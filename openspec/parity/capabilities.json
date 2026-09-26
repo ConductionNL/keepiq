@@ -20,14 +20,18 @@
       "name": "Bitwarden",
       "vendor": "Bitwarden Inc.",
       "columnAddedOn": "2026-09-26",
-      "evidenceGrade": "not-read"
+      "evidenceGrade": "docs-only",
+      "readOn": "2026-09-26",
+      "unknownReason": "Bitwarden's public help centre, pricing and feature pages did not describe this capability either way, so it was left unrated rather than guessed."
     },
     {
       "key": "onepassword",
       "name": "1Password Business",
       "vendor": "AgileBits (1Password)",
       "columnAddedOn": "2026-09-26",
-      "evidenceGrade": "not-read"
+      "evidenceGrade": "docs-only",
+      "readOn": "2026-09-26",
+      "unknownReason": "1Password's public support site, developer docs and business pages did not describe this capability either way, so it was left unrated rather than guessed."
     },
     {
       "key": "passbolt",
@@ -153,8 +157,8 @@
       "area": "vault",
       "name": "Store a login with username, password and website address in your personal vault.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -170,15 +174,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secrets",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/managing-items/ : 'Login (usernames, passwords, passkeys, verification codes)' item type",
+        "onepassword": "https://support.1password.com/item-categories/ : 'Login: include fields like username, password, website, and one-time password'"
+      }
     },
     {
       "id": "vault-02",
       "area": "vault",
       "name": "Edit a stored secret and have the change saved encrypted.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -194,15 +202,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secrets-write-ui",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/managing-items/ : items can be edited; vault data is end-to-end encrypted",
+        "onepassword": "https://support.1password.com/item-history/ : '1Password automatically saves previous versions of items whenever changes occur'"
+      }
     },
     {
       "id": "vault-03",
       "area": "vault",
       "name": "Delete a secret you own.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -218,15 +230,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secrets",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/managing-items/ : deleted items go to trash, can be permanently deleted",
+        "onepassword": "https://support.1password.com/archive-delete-items/ : items can be deleted and permanently deleted from Recently Deleted"
+      }
     },
     {
       "id": "vault-04",
       "area": "vault",
       "name": "Recover a deleted item from a trash bin before it is gone for good.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -239,15 +255,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/managing-items/ : trash items remain 'for 30 days after deletion', can be restored",
+        "onepassword": "https://support.1password.com/archive-delete-items/ : 'restore an item from Recently Deleted for 30 days after the item was deleted'"
+      }
     },
     {
       "id": "vault-05",
       "area": "vault",
       "name": "Organise secrets in folders and subfolders.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -263,15 +283,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secrets",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/folders/ : 'Folders can be nested... There is no limit to the depth' (Socials/Forums)",
+        "onepassword": "https://support.1password.com/favorites-tags/ : items live in vaults (no folders); 'You can nest tags using a forward slash' as the hierarchy substitute"
+      }
     },
     {
       "id": "vault-06",
       "area": "vault",
       "name": "Move a secret into another folder.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -287,15 +311,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secrets-write-ui",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/folders/ : select a folder in the item or bulk assign via the action bar",
+        "onepassword": "https://support.1password.com/move-copy-items/ : 'drag them to a vault, or select Item > Share > [vault name] > Move'"
+      }
     },
     {
       "id": "vault-07",
       "area": "vault",
       "name": "Find a secret by typing part of its name, with typo-tolerant matching.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -311,7 +339,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secrets",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/searching-vault/ : fuzzy matching only in advanced Lunr search with '~' edit distance, not basic search",
+        "onepassword": "https://www.1password.community/discussions/1password/how-to-search-exact-string/155000 and https://support.1password.com/search-1password/ : partial and multiple terms supported; staff state typo correction is not supported"
+      }
     },
     {
       "id": "vault-08",
@@ -335,15 +367,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secrets",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no Nextcloud integration found in Bitwarden docs, a Nextcloud search provider would require one",
+        "onepassword": "not checked: no Nextcloud integration found in 1Password docs, a Nextcloud search provider would require one"
+      }
     },
     {
       "id": "vault-09",
       "area": "vault",
       "name": "Mark items as favourites and filter on them.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -356,15 +392,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/managing-items/ : folders and favorites for organizing items, with filtering",
+        "onepassword": "https://support.1password.com/favorites-tags/ : 'select Add to Favorites... select Favorites in the sidebar'"
+      }
     },
     {
       "id": "vault-10",
       "area": "vault",
       "name": "Label items with tags and filter by tag.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -377,15 +417,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/managing-items/ : organisation is by folders, favorites and collections; tags are not an item property (long-standing community feature request)",
+        "onepassword": "https://support.1password.com/favorites-tags/ : 'no limit the number of tags', 'choose a tag in the sidebar' to filter"
+      }
     },
     {
       "id": "vault-11",
       "area": "vault",
       "name": "Add your own custom fields to an item, including hidden ones.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -401,15 +445,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secrets",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/custom-fields/ : Text, Hidden ('hidden from view'), Checkbox and Linked field types",
+        "onepassword": "https://support.1password.com/custom-fields/ : 11 field types including Password ('copy, reveal, or enlarge')"
+      }
     },
     {
       "id": "vault-12",
       "area": "vault",
       "name": "Store a secure note that is not a login.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -425,15 +473,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secrets",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/managing-items/ : 'Secure note (freeform protected text)'",
+        "onepassword": "https://support.1password.com/item-categories/ : 'Secure Note: contain a text field that can be formatted with Markdown'"
+      }
     },
     {
       "id": "vault-13",
       "area": "vault",
       "name": "Store a payment card or identity document with fields that fit its type.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -449,15 +501,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "card-identity-items",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/managing-items/ : Card and Identity item types",
+        "onepassword": "https://support.1password.com/item-categories/ : Credit Card, Identity, Passport, Driver License categories with typed fields"
+      }
     },
     {
       "id": "vault-14",
       "area": "vault",
       "name": "Store an SSH key pair as its own item type.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -471,15 +527,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/managing-items/ : 'SSH key (for SSH agent functionality)' item type",
+        "onepassword": "https://support.1password.com/item-categories/ : 'SSH Key: contain an option to generate new SSH keys or import existing'"
+      }
     },
     {
       "id": "vault-15",
       "area": "vault",
       "name": "Store a passkey in the vault as its own item type.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -503,15 +563,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "passkey-item-type",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/storing-passkeys/ : passkeys are stored within login items, 'Only one passkey can be saved per login item'",
+        "onepassword": "https://support.1password.com/save-use-passkeys/ : passkey saved on an existing Login or 'as a new item'; no separate Passkey category in https://support.1password.com/item-categories/"
+      }
     },
     {
       "id": "vault-16",
       "area": "vault",
       "name": "Keep a one-time password seed as an authenticator item and see the current code.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -527,15 +591,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secrets",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/authenticator-keys/ : TOTP generation 'available with Premium or membership to a paid organization (Families, Teams, or Enterprise)'",
+        "onepassword": "https://support.1password.com/one-time-passwords/ : 'Select Add More, then select One-Time Password' on a Login item"
+      }
     },
     {
       "id": "vault-17",
       "area": "vault",
       "name": "Attach an encrypted file to a secret.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -551,15 +619,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encrypted-attachments",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/attachments/ : attachments 'encrypted and decrypted locally', paid organizations, up to 500 MB per file",
+        "onepassword": "https://support.1password.com/files/ : 'select Add More > Attach a File'; Business has 1 GB document storage per user"
+      }
     },
     {
       "id": "vault-18",
       "area": "vault",
       "name": "See earlier values of a secret and restore one.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -575,15 +647,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-version-history",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/password-and-generator-history/ : last five passwords of a login kept in Password history; other fields and full versions not restorable",
+        "onepassword": "https://support.1password.com/item-history/ : 'Select View previous versions... Select Restore Item'"
+      }
     },
     {
       "id": "vault-19",
       "area": "vault",
       "name": "Select several secrets at once and move, delete, share or export them together.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -599,7 +675,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "bulk-actions",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/folders/ and https://bitwarden.com/help/managing-items/ : bulk select to move to folder, archive, delete; export is whole-vault, not per selection",
+        "onepassword": "https://support.1password.com/move-copy-items/ : Ctrl-select multiple items to move or copy to a (shared) vault; no per-selection export documented"
+      }
     },
     {
       "id": "vault-20",
@@ -630,7 +710,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "user-settings",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no setting for default item type or default view found in https://bitwarden.com/help/app-settings/",
+        "onepassword": "not checked: no default item type setting found in 1Password support pages"
+      }
     },
     {
       "id": "vault-21",
@@ -638,7 +722,7 @@
       "name": "See the secrets you used most recently on the dashboard.",
       "keepiq": "partial",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -654,15 +738,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "dashboard",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no recently-used list found in Bitwarden help",
+        "onepassword": "https://support.1password.com/sidebar/ : Home screen with favorites and pinned fields; items can be sorted by how frequently you use them"
+      }
     },
     {
       "id": "vault-22",
       "area": "vault",
       "name": "Clone an existing item as the starting point for a new one.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -675,15 +763,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/managing-items/ : 'You can clone any item that you have ownership of to create a duplicate item'",
+        "onepassword": "https://support.1password.com/move-copy-items/ : 'right-click the item, select Duplicate'"
+      }
     },
     {
       "id": "vault-23",
       "area": "vault",
       "name": "Operate the secret list fully from the keyboard.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -699,15 +791,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secrets-write-ui",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/keyboard-shortcuts/ : shortcuts for lock, search, copy, autofill; full list navigation not documented",
+        "onepassword": "https://support.1password.com/keyboard-shortcuts/ : arrow keys navigate the item list; shortcuts for new, edit, save, delete"
+      }
     },
     {
       "id": "crypto-01",
       "area": "crypto",
       "name": "Secret values are encrypted in the browser so the server and its administrator cannot read them (names and URLs stay readable).",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -723,15 +819,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/bitwarden-security-white-paper/ : 'All encryption is done locally'; keys 'never stored on or transmitted to Bitwarden servers'",
+        "onepassword": "https://support.1password.com/1password-security/ : data encrypted with account password and Secret Key on the device; AES-GCM-256 per the white paper https://1passwordstatic.com/files/security/1password-white-paper.pdf"
+      }
     },
     {
       "id": "crypto-02",
       "area": "crypto",
       "name": "Set a master password on first use that the server never stores.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -747,15 +847,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/bitwarden-security-white-paper/ : master password 'never stored on or transmitted to Bitwarden servers'",
+        "onepassword": "https://support.1password.com/1password-security/ : account password plus Secret Key, neither known to 1Password"
+      }
     },
     {
       "id": "crypto-03",
       "area": "crypto",
       "name": "A master password must meet a minimum strength before it is accepted.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -771,15 +875,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/master-password/ : master passwords must be at least 12 characters, zxcvbn strength 0 to 4; Enterprise 'Master password requirements' policy in https://bitwarden.com/help/policies/",
+        "onepassword": "https://support.1password.com/strong-account-password/ : no complexity requirements by default; Business can enforce a minimum via https://support.1password.com/account-password-policy/"
+      }
     },
     {
       "id": "crypto-04",
       "area": "crypto",
       "name": "Change your master password without losing access to your secrets.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -795,15 +903,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/master-password/ : change master password without corrupting the vault",
+        "onepassword": "https://support.1password.com/strong-account-password/ : account password can be changed on 1Password.com"
+      }
     },
     {
       "id": "crypto-05",
       "area": "crypto",
       "name": "Recover from a suspected compromise by re-keying every secret to a new key.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -827,15 +939,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/account-encryption-key/ : 'Also rotate my account's encryption key' when master password may be compromised",
+        "onepassword": "https://support.1password.com/lost-device/ : 'regenerate your Secret Key and deauthorize the lost device'; no documented re-encryption of every item"
+      }
     },
     {
       "id": "crypto-06",
       "area": "crypto",
       "name": "Lock the vault by hand, and have it lock itself after a period of inactivity.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -859,15 +975,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/vault-timeout/ : lock by hand or on timeout (Immediately, intervals, on system lock)",
+        "onepassword": "https://support.1password.com/unlock-auto-lock/ : 'Lock after system is idle for' minutes, also locks on sleep"
+      }
     },
     {
       "id": "crypto-07",
       "area": "crypto",
       "name": "Choose your own session timeout.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -897,15 +1017,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "user-settings",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/vault-timeout/ : custom hours and minutes, lock or log out action; org Session timeout policy",
+        "onepassword": "https://support.1password.com/unlock-auto-lock/ : adjust Auto-Lock minutes; Business presets in https://support.1password.com/unlock-auto-lock-policy/"
+      }
     },
     {
       "id": "crypto-08",
       "area": "crypto",
       "name": "Unlock the vault with a passkey instead of the master password.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -929,15 +1053,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "passkey-vault-login",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/login-with-passkeys/ : PRF-capable passkey 'Use for vault encryption' decrypts and unlocks the vault",
+        "onepassword": "https://support.1password.com/passkey-security/ : unlock with a passkey instead of account password and Secret Key; rolled out as beta per https://blog.1password.com/unlock-1password-individual-passkey-beta/"
+      }
     },
     {
       "id": "crypto-09",
       "area": "crypto",
       "name": "Unlock with a fingerprint or face scan on your device.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -951,15 +1079,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/biometrics/ : Windows Hello, Touch ID, Android fingerprint or face, iOS Face ID",
+        "onepassword": "https://support.1password.com/windows-hello/ and https://support.1password.com/face-id/ : unlock with face, fingerprint, Touch ID"
+      }
     },
     {
       "id": "crypto-10",
       "area": "crypto",
       "name": "Require a second factor such as an authenticator app or security key to open the vault.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -973,15 +1105,19 @@
       },
       "rowSource": "competitor",
       "provider": "nextcloud/server",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/setup-two-step-login-fido/ : FIDO2 security keys and authenticator apps for two-step login; 'Require two-step login' policy",
+        "onepassword": "https://support.1password.com/two-factor-authentication/ and https://support.1password.com/security-key/ : authenticator app or security key as second factor"
+      }
     },
     {
       "id": "crypto-11",
       "area": "crypto",
       "name": "Let an administrator restore a user's access after a forgotten master password.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -994,15 +1130,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/account-recovery/ : Enterprise 'Account recovery administration' lets admins set a temporary master password",
+        "onepassword": "https://support.1password.com/recovery/ : administrators 'select Begin Recovery'; member gets new Secret Key and password"
+      }
     },
     {
       "id": "crypto-12",
       "area": "crypto",
       "name": "Regain access yourself with a recovery code or kit when the master password is lost.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1016,15 +1156,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/forgot-master-password/ : 'Bitwarden has no way to access, retrieve, or reset your master password'; recovery code only covers two-step login",
+        "onepassword": "https://support.1password.com/recovery-codes/ : recovery codes 'limited to individual and family accounts'; business accounts rely on administrator recovery"
+      }
     },
     {
       "id": "crypto-13",
       "area": "crypto",
       "name": "See which algorithms and key sizes protect your vault.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1039,7 +1183,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/bitwarden-security-white-paper/ : AES-CBC 256 with HMAC, RSA-2048, PBKDF2 600,000 rounds or Argon2id",
+        "onepassword": "https://1passwordstatic.com/files/security/1password-white-paper.pdf : AES256-GCM, RSA-OAEP 2048, PBKDF2-HMAC-SHA256"
+      }
     },
     {
       "id": "crypto-14",
@@ -1063,7 +1211,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no organisation-CA certificate binding of user keys found; Key Connector and trusted devices use their own keys",
+        "onepassword": "not checked: no organisation-CA certificate binding of user keys found in the security model docs"
+      }
     },
     {
       "id": "crypto-15",
@@ -1095,7 +1247,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: internal key-generation invariant not described in public docs",
+        "onepassword": "not checked: internal key-generation invariant not described in public docs"
+      }
     },
     {
       "id": "crypto-16",
@@ -1119,15 +1275,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: https://bitwarden.com/help/account-encryption-key/ warns rotation is 'potentially dangerous' but does not describe verify-before-discard",
+        "onepassword": "not checked: re-encryption verification not described in public docs"
+      }
     },
     {
       "id": "crypto-17",
       "area": "crypto",
       "name": "Revoke a user's vault key and reinstate it later.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1143,15 +1303,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/revoke-users/ : 'Revoking a member is how you temporarily remove someone... You can later restore their access'; membership, not key, revocation",
+        "onepassword": "https://support.1password.com/offboarding/ : 'select More Actions > Suspend', later 'select Reactivate'; account suspension, not key revocation"
+      }
     },
     {
       "id": "crypto-18",
       "area": "crypto",
       "name": "An administrator can force-revoke a key flagged as compromised.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1167,15 +1331,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/revoke-users/ : admin can revoke a member at once; account recovery resets the master password; no key-compromise flag",
+        "onepassword": "https://support.1password.com/business-security-practices/ : suspend an account whose device or Emergency Kit was compromised, then recover with a new Secret Key"
+      }
     },
     {
       "id": "crypto-19",
       "area": "crypto",
       "name": "Log in to the vault with single sign-on from the organisation's identity provider.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1189,15 +1357,19 @@
       },
       "rowSource": "competitor",
       "provider": "nextcloud/server",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/policies/ : 'Require single sign-on (SSO)' policy; SSO with trusted devices in https://bitwarden.com/help/bitwarden-security-white-paper/ (Enterprise)",
+        "onepassword": "https://support.1password.com/sso/ : 1Password Business 'Unlock with SSO' via OIDC with Entra ID, Okta, Google and others"
+      }
     },
     {
       "id": "sharing-01",
       "area": "sharing",
       "name": "Share a secret with another Nextcloud user.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1213,15 +1385,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "user-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/collection-permissions/ : collections are assigned to members with a permission level",
+        "onepassword": "https://support.1password.com/create-share-vaults-teams/ : share a vault with team members with per-person permissions"
+      }
     },
     {
       "id": "sharing-02",
       "area": "sharing",
       "name": "Share a secret with a Nextcloud group.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1244,15 +1420,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "user-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/collection-permissions/ : 'Permissions are set when assigning members or groups to collections'",
+        "onepassword": "https://support.1password.com/custom-groups/ : 'give everyone in a group access to specific vaults and assign vault permissions'"
+      }
     },
     {
       "id": "sharing-03",
       "area": "sharing",
       "name": "People who join a group later get access once the owner approves.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1276,15 +1456,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "user-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/policies/ : new organisation members are confirmed by an admin unless 'Automatic user confirmation' is on; adding to a group then grants access without owner approval",
+        "onepassword": "https://support.1password.com/add-remove-team-members/ : new team members are confirmed by an administrator; group membership then grants vault access without owner approval"
+      }
     },
     {
       "id": "sharing-04",
       "area": "sharing",
       "name": "People who leave a group lose access automatically.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1300,15 +1484,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "user-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/about-scim/ : SCIM and directory sync remove users and group memberships, revoking collection access",
+        "onepassword": "https://support.1password.com/custom-groups/ : access flows from group membership, so removal from the group removes vault access"
+      }
     },
     {
       "id": "sharing-05",
       "area": "sharing",
       "name": "Shared copies update when the owner changes the secret.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1324,15 +1512,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "user-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/about-collections/ : items live once in the organisation collection, so every member sees the edited item",
+        "onepassword": "https://support.1password.com/create-share-vaults-teams/ : items live in the shared vault, everyone with access sees the current version"
+      }
     },
     {
       "id": "sharing-06",
       "area": "sharing",
       "name": "Revoke a share.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1347,15 +1539,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "user-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/collection-permissions/ : remove a member or group from the collection",
+        "onepassword": "https://support.1password.com/create-share-vaults-teams/ : revoke a person's or group's access to a vault"
+      }
     },
     {
       "id": "sharing-07",
       "area": "sharing",
       "name": "See who a secret is shared with.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1370,15 +1566,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "user-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/collection-permissions/ : 'Member Access Report to audit collection access levels'",
+        "onepassword": "https://support.1password.com/move-copy-items/ : 'the confirmation screen will show you who will have access to the item'; vault People list"
+      }
     },
     {
       "id": "sharing-08",
       "area": "sharing",
       "name": "Share a whole folder as a team folder whose members inherit every secret in it.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1393,15 +1593,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "team-folder-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/about-collections/ : organisation collections shared with members and groups",
+        "onepassword": "https://support.1password.com/create-share-vaults-teams/ : shared vaults whose members see every item"
+      }
     },
     {
       "id": "sharing-09",
       "area": "sharing",
       "name": "Give team folder members read-only or edit rights.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1417,15 +1621,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "folder-permission-grades",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/collection-permissions/ : 'View items', 'Edit items', 'Manage collection' levels",
+        "onepassword": "https://support.1password.com/create-share-vaults-teams/ : Allow Viewing, Allow Editing, Allow Managing, twelve granular permissions (Business)"
+      }
     },
     {
       "id": "sharing-10",
       "area": "sharing",
       "name": "Nested subfolders inherit team folder access.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1440,7 +1648,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "team-folder-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/about-collections/ : 'Nested collections don't inherit items, access, or permissions from their parent collection'",
+        "onepassword": "https://support.1password.com/create-share-vaults-teams/ : vaults are flat access containers; hierarchy exists only as nested tags (https://support.1password.com/favorites-tags/) which carry no access"
+      }
     },
     {
       "id": "sharing-11",
@@ -1472,14 +1684,18 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "user-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no temporary ownership transfer with take-back found",
+        "onepassword": "not checked: no temporary ownership transfer with take-back found"
+      }
     },
     {
       "id": "sharing-12",
       "area": "sharing",
       "name": "Ownership moves to a colleague when the owner's key is revoked.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
+      "bitwarden": "partial",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -1496,7 +1712,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "user-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/policies/ : 'Centralize organization ownership' makes the organisation own items, so they survive a revoked member; no transfer to a named colleague",
+        "onepassword": "not checked: offboarding page describes deleting or suspending, no automatic reassignment to a colleague found"
+      }
     },
     {
       "id": "sharing-13",
@@ -1519,15 +1739,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "user-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no request-access flow for an item found",
+        "onepassword": "not checked: no request-access flow for an item found"
+      }
     },
     {
       "id": "sharing-14",
       "area": "sharing",
       "name": "Share a secret through a password-protected public link that expires.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1551,15 +1775,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "link-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/about-send/ : Send with password protection, expiration and deletion dates",
+        "onepassword": "https://support.1password.com/share-items/ : expiring link restricted to named emails with email verification; no link password"
+      }
     },
     {
       "id": "sharing-15",
       "area": "sharing",
       "name": "Send a one-off secret to someone without an account that disappears after reading.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1574,15 +1802,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "ephemeral-send",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/about-send/ : no account required, 'Maximum access count limits', automatic deletion",
+        "onepassword": "https://support.1password.com/share-items/ : recipients need no account; link can expire 'after a single person views it'"
+      }
     },
     {
       "id": "sharing-16",
       "area": "sharing",
       "name": "See and revoke the links and sends you created.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1598,15 +1830,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "ephemeral-send",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/about-send/ : Sends listed in every client, can be edited or deleted",
+        "onepassword": "https://support.1password.com/share-items/ : 'View sharing history for each item', revoke by deleting links"
+      }
     },
     {
       "id": "sharing-17",
       "area": "sharing",
       "name": "Share with someone outside the organisation who has their own account elsewhere.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1619,15 +1855,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/about-send/ : external recipient via Send with email verification; otherwise invite them into the organisation",
+        "onepassword": "https://support.1password.com/share-items/ : recipient can save the shared item into their own 1Password account; guest accounts in https://support.1password.com/custom-groups/"
+      }
     },
     {
       "id": "sharing-18",
       "area": "sharing",
       "name": "Give people roles such as manager or viewer on a shared collection.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1639,7 +1879,11 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/collection-permissions/ : 'Manage collection' versus 'View items' roles",
+        "onepassword": "https://support.1password.com/create-share-vaults-teams/ : Allow Managing versus Allow Viewing per person or group"
+      }
     },
     {
       "id": "sharing-19",
@@ -1662,15 +1906,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "user-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no notification on share documented",
+        "onepassword": "not checked: no notification on vault share documented"
+      }
     },
     {
       "id": "sharing-20",
       "area": "sharing",
       "name": "Name an emergency contact who can ask for access after a waiting period.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1685,15 +1933,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "emergency-access",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/emergency-access/ : trusted emergency contact with 'grantor-specified wait time' (premium, incl. Enterprise members)",
+        "onepassword": "https://www.1password.community/discussions/1password/emergency-access---people-i-trust-that-may-ask-to-access-my-account-in-case-of-a/165513 : emergency access is an open feature request; business relies on admin recovery"
+      }
     },
     {
       "id": "sharing-21",
       "area": "sharing",
       "name": "Decline an emergency access request during the waiting period.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1708,15 +1960,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "emergency-access",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/emergency-access/ : the account holder 'may reject the request'",
+        "onepassword": "https://support.1password.com/team-recovery-plan/ : no emergency access feature, only administrator recovery"
+      }
     },
     {
       "id": "sharing-22",
       "area": "sharing",
       "name": "Emergency access is granted automatically when the owner does not respond in time.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1731,7 +1987,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "emergency-access",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/emergency-access/ : 'After this period expires, access is automatically granted'",
+        "onepassword": "https://support.1password.com/team-recovery-plan/ : no emergency access feature, only administrator recovery"
+      }
     },
     {
       "id": "sharing-23",
@@ -1751,15 +2011,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "not checked: no item comments found",
+        "onepassword": "not checked: no item comments found"
+      }
     },
     {
       "id": "requests-01",
       "area": "requests",
       "name": "Ask someone for a secret through a link they fill in.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1775,15 +2039,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-requests",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/receive-files-passwords-or-notes-from-non-bitwarden-users-reverse-send/27067 : receiving secrets from others ('Reverse Send') is an open community feature request; Send in https://bitwarden.com/help/about-send/ only sends outward",
+        "onepassword": "https://www.1password.community/discussions/1password/feature-request---send-me-a-password-securely/151474 : requesting a password from someone is an open feature request; item sharing in https://support.1password.com/share-items/ only sends outward"
+      }
     },
     {
       "id": "requests-02",
       "area": "requests",
       "name": "Choose which fields the other person must fill in.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1807,15 +2075,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-requests",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/receive-files-passwords-or-notes-from-non-bitwarden-users-reverse-send/27067 : receiving secrets from others ('Reverse Send') is an open community feature request; Send in https://bitwarden.com/help/about-send/ only sends outward",
+        "onepassword": "https://www.1password.community/discussions/1password/feature-request---send-me-a-password-securely/151474 : requesting a password from someone is an open feature request; item sharing in https://support.1password.com/share-items/ only sends outward"
+      }
     },
     {
       "id": "requests-03",
       "area": "requests",
       "name": "A filled-in value is encrypted for you and can only be written once.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1831,15 +2103,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-requests",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/receive-files-passwords-or-notes-from-non-bitwarden-users-reverse-send/27067 : receiving secrets from others ('Reverse Send') is an open community feature request; Send in https://bitwarden.com/help/about-send/ only sends outward",
+        "onepassword": "https://www.1password.community/discussions/1password/feature-request---send-me-a-password-securely/151474 : requesting a password from someone is an open feature request; item sharing in https://support.1password.com/share-items/ only sends outward"
+      }
     },
     {
       "id": "requests-04",
       "area": "requests",
       "name": "Give a request an expiry date.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1855,15 +2131,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-requests",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/receive-files-passwords-or-notes-from-non-bitwarden-users-reverse-send/27067 : receiving secrets from others ('Reverse Send') is an open community feature request; Send in https://bitwarden.com/help/about-send/ only sends outward",
+        "onepassword": "https://www.1password.community/discussions/1password/feature-request---send-me-a-password-securely/151474 : requesting a password from someone is an open feature request; item sharing in https://support.1password.com/share-items/ only sends outward"
+      }
     },
     {
       "id": "requests-05",
       "area": "requests",
       "name": "Get notified when a request is filled in.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1879,15 +2159,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-requests",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/receive-files-passwords-or-notes-from-non-bitwarden-users-reverse-send/27067 : receiving secrets from others ('Reverse Send') is an open community feature request; Send in https://bitwarden.com/help/about-send/ only sends outward",
+        "onepassword": "https://www.1password.community/discussions/1password/feature-request---send-me-a-password-securely/151474 : requesting a password from someone is an open feature request; item sharing in https://support.1password.com/share-items/ only sends outward"
+      }
     },
     {
       "id": "requests-06",
       "area": "requests",
       "name": "Ask again for an updated value without starting a new request.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1903,15 +2187,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-requests",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/receive-files-passwords-or-notes-from-non-bitwarden-users-reverse-send/27067 : receiving secrets from others ('Reverse Send') is an open community feature request; Send in https://bitwarden.com/help/about-send/ only sends outward",
+        "onepassword": "https://www.1password.community/discussions/1password/feature-request---send-me-a-password-securely/151474 : requesting a password from someone is an open feature request; item sharing in https://support.1password.com/share-items/ only sends outward"
+      }
     },
     {
       "id": "requests-07",
       "area": "requests",
       "name": "Revoke an open request.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1927,15 +2215,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-requests",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/receive-files-passwords-or-notes-from-non-bitwarden-users-reverse-send/27067 : receiving secrets from others ('Reverse Send') is an open community feature request; Send in https://bitwarden.com/help/about-send/ only sends outward",
+        "onepassword": "https://www.1password.community/discussions/1password/feature-request---send-me-a-password-securely/151474 : requesting a password from someone is an open feature request; item sharing in https://support.1password.com/share-items/ only sends outward"
+      }
     },
     {
       "id": "requests-08",
       "area": "requests",
       "name": "See which requests are still waiting for an answer.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1951,7 +2243,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-requests",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/receive-files-passwords-or-notes-from-non-bitwarden-users-reverse-send/27067 : receiving secrets from others ('Reverse Send') is an open community feature request; Send in https://bitwarden.com/help/about-send/ only sends outward",
+        "onepassword": "https://www.1password.community/discussions/1password/feature-request---send-me-a-password-securely/151474 : requesting a password from someone is an open feature request; item sharing in https://support.1password.com/share-items/ only sends outward"
+      }
     },
     {
       "id": "requests-09",
@@ -1959,7 +2255,7 @@
       "name": "An application can ask a person for a secret it needs.",
       "keepiq": "yes",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1975,15 +2271,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-requests",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no flow found where an application asks a person to supply a secret",
+        "onepassword": "https://www.1password.dev/agentic-autofill/ : an AI agent 'sends a request... to autofill items', triggering 'an approval prompt from your 1Password desktop app'; approves use of a stored item, not supplying a new one"
+      }
     },
     {
       "id": "requests-10",
       "area": "requests",
       "name": "A new request does not ask again for values already on file.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -1999,15 +2299,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-requests",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/receive-files-passwords-or-notes-from-non-bitwarden-users-reverse-send/27067 : receiving secrets from others ('Reverse Send') is an open community feature request; Send in https://bitwarden.com/help/about-send/ only sends outward",
+        "onepassword": "https://www.1password.community/discussions/1password/feature-request---send-me-a-password-securely/151474 : requesting a password from someone is an open feature request; item sharing in https://support.1password.com/share-items/ only sends outward"
+      }
     },
     {
       "id": "requests-11",
       "area": "requests",
       "name": "Get a lost fill-in link back.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -2023,7 +2327,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-requests",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/receive-files-passwords-or-notes-from-non-bitwarden-users-reverse-send/27067 : receiving secrets from others ('Reverse Send') is an open community feature request; Send in https://bitwarden.com/help/about-send/ only sends outward",
+        "onepassword": "https://www.1password.community/discussions/1password/feature-request---send-me-a-password-securely/151474 : requesting a password from someone is an open feature request; item sharing in https://support.1password.com/share-items/ only sends outward"
+      }
     },
     {
       "id": "apps-01",
@@ -3238,7 +3546,7 @@
     {
       "id": "rotation-02",
       "area": "rotation",
-      "name": "An administrator sets a default expiry policy that users can override.",
+      "name": "An administrator sets a default expiry that users can shorten per secret.",
       "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
@@ -3258,6 +3566,12 @@
             "what": "Effective expiry is min() of all candidates, so a user override can never be later than the admin default; override means tighten only.",
             "issue": null,
             "needsLiveCheck": false
+          },
+          {
+            "at": "lib/Service/AdminSettingsService.php:394",
+            "what": "expiry_policy_enforced is stored by the admin settings service but read nowhere and has no UI.",
+            "issue": null,
+            "needsLiveCheck": false
           }
         ]
       },
@@ -3265,8 +3579,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "rotation-expiry-policies",
-      "featureConfidence": "high",
-      "_rename": "An administrator sets a default expiry that users can shorten per secret."
+      "featureConfidence": "high"
     },
     {
       "id": "rotation-03",
@@ -3414,8 +3727,8 @@
     {
       "id": "admin-01",
       "area": "admin",
-      "name": "Set an organisation password policy that the generator and every save respect.",
-      "keepiq": "unknown",
+      "name": "Set an organisation password policy that the generator and the secret dialogs respect.",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3423,11 +3736,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/settings/OrgPasswordPolicySection.vue:26 policy toggle, min length, required classes, min zxcvbn score, HIBP block (:72) -> PUT /api/settings/admin -> lib/Service/PasswordPolicyService.php; generator clamp lib/Service/KeyGeneratorService.php:110; save checks src/dialogs/SecretCreateDialog.vue:326 and SecretEditDialog.vue via src/policy/policy.js:74 evaluateScore and :113 evaluateHibp",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Org password policy; enforced in New/Edit secret dialogs and the generator",
+        "note": "The generator floor is enforced on the server and the save floor in the create and edit dialogs. Other write paths do not check it: the import wizard (import-batch), the browser extension (browser-extension/src/lib/api.js:121) and write-for-app dialog save without the policy check.",
+        "defects": [
+          {
+            "at": "browser-extension/src/lib/api.js:121",
+            "what": "Secrets saved from the browser extension, the import wizard (src/store/modules/import.js:480) and WriteSecretForAppDialog skip src/policy/policy.js, so the save floor is not applied on every save.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "org-password-policies",
       "featureConfidence": "high"
     },
@@ -3435,7 +3760,7 @@
       "id": "admin-02",
       "area": "admin",
       "name": "Set the minimum master password strength for everyone.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3443,11 +3768,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/settings/PasswordPolicySection.vue:26 min score select -> POST /api/settings (AppHost standard route) -> lib/Controller/SettingsController.php:160 create -> update (bounds 12-20 and 3-4, lib/Service/SettingsService.php:83); read back by src/components/PasswordStrengthMeter.vue:165 on LockScreen setup (src/views/LockScreen.vue:182) and MasterPasswordForm",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Password Policy",
+        "note": "Admins set minimum length (12 to 20) and zxcvbn score (3 or 4); the setup and change forms block submit below the floor. Enforcement is client-side by design, since the server never sees the master password."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "admin-settings",
       "featureConfidence": "high"
     },
@@ -3455,7 +3784,7 @@
       "id": "admin-03",
       "area": "admin",
       "name": "Approve applications from a queue in the admin settings.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3463,11 +3792,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/settings/ApplicationQueueSection.vue:73 GET /api/v1/applications/pending, :95 POST /api/v1/applications/{id}/approve, :109 /reject -> lib/Controller/ApplicationController.php:275 isAdmin check -> service approve/reject",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> application queue section",
+        "note": "Pending applications are listed with approve and reject buttons.",
+        "defects": [
+          {
+            "at": "src/components/settings/ApplicationQueueSection.vue:94",
+            "what": "approve() and reject() have no try/catch, so a failed call shows nothing to the admin and leaves an unhandled promise rejection.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "admin-settings",
       "featureConfidence": "high"
     },
@@ -3475,7 +3816,7 @@
       "id": "admin-04",
       "area": "admin",
       "name": "Remove a leaving user from every team folder in one step.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3483,11 +3824,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/settings/OffboardingSection.vue:150 (after OffboardingConfirmDialog) -> src/store/modules/teamFolder.js:220 POST /api/v1/team-folders/offboard -> lib/Controller/TeamFolderController.php:236 -> lib/Service/TeamFolderOffboardingService.php:83 offboard: revokeTeamSharesForUser (lib/Service/TeamFolderShareService.php:232) then transfer owned team secrets to a successor",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Team offboarding (admin or vault_admin)",
+        "note": "One action revokes every team-folder-derived share and hands owned team secrets to a successor. It does not delete the user's team-folder member rows, so a direct user membership survives.",
+        "defects": [
+          {
+            "at": "lib/Service/TeamFolderOffboardingService.php:95",
+            "what": "Offboarding revokes derived share rows but never removes TeamFolderMember rows for the leaver; a later reconcile or share fan-out by the folder owner could re-share to them.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "team-folder-sharing",
       "featureConfidence": "high"
     },
@@ -3495,7 +3848,7 @@
       "id": "admin-05",
       "area": "admin",
       "name": "Switch offline caching off for the whole organisation.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3503,11 +3856,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/settings/OfflineCacheSection.vue:85 PUT /api/settings/admin offline_cache_enabled -> lib/Service/AdminSettingsService.php:354; lib/Controller/OfflineController.php:82 returns 403 when off; src/store/modules/offline.js:124 purges the local snapshot on 403",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> offline cache section",
+        "note": "Switching it off refuses the offline manifest and clients purge any existing snapshot on their next sync."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "offline-readonly-cache",
       "featureConfidence": "high"
     },
@@ -3515,7 +3872,7 @@
       "id": "admin-06",
       "area": "admin",
       "name": "Switch breach checking on for the organisation.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3523,11 +3880,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/settings/BreachCheckSection.vue:30 toggle -> PUT /api/settings/admin breach_check_enabled -> lib/Service/AdminSettingsService.php:350; gate read at lib/Controller/BreachProxyController.php:161 and initial state lib/Controller/DashboardController.php:108",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Breach checking",
+        "note": "Off by default. Turning it on shows the per-user opt-in on the Password health page; users still have to opt in."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "password-health",
       "featureConfidence": "high"
     },
@@ -3535,7 +3896,7 @@
       "id": "admin-07",
       "area": "admin",
       "name": "Decide how long old versions of secrets are kept.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3543,11 +3904,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/settings/AttachmentLimitsSection.vue:46 versions kept and :57 age limit -> PUT /api/settings/admin -> lib/Service/AdminSettingsService.php:451,460; appinfo/info.xml:116 PruneSecretVersionsJob -> lib/BackgroundJob/PruneSecretVersionsJob.php:74,80",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Attachments & version history",
+        "note": "Count (default 20) and age in days (default 365, 0 unlimited), pruned nightly."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-version-history",
       "featureConfidence": "high"
     },
@@ -3555,7 +3920,7 @@
       "id": "admin-08",
       "area": "admin",
       "name": "Create and remove users automatically from a directory through SCIM.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3563,17 +3928,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rli scim lib src appinfo: no hits; users are Nextcloud accounts, keepiq only reacts to deletion (lib/AppInfo/UserLifecycleEventRegistrar.php UserDeletedListener)",
+        "owner": "ConductionNL/keepiq",
+        "note": "No SCIM endpoint. Vault users are whoever has a Nextcloud account; provisioning is Nextcloud's job."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "admin-09",
       "area": "admin",
       "name": "Sync groups from Active Directory or LDAP.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3581,17 +3949,29 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "groups come from Nextcloud (user_ldap); lib/AppInfo/UserLifecycleEventRegistrar.php:56 UserAddedEvent -> lib/Listener/UserAddedToGroupListener.php notifies owners (group_member_added, lib/Notification/KeepiqNotifier.php:164); team folders take group members (src/modals/TeamFolderDialog.vue:99) and reconcile (:469)",
+        "owner": "nextcloud/server",
+        "reachedOn": "Nextcloud LDAP/AD integration; keepiq group shares and team folders use Nextcloud groups",
+        "note": "Directory groups arrive through Nextcloud and keepiq follows membership changes, but a new member only gets a group-shared secret after the owner approves, and the group-share approve endpoint has no UI.",
+        "defects": [
+          {
+            "at": "appinfo/routes.php:136",
+            "what": "POST /api/v1/group-shares/{id}/approve-new-member and deny-new-member have no frontend caller, and the group_member_added notification has no action, so owners cannot approve a synced new member from the UI.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "competitor",
-      "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "provider": "nextcloud/server",
+      "providerHow": "read-from-code"
     },
     {
       "id": "admin-10",
       "area": "admin",
       "name": "Enforce rules such as two-factor login or a ban on exporting personal vaults.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3599,17 +3979,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rni 'export_disabled|allow_export|require_2fa|twofactor' lib/Service/AdminSettingsService.php lib/Controller/ExportController.php src/components/settings: no hits",
+        "owner": "ConductionNL/keepiq",
+        "note": "Keepiq has no policy to require two-factor login or to block personal vault export. Nextcloud can enforce two-factor for the whole login, which also guards keepiq, but that is a server setting, not a vault rule."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "admin-11",
       "area": "admin",
       "name": "Hand out admin roles with only the permissions a person needs.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3617,17 +4000,29 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Service/TeamFolderOffboardingService.php:45 and lib/Service/DelegationAuthorizer.php:49 vault_admin group; admin settings via #[AuthorizedAdminSetting(AdminSettings::class)] (lib/Controller/SettingsController.php:159) so Nextcloud admin delegation can hand the whole Keepiq section to a group",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin delegation for the Keepiq settings section; vault_admin group for offboarding",
+        "note": "There are two coarse levers: Nextcloud's delegation of the whole Keepiq admin section, and a hard-coded vault_admin group that unlocks offboarding and admin handover. No role editor or per-permission roles. The admin handover path has no production caller (#184).",
+        "defects": [
+          {
+            "at": "lib/Service/DelegationAuthorizer.php:113",
+            "what": "vault_admin gates createAdminHandover, which has no production caller.",
+            "issue": "#184",
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "admin-12",
       "area": "admin",
       "name": "See which users have set up a vault.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3635,17 +4030,29 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/settings/ComplianceSection.vue:44 shows metrics.adoption.usersWithActiveSuite <- lib/Service/ComplianceReportService.php:107 countDistinct keepiq_enc_suites; no per-user list endpoint (open #37)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Compliance section (count only)",
+        "note": "Admins see how many users have an active vault, not which ones. The encryption-suite admin section needs a suite id typed in by hand.",
+        "defects": [
+          {
+            "at": "src/components/settings/AdminSuiteSection.vue:24",
+            "what": "Force-revoke asks for a suite id but no screen lists users or suites to find it.",
+            "issue": "#37",
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "admin-13",
       "area": "admin",
       "name": "Manage the organisation through a public admin API.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3653,17 +4060,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "no OpenAPI or admin API docs in docs/; machine routes /api/v1/app/* (appinfo/routes.php:295-321) cover application secrets only; admin endpoints like PUT /api/settings/admin are internal session routes",
+        "owner": "ConductionNL/keepiq",
+        "note": "The admin screens call internal REST routes that a script could reach with a Nextcloud app password, but there is no documented, versioned admin API or scoped admin token."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "admin-14",
       "area": "admin",
       "name": "See the vault's connected integrations and their status in one place.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3671,11 +4081,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/manifest.d/80-connection-registry.json Integrations page /settings/integrations (integriq app_connection, admin, requires integriq); lib/Settings/connections.json declares hibp and siem; status reported by lib/Controller/BreachProxyController.php:227 and lib/Service/SiemService.php:218 via lib/Service/Connection/ConnectionReporter.php",
+        "owner": "ConductionNL/integriq",
+        "reachedOn": "App navigation -> Integrations (admin, only when integriq is installed)",
+        "note": "Keepiq declares two connections (breach check, SIEM) and reports their outcomes; integriq stores and renders the status table. Without integriq installed the menu entry is hidden."
       },
       "rowSource": "own",
-      "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "provider": "integriq",
+      "providerHow": "read-from-code",
       "feature": "apphost-adoption",
       "featureConfidence": "high"
     },
@@ -3683,7 +4097,7 @@
       "id": "admin-15",
       "area": "admin",
       "name": "Set a size limit and a quota for attachments.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3691,11 +4105,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/settings/AttachmentLimitsSection.vue:28 max size and :37 quota -> PUT /api/settings/admin -> lib/Service/AdminSettingsService.php:478; enforced at lib/Service/AttachmentService.php:227 and :234",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Attachments & version history",
+        "note": "Per-attachment limit (default 25 MiB) and per-user quota (default 100 MiB), counted in stored ciphertext bytes."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encrypted-attachments",
       "featureConfidence": "high"
     },
@@ -3703,7 +4121,7 @@
       "id": "admin-16",
       "area": "admin",
       "name": "See the installed version and its details in the admin settings.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3711,11 +4129,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/settings/AdminRoot.vue:2 CnAdminSettingsShell appId=keepiq -> CnVersionInfoCard reads loadState(keepiq, version) provided by lib/Settings/AdminSettings.php:38 extends OpenRegister GenericAdminSettings",
+        "owner": "ConductionNL/nextcloud-vue",
+        "reachedOn": "Nextcloud admin settings -> Keepiq (version card at the top)",
+        "note": "The version card, up-to-date check and re-import button come from the shared admin shell and OpenRegister's AppHost settings class, so keepiq depends on OpenRegister being installed for this page."
       },
       "rowSource": "own",
-      "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "provider": "nextcloud-vue",
+      "providerHow": "read-from-code",
       "feature": "admin-settings",
       "featureConfidence": "high"
     },
@@ -3723,7 +4145,7 @@
       "id": "admin-17",
       "area": "admin",
       "name": "Administrators see pending applications and CA status on the dashboard.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3731,11 +4153,29 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "src/manifest.json pending-apps-queue widget (visibleWhen pending_apps_count > 0) -> GET /api/v1/applications/pending; lib/Service/DashboardSummaryService.php:155 computes ca_health for admins but no widget renders it and src/components/dashboard/CaHealthCard.vue has no importer",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Dashboard (/) Applications awaiting approval table, admins with pending work only",
+        "note": "Admins see which applications await approval on the dashboard, but cannot approve from there, and the CA status is only in admin settings (CaHealthSection). The dashboard CA card is built but orphaned.",
+        "defects": [
+          {
+            "at": "src/components/dashboard/CaHealthCard.vue:1",
+            "what": "CaHealthCard is imported by nothing and ca_health from the summary is never rendered, so CA status never reaches the dashboard.",
+            "issue": null,
+            "needsLiveCheck": false
+          },
+          {
+            "at": "src/manifest.json:208",
+            "what": "The queue's View-all footer is dead: its own _note says limit never reaches the widget on the installed nextcloud-vue.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "dashboard",
       "featureConfidence": "high"
     },
@@ -4107,7 +4547,7 @@
       "id": "portability-01",
       "area": "portability",
       "name": "Import from other password managers, parsed in the browser.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4115,11 +4555,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/SecretList.vue:1002 (Import toolbar item) -> src/dialogs/ImportWizardDialog.vue:492 onFilePicked (file.text() in browser) -> src/store/modules/import.js:106 parseFile via src/import/parsers/index.js:23 (csv, bitwarden, keepass-xml, nc-passwords, cxf, backup) -> src/store/modules/import.js:251 encryptRow (rsaEncrypt client-side) -> import.js:480 POST /api/v1/secrets/import-batch -> appinfo/routes.php:95 -> lib/Controller/ImportController.php:98 -> lib/Service/ImportService.php:101",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard",
+        "note": "Files are read and parsed in the browser and only ciphertext is posted in chunks of 50. Supported sources are generic CSV, Bitwarden JSON/CSV, KeePass XML, Nextcloud Passwords JSON, CXF and the own encrypted backup."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-import",
       "featureConfidence": "high"
     },
@@ -4127,7 +4571,7 @@
       "id": "portability-02",
       "area": "portability",
       "name": "Move over from the Nextcloud Passwords app.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4135,11 +4579,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/import/parsers/ncPasswords.js:103 parseNcPasswords (label/url/username/password, folder tree resolved) registered at src/import/parsers/index.js:26 -> ImportWizardDialog.vue format select -> src/store/modules/import.js:480 POST /api/v1/secrets/import-batch",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard (format 'Nextcloud Passwords (JSON backup)')",
+        "note": "File-based migration from the Passwords app's Predefined JSON backup, with folder hierarchy kept. There is no direct server-side migration by design (E2E); an encrypted Passwords backup is not handled."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-import",
       "featureConfidence": "high"
     },
@@ -4147,7 +4595,7 @@
       "id": "portability-03",
       "area": "portability",
       "name": "Preview and adjust the field mapping before importing.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4155,19 +4603,38 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "preview: src/dialogs/ImportWizardDialog.vue:66-117 (first 5 rows, src/dialogs/ImportWizardDialog.vue previewRows). Adjust: src/import/parsers/csv.js:120 accepts options.mapping and csv.js:142 declares adjustableMapping, but the wizard never passes a mapping (ImportWizardDialog.vue:506 parseFile(text, format, {passphrase})) and src/store/modules/import.js:57 mapping state is never written",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard -> mapping step",
+        "note": "The user sees a read-only preview of the first five mapped rows. There is no control to remap columns, although the CSV parser supports an explicit mapping.",
+        "defects": [
+          {
+            "at": "src/dialogs/ImportWizardDialog.vue:468",
+            "what": "Sensitive cells are masked with a per-cell reveal, but nothing ever sets revealed[key], so login and password columns can never be revealed in the preview.",
+            "issue": null,
+            "needsLiveCheck": false
+          },
+          {
+            "at": "src/store/modules/import.js:57",
+            "what": "The mapping state and the parser's adjustableMapping flag are never used, so column remapping promised by the spec is not wired.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-import",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "_rename": "Preview the field mapping before importing (no remapping yet)."
     },
     {
       "id": "portability-04",
       "area": "portability",
       "name": "Keep the folders from the source when importing.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4175,11 +4642,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "parsers emit folder paths (src/import/parsers/keepassXml.js:59, src/import/parsers/ncPasswords.js:118, src/cxf/cxf.js:270 collections) -> src/store/modules/import.js:264 folderPath -> import.js:419 folders per chunk -> lib/Service/ImportService.php:258 ensureFolderPath (reuses same-name folders, creates missing) -> summary foldersCreated ImportWizardDialog.vue",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard -> folders step",
+        "note": "Source folder hierarchies are recreated under the vault and existing same-name folders are reused. The option to import everything under one new folder is shown but does nothing.",
+        "defects": [
+          {
+            "at": "src/dialogs/ImportWizardDialog.vue:125",
+            "what": "The 'Import everything under one new folder' switch sets underOneFolder, but commit() takes no argument and never reads it, so the choice is silently ignored.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-import",
       "featureConfidence": "high"
     },
@@ -4187,7 +4666,7 @@
       "id": "portability-05",
       "area": "portability",
       "name": "Duplicates are detected during an import.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4195,11 +4674,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/ImportWizardDialog.vue:514 next() -> src/store/modules/import.js:189 detectDuplicates (fetchAllSecrets, dedupeKey name+url from src/import/model.js) -> duplicates step with per-row and bulk Skip / Import as copy (import.js:214, :228) -> import.js:259 '(imported)' suffix",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard -> duplicates step",
+        "note": "Rows matching an existing secret on normalised name plus URL are listed with skip or import-as-copy per row or in bulk; the default is skip.",
+        "defects": [
+          {
+            "at": "src/import/backupParser.js:25",
+            "what": "Backup-restore rows carry no sourceRow, so every duplicate from a backup shares the key undefined and a per-row resolution applies to all of them.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-import",
       "featureConfidence": "high"
     },
@@ -4207,7 +4698,7 @@
       "id": "portability-06",
       "area": "portability",
       "name": "Get an import report that lists rejected rows.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4215,11 +4706,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/store/modules/import.js:119 rejected rows at parse, import.js:427-447 chunk and per-index server rejections folded in -> summary step src/dialogs/ImportWizardDialog.vue:224-278 (Rejected rows table with row/name/reason) -> ImportWizardDialog.vue:545 downloadRejected (client-side CSV, import.js:501)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard -> summary step",
+        "note": "The summary lists counts plus a table of rejected rows with the reason and offers a client-side CSV download of them. The report is transient and not stored."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-import",
       "featureConfidence": "high"
     },
@@ -4227,7 +4722,7 @@
       "id": "portability-07",
       "area": "portability",
       "name": "Import and export files in the Credential Exchange Format.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4235,11 +4730,29 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "export: src/dialogs/ExportDialog.vue:51 CXF mode -> ExportDialog.vue:349 re-auth -> :362 dry-run unmapped report -> src/store/modules/export.js:160 exportCxf -> src/cxf/cxf.js:394 buildCxfDocument -> local download + POST /api/v1/export/events (lib/Controller/ExportController.php:98). import: src/import/parsers/cxf.js:33 registered at src/import/parsers/index.js:27 -> src/cxf/cxf.js:266 cxfToRows -> import wizard commit POST /api/v1/secrets/import-batch",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> actions menu 'Export data' -> Export dialog (CXF mode); import via SecretList Import wizard (format 'FIDO Credential Exchange (CXF)')",
+        "note": "CXF export shows an unmapped-item report before the download and requires the master password again; CXF import runs through the normal wizard. Reading the passkey mapping both ways, the field names line up, so #113 is not reproduced by code reading but is still open.",
+        "defects": [
+          {
+            "at": "src/cxf/cxf.js:135",
+            "what": "Open issue says a passkey does not round-trip through CXF (export maps it, import parses 0 rows). The current export (cxf.js:319) and import (cxf.js:135) use matching plain-string fields, so this needs a live round trip to confirm or close.",
+            "issue": "#113",
+            "needsLiveCheck": true
+          },
+          {
+            "at": "src/dialogs/ExportDialog.vue:111",
+            "what": "In CXF mode the dialog shows the CSV warning text ('A CSV export is UNENCRYPTED') because the non-backup branch is shared.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "cxf-import-export",
       "featureConfidence": "high"
     },
@@ -4247,7 +4760,7 @@
       "id": "portability-08",
       "area": "portability",
       "name": "Move a vault straight to or from another provider with the Credential Exchange Protocol.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4255,19 +4768,24 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "src/views/SecretList.vue:163 'Encrypted transfer (CXP)' -> src/dialogs/CxpTransferDialog.vue:275 startReceive (createImportRequest src/crypto/cxp.js:110) -> POST /api/v1/cxp/relay (appinfo/routes.php:400 -> lib/Controller/CxpRelayController.php:219) -> poll GET relay/{id}/response (routes.php:401) -> cxp.js:187 openEnvelope -> import wizard; send: CxpTransferDialog.vue:360 doSend -> src/store/modules/export.js:206 exportCxpSealed (sealForRequest cxp.js:136)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> actions menu 'Encrypted transfer (CXP)' -> CXP transfer dialog",
+        "note": "The HPKE-sealed handshake works through a relay on this Nextcloud instance only, so both sides must be Keepiq sessions on the same server. There is no way to transfer to or from a different provider, and the send side always sends the whole vault."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "cxp-transfer",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "_rename": "Transfer a vault encrypted between two Keepiq accounts on the same Nextcloud, using the Credential Exchange Protocol handshake."
     },
     {
       "id": "portability-09",
       "area": "portability",
       "name": "Export an encrypted backup that can be restored.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4275,11 +4793,29 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "export: src/dialogs/ExportDialog.vue:341 -> src/store/modules/export.js:86 exportBackup -> src/export/serializer.js:101 serializeVault -> src/export/backup.js:90 encryptBackup (Argon2id + AES-GCM, zxcvbn>=3 floor ExportDialog.vue) -> local .doriath-backup download. restore: src/import/backupParser.js:44 parseBackup (registered backupParser.js:59) -> import wizard -> POST /api/v1/secrets/import-batch",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> actions menu 'Export data' -> Export dialog (Encrypted backup); restore via SecretList Import wizard (format 'Keepiq encrypted backup')",
+        "note": "Backup export is fully client-side and restore runs through the import wizard with the passphrase. The restore path loses fidelity: rows have no source row number and custom secret types come back as the default type.",
+        "defects": [
+          {
+            "at": "src/import/backupParser.js:25",
+            "what": "toRows() sets no sourceRow, so preview keys, duplicate resolutions and rejected-row numbers all collapse onto undefined for a backup restore.",
+            "issue": null,
+            "needsLiveCheck": true
+          },
+          {
+            "at": "src/store/modules/import.js:271",
+            "what": "The serializer writes type as the secret's type or numeric typeId (src/export/serializer.js:120), but encryptRow only stamps a typeId for rows typed totp, passkey, card or identity by name, so restored secrets of other types (api key, ssh key, note, certificate) lose their type.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-export",
       "featureConfidence": "high"
     },
@@ -4287,7 +4823,7 @@
       "id": "portability-10",
       "area": "portability",
       "name": "Export a plaintext CSV after entering the master password again.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4295,11 +4831,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/ExportDialog.vue:44 Plaintext CSV mode -> warning acknowledgement checkbox -> master password field -> ExportDialog.vue:349 verifyMasterPassword (src/crypto/reauth.js:117, client-side decrypt of the private-key blob) -> :380 src/store/modules/export.js:122 exportCsv -> POST /api/v1/export/events before local download",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> actions menu 'Export data' -> Export dialog (Plaintext CSV)",
+        "note": "The CSV path requires acknowledging an unencrypted-file warning and re-entering the master password, verified in the browser, before the local download; the export is reported as an event first."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-export",
       "featureConfidence": "high"
     },
@@ -4307,7 +4847,7 @@
       "id": "portability-11",
       "area": "portability",
       "name": "Choose what goes into an export.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4315,11 +4855,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/ExportDialog.vue:250 scopeOptions (Entire vault or one folder) -> :322 buildScope -> src/export/serializer.js:101 serializeVault collectSubtree (folder plus descendants)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> actions menu 'Export data' -> Export dialog -> Scope select",
+        "note": "Scope is either the whole vault or one folder subtree. There is no choice by type, by selected items or of which fields to include, and CXP send is always the whole vault."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-export",
       "featureConfidence": "high"
     },
@@ -4327,7 +4871,7 @@
       "id": "portability-12",
       "area": "portability",
       "name": "Import a KeePass database export.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4335,19 +4879,32 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/import/parsers/keepassXml.js:148 keepass-xml parser (DOMParser, Group nesting to folders, History ignored) registered at src/import/parsers/index.js:25; KDBX magic bytes rejected with guidance at src/dialogs/ImportWizardDialog.vue:500 (src/import/model.js isKdbx) -> import wizard commit",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard (format 'KeePass 2.x XML export')",
+        "note": "KeePass 2.x XML exports import with their group tree; a .kdbx file is detected and the user is told to export XML instead.",
+        "defects": [
+          {
+            "at": "src/import/parsers/keepassXml.js:24",
+            "what": "A KeePass otp string lands in additional fields as 'otp' and is not split into an authenticator secret, although src/store/modules/import.js:137 says the KeePass parser stashes the seed under 'totp'.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-import",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "_rename": "Import a KeePass 2.x XML export (not a .kdbx database)."
     },
     {
       "id": "clients-01",
       "area": "clients",
       "name": "Fill in logins on websites through a browser extension.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4355,11 +4912,29 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "browser-extension/src/popup/popup.js:45 send('match') -> browser-extension/src/background/service-worker.js:91 doMatch -> browser-extension/src/lib/api.js:97 GET /api/v1/extension/match -> appinfo/routes.php:407 -> lib/Controller/ExtensionController.php:180 (owner's secrets by registrable domain) ; click -> service-worker.js:113 doFill (decrypt in worker) -> browser-extension/src/content/content-script.js:95 fillCredential",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "browser-extension popup (browser-extension/src/popup/popup.js) -> matched candidate list -> click to fill",
+        "note": "Autofill works in code: the popup lists owned secrets matching the site, decrypts in the worker and fills on click. The extension is not packaged or published, and matching only covers secrets the user owns, not shared or team-folder secrets.",
+        "defects": [
+          {
+            "at": "browser-extension/build.mjs:1",
+            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
+            "issue": null,
+            "needsLiveCheck": false
+          },
+          {
+            "at": "lib/Controller/ExtensionController.php:195",
+            "what": "Match searches ownerType user only, so secrets shared with the user or held in team folders are never offered for autofill.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "browser-extension-autofill",
       "featureConfidence": "high"
     },
@@ -4367,7 +4942,7 @@
       "id": "clients-02",
       "area": "clients",
       "name": "Fill in logins inside embedded frames on a page.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4375,11 +4950,29 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "browser-extension/manifest.json content_scripts all_frames:true -> browser-extension/src/content/content-script.js:175 fill-credential handled in every frame; service-worker.js:122 chrome.tabs.sendMessage without frameId reaches all frames",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "browser-extension popup (browser-extension/src/popup/popup.js) -> fill (message delivered to every frame of the tab)",
+        "note": "The content script runs in every frame and every frame with a login form fills on the same message. There is no origin check per frame, and the extension is not distributed.",
+        "defects": [
+          {
+            "at": "browser-extension/build.mjs:1",
+            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
+            "issue": null,
+            "needsLiveCheck": false
+          },
+          {
+            "at": "browser-extension/src/background/service-worker.js:122",
+            "what": "The fill message goes to all frames with no frameId and the frame script does not compare its own origin with the matched site, so a credential matched for the top-level host is also typed into any cross-origin iframe on the page that has a password field.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "browser-extension-autofill",
       "featureConfidence": "high"
     },
@@ -4387,7 +4980,7 @@
       "id": "clients-03",
       "area": "clients",
       "name": "Be offered to save or update a login after submitting a form.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4395,19 +4988,44 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "browser-extension/src/content/content-script.js:134 attachSubmitCapture (submit + Enter) -> :150 captureCurrent -> service-worker.js:240 pendingCapture (memory) -> popup.js:79 'pending-capture' save prompt -> service-worker.js:186 doSaveCapture -> api.js:120 POST /api/v1/secrets",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "browser-extension popup (browser-extension/src/popup/popup.js) -> save prompt shown the next time the popup is opened",
+        "note": "A submitted login is captured, but the offer only appears when the user opens the popup, and it always creates a new secret. The update branch exists but no capture ever carries an id, so an existing login is never updated.",
+        "defects": [
+          {
+            "at": "browser-extension/build.mjs:1",
+            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
+            "issue": null,
+            "needsLiveCheck": false
+          },
+          {
+            "at": "browser-extension/src/background/service-worker.js:198",
+            "what": "doSaveCapture updates only when payload.id is set, but captureCurrent (content-script.js:150) never sets an id, so 'update login' never happens and a changed password creates a duplicate secret.",
+            "issue": null,
+            "needsLiveCheck": false
+          },
+          {
+            "at": "browser-extension/src/background/service-worker.js:29",
+            "what": "The pending capture lives in worker memory only, so an MV3 worker shutdown before the user opens the popup drops the offer.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "browser-extension-autofill",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "_rename": "Save a login captured on form submit from the extension popup."
     },
     {
       "id": "clients-04",
       "area": "clients",
       "name": "Fill in the current one-time code together with the login.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4415,11 +5033,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "browser-extension/src/background/service-worker.js:137 totpCodeForHost on fill -> :155 doTotpForHost (totp-typed secret matched by host, seed decrypted in worker, computeTotp browser-extension/src/lib/totp-service.js) -> :141 'fill-otp' -> content-script.js:115 fillOtp ; popup.js:66 copyWithAutoClear and popup.js:106 live code",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "browser-extension popup (browser-extension/src/popup/popup.js) -> fill a login; the matching authenticator code is filled into an OTP field and copied",
+        "note": "After filling a login the worker looks for a totp-typed secret on the same host, fills a detected one-time-code field and copies the code with a 30 second clipboard clear. The OTP field has to be on the page at fill time, and the extension is not distributed.",
+        "defects": [
+          {
+            "at": "browser-extension/build.mjs:1",
+            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "extension-totp-autofill",
       "featureConfidence": "high"
     },
@@ -4427,7 +5057,7 @@
       "id": "clients-05",
       "area": "clients",
       "name": "Use the extension as a passkey provider on websites.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4435,11 +5065,35 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "browser-extension/src/content/content-script.js:192 injectShim -> browser-extension/src/content/inpage-shim.js overrides navigator.credentials -> content-script.js:204 relay -> service-worker.js:230 webauthn-create/get -> browser-extension/src/passkey/orchestrator.js:74 handleCreate (consent window, createSecret with passkey typeId) / handleGet (match by rpId, getAssertion browser-extension/src/passkey/webauthn.js:197, counter write-back); native path browser-extension/src/passkey/registration.js:23",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Any website's WebAuthn call while the extension is unlocked -> Keepiq consent window",
+        "note": "Passkey create and sign run in the extension through the page shim with per-site consent. The Chrome native proxy path never activates because its optional permission is never requested, and the relay trusts an origin the page itself supplies.",
+        "defects": [
+          {
+            "at": "browser-extension/build.mjs:1",
+            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
+            "issue": null,
+            "needsLiveCheck": false
+          },
+          {
+            "at": "browser-extension/src/content/content-script.js:212",
+            "what": "The relay forwards data.origin from the page's own postMessage instead of location.origin, and no code checks the rpId against the origin, so a malicious page can ask for an assertion for another site's rpId with a forged origin in clientDataJSON; only the consent window naming that rpId stands in the way.",
+            "issue": null,
+            "needsLiveCheck": true
+          },
+          {
+            "at": "browser-extension/manifest.json:15",
+            "what": "webAuthenticationProxy is an optional permission and nothing calls chrome.permissions.request, so registration.js:26 always finds no proxy and the native Chrome/Edge provider path is dead.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "extension-passkey-provider",
       "featureConfidence": "high"
     },
@@ -4447,7 +5101,7 @@
       "id": "clients-06",
       "area": "clients",
       "name": "The extension locks itself automatically.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4455,11 +5109,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "browser-extension/src/background/service-worker.js:37 touchActivity -> browser-extension/src/lib/vault.js:114 armIdleLock (default 15 minutes, service-worker.js:26) ; service-worker.js:254 chrome.idle locked -> vault.lock ; popup.js:197 manual Lock ; worker termination drops the in-memory key",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "browser-extension popup (browser-extension/src/popup/popup.js) (automatic, plus the Lock button)",
+        "note": "The extension locks after 15 idle minutes, on OS or browser lock, on worker termination and on demand. The idle period cannot be changed because nothing ever writes config.idleMinutes, and the extension is not distributed.",
+        "defects": [
+          {
+            "at": "browser-extension/build.mjs:1",
+            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "browser-extension-autofill",
       "featureConfidence": "high"
     },
@@ -4467,7 +5133,7 @@
       "id": "clients-07",
       "area": "clients",
       "name": "Install the vault as an app on a phone from the browser.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4475,11 +5141,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "templates/index.php:22 link rel=manifest + apple-mobile-web-app meta -> appinfo/routes.php:237 -> lib/Controller/WebManifestController.php:73 (PublicPage, display standalone, start_url/scope, maskable icons, vault shortcut) ; src/App.vue:955 registers appinfo/routes.php:233 lib/Controller/ServiceWorkerController.php (webpack entry webpack.config.js:178)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Keepiq app page in a mobile browser -> browser 'Install' / 'Add to home screen'",
+        "note": "A themed web app manifest and a service worker are served and linked, so the browser offers installation. Icons are SVG only, which some browsers do not accept for install; that needs a device check.",
+        "defects": [
+          {
+            "at": "lib/Controller/WebManifestController.php:95",
+            "what": "All manifest icons are image/svg+xml with no PNG fallback; some mobile browsers require raster icons for installability.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "mobile-pwa",
       "featureConfidence": "high"
     },
@@ -4487,7 +5165,7 @@
       "id": "clients-08",
       "area": "clients",
       "name": "Use the main flows comfortably on a phone screen.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4495,11 +5173,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/assets/app.css:30-80 (no horizontal overflow, single-column actions and full-width lock/search under 500px, 44px touch targets for reveal/copy/TOTP) ; src/components/SecretDetailSidebar.vue:1607",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets), secret detail sidebar and LockScreen on a narrow viewport",
+        "note": "The core vault list, detail, search, TOTP and lock screen get a phone layout with 44 px touch targets. Some dialogs keep a fixed minimum width, for example the import wizard at 480 px.",
+        "defects": [
+          {
+            "at": "src/dialogs/ImportWizardDialog.vue:598",
+            "what": "The import wizard sets min-width 480px, wider than most phone viewports.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "mobile-pwa",
       "featureConfidence": "high"
     },
@@ -4507,7 +5197,7 @@
       "id": "clients-09",
       "area": "clients",
       "name": "Read your vault offline, read-only.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4515,11 +5205,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/App.vue:774 offlineStore.syncNow after online unlock -> src/store/modules/offline.js:106 GET /api/v1/offline/manifest (appinfo/routes.php:229) -> encryptSnapshot + IndexedDB writeSnapshot (src/offline/cache.js) ; offline: src/views/LockScreen.vue:715 unlockOffline -> offline.js:140 (no network) -> src/store/modules/secret.js:99 reads the offline vault ; read-only gates src/views/SecretList.vue:704 ; admin toggle src/views/settings/Settings.vue:27 OfflineCacheSection",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "LockScreen while offline -> SecretList (read-only, stale-data banner src/App.vue:76)",
+        "note": "Each online unlock writes an encrypted snapshot to IndexedDB; offline, the lock screen unlocks from it without a network call and the vault is shown read-only with a stale-data banner. Admins can switch caching off, which purges snapshots."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "offline-readonly-cache",
       "featureConfidence": "high"
     },
@@ -4527,7 +5221,7 @@
       "id": "clients-10",
       "area": "clients",
       "name": "Use native mobile apps with system autofill on iOS and Android.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4535,17 +5229,21 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "decided-no",
+        "evidence": "openspec/specs/mobile-pwa/spec.md:11 and :49 ('no native app and no app-store presence'); no iOS/Android project in the repo (ls: src, browser-extension, cli only); the PWA cannot register as a system autofill provider",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "none",
+        "note": "Keepiq chose an installable PWA instead of native apps on record, so there is no system autofill on iOS or Android."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "clients-11",
       "area": "clients",
       "name": "Use a native desktop app.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4553,17 +5251,21 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -ril 'electron|tauri|desktop app' openspec lib src cli: no hits; cli/README.md:9 the only non-browser client is a read-only Go CLI (list/show/get/copy)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "none (closest: keepiq CLI, cli/main.go:42)",
+        "note": "There is no desktop app. A read-only command-line client exists for list, show, get and copy."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "clients-12",
       "area": "clients",
       "name": "Use browser extensions for Chrome, Firefox, Edge and Safari.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4571,17 +5273,35 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "browser-extension/manifest.json:3 manifest_version 3 with background.service_worker; browser-extension/build.mjs:24 targets chrome110 and firefox110; no Safari project",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "browser-extension (load unpacked in Chrome or Edge)",
+        "note": "One MV3 extension targets Chromium browsers and nominally Firefox. Firefox does not run an MV3 background.service_worker, so the Firefox build is unlikely to load; there is no Safari build and no store listing for any browser.",
+        "defects": [
+          {
+            "at": "browser-extension/build.mjs:1",
+            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
+            "issue": null,
+            "needsLiveCheck": false
+          },
+          {
+            "at": "browser-extension/manifest.json:22",
+            "what": "The manifest declares only background.service_worker; Firefox MV3 needs background.scripts, so the extension probably fails to start in Firefox despite the README and build target claiming Firefox support.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "clients-13",
       "area": "clients",
       "name": "Sign in over SSH with keys kept in the vault through an SSH agent.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4589,17 +5309,21 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -ril 'ssh-agent|ssh agent' lib src cli browser-extension: no hits; ssh_key exists only as a stored secret type (src/cxf/cxf.js:355)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "none",
+        "note": "SSH keys can be stored as secrets, but nothing exposes them to an SSH agent."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "clients-14",
       "area": "clients",
       "name": "Link the browser extension to your Nextcloud session.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4607,19 +5331,38 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "browser-extension/src/popup/popup.js:171 pair form (server URL, user, app password) -> browser-extension/src/background/service-worker.js:52 doPair -> browser-extension/src/lib/api.js:68 POST /api/v1/extension/pair (Basic auth with the app password, api.js:35) -> appinfo/routes.php:405 -> lib/Controller/ExtensionController.php:112 ; unpair api.js:76 -> routes.php:406",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "browser-extension popup -> Connect view; user settings page describes the steps (src/App.vue:329)",
+        "note": "The extension is linked by typing the server URL, user name and a manually created Nextcloud app password; it does not reuse the browser's Nextcloud session or a login flow. Disconnect only clears local config and the app password stays valid until revoked in Nextcloud.",
+        "defects": [
+          {
+            "at": "browser-extension/build.mjs:1",
+            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
+            "issue": null,
+            "needsLiveCheck": false
+          },
+          {
+            "at": "lib/Controller/ExtensionController.php:137",
+            "what": "Unpair is an acknowledgement only; the app password is not revoked server-side, so a disconnected extension's credential keeps working until the user deletes it in Nextcloud security settings.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "browser-extension-autofill",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "_rename": "Pair the browser extension with a Nextcloud app password."
     },
     {
       "id": "clients-15",
       "area": "clients",
       "name": "Automate follow-up work on vault events with a flow builder.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4627,17 +5370,22 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "Flows page src/manifest.json:570 (index over OpenRegister 'flows' source) and FlowDetail with src/registry.js:63 FlowDetailSidebar (CnFlowSidebar); OpenRegister triggers are only manual, object and schedule (openregister lib/Service/Flow/Nodes/TriggerManualNode.php, TriggerObjectNode.php, TriggerScheduleNode.php); keepiq data lives in its own tables and grep -i flow lib: no trigger publisher",
+        "owner": "ConductionNL/openregister",
+        "reachedOn": "Flows menu item (/flows) -> OpenRegister flow list and canvas",
+        "note": "The Flows page and canvas are reachable, but they run on OpenRegister's engine whose triggers fire on OpenRegister objects, schedules or manual runs. Keepiq's vault lives in its own tables and publishes nothing to it, so no vault event can start a flow."
       },
       "rowSource": "own",
-      "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "provider": "openregister",
+      "providerHow": "read-from-code",
+      "_rename": "Build flows in the shared flow builder (no vault event triggers)."
     },
     {
       "id": "clients-16",
       "area": "clients",
       "name": "Theme the vault in the organisation's own house style.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4645,17 +5393,35 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "307 var(--color-*) references across src; every hex colour in src/*.vue is a var() fallback (grep: no bare hex outside var()); src/assets/app.css uses Nextcloud theme variables; organisation theming itself comes from Nextcloud theming or the thematiq (nldesign) app",
+        "owner": "ConductionNL/thematiq",
+        "reachedOn": "Every Keepiq page follows the active Nextcloud or NL Design System theme",
+        "note": "Keepiq styles through Nextcloud CSS variables, so the organisation theme applied by Nextcloud theming or thematiq carries through. A few surfaces use fixed colours: the dashboard quick-action tiles and the PWA theme colour.",
+        "defects": [
+          {
+            "at": "src/manifest.json:339",
+            "what": "Dashboard quick-action tiles hard-code backgroundColor (#21468B, #3b82f6, #6b7280) and white text, so they ignore the organisation theme.",
+            "issue": null,
+            "needsLiveCheck": false
+          },
+          {
+            "at": "lib/Controller/WebManifestController.php:89",
+            "what": "PWA theme_color and background_color and the theme-color meta (templates/index.php:23) are fixed to #21468B instead of the instance theme colour.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
-      "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "provider": "thematiq",
+      "providerHow": "read-from-code"
     },
     {
       "id": "clients-17",
       "area": "clients",
       "name": "Get a guided walkthrough the first time you open the app.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4663,17 +5429,21 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/manifest.json:3 walkthrough (tour keepiq:getting-started, trigger first-visit, 7 steps) -> src/main.js:236 manifestForLockState (src/router/guards.js, withheld while locked) -> CnWalkthrough in @conduction/nextcloud-vue resolves nav-item refs via data-cn-route, emitted by src/components/KeepiqAppNav/KeepiqAppNav.vue:52 ; completion stored via GET/PUT /api/preferences/walkthrough_completed_version (src/router/guards.js:310, OpenRegister AppHost preferences controller)",
+        "owner": "ConductionNL/nextcloud-vue",
+        "reachedOn": "First unlocked visit to the app -> Getting started tour",
+        "note": "A seven-step tour starts on the first unlocked visit and points at Dashboard, All secrets, Features and roadmap, Reports and Flows; it is held back while the vault is locked. Completion is stored through the OpenRegister AppHost preferences endpoint."
       },
       "rowSource": "own",
-      "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "provider": "@conduction/nextcloud-vue",
+      "providerHow": "read-from-code"
     },
     {
       "id": "clients-18",
       "area": "clients",
       "name": "See vault figures on the app's own dashboard.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -4681,11 +5451,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/manifest.json:196 Dashboard page (type dashboard, 4 KPI stats, recent activity, admin pending-apps queue, 3 tiles) -> GET /apps/keepiq/api/dashboard/summary -> appinfo/routes.php:24 -> lib/Controller/DashboardController.php:86 -> lib/Service/DashboardSummaryService.php:129 (total_secrets, shared_with_me_count, folders_count, rotation_due_count, pending_apps_count for admins) ; recent activity GET /api/v1/audit/me",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Dashboard menu item (/)",
+        "note": "The dashboard shows total secrets, shared with you, folders and rotation due, a recent activity feed, and for admins the application approval queue. A separate dashboard settings view exists but is unreachable (#208).",
+        "defects": [
+          {
+            "at": "src/views/DashboardSettingsView.vue:1",
+            "what": "The dashboard settings view is in no route, registry entry or bundle, so dashboard personalisation cannot be reached.",
+            "issue": "#208",
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "dashboard",
       "featureConfidence": "high"
     }
