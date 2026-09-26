@@ -256,7 +256,13 @@
           "accessibilityStatement": "no product accessibility statement or VPAT found in the docs",
           "demoInstance": "no public demo; `vault server -dev` is the vendor's own local route"
         }
-      }
+      },
+      "sourceRead": {
+        "tag": "hashicorp/vault@v2.1.1 (Community Edition tree)",
+        "readOn": "2026-09-26",
+        "driven": false
+      },
+      "gradeNote": "source read at hashicorp/vault@v2.1.1 (Community Edition tree), not driven"
     },
     {
       "key": "nextcloud-passwords",
@@ -2088,7 +2094,7 @@
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -2103,7 +2109,8 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Auth/Controllers/AuthRequestsController.cs:78 POST auth-requests, :91 admin-request, :104 PUT {id} (approve); bitwarden/clients@web-v2026.9.0 libs/angular/src/auth/login-approval/login-approval-dialog.component.ts; bitwarden_license/bit-web/src/app/admin-console/organizations/manage/device-approvals/device-approvals.component.ts Note: proposed by the source reader as a capability no row covered."
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Auth/Controllers/AuthRequestsController.cs:78 POST auth-requests, :91 admin-request, :104 PUT {id} (approve); bitwarden/clients@web-v2026.9.0 libs/angular/src/auth/login-approval/login-approval-dialog.component.ts; bitwarden_license/bit-web/src/app/admin-console/organizations/manage/device-approvals/device-approvals.component.ts Note: proposed by the source reader as a capability no row covered.",
+        "hashicorp-vault": "searched 'device approval', 'auth request' in vault/ ui/app: no device concept; control groups approve requests, not devices. Note: rated by the lane from the source."
       }
     },
     {
@@ -2915,7 +2922,7 @@
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "yes",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
@@ -2930,7 +2937,8 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "bitwarden/server@v2026.9.1 bitwarden_license/src/Services/Pam/Api/Endpoints/AccessRequestEndpoints.cs:17 inbox, :30 decision, :39 revoke; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/pam/access-rules/access-rule-edit/access-rule-edit.component.html:73 lease duration, ip-allowlist/ip-allowlist-editor.component.ts (admin rules only, behind FeatureFlag.Pam; no member request UI in the public clients) Note: proposed by the source reader as a capability no row covered."
+        "bitwarden": "bitwarden/server@v2026.9.1 bitwarden_license/src/Services/Pam/Api/Endpoints/AccessRequestEndpoints.cs:17 inbox, :30 decision, :39 revoke; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/pam/access-rules/access-rule-edit/access-rule-edit.component.html:73 lease duration, ip-allowlist/ip-allowlist-editor.component.ts (admin rules only, behind FeatureFlag.Pam; no member request UI in the public clients) Note: proposed by the source reader as a capability no row covered.",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js:127-129 control-groups, control-groups/configure, control-groups/:accessor (Enterprise control groups: a request waits for authorisers' approval); token_bound_cidrs (command/agent/approle_end_to_end_test.go:798) limits a token to IP ranges and max_lease_ttl bounds its time. Note: approval, time limit and IP limit all exist; control groups are Enterprise. Rated by the lane from the source."
       }
     },
     {
@@ -4909,7 +4917,7 @@
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -4924,7 +4932,8 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/dirt/access-intelligence/all-applications/all-applications.component.ts:116 saveCriticalApplications; bitwarden_license/bit-web/src/app/dirt/access-intelligence/risk-insights.component.ts Note: proposed by the source reader as a capability no row covered."
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/dirt/access-intelligence/all-applications/all-applications.component.ts:116 saveCriticalApplications; bitwarden_license/bit-web/src/app/dirt/access-intelligence/risk-insights.component.ts Note: proposed by the source reader as a capability no row covered.",
+        "hashicorp-vault": "searched 'critical application', 'phish', 'weak password' across the tree: no password health or application criticality. Note: rated by the lane from the source."
       }
     },
     {
@@ -5303,7 +5312,7 @@
       "keepiq": "partial",
       "bitwarden": "yes",
       "onepassword": "yes",
-      "passbolt": "partial",
+      "passbolt": "yes",
       "keeper": "yes",
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
@@ -5330,7 +5339,7 @@
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Controllers/OrganizationUsersController.cs:579 DELETE organizations/{orgId}/users/{id}, :605 POST remove (bulk), :669 revoke Note: Removing or revoking a member drops every collection and group access in one step.",
         "onepassword": "https://support.1password.com/offboarding/ : suspend or remove an offboarded team member, removing all vault access",
-        "passbolt": "https://www.passbolt.com/docs/admin/user-provisioning/delete-user : deleting a user removes them 'from all groups they belong to'; suspension blocks access in one step",
+        "passbolt": "passbolt/passbolt_api@v5.16.0 src/Model/Table/UsersTable.php:458 softDelete: :522 GroupsUsers deleteAll for the user, :523 Permissions deleteAll for the user, folder relations removed; src/Controller/Users/UsersEditController.php:98 disabling (suspend) a user blocks sign-in; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/User/DeleteUser/DeleteUserWithConflicts.js Note: Deleting a leaving user removes every permission, folder relation and group membership in one action, after sole-owned items are transferred; suspending blocks access at once. Moved from partial to yes: the one-step removal is there.",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/F.A.Q : there are no group or folder shares ('You don't. This feature is not yet supported.')",
         "keeper": "https://docs.keeper.io/enterprise-guide/user-management-and-lifecycle : Delete User removes the user 'from all Roles, Nodes and Teams'; Lock Account or SCIM/AD Bridge suspension blocks access while Account Transfer keeps the records",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/models/identity/entity.js:15 entity fields name, disabled, policies, metadata (disable or delete in Access > Entities); vault/identity_store_util.go:3164 external groups dropped on next login Note: Disabling or deleting the user's entity, or removing them in the IdP, removes every group-granted path in one step."
@@ -5362,7 +5371,7 @@
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:18 MaximumVaultTimeout, :23 RemoveUnlockWithPin; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/key-management/policies/session-timeout.component.ts (timeout with forced logout action) Note: A session timeout policy can force logout, which clears the local vault copy after the timeout, but there is no switch that disables the offline cache outright.",
         "onepassword": "https://support.1password.com/business-security-practices/ : 'if you want to make sure sensitive data isn't locally cached, you can remove access from all the apps but allow 1Password for Web' per shared vault; this is a per-vault app-access choice, not one organisation-wide switch, and it does not reach Employee vaults.",
-        "passbolt": "https://www.passbolt.com/docs/admin/offline-mode : organisation toggle; 'switching it off and saving ... turns it back off' and deletes every offline item",
+        "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/OfflineMode/config/routes.php:28 POST /offline-mode/settings, :32 delete; plugins/PassboltEe/OfflineModePolicies; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Administration/DisplayOfflineAdministration/DisplayOfflineAdministration.js Note: Admins switch offline mode on or off for the whole organisation from an admin screen.",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/F.A.Q : 'The Passwords app in your browser does not support any offline storage' so there is nothing to switch off (third-party apps may cache)",
         "keeper": "https://docs.keeper.io/enterprise-guide/roles/enforcement-policies#account-settings : 'Restrict offline access: ... prevent users from accessing their Keeper vault without internet access'",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 command/agent/config/config.go Agent/Proxy cache is configured per agent process; no organisation-wide client caching switch in vault/ or ui/app/router.js Note: There are no offline-capable user clients; the only caches are per Vault Agent or Proxy configuration, so there is no org-wide switch."
@@ -5394,7 +5403,7 @@
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/dirt/reports/pages/organizations/exposed-passwords-report.component.ts; bitwarden_license/bit-web/src/app/dirt/access-intelligence/risk-insights.component.ts (Access Intelligence at-risk passwords across the org); libs/common/src/services/audit.service.ts:13 pwnedpasswords range API Note: Organisation-wide exposed password analysis in reports and Access Intelligence; it is on for Enterprise rather than a separate switch.",
         "onepassword": "https://support.1password.com/insights/ : Business breach checks and domain breach report",
-        "passbolt": "https://www.passbolt.com/docs/admin/resource-policies/password-policy : 'External services ... check if the current secret is known in some data breach' (Pro)",
+        "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/PasswordPolicies/src/Model/Dto/PasswordPoliciesSettingsDto.php:94 external_dictionary_check; plugins/PassboltEe/PasswordPoliciesUpdate/config/routes.php:24 POST settings; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Resource/CreateResource/CreateResource.js:108 honours the flag Note: The organisation password policy has an external breach check switch that the create and edit dialogs obey.",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings : 'Password Security Checks' service (HIBP, local databases) chosen by the admin",
         "keeper": "https://docs.keeper.io/enterprise-guide/breachwatch : 'The BreachWatch capability can be deployed selectively to your organization via Role Enforcements' (BreachWatch add-on)",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'breach', 'pwned', 'haveibeenpwned' in ui/app ui/lib and vault/*.go: no match Note: No breach checking exists to switch on."
@@ -5426,7 +5435,7 @@
       "evidence": {
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/vault/services/cipher.service.ts:1911 password history hard-capped at 5; searched 'retention', 'MaxVersions', 'versionsToKeep' in bitwarden/server@v2026.9.1 src/Core/SecretsManager src/Api/SecretsManager bitwarden_license/src/Commercial.Core/SecretsManager: no match Note: History length is fixed in code and Secrets Manager versions have no retention setting. Moved from unknown on code.",
         "onepassword": "not checked: no admin setting for item history retention found",
-        "passbolt": "https://www.passbolt.com/docs/admin/resource-policies/secret-history : 'History length ... between 1 and a maximum ... 10 by default'",
+        "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/SecretRevisions/config/routes.php:27 POST /secret-revisions/settings; plugins/PassboltCe/SecretRevisions/src/Form/SecretRevisionsSettingsForm.php:35 max_revisions; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Administration/DisplaySecretHistoryAdministration Note: Admins set how many previous secret revisions are kept per password.",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Password-Detail-View : 'Revisions are immutable and can not be changed or deleted'; no retention setting in https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings",
         "keeper": "https://docs.keeper.io/enterprise-guide/roles/enforcement-policies#vault-features : 'Retention of Deleted Records' sets days before deleted records can be cleared or auto-purge; record-history retention is not configurable in the docs",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes/configure.js:20 max_versions and delete_version_after per mount; ui/lib/kv/addon/routes/secret/metadata.js:39 per secret Note: Version retention is set per mount and per secret in the UI."
@@ -5455,7 +5464,7 @@
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 bitwarden_license/src/Scim/Controllers/v2/UsersController.cs, bitwarden_license/src/Scim/Controllers/v2/GroupsController.cs (SCIM 2.0 users and groups) Note: SCIM 2.0 service provisions and deprovisions users and groups.",
         "onepassword": "https://support.1password.com/scim/ : SCIM Bridge creates users and groups and suspends users",
-        "passbolt": "https://www.passbolt.com/docs/admin/user-provisioning/scim/ : Entra ID and Okta via '/Users endpoints' (Pro 5.5+, users only)",
+        "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltEe/Scim/config/routes.php:84 GET and :88 POST /scim/v2/{settingId}/{resourceType}, plus patch, put and delete controllers in plugins/PassboltEe/Scim/src/Controller/V2; only UserScimResource implemented (GroupSchema defined but no group resource); passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Administration/DisplayScimSettingsAdministration Note: SCIM 2.0 provisioning creates, updates and removes users; groups are not provisioned over SCIM yet.",
         "nextcloud-passwords": "not checked: users are Nextcloud accounts, so provisioning is whatever the Nextcloud instance offers; the app itself documents none",
         "keeper": "https://docs.keeper.io/enterprise-guide/user-and-team-provisioning/automated-provisioning-with-scim : SCIM provisioning of users and teams (Entra ID, Okta, Google, JumpCloud, OneLogin)",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/identity_store_scim_oss.go scimPaths returns no paths in CE; vault/identity_store_scim_schema.go schema only | docs: https://developer.hashicorp.com/vault/docs/enterprise/scim-overview Note: code not public for this; docs rating kept: SCIM 2.0 server is Enterprise (beta) and does not manage policies."
@@ -5493,7 +5502,7 @@
       "evidence": {
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Public/Controllers/OrganizationController.cs:48 POST public/organization/import (members and groups) used by Directory Connector | docs: https://bitwarden.com/help/ldap-directory/ Note: The server import API is present; the Directory Connector client that reads AD or LDAP lives in bitwarden/directory-connector, not read here. Docs rating kept.",
         "onepassword": "https://support.1password.com/scim/ : group sync via SCIM from Entra ID, Okta, Google Workspace, JumpCloud; no direct AD or LDAP connector",
-        "passbolt": "https://www.passbolt.com/docs/admin/user-provisioning/users-directory/ : 'synchronise users and groups from an external directory' for OpenLDAP and Active Directory (Pro)",
+        "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltEe/DirectorySync/config/routes.php:61 POST /directorysync/synchronize, :64 dry-run; plugins/PassboltEe/DirectorySync/src/Actions/GroupSyncAction.php; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Administration/DisplaySynchronizeUserDirectoryAdministration Note: LDAP and Active Directory sync creates users and groups and updates group membership, with a simulate step.",
         "nextcloud-passwords": "https://github.com/marius-wieschollek/passwords/blob/master/CHANGELOG.md : LDAP users are supported ('Sharing issues with LDAP' fixed) via Nextcloud, but groups cannot receive shares",
         "keeper": "https://docs.keeper.io/enterprise-guide/user-and-team-provisioning/syncing-active-directory-or-ldap : Keeper Bridge provisions users and teams from Active Directory or LDAP",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 builtin/credential/ldap/path_groups.go:37 groups/<name> maps LDAP groups to policies; vault/identity_store_util.go:3164 external group memberships from login Note: LDAP auth reads group membership at login and maps it to policies and external identity groups."
@@ -5916,7 +5925,7 @@
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -5931,7 +5940,8 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Controllers/OrganizationDomainController.cs:85 POST {orgId}/domain, :102 POST {orgId}/domain/{id}/verify; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/admin-console/organizations/manage/domain-verification/domain-verification.component.ts Note: proposed by the source reader as a capability no row covered."
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Controllers/OrganizationDomainController.cs:85 POST {orgId}/domain, :102 POST {orgId}/domain/{id}/verify; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/admin-console/organizations/manage/domain-verification/domain-verification.component.ts Note: proposed by the source reader as a capability no row covered.",
+        "hashicorp-vault": "searched 'domain verif', 'verify domain' across the tree: only LDAP test helpers (vault/external_tests/blackbox/ldap/helpers.go:511). Note: identities come from auth methods; there is no domain claim. Rated by the lane from the source."
       }
     },
     {
@@ -5943,7 +5953,7 @@
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "partial",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -5958,7 +5968,8 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:18 MaximumVaultTimeout; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/key-management/policies/session-timeout.component.ts:47 policy editor Note: proposed by the source reader as a capability no row covered."
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:18 MaximumVaultTimeout; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/key-management/policies/session-timeout.component.ts:47 policy editor Note: proposed by the source reader as a capability no row covered.",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system.go:2834 max_lease_ttl on mount tune; ui/app/components/auth-method/configuration.ts:42 'Max Lease TTL' shown per auth method. Note: an admin caps how long a login token lives on each auth method, which bounds a session; there is no vault lock timeout for members to choose within. Rated by the lane from the source."
       }
     },
     {
@@ -5970,7 +5981,7 @@
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "yes",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -5985,7 +5996,8 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:27 AutomaticUserConfirmation ('Automatically confirm invited users'); bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/policies/policy-edit-definitions/auto-confirm-policy.component.ts:33 AutoConfirmPolicy Note: proposed by the source reader as a capability no row covered."
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:27 AutomaticUserConfirmation ('Automatically confirm invited users'); bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/policies/policy-edit-definitions/auto-confirm-policy.component.ts:33 AutoConfirmPolicy Note: proposed by the source reader as a capability no row covered.",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/identity_store_group_aliases.go:21 group-alias maps an external group (OIDC, LDAP) to a Vault group and its policies. Note: Vault encrypts server-side, so there is no key handover to confirm; a new member gets the policies of their mapped groups at first login. Rated by the lane from the source."
       }
     },
     {
@@ -6471,7 +6483,7 @@
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -6486,7 +6498,8 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/dirt/reports/member-access-report/member-access-report.component.ts; bitwarden_license/bit-web/src/app/dirt/reports/member-access-report/services/member-access-report.service.ts Note: proposed by the source reader as a capability no row covered."
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/dirt/reports/member-access-report/member-access-report.component.ts; bitwarden_license/bit-web/src/app/dirt/reports/member-access-report/services/member-access-report.service.ts Note: proposed by the source reader as a capability no row covered.",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system_paths.go:3241 capabilities-accessor answers what ONE token may do on given paths; searched 'access report' in ui/app ui/lib: none. Note: no report lists which members can reach which paths. Rated by the lane from the source."
       }
     },
     {
@@ -7729,7 +7742,7 @@
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -7744,7 +7757,8 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/browser/src/dirt/phishing-detection/services/phishing-detection.service.ts:128 isPhishingWebAddress, :134 redirect to popup/index.html#/security/phishing-warning; apps/browser/src/dirt/phishing-detection/popup/phishing-warning.component.ts Note: proposed by the source reader as a capability no row covered."
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/browser/src/dirt/phishing-detection/services/phishing-detection.service.ts:128 isPhishingWebAddress, :134 redirect to popup/index.html#/security/phishing-warning; apps/browser/src/dirt/phishing-detection/popup/phishing-warning.component.ts Note: proposed by the source reader as a capability no row covered.",
+        "hashicorp-vault": "searched 'phish' across the whole v2.1.1 tree: 0 files. Note: Vault ships no browser extension or autofill client, so there is nothing to warn in. Rated by the lane from the source."
       }
     }
   ],
