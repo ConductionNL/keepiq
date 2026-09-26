@@ -1,0 +1,3889 @@
+{
+  "product": "keepiq",
+  "category": "Self-hosted password and secrets management for organisations: a team password manager for people (personal vault, sharing, browser autofill, emergency access) combined with a write-without-read secret store, leases and a private certificate authority for applications, running inside the organisation's own Nextcloud with zero-knowledge encryption. A buyer, typically a Dutch public body wanting credentials kept on its own infrastructure, compares it with the SaaS team password managers (Bitwarden, 1Password, Keeper), the self-hosted open-source team manager Passbolt, the machine-secrets engine HashiCorp Vault for the application side, and the community Nextcloud Passwords app as the in-platform alternative. Decided from the code on 2026-09-26 (appinfo/info.xml, lib/Controller, 45 specs under openspec/specs); no prior competitor research exists for this product under any of its names.",
+  "comparedOn": "2026-09-26",
+  "corpus": {
+    "repo": "ConductionNL/keepiq",
+    "file": "openspec/parity/capabilities.json",
+    "readAtSha": "dbb90358acf41d03551f7533f200aa0b01d86dbd"
+  },
+  "systems": [
+    {
+      "key": "keepiq",
+      "name": "Keepiq",
+      "vendor": "Conduction",
+      "isSelf": true,
+      "readOn": "2026-09-26"
+    },
+    {
+      "key": "bitwarden",
+      "name": "Bitwarden",
+      "vendor": "Bitwarden Inc.",
+      "columnAddedOn": "2026-09-26",
+      "evidenceGrade": "not-read"
+    },
+    {
+      "key": "onepassword",
+      "name": "1Password Business",
+      "vendor": "AgileBits (1Password)",
+      "columnAddedOn": "2026-09-26",
+      "evidenceGrade": "not-read"
+    },
+    {
+      "key": "passbolt",
+      "name": "Passbolt",
+      "vendor": "Passbolt SA",
+      "columnAddedOn": "2026-09-26",
+      "evidenceGrade": "not-read"
+    },
+    {
+      "key": "keeper",
+      "name": "Keeper Enterprise",
+      "vendor": "Keeper Security",
+      "columnAddedOn": "2026-09-26",
+      "evidenceGrade": "not-read"
+    },
+    {
+      "key": "hashicorp-vault",
+      "name": "HashiCorp Vault",
+      "vendor": "HashiCorp (IBM)",
+      "columnAddedOn": "2026-09-26",
+      "evidenceGrade": "not-read"
+    },
+    {
+      "key": "nextcloud-passwords",
+      "name": "Nextcloud Passwords",
+      "vendor": "Marius David Wieschollek (community app)",
+      "columnAddedOn": "2026-09-26",
+      "evidenceGrade": "not-read"
+    }
+  ],
+  "areas": [
+    {
+      "key": "vault",
+      "name": "Personal vault and items",
+      "name_nl": "Persoonlijke kluis en items"
+    },
+    {
+      "key": "crypto",
+      "name": "Encryption and vault unlock",
+      "name_nl": "Versleuteling en ontgrendelen"
+    },
+    {
+      "key": "sharing",
+      "name": "Sharing with people and teams",
+      "name_nl": "Delen met mensen en teams"
+    },
+    {
+      "key": "requests",
+      "name": "Collecting secrets from others",
+      "name_nl": "Geheimen opvragen bij anderen"
+    },
+    {
+      "key": "apps",
+      "name": "Machine and application secrets",
+      "name_nl": "Geheimen voor machines en applicaties"
+    },
+    {
+      "key": "pki",
+      "name": "Certificates and the private CA",
+      "name_nl": "Certificaten en de eigen CA"
+    },
+    {
+      "key": "health",
+      "name": "Password health and generation",
+      "name_nl": "Wachtwoordgezondheid en genereren"
+    },
+    {
+      "key": "rotation",
+      "name": "Expiry and rotation",
+      "name_nl": "Verloop en rotatie"
+    },
+    {
+      "key": "admin",
+      "name": "Administration and policy",
+      "name_nl": "Beheer en beleid"
+    },
+    {
+      "key": "audit",
+      "name": "Audit, compliance and monitoring",
+      "name_nl": "Audit, compliance en monitoring"
+    },
+    {
+      "key": "portability",
+      "name": "Import, export and migration",
+      "name_nl": "Import, export en migratie"
+    },
+    {
+      "key": "clients",
+      "name": "Apps, extensions and access points",
+      "name_nl": "Apps, extensies en toegangspunten"
+    }
+  ],
+  "providers": [
+    {
+      "key": "keepiq",
+      "name": "Keepiq",
+      "kind": "self"
+    },
+    {
+      "key": "nextcloud",
+      "name": "Nextcloud server",
+      "kind": "platform"
+    },
+    {
+      "key": "integriq",
+      "name": "Integriq",
+      "kind": "app"
+    },
+    {
+      "key": "openregister",
+      "name": "Open Register",
+      "kind": "app"
+    },
+    {
+      "key": "nextcloud-vue",
+      "name": "@conduction/nextcloud-vue",
+      "kind": "platform"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "vault-01",
+      "area": "vault",
+      "name": "Store a login with username, password and website address in your personal vault.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secrets",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-02",
+      "area": "vault",
+      "name": "Edit a stored secret and have the change saved encrypted.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secrets-write-ui",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-03",
+      "area": "vault",
+      "name": "Delete a secret you own.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secrets",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-04",
+      "area": "vault",
+      "name": "Recover a deleted item from a trash bin before it is gone for good.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "vault-05",
+      "area": "vault",
+      "name": "Organise secrets in folders and subfolders.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secrets",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-06",
+      "area": "vault",
+      "name": "Move a secret into another folder.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secrets-write-ui",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-07",
+      "area": "vault",
+      "name": "Find a secret by typing part of its name, with typo-tolerant matching.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secrets",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-08",
+      "area": "vault",
+      "name": "Find vault items from the Nextcloud search bar.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secrets",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-09",
+      "area": "vault",
+      "name": "Mark items as favourites and filter on them.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "vault-10",
+      "area": "vault",
+      "name": "Label items with tags and filter by tag.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "vault-11",
+      "area": "vault",
+      "name": "Add your own custom fields to an item, including hidden ones.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secrets",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-12",
+      "area": "vault",
+      "name": "Store a secure note that is not a login.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secrets",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-13",
+      "area": "vault",
+      "name": "Store a payment card or identity document with fields that fit its type.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "card-identity-items",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-14",
+      "area": "vault",
+      "name": "Store an SSH key pair as its own item type.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "vault-15",
+      "area": "vault",
+      "name": "Store a passkey in the vault as its own item type.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "passkey-item-type",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-16",
+      "area": "vault",
+      "name": "Keep a one-time password seed on a login and see the current code.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secrets",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-17",
+      "area": "vault",
+      "name": "Attach an encrypted file to a secret.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encrypted-attachments",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-18",
+      "area": "vault",
+      "name": "See earlier values of a secret and restore one.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-version-history",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-19",
+      "area": "vault",
+      "name": "Select several secrets at once and move, delete, share or export them together.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "bulk-actions",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-20",
+      "area": "vault",
+      "name": "Choose a default item type and default view for new items.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "user-settings",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-21",
+      "area": "vault",
+      "name": "See the secrets you used most recently on the dashboard.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "dashboard",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "vault-22",
+      "area": "vault",
+      "name": "Clone an existing item as the starting point for a new one.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "vault-23",
+      "area": "vault",
+      "name": "Operate the secret list fully from the keyboard.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secrets-write-ui",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "crypto-01",
+      "area": "crypto",
+      "name": "Secrets are encrypted in the browser so the server and its administrator cannot read them.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encryption-suites",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "crypto-02",
+      "area": "crypto",
+      "name": "Set a master password on first use that the server never stores.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encryption-suites",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "crypto-03",
+      "area": "crypto",
+      "name": "A master password must meet a minimum strength before it is accepted.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encryption-suites",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "crypto-04",
+      "area": "crypto",
+      "name": "Change your master password without losing access to your secrets.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encryption-suites",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "crypto-05",
+      "area": "crypto",
+      "name": "Recover from a suspected compromise by re-keying every secret to a new key.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encryption-suites",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "crypto-06",
+      "area": "crypto",
+      "name": "Lock the vault by hand, and have it lock itself after a period of inactivity.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encryption-suites",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "crypto-07",
+      "area": "crypto",
+      "name": "Choose your own session timeout.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "user-settings",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "crypto-08",
+      "area": "crypto",
+      "name": "Unlock the vault with a passkey instead of the master password.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "passkey-vault-login",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "crypto-09",
+      "area": "crypto",
+      "name": "Unlock with a fingerprint or face scan on your device.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "crypto-10",
+      "area": "crypto",
+      "name": "Require a second factor such as an authenticator app or security key to open the vault.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "crypto-11",
+      "area": "crypto",
+      "name": "Let an administrator restore a user's access after a forgotten master password.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "crypto-12",
+      "area": "crypto",
+      "name": "Regain access yourself with a recovery code or kit when the master password is lost.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "crypto-13",
+      "area": "crypto",
+      "name": "See which algorithms and key sizes protect your vault.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encryption-suites",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "crypto-14",
+      "area": "crypto",
+      "name": "Protect each user's vault key with a certificate issued by the organisation's own authority.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encryption-suites",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "crypto-15",
+      "area": "crypto",
+      "name": "Creating a key never mints a second active one while the first is in use.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encryption-suites",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "crypto-16",
+      "area": "crypto",
+      "name": "Re-encrypted data is verified before the original is discarded.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encryption-suites",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "crypto-17",
+      "area": "crypto",
+      "name": "Revoke a user's vault key and reinstate it later.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encryption-suites",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "crypto-18",
+      "area": "crypto",
+      "name": "An administrator can force-revoke a key flagged as compromised.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encryption-suites",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "crypto-19",
+      "area": "crypto",
+      "name": "Log in to the vault with single sign-on from the organisation's identity provider.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "sharing-01",
+      "area": "sharing",
+      "name": "Share a secret with another Nextcloud user.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "user-sharing",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-02",
+      "area": "sharing",
+      "name": "Share a secret with a Nextcloud group.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "user-sharing",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-03",
+      "area": "sharing",
+      "name": "People who join a group later get access once the owner approves.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "user-sharing",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-04",
+      "area": "sharing",
+      "name": "People who leave a group lose access automatically.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "user-sharing",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-05",
+      "area": "sharing",
+      "name": "Shared copies update when the owner changes the secret.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "user-sharing",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-06",
+      "area": "sharing",
+      "name": "Revoke a share.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "user-sharing",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-07",
+      "area": "sharing",
+      "name": "See who a secret is shared with.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "user-sharing",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-08",
+      "area": "sharing",
+      "name": "Share a whole folder as a team folder whose members inherit every secret in it.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "team-folder-sharing",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-09",
+      "area": "sharing",
+      "name": "Give team folder members read-only or edit rights.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "folder-permission-grades",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-10",
+      "area": "sharing",
+      "name": "Nested subfolders inherit team folder access.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "team-folder-sharing",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-11",
+      "area": "sharing",
+      "name": "Hand ownership of a secret to a colleague for a while and take it back.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "user-sharing",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-12",
+      "area": "sharing",
+      "name": "Ownership moves to a colleague when the owner's key is revoked.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "user-sharing",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-13",
+      "area": "sharing",
+      "name": "Ask the owner of a secret for access to it.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "user-sharing",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-14",
+      "area": "sharing",
+      "name": "Share a secret through a password-protected public link that expires.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "link-sharing",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-15",
+      "area": "sharing",
+      "name": "Send a one-off secret to someone without an account that disappears after reading.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "ephemeral-send",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-16",
+      "area": "sharing",
+      "name": "See and revoke the links and sends you created.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "ephemeral-send",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-17",
+      "area": "sharing",
+      "name": "Share with someone outside the organisation who has their own account elsewhere.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "sharing-18",
+      "area": "sharing",
+      "name": "Give people roles such as manager or viewer on a shared collection.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "sharing-19",
+      "area": "sharing",
+      "name": "Get a notification when a secret is shared with you.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "user-sharing",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-20",
+      "area": "sharing",
+      "name": "Name an emergency contact who can ask for access after a waiting period.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "emergency-access",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-21",
+      "area": "sharing",
+      "name": "Decline an emergency access request during the waiting period.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "emergency-access",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-22",
+      "area": "sharing",
+      "name": "Emergency access is granted automatically when the owner does not respond in time.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "emergency-access",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "sharing-23",
+      "area": "sharing",
+      "name": "Leave comments on a shared secret for the rest of the team.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "requests-01",
+      "area": "requests",
+      "name": "Ask someone for a secret through a link they fill in.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-requests",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "requests-02",
+      "area": "requests",
+      "name": "Choose which fields the other person must fill in.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-requests",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "requests-03",
+      "area": "requests",
+      "name": "A filled-in value is encrypted for you and can only be written once.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-requests",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "requests-04",
+      "area": "requests",
+      "name": "Give a request an expiry date.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-requests",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "requests-05",
+      "area": "requests",
+      "name": "Get notified when a request is filled in.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-requests",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "requests-06",
+      "area": "requests",
+      "name": "Ask again for an updated value without starting a new request.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-requests",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "requests-07",
+      "area": "requests",
+      "name": "Revoke an open request.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-requests",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "requests-08",
+      "area": "requests",
+      "name": "See which requests are still waiting for an answer.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-requests",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "requests-09",
+      "area": "requests",
+      "name": "An application can ask a person for a secret it needs.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-requests",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "requests-10",
+      "area": "requests",
+      "name": "A new request does not ask again for values already on file.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-requests",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "requests-11",
+      "area": "requests",
+      "name": "Get a lost fill-in link back.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-requests",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-01",
+      "area": "apps",
+      "name": "Register an application that needs secrets.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "application-mgmt",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-02",
+      "area": "apps",
+      "name": "An administrator approves or rejects application registrations.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "application-mgmt",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-03",
+      "area": "apps",
+      "name": "An administrator is notified when an application registration is waiting.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "application-mgmt",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-04",
+      "area": "apps",
+      "name": "Onboard an application with a certificate signing request.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "application-mgmt",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-05",
+      "area": "apps",
+      "name": "An application signs in with a signed token instead of a stored password.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-store-api",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-06",
+      "area": "apps",
+      "name": "An application fetches a secret by its name.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-store-api",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-07",
+      "area": "apps",
+      "name": "An application can write a secret it is not allowed to read back.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-store-api",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-08",
+      "area": "apps",
+      "name": "An application notices a rotated secret by polling for a new version.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-store-api",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-09",
+      "area": "apps",
+      "name": "Applications find the secrets API through a well-known discovery document.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-store-api",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-10",
+      "area": "apps",
+      "name": "A machine that fetches a secret gets a lease that expires.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "machine-secret-leases",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-11",
+      "area": "apps",
+      "name": "Renew or revoke a machine lease.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "machine-secret-leases",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-12",
+      "area": "apps",
+      "name": "An administrator sets the lease time limit.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "machine-secret-leases",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-13",
+      "area": "apps",
+      "name": "Delete an application together with its secrets.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "application-mgmt",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-14",
+      "area": "apps",
+      "name": "See which secrets belong to which application.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "application-mgmt",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-15",
+      "area": "apps",
+      "name": "Fetch secrets in a CI pipeline from one command-line binary without writing plaintext to disk.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "keepiq-cli",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-16",
+      "area": "apps",
+      "name": "Read your own vault from the command line.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "keepiq-cli",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-17",
+      "area": "apps",
+      "name": "Inject secrets into a Kubernetes cluster.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "apps-18",
+      "area": "apps",
+      "name": "Use a ready-made GitHub Actions or GitLab CI integration.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "apps-19",
+      "area": "apps",
+      "name": "Generate short-lived database credentials on demand.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "apps-20",
+      "area": "apps",
+      "name": "Rotate a database or service password automatically.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "apps-21",
+      "area": "apps",
+      "name": "Use client libraries for common programming languages.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "apps-22",
+      "area": "apps",
+      "name": "Manage secrets as code with a Terraform provider.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "apps-23",
+      "area": "apps",
+      "name": "Other Conduction apps keep their connection credentials in the vault.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-store-api",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "apps-24",
+      "area": "apps",
+      "name": "Encrypt and decrypt data for an application without storing it.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "pki-01",
+      "area": "pki",
+      "name": "Run a private certificate authority with a root and an intermediate certificate.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encryption-suites",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "pki-02",
+      "area": "pki",
+      "name": "The certificate authority renews its own certificates before they expire.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encryption-suites",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "pki-03",
+      "area": "pki",
+      "name": "See the health of the certificate authority on the admin dashboard.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "certificate-lifecycle",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "pki-04",
+      "area": "pki",
+      "name": "See every certificate in one inventory, including ones stored as secrets.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "certificate-lifecycle",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "pki-05",
+      "area": "pki",
+      "name": "Get reminded before a certificate expires.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "certificate-lifecycle",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "pki-06",
+      "area": "pki",
+      "name": "Get guided renewal that depends on where the certificate came from.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "certificate-lifecycle",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "pki-07",
+      "area": "pki",
+      "name": "Issue certificates for your own services from the vault.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "pki-08",
+      "area": "pki",
+      "name": "Store a certificate and see its expiry date and subject.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "certificate-lifecycle",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "pki-09",
+      "area": "pki",
+      "name": "Download an application's private key once, at registration.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "application-mgmt",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "health-01",
+      "area": "health",
+      "name": "See a strength score and badge for each password.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "password-health",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "health-02",
+      "area": "health",
+      "name": "Find passwords you reused across items.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "password-health",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "health-03",
+      "area": "health",
+      "name": "See how old each password is.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "password-health",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "health-04",
+      "area": "health",
+      "name": "Check passwords against known breaches without sending them anywhere.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "password-health",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "health-05",
+      "area": "health",
+      "name": "See one health report for your whole vault.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "password-health",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "health-06",
+      "area": "health",
+      "name": "Health checks run in the browser so the server learns nothing.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "password-health",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "health-07",
+      "area": "health",
+      "name": "Generate a strong random password with length and character options.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "key-generator",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "health-08",
+      "area": "health",
+      "name": "Generate a memorable passphrase made of words.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "health-09",
+      "area": "health",
+      "name": "Generate a username or an email alias.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "health-10",
+      "area": "health",
+      "name": "Be told when your email address shows up in a new data breach.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "health-11",
+      "area": "health",
+      "name": "Be told which websites offer two-factor login you have not switched on.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "health-12",
+      "area": "health",
+      "name": "Be warned about logins that use an unencrypted http address.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "health-13",
+      "area": "health",
+      "name": "See one password health score for the whole organisation.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "rotation-01",
+      "area": "rotation",
+      "name": "Give a secret an expiry date without changing its value.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "rotation-expiry-policies",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "rotation-02",
+      "area": "rotation",
+      "name": "An administrator sets a default expiry policy that users can override.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "rotation-expiry-policies",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "rotation-03",
+      "area": "rotation",
+      "name": "Get reminders before and after a secret expires.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "rotation-expiry-policies",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "rotation-04",
+      "area": "rotation",
+      "name": "Mark a secret as rotated, with proof that the value changed.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "rotation-expiry-policies",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "rotation-05",
+      "area": "rotation",
+      "name": "Secrets touched by a breach or a key compromise are flagged for rotation.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "rotation-expiry-policies",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "rotation-06",
+      "area": "rotation",
+      "name": "See secrets that are due for rotation on the dashboard and in the health report.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "rotation-expiry-policies",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "rotation-07",
+      "area": "rotation",
+      "name": "Edit expiry policies per type or folder in a screen made for it.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "rotation-expiry-policies",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "admin-01",
+      "area": "admin",
+      "name": "Set an organisation password policy that the generator and every save respect.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "org-password-policies",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "admin-02",
+      "area": "admin",
+      "name": "Set the minimum master password strength for everyone.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "admin-settings",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "admin-03",
+      "area": "admin",
+      "name": "Approve applications from a queue in the admin settings.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "admin-settings",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "admin-04",
+      "area": "admin",
+      "name": "Remove a leaving user from every team folder in one step.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "team-folder-sharing",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "admin-05",
+      "area": "admin",
+      "name": "Switch offline caching off for the whole organisation.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "offline-readonly-cache",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "admin-06",
+      "area": "admin",
+      "name": "Switch breach checking on for the organisation.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "password-health",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "admin-07",
+      "area": "admin",
+      "name": "Decide how long old versions of secrets are kept.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-version-history",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "admin-08",
+      "area": "admin",
+      "name": "Create and remove users automatically from a directory through SCIM.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "admin-09",
+      "area": "admin",
+      "name": "Sync groups from Active Directory or LDAP.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "admin-10",
+      "area": "admin",
+      "name": "Enforce rules such as two-factor login or a ban on exporting personal vaults.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "admin-11",
+      "area": "admin",
+      "name": "Hand out admin roles with only the permissions a person needs.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "admin-12",
+      "area": "admin",
+      "name": "See which users have set up a vault.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "admin-13",
+      "area": "admin",
+      "name": "Manage the organisation through a public admin API.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "admin-14",
+      "area": "admin",
+      "name": "See the vault's connected integrations and their status in one place.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "apphost-adoption",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "admin-15",
+      "area": "admin",
+      "name": "Set a size limit and a quota for attachments.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "encrypted-attachments",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "admin-16",
+      "area": "admin",
+      "name": "See the installed version and its details in the admin settings.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "admin-settings",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "admin-17",
+      "area": "admin",
+      "name": "Administrators see pending applications and CA status on the dashboard.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "dashboard",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "audit-01",
+      "area": "audit",
+      "name": "Every operation on a secret is logged without the secret itself.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-audit-trail",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "audit-02",
+      "area": "audit",
+      "name": "The audit log cannot be edited or deleted.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-audit-trail",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "audit-03",
+      "area": "audit",
+      "name": "Old audit entries are purged after a retention period.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-audit-trail",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "audit-04",
+      "area": "audit",
+      "name": "See your own activity on your secrets.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-audit-trail",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "audit-05",
+      "area": "audit",
+      "name": "See the history of a single secret.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-audit-trail",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "audit-06",
+      "area": "audit",
+      "name": "Administrators browse the whole audit log.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-audit-trail",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "audit-07",
+      "area": "audit",
+      "name": "Forward audit events to a SIEM over syslog or a webhook.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "siem-audit-export",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "audit-08",
+      "area": "audit",
+      "name": "Produce an organisation compliance report as CSV or PDF.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "compliance-reporting",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "audit-09",
+      "area": "audit",
+      "name": "Compliance snapshots are timestamped and cannot change afterwards.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "compliance-reporting",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "audit-10",
+      "area": "audit",
+      "name": "Plant decoy credentials that raise an alert when anyone touches them.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "honey-credentials",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "audit-11",
+      "area": "audit",
+      "name": "Export all your personal data for a GDPR request.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "gdpr-compliance",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "audit-12",
+      "area": "audit",
+      "name": "Delete your account data, with secrets you shared handled correctly.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "gdpr-compliance",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "audit-13",
+      "area": "audit",
+      "name": "Audit entries are anonymised when an account is deleted.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-audit-trail",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "audit-14",
+      "area": "audit",
+      "name": "Use ready-made connectors for Splunk, Microsoft Sentinel or similar tools.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "audit-15",
+      "area": "audit",
+      "name": "Get alerted in real time about risky user or admin events.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "portability-01",
+      "area": "portability",
+      "name": "Import from other password managers, parsed in the browser.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-import",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "portability-02",
+      "area": "portability",
+      "name": "Move over from the Nextcloud Passwords app.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-import",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "portability-03",
+      "area": "portability",
+      "name": "Preview and adjust the field mapping before importing.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-import",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "portability-04",
+      "area": "portability",
+      "name": "Keep the folders from the source when importing.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-import",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "portability-05",
+      "area": "portability",
+      "name": "Duplicates are detected during an import.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-import",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "portability-06",
+      "area": "portability",
+      "name": "Get an import report that lists rejected rows.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-import",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "portability-07",
+      "area": "portability",
+      "name": "Import and export files in the Credential Exchange Format.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "cxf-import-export",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "portability-08",
+      "area": "portability",
+      "name": "Move a vault straight to or from another provider with the Credential Exchange Protocol.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "cxp-transfer",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "portability-09",
+      "area": "portability",
+      "name": "Export an encrypted backup that can be restored.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-export",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "portability-10",
+      "area": "portability",
+      "name": "Export a plaintext CSV after entering the master password again.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-export",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "portability-11",
+      "area": "portability",
+      "name": "Choose what goes into an export.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-export",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "portability-12",
+      "area": "portability",
+      "name": "Import a KeePass database export.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "secret-import",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "clients-01",
+      "area": "clients",
+      "name": "Fill in logins on websites through a browser extension.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "browser-extension-autofill",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "clients-02",
+      "area": "clients",
+      "name": "Fill in logins inside embedded frames on a page.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "browser-extension-autofill",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "clients-03",
+      "area": "clients",
+      "name": "Be offered to save or update a login after submitting a form.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "browser-extension-autofill",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "clients-04",
+      "area": "clients",
+      "name": "Fill in the current one-time code together with the login.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "extension-totp-autofill",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "clients-05",
+      "area": "clients",
+      "name": "Use the extension as a passkey provider on websites.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "extension-passkey-provider",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "clients-06",
+      "area": "clients",
+      "name": "The extension locks itself automatically.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "browser-extension-autofill",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "clients-07",
+      "area": "clients",
+      "name": "Install the vault as an app on a phone from the browser.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "mobile-pwa",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "clients-08",
+      "area": "clients",
+      "name": "Use the main flows comfortably on a phone screen.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "mobile-pwa",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "clients-09",
+      "area": "clients",
+      "name": "Read your vault offline, read-only.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "offline-readonly-cache",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "clients-10",
+      "area": "clients",
+      "name": "Use native mobile apps with system autofill on iOS and Android.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "clients-11",
+      "area": "clients",
+      "name": "Use a native desktop app.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "clients-12",
+      "area": "clients",
+      "name": "Use browser extensions for Chrome, Firefox, Edge and Safari.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "clients-13",
+      "area": "clients",
+      "name": "Sign in over SSH with keys kept in the vault through an SSH agent.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "clients-14",
+      "area": "clients",
+      "name": "Link the browser extension to your Nextcloud session.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "browser-extension-autofill",
+      "featureConfidence": "high"
+    },
+    {
+      "id": "clients-15",
+      "area": "clients",
+      "name": "Automate follow-up work on vault events with a flow builder.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "clients-16",
+      "area": "clients",
+      "name": "Theme the vault in the organisation's own house style.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "clients-17",
+      "area": "clients",
+      "name": "Get a guided walkthrough the first time you open the app.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read"
+    },
+    {
+      "id": "clients-18",
+      "area": "clients",
+      "name": "See vault figures on the app's own dashboard.",
+      "keepiq": "unknown",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "seeded, not yet read",
+      "feature": "dashboard",
+      "featureConfidence": "high"
+    }
+  ],
+  "pending": []
+}
