@@ -1144,7 +1144,7 @@
       "id": "sharing-06",
       "area": "sharing",
       "name": "Revoke a share.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1152,11 +1152,14 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/SecretDetailSidebar.vue:675 mounts ShareList for the owner -> src/components/share/ShareList.vue:111 onRevoke -> store.revokeShare -> DELETE /api/v1/shares/{id} (appinfo/routes.php:130 share#destroy).",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList -> secret row -> sidebar -> Sharing section -> revoke"
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "user-sharing",
       "featureConfidence": "high"
     },
@@ -1164,7 +1167,7 @@
       "id": "sharing-07",
       "area": "sharing",
       "name": "See who a secret is shared with.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1172,11 +1175,14 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/SecretDetailSidebar.vue:675 mounts ShareList (owner) which lists store.shares (fetched via GET /api/v1/secrets/{secretId}/shares, share.js:241 fetchShares). Recipients see the same list redacted to their own row per ShareList.vue's header comment.",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList -> secret row -> sidebar -> Sharing section"
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "user-sharing",
       "featureConfidence": "high"
     },
@@ -1184,7 +1190,7 @@
       "id": "sharing-08",
       "area": "sharing",
       "name": "Share a whole folder as a team folder whose members inherit every secret in it.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1192,11 +1198,14 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/modals/TeamFolderDialog.vue (opened from SecretList.vue and KeepiqAppNav.vue) -> onShareFolder -> store.shareFolder -> POST /api/v1/team-folders (teamFolder.js:67) -> appinfo/routes.php:362 teamFolder#create -> lib/Service/TeamFolderService.php:109 shareFolder, which fans every secret in the folder subtree out to the folder's members.",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList -> folder actions -> Team folder sharing dialog -> Share this folder"
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "team-folder-sharing",
       "featureConfidence": "high"
     },
@@ -1204,7 +1213,7 @@
       "id": "sharing-09",
       "area": "sharing",
       "name": "Give team folder members read-only or edit rights.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1212,11 +1221,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/modals/TeamFolderDialog.vue:69 renders a grade select per member (data-testid team-folder-grade-*) -> onGradeChange (line 577) -> store.setMemberGrade -> PATCH /api/v1/team-folders/{id}/members/{memberId} (appinfo/routes.php:368 teamFolderMember#setMemberGrade).",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Team folder sharing dialog -> member row -> grade select",
+        "note": "Grades are read/write, not a finer-grained set, but that matches the row's own wording."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "folder-permission-grades",
       "featureConfidence": "high"
     },
@@ -1224,7 +1237,7 @@
       "id": "sharing-10",
       "area": "sharing",
       "name": "Nested subfolders inherit team folder access.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1232,11 +1245,14 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Service/TeamFolderMembershipResolver.php:233 subtreeSecretRefs() calls folderMapper->getSubtreeIds() and fans out to secrets in every descendant folder, not just the shared folder itself. Used by shareFolder, reconcile and the approve-join fan-out payload, all reachable from src/modals/TeamFolderDialog.vue.",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Team folder sharing dialog (same path as sharing-08)"
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "team-folder-sharing",
       "featureConfidence": "high"
     },
@@ -1244,7 +1260,7 @@
       "id": "sharing-11",
       "area": "sharing",
       "name": "Hand ownership of a secret to a colleague for a while and take it back.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1252,11 +1268,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "src/components/share/DelegationManager.vue (mounted for owners in SecretDetailSidebar.vue:680) wires a reclaim button -> store.reclaimDelegation -> POST /api/v1/secrets/{id}/delegations/reclaim (appinfo/routes.php:155). But the creation half, useDelegationStore.createDelegation (delegation.js:105, POST .../delegations), has no caller anywhere in src/ -- DelegationManager only lists and reclaims, it never offers to create one.",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretDetailSidebar -> Delegations section (reclaim only)",
+        "note": "A temporary delegation to a colleague can never be created through the UI, so the reclaim button that IS wired has nothing to act on in normal use. This is the same gap issue #184 names for the related adminHandover path: dead code with a full backend and no production caller for creation. Do not confuse with AdminHandoverPanel.vue (SecretDetailSidebar.vue), which is a separate vault-admin takeover feature, not an owner-to-colleague temporary handover.",
+        "defects": [
+          {
+            "at": "src/store/modules/delegation.js:105",
+            "what": "createDelegation has no caller in src/, so a user can never start a temporary ownership handover from the UI.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "user-sharing",
       "featureConfidence": "high"
     },
@@ -1264,7 +1292,7 @@
       "id": "sharing-12",
       "area": "sharing",
       "name": "Ownership moves to a colleague when the owner's key is revoked.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1272,11 +1300,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Listener/EncryptionSuiteRevokedListener.php is registered (via SuiteLifecycleEventRegistrar) on EncryptionSuiteRevokedEvent and calls DelegationService::makePermanent() to promote a departing owner's temporary SecretDelegation rows to permanent, transferring de-facto ownership to the delegate.",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "automatic (server event listener) -- but only over delegations that exist",
+        "note": "The promotion logic is real and wired to a real event, but since sharing-11 shows no delegation can ever be created via the UI today, there is nothing for it to promote in practice. Rated partial rather than no because the mechanism itself is correctly built and would fire the moment delegation creation is wired up."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "user-sharing",
       "featureConfidence": "high"
     },
@@ -1284,7 +1316,7 @@
       "id": "sharing-13",
       "area": "sharing",
       "name": "Ask the owner of a secret for access to it.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1292,19 +1324,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "No feature lets a user who lacks any access to a secret ask its owner for access. The nearest built feature, src/components/share/ShareRequestForm.vue (mounted in SecretDetailSidebar.vue:687 for isRecipient && !isOwner), requires the requester to ALREADY hold a shared copy and asks the owner to share with a DIFFERENT third party (openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated), which is a distinct capability from the one this row describes.",
+        "owner": "ConductionNL/keepiq",
+        "note": "Rename suggestion: the built and reachable ShareRequestForm feature is 'ask the owner to share this secret with someone else', not 'ask the owner for access to it' for yourself. There is no discovery mechanism for a secret you cannot already see, so a self-access request has nothing to attach to."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "user-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "_rename": "The reachable ShareRequestForm feature should be named 'ask the owner to share this secret with a third party', which is a different capability than this row describes."
     },
     {
       "id": "sharing-14",
       "area": "sharing",
       "name": "Share a secret through a password-protected public link that expires.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1312,11 +1348,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/SecretShareDialog.vue (cnOpenModal('secret-share') from SecretDetailSidebar.vue:1530 openShare) creates a password-protected link via useLinkShareStore.createLinkShare(secretId, snapshot, usageLimit) (SecretShareDialog.vue:276-280) -- only 3 args are passed, so the store's optional 4th `expiresAt` parameter (linkShare.js:68) is always null. lib/Service/LinkShareService.php:148 setExpiresAt(null) confirms the backend supports a real timestamp but the UI never collects one; only usageLimit (1-10) is exposed as a field (SecretShareDialog.vue:73).",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretDetailSidebar -> Share -> Create a password-protected link",
+        "note": "Password protection is real and reachable. Time-based expiry is not: the dialog only lets the owner cap the link by number of uses, never by a date, even though the backend field for it exists.",
+        "defects": [
+          {
+            "at": "src/dialogs/SecretShareDialog.vue:276",
+            "what": "createLinkShare is never called with an expiresAt value, so link shares can only self-limit by usage count, not by time.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "link-sharing",
       "featureConfidence": "high"
     },
@@ -1324,7 +1372,7 @@
       "id": "sharing-15",
       "area": "sharing",
       "name": "Send a one-off secret to someone without an account that disappears after reading.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1332,11 +1380,14 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/modals/NewSendDialog.vue (mounted in src/views/SecretList.vue) collects maxViews, optional ttlHours and password, then calls useEphemeralSendStore().createSend (NewSendDialog.vue:175) -> POST /api/v1/sends (ephemeralSend.js:160) -> appinfo/routes.php:250 ephemeralSend#create. The recipient views it, no account needed, at src/views/EphemeralSendAccess.vue (manifest.json route /send/:token).",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList -> New send action -> NewSendDialog; recipient opens /send/:token unauthenticated"
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "ephemeral-send",
       "featureConfidence": "high"
     },
@@ -1344,7 +1395,7 @@
       "id": "sharing-16",
       "area": "sharing",
       "name": "See and revoke the links and sends you created.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1352,11 +1403,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/modals/MySendsDialog.vue (mounted in src/views/SecretList.vue) lists store.sends (fetchSends, GET /api/v1/sends) and wires a revoke button (line 119, store.revoke(id) -> DELETE /api/v1/sends/{id}, appinfo/routes.php:252).",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList -> My sends action -> MySendsDialog",
+        "note": "Link shares (sharing-14) are also listed and revocable in the same SecretShareDialog, so both link-shares and sends can be reviewed and revoked, just via two different dialogs."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "ephemeral-send",
       "featureConfidence": "high"
     },
@@ -1364,7 +1419,7 @@
       "id": "sharing-17",
       "area": "sharing",
       "name": "Share with someone outside the organisation who has their own account elsewhere.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1372,17 +1427,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rn 'federat\\|remote share\\|outside.*organi[sz]ation' lib/Controller lib/Service: no sharing-related hits (the one federated-cloud-ID hit in EncryptionSuiteProvisioningService.php:331 is only used to name a certificate's common name, not to share with an external account). All sharing paths (user-to-user, team folder, link, send) target a Nextcloud user ID, group ID, or an anonymous public link on this instance.",
+        "owner": "ConductionNL/keepiq",
+        "note": "Sharing with an account on a different Nextcloud instance is not supported; a password-protected public link (sharing-14) is the closest substitute."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "sharing-18",
       "area": "sharing",
       "name": "Give people roles such as manager or viewer on a shared collection.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1390,17 +1448,19 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "The only role-like concept in the codebase is a team folder membership grade of read or write (folder-permission-grades spec, sharing-09); there is no manager/viewer role vocabulary and no 'collection' concept beyond team folders. grep -rln 'manager\\|viewer' src/store/modules lib/Controller for role-purposed hits: none.",
+        "owner": "ConductionNL/keepiq"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "sharing-19",
       "area": "sharing",
       "name": "Get a notification when a secret is shared with you.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1408,11 +1468,14 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Service/DirectShareRegistrar.php:99-105 registerDirectShares (the method behind the reachable register-batch path from sharing-01) fires notificationService->notify(subject: 'secret_shared', ...) once per new recipient after creating the shares.",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "automatic, part of the sharing-01 flow"
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "user-sharing",
       "featureConfidence": "high"
     },
@@ -1420,7 +1483,7 @@
       "id": "sharing-20",
       "area": "sharing",
       "name": "Name an emergency contact who can ask for access after a waiting period.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1428,11 +1491,14 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/EmergencyAccessView.vue (page route /emergency-access, menu item EmergencyAccessMenu) wires a designate form (line 41 @click=\"designate\") -> store.designate -> POST /api/v1/emergency-access/contacts (appinfo/routes.php:113), building the recovery envelope client-side with a configurable wait period.",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Emergency access page -> Designate a contact"
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "emergency-access",
       "featureConfidence": "high"
     },
@@ -1440,7 +1506,7 @@
       "id": "sharing-21",
       "area": "sharing",
       "name": "Decline an emergency access request during the waiting period.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1448,11 +1514,14 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/EmergencyAccessView.vue:349 onDecline calls store.decline(id) -> POST /api/v1/emergency-access/contacts/{id}/decline (appinfo/routes.php:116), which per the grantor-decline-veto requirement can be called during the wait period.",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Emergency access page -> incoming request -> Decline"
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "emergency-access",
       "featureConfidence": "high"
     },
@@ -1460,7 +1529,7 @@
       "id": "sharing-22",
       "area": "sharing",
       "name": "Emergency access is granted automatically when the owner does not respond in time.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1468,11 +1537,14 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/BackgroundJob/ApproveElapsedEmergencyRequests.php is registered in appinfo/info.xml:115, runs hourly, and transitions 'requested' relationships to 'approved' once the wait period elapses with no decline; the header also notes a grantee fetch lazily promotes an elapsed request as a safety net.",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "automatic (background job + lazy promotion on grantee fetch)"
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "emergency-access",
       "featureConfidence": "high"
     },
@@ -1480,7 +1552,7 @@
       "id": "sharing-23",
       "area": "sharing",
       "name": "Leave comments on a shared secret for the rest of the team.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1488,11 +1560,13 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rln 'Comment' lib/Controller/*.php src/store/modules/*.js: no hits. No comment/annotation feature exists anywhere in the app.",
+        "owner": "ConductionNL/keepiq"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "requests-01",
@@ -1718,7 +1792,7 @@
       "id": "apps-01",
       "area": "apps",
       "name": "Register an application that needs secrets.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1726,11 +1800,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/ApplicationRegisterDialog.vue:78 (CSR field) -> src/store/modules/application.js:120 register() -> POST /apps/keepiq/api/v1/applications -> appinfo/routes.php:273 application#create -> lib/Controller/ApplicationController.php",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "ApplicationRegister page (/applications) -> ApplicationRegisterDialog",
+        "note": "A developer registers an application from the Applications page, optionally with a CSR; an active suite is provisioned if the app auto-activates."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "application-mgmt",
       "featureConfidence": "high"
     },
@@ -1738,7 +1816,7 @@
       "id": "apps-02",
       "area": "apps",
       "name": "An administrator approves or rejects application registrations.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1746,11 +1824,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/settings/Settings.vue:20 -> src/components/settings/ApplicationQueueSection.vue (approve/reject buttons) -> POST /apps/keepiq/api/v1/applications/{id}/approve|reject -> appinfo/routes.php:274-275 application#approve/reject",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Settings page -> Applications section (ApplicationQueueSection)",
+        "note": "The admin approval queue that actually ships lives in Settings, not on a dedicated page.",
+        "defects": [
+          {
+            "at": "src/views/AdminApplicationsView.vue:1",
+            "what": "A second, fuller admin applications view component exists but is wired into no route, registry entry or bundle; the shipped queue is ApplicationQueueSection instead.",
+            "issue": "#208",
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "application-mgmt",
       "featureConfidence": "high"
     },
@@ -1758,7 +1848,7 @@
       "id": "apps-03",
       "area": "apps",
       "name": "An administrator is notified when an application registration is waiting.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1766,11 +1856,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Service/ApplicationLifecycleService.php:343-399 dispatchAdminPendingNotification() calls NotificationService::notify() with subject app_pending when a new application registration is pending, fail-soft on error",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud bell notification, fired from ApplicationController#create via ApplicationLifecycleService",
+        "note": "Every vault admin gets a Nextcloud notification when a non-admin's application registration is pending; admins cannot opt out of this one."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "application-mgmt",
       "featureConfidence": "high"
     },
@@ -1778,7 +1872,7 @@
       "id": "apps-04",
       "area": "apps",
       "name": "Onboard an application with a certificate signing request.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1786,11 +1880,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/ApplicationRegisterDialog.vue:78-90 (CSR textarea + file upload, onCsrUpload) -> register() -> POST /apps/keepiq/api/v1/applications {csr} -> ApplicationController#create -> ApplicationLifecycleService::runPostRegistrationHooks -> suiteProvisioner->provision(csr)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "ApplicationRegister page -> ApplicationRegisterDialog CSR upload",
+        "note": "A PKCS#10 CSR can be pasted or uploaded when registering an application; the suite is provisioned from it on activation."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "application-mgmt",
       "featureConfidence": "high"
     },
@@ -1798,7 +1896,7 @@
       "id": "apps-05",
       "area": "apps",
       "name": "An application signs in with a signed token instead of a stored password.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1806,11 +1904,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "cli/internal/client/client.go:148-198 MachineToken() signs an RFC 7523 JWT assertion and POSTs it to the discovery-provided token endpoint -> POST /api/v1/token -> appinfo/routes.php:299 applicationToken#exchange -> lib/Controller/ApplicationTokenController.php:91 exchange()",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "machine: POST /api/v1/token (RFC 7523 JWT-Bearer), used by cli ci mode (cli/ci.go:51)",
+        "note": "The keepiq CLI's CI mode signs an assertion with the application's private key and exchanges it for a bearer token; no password is ever stored or sent."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-store-api",
       "featureConfidence": "high"
     },
@@ -1818,7 +1920,7 @@
       "id": "apps-06",
       "area": "apps",
       "name": "An application fetches a secret by its name.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1826,11 +1928,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "cli/internal/client/client.go:215-243 FetchByName() -> GET /apps/keepiq/api/v1/app/secrets/by-name/{name} Bearer <token> -> appinfo/routes.php:306 applicationSecrets#byName -> lib/Controller/ApplicationSecretsController.php",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "machine: GET /api/v1/app/secrets/by-name/{name}, used by cli ci fetch/run (cli/ci.go:60-95)",
+        "note": "keepiq ci fetch/run resolve a secret by name and decrypt the returned envelope locally with the application private key."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-store-api",
       "featureConfidence": "high"
     },
@@ -1838,7 +1944,7 @@
       "id": "apps-07",
       "area": "apps",
       "name": "An application can write a secret it is not allowed to read back.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1846,11 +1952,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/WriteSecretForAppDialog.vue:1-60 encrypts fields client-side with the app's public certificate and POSTs to /apps/keepiq/api/v1/secrets with owner_type=application; opened from src/views/ApplicationDetail.vue:165",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Application detail page (/applications/:id) -> Write secret dialog",
+        "note": "A human writes a secret encrypted under an application's public certificate; the dialog states plainly that the writer cannot read it back, which is the ADR-003 write-without-read property."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-store-api",
       "featureConfidence": "high"
     },
@@ -1858,7 +1968,7 @@
       "id": "apps-08",
       "area": "apps",
       "name": "An application notices a rotated secret by polling for a new version.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1866,11 +1976,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "cli/internal/client/client.go:218-233 sends If-None-Match with the last observed ETag and returns ErrNotModified on 304; server side lib/Controller/ApplicationSecretsController.php serves the by-name/by-id envelope with a strong ETag",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "machine: GET /api/v1/app/secrets/by-name/{name} with If-None-Match, used by cli ci fetch (poll loop)",
+        "note": "A consumer that keeps polling the same name gets 304 until the ciphertext actually changes, so it can detect rotation cheaply."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-store-api",
       "featureConfidence": "high"
     },
@@ -1878,7 +1992,7 @@
       "id": "apps-09",
       "area": "apps",
       "name": "Applications find the secrets API through a well-known discovery document.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1886,11 +2000,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Controller/DiscoveryController.php serves GET /api/v1/app/.well-known/keepiq (canonical) and GET /api/v1/app/.well-known/doriath (deprecated, same body) with tokenEndpoint/grantType/assertion/secrets/lease fields; cli/internal/client/client.go:139 Discover() calls the deprecated path",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "machine: GET /api/v1/app/.well-known/{keepiq,doriath}, used by cli ci mode (cli/internal/client/client.go:137-143)",
+        "note": "Both the renamed canonical path and the pre-rename doriath path are served identically and deliberately, with a documented removal version, so old and new consumers both work.",
+        "defects": [
+          {
+            "at": "cli/internal/client/client.go:139",
+            "what": "The keepiq CLI itself still calls the deprecated .well-known/doriath path rather than the canonical .well-known/keepiq path; not broken (both are served) but the CLI has not been moved to the canonical path.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-store-api",
       "featureConfidence": "high"
     },
@@ -1898,7 +2024,7 @@
       "id": "apps-10",
       "area": "apps",
       "name": "A machine that fetches a secret gets a lease that expires.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1906,11 +2032,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Service/MachineSecretResponseService.php:84-179 grants or reuses a MachineLease on every fetch and adds Doriath-Lease-Id / Doriath-Lease-Expires headers; cli/internal/client/client.go:226-227 captures them and cli/ci.go:84-86 prints the lease id + expiry",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "machine: lease headers on GET /api/v1/app/secrets*, observed by cli ci fetch",
+        "note": "Every machine secret fetch is covered by a lease with an expiry; a revoked lease blocks re-fetch until re-granted per admin policy."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "machine-secret-leases",
       "featureConfidence": "high"
     },
@@ -1918,7 +2048,7 @@
       "id": "apps-11",
       "area": "apps",
       "name": "Renew or revoke a machine lease.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1926,11 +2056,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "Revoke: src/components/application/ApplicationLeasesPanel.vue:141 onRevoke() -> useLeaseStore().revoke() -> DELETE /apps/keepiq/api/v1/leases/{id} -> appinfo/routes.php:325 leaseAdmin#revoke. Renew: lib/Controller/MachineLeaseController.php:renew() and appinfo/routes.php:320 POST /api/v1/app/leases/{id}/renew exist and are fully implemented, but nothing in src/, browser-extension/ or cli/ calls it, and the internal fetch path (MachineSecretResponseService::grantLease) reuses an existing lease rather than calling this endpoint",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Admin/registrant revoke: Application detail page -> Machine leases panel. Renew: machine route with no known caller in this repo (routes-unmatched.txt: NO-REF)",
+        "note": "Revoking a lease from the application detail page works end to end. The dedicated self-renew endpoint for a bearer-holding application has a full controller and service but no caller anywhere in this checkout, including the keepiq CLI itself; leases are extended by re-fetch/reuse instead.",
+        "defects": [
+          {
+            "at": "lib/Controller/MachineLeaseController.php (renew), appinfo/routes.php:320",
+            "what": "POST /api/v1/app/leases/{id}/renew has no known consumer in the frontend, extension or CLI; lease extension in practice happens via grantOrReuse on fetch, not via this endpoint.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "machine-secret-leases",
       "featureConfidence": "high"
     },
@@ -1938,7 +2080,7 @@
       "id": "apps-12",
       "area": "apps",
       "name": "An administrator sets the lease time limit.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1946,11 +2088,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/settings/MachineLeaseSection.vue:93-128 GET/PUT /apps/keepiq/api/settings/admin (lease_default_ttl_seconds, lease_max_ttl_seconds, lease_renewable, lease_revocation_blocks_refetch), wired into src/views/settings/Settings.vue:23",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Settings page -> Machine leases section",
+        "note": "The instance-wide default and maximum lease TTL, renewability and block-on-revoke are all admin-settable from Settings.",
+        "defects": [
+          {
+            "at": "appinfo/routes.php:324 leaseAdmin#setPolicy",
+            "what": "The per-application lease-policy override endpoint (PUT /api/v1/applications/{id}/lease-policy) has no frontend caller; only the instance-wide default is reachable from the UI.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "machine-secret-leases",
       "featureConfidence": "high"
     },
@@ -1958,7 +2112,7 @@
       "id": "apps-13",
       "area": "apps",
       "name": "Delete an application together with its secrets.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1966,11 +2120,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "lib/Controller/ApplicationController.php:338 destroy() -> lib/Service/ApplicationService.php:201-221 delete(): removes the application row and cascades MachineLease + lease-policy rows only. The method's own docblock (line 216-218) reads: 'The full cascade (Secrets + EncryptionSuite + SecretRequests) lands with the dedicated build cycle once those services accept owner_type=application.' SecretService::deleteByApplication() exists but is only called from ApplicationSecretRequestService and SecretPlaceholderCleaner, never from ApplicationService::delete()",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Application detail page -> admin delete action -> DELETE /apps/keepiq/api/v1/applications/{id}",
+        "note": "The application-mgmt spec requires that deleting an application permanently deletes the application, its EncryptionSuite, and all its attributed secrets. The shipped delete only removes the application row and its lease rows; secrets and the EncryptionSuite are left behind, contradicting the spec's own scenario.",
+        "defects": [
+          {
+            "at": "lib/Service/ApplicationService.php:186-221",
+            "what": "Deleting an application does not cascade-delete its EncryptionSuite or its attributed secrets, despite the application-mgmt spec's Delete Application requirement mandating both; the code comment admits this is deferred.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "application-mgmt",
       "featureConfidence": "high"
     },
@@ -1978,7 +2144,7 @@
       "id": "apps-14",
       "area": "apps",
       "name": "See which secrets belong to which application.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1986,11 +2152,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/application/ApplicationSecretsPanel.vue:134 -> src/store/modules/application.js:317 listApplicationSecrets() -> GET /apps/keepiq/api/v1/secrets?ownerType=application&ownerId={id} -> SecretController#index; panel is mounted from src/views/ApplicationDetail.vue:123",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Application detail page -> Secrets panel",
+        "note": "An application's detail page lists the (ciphertext) secrets attributed to it by name, type and creation date."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "application-mgmt",
       "featureConfidence": "high"
     },
@@ -1998,7 +2168,7 @@
       "id": "apps-15",
       "area": "apps",
       "name": "Fetch secrets in a CI pipeline from one command-line binary without writing plaintext to disk.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2006,11 +2176,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "cli/ci.go:97-126 cmdCIRun() fetches+decrypts each named secret and injects it into the child process environment only (runChild in cli/main.go:281-289); no plaintext is written to disk (comment at ci.go:124)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "keepiq CLI: `keepiq ci run <name> -- <cmd>`",
+        "note": "The CLI is a single static Go binary that fetches, decrypts and injects secrets into a child process's environment for CI use, never touching disk."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "keepiq-cli",
       "featureConfidence": "high"
     },
@@ -2018,7 +2192,7 @@
       "id": "apps-16",
       "area": "apps",
       "name": "Read your own vault from the command line.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2026,11 +2200,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "cli/main.go: cmdList/cmdShow/cmdGet (lines 160-222) authenticate with a Nextcloud app-password, fetch the active suite, unwrap the private key with the master password, and decrypt fields client-side via dcrypto.DecryptField",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "keepiq CLI: `keepiq list|show|get|copy` (human mode)",
+        "note": "v1 of the CLI is deliberately read-only; every decryption happens in the CLI process itself so no key material reaches the server."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "keepiq-cli",
       "featureConfidence": "high"
     },
@@ -2038,7 +2216,7 @@
       "id": "apps-17",
       "area": "apps",
       "name": "Inject secrets into a Kubernetes cluster.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2046,17 +2224,19 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rli 'kubernetes|k8s|helm' lib src cli browser-extension: no hits",
+        "note": "No Kubernetes secret injection (operator, CSI driver, sidecar) exists; keepiq's machine surface is a plain HTTP+JWT API a cluster could call itself, but nothing ships to do that integration."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "apps-18",
       "area": "apps",
       "name": "Use a ready-made GitHub Actions or GitLab CI integration.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2064,17 +2244,19 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rli 'github.action|gitlab.ci|.gitlab-ci' lib src cli browser-extension: no hits (only this repo's own CI workflows use GitHub Actions, which is unrelated to a keepiq integration product)",
+        "note": "No ready-made GitHub Actions or GitLab CI step exists; a pipeline would have to install and script the keepiq CLI itself."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "apps-19",
       "area": "apps",
       "name": "Generate short-lived database credentials on demand.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2082,17 +2264,19 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rli 'dynamic.*database|database.*credential|db.*secret.*engine' lib src: no hits; keepiq only stores and serves secrets a human or app already supplied, it does not generate short-lived database credentials itself",
+        "note": "No dynamic secrets engine (database, cloud IAM, etc.) exists, unlike Vault/OpenBao."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "apps-20",
       "area": "apps",
       "name": "Rotate a database or service password automatically.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2100,17 +2284,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "openspec/specs/rotation-expiry-policies/spec.md:9 describes 'expiry, an admin-default and user-override max-age policy, approaching/overdue reminders ... a proven mark-rotated flow' -- this is a reminder + manual mark-rotated flow (lib/Controller/RotationController.php, src/store/modules/rotation.js), not automatic rotation of the underlying credential at the target service",
+        "owner": "ConductionNL/keepiq",
+        "note": "keepiq flags stale/expiring secrets and lets a user mark one rotated, but it never rotates a password at the destination service itself the way Vault/1Password-style rotation connectors do."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "apps-21",
       "area": "apps",
       "name": "Use client libraries for common programming languages.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2118,17 +2305,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "cli/ is a single Go CLI (stdlib only) covering human read-only + CI fetch; no client SDKs for other languages exist (no python/node/java package in the repo)",
+        "reachedOn": "keepiq CLI (Go binary, cross-compiled)",
+        "note": "There is one cross-compiled CLI binary, not per-language client libraries; a Python or Node consumer would call the documented HTTP+JWT API directly with no official SDK."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "apps-22",
       "area": "apps",
       "name": "Manage secrets as code with a Terraform provider.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2136,11 +2326,13 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rli 'terraform' . --include=*.md --include=*.php --include=*.go: no hits",
+        "note": "No Terraform provider exists for managing keepiq secrets/applications as code."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "apps-23",
@@ -2154,11 +2346,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "The machine secret-store API (discovery, RFC 7523 token exchange, by-name fetch, write-back) is fully built server-side and documented for exactly this use in docs/integration-openconnector.md and openspec/specs/secret-store-api/spec.md; the design docs name OpenConnector (now integriq) as the intended consumer",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "machine: documented for consumption by other Conduction apps (e.g. integriq) via /api/v1/app/*",
+        "note": "This checkout only contains keepiq's own code; whether integriq or another Conduction app actually stores its connection credentials in keepiq today cannot be settled from here, only that keepiq ships and documents a ready contract for it."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-store-api",
       "featureConfidence": "high"
     },
@@ -2166,7 +2362,7 @@
       "id": "apps-24",
       "area": "apps",
       "name": "Encrypt and decrypt data for an application without storing it.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2174,11 +2370,13 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -n 'class.*Controller' lib/Controller | grep -i 'encrypt|transit|crypto': only EncryptionSuiteController (manages the user's own suite/keypair), no generic encrypt/decrypt-as-a-service endpoint that takes arbitrary application data",
+        "note": "keepiq encrypts secret VALUES it stores; it has no Vault-Transit-style API where an application sends it arbitrary data to encrypt/decrypt without storing it."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "pki-01",
