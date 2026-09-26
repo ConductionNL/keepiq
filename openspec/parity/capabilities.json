@@ -477,7 +477,7 @@
       "id": "vault-15",
       "area": "vault",
       "name": "Store a passkey in the vault as its own item type.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -486,10 +486,10 @@
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
-        "evidence": "lib/Repair/SeedSecretTypes.php:72 seeds 'passkey'; src/passkey/passkey.js:36 buildPasskeyCredential canonical CXF-aligned JSON; src/components/SecretDetailSidebar.vue:232-243 PasskeyDisplay for passkey-typed items; src/import/parsers/bitwarden.js:21 and src/cxf/cxf.js:27 create them on import; src/dialogs/SecretCreateDialog.vue:95 manual create offers only a raw value field",
+        "evidence": "lib/Repair/SeedSecretTypes.php:72 seeds 'passkey'; browser-extension/src/background/service-worker.js:23-24 binds the passkey orchestrator to the WebAuthn proxy -> browser-extension/src/passkey/orchestrator.js:81-89 encrypts the new credential and createSecret as a passkey-typed item; src/passkey/passkey.js:36 canonical CXF-aligned schema; src/components/SecretDetailSidebar.vue:232-243 PasskeyDisplay; src/import/parsers/bitwarden.js:21 and src/cxf/cxf.js:27 import them",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "SecretList page (/secrets) -> detail sidebar (passkey presentation); created via Import wizard or by pasting credential JSON into New secret",
-        "note": "Passkey is a real item type with a dedicated display and a canonical schema, and imports from Bitwarden and CXF create it. There is no form to enter a passkey by hand, keepiq cannot mint or use one against a website, and the CXF round trip is a known open defect.",
+        "reachedOn": "browser-extension (passkey provider: site registration saves a passkey item after per-site consent); SecretList page (/secrets/:id) -> detail sidebar passkey presentation; Import wizard",
+        "note": "Passkey is its own item type: the browser extension saves a passkey created on a website into the vault and signs with it later, the web app shows it with the private key masked, and Bitwarden and CXF imports create it. The web app has no form to type one in by hand, and the CXF round trip is a known open defect.",
         "defects": [
           {
             "at": "src/cxf/cxf.js:27",
@@ -508,7 +508,7 @@
     {
       "id": "vault-16",
       "area": "vault",
-      "name": "Keep a one-time password seed on a login and see the current code.",
+      "name": "Keep a one-time password seed as an authenticator item and see the current code.",
       "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
@@ -527,8 +527,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secrets",
-      "featureConfidence": "high",
-      "_rename": "Keep a one-time password seed as an authenticator item and see the current code."
+      "featureConfidence": "high"
     },
     {
       "id": "vault-17",
@@ -706,7 +705,7 @@
       "id": "crypto-01",
       "area": "crypto",
       "name": "Secrets are encrypted in the browser so the server and its administrator cannot read them.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -714,19 +713,24 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/store/modules/secret.js:368-382 rsaEncrypt of key, login and additionalFields in the browser before POST /api/v1/secrets; src/crypto/rsa.js:200 RSA-OAEP-SHA256 via WebCrypto; src/store/modules/attachment.js:193-224 attachments AES-GCM encrypted client side",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> New secret / Edit secret dialogs",
+        "note": "The secret value, login, additional fields and attachments are encrypted in the browser to the user's public key and the private key never leaves the browser unencrypted. The name, URL, type and folder stay plaintext on the server so lists and search work."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "_rename": "Secret values are encrypted in the browser so the server and its administrator cannot read them (names and URLs stay readable)."
     },
     {
       "id": "crypto-02",
       "area": "crypto",
       "name": "Set a master password on first use that the server never stores.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -734,11 +738,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/LockScreen.vue:850 first-time setup -> src/store/modules/encryptionSuite.js:112-136 generates the key pair, encryptPrivateKey(masterPassword) and POSTs only publicKey + encryptedPrivateKey to /api/v1/suites (appinfo/routes.php:37); src/crypto/aes.js:15 PBKDF2-SHA256 600000 iterations with a random salt",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Lock page (/lock) -> first-time setup form (shown only when the server confirms no suite exists)",
+        "note": "On first use the lock screen asks for a master password with confirmation; the browser derives a key from it and sends only the wrapped private key, so the server never receives the password."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encryption-suites",
       "featureConfidence": "high"
     },
@@ -746,7 +754,7 @@
       "id": "crypto-03",
       "area": "crypto",
       "name": "A master password must meet a minimum strength before it is accepted.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -754,11 +762,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/LockScreen.vue:182-185 PasswordStrengthMeter -> :560-570 setup submit gated on strengthValid; src/components/PasswordStrengthMeter.vue:43-46 isValid needs length and zxcvbn score floors taken from the admin policy (fetchPolicy, :19) or app fallback; src/components/MasterPasswordForm.vue:82 same gate on change",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Lock page (/lock) first-time setup; Personal settings -> Security -> change master password",
+        "note": "Setup and change are blocked until the password meets the administrator's minimum length and zxcvbn score. The check is client side only, which is inherent since the server never sees the password."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encryption-suites",
       "featureConfidence": "high"
     },
@@ -766,7 +778,7 @@
       "id": "crypto-04",
       "area": "crypto",
       "name": "Change your master password without losing access to your secrets.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -774,11 +786,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/App.vue:151 MasterPasswordForm in the user-settings Security section -> src/components/MasterPasswordForm.vue:112 store.changePassword -> src/store/modules/encryptionSuite.js:161-198 re-wraps the private key with key proof -> PUT /api/v1/suites/{id}/private-key (appinfo/routes.php:38) -> lib/Controller/EncryptionSuiteController.php:266 marks passkey envelopes stale",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "App navigation -> Personal settings -> Security -> Master password form",
+        "note": "Changing the master password only re-wraps the private key, so every secret stays readable; the server demands proof of the old key and flags enrolled passkeys for re-enrolment."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encryption-suites",
       "featureConfidence": "high"
     },
@@ -786,7 +802,7 @@
       "id": "crypto-05",
       "area": "crypto",
       "name": "Recover from a suspected compromise by re-keying every secret to a new key.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -794,11 +810,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/App.vue:162 CompromiseRecoveryForm behind 'My master password was compromised' -> src/components/CompromiseRecoveryForm.vue:440 initiateCompromiseRecovery -> src/store/modules/encryptionSuite.js:221-255 POST /api/v1/suites/compromise-recovery (appinfo/routes.php:42) then per-record re-encrypt via src/migration/pipeline.js:134; resume via src/components/MigrationResumeBanner.vue:227",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "App navigation -> Personal settings -> Security -> My master password was compromised",
+        "note": "Recovery mints a successor key pair and re-encrypts every secret, version and attachment grant in the browser, with a resume banner if interrupted. An open issue reports that a session-only lockout during recovery can destroy vault access.",
+        "defects": [
+          {
+            "at": "src/store/modules/encryptionSuite.js:221",
+            "what": "Compromise recovery plus migration completion is reported to be able to permanently destroy vault access in a session-only lockout case.",
+            "issue": "#395",
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encryption-suites",
       "featureConfidence": "high"
     },
@@ -806,7 +834,7 @@
       "id": "crypto-06",
       "area": "crypto",
       "name": "Lock the vault by hand, and have it lock itself after a period of inactivity.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -814,11 +842,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "src/manifest.json:170-173 'Lock vault' menu -> src/App.vue:743 sessionStore.lock(); src/App.vue:779 polls checkTimeout -> src/store/modules/session.js:194 compares against lastActivity, which is set only at unlock (:121,:159) because updateActivity (:204) has no caller (grep updateActivity src: definition only); browser-extension/src/background/service-worker.js:37-38 real idle lock",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "App navigation -> Lock vault; automatic lock via the App.vue timeout poll",
+        "note": "Manual lock works and the vault locks itself on tab close and after a timeout. In the web app that timeout runs from the moment of unlock, not from the last activity, so an active user is locked out mid-work; the browser extension does have a true idle lock.",
+        "defects": [
+          {
+            "at": "src/store/modules/session.js:204",
+            "what": "updateActivity is never called, so the web app's auto-lock is an absolute timer from unlock rather than an inactivity timer.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encryption-suites",
       "featureConfidence": "high"
     },
@@ -1382,7 +1422,7 @@
     {
       "id": "sharing-13",
       "area": "sharing",
-      "name": "Ask the owner of a secret for access to it.",
+      "name": "Ask the owner to share this secret with a third party.",
       "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
@@ -1400,8 +1440,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "user-sharing",
-      "featureConfidence": "high",
-      "_rename": "The reachable ShareRequestForm feature should be named 'ask the owner to share this secret with a third party', which is a different capability than this row describes."
+      "featureConfidence": "high"
     },
     {
       "id": "sharing-14",
@@ -2501,7 +2540,7 @@
       "id": "pki-01",
       "area": "pki",
       "name": "Run a private certificate authority with a root and an intermediate certificate.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2509,11 +2548,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Service/CertificateAuthorityService.php:92 bootstrap (4096-bit root, then intermediate; partial-state recovery at :111) called from lib/Repair/BootstrapCertificateAuthority.php:71, registered in appinfo/info.xml:197 and :216; suites are signed via CertificateAuthorityService.php:202 signPublicKey from lib/Service/EncryptionSuiteProvisioningService.php:200",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "machine: install/upgrade repair step; admin sees it on Nextcloud admin settings -> Keepiq (CaHealthSection)",
+        "note": "The app runs its own root and intermediate CA and signs every user and application suite certificate with it. The partial-install recovery that #41 asked for is present in this tree. #444 (phpseclib 4) does not bite yet: composer.json pins phpseclib ^3.0."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encryption-suites",
       "featureConfidence": "high"
     },
@@ -2521,7 +2564,7 @@
       "id": "pki-02",
       "area": "pki",
       "name": "The certificate authority renews its own certificates before they expire.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2529,19 +2572,37 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "Intermediate: lib/BackgroundJob/RenewIntermediateCertificate.php:68 (daily, appinfo/info.xml:111) -> CertificateAuthorityService.php:242 renewIntermediate -> resignAllActiveSuites. Root: CertificateAuthorityService.php:288 renewRoot only reachable through POST /api/v1/ca/renew-root (lib/Controller/CACertificateController.php:140), which no UI calls (routes-unmatched NO-REF); lib/BackgroundJob/CheckRootCertificateExpiry.php:68 only logs",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "machine: daily background job (intermediate only)",
+        "note": "The intermediate is renewed automatically, but because of an inverted date diff it is renewed every day rather than 30 days before expiry. The root is never renewed automatically and its expiry warning never fires.",
+        "defects": [
+          {
+            "at": "lib/BackgroundJob/RenewIntermediateCertificate.php:81",
+            "what": "daysUntilExpiry is computed as $expiresAt->diff(now), which is negative while the certificate is still valid (php -r confirms -299 for +300 days), so the 'more than 30 days left' early return never fires and the job renews the intermediate and re-signs every active suite on every daily run.",
+            "issue": null,
+            "needsLiveCheck": true
+          },
+          {
+            "at": "lib/BackgroundJob/CheckRootCertificateExpiry.php:80",
+            "what": "Same inverted diff: daysUntilExpiry is negative for a valid root, so the 90/30/7 day warnings never match. The job only ever logs anyway; it sends no notification and does not renew.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encryption-suites",
       "featureConfidence": "high"
     },
     {
       "id": "pki-03",
       "area": "pki",
-      "name": "See the health of the certificate authority on the admin dashboard.",
-      "keepiq": "unknown",
+      "name": "See the health of the certificate authority on the admin settings page.",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2549,11 +2610,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/settings/CaHealthSection.vue:144 GET /api/v1/ca/status -> lib/Controller/CACertificateController.php:62 -> lib/Service/CertificateAuthorityStatusService.php:76; mounted in src/views/settings/Settings.vue:19 via src/views/settings/AdminRoot.vue:3 from src/settings.js:35 (templates/settings/admin.php); src/components/dashboard/CaHealthCard.vue:77 has no importer and the in-app Dashboard page has no CA widget",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> CA health section (with Retry bootstrap and Force renew intermediate)",
+        "note": "CA health (root and intermediate expiry, issued counts, status colour) is shown on the Nextcloud admin settings page, not on the in-app dashboard. The dashboard card component exists but nothing mounts it.",
+        "defects": [
+          {
+            "at": "src/components/dashboard/CaHealthCard.vue:28",
+            "what": "CaHealthCard is imported by no page, registry entry or manifest widget, so the dashboard version of CA health is unreachable.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "certificate-lifecycle",
       "featureConfidence": "high"
     },
@@ -2561,7 +2634,7 @@
       "id": "pki-04",
       "area": "pki",
       "name": "See every certificate in one inventory, including ones stored as secrets.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2569,11 +2642,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/CertificateInventoryView.vue:256 -> src/store/modules/certificate.js:33 GET /api/v1/certificates/inventory -> lib/Controller/CertificateController.php:95 -> lib/Service/CertificateLifecycleService.php:97 inventory (stored certificate-type secrets, suite certificates, and CA rows for admins); page Certificates route /certificates in src/manifest.json:490",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Certificates page (/certificates, CertificatesMenu)",
+        "note": "One page lists the user's own certificate-type secrets, their vault suite certificate (all suites for admins) and the root and intermediate for admins. Shared or application-owned certificate secrets are not included."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "certificate-lifecycle",
       "featureConfidence": "high"
     },
@@ -2581,7 +2658,7 @@
       "id": "pki-05",
       "area": "pki",
       "name": "Get reminded before a certificate expires.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2589,11 +2666,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "Suite certificates: lib/BackgroundJob/ScanCertificateExpiryJob.php scanOne (30/7/1 days, appinfo/info.xml:122) -> NotificationService 'certificate_expiring' -> lib/Notification/KeepiqNotifier.php:304. Stored certificates: lib/Service/CertificateMetadataService.php:99 submitMetadata mirrors notAfter into the secret expiry, picked up by lib/BackgroundJob/ScanExpiringSecretsJob.php:152",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud notification; stored certificates only after 'Parse certificate' on the Certificates page",
+        "note": "Users get a notification before their vault certificate expires, and stored certificates are reminded through the secret-expiry job once parsed. A stored certificate that was never parsed has no expiry on file and gets no reminder; the CA's own root expiry is not notified (see pki-02).",
+        "defects": [
+          {
+            "at": "lib/BackgroundJob/CheckRootCertificateExpiry.php:80",
+            "what": "Same inverted diff: daysUntilExpiry is negative for a valid root, so the 90/30/7 day warnings never match. The job only ever logs anyway; it sends no notification and does not renew.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "certificate-lifecycle",
       "featureConfidence": "high"
     },
@@ -2601,7 +2690,7 @@
       "id": "pki-06",
       "area": "pki",
       "name": "Get guided renewal that depends on where the certificate came from.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2609,11 +2698,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/CertificateInventoryView.vue:292 'Renew…' -> src/store/modules/certificate.js:86 POST /api/v1/certificates/{id}/renewal-checklist -> lib/Service/CertificateLifecycleService.php:228 (externally issued checklist); suite rows: CertificateInventoryView.vue:308 -> certificate.js:108 POST /api/v1/certificates/suites/{id}/reissue -> CertificateLifecycleService.php:282",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Certificates page -> Renew… on a stored certificate, Re-issue on a suite certificate",
+        "note": "Stored certificates get a fixed checklist for externally issued certificates; certificates Keepiq issued itself (suite certificates) can be re-issued with one click. There is no branch for a stored certificate that Keepiq's CA issued, because Keepiq does not issue those."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "certificate-lifecycle",
       "featureConfidence": "high"
     },
@@ -2621,7 +2714,7 @@
       "id": "pki-07",
       "area": "pki",
       "name": "Issue certificates for your own services from the vault.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2629,17 +2722,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "lib/Service/CertificateAuthorityService.php:223 signCsr and lib/Service/CertificateIssuanceService.php:211 exist but no controller calls signCsr (grep '->signCsr(' lib: only the service wrapper); the only CSR the CA signs is an application's registration CSR (lib/Service/ApplicationSuiteProvisioner.php:67), downloadable on src/views/ApplicationDetail.vue:324 -> GET /api/v1/applications/{id}/certificate",
+        "owner": "ConductionNL/keepiq",
+        "note": "There is no way to issue a certificate for an arbitrary service. The CA only signs keepiq's own suite certificates and the CSR an application submits when it registers with keepiq."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "pki-08",
       "area": "pki",
       "name": "Store a certificate and see its expiry date and subject.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2647,11 +2743,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "Certificate secret type (lib/Service/CertificateMetadataService.php:73 certificateTypeId) -> src/views/CertificateInventoryView.vue:272 'Parse certificate' -> src/store/modules/certificate.js:59 parseAndSubmit (browser X.509 parse, src/certificates/x509.js:202) -> PUT /api/v1/certificates/{id}/metadata -> lib/Controller/CertificateController.php:121; subject, issuer and expiry columns in CertificateInventoryView.vue",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Secret create dialog with the Certificate type, then Certificates page -> Parse certificate",
+        "note": "Subject, issuer and expiry appear after the user clicks Parse certificate once; parsing happens in the browser so the server never sees the certificate value. Until then the row shows 'not parsed yet'."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "certificate-lifecycle",
       "featureConfidence": "high"
     },
@@ -2659,7 +2759,7 @@
       "id": "pki-09",
       "area": "pki",
       "name": "Download an application's private key once, at registration.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2667,11 +2767,22 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "src/views/ApplicationRegisterView.vue:57 mounts src/dialogs/PrivateKeyDownloadDialog.vue when src/store/modules/application.js:136 finds data.private_key, but no PHP code returns a private_key (grep \"'private_key'\" lib: no hits); lib/Service/ApplicationLifecycleService.php:334 only provisions a suite from a supplied CSR",
+        "owner": "ConductionNL/keepiq",
+        "note": "The one-time private key download is wired in the frontend but the backend never generates a key pair or returns a private key, so the dialog can never open. Applications must bring their own key via a CSR; one registered without a CSR gets no suite.",
+        "defects": [
+          {
+            "at": "src/store/modules/application.js:136",
+            "what": "The frontend waits for a private_key the server never sends, so PrivateKeyDownloadDialog is unreachable and the spec's no-CSR key-generation path (openspec/specs/application-mgmt/spec.md:185) is not implemented.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "application-mgmt",
       "featureConfidence": "high"
     },
@@ -2679,7 +2790,7 @@
       "id": "health-01",
       "area": "health",
       "name": "See a strength score and badge for each password.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2687,11 +2798,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/SecretList.vue:1137 triggerHealthPass -> src/store/modules/health.js:109 analyseVault -> src/health/engine.js:128 zxcvbn score; src/views/SecretList.vue:444 StrengthBadge column (src/components/StrengthBadge.vue:45); src/views/HealthReportView.vue:92 weak category",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) strength column; Password health page (/password-health) weak category",
+        "note": "The secret list runs a memory-only health pass on mount and shows a coloured strength badge per password-bearing secret. TOTP and passkey items are deliberately unscored.",
+        "defects": [
+          {
+            "at": "src/store/modules/health.js:186",
+            "what": "The health pass fetches one page of GET /api/v1/secrets with limit 100 (server MAX_LIMIT 100, lib/Service/SecretService.php:110) and never pages, so a vault with more than 100 secrets is only partly analysed.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "password-health",
       "featureConfidence": "high"
     },
@@ -2699,7 +2822,7 @@
       "id": "health-02",
       "area": "health",
       "name": "Find passwords you reused across items.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2707,11 +2830,29 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/health/engine.js:98 SHA-256 digest buckets -> engine.js:138 reused flag -> src/views/HealthReportView.vue:97 Reused passwords category (src/components/HealthCategory.vue:38 shared-with count)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Password health page (/password-health), linked from Reports",
+        "note": "Reuse is detected in the browser over digests of all values, and each finding says how many secrets share it.",
+        "defects": [
+          {
+            "at": "src/store/modules/health.js:186",
+            "what": "The health pass fetches one page of GET /api/v1/secrets with limit 100 (server MAX_LIMIT 100, lib/Service/SecretService.php:110) and never pages, so a vault with more than 100 secrets is only partly analysed.",
+            "issue": null,
+            "needsLiveCheck": true
+          },
+          {
+            "at": "src/views/HealthReportView.vue:373",
+            "what": "Findings deep-link to route name SecretDetail, which no manifest page defines (routes are named after page ids, src/main.js:128); the push rejects and the .catch swallows it, so clicking a finding does nothing.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "password-health",
       "featureConfidence": "high"
     },
@@ -2719,7 +2860,7 @@
       "id": "health-03",
       "area": "health",
       "name": "See how old each password is.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2727,19 +2868,32 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/health/engine.js:145 ageInDays from keyUpdatedAt -> stale flag; src/views/HealthReportView.vue:28 staleness threshold select (90/180/365/never) persisted via PUT /api/settings/user; HealthCategory.vue has no age field",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Password health page (/password-health) Old passwords category",
+        "note": "Passwords older than a chosen threshold are listed as old, but the computed age in days (finding.ageDays) is never shown, neither in the report nor on the secret list or detail.",
+        "defects": [
+          {
+            "at": "src/store/modules/health.js:186",
+            "what": "The health pass fetches one page of GET /api/v1/secrets with limit 100 (server MAX_LIMIT 100, lib/Service/SecretService.php:110) and never pages, so a vault with more than 100 secrets is only partly analysed.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "password-health",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "_rename": "Find passwords older than a chosen age."
     },
     {
       "id": "health-04",
       "area": "health",
       "name": "Check passwords against known breaches without sending them anywhere.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2747,11 +2901,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/health/hibp.js:79 SHA-1 5-char prefix -> hibp.js:103 GET /api/v1/breach-check/range/{prefix} -> lib/Controller/BreachProxyController.php:155 range (admin gate :161, 5-hex validation :170, HIBP with Add-Padding :184); suffix matched in browser",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Password health page (/password-health) breach opt-in checkbox, shown when the admin switched breach checking on",
+        "note": "k-anonymity range lookup through a server proxy; only a 5-character SHA-1 prefix leaves the browser. Needs both the admin toggle and a per-user opt-in.",
+        "defects": [
+          {
+            "at": "src/store/modules/health.js:186",
+            "what": "The health pass fetches one page of GET /api/v1/secrets with limit 100 (server MAX_LIMIT 100, lib/Service/SecretService.php:110) and never pages, so a vault with more than 100 secrets is only partly analysed.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "password-health",
       "featureConfidence": "high"
     },
@@ -2759,7 +2925,7 @@
       "id": "health-05",
       "area": "health",
       "name": "See one health report for your whole vault.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2767,11 +2933,29 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/manifest.json:482 PasswordHealth page /password-health -> src/views/HealthReportView.vue:69 vault score + counts -> src/store/modules/health.js:109 -> src/health/engine.js:202 vaultScore",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Password health page (/password-health), linked from Reports (src/manifest.json:454)",
+        "note": "One report with a 0 to 100 score, per-category counts and lists for weak, reused, old, breached, possibly compromised and rotation due.",
+        "defects": [
+          {
+            "at": "src/store/modules/health.js:186",
+            "what": "The health pass fetches one page of GET /api/v1/secrets with limit 100 (server MAX_LIMIT 100, lib/Service/SecretService.php:110) and never pages, so a vault with more than 100 secrets is only partly analysed.",
+            "issue": null,
+            "needsLiveCheck": true
+          },
+          {
+            "at": "src/views/HealthReportView.vue:373",
+            "what": "Findings deep-link to route name SecretDetail, which no manifest page defines (routes are named after page ids, src/main.js:128); the push rejects and the .catch swallows it, so clicking a finding does nothing.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "password-health",
       "featureConfidence": "high"
     },
@@ -2779,7 +2963,7 @@
       "id": "health-06",
       "area": "health",
       "name": "Health checks run in the browser so the server learns nothing.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2787,11 +2971,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/store/modules/health.js:202 rsaDecrypt in browser -> health.js:266 Web Worker src/health/worker.js; state memory-only and reset on lock health.js:308; only the HIBP prefix is sent (src/health/hibp.js:79)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Password health page and SecretList strength pass",
+        "note": "Decryption and analysis run in the browser (worker when available), results are held in memory only and cleared on lock. The possibly-compromised flag is the one server-known input."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "password-health",
       "featureConfidence": "high"
     },
