@@ -149,6 +149,11 @@
       "key": "nextcloud-vue",
       "name": "@conduction/nextcloud-vue",
       "kind": "platform"
+    },
+    {
+      "key": "thematiq",
+      "name": "Thematiq",
+      "kind": "app"
     }
   ],
   "capabilities": [
@@ -1104,7 +1109,7 @@
         "note": "Keepiq has no second factor on vault unlock. Nextcloud's own two-factor login gates reaching the app and the encrypted blobs, so a stolen master password alone is not enough, but the unlock step itself asks only for the password or a passkey."
       },
       "rowSource": "competitor",
-      "provider": "nextcloud/server",
+      "provider": "nextcloud",
       "providerHow": "read-from-code",
       "evidence": {
         "bitwarden": "https://bitwarden.com/help/setup-two-step-login-fido/ : FIDO2 security keys and authenticator apps for two-step login; 'Require two-step login' policy",
@@ -1356,7 +1361,7 @@
         "note": "Signing in to Nextcloud through the organisation's identity provider gets the user into keepiq, but the vault itself still has to be unlocked with the master password or a passkey. SSO does not unlock the vault."
       },
       "rowSource": "competitor",
-      "provider": "nextcloud/server",
+      "provider": "nextcloud",
       "providerHow": "read-from-code",
       "evidence": {
         "bitwarden": "https://bitwarden.com/help/policies/ : 'Require single sign-on (SSO)' policy; SSO with trusted devices in https://bitwarden.com/help/bitwarden-security-white-paper/ (Enterprise)",
@@ -4208,7 +4213,7 @@
         ]
       },
       "rowSource": "competitor",
-      "provider": "nextcloud/server",
+      "provider": "nextcloud",
       "providerHow": "read-from-code",
       "evidence": {
         "bitwarden": "https://bitwarden.com/help/ldap-directory/ : Directory Connector syncs users and groups from Active Directory or any LDAP directory",
@@ -5888,7 +5893,7 @@
         "note": "A seven-step tour starts on the first unlocked visit and points at Dashboard, All secrets, Features and roadmap, Reports and Flows; it is held back while the vault is locked. Completion is stored through the OpenRegister AppHost preferences endpoint."
       },
       "rowSource": "own",
-      "provider": "@conduction/nextcloud-vue",
+      "provider": "nextcloud-vue",
       "providerHow": "read-from-code",
       "evidence": {
         "bitwarden": "not checked: no first-run walkthrough documented in the pages read",
