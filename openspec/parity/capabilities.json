@@ -1867,7 +1867,7 @@
         "evidence": "src/components/share/DelegationManager.vue (mounted for owners in SecretDetailSidebar.vue:680) wires a reclaim button -> store.reclaimDelegation -> POST /api/v1/secrets/{id}/delegations/reclaim (appinfo/routes.php:155). But the creation half, useDelegationStore.createDelegation (delegation.js:105, POST .../delegations), has no caller anywhere in src/ -- DelegationManager only lists and reclaims, it never offers to create one.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretDetailSidebar -> Delegations section (reclaim only)",
-        "note": "A temporary delegation to a colleague can never be created through the UI, so the reclaim button that IS wired has nothing to act on in normal use. This is the same gap issue #184 names for the related adminHandover path: dead code with a full backend and no production caller for creation. Do not confuse with AdminHandoverPanel.vue (SecretDetailSidebar.vue), which is a separate vault-admin takeover feature, not an owner-to-colleague temporary handover.",
+        "note": "A temporary delegation to a colleague can never be created through the UI, so the reclaim button that IS wired has nothing to act on in normal use: createDelegation (src/store/modules/delegation.js:105) still has no caller in src/. Do not confuse with AdminHandoverPanel.vue (mounted in SecretDetailSidebar.vue:700), a separate vault-admin takeover that has worked end to end since f13ad8e6 (route, controller call and panel, closing #184); it is not an owner-to-colleague temporary handover and does not close this gap.",
         "defects": [
           {
             "at": "src/store/modules/delegation.js:105",
@@ -1875,7 +1875,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "readOn": "2026-09-26"
       },
       "rowSource": "own",
       "provider": "keepiq",
