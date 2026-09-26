@@ -704,7 +704,7 @@
     {
       "id": "crypto-01",
       "area": "crypto",
-      "name": "Secrets are encrypted in the browser so the server and its administrator cannot read them.",
+      "name": "Secret values are encrypted in the browser so the server and its administrator cannot read them (names and URLs stay readable).",
       "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
@@ -723,8 +723,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encryption-suites",
-      "featureConfidence": "high",
-      "_rename": "Secret values are encrypted in the browser so the server and its administrator cannot read them (names and URLs stay readable)."
+      "featureConfidence": "high"
     },
     {
       "id": "crypto-02",
@@ -866,7 +865,7 @@
       "id": "crypto-07",
       "area": "crypto",
       "name": "Choose your own session timeout.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -874,11 +873,29 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "src/App.vue:137-143 Session timeout select in Personal settings -> :873-874 saveTimeout maps session:0, 10min, 30min then '|| 600000' and only sets sessionStore.timeout in memory; no request persists it and App.vue:497 always starts at 'session'; src/components/settings/SessionTimeoutSection.vue:52-66 does GET/PUT session_timeout but is mounted nowhere (grep SessionTimeoutSection src: self only); lib/Service/SettingsService.php:93 stores the key",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "App navigation -> Personal settings -> Session -> Session timeout",
+        "note": "A user can pick 10 or 30 minutes and it applies for the current page session only; it is not saved and resets on reload. The 'Nextcloud session' option maps to 0, which the '|| 600000' fallback turns into 10 minutes, so it silently behaves like 10 minutes.",
+        "defects": [
+          {
+            "at": "src/App.vue:874",
+            "what": "The 'Nextcloud session' choice maps to 0 and the '|| 600000' fallback turns it into a 10-minute timeout.",
+            "issue": null,
+            "needsLiveCheck": false
+          },
+          {
+            "at": "src/App.vue:873",
+            "what": "The chosen timeout is never persisted to the server, and the component that does persist it (SessionTimeoutSection.vue) is not mounted, so the choice is lost on reload.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "user-settings",
       "featureConfidence": "high"
     },
@@ -886,7 +903,7 @@
       "id": "crypto-08",
       "area": "crypto",
       "name": "Unlock the vault with a passkey instead of the master password.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -894,11 +911,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/App.vue:154 PasskeyManager -> src/components/PasskeyManager.vue:175 store.enroll -> src/store/modules/passkey.js:94-172 WebAuthn create with PRF, wraps the unlock key -> POST /api/v1/passkeys (appinfo/routes.php:243); src/views/LockScreen.vue:239-251 'Unlock with passkey' -> :680 unlockWithPasskey -> src/store/modules/passkey.js:193-240 PRF-derived KEK unwraps the unlock key -> session.unlockWithRawKey",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Personal settings -> Security -> Passkeys (enrol); Lock page (/lock) -> Unlock with passkey",
+        "note": "Users enrol a PRF-capable passkey in personal settings and can then unlock from the lock screen without the master password, which stays the fallback. With several passkeys enrolled, the unlock always evaluates the PRF with the first credential's salt, so using any other passkey likely fails and falls back to the password.",
+        "defects": [
+          {
+            "at": "src/store/modules/passkey.js:212",
+            "what": "Unlock passes credentials[0].prfSalt for every allowed credential; each enrolment has its own random salt (:143), so a second enrolled passkey derives the wrong key and cannot unlock.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "passkey-vault-login",
       "featureConfidence": "high"
     },
@@ -906,7 +935,7 @@
       "id": "crypto-09",
       "area": "crypto",
       "name": "Unlock with a fingerprint or face scan on your device.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -914,17 +943,21 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/PasskeyManager.vue:25 offers Touch ID, Windows Hello or a security key; src/store/modules/passkey.js:221 userVerification 'preferred' with the PRF extension; browser-extension/src/popup/popup.js unlocks with the master password only (grep -rni 'biometric\\|webauthn' browser-extension/src/popup: no hits)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Lock page (/lock) -> Unlock with passkey, using a platform authenticator",
+        "note": "Fingerprint or face unlock works in the web app only by enrolling a platform passkey (Touch ID, Windows Hello) whose browser supports PRF. The browser extension and CLI have no biometric unlock."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "crypto-10",
       "area": "crypto",
       "name": "Require a second factor such as an authenticator app or security key to open the vault.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -932,17 +965,21 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "src/views/LockScreen.vue: master password or passkey only; grep -rni 'totp\\|two-factor\\|second factor' src/views/LockScreen.vue lib/Controller/EncryptionSuiteController.php: no hits",
+        "owner": "nextcloud/server",
+        "reachedOn": "Nextcloud login (two-factor providers) before the keepiq app loads",
+        "note": "Keepiq has no second factor on vault unlock. Nextcloud's own two-factor login gates reaching the app and the encrypted blobs, so a stolen master password alone is not enough, but the unlock step itself asks only for the password or a passkey."
       },
       "rowSource": "competitor",
-      "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "provider": "nextcloud/server",
+      "providerHow": "read-from-code"
     },
     {
       "id": "crypto-11",
       "area": "crypto",
       "name": "Let an administrator restore a user's access after a forgotten master password.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -950,17 +987,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "src/components/settings/AdminSuiteSection.vue:21,180 admin can only force-revoke a suite so the user starts a new empty vault; grep -rni 'escrow\\|recovery key\\|account recovery' lib: only emergency-access envelopes escrowed to a contact's certificate, never to an admin",
+        "owner": "ConductionNL/keepiq",
+        "note": "By zero-knowledge design an administrator cannot restore access to a user's secrets. The admin can force-revoke the locked suite so the user can set up a fresh vault, but the old secrets stay unreadable unless the user has an emergency contact or a backup file."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "crypto-12",
       "area": "crypto",
       "name": "Regain access yourself with a recovery code or kit when the master password is lost.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -968,17 +1008,21 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/export/backup.js:14-17 passphrase-encrypted Argon2id backup that is suite-independent 'for a forgotten master password' -> src/store/modules/export.js:24 encryptBackup; src/import/backupParser.js:14 decryptBackup in the Import wizard; src/views/EmergencyAccessView.vue:11 trusted-contact escrow; grep -rni 'recovery code\\|recovery kit' src lib: no hits",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page -> Export dialog (encrypted backup); Import wizard (restore); Emergency access page (/emergency-access)",
+        "note": "There is no recovery code or kit that reopens the existing vault. A user who kept a passphrase-encrypted backup can restore their secrets into a new vault, but only after an administrator force-revokes the old key, and a trusted emergency contact can regain read access after a wait."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "crypto-13",
       "area": "crypto",
       "name": "See which algorithms and key sizes protect your vault.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -986,19 +1030,22 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "src/crypto/rsa.js:8 RSA_KEY_BITS = 4096 and src/crypto/aes.js:15 PBKDF2 600000 are code constants only; grep -rni 'algorithm\\|key size\\|RSA-OAEP' src --include=*.vue: only template comments; src/views/CertificateInventoryView.vue:116-137 shows vault certificate owner, subject and expiry, no algorithm or key size",
+        "owner": "ConductionNL/keepiq",
+        "note": "No screen tells the user which algorithms or key sizes protect the vault. The certificates page shows the vault certificate's subject and expiry, but not RSA-4096, RSA-OAEP, AES-256-GCM or the key derivation settings."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encryption-suites",
       "featureConfidence": "high"
     },
     {
       "id": "crypto-14",
       "area": "crypto",
-      "name": "Protect each user's vault key with a certificate issued by the organisation's own authority.",
-      "keepiq": "unknown",
+      "name": "Protect each user's vault key with a certificate issued by the instance's own private authority.",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1006,11 +1053,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "appinfo/info.xml:197 repair step BootstrapCertificateAuthority creates the instance root and intermediate; lib/Service/EncryptionSuiteProvisioningService.php:192-200 signFor refuses unless ca_status is healthy and signs every suite public key; appinfo/routes.php:46-49,215-216 CA status, renew and re-issue; src/views/CertificateInventoryView.vue:116,176 vault certificates and CA shown",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Certificates page (/certificates) -> Vault encryption certificates / Certificate authority; admin settings -> CA health",
+        "note": "Each vault public key is signed by a private CA that keepiq bootstraps on the instance, and suite creation refuses while that CA is unhealthy. The CA is the instance's own, generated by keepiq; there is no path to plug in an existing external organisational CA."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encryption-suites",
       "featureConfidence": "high"
     },
@@ -1018,7 +1069,7 @@
       "id": "crypto-15",
       "area": "crypto",
       "name": "Creating a key never mints a second active one while the first is in use.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1026,11 +1077,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Service/EncryptionSuiteProvisioningService.php:118-123 countActiveByOwner > 0 throws ConflictException -> lib/Controller/EncryptionSuiteController.php:213-220 returns 409 suite_already_exists; successor suites only via createSuccessorSuite for compromise recovery (lib/Service/EncryptionSuiteService.php:107)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "machine guard on POST /api/v1/suites (Lock page first-time setup)",
+        "note": "A plain suite create now refuses with 409 when an active suite exists, so the defect in issue #173 no longer holds in this tree. The check reads then inserts without a lock, so two simultaneous first-time setups could in theory both pass.",
+        "defects": [
+          {
+            "at": "lib/Service/EncryptionSuiteProvisioningService.php:118",
+            "what": "The single-active check is a count followed by an insert with no lock or unique constraint, so a concurrent double submit could still mint two active suites.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encryption-suites",
       "featureConfidence": "high"
     },
@@ -1038,7 +1101,7 @@
       "id": "crypto-16",
       "area": "crypto",
       "name": "Re-encrypted data is verified before the original is discarded.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1046,11 +1109,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/migration/pipeline.js:134-155 verifiedReEncrypt decrypts each re-encrypted blob with the new private key and throws RoundTripMismatchError (:49) unless byte-identical; src/migration/driver.js:12 both worker and main-thread paths use it; lib/Service/MigrationWorkService.php:781 server accepts only browser-verified ciphertext; lib/Service/MigrationService.php:402 completion refuses while records remain",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Personal settings -> Security -> compromise recovery migration (and resume banner)",
+        "note": "During key migration every re-encrypted record is decrypted back with the new key and compared before it is committed, and the old suite stays active until nothing is left bound to it."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encryption-suites",
       "featureConfidence": "high"
     },
@@ -1058,7 +1125,7 @@
       "id": "crypto-17",
       "area": "crypto",
       "name": "Revoke a user's vault key and reinstate it later.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1066,11 +1133,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/App.vue:277 revoke button -> :906 suiteStore.revokeSuite -> src/store/modules/encryptionSuite.js:1179-1199 POST /api/v1/suites/{id}/revoke (appinfo/routes.php:39) with master-password proof and ownership check (lib/Controller/EncryptionSuiteController.php:335); src/components/settings/AdminSuiteSection.vue:212 -> encryptionSuite.js:1286 POST /api/v1/suites/{id}/reinstate (routes.php:41, AuthorizedAdminSetting at controller :384)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Personal settings -> Security -> Revoke (user); Nextcloud admin settings -> Keepiq -> suite management -> Reinstate (admin)",
+        "note": "A user can revoke their own vault key after re-entering the master password, and an administrator can reinstate it by id. Revocation also hard-deletes the shares the user received and warns before destroying emergency access, so a reinstate does not bring those back."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encryption-suites",
       "featureConfidence": "high"
     },
@@ -1078,7 +1149,7 @@
       "id": "crypto-18",
       "area": "crypto",
       "name": "An administrator can force-revoke a key flagged as compromised.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1086,11 +1157,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/settings/AdminSuiteSection.vue:42 markCompromised toggle, :180 forceRevokeSuite -> src/store/modules/encryptionSuite.js:1247-1262 POST /api/v1/suites/{id}/force-revoke (appinfo/routes.php:40) -> lib/Controller/EncryptionSuiteController.php:436 -> lib/Service/EncryptionSuiteService.php:199-207 dispatches the revoked event with compromised=true; lib/AppInfo/SuiteLifecycleEventRegistrar.php:109 registers SuiteCompromiseOnRevokeListener",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Encryption suite management -> Force-revoke",
+        "note": "An administrator can force-revoke any suite by id after re-confirming their own password and optionally flag it as compromised, which triggers a listener that flags its secrets for rotation and notifies owners."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encryption-suites",
       "featureConfidence": "high"
     },
@@ -1098,7 +1173,7 @@
       "id": "crypto-19",
       "area": "crypto",
       "name": "Log in to the vault with single sign-on from the organisation's identity provider.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1106,11 +1181,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "keepiq has no identity-provider code (grep -rni 'saml\\|oidc\\|openid' lib src: no hits); the app is behind the Nextcloud session, and src/views/LockScreen.vue still requires the master password or a passkey to unlock",
+        "owner": "nextcloud/server",
+        "reachedOn": "Nextcloud login (user_saml / user_oidc when installed), then Lock page (/lock)",
+        "note": "Signing in to Nextcloud through the organisation's identity provider gets the user into keepiq, but the vault itself still has to be unlocked with the master password or a passkey. SSO does not unlock the vault."
       },
       "rowSource": "competitor",
-      "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "provider": "nextcloud/server",
+      "providerHow": "read-from-code"
     },
     {
       "id": "sharing-01",
@@ -2859,7 +2938,7 @@
     {
       "id": "health-03",
       "area": "health",
-      "name": "See how old each password is.",
+      "name": "Find passwords older than a chosen age.",
       "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
@@ -2886,8 +2965,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "password-health",
-      "featureConfidence": "high",
-      "_rename": "Find passwords older than a chosen age."
+      "featureConfidence": "high"
     },
     {
       "id": "health-04",
@@ -2987,7 +3065,7 @@
       "id": "health-07",
       "area": "health",
       "name": "Generate a strong random password with length and character options.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -2995,11 +3073,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/SecretCreateDialog.vue:112 and SecretEditDialog.vue:115 open src/dialogs/KeyGeneratorModal.vue:216 POST /api/v1/generate-key -> lib/Controller/KeyGeneratorController -> lib/Service/KeyGeneratorService.php:179 generate (random_int CSPRNG, length, special characters, excluded characters, regex override, org policy clamp :110)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList -> New secret / Edit secret dialog -> Generate",
+        "note": "Length, special characters, excluded characters and an advanced regex pattern. The value is generated on the server and returned over the API, so the server sees a generated password before it is encrypted client-side."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "key-generator",
       "featureConfidence": "high"
     },
@@ -3007,7 +3089,7 @@
       "id": "health-08",
       "area": "health",
       "name": "Generate a memorable passphrase made of words.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3015,17 +3097,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rli 'passphrase|diceware|wordlist' src lib browser-extension/src cli: hits are only export-backup passphrases and import parsers; KeyGeneratorService has no word mode",
+        "owner": "ConductionNL/keepiq",
+        "note": "The generator only produces character strings (or regex-shaped ones); there is no word-based passphrase mode."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "health-09",
       "area": "health",
       "name": "Generate a username or an email alias.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3033,17 +3118,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rni 'username generat|email alias|simplelogin|anonaddy|forwarder' src lib browser-extension/src cli: no hits",
+        "owner": "ConductionNL/keepiq",
+        "note": "No username or email-alias generator anywhere in the app, extension or CLI."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "health-10",
       "area": "health",
       "name": "Be told when your email address shows up in a new data breach.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3051,17 +3139,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rni 'breachedaccount|email.*breach|breach.*email' src lib: no hits; the only HIBP use is the Pwned Passwords range proxy (lib/Controller/BreachProxyController.php:57)",
+        "owner": "ConductionNL/keepiq",
+        "note": "Breach checking covers password values only, on demand; there is no email or account breach monitoring and no alerting on new breaches."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "health-11",
       "area": "health",
       "name": "Be told which websites offer two-factor login you have not switched on.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3069,17 +3160,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rni '2fa.directory|twofactorauth|inactive.*2fa' src lib browser-extension/src: no hits",
+        "owner": "ConductionNL/keepiq",
+        "note": "No inactive two-factor report; the health engine has no such category (src/health/engine.js:114)."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "health-12",
       "area": "health",
       "name": "Be warned about logins that use an unencrypted http address.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3087,17 +3181,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "src/health/engine.js flags only weak, reused, stale, compromised, breached; grep for http protocol checks in src and browser-extension/src: no hits",
+        "owner": "ConductionNL/keepiq",
+        "note": "No insecure-URL (http) finding in the health report or the extension."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "health-13",
       "area": "health",
       "name": "See one password health score for the whole organisation.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3105,17 +3202,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "lib/Service/ComplianceReportService.php:57-70 org metrics are adoption, secrets per user, share hygiene, rotation posture (overdue, flags, ciphertext age bands :326), audit and emergency access; no strength or reuse aggregate",
+        "owner": "ConductionNL/keepiq",
+        "note": "Health scoring is per user in the browser by design, so the server has no org-wide health score. The compliance metrics give an org view of rotation posture and ciphertext age only."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "rotation-01",
       "area": "rotation",
       "name": "Give a secret an expiry date without changing its value.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3123,11 +3223,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/RotationPanel.vue:236 onSave -> src/store/modules/rotation.js:154 PUT /api/v1/secrets/{id}/expiry -> lib/Controller/RotationController.php:89 -> lib/Service/SecretService.php:1379 setExpiry (owner-only, ciphertext and key_updated_at untouched)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList -> secret detail sidebar -> Rotation & expiry row (src/components/SecretDetailSidebar.vue:798)",
+        "note": "Owner picks a date or clears it; the value and its key timestamp are not changed."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "rotation-expiry-policies",
       "featureConfidence": "high"
     },
@@ -3135,7 +3239,7 @@
       "id": "rotation-02",
       "area": "rotation",
       "name": "An administrator sets a default expiry policy that users can override.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3143,19 +3247,32 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/settings/RotationPolicySection.vue:30 default max age -> PUT /api/settings/admin -> lib/Service/AdminSettingsService.php; lib/Service/RotationPolicyService.php:88 resolveEffectiveExpiry takes min() of per-secret expiry, policies, user max (:147) and admin max (:157)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Rotation & expiry",
+        "note": "The admin default exists, but the effective expiry is the earliest of all candidates, so a user can only shorten it, never extend or switch it off. The per-user expiry_max_age_days preference has no UI.",
+        "defects": [
+          {
+            "at": "lib/Service/RotationPolicyService.php:108",
+            "what": "Effective expiry is min() of all candidates, so a user override can never be later than the admin default; override means tighten only.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "rotation-expiry-policies",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "_rename": "An administrator sets a default expiry that users can shorten per secret."
     },
     {
       "id": "rotation-03",
       "area": "rotation",
       "name": "Get reminders before and after a secret expires.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3163,11 +3280,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "appinfo/info.xml:117 ScanExpiringSecretsJob -> lib/BackgroundJob/ScanExpiringSecretsJob.php:166 secret_expiring at admin thresholds (default [30,7,1]) and :151 overdue flag + secret_rotation_due; lib/Notification/KeepiqNotifier.php:206,215; notifier registered lib/AppInfo/PlatformIntegrationRegistrar.php:60",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud notifications (owner), gated by the user's notify_security toggle",
+        "note": "Daily scan sends reminders at the configured days-before thresholds and one overdue notification per episode, which also raises a rotation flag.",
+        "defects": [
+          {
+            "at": "lib/BackgroundJob/ScanExpiringSecretsJob.php:93",
+            "what": "Reminders use only the instance thresholds; the per-policy reminder_days column (lib/Db/ExpiryPolicy.php:42) is stored but never read.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "rotation-expiry-policies",
       "featureConfidence": "high"
     },
@@ -3175,7 +3304,7 @@
       "id": "rotation-04",
       "area": "rotation",
       "name": "Mark a secret as rotated, with proof that the value changed.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3183,11 +3312,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/RotationPanel.vue:31 Mark rotated -> src/store/modules/rotation.js:188 POST /api/v1/rotation-flags/{id}/rotated -> lib/Controller/RotationController.php:314 -> lib/Service/RotationFlagService.php:181 markRotated (resolves only when key_updated_at advanced past the value frozen at flag time)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Secret detail sidebar -> Rotation & expiry (owner, when a flag is open; Flag for rotation raises one)",
+        "note": "If the value did not change since flagging, the server refuses and the panel tells the owner to update the value first."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "rotation-expiry-policies",
       "featureConfidence": "high"
     },
@@ -3195,7 +3328,7 @@
       "id": "rotation-05",
       "area": "rotation",
       "name": "Secrets touched by a breach or a key compromise are flagged for rotation.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3203,11 +3336,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "compromise: lib/Listener/SuiteCompromiseOnRevokeListener.php:102 stamps possibly_compromised_at and :108 flag(suite_compromise), registered lib/AppInfo/SuiteLifecycleEventRegistrar.php:109; breach: src/views/HealthReportView.vue:120 Flag all breached -> rotation.js:170 POST /api/v1/rotation-flags -> RotationFlagService.php:136 flagBatch",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Automatic on a compromise revocation; Password health page button for breached passwords",
+        "note": "Compromise flagging is automatic. Breach flagging is a one-click user action because breach verdicts never leave the browser."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "rotation-expiry-policies",
       "featureConfidence": "high"
     },
@@ -3215,7 +3352,7 @@
       "id": "rotation-06",
       "area": "rotation",
       "name": "See secrets that are due for rotation on the dashboard and in the health report.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3223,11 +3360,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/manifest.json:279 kpi-rotation-due widget reads rotation_due_count <- lib/Service/DashboardSummaryService.php:141; src/views/HealthReportView.vue:144 Rotation due category from rotation.js:56 GET /api/v1/rotation-flags",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Dashboard (/) Rotation due KPI; Password health page Rotation due category",
+        "note": "Both surfaces are wired; the health report lists each flagged secret.",
+        "defects": [
+          {
+            "at": "src/views/HealthReportView.vue:373",
+            "what": "Findings deep-link to route name SecretDetail, which no manifest page defines (routes are named after page ids, src/main.js:128); the push rejects and the .catch swallows it, so clicking a finding does nothing.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "rotation-expiry-policies",
       "featureConfidence": "high"
     },
@@ -3235,7 +3384,7 @@
       "id": "rotation-07",
       "area": "rotation",
       "name": "Edit expiry policies per type or folder in a screen made for it.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3243,11 +3392,22 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "routes GET/POST/DELETE /api/v1/expiry-policies -> lib/Controller/RotationController.php:161,190,224 and store actions src/store/modules/rotation.js:81,108,124 exist, but grep for fetchPolicies|upsertPolicy|deletePolicy in src components: no callers",
+        "owner": "ConductionNL/keepiq",
+        "note": "Backend and store are done, but no screen calls them; the admin section says type and folder policies are managed from the vault UI, which has no such editor. Open issue #77.",
+        "defects": [
+          {
+            "at": "src/components/settings/RotationPolicySection.vue:7",
+            "what": "Section text says per-user type and folder policies are managed from the vault UI, but no component calls the expiry-policies store actions.",
+            "issue": "#77",
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "rotation-expiry-policies",
       "featureConfidence": "high"
     },
