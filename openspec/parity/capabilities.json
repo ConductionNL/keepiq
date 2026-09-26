@@ -250,7 +250,13 @@
           "accessibilityStatement": "no product accessibility statement or VPAT found in the docs",
           "demoInstance": "no public demo; `vault server -dev` is the vendor's own local route"
         }
-      }
+      },
+      "sourceRead": {
+        "tag": "hashicorp/vault@v2.1.1 (Community Edition tree)",
+        "readOn": "2026-09-26",
+        "driven": false
+      },
+      "gradeNote": "source read at hashicorp/vault@v2.1.1 (Community Edition tree), not driven"
     },
     {
       "key": "nextcloud-passwords",
@@ -1145,10 +1151,10 @@
       "name": "Sort items by date added, date changed or date last used.",
       "keepiq": "partial",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "partial",
       "passbolt": "unknown",
-      "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "keeper": "partial",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
@@ -1162,7 +1168,11 @@
       "originUrl": "https://community.bitwarden.com/t/sorting-options-by-date-of-modification-addition-last-use-etc/2484",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes/list-directory.js:33 paginate(keys) keeps the LIST order (alphabetical keys); searched 'sort' in ui/lib/kv/addon/routes/list-directory.js and components/page/list.js: no sort control Note: The KV list shows keys in API order with no sort by date added, changed or used.",
+        "onepassword": "https://support.1password.com/getting-started-windows/ : 'you can sort your items by their title, the date you last made changes to them, or how frequently you use them'. Sort by date added is not listed.",
+        "keeper": "https://docs.keeper.io/user-guides/web-vault : records can be sorted by most recently used, name or date modified in the web vault and browser extension; sorting by date added is not described."
+      }
     },
     {
       "id": "vault-25",
@@ -1170,10 +1180,10 @@
       "name": "Find duplicate items already in the vault and merge them.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "partial",
       "passbolt": "unknown",
-      "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "keeper": "partial",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -1187,7 +1197,11 @@
       "originUrl": "https://community.bitwarden.com/t/duplicate-removal-tool-report-including-merge/648",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:86 duplicate-keys warning inside one secret only; searched 'merge', 'duplicate' in ui/lib/kv/addon: no item dedupe Note: Only duplicate field names inside one secret are flagged; there is no duplicate item finder or merge.",
+        "onepassword": "https://support.1password.com/watchtower/ : Watchtower lists 'duplicate items' so they can be deleted; community answers (https://www.1password.community/discussions/1password/merging-duplicated-password/75287) confirm only exact duplicates in one vault are found and there is no merge.",
+        "keeper": "https://docs.keeper.io/keeperpam/commander-cli/command-reference/record-commands : Commander 'find-duplicates' matches on titles, logins, passwords or URLs and '--merge' consolidates them; the vault UI has no duplicate finder, so this is CLI only."
+      }
     },
     {
       "id": "vault-26",
@@ -1195,10 +1209,10 @@
       "name": "Preview an attached file without downloading it.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -1212,7 +1226,11 @@
       "originUrl": "https://community.bitwarden.com/t/view-attachments-without-downloading/52",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'upload', 'attachment', 'preview' in ui/lib/kv/addon and ui/app/components: no KV attachments Note: There are no attachments to preview.",
+        "onepassword": "https://www.1password.community/1password-at-home-31/preview-documents-in-1password-on-windows-17129 : Preview is offered in the Mac, iOS and Android apps; on Windows and Linux a document must be downloaded (images preview on 1Password.com). See also https://support.1password.com/files/",
+        "keeper": "not checked: https://docs.keeper.io/enterprise-guide/secure-file-storage read; it describes storing and downloading files and does not state whether the vault previews them."
+      }
     },
     {
       "id": "vault-27",
@@ -1220,10 +1238,10 @@
       "name": "Archive an item so it leaves search and autofill without being deleted.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -1237,7 +1255,11 @@
       "originUrl": "https://community.bitwarden.com/t/archive-items-exclude-from-search-autofill/7191",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/components/kv-delete-modal.js:23 only delete, delete-metadata, destroy; searched 'archive' in ui/lib/kv/addon: no match Note: Soft delete hides a version but there is no archive state, and no autofill or global search to leave.",
+        "onepassword": "https://support.1password.com/archive-delete-items/ : 'Learn how to archive and delete items to keep your information organized'; archived items are kept out of the everyday item list and suggestions.",
+        "keeper": "not checked: no archive state for records found in https://docs.keeper.io/user-guides/web-vault or the record docs; only delete and the Deleted Items folder are described."
+      }
     },
     {
       "id": "vault-28",
@@ -1245,10 +1267,10 @@
       "name": "Link several website addresses to one login.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "yes",
       "passbolt": "unknown",
-      "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "keeper": "yes",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -1262,7 +1284,36 @@
       "originUrl": "https://community.passbolt.com/t/as-a-user-i-want-to-associate-multiple-uris-with-a-password/4388",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:25 untyped fields, no URL type Note: Secrets have no website field, so several URLs are only extra free-form keys.",
+        "onepassword": "https://support.1password.com/autofill-behavior/ : 'If you only have one website field in an item, learn how to add more'; each website field has its own autofill behaviour.",
+        "keeper": "https://docs.keeper.io/user-guides/tips-and-tricks/one-record-with-multiple-url-domains : store multiple website domains in one record through additional URL fields; KeeperFill matches every one."
+      }
+    },
+    {
+      "id": "vault-29",
+      "area": "vault",
+      "name": "Compare two versions of a secret side by side to see what changed.",
+      "keepiq": "partial",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "yes",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "built",
+        "evidence": "src/dialogs/VersionDetailsDialog.vue:4 read-only view of one decrypted historic version; opened from the version history list (openspec/specs/secret-version-history); git grep -i 'diff|compare' src/dialogs src/components: no diff view",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretDetailSidebar > version history > Version details dialog",
+        "note": "One old version can be opened and read next to nothing else; there is no side-by-side diff."
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "read-from-code",
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes.js:24 secret.metadata.diff route; ui/lib/kv/addon/components/page/secret/metadata/version-history.hbs:52 Version diff Note: The KV UI compares two versions side by side."
+      }
     },
     {
       "id": "crypto-01",
@@ -1905,10 +1956,10 @@
       "name": "Ask for the master password again before a sensitive item is shown or filled.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -1922,7 +1973,11 @@
       "originUrl": "https://community.bitwarden.com/t/require-master-password-re-prompt-for-some-items/41",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:36 MaskedInput reveals on click with no re-auth; searched 'reprompt', 're-authenticate' in ui/app ui/lib: no match Note: Values are masked but revealed without asking for credentials again; Enterprise control groups gate access by approval, not by re-entering a password.",
+        "onepassword": "https://support.1password.com/autofill-confirmation/ : 'Ask before filling' only asks for a confirmation click before filling cards or identities; a 1Password Community request to 'Enter master password again for revealing passwords' (https://1password.community/discussion/30438) was logged as a request, not shipped.",
+        "keeper": "not checked: no per-record master password re-prompt found in https://docs.keeper.io/user-guides/web-vault or https://docs.keeper.io/enterprise-guide/roles/enforcement-policies."
+      }
     },
     {
       "id": "crypto-21",
@@ -1930,10 +1985,10 @@
       "name": "See where you are signed in and end a session on another device.",
       "keepiq": "partial",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "yes",
       "passbolt": "unknown",
-      "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "keeper": "yes",
+      "hashicorp-vault": "partial",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
@@ -1947,7 +2002,11 @@
       "originUrl": "https://community.bitwarden.com/t/session-management/1696",
       "provider": "nextcloud",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/token_store.go:232 auth/token/accessors list (sudo), :336 lookup-accessor, :394 revoke-accessor; ui/app/router.js has no session list page Note: An operator can list token accessors, inspect and revoke them by API or CLI, but users have no 'where am I signed in' page.",
+        "onepassword": "https://support.1password.com/unrecognized-device/ : on 1Password.com, Manage Account shows the apps and browsers 'Linked to your account' and each can be unlinked; https://support.1password.com/lost-device/ : 'Deauthorize Device'.",
+        "keeper": "https://docs.keeper.io/keeperpam/commander-cli/command-reference/device-management-commands : Session Management lists every device session with model, OS and last login, and can log out, lock or remove a device remotely."
+      }
     },
     {
       "id": "crypto-22",
@@ -1955,10 +2014,10 @@
       "name": "Item names, website addresses and usernames are encrypted too, so the server sees no item metadata.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "yes",
       "passbolt": "unknown",
-      "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "keeper": "yes",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -1972,7 +2031,36 @@
       "originUrl": "https://github.com/passbolt/passbolt_api/releases/tag/v5.0.0",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/barrier_aes_gcm.go:846 storage encrypted by the server-held barrier key; ui/lib/kv/addon/components/kv-create-edit-form.js:108 paths and values sent in plaintext over TLS Note: Everything is encrypted at rest, but by a key the server holds, so the server sees names, paths and values.",
+        "onepassword": "https://agilebits.github.io/security-design/secureItems.html : item overviews (title, URLs, tags) and details are both encrypted with the vault key; the server stores neither in clear.",
+        "keeper": "https://docs.keeper.io/enterprise-guide/keeper-encryption-model : 'All fields and all of the data in the vault is encrypted, including file attachments'; type, title and URL are sent to the enterprise only as audit data encrypted with the enterprise public key."
+      }
+    },
+    {
+      "id": "crypto-23",
+      "area": "crypto",
+      "name": "Lock a user out after repeated failed sign-in attempts.",
+      "keepiq": "partial",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "yes",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "built",
+        "evidence": "Nextcloud server login brute-force throttling (platform) and lib/Controller/ApplicationTokenController.php:89 #[BruteForceProtection] on the machine token exchange; lib/Controller/LinkShareAccessController.php:96 counts failed_attempts on public links. The vault unlock is client-side, so the master password has no server-side attempt limit",
+        "owner": "nextcloud/server",
+        "reachedOn": "Nextcloud login; public link access page",
+        "note": "Sign-in and machine token exchange are throttled, not locked; an account lockout after N failures needs Nextcloud's bundled Password policy app. The vault unlock itself has no attempt limit."
+      },
+      "rowSource": "competitor",
+      "provider": "nextcloud",
+      "providerHow": "read-from-code",
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system.go:2891 user_lockout_config LockoutThreshold on auth mount tune; ui/app/components/auth-config-form/options.ts:56 supportsUserLockoutConfig for approle, ldap, userpass, :67 saves user_lockout_config Note: Failed login lockout with threshold, duration and counter reset is configurable per auth method, in the UI and API."
+      }
     },
     {
       "id": "sharing-01",
@@ -2719,10 +2807,10 @@
       "name": "Let a colleague sign in with a shared login without being able to see or copy the password.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "yes",
       "passbolt": "unknown",
-      "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "keeper": "partial",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -2736,7 +2824,11 @@
       "originUrl": "https://canadabuys.canada.ca/en/tender-opportunities/25260005",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/policy.go:27 read capability returns the value; searched 'autofill', 'fill only' in ui/app ui/lib: no match; builtin/logical/database/path_creds_create.go:34 per-user dynamic credentials are the alternative Note: A shared KV login is either readable or not; Vault avoids shared passwords with per-user dynamic credentials or SSH certificates instead, which is a different model.",
+        "onepassword": "https://support.1password.com/create-share-vaults-teams/ : in 1Password Business a group can use items without revealing or copying passwords when the 'View and Copy Passwords' vault permission is removed; https://support.1password.com/permission-enforcement/ notes this permission is client-enforced.",
+        "keeper": "https://docs.keeper.io/enterprise-guide/sharing/hiding-passwords : Privacy Screen stops a team or role from unmasking passwords on shared records, but the docs state masking is visual only and the password stays reachable through the API and browser inspection."
+      }
     },
     {
       "id": "sharing-25",
@@ -2744,10 +2836,10 @@
       "name": "Share an item with a colleague for a set period, after which their access ends by itself.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "partial",
       "passbolt": "unknown",
-      "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "keeper": "yes",
+      "hashicorp-vault": "partial",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -2761,7 +2853,11 @@
       "originUrl": "https://github.com/bitwarden/clients/pull/22921",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 command/token_create.go:90 -ttl on a token carrying chosen policies; vault/expiration.go:1564 token lease revoked at TTL; vault/policy.go no expiry on a policy grant Note: Handing a colleague a token with a policy and a TTL gives access that ends itself, but a grant on their own identity has no end date, so partial.",
+        "onepassword": "https://support.1password.com/share-items/ : a shared item link expires after 1 hour to 30 days or after one view, and can go to specific email addresses, but it shares a copy, not the item itself; vault access for a team member has no expiry (https://support.1password.com/create-share-vaults-teams/).",
+        "keeper": "https://docs.keeper.io/enterprise-guide/sharing/time-limited-access : share credentials with other Keeper users 'on a temporary basis, automatically revoking access at a specified time'."
+      }
     },
     {
       "id": "requests-01",
@@ -3142,7 +3238,7 @@
       "feature": "application-mgmt",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/machine-accounts/ : machine accounts give 'non-human users (applications, deployment pipelines)' programmatic access (Secrets Manager)",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:123 POST organizations/{organizationId}/service-accounts; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/service-accounts/dialog/service-account-dialog.component.ts Note: Machine accounts are created in Secrets Manager and get project access and access tokens.",
         "onepassword": "https://developer.1password.com/docs/service-accounts/get-started/ : create a service account with vault access for an application or pipeline",
         "passbolt": "https://www.passbolt.com/docs/user/quickstart/go-cli : machines use a regular passbolt user account and its private key; there is no application registration object",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Developers/Api/Session-Api : clients authenticate as a Nextcloud user (app password) and open a session; no application registration",
@@ -3155,7 +3251,7 @@
       "area": "apps",
       "name": "An administrator approves or rejects application registrations.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -3182,7 +3278,7 @@
       "feature": "application-mgmt",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: machine accounts are created directly by permitted members; no approve or reject queue found",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:123 creates the machine account directly (no pending state); searched 'pending', 'approve' in src/Api/SecretsManager bitwarden_license/bit-web/src/app/secrets-manager: no registration approval Note: Permitted members create machine accounts directly; there is no application registration queue to approve or reject. Moved from unknown on code.",
         "onepassword": "not checked: no approve or reject queue for service account creation found",
         "passbolt": "not checked: no application registration exists, and no admin approval of API clients is documented",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 builtin/credential/approle/path_role.go:126 roles are created directly by a caller with policy on the path; searched 'pending', 'approve' in builtin/credential/approle: no registration queue Note: There is no self-registration and no approval queue; an admin (or anyone with policy on auth/approle/role) creates roles directly."
@@ -3193,7 +3289,7 @@
       "area": "apps",
       "name": "An administrator is notified when an application registration is waiting.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -3212,7 +3308,7 @@
       "feature": "application-mgmt",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: no pending-registration notification found",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:123 no pending registrations exist to notify about; src/Core/MailTemplates/Handlebars has no machine account registration template Note: No registration step, so no admin notification. Moved from unknown on code.",
         "onepassword": "not checked: no pending-registration notification found",
         "nextcloud-passwords": "https://github.com/marius-wieschollek/passwords/tree/master/src/lib/Notification : NewClientNotification and NewClientMail notify the user (not an admin) when a new client connects",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 builtin/credential/approle/path_role.go:126 roles created directly, no pending state; searched 'pending', 'approve' in builtin/credential/approle: no match Note: With no registration queue there is nothing to notify about."
@@ -3223,7 +3319,7 @@
       "area": "apps",
       "name": "Onboard an application with a certificate signing request.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -3242,7 +3338,7 @@
       "feature": "application-mgmt",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: no certificate signing request onboarding found; machines use access tokens",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:244 POST {id}/access-tokens is the only credential issuance; searched 'X509', 'certificate', 'csr' in src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src/Commercial.Core/SecretsManager: no match Note: Machines are onboarded with an access token, not a CSR. Moved from unknown on code.",
         "onepassword": "not checked: no certificate signing request onboarding found; machines use service account tokens or Connect tokens",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 builtin/logical/pki/path_issue_sign.go:119 sign/<role> signs a CSR; builtin/credential/cert/path_login.go:44 cert auth login with that client certificate Note: A CSR can be signed by the PKI engine and the resulting certificate used to log in with cert auth, but these are two engines wired by the operator, not a single onboarding step."
       }
@@ -3271,7 +3367,7 @@
       "feature": "secret-store-api",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/access-tokens/ : machines authenticate with a bearer access token that is shown once and stored by the operator",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:244 POST access-tokens returns a client secret shown once; src/Core/SecretsManager/Entities/ApiKey.cs:23 ExpireAt; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/service-accounts/access/dialogs/access-token-dialog.component.ts Note: The machine presents a stored access token (client credentials) and gets a short-lived JWT; no signed-assertion or workload identity login.",
         "onepassword": "https://1password.com/blog/introducing-1password-credential-broker : Credential Broker gives pipelines short-lived tokens 'without managing service account tokens'; service accounts otherwise use a stored bearer token",
         "passbolt": "https://www.passbolt.com/docs/development/authentication : API login proves possession of the user's OpenPGP private key (GPGAuth, being replaced by JWT) instead of sending a password",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Developers/Api/Session-Api : clients authenticate with Nextcloud credentials or an app password, then solve a passphrase challenge; no signed token login",
@@ -3303,7 +3399,7 @@
       "feature": "secret-store-api",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/secrets-manager-cli/ : 'bws secret get <SECRET_ID>' by identifier; by-name lookup needs listing and filtering",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/SecretsController.cs:127 GET secrets/{id}, :78 GET organizations/{organizationId}/secrets (list), :286 get-by-ids Note: The API fetches secrets by id or lists them; by-name lookup is a client-side filter over the list.",
         "onepassword": "https://developer.1password.com/docs/cli/secret-references/ : 'op://<vault-name>/<item-name>/[section-name/]<field-name>'",
         "passbolt": "https://www.passbolt.com/docs/user/quickstart/ansible-lookup : 'Search by name, username or URI', lookup(... name='acme-db-production')",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Developers/Api/Object-Search : 'The find command allows you to find api objects that match given search criteria' (e.g. by label)",
@@ -3335,7 +3431,7 @@
       "feature": "secret-store-api",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/machine-accounts/ : permission levels are only 'Can read' and 'Can read, write'",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Core/SecretsManager/Entities/AccessPolicy.cs:13 Read, :14 Write; src/Api/SecretsManager/Models/Request/PeopleAccessPoliciesRequestModel.cs:69; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/shared/access-policies/access-policy-selector/access-policy-selector.component.ts:135 CanRead, :136 CanReadWrite only Note: Permission choices are read or read-write; there is no write-only grant.",
         "onepassword": "https://developer.1password.com/docs/cli/reference/management-commands/service-account/ : 'write_items (requires read_items)'",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/share-resource : 'can update: read, use and update the resource'; there is no write-only permission",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Sharing-Passwords : share permissions are read, write and reshare; write implies read",
@@ -3347,7 +3443,7 @@
       "area": "apps",
       "name": "An application notices a rotated secret by polling for a new version.",
       "keepiq": "yes",
-      "bitwarden": "partial",
+      "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -3366,7 +3462,7 @@
       "feature": "secret-store-api",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/secrets-manager-kubernetes-operator/ : the operator 'uses a controller to synchronize Bitwarden Secrets into Kubernetes secrets' on an interval",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/SecretsController.cs:308 GET organizations/{organizationId}/secrets/sync?lastSyncedDate=, :342 returns HasChanges plus changed secrets (machine accounts only) Note: A machine polls with its last sync date and learns whether any secret changed; the Kubernetes operator uses this. Moved from partial because the API offers change detection, not just a periodic full read.",
         "onepassword": "https://developer.1password.com/docs/k8s/operator/ : operator can 'automatically restart deployments when 1Password items update'",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Search : password objects expose 'revision' and 'edited' fields that a client can compare when polling; no rotation signal as such",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 command/agent/config/config.go:187 static_secret_render_interval for Vault Agent templates (re-renders KV v2 on an interval) Note: Vault Agent polls non-leased secrets such as KV v2 on a configurable interval and re-renders templates when they change."
@@ -3377,7 +3473,7 @@
       "area": "apps",
       "name": "Applications find the secrets API through a well-known discovery document.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -3404,7 +3500,7 @@
       "feature": "secret-store-api",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: machine account Config tab lists server URLs, no well-known discovery document found",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Utilities/ServiceCollectionExtensions.cs:100 only the OIDC /.well-known/openid-configuration of the identity server; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/service-accounts/config/config.component.ts shows API and identity URLs to copy Note: The machine account Config tab hands out the URLs; there is no discovery document for the secrets API itself. Moved from unknown on code.",
         "onepassword": "not checked: no well-known discovery document found",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system_paths.go:2899 sys/internal/specs/openapi serves an OpenAPI document of every mounted path; http/handler.go:613 /.well-known/ routing; vault/logical_system.go:6706 sys/well-known registry maps labels to mounts (used by ACME and OIDC) Note: Vault publishes a machine-readable OpenAPI description of its API and a /.well-known label registry, but no well-known document for discovering the secrets API itself, so partial."
       }
@@ -3433,7 +3529,7 @@
       "feature": "machine-secret-leases",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/access-tokens/ : an authenticated machine's session expires within one hour; tokens can carry an expiry",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Identity/IdentityServer/ClientProviders/SecretsManagerApiKeyProvider.cs:58 AccessTokenLifetime = 3600 * 1; src/Core/SecretsManager/Entities/ApiKey.cs:23 ExpireAt on the access token Note: The machine's session token expires after one hour and the access token can expire, but secrets carry no per-fetch lease.",
         "onepassword": "https://1password.com/blog/introducing-1password-credential-broker : short-lived, 'scoped and time-bound' tokens for pipelines (not a per-secret lease)",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/create-resource/ : secrets are static stored items (Password, TOTP, Custom fields, Notes, Pin code); no dynamic secret or lease engine is documented",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Developers/Api : the API manages stored passwords, folders, tags and shares; no dynamic secret, lease or machine engine is documented",
@@ -3472,7 +3568,7 @@
       "feature": "machine-secret-leases",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/access-tokens/ : 'revoke tokens immediately', sessions die within an hour; no renewal call",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:262 POST service-accounts/{id}/access-tokens/revoke; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/service-accounts/access/access-tokens.component.ts revoke Note: Access tokens can be revoked; renewal is just a new login, there is no lease renew call.",
         "onepassword": "https://developer.1password.com/docs/cli/reference/management-commands/service-account/ : rotating a token issues a new one and can set an expiry on the current token",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/create-resource/ : secrets are static stored items (Password, TOTP, Custom fields, Notes, Pin code); no dynamic secret or lease engine is documented",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Developers/Api : the API manages stored passwords, folders, tags and shares; no dynamic secret, lease or machine engine is documented",
@@ -3511,7 +3607,7 @@
       "feature": "machine-secret-leases",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/access-tokens/ : expiration set per token at creation, default 'Never'; no org-wide maximum found",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Models/Request/AccessTokenCreateRequestModel.cs:26 ExpireAt per token; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/service-accounts/access/dialogs/expiration-options.component.ts Note: Expiry is chosen per token at creation (including never); no organisation-wide maximum.",
         "onepassword": "https://developer.1password.com/docs/cli/reference/management-commands/service-account/ : 'set how long the service account is valid for'",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/create-resource/ : secrets are static stored items (Password, TOTP, Custom fields, Notes, Pin code); no dynamic secret or lease engine is documented",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Developers/Api : the API manages stored passwords, folders, tags and shares; no dynamic secret, lease or machine engine is documented",
@@ -3551,7 +3647,7 @@
       "feature": "application-mgmt",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/machine-accounts/ : when deleted 'Machine accounts are fully removed' and associated secrets remain intact",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:183 POST service-accounts/delete removes machine accounts only; secrets belong to projects (src/Api/SecretsManager/Controllers/ProjectsController.cs:157 separate delete) Note: Deleting a machine account leaves its secrets in their projects; there is no cascading delete.",
         "onepassword": "not checked: deleting a service account is documented, deleting its vault with it is not",
         "passbolt": "https://www.passbolt.com/docs/admin/user-provisioning/delete-user : deleting a (bot) user deletes 'resources belonging solely to the user'; shared ones need an ownership transfer",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/OCC-Commands/OCC-Commands : 'passwords:user:delete' removes a user's data; apps are ordinary users",
@@ -3582,7 +3678,7 @@
       "feature": "application-mgmt",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/machine-accounts/ : projects are added to a machine account with read or read-write, shown on its Projects tab",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/AccessPoliciesController.cs:198 GET service-accounts/{id}/granted-policies, :215 PUT; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/service-accounts/projects/service-account-projects.component.ts Note: A machine account's Projects tab lists the projects (and thereby secrets) it can read or write.",
         "onepassword": "https://developer.1password.com/docs/service-accounts/get-started/ : each service account is scoped to named vaults with per-vault permissions",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/search-and-filter : 'Items I own' and 'Shared with me' filters per account; a bot account's resources show in its share lists",
         "keeper": "https://docs.keeper.io/keeperpam/secrets-manager/about/one-time-token : applications are associated to shared folders or records ('secrets-manager share add'), and the application view lists them",
@@ -3613,7 +3709,7 @@
       "feature": "keepiq-cli",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/secrets-manager-cli/ : 'bws run' injects secrets 'as environment variables'",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/SecretsController.cs:78 list and :286 get-by-ids used by bws; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/integrations/integrations.component.ts:18 links bitwarden/sdk-sm (bws CLI) | docs: https://bitwarden.com/help/secrets-manager-cli/ Note: The bws binary (bws run injects env vars) lives in bitwarden/sdk-sm, not read here; the server API it calls is present. Docs rating kept.",
         "onepassword": "https://developer.1password.com/docs/cli/secrets-environment-variables : 'op run' passes secrets as environment variables 'without exposing any secrets in plaintext'",
         "passbolt": "https://www.passbolt.com/docs/user/quickstart/go-cli : go-passbolt-cli lets you 'inject secrets into scripts without ever writing them to disk'",
         "nextcloud-passwords": "https://github.com/marius-wieschollek/passwords#apps : the official and third-party client list (browser extensions, Android, iOS, desktop) has no command-line client",
@@ -3645,7 +3741,7 @@
       "feature": "keepiq-cli",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/cli/ : Password Manager CLI reads and edits your own vault",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/cli/src/commands/get.command.ts, list.command.ts (bw get/list item), apps/cli/src/commands/serve.command.ts (bw serve local REST) Note: The bw CLI reads and edits the user's own vault, and can serve it as a local API.",
         "onepassword": "https://developer.1password.com/docs/cli/reference/ : 1Password CLI 'op' reads items from your account",
         "passbolt": "https://www.passbolt.com/docs/user/quickstart/go-cli : 'retrieve, create, update, share and delete resources, folders, users and groups' from a terminal",
         "nextcloud-passwords": "https://github.com/marius-wieschollek/passwords#apps : no command-line client in the client list; only a JS library per https://git.mdns.eu/nextcloud/passwords/-/wikis/Developers/Libraries",
@@ -3673,7 +3769,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/secrets-manager-kubernetes-operator/ : sm-operator deployed with Helm syncs secrets into Kubernetes",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/integrations/integrations.component.ts:94 Kubernetes Operator; bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/SecretsController.cs:308 secrets/sync used by the operator | docs: https://bitwarden.com/help/secrets-manager-kubernetes-operator/ Note: sm-operator lives in its own repo; the integrations page offers it and the sync API serves it. Docs rating kept.",
         "onepassword": "https://developer.1password.com/docs/k8s/integrations/ : Kubernetes Secrets Injector, Operator and Helm charts",
         "passbolt": "https://external-secrets.io/latest/provider/passbolt/ : third-party External Secrets Operator provider syncs passbolt to Kubernetes secrets, read-only; not a vendor product",
         "keeper": "https://docs.keeper.io/keeperpam/secrets-manager/integrations/kubernetes-external-secrets-operator : External Secrets Operator provider syncs Keeper secrets into Kubernetes Secrets (also a Secrets Injector)",
@@ -3700,7 +3796,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/github-actions-integration/ : injects secrets as masked environment variables; GitLab CI/CD and Jenkins listed in https://bitwarden.com/help/secrets-manager-overview/",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/integrations/integrations.component.ts:25 GitHub Actions, :32 GitLab CI/CD, :39 Ansible | docs: https://bitwarden.com/help/github-actions-integration/ Note: Ready-made CI integrations are listed in the product; their code lives in separate repos. Docs rating kept.",
         "onepassword": "https://developer.1password.com/docs/ci-cd/github-actions/ : load secrets into GitHub Actions with secret references",
         "passbolt": "not checked: no vendor GitHub Actions or GitLab CI integration found; the Go CLI can be scripted in CI",
         "keeper": "https://docs.keeper.io/keeperpam/secrets-manager/integrations/github-actions : Keeper Secrets Manager GitHub Action; GitLab integration at https://docs.keeper.io/keeperpam/secrets-manager/integrations/gitlab-plugin",
@@ -3712,7 +3808,7 @@
       "area": "apps",
       "name": "Generate short-lived database credentials on demand.",
       "keepiq": "no",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "no",
       "passbolt": "no",
       "keeper": "partial",
@@ -3727,7 +3823,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "not checked: no dynamic database credential feature found in Secrets Manager docs or FAQs",
+        "bitwarden": "searched 'dynamic.?secret', 'DatabaseCredential', 'transit' in bitwarden/server@v2026.9.1 src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src: no match; src/Pam.Domain/Enums/PamTargetSystemKind.cs:10 Mssql is rotation of a stored credential, not on-demand minting Note: Secrets Manager stores static values; no on-demand short-lived database credentials. Moved from unknown on a documented search.",
         "onepassword": "https://1password.com/blog/introducing-1password-credential-broker : automatic rotation is not in the initial release and a database password 'may still be long-lived in the database'",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/create-resource/ : secrets are static stored items (Password, TOTP, Custom fields, Notes, Pin code); no dynamic secret or lease engine is documented",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Developers/Api : the API manages stored passwords, folders, tags and shares; no dynamic secret, lease or machine engine is documented",
@@ -3740,7 +3836,7 @@
       "area": "apps",
       "name": "Rotate a database or service password automatically.",
       "keepiq": "no",
-      "bitwarden": "unknown",
+      "bitwarden": "partial",
       "onepassword": "partial",
       "passbolt": "no",
       "keeper": "yes",
@@ -3756,7 +3852,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "not checked: no built-in automatic rotation found; only manual update and community Ansible tooling",
+        "bitwarden": "bitwarden/server@v2026.9.1 bitwarden_license/src/Services/Pam/AccessConnector/Rotation/Api/Endpoints/RotationConfigEndpoints.cs:23 POST rotation config, :47 {id}/rotate; src/Pam.Domain/Enums/PamTargetSystemKind.cs:9 Entra, :10 Mssql, :11 CustomScript; bitwarden_license/src/Services/Pam/Api/Endpoints/PamEndpointsExtensions.cs:53 gated on FeatureFlagKeys.PamAccessConnector (src/Core/Constants.cs:314 'pm-42354-rotation-daemon'); bitwarden/clients@web-v2026.9.0 no rotation UI (searched 'rotationConfig', 'targetSystem' in apps libs bitwarden_license: no match) Note: Server-side scheduled and on-demand rotation of vault credentials against Entra, MSSQL and custom scripts through a pull-based access connector exists behind a feature flag, with no admin UI in this client tag and the connector not in these repos. Moved from unknown: real but pre-release.",
         "onepassword": "https://1password.com/blog/introducing-1password-credential-broker : no built-in rotation yet; SDKs can script rotation per https://blog.1password.com/1password-sdks-programmatic-item-management/",
         "passbolt": "https://www.passbolt.com/docs/admin/resource-policies/password-expiry : expiry policies flag passwords as expired and notify owners; rotation itself stays manual",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Settings : 'Maximum age in days' only marks old passwords as weak; no automatic rotation",
@@ -3785,7 +3881,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/secrets-manager-sdk/ : C++, C#, Go, Java, JavaScript, PHP, Python, Ruby",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/integrations/integrations.component.ts:45 C#, :51 C++, :57 Go, :63 Java, :70 JS WebAssembly, :76 php, :82 Python, :88 Ruby, :18 Rust (bitwarden/sdk-sm) | docs: https://bitwarden.com/help/secrets-manager-sdk/ Note: SDKs for nine languages from bitwarden/sdk-sm (not read here); listed in the product. Docs rating kept.",
         "onepassword": "https://developer.1password.com/docs/sdks/ : SDKs for Go, JavaScript and Python",
         "passbolt": "https://www.passbolt.com/docs/user/quickstart/go-cli : official Go module go-passbolt; other languages rely on generic OpenPGP libraries per https://www.passbolt.com/docs/development/getting-started",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Developers/Libraries : official NPM/JS Passwords Client; third-party Rust library and Ansible integration",
@@ -3813,7 +3909,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/secrets-manager-overview/ : Terraform listed among integrations",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/integrations/integrations.component.ts:101 Terraform Provider (registry.terraform.io/providers/bitwarden/bitwarden-secrets) Note: Terraform provider listed in product; its code is in a separate repo. Docs rating kept.",
         "onepassword": "https://developer.1password.com/docs/terraform : reference, create or update items as Terraform resources",
         "passbolt": "https://github.com/Bald1nh0/terraform-provider-passbolt : community Terraform provider for users, groups, folders and passwords; not vendor maintained",
         "keeper": "https://docs.keeper.io/keeperpam/secrets-manager/integrations/terraform : Terraform Provider for Keeper Secrets Manager",
@@ -3825,7 +3921,7 @@
       "area": "apps",
       "name": "Other Conduction apps keep their connection credentials in the vault.",
       "keepiq": "unknown",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "no",
@@ -3844,7 +3940,7 @@
       "feature": "secret-store-api",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: Conduction-specific integration, not applicable to a third-party product",
+        "bitwarden": "searched 'nextcloud', 'conduction' in bitwarden/server@v2026.9.1 and bitwarden/clients@web-v2026.9.0: no match Note: No integration with Conduction apps; they could only call the generic Secrets Manager API. Moved from unknown on a documented search.",
         "onepassword": "not checked: Conduction-specific integration, not applicable to a third-party product",
         "passbolt": "not checked: a Conduction-specific integration no vendor page can speak to",
         "nextcloud-passwords": "not checked: a Conduction-specific integration no vendor page can speak to; the app does offer a full API per https://git.mdns.eu/nextcloud/passwords/-/wikis/Developers/Api",
@@ -3857,7 +3953,7 @@
       "area": "apps",
       "name": "Encrypt and decrypt data for an application without storing it.",
       "keepiq": "no",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "no",
       "keeper": "unknown",
@@ -3872,7 +3968,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "not checked: no encryption-as-a-service API found",
+        "bitwarden": "searched 'transit', 'encrypt-as', 'EncryptionService' routes in bitwarden/server@v2026.9.1 src/Api/SecretsManager bitwarden_license/src: no encrypt/decrypt endpoint for arbitrary data Note: No encryption-as-a-service API; all encryption is client side on stored items. Moved from unknown on a documented search.",
         "onepassword": "not checked: no encryption-as-a-service API found",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/create-resource/ : secrets are static stored items (Password, TOTP, Custom fields, Notes, Pin code); no dynamic secret or lease engine is documented",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Developers/Api : the API manages stored passwords, folders, tags and shares; no dynamic secret, lease or machine engine is documented",
@@ -3880,11 +3976,37 @@
       }
     },
     {
+      "id": "apps-25",
+      "area": "apps",
+      "name": "Push secrets out to cloud secret stores such as AWS Secrets Manager, Azure Key Vault or GitHub and keep them in sync.",
+      "keepiq": "no",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "yes",
+      "hashicorp-vault": "yes",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "none",
+        "evidence": "git grep -i 'aws|azure|key vault' lib src: no match; no outbound secret sync",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "nothing",
+        "note": "No push of secrets to cloud secret stores."
+      },
+      "rowSource": "competitor",
+      "provider": "keepiq",
+      "providerHow": "read-from-code",
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/sync/addon/routes.js:10 destinations and sync routes; ui/lib/sync/addon/utils/constants.ts:12 aws-sm, azure-kv, gcp-sm, gh, vercel-project; ui/lib/sync/addon/components/secrets/page/overview.hbs:18 activation required; no sys/sync server code in the CE tree | docs: https://developer.hashicorp.com/vault/docs/sync Note: Secrets sync to AWS, Azure, GCP, GitHub and Vercel is in the UI; the server side is Enterprise only, which is the plan this column rates.",
+        "keeper": "https://docs.keeper.io/keeperpam/privileged-access-manager/universal-secrets-sync : 'Synchronize Shared Secrets to Cloud Secret Management Services'; Universal Secrets Sync automatically pushes shared secrets to cloud secret stores (KeeperPAM)."
+      }
+    },
+    {
       "id": "pki-01",
       "area": "pki",
       "name": "Run a private certificate authority with a root and an intermediate certificate.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "no",
       "keeper": "unknown",
@@ -3903,7 +4025,7 @@
       "feature": "encryption-suites",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: no certificate authority or certificate lifecycle feature found in Bitwarden help or Secrets Manager docs",
+        "bitwarden": "searched 'x509', 'certificate' (case-insensitive) in bitwarden/server@v2026.9.1 src/Core/Vault src/Api/Vault src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src/Commercial.Core and 'x509', 'certificateAuthority' in bitwarden/clients@web-v2026.9.0 libs/vault libs/common/src/vault bitwarden_license/bit-web/src/app/secrets-manager: no match (only a package lock entry) Note: No certificate authority of any kind. Moved from unknown on a documented search.",
         "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs",
         "passbolt": "https://www.passbolt.com/roadmap : 'New content type: Certificates, Store and manage certificates' is in the backlog; passbolt runs no certificate authority",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Creating-Passwords : the only item type is a password entry (custom field types Text, Secret, Email, Website, File, Data); no certificate or CA features in https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings",
@@ -3916,7 +4038,7 @@
       "area": "pki",
       "name": "The certificate authority renews its own certificates before they expire.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "no",
       "keeper": "unknown",
@@ -3949,7 +4071,7 @@
       "feature": "encryption-suites",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: no certificate authority or certificate lifecycle feature found in Bitwarden help or Secrets Manager docs",
+        "bitwarden": "searched 'x509', 'certificate' (case-insensitive) in bitwarden/server@v2026.9.1 src/Core/Vault src/Api/Vault src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src/Commercial.Core and 'x509', 'certificateAuthority' in bitwarden/clients@web-v2026.9.0 libs/vault libs/common/src/vault bitwarden_license/bit-web/src/app/secrets-manager: no match (only a package lock entry) Note: No CA, so no self-renewal. Moved from unknown on a documented search.",
         "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs",
         "passbolt": "https://www.passbolt.com/roadmap : 'New content type: Certificates, Store and manage certificates' is in the backlog; passbolt runs no certificate authority",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Creating-Passwords : the only item type is a password entry (custom field types Text, Secret, Email, Website, File, Data); no certificate or CA features in https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings",
@@ -3961,7 +4083,7 @@
       "area": "pki",
       "name": "See the health of the certificate authority on the admin settings page.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "no",
       "keeper": "unknown",
@@ -3988,7 +4110,7 @@
       "feature": "certificate-lifecycle",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: no certificate authority or certificate lifecycle feature found in Bitwarden help or Secrets Manager docs",
+        "bitwarden": "searched 'x509', 'certificate' (case-insensitive) in bitwarden/server@v2026.9.1 src/Core/Vault src/Api/Vault src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src/Commercial.Core and 'x509', 'certificateAuthority' in bitwarden/clients@web-v2026.9.0 libs/vault libs/common/src/vault bitwarden_license/bit-web/src/app/secrets-manager: no match (only a package lock entry) Note: No CA, so no CA health view. Moved from unknown on a documented search.",
         "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs",
         "passbolt": "https://www.passbolt.com/roadmap : 'New content type: Certificates, Store and manage certificates' is in the backlog; passbolt runs no certificate authority",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Creating-Passwords : the only item type is a password entry (custom field types Text, Secret, Email, Website, File, Data); no certificate or CA features in https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings",
@@ -4000,7 +4122,7 @@
       "area": "pki",
       "name": "See every certificate in one inventory, including ones stored as secrets.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "no",
       "keeper": "unknown",
@@ -4019,7 +4141,7 @@
       "feature": "certificate-lifecycle",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: no certificate authority or certificate lifecycle feature found in Bitwarden help or Secrets Manager docs",
+        "bitwarden": "searched 'x509', 'certificate' (case-insensitive) in bitwarden/server@v2026.9.1 src/Core/Vault src/Api/Vault src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src/Commercial.Core and 'x509', 'certificateAuthority' in bitwarden/clients@web-v2026.9.0 libs/vault libs/common/src/vault bitwarden_license/bit-web/src/app/secrets-manager: no match (only a package lock entry) Note: No certificate inventory; certificates can only sit in notes or attachments. Moved from unknown on a documented search.",
         "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs",
         "passbolt": "https://www.passbolt.com/roadmap : 'New content type: Certificates, Store and manage certificates' is in the backlog; passbolt runs no certificate authority",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Creating-Passwords : the only item type is a password entry (custom field types Text, Secret, Email, Website, File, Data); no certificate or CA features in https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings",
@@ -4031,7 +4153,7 @@
       "area": "pki",
       "name": "Get reminded before a certificate expires.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "no",
       "keeper": "unknown",
@@ -4058,7 +4180,7 @@
       "feature": "certificate-lifecycle",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: no certificate authority or certificate lifecycle feature found in Bitwarden help or Secrets Manager docs",
+        "bitwarden": "searched 'x509', 'certificate' (case-insensitive) in bitwarden/server@v2026.9.1 src/Core/Vault src/Api/Vault src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src/Commercial.Core and 'x509', 'certificateAuthority' in bitwarden/clients@web-v2026.9.0 libs/vault libs/common/src/vault bitwarden_license/bit-web/src/app/secrets-manager: no match (only a package lock entry) Note: No certificate expiry tracking or reminders. Moved from unknown on a documented search.",
         "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs",
         "passbolt": "https://www.passbolt.com/roadmap : 'New content type: Certificates, Store and manage certificates' is in the backlog; passbolt runs no certificate authority",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Creating-Passwords : the only item type is a password entry (custom field types Text, Secret, Email, Website, File, Data); no certificate or CA features in https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings",
@@ -4070,7 +4192,7 @@
       "area": "pki",
       "name": "Get guided renewal that depends on where the certificate came from.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "no",
       "keeper": "unknown",
@@ -4089,7 +4211,7 @@
       "feature": "certificate-lifecycle",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: no certificate authority or certificate lifecycle feature found in Bitwarden help or Secrets Manager docs",
+        "bitwarden": "searched 'x509', 'certificate' (case-insensitive) in bitwarden/server@v2026.9.1 src/Core/Vault src/Api/Vault src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src/Commercial.Core and 'x509', 'certificateAuthority' in bitwarden/clients@web-v2026.9.0 libs/vault libs/common/src/vault bitwarden_license/bit-web/src/app/secrets-manager: no match (only a package lock entry) Note: No certificate renewal flow. Moved from unknown on a documented search.",
         "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs",
         "passbolt": "https://www.passbolt.com/roadmap : 'New content type: Certificates, Store and manage certificates' is in the backlog; passbolt runs no certificate authority",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Creating-Passwords : the only item type is a password entry (custom field types Text, Secret, Email, Website, File, Data); no certificate or CA features in https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings",
@@ -4101,7 +4223,7 @@
       "area": "pki",
       "name": "Issue certificates for your own services from the vault.",
       "keepiq": "no",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "no",
       "keeper": "unknown",
@@ -4117,7 +4239,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "not checked: no certificate authority or certificate lifecycle feature found in Bitwarden help or Secrets Manager docs",
+        "bitwarden": "searched 'x509', 'certificate' (case-insensitive) in bitwarden/server@v2026.9.1 src/Core/Vault src/Api/Vault src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src/Commercial.Core and 'x509', 'certificateAuthority' in bitwarden/clients@web-v2026.9.0 libs/vault libs/common/src/vault bitwarden_license/bit-web/src/app/secrets-manager: no match (only a package lock entry) Note: No certificate issuance. Moved from unknown on a documented search.",
         "onepassword": "not checked: no certificate authority or certificate lifecycle feature found in 1Password support or developer docs",
         "passbolt": "https://www.passbolt.com/roadmap : 'New content type: Certificates, Store and manage certificates' is in the backlog; passbolt runs no certificate authority",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Creating-Passwords : the only item type is a password entry (custom field types Text, Secret, Email, Website, File, Data); no certificate or CA features in https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings",
@@ -4148,7 +4270,7 @@
       "feature": "certificate-lifecycle",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/managing-items/ : the five item types are Login, Card, Identity, Secure note and SSH key; no certificate type with expiry or subject",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Core/Vault/Enums/CipherType.cs:7-14 Login, SecureNote, Card, Identity, SSHKey, BankAccount, DriversLicense, Passport; no certificate type. searched 'x509', 'certificate' (case-insensitive) in bitwarden/server@v2026.9.1 src/Core/Vault src/Api/Vault src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src/Commercial.Core and 'x509', 'certificateAuthority' in bitwarden/clients@web-v2026.9.0 libs/vault libs/common/src/vault bitwarden_license/bit-web/src/app/secrets-manager: no match (only a package lock entry) Note: No certificate item type with parsed expiry or subject; a certificate can only be stored as a note, custom field or attachment.",
         "onepassword": "https://support.1password.com/item-categories/ : the full category list (about 22 types) has no certificate type with expiry or subject",
         "passbolt": "https://www.passbolt.com/roadmap : 'New content type: Certificates, Store and manage certificates' is in the backlog; passbolt runs no certificate authority",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Creating-Passwords : the only item type is a password entry (custom field types Text, Secret, Email, Website, File, Data); no certificate or CA features in https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings",
@@ -4161,7 +4283,7 @@
       "area": "pki",
       "name": "Download an application's private key once, at registration.",
       "keepiq": "no",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -4187,7 +4309,7 @@
       "feature": "application-mgmt",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: applications receive an access token shown once (https://bitwarden.com/help/access-tokens/), not a private key",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:244 POST access-tokens returns a one-time client secret, not a key pair; searched 'x509', 'certificate' (case-insensitive) in bitwarden/server@v2026.9.1 src/Core/Vault src/Api/Vault src/Api/SecretsManager src/Core/SecretsManager bitwarden_license/src/Commercial.Core and 'x509', 'certificateAuthority' in bitwarden/clients@web-v2026.9.0 libs/vault libs/common/src/vault bitwarden_license/bit-web/src/app/secrets-manager: no match (only a package lock entry) Note: Machines get an access token shown once, never a private key. Moved from unknown on code.",
         "onepassword": "not checked: service accounts receive a token shown once, not a private key",
         "passbolt": "not checked: there is no application registration, so no one-time private key download applies",
         "nextcloud-passwords": "not checked: there is no application registration, so no one-time private key download applies",
@@ -4226,7 +4348,7 @@
       "feature": "password-health",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/reports/ : Weak passwords report scores with zxcvbn 'sorted by severity'; no per-item badge documented",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/dirt/reports/pages/weak-passwords-report.component.ts:29 ReportScore label and badgeVariant per item, :206 passwordStrengthService.getPasswordStrength (zxcvbn); libs/vault/src/cipher-view/login-credentials/login-credentials-view.component.html:102 'atRiskPassword' badge when a security task exists Note: Weak items get a scored badge in the weak passwords report, and at-risk items show a badge in the item view; there is no strength badge on every item in the vault list.",
         "onepassword": "https://support.1password.com/watchtower/ : Watchtower flags weak passwords per item; no numeric per-item score documented",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/create-resource/ : 'Quality below the field rates the password from very weak to very strong' with entropy in bits, shown while editing; no badge in the list",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Password-Security-Status : a coloured shield per password (Secure, Weak, Broken, Unknown); a status badge rather than a numeric score",
@@ -4272,7 +4394,7 @@
       "feature": "password-health",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/reports/ : Reused Passwords report detects 'non-unique passwords in your vault'",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/dirt/reports/pages/reused-passwords-report.component.ts; apps/web/src/app/dirt/reports/pages/organizations/reused-passwords-report.component.ts Note: Reused passwords report for personal and organisation vaults.",
         "onepassword": "https://support.1password.com/watchtower/ : 'Reused passwords' flags identical passwords across items",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/F.A.Q : duplicates are marked 'Weak (Duplicate)'; 'To find other duplicates of the same password, just click on the shield icon'",
         "keeper": "https://docs.keeper.io/user-guides/security-audit : the Security Audit screen shows 'each record's password strength and reuse'",
@@ -4311,7 +4433,7 @@
       "feature": "password-health",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://community.bitwarden.com/t/vault-health-reports-add-report-for-password-age/11561 : password age report is an open request; per-item password history shows change dates",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/vault/models/view/cipher.view.ts:62 passwordHistory with dates, login passwordRevisionDate shown in item history; searched 'passwordRevisionDate' in apps/web/src/app/dirt bitwarden_license/bit-web/src/app/dirt: no report uses it Note: Each item shows when its password last changed, but there is no report filtering passwords older than a chosen age.",
         "onepassword": "https://support.1password.com/item-history/ : last edited date and previous versions per item; no password age report in https://support.1password.com/watchtower/",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/grid-columns : 'Modified' and 'Expiry' columns; no password age as such",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords : list shows 'the date when the actual password was last changed'; 'Maximum age in days' rule in https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Settings",
@@ -4350,7 +4472,7 @@
       "feature": "password-health",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/reports/ : Exposed Passwords sends 'the first five digits of the hash', 'locally compared with the full hash'",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/services/audit.service.ts:13 api.pwnedpasswords.com/range/ (k-anonymity, 5-char hash prefix); apps/web/src/app/dirt/reports/pages/exposed-passwords-report.component.ts Note: Exposed passwords check sends only a hash prefix and compares locally.",
         "onepassword": "https://support.1password.com/watchtower-privacy/ : 'Only the first five characters of each hash leave your device'",
         "passbolt": "https://www.passbolt.com/docs/admin/resource-policies/password-policy : optional external dictionary check on save; 'a hash of the secret is sent to the external service and not the secret itself'",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/Services/Password-Security-Check-Services : HIBP k-anonymity 'no SHA-1 hash of any password is ever sent to the api', or fully local breach databases",
@@ -4396,7 +4518,7 @@
       "feature": "password-health",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/reports/ : vault health reports for exposed, reused, weak, unsecured, inactive 2FA (premium and paid org members)",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/dirt/reports/pages/reports-home.component.ts lists exposed, reused, weak, unsecured websites, inactive 2FA, breach and passkey reports Note: One reports hub covers the whole vault.",
         "onepassword": "https://support.1password.com/watchtower/ : Watchtower overview of weak, reused, vulnerable, unsecured, 2FA and expiring items",
         "passbolt": "https://community.passbolt.com/t/as-an-administrator-i-would-like-to-check-the-weakness-passwords/2744 : open feature request; no vault health report in the docs",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords : 'You can get a quick overview of all passwords by their security status in the security section'",
@@ -4428,7 +4550,7 @@
       "feature": "password-health",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/reports/ : reports 'are run locally on your client'",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/dirt/reports/pages/cipher-report.component.ts decrypts ciphers locally for every report; apps/web/src/app/dirt/reports/pages/weak-passwords-report.component.ts:206 client-side scoring Note: Reports run in the client over decrypted data; only hash prefixes leave for the breach check.",
         "onepassword": "https://support.1password.com/watchtower-privacy/ : 'Everything is checked locally on your own device'",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/create-resource/ : strength rating runs in the extension; the breach check sends a hash to an external service",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Settings : the server stores a (partial) SHA-1 hash and runs the check daily ('If the server is compromised, an attacker could use the SHA-1 hash')",
@@ -4460,7 +4582,7 @@
       "feature": "key-generator",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/generator/ : password generator with length and character options; org 'Password generator' policy",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/tools/generator/core/src/metadata/password/random-password.ts length and character-class options; libs/tools/generator/core/src/engine/password-randomizer.ts; bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:7 PasswordGenerator policy Note: Random password generator with length, character sets, minimum numbers and specials, bounded by org policy.",
         "onepassword": "https://support.1password.com/generate-website-password/ : random password generator with options",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/create-resource/ : password tab 'Length ... from 8 to 128 characters' and character type toggles",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Settings : generator 'Password strength', 'Include numbers', 'Include special characters'",
@@ -4489,7 +4611,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/generator/ : passphrase generator; policy covers 'passwords and passphrases' (https://bitwarden.com/help/policies/)",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/tools/generator/core/src/metadata/password/eff-word-list.ts passphrase from the EFF word list Note: Passphrase generator with word count, separator, capitalisation and number options.",
         "onepassword": "https://support.1password.com/generate-website-password/ : Memorable Passwords from words, including Dutch",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/create-resource/ : passphrase tab, 'Number of words: from 4 to 40', separator and case",
         "nextcloud-passwords": "https://github.com/marius-wieschollek/passwords#modern-password-generator : word based passwords such as 'FuriousToothbrush'; word services in https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings",
@@ -4518,7 +4640,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/generator/ : username generator with forwarded email alias via SimpleLogin, Addy.io, Firefox Relay, Fastmail, DuckDuckGo, Forward Email",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/tools/generator/core/src/metadata/username/eff-word-list.ts random word username; libs/tools/generator/core/src/metadata/email/catchall.ts, plus-address.ts, forwarder.ts; libs/tools/generator/core/src/data/integrations.ts:8 AddyIo, :9 DuckDuckGo, :10 Fastmail, :12 ForwardEmail, :13 SimpleLogin Note: Username generator plus catch-all, plus-addressing and forwarded email aliases through six alias services.",
         "onepassword": "https://support.1password.com/fastmail/ : Masked Emails only with a Fastmail account; no general username generator documented",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 sdk/helper/template/template.go:102 random, :103 truncate, :105 uppercase functions for username_template in secrets engines; searched 'alias' generation for email: none Note: Dynamic secrets engines generate usernames from templates; there is no email alias generation."
       }
@@ -4544,7 +4666,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/reports/ : Data Breach report via Have I Been Pwned, run on demand for individual vaults; not a push alert",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Dirt/Controllers/HibpController.cs:45 GET hibp/breach (on demand proxy); bitwarden/clients@web-v2026.9.0 libs/common/src/services/audit.service.ts:76 breachedAccounts; apps/web/src/app/dirt/reports/pages/breach-report.component.ts; searched 'breach' in src/ bitwarden_license/src for jobs or mail templates: none Note: On-demand breach report by email address; no monitoring job or alert when a new breach appears.",
         "onepassword": "https://support.1password.com/insights/ : Business breach checks 'Track data breaches affecting your team members'; domain breach report in https://support.1password.com/breach-report/",
         "nextcloud-passwords": "not checked: breach alerts cover stored passwords ('Security issues' emails), not the user's email address",
         "keeper": "https://docs.keeper.io/user-guides/breachwatch : BreachWatch 'monitors the internet and dark web for breached accounts matching records stored within your Keeper Vault' and alerts; it is record/password based (add-on)",
@@ -4572,7 +4694,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/reports/ : Inactive 2FA report where 'Two-factor authentication (2FA) via TOTP is available'",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/dirt/reports/pages/inactive-two-factor-report.component.ts:98 loads the 2fa directory and flags logins on sites supporting TOTP without a TOTP seed; organizations/inactive-two-factor-report.component.ts Note: Inactive two-step login report for personal and organisation vaults.",
         "onepassword": "https://support.1password.com/watchtower/ : shows 'logins for websites that support two-factor authentication'",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched '2fa directory', 'twofactorauth', 'inactive two-factor' in ui/app ui/lib: no match; stored secrets carry no website URL type Note: Vault has no website logins to inspect, so no two-factor advice."
       }
@@ -4598,7 +4720,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/reports/ : Unsecured Websites flags 'unsecured (http://) schemes in URIs'",
+        "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/dirt/reports/pages/unsecured-websites-report.component.ts:136 flags URIs starting with 'http://' Note: Unsecured websites report.",
         "onepassword": "https://support.1password.com/watchtower/ : 'Unsecured websites' catches HTTP sites",
         "keeper": "https://docs.keeper.io/enterprise-guide/roles/enforcement-policies#keeperfill : KeeperFill setting 'Enforce the HTTP Fill Warning popup'",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:25 untyped fields, no URL field to inspect; searched 'http://', 'insecure' warnings in ui/lib/kv/addon: none Note: Secrets have no website field, so nothing warns about http addresses."
@@ -4639,10 +4761,10 @@
       "name": "Ask the members who hold an at-risk password to change it, and track whether they did.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "partial",
       "passbolt": "unknown",
-      "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "keeper": "partial",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -4656,7 +4778,11 @@
       "originUrl": "https://github.com/bitwarden/clients/pull/22641",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'zxcvbn', 'strength', 'reuse', 'pwned', 'breach' in ui/app ui/lib and vault/*.go: no password health code Note: No at-risk password detection exists, so no follow-up tracking.",
+        "onepassword": "https://support.1password.com/insights/ : Insights shows compromised, weak or reused passwords across the team's vaults, and https://support.1password.com/insights-notifications/ sends team members an automated email when their details appear in a breach. A per-item change request with completion tracking is not described.",
+        "keeper": "https://docs.keeper.io/enterprise-guide/breachwatch : the Admin Console summarises how users dealt with BreachWatch alerts, and 'If users have At Risk or Ignored passwords, the Keeper Administrator can reach out to the user'; the outreach is manual, there is no built-in change request."
+      }
     },
     {
       "id": "health-15",
@@ -4664,10 +4790,10 @@
       "name": "See which of your logins are for websites that accept a passkey you have not set up.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -4681,7 +4807,11 @@
       "originUrl": "https://github.com/bitwarden/clients/pull/22766",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'passkey', 'webauthn' in all .go .hbs .ts: no match Note: No passkey awareness and no website logins.",
+        "onepassword": "https://support.1password.com/watchtower/ : 'Passkeys available shows logins for websites that support passkeys, but don't yet have a passkey saved in the item.'",
+        "keeper": "not checked: https://docs.keeper.io/user-guides/breachwatch and the passkey docs read; no report of saved logins whose sites accept passkeys."
+      }
     },
     {
       "id": "rotation-01",
@@ -5519,10 +5649,10 @@
       "name": "An administrator defines new item types and the fields they carry.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "no",
       "passbolt": "unknown",
-      "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "keeper": "yes",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "partial",
@@ -5536,7 +5666,11 @@
       "originUrl": "https://community.passbolt.com/t/as-an-administrator-i-can-create-new-secret-types-and-define-their-associated-input-fields/19",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:25 untyped key/value rows; ui/lib/kv/addon/routes.js:8 no item type admin route Note: KV is untyped; there are no admin-defined item types.",
+        "onepassword": "https://support.1password.com/custom-fields/ and https://support.1password.com/item-categories/ : categories are fixed; a 1Password Community answer states 'you cannot ... create new categories' (https://www.1password.community/discussions/1password/custom-item-templates/166721). Custom fields per item are the only extension.",
+        "keeper": "https://docs.keeper.io/enterprise-guide/creating-new-record-types : an admin with 'Manage Record Types in Vault' creates a record template with labelled and required fields and publishes it to roles."
+      }
     },
     {
       "id": "admin-19",
@@ -5544,10 +5678,10 @@
       "name": "Suspend a user's access and reactivate it later without deleting the account.",
       "keepiq": "partial",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "yes",
       "passbolt": "unknown",
-      "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "keeper": "yes",
+      "hashicorp-vault": "yes",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
@@ -5561,7 +5695,11 @@
       "originUrl": "https://community.passbolt.com/t/as-an-admin-i-can-suspend-and-reactivate-a-user/101",
       "provider": "nextcloud",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/models/identity/entity.js:18 disabled boolean on an entity (Access > Entities edit); a disabled entity's tokens are refused until re-enabled Note: Setting an entity to disabled suspends all of that user's access and clearing it restores it, without deleting the entity.",
+        "onepassword": "https://support.1password.com/offboarding/ : 'select More Actions > Suspend'; https://support.1password.com/add-remove-team-members/ : a suspended team member is reactivated with Reactivate.",
+        "keeper": "https://docs.keeper.io/enterprise-guide/user-management-and-lifecycle : 'Lock Account' suspends vault access while keeping the user's records; unlocking restores it (Commander enterprise-user --unlock)."
+      }
     },
     {
       "id": "admin-20",
@@ -5572,7 +5710,7 @@
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "yes",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
@@ -5586,7 +5724,11 @@
       "originUrl": "https://community.passbolt.com/t/as-an-admin-i-do-not-want-my-users-to-see-all-users-on-the-platform/1151",
       "provider": "nextcloud",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js access.identity routes; entity listing is the identity/entity/id path, which needs an ACL grant (vault/policy.go:30 list capability) Note: Only callers whose policy grants list on identity/entity can see the people list; ordinary users get no such grant by default.",
+        "onepassword": "not checked: https://support.1password.com/team-policies/, https://support.1password.com/create-share-vaults-teams/ and https://support.1password.com/groups/ read; none describes limiting which team members a user can see in the people picker.",
+        "keeper": "not checked: no setting found in https://docs.keeper.io/enterprise-guide/roles/enforcement-policies that hides the enterprise user list from people sharing records."
+      }
     },
     {
       "id": "admin-21",
@@ -5597,7 +5739,7 @@
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "yes",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -5611,7 +5753,11 @@
       "originUrl": "https://www.passbolt.com/roadmap",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system_custom_messages.go:67 sys/config/ui/custom-messages; ui/lib/config-ui/addon/routes.js:8 messages create/edit and login-settings; ui/lib/core/addon/components/sidebar/nav/tools.hbs:40 'Custom messages' nav Note: Admins create custom messages shown as banners or modals, before or after login, with start and end times.",
+        "onepassword": "not checked: no admin announcement or banner feature found in https://support.1password.com/team-policies/ or the Business admin guides (https://support.1password.com/explore/team-admin/).",
+        "keeper": "not checked: no admin announcement to all users found in the Admin Console overview (https://docs.keeper.io/enterprise-guide/getting-started-with-keeper-admin-console)."
+      }
     },
     {
       "id": "admin-22",
@@ -5619,10 +5765,10 @@
       "name": "Require that work logins are kept in the organisation's vault rather than in personal vaults.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "partial",
       "passbolt": "unknown",
-      "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "keeper": "partial",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -5636,7 +5782,11 @@
       "originUrl": "https://www.tenderned.nl/aankondigingen/overzicht/295007",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/policy.go path policies only; no personal vault concept to forbid (ui/lib/kv/addon/routes.js:8) Note: Vault has only the organisation's store; there is no personal vault to restrict, and nothing enforces where people keep work logins elsewhere.",
+        "onepassword": "https://support.1password.com/employee-vault/ and https://support.1password.com/offboarding/ : every Business member has an Employee vault owned by the organisation, and Business Watchtower reports on it, but no policy found that forbids keeping work logins in a personal or Employee vault (https://support.1password.com/team-policies/).",
+        "keeper": "https://docs.keeper.io/enterprise-guide/account-transfer-policy : the enterprise can take over a leaver's vault, and https://docs.keeper.io/enterprise-guide/personal-vaults-for-enterprise-and-business-users separates a personal family vault; no enforcement found that forbids storing work logins in a personal vault."
+      }
     },
     {
       "id": "audit-01",
@@ -5970,7 +6120,7 @@
       "onepassword": "yes",
       "passbolt": "partial",
       "keeper": "partial",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
@@ -5989,7 +6139,8 @@
         "onepassword": "https://support.1password.com/export/ : export account data from the 1Password app",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/export : a user can export all resources they can access to KDBX; no dedicated GDPR data export",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Export : database backup with all passwords, folders and tags, or CSV and office exports; no dedicated GDPR export",
-        "keeper": "https://docs.keeper.io/user-guides/export-and-reports/vault-export : users export their vault records; not a full personal-data (account, events) export, and admins can restrict export"
+        "keeper": "https://docs.keeper.io/user-guides/export-and-reports/vault-export : users export their vault records; not a full personal-data (account, events) export, and admins can restrict export",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js has no personal data export route; searched 'gdpr', 'personal data' in ui/app and vault/*.go: no export Note: There is no self-service personal data export; an admin can read the entity record by API."
       }
     },
     {
@@ -6001,7 +6152,7 @@
       "onepassword": "unknown",
       "passbolt": "partial",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "partial",
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
@@ -6019,7 +6170,8 @@
         "bitwarden": "https://bitwarden.com/help/delete-your-account/ : deletion is permanent and 'will delete all associated vault data'; handling of shared organisation items not described there",
         "onepassword": "not checked: account deletion and the fate of shared items not described in the pages read",
         "passbolt": "https://www.passbolt.com/docs/admin/user-provisioning/delete-user : admin deletion destroys personal passwords and prompts to transfer ownership of shared ones; not user self-service",
-        "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Settings : 'Delete everything' removes all passwords, folders, tags and the private key; deleting a shared copy only affects the recipient per https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/F.A.Q"
+        "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Settings : 'Delete everything' removes all passwords, folders, tags and the private key; deleting a shared copy only affects the recipient per https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/F.A.Q",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js access.identity entity delete by an admin; ui/app/models/identity/entity.js:15 entity fields; secrets live at paths with no owner so they survive the entity (vault/policy.go) Note: An admin can delete a user's entity and aliases and shared secrets stay put because they are not owned, but users cannot delete their own account, so partial."
       }
     },
     {
@@ -6031,7 +6183,7 @@
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
@@ -6047,7 +6199,8 @@
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "not checked: anonymisation of audit entries on deletion not described",
-        "onepassword": "not checked: anonymisation of audit entries on deletion not described"
+        "onepassword": "not checked: anonymisation of audit entries on deletion not described",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 audit/hashstructure.go:25 HMACs secret values at write time only; searched 'anonymi' in audit/ and vault/*.go: no rewrite of past entries on entity delete Note: Audit entries are HMAC'd for values at write time but identity fields are not anonymised later when an account is deleted."
       }
     },
     {
@@ -6077,7 +6230,7 @@
         "passbolt": "https://www.passbolt.com/docs/hosting/maintenance/diagnostics/forward-action-logs : only a file engine and a local syslog engine; a log shipper such as Filebeat or rsyslog does the rest, no ready-made SIEM connectors",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/Feature-Comparison : security and admin feature lists carry no audit or activity log; the app registers no Nextcloud activity provider (https://github.com/marius-wieschollek/passwords/tree/master/src/lib)",
         "keeper": "https://docs.keeper.io/enterprise-guide/event-reporting : built-in SIEM connectors for Splunk, Microsoft Sentinel, QRadar, Elastic, Datadog, Sumo Logic and more",
-        "hashicorp-vault": "https://developer.hashicorp.com/vault/tutorials/monitoring/monitor-telemetry-audit-splunk : audit entries shipped to Splunk through an agent such as Fluent Bit; Enterprise users get a Splunk app with dashboards"
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 audit/backend_socket.go and audit/backend_syslog.go generic streams; no Splunk or Sentinel connector code in the tree | docs: https://developer.hashicorp.com/vault/tutorials/monitoring/monitor-telemetry-audit-splunk Note: code not public for the Splunk app; docs rating kept: generic syslog and socket streams, with a Splunk app for Enterprise documented separately."
       }
     },
     {
@@ -6089,7 +6242,7 @@
       "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "yes",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "partial",
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
@@ -6105,7 +6258,8 @@
         "bitwarden": "https://bitwarden.com/help/event-logs/ : real-time alerting only through a connected SIEM; no built-in risky-event alerts found",
         "onepassword": "https://support.1password.com/events-reporting/ : 'set up custom alerts' in the SIEM; built-in Insights notifications are admin-sent, not real-time (https://support.1password.com/insights-notifications/)",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/F.A.Q : notifications for failed unlock attempts and 'Administrative access to your account' (impersonation), sent to the user",
-        "keeper": "https://docs.keeper.io/enterprise-guide/event-reporting#alerts : 'event-based triggers that will generate either email or SMS-based alerts'; see Recommended Alerts (https://docs.keeper.io/enterprise-guide/recommended-alerts)"
+        "keeper": "https://docs.keeper.io/enterprise-guide/event-reporting#alerts : 'event-based triggers that will generate either email or SMS-based alerts'; see Recommended Alerts (https://docs.keeper.io/enterprise-guide/recommended-alerts)",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 http/handler.go:546 sys/events/subscribe websocket stream of events such as KV data-write; audit/backend_socket.go real-time audit stream; searched 'alert', 'risk' in vault/eventbus: no risk rules Note: Real-time event and audit streams exist for an external system to alert on, but Vault itself classifies nothing as risky and sends no alerts, so partial."
       }
     },
     {
@@ -6117,7 +6271,7 @@
       "onepassword": "partial",
       "passbolt": "yes",
       "keeper": "yes",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
@@ -6136,7 +6290,8 @@
         "onepassword": "https://support.1password.com/import/ : imports from Bitwarden, Dashlane, KeePass, Keeper, LastPass, browsers and CSV; where parsing happens is not stated",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/import/ : importers for LastPass, 1Password, KeePass, Dashlane, NordPass, LogMeOnce, Bitwarden, Keeper, browsers; encryption happens in the extension per https://www.passbolt.com/docs/user/introduction/how-passbolt-secures-your-data/",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Import : profiles for Passman, Chrome, Enpass, Firefox and custom CSV; where parsing runs is not stated",
-        "keeper": "https://docs.keeper.io/user-guides/import-records-1/import-overview : imports from 1Password, Bitwarden, Dashlane, LastPass, KeePass, browsers and more in the Web Vault/Desktop App, where records are encrypted on the device before upload (zero-knowledge)"
+        "keeper": "https://docs.keeper.io/user-guides/import-records-1/import-overview : imports from 1Password, Bitwarden, Dashlane, LastPass, KeePass, browsers and more in the Web Vault/Desktop App, where records are encrypted on the device before upload (zero-knowledge)",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'keepass', 'lastpass', 'bitwarden', '1password', 'import', 'csv' in ui/lib/kv/addon and all .go .ts .hbs: no password manager importer Note: No importer for other password managers exists; bulk loading is scripting against the KV API."
       }
     },
     {
@@ -6148,7 +6303,7 @@
       "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "partial",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
@@ -6167,7 +6322,8 @@
         "onepassword": "https://support.1password.com/import/ : the supported sources list does not include Nextcloud Passwords",
         "passbolt": "not checked: no Nextcloud Passwords importer in the list; a CSV route is not documented",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Import/Import-from-Backup : 'The Passwords database backup can also be used to move from one Nextcloud instance to another'",
-        "keeper": "https://docs.keeper.io/user-guides/import-records-1/import-a-.csv-file : no Nextcloud Passwords importer in the list, but a generic .csv import with field mapping would take its CSV export"
+        "keeper": "https://docs.keeper.io/user-guides/import-records-1/import-a-.csv-file : no Nextcloud Passwords importer in the list, but a generic .csv import with field mapping would take its CSV export",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'keepass', 'lastpass', 'bitwarden', '1password', 'credential exchange', 'cxf' in all .go .ts .hbs (non-test): no match; ui/lib/kv/addon/routes.js:8 no import route Note: No importer exists, for Nextcloud Passwords or anything else."
       }
     },
     {
@@ -6179,7 +6335,7 @@
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "yes",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
         "state": "building",
@@ -6211,7 +6367,8 @@
         "bitwarden": "not checked: no field-mapping preview described in https://bitwarden.com/help/import-data/",
         "onepassword": "not checked: no field-mapping preview described in https://support.1password.com/import/",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Import/Import-from-custom-CSV : 'CSV Field Mapping ... You can use the Preview Line option to preview a different line'",
-        "keeper": "https://docs.keeper.io/user-guides/web-vault#field-mapping : field mapping screen ('Click any field to open a dropdown menu'), then 'a summary screen will display a preview of your vault' before import"
+        "keeper": "https://docs.keeper.io/user-guides/web-vault#field-mapping : field mapping screen ('Click any field to open a dropdown menu'), then 'a summary screen will display a preview of your vault' before import",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'keepass', 'lastpass', 'bitwarden', '1password', 'credential exchange', 'cxf' in all .go .ts .hbs (non-test): no match; ui/lib/kv/addon/routes.js:8 no import route Note: No importer exists, so no mapping preview."
       }
     },
     {
@@ -6223,7 +6380,7 @@
       "onepassword": "unknown",
       "passbolt": "yes",
       "keeper": "yes",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
@@ -6250,7 +6407,8 @@
         "onepassword": "not checked: https://support.1password.com/import/ does not say whether folders become vaults or tags",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/import/keepass-kdbx : KeePass 'Group' imported (and Bitwarden 'folder' column)",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Export : backups include 'Passwords, Folders and Tags' and restore them",
-        "keeper": "https://docs.keeper.io/user-guides/import-records-1/import-a-.csv-file : 'supports advanced structure including Folders, Subfolders, Shared Folders'"
+        "keeper": "https://docs.keeper.io/user-guides/import-records-1/import-a-.csv-file : 'supports advanced structure including Folders, Subfolders, Shared Folders'",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'keepass', 'lastpass', 'bitwarden', '1password', 'credential exchange', 'cxf' in all .go .ts .hbs (non-test): no match; ui/lib/kv/addon/routes.js:8 no import route Note: No importer exists. KV paths are folders, so a scripted import can keep structure, but the product does nothing here."
       }
     },
     {
@@ -6262,7 +6420,7 @@
       "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
@@ -6287,7 +6445,8 @@
       "evidence": {
         "bitwarden": "https://bitwarden.com/help/import-data/ : 'importing does not check for duplicates'",
         "onepassword": "https://support.1password.com/watchtower/ : Watchtower finds 'exact duplicates saved in the same vault' after import, not during it",
-        "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Import : 'Conflict handling' modes skip, overwrite, merge or create when an entry already exists"
+        "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Import : 'Conflict handling' modes skip, overwrite, merge or create when an entry already exists",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'keepass', 'lastpass', 'bitwarden', '1password', 'credential exchange', 'cxf' in all .go .ts .hbs (non-test): no match; ui/lib/kv/addon/routes.js:8 no import route Note: No importer exists, so no duplicate detection."
       }
     },
     {
@@ -6299,7 +6458,7 @@
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
@@ -6316,7 +6475,8 @@
       "evidence": {
         "bitwarden": "https://bitwarden.com/help/import-data/ : errors name the item by index, type, name and field, but 'No data is added to your vault when an import is rejected'",
         "onepassword": "not checked: no import report described in https://support.1password.com/import/",
-        "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Import : per-item warnings such as 'has files attached which can not be imported'; no report of rejected rows described"
+        "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Import : per-item warnings such as 'has files attached which can not be imported'; no report of rejected rows described",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'keepass', 'lastpass', 'bitwarden', '1password', 'credential exchange', 'cxf' in all .go .ts .hbs (non-test): no match; ui/lib/kv/addon/routes.js:8 no import route Note: No importer exists, so no import report."
       }
     },
     {
@@ -6328,7 +6488,7 @@
       "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "no",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
@@ -6359,7 +6519,8 @@
       "evidence": {
         "bitwarden": "https://bitwarden.com/help/import-data/ : Credential Exchange supported as a device-to-device transfer, not as CXF file import or export",
         "onepassword": "https://support.1password.com/import/ : Credential Exchange standard supported as direct app-to-app transfer, not as files",
-        "keeper": "https://docs.keeper.io/user-guides/export-and-reports/vault-export : export formats are CSV, JSON, PDF and encrypted KeePass (.kdbx); no Credential Exchange Format"
+        "keeper": "https://docs.keeper.io/user-guides/export-and-reports/vault-export : export formats are CSV, JSON, PDF and encrypted KeePass (.kdbx); no Credential Exchange Format",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'keepass', 'lastpass', 'bitwarden', '1password', 'credential exchange', 'cxf' in all .go .ts .hbs (non-test): no match; ui/lib/kv/addon/routes.js:8 no import route Note: No Credential Exchange Format support."
       }
     },
     {
@@ -6371,7 +6532,7 @@
       "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "building",
@@ -6387,7 +6548,8 @@
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "https://bitwarden.com/help/import-data/ : 'direct import via FIDO's CXP' on iOS 26+ and Android; export to other providers per https://bitwarden.com/resources/july-2026-spotlight-your-passkeys-can-now-move-freely-heres-how/",
-        "onepassword": "https://support.1password.com/import/ : Credential Exchange standard on iOS 26+ and Android 14+ for direct transfer"
+        "onepassword": "https://support.1password.com/import/ : Credential Exchange standard on iOS 26+ and Android 14+ for direct transfer",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'keepass', 'lastpass', 'bitwarden', '1password', 'credential exchange', 'cxf' in all .go .ts .hbs (non-test): no match Note: No Credential Exchange Protocol support."
       }
     },
     {
@@ -6433,7 +6595,7 @@
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/export : KDBX export encrypted with a KeePass passphrase, re-importable via https://www.passbolt.com/docs/user/basic-features/browser/import/keepass-kdbx",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Import/Import-from-Backup : 'If the backup has been secured with a password, you will have to enter it here'",
         "keeper": "https://docs.keeper.io/user-guides/export-and-reports/vault-export : 'Encrypted Keepass (.kdbx)' export protected by a chosen master password or key file, re-importable (https://docs.keeper.io/user-guides/import-records-1/import-from-keepass-kdbx)",
-        "hashicorp-vault": "https://developer.hashicorp.com/vault/docs/enterprise/automated-integrated-storage-snapshots : Vault Enterprise takes scheduled integrated-storage snapshots for restore (data stays barrier-encrypted)"
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system_raft.go:142 sys/storage/raft/snapshot (save and restore), :158 snapshot-force; ui/app/components/raft-storage-overview.hbs:12 Download snapshot; ui/app/components/raft-storage-restore.hbs restore upload; ui/app/components/recovery/page/snapshots/snapshot-manage.hbs:6 Secrets recovery (Enterprise) Note: Integrated storage snapshots stay barrier-encrypted and can be downloaded and restored from the UI, even in CE; automated snapshots and single-secret recovery are Enterprise."
       }
     },
     {
@@ -6445,7 +6607,7 @@
       "onepassword": "yes",
       "passbolt": "partial",
       "keeper": "partial",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
@@ -6464,7 +6626,8 @@
         "onepassword": "https://support.1password.com/export/ : 'Enter your account password' before export; CSV or 1PUX",
         "passbolt": "https://www.passbolt.com/docs/admin/resource-policies/export-policies : cleartext CSV 'not allowed by default' since 5.10; when allowed the export asks for the passphrase per https://www.passbolt.com/docs/user/basic-features/browser/export",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Export : predefined and custom CSV exports; re-entering the master password is not described",
-        "keeper": "https://docs.keeper.io/user-guides/export-and-reports/vault-export : plaintext CSV export exists and can be restricted by role policy; a master password re-prompt for export is not documented"
+        "keeper": "https://docs.keeper.io/user-guides/export-and-reports/vault-export : plaintext CSV export exists and can be restricted by role policy; a master password re-prompt for export is not documented",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes.js:8 no export route; searched 'csv' in ui/lib/kv/addon: no match; CSV exports only for client counts and agent registry Note: There is no plaintext export of secrets; a user can only script reads with the CLI or API."
       }
     },
     {
@@ -6476,7 +6639,7 @@
       "onepassword": "partial",
       "passbolt": "yes",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
@@ -6494,7 +6657,8 @@
         "bitwarden": "https://bitwarden.com/help/export-your-data/ : choose individual vault or an organisation vault, optionally with attachments",
         "onepassword": "https://support.1password.com/export/ : 1Password 8 exports a whole account; CSV holds only Login and Password items",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/export : 'Select the password(s) or the folder(s) you would like to export'",
-        "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Export : choose Passwords, Folders or Tags, delimiter, header and field mapping"
+        "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Export : choose Passwords, Folders or Tags, delimiter, header and field mapping",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system_raft.go:142 snapshot is the whole store; ui/lib/kv/addon/routes.js:8 no export route Note: The only export is a whole-cluster snapshot; nothing lets you choose what goes in."
       }
     },
     {
@@ -6506,7 +6670,7 @@
       "onepassword": "yes",
       "passbolt": "yes",
       "keeper": "yes",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
@@ -6533,7 +6697,8 @@
         "onepassword": "https://support.1password.com/import-keepass/ : 1Password can import your passwords from KeePass (passwords only)",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/import/keepass-kdbx : KDBX import for KeePass, KeePassXC and MacPass",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Import : no KeePass importer is listed; a KeePass CSV export can go through 'Custom CSV'",
-        "keeper": "https://docs.keeper.io/user-guides/import-records-1/import-from-keepass : 'Import from KeePass (.XML)' and (.kdbx) importers"
+        "keeper": "https://docs.keeper.io/user-guides/import-records-1/import-from-keepass : 'Import from KeePass (.XML)' and (.kdbx) importers",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'keepass', 'lastpass', 'bitwarden', '1password', 'credential exchange', 'cxf' in all .go .ts .hbs (non-test): no match Note: No KeePass import exists."
       }
     },
     {
@@ -6579,7 +6744,7 @@
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/autofill : in-form menu, 'Click one and the form is filled'",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/Feature-Comparison : browser extension 'Autofill passwords'; see https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Browser-Extension/Password-Autofill",
         "keeper": "https://docs.keeper.io/user-guides/browser-extensions : KeeperFill 'Autofill Your Passwords' on websites",
-        "hashicorp-vault": "https://developer.hashicorp.com/vault/install : Vault ships as server/CLI binaries and packages for macOS, Windows and Linux; there is no browser extension or mobile app"
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/: no match Note: There is no browser extension."
       }
     },
     {
@@ -6623,7 +6788,7 @@
         "bitwarden": "https://bitwarden.com/help/auto-fill-browser/ : fills in iframes but warns for untrusted iframes and never auto-fills them on page load",
         "onepassword": "https://support.1password.com/browser-autofill-security/ : fills a login in an iframe only when the item URL matches the iframe origin; credit cards fill across origins",
         "passbolt": "https://www.passbolt.com/docs/user/faq/why-my-autofill-doesnt-work : 'Passbolt cannot access or interact with fields inside shadow roots or iframes'",
-        "hashicorp-vault": "https://developer.hashicorp.com/vault/install : Vault ships as server/CLI binaries and packages for macOS, Windows and Linux; there is no browser extension or mobile app"
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No browser extension, so no frame autofill."
       }
     },
     {
@@ -6675,7 +6840,7 @@
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/autofill : 'when you submit a login form ... passbolt offers to save it'",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/Feature-Comparison : extension 'Detect new passwords' and 'Detect changed passwords'",
         "keeper": "https://docs.keeper.io/user-guides/browser-extensions#save-prompt : 'Keeper will offer to save a password to the vault, if you login manually on a site'; 'Prompt to Change' policy for updates",
-        "hashicorp-vault": "https://developer.hashicorp.com/vault/install : Vault ships as server/CLI binaries and packages for macOS, Windows and Linux; there is no browser extension or mobile app"
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No browser extension, so no save-login prompt."
       }
     },
     {
@@ -6715,7 +6880,7 @@
         "passbolt": "https://www.passbolt.com/roadmap : 'TOTP autofill' released; OTP fields offered in the in-form menu per https://www.passbolt.com/docs/user/basic-features/browser/autofill",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/Feature-Comparison : 'One Time Passwords' not supported",
         "keeper": "https://docs.keeper.io/user-guides/browser-extensions#autofilling-2fa-codes : 'Upon autofilling your username and password via KeeperFill, when prompted, a stored two-factor code will also be autofilled'",
-        "hashicorp-vault": "https://developer.hashicorp.com/vault/install : Vault ships as server/CLI binaries and packages for macOS, Windows and Linux; there is no browser extension or mobile app"
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No browser extension, so no one-time code fill."
       }
     },
     {
@@ -6767,7 +6932,7 @@
         "passbolt": "https://www.passbolt.com/roadmap : 'New content type: Passkeys' still in the backlog",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Creating-Passwords : no passkey item type",
         "keeper": "https://docs.keeper.io/user-guides/browser-extensions#passkeys : create a passkey and log in with a passkey through KeeperFill",
-        "hashicorp-vault": "https://developer.hashicorp.com/vault/install : Vault ships as server/CLI binaries and packages for macOS, Windows and Linux; there is no browser extension or mobile app"
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No browser extension and no passkey support (searched 'webauthn', 'passkey': no match)."
       }
     },
     {
@@ -6806,7 +6971,7 @@
         "onepassword": "https://support.1password.com/unlock-auto-lock/ : idle auto-lock, and 'when you quit your browser, 1Password will always lock'",
         "passbolt": "https://www.passbolt.com/docs/hosting/session-timeout : the extension logs out when the server session ends or 'If the browser window is closed'",
         "keeper": "https://docs.keeper.io/user-guides/browser-extensions#stay-logged-in : 'Inactivity Logout Timer which automatically logs you out of Keeper after a period of inactivity'; admin Logout Timer policy",
-        "hashicorp-vault": "https://developer.hashicorp.com/vault/install : Vault ships as server/CLI binaries and packages for macOS, Windows and Linux; there is no browser extension or mobile app"
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No browser extension exists to lock."
       }
     },
     {
@@ -6818,7 +6983,7 @@
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
@@ -6842,7 +7007,8 @@
       "featureConfidence": "high",
       "evidence": {
         "bitwarden": "not checked: native apps are offered; no installable web app documented",
-        "onepassword": "not checked: native apps are offered; no installable web app documented"
+        "onepassword": "not checked: native apps are offered; no installable web app documented",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/public contains favicon, fonts, images, robots.txt, no web app manifest; ui/app/index.html:14 viewport meta but no manifest link; the only service worker is for authenticated downloads (ui/lib/service-worker-authenticated-download) Note: The UI has no web app manifest, so it cannot be installed as a phone app."
       }
     },
     {
@@ -6854,7 +7020,7 @@
       "onepassword": "yes",
       "passbolt": "yes",
       "keeper": "yes",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "partial",
       "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
@@ -6881,7 +7047,8 @@
         "onepassword": "https://support.1password.com/ios-autofill/ : native iPhone and iPad app with full vault use",
         "passbolt": "https://www.passbolt.com/docs/user/quickstart/mobile/ : native iOS and Android apps",
         "nextcloud-passwords": "https://github.com/marius-wieschollek/passwords#build-upon-modern-standards : 'The web interface is mobile friendly and can be used with any modern web browser'",
-        "keeper": "https://docs.keeper.io/user-guides/ios : full native iPhone/iPad app (and Android, https://docs.keeper.io/user-guides/android)"
+        "keeper": "https://docs.keeper.io/user-guides/ios : full native iPhone/iPad app (and Android, https://docs.keeper.io/user-guides/android)",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/index.html:14 viewport meta; ui/lib/core/addon/components/sidebar/frame.hbs:53 Hds::AppSideNav @isResponsive=true @isCollapsible=true; ui/lib/kv/addon/components/page/list.hbs:100 'level is-mobile' rows Note: The UI shell is responsive (collapsible side nav, viewport meta, mobile-aware list rows), but it is a desktop admin console with wide forms and tables, not designed for phone flows, so partial."
       }
     },
     {
@@ -6893,7 +7060,7 @@
       "onepassword": "yes",
       "passbolt": "yes",
       "keeper": "yes",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
@@ -6912,7 +7079,8 @@
         "onepassword": "https://releases.1password.com/b5x/stable/ : apps keep working offline, changes sync when back online",
         "passbolt": "https://www.passbolt.com/docs/user/advanced-features/offline-mode : 'a read-only, encrypted copy of the resources you rely on most' (beta, 5.16)",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/F.A.Q : 'The Passwords app in your browser does not support any offline storage. But some of the apps ... do include offline storage'",
-        "keeper": "https://docs.keeper.io/enterprise-guide/vault-offline-access : a local encrypted copy of the vault opens offline; 'Editing records' is among the actions not available offline; admin policy 1 to 30 days or off"
+        "keeper": "https://docs.keeper.io/enterprise-guide/vault-offline-access : a local encrypted copy of the vault opens offline; 'Editing records' is among the actions not available offline; admin policy 1 to 30 days or off",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/public has no service worker for offline data (the only one is ui/lib/service-worker-authenticated-download); command/agentproxyshared/cache is a machine-side proxy cache, not a user vault Note: The web UI needs a live server; there is no offline read-only mode for users."
       }
     },
     {
@@ -6942,7 +7110,7 @@
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/mobile/autofill-chrome-android : native Android and iOS apps with autofill",
         "nextcloud-passwords": "https://github.com/marius-wieschollek/passwords#apps : third-party Android apps (joleaf, hegocre) and an iOS app by Johannes Schliephake; none official",
         "keeper": "https://docs.keeper.io/user-guides/autofill-setup-for-ios : system autofill and passkeys on iOS; Android autofill at https://docs.keeper.io/user-guides/autofill-setup-for-android",
-        "hashicorp-vault": "https://developer.hashicorp.com/vault/install : Vault ships as server/CLI binaries and packages for macOS, Windows and Linux; there is no browser extension or mobile app"
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No native mobile apps."
       }
     },
     {
@@ -6972,7 +7140,7 @@
         "passbolt": "https://www.passbolt.com/docs/user/quickstart/desktop/windows-app : Windows app only; no macOS or Linux app",
         "nextcloud-passwords": "https://github.com/marius-wieschollek/passwords#apps : third-party Windows, Linux and macOS apps marked 'WIP'",
         "keeper": "https://docs.keeper.io/user-guides/web-vault : 'cross-platform, Keeper Desktop Application' for Mac, Windows and Linux",
-        "hashicorp-vault": "https://developer.hashicorp.com/vault/install : Vault ships as server/CLI binaries and packages for macOS, Windows and Linux; there is no browser extension or mobile app"
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No native desktop app; the vault binary is a CLI and server."
       }
     },
     {
@@ -7016,7 +7184,7 @@
         "passbolt": "https://www.passbolt.com/roadmap : 'Safari extension' released; Firefox, Chrome, Edge per https://www.passbolt.com/docs/user/faq/why-a-browser-extension",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Browser-Extension : Firefox, Chrome and Microsoft Edge; no Safari",
         "keeper": "https://docs.keeper.io/user-guides/browser-extensions : KeeperFill for Chrome, Firefox, Safari, Microsoft Edge, Opera and other Chromium browsers",
-        "hashicorp-vault": "https://developer.hashicorp.com/vault/install : Vault ships as server/CLI binaries and packages for macOS, Windows and Linux; there is no browser extension or mobile app"
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No browser extensions."
       }
     },
     {
@@ -7046,7 +7214,7 @@
         "passbolt": "https://www.passbolt.com/roadmap : 'New content type: SSH key' still in the backlog",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Creating-Passwords : no SSH key type or agent",
         "keeper": "https://docs.keeper.io/keeperpam/privileged-access-manager/ssh-agent : 'Keeper's built-in SSH agent' serves SSH keys stored in the vault (documented under KeeperPAM)",
-        "hashicorp-vault": "https://developer.hashicorp.com/vault/docs/secrets/ssh/signed-ssh-certificates : Vault signs users' own local SSH keys as a CA; no SSH agent serving keys from Vault"
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 builtin/logical/ssh/path_sign.go:17 sign/<role> signs a user's public key; command/ssh.go:70 vault ssh -mode=ca signs the local key and connects; searched 'SSH_AUTH_SOCK', 'ssh-agent' in command builtin: no agent Note: Vault signs users' own keys as an SSH CA and the CLI can connect with them, but no SSH agent serves private keys kept in Vault."
       }
     },
     {
@@ -7092,7 +7260,7 @@
         "passbolt": "https://www.passbolt.com/docs/user/faq/why-a-browser-extension : the extension talks to the passbolt server; passbolt is not a Nextcloud app",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Browser-Extension/Account-Settings : accounts connect to Nextcloud by PassLink QR code or app password",
         "keeper": "https://docs.keeper.io/enterprise-guide/integrations : standalone product; the extension links to a Keeper account, with no Nextcloud integration",
-        "hashicorp-vault": "https://developer.hashicorp.com/vault/docs/ui : standalone UI and token login; no Nextcloud integration"
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'nextcloud' in all .go .hbs .ts .js files: no match Note: No Nextcloud integration and no browser extension."
       }
     },
     {
@@ -7120,7 +7288,7 @@
         "bitwarden": "not checked: no built-in flow builder found; automation goes through the Public API or SIEM",
         "onepassword": "not checked: no built-in flow builder found; automation goes through Events API or SIEM",
         "keeper": "https://docs.keeper.io/enterprise-guide/webhooks : alerts can call webhooks (Slack, Teams, custom URL) for follow-up in other tools; no built-in flow builder",
-        "hashicorp-vault": "https://developer.hashicorp.com/vault/docs/concepts/events : event notifications (Enterprise) for KV writes and deletes that external subscribers consume; no flow builder"
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 http/handler.go:546 sys/events/subscribe; http/events_stubs_oss.go entHandleEventsSubscribe stub in CE | docs: https://developer.hashicorp.com/vault/docs/concepts/events Note: Event notifications for KV writes and deletes exist for external subscribers (Enterprise handler not in CE); there is no flow builder."
       }
     },
     {
@@ -7132,7 +7300,7 @@
       "onepassword": "unknown",
       "passbolt": "partial",
       "keeper": "partial",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
@@ -7163,7 +7331,8 @@
         "onepassword": "not checked: no organisation branding option found",
         "passbolt": "https://www.passbolt.com/docs/user/settings/browser/appearance-and-language : four user-chosen themes (Default, Midgar, Solarized Dark, Solarized Light); no organisation branding",
         "nextcloud-passwords": "https://github.com/marius-wieschollek/passwords/tree/master/src/lib/Integrations : ThemingIntegration follows the Nextcloud theming; dark mode per https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/Feature-Comparison",
-        "keeper": "https://docs.keeper.io/enterprise-guide/user-and-team-provisioning/custom-invite-and-logo : admins upload the company logo to the vault and customise the invite; users pick a colour theme (https://docs.keeper.io/user-guides/web-vault#settings); no full house-style theming"
+        "keeper": "https://docs.keeper.io/enterprise-guide/user-and-team-provisioning/custom-invite-and-logo : admins upload the company logo to the vault and customise the invite; users pick a colour theme (https://docs.keeper.io/user-guides/web-vault#settings); no full house-style theming",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/config-ui/addon/routes.js:8 custom messages and login-settings only; searched 'custom_logo', 'brand_color', 'custom-theme' in ui/app ui/lib vault/*.go: no match Note: Admins can post custom banner messages, but the UI cannot be themed with logo or colours."
       }
     },
     {
@@ -7175,7 +7344,7 @@
       "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "yes",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "partial",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
@@ -7191,7 +7360,8 @@
         "bitwarden": "not checked: no first-run walkthrough documented in the pages read",
         "onepassword": "https://support.1password.com/team-policies/ : 'Guided setup' policy prompts new members to import from other password managers",
         "nextcloud-passwords": "not checked: an integrated manual and an encryption setup wizard exist, a first-run walkthrough is not documented",
-        "keeper": "https://docs.keeper.io/enterprise-guide/roles/enforcement-policies#vault-features : 'Disable in-app onboarding' hides the 'Quick Start' module that otherwise appears 'when they login in for the first time'"
+        "keeper": "https://docs.keeper.io/enterprise-guide/roles/enforcement-policies#vault-features : 'Disable in-app onboarding' hides the 'Quick Start' module that otherwise appears 'when they login in for the first time'",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/utils/constants/wizard.ts:8 wizards for acl-policy, auth-methods, secret-engines, namespace, agent-registry; ui/app/components/wizard/index.ts:58 intro shown until dismissed; ui/app/components/page/policies.hbs:41 AclWizard mounted on the policies page; ui/app/components/wizard/guided-start.hbs:6 Guided Start Note: First-visit intro and guided-start wizards appear on the policies, auth methods, secrets engines and namespaces pages for admins, but there is no end-user tour of the app on first open, so partial."
       }
     },
     {
@@ -7203,7 +7373,7 @@
       "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "partial",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "yes",
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
@@ -7229,7 +7399,8 @@
         "bitwarden": "https://bitwarden.com/help/access-intelligence/ : Risk Insights dashboard for administrators (Enterprise); no personal figures dashboard",
         "onepassword": "https://support.1password.com/insights/ : Insights dashboard for administrators; Watchtower overview for each user (https://support.1password.com/watchtower/)",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Dashboard-Widget : Nextcloud dashboard widget with favorites and search; Security section groups passwords by status",
-        "keeper": "https://docs.keeper.io/enterprise-guide/risk-management-dashboard : admin Risk Management Dashboard and Admin Console dashboard with organisation figures; end users get the Security Audit screen, not a dashboard"
+        "keeper": "https://docs.keeper.io/enterprise-guide/risk-management-dashboard : admin Risk Management Dashboard and Admin Console dashboard with organisation figures; end users get the Security Audit screen, not a dashboard",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js dashboard route; ui/app/components/dashboard/overview.hbs:23 SecretsEngines, :36 ClusterConfiguration, :50 ClientCount, :27 Replication widgets Note: The Vault dashboard shows its own figures: mounted engines, client counts, replication and cluster configuration."
       }
     },
     {
@@ -7238,10 +7409,10 @@
       "name": "Edit items while offline and have the changes sync when you are back online.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -7255,7 +7426,11 @@
       "originUrl": "https://community.bitwarden.com/t/offline-editing-management-of-writeable-vault-items/107",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/public has no manifest or offline service worker; ui/lib/kv/addon/components/kv-create-edit-form.js:108 writes go straight to the API Note: The UI requires a live server; no offline edits.",
+        "onepassword": "https://support.1password.com/sync/ : in the apps data is cached locally so you can view and edit it without an internet connection, and changes reach other devices when you next go online.",
+        "keeper": "not checked: https://docs.keeper.io/user-guides/vault-offline-access read; current docs list creating and editing records offline while older release notes (https://docs.keeper.io/release-notes/desktop/web-vault-+-desktop-app/older/vault-version-14.4.0) describe read-only offline access, so it is not settled."
+      }
     },
     {
       "id": "clients-20",
@@ -7263,10 +7438,10 @@
       "name": "Type a login into a desktop application with a keyboard shortcut.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "yes",
       "passbolt": "unknown",
-      "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "keeper": "yes",
+      "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -7280,7 +7455,11 @@
       "originUrl": "https://community.bitwarden.com/t/desktop-app-auto-type-windows-macos-linux/158",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No desktop client and no auto-type.",
+        "onepassword": "https://support.1password.com/mac-universal-autofill/ : Command-Backslash autofills usernames and passwords 'in your favorite apps and websites' on Mac; https://support.1password.com/windows-auto-type/ : Auto-Type in apps on Windows.",
+        "keeper": "https://docs.keeper.io/user-guides/keeperfill-for-apps : KeeperFill for Apps in the desktop app fills logins and passwords into native applications with the Ctrl/Cmd+Shift+K hotkey."
+      }
     },
     {
       "id": "clients-21",
@@ -7288,10 +7467,10 @@
       "name": "Switch between several accounts or servers in the same app or extension.",
       "keepiq": "no",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "yes",
       "passbolt": "unknown",
-      "keeper": "unknown",
-      "hashicorp-vault": "unknown",
+      "keeper": "yes",
+      "hashicorp-vault": "partial",
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "none",
@@ -7305,7 +7484,11 @@
       "originUrl": "https://community.bitwarden.com/t/account-switching/716",
       "provider": "keepiq",
       "providerHow": "read-from-code",
-      "evidence": {}
+      "evidence": {
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/services/auth.js:46 tokens list kept per cluster, :101 currentTokenName per active cluster; ui/app/components/namespace-picker.ts namespace switching (Enterprise namespaces); CLI -address and VAULT_ADDR per call Note: The CLI targets any server per command and the UI keeps a token per cluster and switches namespaces, but there is no account switcher for several identities in one UI session, so partial.",
+        "onepassword": "https://support.1password.com/multiple-accounts/ : add multiple accounts to the apps and browser extension, see all items at once or 'Switch to a specific account'.",
+        "keeper": "https://docs.keeper.io/user-guides/tips-and-tricks/personal-and-business-vaults : switch between business and personal accounts in the web vault, browser extension and mobile apps ('Switch Account', 'Add Account')."
+      }
     }
   ],
   "pending": []
