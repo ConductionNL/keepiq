@@ -152,7 +152,7 @@
       "id": "vault-01",
       "area": "vault",
       "name": "Store a login with username, password and website address in your personal vault.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -160,11 +160,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/SecretCreateDialog.vue:439 useSecretStore().createSecret -> src/store/modules/secret.js:348,385 POST /api/v1/secrets -> appinfo/routes.php:89 secret#create -> lib/Controller/SecretController.php",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> New secret dialog (secret-create modal)",
+        "note": "Create dialog collects name, type, url, login and key, and posts through the secret store to the secret CRUD endpoint. Login is one of the built-in system types."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secrets",
       "featureConfidence": "high"
     },
@@ -172,7 +176,7 @@
       "id": "vault-02",
       "area": "vault",
       "name": "Edit a stored secret and have the change saved encrypted.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -180,11 +184,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/SecretEditDialog.vue:492 useSecretStore().updateSecret -> src/store/modules/secret.js:400,449 PUT /api/v1/secrets/{id} -> appinfo/routes.php:97 secret#update",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page -> secret detail sidebar -> Edit (secret-edit modal)",
+        "note": "Edit dialog diffs the changed fields and updates through the same encrypted-at-rest path as create."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secrets-write-ui",
       "featureConfidence": "high"
     },
@@ -192,7 +200,7 @@
       "id": "vault-03",
       "area": "vault",
       "name": "Delete a secret you own.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -200,11 +208,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/SecretDeleteConfirmDialog.vue:140 useSecretStore().deleteSecret -> src/store/modules/secret.js:527 DELETE /api/v1/secrets/{id} -> appinfo/routes.php:98 secret#destroy",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page -> secret row -> Delete (secret-delete modal)",
+        "note": "Deletion is a hard, permanent delete with an explicit irreversible-warning copy in the dialog; there is no trash (see vault-04)."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secrets",
       "featureConfidence": "high"
     },
@@ -212,7 +224,7 @@
       "id": "vault-04",
       "area": "vault",
       "name": "Recover a deleted item from a trash bin before it is gone for good.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -220,17 +232,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rniF trash|deletedAt lib src: no soft-delete column or restore path. SecretDeleteConfirmDialog.vue:30 and BulkDeleteDialog.vue:35 both say verbatim 'There is no trash — this cannot be undone.'",
+        "owner": "ConductionNL/keepiq",
+        "note": "Deliberate design choice, stated in the delete-confirmation copy itself, not a gap that was missed."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "vault-05",
       "area": "vault",
       "name": "Organise secrets in folders and subfolders.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -238,11 +253,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/SecretList.vue:1618 cnOpenModal('folder-create') -> src/dialogs/FolderCreateDialog.vue:227 useFolderStore().createFolder -> src/store/modules/folder.js:100 POST /api/v1/folders -> appinfo/routes.php:81 folder#create",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page -> folder tree in app nav -> New folder",
+        "note": "Folders nest via parentId, giving subfolders in the same tree."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secrets",
       "featureConfidence": "high"
     },
@@ -250,7 +269,7 @@
       "id": "vault-06",
       "area": "vault",
       "name": "Move a secret into another folder.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -258,11 +277,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/SecretList.vue:1516 cnOpenModal('secret-move') -> src/dialogs/MoveDialog.vue:329 useSecretStore().updateSecret({folderId}) -> PUT /api/v1/secrets/{id} -> appinfo/routes.php:97 secret#update",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page -> secret row action -> Move (secret-move modal)",
+        "note": "MoveDialog also handles moving a whole folder's contents (updateFolder for subfolders), a superset of the single-secret move asked for here."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secrets-write-ui",
       "featureConfidence": "high"
     },
@@ -270,7 +293,7 @@
       "id": "vault-07",
       "area": "vault",
       "name": "Find a secret by typing part of its name, with typo-tolerant matching.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -278,11 +301,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/SecretList.vue:1471 onSearch debounces into secretStore.searchSecrets -> src/store/modules/secret.js search param -> GET /api/v1/secrets?search= -> appinfo/routes.php:88 secret#index -> lib/Service/SecretService.php:1034 search() -> fuzzyMatch() Levenshtein tolerance 1-2",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page -> inline search field",
+        "note": "Server-side two-stage fuzzy match: SQL substring pre-filter plus a paged Levenshtein scan, genuinely typo-tolerant, not just a substring filter."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secrets",
       "featureConfidence": "high"
     },
@@ -290,7 +317,7 @@
       "id": "vault-08",
       "area": "vault",
       "name": "Find vault items from the Nextcloud search bar.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -298,11 +325,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Search/SecretSearchProvider.php implements OCP\\Search\\IProvider, queries plaintext name/url; registered at lib/AppInfo/PlatformIntegrationRegistrar.php:56 registerSearchProvider(SecretSearchProvider::class), called from lib/AppInfo/Application.php:165",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud unified search bar (server-wide)",
+        "note": "Only matches the plaintext name/url columns, so it works without the vault being unlocked; deep-links back into the app."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secrets",
       "featureConfidence": "high"
     },
@@ -310,7 +341,7 @@
       "id": "vault-09",
       "area": "vault",
       "name": "Mark items as favourites and filter on them.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -318,17 +349,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rniF favourite|favorite lib src: no hits anywhere in the codebase",
+        "owner": "ConductionNL/keepiq",
+        "note": "No favourites concept exists on the secret entity, store, or UI."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "vault-10",
       "area": "vault",
       "name": "Label items with tags and filter by tag.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -336,11 +370,14 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rniF '\"tags\"' lib src: no hits; Secret entity (lib/Db) has no tags column and no additionalFields convention is treated as tags",
+        "owner": "ConductionNL/keepiq",
+        "note": "No tagging system. A user could ad-hoc name an additional field 'tag' but there is no dedicated tag storage, chip UI, or filter-by-tag."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "vault-11",
@@ -972,7 +1009,7 @@
       "id": "sharing-01",
       "area": "sharing",
       "name": "Share a secret with another Nextcloud user.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -980,11 +1017,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/SecretList.vue:59 mounts BulkShareDialog, row checkbox selection (SecretList.vue:364) allows selecting a single secret -> src/dialogs/BulkShareDialog.vue:150 onRun/shareOne -> POST /apps/keepiq/api/v1/shares/register-batch (BulkShareDialog.vue:165) -> appinfo/routes.php:124 share#registerBatch -> lib/Controller/ShareController.php",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> select one or more rows -> Share bulk action -> BulkShareDialog",
+        "note": "The per-secret sidebar Share button opens SecretShareDialog, which only does link sharing and explicitly disables user-to-user sharing as 'coming soon'. Real user-to-user sharing is reached through the bulk-selection Share action instead, which works for exactly one selected secret too."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "user-sharing",
       "featureConfidence": "high"
     },
@@ -992,7 +1033,7 @@
       "id": "sharing-02",
       "area": "sharing",
       "name": "Share a secret with a Nextcloud group.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1000,11 +1041,22 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "lib/Controller/GroupShareController.php and lib/Service/GroupShareService.php implement group shares fully, but src/components/share/GroupShareForm.vue (registry key 'group-share-form') has no cnOpenModal caller anywhere in src/, and no store or component ever calls the /api/v1/secrets/{id}/group-shares endpoints (grep -rn 'group-shares' src/ browser-extension/ cli/: no hits). GroupShareForm.vue also calls useShareStore.encryptForRecipient with a `members` prop no caller ever supplies, not the groupShare backend at all.",
+        "owner": "ConductionNL/keepiq",
+        "note": "A user cannot share a secret with a Nextcloud group today. The backend and a form component exist but nothing in the app opens the form or calls the group-share API.",
+        "defects": [
+          {
+            "at": "src/components/share/GroupShareForm.vue:1",
+            "what": "Group-share form component is registered but never opened by any page or dialog, and its own submit logic calls the wrong store (useShareStore per-user encryption) rather than the group-shares endpoint.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "user-sharing",
       "featureConfidence": "high"
     },
@@ -1012,7 +1064,7 @@
       "id": "sharing-03",
       "area": "sharing",
       "name": "People who join a group later get access once the owner approves.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1020,11 +1072,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/AppInfo/UserLifecycleEventRegistrar.php registers UserAddedToGroupListener on OCP UserAddedEvent -> lib/Listener/UserAddedToGroupListener.php calls TeamFolderService::handleGroupMemberJoin (lib/Service/TeamFolderService.php:451), which sends an NC notification 'team_folder_join_request' to the folder owner. The owner picks this up by reopening src/modals/TeamFolderDialog.vue, whose refresh() (line 449) reconciles and shows a 'N members need re-share' banner (lines 148-181) with a button wired to onRunFanOut -> store.runFanOut -> POST /apps/keepiq/api/v1/team-folders/{id}/shares.",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "TeamFolderDialog (opened from SecretList.vue folder actions) -> reconcile banner -> Share now button",
+        "note": "For team folders this works, but it is a blanket re-share of every pending member, not a per-request approve/deny: the dedicated store action teamFolder.js:202 approveJoin is never called from any component, so the individual-approval gesture the spec and the notification text describe does not exist in the UI. The separate ad-hoc group-share path (GroupShareController) that this row's specHint (user-sharing/spec.md) actually names has no UI at all (see sharing-02), so a GroupShare row is never created and its own owner-notification requirement never fires in practice.",
+        "defects": [
+          {
+            "at": "src/store/modules/teamFolder.js:202",
+            "what": "approveJoin is defined and calls a real backend route but no component ever calls it; the only reachable grant path is the blanket reconcile/Share-now fan-out.",
+            "issue": null,
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "user-sharing",
       "featureConfidence": "high"
     },
@@ -1032,7 +1096,7 @@
       "id": "sharing-04",
       "area": "sharing",
       "name": "People who leave a group lose access automatically.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1040,11 +1104,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/AppInfo/UserLifecycleEventRegistrar.php registers UserRemovedFromGroupListener on OCP UserRemovedEvent -> lib/Listener/UserRemovedFromGroupListener.php calls TeamFolderService::handleGroupMemberLeave, which auto-revokes the departing user's folder-derived shares (direct shares are left intact). This fires automatically with no UI action needed, on a team folder that is reachable via src/modals/TeamFolderDialog.vue (opened from SecretList.vue and KeepiqAppNav.vue).",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "automatic (server event listener) once a team folder with a group member exists",
+        "note": "The equivalent ad-hoc group-share auto-revocation (GroupShareService::handleMemberLeave, same listener) is also wired at the backend, but since sharing-02's group-share creation path is unreachable from the UI, that branch has nothing to act on in practice; the team-folder branch is what actually delivers this capability to a user."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "user-sharing",
       "featureConfidence": "high"
     },
@@ -1052,7 +1120,7 @@
       "id": "sharing-05",
       "area": "sharing",
       "name": "Shared copies update when the owner changes the secret.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1060,11 +1128,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/SecretEditDialog.vue (opened via SecretDetailSidebar.vue:1495 openEdit -> cnOpenModal('secret-edit')) submits through src/store/modules/secret.js update action; when a sensitive field changes (secret.js:459) it calls useShareStore().syncUpdate(...) (secret.js:471) -> PUT /apps/keepiq/api/v1/secrets/{id}/sync (share.js:551) -> appinfo/routes.php:129 share#sync.",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList -> secret row -> sidebar -> Edit -> save",
+        "note": "Sync runs automatically as part of the normal edit flow; no separate user action is needed."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "user-sharing",
       "featureConfidence": "high"
     },
