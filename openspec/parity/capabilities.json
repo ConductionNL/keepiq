@@ -4837,7 +4837,7 @@
       "feature": "rotation-expiry-policies",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://community.bitwarden.com/t/password-vault-item-expiration-date/162?page=3 : item expiration dates are a feature request open since 2018",
+        "bitwarden": "searched 'expir' in bitwarden/server@v2026.9.1 src/Core/Vault/Entities/Cipher.cs src/Api/Vault/Models/CipherLoginModel.cs: no match; bitwarden/clients@web-v2026.9.0 libs/common/src/vault/models/view/cipher.view.ts has no expiry field (card expMonth/expYear only) Note: Items have no expiry date; only payment cards carry an expiry as data.",
         "onepassword": "https://www.1password.community/discussions/1password/1password-product-enhancements-set-expiry-dates-find-items-nearby-and-get-autosa/154800 : add a date field to any item and 'Set expiry alert'",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/password-expiry : 'Set expiry date' automatically in days or manually, without changing the secret",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Creating-Passwords : item properties have no expiry date; only a per-user 'Maximum age in days' rule in https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Settings",
@@ -4883,7 +4883,7 @@
       "feature": "rotation-expiry-policies",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://community.bitwarden.com/t/feature-request-time-limited-passwords-with-customizable-expiration-handling/69118 : time-limited passwords are an open request; no expiry policy among https://bitwarden.com/help/policies/",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:5-34 lists every policy type; none sets an item or secret expiry Note: No expiry policy among the 23 organisation policies.",
         "onepassword": "not checked: no admin default expiry policy found in Business policy pages",
         "passbolt": "https://www.passbolt.com/docs/admin/resource-policies/password-expiry : 'Default password expiry period' plus 'Policy Override' allowing users to override (Pro, Cloud)",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings : admin defaults cover emails and the security check hash only; maximum age is a user setting",
@@ -4922,7 +4922,7 @@
       "feature": "rotation-expiry-policies",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://community.bitwarden.com/t/expiration-reminders-for-all-vault-items-including-repeating-intervals/93914 : expiration reminders are an open request",
+        "bitwarden": "searched 'expir' in bitwarden/server@v2026.9.1 src/Core/Vault; src/Core/MailTemplates/Handlebars has no item-expiry template Note: No expiry, so no expiry reminders.",
         "onepassword": "https://www.1password.community/discussions/1password/new-feature-expiry-date---where-is-the-alert/151411 : choose how far ahead to be reminded, shown in Watchtower and on the item; no push notification",
         "passbolt": "https://www.passbolt.com/docs/admin/resource-policies/password-expiry : owners are emailed on the expiry day and, with Pro, N days before; no reminder after expiry",
         "nextcloud-passwords": "not checked: an outdated password turns 'Weak (Outdated)' but no reminder email for age is documented",
@@ -4935,7 +4935,7 @@
       "area": "rotation",
       "name": "Mark a secret as rotated, with proof that the value changed.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "partial",
       "onepassword": "unknown",
       "passbolt": "partial",
       "keeper": "partial",
@@ -4954,7 +4954,7 @@
       "feature": "rotation-expiry-policies",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: no mark-as-rotated action found",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Vault/Controllers/SecurityTaskController.cs:65 PATCH tasks/{taskId}/complete; bitwarden/clients@web-v2026.9.0 libs/vault/src/cipher-form/services/default-cipher-form.service.ts:146 passwordHasChanged compares new and old password, :158 markAsComplete only then Note: An admin-assigned 'update at-risk credential' task closes only when the saved password actually differs from the old one; there is no general mark-as-rotated for any item. Moved from unknown on code.",
         "onepassword": "not checked: no mark-as-rotated action found",
         "passbolt": "https://www.passbolt.com/docs/admin/resource-policies/password-expiry : 'Automatic Update ... when a password is updated it will automatically renew the expiry date'; changes visible in secret history (https://www.passbolt.com/docs/user/advanced-features/secret-history/)",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Password-Detail-View : statistics show 'when the password itself was last changed'; revisions keep each value",
@@ -4986,7 +4986,7 @@
       "feature": "rotation-expiry-policies",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/access-intelligence/ : at-risk (exposed, weak, reused) passwords flagged with member notifications; key compromise not covered",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Vault/Controllers/SecurityTaskController.cs:104 POST {orgId}/bulk-create; src/Core/Vault/Commands/CreateManyTaskNotificationsCommand.cs notifies members; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/dirt/access-intelligence/activity/application-review-dialog/assign-tasks-view.component.ts Note: Access Intelligence flags exposed, weak and reused passwords and assigns change tasks with notifications; key compromise is not a trigger.",
         "onepassword": "https://support.1password.com/watchtower/ : 'Compromised websites' and 'Vulnerable passwords' flag items to change; key compromise not covered",
         "passbolt": "https://www.passbolt.com/docs/admin/resource-policies/password-expiry : 'Automatic Expiry' marks passwords expired when a user or group who accessed them is removed; no breach-driven flag",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/F.A.Q : breached passwords are flagged and listed under Security, Breached, with email alerts; no key compromise flow",
@@ -4999,7 +4999,7 @@
       "area": "rotation",
       "name": "See secrets that are due for rotation on the dashboard and in the health report.",
       "keepiq": "yes",
-      "bitwarden": "no",
+      "bitwarden": "partial",
       "onepassword": "yes",
       "passbolt": "partial",
       "keeper": "unknown",
@@ -5026,7 +5026,7 @@
       "feature": "rotation-expiry-policies",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/reports/ : health reports cover exposed, reused, weak, unsecured, inactive 2FA; nothing due for rotation",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Vault/Controllers/SecurityTaskController.cs:52 GET tasks (pending), :90 metrics; bitwarden/clients@web-v2026.9.0 apps/browser/src/vault/popup/components/at-risk-callout/at-risk-password-callout.component.ts; bitwarden_license/bit-web/src/app/dirt/access-intelligence/activity/activity-cards/password-change-metric.component.ts Note: Pending change tasks for at-risk passwords show as a callout to members and as a progress metric for admins; nothing is due by age or expiry. Moved from no because a 'needs changing' list exists.",
         "onepassword": "https://support.1password.com/watchtower/ : 'Expiring items' section in Watchtower",
         "passbolt": "https://www.passbolt.com/docs/user/basic-features/browser/password-expiry : 'Expiry' column and 'Expired' filter; no dashboard or health report",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Passwords/Password-Security-Status : 'Weak (Outdated)' status in the Security section; no dashboard view",
@@ -5038,7 +5038,7 @@
       "area": "rotation",
       "name": "Edit expiry policies per type or folder in a screen made for it.",
       "keepiq": "no",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "no",
       "keeper": "unknown",
@@ -5064,7 +5064,7 @@
       "feature": "rotation-expiry-policies",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: no expiry policy screen exists to edit",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:5-34 no expiry policy; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/policies/policy-edit-definitions/ has no expiry policy component Note: No expiry policies exist, so no screen to edit them. Moved from unknown on code.",
         "onepassword": "not checked: no per-type or per-vault expiry policy screen found",
         "passbolt": "https://www.passbolt.com/docs/admin/resource-policies/password-expiry : one organisation-wide default expiry period; no per type or per folder policies",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Settings : a single 'Maximum age in days' per user",
@@ -5103,7 +5103,7 @@
       "feature": "org-password-policies",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/policies/ : 'Password generator' policy 'Enforces configurable minimum requirements for member-generated passwords'; manually typed passwords on save are not checked",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:7 PasswordGenerator; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/policies/policy-edit-definitions/password-generator.component.ts; searched 'PolicyType.PasswordGenerator' in libs/vault/src/cipher-form: no match Note: The generator obeys the organisation password policy, but passwords typed by hand into an item are not checked against it.",
         "onepassword": "not checked: no organisation policy for item password rules found in https://support.1password.com/team-policies/",
         "passbolt": "https://www.passbolt.com/docs/admin/resource-policies/password-policy : sets generator defaults org-wide (Pro), but 'a user still has the possibility to change the configuration'; not enforced on save",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings : admin chooses the generator service only; password rules are user settings that 'can be overwritten by the user'",
@@ -5135,7 +5135,7 @@
       "feature": "admin-settings",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/policies/ : 'Master password requirements' enforces minimum strength and complexity (Enterprise)",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:6 MasterPassword; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/policies/policy-edit-definitions/master-password.component.ts:64 minComplexity, :65 minLength, :73 enforceOnLogin Note: Master password requirements policy with minimum score, length, character classes and enforce-on-login.",
         "onepassword": "https://support.1password.com/account-password-policy/ : Business can 'adjust the minimum length' and add requirements",
         "passbolt": "https://www.passbolt.com/docs/admin/authentication/user-passphrase-policies : 'User passphrase minimal entropy' for all users (Pro)",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Encryption/Enable-End-to-End-Encryption : a fixed 'at least 12 characters'; no admin setting in https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/App-Settings",
@@ -5148,7 +5148,7 @@
       "area": "admin",
       "name": "Approve applications from a queue in the admin settings.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -5175,7 +5175,7 @@
       "feature": "admin-settings",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "not checked: no approval queue for machine accounts found",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/ServiceAccountsController.cs:123 machine accounts created directly; searched 'pending', 'approve' in src/Api/SecretsManager bitwarden_license/bit-web/src/app/secrets-manager: no application approval queue (device approvals exist for users only, bitwarden_license/bit-cli/src/admin-console/device-approval) Note: There is an approval queue for user device logins, not for applications. Moved from unknown on code.",
         "onepassword": "not checked: no approval queue for service accounts found",
         "passbolt": "not checked: no application registration or approval queue is documented",
         "nextcloud-passwords": "not checked: no application registration or approval queue is documented",
@@ -5214,7 +5214,7 @@
       "feature": "team-folder-sharing",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/remove-users/ : removing or revoking a member removes all organisation collection access at once",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Controllers/OrganizationUsersController.cs:579 DELETE organizations/{orgId}/users/{id}, :605 POST remove (bulk), :669 revoke Note: Removing or revoking a member drops every collection and group access in one step.",
         "onepassword": "https://support.1password.com/offboarding/ : suspend or remove an offboarded team member, removing all vault access",
         "passbolt": "https://www.passbolt.com/docs/admin/user-provisioning/delete-user : deleting a user removes them 'from all groups they belong to'; suspension blocks access in one step",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/F.A.Q : there are no group or folder shares ('You don't. This feature is not yet supported.')",
@@ -5246,7 +5246,7 @@
       "feature": "offline-readonly-cache",
       "featureConfidence": "high",
       "evidence": {
-        "bitwarden": "https://bitwarden.com/help/policies/ : 'Session timeout' policy can force the log out action, which removes vault data from devices; no explicit offline switch",
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:18 MaximumVaultTimeout, :23 RemoveUnlockWithPin; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/key-management/policies/session-timeout.component.ts (timeout with forced logout action) Note: A session timeout policy can force logout, which clears the local vault copy after the timeout, but there is no switch that disables the offline cache outright.",
         "onepassword": "not checked: no offline access switch found among https://support.1password.com/team-policies/",
         "passbolt": "https://www.passbolt.com/docs/admin/offline-mode : organisation toggle; 'switching it off and saving ... turns it back off' and deletes every offline item",
         "nextcloud-passwords": "https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/F.A.Q : 'The Passwords app in your browser does not support any offline storage' so there is nothing to switch off (third-party apps may cache)",
@@ -5696,7 +5696,7 @@
       "provider": "nextcloud",
       "providerHow": "read-from-code",
       "evidence": {
-        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/models/identity/entity.js:18 disabled boolean on an entity (Access > Entities edit); a disabled entity's tokens are refused until re-enabled Note: Setting an entity to disabled suspends all of that user's access and clearing it restores it, without deleting the entity.",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/models/identity/entity.js:18 disabled boolean on an entity (Access > Entities edit); vault/request_handling.go:574 requests from a disabled entity are refused Note: Setting an entity to disabled suspends all of that user's access and clearing it restores it, without deleting the entity.",
         "onepassword": "https://support.1password.com/offboarding/ : 'select More Actions > Suspend'; https://support.1password.com/add-remove-team-members/ : a suspended team member is reactivated with Reactivate.",
         "keeper": "https://docs.keeper.io/enterprise-guide/user-management-and-lifecycle : 'Lock Account' suspends vault access while keeping the user's records; unlocking restores it (Commander enterprise-user --unlock)."
       }
