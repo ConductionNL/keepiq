@@ -3310,8 +3310,8 @@
       "area": "health",
       "name": "See a strength score and badge for each password.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3335,15 +3335,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "password-health",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/reports/ : Weak passwords report scores with zxcvbn 'sorted by severity'; no per-item badge documented",
+        "onepassword": "https://support.1password.com/watchtower/ : Watchtower flags weak passwords per item; no numeric per-item score documented"
+      }
     },
     {
       "id": "health-02",
       "area": "health",
       "name": "Find passwords you reused across items.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3373,15 +3377,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "password-health",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/reports/ : Reused Passwords report detects 'non-unique passwords in your vault'",
+        "onepassword": "https://support.1password.com/watchtower/ : 'Reused passwords' flags identical passwords across items"
+      }
     },
     {
       "id": "health-03",
       "area": "health",
       "name": "Find passwords older than a chosen age.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3405,15 +3413,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "password-health",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/vault-health-reports-add-report-for-password-age/11561 : password age report is an open request; per-item password history shows change dates",
+        "onepassword": "https://support.1password.com/item-history/ : last edited date and previous versions per item; no password age report in https://support.1password.com/watchtower/"
+      }
     },
     {
       "id": "health-04",
       "area": "health",
       "name": "Check passwords against known breaches without sending them anywhere.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3437,15 +3449,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "password-health",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/reports/ : Exposed Passwords sends 'the first five digits of the hash', 'locally compared with the full hash'",
+        "onepassword": "https://support.1password.com/watchtower-privacy/ : 'Only the first five characters of each hash leave your device'"
+      }
     },
     {
       "id": "health-05",
       "area": "health",
       "name": "See one health report for your whole vault.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3475,15 +3491,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "password-health",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/reports/ : vault health reports for exposed, reused, weak, unsecured, inactive 2FA (premium and paid org members)",
+        "onepassword": "https://support.1password.com/watchtower/ : Watchtower overview of weak, reused, vulnerable, unsecured, 2FA and expiring items"
+      }
     },
     {
       "id": "health-06",
       "area": "health",
       "name": "Health checks run in the browser so the server learns nothing.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3499,15 +3519,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "password-health",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/reports/ : reports 'are run locally on your client'",
+        "onepassword": "https://support.1password.com/watchtower-privacy/ : 'Everything is checked locally on your own device'"
+      }
     },
     {
       "id": "health-07",
       "area": "health",
       "name": "Generate a strong random password with length and character options.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3523,15 +3547,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "key-generator",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/generator/ : password generator with length and character options; org 'Password generator' policy",
+        "onepassword": "https://support.1password.com/generate-website-password/ : random password generator with options"
+      }
     },
     {
       "id": "health-08",
       "area": "health",
       "name": "Generate a memorable passphrase made of words.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3544,15 +3572,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/generator/ : passphrase generator; policy covers 'passwords and passphrases' (https://bitwarden.com/help/policies/)",
+        "onepassword": "https://support.1password.com/generate-website-password/ : Memorable Passwords from words, including Dutch"
+      }
     },
     {
       "id": "health-09",
       "area": "health",
       "name": "Generate a username or an email alias.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3565,15 +3597,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/generator/ : username generator with forwarded email alias via SimpleLogin, Addy.io, Firefox Relay, Fastmail, DuckDuckGo, Forward Email",
+        "onepassword": "https://support.1password.com/fastmail/ : Masked Emails only with a Fastmail account; no general username generator documented"
+      }
     },
     {
       "id": "health-10",
       "area": "health",
       "name": "Be told when your email address shows up in a new data breach.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3586,15 +3622,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/reports/ : Data Breach report via Have I Been Pwned, run on demand for individual vaults; not a push alert",
+        "onepassword": "https://support.1password.com/insights/ : Business breach checks 'Track data breaches affecting your team members'; domain breach report in https://support.1password.com/breach-report/"
+      }
     },
     {
       "id": "health-11",
       "area": "health",
       "name": "Be told which websites offer two-factor login you have not switched on.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3607,15 +3647,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/reports/ : Inactive 2FA report where 'Two-factor authentication (2FA) via TOTP is available'",
+        "onepassword": "https://support.1password.com/watchtower/ : shows 'logins for websites that support two-factor authentication'"
+      }
     },
     {
       "id": "health-12",
       "area": "health",
       "name": "Be warned about logins that use an unencrypted http address.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3628,15 +3672,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/reports/ : Unsecured Websites flags 'unsecured (http://) schemes in URIs'",
+        "onepassword": "https://support.1password.com/watchtower/ : 'Unsecured websites' catches HTTP sites"
+      }
     },
     {
       "id": "health-13",
       "area": "health",
       "name": "See one password health score for the whole organisation.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3649,15 +3697,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/access-intelligence/ : Enterprise Access Intelligence reviews at-risk credentials across the organisation, with risk over time",
+        "onepassword": "https://support.1password.com/insights/ : Business Insights track 'compromised, weak, or reused passwords... across your organization'"
+      }
     },
     {
       "id": "rotation-01",
       "area": "rotation",
       "name": "Give a secret an expiry date without changing its value.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3673,14 +3725,18 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "rotation-expiry-policies",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/password-vault-item-expiration-date/162?page=3 : item expiration dates are a feature request open since 2018",
+        "onepassword": "https://www.1password.community/discussions/1password/1password-product-enhancements-set-expiry-dates-find-items-nearby-and-get-autosa/154800 : add a date field to any item and 'Set expiry alert'"
+      }
     },
     {
       "id": "rotation-02",
       "area": "rotation",
       "name": "An administrator sets a default expiry that users can shorten per secret.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -3711,15 +3767,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "rotation-expiry-policies",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/feature-request-time-limited-passwords-with-customizable-expiration-handling/69118 : time-limited passwords are an open request; no expiry policy among https://bitwarden.com/help/policies/",
+        "onepassword": "not checked: no admin default expiry policy found in Business policy pages"
+      }
     },
     {
       "id": "rotation-03",
       "area": "rotation",
       "name": "Get reminders before and after a secret expires.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3743,7 +3803,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "rotation-expiry-policies",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/expiration-reminders-for-all-vault-items-including-repeating-intervals/93914 : expiration reminders are an open request",
+        "onepassword": "https://www.1password.community/discussions/1password/new-feature-expiry-date---where-is-the-alert/151411 : choose how far ahead to be reminded, shown in Watchtower and on the item; no push notification"
+      }
     },
     {
       "id": "rotation-04",
@@ -3767,15 +3831,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "rotation-expiry-policies",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no mark-as-rotated action found",
+        "onepassword": "not checked: no mark-as-rotated action found"
+      }
     },
     {
       "id": "rotation-05",
       "area": "rotation",
       "name": "Secrets touched by a breach or a key compromise are flagged for rotation.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3791,15 +3859,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "rotation-expiry-policies",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/access-intelligence/ : at-risk (exposed, weak, reused) passwords flagged with member notifications; key compromise not covered",
+        "onepassword": "https://support.1password.com/watchtower/ : 'Compromised websites' and 'Vulnerable passwords' flag items to change; key compromise not covered"
+      }
     },
     {
       "id": "rotation-06",
       "area": "rotation",
       "name": "See secrets that are due for rotation on the dashboard and in the health report.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3823,7 +3895,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "rotation-expiry-policies",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/reports/ : health reports cover exposed, reused, weak, unsecured, inactive 2FA; nothing due for rotation",
+        "onepassword": "https://support.1password.com/watchtower/ : 'Expiring items' section in Watchtower"
+      }
     },
     {
       "id": "rotation-07",
@@ -3854,14 +3930,18 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "rotation-expiry-policies",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no expiry policy screen exists to edit",
+        "onepassword": "not checked: no per-type or per-vault expiry policy screen found"
+      }
     },
     {
       "id": "admin-01",
       "area": "admin",
       "name": "Set an organisation password policy that the generator and the secret dialogs respect.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
+      "bitwarden": "partial",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -3886,15 +3966,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "org-password-policies",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/policies/ : 'Password generator' policy 'Enforces configurable minimum requirements for member-generated passwords'; manually typed passwords on save are not checked",
+        "onepassword": "not checked: no organisation policy for item password rules found in https://support.1password.com/team-policies/"
+      }
     },
     {
       "id": "admin-02",
       "area": "admin",
       "name": "Set the minimum master password strength for everyone.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3910,7 +3994,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "admin-settings",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/policies/ : 'Master password requirements' enforces minimum strength and complexity (Enterprise)",
+        "onepassword": "https://support.1password.com/account-password-policy/ : Business can 'adjust the minimum length' and add requirements"
+      }
     },
     {
       "id": "admin-03",
@@ -3942,15 +4030,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "admin-settings",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no approval queue for machine accounts found",
+        "onepassword": "not checked: no approval queue for service accounts found"
+      }
     },
     {
       "id": "admin-04",
       "area": "admin",
       "name": "Remove a leaving user from every team folder in one step.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -3974,14 +4066,18 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "team-folder-sharing",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/remove-users/ : removing or revoking a member removes all organisation collection access at once",
+        "onepassword": "https://support.1password.com/offboarding/ : suspend or remove an offboarded team member, removing all vault access"
+      }
     },
     {
       "id": "admin-05",
       "area": "admin",
       "name": "Switch offline caching off for the whole organisation.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "partial",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -3998,15 +4094,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "offline-readonly-cache",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/policies/ : 'Session timeout' policy can force the log out action, which removes vault data from devices; no explicit offline switch",
+        "onepassword": "not checked: no offline access switch found among https://support.1password.com/team-policies/"
+      }
     },
     {
       "id": "admin-06",
       "area": "admin",
       "name": "Switch breach checking on for the organisation.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4022,7 +4122,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "password-health",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/access-intelligence/ : Enterprise Access Intelligence analyses exposed passwords across the organisation",
+        "onepassword": "https://support.1password.com/insights/ : Business breach checks and domain breach report"
+      }
     },
     {
       "id": "admin-07",
@@ -4046,15 +4150,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-version-history",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: password history keeps the last five passwords, no admin retention setting found",
+        "onepassword": "not checked: no admin setting for item history retention found"
+      }
     },
     {
       "id": "admin-08",
       "area": "admin",
       "name": "Create and remove users automatically from a directory through SCIM.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4067,15 +4175,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/about-scim/ : SCIM provisioning for Teams and Enterprise organisations",
+        "onepassword": "https://support.1password.com/scim/ : SCIM Bridge creates users and groups and suspends users"
+      }
     },
     {
       "id": "admin-09",
       "area": "admin",
       "name": "Sync groups from Active Directory or LDAP.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4097,15 +4209,19 @@
       },
       "rowSource": "competitor",
       "provider": "nextcloud/server",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/ldap-directory/ : Directory Connector syncs users and groups from Active Directory or any LDAP directory",
+        "onepassword": "https://support.1password.com/scim/ : group sync via SCIM from Entra ID, Okta, Google Workspace, JumpCloud; no direct AD or LDAP connector"
+      }
     },
     {
       "id": "admin-10",
       "area": "admin",
       "name": "Enforce rules such as two-factor login or a ban on exporting personal vaults.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4118,15 +4234,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/policies/ : 'Require two-step login' and 'Remove export' policies",
+        "onepassword": "https://support.1password.com/team-policies/ : 'Two-factor authentication' enforcement and further sign-in, sharing and file policies"
+      }
     },
     {
       "id": "admin-11",
       "area": "admin",
       "name": "Hand out admin roles with only the permissions a person needs.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4148,15 +4268,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/user-types-access-control/ : member roles including custom roles with granular permissions",
+        "onepassword": "https://support.1password.com/custom-groups/ : custom groups with chosen administrative permissions (Business)"
+      }
     },
     {
       "id": "admin-12",
       "area": "admin",
       "name": "See which users have set up a vault.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4178,15 +4302,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/managing-users/ : Members list shows invited, accepted and confirmed status",
+        "onepassword": "https://support.1password.com/add-remove-team-members/ : People list shows invited, pending confirmation and active members"
+      }
     },
     {
       "id": "admin-13",
       "area": "admin",
       "name": "Manage the organisation through a public admin API.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4199,15 +4327,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/public-api/ : Public API for members, collections, groups, event logs and policies (Teams and Enterprise)",
+        "onepassword": "https://support.1password.com/scim/ : administration automated through SCIM and CLI user and group commands; no general admin REST API found"
+      }
     },
     {
       "id": "admin-14",
       "area": "admin",
       "name": "See the vault's connected integrations and their status in one place.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4223,15 +4355,19 @@
       "provider": "integriq",
       "providerHow": "read-from-code",
       "feature": "apphost-adoption",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/releasenotes/ : Admin Console Integrations page links to SSO, event management and more; status is shown per feature, not in one place",
+        "onepassword": "https://support.1password.com/scim-troubleshooting/ : 'select Integrations in the sidebar', SCIM bridge Health Monitoring and Events Reporting in one page"
+      }
     },
     {
       "id": "admin-15",
       "area": "admin",
       "name": "Set a size limit and a quota for attachments.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4247,7 +4383,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "encrypted-attachments",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/attachments/ : 500 MB per file and 5 GB storage per user, more bought in 1 GB steps; no admin-set limit",
+        "onepassword": "https://support.1password.com/team-policies/ : 'File storage' policy can turn file saving off; 1 GB per user fixed"
+      }
     },
     {
       "id": "admin-16",
@@ -4271,7 +4411,11 @@
       "provider": "nextcloud-vue",
       "providerHow": "read-from-code",
       "feature": "admin-settings",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: self-hosted version display not found in the pages read",
+        "onepassword": "not checked: 1Password is SaaS only, no installed version page applies"
+      }
     },
     {
       "id": "admin-17",
@@ -4309,15 +4453,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "dashboard",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no pending applications or CA status on an admin dashboard found",
+        "onepassword": "not checked: no pending applications or CA status on an admin dashboard found"
+      }
     },
     {
       "id": "audit-01",
       "area": "audit",
       "name": "Every operation on a secret is logged without the secret itself.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4333,7 +4481,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-audit-trail",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/event-logs/ : over 60 event types incl. item viewed, password accessed, copied, edited; logs are timestamped records of usage, vault data stays end-to-end encrypted",
+        "onepassword": "https://support.1password.com/activity-log/ : audit log records item, vault, user events with actor, object UUID and IP, not item contents (Business)"
+      }
     },
     {
       "id": "audit-02",
@@ -4357,15 +4509,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-audit-trail",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: https://bitwarden.com/help/event-logs/ states no immutability guarantee",
+        "onepassword": "not checked: https://support.1password.com/activity-log/ states no immutability guarantee"
+      }
     },
     {
       "id": "audit-03",
       "area": "audit",
       "name": "Old audit entries are purged after a retention period.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4381,7 +4537,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-audit-trail",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/event-logs/ : 'event log data is retained indefinitely, you can only view up to 367 days'",
+        "onepassword": "https://support.1password.com/activity-log/ : 'The audit log keeps 365 days of events'; longer via Events Reporting"
+      }
     },
     {
       "id": "audit-04",
@@ -4405,15 +4565,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-audit-trail",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: event logs are an Admin Console feature; no personal activity view found",
+        "onepassword": "not checked: audit log is for administrators; no personal activity view found"
+      }
     },
     {
       "id": "audit-05",
       "area": "audit",
       "name": "See the history of a single secret.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4429,15 +4593,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-audit-trail",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/event-logs/ : selecting a resource identifier 'displays all associated events' for that item",
+        "onepassword": "https://support.1password.com/reports/ : usage reports track item copies, views, fills, shares and updates over 12 months; versions in https://support.1password.com/item-history-teams/"
+      }
     },
     {
       "id": "audit-06",
       "area": "audit",
       "name": "Administrators browse the whole audit log.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4453,15 +4621,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-audit-trail",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/event-logs/ : organisation event logs in the Admin Console (Teams and Enterprise)",
+        "onepassword": "https://support.1password.com/activity-log/ : audit log with filters by date, actor and event type (Business)"
+      }
     },
     {
       "id": "audit-07",
       "area": "audit",
       "name": "Forward audit events to a SIEM over syslog or a webhook.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4485,15 +4657,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "siem-audit-export",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/event-logs/ : '/events' endpoint of the Public API and native SIEM integrations",
+        "onepassword": "https://support.1password.com/events-reporting/ : Events Reporting and Events API streams sign-in, item usage and audit events (Business)"
+      }
     },
     {
       "id": "audit-08",
       "area": "audit",
       "name": "Produce an organisation compliance report as CSV or PDF.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4509,7 +4685,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "compliance-reporting",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/event-logs/ : export logs 'as .csv files'; Member Access report per https://bitwarden.com/help/reports/; no compliance report in PDF",
+        "onepassword": "https://support.1password.com/reports/ : Business reports (Watchtower, usage, adoption, team) with CSV download for some; no single compliance report"
+      }
     },
     {
       "id": "audit-09",
@@ -4533,7 +4713,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "compliance-reporting",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no signed or frozen compliance snapshots found",
+        "onepassword": "not checked: no signed or frozen compliance snapshots found"
+      }
     },
     {
       "id": "audit-10",
@@ -4557,15 +4741,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "honey-credentials",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: no decoy or honeytoken credential feature found",
+        "onepassword": "not checked: no decoy or honeytoken credential feature found"
+      }
     },
     {
       "id": "audit-11",
       "area": "audit",
       "name": "Export all your personal data for a GDPR request.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4581,14 +4769,18 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "gdpr-compliance",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/export-your-data/ : export vault as .json, .csv, encrypted .json or .zip with attachments",
+        "onepassword": "https://support.1password.com/export/ : export account data from the 1Password app"
+      }
     },
     {
       "id": "audit-12",
       "area": "audit",
       "name": "Delete your account data, with secrets you shared handled correctly.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "partial",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -4605,7 +4797,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "gdpr-compliance",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/delete-your-account/ : deletion is permanent and 'will delete all associated vault data'; handling of shared organisation items not described there",
+        "onepassword": "not checked: account deletion and the fate of shared items not described in the pages read"
+      }
     },
     {
       "id": "audit-13",
@@ -4629,15 +4825,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-audit-trail",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: anonymisation of audit entries on deletion not described",
+        "onepassword": "not checked: anonymisation of audit entries on deletion not described"
+      }
     },
     {
       "id": "audit-14",
       "area": "audit",
       "name": "Use ready-made connectors for Splunk, Microsoft Sentinel or similar tools.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4651,15 +4851,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/event-logs/ : SIEM integrations for Elastic, Microsoft Sentinel, Panther, Rapid7, Sumo Logic and Splunk",
+        "onepassword": "https://support.1password.com/events-reporting/ : Splunk, Microsoft Sentinel, Datadog, Elastic, CrowdStrike and more (Business)"
+      }
     },
     {
       "id": "audit-15",
       "area": "audit",
       "name": "Get alerted in real time about risky user or admin events.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4673,15 +4877,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/event-logs/ : real-time alerting only through a connected SIEM; no built-in risky-event alerts found",
+        "onepassword": "https://support.1password.com/events-reporting/ : 'set up custom alerts' in the SIEM; built-in Insights notifications are admin-sent, not real-time (https://support.1password.com/insights-notifications/)"
+      }
     },
     {
       "id": "portability-01",
       "area": "portability",
       "name": "Import from other password managers, parsed in the browser.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4697,15 +4905,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-import",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/import-data/ : imports from LastPass, 1Password, Keeper, Dashlane, KeePass and more; data 'encrypted locally before being sent to the server'",
+        "onepassword": "https://support.1password.com/import/ : imports from Bitwarden, Dashlane, KeePass, Keeper, LastPass, browsers and CSV; where parsing happens is not stated"
+      }
     },
     {
       "id": "portability-02",
       "area": "portability",
       "name": "Move over from the Nextcloud Passwords app.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4721,7 +4933,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-import",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/add-import-format-for-nextcloud-passwords/56969 : a Nextcloud Passwords import format is an open feature request; third-party converters exist",
+        "onepassword": "https://support.1password.com/import/ : the supported sources list does not include Nextcloud Passwords"
+      }
     },
     {
       "id": "portability-03",
@@ -4760,14 +4976,18 @@
       "providerHow": "read-from-code",
       "feature": "secret-import",
       "featureConfidence": "high",
-      "_rename": "Preview the field mapping before importing (no remapping yet)."
+      "_rename": "Preview the field mapping before importing (no remapping yet).",
+      "evidence": {
+        "bitwarden": "not checked: no field-mapping preview described in https://bitwarden.com/help/import-data/",
+        "onepassword": "not checked: no field-mapping preview described in https://support.1password.com/import/"
+      }
     },
     {
       "id": "portability-04",
       "area": "portability",
       "name": "Keep the folders from the source when importing.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "yes",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -4792,15 +5012,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-import",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/import-data/ : folder structure is preserved, a chosen destination folder becomes the parent",
+        "onepassword": "not checked: https://support.1password.com/import/ does not say whether folders become vaults or tags"
+      }
     },
     {
       "id": "portability-05",
       "area": "portability",
       "name": "Duplicates are detected during an import.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "no",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4824,14 +5048,18 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-import",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/import-data/ : 'importing does not check for duplicates'",
+        "onepassword": "https://support.1password.com/watchtower/ : Watchtower finds 'exact duplicates saved in the same vault' after import, not during it"
+      }
     },
     {
       "id": "portability-06",
       "area": "portability",
       "name": "Get an import report that lists rejected rows.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "partial",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -4848,15 +5076,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-import",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/import-data/ : errors name the item by index, type, name and field, but 'No data is added to your vault when an import is rejected'",
+        "onepassword": "not checked: no import report described in https://support.1password.com/import/"
+      }
     },
     {
       "id": "portability-07",
       "area": "portability",
       "name": "Import and export files in the Credential Exchange Format.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4886,15 +5118,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "cxf-import-export",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/import-data/ : Credential Exchange supported as a device-to-device transfer, not as CXF file import or export",
+        "onepassword": "https://support.1password.com/import/ : Credential Exchange standard supported as direct app-to-app transfer, not as files"
+      }
     },
     {
       "id": "portability-08",
       "area": "portability",
       "name": "Move a vault straight to or from another provider with the Credential Exchange Protocol.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4911,15 +5147,19 @@
       "providerHow": "read-from-code",
       "feature": "cxp-transfer",
       "featureConfidence": "high",
-      "_rename": "Transfer a vault encrypted between two Keepiq accounts on the same Nextcloud, using the Credential Exchange Protocol handshake."
+      "_rename": "Transfer a vault encrypted between two Keepiq accounts on the same Nextcloud, using the Credential Exchange Protocol handshake.",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/import-data/ : 'direct import via FIDO's CXP' on iOS 26+ and Android; export to other providers per https://bitwarden.com/resources/july-2026-spotlight-your-passkeys-can-now-move-freely-heres-how/",
+        "onepassword": "https://support.1password.com/import/ : Credential Exchange standard on iOS 26+ and Android 14+ for direct transfer"
+      }
     },
     {
       "id": "portability-09",
       "area": "portability",
       "name": "Export an encrypted backup that can be restored.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "no",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4949,15 +5189,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-export",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/export-your-data/ : '.json (Encrypted)' account restricted or password protected, re-importable",
+        "onepassword": "https://support.1password.com/export/ : 'Exported data files are not encrypted. They are stored in plaintext.'"
+      }
     },
     {
       "id": "portability-10",
       "area": "portability",
       "name": "Export a plaintext CSV after entering the master password again.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4973,15 +5217,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-export",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/export-your-data/ : 'Enter your master password or an email verification code to confirm'; .csv format",
+        "onepassword": "https://support.1password.com/export/ : 'Enter your account password' before export; CSV or 1PUX"
+      }
     },
     {
       "id": "portability-11",
       "area": "portability",
       "name": "Choose what goes into an export.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -4997,15 +5245,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "secret-export",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/export-your-data/ : choose individual vault or an organisation vault, optionally with attachments",
+        "onepassword": "https://support.1password.com/export/ : 1Password 8 exports a whole account; CSV holds only Login and Password items"
+      }
     },
     {
       "id": "portability-12",
       "area": "portability",
       "name": "Import a KeePass database export.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -5030,15 +5282,19 @@
       "providerHow": "read-from-code",
       "feature": "secret-import",
       "featureConfidence": "high",
-      "_rename": "Import a KeePass 2.x XML export (not a .kdbx database)."
+      "_rename": "Import a KeePass 2.x XML export (not a .kdbx database).",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/import-data/ : KeePass among supported imports",
+        "onepassword": "https://support.1password.com/import-keepass/ : 1Password can import your passwords from KeePass (passwords only)"
+      }
     },
     {
       "id": "clients-01",
       "area": "clients",
       "name": "Fill in logins on websites through a browser extension.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -5068,15 +5324,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "browser-extension-autofill",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/auto-fill-browser/ : the extension 'recognizes it and enters matching credentials'",
+        "onepassword": "https://support.1password.com/save-fill-passwords/ : 'After you've saved your username and password for a website, 1Password can fill them'"
+      }
     },
     {
       "id": "clients-02",
       "area": "clients",
       "name": "Fill in logins inside embedded frames on a page.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -5106,15 +5366,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "browser-extension-autofill",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/auto-fill-browser/ : fills in iframes but warns for untrusted iframes and never auto-fills them on page load",
+        "onepassword": "https://support.1password.com/browser-autofill-security/ : fills a login in an iframe only when the item URL matches the iframe origin; credit cards fill across origins"
+      }
     },
     {
       "id": "clients-03",
       "area": "clients",
       "name": "Be offered to save or update a login after submitting a form.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -5151,15 +5415,19 @@
       "providerHow": "read-from-code",
       "feature": "browser-extension-autofill",
       "featureConfidence": "high",
-      "_rename": "Save a login captured on form submit from the extension popup."
+      "_rename": "Save a login captured on form submit from the extension popup.",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/auto-fill-browser/ : extension offers to add or update logins (notification settings)",
+        "onepassword": "https://support.1password.com/save-fill-passwords/ : '1Password will automatically offer to save your login' and asks to update an existing item"
+      }
     },
     {
       "id": "clients-04",
       "area": "clients",
       "name": "Fill in the current one-time code together with the login.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -5183,15 +5451,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "extension-totp-autofill",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/authenticator-keys/ : TOTP copied automatically on autofill, and TOTP autofill in browser extensions",
+        "onepassword": "https://support.1password.com/one-time-passwords/ : '1Password automatically fills your one-time password'"
+      }
     },
     {
       "id": "clients-05",
       "area": "clients",
       "name": "Use the extension as a passkey provider on websites.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -5227,15 +5499,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "extension-passkey-provider",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/storing-passkeys/ : extension prompts to save passkeys and signs in with them",
+        "onepassword": "https://support.1password.com/save-use-passkeys/ : save and sign in with passkeys in the browser extension"
+      }
     },
     {
       "id": "clients-06",
       "area": "clients",
       "name": "The extension locks itself automatically.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -5259,7 +5535,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "browser-extension-autofill",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/vault-timeout/ : vault timeout applies per client including the browser extension",
+        "onepassword": "https://support.1password.com/unlock-auto-lock/ : idle auto-lock, and 'when you quit your browser, 1Password will always lock'"
+      }
     },
     {
       "id": "clients-07",
@@ -5291,15 +5571,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "mobile-pwa",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "not checked: native apps are offered; no installable web app documented",
+        "onepassword": "not checked: native apps are offered; no installable web app documented"
+      }
     },
     {
       "id": "clients-08",
       "area": "clients",
       "name": "Use the main flows comfortably on a phone screen.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -5323,15 +5607,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "mobile-pwa",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/download/ : native iOS and Android apps with vault functionality and autofill",
+        "onepassword": "https://support.1password.com/ios-autofill/ : native iPhone and iPad app with full vault use"
+      }
     },
     {
       "id": "clients-09",
       "area": "clients",
       "name": "Read your vault offline, read-only.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -5347,15 +5635,19 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "offline-readonly-cache",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/using-bitwarden-offline/ : cached encrypted vault, 'offline access with Bitwarden is read-only', sessions expire after 30 days",
+        "onepassword": "https://releases.1password.com/b5x/stable/ : apps keep working offline, changes sync when back online"
+      }
     },
     {
       "id": "clients-10",
       "area": "clients",
       "name": "Use native mobile apps with system autofill on iOS and Android.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -5369,15 +5661,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/download/ : iOS and Android apps with 'tight integration to enable autofilling'",
+        "onepassword": "https://support.1password.com/android-autofill/ and https://support.1password.com/ios-autofill/ : system autofill on Android and iOS"
+      }
     },
     {
       "id": "clients-11",
       "area": "clients",
       "name": "Use a native desktop app.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -5391,15 +5687,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/download/ : desktop apps for macOS, Windows and Linux",
+        "onepassword": "https://releases.1password.com/windows/stable/ : 1Password for Mac, Windows and Linux"
+      }
     },
     {
       "id": "clients-12",
       "area": "clients",
       "name": "Use browser extensions for Chrome, Firefox, Edge and Safari.",
       "keepiq": "partial",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -5427,15 +5727,19 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/download/ : extensions for Edge, Chrome, Safari, Firefox, Opera, Brave and more",
+        "onepassword": "https://releases.1password.com/b5x/stable/ : Chrome, Edge, Brave, Firefox and Safari extensions"
+      }
     },
     {
       "id": "clients-13",
       "area": "clients",
       "name": "Sign in over SSH with keys kept in the vault through an SSH agent.",
       "keepiq": "no",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "yes",
+      "onepassword": "yes",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -5449,7 +5753,11 @@
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/ssh-agent/ : desktop app 'acts as an alternative to your operating system's native SSH agent'",
+        "onepassword": "https://developer.1password.com/docs/ssh/agent/ : SSH Agent uses keys saved in 1Password, private key 'never even leaves the 1Password app'"
+      }
     },
     {
       "id": "clients-14",
@@ -5488,7 +5796,11 @@
       "providerHow": "read-from-code",
       "feature": "browser-extension-autofill",
       "featureConfidence": "high",
-      "_rename": "Pair the browser extension with a Nextcloud app password."
+      "_rename": "Pair the browser extension with a Nextcloud app password.",
+      "evidence": {
+        "bitwarden": "not checked: no Nextcloud integration found",
+        "onepassword": "not checked: no Nextcloud integration found"
+      }
     },
     {
       "id": "clients-15",
@@ -5511,14 +5823,18 @@
       "rowSource": "own",
       "provider": "openregister",
       "providerHow": "read-from-code",
-      "_rename": "Build flows in the shared flow builder (no vault event triggers)."
+      "_rename": "Build flows in the shared flow builder (no vault event triggers).",
+      "evidence": {
+        "bitwarden": "not checked: no built-in flow builder found; automation goes through the Public API or SIEM",
+        "onepassword": "not checked: no built-in flow builder found; automation goes through Events API or SIEM"
+      }
     },
     {
       "id": "clients-16",
       "area": "clients",
       "name": "Theme the vault in the organisation's own house style.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
+      "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "unknown",
       "keeper": "unknown",
@@ -5547,7 +5863,11 @@
       },
       "rowSource": "own",
       "provider": "thematiq",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "https://community.bitwarden.com/t/add-company-branding-to-vault-sign-in-screen/50060 : company branding is an open request; only light, dark and other stock themes (https://bitwarden.com/help/change-theme/)",
+        "onepassword": "not checked: no organisation branding option found"
+      }
     },
     {
       "id": "clients-17",
@@ -5555,7 +5875,7 @@
       "name": "Get a guided walkthrough the first time you open the app.",
       "keepiq": "yes",
       "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -5569,15 +5889,19 @@
       },
       "rowSource": "own",
       "provider": "@conduction/nextcloud-vue",
-      "providerHow": "read-from-code"
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "not checked: no first-run walkthrough documented in the pages read",
+        "onepassword": "https://support.1password.com/team-policies/ : 'Guided setup' policy prompts new members to import from other password managers"
+      }
     },
     {
       "id": "clients-18",
       "area": "clients",
       "name": "See vault figures on the app's own dashboard.",
       "keepiq": "yes",
-      "bitwarden": "unknown",
-      "onepassword": "unknown",
+      "bitwarden": "partial",
+      "onepassword": "partial",
       "passbolt": "unknown",
       "keeper": "unknown",
       "hashicorp-vault": "unknown",
@@ -5601,7 +5925,11 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "feature": "dashboard",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "evidence": {
+        "bitwarden": "https://bitwarden.com/help/access-intelligence/ : Risk Insights dashboard for administrators (Enterprise); no personal figures dashboard",
+        "onepassword": "https://support.1password.com/insights/ : Insights dashboard for administrators; Watchtower overview for each user (https://support.1password.com/watchtower/)"
+      }
     }
   ],
   "pending": []
