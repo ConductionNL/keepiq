@@ -4698,18 +4698,11 @@
       "nextcloud-passwords": "unknown",
       "built": {
         "state": "built",
-        "evidence": "lib/Service/TeamFolderOffboardingService.php:45 and lib/Service/DelegationAuthorizer.php:49 vault_admin group; admin settings via #[AuthorizedAdminSetting(AdminSettings::class)] (lib/Controller/SettingsController.php:159) so Nextcloud admin delegation can hand the whole Keepiq section to a group",
+        "evidence": "lib/Service/TeamFolderOffboardingService.php:45 and lib/Service/DelegationAuthorizer.php:49 vault_admin group; admin settings via #[AuthorizedAdminSetting(AdminSettings::class)] (lib/Controller/SettingsController.php:159) so Nextcloud admin delegation can hand the whole Keepiq section to a group; admin handover reachable since f13ad8e6: appinfo/routes.php:150 delegation#handover -> lib/Controller/DelegationController.php:168 createAdminHandover, called from src/components/share/AdminHandoverPanel.vue (mounted in SecretDetailSidebar.vue:700, shown when isVaultAdmin) via src/store/modules/delegation.js:169",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Nextcloud admin delegation for the Keepiq settings section; vault_admin group for offboarding",
-        "note": "There are two coarse levers: Nextcloud's delegation of the whole Keepiq admin section, and a hard-coded vault_admin group that unlocks offboarding and admin handover. No role editor or per-permission roles. The admin handover path has no production caller (#184).",
-        "defects": [
-          {
-            "at": "lib/Service/DelegationAuthorizer.php:113",
-            "what": "vault_admin gates createAdminHandover, which has no production caller.",
-            "issue": "#184",
-            "needsLiveCheck": false
-          }
-        ]
+        "reachedOn": "Nextcloud admin delegation for the Keepiq settings section; vault_admin group for offboarding and for the admin handover panel in the secret sidebar",
+        "note": "There are two coarse levers: Nextcloud's delegation of the whole Keepiq admin section, and a hard-coded vault_admin group that unlocks offboarding and admin handover. The handover now has a route, a controller call and a UI panel (f13ad8e6, closing #184), so both levers work end to end. There is still no role editor and no per-permission role, so a person cannot be given only the permissions they need: partial.",
+        "defects": []
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -4896,19 +4889,13 @@
         "evidence": "src/manifest.json pending-apps-queue widget (visibleWhen pending_apps_count > 0) -> GET /api/v1/applications/pending; lib/Service/DashboardSummaryService.php:155 computes ca_health for admins but no widget renders it and src/components/dashboard/CaHealthCard.vue has no importer",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Dashboard (/) Applications awaiting approval table, admins with pending work only",
-        "note": "Admins see which applications await approval on the dashboard, but cannot approve from there, and the CA status is only in admin settings (CaHealthSection). The dashboard CA card is built but orphaned.",
+        "note": "Admins see which applications await approval on the dashboard, but cannot approve from there, and the CA status is only in admin settings (CaHealthSection). The dashboard CA card is built but orphaned. The queue's View-all footer needs a live check: the _note at src/manifest.json:208 that ties it to the limit forwarding predates the installed @conduction/nextcloud-vue 2.55.1, which keeps limit, so it is not recorded as a defect.",
         "defects": [
           {
             "at": "src/components/dashboard/CaHealthCard.vue:1",
             "what": "CaHealthCard is imported by nothing and ca_health from the summary is never rendered, so CA status never reaches the dashboard.",
             "issue": null,
             "needsLiveCheck": false
-          },
-          {
-            "at": "src/manifest.json:208",
-            "what": "The queue's View-all footer is dead: its own _note says limit never reaches the widget on the installed nextcloud-vue.",
-            "issue": null,
-            "needsLiveCheck": true
           }
         ]
       },
