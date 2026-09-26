@@ -383,7 +383,7 @@
       "id": "vault-11",
       "area": "vault",
       "name": "Add your own custom fields to an item, including hidden ones.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -391,11 +391,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "src/dialogs/SecretCreateDialog.vue:122 and src/dialogs/SecretEditDialog.vue:125 AdditionalFieldsEditor -> src/store/modules/secret.js:377 encrypts additionalFields blob -> POST /api/v1/secrets (appinfo/routes.php:89); src/components/AdditionalFieldsEditor.vue:50 value is a plain NcTextField; src/components/SecretDetailSidebar.vue:570-577 renders every value as plain <dd> text",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> New secret / Edit secret dialog -> Additional fields section",
+        "note": "Owners can add, rename and remove named custom fields on create and edit, stored encrypted. There is no hidden or concealed field kind: values are typed in plain text fields and shown unmasked on the detail sidebar."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secrets",
       "featureConfidence": "high"
     },
@@ -403,7 +407,7 @@
       "id": "vault-12",
       "area": "vault",
       "name": "Store a secure note that is not a login.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -411,11 +415,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Repair/SeedSecretTypes.php:66 seeds 'note' => 'Secure Note' (repair step appinfo/info.xml:199); src/dialogs/SecretCreateDialog.vue:279 valueLabel reads 'Note' for the note type; src/components/SecretDetailSidebar.vue:200 note icon and :1233 'Note' label",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Type: Secure Note",
+        "note": "Secure Note is a seeded system type; the create dialog relabels the value field to Note and the detail sidebar shows it as a note. URL and login stay optional."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secrets",
       "featureConfidence": "high"
     },
@@ -423,7 +431,7 @@
       "id": "vault-13",
       "area": "vault",
       "name": "Store a payment card or identity document with fields that fit its type.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -431,11 +439,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/SecretCreateDialog.vue:37-94 card fields (number, expiry, CVV, PIN, cardholder, Luhn hint) and identity fields (name, address, phone, email, BSN) -> :307 serializeCard into the encrypted key -> src/store/modules/secret.js:348 createSecret; src/dialogs/SecretEditDialog.vue:51,73 same sets on edit; src/components/SecretDetailSidebar.vue:253,421 per-field rows with masked number/CVV/PIN/BSN",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Type: Payment card or Identity",
+        "note": "Card and identity types each get their own field set in create and edit, serialized into the encrypted key, and render as per-field rows with sensitive fields masked. The identity type holds personal details and a BSN, not passport or licence document fields."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "card-identity-items",
       "featureConfidence": "high"
     },
@@ -443,7 +455,7 @@
       "id": "vault-14",
       "area": "vault",
       "name": "Store an SSH key pair as its own item type.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -451,17 +463,21 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "lib/Repair/SeedSecretTypes.php:64 seeds 'ssh_key' => 'SSH Key'; src/dialogs/SecretCreateDialog.vue:95-108 offers only one value field for it; src/cxf/cxf.js:205,355 maps CXF ssh-key items; grep -rni ssh src --include=*.vue: no SSH-specific form, public-key field or key-pair generator",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Type: SSH Key",
+        "note": "SSH Key exists as its own type, but it stores a single secret value like any other type: there are no separate private key, public key and fingerprint fields and no key-pair generation. A user can put the public key in an additional field by hand."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "vault-15",
       "area": "vault",
       "name": "Store a passkey in the vault as its own item type.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -469,11 +485,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Repair/SeedSecretTypes.php:72 seeds 'passkey'; src/passkey/passkey.js:36 buildPasskeyCredential canonical CXF-aligned JSON; src/components/SecretDetailSidebar.vue:232-243 PasskeyDisplay for passkey-typed items; src/import/parsers/bitwarden.js:21 and src/cxf/cxf.js:27 create them on import; src/dialogs/SecretCreateDialog.vue:95 manual create offers only a raw value field",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> detail sidebar (passkey presentation); created via Import wizard or by pasting credential JSON into New secret",
+        "note": "Passkey is a real item type with a dedicated display and a canonical schema, and imports from Bitwarden and CXF create it. There is no form to enter a passkey by hand, keepiq cannot mint or use one against a website, and the CXF round trip is a known open defect.",
+        "defects": [
+          {
+            "at": "src/cxf/cxf.js:27",
+            "what": "CXF export of a passkey item is not parsed back on import (export maps 1 item, import parses 0 rows).",
+            "issue": "#113",
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "passkey-item-type",
       "featureConfidence": "high"
     },
@@ -481,7 +509,7 @@
       "id": "vault-16",
       "area": "vault",
       "name": "Keep a one-time password seed on a login and see the current code.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -489,19 +517,24 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Repair/SeedSecretTypes.php:67 seeds 'totp' => 'Authenticator (TOTP)'; src/components/SecretDetailSidebar.vue:214-228 renders TotpDisplay only when the type is totp (:1243 isTotp); src/totp/totp.js:7 parses otpauth URI or base32; src/import/parsers/bitwarden.js:70-71 puts a login's seed into additionalFields.totp, which the sidebar shows as plain text, not a code",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> detail sidebar of an Authenticator (TOTP) item -> One-time code row",
+        "note": "A live one-time code works, but only on a separate Authenticator item whose value is the seed. A seed kept on a login (for example imported from Bitwarden into additionalFields.totp) is shown as raw text and never becomes a code."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secrets",
-      "featureConfidence": "high"
+      "featureConfidence": "high",
+      "_rename": "Keep a one-time password seed as an authenticator item and see the current code."
     },
     {
       "id": "vault-17",
       "area": "vault",
       "name": "Attach an encrypted file to a secret.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -509,11 +542,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/SecretDetailSidebar.vue:598 AttachmentPanel -> src/components/AttachmentPanel.vue:169 store.upload -> src/store/modules/attachment.js:193-224 AES-GCM file key, encrypted blob and metadata, RSA-wrapped key -> POST /api/v1/secrets/{secretId}/attachments (appinfo/routes.php:348) -> lib/Controller/AttachmentController.php:84; download :251 and delete :292 wired",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets/:id) -> detail sidebar -> Attachments box",
+        "note": "Files are encrypted in the browser with a per-file key wrapped to the vault key, then uploaded; the owner can list, download (decrypted client side) and delete them."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "encrypted-attachments",
       "featureConfidence": "high"
     },
@@ -521,7 +558,7 @@
       "id": "vault-18",
       "area": "vault",
       "name": "See earlier values of a secret and restore one.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -529,11 +566,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Service/SecretService.php:892 versionService->snapshot on every user update; src/components/SecretDetailSidebar.vue:781 VersionHistoryPanel -> src/store/modules/secretVersion.js:42 GET /api/v1/secrets/{secretId}/versions, :68 view, :108 POST /api/v1/versions/{id}/restore (appinfo/routes.php:330-332) -> lib/Controller/SecretVersionController.php:139; src/components/VersionHistoryPanel.vue:155 restore after VersionRestoreDialog confirm",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets/:id) -> detail sidebar -> Version history panel -> View / Restore",
+        "note": "Each update snapshots the prior value; the owner can view an earlier version decrypted in session and restore it after a confirm, with the current value kept as a new version."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-version-history",
       "featureConfidence": "high"
     },
@@ -541,7 +582,7 @@
       "id": "vault-19",
       "area": "vault",
       "name": "Select several secrets at once and move, delete, share or export them together.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -549,11 +590,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/SecretList.vue:294-333 selection-actions strip: Move, Share, Add to team folder, Delete -> src/dialogs/BulkMoveDialog.vue:153, BulkShareDialog.vue:218, BulkDeleteDialog.vue:195 bulk.run -> src/store/modules/bulk.js:111; src/views/SecretList.vue:8-11 ExportDialog receives all decryptedSecrets, not the selection",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets) -> row checkboxes -> selection strip",
+        "note": "Multi-select with shift-range works and the strip moves, shares, adds to a team folder or deletes the selection with per-item retry. Export is not a bulk action: the export dialog always takes the whole visible list."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "bulk-actions",
       "featureConfidence": "high"
     },
@@ -561,7 +606,7 @@
       "id": "vault-20",
       "area": "vault",
       "name": "Choose a default item type and default view for new items.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -569,11 +614,22 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "lib/Service/SettingsService.php:98-99 user pref keys default_secret_type and default_view; grep -rn default_secret_type src: no hits; src/views/DashboardSettingsView.vue:36 edits default_view but is in no route or registry (grep DashboardSettingsView src: only a comment)",
+        "owner": "ConductionNL/keepiq",
+        "note": "The backend stores both preferences, but no reached screen edits them: the only form is DashboardSettingsView, which no route mounts. The create dialog and list do not read them either; the create dialog preselects the first type.",
+        "defects": [
+          {
+            "at": "src/views/DashboardSettingsView.vue:36",
+            "what": "The settings view that edits default_view is not mounted by any route or registry entry, so the preference cannot be set.",
+            "issue": "#208",
+            "needsLiveCheck": false
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "user-settings",
       "featureConfidence": "high"
     },
@@ -581,7 +637,7 @@
       "id": "vault-21",
       "area": "vault",
       "name": "See the secrets you used most recently on the dashboard.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -589,11 +645,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "building",
+        "evidence": "src/manifest.json:294 recent-activity-feed widget -> GET /api/v1/audit/me (appinfo/routes.php:378) listing the user's own audit events with item names; lib/Service/AuditService.php:200 recentlyAccessed (secret.read only) has no caller (grep recentlyAccessed lib src: definition only)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Dashboard page (/) -> Recent activity widget",
+        "note": "The dashboard shows your last five audit events of any kind, which includes secret reads by name, but it is an activity log rather than a list of recently used secrets and rows do not open the secret. The dedicated recently-accessed query exists but nothing calls it."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "dashboard",
       "featureConfidence": "high"
     },
@@ -601,7 +661,7 @@
       "id": "vault-22",
       "area": "vault",
       "name": "Clone an existing item as the starting point for a new one.",
-      "keepiq": "unknown",
+      "keepiq": "no",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -609,17 +669,20 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "none",
+        "evidence": "grep -rni 'clone\\|duplicate\\|make a copy' src --include=*.vue: only import-wizard duplicate handling; no clone action in SecretDetailSidebar.vue or SecretList.vue menus",
+        "owner": "ConductionNL/keepiq",
+        "note": "There is no clone or duplicate action on a secret."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "vault-23",
       "area": "vault",
       "name": "Operate the secret list fully from the keyboard.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -627,11 +690,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/SecretList.vue:371 SecretListItem in the list slot; src/components/SecretListItem.vue:5-10 tabindex=0 with Enter and Space opening the row, :91-92 copy control stops propagation; src/views/SecretList.vue:362 native NcCheckboxRadioSwitch per row with aria-label; selection strip buttons :294-333",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (/secrets)",
+        "note": "Rows are Tab-reachable and open with Enter or Space, selection checkboxes and the copy control are independently focusable, and bulk actions are buttons. There are no arrow-key or shortcut bindings, so moving through a long list means tabbing through every control."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secrets-write-ui",
       "featureConfidence": "high"
     },
@@ -1572,7 +1639,7 @@
       "id": "requests-01",
       "area": "requests",
       "name": "Ask someone for a secret through a link they fill in.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1580,11 +1647,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/SecretList.vue:992 (credential-request action) -> src/dialogs/SecretRequestCreateDialog.vue:520 -> src/store/modules/secretRequest.js:106 POST /api/v1/secret-requests -> lib/Controller/SecretRequestController.php:170 -> lib/Service/SecretRequestService.php:411 createForUserVault; recipient: src/views/SecretRequestFill.vue:299 -> secretRequest.js:325 POST /api/v1/public/secret-requests/{token}/fill -> lib/Controller/SecretRequestFillController.php:160 (#[PublicPage])",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (vault) -> 'Ask someone for a credential' action, or SecretDetail sidebar -> Requests -> 'Ask someone to fill this in'; recipient uses the anonymous /public/share/request/:token page",
+        "note": "Fresh requests create a placeholder secret server side; the fill link points at the anonymous public shell (src/utils/fillLink.js), so a recipient without an account can open it."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-requests",
       "featureConfidence": "high"
     },
@@ -1592,7 +1663,7 @@
       "id": "requests-02",
       "area": "requests",
       "name": "Choose which fields the other person must fill in.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1600,11 +1671,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/SecretRequestCreateDialog.vue:99 (field checkboxes for key, login, url and custom members) -> secretRequest.js:106 requestedFields -> lib/Service/SecretRequestPolicy.php requireAllRequestedFields (called at lib/Service/SecretRequestService.php:165)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Request create dialog",
+        "note": "Key, login, url and any named additional field can be requested; the recipient must fill every requested field.",
+        "defects": [
+          {
+            "at": "lib/Service/SecretRequestService.php:228",
+            "what": "Any additional member is sent as one additionalFields blob that replaces the stored blob wholesale, so filling a request for one extra field on a secret that already has other extra fields appears to drop the others.",
+            "issue": null,
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-requests",
       "featureConfidence": "high"
     },
@@ -1612,7 +1695,7 @@
       "id": "requests-03",
       "area": "requests",
       "name": "A filled-in value is encrypted for you and can only be written once.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1620,11 +1703,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/store/modules/secretRequest.js:325 submitFill encrypts with the requester suite certificate (public_certificate from lib/Controller/SecretRequestFillController.php:86) via rsaEncrypt; lib/Service/SecretRequestService.php:163 fill -> SecretRequestPolicy.php:192 requireOpenByToken refuses a fulfilled token (410) and flips status to fulfilled after persisting",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Anonymous fill page /public/share/request/:token",
+        "note": "Values are encrypted in the recipient's browser to the owner's suite and the token is single-use. The url field is stored plaintext by design and the dialog labels it so."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-requests",
       "featureConfidence": "high"
     },
@@ -1632,7 +1719,7 @@
       "id": "requests-04",
       "area": "requests",
       "name": "Give a request an expiry date.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1640,11 +1727,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/SecretRequestCreateDialog.vue:166 (datetime-local expiry, prefilled) -> lib/Controller/SecretRequestController.php parseExpiry -> SecretRequestService.php:664 expire, run by lib/BackgroundJob/ExpireSecretRequestsJob.php:117 registered in appinfo/info.xml:114; SecretRequestPolicy.php:192 refuses expired tokens",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Request create dialog; expiry shown per row in the SecretDetail sidebar request list",
+        "note": "Expired requests are refused on the fill page and swept by a registered background job, which also removes an unfilled placeholder."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-requests",
       "featureConfidence": "high"
     },
@@ -1652,7 +1743,7 @@
       "id": "requests-05",
       "area": "requests",
       "name": "Get notified when a request is filled in.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1660,11 +1751,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Service/SecretRequestService.php:192 -> lib/Service/SecretRequestOutbox.php:74 announceFulfilled -> lib/Service/NotificationService.php:55 (request_fulfilled, opt-out key notify_requests) -> lib/Notification/KeepiqNotifier.php:198, notifier registered at lib/AppInfo/PlatformIntegrationRegistrar.php:60",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud notification to the requester",
+        "note": "A Nextcloud notification goes to the requester when a request is filled; users can opt out through the notify_requests setting."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-requests",
       "featureConfidence": "high"
     },
@@ -1672,7 +1767,7 @@
       "id": "requests-06",
       "area": "requests",
       "name": "Ask again for an updated value without starting a new request.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1680,11 +1775,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/SecretDetailSidebar.vue:727 ('Ask for new values' when the secret has a value) -> SecretRequestCreateDialog.vue isReRequest -> src/store/modules/secretRequest.js:147 createReRequest -> SecretRequestController.php:170 MODE_RE_REQUEST -> SecretRequestService.php:533 createReRequest",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretDetail sidebar -> Requests -> Ask for new values",
+        "note": "A re-request targets the existing secret and overwrites its values when filled; only the owner may create one and only one pending request per secret is allowed (409)."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-requests",
       "featureConfidence": "high"
     },
@@ -1692,7 +1791,7 @@
       "id": "requests-07",
       "area": "requests",
       "name": "Revoke an open request.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1700,11 +1799,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/secretRequest/SecretRequestList.vue:76 Revoke button -> src/store/modules/secretRequest.js:181 DELETE /api/v1/secret-requests/{id} -> lib/Controller/SecretRequestController.php:403 destroy -> lib/Service/SecretRequestService.php:607 decline (status declined, unfilled placeholder removed); application scope: SecretRequestList.vue onRevokeConfirmed -> secretRequest.js:253 DELETE /api/v1/applications/{id}/secret-requests/{requestId}",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretDetail sidebar -> Requests list -> Revoke; admins also on ApplicationDetail (/applications/:id)",
+        "note": "Revoking sets the request to declined and deletes an empty placeholder secret. The row disappears from the list instead of showing as revoked."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-requests",
       "featureConfidence": "high"
     },
@@ -1712,7 +1815,7 @@
       "id": "requests-08",
       "area": "requests",
       "name": "See which requests are still waiting for an answer.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1720,11 +1823,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/SecretList.vue:647 pendingRequestsBySecret feeds the row requestState indicator (SecretList.vue:377) from src/store/modules/secretRequest.js:64 GET /api/v1/secret-requests -> lib/Controller/SecretRequestController.php:100 index; per secret: src/components/secretRequest/SecretRequestList.vue:13 'Outstanding requests' with status and expiry in src/components/SecretDetailSidebar.vue:737",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretList page (row badge) and SecretDetail sidebar -> Requests list",
+        "note": "Waiting requests show as a badge on the secret row and in the per-secret list. There is no single page listing all open requests, although the list component's header comment mentions a 'My requests' view that does not exist in the manifest."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-requests",
       "featureConfidence": "high"
     },
@@ -1732,7 +1839,7 @@
       "id": "requests-09",
       "area": "requests",
       "name": "An application can ask a person for a secret it needs.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1740,11 +1847,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "machine: POST /api/v1/app/secret-requests (appinfo/routes.php:317) -> lib/Controller/ApplicationSecretRequestsController.php:124 create (JWT application principal) -> lib/Service/ApplicationSecretRequestService.php:111 createForApplicationVault; response carries token and the human fill link; GET /api/v1/app/secret-requests lists pending ones (ApplicationSecretRequestsController.php:89)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "machine: POST /api/v1/app/secret-requests; admin oversight on ApplicationDetail (src/views/ApplicationDetail.vue:152)",
+        "note": "An authenticated application can create a request into its own vault and hand the returned link to a person; admins can see and revoke these requests on the application detail page."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-requests",
       "featureConfidence": "high"
     },
@@ -1752,7 +1863,7 @@
       "id": "requests-10",
       "area": "requests",
       "name": "A new request does not ask again for values already on file.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1760,11 +1871,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/dialogs/SecretRequestCreateDialog.vue:591 defaultSelection does not pre-tick a field that already holds a value, and :107 marks filled fields; isFieldFilled at SecretRequestCreateDialog.vue:559",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Request create dialog opened from the SecretDetail sidebar",
+        "note": "Filled fields are marked and left unticked on a fresh request, but the requester can still tick them. Additional members count as unfilled when the blob is not decrypted in that context."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-requests",
       "featureConfidence": "high"
     },
@@ -1772,7 +1887,7 @@
       "id": "requests-11",
       "area": "requests",
       "name": "Get a lost fill-in link back.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -1780,11 +1895,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/secretRequest/SecretRequestList.vue:62 'Copy fill link' for pending, unexpired rows -> src/utils/fillLink.js fillLinkFor(row.token)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "SecretDetail sidebar -> Requests list -> Copy fill link",
+        "note": "The requester can copy the fill link again from the request list at any time while the request is pending and not expired."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-requests",
       "featureConfidence": "high"
     },
@@ -3276,7 +3395,7 @@
       "id": "audit-01",
       "area": "audit",
       "name": "Every operation on a secret is logged without the secret itself.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3284,11 +3403,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Service/SecretService.php:284,588,678,794 dispatch secret.created/updated/deleted/read AuditEvents -> lib/AppInfo/AuditStreamEventRegistrar.php:74 registers lib/Listener/AuditListener.php:78 -> lib/Service/AuditService.php:69 record(); lib/Service/AuditService.php:99 sanitiseMetadata rejects lib/Event/Audit/AuditEventTypes.php:173 FORBIDDEN_KEYS (value, password, ciphertext, payload...) and drops non-whitelisted keys",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "automatic: every secret create/read/update/delete, share, link share, rotation, lease and export path records an entry",
+        "note": "About 23 services record audit events through one listener; metadata is whitelisted per event type and any secret-material key throws before insert. The listener is fail-soft, so a failed audit write is logged, not blocking."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-audit-trail",
       "featureConfidence": "high"
     },
@@ -3296,7 +3419,7 @@
       "id": "audit-02",
       "area": "audit",
       "name": "The audit log cannot be edited or deleted.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3304,11 +3427,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "appinfo/routes.php:377-379 only GET audit routes; lib/Db/AuditEntryMapper.php:242 purgeOlderThan and :285 anonymizeActor are the only writes besides insert; grep for hash chain/prev_hash in lib: no hits",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "no update or delete verb exists in any API or UI",
+        "note": "Append-only at the application level: only retention purge and account-deletion anonymisation modify rows. There is no database-level protection or tamper evidence (no hash chain), so someone with database access can still alter entries undetected."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-audit-trail",
       "featureConfidence": "high"
     },
@@ -3316,7 +3443,7 @@
       "id": "audit-03",
       "area": "audit",
       "name": "Old audit entries are purged after a retention period.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3324,19 +3451,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "appinfo/info.xml:113 registers lib/BackgroundJob/PurgeAuditLogJob.php:79 (daily, floor 30 days) -> lib/Service/AuditService.php:243 purge -> lib/Db/AuditEntryMapper.php:242; retention set in src/components/settings/AdminAuditSection.vue:317 PUT /api/settings/admin -> lib/Service/AdminSettingsService.php:337",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings > Keepiq > audit section (retention days input); purge runs as a registered background job",
+        "note": "Default 365 days, minimum 30 enforced both on save and in the job."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-audit-trail",
       "featureConfidence": "high"
     },
     {
       "id": "audit-04",
       "area": "audit",
-      "name": "See your own activity on your secrets.",
-      "keepiq": "unknown",
+      "name": "See your own recent activity in the vault.",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3344,11 +3475,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/manifest.json:473 PersonalActivity page /my-activity -> src/views/PersonalActivityView.vue:102 -> src/store/modules/audit.js:85 GET /api/v1/audit/me -> lib/Controller/AuditController.php:140 mine -> AuditService::listForActor; also dashboard widget src/manifest.json:297",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "My activity page (/my-activity) and the Recent activity dashboard widget",
+        "note": "Shows entries where the user is the actor, i.e. what you did. What other people (share recipients, applications) did to your secrets shows only on the per-secret history, not in this feed."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-audit-trail",
       "featureConfidence": "high"
     },
@@ -3356,7 +3491,7 @@
       "id": "audit-05",
       "area": "audit",
       "name": "See the history of a single secret.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3364,11 +3499,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/SecretDetailSidebar.vue:755 SecretActivityTab (v-if isOwner) -> src/components/SecretActivityTab.vue:100 -> src/store/modules/audit.js:65 GET /api/v1/audit/secret/{id} -> lib/Controller/AuditController.php:98 secret (owner-scoped, 404 for non-owners)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Secret detail sidebar > Activity section (owner only)",
+        "note": "Only the owner sees it; share recipients get no history view."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-audit-trail",
       "featureConfidence": "high"
     },
@@ -3376,7 +3515,7 @@
       "id": "audit-06",
       "area": "audit",
       "name": "Administrators browse the whole audit log.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3384,11 +3523,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Settings/AdminSettings.php + src/settings.js:35 AdminRoot -> src/views/settings/Settings.vue:30 AdminAuditSection -> src/components/settings/AdminAuditSection.vue:250,338,364 -> src/store/modules/audit.js:122 GET /api/v1/audit -> lib/Controller/AuditController.php:180 index (AuthorizedAdminSetting)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings > Keepiq > audit section (filters, paging, client-side CSV export)",
+        "note": "Filter by event type, actor, object and date range, with paging and a CSV export of the whole filter result."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-audit-trail",
       "featureConfidence": "high"
     },
@@ -3396,7 +3539,7 @@
       "id": "audit-07",
       "area": "audit",
       "name": "Forward audit events to a SIEM over syslog or a webhook.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3404,11 +3547,23 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/settings/Settings.vue:25 SiemSection -> src/components/settings/SiemSection.vue:389 POST /api/v1/siem/sinks, :418 test -> lib/Controller/SiemSinkController.php (type syslog|webhook) -> lib/Service/SiemSinkService.php:91; lib/AppInfo/AuditStreamEventRegistrar.php:83 SiemForwardListener -> lib/Service/SiemService.php:152 enqueue; appinfo/info.xml:121 DeliverSiemEventsJob -> lib/Service/SiemService.php:237 deliverOne -> lib/Service/SiemTransport.php:100 RFC 5424 syslog (TLS optional) / :152 HTTPS webhook with HMAC signature",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings > Keepiq > SIEM section (create, edit, test, delete sinks)",
+        "note": "Queued delivery with exponential backoff, dead-letter after max attempts and an admin notification. Per-sink category filter and queue cap.",
+        "defects": [
+          {
+            "at": "lib/Service/SiemService.php:254,271",
+            "what": "The raw transport exception message is stored as lastError and shown in the SIEM section; an HTTP client exception carries the full endpoint URL, so a webhook URL with embedded credentials or tokens leaks into the UI and database.",
+            "issue": "#728",
+            "needsLiveCheck": true
+          }
+        ]
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "siem-audit-export",
       "featureConfidence": "high"
     },
@@ -3416,7 +3571,7 @@
       "id": "audit-08",
       "area": "audit",
       "name": "Produce an organisation compliance report as CSV or PDF.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3424,11 +3579,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/settings/Settings.vue:24 ComplianceSection -> src/components/settings/ComplianceSection.vue:201 POST /api/v1/compliance/reports -> lib/Controller/ComplianceReportController.php:98 generate -> lib/Service/ComplianceReportService.php:152; export in src/dialogs/ComplianceSnapshotDialog.vue:148 exportCsv and :193 exportPdf (browser print), beacon POST .../exported :216",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings > Keepiq > Compliance section > Generate report > snapshot dialog (Export CSV / Export PDF (print))",
+        "note": "Metadata-only aggregates (secrets per user, share hygiene, rotation posture, ciphertext age). The PDF is the browser print dialog over the rendered snapshot, not a server-generated file."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "compliance-reporting",
       "featureConfidence": "high"
     },
@@ -3436,7 +3595,7 @@
       "id": "audit-09",
       "area": "audit",
       "name": "Compliance snapshots are timestamped and cannot change afterwards.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3444,11 +3603,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Service/ComplianceReportService.php:152-165 generate stores the aggregate with generatedAt/generatedBy; lib/Db/ComplianceReportMapper.php has only findById/findAll; appinfo/routes.php:195-199 no update or delete route; the exported route only records an audit event (lib/Service/ComplianceReportService.php:211)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Compliance section report list; snapshots reopen as stored",
+        "note": "Immutable at the application level: no edit or delete path. No signature or hash, so the snapshot is not tamper-evident against database access."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "compliance-reporting",
       "featureConfidence": "high"
     },
@@ -3456,7 +3619,7 @@
       "id": "audit-10",
       "area": "audit",
       "name": "Plant decoy credentials that raise an alert when anyone touches them.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3464,11 +3627,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/components/SecretDetailSidebar.vue:814 HoneyPanel -> src/components/HoneyPanel.vue:181 store.flag -> src/store/modules/honey.js:56 POST /api/v1/secrets/{id}/honey -> lib/Controller/HoneyController.php; lib/AppInfo/AuditStreamEventRegistrar.php:92 HoneyTripwireListener -> lib/Listener/HoneyTripwireListener.php:141,160,173 (UI read, machine retrieve, link access) -> lib/Service/HoneyTripwireService.php:91 raiseAlert, :173 notify owner and admins; admin alert list src/components/settings/HoneySection.vue:145",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Secret detail sidebar > Honey tripwire panel; alerts in the panel and in Nextcloud admin settings > Keepiq > Honey section",
+        "note": "You flag an existing secret as a decoy; any server-observed access (UI read, application retrieval, link share, share copy) raises an alert and a notification that bypasses notification preferences. Alerts can be acknowledged or snoozed."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "honey-credentials",
       "featureConfidence": "high"
     },
@@ -3476,7 +3643,7 @@
       "id": "audit-11",
       "area": "audit",
       "name": "Export all your personal data for a GDPR request.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3484,11 +3651,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/SecretList.vue:170 menu action openGdpr -> src/dialogs/GdprExportDialog.vue:155 -> src/store/modules/export.js:250 exportGdprPackage, GET /api/v1/gdpr/metadata -> lib/Controller/GdprController.php:93 -> lib/Service/GdprService.php:102 collectMetadata (shares given/received, delegations, link shares, requests, suites, attachments)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Secret list page > actions menu > GDPR export dialog",
+        "note": "Server metadata is combined client-side with the decrypted vault into one package; the export is audited as vault.gdpr_exported."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "gdpr-compliance",
       "featureConfidence": "high"
     },
@@ -3496,7 +3667,7 @@
       "id": "audit-12",
       "area": "audit",
       "name": "Delete your account data, with secrets you shared handled correctly.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3504,11 +3675,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "src/views/SecretList.vue:175 deletionOpen -> src/dialogs/AccountDeletionDialog.vue:208 -> src/store/modules/export.js:286 DELETE /api/v1/gdpr/account-data -> lib/Controller/GdprController.php:130 (confirmation phrase) -> lib/Service/AccountDeletionService.php:108 deleteAllFor; lib/Service/AccountShareCleanupService.php:84 transferDelegatedSecrets, :126 detachGrantedShares tombstones recipient copies, :162 removeReceivedShares; also on Nextcloud user deletion via lib/Listener/UserDeletedListener.php",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Secret list page > actions menu > Delete account data dialog; automatically when an admin deletes the Nextcloud user",
+        "note": "Delegated secrets transfer to the delegate, recipients keep a tombstoned copy with sync severed, received shares and the user's own data are removed. Separately, a normal single-secret delete still leaves recipient copies live (#83), which is outside the account-deletion path."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "gdpr-compliance",
       "featureConfidence": "high"
     },
@@ -3516,7 +3691,7 @@
       "id": "audit-13",
       "area": "audit",
       "name": "Audit entries are anonymised when an account is deleted.",
-      "keepiq": "unknown",
+      "keepiq": "yes",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3524,11 +3699,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Service/AccountDeletionService.php:150 dispatches AccountDataDeletedEvent -> lib/AppInfo/AuditStreamEventRegistrar.php:96 AuditListener -> lib/Listener/AuditListener.php:120 anonymizeUser -> lib/Service/AuditService.php:270, lib/Db/AuditEntryMapper.php:285 anonymizeActor + metadata scrub of recipientId/delegatedTo",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "automatic on in-app account data deletion and on Nextcloud user deletion",
+        "note": "Entries are kept with the actor replaced by a deleted-account marker. Object names (secret titles) on the entries are not scrubbed."
       },
       "rowSource": "own",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read",
+      "providerHow": "read-from-code",
       "feature": "secret-audit-trail",
       "featureConfidence": "high"
     },
@@ -3536,7 +3715,7 @@
       "id": "audit-14",
       "area": "audit",
       "name": "Use ready-made connectors for Splunk, Microsoft Sentinel or similar tools.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3544,17 +3723,21 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Service/SiemTransport.php:100 generic RFC 5424 syslog and :152 generic HTTPS JSON webhook; grep -i 'splunk|sentinel|datadog|CEF|LEEF' lib src/components/settings/SiemSection.vue: no hits",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud admin settings > Keepiq > SIEM section",
+        "note": "No named connectors or vendor formats; Splunk, Sentinel and similar tools can ingest the generic syslog or webhook stream, but the admin has to configure the receiving side."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "audit-15",
       "area": "audit",
       "name": "Get alerted in real time about risky user or admin events.",
-      "keepiq": "unknown",
+      "keepiq": "partial",
       "bitwarden": "unknown",
       "onepassword": "unknown",
       "passbolt": "unknown",
@@ -3562,11 +3745,15 @@
       "hashicorp-vault": "unknown",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none"
+        "state": "built",
+        "evidence": "lib/Service/HoneyTripwireService.php:173 honey_access notification; emergency_access_requested/accessed and secret_compromised notification subjects in lib/Service; lib/Service/SiemService.php:363 siem_dead_letter; grep for failed-unlock, mass-export or admin-change alert rules in lib: none",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Nextcloud notifications for honey access, emergency access and breached secrets",
+        "note": "Real-time alerts exist for a fixed set of events (decoy touched, emergency access, compromised secret). There is no configurable risk rule engine for user or admin behaviour such as failed unlocks, bulk exports or policy changes; that would sit in a SIEM fed by the export."
       },
       "rowSource": "competitor",
       "provider": "keepiq",
-      "providerHow": "seeded, not yet read"
+      "providerHow": "read-from-code"
     },
     {
       "id": "portability-01",
