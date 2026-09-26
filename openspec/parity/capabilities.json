@@ -164,11 +164,11 @@
         }
       },
       "sourceRead": {
-        "tag": "passbolt/passbolt_api@v5.16.0 and passbolt/passbolt_browser_extension@v5.16.0",
+        "tag": "passbolt/passbolt_api@v5.16.0, passbolt/passbolt_browser_extension@v5.16.0 and passbolt/passbolt_styleguide@v5.16.0",
         "readOn": "2026-09-26",
         "driven": false
       },
-      "gradeNote": "source read at passbolt/passbolt_api@v5.16.0 and passbolt/passbolt_browser_extension@v5.16.0, not driven"
+      "gradeNote": "source read at passbolt/passbolt_api@v5.16.0, passbolt/passbolt_browser_extension@v5.16.0 and passbolt/passbolt_styleguide@v5.16.0, not driven"
     },
     {
       "key": "keeper",
@@ -324,7 +324,13 @@
           "jobPostings": "single maintainer, no hiring",
           "tenders": "no tender naming the Passwords app in the intelligence database (queried 2026-09-26)"
         }
-      }
+      },
+      "sourceRead": {
+        "tag": "marius-wieschollek/passwords@2026.9.0",
+        "readOn": "2026-09-26",
+        "driven": false
+      },
+      "gradeNote": "source read at marius-wieschollek/passwords@2026.9.0, not driven"
     }
   ],
   "areas": [
@@ -1169,7 +1175,7 @@
       "passbolt": "partial",
       "keeper": "partial",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
         "evidence": "src/views/SecretList.vue:787-792 sortOptions name, created_at, updated_at -> src/store/modules/secret.js:140 sort param -> lib/Db/SecretMapper.php:48 SORTABLE_COLUMNS",
@@ -1186,6 +1192,7 @@
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/vault/src/components/vault-items-table/vault-items-table.component.html:125 sortable name column, :183 sortByVault, :204 sortBySharedFolders, :227 sortByFolders (no date column); apps/browser/src/vault/popup/services/vault-popup-items.service.ts:410 sortCiphersByLastUsedThenName; libs/common/src/vault/services/cipher.service.ts:1523 sortCiphersByLastUsedThenName; searched 'dateAdded', 'sortBy', 'lastUsed' in apps/*/locales en messages.json: no sort option strings Note: The web vault table sorts by name, vault and folder only, and the browser popup orders by last used then name with no user choice. No user-selectable sort by date added or date changed.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes/list-directory.js:33 paginate(keys) keeps the LIST order (alphabetical keys); searched 'sort' in ui/lib/kv/addon/routes/list-directory.js and components/page/list.js: no sort control Note: The KV list shows keys in API order with no sort by date added, changed or used.",
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 src/shared/models/column/ColumnModifiedModel.js:33 modified column sortable; src/shared/models/column/: no created or last-used column (ColumnNameModel, ColumnUsernameModel, ColumnUriModel, ColumnExpiredModel and others) Note: The password grid sorts by name, username, URI, expiry and date modified, but not by date added or date last used.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/vue/Components/ContentList/Item/Header.vue:8-18 sort by label or edited, ascending or descending; src/js/Services/SettingsService.js:12-13 client.ui.sort.field default label Note: Lists sort by name or date changed; there is no sort by date added or date last used.",
         "onepassword": "https://support.1password.com/getting-started-windows/ : 'you can sort your items by their title, the date you last made changes to them, or how frequently you use them'. Sort by date added is not listed.",
         "keeper": "https://docs.keeper.io/user-guides/web-vault : records can be sorted by most recently used, name or date modified in the web vault and browser extension; sorting by date added is not described."
       }
@@ -1200,7 +1207,7 @@
       "passbolt": "no",
       "keeper": "partial",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "partial",
       "built": {
         "state": "none",
         "evidence": "git grep -i duplicate src lib: only the import wizard dedup (src/dialogs/ImportWizardDialog.vue:7 'duplicates' step); no report or merge over the stored vault",
@@ -1217,6 +1224,7 @@
         "bitwarden": "searched 'duplicate(cipher|item|login)', 'dedup', 'findDuplicates', 'mergeCipher' in bitwarden/clients@web-v2026.9.0 apps/ libs/ bitwarden_license/ and 'dedup', 'DuplicateCipher', 'MergeCipher' in bitwarden/server@v2026.9.1 src/ bitwarden_license/: only autofill DOM and phishing-list dedup helpers; en messages.json has only duplicateAttachmentNameError and duplicateDomainError Note: No duplicate item finder or merge tool in the clients or server; the reports cover weak, reused and exposed passwords, not duplicate items.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:86 duplicate-keys warning inside one secret only; searched 'merge', 'duplicate' in ui/lib/kv/addon: no item dedupe Note: Only duplicate field names inside one secret are flagged; there is no duplicate item finder or merge.",
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 searched 'duplicate', 'merge' in src/react-extension/components/Resource: no duplicate finder or merge action; passbolt/passbolt_browser_extension@v5.16.0 same in src/all/background_page/service/resource: no match Note: No duplicate finder or merge.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Helper/SecurityCheck/UserRulesSecurityCheck.php:94-96 hasDuplicates() flags items with the same password hash; searched 'merge' in src/js/Manager src/vue/Section: only import mode 'Merge with existing' (src/vue/Components/Import.vue:108) Note: Items that reuse a password are flagged as duplicates, but there is no find-duplicate-items-and-merge tool.",
         "onepassword": "https://support.1password.com/watchtower/ : Watchtower lists 'duplicate items' so they can be deleted; community answers (https://www.1password.community/discussions/1password/merging-duplicated-password/75287) confirm only exact duplicates in one vault are found and there is no merge.",
         "keeper": "https://docs.keeper.io/keeperpam/commander-cli/command-reference/record-commands : Commander 'find-duplicates' matches on titles, logins, passwords or URLs and '--merge' consolidates them; the vault UI has no duplicate finder, so this is CLI only."
       }
@@ -1231,7 +1239,7 @@
       "passbolt": "no",
       "keeper": "unknown",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "partial",
       "built": {
         "state": "none",
         "evidence": "src/components/AttachmentPanel.vue:42-44 offers only 'Download attachment' (store.download); appinfo/routes.php:350 attachment#download returns the ciphertext blob; no preview component",
@@ -1248,6 +1256,7 @@
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/vault/src/components/download-attachment/download-attachment.component.ts:102 decrypts to blobData and hands it to the file download service; apps/web/src/app/core/web-file-download.service.ts:20 a.download = fileName (save); libs/common/src/platform/abstractions/file-download/file-download.builder.ts:22 downloadMethod 'open' only for pdf, not used by attachments; searched 'preview', 'viewAttachment' in en messages.json: no match Note: Attachments are decrypted and saved as a download. There is no in-app viewer; the builder's 'open' method for PDFs is not wired to attachments.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'upload', 'attachment', 'preview' in ui/lib/kv/addon and ui/app/components: no KV attachments Note: There are no attachments to preview.",
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/ResourceTypes/src/Model/Entity/ResourceType.php:52-58 no file or attachment type; searched 'attachment' in src/Model/Table: no match Note: Passbolt has no attachments, so nothing to preview.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/vue/Components/Sidebar/PasswordSidebar/Details/DetailField.vue:58 file fields link to the Nextcloud WebDAV path Note: A file field opens the linked file in Nextcloud, where Files can preview it; the vault itself stores no attachment to preview.",
         "onepassword": "https://www.1password.community/1password-at-home-31/preview-documents-in-1password-on-windows-17129 : Preview is offered in the Mac, iOS and Android apps; on Windows and Linux a document must be downloaded (images preview on 1Password.com). See also https://support.1password.com/files/",
         "keeper": "not checked: https://docs.keeper.io/enterprise-guide/secure-file-storage read; it describes storing and downloading files and does not state whether the vault previews them."
       }
@@ -1262,7 +1271,7 @@
       "passbolt": "no",
       "keeper": "unknown",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "partial",
       "built": {
         "state": "none",
         "evidence": "git grep -i archiv src lib appinfo: no match",
@@ -1279,6 +1288,7 @@
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Vault/Controllers/CiphersController.cs:1024 PUT ciphers/{id}/archive, :1041 PUT ciphers/archive, :1241 PUT ciphers/unarchive; bitwarden/clients@web-v2026.9.0 libs/common/src/vault/services/default-cipher-archive.service.ts:66 PUT /ciphers/archive, :43 userCanArchive$ (premium from any source, includes org plans); libs/common/src/vault/services/cipher.service.ts:552 autofill candidates exclude isArchived; apps/browser/src/vault/popup/components/vault/item-more-options/item-more-options.component.ts:132 canArchive$; apps/browser/src/vault/popup/settings/archive.component.ts archive view; apps/browser/src/_locales/en/messages.json:693 'excluded from search results and autofill suggestions' Note: Archive and unarchive exist end to end; archived items drop out of search and autofill. Gated on premium, which an enterprise seat carries.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/components/kv-delete-modal.js:23 only delete, delete-metadata, destroy; searched 'archive' in ui/lib/kv/addon: no match Note: Soft delete hides a version but there is no archive state, and no autofill or global search to leave.",
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 src/locales/en-UK/common.json: no 'archive' string; passbolt/passbolt_api@v5.16.0 searched 'archive' in src/Model/Table and src/Controller/Resources: no match Note: No archive state for items; the only choices are keep or delete.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Controller/Api/PasswordApiController.php:146 create(hidden) flag; src/lib/Controller/Api/AbstractObjectApiController.php:101,122 lists and finds filter hidden=false; src/js/Actions/User/RecoverHiddenItemsAction.js recovers hidden items Note: The API has a hidden flag that removes an item from lists and search without deleting it, but the web UI offers no archive action; clients set it (e.g. private mode).",
         "onepassword": "https://support.1password.com/archive-delete-items/ : 'Learn how to archive and delete items to keep your information organized'; archived items are kept out of the everyday item list and suggestions.",
         "keeper": "not checked: no archive state for records found in https://docs.keeper.io/user-guides/web-vault or the record docs; only delete and the Deleted Items folder are described."
       }
@@ -1293,7 +1303,7 @@
       "passbolt": "yes",
       "keeper": "yes",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "partial",
       "built": {
         "state": "none",
         "evidence": "lib/Db/Secret.php:252 a single 'url' string field; git grep -i 'additionalUrl|urls' src lib: no multi-URL model; browser-extension/src/lib/match.js matches on that one url",
@@ -1310,6 +1320,7 @@
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/vault/src/cipher-form/components/autofill-options/autofill-options.component.ts:74 uris formArray, :131 cipher.login.uris mapped from the list; autofill-options.component.html:34 addUriMenu, :36 'addWebsiteOrApp'; bitwarden/server@v2026.9.1 src/Core/Vault/Enums/CipherType.cs:7 Login Note: A login carries a list of URIs, each with its own match detection, added from the cipher form.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:25 untyped fields, no URL type Note: Secrets have no website field, so several URLs are only extra free-form keys.",
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/ResourceDetails/DisplayResourceDetails/DisplayResourceDetailsURIs.js:68 main URI metadata.uris[0], :75 additionalUris Note: v5 resources hold a list of URIs, shown as a main address plus additional ones.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/vue/Dialog/CreatePassword.vue:28 one url field; src/vue/Dialog/CreatePassword/CustomFields/CustomFieldType.vue:17 extra 'Website' (url) custom fields Note: One primary URL per item; extra addresses can go in Website custom fields, but whether clients match on them is extension behaviour not in this repo.",
         "onepassword": "https://support.1password.com/autofill-behavior/ : 'If you only have one website field in an item, learn how to add more'; each website field has its own autofill behaviour.",
         "keeper": "https://docs.keeper.io/user-guides/tips-and-tricks/one-record-with-multiple-url-domains : store multiple website domains in one record through additional URL fields; KeeperFill matches every one."
       }
@@ -1324,7 +1335,7 @@
       "passbolt": "partial",
       "keeper": "partial",
       "hashicorp-vault": "yes",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "built",
         "evidence": "src/dialogs/VersionDetailsDialog.vue:4 read-only view of one decrypted historic version; opened from the version history list (openspec/specs/secret-version-history); git grep -i 'diff|compare' src/dialogs src/components: no diff view",
@@ -1339,8 +1350,69 @@
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/SecretVersionsController.cs:39 GET secrets/{secretId}/versions, :69 GET secret-versions/{id}, :153 PUT versions/restore (API only); bitwarden/clients@web-v2026.9.0 searched 'versions', 'secretVersion', 'diff', 'compare' in bitwarden_license/bit-web/src/app/secrets-manager: no caller or view; libs/vault/src/components/password-history-view/password-history-view.component.ts lists past passwords only Note: Secrets Manager keeps secret versions with list and restore routes, but no client calls them and nothing compares two versions. Vault items only show a list of previous passwords.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes.js:24 secret.metadata.diff route; ui/lib/kv/addon/components/page/secret/metadata/version-history.hbs:52 Version diff Note: The KV UI compares two versions side by side.",
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/SecretRevisions/config/routes.php:39 GET revisions of a resource; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/SecretHistory/DisplayResourceSecretHistory.js:163 lists revisions, :175 DisplayCreatorSecretRevision shows one revision at a time Note: Users browse previous secret revisions with who changed them and when, one at a time; there is no side-by-side comparison.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/vue/Dialog/ViewRevision.vue shows one revision's fields; searched 'compare', 'diff' in src/vue/Dialog/ViewRevision.vue and src/vue/Components/Sidebar/PasswordSidebar: no match Note: You can view any one revision but not compare two side by side.",
         "onepassword": "https://support.1password.com/item-history/ : 'View previous versions' opens one earlier version of an item and 'Restore' brings it back; no side-by-side comparison is described.",
         "keeper": "https://docs.keeper.io/keeperpam/commander-cli/command-reference/record-commands : the Commander record-history command can 'see differences in between revision' (diff action); in the vault UI (https://docs.keeper.io/user-guides/web-vault) Record History opens one old version at a time and restores it, with no side-by-side view described."
+      }
+    },
+    {
+      "id": "vault-30",
+      "area": "vault",
+      "name": "Print a login, or show its password as a QR code to type it on another device.",
+      "keepiq": "no",
+      "bitwarden": "no",
+      "onepassword": "unknown",
+      "passbolt": "no",
+      "keeper": "unknown",
+      "hashicorp-vault": "no",
+      "nextcloud-passwords": "yes",
+      "built": {
+        "state": "none",
+        "evidence": "searched 'qrcode', 'QRCode', 'print(' in src/ lib/: only src/dialogs/ComplianceSnapshotDialog.vue:201 prints the compliance report",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "nothing",
+        "note": "A secret cannot be printed or shown as a QR code."
+      },
+      "rowSource": "competitor",
+      "origin": "featureRequest",
+      "originUrl": "https://community.bitwarden.com/t/share-wifi-passwords-via-qr-codes-and-nfc/6472",
+      "provider": "keepiq",
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "searched 'qrcode', 'print(' in apps/web/src apps/browser/src libs/vault/src: only qrcode-parser for reading TOTP codes (apps/browser/src/vault/popup/components/vault/view/view.component.spec.ts:60). Rated by the lane from the source.",
+        "hashicorp-vault": "searched 'qrcode', 'print(' in ui/app ui/lib: only the MFA enrolment QR code (ui/app/components/mfa/form/self-enroll.hbs). Rated by the lane from the source.",
+        "passbolt": "searched 'qrcode', 'print(' in passbolt_styleguide src/react-extension: only the TOTP setup scanner (src/react-extension/components/MFA/TotpSetup/ScanTotpCode/ScanTotpCode.js). Rated by the lane from the source.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/js/Actions/Password/PrintPasswordAction.js:27 print(); src/js/Actions/Password/PasswordActions.js:82 qrcode(); src/vue/Components/ContentList/Item/PasswordItem/PasswordItemActionMenu.vue:105,111 Note: proposed by the source reader as a capability no row covered."
+      }
+    },
+    {
+      "id": "vault-31",
+      "area": "vault",
+      "name": "See each login with the website's icon and a screenshot preview of the site.",
+      "keepiq": "partial",
+      "bitwarden": "partial",
+      "onepassword": "unknown",
+      "passbolt": "no",
+      "keeper": "unknown",
+      "hashicorp-vault": "no",
+      "nextcloud-passwords": "yes",
+      "built": {
+        "state": "built",
+        "evidence": "lib/Controller/DashboardController.php:101 favicon_service_url admin setting (off by default) -> src/utils/favicon.js:6 -> src/components/SecretListItem.vue:13 favicon in the list; searched 'screenshot', 'preview' for sites: none",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Secret list, favicon beside each login once an admin sets a favicon service",
+        "note": "Site icons show when an admin configures a favicon service; there is no screenshot preview."
+      },
+      "rowSource": "competitor",
+      "origin": "changelog",
+      "originUrl": "https://github.com/marius-wieschollek/passwords/blob/2026.7.0/CHANGELOG.md",
+      "provider": "keepiq",
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Icons/Controllers/IconsController.cs:55 GET {hostname}/icon.png; bitwarden/clients@web-v2026.9.0 libs/common/src/vault/icon/build-cipher-icon.ts builds the item icon. Note: site icons yes, screenshot preview no. Rated by the lane from the source.",
+        "hashicorp-vault": "searched 'favicon' in ui/app ui/lib: only the UI's own favicon (ui/app/index.html). Rated by the lane from the source.",
+        "passbolt": "passbolt/passbolt_styleguide@v5.16.0 src/shared/components/Icons/ResourceIcon.js:29 icon comes from the item metadata (a KeePass icon set and colour) or the resource type default; searched 'favicon' in src/react-extension src/shared: no match. Rated by the lane from the source.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/appinfo/routes.php service/favicon/{domain}/{size} and service/preview/{domain}/{view}; src/vue/Components/Sidebar/PasswordSidebar/Preview.vue:2; src/lib/Provider/Favicon, src/lib/Provider/Preview Note: proposed by the source reader as a capability no row covered. The 2026.7.0 changelog entry is a fix to favicon requests, so it shows the feature is live, not new."
       }
     },
     {
@@ -1370,7 +1442,7 @@
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/vault/services/cipher.service.ts:288 encrypt() before :792 createWithServer / :856 updateWithServer; bitwarden/server@v2026.9.1 src/Api/Vault/Controllers/CiphersController.cs:328 accepts EncString fields only Note: Everything is encrypted client side, including item names and URIs, which is stricter than the row (the row allows names and URLs in clear).",
         "onepassword": "https://support.1password.com/1password-security/ : data encrypted with account password and Secret Key on the device; AES-GCM-256 per the white paper https://1passwordstatic.com/files/security/1password-white-paper.pdf",
         "passbolt": "passbolt/passbolt_browser_extension@v5.16.0 src/all/background_page/service/crypto/encryptMessageService.js OpenPGP encryption in the extension, src/all/background_page/service/crypto/decryptSecretsService.js; passbolt/passbolt_api@v5.16.0 src/Controller/Secrets/SecretsView (config/routes.php:323 GET /secrets/resource/{resourceId}) serves only armored ciphertext; plugins/PassboltCe/Metadata/config/routes.php:45 metadata keys (v5 can also encrypt names and URIs) Note: Secrets are OpenPGP-encrypted per user in the browser extension; with v5 encrypted metadata even names and URIs are hidden from the server, which exceeds the row.",
-        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/js/Services/ClientService.js:12 passwords-client library does CSEv1 in the browser; src/js/Manager/EncryptionManager.js:13 install() enables client side encryption; src/lib/Controller/Api/PasswordApiController.php:138 cseType defaults to EncryptionService::DEFAULT_CSE_ENCRYPTION; src/lib/Encryption/Object/SseV1Encryption.php:31 server side encryption otherwise Note: Client side encryption exists but is opt-in; without it the server encrypts and can read values. The crypto itself lives in the external passwords-client npm package.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/js/Services/ClientService.js:12 passwords-client library does CSEv1 in the browser; src/js/Manager/EncryptionManager.js:13 install() enables client side encryption; src/lib/Controller/Api/PasswordApiController.php:138 cseType defaults to EncryptionService::DEFAULT_CSE_ENCRYPTION; src/lib/Encryption/Object/SseV1Encryption.php:31 server side encryption otherwise Note: Client side encryption exists but is opt-in; without it the server encrypts and can read values. The crypto itself lives in the external passwords-client npm package. Sharing an end-to-end encrypted item downgrades it to server-side encryption (src/js/Actions/Share/CreateShareAction.js:45,90; src/lib/Helper/Sharing/CreatePasswordShareHelper.php:187).",
         "keeper": "https://docs.keeper.io/enterprise-guide/keeper-encryption-model : zero-knowledge, end-to-end encryption; 'the login credentials never leave the device', records decrypted locally",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/barrier_aes_gcm.go:846 AESGCMBarrier.Put encrypts server-side before storage; ui/lib/kv/addon/components/kv-create-edit-form.js:108 UI sends plaintext payload to kvV2Write Note: Encryption happens in the server's barrier; the browser and CLI send plaintext over TLS, so the server can read values."
       }
@@ -1993,7 +2065,7 @@
       "passbolt": "yes",
       "keeper": "unknown",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "none",
         "evidence": "git grep -i 'reprompt|re-prompt' src browser-extension: no match; master-password re-entry exists only before a plaintext export (src/dialogs/ExportDialog.vue:130 via src/crypto/reauth.js verifyMasterPassword)",
@@ -2010,6 +2082,7 @@
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/Vault/Entities/Cipher.cs:27 Reprompt; src/Core/Vault/Enums/CipherRepromptType.cs:3; bitwarden/clients@web-v2026.9.0 libs/vault/src/cipher-form/components/additional-options/additional-options-section.component.ts:50 reprompt toggle; libs/vault/src/services/password-reprompt.service.ts:42 passwordRepromptCheck(); apps/browser/src/autofill/services/autofill.service.ts:53 openVaultItemPasswordRepromptPopout before fill Note: Per-item master password re-prompt, set in the item form and enforced before view, copy and autofill.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:36 MaskedInput reveals on click with no re-auth; searched 'reprompt', 're-authenticate' in ui/app ui/lib: no match Note: Values are masked but revealed without asking for credentials again; Enterprise control groups gate access by approval, not by re-entering a password.",
         "passbolt": "passbolt/passbolt_browser_extension@v5.16.0 src/all/background_page/service/passphrase/getPassphraseService.js:35 passphrase requested for every decrypt unless the user ticked remember; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/AuthenticationPassphrase/InputPassphrase/InputPassphrase.js:210 remember-me durations Note: By default the passphrase is asked before any secret is shown, copied or filled; users can opt to remember it for a set time. It is global, not a per-item flag.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/js/Actions/Encryption/CheckPassphrase.js:47 passphrase recheck runs only on login at src/vue/Section/Authorize.vue:211; searched 'reprompt', 'protected' in src/vue/Dialog src/vue/Components/Sidebar: no per-item re-prompt Note: No master password re-prompt per item.",
         "onepassword": "https://support.1password.com/autofill-confirmation/ : 'Ask before filling' only asks for a confirmation click before filling cards or identities; a 1Password Community request to 'Enter master password again for revealing passwords' (https://1password.community/discussion/30438) was logged as a request, not shipped.",
         "keeper": "not checked: no per-record master password re-prompt found in https://docs.keeper.io/user-guides/web-vault or https://docs.keeper.io/enterprise-guide/roles/enforcement-policies."
       }
@@ -2024,7 +2097,7 @@
       "passbolt": "no",
       "keeper": "yes",
       "hashicorp-vault": "partial",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "built",
         "evidence": "Nextcloud server Settings > Security 'Devices & sessions' lists and revokes sessions and app passwords (platform); keepiq adds appinfo/routes.php:406 extension#unpair called from browser-extension/src/background/service-worker.js:64 doUnpair",
@@ -2041,6 +2114,7 @@
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Controllers/DevicesController.cs:77 GET devices, :276 POST devices/{id}/deactivate; bitwarden/clients@web-v2026.9.0 libs/angular/src/auth/device-management/device-management.component.ts:48 lastActivityDate, device-management-table.component.html:46 'currentSession', :59 firstLogin; device-management-item-group.component.html:68-76 per-device 'logOut' and 'removeDevice' menu is inside an HTML comment; libs/common/src/auth/services/devices-api.service.implementation.ts:119 deactivateDevice has no UI caller; apps/web/src/app/auth/settings/account/account.component.html:32 deauthorizeSessions (all devices at once) Note: Users see a device list with first login, recent activity and the current session, but ending a session on one chosen device is commented out in the UI; the only action is to deauthorize all sessions at once.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/token_store.go:232 auth/token/accessors list (sudo), :336 lookup-accessor, :394 revoke-accessor; ui/app/router.js has no session list page Note: An operator can list token accessors, inspect and revoke them by API or CLI, but users have no 'where am I signed in' page.",
         "passbolt": "passbolt/passbolt_api@v5.16.0 config/routes.php:56-71 auth routes are login, verify, is-authenticated and logout only; no session list or remote revoke route; plugins/PassboltCe/Mobile and JwtAuthentication have no session index Note: Users cannot see their active sessions or end one on another device.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Db/Session.php and src/lib/Helper/CleanUp/CleanSessionsHelper.php manage vault sessions server side; src/appinfo/routes.php:21-24 session routes have no list or revoke-other endpoint; no sessions view in src/vue/Section/Settings.vue Note: The app keeps vault sessions but shows none to the user; device sign-outs happen in Nextcloud's own security settings.",
         "onepassword": "https://support.1password.com/unrecognized-device/ : on 1Password.com, Manage Account shows the apps and browsers 'Linked to your account' and each can be unlinked; https://support.1password.com/lost-device/ : 'Deauthorize Device'.",
         "keeper": "https://docs.keeper.io/keeperpam/commander-cli/command-reference/device-management-commands : Session Management lists every device session with model, OS and last login, and can log out, lock or remove a device remotely."
       }
@@ -2055,7 +2129,7 @@
       "passbolt": "yes",
       "keeper": "yes",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "partial",
       "built": {
         "state": "none",
         "evidence": "see crypto-01: names and URLs stay readable server-side (lib/Db/Secret.php:252 url, name stored in clear for search and autofill matching)",
@@ -2072,6 +2146,7 @@
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/vault/models/domain/cipher.ts:44 name?: EncString, :45 notes?: EncString; libs/common/src/vault/models/domain/login.ts:17 username?: EncString; libs/common/src/vault/models/domain/login-uri.ts:18 uri?: EncString; bitwarden/server@v2026.9.1 src/Core/Vault/Entities/Cipher.cs:20 Data (opaque encrypted JSON) Note: Item names, notes, usernames and URIs are all EncStrings encrypted client side; the server stores them inside an opaque Data blob. Item type, folder and collection ids, dates and attachment sizes stay readable to the server.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/barrier_aes_gcm.go:846 storage encrypted by the server-held barrier key; ui/lib/kv/addon/components/kv-create-edit-form.js:108 paths and values sent in plaintext over TLS Note: Everything is encrypted at rest, but by a key the server holds, so the server sees names, paths and values.",
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/Metadata/config/routes.php:29 POST /metadata/types/settings, :38 keys settings, :45 metadata keys; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Administration/DisplayContentTypesEncryptedMetadataAdministration and DisplayMigrateMetadataAdministration Note: With encrypted metadata on (v5), item names, URIs, usernames and descriptions are encrypted with a shared or personal metadata key, and existing items can be migrated. Admins choose it; cleartext metadata is still possible.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/vue/Dialog/CreatePassword.vue:122 cseType CSEv1r1 when CSE is on; src/vue/Components/Sidebar/PasswordSidebar/Tabs/Details.vue:161 'Encryption with libsodium'; src/appinfo/routes.php service/favicon/{domain} and service/preview/{domain} fetched by the client; src/js/Actions/Share/CreateShareAction.js:45,90 #disableCse() before sharing Note: With CSE the client encrypts the item fields before upload, but the web UI asks the server for favicons and previews by domain, and sharing an item silently drops it back to server-side encryption, so the server still learns metadata.",
         "onepassword": "https://agilebits.github.io/security-design/secureItems.html : item overviews (title, URLs, tags) and details are both encrypted with the vault key; the server stores neither in clear.",
         "keeper": "https://docs.keeper.io/enterprise-guide/keeper-encryption-model : 'All fields and all of the data in the vault is encrypted, including file attachments'; type, title and URL are sent to the enterprise only as audit data encrypted with the enterprise public key."
       }
@@ -2086,7 +2161,7 @@
       "passbolt": "partial",
       "keeper": "yes",
       "hashicorp-vault": "yes",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
         "evidence": "Nextcloud server login brute-force throttling (platform) and lib/Controller/ApplicationTokenController.php:89 #[BruteForceProtection] on the machine token exchange; lib/Controller/LinkShareAccessController.php:96 counts failed_attempts on public links. The vault unlock is client-side, so the master password has no server-side attempt limit",
@@ -2101,6 +2176,7 @@
         "bitwarden": "bitwarden/server@v2026.9.1 src/Identity/IdentityServer/RequestValidators/BaseRequestValidator.cs:579 FailedLoginCount incremented, :566 reset on success, :237 User_FailedLogIn event; src/Core/Platform/Mail/IMailService.cs failed login attempt mail; src/Identity/appsettings.json:83 IpRateLimit post:/connect/token 10 per 1m; searched 'Lockout', 'MaxFailed' in src/Identity src/Core/Auth: no account lockout Note: Failed sign-ins are counted, logged as events, mailed to the user and throttled per IP, but the account is never locked after a threshold.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system.go:2891 user_lockout_config LockoutThreshold on auth mount tune; ui/app/components/auth-config-form/options.ts:56 supportsUserLockoutConfig for approle, ldap, userpass, :67 saves user_lockout_config Note: Failed login lockout with threshold, duration and counter reset is configurable per auth method, in the UI and API.",
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/MultiFactorAuthentication/src/Service/MfaRateLimiterService.php:36 isFailedAttemptsExceeded; config/default.php:396 PASSBOLT_SECURITY_MFA_MAX_ATTEMPTS default 4 Note: After too many failed MFA codes the login is reset and must restart. Primary sign-in is an OpenPGP key challenge with a local passphrase, so there is no password lockout to configure.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Helper/User/UserLoginAttemptHelper.php:26 MAX_FAILED_ATTEMPTS = 5; :75-81 isAttemptAllowed() refuses further attempts; :103-114 revokes the client token, notifies, returns 403 Note: After five failed vault logins further attempts are refused, the client's app token is revoked and the user is notified.",
         "onepassword": "https://support.1password.com/team-policies/ : 'Sign-in attempts: Set the number of failed sign-in attempts allowed before team members are temporarily blocked from accessing 1Password. The block applies only to the IP address where the attempt' occurred, so it is a temporary IP block, not an account lockout.",
         "keeper": "https://docs.keeper.io/enterprise-guide/developer-tools/login-api : 'Password attempts are limited to ten attempts, after which authentication attempts are throttled' until support resets it; https://docs.keeper.io/enterprise-guide/roles/enforcement-policies adds a role policy that erases local data after 5 incorrect attempts."
       }
@@ -2115,7 +2191,7 @@
       "passbolt": "yes",
       "keeper": "unknown",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "yes",
       "built": {
         "state": "none",
         "evidence": "searched 'device approval', 'auth request', 'approveLogin', 'LoginRequest' in lib/ src/ appinfo/routes.php: no match; the vault unlocks with the user's own passphrase on each device",
@@ -2130,6 +2206,7 @@
       "providerHow": "read-from-code",
       "evidence": {
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltEe/AccountRecovery/config/routes.php:52 POST /account-recovery/requests, :61 admin review, :68 responses; plugins/PassboltCe/Mobile/config/routes.php:27 transfer from a signed-in browser; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/UserSetting/TransferToMobile/TransferToMobile.js, src/react-extension/components/UserSetting/ExportAccountToDesktop Note: A new mobile or desktop device is set up from a browser where the user is signed in, and a lost browser can be restored through an account recovery request that an admin approves (Pro).",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Controller/Link/ConnectController.php:136 request() from the new client, :221 confirm() by the signed-in web session, :260 apply(codes); src/vue/Dialog/ConnectClient.vue with ConnectConfirm.vue; :242 new client notification Note: PassLink lets a new extension or app sign in by being approved from a browser where you are already signed in; no admin approval option.",
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Auth/Controllers/AuthRequestsController.cs:78 POST auth-requests, :91 admin-request, :104 PUT {id} (approve); bitwarden/clients@web-v2026.9.0 libs/angular/src/auth/login-approval/login-approval-dialog.component.ts; bitwarden_license/bit-web/src/app/admin-console/organizations/manage/device-approvals/device-approvals.component.ts Note: proposed by the source reader as a capability no row covered.",
         "hashicorp-vault": "searched 'device approval', 'auth request' in vault/ ui/app: no device concept; control groups approve requests, not devices. Note: rated by the lane from the source."
       }
@@ -2890,7 +2967,7 @@
       "passbolt": "partial",
       "keeper": "partial",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "none",
         "evidence": "git grep -i 'hidePassword|useOnly|can_view' src lib: no match; team folder roles are read-only or edit (sharing-09), both reveal the value",
@@ -2907,6 +2984,7 @@
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Models/Request/SelectionReadOnlyRequestModel.cs:11 HidePasswords on collection access; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/shared/components/access-selector/access-selector.models.ts:134 ViewExceptPass, :136 EditExceptPass; libs/vault/src/cipher-view/login-credentials/login-credentials-view.component.html:63 password shown only if cipher.viewPassword; apps/browser/src/autofill/browser/main-context-menu-handler.ts:362 copy password only if viewPassword, autofill entry still offered Note: The 'can view, except passwords' collection permission hides the password and its copy action while autofill still works. The password is still decrypted on the device, so this is a UI control, not a cryptographic one.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/policy.go:27 read capability returns the value; searched 'autofill', 'fill only' in ui/app ui/lib: no match; builtin/logical/database/path_creds_create.go:34 per-user dynamic credentials are the alternative Note: A shared KV login is either readable or not; Vault avoids shared passwords with per-user dynamic credentials or SSH certificates instead, which is a different model.",
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/Rbacs/src/Model/Entity/UiAction.php:37 Secrets.preview, :38 Secrets.copy can be denied per role; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Administration/DisplayRbacAdministration/DisplayRbacAdministration.js Note: An admin can stop a whole role from revealing or copying secrets while autofill still works, but it is a role setting, not a per-share option, and the client-side checks do not stop a user who can decrypt the secret.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/vue/Components/Sharing/ShareOptionsForm.vue:67-70 share flags editable and shareable only; no hide-password flag in src/lib/Controller/Api/ShareApiController.php:158-165 Note: Recipients always see the shared password.",
         "onepassword": "https://support.1password.com/create-share-vaults-teams/ : in 1Password Business a group can use items without revealing or copying passwords when the 'View and Copy Passwords' vault permission is removed; https://support.1password.com/permission-enforcement/ notes this permission is client-enforced.",
         "keeper": "https://docs.keeper.io/enterprise-guide/sharing/hiding-passwords : Privacy Screen stops a team or role from unmasking passwords on shared records, but the docs state masking is visual only and the password stays reachable through the API and browser inspection."
       }
@@ -2921,7 +2999,7 @@
       "passbolt": "no",
       "keeper": "yes",
       "hashicorp-vault": "partial",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "yes",
       "built": {
         "state": "none",
         "evidence": "lib/Controller/ShareController.php: no expiry field on a user share (git grep -i expir lib/Controller/ShareController.php: no match); time-bound access exists only for public links (sharing-14) and ownership handover (sharing-11)",
@@ -2938,6 +3016,7 @@
         "bitwarden": "bitwarden/server@v2026.9.1 bitwarden_license/src/Services/Pam/Api/Endpoints/CipherLeaseEndpoints.cs:24 POST cipher lease, :18 pre-check; bitwarden_license/src/Services/Pam/Api/Endpoints/LeaseEndpoints.cs:17 active, :26 revoke, :34 extend; bitwarden_license/src/Services/Pam/Api/Endpoints/AccessRequestEndpoints.cs:30 decision; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/pam/access-rules/access-rule-edit/access-rule-edit.component.html:73 defaultLeaseDurationSeconds, :83 max duration; apps/web/src/app/pam/org-nav-slot/pam-org-nav-slot.component.ts:31 behind FeatureFlag.Pam; searched 'lease' in apps/browser libs/vault libs/pam: no end-user checkout UI Note: Enterprise PAM gives time-boxed leases on items in ruled collections with request, approve, extend and revoke on the server, and admins set lease durations in the web admin console. The member-side request and checkout UI is not in the public clients at this tag, and the whole feature sits behind a feature flag.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 command/token_create.go:90 -ttl on a token carrying chosen policies; vault/expiration.go:1564 token lease revoked at TTL; vault/policy.go no expiry on a policy grant Note: Handing a colleague a token with a policy and a TTL gives access that ends itself, but a grant on their own identity has no end date, so partial.",
         "passbolt": "passbolt/passbolt_api@v5.16.0 src/Model/Table/PermissionsTable.php: permissions carry no end date; searched 'expires', 'valid_until' in src/Model/Table/PermissionsTable.php and src/Controller/Share: no match Note: Shares do not expire; access lasts until an owner removes it.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/vue/Components/Sharing/ShareOptionsForm.vue:55 expires date; src/lib/Controller/Api/ShareApiController.php:162 expires; src/lib/Cron/SynchronizeShares.php:133 deleteExpiredShares() Note: Shares take an expiry date and a background job removes them when it passes.",
         "onepassword": "https://support.1password.com/share-items/ : a shared item link expires after 1 hour to 30 days or after one view, and can go to specific email addresses, but it shares a copy, not the item itself; vault access for a team member has no expiry (https://support.1password.com/create-share-vaults-teams/).",
         "keeper": "https://docs.keeper.io/enterprise-guide/sharing/time-limited-access : share credentials with other Keeper users 'on a temporary basis, automatically revoking access at a specified time'."
       }
@@ -2952,7 +3031,7 @@
       "passbolt": "no",
       "keeper": "unknown",
       "hashicorp-vault": "yes",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "built",
         "evidence": "appinfo/routes.php:140-142 shareRequest create/approve/deny -> src/components/share/ShareRequestForm.vue:128 POST /api/v1/share-requests, mounted in src/components/SecretDetailSidebar.vue:687; searched 'lease', 'ip allow', 'time window' in lib/Service/ShareRequestService.php: none (machine leases at routes.php:319 are for applications)",
@@ -2967,6 +3046,7 @@
       "providerHow": "read-from-code",
       "evidence": {
         "passbolt": "passbolt/passbolt_api@v5.16.0 searched 'access request', 'ip range', 'time window' in src/ plugins/: no access-request flow for resources; the only request flow is account recovery Note: No just-in-time or approval-gated access to privileged logins.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'access request', 'ip', 'time window' in src/lib/Controller/Api/ShareApiController.php src/lib/Helper/Sharing: no match Note: No privileged access requests.",
         "bitwarden": "bitwarden/server@v2026.9.1 bitwarden_license/src/Services/Pam/Api/Endpoints/AccessRequestEndpoints.cs:17 inbox, :30 decision, :39 revoke; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/pam/access-rules/access-rule-edit/access-rule-edit.component.html:73 lease duration, ip-allowlist/ip-allowlist-editor.component.ts (admin rules only, behind FeatureFlag.Pam; no member request UI in the public clients) Note: proposed by the source reader as a capability no row covered.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js:127-129 control-groups, control-groups/configure, control-groups/:accessor (Enterprise control groups: a request waits for authorisers' approval); token_bound_cidrs (command/agent/approle_end_to_end_test.go:798) limits a token to IP ranges and max_lease_ttl bounds its time. Note: approval, time limit and IP limit all exist; control groups are Enterprise. Rated by the lane from the source."
       }
@@ -2981,7 +3061,7 @@
       "passbolt": "yes",
       "keeper": "unknown",
       "hashicorp-vault": "partial",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
         "evidence": "lib/Service/TeamFolderService.php:221 addMember requires the caller to be the folder owner; group members follow the Nextcloud group (sharing-04), whose membership Nextcloud group admins (subadmins) manage in Settings > Users",
@@ -2995,6 +3075,7 @@
       "provider": "nextcloud",
       "providerHow": "read-from-code",
       "evidence": {
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Helper/Sharing/RecipientSearchHelper.php:121-132 resolveGroup() reads live Nextcloud group membership; no group management in src/lib/Controller Note: The app has no groups of its own; Nextcloud group admins manage membership, and the app reads it when a group share is fanned out.",
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/admin-console/models/api/permissions.api.ts:13 manageGroups is an organisation-wide custom permission. Note: a member can be allowed to manage all groups, not only their own (the feature request 82556 asks for per-group managers). Rated by the lane from the source.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/identity_store_groups.go:88 identity/group/id/<id> with member_entity_ids (:58); an ACL policy on that one path lets a chosen user edit one group's members. Note: possible through path policies, with no group manager role in the UI. Rated by the lane from the source.",
         "passbolt": "passbolt/passbolt_api@v5.16.0 src/Service/Groups/GroupsUpdateService.php:95 group managers may add members, :104 is_admin marks a group manager; config/routes.php:155 PUT /groups/{id} Note: proposed by the source reader as a capability no row covered."
@@ -4137,7 +4218,7 @@
       "passbolt": "no",
       "keeper": "yes",
       "hashicorp-vault": "yes",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "none",
         "evidence": "git grep -i 'aws|azure|key vault' lib src: no match; no outbound secret sync",
@@ -4152,6 +4233,7 @@
         "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/secrets-manager/integrations/integrations.component.ts:94 Kubernetes Operator, :25 GitHub Actions and :32 GitLab CI/CD (pull at job time), :101 Terraform Provider; bitwarden/server@v2026.9.1 src/Api/SecretsManager/Controllers/SecretsController.cs:308 secrets/sync used by the operator; searched 'AzureKeyVault', 'AwsSecrets', 'GithubSecret', 'SecretsManagerSync' in src/ bitwarden_license/: no match Note: Only the Kubernetes operator keeps an external store (Kubernetes Secrets) in sync; there is no push sync to AWS Secrets Manager, Azure Key Vault or GitHub secrets. CI integrations pull at run time instead.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/sync/addon/routes.js:10 destinations and sync routes; ui/lib/sync/addon/utils/constants.ts:12 aws-sm, azure-kv, gcp-sm, gh, vercel-project; ui/lib/sync/addon/components/secrets/page/overview.hbs:18 activation required; no sys/sync server code in the CE tree | docs: https://developer.hashicorp.com/vault/docs/sync Note: Secrets sync to AWS, Azure, GCP, GitHub and Vercel is in the UI; the server side is Enterprise only, which is the plan this column rates.",
         "passbolt": "passbolt/passbolt_api@v5.16.0 searched 'aws', 'azure key vault', 'secrets manager' in src/ plugins/: only unrelated matches (subscription key, SCIM settings) Note: No sync out to cloud secret stores.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'aws', 'azure', 'secrets manager', 'sync' targets in src/lib: no match Note: No push to cloud secret stores.",
         "onepassword": "https://developer.1password.com/docs/environments/aws-secrets-manager/ : 'Sync secrets from 1Password to AWS Secrets Manager (beta)' from a 1Password Environment; AWS is the only destination documented (Azure Key Vault, GitHub and the rest not found).",
         "keeper": "https://docs.keeper.io/keeperpam/privileged-access-manager/universal-secrets-sync : 'Synchronize Shared Secrets to Cloud Secret Management Services'; Universal Secrets Sync automatically pushes shared secrets to cloud secret stores (KeeperPAM)."
       }
@@ -4928,7 +5010,7 @@
       "passbolt": "no",
       "keeper": "partial",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "none",
         "evidence": "health checks run per user in the browser (src/store/modules/health.js); no organisation view (health-13 no) and no request-to-change action",
@@ -4945,6 +5027,7 @@
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/Vault/Controllers/SecurityTaskController.cs:104 POST {orgId}/bulk-create, :65 PATCH tasks/{taskId}/complete, :90 metrics; src/Core/Vault/Commands/CreateManyTaskNotificationsCommand.cs notifies members; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/dirt/access-intelligence/activity/application-review-dialog/assign-tasks-view.component.ts assign tasks; apps/browser/src/vault/popup/components/at-risk-callout/at-risk-password-callout.component.ts member callout; libs/vault/src/cipher-form/services/default-cipher-form.service.ts:158 task marked complete when the password changes; bitwarden_license/bit-web/src/app/dirt/access-intelligence/activity/activity-cards/password-change-metric.component.ts progress Note: Admins assign change-password security tasks from Access Intelligence, members are notified and see an at-risk callout, and completion is recorded when the password is actually changed and shown as a metric.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'zxcvbn', 'strength', 'reuse', 'pwned', 'breach' in ui/app ui/lib and vault/*.go: no password health code Note: No at-risk password detection exists, so no follow-up tracking.",
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Administration: no at-risk password view; passbolt/passbolt_api@v5.16.0 searched 'at risk', 'weak password' notification in src/Notification: no match Note: There is no way to ask holders of a weak or breached password to change it or track it.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Cron/CheckPasswordsJob.php:122-123 notifies the owner of their own bad passwords; searched 'recipient' notifications for at-risk shares in src/lib/Notification: none Note: Only the owner hears about their own breached passwords; no ask-and-track flow for holders.",
         "onepassword": "https://support.1password.com/insights/ : Insights shows compromised, weak or reused passwords across the team's vaults, and https://support.1password.com/insights-notifications/ sends team members an automated email when their details appear in a breach. A per-item change request with completion tracking is not described.",
         "keeper": "https://docs.keeper.io/enterprise-guide/breachwatch : the Admin Console summarises how users dealt with BreachWatch alerts, and 'If users have At Risk or Ignored passwords, the Keeper Administrator can reach out to the user'; the outreach is manual, there is no built-in change request."
       }
@@ -4959,7 +5042,7 @@
       "passbolt": "no",
       "keeper": "unknown",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "none",
         "evidence": "git grep -i 'passkey' src/health src/store/modules/health.js: no passkey-availability check",
@@ -4976,6 +5059,7 @@
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/dirt/reports/reports.ts:24 PasskeyLogin; apps/web/src/app/dirt/reports/pages/reports-home.component.ts:41 FeatureFlag.PasskeyLoginReport, :73 report card; apps/web/src/app/dirt/reports/pages/passkey-report.service.ts:31 loadPasskeyDirectory via PasskeyDirectoryApiService, :74 skips logins that already have hasFido2Credentials; apps/web/src/app/dirt/reports/pages/organizations/org-passkey-report.component.ts organisation variant Note: A passkey report matches logins against a passkey directory and lists those whose site supports passkey login or MFA but that hold no passkey yet, in personal and organisation variants. It is behind the PasskeyLoginReport feature flag.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 searched 'passkey', 'webauthn' in all .go .hbs .ts: no match Note: No passkey awareness and no website logins.",
         "passbolt": "passbolt/passbolt_browser_extension@v5.16.0 searched 'passkey', 'webauthn' in src/all: no match; passbolt/passbolt_styleguide@v5.16.0 same in src/: no match Note: No passkey support at all, so no passkey-ready site hints.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'passkey', 'webauthn' site directory in src/lib src/js: WebAuthn code is for vault login only (src/js/Actions/WebAuthn) Note: No passkey availability check.",
         "onepassword": "https://support.1password.com/watchtower/ : 'Passkeys available shows logins for websites that support passkeys, but don't yet have a passkey saved in the item.'",
         "keeper": "not checked: https://docs.keeper.io/user-guides/breachwatch and the passkey docs read; no report of saved logins whose sites accept passkeys."
       }
@@ -4990,7 +5074,7 @@
       "passbolt": "no",
       "keeper": "unknown",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "none",
         "evidence": "searched 'critical', 'businessCritical' in src/ lib/: no application criticality; the Password health page (src/manifest.json:454) reports only the caller's own vault",
@@ -5005,6 +5089,7 @@
       "providerHow": "read-from-code",
       "evidence": {
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 searched 'critical', 'at risk' in src/react-extension/components: no application criticality or at-risk view; passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/Reports/src/Service/ReportPool.php:63 no reports registered Note: No way to mark critical applications or see who holds their weak passwords.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Services/PasswordSecurityCheckService.php per-item status only; searched 'critical' in src/lib src/vue: no match Note: No critical application marking or holder report.",
         "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/dirt/access-intelligence/all-applications/all-applications.component.ts:116 saveCriticalApplications; bitwarden_license/bit-web/src/app/dirt/access-intelligence/risk-insights.component.ts Note: proposed by the source reader as a capability no row covered.",
         "hashicorp-vault": "searched 'critical application', 'phish', 'weak password' across the tree: no password health or application criticality. Note: rated by the lane from the source."
       }
@@ -5265,6 +5350,36 @@
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/PasswordExpiry/src/Model/Dto/PasswordExpirySettingsDto.php:25-35 one organisation-wide settings object (automatic_expiry, automatic_update, policy_override, expiry_notification, default period); no folder or type key Note: Expiry policy is a single organisation setting; there is no per type or per folder policy.",
         "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Helper/Settings/UserSettingsHelper.php password/security/age is one global per-user number; searched 'policy', 'expir' in src/lib/Helper/AppSettings src/vue/Section/Settings.vue: no per-type or per-folder policy Note: No expiry policy screen.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/kv/addon/routes/configure.js:20 KV engine configure screen with delete_version_after and max_versions per mount Note: A dedicated screen sets version expiry per KV mount, but not per subfolder or per item type, so partial."
+      }
+    },
+    {
+      "id": "rotation-08",
+      "area": "rotation",
+      "name": "Open the website's own change-password page straight from a login, found through its well-known address.",
+      "keepiq": "no",
+      "bitwarden": "yes",
+      "onepassword": "unknown",
+      "passbolt": "no",
+      "keeper": "unknown",
+      "hashicorp-vault": "no",
+      "nextcloud-passwords": "yes",
+      "built": {
+        "state": "none",
+        "evidence": "searched 'change-password', 'well-known' in src/ lib/ browser-extension/src: no match",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "nothing",
+        "note": "Keepiq stores the website address but never looks up or opens the site's change-password page."
+      },
+      "rowSource": "competitor",
+      "origin": "featureRequest",
+      "originUrl": "https://community.bitwarden.com/t/implementing-the-change-password-url-spec/3367",
+      "provider": "keepiq",
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "bitwarden/server@v2026.9.1 src/Icons/Controllers/ChangePasswordUriController.cs:9 change-password-uri resolves a site's well-known address; bitwarden/clients@web-v2026.9.0 apps/browser/src/autofill/background/notification.background.ts:572 hasPasswordChangeUri offers the change page. Rated by the lane from the source.",
+        "hashicorp-vault": "searched 'change-password' in ui/app ui/lib: no match; Vault stores no website logins. Rated by the lane from the source.",
+        "passbolt": "searched 'change-password', 'well-known' in passbolt_styleguide src/react-extension src/shared and passbolt_api src/: no match. Rated by the lane from the source.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Services/PasswordChangeUrlService.php:61 getPasswordChangeUrl() probes /.well-known/change-password at :121; src/appinfo/routes.php:106 POST /api/1.0/service/password-change; src/vue/Components/ContentList/Item/PasswordItem/PasswordItemActionMenu.vue:99 openChangePasswordPage() Note: proposed by the source reader as a capability no row covered."
       }
     },
     {
@@ -5851,7 +5966,7 @@
       "passbolt": "no",
       "keeper": "yes",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "building",
         "evidence": "appinfo/routes.php:75-77 secretType#create/update/destroy -> lib/Controller/SecretTypeController.php; src/store/modules/secretType.js:73 createType has no caller in src (git grep createType src)",
@@ -5868,6 +5983,7 @@
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/Vault/Enums/CipherType.cs:3-15 fixed enum (Login, SecureNote, Card, Identity, SSHKey, BankAccount, DriversLicense, Passport); searched 'CustomCipherType', 'ItemTemplate', 'CipherTemplate' in src/ bitwarden_license/: no match Note: Item types are a fixed server enum shipped by Bitwarden. Users can add custom fields to a single item, but an administrator cannot define a new item type or its field set.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/lib/core/addon/components/kv-object-editor.hbs:25 untyped key/value rows; ui/lib/kv/addon/routes.js:8 no item type admin route Note: KV is untyped; there are no admin-defined item types.",
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/ResourceTypes/config/routes.php:25 index, :29 view, :35 delete, :40 update only, no create; plugins/PassboltCe/ResourceTypes/src/Model/Entity/ResourceType.php:52-58 fixed built-in slugs; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Administration/DisplayContentTypesAllowedContentTypesAdministration toggles built-in types Note: Admins can enable or disable the built-in types, and users can add custom fields per item, but nobody can define a new item type.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/vue/Dialog/CreatePassword/CustomFields/CustomFieldType.vue:14-19 fixed field types; src/lib/Helper/AppSettings/*.php no item type settings Note: No admin-defined item types.",
         "onepassword": "https://support.1password.com/custom-fields/ and https://support.1password.com/item-categories/ : categories are fixed; a 1Password Community answer states 'you cannot ... create new categories' (https://www.1password.community/discussions/1password/custom-item-templates/166721). Custom fields per item are the only extension.",
         "keeper": "https://docs.keeper.io/enterprise-guide/creating-new-record-types : an admin with 'Manage Record Types in Vault' creates a record template with labelled and required fields and publishes it to roles."
       }
@@ -5882,7 +5998,7 @@
       "passbolt": "yes",
       "keeper": "yes",
       "hashicorp-vault": "yes",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "built",
         "evidence": "Nextcloud server user management disables and re-enables an account (platform), which blocks the vault with it; git grep -i suspend lib src: no vault-only suspension",
@@ -5899,6 +6015,7 @@
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Controllers/OrganizationUsersController.cs:669 PUT {id}/revoke, :731 PUT {id}/restore; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/members/members.component.html:65 'revoked' filter, :187 restoreAccess, :197 revokeAccess Note: Admins revoke a member's organisation access and restore it later; the member and their assignments stay in place while revoked.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/models/identity/entity.js:18 disabled boolean on an entity (Access > Entities edit); vault/request_handling.go:574 requests from a disabled entity are refused Note: Setting an entity to disabled suspends all of that user's access and clearing it restores it, without deleting the entity.",
         "passbolt": "passbolt/passbolt_api@v5.16.0 src/Controller/Users/UsersEditController.php:87-98 disabled date sets or clears suspension, :181 admins emailed; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/User/EditUser/EditUser.js:153 'is suspended' toggle, src/shared/models/column/ColumnUserSuspendedModel.js Note: Admins can suspend a user now or at a scheduled date and reactivate later; suspended users cannot sign in or receive emails.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/EventListener/User/UserDeletedListener.php:44 only deletion is handled; searched 'suspend', 'disable' user in src/lib/Helper/User src/lib/Command: no vault-level suspend Note: The app has no suspend switch; disabling the Nextcloud account is the only lever, outside this app.",
         "onepassword": "https://support.1password.com/offboarding/ : 'select More Actions > Suspend'; https://support.1password.com/add-remove-team-members/ : a suspended team member is reactivated with Reactivate.",
         "keeper": "https://docs.keeper.io/enterprise-guide/user-management-and-lifecycle : 'Lock Account' suspends vault access while keeping the user's records; unlocking restores it (Commander enterprise-user --unlock)."
       }
@@ -5913,7 +6030,7 @@
       "passbolt": "yes",
       "keeper": "unknown",
       "hashicorp-vault": "yes",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
         "evidence": "sharing user picker uses Nextcloud's sharee search, which honours the platform's 'restrict username autocompletion' sharing settings; keepiq itself adds no directory restriction",
@@ -5930,6 +6047,7 @@
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Controllers/OrganizationUsersController.cs:211 GET mini-details [Authorize<MemberOrProviderRequirement>] returns every member to any member, :220 full list only with ManageUsers; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/members/members.component.html members page only in the admin console; searched 'hideMembers', 'memberVisibility', 'restrictMember' in apps/web/src/locales/en/messages.json: no setting Note: Ordinary members get no member list page, but there is no admin setting for it and the mini-details API still returns all members' names and emails to any member.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/router.js access.identity routes; entity listing is the identity/entity/id path, which needs an ACL grant (vault/policy.go:30 list capability) Note: Only callers whose policy grants list on identity/entity can see the people list; ordinary users get no such grant by default.",
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/Rbacs/src/Model/Entity/UiAction.php:50 Users.viewWorkspace, :46 Share.viewUsersInAutocomplete, :47 Share.viewGroupsInAutocomplete; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Administration/DisplayRbacAdministration/DisplayRbacAdministration.js Note: Role settings can hide the users workspace and the user and group suggestions in the share dialog from ordinary users.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Helper/Settings/ShareSettingsHelper.php:61-62 autocomplete follows isSharingEnumerationEnabled(), :111-112 shareManager->allowEnumeration(); src/lib/Helper/Sharing/RecipientSearchHelper.php:141-146 limits matches to the user's groups Note: The share recipient search honours Nextcloud's user enumeration and group restrictions, so admins can stop users browsing everyone.",
         "onepassword": "not checked: https://support.1password.com/team-policies/, https://support.1password.com/create-share-vaults-teams/ and https://support.1password.com/groups/ read; none describes limiting which team members a user can see in the people picker.",
         "keeper": "not checked: no setting found in https://docs.keeper.io/enterprise-guide/roles/enforcement-policies that hides the enterprise user list from people sharing records."
       }
@@ -5944,7 +6062,7 @@
       "passbolt": "no",
       "keeper": "unknown",
       "hashicorp-vault": "yes",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "none",
         "evidence": "git grep -i 'announcement|broadcast|motd' src lib: no match (only offline and migration banners, src/App.vue:73,90)",
@@ -5961,6 +6079,7 @@
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:29 OrganizationUserNotification ('Vault banner message'); bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/policies/policy-edit-definitions/organization-user-notification-policy.component.html:3 enableBanner, :7 createBannerMessage; policy-edit-register.ts:43 registered; apps/browser/src/vault/popup/components/vault/vault.component.ts:59 VaultOrganizationUserNotificationsComponent; apps/web/src/app/vault/individual-vault/vault-next.component.ts; apps/desktop/src/vault/app/vault-v3/vault.component.ts Note: The vault banner message policy lets an admin publish a banner every organisation member sees on their vault page in web, browser and desktop. It needs the single organisation policy first.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system_custom_messages.go:67 sys/config/ui/custom-messages; ui/lib/config-ui/addon/routes.js:8 messages create/edit and login-settings; ui/lib/core/addon/components/sidebar/nav/tools.hbs:40 'Custom messages' nav Note: Admins create custom messages shown as banners or modals, before or after login, with start and end times.",
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Announcement/ManageAnnouncements/ManageAnnouncements.js:53 only renders built-in announcements such as HandleSubscriptionAnnouncement; passbolt/passbolt_api@v5.16.0 no announcement route in config/routes.php Note: The only banners are product ones (subscription expiry); admins cannot post their own announcement.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'announce', 'banner', 'motd' in src/lib src/vue: no match (only EnvironmentService maintenance client type) Note: No announcement feature.",
         "onepassword": "not checked: no admin announcement or banner feature found in https://support.1password.com/team-policies/ or the Business admin guides (https://support.1password.com/explore/team-admin/).",
         "keeper": "not checked: no admin announcement to all users found in the Admin Console overview (https://docs.keeper.io/enterprise-guide/getting-started-with-keeper-admin-console)."
       }
@@ -5975,7 +6094,7 @@
       "passbolt": "no",
       "keeper": "partial",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "none",
         "evidence": "lib/Service/AdminSettingsService.php: no ownership or personal-vault policy; git grep -i 'personal vault' lib: descriptive text only",
@@ -5992,6 +6111,7 @@
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:10 OrganizationDataOwnership, :52 'Enforce organization data ownership'; bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/policies/policy-edit-definitions/organization-data-ownership.component.ts:21 policy editor; apps/web/src/locales/en/messages.json:8554 'Require all items to be owned by an organization, removing the option to store items at the account level' Note: The organisation data ownership policy removes the personal vault option so new items must be saved to the organisation.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/policy.go path policies only; no personal vault concept to forbid (ui/lib/kv/addon/routes.js:8) Note: Vault has only the organisation's store; there is no personal vault to restrict, and nothing enforces where people keep work logins elsewhere.",
         "passbolt": "passbolt/passbolt_api@v5.16.0 searched 'personal vault', 'personal' policy in plugins/PassboltEe and plugins/PassboltCe: no rule that forces items into shared folders Note: Every item starts personal and nothing requires work logins to live in shared folders.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Db/Password.php every item belongs to one user's vault; no organisation vault or policy in src/lib/Helper/AppSettings Note: There is no organisation vault, only personal vaults.",
         "onepassword": "https://support.1password.com/employee-vault/ and https://support.1password.com/offboarding/ : every Business member has an Employee vault owned by the organisation, and Business Watchtower reports on it, but no policy found that forbids keeping work logins in a personal or Employee vault (https://support.1password.com/team-policies/).",
         "keeper": "https://docs.keeper.io/enterprise-guide/account-transfer-policy : the enterprise can take over a leaver's vault, and https://docs.keeper.io/enterprise-guide/personal-vaults-for-enterprise-and-business-users separates a personal family vault; no enforcement found that forbids storing work logins in a personal vault."
       }
@@ -6006,7 +6126,7 @@
       "passbolt": "partial",
       "keeper": "unknown",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "none",
         "evidence": "searched 'domain verif', 'claimDomain', 'claimed' in lib/ src/: only delegation 'reclaimed' hits; accounts come from Nextcloud user backends (LDAP, OIDC) which keepiq does not manage",
@@ -6021,6 +6141,7 @@
       "providerHow": "read-from-code",
       "evidence": {
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/SelfRegistration/config/routes.php:28 POST self-registration settings with an email domain safe list; passbolt/passbolt_styleguide@v5.16.0 src/locales/en-UK/common.json 'Email Domain Safe List', 'All the users with an email address ending with the domain in the safe list are allowed to register' Note: Admins list email domains whose users may self-register into the organisation's instance; there is no domain verification or claim over accounts elsewhere, which on a self-hosted server is moot.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'domain claim', 'verified domain' in src/lib: no match Note: No domain claiming; accounts come from Nextcloud.",
         "bitwarden": "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Controllers/OrganizationDomainController.cs:85 POST {orgId}/domain, :102 POST {orgId}/domain/{id}/verify; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/admin-console/organizations/manage/domain-verification/domain-verification.component.ts Note: proposed by the source reader as a capability no row covered.",
         "hashicorp-vault": "searched 'domain verif', 'verify domain' across the tree: only LDAP test helpers (vault/external_tests/blackbox/ldap/helpers.go:511). Note: identities come from auth methods; there is no domain claim. Rated by the lane from the source."
       }
@@ -6035,7 +6156,7 @@
       "passbolt": "partial",
       "keeper": "unknown",
       "hashicorp-vault": "partial",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "none",
         "evidence": "lib/Service/AdminSettingsService.php:55 VALID_SESSION_TIMEOUTS and :308 default_session_timeout set a DEFAULT only; git grep default_session_timeout src: no caller, so no admin page sets it; src/App.vue:137 user timeout select has no cap",
@@ -6050,6 +6171,7 @@
       "providerHow": "read-from-code",
       "evidence": {
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/RememberMe/config/config.php:15 options 5 min to 1 hour offered to users, overridable via passbolt.plugins.rememberMe.options (plugins/PassboltCe/RememberMe/config/bootstrap.php:18); passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/AuthenticationPassphrase/InputPassphrase/InputPassphrase.js:210 Note: The server admin can change which passphrase remember durations users may pick, but only in the server config file, not in the admin UI.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Helper/Settings/UserSettingsHelper.php session/lifetime is a user setting (default 600); src/lib/Helper/AppSettings/*.php no maximum Note: Users pick their session lifetime; admins cannot cap it.",
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:18 MaximumVaultTimeout; bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/key-management/policies/session-timeout.component.ts:47 policy editor Note: proposed by the source reader as a capability no row covered.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system.go:2834 max_lease_ttl on mount tune; ui/app/components/auth-method/configuration.ts:42 'Max Lease TTL' shown per auth method. Note: an admin caps how long a login token lives on each auth method, which bounds a session; there is no vault lock timeout for members to choose within. Rated by the lane from the source."
       }
@@ -6064,7 +6186,7 @@
       "passbolt": "partial",
       "keeper": "unknown",
       "hashicorp-vault": "yes",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "yes",
       "built": {
         "state": "none",
         "evidence": "lib/Service/TeamFolderService.php:496 approveJoin returns a fan-out payload the owner's browser must encrypt; src/modals/TeamFolderDialog.vue:469 shows pendingCount and src/store/modules/teamFolder.js:278 runFanOut shares keys when the owner runs it; approveJoin (teamFolder.js:202) has no caller in src",
@@ -6079,6 +6201,7 @@
       "providerHow": "read-from-code",
       "evidence": {
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltEe/Scim and plugins/PassboltEe/DirectorySync create users automatically; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/User/ConfirmShareMissingMetadataKeys/ConfirmShareMissingMetadataKeys.js admin must share missing metadata keys; sharing-03 in this pack: group access needs a group manager to save the group so secrets are encrypted for the new member Note: Accounts are provisioned and activated without an admin, but access to shared secrets and metadata keys still needs someone who holds them to encrypt for the newcomer.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Controller/Api/ShareApiController.php:181 canShareWithUser() accepts any Nextcloud user; src/js/Actions/Share/CreateShareAction.js:90 #disableCse() moves shared items to server-side encryption, so no key handover is needed Note: There is no confirmation step: any Nextcloud user can receive shares at once, because shared items are server-side encrypted rather than wrapped to a member key.",
         "bitwarden": "bitwarden/server@v2026.9.1 src/Core/AdminConsole/Enums/PolicyType.cs:27 AutomaticUserConfirmation ('Automatically confirm invited users'); bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/policies/policy-edit-definitions/auto-confirm-policy.component.ts:33 AutoConfirmPolicy Note: proposed by the source reader as a capability no row covered.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/identity_store_group_aliases.go:21 group-alias maps an external group (OIDC, LDAP) to a Vault group and its policies. Note: Vault encrypts server-side, so there is no key handover to confirm; a new member gets the policies of their mapped groups at first login. Rated by the lane from the source."
       }
@@ -6093,7 +6216,7 @@
       "passbolt": "yes",
       "keeper": "unknown",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "built",
         "evidence": "nextcloud/server Settings > Users lists each account's last login (platform); searched 'lastLogin', 'twofactor' in keepiq lib/ src/: no match, so no keepiq view shows a user's two-factor state",
@@ -6107,9 +6230,40 @@
       "provider": "nextcloud",
       "providerHow": "read-from-code",
       "evidence": {
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'twofactor', 'lastLogin' in src/lib/Settings src/templates/admin: no user list; src/lib/Helper/User/UserTokenHelper.php:98 reads 2FA state only for the vault login Note: The app adds no user list; whatever Nextcloud's own user management shows is outside this app.",
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/app/admin-console/organizations/members/members.component.html:399 two-step login badge per member; searched 'lastLogin', 'lastActivity' in apps/web/src/app/admin-console and bitwarden_license/bit-web/src/app: no match. Note: two-factor status yes, last sign-in no (the feature request 93955 asks for it). Rated by the lane from the source.",
         "hashicorp-vault": "searched 'lastLogin', 'last_login' in ui/app and vault/identity*.go: no match; the entity list carries no sign-in or two-factor status. Note: rated by the lane from the source.",
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 src/shared/models/column/ColumnUserMfaModel.js; src/shared/models/column/ColumnUserLastLoggedInModel.js Note: proposed by the source reader as a capability no row covered."
+      }
+    },
+    {
+      "id": "admin-27",
+      "area": "admin",
+      "name": "Administrators schedule automatic encrypted backups of every vault on the server and restore them from the command line.",
+      "keepiq": "no",
+      "bitwarden": "partial",
+      "onepassword": "unknown",
+      "passbolt": "no",
+      "keeper": "unknown",
+      "hashicorp-vault": "partial",
+      "nextcloud-passwords": "yes",
+      "built": {
+        "state": "none",
+        "evidence": "searched 'backup' in lib/Command lib/BackgroundJob: no match; the encrypted-backup export (portability-09) is per user and started by hand",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "nothing",
+        "note": "There is no scheduled server-side backup of all vaults and no restore command; an instance relies on the Nextcloud database backup."
+      },
+      "rowSource": "competitor",
+      "origin": "featureRequest",
+      "originUrl": "https://community.bitwarden.com/t/adjusting-timezone-and-database-backup-schedule-in-bitwarden/59341",
+      "provider": "keepiq",
+      "providerHow": "read-from-code",
+      "evidence": {
+        "bitwarden": "bitwarden/server@v2026.9.1 util/MsSql/backup-db.sh:2-4 nightly database backup with BACKUP_INTERVAL and BACKUP_TIMEZONE. Note: scheduled server backups of all vaults exist on the self-hosted database container; restore is a manual database step, not a command. Rated by the lane from the source.",
+        "hashicorp-vault": "hashicorp/vault@v2.1.1 command/operator_raft_snapshot.go and command/operator_raft_snapshot_restore.go save and restore a snapshot from the CLI; CHANGELOG.md:286 names automated snapshots as an Enterprise feature whose code is not public. Note: manual snapshot and restore are in the public code; the schedule is Enterprise. Rated by the lane from the source.",
+        "passbolt": "searched 'backup' in passbolt_api src/Command plugins/: only install-time options (src/Command/InstallCommand.php:98); no scheduled backup job. Rated by the lane from the source.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/lib/Cron/BackupJob.php:47 backup/interval; src/lib/Helper/AppSettings/BackupSettingsHelper.php:35-37 interval, max files, auto-restore after update; src/lib/Command/BackupRestoreCommand.php:45 passwords:backup:restore Note: proposed by the source reader as a capability no row covered."
       }
     },
     {
@@ -6601,7 +6755,7 @@
       "passbolt": "no",
       "keeper": "unknown",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "no",
       "built": {
         "state": "none",
         "evidence": "lib/Service/ComplianceReportService.php:56-70 SECTION_ALLOWLIST holds aggregates only (adoption, secretsPerUser, shareHygiene counts); no per-member access listing in lib/ src/",
@@ -6616,6 +6770,7 @@
       "providerHow": "read-from-code",
       "evidence": {
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/Reports/src/Service/ReportPool.php:63 report framework with no reports registered; config/routes.php:182 permissions only per resource; passbolt/passbolt_styleguide@v5.16.0 no access report component Note: Access can be read per item or per folder in the share list, but there is no report of who can reach what across the organisation.",
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/appinfo/routes.php:62 share list is per user; searched 'report', 'access report' in src/lib/Controller src/lib/Settings: no match Note: No access report; each user sees only their own shares.",
         "bitwarden": "bitwarden/clients@web-v2026.9.0 bitwarden_license/bit-web/src/app/dirt/reports/member-access-report/member-access-report.component.ts; bitwarden_license/bit-web/src/app/dirt/reports/member-access-report/services/member-access-report.service.ts Note: proposed by the source reader as a capability no row covered.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 vault/logical_system_paths.go:3241 capabilities-accessor answers what ONE token may do on given paths; searched 'access report' in ui/app ui/lib: none. Note: no report lists which members can reach which paths. Rated by the lane from the source."
       }
@@ -7107,7 +7262,7 @@
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/browser/src/autofill/services/autofill.service.ts:481 doAutoFill, :712 doAutoFillActiveTab; apps/browser/src/manifest.v3.json:137 autofill_login shortcut Note: Extension fills matching logins via inline menu, popup, shortcut or on page load.",
         "onepassword": "https://support.1password.com/save-fill-passwords/ : 'After you've saved your username and password for a website, 1Password can fill them'",
         "passbolt": "passbolt/passbolt_browser_extension@v5.16.0 src/all/background_page/pagemod/webIntegrationPagemod.js injects the web integration; src/all/background_page/controller/autofill/AutofillController.js:149 fillCredentials; passbolt/passbolt_styleguide@v5.16.0 src/react-web-integration/lib/InForm/InFormCallToActionField.js in-form menu on login fields Note: The extension puts a menu on login fields and fills the chosen credential.",
-        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/js/Services/AppStoreService.js:19 Apps section lists clients from the handbook app store; src/lib/Controller/Link/ConnectController.php:136 PassLink pairing used by the extension; code not public for this (passwords-webextension repo not read); docs rating kept: https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/Feature-Comparison Note: Autofill lives in the separate extension repo; the server side it pairs with is here. Docs rating kept.",
+        "nextcloud-passwords": "not in the cloned repos, docs rating kept: marius-wieschollek/passwords@2026.9.0 src/js/Services/AppStoreService.js:19 Apps section lists clients from the handbook app store; src/lib/Controller/Link/ConnectController.php:136 PassLink pairing used by the extension; code not public for this (passwords-webextension repo not read); docs rating kept: https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/Feature-Comparison Note: Autofill lives in the separate extension repo; the server side it pairs with is here. Docs rating kept.",
         "keeper": "https://docs.keeper.io/user-guides/browser-extensions : KeeperFill 'Autofill Your Passwords' on websites",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/: no match Note: There is no browser extension."
       }
@@ -7204,7 +7359,7 @@
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/browser/src/autofill/background/notification.background.ts:638 triggerAddLoginNotification, :663 getEnableAddedLoginPrompt, :144 bgSaveCipher Note: Add-login and change-password prompts after form submission.",
         "onepassword": "https://support.1password.com/save-fill-passwords/ : '1Password will automatically offer to save your login' and asks to update an existing item",
         "passbolt": "passbolt/passbolt_browser_extension@v5.16.0 src/all/background_page/controller/webIntegration/webIntegrationController.js:34 autosave opens the save-credentials flow (feature autosave-credentials); passbolt/passbolt_styleguide@v5.16.0 src/react-quickaccess/components/ResourceAutoSave/SaveResource.js Note: After a login form is submitted, the extension offers to save the credentials in the quick access popup.",
-        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 code not public for this (passwords-webextension repo not read); docs rating kept: https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/Feature-Comparison (extension 'Detect new passwords', 'Detect changed passwords') Note: Save and update prompts are extension features. Docs rating kept.",
+        "nextcloud-passwords": "not in the cloned repos, docs rating kept: marius-wieschollek/passwords@2026.9.0 code not public for this (passwords-webextension repo not read); docs rating kept: https://git.mdns.eu/nextcloud/passwords/-/wikis/Administrators/Feature-Comparison (extension 'Detect new passwords', 'Detect changed passwords') Note: Save and update prompts are extension features. Docs rating kept.",
         "keeper": "https://docs.keeper.io/user-guides/browser-extensions#save-prompt : 'Keeper will offer to save a password to the vault, if you login manually on a site'; 'Prompt to Change' policy for updates",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No browser extension, so no save-login prompt."
       }
@@ -7447,7 +7602,7 @@
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/key-management/vault-timeout/enums/vault-timeout-action.enum.ts:4 Lock keeps the encrypted vault locally (vs :5 LogOut); libs/common/src/key-management/master-password/abstractions/master-password-unlock.service.ts local unlock without the server Note: Locked clients keep an encrypted local copy and unlock offline; edits need the server, so offline use is read-only.",
         "onepassword": "https://releases.1password.com/b5x/stable/ : apps keep working offline, changes sync when back online",
         "passbolt": "passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/OfflineMode/config/routes.php:40 mark items offline, :52 offline item; passbolt/passbolt_browser_extension@v5.16.0 src/all/background_page/controller/offlineResourceController/markResourceOfflineAvailableController.js:47; passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Resource/DisplayResourcesList/DisplayResourcesListContextualMenu.js offline actions Note: Users mark resources available offline and the extension keeps an encrypted read-only copy (new in 5.16).",
-        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 searched 'offline', 'serviceWorker' in src/js src/vue: no vault offline storage in the web app; docs rating kept: https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/F.A.Q (some third-party apps cache offline) Note: The web app has no offline mode; offline reading exists only in some third-party clients. Docs rating kept.",
+        "nextcloud-passwords": "not in the cloned repos, docs rating kept: marius-wieschollek/passwords@2026.9.0 searched 'offline', 'serviceWorker' in src/js src/vue: no vault offline storage in the web app; docs rating kept: https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/F.A.Q (some third-party apps cache offline) Note: The web app has no offline mode; offline reading exists only in some third-party clients. Docs rating kept.",
         "keeper": "https://docs.keeper.io/enterprise-guide/vault-offline-access : a local encrypted copy of the vault opens offline; 'Editing records' is among the actions not available offline; admin policy 1 to 30 days or off",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/public has no service worker for offline data (the only one is ui/lib/service-worker-authenticated-download); command/agentproxyshared/cache is a machine-side proxy cache, not a user vault Note: The web UI needs a live server; there is no offline read-only mode for users."
       }
@@ -7477,7 +7632,7 @@
         "bitwarden": "code not public in the cloned repos (bitwarden/android and bitwarden/ios are separate); docs rating kept: https://bitwarden.com/download/ Note: Native mobile apps with system autofill per docs.",
         "onepassword": "https://support.1password.com/android-autofill/ and https://support.1password.com/ios-autofill/ : system autofill on Android and iOS",
         "passbolt": "not in the cloned repos, docs rating kept: passbolt/passbolt_api@v5.16.0 plugins/PassboltCe/Mobile/config/routes.php:27 mobile account transfer | docs: https://www.passbolt.com/docs/user/basic-features/mobile/autofill-chrome-android Note: Native iOS and Android apps with system autofill exist in separate repos; the server supports them through the mobile transfer and JWT routes. Docs rating kept.",
-        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/js/Services/AppStoreService.js:19 Apps section lists third-party apps from the handbook app store; source silent: extension/mobile repo not read; docs rating kept: https://github.com/marius-wieschollek/passwords#apps Note: Native mobile apps are third party and outside this repo. Docs rating kept.",
+        "nextcloud-passwords": "not in the cloned repos, docs rating kept: marius-wieschollek/passwords@2026.9.0 src/js/Services/AppStoreService.js:19 Apps section lists third-party apps from the handbook app store; source silent: extension/mobile repo not read; docs rating kept: https://github.com/marius-wieschollek/passwords#apps Note: Native mobile apps are third party and outside this repo. Docs rating kept.",
         "keeper": "https://docs.keeper.io/user-guides/autofill-setup-for-ios : system autofill and passkeys on iOS; Android autofill at https://docs.keeper.io/user-guides/autofill-setup-for-android",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No native mobile apps."
       }
@@ -7507,7 +7662,7 @@
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/desktop (Electron app with desktop_native Rust core, apps/desktop/desktop_native/core/src/ssh_agent/mod.rs) Note: Desktop app for Windows, macOS and Linux.",
         "onepassword": "https://releases.1password.com/windows/stable/ : 1Password for Mac, Windows and Linux",
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Desktop/GetStarted/GetStartedDesktop.js and src/react-extension/components/UserSetting/ExportAccountToDesktop/ExportAccountToDesktopHelp.js:31 account export to the desktop app; Rbacs UiAction Desktop.transfer | docs: https://www.passbolt.com/docs/user/quickstart/desktop/windows-app Note: A desktop app is supported through account kit export, but it ships for Windows only per the docs.",
-        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/js/Services/AppStoreService.js:19 app catalogue fetched from the handbook; source silent: desktop apps not in this repo; docs rating kept: https://github.com/marius-wieschollek/passwords#apps Note: Desktop apps are third party and marked WIP. Docs rating kept.",
+        "nextcloud-passwords": "not in the cloned repos, docs rating kept: marius-wieschollek/passwords@2026.9.0 src/js/Services/AppStoreService.js:19 app catalogue fetched from the handbook; source silent: desktop apps not in this repo; docs rating kept: https://github.com/marius-wieschollek/passwords#apps Note: Desktop apps are third party and marked WIP. Docs rating kept.",
         "keeper": "https://docs.keeper.io/user-guides/web-vault : 'cross-platform, Keeper Desktop Application' for Mac, Windows and Linux",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No native desktop app; the vault binary is a CLI and server."
       }
@@ -7551,7 +7706,7 @@
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/browser/package.json:7 build:chrome, plus build:firefox, build:edge, build:opera, build:safari; apps/browser/src/manifest.json, manifest.v3.json Note: One extension codebase built for Chrome, Firefox, Edge, Opera and Safari.",
         "onepassword": "https://releases.1password.com/b5x/stable/ : Chrome, Edge, Brave, Firefox and Safari extensions",
         "passbolt": "passbolt/passbolt_browser_extension@v5.16.0 src/chrome, src/chrome-mv3, src/firefox, src/safari build targets (Edge uses the Chromium build) Note: The extension is built for Chrome and other Chromium browsers including Edge, Firefox and Safari.",
-        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/js/Services/AppStoreService.js:19 app catalogue fetched from the handbook; source silent: extension repo not read; docs rating kept: https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Browser-Extension Note: Firefox, Chrome and Edge per docs, no Safari. Docs rating kept.",
+        "nextcloud-passwords": "not in the cloned repos, docs rating kept: marius-wieschollek/passwords@2026.9.0 src/js/Services/AppStoreService.js:19 app catalogue fetched from the handbook; source silent: extension repo not read; docs rating kept: https://git.mdns.eu/nextcloud/passwords/-/wikis/Users/Browser-Extension Note: Firefox, Chrome and Edge per docs, no Safari. Docs rating kept.",
         "keeper": "https://docs.keeper.io/user-guides/browser-extensions : KeeperFill for Chrome, Firefox, Safari, Microsoft Edge, Opera and other Chromium browsers",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No browser extensions."
       }
@@ -7803,6 +7958,7 @@
         "bitwarden": "bitwarden/clients@web-v2026.9.0 libs/common/src/vault/services/cipher.service.ts:792 createWithServer, :856 updateWithServer (edits go straight to the API); searched 'offline' in apps/web, apps/browser, apps/desktop en messages.json and 'pendingChanges', 'offlineQueue', 'outbox' in libs/common/src/vault libs/vault/src: no match Note: Clients keep an encrypted local cache for offline reading, but every create and edit is a direct server call with no offline queue, so offline editing is not supported.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/public has no manifest or offline service worker; ui/lib/kv/addon/components/kv-create-edit-form.js:108 writes go straight to the API Note: The UI requires a live server; no offline edits.",
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 src/locales/en-UK/common.json:566 'Enable read-only access to critical credentials when the Passbolt server is unreachable'; passbolt/passbolt_browser_extension@v5.16.0 src/all/background_page/service/resource/update/resourceUpdateService.js:169 offline copy only refreshed after an online update Note: Offline mode is read-only; edits need the server.",
+        "nextcloud-passwords": "source silent: extension/mobile repo not read; the web app has no offline mode (searched 'offline', 'serviceWorker' in src/js src/vue: no match) Note: The web app cannot edit offline; whether third-party mobile apps queue edits is outside this repo.",
         "onepassword": "https://support.1password.com/sync/ : in the apps data is cached locally so you can view and edit it without an internet connection, and changes reach other devices when you next go online.",
         "keeper": "not checked: https://docs.keeper.io/user-guides/vault-offline-access read; current docs list creating and editing records offline while older release notes (https://docs.keeper.io/release-notes/desktop/web-vault-+-desktop-app/older/vault-version-14.4.0) describe read-only offline access, so it is not settled."
       }
@@ -7834,6 +7990,7 @@
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/desktop/desktop_native/autotype/src/mvp/windows/type_input.rs Windows keystroke typing, windows/window_title.rs match on foreground window; apps/desktop/desktop_native/autotype/src/mvp/linux.rs:5 todo!('Bitwarden does not yet support Linux autotype'), macos.rs:16 same for macOS; apps/desktop/src/autofill/components/autotype-shortcut.component.ts:28 shortcut editor; apps/desktop/src/locales/en/messages.json:5965 'Enable autotype shortcut (Feature Preview)'; libs/common/src/enums/feature-flag.enum.ts:40 WindowsDesktopAutotype, :161 default FALSE Note: Desktop auto-type with a global shortcut exists on Windows only, as a feature preview behind a flag; Linux and macOS are todo stubs.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 top-level tree has ui/ (web app), command/ (CLI) and server code only; searched 'browser extension', 'autofill' in ui/app ui/lib: no match Note: No desktop client and no auto-type.",
         "passbolt": "not checked: passbolt/passbolt_styleguide@v5.16.0 src/react-extension/components/Desktop/ only covers account kit import for the Windows app; passbolt/passbolt_browser_extension@v5.16.0 searched 'autotype', 'auto-type' in src/: no match Note: source silent: an auto-type shortcut would live in the Windows desktop app, whose source is not among the cloned repos.",
+        "nextcloud-passwords": "source silent: desktop apps are third party and not in this repo Note: Auto-type would live in a desktop client not read here.",
         "onepassword": "https://support.1password.com/mac-universal-autofill/ : Command-Backslash autofills usernames and passwords 'in your favorite apps and websites' on Mac; https://support.1password.com/windows-auto-type/ : Auto-Type in apps on Windows.",
         "keeper": "https://docs.keeper.io/user-guides/keeperfill-for-apps : KeeperFill for Apps in the desktop app fills logins and passwords into native applications with the Ctrl/Cmd+Shift+K hotkey."
       }
@@ -7865,6 +8022,7 @@
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/browser/src/auth/popup/account-switching/account-switcher.component.ts:40 switcher page; apps/browser/src/auth/popup/account-switching/services/account-switcher.service.ts:72 ACCOUNT_LIMIT, :93 add account entry; apps/browser/src/auth/popup/account-switching/account.component.html:22 account.server shown per account; apps/desktop/src/auth/components/account-switcher/account-switcher-v2.component.ts Note: Browser extension and desktop switch between several logged-in accounts, each on its own server, up to a fixed account limit.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/app/services/auth.js:46 tokens list kept per cluster, :101 currentTokenName per active cluster; ui/app/components/namespace-picker.ts namespace switching (Enterprise namespaces); CLI -address and VAULT_ADDR per call Note: The CLI targets any server per command and the UI keeps a token per cluster and switches namespaces, but there is no account switcher for several identities in one UI session, so partial.",
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 src/react-extension/contexts/Authentication/AuthenticationLoginContext.js:252 handleSwitchAccount opens /users/recover, replacing the configured account; src/react-extension/components/AuthenticationLogin/OrchestrateLogin/OrchestrateLoginBoxFooter.js:37 Note: The extension holds one account; 'switch to another account' re-runs account recovery and replaces it rather than keeping several side by side.",
+        "nextcloud-passwords": "source silent: extension/mobile repo not read; server side each client pairs per account via src/lib/Controller/Link/ConnectController.php:136 Note: Multi-account switching is client behaviour outside this repo.",
         "onepassword": "https://support.1password.com/multiple-accounts/ : add multiple accounts to the apps and browser extension, see all items at once or 'Switch to a specific account'.",
         "keeper": "https://docs.keeper.io/user-guides/tips-and-tricks/personal-and-business-vaults : switch between business and personal accounts in the web vault, browser extension and mobile apps ('Switch Account', 'Add Account')."
       }
@@ -7894,6 +8052,7 @@
       "providerHow": "read-from-code",
       "evidence": {
         "passbolt": "passbolt/passbolt_browser_extension@v5.16.0 searched 'phishing', 'safebrowsing' in src/all: no blocklist check; passbolt/passbolt_styleguide@v5.16.0 src/locales/en-UK/common.json 'phishing' only in the security token explanation Note: The security token protects the passbolt dialogs themselves from spoofing, but the extension does not warn about known phishing sites.",
+        "nextcloud-passwords": "source silent: extension repo not read Note: Phishing warnings would be extension behaviour.",
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/browser/src/dirt/phishing-detection/services/phishing-detection.service.ts:128 isPhishingWebAddress, :134 redirect to popup/index.html#/security/phishing-warning; apps/browser/src/dirt/phishing-detection/popup/phishing-warning.component.ts Note: proposed by the source reader as a capability no row covered.",
         "hashicorp-vault": "searched 'phish' across the whole v2.1.1 tree: 0 files. Note: Vault ships no browser extension or autofill client, so there is nothing to warn in. Rated by the lane from the source."
       }
@@ -7908,7 +8067,7 @@
       "passbolt": "yes",
       "keeper": "unknown",
       "hashicorp-vault": "no",
-      "nextcloud-passwords": "unknown",
+      "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
         "evidence": "l10n/ holds 74 files (37 languages, l10n/nl.json 1173 strings) loaded through Nextcloud's translation layer; the language is each user's Nextcloud personal setting",
@@ -7922,6 +8081,7 @@
       "provider": "keepiq",
       "providerHow": "read-from-code",
       "evidence": {
+        "nextcloud-passwords": "marius-wieschollek/passwords@2026.9.0 src/appinfo/routes.php:17 GET /l10n/{section}/{language}.json; src/lib/Controller/LanguageController.php falls back via l10nFactory->findLanguage(); src/js/Services/LocalisationService.js:11 getLanguage() from @nextcloud/l10n; scripts/compile-language-files.js:36 builds src/l10n at release Note: The UI follows each user's Nextcloud language, loading per-section translation files; the files are generated at build time, so the number of languages cannot be counted from the git tree.",
         "bitwarden": "bitwarden/clients@web-v2026.9.0 apps/web/src/locales holds 66 locales, chosen in the account preferences. Note: rated by the lane from the source.",
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/package.json:121 depends on ember-intl but git ls-files holds no translations or locales files; the UI is English only. Note: rated by the lane from the source.",
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 src/locales/ holds 17 locales (cs-CZ to uk-UA); src/react-extension/components/Administration/DisplayInternationalizationAdministration sets the organisation default Note: proposed by the source reader as a capability no row covered."
