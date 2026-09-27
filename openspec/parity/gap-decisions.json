@@ -235,7 +235,7 @@
   "row": "clients-01",
   "matrix": "keepiq",
   "decision": "build",
-  "reason": "Build: 5 competitors rate yes (Bitwarden, 1Password, Passbolt, Keeper, Nextcloud Passwords). Specified for the missing half: a packaged, signed extension in the browser stores, and matching over shared and team folder secrets; autofill of owned secrets is built.",
+  "reason": "Build: 5 competitors rate yes (Bitwarden, 1Password, Passbolt, Keeper, Nextcloud Passwords). Specified for the missing half: a packaged, signed extension in the browser stores. Matrix corrected: matching already covers shared and team folder secrets, because every recipient copy is a row owned by the recipient (lib/Service/RecipientSecretCopyService.php:112-113, lib/Service/TeamFolderShareService.php:295), so the owner-scoped match (lib/Controller/ExtensionController.php:195) returns them.",
   "change": "clients-extension-store-release",
   "decidedOn": "2026-09-27"
  },
