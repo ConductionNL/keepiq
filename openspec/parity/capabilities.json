@@ -1721,8 +1721,8 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "built",
-        "evidence": "src/components/PasskeyManager.vue:25 offers Touch ID, Windows Hello or a security key; src/store/modules/passkey.js:221 userVerification 'preferred' with the PRF extension; browser-extension/src/popup/popup.js unlocks with the master password only (grep -rni 'biometric\\|webauthn' browser-extension/src/popup: no hits)",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/clients-extension-unlock-lock-and-accounts on 2026-09-27 for the missing half: fingerprint or face unlock in the browser extension; the web app unlock with a platform passkey is built. Before: src/components/PasskeyManager.vue:25 offers Touch ID, Windows Hello or a security key; src/store/modules/passkey.js:221 userVerification 'preferred' with the PRF extension; browser-extension/src/popup/popup.js unlocks with the master password only (grep -rni 'biometric\\|webauthn' browser-extension/src/popup: no hits)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Lock page (/lock) -> Unlock with passkey, using a platform authenticator",
         "note": "Fingerprint or face unlock works in the web app only by enrolling a platform passkey (Touch ID, Windows Hello) whose browser supports PRF. The browser extension and CLI have no biometric unlock."
@@ -1781,8 +1781,8 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "src/components/settings/AdminSuiteSection.vue:21,180 admin can only force-revoke a suite so the user starts a new empty vault; grep -rni 'escrow\\|recovery key\\|account recovery' lib: only emergency-access envelopes escrowed to a contact's certificate, never to an admin",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/crypto-organisation-account-recovery on 2026-09-27. Before: src/components/settings/AdminSuiteSection.vue:21,180 admin can only force-revoke a suite so the user starts a new empty vault; grep -rni 'escrow\\|recovery key\\|account recovery' lib: only emergency-access envelopes escrowed to a contact's certificate, never to an admin",
         "owner": "ConductionNL/keepiq",
         "note": "By zero-knowledge design an administrator cannot restore access to a user's secrets. The admin can force-revoke the locked suite so the user can set up a fresh vault, but the old secrets stay unreadable unless the user has an emergency contact or a backup file."
       },
@@ -2193,8 +2193,8 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "none",
-        "evidence": "searched 'device approval', 'auth request', 'approveLogin', 'LoginRequest' in lib/ src/ appinfo/routes.php: no match; the vault unlocks with the user's own passphrase on each device",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/crypto-new-device-approval on 2026-09-27. Before: searched 'device approval', 'auth request', 'approveLogin', 'LoginRequest' in lib/ src/ appinfo/routes.php: no match; the vault unlocks with the user's own passphrase on each device",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Sign-in is Nextcloud's; a new device unlocks the vault with the user's passphrase, and there is no approve-from-another-device or admin approval flow."
@@ -2761,8 +2761,8 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "grep -rn 'federat\\|remote share\\|outside.*organi[sz]ation' lib/Controller lib/Service: no sharing-related hits (the one federated-cloud-ID hit in EncryptionSuiteProvisioningService.php:331 is only used to name a certificate's common name, not to share with an external account). All sharing paths (user-to-user, team folder, link, send) target a Nextcloud user ID, group ID, or an anonymous public link on this instance.",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/sharing-federated-recipients on 2026-09-27. Before: grep -rn 'federat\\|remote share\\|outside.*organi[sz]ation' lib/Controller lib/Service: no sharing-related hits (the one federated-cloud-ID hit in EncryptionSuiteProvisioningService.php:331 is only used to name a certificate's common name, not to share with an external account). All sharing paths (user-to-user, team folder, link, send) target a Nextcloud user ID, group ID, or an anonymous public link on this instance.",
         "owner": "ConductionNL/keepiq",
         "note": "Sharing with an account on a different Nextcloud instance is not supported; a password-protected public link (sharing-14) is the closest substitute."
       },
@@ -2790,8 +2790,8 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "The only role-like concept in the codebase is a team folder membership grade of read or write (folder-permission-grades spec, sharing-09); there is no manager/viewer role vocabulary and no 'collection' concept beyond team folders. grep -rln 'manager\\|viewer' src/store/modules lib/Controller for role-purposed hits: none.",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/sharing-team-folder-manager-role on 2026-09-27. Before: The only role-like concept in the codebase is a team folder membership grade of read or write (folder-permission-grades spec, sharing-09); there is no manager/viewer role vocabulary and no 'collection' concept beyond team folders. grep -rln 'manager\\|viewer' src/store/modules lib/Controller for role-purposed hits: none.",
         "owner": "ConductionNL/keepiq"
       },
       "rowSource": "competitor",
@@ -2969,8 +2969,8 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "git grep -i 'hidePassword|useOnly|can_view' src lib: no match; team folder roles are read-only or edit (sharing-09), both reveal the value",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/sharing-use-only-and-expiring-shares on 2026-09-27. Before: git grep -i 'hidePassword|useOnly|can_view' src lib: no match; team folder roles are read-only or edit (sharing-09), both reveal the value",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Every recipient who can use a secret can also reveal it."
@@ -3001,8 +3001,8 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "none",
-        "evidence": "lib/Controller/ShareController.php: no expiry field on a user share (git grep -i expir lib/Controller/ShareController.php: no match); time-bound access exists only for public links (sharing-14) and ownership handover (sharing-11)",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/sharing-use-only-and-expiring-shares on 2026-09-27. Before: lib/Controller/ShareController.php: no expiry field on a user share (git grep -i expir lib/Controller/ShareController.php: no match); time-bound access exists only for public links (sharing-14) and ownership handover (sharing-11)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "A share to a colleague lasts until it is revoked by hand."
@@ -6703,8 +6703,8 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "built",
-        "evidence": "lib/Service/SiemTransport.php:100 generic RFC 5424 syslog and :152 generic HTTPS JSON webhook; grep -i 'splunk|sentinel|datadog|CEF|LEEF' lib src/components/settings/SiemSection.vue: no hits",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/audit-siem-vendor-connectors on 2026-09-27 for the missing half: named Splunk, Microsoft Sentinel and CEF presets on the SIEM export; the generic syslog and webhook stream is built. Before: lib/Service/SiemTransport.php:100 generic RFC 5424 syslog and :152 generic HTTPS JSON webhook; grep -i 'splunk|sentinel|datadog|CEF|LEEF' lib src/components/settings/SiemSection.vue: no hits",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings > Keepiq > SIEM section",
         "note": "No named connectors or vendor formats; Splunk, Sentinel and similar tools can ingest the generic syslog or webhook stream, but the admin has to configure the receiving side."
@@ -7239,11 +7239,11 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "built",
-        "evidence": "browser-extension/src/popup/popup.js:45 send('match') -> browser-extension/src/background/service-worker.js:91 doMatch -> browser-extension/src/lib/api.js:97 GET /api/v1/extension/match -> appinfo/routes.php:407 -> lib/Controller/ExtensionController.php:180 (owner's secrets by registrable domain) ; click -> service-worker.js:113 doFill (decrypt in worker) -> browser-extension/src/content/content-script.js:95 fillCredential",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/clients-extension-store-release on 2026-09-27 for the missing half: a packaged, signed extension in the browser stores. Matrix corrected: matching already covers shared and team folder secrets, because every recipient copy is a row owned by the recipient (lib/Service/RecipientSecretCopyService.php:112-113, lib/Service/TeamFolderShareService.php:295), so the owner-scoped match (lib/Controller/ExtensionController.php:195) returns them. Before: browser-extension/src/popup/popup.js:45 send('match') -> browser-extension/src/background/service-worker.js:91 doMatch -> browser-extension/src/lib/api.js:97 GET /api/v1/extension/match -> appinfo/routes.php:407 -> lib/Controller/ExtensionController.php:180 (owner's secrets by registrable domain) ; click -> service-worker.js:113 doFill (decrypt in worker) -> browser-extension/src/content/content-script.js:95 fillCredential",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "browser-extension popup (browser-extension/src/popup/popup.js) -> matched candidate list -> click to fill",
-        "note": "Autofill works in code: the popup lists owned secrets matching the site, decrypts in the worker and fills on click. The extension is not packaged or published, and matching only covers secrets the user owns, not shared or team-folder secrets.",
+        "note": "Autofill works in code: the popup lists owned secrets matching the site, decrypts in the worker and fills on click. The extension is not packaged or published, and matching only covers secrets the user owns, not shared or team-folder secrets. Corrected 2026-09-27: matching does cover shared and team folder secrets, because every recipient copy is a row owned by the recipient (lib/Service/RecipientSecretCopyService.php:112-113, lib/Service/TeamFolderShareService.php:295) and the match is owner-scoped (lib/Controller/ExtensionController.php:195). The missing half is the store release.",
         "defects": [
           {
             "at": "browser-extension/build.mjs:1",
@@ -7382,8 +7382,8 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "built",
-        "evidence": "browser-extension/src/background/service-worker.js:137 totpCodeForHost on fill -> :155 doTotpForHost (totp-typed secret matched by host, seed decrypted in worker, computeTotp browser-extension/src/lib/totp-service.js) -> :141 'fill-otp' -> content-script.js:115 fillOtp ; popup.js:66 copyWithAutoClear and popup.js:106 live code",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/clients-extension-store-release on 2026-09-27 for the missing half: filling a one-time code field that appears after the login step; filling a code field present at fill time is built. Before: browser-extension/src/background/service-worker.js:137 totpCodeForHost on fill -> :155 doTotpForHost (totp-typed secret matched by host, seed decrypted in worker, computeTotp browser-extension/src/lib/totp-service.js) -> :141 'fill-otp' -> content-script.js:115 fillOtp ; popup.js:66 copyWithAutoClear and popup.js:106 live code",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "browser-extension popup (browser-extension/src/popup/popup.js) -> fill a login; the matching authenticator code is filled into an OTP field and copied",
         "note": "After filling a login the worker looks for a totp-typed secret on the same host, fills a detected one-time-code field and copies the code with a 30 second clipboard clear. The OTP field has to be on the page at fill time, and the extension is not distributed.",
@@ -7474,8 +7474,8 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "built",
-        "evidence": "browser-extension/src/background/service-worker.js:37 touchActivity -> browser-extension/src/lib/vault.js:114 armIdleLock (default 15 minutes, service-worker.js:26) ; service-worker.js:254 chrome.idle locked -> vault.lock ; popup.js:197 manual Lock ; worker termination drops the in-memory key",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/clients-extension-unlock-lock-and-accounts on 2026-09-27 for the missing half: a user-chosen idle period; the fixed 15 minute idle lock is built. Before: browser-extension/src/background/service-worker.js:37 touchActivity -> browser-extension/src/lib/vault.js:114 armIdleLock (default 15 minutes, service-worker.js:26) ; service-worker.js:254 chrome.idle locked -> vault.lock ; popup.js:197 manual Lock ; worker termination drops the in-memory key",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "browser-extension popup (browser-extension/src/popup/popup.js) (automatic, plus the Lock button)",
         "note": "The extension locks after 15 idle minutes, on OS or browser lock, on worker termination and on demand. The idle period cannot be changed because nothing ever writes config.idleMinutes, and the extension is not distributed.",
@@ -7729,8 +7729,8 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "grep -ril 'ssh-agent|ssh agent' lib src cli browser-extension: no hits; ssh_key exists only as a stored secret type (src/cxf/cxf.js:355)",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/clients-ssh-agent on 2026-09-27. Before: grep -ril 'ssh-agent|ssh agent' lib src cli browser-extension: no hits; ssh_key exists only as a stored secret type (src/cxf/cxf.js:355)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "none",
         "note": "SSH keys can be stored as secrets, but nothing exposes them to an SSH agent."
@@ -7949,8 +7949,8 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none",
-        "evidence": "offline cache is read-only by design (clients-09; src/App.vue:73 stale-data banner, src/offline)",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/clients-offline-edits on 2026-09-27. Before: offline cache is read-only by design (clients-09; src/App.vue:73 stale-data banner, src/offline)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Offline mode reads only; edits need the server."
@@ -8013,8 +8013,8 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none",
-        "evidence": "browser-extension/src/lib/api.js:15-31 stores one paired config under CONFIG_KEY; no account list",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/clients-extension-unlock-lock-and-accounts on 2026-09-27. Before: browser-extension/src/lib/api.js:15-31 stores one paired config under CONFIG_KEY; no account list",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "The extension pairs with one Nextcloud account at a time; switching means unpairing."
