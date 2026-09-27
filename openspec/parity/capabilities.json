@@ -3991,8 +3991,8 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "grep -rli 'kubernetes|k8s|helm' lib src cli browser-extension: no hits",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/apps-kubernetes-injection on 2026-09-27. Before: grep -rli 'kubernetes|k8s|helm' lib src cli browser-extension: no hits",
         "note": "No Kubernetes secret injection (operator, CSI driver, sidecar) exists; keepiq's machine surface is a plain HTTP+JWT API a cluster could call itself, but nothing ships to do that integration.",
         "owner": "ConductionNL/keepiq"
       },
@@ -4020,8 +4020,8 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "grep -rli 'github.action|gitlab.ci|.gitlab-ci' lib src cli browser-extension: no hits (only this repo's own CI workflows use GitHub Actions, which is unrelated to a keepiq integration product)",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/apps-client-libraries-and-ci on 2026-09-27. Before: grep -rli 'github.action|gitlab.ci|.gitlab-ci' lib src cli browser-extension: no hits (only this repo's own CI workflows use GitHub Actions, which is unrelated to a keepiq integration product)",
         "note": "No ready-made GitHub Actions or GitLab CI step exists; a pipeline would have to install and script the keepiq CLI itself.",
         "owner": "ConductionNL/keepiq"
       },
@@ -4078,8 +4078,8 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "Matrix corrected 2026-09-27 in the openspec pass: the rating is no and nothing rotates a password at the destination service; the evidence below is the reminder and manual mark-rotated flow only. Before: openspec/specs/rotation-expiry-policies/spec.md:9 describes 'expiry, an admin-default and user-override max-age policy, approaching/overdue reminders ... a proven mark-rotated flow' -- this is a reminder + manual mark-rotated flow (lib/Controller/RotationController.php, src/store/modules/rotation.js), not automatic rotation of the underlying credential at the target service",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/apps-secret-sync-and-rotation-runner on 2026-09-27. Before: Matrix corrected 2026-09-27 in the openspec pass: the rating is no and nothing rotates a password at the destination service; the evidence below is the reminder and manual mark-rotated flow only. Before: openspec/specs/rotation-expiry-policies/spec.md:9 describes 'expiry, an admin-default and user-override max-age policy, approaching/overdue reminders ... a proven mark-rotated flow'; this is a reminder + manual mark-rotated flow (lib/Controller/RotationController.php, src/store/modules/rotation.js), not automatic rotation of the underlying credential at the target service",
         "owner": "ConductionNL/keepiq",
         "note": "keepiq flags stale/expiring secrets and lets a user mark one rotated, but it never rotates a password at the destination service itself the way Vault/1Password-style rotation connectors do."
       },
@@ -4107,8 +4107,8 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "built",
-        "evidence": "cli/ is a single Go CLI (stdlib only) covering human read-only + CI fetch; no client SDKs for other languages exist (no python/node/java package in the repo)",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/apps-client-libraries-and-ci on 2026-09-27 for the missing half: client libraries for common languages; the Go command-line client is built. Before: cli/ is a single Go CLI (stdlib only) covering human read-only + CI fetch; no client SDKs for other languages exist (no python/node/java package in the repo)",
         "reachedOn": "keepiq CLI (Go binary, cross-compiled)",
         "note": "There is one cross-compiled CLI binary, not per-language client libraries; a Python or Node consumer would call the documented HTTP+JWT API directly with no official SDK.",
         "owner": "ConductionNL/keepiq"
@@ -4137,8 +4137,8 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "grep -rli 'terraform' . --include=*.md --include=*.php --include=*.go: no hits",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/apps-terraform-provider on 2026-09-27. Before: grep -rli 'terraform' . --include=*.md --include=*.php --include=*.go: no hits",
         "note": "No Terraform provider exists for managing keepiq secrets/applications as code.",
         "owner": "ConductionNL/keepiq"
       },
@@ -4226,8 +4226,8 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "git grep -i 'aws|azure|key vault' lib src: no match; no outbound secret sync",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/apps-secret-sync-and-rotation-runner on 2026-09-27. Before: git grep -i 'aws|azure|key vault' lib src: no match; no outbound secret sync",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "No push of secrets to cloud secret stores."
@@ -5511,8 +5511,8 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "built",
-        "evidence": "src/components/settings/OffboardingSection.vue:150 (after OffboardingConfirmDialog) -> src/store/modules/teamFolder.js:220 POST /api/v1/team-folders/offboard -> lib/Controller/TeamFolderController.php:236 -> lib/Service/TeamFolderOffboardingService.php:83 offboard: revokeTeamSharesForUser (lib/Service/TeamFolderShareService.php:232) then transfer owned team secrets to a successor",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/admin-member-overview-and-offboarding on 2026-09-27 for the missing half: offboarding also removes the leaver's own team folder member rows; revoking derived shares and handing over owned team secrets is built. Before: src/components/settings/OffboardingSection.vue:150 (after OffboardingConfirmDialog) -> src/store/modules/teamFolder.js:220 POST /api/v1/team-folders/offboard -> lib/Controller/TeamFolderController.php:236 -> lib/Service/TeamFolderOffboardingService.php:83 offboard: revokeTeamSharesForUser (lib/Service/TeamFolderShareService.php:232) then transfer owned team secrets to a successor",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Team offboarding (admin or vault_admin)",
         "note": "One action revokes every team-folder-derived share and hands owned team secrets to a successor. It does not delete the user's team-folder member rows, so a direct user membership survives.",
@@ -5714,8 +5714,8 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "none",
-        "evidence": "grep -rni 'export_disabled|allow_export|require_2fa|twofactor' lib/Service/AdminSettingsService.php lib/Controller/ExportController.php src/components/settings: no hits",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/admin-vault-policies on 2026-09-27. Before: grep -rni 'export_disabled|allow_export|require_2fa|twofactor' lib/Service/AdminSettingsService.php lib/Controller/ExportController.php src/components/settings: no hits",
         "owner": "ConductionNL/keepiq",
         "note": "Keepiq has no policy to require two-factor login or to block personal vault export. Nextcloud can enforce two-factor for the whole login, which also guards keepiq, but that is a server setting, not a vault rule."
       },
@@ -5743,8 +5743,8 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "built",
-        "evidence": "lib/Service/TeamFolderOffboardingService.php:45 and lib/Service/DelegationAuthorizer.php:49 vault_admin group; admin settings via #[AuthorizedAdminSetting(AdminSettings::class)] (lib/Controller/SettingsController.php:159) so Nextcloud admin delegation can hand the whole Keepiq section to a group; admin handover reachable since f13ad8e6: appinfo/routes.php:150 delegation#handover -> lib/Controller/DelegationController.php:168 createAdminHandover, called from src/components/share/AdminHandoverPanel.vue (mounted in SecretDetailSidebar.vue:700, shown when isVaultAdmin) via src/store/modules/delegation.js:169",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/admin-scoped-roles on 2026-09-27 for the missing half: named admin roles with a chosen set of permissions; the whole-section delegation and the vault_admin group are built. Before: lib/Service/TeamFolderOffboardingService.php:45 and lib/Service/DelegationAuthorizer.php:49 vault_admin group; admin settings via #[AuthorizedAdminSetting(AdminSettings::class)] (lib/Controller/SettingsController.php:159) so Nextcloud admin delegation can hand the whole Keepiq section to a group; admin handover reachable since f13ad8e6: appinfo/routes.php:150 delegation#handover -> lib/Controller/DelegationController.php:168 createAdminHandover, called from src/components/share/AdminHandoverPanel.vue (mounted in SecretDetailSidebar.vue:700, shown when isVaultAdmin) via src/store/modules/delegation.js:169",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin delegation for the Keepiq settings section; vault_admin group for offboarding and for the admin handover panel in the secret sidebar",
         "note": "There are two coarse levers: Nextcloud's delegation of the whole Keepiq admin section, and a hard-coded vault_admin group that unlocks offboarding and admin handover. The handover now has a route, a controller call and a UI panel (f13ad8e6, closing #184), so both levers work end to end. There is still no role editor and no per-permission role, so a person cannot be given only the permissions they need: partial.",
@@ -5774,8 +5774,8 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "built",
-        "evidence": "src/components/settings/ComplianceSection.vue:44 shows metrics.adoption.usersWithActiveSuite <- lib/Service/ComplianceReportService.php:107 countDistinct keepiq_enc_suites; no per-user list endpoint (open #37)",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/admin-member-overview-and-offboarding on 2026-09-27 for the missing half: a list of which users have set up a vault; the count is built. Before: src/components/settings/ComplianceSection.vue:44 shows metrics.adoption.usersWithActiveSuite <- lib/Service/ComplianceReportService.php:107 countDistinct keepiq_enc_suites; no per-user list endpoint (open #37)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin settings -> Keepiq -> Compliance section (count only)",
         "note": "Admins see how many users have an active vault, not which ones. The encryption-suite admin section needs a suite id typed in by hand.",
@@ -5812,8 +5812,8 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "none",
-        "evidence": "no OpenAPI or admin API docs in docs/; machine routes /api/v1/app/* (appinfo/routes.php:295-321) cover application secrets only; admin endpoints like PUT /api/settings/admin are internal session routes",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/admin-public-api on 2026-09-27. Before: no OpenAPI or admin API docs in docs/; machine routes /api/v1/app/* (appinfo/routes.php:295-321) cover application secrets only; admin endpoints like PUT /api/settings/admin are internal session routes",
         "owner": "ConductionNL/keepiq",
         "note": "The admin screens call internal REST routes that a script could reach with a Nextcloud app password, but there is no documented, versioned admin API or scoped admin token."
       },
@@ -6102,8 +6102,8 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "lib/Service/AdminSettingsService.php: no ownership or personal-vault policy; git grep -i 'personal vault' lib: descriptive text only",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/admin-vault-policies on 2026-09-27. Before: lib/Service/AdminSettingsService.php: no ownership or personal-vault policy; git grep -i 'personal vault' lib: descriptive text only",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Every secret starts in the creator's personal vault; nothing forces work logins into a team folder."
@@ -6194,8 +6194,8 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "none",
-        "evidence": "lib/Service/TeamFolderService.php:496 approveJoin returns a fan-out payload the owner's browser must encrypt; src/modals/TeamFolderDialog.vue:469 shows pendingCount and src/store/modules/teamFolder.js:278 runFanOut shares keys when the owner runs it; approveJoin (teamFolder.js:202) has no caller in src",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/admin-auto-confirm-members on 2026-09-27. Before: lib/Service/TeamFolderService.php:496 approveJoin returns a fan-out payload the owner's browser must encrypt; src/modals/TeamFolderDialog.vue:469 shows pendingCount and src/store/modules/teamFolder.js:278 runFanOut shares keys when the owner runs it; approveJoin (teamFolder.js:202) has no caller in src",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Team folder dialog, pending members count and fan-out run by the owner",
         "note": "A new team folder member gets access only when the owner's browser runs the key fan-out; there is no automatic confirmation."
@@ -6254,8 +6254,8 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "none",
-        "evidence": "searched 'backup' in lib/Command lib/BackgroundJob: no match; the encrypted-backup export (portability-09) is per user and started by hand",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/admin-scheduled-vault-backups on 2026-09-27. Before: searched 'backup' in lib/Command lib/BackgroundJob: no match; the encrypted-backup export (portability-09) is per user and started by hand",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "There is no scheduled server-side backup of all vaults and no restore command; an instance relies on the Nextcloud database backup."
