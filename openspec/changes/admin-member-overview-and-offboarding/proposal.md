@@ -21,7 +21,7 @@ No demand row.
 
 ### Competitors rated yes
 
-- Bitwarden (admin-04): "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Controllers/OrganizationUsersController.cs:579 DELETE organizations/{orgId}/users/{id}, :605 POST remove (bulk), :669 revoke. Note: Removing or revoking a member drops every collection and group access in one step."
+- Bitwarden (admin-04): "bitwarden/server@v2026.9.1 src/Api/AdminConsole/Controllers/OrganizationUsersController.cs:579 DELETE organizations/{orgId}/users/{id}, :605 POST remove (bulk), :669 revoke Note: Removing or revoking a member drops every collection and group access in one step."
 - 1Password (admin-04): "https://support.1password.com/offboarding/ : suspend or remove an offboarded team member, removing all vault access"
 - Passbolt (admin-04): "passbolt/passbolt_api@v5.16.0 src/Model/Table/UsersTable.php:458 softDelete: :522 GroupsUsers deleteAll for the user, :523 Permissions deleteAll for the user, folder relations removed; ... Note: Deleting a leaving user removes every permission, folder relation and group membership in one action, after sole-owned items are transferred ..."
 - Keeper (admin-04): "https://docs.keeper.io/enterprise-guide/user-management-and-lifecycle : Delete User removes the user 'from all Roles, Nodes and Teams'; Lock Account or SCIM/AD Bridge suspension blocks access while Account Transfer keeps the records"
