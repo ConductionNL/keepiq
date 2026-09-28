@@ -468,10 +468,12 @@ export default {
 		},
 
 		/**
-		 * Close and reset all transient state (releases ephemeral key material).
+		 * Close and reset all transient state (releases ephemeral key material),
+		 * including the acknowledgement of secrets left out (keepiq#794).
 		 *
 		 * @param {boolean} value The open state.
 		 * @return {void}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		onUpdateOpen(value) {
 			if (!value) {
