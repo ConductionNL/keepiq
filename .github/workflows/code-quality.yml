@@ -241,9 +241,8 @@ jobs:
       # formatter failure mode that made the old `.prettierrc` worth deleting.
       # Centralising the config never stopped drift; the gate does.
       # Measured on this tree before enabling: PASSES, 294 of 310 tracked
-      # frontend files in scope. This repo has TWO documentation trees and both
-      # are excluded by .prettierignore — `docs/` and the separate `docusaurus/`
-      # site, which has its own package.json and its own toolchain.
+      # frontend files in scope. The documentation site in `docs/` is excluded
+      # by .prettierignore: it has its own package.json and its own toolchain.
       # `check:l10n-js` regenerates l10n/<locale>.js from the JSON catalogue and
       # fails when the committed file is stale. Nextcloud serves ONLY the JS half
       # to a browser — raw JSON out of an app directory is a 404 — so a catalogue
