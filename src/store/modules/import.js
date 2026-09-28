@@ -43,6 +43,54 @@ export const STEPS = [
 	'summary',
 ]
 
+/**
+ * The type the server files a secret under when it carries no type id
+ * (`lib/Service/ImportService.php`: a null typeId resolves to `login`).
+ */
+const DEFAULT_TYPE_NAME = 'login'
+
+/**
+ * Build the lookup that turns an import row's `type` into a type id this vault
+ * knows (keepiq#749).
+ *
+ * A backup written by the export serializer stores the server secret's
+ * `typeId`, a UUID; the format parsers and older backups store a type name. A
+ * known type id is kept, a name maps to the id of the vault's type with that
+ * name (a system type wins over a custom type of the same name), and anything
+ * else maps to null so the server applies its default type.
+ *
+ * @param {Array<object>} types The vault's secret types ({ id, name, scope }).
+ * @return {function((string|null|undefined)): (string|null)} Maps a row type
+ *   to a type id, or null.
+ * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
+ */
+export function typeIdResolver(types) {
+	const known = (Array.isArray(types) ? types : []).filter(
+		(type) => type && type.id,
+	)
+	const systemFirst = [
+		...known.filter((type) => type.scope === 'system'),
+		...known.filter((type) => type.scope !== 'system'),
+	]
+	const ids = new Set()
+	const idsByName = new Map()
+	for (const type of systemFirst) {
+		ids.add(type.id)
+		if (type.name && !idsByName.has(type.name)) {
+			idsByName.set(type.name, type.id)
+		}
+	}
+	return (rowType) => {
+		if (typeof rowType !== 'string' || rowType === '') {
+			return null
+		}
+		if (ids.has(rowType)) {
+			return rowType
+		}
+		return idsByName.get(rowType) ?? null
+	}
+}
+
 export const useImportStore = defineStore('import', {
 	state: () => ({
 		/** @type {string} The current wizard step. */
@@ -240,22 +288,14 @@ export const useImportStore = defineStore('import', {
 		 * @param {object} row The plaintext row.
 		 * @param {CryptoKey} publicKey The owner's imported public key.
 		 * @param {boolean} asCopy Whether to apply the "(imported)" copy suffix.
-		 * @param {string|null} totpTypeId The resolved `totp` type id, stamped on
-		 *   `totp` rows so an imported seed lands as an Authenticator secret.
-		 * @param passkeyTypeId
-		 * @param typedIds
+		 * @param {string|null} typeId The vault type id resolved for the row's
+		 *   `type` (see typeIdResolver), or null for the server's default type.
 		 * @return {Promise<object>} The ciphertext-only item.
 		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 */
-		async encryptRow(
-			row,
-			publicKey,
-			asCopy,
-			totpTypeId = null,
-			passkeyTypeId = null,
-			typedIds = {},
-		) {
+		async encryptRow(row, publicKey, asCopy, typeId = null) {
 			const name = asCopy ? `${row.name} (imported)` : row.name
 			const item = {
 				sourceRow: row.sourceRow,
@@ -264,27 +304,12 @@ export const useImportStore = defineStore('import', {
 				folderPath: folderSegments(row.folder),
 				key: await rsaEncrypt(String(row.password ?? ''), publicKey),
 			}
-			// A `totp` row carries its seed in `password` (now ciphertext in
-			// `key`); stamp the resolved totp type id so the server files it as
-			// an Authenticator secret (add-totp-secrets D6). The seed stays
-			// ciphertext — the type is a UI hint only.
-			if (row.type === 'totp' && totpTypeId) {
-				item.typeId = totpTypeId
-			}
-			// A `passkey` row carries its canonical credential JSON in
-			// `password` (now ciphertext in `key`); stamp the resolved type id
-			// so the server files it as a Passkey (passkey-item-type D5).
-			if (row.type === 'passkey' && passkeyTypeId) {
-				item.typeId = passkeyTypeId
-			}
-			// `card` / `identity` rows carry their composite JSON payload in
-			// `password` (now ciphertext in `key`); the type is a UI hint
-			// only (card-identity-items §5.1).
-			if (
-				(row.type === 'card' || row.type === 'identity')
-				&& typedIds[row.type]
-			) {
-				item.typeId = typedIds[row.type]
+			// Stamp the resolved type id so the server files the secret under
+			// its own type: an authenticator seed, a passkey credential or a
+			// card payload rides the encrypted `key` like any other value, and
+			// the type stays a UI hint only.
+			if (typeId) {
+				item.typeId = typeId
 			}
 			if (row.login != null && row.login !== '') {
 				item.login = await rsaEncrypt(String(row.login), publicKey)
@@ -308,6 +333,7 @@ export const useImportStore = defineStore('import', {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 */
 		async commit() {
 			const session = useSessionStore()
@@ -322,70 +348,30 @@ export const useImportStore = defineStore('import', {
 			const rows = this.acceptedRows
 			const dupRows = new Set(this.duplicates.map((d) => d.sourceRow))
 
-			// Resolve the `totp` type id once so imported authenticator seeds are
-			// filed as Authenticator secrets (add-totp-secrets D6). Best-effort:
-			// if the type list is unavailable the seed still imports as a login.
-			let totpTypeId = null
-			if (rows.some((row) => row.type === 'totp')) {
-				const typeStore = useSecretTypeStore()
-				if (
-					!Array.isArray(typeStore.types)
-					|| typeStore.types.length === 0
-				) {
-					try {
-						await typeStore.fetchTypes()
-					} catch {
-						// Non-fatal.
-					}
-				}
-				const types = Array.isArray(typeStore.types) ? typeStore.types : []
-				const totpType = types.find((type) => type && type.name === 'totp')
-				totpTypeId = totpType ? totpType.id : null
-			}
-
-			// Resolve the `passkey` type id the same way (passkey-item-type D5).
-			let passkeyTypeId = null
-			if (rows.some((row) => row.type === 'passkey')) {
-				const typeStore = useSecretTypeStore()
-				if (
-					!Array.isArray(typeStore.types)
-					|| typeStore.types.length === 0
-				) {
-					try {
-						await typeStore.fetchTypes()
-					} catch {
-						// Non-fatal.
-					}
-				}
-				const types = Array.isArray(typeStore.types) ? typeStore.types : []
-				const passkeyType = types.find(
-					(type) => type && type.name === 'passkey',
-				)
-				passkeyTypeId = passkeyType ? passkeyType.id : null
-			}
-
-			// Resolve `card` / `identity` type ids (card-identity-items §5.1).
-			const typedIds = {}
-			if (rows.some((row) => row.type === 'card' || row.type === 'identity')) {
-				const typeStore = useSecretTypeStore()
-				if (
-					!Array.isArray(typeStore.types)
-					|| typeStore.types.length === 0
-				) {
-					try {
-						await typeStore.fetchTypes()
-					} catch {
-						// Non-fatal.
-					}
-				}
-				const types = Array.isArray(typeStore.types) ? typeStore.types : []
-				for (const name of ['card', 'identity']) {
-					const match = types.find((type) => type && type.name === name)
-					if (match) {
-						typedIds[name] = match.id
-					}
+			// Resolve every row's type to a type id this vault knows: a type id
+			// from a backup, or a type name from a parser or an older backup
+			// (keepiq#749; add-totp-secrets D6, passkey-item-type D5,
+			// card-identity-items §5.1). The type list is fetched only when a
+			// row names a type other than the default. Best-effort: without the
+			// list every row imports under the default type.
+			const typeStore = useSecretTypeStore()
+			const needsTypes = rows.some(
+				(row) =>
+					typeof row.type === 'string'
+					&& row.type !== ''
+					&& row.type !== DEFAULT_TYPE_NAME,
+			)
+			if (
+				needsTypes
+				&& (!Array.isArray(typeStore.types) || typeStore.types.length === 0)
+			) {
+				try {
+					await typeStore.fetchTypes()
+				} catch {
+					// Non-fatal.
 				}
 			}
+			const typeIdFor = typeIdResolver(typeStore.types)
 
 			// Encrypt every row client-side BEFORE any request leaves the browser.
 			const items = []
@@ -397,9 +383,7 @@ export const useImportStore = defineStore('import', {
 						row,
 						publicKey,
 						asCopy,
-						totpTypeId,
-						passkeyTypeId,
-						typedIds,
+						typeIdFor(row.type),
 					),
 				)
 				itemRowByIndex.push(row)
