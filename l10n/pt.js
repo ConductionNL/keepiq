@@ -1168,7 +1168,10 @@ OC.L10N.register(
         "Reinstate suite": "Restaurar a suite",
         "Revoking this suite deleted %n emergency-access contact.": "Revogar esta suite eliminou %n contacto de acesso de emergência.",
         "Revoking this suite deleted %n emergency-access contacts.": "Revogar esta suite eliminou %n contactos de acesso de emergência.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tratar os segredos da suite como comprometidos (marcar para rotação e notificar os proprietários)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tratar os segredos da suite como comprometidos (marcar para rotação e notificar os proprietários)",
+        "%n secret could not be decrypted and is not in this export.": "%n segredo não pôde ser desencriptado e não está nesta exportação.",
+        "%n secrets could not be decrypted and are not in this export.": "%n segredos não puderam ser desencriptados e não estão nesta exportação.",
+        "Continue without the secrets that could not be decrypted": "Continuar sem os segredos que não puderam ser desencriptados"
     },
     "nplurals=2; plural=(n != 1);"
 )

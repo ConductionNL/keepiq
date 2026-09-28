@@ -1168,7 +1168,10 @@ OC.L10N.register(
         "Reinstate suite": "Atkurti rinkinį",
         "Revoking this suite deleted %n emergency-access contact.": "Šio rinkinio atšaukimas pašalino %n avarinės prieigos kontaktą.",
         "Revoking this suite deleted %n emergency-access contacts.": "Šio rinkinio atšaukimas pašalino %n avarinės prieigos kontaktų.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Laikyti rinkinio paslaptis pažeistomis (pažymėti keitimui ir pranešti savininkams)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Laikyti rinkinio paslaptis pažeistomis (pažymėti keitimui ir pranešti savininkams)",
+        "%n secret could not be decrypted and is not in this export.": "%n paslapties nepavyko iššifruoti, ir jos nėra šiame eksporte.",
+        "%n secrets could not be decrypted and are not in this export.": "%n paslapčių nepavyko iššifruoti, ir jų nėra šiame eksporte.",
+        "Continue without the secrets that could not be decrypted": "Tęsti be paslapčių, kurių nepavyko iššifruoti"
     },
     "nplurals=2; plural=(n != 1);"
 )

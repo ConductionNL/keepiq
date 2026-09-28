@@ -1168,7 +1168,10 @@ OC.L10N.register(
         "Reinstate suite": "Врати комплет",
         "Revoking this suite deleted %n emergency-access contact.": "Отповикувањето на овој комплет избриша %n контакт за итен пристап.",
         "Revoking this suite deleted %n emergency-access contacts.": "Отповикувањето на овој комплет избриша %n контакти за итен пристап.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Третирај ги тајните на комплетот како компромитирани (означи за ротација и извести ги сопствениците)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Третирај ги тајните на комплетот како компромитирани (означи за ротација и извести ги сопствениците)",
+        "%n secret could not be decrypted and is not in this export.": "%n тајна не можеше да се дешифрира и не е во овој извоз.",
+        "%n secrets could not be decrypted and are not in this export.": "%n тајни не можеа да се дешифрираат и не се во овој извоз.",
+        "Continue without the secrets that could not be decrypted": "Продолжи без тајните што не можеа да се дешифрираат"
     },
     "nplurals=2; plural=(n != 1);"
 )

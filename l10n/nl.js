@@ -1173,7 +1173,10 @@ OC.L10N.register(
         "Reinstate suite": "Suite herstellen",
         "Revoking this suite deleted %n emergency-access contact.": "Het intrekken van deze suite verwijderde %n noodtoegangscontact.",
         "Revoking this suite deleted %n emergency-access contacts.": "Het intrekken van deze suite verwijderde %n noodtoegangscontacten.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandel de geheimen van de suite als gecompromitteerd (markeer voor rotatie en waarschuw eigenaren)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandel de geheimen van de suite als gecompromitteerd (markeer voor rotatie en waarschuw eigenaren)",
+        "%n secret could not be decrypted and is not in this export.": "%n geheim kon niet worden ontsleuteld en zit niet in deze export.",
+        "%n secrets could not be decrypted and are not in this export.": "%n geheimen konden niet worden ontsleuteld en zitten niet in deze export.",
+        "Continue without the secrets that could not be decrypted": "Doorgaan zonder de geheimen die niet konden worden ontsleuteld"
     },
     "nplurals=2; plural=(n != 1);"
 )

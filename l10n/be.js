@@ -1168,7 +1168,10 @@ OC.L10N.register(
         "Reinstate suite": "Аднавіць набор",
         "Revoking this suite deleted %n emergency-access contact.": "Адкліканне гэтага набору выдаліла %n кантакт аварыйнага доступу.",
         "Revoking this suite deleted %n emergency-access contacts.": "Адкліканне гэтага набору выдаліла %n кантактаў аварыйнага доступу.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Лічыць сакрэты набору скампраметаванымі (пазначыць для ратацыі і апавясціць уладальнікаў)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Лічыць сакрэты набору скампраметаванымі (пазначыць для ратацыі і апавясціць уладальнікаў)",
+        "%n secret could not be decrypted and is not in this export.": "%n сакрэт не ўдалося расшыфраваць, і яго няма ў гэтым экспарце.",
+        "%n secrets could not be decrypted and are not in this export.": "%n сакрэтаў не ўдалося расшыфраваць, і іх няма ў гэтым экспарце.",
+        "Continue without the secrets that could not be decrypted": "Працягнуць без сакрэтаў, якія не ўдалося расшыфраваць"
     },
     "nplurals=2; plural=(n != 1);"
 )

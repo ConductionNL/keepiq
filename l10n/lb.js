@@ -1168,7 +1168,10 @@ OC.L10N.register(
         "Reinstate suite": "Reinstate suite",
         "Revoking this suite deleted %n emergency-access contact.": "Revoking this suite deleted %n emergency-access contact.",
         "Revoking this suite deleted %n emergency-access contacts.": "Revoking this suite deleted %n emergency-access contacts.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Treat the suite's secrets as compromised (flag for rotation and notify owners)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Treat the suite's secrets as compromised (flag for rotation and notify owners)",
+        "%n secret could not be decrypted and is not in this export.": "%n secret could not be decrypted and is not in this export.",
+        "%n secrets could not be decrypted and are not in this export.": "%n secrets could not be decrypted and are not in this export.",
+        "Continue without the secrets that could not be decrypted": "Continue without the secrets that could not be decrypted"
     },
     "nplurals=2; plural=(n != 1);"
 )
