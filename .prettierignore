@@ -9,11 +9,9 @@ coverage-vitest/
 playwright-report/
 test-results/
 *.min.*
-# This repo carries TWO Docusaurus trees, `docs/` and `docusaurus/`. Both are
-# documentation sites with their own conventions (their CSS is space-indented
-# by Docusaurus' own scaffolding), and both are built by a separate toolchain.
+# `docs/` is the Docusaurus documentation site. It has its own conventions (its
+# CSS is space-indented by Docusaurus' own scaffolding) and its own toolchain.
 docs/
-docusaurus/
 # Written by the translation workflow — a formatter here would fight its own
 # generator on every run.
 l10n/
