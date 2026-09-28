@@ -139,7 +139,10 @@ describe('useExportStore', () => {
 		session.encryptedPrivateKey = 'ENVELOPE'
 
 		const store = useExportStore()
-		const report = await store.deleteAccountData('DELETE MY KEEPIQ DATA', 'master-pw')
+		const report = await store.deleteAccountData(
+			'DELETE MY KEEPIQ DATA',
+			'master-pw',
+		)
 
 		expect(config.data).toEqual({ confirmation: 'DELETE MY KEEPIQ DATA' })
 		expect(config.headers).toEqual({ 'X-Keepiq-Key-Proof': 'SIG' })

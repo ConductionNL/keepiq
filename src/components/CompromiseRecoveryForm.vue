@@ -322,21 +322,6 @@ export default {
 		}
 	},
 
-	/**
-	 * Load the emergency contacts the owner may choose to carry to the new key.
-	 *
-	 * @return {Promise<void>}
-	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
-	 */
-	async mounted() {
-		const suiteId = useSessionStore().suiteId
-		if (!suiteId) {
-			return
-		}
-		this.carriableContacts = await useEncryptionSuiteStore()
-			.listCarriableEmergencyContacts(suiteId)
-	},
-
 	computed: {
 		/**
 		 * Emergency contacts that could not be carried across the rotation and
@@ -465,6 +450,21 @@ export default {
 				? store.migrationFailures
 				: store.migrationUnrecoverable
 		},
+	},
+
+	/**
+	 * Load the emergency contacts the owner may choose to carry to the new key.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+	 */
+	async mounted() {
+		const suiteId = useSessionStore().suiteId
+		if (!suiteId) {
+			return
+		}
+		this.carriableContacts =
+			await useEncryptionSuiteStore().listCarriableEmergencyContacts(suiteId)
 	},
 
 	methods: {

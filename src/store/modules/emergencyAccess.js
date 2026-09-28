@@ -144,7 +144,11 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 				purpose: PROOF_PURPOSE.EMERGENCY_DESIGNATE,
 				encryptedPrivateKey: session.encryptedPrivateKey,
 				masterPassword,
-				boundValues: [granteeUserId, String(waitPeriodDays), recoveryEnvelope],
+				boundValues: [
+					granteeUserId,
+					String(waitPeriodDays),
+					recoveryEnvelope,
+				],
 			})
 
 			// 4. Persist only the grantee-encrypted envelope.

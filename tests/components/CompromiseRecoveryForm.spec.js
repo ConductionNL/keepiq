@@ -69,7 +69,8 @@ function mountForm() {
 				NcCheckboxRadioSwitch: {
 					props: ['modelValue'],
 					emits: ['update:modelValue'],
-					template: '<label class="carry"><input type="checkbox" :checked="modelValue" @change="$emit(\'update:modelValue\', $event.target.checked)" /><slot /></label>',
+					template:
+						'<label class="carry"><input type="checkbox" :checked="modelValue" @change="$emit(\'update:modelValue\', $event.target.checked)" /><slot /></label>',
 				},
 			},
 		},
@@ -87,8 +88,18 @@ describe('CompromiseRecoveryForm', () => {
 	// owner picks, nothing is preselected, and only the ticked ones go through.
 	describe('emergency contacts to carry', () => {
 		const contacts = [
-			{ id: 'rel-1', granteeUserId: 'bob', state: 'granted', waitPeriodDays: 7 },
-			{ id: 'rel-2', granteeUserId: 'carol', state: 'granted', waitPeriodDays: 1 },
+			{
+				id: 'rel-1',
+				granteeUserId: 'bob',
+				state: 'granted',
+				waitPeriodDays: 7,
+			},
+			{
+				id: 'rel-2',
+				granteeUserId: 'carol',
+				state: 'granted',
+				waitPeriodDays: 1,
+			},
 		]
 
 		beforeEach(() => {
@@ -97,30 +108,45 @@ describe('CompromiseRecoveryForm', () => {
 
 		it('lists the carriable contacts with none preselected', async () => {
 			const store = useEncryptionSuiteStore()
-			const list = vi.spyOn(store, 'listCarriableEmergencyContacts').mockResolvedValue(contacts)
+			const list = vi
+				.spyOn(store, 'listCarriableEmergencyContacts')
+				.mockResolvedValue(contacts)
 
 			const wrapper = mountForm()
 			await flushPromises()
 
 			expect(list).toHaveBeenCalledWith('old-suite')
-			const items = wrapper.findAll('[data-testid="compromise-recovery-carry-item"]')
+			const items = wrapper.findAll(
+				'[data-testid="compromise-recovery-carry-item"]',
+			)
 			expect(items.map((i) => i.text())).toEqual([
 				expect.stringContaining('bob'),
 				expect.stringContaining('carol'),
 			])
-			expect(items.every((i) => i.find('input').element.checked === false)).toBe(true)
+			expect(
+				items.every((i) => i.find('input').element.checked === false),
+			).toBe(true)
 		})
 
 		it('carries only the contacts the owner ticked', async () => {
 			const store = useEncryptionSuiteStore()
-			vi.spyOn(store, 'listCarriableEmergencyContacts').mockResolvedValue(contacts)
+			vi.spyOn(store, 'listCarriableEmergencyContacts').mockResolvedValue(
+				contacts,
+			)
 			const initiate = vi
 				.spyOn(store, 'initiateCompromiseRecovery')
-				.mockResolvedValue({ migrated: 0, droppedVersions: 0, failures: [], residualContacts: ['bob'] })
+				.mockResolvedValue({
+					migrated: 0,
+					droppedVersions: 0,
+					failures: [],
+					residualContacts: ['bob'],
+				})
 
 			const wrapper = mountForm()
 			await flushPromises()
-			const carol = wrapper.findAll('[data-testid="compromise-recovery-carry-item"]')[1]
+			const carol = wrapper.findAll(
+				'[data-testid="compromise-recovery-carry-item"]',
+			)[1]
 			await carol.find('input').setValue(true)
 
 			wrapper.vm.oldPassword = 'old'
@@ -137,7 +163,9 @@ describe('CompromiseRecoveryForm', () => {
 			const wrapper = mountForm()
 			await flushPromises()
 
-			expect(wrapper.find('[data-testid="compromise-recovery-carry"]').exists()).toBe(false)
+			expect(
+				wrapper.find('[data-testid="compromise-recovery-carry"]').exists(),
+			).toBe(false)
 		})
 	})
 

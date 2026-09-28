@@ -220,7 +220,11 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *   be re-enveloped and must be re-established.
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 		 */
-		async initiateCompromiseRecovery(oldPassword, newPassword, carryContactIds = []) {
+		async initiateCompromiseRecovery(
+			oldPassword,
+			newPassword,
+			carryContactIds = [],
+		) {
 			const { publicKeyPem, privateKey } = await generateKeyPair()
 
 			// Export new private key as PEM.
@@ -370,7 +374,8 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				)
 				const contacts = Array.isArray(response.data) ? response.data : []
 				return contacts.filter(
-					(contact) => contact.state === 'granted'
+					(contact) =>
+						contact.state === 'granted'
 						&& contact.grantorSuiteId === suiteId,
 				)
 			} catch {
@@ -446,7 +451,10 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				// Not confirmed by the owner, or a break-glass in flight: never
 				// escrow the new key to it. The sweep invalidates it at completion
 				// and the owner re-establishes it if they still want it.
-				if (contact.state !== 'granted' || !carryContactIds.includes(contact.id)) {
+				if (
+					contact.state !== 'granted'
+					|| !carryContactIds.includes(contact.id)
+				) {
 					residualContacts.push(contact.granteeUserId)
 					continue
 				}

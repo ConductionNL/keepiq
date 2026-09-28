@@ -51,10 +51,16 @@ describe('useEmergencyAccessStore — designate', () => {
 			}
 			return { data: [] }
 		})
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 'rel-1' } })
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { id: 'rel-1' } })
 
 		const store = useEmergencyAccessStore()
-		await store.designate({ granteeUserId: 'bob', waitPeriodDays: 7, masterPassword: 'master-pw' })
+		await store.designate({
+			granteeUserId: 'bob',
+			waitPeriodDays: 7,
+			masterPassword: 'master-pw',
+		})
 
 		expect(buildKeyProofHeaders).toHaveBeenCalledWith({
 			suiteId: 'suite-1',
@@ -66,7 +72,12 @@ describe('useEmergencyAccessStore — designate', () => {
 		})
 		expect(post).toHaveBeenCalledWith(
 			expect.stringContaining('/emergency-access/contacts'),
-			{ granteeUserId: 'bob', waitPeriodDays: 7, accessLevel: 'view', recoveryEnvelope: 'ENVELOPE-JSON' },
+			{
+				granteeUserId: 'bob',
+				waitPeriodDays: 7,
+				accessLevel: 'view',
+				recoveryEnvelope: 'ENVELOPE-JSON',
+			},
 			{ headers: { 'X-Keepiq-Key-Proof': 'SIG' } },
 		)
 		expect(JSON.stringify(post.mock.calls)).not.toContain('master-pw')

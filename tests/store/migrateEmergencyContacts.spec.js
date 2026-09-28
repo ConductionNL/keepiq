@@ -127,7 +127,12 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 	it('does not carry a contact the owner did not confirm', async () => {
 		mockGets({
 			contacts: [
-				{ id: 'rel-1', granteeUserId: 'bob', state: 'granted', grantorSuiteId: 'old-suite' },
+				{
+					id: 'rel-1',
+					granteeUserId: 'bob',
+					state: 'granted',
+					grantorSuiteId: 'old-suite',
+				},
 			],
 			certs: { bob: { suiteId: 'bob-suite', certificate: 'BOB-CERT' } },
 		})
@@ -146,7 +151,12 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 		async (state) => {
 			mockGets({
 				contacts: [
-					{ id: 'rel-1', granteeUserId: 'mallory', state, grantorSuiteId: 'old-suite' },
+					{
+						id: 'rel-1',
+						granteeUserId: 'mallory',
+						state,
+						grantorSuiteId: 'old-suite',
+					},
 				],
 				certs: { mallory: { suiteId: 'm-suite', certificate: 'M-CERT' } },
 			})
@@ -164,10 +174,30 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 	it('lists only granted contacts on the given suite as carriable', async () => {
 		mockGets({
 			contacts: [
-				{ id: 'a', granteeUserId: 'bob', state: 'granted', grantorSuiteId: 'old-suite' },
-				{ id: 'b', granteeUserId: 'mallory', state: 'approved', grantorSuiteId: 'old-suite' },
-				{ id: 'c', granteeUserId: 'carol', state: 'invalidated', grantorSuiteId: 'old-suite' },
-				{ id: 'd', granteeUserId: 'erin', state: 'granted', grantorSuiteId: 'a-prior-suite' },
+				{
+					id: 'a',
+					granteeUserId: 'bob',
+					state: 'granted',
+					grantorSuiteId: 'old-suite',
+				},
+				{
+					id: 'b',
+					granteeUserId: 'mallory',
+					state: 'approved',
+					grantorSuiteId: 'old-suite',
+				},
+				{
+					id: 'c',
+					granteeUserId: 'carol',
+					state: 'invalidated',
+					grantorSuiteId: 'old-suite',
+				},
+				{
+					id: 'd',
+					granteeUserId: 'erin',
+					state: 'granted',
+					grantorSuiteId: 'a-prior-suite',
+				},
 			],
 			certs: {},
 		})
