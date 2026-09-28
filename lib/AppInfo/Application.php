@@ -95,7 +95,7 @@ class Application extends App implements IBootstrap {
 	 * there is no container to resolve an adapter from yet, and declaring a
 	 * typed dependency on a possibly-absent foreign class would 500 every
 	 * route (a param type is a class reference the router reflects over).
-	 * OpenRegisterAutoloader::register() is static for the same reason.
+	 * OpenRegisterAutoloader::bootstrapAppHost() is static for the same reason.
 	 */
 	public function register(IRegistrationContext $context): void {
 		include_once __DIR__ . '/../../vendor/autoload.php';
@@ -130,49 +130,36 @@ class Application extends App implements IBootstrap {
 		// enabled and kept serving requests: nothing in the UI, and nothing in the
 		// app itself, reported that half its wiring was missing.
 		//
-		// OpenRegisterAutoloader::register() puts OpenRegister's prefix on the
-		// autoloader ourselves, which is exactly what Nextcloud will do a few
-		// iterations later. It never throws; it returns false when OpenRegister is
-		// absent, disabled or unusable, and the guard below then skips the
-		// AppHost plumbing. Unexpected failures, here and in Bootstrap below,
-		// are logged from boot().
-		$openRegisterLoadable = OpenRegisterAutoloader::register();
-
+		// OpenRegisterAutoloader puts OpenRegister's prefix on the autoloader
+		// ourselves, which is exactly what Nextcloud will do a few iterations
+		// later, and then runs the AppHost wiring below. bootstrapAppHost() is the
+		// whole of that wiring, so every branch of it is unit-tested there rather
+		// than here, where Application cannot be constructed without a container.
+		// It never throws. An absent or disabled OpenRegister skips the AppHost
+		// plumbing quietly; anything else (no lib/, no loadable Bootstrap, a
+		// throwing or broken Bootstrap) is recorded and logged from boot(). This
+		// app's own listeners and services below MUST register either way.
+		//
 		// Gate-64 — apphost-prelude exclude This app HAS a prelude, OpenRegisterAutoloader
-		// above — but gate-64 matches only `registerAutoloading(...)` naming
+		// — but gate-64 matches only `registerAutoloading(...)` naming
 		// 'openregister', which is `\OC_App::registerAutoloading()`. That is
 		// PRIVATE API and Nextcloud 35 REMOVED it, which is the defect this
 		// app just fixed (keepiq#712): the call threw, the prelude's catch-all
-		// returned false, the guard below answered false, and every AppHost
-		// endpoint returned 500. NC 35 moved the method to
-		// `OC\App\AppManager`, also private and not on `OCP\App\IAppManager`,
-		// so there is no public API the gate's pattern can be satisfied with.
-		// The prelude now does what Nextcloud does — a PSR-4 prefix over the
-		// app's lib/, via spl_autoload_register and the public
-		// IAppManager::getAppPath(). The gate's intent is met; its pattern
-		// cannot be. Tracked in ConductionNL/.github#791: gate-64 should
-		// accept a prelude that registers the prefix by any means, and stop
-		// mandating a method that no longer exists.
-		//
-		// Gate on the prelude's answer, not only on class_exists(): under a
-		// worker the class stays defined after OpenRegister is disabled. The
-		// class_exists() guard MUST stay in this method as well, as its own
-		// condition: it is the assertion psalm relies on to accept the
-		// Bootstrap::register() call below, and psalm neither carries that
-		// narrowing across a call nor through an `&&` with another operand.
-		if ($openRegisterLoadable === true) {
-			if (class_exists(Bootstrap::class) === true) {
-				try {
-					Bootstrap::register($context, self::APP_ID, ['namespace' => 'OCA\\Keepiq']);
-				} catch (\Throwable $e) {
-					// AppHost present but unloadable: skip the generic plumbing;
-					// Keepiq's own listeners and services MUST still register.
-					// This app's container cannot inject a logger yet, so the
-					// failure is recorded and boot() logs it.
-					OpenRegisterAutoloader::recordFailure($e);
-				}
+		// returned false, the guard answered false, and every AppHost endpoint
+		// returned 500. NC 35 moved the method to `OC\App\AppManager`, also
+		// private and not on `OCP\App\IAppManager`, so there is no public API
+		// the gate's pattern can be satisfied with. The prelude now does what
+		// Nextcloud does — a PSR-4 prefix over the app's lib/, via
+		// spl_autoload_register and the public IAppManager::getAppPath(). The
+		// gate's intent is met; its pattern cannot be. Tracked in
+		// ConductionNL/.github#791: gate-64 should accept a prelude that
+		// registers the prefix by any means, and stop mandating a method that
+		// no longer exists.
+		OpenRegisterAutoloader::bootstrapAppHost(
+			bootstrap: static function () use ($context): void {
+				Bootstrap::register($context, self::APP_ID, ['namespace' => 'OCA\\Keepiq']);
 			}
-		}
+		);
 
 		// ORDER MATTERS here: a registerService() for an id the AppHost engine
 		// already aliased only wins when it runs after that call.

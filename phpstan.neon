@@ -18,6 +18,7 @@ parameters:
         # classes they extend when the openregister sibling app is absent from the
         # analysis path. Analysis-only — never loaded at runtime (ADR-040).
         - tests/stubs/openregister-apphost.stub.php
+        - tests/stubs/openregister-apphost-bootstrap.stub.php
         # Integriq's connection-registry events (adopt-connection-registry), named
         # by string behind class_exists in ConnectionReporter (ADR-041).
         - tests/stubs/Integriq/Event/ConnectionStatusReportedEvent.php

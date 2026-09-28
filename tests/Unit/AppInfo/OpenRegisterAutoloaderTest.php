@@ -357,7 +357,7 @@ class OpenRegisterAutoloaderTest extends TestCase {
 	}//end testADisabledOpenRegisterIsNotRegistered()
 
 	/**
-	 * An unexpected failure is swallowed at register() time and logged once at boot.
+	 * An unexpected failure is swallowed at register() time and logged at boot, once per request.
 	 *
 	 * This is the fail mode that hid the Nextcloud 35 500s: every failure
 	 * collapsed into an unlogged false. It must still never throw, but it must
@@ -475,14 +475,216 @@ class OpenRegisterAutoloaderTest extends TestCase {
 	public function testADisableAfterRegistrationIsHonoured(): void {
 		$root = $this->fakeApp();
 
+		$baseline = count(spl_autoload_functions());
+
 		try {
 			$this->assertTrue(OpenRegisterAutoloader::register($this->appManager(enabled: true, path: $root)));
 			$this->assertFalse(OpenRegisterAutoloader::register($this->appManager(enabled: false, path: $root)));
+			// The loader comes off the chain too, so OpenRegister classes not yet
+			// loaded stop being autoloadable through keepiq.
+			$this->assertCount($baseline, spl_autoload_functions(), 'a disable must take the loader off the chain');
+
+			// And a re-enable puts exactly one back.
+			$this->assertTrue(OpenRegisterAutoloader::register($this->appManager(enabled: true, path: $root)));
+			$this->assertCount($baseline + 1, spl_autoload_functions(), 'a re-enable must re-install exactly one loader');
 		} finally {
 			$this->removeFakeApp($root);
 		}
 
 	}//end testADisableAfterRegistrationIsHonoured()
+
+	/**
+	 * bootstrapAppHost() never runs the AppHost wiring when the prelude refused.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 */
+	public function testBootstrapAppHostSkipsTheWiringWhenOpenRegisterIsDisabled(): void {
+		$ran = false;
+		OpenRegisterAutoloader::bootstrapAppHost(
+			bootstrap: static function () use (&$ran): void {
+				$ran = true;
+			},
+			appManager: $this->appManager(enabled: false, path: '/nowhere'),
+		);
+
+		$this->assertFalse($ran, 'a disabled OpenRegister must not get its AppHost wired');
+		$this->assertNothingIsLogged();
+
+	}//end testBootstrapAppHostSkipsTheWiringWhenOpenRegisterIsDisabled()
+
+	/**
+	 * With the prelude registered and Bootstrap loadable, the wiring runs, quietly.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 */
+	public function testBootstrapAppHostRunsTheWiringWhenBootstrapIsLoadable(): void {
+		$root = $this->fakeApp();
+		$class = $this->plantProbeClass(root: $root, body: 'class {name} {}');
+		$ran = 0;
+
+		try {
+			OpenRegisterAutoloader::bootstrapAppHost(
+				bootstrap: static function () use (&$ran): void {
+					$ran++;
+				},
+				appManager: $this->appManager(enabled: true, path: $root),
+				bootstrapClass: $class,
+			);
+		} finally {
+			$this->removeFakeApp($root);
+		}
+
+		$this->assertSame(1, $ran);
+		$this->assertNothingIsLogged();
+
+	}//end testBootstrapAppHostRunsTheWiringWhenBootstrapIsLoadable()
+
+	/**
+	 * An enabled OpenRegister without AppHost\Bootstrap is recorded, not silent.
+	 *
+	 * An OpenRegister older than AppHost, or a partial deploy missing the file,
+	 * otherwise leaves /api/health and /api/metrics answering 500 with nothing
+	 * in the log.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 */
+	public function testBootstrapAppHostRecordsAMissingBootstrap(): void {
+		$root = $this->fakeApp();
+		$ran = false;
+
+		try {
+			OpenRegisterAutoloader::bootstrapAppHost(
+				bootstrap: static function () use (&$ran): void {
+					$ran = true;
+				},
+				appManager: $this->appManager(enabled: true, path: $root),
+				bootstrapClass: 'OCA\\OpenRegister\\Probe\\Absent' . bin2hex(random_bytes(4)),
+			);
+		} finally {
+			$this->removeFakeApp($root);
+		}
+
+		$this->assertFalse($ran);
+		$this->assertLoggedOnce(reason: 'is not loadable');
+
+	}//end testBootstrapAppHostRecordsAMissingBootstrap()
+
+	/**
+	 * A throwing Bootstrap::register() is recorded and logged at boot.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 */
+	public function testBootstrapAppHostRecordsAThrowingBootstrap(): void {
+		$root = $this->fakeApp();
+		$class = $this->plantProbeClass(root: $root, body: 'class {name} {}');
+
+		try {
+			OpenRegisterAutoloader::bootstrapAppHost(
+				bootstrap: static function (): void {
+					throw new \RuntimeException('bootstrap broke');
+				},
+				appManager: $this->appManager(enabled: true, path: $root),
+				bootstrapClass: $class,
+			);
+		} finally {
+			$this->removeFakeApp($root);
+		}
+
+		$this->assertLoggedOnce(reason: 'bootstrap broke');
+
+	}//end testBootstrapAppHostRecordsAThrowingBootstrap()
+
+	/**
+	 * A truncated Bootstrap.php cannot escape and abort the caller's register().
+	 *
+	 * class_exists() runs this prelude's loader, which includes the file, so a
+	 * ParseError is thrown from the class check itself. It must land in the same
+	 * catch as any other Bootstrap failure.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 */
+	public function testBootstrapAppHostContainsABrokenBootstrapFile(): void {
+		$root = $this->fakeApp();
+		$class = $this->plantProbeClass(root: $root, body: 'class {name} { public function (');
+
+		try {
+			OpenRegisterAutoloader::bootstrapAppHost(
+				bootstrap: static function (): void {
+				},
+				appManager: $this->appManager(enabled: true, path: $root),
+				bootstrapClass: $class,
+			);
+		} finally {
+			$this->removeFakeApp($root);
+		}
+
+		$this->assertLoggedOnce(reason: '');
+
+	}//end testBootstrapAppHostContainsABrokenBootstrapFile()
+
+	/**
+	 * Write a probe class under the fake app's lib/Probe and return its name.
+	 *
+	 * The name is unique per call, because a class loaded once stays loaded for
+	 * the rest of the process.
+	 *
+	 * @param string $root The fake app root.
+	 * @param string $body The class source, with {name} for the short name.
+	 *
+	 * @return string The fully qualified class name.
+	 */
+	private function plantProbeClass(string $root, string $body): string {
+		$short = 'Probe' . bin2hex(random_bytes(6));
+		file_put_contents(
+			$root . '/lib/Probe/' . $short . '.php',
+			"<?php\nnamespace OCA\\OpenRegister\\Probe;\n" . str_replace('{name}', $short, $body) . "\n"
+		);
+
+		return 'OCA\\OpenRegister\\Probe\\' . $short;
+
+	}//end plantProbeClass()
+
+	/**
+	 * Assert boot() would log nothing.
+	 *
+	 * @return void
+	 */
+	private function assertNothingIsLogged(): void {
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->never())->method($this->anything());
+		OpenRegisterAutoloader::reportFailure($logger);
+
+	}//end assertNothingIsLogged()
+
+	/**
+	 * Assert boot() logs exactly one warning whose reason contains $reason.
+	 *
+	 * @param string $reason A fragment of the expected reason.
+	 *
+	 * @return void
+	 */
+	private function assertLoggedOnce(string $reason): void {
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())
+			->method('warning')
+			->with(
+				$this->stringContains('AppHost wiring was skipped'),
+				$this->callback(static fn (array $ctx): bool => str_contains((string)($ctx['reason'] ?? ''), $reason))
+			);
+		OpenRegisterAutoloader::reportFailure($logger);
+		OpenRegisterAutoloader::reportFailure($logger);
+
+	}//end assertLoggedOnce()
 
 	/**
 	 * A failure recorded by the caller is reported like the prelude's own.

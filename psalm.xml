@@ -22,6 +22,7 @@
              sibling app is absent. Analysis-only — never loaded at runtime.
              The real classes live in openregister/lib/AppHost/Settings/. -->
         <file name="tests/stubs/openregister-apphost.stub.php" preloadClasses="true" />
+        <file name="tests/stubs/openregister-apphost-bootstrap.stub.php" />
         <!-- Integriq's connection-registry events (adopt-connection-registry).
              ConnectionReporter names them by string behind class_exists
              (ADR-041). Declaration-only stubs, so psalm sees the constructor

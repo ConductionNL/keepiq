@@ -68,6 +68,11 @@ final class OpenRegisterAutoloader {
 	private const OPENREGISTER_NAMESPACE = 'OCA\\OpenRegister\\';
 
 	/**
+	 * The AppHost entry point, as a string so naming it autoloads nothing.
+	 */
+	private const BOOTSTRAP_CLASS = 'OCA\\OpenRegister\\AppHost\\Bootstrap';
+
+	/**
 	 * Whether the prefix is already on the autoloader.
 	 *
 	 * `spl_autoload_register()` has no early-return of its own, so without this
@@ -184,7 +189,10 @@ final class OpenRegisterAutoloader {
 			// NC 35) this static outlives the request, and an OpenRegister
 			// disabled since the first registration must not still be wired.
 			if ($appManager->isEnabledForAnyone(self::OPENREGISTER_APP_ID) === false) {
-				// Absent or disabled: the expected degraded path, and quiet.
+				// Absent or disabled: the expected degraded path, and quiet. Take
+				// the loader off the chain as well, so OpenRegister classes not
+				// yet loaded stop being autoloadable through this app.
+				self::removeLoader();
 				return false;
 			}
 
@@ -239,15 +247,72 @@ final class OpenRegisterAutoloader {
 	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
 	 */
 	public static function unregister(): void {
+		self::removeLoader();
+		self::$failure = null;
+
+	}//end unregister()
+
+	/**
+	 * Wire OpenRegister's AppHost plumbing into the caller, or record why not.
+	 *
+	 * This is the whole of the caller's AppHost wiring, in one place a test can
+	 * reach: `Application::register()` cannot be constructed without a DI
+	 * container, so every branch that lived there was untestable. The prelude
+	 * runs first. When it refuses, nothing runs. When it registered, the
+	 * Bootstrap class must be loadable (an OpenRegister older than AppHost, or
+	 * a partial deploy, is not), and then the caller's closure runs. Any
+	 * failure, including a ParseError from a truncated Bootstrap.php that the
+	 * class check itself includes, is recorded for {@see reportFailure()} and
+	 * never escapes: an exception here would abort the caller's register().
+	 *
+	 * @param callable():void  $bootstrap      Calls `AppHost\Bootstrap::register()`.
+	 * @param IAppManager|null $appManager     Passed to {@see register()}; for tests only.
+	 * @param string           $bootstrapClass The class that must be loadable; for tests only.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 */
+	public static function bootstrapAppHost(
+		callable $bootstrap,
+		?IAppManager $appManager = null,
+		string $bootstrapClass = self::BOOTSTRAP_CLASS,
+	): void {
+		if (self::register(appManager: $appManager) === false) {
+			return;
+		}
+
+		try {
+			if (class_exists($bootstrapClass) === false) {
+				throw new RuntimeException(
+					sprintf(
+						'OpenRegister is enabled but %s is not loadable (too old for AppHost, or an incomplete deploy)',
+						$bootstrapClass
+					)
+				);
+			}
+
+			$bootstrap();
+		} catch (\Throwable $e) {
+			self::recordFailure(failure: $e);
+		}
+
+	}//end bootstrapAppHost()
+
+	/**
+	 * Take this prelude's loader off the autoload chain, if it is on it.
+	 *
+	 * @return void
+	 */
+	private static function removeLoader(): void {
 		if (self::$loader !== null) {
 			spl_autoload_unregister(self::$loader);
 			self::$loader = null;
 		}
 
 		self::$registered = false;
-		self::$failure = null;
 
-	}//end unregister()
+	}//end removeLoader()
 
 	/**
 	 * Record a failure of the AppHost wiring that follows this prelude.

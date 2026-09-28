@@ -72,7 +72,7 @@ Keepiq SHALL delete its local `HealthController`, `MetricsController`, and `Deep
 
 ### Requirement: AppHost Prelude Registers OpenRegister With Public API Only
 
-Because Nextcloud registers app autoloaders in sorted order, `OCA\OpenRegister\` is not autoloadable inside Keepiq's `Application::register()`. Keepiq SHALL put OpenRegister's PSR-4 prefix on the autoloader itself (`OpenRegisterAutoloader::register()`) before any `OCA\OpenRegister\…` reference, using only public API (`IAppManager`) and without booting OpenRegister. The prelude MUST NOT throw. When OpenRegister is absent or disabled it SHALL register nothing and return false, so the caller falls through to its degraded path, and this SHALL be re-checked on every call, including after an earlier successful registration. Any other failure, including an enabled OpenRegister without a `lib/` directory and a throwing `AppHost\Bootstrap::register()`, SHALL be recorded and logged once per request at boot.
+Because Nextcloud registers app autoloaders in sorted order, `OCA\OpenRegister\` is not autoloadable inside Keepiq's `Application::register()`. Keepiq SHALL put OpenRegister's PSR-4 prefix on the autoloader itself (`OpenRegisterAutoloader::register()`) before any `OCA\OpenRegister\…` reference, using only public API (`IAppManager`) and without booting OpenRegister. The prelude MUST NOT throw. When OpenRegister is absent or disabled, or enabled but missing from disk (which Nextcloud's Coordinator already logs), it SHALL register nothing and return false, so the caller falls through to its degraded path, and this SHALL be re-checked on every call, including after an earlier successful registration, with the prelude's loader taken off the autoload chain again after a disable. Any other failure, including an enabled OpenRegister without a `lib/` directory, one without a loadable `AppHost\Bootstrap` (older than AppHost, or an incomplete deploy), and a throwing or unparseable `AppHost\Bootstrap`, SHALL be recorded and logged once per request at boot, and SHALL NOT abort the caller's registration. The whole of this wiring SHALL live in `OpenRegisterAutoloader::bootstrapAppHost()`, so that each branch is reachable from a unit test.
 
 #### Scenario: Enabled OpenRegister is autoloadable during register()
 
@@ -90,10 +90,10 @@ Because Nextcloud registers app autoloaders in sorted order, `OCA\OpenRegister\`
 
 #### Scenario: Unexpected failure leaves one log line
 
-- **GIVEN** resolving OpenRegister fails for any reason other than the app being absent, disabled, or enabled but missing from disk — for example an enabled OpenRegister without `lib/`, or a throwing `AppHost\Bootstrap::register()`
+- **GIVEN** resolving OpenRegister fails for any reason other than the app being absent, disabled, or enabled but missing from disk — for example an enabled OpenRegister without `lib/`, an OpenRegister without a loadable `AppHost\Bootstrap`, or a throwing or unparseable `AppHost\Bootstrap`
 - **WHEN** the prelude runs and the app then boots
-- **THEN** `register()` MUST NOT throw, and `Application::boot()` MUST log exactly one warning for that request, carrying the reason
-- @e2e exclude bootstrap logging — no UI surface; covered by unit tests
+- **THEN** `bootstrapAppHost()` MUST NOT throw, and `Application::boot()` MUST log exactly one warning for that request, carrying the reason
+- @e2e exclude bootstrap logging — no UI surface; every branch of `bootstrapAppHost()` and `reportFailure()` is covered by unit tests. `Application` itself makes one call to `bootstrapAppHost()`, which the AppHost Newman collection covers on the enabled path.
 
 ### Requirement: Domain Surfaces Excluded From Adoption
 
