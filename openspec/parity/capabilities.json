@@ -3605,7 +3605,7 @@
       "id": "apps-06",
       "area": "apps",
       "name": "An application fetches a secret by its name.",
-      "keepiq": "yes",
+      "keepiq": "partial",
       "bitwarden": "partial",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -3614,10 +3614,10 @@
       "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
-        "evidence": "cli/internal/client/client.go:215-243 FetchByName() -> GET /apps/keepiq/api/v1/app/secrets/by-name/{name} Bearer <token> -> appinfo/routes.php:306 applicationSecrets#byName -> lib/Controller/ApplicationSecretsController.php",
+        "evidence": "cli/internal/client/client.go:215-243 FetchByName() -> GET /apps/keepiq/api/v1/app/secrets/by-name/{name} Bearer <token> -> appinfo/routes.php:306 applicationSecrets#byName -> lib/Controller/ApplicationSecretsController.php Corrections round 8 (2026-09-28), keepiq#793: the by-name route answers, but the CLI cannot decrypt what it returns, because cli/internal/client/client.go:201-207 reads a top-level scheme and payload.value while lib/Service/MachineSecretEnvelopeService.php:145-148 sends encryption.scheme and ciphertext.key, so cli/ci.go:65-66 stops every fetch with unexpected envelope scheme \"\", at b5727e0.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: GET /api/v1/app/secrets/by-name/{name}, used by cli ci fetch/run (cli/ci.go:60-95)",
-        "note": "keepiq ci fetch/run resolve a secret by name and decrypt the returned envelope locally with the application private key."
+        "note": "keepiq ci fetch/run resolve a secret by name and decrypt the returned envelope locally with the application private key. Own rating yes to partial (corrections round 8, 2026-09-28): the server resolves and returns the secret by name, but the shipped CLI cannot decrypt the envelope it gets back, keepiq#793."
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3747,10 +3747,10 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "built",
-        "evidence": "lib/Service/MachineSecretResponseService.php:84-179 grants or reuses a MachineLease on every fetch and adds Doriath-Lease-Id / Doriath-Lease-Expires headers; cli/internal/client/client.go:226-227 captures them and cli/ci.go:84-86 prints the lease id + expiry",
+        "evidence": "lib/Service/MachineSecretResponseService.php:84-179 grants or reuses a MachineLease on every fetch and adds Doriath-Lease-Id / Doriath-Lease-Expires headers; cli/internal/client/client.go:226-227 captures them and cli/ci.go:84-86 prints the lease id + expiry Corrections round 8 (2026-09-28), keepiq#793: the CLI never prints the lease, because fetchDecrypt fails at cli/ci.go:65-66 before the lease line at cli/ci.go:84-86; the server still grants the lease before it serializes the envelope, lib/Service/MachineSecretResponseService.php:95 and :118, at b5727e0.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: lease headers on GET /api/v1/app/secrets*, observed by cli ci fetch",
-        "note": "Every machine secret fetch is covered by a lease with an expiry; a revoked lease blocks re-fetch until re-granted per admin policy."
+        "note": "Every machine secret fetch is covered by a lease with an expiry; a revoked lease blocks re-fetch until re-granted per admin policy. Corrections round 8 (2026-09-28): the lease line in the CLI is never printed because the CLI fetch fails first, keepiq#793; rating kept because the server grants the lease and returns its id and expiry headers on every machine fetch, whichever client makes it."
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -3919,7 +3919,7 @@
       "id": "apps-15",
       "area": "apps",
       "name": "Fetch secrets in a CI pipeline from one command-line binary without writing plaintext to disk.",
-      "keepiq": "yes",
+      "keepiq": "no",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -3928,10 +3928,10 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "built",
-        "evidence": "cli/ci.go:97-126 cmdCIRun() fetches+decrypts each named secret and injects it into the child process environment only (runChild in cli/main.go:281-289); no plaintext is written to disk (comment at ci.go:124)",
+        "evidence": "cli/ci.go:97-126 cmdCIRun() fetches+decrypts each named secret and injects it into the child process environment only (runChild in cli/main.go:281-289); no plaintext is written to disk (comment at ci.go:124) Corrections round 8 (2026-09-28), keepiq#793: cmdCIRun calls fetchDecrypt at cli/ci.go:118, which refuses the server envelope at cli/ci.go:65-66 because the server puts the scheme under encryption.scheme (lib/Service/MachineSecretEnvelopeService.php:145), so runChild at cli/ci.go:125 is never reached, at b5727e0.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "keepiq CLI: `keepiq ci run <name> -- <cmd>`",
-        "note": "The CLI is a single static Go binary that fetches, decrypts and injects secrets into a child process's environment for CI use, never touching disk."
+        "note": "The CLI is a single static Go binary that fetches, decrypts and injects secrets into a child process's environment for CI use, never touching disk. Own rating yes to no (corrections round 8, 2026-09-28): every ci fetch and ci run stops at the envelope scheme check before decryption, so no secret reaches the child process, keepiq#793."
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7091,10 +7091,10 @@
       "nextcloud-passwords": "yes",
       "built": {
         "state": "specified",
-        "evidence": "Specified in openspec/changes/portability-export-choice-and-restore-fidelity on 2026-09-27 for the missing half: a restore that keeps custom secret types and source row numbers; the encrypted backup and its restore are built. Before: export: src/dialogs/ExportDialog.vue:341 -> src/store/modules/export.js:86 exportBackup -> src/export/serializer.js:101 serializeVault -> src/export/backup.js:90 encryptBackup (Argon2id + AES-GCM, zxcvbn>=3 floor ExportDialog.vue) -> local .doriath-backup download. restore: src/import/backupParser.js:44 parseBackup (registered backupParser.js:59) -> import wizard -> POST /api/v1/secrets/import-batch",
+        "evidence": "Specified in openspec/changes/portability-export-choice-and-restore-fidelity on 2026-09-27 for the missing half: a restore that keeps custom secret types and source row numbers; the encrypted backup and its restore are built. Before: export: src/dialogs/ExportDialog.vue:341 -> src/store/modules/export.js:86 exportBackup -> src/export/serializer.js:101 serializeVault -> src/export/backup.js:90 encryptBackup (Argon2id + AES-GCM, zxcvbn>=3 floor ExportDialog.vue) -> local .doriath-backup download. restore: src/import/backupParser.js:44 parseBackup (registered backupParser.js:59) -> import wizard -> POST /api/v1/secrets/import-batch Corrections round 8 (2026-09-28), keepiq#749: src/export/serializer.js:120 writes the secret UUID typeId (lib/Db/Secret.php:307) as its type, src/import/backupParser.js:32 passes it through, and src/store/modules/import.js:271-288 matches only the names totp, passkey, card and identity, so every restored secret gets the default type, at b5727e0.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> actions menu 'Export data' -> Export dialog (Encrypted backup); restore via SecretList Import wizard (format 'Keepiq encrypted backup')",
-        "note": "Backup export is fully client-side and restore runs through the import wizard with the passphrase. The restore path loses fidelity: rows have no source row number and custom secret types come back as the default type.",
+        "note": "Backup export is fully client-side and restore runs through the import wizard with the passphrase. The restore path loses fidelity: rows have no source row number and custom secret types come back as the default type. Corrections round 8 (2026-09-28): the restore loses every secret type, not only custom types, because the backup stores the type UUID and the import only recognises type names, keepiq#749; rating kept because names, values and folders still round-trip and partial already records the lost fidelity.",
         "defects": [
           {
             "at": "src/import/backupParser.js:25",
