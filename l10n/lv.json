@@ -1168,6 +1168,9 @@
         "Revoking this suite deleted %n emergency-access contact.": "Šī komplekta atsaukšana dzēsa %n ārkārtas piekļuves kontaktu.",
         "Revoking this suite deleted %n emergency-access contacts.": "Šī komplekta atsaukšana dzēsa %n ārkārtas piekļuves kontaktus.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Uzskatīt komplekta noslēpumus par kompromitētiem (atzīmēt maiņai un paziņot īpašniekiem)",
+        "%n secret could not be decrypted and is not in this export.": "%n noslēpumu neizdevās atšifrēt, un tas nav šajā eksportā.",
+        "%n secrets could not be decrypted and are not in this export.": "%n noslēpumus neizdevās atšifrēt, un tie nav šajā eksportā.",
+        "Continue without the secrets that could not be decrypted": "Turpināt bez noslēpumiem, kurus neizdevās atšifrēt",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Izvēlieties, kuras ārkārtas kontaktpersonas drīkst saņemt jūsu jauno atslēgu. Atzīmējiet tikai cilvēkus, kurus norīkojāt paši un kuriem joprojām uzticaties: tas, kuram bija jūsu sesija, varēja pievienot savu kontaktpersonu. Neatzīmētās kontaktpersonas zaudē ārkārtas piekļuvi; vēlāk varat tās norīkot atkārtoti.",
         "{grantee}, waiting period in days: {days}": "{grantee}, gaidīšanas laiks dienās: {days}"
     },

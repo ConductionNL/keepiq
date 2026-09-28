@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "Revoking this suite deleted %n emergency-access contact.",
         "Revoking this suite deleted %n emergency-access contacts.": "Revoking this suite deleted %n emergency-access contacts.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Treat the suite's secrets as compromised (flag for rotation and notify owners)",
+        "%n secret could not be decrypted and is not in this export.": "%n secret could not be decrypted and is not in this export.",
+        "%n secrets could not be decrypted and are not in this export.": "%n secrets could not be decrypted and are not in this export.",
+        "Continue without the secrets that could not be decrypted": "Continue without the secrets that could not be decrypted",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Agħżel liema kuntatti ta’ emerġenza jistgħu jirċievu ċ-ċavetta l-ġdida tiegħek. Immarka biss nies li ħatart int stess u li għadek tafdahom: min kellu s-sessjoni tiegħek seta’ żied kuntatt tiegħu. Il-kuntatti li ma timmarkax jitilfu l-aċċess ta’ emerġenza; tista’ terġa’ taħtarhom wara.",
         "{grantee}, waiting period in days: {days}": "{grantee}, perjodu ta’ stennija f’jiem: {days}"
     },

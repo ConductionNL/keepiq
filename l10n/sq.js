@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "Revokimi i kësaj suite fshiu %n kontakt të qasjes së emergjencës.",
         "Revoking this suite deleted %n emergency-access contacts.": "Revokimi i kësaj suite fshiu %n kontakte të qasjes së emergjencës.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Trajto sekretet e suitës si të komprometuara (shëno për rotacion dhe njofto pronarët)",
+        "%n secret could not be decrypted and is not in this export.": "%n sekret nuk mund të deshifrohej dhe nuk është në këtë eksport.",
+        "%n secrets could not be decrypted and are not in this export.": "%n sekrete nuk mund të deshifroheshin dhe nuk janë në këtë eksport.",
+        "Continue without the secrets that could not be decrypted": "Vazhdo pa sekretet që nuk mund të deshifroheshin",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Zgjidhni cilët kontakte urgjence mund të marrin çelësin tuaj të ri. Shënoni vetëm personat që i keni caktuar vetë dhe tek të cilët ende keni besim: kushdo që ka pasur seancën tuaj mund të ketë shtuar një kontakt të vetin. Kontaktet që nuk i shënoni humbasin qasjen e urgjencës; mund t’i caktoni sërish më pas.",
         "{grantee}, waiting period in days: {days}": "{grantee}, periudha e pritjes në ditë: {days}"
     },

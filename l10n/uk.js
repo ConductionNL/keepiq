@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "Відкликання цього набору видалило %n контакт аварійного доступу.",
         "Revoking this suite deleted %n emergency-access contacts.": "Відкликання цього набору видалило %n контактів аварійного доступу.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Вважати секрети набору скомпрометованими (позначити для ротації та сповістити власників)",
+        "%n secret could not be decrypted and is not in this export.": "%n секрет не вдалося розшифрувати, і його немає в цьому експорті.",
+        "%n secrets could not be decrypted and are not in this export.": "%n секретів не вдалося розшифрувати, і їх немає в цьому експорті.",
+        "Continue without the secrets that could not be decrypted": "Продовжити без секретів, які не вдалося розшифрувати",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Виберіть, які екстрені контакти можуть отримати ваш новий ключ. Позначайте лише людей, яких ви призначили самі й досі їм довіряєте: той, хто мав вашу сесію, міг додати власний контакт. Непозначені контакти втрачають екстрений доступ; згодом ви можете призначити їх знову.",
         "{grantee}, waiting period in days: {days}": "{grantee}, період очікування в днях: {days}"
     },

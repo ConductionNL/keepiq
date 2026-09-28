@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "Η ανάκληση αυτής της σουίτας διέγραψε %n επαφή πρόσβασης έκτακτης ανάγκης.",
         "Revoking this suite deleted %n emergency-access contacts.": "Η ανάκληση αυτής της σουίτας διέγραψε %n επαφές πρόσβασης έκτακτης ανάγκης.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Αντιμετώπιση των μυστικών της σουίτας ως παραβιασμένων (επισήμανση για εναλλαγή και ειδοποίηση ιδιοκτητών)",
+        "%n secret could not be decrypted and is not in this export.": "%n μυστικό δεν ήταν δυνατό να αποκρυπτογραφηθεί και δεν περιλαμβάνεται σε αυτή την εξαγωγή.",
+        "%n secrets could not be decrypted and are not in this export.": "%n μυστικά δεν ήταν δυνατό να αποκρυπτογραφηθούν και δεν περιλαμβάνονται σε αυτή την εξαγωγή.",
+        "Continue without the secrets that could not be decrypted": "Συνέχεια χωρίς τα μυστικά που δεν ήταν δυνατό να αποκρυπτογραφηθούν",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Επιλέξτε ποιες επαφές έκτακτης ανάγκης μπορούν να λάβουν το νέο σας κλειδί. Επιλέξτε μόνο άτομα που ορίσατε εσείς και εξακολουθείτε να εμπιστεύεστε: όποιος είχε την περίοδο σύνδεσής σας μπορεί να πρόσθεσε δική του επαφή. Οι επαφές που δεν επιλέγετε χάνουν την πρόσβαση έκτακτης ανάγκης· μπορείτε να τις ορίσετε ξανά αργότερα.",
         "{grantee}, waiting period in days: {days}": "{grantee}, περίοδος αναμονής σε ημέρες: {days}"
     },

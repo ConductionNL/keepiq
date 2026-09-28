@@ -202,7 +202,11 @@ class SecretController extends OCSController {
 				],
 				userId: $userId
 			);
-		} catch (SuiteBlockedException $e) {
+		} catch (NotFoundException $e) {
+			// The folder named in the request does not exist (keepiq#795).
+			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
+		} catch (ForbiddenException|SuiteBlockedException $e) {
+			// ForbiddenException: the folder belongs to another user (keepiq#795).
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (WriteLockedException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: self::STATUS_LOCKED);

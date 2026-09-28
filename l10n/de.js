@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "Der Widerruf dieser Suite hat %n Notfallzugangskontakt gelöscht.",
         "Revoking this suite deleted %n emergency-access contacts.": "Der Widerruf dieser Suite hat %n Notfallzugangskontakte gelöscht.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Die Geheimnisse der Suite als kompromittiert behandeln (zur Rotation markieren und Eigentümer benachrichtigen)",
+        "%n secret could not be decrypted and is not in this export.": "%n Geheimnis konnte nicht entschlüsselt werden und ist nicht in diesem Export enthalten.",
+        "%n secrets could not be decrypted and are not in this export.": "%n Geheimnisse konnten nicht entschlüsselt werden und sind nicht in diesem Export enthalten.",
+        "Continue without the secrets that could not be decrypted": "Ohne die Geheimnisse fortfahren, die nicht entschlüsselt werden konnten",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Wählen Sie, welche Notfallkontakte Ihren neuen Schlüssel erhalten dürfen. Markieren Sie nur Personen, die Sie selbst benannt haben und denen Sie weiterhin vertrauen: Wer Ihre Sitzung in der Hand hatte, könnte einen eigenen Kontakt hinzugefügt haben. Nicht markierte Kontakte verlieren ihren Notfallzugang; Sie können sie danach erneut benennen.",
         "{grantee}, waiting period in days: {days}": "{grantee}, Wartezeit in Tagen: {days}"
     },

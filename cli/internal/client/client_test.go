@@ -1,17 +1,38 @@
 package client
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 )
 
+// serverEnvelope returns the envelope the server's real
+// MachineSecretEnvelopeService::serialize() writes (cli/testdata, guarded by a
+// PHPUnit test), so this test cannot drift back to a shape only the CLI knows.
+func serverEnvelope(t *testing.T) []byte {
+	t.Helper()
+	raw, err := os.ReadFile("../../testdata/machine_envelope.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var f struct {
+		Envelope json.RawMessage `json:"envelope"`
+	}
+	if err := json.Unmarshal(raw, &f); err != nil {
+		t.Fatal(err)
+	}
+	return f.Envelope
+}
+
 // TestFetchByNameConditional verifies the ETag poll loop: the first fetch
-// captures the ETag and decodes the envelope; an unchanged re-fetch sends
-// If-None-Match and is answered 304 → ErrNotModified (§4.2).
+// captures the ETag and decodes the server's envelope; an unchanged re-fetch
+// sends If-None-Match and is answered 304 → ErrNotModified (§4.2).
 func TestFetchByNameConditional(t *testing.T) {
 	const etag = `"v1-abc"`
+	body := serverEnvelope(t)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != "Bearer tok" {
 			t.Errorf("missing bearer, got %q", r.Header.Get("Authorization"))
@@ -25,7 +46,7 @@ func TestFetchByNameConditional(t *testing.T) {
 		w.Header().Set("Doriath-Lease-Id", "lease-9")
 		w.Header().Set("Doriath-Lease-Expires", "2026-01-01T00:00:00Z")
 		w.WriteHeader(http.StatusOK)
-		_, _ = w.Write([]byte(`{"format":"doriath-machine-secret-v1","scheme":"rsa-oaep-sha256-chunked-v1","payload":{"value":"QUJD"}}`))
+		_, _ = w.Write(body)
 	}))
 	defer srv.Close()
 
@@ -35,8 +56,17 @@ func TestFetchByNameConditional(t *testing.T) {
 	if err != nil {
 		t.Fatalf("first fetch: %v", err)
 	}
-	if env.Payload.Value != "QUJD" {
-		t.Fatalf("payload = %q", env.Payload.Value)
+	if env.Format != "doriath-machine-secret-v1" {
+		t.Fatalf("format = %q", env.Format)
+	}
+	if env.Encryption.Scheme != "rsa-oaep-sha256-chunked-v1" {
+		t.Fatalf("encryption.scheme = %q", env.Encryption.Scheme)
+	}
+	if env.Ciphertext.Key == "" || env.Ciphertext.Login == "" || env.Ciphertext.AdditionalFields == "" {
+		t.Fatalf("ciphertext fields not decoded: %+v", env.Ciphertext)
+	}
+	if env.Secret.Name != "ci-fixture-db-password" {
+		t.Fatalf("secret.name = %q", env.Secret.Name)
 	}
 	if c.LeaseID() != "lease-9" {
 		t.Fatalf("lease id = %q", c.LeaseID())

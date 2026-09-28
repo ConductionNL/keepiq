@@ -20,10 +20,15 @@ const folders = [
 	{ id: 'f3', name: 'Personal', parentId: null },
 ]
 
+// A server secret carries `typeId`, a UUID (lib/Db/Secret.php); the system
+// type ids are UUID v5 of the type name (lib/Repair/SeedSecretTypes.php).
+const LOGIN_TYPE_ID = '307f9df3-b31f-519e-bb55-748490bb9b11'
+const API_KEY_TYPE_ID = '398f4274-0cda-5c40-8cf2-34124657b1d5'
+
 const secrets = [
-	{ name: 'AWS', key: 'k1', login: 'l1', folderId: 'f2', typeId: 'login' },
-	{ name: 'Bank', key: 'k2', login: 'l2', folderId: 'f3', typeId: 'login' },
-	{ name: 'Root', key: 'k3', login: null, folderId: null, typeId: 'login' },
+	{ name: 'AWS', key: 'k1', login: 'l1', folderId: 'f2', typeId: API_KEY_TYPE_ID },
+	{ name: 'Bank', key: 'k2', login: 'l2', folderId: 'f3', typeId: LOGIN_TYPE_ID },
+	{ name: 'Root', key: 'k3', login: null, folderId: null, typeId: LOGIN_TYPE_ID },
 ]
 
 describe('serializeVault', () => {
@@ -34,6 +39,8 @@ describe('serializeVault', () => {
 		const aws = payload.secrets.find((s) => s.name === 'AWS')
 		expect(aws.folder).toBe('Work/Cloud')
 		expect(aws.password).toBe('k1')
+		// The type id travels as-is; the restore maps it back (keepiq#749).
+		expect(aws.type).toBe(API_KEY_TYPE_ID)
 		const root = payload.secrets.find((s) => s.name === 'Root')
 		expect(root.folder).toBe('')
 		expect(payload.folders.map((f) => f.path).sort()).toEqual([

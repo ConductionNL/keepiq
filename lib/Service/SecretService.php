@@ -135,6 +135,8 @@ class SecretService {
 	 * @param SecretVersionService|null $versionService The version-history service (pre-update snapshots)
 	 * @param RotationPolicyService|null $rotationService The rotation service (flag cascade)
 	 * @param AuditEventFactory $auditEvents The audit-event factory
+	 * @param FolderOwnershipGuard|null $folderOwnership Checks a secret's folder belongs to its owner (keepiq#795);
+	 *                                                   without it every folder is refused
 	 *
 	 * @return void
 	 */
@@ -155,6 +157,7 @@ class SecretService {
 		private ?SecretVersionService $versionService = null,
 		private ?RotationPolicyService $rotationService = null,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
+		private ?FolderOwnershipGuard $folderOwnership = null,
 	) {
 	}//end __construct()
 
@@ -250,6 +253,9 @@ class SecretService {
 			throw new InvalidArgumentException('A secret requires a name and a key');
 		}
 
+		$folderId = $this->nullableString(value: $data['folderId'] ?? null);
+		$this->requireFolderOwnedBy(folderId: $folderId, userId: $userId);
+
 		$suite = $this->getActiveSuiteOrBlock(userId: $userId);
 
 		$typeId = $this->typeService->resolveTypeForSecret(
@@ -263,7 +269,7 @@ class SecretService {
 		$secret->setName($name);
 		$secret->setUrl($this->nullableString(value: $data['url'] ?? null));
 		$secret->setTypeId($typeId);
-		$secret->setFolderId($this->nullableString(value: $data['folderId'] ?? null));
+		$secret->setFolderId($folderId);
 		$secret->setKey($key);
 		$secret->setLogin($this->nullableString(value: $data['login'] ?? null));
 		$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields'] ?? null));
@@ -325,6 +331,11 @@ class SecretService {
 			throw new InvalidArgumentException('A secret requires a name and a key');
 		}
 
+		// The writing user files the application's secret, so the folder is
+		// checked against that user.
+		$folderId = $this->nullableString(value: $data['folderId'] ?? null);
+		$this->requireFolderOwnedBy(folderId: $folderId, userId: $writingUserId);
+
 		try {
 			$suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
 			// No MultipleObjectsReturnedException arm: findActiveByOwner()
@@ -352,7 +363,7 @@ class SecretService {
 		$secret->setName($name);
 		$secret->setUrl($this->nullableString(value: $data['url'] ?? null));
 		$secret->setTypeId($typeId);
-		$secret->setFolderId($this->nullableString(value: $data['folderId'] ?? null));
+		$secret->setFolderId($folderId);
 		$secret->setKey($key);
 		$secret->setLogin($this->nullableString(value: $data['login'] ?? null));
 		$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields'] ?? null));
@@ -448,13 +459,20 @@ class SecretService {
 			$applicationId
 		);
 
+		$folderId = $this->nullableString(value: $data['folderId'] ?? null);
+		// Keepiq#795: folders belong to users and a machine write has no user, so an
+		// application cannot file a secret in a folder. Clearing it stays allowed.
+		if ($folderId !== null) {
+			throw new InvalidArgumentException('An application cannot file a secret in a folder');
+		}
+
 		$now = new DateTime();
 		$secret = new Secret();
 		$secret->setId(Uuid::uuid4()->toString());
 		$secret->setName($name);
 		$secret->setUrl($this->nullableString(value: $data['url'] ?? null));
 		$secret->setTypeId($typeId);
-		$secret->setFolderId($this->nullableString(value: $data['folderId'] ?? null));
+		$secret->setFolderId($folderId);
 		$secret->setKey($key);
 		$secret->setLogin($this->nullableString(value: $data['login'] ?? null));
 		$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields'] ?? null));
@@ -542,7 +560,13 @@ class SecretService {
 		}
 
 		if (array_key_exists('folderId', $data) === true) {
-			$secret->setFolderId($this->nullableString(value: $data['folderId']));
+			$folderId = $this->nullableString(value: $data['folderId']);
+			// Keepiq#795: folders belong to users and a machine write has no user, so an
+			// application cannot file a secret in a folder. Clearing it stays allowed.
+			if ($folderId !== null) {
+				throw new InvalidArgumentException('An application cannot file a secret in a folder');
+			}
+			$secret->setFolderId($folderId);
 		}
 
 		if (array_key_exists('login', $data) === true) {
@@ -802,6 +826,33 @@ class SecretService {
 	}//end get()
 
 	/**
+	 * Refuse a folder the given user does not own (keepiq#795).
+	 *
+	 * A secret may only be filed in a folder its owner owns: the folder owner's
+	 * delete counts and purges every secret in it without an owner filter.
+	 * Without the guard wired, every folder is refused rather than trusted.
+	 * A null folder (no folder, or clearing it) is always allowed.
+	 *
+	 * @param string|null $folderId The folder the secret is filed in
+	 * @param string $userId The user who must own that folder
+	 *
+	 * @return void
+	 *
+	 * @throws NotFoundException When the folder does not exist
+	 * @throws ForbiddenException When the folder belongs to another user or cannot be checked
+	 *
+	 * @spec exclude keepiq#795 security fix, no OpenSpec requirement names this guard yet
+	 */
+	private function requireFolderOwnedBy(?string $folderId, string $userId): void {
+		if ($folderId === null) {
+			return;
+		}
+
+		($this->folderOwnership ?? throw new ForbiddenException(message: 'The folder cannot be checked'))
+			->requireOwned(id: $folderId, userId: $userId);
+	}//end requireFolderOwnedBy()
+
+	/**
 	 * Update a secret owned by the user.
 	 *
 	 * @param string $id The secret ID
@@ -846,7 +897,12 @@ class SecretService {
 		}
 
 		if (array_key_exists('folderId', $data) === true) {
-			$secret->setFolderId($this->nullableString(value: $data['folderId']));
+			$folderId = $this->nullableString(value: $data['folderId']);
+			if ($folderId !== $secret->getFolderId()) {
+				$this->requireFolderOwnedBy(folderId: $folderId, userId: $userId);
+			}
+
+			$secret->setFolderId($folderId);
 		}
 
 		if (array_key_exists('typeId', $data) === true) {

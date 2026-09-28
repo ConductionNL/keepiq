@@ -1168,6 +1168,9 @@
         "Revoking this suite deleted %n emergency-access contact.": "Odvolanie tejto sady odstránilo %n kontakt núdzového prístupu.",
         "Revoking this suite deleted %n emergency-access contacts.": "Odvolanie tejto sady odstránilo %n kontaktov núdzového prístupu.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Považovať tajomstvá sady za kompromitované (označiť na výmenu a upozorniť vlastníkov)",
+        "%n secret could not be decrypted and is not in this export.": "%n tajomstvo sa nepodarilo dešifrovať a nie je v tomto exporte.",
+        "%n secrets could not be decrypted and are not in this export.": "%n tajomstiev sa nepodarilo dešifrovať a nie sú v tomto exporte.",
+        "Continue without the secrets that could not be decrypted": "Pokračovať bez tajomstiev, ktoré sa nepodarilo dešifrovať",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Vyberte, ktoré núdzové kontakty môžu dostať váš nový kľúč. Označte len osoby, ktoré ste určili sami a ktorým stále dôverujete: ten, kto mal vašu reláciu, mohol pridať vlastný kontakt. Neoznačené kontakty stratia núdzový prístup; neskôr ich môžete určiť znova.",
         "{grantee}, waiting period in days: {days}": "{grantee}, čakacia doba v dňoch: {days}"
     },

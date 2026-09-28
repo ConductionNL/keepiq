@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "Опозивање овог комплета избрисало је %n контакт хитног приступа.",
         "Revoking this suite deleted %n emergency-access contacts.": "Опозивање овог комплета избрисало је %n контаката хитног приступа.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Третирај тајне комплета као компромитоване (означи за ротацију и обавести власнике)",
+        "%n secret could not be decrypted and is not in this export.": "%n тајна није могла да се дешифрује и није у овом извозу.",
+        "%n secrets could not be decrypted and are not in this export.": "%n тајни није могло да се дешифрује и нису у овом извозу.",
+        "Continue without the secrets that could not be decrypted": "Настави без тајни које није било могуће дешифровати",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Изаберите који контакти за хитне случајеве смеју да приме ваш нови кључ. Означите само особе које сте сами одредили и којима и даље верујете: ко је имао вашу сесију, могао је да дода сопствени контакт. Неозначени контакти губе приступ у хитним случајевима; касније их можете поново одредити.",
         "{grantee}, waiting period in days: {days}": "{grantee}, период чекања у данима: {days}"
     },

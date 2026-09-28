@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "Odvolání této sady odstranilo %n kontakt nouzového přístupu.",
         "Revoking this suite deleted %n emergency-access contacts.": "Odvolání této sady odstranilo %n kontaktů nouzového přístupu.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Považovat tajemství sady za kompromitovaná (označit k obměně a upozornit vlastníky)",
+        "%n secret could not be decrypted and is not in this export.": "%n tajemství nebylo možné dešifrovat a není v tomto exportu.",
+        "%n secrets could not be decrypted and are not in this export.": "%n tajemství nebylo možné dešifrovat a nejsou v tomto exportu.",
+        "Continue without the secrets that could not be decrypted": "Pokračovat bez tajemství, která nebylo možné dešifrovat",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Vyberte, které nouzové kontakty mohou dostat váš nový klíč. Zaškrtněte jen osoby, které jste určili sami a kterým stále důvěřujete: kdo měl vaši relaci, mohl přidat vlastní kontakt. Nezaškrtnuté kontakty ztratí nouzový přístup; později je můžete určit znovu.",
         "{grantee}, waiting period in days: {days}": "{grantee}, čekací doba ve dnech: {days}"
     },

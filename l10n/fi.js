@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "Tämän sarjan peruuttaminen poisti %n hätäkäytön yhteyshenkilön.",
         "Revoking this suite deleted %n emergency-access contacts.": "Tämän sarjan peruuttaminen poisti %n hätäkäytön yhteyshenkilöä.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Käsittele sarjan salaisuuksia vaarantuneina (merkitse kierrätettäväksi ja ilmoita omistajille)",
+        "%n secret could not be decrypted and is not in this export.": "%n salaisuutta ei voitu purkaa, eikä se ole tässä viennissä.",
+        "%n secrets could not be decrypted and are not in this export.": "%n salaisuutta ei voitu purkaa, eivätkä ne ole tässä viennissä.",
+        "Continue without the secrets that could not be decrypted": "Jatka ilman salaisuuksia, joita ei voitu purkaa",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Valitse, mitkä hätäyhteyshenkilöt saavat uuden avaimesi. Valitse vain henkilöitä, jotka olet itse nimennyt ja joihin luotat edelleen: istuntosi haltuunsa saanut on voinut lisätä oman yhteyshenkilön. Valitsematta jätetyt menettävät hätäkäyttöoikeutensa; voit nimetä heidät uudelleen myöhemmin.",
         "{grantee}, waiting period in days: {days}": "{grantee}, odotusaika päivinä: {days}"
     },

@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "Tilbagekaldelsen af denne suite fjernede %n nødadgangskontakt.",
         "Revoking this suite deleted %n emergency-access contacts.": "Tilbagekaldelsen af denne suite fjernede %n nødadgangskontakter.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandl suitens hemmeligheder som kompromitterede (markér til rotation, og underret ejere)",
+        "%n secret could not be decrypted and is not in this export.": "%n hemmelighed kunne ikke dekrypteres og er ikke med i denne eksport.",
+        "%n secrets could not be decrypted and are not in this export.": "%n hemmeligheder kunne ikke dekrypteres og er ikke med i denne eksport.",
+        "Continue without the secrets that could not be decrypted": "Fortsæt uden de hemmeligheder, der ikke kunne dekrypteres",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Vælg hvilke nødkontakter der må modtage din nye nøgle. Sæt kun flueben ved personer, du selv har udpeget og stadig stoler på: den, der havde din session, kan have tilføjet sin egen kontakt. Kontakter uden flueben mister deres nødadgang; du kan udpege dem igen bagefter.",
         "{grantee}, waiting period in days: {days}": "{grantee}, ventetid i dage: {days}"
     },

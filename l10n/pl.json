@@ -1168,6 +1168,9 @@
         "Revoking this suite deleted %n emergency-access contact.": "Unieważnienie tego zestawu usunęło %n kontakt dostępu awaryjnego.",
         "Revoking this suite deleted %n emergency-access contacts.": "Unieważnienie tego zestawu usunęło %n kontaktów dostępu awaryjnego.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Traktuj sekrety zestawu jako naruszone (oznacz do rotacji i powiadom właścicieli)",
+        "%n secret could not be decrypted and is not in this export.": "Nie udało się odszyfrować %n sekretu i nie ma go w tym eksporcie.",
+        "%n secrets could not be decrypted and are not in this export.": "Nie udało się odszyfrować %n sekretów i nie ma ich w tym eksporcie.",
+        "Continue without the secrets that could not be decrypted": "Kontynuuj bez sekretów, których nie udało się odszyfrować",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Wybierz, którzy kontakty awaryjne mogą otrzymać Twój nowy klucz. Zaznacz tylko osoby, które wyznaczyłeś sam i którym nadal ufasz: ktoś, kto miał Twoją sesję, mógł dodać własny kontakt. Niezaznaczone kontakty tracą dostęp awaryjny; możesz je później wyznaczyć ponownie.",
         "{grantee}, waiting period in days: {days}": "{grantee}, okres oczekiwania w dniach: {days}"
     },

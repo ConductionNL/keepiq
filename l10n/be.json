@@ -1168,6 +1168,9 @@
         "Revoking this suite deleted %n emergency-access contact.": "Адкліканне гэтага набору выдаліла %n кантакт аварыйнага доступу.",
         "Revoking this suite deleted %n emergency-access contacts.": "Адкліканне гэтага набору выдаліла %n кантактаў аварыйнага доступу.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Лічыць сакрэты набору скампраметаванымі (пазначыць для ратацыі і апавясціць уладальнікаў)",
+        "%n secret could not be decrypted and is not in this export.": "%n сакрэт не ўдалося расшыфраваць, і яго няма ў гэтым экспарце.",
+        "%n secrets could not be decrypted and are not in this export.": "%n сакрэтаў не ўдалося расшыфраваць, і іх няма ў гэтым экспарце.",
+        "Continue without the secrets that could not be decrypted": "Працягнуць без сакрэтаў, якія не ўдалося расшыфраваць",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Выберыце, якія экстраныя кантакты могуць атрымаць ваш новы ключ. Адзначайце толькі людзей, якіх вы прызначылі самі і якім па-ранейшаму давяраеце: той, хто меў вашу сесію, мог дадаць уласны кантакт. Неадзначаныя кантакты губляюць экстраны доступ; пазней вы можаце прызначыць іх зноў.",
         "{grantee}, waiting period in days: {days}": "{grantee}, перыяд чакання ў днях: {days}"
     },
