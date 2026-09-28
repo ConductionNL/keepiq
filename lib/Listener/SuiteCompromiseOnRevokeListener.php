@@ -28,6 +28,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Listener;
 
 use DateTime;
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
@@ -98,22 +99,17 @@ class SuiteCompromiseOnRevokeListener implements IEventListener {
 			// possibly_compromised_at yet, so this listener stamps it here.
 			$secrets = $this->secretMapper->findByEncryptionSuiteId($event->getSuiteId());
 			foreach ($secrets as $secret) {
-				if ($secret->getPossiblyCompromisedAt() === null) {
-					$secret->setPossiblyCompromisedAt(new DateTime());
-					$this->secretMapper->update($secret);
+				$this->stampAndFlag(secret: $secret);
+
+				$target = $this->resolveTarget(secret: $secret);
+				$ownerId = (string)$target->getOwnerId();
+
+				// For a shared copy the SOURCE is what its owner has to rotate,
+				// so it is stamped and flagged as well, not only the revoked
+				// user's copy (keepiq#802).
+				if ($target !== $secret) {
+					$this->stampAndFlag(secret: $target);
 				}
-
-				// Auto-raise a rotation flag per compromised secret
-				// (rotation-expiry-policies §3.2; idempotent).
-				$this->rotationService?->flag(
-					secretId: $secret->getId(),
-					reason: 'suite_compromise'
-				);
-
-				$ownerId = $this->resolveSourceOwner(
-					recipientSecretId: $secret->getId(),
-					fallbackOwnerId: $secret->getOwnerId()
-				);
 
 				if ($ownerId === '' || isset($notified[$ownerId]) === true) {
 					continue;
@@ -125,11 +121,11 @@ class SuiteCompromiseOnRevokeListener implements IEventListener {
 					params: [
 						'suiteId' => $event->getSuiteId(),
 						'revokedBy' => $event->getRevokedBy(),
-						'secretId' => $secret->getId(),
-						'secretName' => $secret->getName(),
+						'secret_id' => $target->getId(),
+						'secret_name' => $target->getName(),
 					],
 					objectType: 'secret',
-					objectId: $secret->getId(),
+					objectId: $target->getId(),
 				);
 				$notified[$ownerId] = true;
 			}//end foreach
@@ -142,34 +138,49 @@ class SuiteCompromiseOnRevokeListener implements IEventListener {
 	}//end handle()
 
 	/**
-	 * Resolve a recipient Secret copy back to its source owner via the
-	 * ShareTarget mapper. If the copy is not part of any share (a direct
-	 * owner copy), fall back to the copy's own owner.
+	 * Stamp a Secret possibly-compromised (once) and raise its rotation flag.
 	 *
-	 * @param string $recipientSecretId The recipient Secret ID
-	 * @param string $fallbackOwnerId The fallback owner
+	 * The flag is idempotent (rotation-expiry-policies §3.2).
 	 *
-	 * @return string
+	 * @param Secret $secret The Secret to mark
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 */
-	private function resolveSourceOwner(
-		string $recipientSecretId,
-		string $fallbackOwnerId,
-	): string {
+	private function stampAndFlag(Secret $secret): void {
+		if ($secret->getPossiblyCompromisedAt() === null) {
+			$secret->setPossiblyCompromisedAt(new DateTime());
+			$this->secretMapper->update($secret);
+		}
+
+		$this->rotationService?->flag(
+			secretId: $secret->getId(),
+			reason: 'suite_compromise'
+		);
+
+	}//end stampAndFlag()
+
+	/**
+	 * The Secret a warning about $secret should point at: for a shared copy,
+	 * the SOURCE Secret, which its owner can open and has to rotate; otherwise
+	 * $secret itself. Any lookup failure falls back to $secret.
+	 *
+	 * @param Secret $secret The Secret sealed under the affected suite
+	 *
+	 * @return Secret
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 */
+	private function resolveTarget(Secret $secret): Secret {
 		try {
 			$row = $this->shareTargetMapper->findByRecipientSecret(
-				recipientSecretId: $recipientSecretId
+				recipientSecretId: $secret->getId()
 			);
-			try {
-				$source = $this->secretMapper->findById($row->getSourceSecretId());
-				return $source->getOwnerId();
-			} catch (DoesNotExistException) {
-				return $fallbackOwnerId;
-			}
-		} catch (DoesNotExistException) {
-			// Not a shared copy — fall back to the secret's own owner.
-			return $fallbackOwnerId;
+			return $this->secretMapper->findById($row->getSourceSecretId());
 		} catch (Throwable) {
-			return $fallbackOwnerId;
+			// Not a shared copy, or its source is gone: the copy itself.
+			return $secret;
 		}
-	}//end resolveSourceOwner()
+	}//end resolveTarget()
 }//end class

@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Listener;
 
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
@@ -95,10 +96,8 @@ class SuiteCompromiseListener implements IEventListener {
 					reason: 'suite_compromise'
 				);
 
-				$ownerId = $this->resolveSourceOwner(
-					recipientSecretId: $secret->getId(),
-					fallbackOwnerId: $secret->getOwnerId()
-				);
+				$target = $this->resolveTarget(secret: $secret);
+				$ownerId = (string)$target->getOwnerId();
 
 				if ($ownerId === '' || isset($notified[$ownerId]) === true) {
 					continue;
@@ -111,11 +110,11 @@ class SuiteCompromiseListener implements IEventListener {
 						'oldSuiteId' => $event->getOldSuiteId(),
 						'newSuiteId' => $event->getNewSuiteId(),
 						'migrationId' => $event->getMigrationId(),
-						'secretId' => $secret->getId(),
-						'secretName' => $secret->getName(),
+						'secret_id' => $target->getId(),
+						'secret_name' => $target->getName(),
 					],
 					objectType: 'secret',
-					objectId: $secret->getId(),
+					objectId: $target->getId(),
 				);
 				$notified[$ownerId] = true;
 			}//end foreach
@@ -128,34 +127,25 @@ class SuiteCompromiseListener implements IEventListener {
 	}//end handle()
 
 	/**
-	 * Resolve a recipient Secret copy back to its source owner via the
-	 * ShareTarget mapper. If the copy is not part of any share (a direct
-	 * owner copy), fall back to the copy's own owner.
+	 * The Secret a warning about $secret should point at: for a shared copy,
+	 * the SOURCE Secret, which its owner can open and has to rotate; otherwise
+	 * $secret itself. Any lookup failure falls back to $secret.
 	 *
-	 * @param string $recipientSecretId The recipient Secret ID
-	 * @param string $fallbackOwnerId The fallback owner
+	 * @param Secret $secret The Secret sealed under the affected suite
 	 *
-	 * @return string
+	 * @return Secret
+	 *
+	 * @spec openspec/changes/implement-user-sharing/tasks.md#8.4
 	 */
-	private function resolveSourceOwner(
-		string $recipientSecretId,
-		string $fallbackOwnerId,
-	): string {
+	private function resolveTarget(Secret $secret): Secret {
 		try {
 			$row = $this->shareTargetMapper->findByRecipientSecret(
-				recipientSecretId: $recipientSecretId
+				recipientSecretId: $secret->getId()
 			);
-			try {
-				$source = $this->secretMapper->findById($row->getSourceSecretId());
-				return $source->getOwnerId();
-			} catch (DoesNotExistException) {
-				return $fallbackOwnerId;
-			}
-		} catch (DoesNotExistException) {
-			// Not a shared copy — fall back to the secret's own owner.
-			return $fallbackOwnerId;
+			return $this->secretMapper->findById($row->getSourceSecretId());
 		} catch (Throwable) {
-			return $fallbackOwnerId;
+			// Not a shared copy, or its source is gone: the copy itself.
+			return $secret;
 		}
-	}//end resolveSourceOwner()
+	}//end resolveTarget()
 }//end class

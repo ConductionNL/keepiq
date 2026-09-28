@@ -83,11 +83,19 @@ class SuiteCompromiseListenerTest extends TestCase {
 		$source->setId('src-1');
 		$source->setOwnerType('user');
 		$source->setOwnerId('alice');
+		$source->setName('shared-thing-source');
 		$secretMapper->method('findById')->willReturn($source);
 
+		// snake_case, as the notifier reads it, pointing at the source alice
+		// can open (#805 review).
 		$notificationService->expects($this->once())
 			->method('notify')
-			->with('secret_compromised', 'alice');
+			->with(
+				'secret_compromised',
+				'alice',
+				$this->callback(static fn (array $params): bool => ($params['secret_id'] ?? null) === 'src-1'
+					&& ($params['secret_name'] ?? null) === 'shared-thing-source')
+			);
 
 		$listener->handle($event);
 	}//end testHandleNotifiesSourceOwnerForSharedCopy()
@@ -129,7 +137,12 @@ class SuiteCompromiseListenerTest extends TestCase {
 
 		$notificationService->expects($this->once())
 			->method('notify')
-			->with('secret_compromised', 'alice');
+			->with(
+				'secret_compromised',
+				'alice',
+				$this->callback(static fn (array $params): bool => ($params['secret_id'] ?? null) === 'copy-1'
+					&& ($params['secret_name'] ?? null) === 'demo')
+			);
 
 		$listener->handle($event);
 	}//end testHandleFallsBackToOwnOwnerWhenNotShared()

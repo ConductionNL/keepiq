@@ -26,6 +26,7 @@ use OCA\Keepiq\Listener\EncryptionSuiteRevokedListener;
 use OCA\Keepiq\Listener\SuiteCompromiseOnRevokeListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\EventDispatcher\EventDispatcher as SymfonyEventDispatcher;
 
 /**
  * The order two listeners on the revoke event run in is load-bearing.
@@ -43,8 +44,9 @@ class SuiteLifecycleEventRegistrarTest extends TestCase {
 	 * The compromise cascade runs before the share-target sweep.
 	 *
 	 * Nextcloud hands registrations to the dispatcher in the order they were
-	 * made, and the dispatcher runs higher priorities first and equal priorities
-	 * in insertion order. This resolves the registrar's calls the same way.
+	 * made (RegistrationContext::delegateEventListenerRegistrations), and its
+	 * EventDispatcher forwards each priority to Symfony's dispatcher, which
+	 * decides the run order. The test dispatches through Symfony's dispatcher.
 	 *
 	 * @return void
 	 */
@@ -59,16 +61,33 @@ class SuiteLifecycleEventRegistrarTest extends TestCase {
 
 		(new SuiteLifecycleEventRegistrar())->register(context: $context);
 
-		$onRevoke = array_values(array_filter(
-			$registrations,
-			static fn (array $r): bool => $r['event'] === EncryptionSuiteRevokedEvent::class
-		));
-		$order = array_keys($onRevoke);
-		usort(
-			$order,
-			static fn (int $a, int $b): int => [$onRevoke[$b]['priority'], $a] <=> [$onRevoke[$a]['priority'], $b]
+		// Hand the registrations to the REAL Symfony dispatcher that Nextcloud's
+		// EventDispatcher::addServiceListener() forwards to, in registration
+		// order and with their priorities, and record the order they run in.
+		// That observes the dispatcher's own priority and tie-break rules
+		// instead of restating them here (#805 review).
+		$dispatcher = new SymfonyEventDispatcher();
+		$runOrder = [];
+		foreach ($registrations as $registration) {
+			$dispatcher->addListener(
+				$registration['event'],
+				static function () use (&$runOrder, $registration): void {
+					$runOrder[] = $registration['listener'];
+				},
+				$registration['priority']
+			);
+		}
+
+		$dispatcher->dispatch(
+			new EncryptionSuiteRevokedEvent(
+				suiteId: 'suite-1',
+				ownerType: 'user',
+				ownerId: 'alice',
+				revokedBy: 'admin',
+				compromised: true
+			),
+			EncryptionSuiteRevokedEvent::class
 		);
-		$runOrder = array_map(static fn (int $i): string => $onRevoke[$i]['listener'], $order);
 
 		$cascade = array_search(SuiteCompromiseOnRevokeListener::class, $runOrder, true);
 		$sweep = array_search(EncryptionSuiteRevokedListener::class, $runOrder, true);
