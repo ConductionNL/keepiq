@@ -1168,7 +1168,9 @@ OC.L10N.register(
         "Reinstate suite": "Възстанови комплекта",
         "Revoking this suite deleted %n emergency-access contact.": "Отменянето на този комплект премахна %n контакт за авариен достъп.",
         "Revoking this suite deleted %n emergency-access contacts.": "Отменянето на този комплект премахна %n контакта за авариен достъп.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Третирай тайните на комплекта като компрометирани (маркирай за ротация и уведоми собствениците)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Третирай тайните на комплекта като компрометирани (маркирай за ротация и уведоми собствениците)",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Изберете кои контакти за спешни случаи могат да получат новия ви ключ. Отбележете само хора, които сте определили сами и на които все още имате доверие: който е държал сесията ви, може да е добавил свой контакт. Неотбелязаните контакти губят спешния си достъп; можете да ги определите отново след това.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, период на изчакване в дни: {days}"
     },
     "nplurals=2; plural=(n != 1);"
 )

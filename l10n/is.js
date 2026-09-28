@@ -1168,7 +1168,9 @@ OC.L10N.register(
         "Reinstate suite": "Endurvirkja sett",
         "Revoking this suite deleted %n emergency-access contact.": "Afturköllun þessa setts eyddi %n neyðaraðgangstengilið.",
         "Revoking this suite deleted %n emergency-access contacts.": "Afturköllun þessa setts eyddi %n neyðaraðgangstengiliðum.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Meðhöndla leyndarmál settsins sem í hættu (merkja fyrir endurnýjun og láta eigendur vita)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Meðhöndla leyndarmál settsins sem í hættu (merkja fyrir endurnýjun og láta eigendur vita)",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Veldu hvaða neyðartengiliðir mega fá nýja lykilinn þinn. Hakaðu aðeins við fólk sem þú tilnefndir sjálf(ur) og treystir enn: sá sem hafði setuna þína gæti hafa bætt við eigin tengilið. Tengiliðir sem þú hakar ekki við missa neyðaraðgang sinn; þú getur tilnefnt þá aftur síðar.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, biðtími í dögum: {days}"
     },
     "nplurals=2; plural=(n != 1);"
 )

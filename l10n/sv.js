@@ -1168,7 +1168,9 @@ OC.L10N.register(
         "Reinstate suite": "Återinför svit",
         "Revoking this suite deleted %n emergency-access contact.": "Återkallelsen av denna svit tog bort %n nödåtkomstkontakt.",
         "Revoking this suite deleted %n emergency-access contacts.": "Återkallelsen av denna svit tog bort %n nödåtkomstkontakter.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandla svitens hemligheter som komprometterade (markera för rotation och meddela ägare)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandla svitens hemligheter som komprometterade (markera för rotation och meddela ägare)",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Välj vilka nödkontakter som får ta emot din nya nyckel. Markera bara personer som du själv har utsett och fortfarande litar på: den som hade din session kan ha lagt till en egen kontakt. Kontakter du inte markerar förlorar sin nödåtkomst; du kan utse dem igen efteråt.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, väntetid i dagar: {days}"
     },
     "nplurals=2; plural=(n != 1);"
 )

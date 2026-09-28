@@ -1168,7 +1168,9 @@ OC.L10N.register(
         "Reinstate suite": "Аднавіць набор",
         "Revoking this suite deleted %n emergency-access contact.": "Адкліканне гэтага набору выдаліла %n кантакт аварыйнага доступу.",
         "Revoking this suite deleted %n emergency-access contacts.": "Адкліканне гэтага набору выдаліла %n кантактаў аварыйнага доступу.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Лічыць сакрэты набору скампраметаванымі (пазначыць для ратацыі і апавясціць уладальнікаў)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Лічыць сакрэты набору скампраметаванымі (пазначыць для ратацыі і апавясціць уладальнікаў)",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Выберыце, якія экстраныя кантакты могуць атрымаць ваш новы ключ. Адзначайце толькі людзей, якіх вы прызначылі самі і якім па-ранейшаму давяраеце: той, хто меў вашу сесію, мог дадаць уласны кантакт. Неадзначаныя кантакты губляюць экстраны доступ; пазней вы можаце прызначыць іх зноў.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, перыяд чакання ў днях: {days}"
     },
     "nplurals=2; plural=(n != 1);"
 )

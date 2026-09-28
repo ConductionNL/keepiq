@@ -1168,7 +1168,9 @@ OC.L10N.register(
         "Reinstate suite": "Reinstate suite",
         "Revoking this suite deleted %n emergency-access contact.": "Revoking this suite deleted %n emergency-access contact.",
         "Revoking this suite deleted %n emergency-access contacts.": "Revoking this suite deleted %n emergency-access contacts.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Treat the suite's secrets as compromised (flag for rotation and notify owners)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Treat the suite's secrets as compromised (flag for rotation and notify owners)",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Wielt, wéi eng Noutkontakter Äre neie Schlëssel kréien däerfen. Markéiert nëmme Leit, déi Dir selwer bestëmmt hutt an deenen Dir nach ëmmer vertraut: Wien Är Sessioun hat, kann e Kontakt vu sech bäigesat hunn. Net markéiert Kontakter verléieren hiren Noutzougang; Dir kënnt se duerno nees bestëmmen.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, Waardezäit an Deeg: {days}"
     },
     "nplurals=2; plural=(n != 1);"
 )

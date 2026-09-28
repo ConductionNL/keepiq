@@ -1168,7 +1168,9 @@ OC.L10N.register(
         "Reinstate suite": "Restabilește suita",
         "Revoking this suite deleted %n emergency-access contact.": "Revocarea acestei suite a șters %n contact de acces de urgență.",
         "Revoking this suite deleted %n emergency-access contacts.": "Revocarea acestei suite a șters %n contacte de acces de urgență.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tratează secretele suitei ca fiind compromise (marchează pentru rotire și notifică proprietarii)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tratează secretele suitei ca fiind compromise (marchează pentru rotire și notifică proprietarii)",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Alegeți ce contacte de urgență pot primi noua dvs. cheie. Bifați doar persoanele pe care le-ați desemnat dvs. și în care încă aveți încredere: cine v-a deținut sesiunea poate să fi adăugat un contact propriu. Contactele nebifate își pierd accesul de urgență; le puteți desemna din nou ulterior.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, perioadă de așteptare în zile: {days}"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1168,7 +1168,9 @@ OC.L10N.register(
         "Reinstate suite": "Atkurti rinkinį",
         "Revoking this suite deleted %n emergency-access contact.": "Šio rinkinio atšaukimas pašalino %n avarinės prieigos kontaktą.",
         "Revoking this suite deleted %n emergency-access contacts.": "Šio rinkinio atšaukimas pašalino %n avarinės prieigos kontaktų.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Laikyti rinkinio paslaptis pažeistomis (pažymėti keitimui ir pranešti savininkams)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Laikyti rinkinio paslaptis pažeistomis (pažymėti keitimui ir pranešti savininkams)",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Pasirinkite, kurie skubios pagalbos kontaktai gali gauti jūsų naują raktą. Pažymėkite tik žmones, kuriuos paskyrėte patys ir kuriais vis dar pasitikite: tas, kas turėjo jūsų seansą, galėjo pridėti savo kontaktą. Nepažymėti kontaktai praranda skubią prieigą; vėliau galėsite juos paskirti iš naujo.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, laukimo laikotarpis dienomis: {days}"
     },
     "nplurals=2; plural=(n != 1);"
 )

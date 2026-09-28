@@ -1168,7 +1168,9 @@ OC.L10N.register(
         "Reinstate suite": "Ponovno vzpostavi komplet",
         "Revoking this suite deleted %n emergency-access contact.": "Preklic tega kompleta je izbrisal %n stik zasilnega dostopa.",
         "Revoking this suite deleted %n emergency-access contacts.": "Preklic tega kompleta je izbrisal %n stikov zasilnega dostopa.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Obravnavaj skrivnosti kompleta kot ogrožene (označi za menjavo in obvesti lastnike)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Obravnavaj skrivnosti kompleta kot ogrožene (označi za menjavo in obvesti lastnike)",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Izberite, kateri stiki za nujne primere lahko prejmejo vaš novi ključ. Označite samo osebe, ki ste jih določili sami in jim še vedno zaupate: kdor je imel vašo sejo, je morda dodal svoj stik. Neoznačeni stiki izgubijo dostop v nujnih primerih; pozneje jih lahko znova določite.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, čakalna doba v dneh: {days}"
     },
     "nplurals=2; plural=(n != 1);"
 )
