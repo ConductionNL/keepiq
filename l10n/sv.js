@@ -1168,7 +1168,10 @@ OC.L10N.register(
         "Reinstate suite": "Återinför svit",
         "Revoking this suite deleted %n emergency-access contact.": "Återkallelsen av denna svit tog bort %n nödåtkomstkontakt.",
         "Revoking this suite deleted %n emergency-access contacts.": "Återkallelsen av denna svit tog bort %n nödåtkomstkontakter.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandla svitens hemligheter som komprometterade (markera för rotation och meddela ägare)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandla svitens hemligheter som komprometterade (markera för rotation och meddela ägare)",
+        "%n secret could not be decrypted and is not in this export.": "%n hemlighet kunde inte dekrypteras och finns inte i den här exporten.",
+        "%n secrets could not be decrypted and are not in this export.": "%n hemligheter kunde inte dekrypteras och finns inte i den här exporten.",
+        "Continue without the secrets that could not be decrypted": "Fortsätt utan hemligheterna som inte kunde dekrypteras"
     },
     "nplurals=2; plural=(n != 1);"
 )

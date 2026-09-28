@@ -1168,7 +1168,10 @@ OC.L10N.register(
         "Reinstate suite": "Restabilește suita",
         "Revoking this suite deleted %n emergency-access contact.": "Revocarea acestei suite a șters %n contact de acces de urgență.",
         "Revoking this suite deleted %n emergency-access contacts.": "Revocarea acestei suite a șters %n contacte de acces de urgență.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tratează secretele suitei ca fiind compromise (marchează pentru rotire și notifică proprietarii)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tratează secretele suitei ca fiind compromise (marchează pentru rotire și notifică proprietarii)",
+        "%n secret could not be decrypted and is not in this export.": "%n secret nu a putut fi decriptat și nu este în acest export.",
+        "%n secrets could not be decrypted and are not in this export.": "%n secrete nu au putut fi decriptate și nu sunt în acest export.",
+        "Continue without the secrets that could not be decrypted": "Continuă fără secretele care nu au putut fi decriptate"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1168,7 +1168,10 @@ OC.L10N.register(
         "Reinstate suite": "Atjaunot komplektu",
         "Revoking this suite deleted %n emergency-access contact.": "Šī komplekta atsaukšana dzēsa %n ārkārtas piekļuves kontaktu.",
         "Revoking this suite deleted %n emergency-access contacts.": "Šī komplekta atsaukšana dzēsa %n ārkārtas piekļuves kontaktus.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Uzskatīt komplekta noslēpumus par kompromitētiem (atzīmēt maiņai un paziņot īpašniekiem)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Uzskatīt komplekta noslēpumus par kompromitētiem (atzīmēt maiņai un paziņot īpašniekiem)",
+        "%n secret could not be decrypted and is not in this export.": "%n noslēpumu neizdevās atšifrēt, un tas nav šajā eksportā.",
+        "%n secrets could not be decrypted and are not in this export.": "%n noslēpumus neizdevās atšifrēt, un tie nav šajā eksportā.",
+        "Continue without the secrets that could not be decrypted": "Turpināt bez noslēpumiem, kurus neizdevās atšifrēt"
     },
     "nplurals=2; plural=(n != 1);"
 )

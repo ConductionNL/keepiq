@@ -1168,7 +1168,10 @@ OC.L10N.register(
         "Reinstate suite": "Suite wiederherstellen",
         "Revoking this suite deleted %n emergency-access contact.": "Der Widerruf dieser Suite hat %n Notfallzugangskontakt gelöscht.",
         "Revoking this suite deleted %n emergency-access contacts.": "Der Widerruf dieser Suite hat %n Notfallzugangskontakte gelöscht.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Die Geheimnisse der Suite als kompromittiert behandeln (zur Rotation markieren und Eigentümer benachrichtigen)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Die Geheimnisse der Suite als kompromittiert behandeln (zur Rotation markieren und Eigentümer benachrichtigen)",
+        "%n secret could not be decrypted and is not in this export.": "%n Geheimnis konnte nicht entschlüsselt werden und ist nicht in diesem Export enthalten.",
+        "%n secrets could not be decrypted and are not in this export.": "%n Geheimnisse konnten nicht entschlüsselt werden und sind nicht in diesem Export enthalten.",
+        "Continue without the secrets that could not be decrypted": "Ohne die Geheimnisse fortfahren, die nicht entschlüsselt werden konnten"
     },
     "nplurals=2; plural=(n != 1);"
 )

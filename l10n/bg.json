@@ -1167,7 +1167,10 @@
         "Reinstate suite": "Възстанови комплекта",
         "Revoking this suite deleted %n emergency-access contact.": "Отменянето на този комплект премахна %n контакт за авариен достъп.",
         "Revoking this suite deleted %n emergency-access contacts.": "Отменянето на този комплект премахна %n контакта за авариен достъп.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Третирай тайните на комплекта като компрометирани (маркирай за ротация и уведоми собствениците)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Третирай тайните на комплекта като компрометирани (маркирай за ротация и уведоми собствениците)",
+        "%n secret could not be decrypted and is not in this export.": "%n тайна не можа да бъде дешифрирана и не е включена в този експорт.",
+        "%n secrets could not be decrypted and are not in this export.": "%n тайни не можаха да бъдат дешифрирани и не са включени в този експорт.",
+        "Continue without the secrets that could not be decrypted": "Продължаване без тайните, които не можаха да бъдат дешифрирани"
     },
     "plurals": null
 }

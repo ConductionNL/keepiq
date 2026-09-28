@@ -8,11 +8,13 @@
 			<ExportDialog
 				:open="exportOpen"
 				:secrets="decryptedSecrets"
+				:skipped="skippedSecrets"
 				:folders="folders"
 				@update:open="exportOpen = $event" />
 			<CxpTransferDialog
 				:open="cxpOpen"
 				:secrets="decryptedSecrets"
+				:skipped="skippedSecrets"
 				:folders="folders"
 				@update:open="cxpOpen = $event"
 				@openImport="importOpen = true" />
@@ -610,6 +612,8 @@ export default {
 			teamFolderOpen: false,
 			typeFilter: null,
 			decryptedSecrets: [],
+			/** Secrets the last decryptAllSecrets() could not decrypt (keepiq#794). */
+			skippedSecrets: 0,
 			bulkDialog: null,
 			lastCheckedId: null,
 			/**
@@ -1215,27 +1219,32 @@ export default {
 
 		/**
 		 * Decrypt every secret the user can read, in the browser, so the export
-		 * dialogs can serialize the full vault. Returns [] when the vault is
-		 * locked (the dialogs then fall back to metadata-only where applicable).
+		 * dialogs can serialize the full vault. A secret that cannot be
+		 * decrypted (a blocked or revoked suite) is left out and counted, so the
+		 * dialogs can say how many are missing (keepiq#794).
 		 *
-		 * @return {Promise<Array<object>>}
+		 * @return {Promise<{secrets: Array<object>, skipped: number}>}
 		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async decryptAllSecrets() {
 			const store = this.secretStore
 			// Pull the WHOLE vault (the export covers everything, not just the
 			// paginated view); paged within the server's per-request cap.
 			await store.fetchAllSecrets()
-			const out = []
+			const secrets = []
+			let skipped = 0
 			for (const secret of store.secrets) {
 				try {
-					out.push(await store.decryptSecret(secret))
+					secrets.push(await store.decryptSecret(secret))
 				} catch {
 					// A secret whose suite is blocked/revoked cannot be decrypted;
-					// skip it rather than failing the whole export.
+					// leave it out rather than failing the whole export, and
+					// count it so the dialog tells the user.
+					skipped += 1
 				}
 			}
-			return out
+			return { secrets, skipped }
 		},
 
 		/**
@@ -1243,9 +1252,12 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async openExport() {
-			this.decryptedSecrets = await this.decryptAllSecrets()
+			const { secrets, skipped } = await this.decryptAllSecrets()
+			this.decryptedSecrets = secrets
+			this.skippedSecrets = skipped
 			this.exportOpen = true
 		},
 
@@ -1255,9 +1267,12 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/cxp-transfer/specs/cxp-transfer/spec.md
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async openCxp() {
-			this.decryptedSecrets = await this.decryptAllSecrets()
+			const { secrets, skipped } = await this.decryptAllSecrets()
+			this.decryptedSecrets = secrets
+			this.skippedSecrets = skipped
 			this.cxpOpen = true
 		},
 
@@ -1268,7 +1283,8 @@ export default {
 		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
 		 */
 		async openGdpr() {
-			this.decryptedSecrets = await this.decryptAllSecrets()
+			const { secrets } = await this.decryptAllSecrets()
+			this.decryptedSecrets = secrets
 			this.gdprOpen = true
 		},
 

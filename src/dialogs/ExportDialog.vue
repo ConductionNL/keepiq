@@ -29,6 +29,36 @@
 				{{ error }}
 			</NcNoteCard>
 
+			<!-- Secrets that could not be decrypted are not in the file: say
+			     how many before anything is written, and let the user choose
+			     to continue or cancel (keepiq#794). -->
+			<div
+				v-if="skipped > 0"
+				class="export-dialog__skipped"
+				data-testid="export-skipped-warning">
+				<NcNoteCard type="warning">
+					{{
+						n(
+							'keepiq',
+							'%n secret could not be decrypted and is not in this export.',
+							'%n secrets could not be decrypted and are not in this export.',
+							skipped,
+						)
+					}}
+				</NcNoteCard>
+				<NcCheckboxRadioSwitch
+					:modelValue="skippedAcknowledged"
+					data-testid="export-skipped-ack"
+					@update:modelValue="skippedAcknowledged = $event">
+					{{
+						t(
+							'keepiq',
+							'Continue without the secrets that could not be decrypted',
+						)
+					}}
+				</NcCheckboxRadioSwitch>
+			</div>
+
 			<fieldset class="export-dialog__modes">
 				<legend>{{ t('keepiq', 'Export format') }}</legend>
 				<NcCheckboxRadioSwitch
@@ -188,6 +218,12 @@ export default {
 			default: () => [],
 		},
 
+		/** How many secrets could not be decrypted and are not in `secrets`. */
+		skipped: {
+			type: Number,
+			default: 0,
+		},
+
 		/** Folder rows ({ id, name, parentId }). */
 		folders: {
 			type: Array,
@@ -216,6 +252,8 @@ export default {
 			passphraseScore: 0,
 			masterPassword: '',
 			warningAcknowledged: false,
+			/** Whether the user chose to export without the skipped secrets. */
+			skippedAcknowledged: false,
 			scopeFolder: 'vault',
 			error: null,
 			/** CXF pre-download unmapped-item report (null = not built yet). */
@@ -274,14 +312,19 @@ export default {
 		},
 
 		/**
-		 * Whether the export may be submitted: backup needs a passphrase at/above
-		 * the strength floor; plaintext CSV needs the warning acknowledged and a
-		 * master password entered.
+		 * Whether the export may be submitted: when secrets could not be
+		 * decrypted the user must first choose to continue without them; backup
+		 * needs a passphrase at/above the strength floor; plaintext CSV needs the
+		 * warning acknowledged and a master password entered.
 		 *
 		 * @return {boolean}
 		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		canSubmit() {
+			if (this.skipped > 0 && !this.skippedAcknowledged) {
+				return false
+			}
 			if (this.mode === 'encrypted-backup') {
 				return (
 					this.passphrase.length > 0
@@ -332,9 +375,15 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async onExport() {
 			this.error = null
+			// Nothing is written until the user chose to continue without the
+			// secrets that could not be decrypted (keepiq#794).
+			if (this.skipped > 0 && !this.skippedAcknowledged) {
+				return
+			}
 			try {
 				const scope = this.buildScope()
 				if (this.mode === 'encrypted-backup') {
@@ -406,6 +455,7 @@ export default {
 			this.passphraseScore = 0
 			this.masterPassword = ''
 			this.warningAcknowledged = false
+			this.skippedAcknowledged = false
 			this.scopeFolder = 'vault'
 			this.error = null
 			this.cxfReport = null
@@ -435,6 +485,12 @@ export default {
 	gap: 12px;
 	padding: 8px 4px;
 	min-width: 320px;
+}
+
+.export-dialog__skipped {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
 }
 
 .export-dialog__modes {
