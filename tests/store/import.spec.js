@@ -470,4 +470,127 @@ describe('useImportStore', () => {
 		expect(JSON.stringify(posted)).not.toContain('JBSWY3DPEHPK3PXP')
 		expect(await rsaDecrypt(item.key, privateKey)).toBe('JBSWY3DPEHPK3PXP')
 	})
+
+	describe('restoring secret types from a backup (keepiq#749)', () => {
+		// System type ids are UUID v5 of the type name, the same on every
+		// instance (lib/Repair/SeedSecretTypes.php deterministicId()); a custom
+		// type id is random.
+		const TYPE_IDS = {
+			login: '307f9df3-b31f-519e-bb55-748490bb9b11',
+			api_key: '398f4274-0cda-5c40-8cf2-34124657b1d5',
+			ssh_key: 'fd2e8ebb-4603-52d0-b83b-504e01a9d81a',
+			note: 'cc565d72-e4eb-5103-a636-b954ecb94bdd',
+			totp: 'ad4d6696-3cca-56c5-9112-fc594139c284',
+			vpnProfile: '5b0e1c2a-7d4f-4e8a-9c61-2f3a8b7d9e10',
+			customNote: 'e7a1c9d2-3b4f-4a5e-8c6d-9f0b1a2c3d4e',
+		}
+
+		/**
+		 * Seed the vault's types: the system types, a custom "vpn_profile" and
+		 * a custom type that shares the system name "note" (listed first).
+		 *
+		 * @return {Promise<void>}
+		 */
+		async function seedVaultTypes() {
+			const { useSecretTypeStore } =
+				await import('../../src/store/modules/secretType.js')
+			useSecretTypeStore().types = [
+				{ id: TYPE_IDS.customNote, name: 'note', scope: 'user' },
+				{ id: TYPE_IDS.login, name: 'login', scope: 'system' },
+				{ id: TYPE_IDS.api_key, name: 'api_key', scope: 'system' },
+				{ id: TYPE_IDS.ssh_key, name: 'ssh_key', scope: 'system' },
+				{ id: TYPE_IDS.note, name: 'note', scope: 'system' },
+				{ id: TYPE_IDS.totp, name: 'totp', scope: 'system' },
+				{ id: TYPE_IDS.vpnProfile, name: 'vpn_profile', scope: 'user' },
+			]
+		}
+
+		/**
+		 * Restore a backup payload through the real backup encryption, the
+		 * registered backup parser and the store's commit, and return the
+		 * committed items by name.
+		 *
+		 * @param {object} payload The vault payload to back up.
+		 * @return {Promise<Object<string, object>>} Committed items by name.
+		 */
+		async function restore(payload) {
+			vi.spyOn(useSecretStore(), 'fetchSecrets').mockResolvedValue()
+			const envelope = await encryptBackup(payload, 'restore-pass')
+			const posted = []
+			vi.spyOn(axios, 'post').mockImplementation(async (url, body) => {
+				posted.push(...body.items)
+				return {
+					data: {
+						results: body.items.map((_, i) => ({
+							index: i,
+							status: 'created',
+							secretId: `r${i}`,
+						})),
+						foldersCreated: [],
+					},
+				}
+			})
+			const store = useImportStore()
+			await store.parseFile(JSON.stringify(envelope), 'doriath-backup', {
+				passphrase: 'restore-pass',
+			})
+			await store.commit()
+			return Object.fromEntries(posted.map((item) => [item.name, item]))
+		}
+
+		it('keeps the type id the export wrote from the server secret', async () => {
+			await unlockSession()
+			await seedVaultTypes()
+
+			// Decrypted server secrets carry `typeId` (a UUID) and no `type`.
+			const decrypted = [
+				{ name: 'Deploy key', key: 'ssh-ed25519 AAAA', login: null, folderId: null, typeId: TYPE_IDS.ssh_key },
+				{ name: 'Recovery codes', key: 'codes', login: null, folderId: null, typeId: TYPE_IDS.note },
+				{ name: 'Office VPN', key: 'vpn-secret', login: 'me', folderId: null, typeId: TYPE_IDS.vpnProfile },
+				{ name: 'GitHub', key: 'hunter2', login: 'octocat', folderId: null, typeId: TYPE_IDS.login },
+			]
+			const items = await restore(serializeVault(decrypted, [], { mode: 'vault' }))
+
+			expect(items['Deploy key'].typeId).toBe(TYPE_IDS.ssh_key)
+			expect(items['Recovery codes'].typeId).toBe(TYPE_IDS.note)
+			expect(items['Office VPN'].typeId).toBe(TYPE_IDS.vpnProfile)
+			expect(items.GitHub.typeId).toBe(TYPE_IDS.login)
+		})
+
+		it('maps a type name from an older backup to the vault type id, system type first', async () => {
+			await unlockSession()
+			await seedVaultTypes()
+
+			const secret = (name, type) => ({
+				name,
+				url: null,
+				login: null,
+				password: 'value-' + name,
+				additionalFields: null,
+				folder: '',
+				type,
+			})
+			const payload = {
+				format: 'keepiq-vault',
+				version: 1,
+				secrets: [
+					secret('Deploy key', 'ssh_key'),
+					secret('Recovery codes', 'note'),
+					secret('Stripe', 'api_key'),
+					secret('Office VPN', 'vpn_profile'),
+					secret('Mystery', 'type-this-vault-does-not-have'),
+				],
+				folders: [],
+			}
+			const items = await restore(payload)
+
+			expect(items['Deploy key'].typeId).toBe(TYPE_IDS.ssh_key)
+			// A custom type named "note" exists too; the system type wins.
+			expect(items['Recovery codes'].typeId).toBe(TYPE_IDS.note)
+			expect(items.Stripe.typeId).toBe(TYPE_IDS.api_key)
+			expect(items['Office VPN'].typeId).toBe(TYPE_IDS.vpnProfile)
+			// An unknown type falls back to the server's default type.
+			expect(items.Mystery.typeId).toBeUndefined()
+		})
+	})
 })
