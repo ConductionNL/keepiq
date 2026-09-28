@@ -118,38 +118,52 @@ jobs:
       app-name: keepiq
       php-version: "8.3"
       php-test-versions: '["8.3", "8.4"]'
-      # Order matters: the PHPUnit matrix uses the whole list, but the E2E
-      # (Playwright), Newman and Journeydoc jobs all check out
-      # `fromJSON(nextcloud-test-refs)[0]` as their single server. That server
-      # has to be one OpenRegister can load, because `additional-apps` below
-      # installs it and keepiq's AppHost integration delegates to it —
-      # OpenRegister's lib/ContextChat/ContentProvider.php implements
-      # `OCP\ContextChat\IContentProvider`, which exists in stable32 and NOT in
-      # stable31 (verified: raw.githubusercontent.com returns 404 for the
-      # stable31 path). On stable31 every `occ` invocation printed
+      # NO `nextcloud-test-refs` HERE, DELIBERATELY. The shared workflow derives
+      # the matrix from appinfo/info.xml when this input is unset, and a derived
+      # matrix cannot disagree with the declared range. The override that used to
+      # sit here is exactly how the two came apart: it read
+      # `["stable34", "stable32", "stable33"]` while this branch moved info.xml to
+      # `<nextcloud min-version="32" max-version="35"/>`, so NC 35 was advertised
+      # to the App Store with no job touching it — not known-broken, unmeasured.
+      # gate-65 rule 11 is what caught it. Re-adding stable35 by hand fixes today
+      # and leaves the next bump to be remembered in two files; deriving deletes
+      # the second file.
+      #
+      # WHAT THE OVERRIDE WAS PROTECTING, AND WHY IT NO LONGER HAS TO.
+      # Its ORDER carried meaning: E2E (Playwright), Newman and journeydoc-capture
+      # each ran against `fromJSON(nextcloud-test-refs)[0]`, so stable34 had to
+      # lead to keep them off a server OpenRegister cannot load — OpenRegister's
+      # lib/ContextChat/ContentProvider.php implements
+      # `OCP\ContextChat\IContentProvider`, which does not exist before stable32,
+      # and on stable31 every `occ` invocation printed
       # `Interface "OCP\ContextChat\IContentProvider" not found` while loading
       # commands from openregister's info.xml.
       #
-      # The earlier reorder fixed the FIRST-entry problem for E2E/Newman/Journeydoc
-      # but left "stable31 is still covered by the PHPUnit matrix" — and that leg
-      # is broken by the same fact. The phpunit job ALSO installs `additional-apps`
-      # (shared quality.yml, "Checkout additional apps" + "Enabling app: …"), and
-      # its `occ app:enable openregister` failure is only a ::warning::, so the
-      # stable31 leg ran on without OpenRegister loaded. openregister has since
-      # made the floor explicit — `<nextcloud min-version="32"/>`, 8d5181f7a — so
-      # NC31 is now a configuration this fixture cannot produce at all.
+      # Those four jobs no longer read a meaning off a position. The shared
+      # workflow computes a `single-server` output — the numerically HIGHEST
+      # stable branch in the resolved set, and for the derived path the matrix
+      # action's own `branches-max` — and they consume that. The action's
+      # `branches` output is OLDEST-first, so a positional read would have moved
+      # all four onto stable32 silently. List order is now inert, and the one
+      # thing the override bought is structural instead.
       #
-      # Removing stable31 corrects an impossible configuration; it does not reduce
-      # coverage, because nothing was being covered on that leg.
+      # THIS ADDS A stable35 LEG. It was RED BEFORE IT WAS GREEN, deliberately.
+      # `additional-apps` below installs openregister and integriq, and when this
+      # branch was opened (2026-09-15) BOTH still declared `max-version="34"` on
+      # `development`. The shared workflow aborts the job when `occ app:enable`
+      # fails for an additional app — that was once only a ::warning::, which is
+      # how a leg previously ran on WITHOUT OpenRegister loaded and reported
+      # nothing — so the stable35 legs failed at the fixture, not in the tests.
       #
-      # THE LIST IS THE WHOLE DECLARED RANGE. appinfo/info.xml declares
-      # <nextcloud min-version="32" max-version="34"/>, so 32, 33 and 34 each get
-      # a leg. Adopting NC 34 by REPLACING the list left 32 and 33 advertised to
-      # the App Store with no job touching them — the declared floor became the
-      # untested end, which is the same drift as never testing 34, reversed.
-      # stable34 leads because newman, playwright and journeydoc-capture all read
-      # `fromJSON(inputs.nextcloud-test-refs)[0]` as their single server.
-      nextcloud-test-refs: '["stable34", "stable32", "stable33"]'
+      # RESOLVED 2026-09-24: both dependencies now declare
+      # `<nextcloud min-version="32" max-version="35"/>` on `development`, which
+      # is the ref this file pins. Verified by parsing each appinfo/info.xml
+      # rather than grepping, because both files carry comments that quote OTHER
+      # apps' ranges and a grep matches those first.
+      #
+      # The point of deriving the matrix from info.xml stands: the red was the
+      # honest state of NC 35 support while the gap existed, and nothing here
+      # could hide it. Leave it derived.
       enable-psalm: true
       enable-phpstan: true
       enable-phpmetrics: true
