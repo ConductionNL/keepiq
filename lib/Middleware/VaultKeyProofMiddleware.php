@@ -44,6 +44,7 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Middleware;
 use OCP\IRequest;
 use OCP\IUserSession;
+use Psr\Log\LoggerInterface;
 use ReflectionMethod;
 use Throwable;
 
@@ -69,6 +70,7 @@ class VaultKeyProofMiddleware extends Middleware {
 	 * @param EncryptionSuiteService $suiteService Resolves the subject suite
 	 * @param VaultKeyProofService $proofService Verifies the proof
 	 * @param SuiteMigrationMapper $migrationMapper Resolves a migration's old suite
+	 * @param LoggerInterface $logger Records every refused proof
 	 *
 	 * @return void
 	 */
@@ -78,6 +80,7 @@ class VaultKeyProofMiddleware extends Middleware {
 		private EncryptionSuiteService $suiteService,
 		private VaultKeyProofService $proofService,
 		private SuiteMigrationMapper $migrationMapper,
+		private LoggerInterface $logger,
 	) {
 	}//end __construct()
 
@@ -142,6 +145,19 @@ class VaultKeyProofMiddleware extends Middleware {
 		if (($exception instanceof KeyProofRequiredException) === false) {
 			throw $exception;
 		}
+
+		// A refusal is exactly what a session-only attacker produces, so it must
+		// leave a record rather than only a 403 (#804 review).
+		$this->logger->warning(
+			'Keepiq: vault key proof refused on {route}: {reason}',
+			[
+				'app' => 'keepiq',
+				'userId' => $this->userSession->getUser()?->getUID(),
+				'route' => $controller::class . '::' . $methodName,
+				'purpose' => $this->attributeFor(controller: $controller, methodName: $methodName)?->getPurpose(),
+				'reason' => $exception->getMessage(),
+			]
+		);
 
 		return new JSONResponse(
 			data: [
@@ -210,6 +226,17 @@ class VaultKeyProofMiddleware extends Middleware {
 	 * @throws KeyProofRequiredException When a named suite is not the caller's own
 	 */
 	private function resolveSubjectSuite(string $subject, string $userId): EncryptionSuite {
+		if ($subject === 'migrationNewSuite') {
+			// The NEW end: during a compromise recovery the old password may be
+			// the leaked one, so a route that must not be usable by whoever holds
+			// it proves the new key, which only the owner knows (#804 review).
+			$migration = $this->migrationMapper->findById((string)$this->request->getParam('id', ''));
+			return $this->assertOwned(
+				suite: $this->suiteService->getSuite($migration->getNewSuiteId()),
+				userId: $userId
+			);
+		}
+
 		if ($subject === 'migrationOldSuite') {
 			// Completion proves the OLD key, not the new one: at completion both
 			// suites are active so 'active' is ambiguous, and the old key is the

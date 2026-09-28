@@ -39,6 +39,7 @@ use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
@@ -57,6 +58,10 @@ class GuardFixtureController extends Controller {
 	public function guardedMigrationOldSuite(): void {
 	}
 
+	#[VaultKeyProofRequired(binds: ['id'], subject: 'migrationNewSuite', purpose: 'emergency-access-re-envelope')]
+	public function guardedMigrationNewSuite(): void {
+	}
+
 	public function unguarded(): void {
 	}
 }//end class
@@ -72,6 +77,7 @@ class VaultKeyProofMiddlewareTest extends TestCase {
 	private SuiteMigrationMapper $migrationMapper;
 	private VaultKeyProofMiddleware $middleware;
 	private GuardFixtureController $controller;
+	private LoggerInterface $logger;
 
 	/**
 	 * @return void
@@ -84,6 +90,7 @@ class VaultKeyProofMiddlewareTest extends TestCase {
 		$this->suiteService = $this->createMock(EncryptionSuiteService::class);
 		$this->proofService = $this->createMock(VaultKeyProofService::class);
 		$this->migrationMapper = $this->createMock(SuiteMigrationMapper::class);
+		$this->logger = $this->createMock(LoggerInterface::class);
 
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('alice');
@@ -95,6 +102,7 @@ class VaultKeyProofMiddlewareTest extends TestCase {
 			suiteService: $this->suiteService,
 			proofService: $this->proofService,
 			migrationMapper: $this->migrationMapper,
+			logger: $this->logger,
 		);
 
 		$this->controller = new GuardFixtureController('keepiq', $this->request);
@@ -152,6 +160,34 @@ class VaultKeyProofMiddlewareTest extends TestCase {
 		$this->middleware->beforeController($this->controller, 'guardedMigrationOldSuite');
 	}//end testMigrationOldSuiteSubjectVerifiesAgainstTheOldSuiteKey()
 
+	/**
+	 * The new end of a migration can be the proof subject (#804 review): during
+	 * a compromise recovery the OLD password may be the leaked one, so the
+	 * re-envelope route proves the NEW key, which only the owner holds.
+	 *
+	 * @return void
+	 */
+	public function testMigrationNewSuiteSubjectVerifiesAgainstTheNewSuiteKey(): void {
+		$migration = new SuiteMigration();
+		$migration->setOldSuiteId('old-suite');
+		$migration->setNewSuiteId('new-suite');
+		$this->migrationMapper->method('findById')->with('migr-1')->willReturn($migration);
+		$this->suiteService->method('getSuite')
+			->with('new-suite')
+			->willReturn($this->suiteWithCertificate('NEW-CERT'));
+
+		$this->request->method('getHeader')->willReturnMap([
+			['X-Keepiq-Key-Proof-Nonce', 'the-nonce'],
+			['X-Keepiq-Key-Proof', 'the-sig'],
+		]);
+		$this->request->method('getParam')->willReturnMap([['id', '', 'migr-1']]);
+
+		$this->proofService->expects($this->once())->method('verify')
+			->with('the-nonce', 'the-sig', 'NEW-CERT', 'alice', 'emergency-access-re-envelope', ['migr-1']);
+
+		$this->middleware->beforeController($this->controller, 'guardedMigrationNewSuite');
+	}//end testMigrationNewSuiteSubjectVerifiesAgainstTheNewSuiteKey()
+
 	public function testRouteParamSubjectRefusesAForeignSuite(): void {
 		$foreign = $this->suiteWithCertificate('CERT-PEM');
 		$foreign->setOwnerType('user');
@@ -185,6 +221,27 @@ class VaultKeyProofMiddlewareTest extends TestCase {
 		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
 		$this->assertSame('key_proof_required', $response->getData()['error']);
 	}//end testAfterExceptionMapsTheGuardExceptionTo403()
+
+	/**
+	 * A refused proof leaves a log line (#804 review): the session-only attacker
+	 * the guard exists for is exactly the caller that produces refusals, and a
+	 * 403 alone is invisible in the app's own records.
+	 *
+	 * @return void
+	 */
+	public function testAfterExceptionLogsTheRefusal(): void {
+		$this->logger->expects($this->once())
+			->method('warning')
+			->with(
+				$this->stringContains('key proof refused'),
+				$this->callback(static fn (array $ctx): bool => ($ctx['userId'] ?? null) === 'alice'
+					&& ($ctx['purpose'] ?? null) === 'compromise-recovery'
+					&& str_ends_with((string)($ctx['route'] ?? ''), 'GuardFixtureController::guardedActive')
+					&& ($ctx['reason'] ?? null) === 'need a proof')
+			);
+
+		$this->middleware->afterException($this->controller, 'guardedActive', new KeyProofRequiredException('need a proof'));
+	}//end testAfterExceptionLogsTheRefusal()
 
 	public function testAfterExceptionRethrowsAForeignException(): void {
 		$this->expectException(RuntimeException::class);

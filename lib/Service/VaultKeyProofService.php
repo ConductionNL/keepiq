@@ -7,14 +7,20 @@
  * expressed as a signature, made with the caller's EncryptionSuite private key,
  * over a server-issued challenge bound to the operation's parameters.
  *
- * The challenge is STATELESS. It carries a random component and is authenticated
- * with the instance secret over that component, the caller, the purpose, and an
- * expiry — so it can be verified without any server-side store. This is
- * deliberate: Nextcloud returns a null cache when none is configured, and a
- * nonce store that silently forgets would make every guarded flow unusable on a
- * default install. Single-use enforcement is unnecessary because the signature
- * commits to the operation's parameters, so a replay only ever re-authorises the
- * byte-identical operation.
+ * The challenge is STATELESS to issue and check. It carries a random component
+ * and is authenticated with the instance secret over that component, the
+ * caller, the purpose, and an expiry, so it can be verified without any
+ * server-side store.
+ *
+ * A proof is also SINGLE-USE: a successful verify() consumes its nonce in the
+ * distributed cache for the rest of the challenge's lifetime, and a second use
+ * is refused. The signature commits to the operation's parameters, but that is
+ * not enough on an upsert route: a captured designate proof, replayed after the
+ * owner revoked the contact, would recreate it (#804 review). This follows
+ * JwtAuthService's jti replay protection. The limit is the cache: without a
+ * memcache Nextcloud hands out a null cache, which forgets everything, so reuse
+ * is then not detected. The guarded flows keep working; only the replay
+ * protection degrades. With APCu only, reuse is detected per server.
  *
  * The proof is a SIGNATURE, never a decryption. The browser's session key is
  * non-extractable and decrypt-only, so a decrypt challenge would be satisfiable
@@ -39,7 +45,9 @@ namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\Exception\KeyProofRequiredException;
 use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\ICacheFactory;
 use OCP\IConfig;
+use OCP\IMemcache;
 use OCP\Security\ISecureRandom;
 use RuntimeException;
 
@@ -51,6 +59,11 @@ class VaultKeyProofService {
 	 * How long a challenge is valid, in seconds.
 	 */
 	private const TTL = 300;
+
+	/**
+	 * Distributed cache namespace for consumed nonces (single-use proofs).
+	 */
+	public const USED_NONCE_CACHE_NS = 'keepiq_proof_nonce';
 
 	/**
 	 * Stable public purpose identifiers. Both the guarded method's attribute and
@@ -86,6 +99,7 @@ class VaultKeyProofService {
 	 * @param IConfig $config The system config, for the instance secret
 	 * @param ISecureRandom $secureRandom The challenge randomness source
 	 * @param ITimeFactory $timeFactory The clock, injected for testable expiry
+	 * @param ICacheFactory $cacheFactory Holds consumed nonces, so each proof is single-use
 	 *
 	 * @return void
 	 */
@@ -93,6 +107,7 @@ class VaultKeyProofService {
 		private IConfig $config,
 		private ISecureRandom $secureRandom,
 		private ITimeFactory $timeFactory,
+		private ICacheFactory $cacheFactory,
 	) {
 	}//end __construct()
 
@@ -178,7 +193,46 @@ class VaultKeyProofService {
 		if ($verified !== 1) {
 			throw new KeyProofRequiredException(message: 'Proof does not verify');
 		}
+
+		// Only a proof that fully verified is consumed, so nothing can burn a
+		// nonce it could not have used.
+		$this->consume(nonce: $nonce, expiresAt: (int)$claims['e']);
 	}//end verify()
+
+	/**
+	 * Mark a nonce used for the rest of its lifetime, or refuse a reuse.
+	 *
+	 * Atomic add() where the cache supports it; otherwise hasKey() then set(),
+	 * as JwtAuthService does for jti.
+	 *
+	 * @param string $nonce     The verified challenge
+	 * @param int    $expiresAt When the challenge expires
+	 *
+	 * @return void
+	 *
+	 * @throws KeyProofRequiredException When the nonce was already used
+	 *
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
+	 */
+	private function consume(string $nonce, int $expiresAt): void {
+		$cache = $this->cacheFactory->createDistributed(self::USED_NONCE_CACHE_NS);
+		$key = hash('sha256', $nonce);
+		$ttl = max(1, ($expiresAt - $this->timeFactory->getTime()));
+
+		if ($cache instanceof IMemcache) {
+			if ($cache->add($key, 1, $ttl) === false) {
+				throw new KeyProofRequiredException(message: 'Proof already used');
+			}
+
+			return;
+		}
+
+		if ($cache->hasKey($key) === true) {
+			throw new KeyProofRequiredException(message: 'Proof already used');
+		}
+
+		$cache->set($key, 1, $ttl);
+	}//end consume()
 
 	/**
 	 * The exact string a valid proof signs: the challenge, then the SHA-256 of
