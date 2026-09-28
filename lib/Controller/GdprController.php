@@ -31,9 +31,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Event\GdprExportPerformedEvent;
 use OCA\Keepiq\Service\AccountDeletionService;
 use OCA\Keepiq\Service\GdprService;
+use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -114,19 +116,26 @@ class GdprController extends Controller {
 	/**
 	 * Delete all of the session user's Keepiq data (GDPR Art. 17).
 	 *
-	 * Gated by the typed confirmation phrase in the request body. The
-	 * master-password re-authentication is enforced client-side (proof of
-	 * knowledge): the server cannot verify the master password under the
-	 * always-E2E model (ADR-003), so it never sees it. Returns the per-entity
-	 * DeletionReport counts.
+	 * Gated by the typed confirmation phrase AND a vault-key proof. The phrase
+	 * guards against a slip; the proof guards against a stolen session, which
+	 * could otherwise wipe every secret, suite and migration in one request. The
+	 * server never sees the master password (ADR-003): the proof is a signature
+	 * made with the private key it unlocks. A user without an active suite cannot
+	 * make one, and is deleted through the Nextcloud account instead
+	 * (UserDeletedListener). Returns the per-entity DeletionReport counts.
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/gdpr-compliance/spec.md#requirement-account-data-deletion
 	 */
 	#[NoAdminRequired]
+	#[VaultKeyProofRequired(
+		binds: ['confirmation'],
+		subject: 'active',
+		purpose: VaultKeyProofService::PURPOSE_DELETE_ACCOUNT_DATA
+	)]
 	public function deleteAccountData(): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {

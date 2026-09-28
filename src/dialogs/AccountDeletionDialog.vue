@@ -207,6 +207,7 @@ export default {
 			try {
 				const result = await this.exportStore.deleteAccountData(
 					this.confirmation,
+					this.masterPassword,
 				)
 				this.report = result.report || result
 				this.sessionStore.lock()

@@ -34,6 +34,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Controller\EmergencyAccessController;
 use OCA\Keepiq\Controller\EncryptionSuiteController;
+use OCA\Keepiq\Controller\GdprController;
 use OCA\Keepiq\Controller\MigrationController;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use PHPUnit\Framework\TestCase;
@@ -101,6 +102,14 @@ class VaultKeyProofAttributesTest extends TestCase {
 				['id', 'contactId', 'recoveryEnvelope', 'granteeSuiteId'],
 				'migrationOldSuite',
 				VaultKeyProofService::PURPOSE_EMERGENCY_RE_ENVELOPE,
+			],
+			// Wipes every secret, suite and migration the user has.
+			'delete account data' => [
+				GdprController::class,
+				'deleteAccountData',
+				['confirmation'],
+				'active',
+				VaultKeyProofService::PURPOSE_DELETE_ACCOUNT_DATA,
 			],
 		];
 	}//end guardedMethodsProvider()

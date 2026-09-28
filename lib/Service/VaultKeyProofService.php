@@ -64,6 +64,7 @@ class VaultKeyProofService {
 	public const PURPOSE_REVOKE_SUITE = 'revoke-suite';
 	public const PURPOSE_EMERGENCY_DESIGNATE = 'emergency-access-designate';
 	public const PURPOSE_EMERGENCY_RE_ENVELOPE = 'emergency-access-re-envelope';
+	public const PURPOSE_DELETE_ACCOUNT_DATA = 'delete-account-data';
 
 	/**
 	 * The purposes a challenge may be issued for.
@@ -76,6 +77,7 @@ class VaultKeyProofService {
 		self::PURPOSE_REVOKE_SUITE,
 		self::PURPOSE_EMERGENCY_DESIGNATE,
 		self::PURPOSE_EMERGENCY_RE_ENVELOPE,
+		self::PURPOSE_DELETE_ACCOUNT_DATA,
 	];
 
 	/**

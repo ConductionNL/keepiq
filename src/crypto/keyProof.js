@@ -32,6 +32,7 @@ export const PROOF_PURPOSE = {
 	REVOKE_SUITE: 'revoke-suite',
 	EMERGENCY_DESIGNATE: 'emergency-access-designate',
 	EMERGENCY_RE_ENVELOPE: 'emergency-access-re-envelope',
+	DELETE_ACCOUNT_DATA: 'delete-account-data',
 }
 
 /**
