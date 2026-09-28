@@ -75,3 +75,25 @@ The `SUITE_REVOKED` audit event's metadata MUST carry `{ reason, markCompromised
 - **THEN** the revocation MUST proceed and the emergency access MUST be cleared unconditionally (revocation is authoritative — unlike the owner path, no `acceptEmergencyLoss` gate blocks it)
 - **AND** the count of destroyed usable emergency contacts (`EmergencyEnvelopeInvalidationService::countUsableForGrantorSuite`) MUST be recorded in the `SUITE_REVOKED` audit metadata as `emergencyContactsDestroyed` and surfaced to the administrator as an informational warning
 - **AND** the emergency contacts' identities MUST NOT cross the wire — only the count
+
+### Requirement: A Suite In An In-Progress Migration Cannot Be Revoked
+The system MUST refuse to revoke a suite, by an administrator's force-revoke or by its owner, while that suite is the old or the new end of a key migration that is still `in_progress` (keepiq#803). Revoking the old end blocks the reads the owner's browser needs to re-encrypt; revoking the new end makes records that were already re-encrypted, or are being written, unreadable. Either way the migration and the vault write lock would stay `in_progress` with no way to finish. The refusal MUST happen before anything is changed, MUST answer `409` with `error: migration_in_progress`, and MUST say that the migration has to be completed or aborted first.
+
+#### Scenario: Force-revoke of a suite mid-migration is refused
+@e2e exclude Server-side refusal on an admin API route; covered by PHPUnit on EncryptionSuiteController and MigrationService.
+- **GIVEN** user A's suite is the old or the new end of a migration in state `in_progress`
+- **WHEN** an administrator force-revokes that suite
+- **THEN** the system MUST refuse with `409` and `error: migration_in_progress`
+- **AND** the suite, its emergency contacts and the migration MUST be unchanged
+
+#### Scenario: The owner's revoke of a suite mid-migration is refused
+@e2e exclude Server-side refusal; covered by PHPUnit on EncryptionSuiteController.
+- **GIVEN** user A's suite is part of a migration in state `in_progress`
+- **WHEN** A revokes that suite
+- **THEN** the system MUST refuse with `409` and `error: migration_in_progress`
+
+#### Scenario: A finished migration does not block revocation
+@e2e exclude Server-side check; covered by PHPUnit on MigrationService.
+- **GIVEN** every migration the suite was part of is `completed`, `completed_with_errors` or `aborted`
+- **WHEN** the suite is revoked
+- **THEN** the migration check MUST NOT refuse it

@@ -25,6 +25,7 @@ use Exception;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
 use OCA\Keepiq\Service\EncryptionSuiteService;
@@ -51,6 +52,12 @@ use RuntimeException;
  *   VaultKeyProofService for the challenge endpoint pushed it to 13; splitting
  *   the challenge onto its own controller would add a route surface for one
  *   trivial method without reducing the domain coupling that the rest carries.
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Same cause: the aggregate
+ *   is the sum of small endpoints that each map their own exceptions to a
+ *   status. It reached the threshold when both revoke paths gained the 409 for
+ *   a suite that is part of an in-progress migration (keepiq#803). Splitting
+ *   the two revoke endpoints off would duplicate validateOwnership() and the
+ *   emergency-access safeguard, not remove any branch.
  */
 class EncryptionSuiteController extends OCSController {
 	/**
@@ -334,6 +341,10 @@ class EncryptionSuiteController extends OCSController {
 			// already call this same helper; revoke() did not.
 			$this->validateOwnership(suite: $this->suiteService->getSuite($id));
 
+			// Not while the suite is part of an in-progress migration: revoking
+			// either end strands it (keepiq#803).
+			$this->migrationService->assertNoMigrationInProgress(suiteId: $id);
+
 			// Refuse to silently destroy a still-usable break-glass path. The
 			// envelope clear runs asynchronously in EmergencyAccessSuiteRevocation-
 			// Listener, downstream of the event revokeSuite dispatches, so the
@@ -357,6 +368,11 @@ class EncryptionSuiteController extends OCSController {
 
 			$suite = $this->suiteService->revokeSuite(id: $id, reason: $reason, revokedBy: $userId);
 			return new JSONResponse(data: $suite->jsonSerialize());
+		} catch (SuiteMigrationInProgressException $e) {
+			return new JSONResponse(
+				data: ['error' => 'migration_in_progress', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (RuntimeException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
@@ -449,6 +465,10 @@ class EncryptionSuiteController extends OCSController {
 		}
 
 		try {
+			// Not while the suite is part of an in-progress migration: revoking
+			// either end strands it (keepiq#803). Checked before anything else.
+			$this->migrationService->assertNoMigrationInProgress(suiteId: $id);
+
 			// Read BEFORE revokeSuite(): the EncryptionSuiteRevokedEvent cascade
 			// clears the grantor's emergency envelopes, so the usable count is
 			// non-zero here only while the contacts still exist.
@@ -469,6 +489,11 @@ class EncryptionSuiteController extends OCSController {
 			}
 
 			return new JSONResponse(data: $data);
+		} catch (SuiteMigrationInProgressException $e) {
+			return new JSONResponse(
+				data: ['error' => 'migration_in_progress', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (RuntimeException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],

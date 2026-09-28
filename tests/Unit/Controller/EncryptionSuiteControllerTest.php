@@ -24,6 +24,7 @@ use OCA\Keepiq\Controller\EncryptionSuiteController;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\SuiteMigration;
 use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
@@ -979,4 +980,47 @@ class EncryptionSuiteControllerTest extends TestCase {
 			haystack: $response->getData()['warning']
 		);
 	}//end testForceRevokeWithoutCompromiseReturnsTheRotationWarning()
+
+	/**
+	 * Force-revoke refuses a suite that is part of an in-progress migration,
+	 * before anything is touched (keepiq#803).
+	 *
+	 * @return void
+	 */
+	public function testForceRevokeRefusesASuiteMidMigration(): void {
+		$this->migrationService->expects($this->once())
+			->method('assertNoMigrationInProgress')
+			->with('suite-1')
+			->willThrowException(new SuiteMigrationInProgressException('mid-migration'));
+		$this->emergencyService->expects($this->never())->method('countUsableForGrantorSuite');
+		$this->suiteService->expects($this->never())->method('revokeSuite');
+
+		$response = $this->controller->forceRevoke('suite-1', 'departed');
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+		$this->assertSame(expected: 'migration_in_progress', actual: $response->getData()['error']);
+	}//end testForceRevokeRefusesASuiteMidMigration()
+
+	/**
+	 * The owner's own revoke has the same hazard and the same refusal.
+	 *
+	 * @return void
+	 */
+	public function testOwnerRevokeRefusesASuiteMidMigration(): void {
+		$owned = new EncryptionSuite();
+		$owned->setId('suite-1');
+		$owned->setOwnerType('user');
+		$owned->setOwnerId('testuser');
+		$this->suiteService->method('getSuite')->willReturn($owned);
+		$this->migrationService->expects($this->once())
+			->method('assertNoMigrationInProgress')
+			->with('suite-1')
+			->willThrowException(new SuiteMigrationInProgressException('mid-migration'));
+		$this->suiteService->expects($this->never())->method('revokeSuite');
+
+		$response = $this->controller->revoke('suite-1', 'security concern', true);
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+		$this->assertSame(expected: 'migration_in_progress', actual: $response->getData()['error']);
+	}//end testOwnerRevokeRefusesASuiteMidMigration()
 }//end class

@@ -12,6 +12,7 @@ use OCA\Keepiq\Event\SuiteMigrationAbortedEvent;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
 use OCA\Keepiq\Exception\MigrationAbortRefusedException;
 use OCA\Keepiq\Exception\MigrationIncompleteException;
+use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
@@ -651,4 +652,57 @@ class MigrationServiceTest extends TestCase {
 
 		$this->assertSame(['drop', 'gate'], $order);
 	}//end testVersionDropRunsBeforeTheGate()
+
+	/**
+	 * A suite at either end of an in-progress migration cannot be revoked
+	 * (keepiq#803): revoking the old end blocks the reads the migration needs,
+	 * revoking the new end strands what it already re-encrypted.
+	 *
+	 * @param string $end Which end of the migration the suite is.
+	 *
+	 * @return void
+	 *
+	 * @dataProvider migrationEndProvider
+	 */
+	public function testASuiteInAnInProgressMigrationIsRefused(string $end): void {
+		$migration = new SuiteMigration();
+		$migration->setId('migration-1');
+		$migration->setOldSuiteId($end === 'old' ? 'suite-1' : 'other-suite');
+		$migration->setNewSuiteId($end === 'new' ? 'suite-1' : 'other-suite');
+		$migration->setStatus('in_progress');
+		$this->migrationMapper->method('findBySuiteId')->with('suite-1')->willReturn([$migration]);
+
+		$this->expectException(SuiteMigrationInProgressException::class);
+		$this->service->assertNoMigrationInProgress(suiteId: 'suite-1');
+	}//end testASuiteInAnInProgressMigrationIsRefused()
+
+	/**
+	 * The two ends of a migration.
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function migrationEndProvider(): array {
+		return ['old suite' => ['old'], 'new suite' => ['new']];
+	}//end migrationEndProvider()
+
+	/**
+	 * Finished migrations, or none, do not block a revoke.
+	 *
+	 * @return void
+	 */
+	public function testFinishedMigrationsDoNotBlockARevoke(): void {
+		$migrations = [];
+		foreach (['completed', 'completed_with_errors', 'aborted'] as $i => $status) {
+			$migration = new SuiteMigration();
+			$migration->setId('migration-' . $i);
+			$migration->setOldSuiteId('suite-1');
+			$migration->setNewSuiteId('other-suite');
+			$migration->setStatus($status);
+			$migrations[] = $migration;
+		}
+		$this->migrationMapper->method('findBySuiteId')->willReturn($migrations);
+
+		$this->service->assertNoMigrationInProgress(suiteId: 'suite-1');
+		$this->addToAssertionCount(1);
+	}//end testFinishedMigrationsDoNotBlockARevoke()
 }//end class

@@ -30,6 +30,7 @@ use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
 use OCA\Keepiq\Event\SuiteMigrationStartedEvent;
 use OCA\Keepiq\Exception\MigrationAbortRefusedException;
 use OCA\Keepiq\Exception\MigrationIncompleteException;
+use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -607,6 +608,35 @@ class MigrationService {
 
 		return $ownerId;
 	}//end resolveOwnerId()
+
+	/**
+	 * Refuse when the suite is either end of a migration still in progress.
+	 *
+	 * Revoking the old end blocks the reads the owner's browser needs to
+	 * re-encrypt; revoking the new end strands what was already re-encrypted.
+	 * Either way the migration and the write lock stay `in_progress` with no
+	 * way to finish (keepiq#803). Both revoke paths call this before touching
+	 * anything.
+	 *
+	 * @param string $suiteId The suite about to be revoked
+	 *
+	 * @return void
+	 *
+	 * @throws SuiteMigrationInProgressException When a migration involving the suite is in progress
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
+	 */
+	public function assertNoMigrationInProgress(string $suiteId): void {
+		foreach ($this->mapper->findBySuiteId(suiteId: $suiteId) as $migration) {
+			if ($migration->getStatus() === 'in_progress') {
+				throw new SuiteMigrationInProgressException(
+					message: 'This suite is part of a key migration that is still in progress. '
+					. 'It can be revoked once that migration is completed or aborted.'
+				);
+			}
+		}
+
+	}//end assertNoMigrationInProgress()
 
 	/**
 	 * Get in-progress migration for a given owner (via their old suite).
