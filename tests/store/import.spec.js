@@ -544,12 +544,38 @@ describe('useImportStore', () => {
 
 			// Decrypted server secrets carry `typeId` (a UUID) and no `type`.
 			const decrypted = [
-				{ name: 'Deploy key', key: 'ssh-ed25519 AAAA', login: null, folderId: null, typeId: TYPE_IDS.ssh_key },
-				{ name: 'Recovery codes', key: 'codes', login: null, folderId: null, typeId: TYPE_IDS.note },
-				{ name: 'Office VPN', key: 'vpn-secret', login: 'me', folderId: null, typeId: TYPE_IDS.vpnProfile },
-				{ name: 'GitHub', key: 'hunter2', login: 'octocat', folderId: null, typeId: TYPE_IDS.login },
+				{
+					name: 'Deploy key',
+					key: 'ssh-ed25519 AAAA',
+					login: null,
+					folderId: null,
+					typeId: TYPE_IDS.ssh_key,
+				},
+				{
+					name: 'Recovery codes',
+					key: 'codes',
+					login: null,
+					folderId: null,
+					typeId: TYPE_IDS.note,
+				},
+				{
+					name: 'Office VPN',
+					key: 'vpn-secret',
+					login: 'me',
+					folderId: null,
+					typeId: TYPE_IDS.vpnProfile,
+				},
+				{
+					name: 'GitHub',
+					key: 'hunter2',
+					login: 'octocat',
+					folderId: null,
+					typeId: TYPE_IDS.login,
+				},
 			]
-			const items = await restore(serializeVault(decrypted, [], { mode: 'vault' }))
+			const items = await restore(
+				serializeVault(decrypted, [], { mode: 'vault' }),
+			)
 
 			expect(items['Deploy key'].typeId).toBe(TYPE_IDS.ssh_key)
 			expect(items['Recovery codes'].typeId).toBe(TYPE_IDS.note)
