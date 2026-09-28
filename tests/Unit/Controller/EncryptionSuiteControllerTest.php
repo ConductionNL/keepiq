@@ -1023,4 +1023,63 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
 		$this->assertSame(expected: 'migration_in_progress', actual: $response->getData()['error']);
 	}//end testOwnerRevokeRefusesASuiteMidMigration()
+
+	/**
+	 * A compromise force-revoke is not blocked by an in-progress migration: it
+	 * ends the migration and revokes BOTH ends (keepiq#809 review). Otherwise
+	 * the party being contained could keep the admin's containment blocked.
+	 *
+	 * @return void
+	 */
+	public function testCompromiseForceRevokeEndsTheMigrationAndRevokesBothEnds(): void {
+		$migration = new SuiteMigration();
+		$migration->setId('migration-1');
+		$migration->setOldSuiteId('suite-1');
+		$migration->setNewSuiteId('suite-2');
+		$migration->setStatus('terminated');
+
+		$this->migrationService->expects($this->never())->method('assertNoMigrationInProgress');
+		$this->migrationService->expects($this->once())
+			->method('terminateInProgressForCompromise')
+			->with('suite-1')
+			->willReturn($migration);
+		$this->emergencyService->method('countUsableForGrantorSuite')->willReturn(0);
+
+		$revoked = [];
+		$this->suiteService->method('revokeSuite')->willReturnCallback(
+			static function (string $id, string $reason, string $revokedBy, bool $markCompromised = false, int $emergencyContactsDestroyed = 0) use (&$revoked): EncryptionSuite {
+				$revoked[] = [$id, $markCompromised];
+				$suite = new EncryptionSuite();
+				$suite->setId($id);
+				$suite->setStatus('revoked');
+				return $suite;
+			}
+		);
+
+		$response = $this->controller->forceRevoke('suite-1', 'account taken over', true);
+
+		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+		$this->assertSame([['suite-1', true], ['suite-2', true]], $revoked);
+		$this->assertSame('migration-1', $response->getData()['terminatedMigration']);
+		$this->assertSame('suite-2', $response->getData()['alsoRevokedSuite']);
+	}//end testCompromiseForceRevokeEndsTheMigrationAndRevokesBothEnds()
+
+	/**
+	 * A compromise force-revoke with no migration revokes just the one suite.
+	 *
+	 * @return void
+	 */
+	public function testCompromiseForceRevokeWithoutAMigrationRevokesOneSuite(): void {
+		$this->migrationService->method('terminateInProgressForCompromise')->willReturn(null);
+		$this->emergencyService->method('countUsableForGrantorSuite')->willReturn(0);
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setStatus('revoked');
+		$this->suiteService->expects($this->once())->method('revokeSuite')->willReturn($suite);
+
+		$response = $this->controller->forceRevoke('suite-1', 'account taken over', true);
+
+		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+		$this->assertArrayNotHasKey('terminatedMigration', $response->getData());
+	}//end testCompromiseForceRevokeWithoutAMigrationRevokesOneSuite()
 }//end class

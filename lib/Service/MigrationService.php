@@ -616,7 +616,8 @@ class MigrationService {
 	 * re-encrypt; revoking the new end strands what was already re-encrypted.
 	 * Either way the migration and the write lock stay `in_progress` with no
 	 * way to finish (keepiq#803). Both revoke paths call this before touching
-	 * anything.
+	 * anything. It is a check, not a lock: a migration started in the moment
+	 * between this call and revokeSuite() is not caught.
 	 *
 	 * @param string $suiteId The suite about to be revoked
 	 *
@@ -637,6 +638,55 @@ class MigrationService {
 		}
 
 	}//end assertNoMigrationInProgress()
+
+	/**
+	 * End the suite's in-progress migration for a compromise force-revoke.
+	 *
+	 * The owner's abort refuses once anything is committed, and every migration
+	 * route is owner-only. So whoever holds the session and the leaked password
+	 * could start a recovery, commit one record and walk away, and the admin's
+	 * containment would be blocked for good (keepiq#809 review). A compromise
+	 * force-revoke therefore ends the migration instead: status `terminated`,
+	 * which releases the write lock, plus the same aborted event the owner's
+	 * abort dispatches, so the SecretRequests it locked are released. The
+	 * caller revokes both ends.
+	 *
+	 * @param string $suiteId The suite being force-revoked
+	 *
+	 * @return SuiteMigration|null The terminated migration, or null when none was in progress
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
+	 */
+	public function terminateInProgressForCompromise(string $suiteId): ?SuiteMigration {
+		foreach ($this->mapper->findBySuiteId(suiteId: $suiteId) as $migration) {
+			if ($migration->getStatus() !== 'in_progress') {
+				continue;
+			}
+
+			$migration->setStatus('terminated');
+			$migration->setCompletedAt(new DateTime());
+			$this->mapper->update($migration);
+			$this->workService->clearFailureAccounting(migration: $migration);
+
+			$this->eventDispatcher?->dispatchTyped(
+				new SuiteMigrationAbortedEvent(
+					oldSuiteId: $migration->getOldSuiteId(),
+					newSuiteId: $migration->getNewSuiteId(),
+					migrationId: $migration->getId(),
+				)
+			);
+
+			$this->logger->warning(
+				'Keepiq: migration terminated by a compromise force-revoke',
+				['migrationId' => $migration->getId(), 'suiteId' => $suiteId]
+			);
+
+			return $migration;
+		}
+
+		return null;
+
+	}//end terminateInProgressForCompromise()
 
 	/**
 	 * Get in-progress migration for a given owner (via their old suite).

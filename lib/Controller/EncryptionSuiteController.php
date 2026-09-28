@@ -467,7 +467,12 @@ class EncryptionSuiteController extends OCSController {
 		try {
 			// Not while the suite is part of an in-progress migration: revoking
 			// either end strands it (keepiq#803). Checked before anything else.
-			$this->migrationService->assertNoMigrationInProgress(suiteId: $id);
+			// A COMPROMISE force-revoke is the exception: there the migration is
+			// ended below instead, or whoever is being contained could block the
+			// containment for good by leaving a migration open.
+			if ($markCompromised === false) {
+				$this->migrationService->assertNoMigrationInProgress(suiteId: $id);
+			}
 
 			// Read BEFORE revokeSuite(): the EncryptionSuiteRevokedEvent cascade
 			// clears the grantor's emergency envelopes, so the usable count is
@@ -486,7 +491,10 @@ class EncryptionSuiteController extends OCSController {
 			$data['emergencyContactsDestroyed'] = $emergencyCount;
 			if ($markCompromised === false) {
 				$data['warning'] = 'The revoked user may still know these secrets; consider rotating them.';
+				return new JSONResponse(data: $data);
 			}
+
+			$data += $this->endMigrationForCompromise(suiteId: $id, reason: $reason, adminUid: $adminUid);
 
 			return new JSONResponse(data: $data);
 		} catch (SuiteMigrationInProgressException $e) {
@@ -506,6 +514,43 @@ class EncryptionSuiteController extends OCSController {
 			);
 		}//end try
 	}//end forceRevoke()
+
+	/**
+	 * End the suite's in-progress migration and revoke its other end.
+	 *
+	 * Part of a compromise force-revoke. The other end is revoked as
+	 * compromised too: during a compromise either end may be the one the
+	 * attacker controls (keepiq#809 review).
+	 *
+	 * @param string $suiteId  The suite just force-revoked
+	 * @param string $reason   The admin's reason, reused for the other end
+	 * @param string $adminUid The acting administrator
+	 *
+	 * @return array<string,string> `terminatedMigration` and `alsoRevokedSuite`, or empty when no migration was open
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
+	 */
+	private function endMigrationForCompromise(string $suiteId, string $reason, string $adminUid): array {
+		$migration = $this->migrationService->terminateInProgressForCompromise(suiteId: $suiteId);
+		if ($migration === null) {
+			return [];
+		}
+
+		$otherId = $migration->getOldSuiteId();
+		if ($otherId === $suiteId) {
+			$otherId = $migration->getNewSuiteId();
+		}
+		$this->suiteService->revokeSuite(
+			id: $otherId,
+			reason: $reason,
+			revokedBy: $adminUid,
+			markCompromised: true,
+			emergencyContactsDestroyed: $this->emergencyService->countUsableForGrantorSuite($otherId),
+		);
+
+		return ['terminatedMigration' => $migration->getId(), 'alsoRevokedSuite' => $otherId];
+
+	}//end endMigrationForCompromise()
 
 	/**
 	 * Initiate compromise recovery: create new suite and migration record.
