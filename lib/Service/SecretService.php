@@ -254,13 +254,7 @@ class SecretService {
 		}
 
 		$folderId = $this->nullableString(value: $data['folderId'] ?? null);
-		// Keepiq#795: a secret may only be filed in a folder its owner owns; the folder
-		// owner's delete counts and purges every secret in it without an owner filter.
-		// Without the guard wired, every folder is refused rather than trusted.
-		if ($folderId !== null) {
-			($this->folderOwnership ?? throw new ForbiddenException(message: 'The folder cannot be checked'))
-				->requireOwned(id: $folderId, userId: $userId);
-		}
+		$this->requireFolderOwnedBy(folderId: $folderId, userId: $userId);
 
 		$suite = $this->getActiveSuiteOrBlock(userId: $userId);
 
@@ -340,13 +334,7 @@ class SecretService {
 		// The writing user files the application's secret, so the folder is
 		// checked against that user.
 		$folderId = $this->nullableString(value: $data['folderId'] ?? null);
-		// Keepiq#795: a secret may only be filed in a folder its owner owns; the folder
-		// owner's delete counts and purges every secret in it without an owner filter.
-		// Without the guard wired, every folder is refused rather than trusted.
-		if ($folderId !== null) {
-			($this->folderOwnership ?? throw new ForbiddenException(message: 'The folder cannot be checked'))
-				->requireOwned(id: $folderId, userId: $writingUserId);
-		}
+		$this->requireFolderOwnedBy(folderId: $folderId, userId: $writingUserId);
 
 		try {
 			$suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
@@ -838,6 +826,33 @@ class SecretService {
 	}//end get()
 
 	/**
+	 * Refuse a folder the given user does not own (keepiq#795).
+	 *
+	 * A secret may only be filed in a folder its owner owns: the folder owner's
+	 * delete counts and purges every secret in it without an owner filter.
+	 * Without the guard wired, every folder is refused rather than trusted.
+	 * A null folder (no folder, or clearing it) is always allowed.
+	 *
+	 * @param string|null $folderId The folder the secret is filed in
+	 * @param string $userId The user who must own that folder
+	 *
+	 * @return void
+	 *
+	 * @throws NotFoundException When the folder does not exist
+	 * @throws ForbiddenException When the folder belongs to another user or cannot be checked
+	 *
+	 * @spec exclude keepiq#795 security fix, no OpenSpec requirement names this guard yet
+	 */
+	private function requireFolderOwnedBy(?string $folderId, string $userId): void {
+		if ($folderId === null) {
+			return;
+		}
+
+		($this->folderOwnership ?? throw new ForbiddenException(message: 'The folder cannot be checked'))
+			->requireOwned(id: $folderId, userId: $userId);
+	}//end requireFolderOwnedBy()
+
+	/**
 	 * Update a secret owned by the user.
 	 *
 	 * @param string $id The secret ID
@@ -884,13 +899,7 @@ class SecretService {
 		if (array_key_exists('folderId', $data) === true) {
 			$folderId = $this->nullableString(value: $data['folderId']);
 			if ($folderId !== $secret->getFolderId()) {
-				// Keepiq#795: a secret may only be filed in a folder its owner owns; the folder
-				// owner's delete counts and purges every secret in it without an owner filter.
-				// Without the guard wired, every folder is refused rather than trusted.
-				if ($folderId !== null) {
-					($this->folderOwnership ?? throw new ForbiddenException(message: 'The folder cannot be checked'))
-						->requireOwned(id: $folderId, userId: $userId);
-				}
+				$this->requireFolderOwnedBy(folderId: $folderId, userId: $userId);
 			}
 
 			$secret->setFolderId($folderId);
