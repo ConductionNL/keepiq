@@ -20,12 +20,12 @@
  * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
  */
 
+import { mount } from '@vue/test-utils'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
-import { parse } from 'vue/compiler-sfc'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { parse } from 'vue/compiler-sfc'
 import CxpTransferDialog from '../../src/dialogs/CxpTransferDialog.vue'
 import ExportDialog from '../../src/dialogs/ExportDialog.vue'
 import SecretList from '../../src/views/SecretList.vue'
@@ -72,8 +72,11 @@ function n(app, singular, plural, count) {
 	return (count === 1 ? singular : plural).replace('%n', String(count))
 }
 
+// A mount-level mixin overrides the setup file's `n` stub, which picks the
+// plural form but leaves `%n` in place; this one substitutes the count like
+// Nextcloud's own `n()`.
 const mountOpts = {
-	global: { stubs: ncStubs, mocks: { t: (app, s) => s, n } },
+	global: { stubs: ncStubs, mixins: [{ methods: { t: (app, s) => s, n } }] },
 }
 
 /**
