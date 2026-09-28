@@ -43,6 +43,39 @@
 				v-model="confirmPassword"
 				:label="t('keepiq', 'Confirm new password')"
 				:disabled="loading" />
+
+			<!-- keepiq#800: carrying a contact hands them the NEW key, and this
+			     runs when someone else may have held the session. The owner
+			     picks; nothing is preselected. -->
+			<div
+				v-if="carriableContacts.length > 0"
+				class="compromise-recovery-form__carry"
+				data-testid="compromise-recovery-carry">
+				<NcNoteCard type="warning">
+					<p>
+						{{
+							t(
+								'keepiq',
+								'Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.',
+							)
+						}}
+					</p>
+				</NcNoteCard>
+				<NcCheckboxRadioSwitch
+					v-for="contact in carriableContacts"
+					:key="contact.id"
+					:modelValue="carryContactIds.includes(contact.id)"
+					:disabled="loading"
+					data-testid="compromise-recovery-carry-item"
+					@update:modelValue="toggleCarry(contact.id, $event)">
+					{{
+						t('keepiq', '{grantee}, waiting period in days: {days}', {
+							grantee: contact.granteeUserId,
+							days: contact.waitPeriodDays,
+						})
+					}}
+				</NcCheckboxRadioSwitch>
+			</div>
 		</template>
 
 		<!-- Surface 2 of 3: during. Driven by the worker, counted across all
@@ -244,14 +277,22 @@
 </template>
 
 <script>
-import { NcButton, NcNoteCard, NcPasswordField, NcProgressBar } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcNoteCard,
+	NcPasswordField,
+	NcProgressBar,
+} from '@nextcloud/vue'
 import PasswordStrengthMeter from './PasswordStrengthMeter.vue'
 import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
+import { useSessionStore } from '../store/modules/session.js'
 
 export default {
 	name: 'CompromiseRecoveryForm',
 	components: {
 		NcButton,
+		NcCheckboxRadioSwitch,
 		NcNoteCard,
 		NcPasswordField,
 		NcProgressBar,
@@ -274,7 +315,26 @@ export default {
 			activeOldPassword: null,
 			/** @type {boolean} Show the re-auth field when completion needs a fresh proof. */
 			needsReauth: false,
+			/** @type {Array<object>} Emergency contacts this rotation may carry. */
+			carriableContacts: [],
+			/** @type {string[]} The ones the owner ticked; none by default. */
+			carryContactIds: [],
 		}
+	},
+
+	/**
+	 * Load the emergency contacts the owner may choose to carry to the new key.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+	 */
+	async mounted() {
+		const suiteId = useSessionStore().suiteId
+		if (!suiteId) {
+			return
+		}
+		this.carriableContacts = await useEncryptionSuiteStore()
+			.listCarriableEmergencyContacts(suiteId)
 	},
 
 	computed: {
@@ -424,6 +484,19 @@ export default {
 		},
 
 		/**
+		 * Tick or untick one emergency contact to carry to the new key.
+		 *
+		 * @param {string} contactId The contact id.
+		 * @param {boolean} carry Whether to carry it.
+		 * @return {void}
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		toggleCarry(contactId, carry) {
+			const others = this.carryContactIds.filter((id) => id !== contactId)
+			this.carryContactIds = carry ? [...others, contactId] : others
+		},
+
+		/**
 		 * Initiate compromise recovery: full key rotation plus the secret
 		 * migration from the old (leaked) master password to the new one.
 		 *
@@ -440,6 +513,7 @@ export default {
 				const outcome = await store.initiateCompromiseRecovery(
 					this.oldPassword,
 					this.newPassword,
+					[...this.carryContactIds],
 				)
 
 				this.result = outcome

@@ -30,6 +30,8 @@ export const PROOF_PURPOSE = {
 	COMPLETE_MIGRATION: 'complete-migration',
 	EMERGENCY_DESTROY: 'emergency-access-destroy',
 	REVOKE_SUITE: 'revoke-suite',
+	EMERGENCY_DESIGNATE: 'emergency-access-designate',
+	EMERGENCY_RE_ENVELOPE: 'emergency-access-re-envelope',
 }
 
 /**

@@ -19,11 +19,12 @@
  * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
  */
 
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import CompromiseRecoveryForm from '../../src/components/CompromiseRecoveryForm.vue'
 import { useEncryptionSuiteStore } from '../../src/store/modules/encryptionSuite.js'
+import { useSessionStore } from '../../src/store/modules/session.js'
 
 /**
  * Mount the form with the Nextcloud component surface stubbed out, so the test
@@ -65,6 +66,11 @@ function mountForm() {
 				NcPasswordField: { template: '<input />' },
 				NcProgressBar: { template: '<div class="progress-bar" />' },
 				PasswordStrengthMeter: true,
+				NcCheckboxRadioSwitch: {
+					props: ['modelValue'],
+					emits: ['update:modelValue'],
+					template: '<label class="carry"><input type="checkbox" :checked="modelValue" @change="$emit(\'update:modelValue\', $event.target.checked)" /><slot /></label>',
+				},
 			},
 		},
 	})
@@ -74,6 +80,65 @@ describe('CompromiseRecoveryForm', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		vi.restoreAllMocks()
+	})
+
+	// keepiq#800: a compromise recovery runs exactly when someone else may have
+	// held the session, and carrying a contact hands them the NEW key. So the
+	// owner picks, nothing is preselected, and only the ticked ones go through.
+	describe('emergency contacts to carry', () => {
+		const contacts = [
+			{ id: 'rel-1', granteeUserId: 'bob', state: 'granted', waitPeriodDays: 7 },
+			{ id: 'rel-2', granteeUserId: 'carol', state: 'granted', waitPeriodDays: 1 },
+		]
+
+		beforeEach(() => {
+			useSessionStore().suiteId = 'old-suite'
+		})
+
+		it('lists the carriable contacts with none preselected', async () => {
+			const store = useEncryptionSuiteStore()
+			const list = vi.spyOn(store, 'listCarriableEmergencyContacts').mockResolvedValue(contacts)
+
+			const wrapper = mountForm()
+			await flushPromises()
+
+			expect(list).toHaveBeenCalledWith('old-suite')
+			const items = wrapper.findAll('[data-testid="compromise-recovery-carry-item"]')
+			expect(items.map((i) => i.text())).toEqual([
+				expect.stringContaining('bob'),
+				expect.stringContaining('carol'),
+			])
+			expect(items.every((i) => i.find('input').element.checked === false)).toBe(true)
+		})
+
+		it('carries only the contacts the owner ticked', async () => {
+			const store = useEncryptionSuiteStore()
+			vi.spyOn(store, 'listCarriableEmergencyContacts').mockResolvedValue(contacts)
+			const initiate = vi
+				.spyOn(store, 'initiateCompromiseRecovery')
+				.mockResolvedValue({ migrated: 0, droppedVersions: 0, failures: [], residualContacts: ['bob'] })
+
+			const wrapper = mountForm()
+			await flushPromises()
+			const carol = wrapper.findAll('[data-testid="compromise-recovery-carry-item"]')[1]
+			await carol.find('input').setValue(true)
+
+			wrapper.vm.oldPassword = 'old'
+			wrapper.vm.newPassword = 'new'
+			await wrapper.vm.handleSubmit()
+
+			expect(initiate).toHaveBeenCalledWith('old', 'new', ['rel-2'])
+		})
+
+		it('shows no list when there is nothing to carry', async () => {
+			const store = useEncryptionSuiteStore()
+			vi.spyOn(store, 'listCarriableEmergencyContacts').mockResolvedValue([])
+
+			const wrapper = mountForm()
+			await flushPromises()
+
+			expect(wrapper.find('[data-testid="compromise-recovery-carry"]').exists()).toBe(false)
+		})
 	})
 
 	it('warns before confirming that values must be changed at their source', () => {

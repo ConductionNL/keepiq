@@ -196,19 +196,27 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 	}//end testReEnvelopeRepointsToNewSuiteAndKeepsGranted()
 
 	/**
-	 * A re-envelope carries an in-flight break-glass (requested/approved) onto the
-	 * new suite WITHOUT forcing it back to granted — that would silently veto the
-	 * request — and without mis-auditing the carry as a grant.
+	 * Only a `granted` contact is carried across a rotation (keepiq#800).
+	 *
+	 * A `requested` or `approved` contact has a break-glass in flight. Carrying
+	 * it would hand the NEW private key to that grantee with the wait already
+	 * served, which is exactly what a planted contact is after. An invalidated
+	 * contact has no envelope to carry, and reviving it here would re-grant a
+	 * contact through a route that proves nothing about the grantee.
+	 *
+	 * @param string $state The contact state that must be refused.
 	 *
 	 * @return void
+	 *
+	 * @dataProvider uncarriedStateProvider
 	 */
-	public function testReEnvelopePreservesInFlightBreakGlassState(): void {
-		$contact = $this->contact(state: EmergencyContact::STATE_APPROVED);
-		$this->mapper->method('findById')->willReturn($contact);
-		$this->mapper->method('update')->willReturnArgument(0);
+	public function testReEnvelopeRefusesAContactThatIsNotGranted(string $state): void {
+		$this->mapper->method('findById')->willReturn($this->contact(state: $state));
+		$this->mapper->expects($this->never())->method('update');
 		$this->suiteMapper->method('findActiveByOwner')->willReturn($this->suite('grantee-active'));
 
-		$updated = $this->service->reEnvelopeForRotation(
+		$this->expectException(ForbiddenException::class);
+		$this->service->reEnvelopeForRotation(
 			ownerId: 'alice',
 			oldSuiteId: 'old-suite',
 			newSuiteId: 'new-suite',
@@ -216,13 +224,20 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 			recoveryEnvelope: $this->envelope(),
 			sealedSuiteId: 'grantee-active',
 		);
+	}//end testReEnvelopeRefusesAContactThatIsNotGranted()
 
-		// Carried across the rotation (new suite, fresh envelope) but the approved
-		// break-glass is neither vetoed nor relabelled as a grant.
-		$this->assertSame('new-suite', $updated->getGrantorSuiteId());
-		$this->assertSame(EmergencyContact::STATE_APPROVED, $updated->getState());
-		$this->assertSame(0, $this->auditCount(AuditEventTypes::EMERGENCY_ACCESS_GRANTED));
-	}//end testReEnvelopePreservesInFlightBreakGlassState()
+	/**
+	 * The contact states a rotation must not carry.
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function uncarriedStateProvider(): array {
+		return [
+			'requested' => [EmergencyContact::STATE_REQUESTED],
+			'approved' => [EmergencyContact::STATE_APPROVED],
+			'invalidated' => [EmergencyContact::STATE_INVALIDATED],
+		];
+	}//end uncarriedStateProvider()
 
 	/**
 	 * A contact whose grantor is not the migration owner is refused.

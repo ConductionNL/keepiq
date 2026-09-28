@@ -2,7 +2,7 @@
 
 ### Requirement: Irreversible Operations Require A Verified Key Proof
 
-The system MUST refuse any operation that can render vault contents or key material permanently unreadable unless the request carries a **key proof**: a signature, made with the private key of the owner's EncryptionSuite, over a challenge the server issued.
+The system MUST refuse any operation that can render vault contents or key material permanently unreadable, or that escrows the owner's private key to another party, unless the request carries a **key proof**: a signature, made with the private key of the owner's EncryptionSuite, over a challenge the server issued.
 
 The server MUST verify the signature against the public key it already stores for the subject suite. Because a suite's private key exists only inside an AES envelope keyed by PBKDF2-SHA256 over the master password, a verified proof establishes that the caller knows the master password. A Nextcloud session alone MUST NOT be sufficient authority for any such operation.
 
@@ -111,7 +111,7 @@ Single-use enforcement is NOT required, because a proof is bound to its operatio
 
 Because a declarative guard fails open when it is omitted, the system MUST carry a test that enumerates every operation required to be guarded and asserts, by reflection, that each carries `#[VaultKeyProofRequired]` with the expected binding and subject.
 
-Adding a route that can render vault contents or key material permanently unreadable without adding it to that enumeration MUST be treated as a defect in this requirement, not as an accepted gap.
+Adding a route that can render vault contents or key material permanently unreadable, or escrow the private key to another party, without adding it to that enumeration MUST be treated as a defect in this requirement, not as an accepted gap.
 
 #### Scenario: A guarded route that loses its attribute fails the build
 

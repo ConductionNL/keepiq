@@ -85,6 +85,23 @@ class VaultKeyProofAttributesTest extends TestCase {
 				'routeParam:id',
 				VaultKeyProofService::PURPOSE_REVOKE_SUITE,
 			],
+			// keepiq#800: designate is an upsert that overwrites any existing
+			// contact's envelope and escrows the key to whoever it names.
+			'designate emergency contact' => [
+				EmergencyAccessController::class,
+				'create',
+				['granteeUserId', 'waitPeriodDays', 'recoveryEnvelope'],
+				'active',
+				VaultKeyProofService::PURPOSE_EMERGENCY_DESIGNATE,
+			],
+			// keepiq#801: overwrites a contact's envelope during a migration.
+			're-envelope emergency contact' => [
+				MigrationController::class,
+				'reEnvelopeEmergencyContact',
+				['id', 'contactId', 'recoveryEnvelope', 'granteeSuiteId'],
+				'migrationOldSuite',
+				VaultKeyProofService::PURPOSE_EMERGENCY_RE_ENVELOPE,
+			],
 		];
 	}//end guardedMethodsProvider()
 

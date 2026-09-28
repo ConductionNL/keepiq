@@ -1172,7 +1172,9 @@
         "Reinstate suite": "Suite herstellen",
         "Revoking this suite deleted %n emergency-access contact.": "Het intrekken van deze suite verwijderde %n noodtoegangscontact.",
         "Revoking this suite deleted %n emergency-access contacts.": "Het intrekken van deze suite verwijderde %n noodtoegangscontacten.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandel de geheimen van de suite als gecompromitteerd (markeer voor rotatie en waarschuw eigenaren)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandel de geheimen van de suite als gecompromitteerd (markeer voor rotatie en waarschuw eigenaren)",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Kies welke noodcontacten je nieuwe sleutel mogen ontvangen. Vink alleen mensen aan die je zelf hebt aangewezen en nog steeds vertrouwt: wie je sessie in handen had, kan zelf een contact hebben toegevoegd. Contacten die je niet aanvinkt, verliezen hun noodtoegang; je kunt ze daarna opnieuw aanwijzen.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, wachttijd in dagen: {days}"
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"

@@ -1167,7 +1167,9 @@
         "Reinstate suite": "Restableix la suite",
         "Revoking this suite deleted %n emergency-access contact.": "La revocació d'aquesta suite ha eliminat %n contacte d'accés d'emergència.",
         "Revoking this suite deleted %n emergency-access contacts.": "La revocació d'aquesta suite ha eliminat %n contactes d'accés d'emergència.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tracta els secrets de la suite com a compromesos (marca per a rotació i notifica els propietaris)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tracta els secrets de la suite com a compromesos (marca per a rotació i notifica els propietaris)",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Trieu quins contactes d'emergència poden rebre la vostra clau nova. Marqueu només persones que heu designat vosaltres i en qui encara confieu: qui tenia la vostra sessió pot haver afegit un contacte propi. Els contactes que no marqueu perden l'accés d'emergència; després els podeu tornar a designar.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, període d’espera en dies: {days}"
     },
     "plurals": null
 }

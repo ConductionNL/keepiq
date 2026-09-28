@@ -1167,7 +1167,9 @@
         "Reinstate suite": "Vrati komplet",
         "Revoking this suite deleted %n emergency-access contact.": "Opozivanje ovog kompleta izbrisalo je %n kontakt hitnog pristupa.",
         "Revoking this suite deleted %n emergency-access contacts.": "Opozivanje ovog kompleta izbrisalo je %n kontakata hitnog pristupa.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tretiraj tajne kompleta kao kompromitirane (označi za rotaciju i obavijesti vlasnike)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tretiraj tajne kompleta kao kompromitirane (označi za rotaciju i obavijesti vlasnike)",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Odaberite koji kontakti za hitne slučajeve smiju primiti vaš novi ključ. Označite samo osobe koje ste sami odredili i kojima i dalje vjerujete: tko je imao vašu sesiju, mogao je dodati vlastiti kontakt. Neoznačeni kontakti gube pristup u hitnim slučajevima; poslije ih možete ponovno odrediti.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, razdoblje čekanja u danima: {days}"
     },
     "plurals": null
 }

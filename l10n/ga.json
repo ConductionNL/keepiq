@@ -1167,7 +1167,9 @@
         "Reinstate suite": "Reinstate suite",
         "Revoking this suite deleted %n emergency-access contact.": "Revoking this suite deleted %n emergency-access contact.",
         "Revoking this suite deleted %n emergency-access contacts.": "Revoking this suite deleted %n emergency-access contacts.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Treat the suite's secrets as compromised (flag for rotation and notify owners)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Treat the suite's secrets as compromised (flag for rotation and notify owners)",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Roghnaigh cé na teagmhálaithe éigeandála a fhéadfaidh d’eochair nua a fháil. Ná cuir tic ach le daoine a d’ainmnigh tú féin agus a bhfuil muinín agat astu fós: d’fhéadfadh an té a raibh do sheisiún aige teagmhálaí dá chuid féin a chur leis. Cailleann teagmhálaithe gan tic a rochtain éigeandála; is féidir leat iad a ainmniú arís ina dhiaidh sin.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, tréimhse feithimh i laethanta: {days}"
     },
     "plurals": null
 }

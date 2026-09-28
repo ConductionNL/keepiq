@@ -212,13 +212,15 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *
 		 * @param {string} oldPassword The current master password.
 		 * @param {string} newPassword The new master password.
+		 * @param {string[]} [carryContactIds] The emergency contacts the owner confirmed
+		 *   to carry to the new key (keepiq#800); none are carried by default.
 		 * @return {Promise<{migrated: number, failed: number, droppedVersions: number,
 		 *   failures: Array<object>, usedWorker: boolean, residualContacts: string[]}>}
 		 *   The migration outcome, including the emergency contacts that could not
 		 *   be re-enveloped and must be re-established.
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 		 */
-		async initiateCompromiseRecovery(oldPassword, newPassword) {
+		async initiateCompromiseRecovery(oldPassword, newPassword, carryContactIds = []) {
 			const { publicKeyPem, privateKey } = await generateKeyPair()
 
 			// Export new private key as PEM.
@@ -311,6 +313,9 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				migrationId: response.data.migration.id,
 				oldSuiteId: response.data.migration.oldSuiteId,
 				newPrivateKeyPem,
+				oldEncryptedPrivateKey: response.data.oldEncryptedPrivateKey,
+				oldPassword,
+				carryContactIds,
 			})
 
 			// Only now, with nothing left on the old suite, is the vault ready
@@ -347,31 +352,69 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		},
 
 		/**
-		 * Migrate the owner's emergency-access recovery envelopes onto the new
-		 * suite during a compromise-recovery rotation.
+		 * The owner's emergency contacts that a rotation of `suiteId` may carry:
+		 * those in state `granted` bound to that suite. The compromise-recovery
+		 * form lists these for the owner to confirm before the rotation starts
+		 * (keepiq#800). A contact with a break-glass `requested` or `approved` is
+		 * never offered: carrying it would release the new key with the wait
+		 * already served.
 		 *
-		 * For each of the owner's non-invalidated contacts the browser fetches the
-		 * grantee's CURRENT certificate, mints a fresh recovery envelope escrowing
-		 * the new private key (never the old one — this is a build, not a re-wrap),
-		 * and posts it to the migration re-point endpoint. A grantee with no active
-		 * certificate, or a transient re-point failure, is not fatal: the contact
-		 * is left on the old suite for the completion sweep to invalidate and its
-		 * grantee is returned as residual so the form can prompt re-establishment.
+		 * @param {string} suiteId The suite about to be rotated away from.
+		 * @return {Promise<Array<object>>} The carriable contacts; empty when they cannot be listed.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		async listCarriableEmergencyContacts(suiteId) {
+			try {
+				const response = await axios.get(
+					generateUrl('/apps/keepiq/api/v1/emergency-access/contacts'),
+				)
+				const contacts = Array.isArray(response.data) ? response.data : []
+				return contacts.filter(
+					(contact) => contact.state === 'granted'
+						&& contact.grantorSuiteId === suiteId,
+				)
+			} catch {
+				return []
+			}
+		},
+
+		/**
+		 * Migrate the owner's confirmed emergency-access recovery envelopes onto
+		 * the new suite during a compromise-recovery rotation.
+		 *
+		 * Only a contact the owner confirmed (`carryContactIds`) and that is still
+		 * `granted` is carried (keepiq#800): the browser fetches the grantee's
+		 * CURRENT certificate, mints a fresh recovery envelope escrowing the new
+		 * private key (a build, not a re-wrap), and posts it to the migration
+		 * re-point endpoint with a vault-key proof made with the OLD key, which is
+		 * the one this rotation already holds the password for (keepiq#801).
+		 *
+		 * Every other contact on the old suite is left for the completion sweep to
+		 * invalidate and returned as residual, so the form prompts the owner to
+		 * re-establish it: one they did not confirm, one with a break-glass in
+		 * flight, one whose grantee has no active certificate, or one whose post
+		 * failed. None of these is fatal; emergency contacts are outside the gate.
 		 *
 		 * The raw new private key PEM stays in this rotation scope: it only ever
 		 * leaves as envelope ciphertext, never logged or persisted (ADR-003).
 		 *
 		 * @param {object} params The parameters.
 		 * @param {string} params.migrationId The migration id.
-		 * @param {string} params.oldSuiteId The rotating old suite; only contacts bound to it are carried.
+		 * @param {string} params.oldSuiteId The rotating old suite; only contacts bound to it are considered.
 		 * @param {string} params.newPrivateKeyPem The freshly generated private key PEM.
-		 * @return {Promise<string[]>} The grantee ids that could not be re-enveloped.
+		 * @param {string} params.oldEncryptedPrivateKey The old suite's AES envelope, for the proof.
+		 * @param {string} params.oldPassword The old master password, for the proof.
+		 * @param {string[]} [params.carryContactIds] The contact ids the owner confirmed.
+		 * @return {Promise<string[]>} The grantee ids that were not re-enveloped.
 		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
 		async migrateEmergencyContacts({
 			migrationId,
 			oldSuiteId,
 			newPrivateKeyPem,
+			oldEncryptedPrivateKey,
+			oldPassword,
+			carryContactIds = [],
 		}) {
 			const residualContacts = []
 
@@ -394,11 +437,17 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				}
 
 				// Only THIS rotation's contacts belong here. A contact stranded on
-				// a prior suite (grantorSuiteId !== the rotating old suite) was not
-				// lost in this rotation, so skip it silently rather than posting it
-				// (the server would refuse it, grantorSuiteId !== oldSuiteId) and
-				// mislabelling it as a residual this rotation dropped.
+				// a prior suite was not lost in this rotation, so skip it silently
+				// rather than mislabelling it as a residual this rotation dropped.
 				if (contact.grantorSuiteId !== oldSuiteId) {
+					continue
+				}
+
+				// Not confirmed by the owner, or a break-glass in flight: never
+				// escrow the new key to it. The sweep invalidates it at completion
+				// and the owner re-establishes it if they still want it.
+				if (contact.state !== 'granted' || !carryContactIds.includes(contact.id)) {
+					residualContacts.push(contact.granteeUserId)
 					continue
 				}
 
@@ -415,6 +464,21 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 						certResponse.data.certificate,
 					)
 
+					// Bound in the order the server hashes them:
+					// id, contactId, recoveryEnvelope, granteeSuiteId.
+					const headers = await buildKeyProofHeaders({
+						suiteId: oldSuiteId,
+						purpose: PROOF_PURPOSE.EMERGENCY_RE_ENVELOPE,
+						encryptedPrivateKey: oldEncryptedPrivateKey,
+						masterPassword: oldPassword,
+						boundValues: [
+							migrationId,
+							contact.id,
+							recoveryEnvelope,
+							certResponse.data.suiteId,
+						],
+					})
+
 					await axios.post(
 						generateUrl(
 							`/apps/keepiq/api/v1/migrations/${migrationId}/emergency-contacts/${contact.id}`,
@@ -423,12 +487,13 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 							recoveryEnvelope,
 							granteeSuiteId: certResponse.data.suiteId,
 						},
+						{ headers },
 					)
 				} catch {
-					// Grantee unreachable (no active certificate) or a transient
-					// re-point failure: leave the contact on the old suite for the
-					// completion sweep to invalidate, and prompt re-establishment.
-					// Never fatal — emergency contacts are outside the gate.
+					// Grantee unreachable (no active certificate), a refused proof,
+					// or a transient re-point failure: leave the contact on the old
+					// suite for the completion sweep to invalidate, and prompt
+					// re-establishment. Never fatal — contacts are outside the gate.
 					residualContacts.push(contact.granteeUserId)
 				}
 			}

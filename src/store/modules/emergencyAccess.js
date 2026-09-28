@@ -135,7 +135,19 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 				privateKeyPem = null
 			}
 
-			// 3. Persist only the grantee-encrypted envelope.
+			// 3. Prove the master password (keepiq#800). A designation names who a
+			//    later rotation escrows the key to and overwrites an existing
+			//    contact's envelope, so a session alone must not be enough. Bound
+			//    in the order the server hashes them.
+			const headers = await buildKeyProofHeaders({
+				suiteId: session.suiteId,
+				purpose: PROOF_PURPOSE.EMERGENCY_DESIGNATE,
+				encryptedPrivateKey: session.encryptedPrivateKey,
+				masterPassword,
+				boundValues: [granteeUserId, String(waitPeriodDays), recoveryEnvelope],
+			})
+
+			// 4. Persist only the grantee-encrypted envelope.
 			const response = await axios.post(
 				generateUrl('/apps/keepiq/api/v1/emergency-access/contacts'),
 				{
@@ -144,6 +156,7 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 					accessLevel: 'view',
 					recoveryEnvelope,
 				},
+				{ headers },
 			)
 			await this.fetchContacts()
 			return response.data
