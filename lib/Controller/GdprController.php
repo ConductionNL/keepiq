@@ -131,11 +131,7 @@ class GdprController extends Controller {
 	 * @spec openspec/changes/harden-vault-key-material-guards/specs/gdpr-compliance/spec.md#requirement-account-data-deletion
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(
-		binds: ['confirmation'],
-		subject: 'active',
-		purpose: VaultKeyProofService::PURPOSE_DELETE_ACCOUNT_DATA
-	)]
+	#[VaultKeyProofRequired(binds: ['confirmation'], subject: 'active', purpose: VaultKeyProofService::PURPOSE_DELETE_ACCOUNT_DATA)]
 	public function deleteAccountData(): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {

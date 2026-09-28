@@ -163,11 +163,7 @@ class EmergencyAccessController extends OCSController {
 	 * @spec openspec/changes/harden-vault-key-material-guards/specs/emergency-access/spec.md#requirement-designate-emergency-contact
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(
-		binds: ['granteeUserId', 'waitPeriodDays', 'recoveryEnvelope'],
-		subject: 'active',
-		purpose: VaultKeyProofService::PURPOSE_EMERGENCY_DESIGNATE
-	)]
+	#[VaultKeyProofRequired(binds: ['granteeUserId', 'waitPeriodDays', 'recoveryEnvelope'], purpose: VaultKeyProofService::PURPOSE_EMERGENCY_DESIGNATE)]
 	public function create(
 		string $granteeUserId,
 		int $waitPeriodDays,
