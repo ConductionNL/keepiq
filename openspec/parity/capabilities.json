@@ -6869,7 +6869,7 @@
       "id": "portability-03",
       "area": "portability",
       "name": "Preview and adjust the field mapping before importing.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "no",
@@ -6877,26 +6877,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "building",
-        "evidence": "preview: src/dialogs/ImportWizardDialog.vue:66-117 (first 5 rows, src/dialogs/ImportWizardDialog.vue previewRows). Adjust: src/import/parsers/csv.js:120 accepts options.mapping and csv.js:142 declares adjustableMapping, but the wizard never passes a mapping (ImportWizardDialog.vue:506 parseFile(text, format, {passphrase})) and src/store/modules/import.js:57 mapping state is never written",
+        "state": "built",
+        "evidence": "src/dialogs/ImportWizardDialog.vue mapping step mounts src/components/import/ColumnMapping.vue when store.adjustableMapping -> src/store/modules/import.js applyMapping() re-parses sourceText through csvParser.parseDetailed (src/import/parsers/csv.js); canProceed requires mappingHasName; per-cell toggleReveal on login and password cells",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard -> mapping step",
-        "note": "The user sees a read-only preview of the first five mapped rows. There is no control to remap columns, although the CSV parser supports an explicit mapping.",
-        "defects": [
-          {
-            "at": "src/dialogs/ImportWizardDialog.vue:468",
-            "what": "Sensitive cells are masked with a per-cell reveal, but nothing ever sets revealed[key], so login and password columns can never be revealed in the preview.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "src/store/modules/import.js:57",
-            "what": "The mapping state and the parser's adjustableMapping flag are never used, so column remapping promised by the spec is not wired.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
-        "change": "openspec/changes/portability-import-field-mapping"
+        "reachedOn": "Vault (/secrets) -> Import -> Generic CSV -> pick a file -> mapping step",
+        "note": "Built 2026-09-29. Tests: vitest tests/store/importMapping.spec.js, tests/dialogs/ImportWizardDialog.mapping.spec.js.",
+        "change": "openspec/changes/archive/2026-09-29-portability-import-field-mapping"
       },
       "rowSource": "own",
       "provider": "keepiq",
