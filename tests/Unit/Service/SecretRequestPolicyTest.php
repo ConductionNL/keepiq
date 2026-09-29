@@ -66,7 +66,7 @@ class SecretRequestPolicyTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		$this->mapper = $this->createMock(SecretRequestMapper::class);
-		$this->policy = new SecretRequestPolicy(mapper: $this->mapper);
+		$this->policy = new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites());
 	}//end setUp()
 
 	/**
@@ -227,7 +227,7 @@ class SecretRequestPolicyTest extends TestCase {
 		foreach ($cases as [$status, $expiresAt, $expectedReason, $expectedCode]) {
 			$mapper = $this->createMock(SecretRequestMapper::class);
 			$mapper->method('findByToken')->willReturn($this->make($status, $expiresAt));
-			$policy = new SecretRequestPolicy(mapper: $mapper);
+			$policy = new SecretRequestPolicy(mapper: $mapper, suiteMapper: $this->activeSuites());
 
 			$this->assertSame(
 				$expectedReason,
@@ -337,7 +337,7 @@ class SecretRequestPolicyTest extends TestCase {
 		foreach ($expected as $status => $code) {
 			$mapper = $this->createMock(SecretRequestMapper::class);
 			$mapper->method('findByToken')->willReturn($this->make($status));
-			$policy = new SecretRequestPolicy(mapper: $mapper);
+			$policy = new SecretRequestPolicy(mapper: $mapper, suiteMapper: $this->activeSuites());
 
 			try {
 				$policy->requireOpenByToken(token: 'tok-1');
@@ -449,4 +449,19 @@ class SecretRequestPolicyTest extends TestCase {
 
 		$this->assertSame('req-1', $policy->requireOpenByToken(token: 'tok-1')->getId());
 	}//end testARequestOnAnActiveSuiteIsOpen()
+
+	/**
+	 * A suite mapper whose every suite is active, so the policy's suite check
+	 * passes for tests that are not about it.
+	 *
+	 * @return EncryptionSuiteMapper
+	 */
+	private function activeSuites(): EncryptionSuiteMapper {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setStatus('active');
+		$suites = $this->createMock(EncryptionSuiteMapper::class);
+		$suites->method('findById')->willReturn($suite);
+		return $suites;
+	}//end activeSuites()
 }//end class

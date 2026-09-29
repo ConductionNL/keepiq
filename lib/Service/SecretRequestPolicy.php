@@ -171,8 +171,9 @@ class SecretRequestPolicy {
 	 * Constructor for SecretRequestPolicy.
 	 *
 	 * @param SecretRequestMapper $mapper The request mapper
+	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper; required, because
+	 *                                           fill refuses a request whose suite is not active
 	 * @param SecretMapper|null $secretMapper Optional Secret mapper for owner lookups
-	 * @param EncryptionSuiteMapper|null $suiteMapper Optional suite mapper
 	 *
 	 * @return void
 	 *
@@ -180,8 +181,8 @@ class SecretRequestPolicy {
 	 */
 	public function __construct(
 		private SecretRequestMapper $mapper,
+		private EncryptionSuiteMapper $suiteMapper,
 		private ?SecretMapper $secretMapper = null,
-		private ?EncryptionSuiteMapper $suiteMapper = null,
 	) {
 	}//end __construct()
 
@@ -317,9 +318,7 @@ class SecretRequestPolicy {
 	/**
 	 * Whether the suite a request is sealed to is still active.
 	 *
-	 * The suite mapper is always injected in production: Nextcloud resolves a
-	 * class-typed parameter by type before falling back to its null default.
-	 * Only unit tests that build the policy without one skip this check.
+	 * A suite that no longer exists counts as not active (fail closed).
 	 *
 	 * @param SecretRequest $entity The request
 	 *
@@ -328,10 +327,6 @@ class SecretRequestPolicy {
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
 	 */
 	private function suiteIsActive(SecretRequest $entity): bool {
-		if ($this->suiteMapper === null) {
-			return true;
-		}
-
 		try {
 			$suite = $this->suiteMapper->findById((string)$entity->getEncryptionSuiteId());
 		} catch (DoesNotExistException) {
@@ -529,17 +524,12 @@ class SecretRequestPolicy {
 	 *
 	 * @throws InvalidArgumentException When the application ID is blank or
 	 *                                  it has no active suite.
-	 * @throws RuntimeException When the suite mapper dependency is not wired.
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 	 */
 	public function requireApplicationSuiteId(string $applicationId): string {
 		if ($applicationId === '') {
 			throw new InvalidArgumentException(message: 'applicationId is required');
-		}
-
-		if ($this->suiteMapper === null) {
-			throw new RuntimeException(message: 'EncryptionSuite mapper not wired for application requests');
 		}
 
 		try {

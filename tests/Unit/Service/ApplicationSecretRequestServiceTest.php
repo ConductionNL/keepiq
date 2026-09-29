@@ -35,6 +35,8 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
@@ -114,7 +116,7 @@ class ApplicationSecretRequestServiceTest extends TestCase {
 	): ApplicationSecretRequestService {
 		return new ApplicationSecretRequestService(
 			mapper: $this->mapper,
-			policy: ($policy ?? new SecretRequestPolicy(mapper: $this->mapper)),
+			policy: ($policy ?? new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites())),
 			outbox: new SecretRequestOutbox(),
 			writeLockService: ($writeLock ?? $this->createMock(WriteLockService::class)),
 			logger: $this->createMock(LoggerInterface::class),
@@ -431,7 +433,7 @@ class ApplicationSecretRequestServiceTest extends TestCase {
 
 		return new ApplicationSecretRequestService(
 			mapper: $this->mapper,
-			policy: ($policy ?? new SecretRequestPolicy(mapper: $this->mapper)),
+			policy: ($policy ?? new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites())),
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -529,4 +531,19 @@ class ApplicationSecretRequestServiceTest extends TestCase {
 		// Field NAMES are not recorded.
 		$this->assertStringNotContainsString('api-key', (string)json_encode($metadata));
 	}//end testCreationEmitsExactlyOneApplicationAuditEvent()
+
+	/**
+	 * A suite mapper whose every suite is active, so the policy's suite check
+	 * passes for tests that are not about it.
+	 *
+	 * @return EncryptionSuiteMapper
+	 */
+	private function activeSuites(): EncryptionSuiteMapper {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setStatus('active');
+		$suites = $this->createMock(EncryptionSuiteMapper::class);
+		$suites->method('findById')->willReturn($suite);
+		return $suites;
+	}//end activeSuites()
 }//end class
