@@ -14,7 +14,6 @@ const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0))
 import axios from '@nextcloud/axios'
 import { createPinia, setActivePinia } from 'pinia'
 import AdminApplicationsView from '../../src/views/AdminApplicationsView.vue'
-import { useApplicationStore } from '../../src/store/modules/application.js'
 
 describe('AdminApplicationsView', () => {
 	beforeEach(() => {

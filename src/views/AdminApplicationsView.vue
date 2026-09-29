@@ -78,7 +78,6 @@
 				</li>
 			</ul>
 		</section>
-
 	</div>
 </template>
 
@@ -186,5 +185,4 @@ export default {
 .keepiq-applications-view__empty {
 	color: var(--color-text-lighter);
 }
-
 </style>

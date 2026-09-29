@@ -89,7 +89,12 @@ describe('useApplicationStore', () => {
 
 		it('keeps no private-key state: the server never returns one (pki-09 decided no)', async () => {
 			vi.spyOn(axios, 'post').mockResolvedValue({
-				data: { id: 'app-x', name: 'X', status: 'active', private_key: 'PEM' },
+				data: {
+					id: 'app-x',
+					name: 'X',
+					status: 'active',
+					private_key: 'PEM',
+				},
 			})
 			const store = useApplicationStore()
 			await store.registerApplication({ name: 'X', type: 'internal' })
