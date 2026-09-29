@@ -1603,7 +1603,7 @@
       "id": "crypto-06",
       "area": "crypto",
       "name": "Lock the vault by hand, and have it lock itself after a period of inactivity.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -1611,20 +1611,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "building",
-        "evidence": "src/manifest.json:170-173 'Lock vault' menu -> src/App.vue:743 sessionStore.lock(); src/App.vue:779 polls checkTimeout -> src/store/modules/session.js:194 compares against lastActivity, which is set only at unlock (:121,:159) because updateActivity (:204) has no caller (grep updateActivity src: definition only); browser-extension/src/background/service-worker.js:37-38 real idle lock",
+        "state": "built",
+        "evidence": "src/App.vue mounted() registers pointerdown/pointermove/keydown/wheel/scroll/touchstart listeners -> handleActivity -> src/store/modules/session.js noteActivity() (15 s throttle); checkTimeout() compares against lastActivity and skips a null timeout; manual lock unchanged (sessionStore.lock)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "App navigation -> Lock vault; automatic lock via the App.vue timeout poll",
-        "note": "Manual lock works and the vault locks itself on tab close and after a timeout. In the web app that timeout runs from the moment of unlock, not from the last activity, so an active user is locked out mid-work; the browser extension does have a true idle lock.",
-        "defects": [
-          {
-            "at": "src/store/modules/session.js:204",
-            "what": "updateActivity is never called, so the web app's auto-lock is an absolute timer from unlock rather than an inactivity timer.",
-            "issue": null,
-            "needsLiveCheck": true
-          }
-        ],
-        "change": "openspec/changes/crypto-session-timeout-and-inactivity-lock"
+        "reachedOn": "Any vault page while unlocked; the lock screen appears after the chosen idle period",
+        "note": "Built 2026-09-29. Tests: vitest tests/store/session.timeout.spec.js (active user stays unlocked over 25 min, idle user locked, throttle, locked vault ignores activity), tests/components/appSessionWiring.spec.js.",
+        "change": "openspec/changes/archive/2026-09-29-crypto-session-timeout-and-inactivity-lock"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1644,7 +1636,7 @@
       "id": "crypto-07",
       "area": "crypto",
       "name": "Choose your own session timeout.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -1652,26 +1644,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "building",
-        "evidence": "src/App.vue:137-143 Session timeout select in Personal settings -> :873-874 saveTimeout maps session:0, 10min, 30min then '|| 600000' and only sets sessionStore.timeout in memory; no request persists it and App.vue:497 always starts at 'session'; src/components/settings/SessionTimeoutSection.vue:52-66 does GET/PUT session_timeout but is mounted nowhere (grep SessionTimeoutSection src: self only); lib/Service/SettingsService.php:93 stores the key",
+        "state": "built",
+        "evidence": "src/App.vue user-settings Session select -> onTimeoutChange -> src/store/modules/session.js saveTimeoutPreference() PUT /api/settings/user; loadTimeoutPreference() on mount; 'session' held as null (no idle timer); lib/Service/AdminSettingsService.php DEFAULT_SESSION_TIMEOUT = '10min' for an unset value",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "App navigation -> Personal settings -> Session -> Session timeout",
-        "note": "A user can pick 10 or 30 minutes and it applies for the current page session only; it is not saved and resets on reload. The 'Nextcloud session' option maps to 0, which the '|| 600000' fallback turns into 10 minutes, so it silently behaves like 10 minutes.",
-        "defects": [
-          {
-            "at": "src/App.vue:874",
-            "what": "The 'Nextcloud session' choice maps to 0 and the '|| 600000' fallback turns it into a 10-minute timeout.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "src/App.vue:873",
-            "what": "The chosen timeout is never persisted to the server, and the component that does persist it (SessionTimeoutSection.vue) is not mounted, so the choice is lost on reload.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
-        "change": "openspec/changes/crypto-session-timeout-and-inactivity-lock"
+        "reachedOn": "User settings dialog (app navigation, Settings) -> Session -> Session timeout",
+        "note": "Built 2026-09-29. Tests: vitest tests/store/session.timeout.spec.js (load, save, Nextcloud session never locks), PHPUnit SettingsServiceSessionTimeoutTest.",
+        "change": "openspec/changes/archive/2026-09-29-crypto-session-timeout-and-inactivity-lock"
       },
       "rowSource": "own",
       "provider": "keepiq",
