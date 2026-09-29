@@ -40,10 +40,12 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 /**
  * Wires the EncryptionSuite lifecycle listener graph.
  *
- * The three suite events fan out to more than one listener each, and the
- * ORDER of the bindings is not significant — Nextcloud's dispatcher invokes
- * every registered listener for an event and a failure in one is contained by
- * that listener, not by this registration.
+ * The three suite events fan out to more than one listener each. Nextcloud's
+ * dispatcher invokes every registered listener for an event, and a failure in
+ * one is contained by that listener, not by this registration. The ORDER is
+ * not significant, with one exception on the revoke event: the compromise
+ * cascade reads the ShareTargets that EncryptionSuiteRevokedListener deletes,
+ * so it is registered at a higher priority to run first (keepiq#802).
  *
  * Grouped as one registrar because all the listeners share a single trigger
  * family (a suite started migrating, finished migrating, or was revoked) and
@@ -104,9 +106,15 @@ final class SuiteLifecycleEventRegistrar {
 		// on the SAME revoke event, but only when the administrator flagged the
 		// revocation as a compromise — stamp/flag/notify over the revoked
 		// suite's blast radius. A no-op on the owner path (flag stays false).
+		// Priority 10 so it runs BEFORE EncryptionSuiteRevokedListener (priority
+		// 0), which deletes the revoked user's inbound ShareTargets. The cascade
+		// resolves each shared copy's source owner through those rows; run after
+		// the sweep it always missed and warned the revoked user instead of the
+		// owners who have to rotate (keepiq#802).
 		$context->registerEventListener(
 			event: EncryptionSuiteRevokedEvent::class,
-			listener: SuiteCompromiseOnRevokeListener::class
+			listener: SuiteCompromiseOnRevokeListener::class,
+			priority: 10
 		);
 
 		// Emergency access — invalidate/clear recovery envelopes on a grantor's
