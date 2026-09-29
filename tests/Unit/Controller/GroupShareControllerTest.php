@@ -26,6 +26,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\GroupShareController;
+use OCA\Keepiq\Db\GroupShare;
 use OCA\Keepiq\Service\GroupShareService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -105,6 +106,47 @@ class GroupShareControllerTest extends TestCase {
 			userSession: $this->userSession
 		);
 	}//end controller()
+
+	/**
+	 * sharing-02: creating a group share answers 201 with the member fan-out
+	 * and the count of members skipped for want of an encryption suite, so
+	 * the sidebar can say how many received it and how many did not.
+	 *
+	 * @return void
+	 */
+	public function testCreateAnswersTheFanOutAndTheSkippedCount(): void {
+		$this->signIn('alice');
+		$row = new GroupShare();
+		$row->setId('gs-1');
+		$row->setGroupId('finance');
+		$this->groupShareService->expects($this->once())->method('createGroupShare')
+			->with('sec-1', 'finance', 'alice')
+			->willReturn(['groupShare' => $row, 'members' => [['userId' => 'bob', 'certificate' => 'PEM']], 'skipped' => 1]);
+
+		$response = $this->controller()->create(secretId: 'sec-1', groupId: 'finance');
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertSame(1, $response->getData()['skipped']);
+		$this->assertSame('bob', $response->getData()['members'][0]['userId']);
+		$this->assertSame('gs-1', $response->getData()['groupShare']['id']);
+	}//end testCreateAnswersTheFanOutAndTheSkippedCount()
+
+	/**
+	 * sharing-02: a group outside the caller's reach answers 400 with the
+	 * service's message and creates nothing.
+	 *
+	 * @return void
+	 */
+	public function testCreateForAGroupOutOfReachIs400(): void {
+		$this->signIn('alice');
+		$this->groupShareService->method('createGroupShare')
+			->willThrowException(new InvalidArgumentException('Group not found'));
+
+		$response = $this->controller()->create(secretId: 'sec-1', groupId: 'board');
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame(['message' => 'Group not found'], $response->getData());
+	}//end testCreateForAGroupOutOfReachIs400()
 
 	/**
 	 * Approving must forward the URL's group-share id, the new member, the
