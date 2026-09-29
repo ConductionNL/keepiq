@@ -68,7 +68,7 @@
 						c.granteeUserId
 					}}</span>
 					<span class="emergency-access__state" :data-state="c.state">{{
-						stateLabel(c.state)
+						stateLabel(c)
 					}}</span>
 					<span class="emergency-access__wait">{{
 						t('keepiq', '{days}d wait', { days: c.waitPeriodDays })
@@ -81,12 +81,23 @@
 						{{ t('keepiq', 'Decline request') }}
 					</NcButton>
 					<NcButton
-						v-if="c.state === 'invalidated'"
+						v-if="canReestablish(c)"
 						variant="secondary"
 						data-testid="emergency-reestablish"
 						@click="scrollToDesignate(c.granteeUserId)">
 						{{ t('keepiq', 'Re-establish') }}
 					</NcButton>
+					<span
+						v-if="c.invalidatedReason === 'grantor_rotation_in_flight'"
+						class="emergency-access__warning"
+						data-testid="emergency-in-flight-warning">
+						{{
+							t(
+								'keepiq',
+								'This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.',
+							)
+						}}
+					</span>
 					<NcButton
 						variant="error"
 						data-testid="emergency-revoke"
@@ -115,7 +126,7 @@
 						c.grantorUserId
 					}}</span>
 					<span class="emergency-access__state" :data-state="c.state">{{
-						stateLabel(c.state)
+						stateLabel(c)
 					}}</span>
 					<NcButton
 						v-if="c.state === 'granted'"
@@ -244,13 +255,16 @@ export default {
 		t,
 
 		/**
-		 * Human-readable label for a lifecycle state.
+		 * Human-readable label for a contact's lifecycle state.
 		 *
-		 * @param {string} state The state key.
+		 * @param {object} contact The contact.
 		 * @return {string} The label.
 		 * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-designate-emergency-contact
 		 */
-		stateLabel(state) {
+		stateLabel(contact) {
+			if (contact.state === 'invalidated' && !this.canReestablish(contact)) {
+				return t('keepiq', 'Invalidated')
+			}
 			const map = {
 				granted: t('keepiq', 'Granted'),
 				requested: t('keepiq', 'Requested'),
@@ -258,7 +272,28 @@ export default {
 				declined: t('keepiq', 'Declined'),
 				invalidated: t('keepiq', 'Invalidated (re-establish)'),
 			}
-			return map[state] || state
+			return map[contact.state] || contact.state
+		},
+
+		/**
+		 * Whether to offer Re-establish for a contact: only an invalidated one
+		 * that could not be reached. A key rotation also leaves behind contacts
+		 * the owner chose not to carry and contacts with a break-glass in
+		 * flight, and nudging those back in is what a planted contact is after
+		 * (#804 review).
+		 *
+		 * @param {object} contact The contact.
+		 * @return {boolean} True to offer Re-establish.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		canReestablish(contact) {
+			if (contact.state !== 'invalidated') {
+				return false
+			}
+			return ![
+				'grantor_rotation_not_carried',
+				'grantor_rotation_in_flight',
+			].includes(contact.invalidatedReason)
 		},
 
 		/**
@@ -431,6 +466,7 @@ export default {
 
 .emergency-access__item {
 	display: flex;
+	flex-wrap: wrap;
 	align-items: center;
 	gap: 12px;
 	padding: 8px 0;
@@ -445,6 +481,13 @@ export default {
 .emergency-access__state {
 	color: var(--color-text-maxcontrast);
 	min-width: 120px;
+}
+
+.emergency-access__warning {
+	/* Its own line under the contact, after the action buttons. */
+	flex-basis: 100%;
+	order: 1;
+	color: var(--color-warning-text, var(--color-warning));
 }
 
 .emergency-access__error {

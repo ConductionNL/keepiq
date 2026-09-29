@@ -62,6 +62,14 @@ use OCP\IUserSession;
  */
 class MigrationController extends OCSController {
 	/**
+	 * The request parameters a re-envelope proof commits to, in signing order
+	 * (reEnvelopeEmergencyContact). A constant so the attribute fits one line.
+	 *
+	 * @var string[]
+	 */
+	private const ENVELOPE_BINDS = ['id', 'contactId', 'recoveryEnvelope', 'granteeSuiteId'];
+
+	/**
 	 * Constructor for MigrationController.
 	 *
 	 * @param IRequest $request The request object
@@ -503,8 +511,12 @@ class MigrationController extends OCSController {
 	 * #804 review): it overwrites a contact's envelope, so with a session alone
 	 * it could destroy break-glass the same way an unguarded destroy() could.
 	 * It is the new key, not the old one, because every migration is a
-	 * compromise recovery and the old password may be the leaked one. Only the
-	 * owner who set the new password can prove the new key.
+	 * compromise recovery and the old password may be the leaked one. The new
+	 * key is held by the party who started the migration. That closes the case
+	 * of a leaked password used against a rotation the owner started, but not a
+	 * rotation the attacker started: starting one (compromiseRecovery) is proven
+	 * with the ACTIVE key, so a holder of the session and the old password can
+	 * start it with a key pair of their own and pass this proof too.
 	 *
 	 * @param string $id The migration ID
 	 * @param string $contactId The emergency-contact ID
@@ -518,11 +530,7 @@ class MigrationController extends OCSController {
 	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(
-		binds: ['id', 'contactId', 'recoveryEnvelope', 'granteeSuiteId'],
-		subject: 'migrationNewSuite',
-		purpose: VaultKeyProofService::PURPOSE_EMERGENCY_RE_ENVELOPE
-	)]
+	#[VaultKeyProofRequired(purpose: VaultKeyProofService::PURPOSE_EMERGENCY_RE_ENVELOPE, binds: self::ENVELOPE_BINDS, subject: 'migrationNewSuite')]
 	public function reEnvelopeEmergencyContact(
 		string $id,
 		string $contactId,

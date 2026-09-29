@@ -215,9 +215,10 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * @param {string[]} [carryContactIds] The emergency contacts the owner confirmed
 		 *   to carry to the new key (keepiq#800); none are carried by default.
 		 * @return {Promise<{migrated: number, failed: number, droppedVersions: number,
-		 *   failures: Array<object>, usedWorker: boolean, residualContacts: string[]}>}
-		 *   The migration outcome, including the emergency contacts that could not
-		 *   be re-enveloped and must be re-established.
+		 *   failures: Array<object>, usedWorker: boolean,
+		 *   residualContacts: Array<{granteeUserId: string, reason: string}>}>}
+		 *   The migration outcome, including the emergency contacts that were not
+		 *   re-enveloped, each with why (see migrateEmergencyContacts).
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 		 */
 		async initiateCompromiseRecovery(
@@ -309,8 +310,9 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			// completion sweep (SuiteMigrationCompletedEvent) invalidates every
 			// contact still bound to the old suite, so any contact re-enveloped
 			// here has already left the old suite and survives; the ones that
-			// could not be carried stay behind for the sweep to invalidate and are
-			// returned as residual for the form to prompt re-establishment.
+			// were not carried stay behind for the sweep to invalidate and are
+			// returned as residual with a reason: the form prompts re-establishment
+			// only for an unreachable one, and warns about a break-glass in flight.
 			// Emergency contacts are outside the completion gate, so this never
 			// blocks completion (design D2).
 			outcome.residualContacts = await this.migrateEmergencyContacts({
@@ -393,14 +395,18 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * CURRENT certificate, mints a fresh recovery envelope escrowing the new
 		 * private key (a build, not a re-wrap), and posts it to the migration
 		 * re-point endpoint with a vault-key proof made with the NEW key and password
-		 * (keepiq#801, #804 review): the old password may be the leaked one, and
-		 * only the owner who just set the new one can prove the new key.
+		 * (keepiq#801, #804 review): the old password may be the leaked one. The
+		 * new key is held by whoever started this migration; see
+		 * MigrationController::reEnvelopeEmergencyContact for what that does and
+		 * does not rule out.
 		 *
 		 * Every other contact on the old suite is left for the completion sweep to
-		 * invalidate and returned as residual, so the form prompts the owner to
-		 * re-establish it: one they did not confirm, one with a break-glass in
-		 * flight, one whose grantee has no active certificate, or one whose post
-		 * failed. None of these is fatal; emergency contacts are outside the gate.
+		 * invalidate and returned as residual with its reason:
+		 * `break_glass_in_flight` (requested or approved, warned about, never
+		 * prompted), `not_confirmed` (unticked or declined, no prompt) or
+		 * `unreachable` (no active grantee certificate, or the post failed, the
+		 * only one the form prompts to re-establish). None of these is fatal;
+		 * emergency contacts are outside the gate.
 		 *
 		 * The raw new private key PEM stays in this rotation scope: it only ever
 		 * leaves as envelope ciphertext, never logged or persisted (ADR-003).
@@ -459,14 +465,18 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				// Each gets its own reason, because the form must not nudge the
 				// owner to re-add either the way it does for an unreachable
 				// grantee: that is what a planted contact is after (#804 review).
-				if (contact.state !== 'granted') {
+				if (['requested', 'approved'].includes(contact.state)) {
 					residualContacts.push({
 						granteeUserId: contact.granteeUserId,
 						reason: 'break_glass_in_flight',
 					})
 					continue
 				}
-				if (!carryContactIds.includes(contact.id)) {
+				// Declined (nothing in flight) or unticked: the owner's choice.
+				if (
+					contact.state !== 'granted'
+					|| !carryContactIds.includes(contact.id)
+				) {
 					residualContacts.push({
 						granteeUserId: contact.granteeUserId,
 						reason: 'not_confirmed',

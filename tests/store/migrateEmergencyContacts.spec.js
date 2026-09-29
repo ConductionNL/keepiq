@@ -177,6 +177,30 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 		},
 	)
 
+	it('does not carry a declined contact, and does not flag it as in flight', async () => {
+		mockGets({
+			contacts: [
+				{
+					id: 'rel-1',
+					granteeUserId: 'bob',
+					state: 'declined',
+					grantorSuiteId: 'old-suite',
+				},
+			],
+			certs: { bob: { suiteId: 'bob-suite', certificate: 'BOB-CERT' } },
+		})
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
+
+		const store = useEncryptionSuiteStore()
+		const residual = await migrate(store, ['rel-1'])
+
+		// The owner declined its request: nothing is in flight, so it gets the
+		// neutral not-carried reason, not the planted-contact warning (#804 review).
+		expect(residual).toEqual([{ granteeUserId: 'bob', reason: 'not_confirmed' }])
+		expect(buildRecoveryEnvelope).not.toHaveBeenCalled()
+		expect(post).not.toHaveBeenCalled()
+	})
+
 	it('lists only granted contacts on the given suite as carriable', async () => {
 		mockGets({
 			contacts: [

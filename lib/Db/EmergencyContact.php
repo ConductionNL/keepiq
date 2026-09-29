@@ -224,4 +224,22 @@ class EmergencyContact extends Entity implements JsonSerializable {
 			'updatedAt' => $this->updatedAt?->format('c'),
 		];
 	}//end jsonSerialize()
+
+	/**
+	 * Serialize for the grantor's own contact list: the management shape plus
+	 * why the contact was invalidated, which the view needs to decide whether
+	 * to offer Re-establish (#804 review). Not part of jsonSerialize(), which
+	 * also feeds the grantee's incoming list: that the grantor chose not to
+	 * carry a contact across a rotation is the grantor's to know.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+	 */
+	public function jsonSerializeForGrantor(): array {
+		return array_merge(
+			$this->jsonSerialize(),
+			['invalidatedReason' => $this->invalidatedReason]
+		);
+	}//end jsonSerializeForGrantor()
 }//end class

@@ -49,6 +49,7 @@ use OCP\ICacheFactory;
 use OCP\IConfig;
 use OCP\IMemcache;
 use OCP\Security\ISecureRandom;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
@@ -94,20 +95,31 @@ class VaultKeyProofService {
 	];
 
 	/**
+	 * Whether the missing-memcache warning was already logged.
+	 *
+	 * @var boolean
+	 */
+	private bool $reuseWarningLogged = false;
+
+	/**
 	 * Constructor.
 	 *
 	 * @param IConfig $config The system config, for the instance secret
 	 * @param ISecureRandom $secureRandom The challenge randomness source
 	 * @param ITimeFactory $timeFactory The clock, injected for testable expiry
 	 * @param ICacheFactory $cacheFactory Holds consumed nonces, so each proof is single-use
+	 * @param LoggerInterface|null $logger Says so when single use cannot be enforced
 	 *
 	 * @return void
+	 *
+	 * @spec exclude Constructor wiring only — no domain logic.
 	 */
 	public function __construct(
 		private IConfig $config,
 		private ISecureRandom $secureRandom,
 		private ITimeFactory $timeFactory,
 		private ICacheFactory $cacheFactory,
+		private ?LoggerInterface $logger = null,
 	) {
 	}//end __construct()
 
@@ -215,6 +227,10 @@ class VaultKeyProofService {
 	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
 	 */
 	private function consume(string $nonce, int $expiresAt): void {
+		if ($this->cacheFactory->isAvailable() === false) {
+			$this->warnReuseUndetected();
+		}
+
 		$cache = $this->cacheFactory->createDistributed(self::USED_NONCE_CACHE_NS);
 		$key = hash('sha256', $nonce);
 		$ttl = max(1, ($expiresAt - $this->timeFactory->getTime()));
@@ -233,6 +249,30 @@ class VaultKeyProofService {
 
 		$cache->set($key, 1, $ttl);
 	}//end consume()
+
+	/**
+	 * Log, once per request, that proofs cannot be made single-use here.
+	 *
+	 * Without a configured memcache Nextcloud hands out a NullCache, whose
+	 * add() always succeeds, so a reused proof is not detected. The spec states
+	 * that limit; this makes it visible to an administrator (#804 review).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
+	 */
+	private function warnReuseUndetected(): void {
+		if ($this->reuseWarningLogged === true) {
+			return;
+		}
+
+		$this->reuseWarningLogged = true;
+		$this->logger?->warning(
+			'Keepiq: no memcache is configured, so a reused vault-key proof is not detected. '
+			. 'Configure a distributed memcache (memcache.distributed) to make proofs single-use.',
+			['app' => 'keepiq']
+		);
+	}//end warnReuseUndetected()
 
 	/**
 	 * The exact string a valid proof signs: the challenge, then the SHA-256 of

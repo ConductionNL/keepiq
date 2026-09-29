@@ -4,12 +4,12 @@
  * Keepiq EmergencyAccessSuiteRotationListener
  *
  * Listens for SuiteMigrationCompletedEvent (compromise recovery / key rotation)
- * and invalidates the grantor's emergency-access recovery envelopes
- * (add-emergency-access §3.1 / design D6). The envelopes escrow the grantor's
- * OLD private key, so after a rotation they hold a stale key and MUST be
- * invalidated; the grantor is then prompted (in the UI) to re-establish
- * emergency access against the new key. The envelope is keyed by the old suite
- * id recorded at designation.
+ * and invalidates the emergency-access contacts the rotation did not carry
+ * (add-emergency-access §3.1 / design D6). Their envelopes escrow the grantor's
+ * OLD private key, so they MUST be invalidated. Each is recorded with why it
+ * was not carried, and the UI prompts the grantor to re-establish only an
+ * unreachable one (see EmergencyEnvelopeInvalidationService). The envelope is
+ * keyed by the old suite id recorded at designation.
  *
  * @category Listener
  * @package  OCA\Keepiq\Listener

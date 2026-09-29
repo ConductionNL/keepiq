@@ -33,6 +33,7 @@ use OCP\IConfig;
 use OCP\IMemcache;
 use OCP\Security\ISecureRandom;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * Tests for VaultKeyProofService.
@@ -238,6 +239,92 @@ class VaultKeyProofServiceTest extends TestCase {
 	}//end testAPlainCacheStillRefusesReuse()
 
 	/**
+	 * Only a fully verified proof consumes its nonce: a bad signature first
+	 * must not burn the nonce for the real proof after it (#804 review).
+	 *
+	 * @return void
+	 */
+	public function testAFailedProofDoesNotConsumeItsNonce(): void {
+		[$nonce, $sig] = $this->prove(boundValues: []);
+
+		try {
+			$this->service->verify($nonce, $sig, $this->otherPublicKeyPem, 'alice', self::PURPOSE, []);
+			$this->fail('a proof checked against the wrong key must be refused');
+		} catch (KeyProofRequiredException) {
+			// Expected.
+		}
+
+		$this->assertSame([], $this->store, 'a refused proof must not consume its nonce');
+		$this->service->verify($nonce, $sig, $this->publicKeyPem, 'alice', self::PURPOSE, []);
+		$this->assertCount(1, $this->store);
+	}//end testAFailedProofDoesNotConsumeItsNonce()
+
+	/**
+	 * Without a memcache, Nextcloud hands out a NullCache whose add() always
+	 * succeeds, so a reuse is not detected. That limit is in the spec; the
+	 * install must at least say so in the log, once (#804 review).
+	 *
+	 * @return void
+	 */
+	public function testANoMemcacheInstallLogsThatReuseIsUndetected(): void {
+		// NullCache: an IMemcache whose add() always returns true.
+		$nullCache = $this->createMock(IMemcache::class);
+		$nullCache->method('add')->willReturn(true);
+		$factory = $this->cacheFactory(cache: $nullCache, available: false);
+
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())
+			->method('warning')
+			->with($this->stringContains('memcache'));
+
+		$service = $this->serviceWith(cacheFactory: $factory, logger: $logger);
+		[$nonce, $sig] = $this->prove(boundValues: []);
+		$service->verify($nonce, $sig, $this->publicKeyPem, 'alice', self::PURPOSE, []);
+		// The documented limit: the reuse goes through, and is not logged twice.
+		$service->verify($nonce, $sig, $this->publicKeyPem, 'alice', self::PURPOSE, []);
+	}//end testANoMemcacheInstallLogsThatReuseIsUndetected()
+
+	/**
+	 * An install with a memcache logs nothing.
+	 *
+	 * @return void
+	 */
+	public function testAMemcacheInstallDoesNotWarn(): void {
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->never())->method('warning');
+
+		$service = $this->serviceWith(cacheFactory: $this->cacheFactory(cache: $this->memcache()), logger: $logger);
+		[$nonce, $sig] = $this->prove(boundValues: []);
+		$service->verify($nonce, $sig, $this->publicKeyPem, 'alice', self::PURPOSE, []);
+	}//end testAMemcacheInstallDoesNotWarn()
+
+	/**
+	 * A service over the given cache factory and logger, sharing setUp's
+	 * secret, randomness and clock (so prove() proofs verify against it).
+	 *
+	 * @param ICacheFactory $cacheFactory The cache factory
+	 * @param LoggerInterface $logger The logger
+	 *
+	 * @return VaultKeyProofService
+	 */
+	private function serviceWith(ICacheFactory $cacheFactory, LoggerInterface $logger): VaultKeyProofService {
+		$config = $this->createMock(IConfig::class);
+		$config->method('getSystemValueString')->willReturn('the-instance-secret');
+		$random = $this->createMock(ISecureRandom::class);
+		$random->method('generate')->willReturn('deterministic-random');
+		$time = $this->createMock(ITimeFactory::class);
+		$time->method('getTime')->willReturnCallback(fn () => $this->now);
+
+		return new VaultKeyProofService(
+			config: $config,
+			secureRandom: $random,
+			timeFactory: $time,
+			cacheFactory: $cacheFactory,
+			logger: $logger,
+		);
+	}//end serviceWith()
+
+	/**
 	 * Issue a challenge for alice and sign it over the bound values.
 	 *
 	 * @param string[] $boundValues The bound values
@@ -274,12 +361,14 @@ class VaultKeyProofServiceTest extends TestCase {
 	 * A cache factory handing out the given cache.
 	 *
 	 * @param ICache $cache The cache to hand out
+	 * @param bool $available Whether a memcache is configured
 	 *
 	 * @return ICacheFactory
 	 */
-	private function cacheFactory(ICache $cache): ICacheFactory {
+	private function cacheFactory(ICache $cache, bool $available = true): ICacheFactory {
 		$factory = $this->createMock(ICacheFactory::class);
 		$factory->method('createDistributed')->willReturn($cache);
+		$factory->method('isAvailable')->willReturn($available);
 
 		return $factory;
 	}//end cacheFactory()

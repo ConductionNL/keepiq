@@ -81,7 +81,7 @@ class EmergencyAccessController extends OCSController {
 
 		return new JSONResponse(
 			data: array_map(
-				static fn ($c) => $c->jsonSerialize(),
+				static fn ($c) => $c->jsonSerializeForGrantor(),
 				$this->service->listForGrantor(grantorUserId: $userId)
 			)
 		);
@@ -202,11 +202,7 @@ class EmergencyAccessController extends OCSController {
 	 * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(
-		binds: ['id'],
-		subject: 'active',
-		purpose: VaultKeyProofService::PURPOSE_EMERGENCY_DESTROY
-	)]
+	#[VaultKeyProofRequired(purpose: VaultKeyProofService::PURPOSE_EMERGENCY_DESTROY, binds: ['id'])]
 	public function destroy(string $id): JSONResponse {
 		$userId = $this->requireUserId();
 		if ($userId === null) {

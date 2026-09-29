@@ -9,10 +9,10 @@ Carrying a contact hands the grantor's **new** key to that grantee, and a compro
 
 - Before the rotation starts, the system MUST show the grantor the contacts that can be carried and MUST carry only the ones the grantor confirms. None MUST be preselected.
 - Only a contact in state `granted` MUST be carried. A contact with a break-glass `requested` or `approved` MUST NOT be carried: the server MUST refuse it, and it is left on the old suite for the completion sweep to invalidate. The grantor re-designates it if they still want it.
-- Each re-envelope MUST carry a verified key proof made with the migration's **new** key (see the `vault-key-proof` capability), because it overwrites the contact's envelope. Not the old key: every migration is a compromise recovery, and the old password may be the leaked one.
+- Each re-envelope MUST carry a verified key proof made with the migration's **new** key (see the `vault-key-proof` capability), because it overwrites the contact's envelope. Not the old key: every migration is a compromise recovery, and the old password may be the leaked one. The new key is held by the party who started the migration, so this rules out a leaked password used against a rotation the owner started, but not a rotation the holder of the session and old password started themselves: starting one is proven with the active key.
 - A carry MUST be audited as its own event, distinct from a fresh designation, so a carry cannot be mistaken for a planted designation after an incident.
 
-Contacts the grantor did not confirm, or that were refused, are invalidated at completion like any other residual contact. Only contacts that could not be reached (no active certificate, or a failed re-envelope) come with a prompt to re-establish them. The system MUST NOT prompt the grantor to re-establish a contact they did not confirm, and MUST warn, rather than prompt, about a contact whose break-glass was in flight, because that is what a planted contact looks like.
+Contacts the grantor did not confirm, or that were refused, are invalidated at completion like any other residual contact. The completion sweep MUST record why each was not carried (a break-glass in flight, a reachable grantee the grantor did not carry, or an unreachable grantee), so every surface that lists invalidated contacts, not only the recovery form, can tell them apart. Only contacts that could not be reached (no active certificate, or a failed re-envelope) come with a prompt to re-establish them. A `declined` contact has nothing in flight and counts as not confirmed. The system MUST NOT prompt the grantor to re-establish a contact they did not confirm, and MUST warn, rather than prompt, about a contact whose break-glass was in flight, because that is what a planted contact looks like.
 
 Migrating rather than invalidating is possible because the recovery envelope is rebuilt, not re-wrapped: `buildRecoveryEnvelope` takes the grantor's private key and the grantee's public certificate, both of which the grantor has mid-rotation. Sealing to the grantee's *current* certificate is also more correct than preserving the old envelope, which may escrow a key the grantee has since rotated away from.
 
@@ -46,6 +46,13 @@ Likewise, if a grantee's EncryptionSuite is revoked, envelopes encrypted to that
 - **WHEN** A performs compromise recovery and confirms only B
 - **THEN** only B MUST receive an envelope escrowing A's new private key
 - **AND** C MUST be invalidated at completion, without a prompt to re-establish C
+- **AND** the Emergency Access view MUST NOT offer to re-establish C afterwards
+
+#### Scenario: The Emergency Access view warns about an in-flight contact
+@e2e exclude The view renders server-recorded reasons; covered by vitest on EmergencyAccessView and PHPUnit on the completion sweep.
+- **GIVEN** A's contact B was invalidated at completion because its break-glass was in flight
+- **WHEN** A opens the Emergency Access view
+- **THEN** B MUST be shown with a warning and without a Re-establish action
 
 #### Scenario: Suite rotation invalidates only the unreachable residual
 @e2e exclude Server-side listener sweep after the migration loop; covered by PHPUnit (contacts remaining on the old suite are invalidated) and the completion-summary assertion.

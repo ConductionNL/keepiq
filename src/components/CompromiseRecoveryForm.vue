@@ -366,8 +366,9 @@ export default {
 
 	computed: {
 		/**
-		 * Emergency contacts that could not be carried across the rotation and
-		 * were invalidated — the owner is prompted to re-establish exactly these.
+		 * Emergency contacts that could not be reached, so were not carried across
+		 * the rotation — the only residual the owner is prompted to re-establish.
+		 * Unconfirmed and in-flight contacts have their own lists below.
 		 * Empty (so the block is hidden) when every contact migrated, on a resumed
 		 * run that cannot re-envelope, or before a run has terminated.
 		 *

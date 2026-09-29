@@ -231,12 +231,15 @@ class VaultKeyProofMiddleware extends Middleware {
 	 * @return EncryptionSuite
 	 *
 	 * @throws KeyProofRequiredException When a named suite is not the caller's own
+	 *
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 	 */
 	private function resolveSubjectSuite(string $subject, string $userId): EncryptionSuite {
 		if ($subject === 'migrationNewSuite') {
 			// The NEW end: during a compromise recovery the old password may be
 			// the leaked one, so a route that must not be usable by whoever holds
-			// it proves the new key, which only the owner knows (#804 review).
+			// it proves the new key, held by whoever started the migration
+			// (#804 review; see MigrationController::reEnvelopeEmergencyContact).
 			$migration = $this->migrationMapper->findById((string)$this->request->getParam('id', ''));
 			return $this->assertOwned(
 				suite: $this->suiteService->getSuite($migration->getNewSuiteId()),
