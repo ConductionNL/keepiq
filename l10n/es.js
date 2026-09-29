@@ -1182,7 +1182,13 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Tu rotación de clave se reanudó, así que estos contactos de emergencia no se pudieron trasladar y se les retiró el acceso de emergencia. Vuelve a añadirlos desde Acceso de emergencia si aún los quieres.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Tu rotación de clave retiró %n contacto de emergencia. Revisa Acceso de emergencia y vuelve a añadirlo si aún lo quieres.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Tu rotación de clave retiró %n contactos de emergencia. Revisa Acceso de emergencia y vuelve a añadirlos si aún los quieres.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Tu rotación de clave retiró el acceso de emergencia de este contacto. Vuelve a designarlo si aún lo quieres."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Tu rotación de clave retiró el acceso de emergencia de este contacto. Vuelve a designarlo si aún lo quieres.",
+        "Shared with groups": "Compartido con grupos",
+        "Not shared with any group yet.": "Aún no se ha compartido con ningún grupo.",
+        "Revoke the share with {group}": "Revocar el uso compartido con {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Compartido con {group}: {received} miembros lo recibieron, {skipped} no porque aún no han configurado el cifrado.",
+        "Search groups": "Buscar grupos",
+        "Failed to share": "No se pudo compartir"
     },
     "nplurals=2; plural=(n != 1);"
 )

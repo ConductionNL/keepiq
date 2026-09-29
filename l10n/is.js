@@ -1182,7 +1182,13 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Lyklasnúningurinn var hafinn aftur, svo ekki var hægt að færa þessa neyðartengiliði yfir og neyðaraðgangur þeirra var fjarlægður. Bættu þeim aftur við í Neyðaraðgangi ef þú vilt þá enn.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Lyklasnúningurinn fjarlægði %n neyðartengilið. Skoðaðu Neyðaraðgang og bættu honum aftur við ef þú vilt hann enn.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Lyklasnúningurinn fjarlægði %n neyðartengiliði. Skoðaðu Neyðaraðgang og bættu þeim aftur við ef þú vilt þá enn.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Lyklasnúningurinn fjarlægði neyðaraðgang þessa tengiliðar. Tilnefndu hann aftur ef þú vilt hann enn."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Lyklasnúningurinn fjarlægði neyðaraðgang þessa tengiliðar. Tilnefndu hann aftur ef þú vilt hann enn.",
+        "Shared with groups": "Deilt með hópum",
+        "Not shared with any group yet.": "Ekki enn deilt með neinum hópi.",
+        "Revoke the share with {group}": "Afturkalla deilingu með {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Deilt með {group}: {received} meðlimir fengu það, {skipped} ekki þar sem þeir hafa ekki enn sett upp dulkóðun.",
+        "Search groups": "Leita að hópum",
+        "Failed to share": "Ekki tókst að deila"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1182,7 +1182,13 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Rakto rotacija buvo pratęsta, todėl šių skubios prieigos kontaktų nepavyko perkelti ir jų prieiga nenumatytais atvejais pašalinta. Jei jų vis dar norite, vėl pridėkite juos skiltyje „Prieiga nenumatytais atvejais“.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Rakto rotacija pašalino %n skubios prieigos kontaktą. Patikrinkite „Prieiga nenumatytais atvejais“ ir vėl jį pridėkite, jei jo vis dar norite.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Rakto rotacija pašalino %n skubios prieigos kontaktus. Patikrinkite „Prieiga nenumatytais atvejais“ ir vėl juos pridėkite, jei jų vis dar norite.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rakto rotacija pašalino šio kontakto prieigą nenumatytais atvejais. Jei jo vis dar norite, paskirkite jį iš naujo."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rakto rotacija pašalino šio kontakto prieigą nenumatytais atvejais. Jei jo vis dar norite, paskirkite jį iš naujo.",
+        "Shared with groups": "Bendrinama su grupėmis",
+        "Not shared with any group yet.": "Dar nebendrinama su jokia grupe.",
+        "Revoke the share with {group}": "Atšaukti bendrinimą su {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Bendrinama su {group}: {received} nariai tai gavo, {skipped} negavo, nes dar nenustatė šifravimo.",
+        "Search groups": "Ieškoti grupių",
+        "Failed to share": "Nepavyko bendrinti"
     },
     "nplurals=2; plural=(n != 1);"
 )

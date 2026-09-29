@@ -40,6 +40,7 @@ use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
+use OCP\Share\IManager as IShareManager;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 
@@ -64,6 +65,8 @@ class GroupShareService {
 	 * @param IGroupManager $groupManager The Nextcloud group manager
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param LoggerInterface $logger The logger
+	 * @param IShareManager $shareManager Nextcloud's share settings (group sharing on, own groups only)
+	 * @param ShareRevocationService $revocationService Revokes one member's share and deletes its copy
 	 *
 	 * @return void
 	 */
@@ -77,6 +80,8 @@ class GroupShareService {
 		private IGroupManager $groupManager,
 		private NotificationService $notificationService,
 		private LoggerInterface $logger,
+		private IShareManager $shareManager,
+		private ShareRevocationService $revocationService,
 	) {
 	}//end __construct()
 
@@ -91,11 +96,15 @@ class GroupShareService {
 	 * @param string $groupId The Nextcloud group ID
 	 * @param string $userId The initiator (must be owner or delegate)
 	 *
-	 * @return array{groupShare:GroupShare,members:array<int,array{userId:string,certificate:string}>}
+	 * `skipped` counts the members (owner excluded) left out for want of an
+	 * active EncryptionSuite, so the sharer can be told who did not get it.
+	 *
+	 * @return array{groupShare:GroupShare,members:array<int,array{userId:string,certificate:string}>,skipped:int}
 	 *
 	 * @throws InvalidArgumentException On unauthorized / missing secret / empty group
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#4.2
+	 * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#requirement-share-with-a-group
 	 */
 	public function createGroupShare(string $secretId, string $groupId, string $userId): array {
 		if ($groupId === '') {
@@ -109,6 +118,8 @@ class GroupShareService {
 		if ($group === null) {
 			throw new InvalidArgumentException(message: 'Group not found');
 		}
+
+		$this->assertGroupShareable(groupId: $groupId, userId: $userId);
 
 		// Idempotency — one GroupShare per (secret, group). Surface the
 		// existing one with a fresh member list rather than persisting a
@@ -130,6 +141,7 @@ class GroupShareService {
 		}
 
 		$members = [];
+		$skipped = 0;
 		foreach ($group->getUsers() as $user) {
 			$candidateId = $user->getUID();
 			if ($candidateId === $secret->getOwnerId()) {
@@ -142,6 +154,7 @@ class GroupShareService {
 					ownerId: $candidateId
 				);
 			} catch (DoesNotExistException) {
+				$skipped++;
 				continue;
 			}
 
@@ -154,12 +167,42 @@ class GroupShareService {
 		return [
 			'groupShare' => $existing,
 			'members' => $members,
+			'skipped' => $skipped,
 		];
 	}//end createGroupShare()
 
 	/**
-	 * Revoke a group share — cascade-deletes every ShareTarget that was
-	 * fanned out from it, then deletes the GroupShare row itself.
+	 * Apply Nextcloud's own share settings to a group share: group sharing
+	 * must be on, and when sharing is restricted to the sharer's own groups
+	 * the sharer must be a member. A group outside that reach is reported as
+	 * "Group not found", the same answer a missing group gets, so the reply
+	 * does not confirm that a group the caller cannot see exists.
+	 *
+	 * @param string $groupId The target group
+	 * @param string $userId The sharer
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the group is out of the sharer's reach
+	 *
+	 * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#requirement-share-with-a-group
+	 */
+	private function assertGroupShareable(string $groupId, string $userId): void {
+		if ($this->shareManager->allowGroupSharing() === false) {
+			throw new InvalidArgumentException(message: 'Group sharing is disabled');
+		}
+
+		if ($this->shareManager->shareWithGroupMembersOnly() === true
+			&& $this->groupManager->isInGroup($userId, $groupId) === false
+		) {
+			throw new InvalidArgumentException(message: 'Group not found');
+		}
+	}//end assertGroupShareable()
+
+	/**
+	 * Revoke a group share: revoke every member share fanned out from it
+	 * through the share revocation path (which deletes the member's Secret
+	 * copy, not only the ShareTarget row), then delete the GroupShare row.
 	 *
 	 * @param string $groupShareId The GroupShare row ID
 	 * @param string $userId The Nextcloud user requesting the revoke
@@ -169,6 +212,7 @@ class GroupShareService {
 	 * @throws InvalidArgumentException On unauthorized / not found
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#4.3
+	 * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#scenario-the-owner-revokes-a-group-share
 	 */
 	public function revokeGroupShare(string $groupShareId, string $userId): void {
 		try {
@@ -180,6 +224,12 @@ class GroupShareService {
 		$secret = $this->loadSecret(secretId: $entity->getSecretId());
 		$this->assertOwnerOrDelegate(secret: $secret, userId: $userId);
 
+		foreach ($this->bulkGrantMapper->findByGroupShare(groupShareId: $groupShareId) as $target) {
+			$this->revocationService->revokeShare(shareId: $target->getId(), userId: $userId);
+		}
+
+		// Anything the per-share revoke could not reach (a row whose source
+		// moved) still goes with the group share.
 		$this->bulkGrantMapper->deleteByGroupShare(groupShareId: $groupShareId);
 		$this->mapper->delete($entity);
 

@@ -1182,7 +1182,13 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "La rotazione della chiave è stata ripresa, quindi questi contatti di emergenza non hanno potuto essere trasferiti e il loro accesso di emergenza è stato rimosso. Aggiungili di nuovo da Accesso di emergenza se li vuoi ancora.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "La rotazione della chiave ha rimosso %n contatto di emergenza. Controlla Accesso di emergenza e aggiungilo di nuovo se lo vuoi ancora.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "La rotazione della chiave ha rimosso %n contatti di emergenza. Controlla Accesso di emergenza e aggiungili di nuovo se li vuoi ancora.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "La rotazione della chiave ha rimosso l'accesso di emergenza di questo contatto. Designalo di nuovo se lo vuoi ancora."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "La rotazione della chiave ha rimosso l'accesso di emergenza di questo contatto. Designalo di nuovo se lo vuoi ancora.",
+        "Shared with groups": "Condiviso con gruppi",
+        "Not shared with any group yet.": "Non ancora condiviso con alcun gruppo.",
+        "Revoke the share with {group}": "Revoca la condivisione con {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Condiviso con {group}: {received} membri lo hanno ricevuto, {skipped} no perché non hanno ancora configurato la crittografia.",
+        "Search groups": "Cerca gruppi",
+        "Failed to share": "Condivisione non riuscita"
     },
     "nplurals=2; plural=(n != 1);"
 )

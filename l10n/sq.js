@@ -1182,7 +1182,13 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Rrotullimi i kyçit u rifillua, prandaj këta kontakte emergjence nuk mund të barteshin dhe aksesi i tyre i emergjencës u hoq. Shtojini përsëri nga Aksesi i emergjencës nëse i doni ende.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Rrotullimi i kyçit hoqi %n kontakt emergjence. Kontrolloni Aksesin e emergjencës dhe shtojeni përsëri nëse e doni ende.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Rrotullimi i kyçit hoqi %n kontakte emergjence. Kontrolloni Aksesin e emergjencës dhe shtojini përsëri nëse i doni ende.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rrotullimi i kyçit hoqi aksesin e emergjencës së këtij kontakti. Caktojeni përsëri nëse e doni ende."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rrotullimi i kyçit hoqi aksesin e emergjencës së këtij kontakti. Caktojeni përsëri nëse e doni ende.",
+        "Shared with groups": "Ndarë me grupe",
+        "Not shared with any group yet.": "Ende nuk është ndarë me asnjë grup.",
+        "Revoke the share with {group}": "Revoko ndarjen me {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Ndarë me {group}: {received} anëtarë e morën, {skipped} jo, sepse ende nuk kanë konfiguruar enkriptimin.",
+        "Search groups": "Kërko grupe",
+        "Failed to share": "Ndarja dështoi"
     },
     "nplurals=2; plural=(n != 1);"
 )

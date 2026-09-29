@@ -1187,7 +1187,13 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Je sleutelrotatie is hervat, dus deze noodcontacten konden niet worden meegenomen en hun noodtoegang is verwijderd. Voeg ze opnieuw toe via Noodtoegang als je ze nog wilt.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Je sleutelrotatie heeft %n noodcontact verwijderd. Kijk bij Noodtoegang en voeg het opnieuw toe als je het nog wilt.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Je sleutelrotatie heeft %n noodcontacten verwijderd. Kijk bij Noodtoegang en voeg ze opnieuw toe als je ze nog wilt.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Je sleutelrotatie heeft de noodtoegang van dit contact verwijderd. Wijs het opnieuw aan als je het nog wilt."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Je sleutelrotatie heeft de noodtoegang van dit contact verwijderd. Wijs het opnieuw aan als je het nog wilt.",
+        "Shared with groups": "Gedeeld met groepen",
+        "Not shared with any group yet.": "Nog met geen enkele groep gedeeld.",
+        "Revoke the share with {group}": "Deling met {group} intrekken",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Gedeeld met {group}: {received} leden hebben het ontvangen, {skipped} niet omdat ze nog geen versleuteling hebben ingesteld.",
+        "Search groups": "Groepen zoeken",
+        "Failed to share": "Delen mislukt"
     },
     "nplurals=2; plural=(n != 1);"
 )

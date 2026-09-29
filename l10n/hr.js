@@ -1182,7 +1182,13 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Rotacija ključa je nastavljena pa ovi kontakti za pristup u nuždi nisu mogli biti preneseni i njihov pristup u nuždi je uklonjen. Dodajte ih ponovno u odjeljku Pristup u nuždi ako ih još želite.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Rotacija ključa uklonila je %n kontakt za pristup u nuždi. Provjerite Pristup u nuždi i dodajte ga ponovno ako ga još želite.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Rotacija ključa uklonila je %n kontakta za pristup u nuždi. Provjerite Pristup u nuždi i dodajte ih ponovno ako ih još želite.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rotacija ključa uklonila je pristup u nuždi ovog kontakta. Odredite ga ponovno ako ga još želite."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rotacija ključa uklonila je pristup u nuždi ovog kontakta. Odredite ga ponovno ako ga još želite.",
+        "Shared with groups": "Dijeljeno s grupama",
+        "Not shared with any group yet.": "Još nije dijeljeno ni s jednom grupom.",
+        "Revoke the share with {group}": "Opozovi dijeljenje s grupom {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Dijeljeno s grupom {group}: {received} članova je to primilo, {skipped} nije jer još nisu postavili šifriranje.",
+        "Search groups": "Pretraži grupe",
+        "Failed to share": "Dijeljenje nije uspjelo"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1182,7 +1182,13 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Rotácia kľúča bola obnovená, a preto tieto núdzové kontakty nebolo možné preniesť a ich prístup pre naliehavé prípady bol odstránený. Ak ich stále chcete, pridajte ich znova v časti Prístup pre naliehavé prípady.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Rotácia kľúča odstránila %n núdzový kontakt. Skontrolujte Prístup pre naliehavé prípady a pridajte ho znova, ak ho stále chcete.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Rotácia kľúča odstránila %n núdzových kontaktov. Skontrolujte Prístup pre naliehavé prípady a pridajte ich znova, ak ich stále chcete.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rotácia kľúča odstránila tomuto kontaktu prístup pre naliehavé prípady. Ak ho stále chcete, určte ho znova."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rotácia kľúča odstránila tomuto kontaktu prístup pre naliehavé prípady. Ak ho stále chcete, určte ho znova.",
+        "Shared with groups": "Zdieľané so skupinami",
+        "Not shared with any group yet.": "Zatiaľ nezdieľané so žiadnou skupinou.",
+        "Revoke the share with {group}": "Zrušiť zdieľanie so skupinou {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Zdieľané so skupinou {group}: {received} členov to dostalo, {skipped} nie, pretože ešte nemajú nastavené šifrovanie.",
+        "Search groups": "Hľadať skupiny",
+        "Failed to share": "Zdieľanie zlyhalo"
     },
     "nplurals=2; plural=(n != 1);"
 )

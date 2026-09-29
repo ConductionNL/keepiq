@@ -1181,7 +1181,13 @@
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Din nøglerotation blev genoptaget, så disse nødkontakter kunne ikke overføres, og deres nødadgang blev fjernet. Tilføj dem igen under Nødadgang, hvis du stadig ønsker dem.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Din nøglerotation fjernede %n nødkontakt. Tjek Nødadgang, og tilføj den igen, hvis du stadig ønsker den.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Din nøglerotation fjernede %n nødkontakter. Tjek Nødadgang, og tilføj dem igen, hvis du stadig ønsker dem.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Din nøglerotation fjernede denne kontakts nødadgang. Udpeg den igen, hvis du stadig ønsker den."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Din nøglerotation fjernede denne kontakts nødadgang. Udpeg den igen, hvis du stadig ønsker den.",
+        "Shared with groups": "Delt med grupper",
+        "Not shared with any group yet.": "Endnu ikke delt med nogen gruppe.",
+        "Revoke the share with {group}": "Tilbagekald deling med {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Delt med {group}: {received} medlemmer modtog den, {skipped} gjorde ikke, fordi de endnu ikke har opsat kryptering.",
+        "Search groups": "Søg efter grupper",
+        "Failed to share": "Deling mislykkedes"
     },
     "plurals": null
 }

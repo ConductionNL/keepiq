@@ -1182,7 +1182,13 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Anahtar döndürmeniz sürdürüldü, bu nedenle bu acil durum kişileri aktarılamadı ve acil durum erişimleri kaldırıldı. Hâlâ istiyorsanız onları Acil durum erişimi bölümünden yeniden ekleyin.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Anahtar döndürmeniz %n acil durum kişisini kaldırdı. Acil durum erişimini kontrol edin ve hâlâ istiyorsanız yeniden ekleyin.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Anahtar döndürmeniz %n acil durum kişisini kaldırdı. Acil durum erişimini kontrol edin ve hâlâ istiyorsanız onları yeniden ekleyin.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Anahtar döndürmeniz bu kişinin acil durum erişimini kaldırdı. Hâlâ istiyorsanız onu yeniden atayın."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Anahtar döndürmeniz bu kişinin acil durum erişimini kaldırdı. Hâlâ istiyorsanız onu yeniden atayın.",
+        "Shared with groups": "Gruplarla paylaşıldı",
+        "Not shared with any group yet.": "Henüz hiçbir grupla paylaşılmadı.",
+        "Revoke the share with {group}": "{group} ile paylaşımı geri al",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "{group} ile paylaşıldı: {received} üye aldı, {skipped} üye henüz şifreleme ayarlamadığı için almadı.",
+        "Search groups": "Grup ara",
+        "Failed to share": "Paylaşılamadı"
     },
     "nplurals=2; plural=(n != 1);"
 )

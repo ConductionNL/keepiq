@@ -1181,7 +1181,13 @@
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Atslēgas rotācija tika atsākta, tāpēc šīs ārkārtas kontaktpersonas nevarēja pārnest un to ārkārtas piekļuve tika noņemta. Pievienojiet tās atkārtoti sadaļā Ārkārtas piekļuve, ja tās joprojām vēlaties.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Atslēgas rotācija noņēma %n ārkārtas kontaktpersonu. Pārbaudiet Ārkārtas piekļuvi un pievienojiet to atkārtoti, ja joprojām to vēlaties.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Atslēgas rotācija noņēma %n ārkārtas kontaktpersonas. Pārbaudiet Ārkārtas piekļuvi un pievienojiet tās atkārtoti, ja joprojām tās vēlaties.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Atslēgas rotācija noņēma šīs kontaktpersonas ārkārtas piekļuvi. Norīkojiet to atkārtoti, ja joprojām to vēlaties."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Atslēgas rotācija noņēma šīs kontaktpersonas ārkārtas piekļuvi. Norīkojiet to atkārtoti, ja joprojām to vēlaties.",
+        "Shared with groups": "Kopīgots ar grupām",
+        "Not shared with any group yet.": "Vēl nav kopīgots ne ar vienu grupu.",
+        "Revoke the share with {group}": "Atsaukt kopīgošanu ar {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Kopīgots ar {group}: {received} dalībnieki to saņēma, {skipped} nesaņēma, jo viņiem vēl nav iestatīta šifrēšana.",
+        "Search groups": "Meklēt grupas",
+        "Failed to share": "Kopīgošana neizdevās"
     },
     "plurals": null
 }

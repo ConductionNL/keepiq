@@ -1182,7 +1182,13 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Vossa rotaziun da la clav è vegnida cuntinuada, perquai n'hai quests contacts d'urgenza betg pudì vegnir transferids ed lur access d'urgenza è vegnì allontanà. Agiuntai els danovamain sut Access d'urgenza, sche Vus als vulais anc.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Vossa rotaziun da la clav ha allontanà %n contact d'urgenza. Controllai Access d'urgenza ed agiuntai el danovamain, sche Vus al vulais anc.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Vossa rotaziun da la clav ha allontanà %n contacts d'urgenza. Controllai Access d'urgenza ed agiuntai els danovamain, sche Vus als vulais anc.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Vossa rotaziun da la clav ha allontanà l'access d'urgenza da quest contact. Designai el danovamain, sche Vus al vulais anc."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Vossa rotaziun da la clav ha allontanà l'access d'urgenza da quest contact. Designai el danovamain, sche Vus al vulais anc.",
+        "Shared with groups": "Partì cun gruppas",
+        "Not shared with any group yet.": "Anc betg partì cun ina gruppa.",
+        "Revoke the share with {group}": "Revocar la partiziun cun {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Partì cun {group}: {received} commembers han retschavì quai, {skipped} betg, perquai ch'els n'han anc betg configurà il criptadi.",
+        "Search groups": "Tschertgar gruppas",
+        "Failed to share": "La partiziun n'è betg reussida"
     },
     "nplurals=2; plural=(n != 1);"
 )

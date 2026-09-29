@@ -1181,7 +1181,13 @@
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ротацијата на клучот беше продолжена, па овие контакти за итни случаи не можеа да се пренесат и нивниот пристап во итни случаи беше отстранет. Додајте ги повторно од „Пристап во итни случаи“ ако сè уште ги сакате.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ротацијата на клучот отстрани %n контакт за итни случаи. Проверете „Пристап во итни случаи“ и додајте го повторно ако сè уште го сакате.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ротацијата на клучот отстрани %n контакти за итни случаи. Проверете „Пристап во итни случаи“ и додајте ги повторно ако сè уште ги сакате.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ротацијата на клучот го отстрани пристапот во итни случаи на овој контакт. Одредете го повторно ако сè уште го сакате."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ротацијата на клучот го отстрани пристапот во итни случаи на овој контакт. Одредете го повторно ако сè уште го сакате.",
+        "Shared with groups": "Споделено со групи",
+        "Not shared with any group yet.": "Сè уште не е споделено со ниедна група.",
+        "Revoke the share with {group}": "Отповикај го споделувањето со {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Споделено со {group}: {received} членови го примија, {skipped} не, бидејќи сè уште немаат поставено шифрирање.",
+        "Search groups": "Пребарај групи",
+        "Failed to share": "Споделувањето не успеа"
     },
     "plurals": null
 }

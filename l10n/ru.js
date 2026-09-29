@@ -1182,7 +1182,13 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ротация ключа была возобновлена, поэтому эти экстренные контакты не удалось перенести и их экстренный доступ удалён. Добавьте их снова в разделе «Экстренный доступ», если они вам ещё нужны.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ротация ключа удалила %n экстренный контакт. Проверьте «Экстренный доступ» и добавьте его снова, если он вам ещё нужен.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ротация ключа удалила %n экстренных контактов. Проверьте «Экстренный доступ» и добавьте их снова, если они вам ещё нужны.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ротация ключа удалила экстренный доступ этого контакта. Назначьте его снова, если он вам ещё нужен."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ротация ключа удалила экстренный доступ этого контакта. Назначьте его снова, если он вам ещё нужен.",
+        "Shared with groups": "Предоставлен доступ группам",
+        "Not shared with any group yet.": "Пока не предоставлен ни одной группе.",
+        "Revoke the share with {group}": "Отозвать доступ для {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Предоставлено группе {group}: {received} участников получили, {skipped} нет, так как у них ещё не настроено шифрование.",
+        "Search groups": "Искать группы",
+        "Failed to share": "Не удалось предоставить доступ"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1182,7 +1182,13 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ратацыя ключа была адноўлена, таму гэтыя экстраныя кантакты не ўдалося перанесці, і іх надзвычайны доступ выдалены. Дадайце іх зноў у раздзеле «Надзвычайны доступ», калі яны вам яшчэ патрэбныя.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ратацыя ключа выдаліла %n экстраны кантакт. Праверце «Надзвычайны доступ» і дадайце яго зноў, калі ён вам яшчэ патрэбны.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ратацыя ключа выдаліла %n экстраных кантактаў. Праверце «Надзвычайны доступ» і дадайце іх зноў, калі яны вам яшчэ патрэбныя.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ратацыя ключа выдаліла надзвычайны доступ гэтага кантакту. Прызначце яго зноў, калі ён вам яшчэ патрэбны."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ратацыя ключа выдаліла надзвычайны доступ гэтага кантакту. Прызначце яго зноў, калі ён вам яшчэ патрэбны.",
+        "Shared with groups": "Абагулена з групамі",
+        "Not shared with any group yet.": "Яшчэ не абагулена ні з адной групай.",
+        "Revoke the share with {group}": "Адклікаць абагульванне з {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Абагулена з {group}: {received} удзельнікаў атрымалі, {skipped} не, бо ў іх яшчэ не наладжана шыфраванне.",
+        "Search groups": "Шукаць групы",
+        "Failed to share": "Не ўдалося абагуліць"
     },
     "nplurals=2; plural=(n != 1);"
 )

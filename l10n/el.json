@@ -1181,7 +1181,13 @@
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Η εναλλαγή κλειδιού συνεχίστηκε, οπότε αυτές οι επαφές έκτακτης ανάγκης δεν μπόρεσαν να μεταφερθούν και η πρόσβασή τους έκτακτης ανάγκης αφαιρέθηκε. Προσθέστε τις ξανά από την Πρόσβαση έκτακτης ανάγκης, αν τις θέλετε ακόμα.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Η εναλλαγή κλειδιού αφαίρεσε %n επαφή έκτακτης ανάγκης. Ελέγξτε την Πρόσβαση έκτακτης ανάγκης και προσθέστε την ξανά, αν τη θέλετε ακόμα.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Η εναλλαγή κλειδιού αφαίρεσε %n επαφές έκτακτης ανάγκης. Ελέγξτε την Πρόσβαση έκτακτης ανάγκης και προσθέστε τις ξανά, αν τις θέλετε ακόμα.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Η εναλλαγή κλειδιού αφαίρεσε την πρόσβαση έκτακτης ανάγκης αυτής της επαφής. Ορίστε την ξανά, αν τη θέλετε ακόμα."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Η εναλλαγή κλειδιού αφαίρεσε την πρόσβαση έκτακτης ανάγκης αυτής της επαφής. Ορίστε την ξανά, αν τη θέλετε ακόμα.",
+        "Shared with groups": "Κοινοποιήθηκε σε ομάδες",
+        "Not shared with any group yet.": "Δεν έχει κοινοποιηθεί ακόμη σε καμία ομάδα.",
+        "Revoke the share with {group}": "Ανάκληση της κοινοποίησης στην ομάδα {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Κοινοποιήθηκε στην ομάδα {group}: {received} μέλη το έλαβαν, {skipped} όχι, επειδή δεν έχουν ρυθμίσει ακόμη κρυπτογράφηση.",
+        "Search groups": "Αναζήτηση ομάδων",
+        "Failed to share": "Η κοινοποίηση απέτυχε"
     },
     "plurals": null
 }
