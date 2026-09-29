@@ -260,6 +260,48 @@
 					</li>
 				</ul>
 			</template>
+
+			<!-- #804 review: never nudge the owner to re-add these two. An
+			     unticked or in-flight contact is what a planted one looks like. -->
+			<div
+				v-if="unconfirmedContacts.length > 0"
+				data-testid="compromise-recovery-unconfirmed">
+				<NcNoteCard type="info">
+					{{
+						t(
+							'keepiq',
+							'You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.',
+						)
+					}}
+				</NcNoteCard>
+				<ul class="compromise-recovery-form__list">
+					<li v-for="grantee in unconfirmedContacts" :key="grantee">
+						<span class="compromise-recovery-form__list-name">{{
+							grantee
+						}}</span>
+					</li>
+				</ul>
+			</div>
+
+			<div
+				v-if="inFlightContacts.length > 0"
+				data-testid="compromise-recovery-in-flight">
+				<NcNoteCard type="error">
+					{{
+						t(
+							'keepiq',
+							'These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.',
+						)
+					}}
+				</NcNoteCard>
+				<ul class="compromise-recovery-form__list">
+					<li v-for="grantee in inFlightContacts" :key="grantee">
+						<span class="compromise-recovery-form__list-name">{{
+							grantee
+						}}</span>
+					</li>
+				</ul>
+			</div>
 		</template>
 
 		<NcButton
@@ -333,7 +375,28 @@ export default {
 		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
 		residualContacts() {
-			return this.result?.residualContacts ?? []
+			return this.residualWithReason('unreachable')
+		},
+
+		/**
+		 * Contacts the owner left unticked, so they lost emergency access.
+		 *
+		 * @return {string[]} The grantee ids.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		unconfirmedContacts() {
+			return this.residualWithReason('not_confirmed')
+		},
+
+		/**
+		 * Contacts with a break-glass requested or approved, which were not
+		 * given the new key and are flagged as a possible plant.
+		 *
+		 * @return {string[]} The grantee ids.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		inFlightContacts() {
+			return this.residualWithReason('break_glass_in_flight')
 		},
 
 		/**
@@ -481,6 +544,19 @@ export default {
 		 */
 		onStrengthChange({ isValid }) {
 			this.strengthValid = isValid
+		},
+
+		/**
+		 * The residual grantee ids that carry the given reason.
+		 *
+		 * @param {string} reason `unreachable`, `not_confirmed` or `break_glass_in_flight`.
+		 * @return {string[]} The grantee ids.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		residualWithReason(reason) {
+			return (this.result?.residualContacts ?? [])
+				.filter((entry) => entry.reason === reason)
+				.map((entry) => entry.granteeUserId)
 		},
 
 		/**

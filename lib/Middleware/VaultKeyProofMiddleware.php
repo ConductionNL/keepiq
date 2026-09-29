@@ -50,6 +50,13 @@ use Throwable;
 
 /**
  * Enforce #[VaultKeyProofRequired] on the annotated controller methods.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The guard is one place that
+ *   has to see the attribute, the request, the session, the three ways a
+ *   subject suite is resolved (active suite, route parameter, migration end),
+ *   the proof service, its exception and now the logger that records every
+ *   refusal (#804 review). Splitting it would scatter the one check that must
+ *   stay in a single middleware so it cannot be skipped.
  */
 class VaultKeyProofMiddleware extends Middleware {
 	/**

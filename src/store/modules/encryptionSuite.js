@@ -317,8 +317,9 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				migrationId: response.data.migration.id,
 				oldSuiteId: response.data.migration.oldSuiteId,
 				newPrivateKeyPem,
-				oldEncryptedPrivateKey: response.data.oldEncryptedPrivateKey,
-				oldPassword,
+				newSuiteId: response.data.newSuite?.id,
+				newEncryptedPrivateKey: newEncryptedPk,
+				newPassword,
 				carryContactIds,
 			})
 
@@ -391,8 +392,9 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * `granted` is carried (keepiq#800): the browser fetches the grantee's
 		 * CURRENT certificate, mints a fresh recovery envelope escrowing the new
 		 * private key (a build, not a re-wrap), and posts it to the migration
-		 * re-point endpoint with a vault-key proof made with the OLD key, which is
-		 * the one this rotation already holds the password for (keepiq#801).
+		 * re-point endpoint with a vault-key proof made with the NEW key and password
+		 * (keepiq#801, #804 review): the old password may be the leaked one, and
+		 * only the owner who just set the new one can prove the new key.
 		 *
 		 * Every other contact on the old suite is left for the completion sweep to
 		 * invalidate and returned as residual, so the form prompts the owner to
@@ -407,18 +409,22 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * @param {string} params.migrationId The migration id.
 		 * @param {string} params.oldSuiteId The rotating old suite; only contacts bound to it are considered.
 		 * @param {string} params.newPrivateKeyPem The freshly generated private key PEM.
-		 * @param {string} params.oldEncryptedPrivateKey The old suite's AES envelope, for the proof.
-		 * @param {string} params.oldPassword The old master password, for the proof.
+		 * @param {string} params.newSuiteId The new suite, whose key the proof is made with.
+		 * @param {string} params.newEncryptedPrivateKey The new suite's AES envelope, for the proof.
+		 * @param {string} params.newPassword The new master password, for the proof.
 		 * @param {string[]} [params.carryContactIds] The contact ids the owner confirmed.
-		 * @return {Promise<string[]>} The grantee ids that were not re-enveloped.
+		 * @return {Promise<Array<{granteeUserId: string, reason: string}>>} The contacts
+		 *   that were not re-enveloped, each with why: `break_glass_in_flight`,
+		 *   `not_confirmed` or `unreachable`.
 		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
 		async migrateEmergencyContacts({
 			migrationId,
 			oldSuiteId,
 			newPrivateKeyPem,
-			oldEncryptedPrivateKey,
-			oldPassword,
+			newSuiteId,
+			newEncryptedPrivateKey,
+			newPassword,
 			carryContactIds = [],
 		}) {
 			const residualContacts = []
@@ -448,14 +454,23 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 					continue
 				}
 
-				// Not confirmed by the owner, or a break-glass in flight: never
-				// escrow the new key to it. The sweep invalidates it at completion
-				// and the owner re-establishes it if they still want it.
-				if (
-					contact.state !== 'granted'
-					|| !carryContactIds.includes(contact.id)
-				) {
-					residualContacts.push(contact.granteeUserId)
+				// A break-glass in flight, or not confirmed by the owner: never
+				// escrow the new key to it. The sweep invalidates it at completion.
+				// Each gets its own reason, because the form must not nudge the
+				// owner to re-add either the way it does for an unreachable
+				// grantee: that is what a planted contact is after (#804 review).
+				if (contact.state !== 'granted') {
+					residualContacts.push({
+						granteeUserId: contact.granteeUserId,
+						reason: 'break_glass_in_flight',
+					})
+					continue
+				}
+				if (!carryContactIds.includes(contact.id)) {
+					residualContacts.push({
+						granteeUserId: contact.granteeUserId,
+						reason: 'not_confirmed',
+					})
 					continue
 				}
 
@@ -475,10 +490,10 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 					// Bound in the order the server hashes them:
 					// id, contactId, recoveryEnvelope, granteeSuiteId.
 					const headers = await buildKeyProofHeaders({
-						suiteId: oldSuiteId,
+						suiteId: newSuiteId,
 						purpose: PROOF_PURPOSE.EMERGENCY_RE_ENVELOPE,
-						encryptedPrivateKey: oldEncryptedPrivateKey,
-						masterPassword: oldPassword,
+						encryptedPrivateKey: newEncryptedPrivateKey,
+						masterPassword: newPassword,
 						boundValues: [
 							migrationId,
 							contact.id,
@@ -502,7 +517,10 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 					// or a transient re-point failure: leave the contact on the old
 					// suite for the completion sweep to invalidate, and prompt
 					// re-establishment. Never fatal — contacts are outside the gate.
-					residualContacts.push(contact.granteeUserId)
+					residualContacts.push({
+						granteeUserId: contact.granteeUserId,
+						reason: 'unreachable',
+					})
 				}
 			}
 

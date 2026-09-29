@@ -499,10 +499,12 @@ class MigrationController extends OCSController {
 	 * old suite for the completion sweep to invalidate — never recorded as a
 	 * migration failure that would block the gate.
 	 *
-	 * Guarded by a vault-key proof over the migration's OLD key (keepiq#801):
-	 * it overwrites a contact's envelope, so with a session alone it could
-	 * destroy break-glass the same way an unguarded destroy() could. The old
-	 * key is the one the rotating client already holds the password for.
+	 * Guarded by a vault-key proof over the migration's NEW key (keepiq#801,
+	 * #804 review): it overwrites a contact's envelope, so with a session alone
+	 * it could destroy break-glass the same way an unguarded destroy() could.
+	 * It is the new key, not the old one, because every migration is a
+	 * compromise recovery and the old password may be the leaked one. Only the
+	 * owner who set the new password can prove the new key.
 	 *
 	 * @param string $id The migration ID
 	 * @param string $contactId The emergency-contact ID
@@ -518,7 +520,7 @@ class MigrationController extends OCSController {
 	#[NoAdminRequired]
 	#[VaultKeyProofRequired(
 		binds: ['id', 'contactId', 'recoveryEnvelope', 'granteeSuiteId'],
-		subject: 'migrationOldSuite',
+		subject: 'migrationNewSuite',
 		purpose: VaultKeyProofService::PURPOSE_EMERGENCY_RE_ENVELOPE
 	)]
 	public function reEnvelopeEmergencyContact(

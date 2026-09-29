@@ -1173,7 +1173,9 @@ OC.L10N.register(
         "%n secrets could not be decrypted and are not in this export.": "%n gizli bilginin şifresi çözülemedi ve bunlar bu dışa aktarımda yer almıyor.",
         "Continue without the secrets that could not be decrypted": "Şifresi çözülemeyen gizli bilgiler olmadan devam et",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Yeni anahtarınızı hangi acil durum kişilerinin alabileceğini seçin. Yalnızca kendiniz atadığınız ve hâlâ güvendiğiniz kişileri işaretleyin: oturumunuzu ele geçiren kişi kendi kişisini eklemiş olabilir. İşaretlemediğiniz kişiler acil durum erişimini kaybeder; onları daha sonra yeniden atayabilirsiniz.",
-        "{grantee}, waiting period in days: {days}": "{grantee}, gün cinsinden bekleme süresi: {days}"
+        "{grantee}, waiting period in days: {days}": "{grantee}, gün cinsinden bekleme süresi: {days}",
+        "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Bu kişileri onaylamadınız, bu nedenle acil durum erişimleri kaldırıldı. Onları yalnızca kendiniz eklediğinizden eminseniz yeniden atayın.",
+        "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Bu kişilerin bekleyen veya onaylanmış bir acil durum erişimi isteği vardı, bu nedenle yeni anahtarınızı almadılar. Başka biri tarafından eklenmiş bir kişi böyle görünürdü: isteğin gerçek olduğunu bilmiyorsanız onları yeniden atamayın."
     },
     "nplurals=2; plural=(n != 1);"
 )

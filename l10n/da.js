@@ -1173,7 +1173,9 @@ OC.L10N.register(
         "%n secrets could not be decrypted and are not in this export.": "%n hemmeligheder kunne ikke dekrypteres og er ikke med i denne eksport.",
         "Continue without the secrets that could not be decrypted": "Fortsæt uden de hemmeligheder, der ikke kunne dekrypteres",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Vælg hvilke nødkontakter der må modtage din nye nøgle. Sæt kun flueben ved personer, du selv har udpeget og stadig stoler på: den, der havde din session, kan have tilføjet sin egen kontakt. Kontakter uden flueben mister deres nødadgang; du kan udpege dem igen bagefter.",
-        "{grantee}, waiting period in days: {days}": "{grantee}, ventetid i dage: {days}"
+        "{grantee}, waiting period in days: {days}": "{grantee}, ventetid i dage: {days}",
+        "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Du bekræftede ikke disse kontakter, så deres nødadgang er fjernet. Udpeg dem kun igen, hvis du er sikker på, at du selv har tilføjet dem.",
+        "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Disse kontakter havde en afventende eller godkendt anmodning om nødadgang, så de fik ikke din nye nøgle. Sådan ville en kontakt tilføjet af en anden se ud: udpeg dem ikke igen, medmindre du ved, at anmodningen var ægte."
     },
     "nplurals=2; plural=(n != 1);"
 )

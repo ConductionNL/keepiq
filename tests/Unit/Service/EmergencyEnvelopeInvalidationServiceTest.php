@@ -192,7 +192,16 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 		$this->assertSame(EmergencyContact::STATE_GRANTED, $updated->getState());
 		$this->assertSame($this->envelope(), $updated->getRecoveryEnvelope());
 		$this->assertNull($updated->getInvalidatedReason());
-		$this->assertSame(1, $this->auditCount(AuditEventTypes::EMERGENCY_ACCESS_GRANTED));
+
+		// A carry is audited as its own event, not as a fresh grant, so after an
+		// incident it can be told apart from a designation (#804 review).
+		$this->assertSame(0, $this->auditCount(AuditEventTypes::EMERGENCY_ACCESS_GRANTED));
+		$this->assertSame(1, $this->auditCount(AuditEventTypes::EMERGENCY_ACCESS_CARRIED));
+		$carried = array_values(array_filter(
+			$this->dispatched,
+			static fn (AuditEvent $e): bool => $e->getEventType() === AuditEventTypes::EMERGENCY_ACCESS_CARRIED
+		))[0];
+		$this->assertSame('new-suite', $carried->getMetadata()['toSuiteId'] ?? null);
 	}//end testReEnvelopeRepointsToNewSuiteAndKeepsGranted()
 
 	/**

@@ -1173,7 +1173,9 @@ OC.L10N.register(
         "%n secrets could not be decrypted and are not in this export.": "%n secrets no s'han pogut desxifrar i no són en aquesta exportació.",
         "Continue without the secrets that could not be decrypted": "Continua sense els secrets que no s'han pogut desxifrar",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Trieu quins contactes d'emergència poden rebre la vostra clau nova. Marqueu només persones que heu designat vosaltres i en qui encara confieu: qui tenia la vostra sessió pot haver afegit un contacte propi. Els contactes que no marqueu perden l'accés d'emergència; després els podeu tornar a designar.",
-        "{grantee}, waiting period in days: {days}": "{grantee}, període d’espera en dies: {days}"
+        "{grantee}, waiting period in days: {days}": "{grantee}, període d’espera en dies: {days}",
+        "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "No has confirmat aquests contactes, per tant se n'ha eliminat l'accés d'emergència. Torna'ls a designar només si estàs segur que els has afegit tu.",
+        "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Aquests contactes tenien una sol·licitud d'accés d'emergència pendent o aprovada, per tant no han rebut la teva clau nova. Així és com es veuria un contacte afegit per una altra persona: no els tornis a designar tret que sàpigues que la sol·licitud era legítima."
     },
     "nplurals=2; plural=(n != 1);"
 )

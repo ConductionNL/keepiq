@@ -139,7 +139,9 @@ describe('CompromiseRecoveryForm', () => {
 					migrated: 0,
 					droppedVersions: 0,
 					failures: [],
-					residualContacts: ['bob'],
+					residualContacts: [
+						{ granteeUserId: 'bob', reason: 'not_confirmed' },
+					],
 				})
 
 			const wrapper = mountForm()
@@ -202,14 +204,17 @@ describe('CompromiseRecoveryForm', () => {
 		expect(wrapper.text()).toContain('7 older versions were dropped')
 	})
 
-	it('prompts to re-establish exactly the emergency contacts that were lost', async () => {
+	it('prompts to re-establish only the contacts that could not be reached', async () => {
 		const wrapper = mountForm()
 		wrapper.vm.phase = 'terminal'
 		wrapper.vm.result = {
 			migrated: 3,
 			droppedVersions: 0,
 			failures: [],
-			residualContacts: ['bob', 'carol'],
+			residualContacts: [
+				{ granteeUserId: 'bob', reason: 'unreachable' },
+				{ granteeUserId: 'carol', reason: 'unreachable' },
+			],
 		}
 		await wrapper.vm.$nextTick()
 
@@ -218,6 +223,40 @@ describe('CompromiseRecoveryForm', () => {
 		expect(text).toContain('Re-establish')
 		expect(text).toContain('bob')
 		expect(text).toContain('carol')
+	})
+
+	// #804 review: an unticked or in-flight contact is the one a planted contact
+	// would be, so the owner must not be nudged to re-add it.
+	it('never nudges the owner to re-add an unconfirmed or in-flight contact', async () => {
+		const wrapper = mountForm()
+		wrapper.vm.phase = 'terminal'
+		wrapper.vm.result = {
+			migrated: 3,
+			droppedVersions: 0,
+			failures: [],
+			residualContacts: [
+				{ granteeUserId: 'dave', reason: 'not_confirmed' },
+				{ granteeUserId: 'mallory', reason: 'break_glass_in_flight' },
+			],
+		}
+		await wrapper.vm.$nextTick()
+
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-residual"]').exists(),
+		).toBe(false)
+		expect(wrapper.text()).not.toContain('Re-establish')
+
+		const unconfirmed = wrapper.find(
+			'[data-testid="compromise-recovery-unconfirmed"]',
+		)
+		expect(unconfirmed.text()).toContain('dave')
+		expect(unconfirmed.text()).toContain('did not confirm')
+
+		const inFlight = wrapper.find(
+			'[data-testid="compromise-recovery-in-flight"]',
+		)
+		expect(inFlight.text()).toContain('mallory')
+		expect(inFlight.text()).toContain('added by someone else')
 	})
 
 	it('says nothing about emergency access when every contact migrated', async () => {

@@ -268,13 +268,14 @@ class EmergencyEnvelopeInvalidationService {
 		$contact->setUpdatedAt(new DateTime());
 		$updated = $this->mapper->update($contact);
 
-		// Only granted contacts get here, so the carry is audited as a re-grant.
-		$this->auditTrail->recordGranted(
+		// Audited as a CARRY, not a grant, so it can't be mistaken for a fresh
+		// designation after an incident (#804 review).
+		$this->auditTrail->recordCarried(
 			grantorUserId: $updated->getGrantorUserId(),
 			granteeUserId: $updated->getGranteeUserId(),
 			id: $updated->getId(),
-			accessLevel: (string)$updated->getAccessLevel(),
-			waitPeriodDays: (int)$updated->getWaitPeriodDays(),
+			fromSuiteId: $oldSuiteId,
+			toSuiteId: $newSuiteId,
 		);
 
 		return $updated;

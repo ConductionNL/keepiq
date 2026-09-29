@@ -1173,7 +1173,9 @@ OC.L10N.register(
         "%n secrets could not be decrypted and are not in this export.": "Ekki tókst að afkóða %n leyndarmál og þau eru ekki í þessum útflutningi.",
         "Continue without the secrets that could not be decrypted": "Halda áfram án leyndarmálanna sem ekki tókst að afkóða",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Veldu hvaða neyðartengiliðir mega fá nýja lykilinn þinn. Hakaðu aðeins við fólk sem þú tilnefndir sjálf(ur) og treystir enn: sá sem hafði setuna þína gæti hafa bætt við eigin tengilið. Tengiliðir sem þú hakar ekki við missa neyðaraðgang sinn; þú getur tilnefnt þá aftur síðar.",
-        "{grantee}, waiting period in days: {days}": "{grantee}, biðtími í dögum: {days}"
+        "{grantee}, waiting period in days: {days}": "{grantee}, biðtími í dögum: {days}",
+        "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Þú staðfestir ekki þessa tengiliði, svo neyðaraðgangur þeirra var fjarlægður. Tilnefndu þá aðeins aftur ef þú ert viss um að þú hafir bætt þeim við sjálf(ur).",
+        "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Þessir tengiliðir áttu biðandi eða samþykkta beiðni um neyðaraðgang, svo þeir fengu ekki nýja lykilinn þinn. Þannig myndi tengiliður sem einhver annar bætti við líta út: tilnefndu þá ekki aftur nema þú vitir að beiðnin hafi verið ósvikin."
     },
     "nplurals=2; plural=(n != 1);"
 )

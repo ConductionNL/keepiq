@@ -9,9 +9,10 @@ Carrying a contact hands the grantor's **new** key to that grantee, and a compro
 
 - Before the rotation starts, the system MUST show the grantor the contacts that can be carried and MUST carry only the ones the grantor confirms. None MUST be preselected.
 - Only a contact in state `granted` MUST be carried. A contact with a break-glass `requested` or `approved` MUST NOT be carried: the server MUST refuse it, and it is left on the old suite for the completion sweep to invalidate. The grantor re-designates it if they still want it.
-- Each re-envelope MUST carry a verified key proof made with the migration's old key (see the `vault-key-proof` capability), because it overwrites the contact's envelope.
+- Each re-envelope MUST carry a verified key proof made with the migration's **new** key (see the `vault-key-proof` capability), because it overwrites the contact's envelope. Not the old key: every migration is a compromise recovery, and the old password may be the leaked one.
+- A carry MUST be audited as its own event, distinct from a fresh designation, so a carry cannot be mistaken for a planted designation after an incident.
 
-Contacts the grantor did not confirm, or that were refused, are invalidated at completion like any other residual contact, and the grantor is prompted to re-establish them.
+Contacts the grantor did not confirm, or that were refused, are invalidated at completion like any other residual contact. Only contacts that could not be reached (no active certificate, or a failed re-envelope) come with a prompt to re-establish them. The system MUST NOT prompt the grantor to re-establish a contact they did not confirm, and MUST warn, rather than prompt, about a contact whose break-glass was in flight, because that is what a planted contact looks like.
 
 Migrating rather than invalidating is possible because the recovery envelope is rebuilt, not re-wrapped: `buildRecoveryEnvelope` takes the grantor's private key and the grantee's public certificate, both of which the grantor has mid-rotation. Sealing to the grantee's *current* certificate is also more correct than preserving the old envelope, which may escrow a key the grantee has since rotated away from.
 
@@ -37,14 +38,14 @@ Likewise, if a grantee's EncryptionSuite is revoked, envelopes encrypted to that
 - **GIVEN** A has an emergency contact B whose break-glass is `requested` or `approved`
 - **WHEN** A performs compromise recovery and rotates their EncryptionSuite
 - **THEN** the system MUST NOT escrow A's new private key to B
-- **AND** B MUST be invalidated at completion and A prompted to re-establish B
+- **AND** B MUST be invalidated at completion, and A MUST be warned about B rather than prompted to re-establish B
 
 #### Scenario: An unconfirmed contact is not carried
 @e2e exclude The confirmation list is component state; covered by vitest on CompromiseRecoveryForm and the store.
 - **GIVEN** A has emergency contacts B and C, both `granted` with active suites
 - **WHEN** A performs compromise recovery and confirms only B
 - **THEN** only B MUST receive an envelope escrowing A's new private key
-- **AND** C MUST be invalidated at completion and A prompted to re-establish C
+- **AND** C MUST be invalidated at completion, without a prompt to re-establish C
 
 #### Scenario: Suite rotation invalidates only the unreachable residual
 @e2e exclude Server-side listener sweep after the migration loop; covered by PHPUnit (contacts remaining on the old suite are invalidated) and the completion-summary assertion.

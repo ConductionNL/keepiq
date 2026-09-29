@@ -1173,7 +1173,9 @@ OC.L10N.register(
         "%n secrets could not be decrypted and are not in this export.": "%n salaisuutta ei voitu purkaa, eivätkä ne ole tässä viennissä.",
         "Continue without the secrets that could not be decrypted": "Jatka ilman salaisuuksia, joita ei voitu purkaa",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Valitse, mitkä hätäyhteyshenkilöt saavat uuden avaimesi. Valitse vain henkilöitä, jotka olet itse nimennyt ja joihin luotat edelleen: istuntosi haltuunsa saanut on voinut lisätä oman yhteyshenkilön. Valitsematta jätetyt menettävät hätäkäyttöoikeutensa; voit nimetä heidät uudelleen myöhemmin.",
-        "{grantee}, waiting period in days: {days}": "{grantee}, odotusaika päivinä: {days}"
+        "{grantee}, waiting period in days: {days}": "{grantee}, odotusaika päivinä: {days}",
+        "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Et vahvistanut näitä yhteyshenkilöitä, joten heidän hätäkäyttöoikeutensa poistettiin. Nimeä heidät uudelleen vain, jos olet varma, että lisäsit heidät itse.",
+        "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Näillä yhteyshenkilöillä oli odottava tai hyväksytty hätäkäyttöpyyntö, joten he eivät saaneet uutta avaintasi. Tältä näyttäisi jonkun toisen lisäämä yhteyshenkilö: älä nimeä heitä uudelleen, ellet tiedä pyynnön olleen aito."
     },
     "nplurals=2; plural=(n != 1);"
 )

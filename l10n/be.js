@@ -1173,7 +1173,9 @@ OC.L10N.register(
         "%n secrets could not be decrypted and are not in this export.": "%n сакрэтаў не ўдалося расшыфраваць, і іх няма ў гэтым экспарце.",
         "Continue without the secrets that could not be decrypted": "Працягнуць без сакрэтаў, якія не ўдалося расшыфраваць",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Выберыце, якія экстраныя кантакты могуць атрымаць ваш новы ключ. Адзначайце толькі людзей, якіх вы прызначылі самі і якім па-ранейшаму давяраеце: той, хто меў вашу сесію, мог дадаць уласны кантакт. Неадзначаныя кантакты губляюць экстраны доступ; пазней вы можаце прызначыць іх зноў.",
-        "{grantee}, waiting period in days: {days}": "{grantee}, перыяд чакання ў днях: {days}"
+        "{grantee}, waiting period in days: {days}": "{grantee}, перыяд чакання ў днях: {days}",
+        "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Вы не пацвердзілі гэтыя кантакты, таму іх экстраны доступ выдалены. Прызначайце іх зноў, толькі калі ўпэўнены, што дадалі іх самі.",
+        "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Гэтыя кантакты мелі чаканы або ўхвалены запыт на экстраны доступ, таму не атрымалі ваш новы ключ. Менавіта так выглядаў бы кантакт, дададзены кімсьці іншым: не прызначайце іх зноў, калі не ведаеце, што запыт быў сапраўдным."
     },
     "nplurals=2; plural=(n != 1);"
 )

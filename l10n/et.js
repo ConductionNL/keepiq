@@ -1173,7 +1173,9 @@ OC.L10N.register(
         "%n secrets could not be decrypted and are not in this export.": "%n saladust ei õnnestunud dekrüpteerida ja need ei ole selles ekspordis.",
         "Continue without the secrets that could not be decrypted": "Jätka ilma saladusteta, mida ei õnnestunud dekrüpteerida",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Vali, millised hädaolukorra kontaktid võivad sinu uue võtme saada. Märgi ainult inimesed, kelle määrasid ise ja keda endiselt usaldad: see, kelle käes oli sinu seanss, võis lisada oma kontakti. Märkimata kontaktid kaotavad hädaolukorra juurdepääsu; saad need hiljem uuesti määrata.",
-        "{grantee}, waiting period in days: {days}": "{grantee}, ooteaeg päevades: {days}"
+        "{grantee}, waiting period in days: {days}": "{grantee}, ooteaeg päevades: {days}",
+        "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Sa ei kinnitanud neid kontakte, seega eemaldati nende hädaolukorra juurdepääs. Määra need uuesti ainult siis, kui oled kindel, et lisasid need ise.",
+        "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Neil kontaktidel oli ootel või kinnitatud hädaolukorra juurdepääsu taotlus, seega nad ei saanud sinu uut võtit. Nii näeks välja kontakt, kelle lisas keegi teine: ära määra neid uuesti, kui sa ei tea, et taotlus oli ehtne."
     },
     "nplurals=2; plural=(n != 1);"
 )

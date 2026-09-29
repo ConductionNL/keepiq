@@ -100,7 +100,9 @@ class VaultKeyProofAttributesTest extends TestCase {
 				MigrationController::class,
 				'reEnvelopeEmergencyContact',
 				['id', 'contactId', 'recoveryEnvelope', 'granteeSuiteId'],
-				'migrationOldSuite',
+				// The NEW key: during a compromise recovery the old password may
+				// be the leaked one (#804 review).
+				'migrationNewSuite',
 				VaultKeyProofService::PURPOSE_EMERGENCY_RE_ENVELOPE,
 			],
 			// Wipes every secret, suite and migration the user has.

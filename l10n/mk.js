@@ -1173,7 +1173,9 @@ OC.L10N.register(
         "%n secrets could not be decrypted and are not in this export.": "%n тајни не можеа да се дешифрираат и не се во овој извоз.",
         "Continue without the secrets that could not be decrypted": "Продолжи без тајните што не можеа да се дешифрираат",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Изберете кои контакти за итни случаи смеат да го добијат вашиот нов клуч. Означете само луѓе што ги одредивте сами и на кои сè уште им верувате: кој ја имал вашата сесија можеби додал свој контакт. Неозначените контакти го губат пристапот за итни случаи; подоцна можете повторно да ги одредите.",
-        "{grantee}, waiting period in days: {days}": "{grantee}, период на чекање во денови: {days}"
+        "{grantee}, waiting period in days: {days}": "{grantee}, период на чекање во денови: {days}",
+        "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Не ги потврдивте овие контакти, па нивниот пристап за итни случаи е отстранет. Одредете ги повторно само ако сте сигурни дека ги додадовте сами.",
+        "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Овие контакти имаа барање за пристап за итни случаи што чекаше или беше одобрено, па не го добија вашиот нов клуч. Вака би изгледал контакт што го додал некој друг: не одредувајте ги повторно освен ако знаете дека барањето било вистинско."
     },
     "nplurals=2; plural=(n != 1);"
 )

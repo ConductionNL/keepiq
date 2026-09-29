@@ -1173,7 +1173,9 @@ OC.L10N.register(
         "%n secrets could not be decrypted and are not in this export.": "%n titkot nem sikerült visszafejteni, és nincsenek benne ebben az exportban.",
         "Continue without the secrets that could not be decrypted": "Folytatás a vissza nem fejthető titkok nélkül",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Válassza ki, mely vészhelyzeti kapcsolattartók kaphatják meg az új kulcsát. Csak olyan személyeket jelöljön be, akiket Ön jelölt ki, és akikben továbbra is megbízik: aki a munkamenetét birtokolta, hozzáadhatott saját kapcsolattartót. A be nem jelölt kapcsolattartók elveszítik a vészhelyzeti hozzáférést; később újra kijelölheti őket.",
-        "{grantee}, waiting period in days: {days}": "{grantee}, várakozási idő napokban: {days}"
+        "{grantee}, waiting period in days: {days}": "{grantee}, várakozási idő napokban: {days}",
+        "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Nem erősítette meg ezeket a kapcsolattartókat, ezért vészhelyzeti hozzáférésüket eltávolítottuk. Csak akkor jelölje ki őket újra, ha biztos benne, hogy Ön adta hozzá őket.",
+        "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Ezeknek a kapcsolattartóknak függőben lévő vagy jóváhagyott vészhelyzeti hozzáférési kérelmük volt, ezért nem kapták meg az új kulcsát. Így nézne ki egy mások által hozzáadott kapcsolattartó: ne jelölje ki őket újra, hacsak nem tudja, hogy a kérelem valódi volt."
     },
     "nplurals=2; plural=(n != 1);"
 )

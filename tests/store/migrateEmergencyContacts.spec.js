@@ -41,15 +41,16 @@ vi.mock('../../src/crypto/keyProof.js', async (importOriginal) => ({
  *
  * @param {object} store The encryption-suite store.
  * @param {string[]} carryContactIds The contacts the owner confirmed.
- * @return {Promise<string[]>} The residual grantee ids.
+ * @return {Promise<Array<{granteeUserId: string, reason: string}>>} The residual contacts.
  */
 function migrate(store, carryContactIds) {
 	return store.migrateEmergencyContacts({
 		migrationId: 'migr-1',
 		oldSuiteId: 'old-suite',
 		newPrivateKeyPem: 'NEW-PEM',
-		oldEncryptedPrivateKey: 'OLD-ENVELOPE',
-		oldPassword: 'old-pw',
+		newSuiteId: 'new-suite',
+		newEncryptedPrivateKey: 'NEW-ENVELOPE',
+		newPassword: 'new-pw',
 		carryContactIds,
 	})
 }
@@ -112,14 +113,15 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 			{ recoveryEnvelope: 'FRESH-ENVELOPE-JSON', granteeSuiteId: 'bob-suite' },
 			{ headers: { 'X-Keepiq-Key-Proof': 'SIG' } },
 		)
-		// The proof is made with the OLD key and binds the route's parameters in
-		// the order the server hashes them: id, contactId, recoveryEnvelope,
-		// granteeSuiteId.
+		// The proof is made with the NEW key and password (#804 review): during a
+		// compromise recovery the old password may be the leaked one. It binds
+		// the route's parameters in the order the server hashes them: id,
+		// contactId, recoveryEnvelope, granteeSuiteId.
 		expect(buildKeyProofHeaders).toHaveBeenCalledWith({
-			suiteId: 'old-suite',
+			suiteId: 'new-suite',
 			purpose: PROOF_PURPOSE.EMERGENCY_RE_ENVELOPE,
-			encryptedPrivateKey: 'OLD-ENVELOPE',
-			masterPassword: 'old-pw',
+			encryptedPrivateKey: 'NEW-ENVELOPE',
+			masterPassword: 'new-pw',
 			boundValues: ['migr-1', 'rel-1', 'FRESH-ENVELOPE-JSON', 'bob-suite'],
 		})
 	})
@@ -141,7 +143,7 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 		const store = useEncryptionSuiteStore()
 		const residual = await migrate(store, [])
 
-		expect(residual).toEqual(['bob'])
+		expect(residual).toEqual([{ granteeUserId: 'bob', reason: 'not_confirmed' }])
 		expect(buildRecoveryEnvelope).not.toHaveBeenCalled()
 		expect(post).not.toHaveBeenCalled()
 	})
@@ -165,7 +167,11 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 			const store = useEncryptionSuiteStore()
 			const residual = await migrate(store, ['rel-1'])
 
-			expect(residual).toEqual(['mallory'])
+			// Its own reason, so the form can warn instead of nudging the owner to
+			// re-add it (#804 review).
+			expect(residual).toEqual([
+				{ granteeUserId: 'mallory', reason: 'break_glass_in_flight' },
+			])
 			expect(buildRecoveryEnvelope).not.toHaveBeenCalled()
 			expect(post).not.toHaveBeenCalled()
 		},
@@ -225,7 +231,7 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 		const store = useEncryptionSuiteStore()
 		const residual = await migrate(store, ['rel-1'])
 
-		expect(residual).toEqual(['bob'])
+		expect(residual).toEqual([{ granteeUserId: 'bob', reason: 'unreachable' }])
 		expect(post).not.toHaveBeenCalled()
 	})
 
@@ -283,7 +289,7 @@ describe('useEncryptionSuiteStore — migrateEmergencyContacts', () => {
 		const store = useEncryptionSuiteStore()
 		const residual = await migrate(store, ['rel-1', 'rel-2'])
 
-		expect(residual).toEqual(['bob'])
+		expect(residual).toEqual([{ granteeUserId: 'bob', reason: 'unreachable' }])
 	})
 
 	it('returns no residual when the contacts cannot be enumerated', async () => {
