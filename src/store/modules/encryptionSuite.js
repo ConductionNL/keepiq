@@ -1146,7 +1146,10 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *
 		 * @param {string} oldPassword The old master password.
 		 * @return {Promise<{migrated: number, failed: number, droppedVersions: number,
-		 *   failures: Array<object>, usedWorker: boolean}>} The migration outcome.
+		 *   failures: Array<object>, usedWorker: boolean,
+		 *   residualContacts: Array<{granteeUserId: string, reason: string}>}>}
+		 *   The migration outcome, including the emergency contacts the rotation
+		 *   removed (see rotationRemovedContacts).
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
 		 */
 		async resumeMigration(oldPassword) {
@@ -1227,7 +1230,60 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			})
 			await this.finaliseMigration(migrationId, outcome, completeProof)
 
+			// A resumed run never carries an emergency contact: that step belongs
+			// to the initiate path, which knows what the owner ticked. The
+			// completion sweep has now invalidated every contact left on the old
+			// suite, so name them for the completion screen instead of removing
+			// the owner's break-glass path without a word (#804 review).
+			outcome.residualContacts = await this.rotationRemovedContacts(
+				this.migrationStatus?.oldSuiteId ?? oldSuite.id,
+			)
+
 			return outcome
+		},
+
+		/**
+		 * The owner's emergency contacts that the rotation away from a suite
+		 * invalidated, for the completion screen after a resumed run.
+		 *
+		 * Read back from the server, because a resumed run has no residual list
+		 * of its own. A contact with a break-glass in flight is reported as such,
+		 * so the screen can warn about it; every other one as
+		 * `removed_by_rotation`, which the screen names neutrally, never as a
+		 * prompt to re-establish (#804 review).
+		 *
+		 * @param {string} oldSuiteId The suite the rotation moved away from.
+		 * @return {Promise<Array<{granteeUserId: string, reason: string}>>} The
+		 *   removed contacts; empty when they cannot be listed.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		async rotationRemovedContacts(oldSuiteId) {
+			let contacts
+			try {
+				const response = await axios.get(
+					generateUrl('/apps/keepiq/api/v1/emergency-access/contacts'),
+				)
+				contacts = Array.isArray(response.data) ? response.data : []
+			} catch {
+				return []
+			}
+
+			return contacts
+				.filter(
+					(contact) =>
+						contact.state === 'invalidated'
+						&& contact.grantorSuiteId === oldSuiteId
+						&& String(contact.invalidatedReason ?? '').startsWith(
+							'grantor_rotation',
+						),
+				)
+				.map((contact) => ({
+					granteeUserId: contact.granteeUserId,
+					reason:
+						contact.invalidatedReason === 'grantor_rotation_in_flight'
+							? 'break_glass_in_flight'
+							: 'removed_by_rotation',
+				}))
 		},
 
 		/**
