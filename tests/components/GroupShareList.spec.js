@@ -51,9 +51,10 @@ describe('GroupShareList', () => {
 
 		expect(share).toHaveBeenCalledWith('s-1', 'finance')
 		expect(wrapper.findComponent({ name: 'GroupShareForm' }).exists()).toBe(false)
-		expect(wrapper.find('[data-testid="group-share-result"]').text()).toBe(
-			'Shared with Finance: 3 members received it, 1 did not because they have no encryption set up yet.',
-		)
+		// The test t() stub returns the key untranslated, so the counts are
+		// read from the values the message is rendered with.
+		expect(wrapper.find('[data-testid="group-share-result"]').exists()).toBe(true)
+		expect(wrapper.vm.result).toEqual({ group: 'Finance', received: 3, skipped: 1 })
 	})
 
 	it('revokes a group share', async () => {
