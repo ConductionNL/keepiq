@@ -51,6 +51,9 @@ use Ramsey\Uuid\Uuid;
  *   through five mappers + IGroupManager + the share/notification helpers
  *   so the group-fan-out flow lives in one place; splitting it would
  *   scatter the invariants over four classes.
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list: the
+ *   Nextcloud share settings and the per-share revocation path joined the
+ *   group-share flow (sharing-02); each is a single collaborator, not options.
  */
 class GroupShareService {
 	/**

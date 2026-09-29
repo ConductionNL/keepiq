@@ -82,7 +82,8 @@ class DirectShareRegistrar {
 	 * team-folder fan-out registration.
 	 *
 	 * @param string $userId The sharing owner
-	 * @param array<int,array<string,mixed>> $shares Rows {sourceSecretId, targetUserId, encryptedKey, encryptedLogin?, encryptedAdditionalFields?, groupShareId?}
+	 * @param array<int,array<string,mixed>> $shares Rows {sourceSecretId, targetUserId, encryptedKey,
+	 *   encryptedLogin?, encryptedAdditionalFields?, groupShareId?}
 	 *
 	 * @return array<int,array{sourceSecretId:string,targetUserId:string,status:string,recipientSecretId?:string}>
 	 *
