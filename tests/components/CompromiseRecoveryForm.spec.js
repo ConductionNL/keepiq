@@ -464,6 +464,44 @@ describe('CompromiseRecoveryForm', () => {
 		).toBe(false)
 	})
 
+	// #804 review, round 5: a retry resumes the run this form started, so the
+	// owner's ticks still decide what the completion screen says.
+	it('keeps the initiate list when a retry completes the rotation', async () => {
+		const store = useEncryptionSuiteStore()
+		vi.spyOn(store, 'resumeMigration').mockImplementation(async () => {
+			store.migrationNeedsAcknowledgement = false
+			return {
+				migrated: 1,
+				failed: 0,
+				droppedVersions: 0,
+				failures: [],
+				residualContacts: [
+					{ granteeUserId: 'carol', reason: 'removed_by_rotation' },
+				],
+			}
+		})
+
+		const wrapper = mountForm()
+		wrapper.vm.activeOldPassword = 'old-pw'
+		wrapper.vm.result = {
+			migrated: 2,
+			failed: 1,
+			droppedVersions: 0,
+			failures: [],
+			residualContacts: [{ granteeUserId: 'carol', reason: 'not_confirmed' }],
+		}
+		await wrapper.vm.handleRetry()
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.vm.phase).toBe('terminal')
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-unconfirmed"]').text(),
+		).toContain('carol')
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-removed"]').exists(),
+		).toBe(false)
+	})
+
 	it("shows the server's loss count even when the display list is capped", async () => {
 		const store = useEncryptionSuiteStore()
 		store.migrationStatus = { id: 'migration-1' }

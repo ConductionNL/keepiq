@@ -688,7 +688,13 @@ export default {
 			try {
 				const store = useEncryptionSuiteStore()
 				const outcome = await store.resumeMigration(this.activeOldPassword)
-				this.result = outcome
+				// A retry resumes the run this form started, which knows the
+				// owner's ticks: keep that list rather than the resume's neutral
+				// read-back (#804 review, round 5).
+				this.result = {
+					...outcome,
+					residualContacts: this.keepResidual(outcome.residualContacts),
+				}
 				this.phase = store.migrationNeedsAcknowledgement
 					? 'running'
 					: 'terminal'
