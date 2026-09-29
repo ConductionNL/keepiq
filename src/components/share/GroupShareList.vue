@@ -7,7 +7,7 @@
   the GroupShareForm. After a share it says how many members received the
   secret and how many did not.
 
-  @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#requirement-share-with-a-group
+  @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 -->
 <template>
 	<section class="keepiq-group-share-list" data-testid="group-share-list">
@@ -132,7 +132,7 @@ export default {
 		 *
 		 * @param {{group: {id: string, label: string}, received: number, skipped: number}} payload The share outcome.
 		 * @return {void}
-		 * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#scenario-an-owner-shares-with-a-group
+		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 		 */
 		onShared(payload) {
 			this.formOpen = false
@@ -148,7 +148,7 @@ export default {
 		 *
 		 * @param {string} id The group share id.
 		 * @return {void}
-		 * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#scenario-the-owner-revokes-a-group-share
+		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 		 */
 		onRevoke(id) {
 			this.result = null

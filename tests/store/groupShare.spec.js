@@ -5,7 +5,7 @@
  * useGroupShareStore: the three group-share routes and the per-member
  * fan-out through register-batch (sharing-02).
  *
- * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#requirement-share-with-a-group
+ * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
  */
 
 import axios from '@nextcloud/axios'
@@ -62,13 +62,11 @@ describe('useGroupShareStore', () => {
 					},
 				}
 			})
-		useSecretStore().fetchSecret = vi
-			.fn()
-			.mockResolvedValue({
-				key: 'hunter2',
-				login: 'alice',
-				additionalFields: {},
-			})
+		useSecretStore().fetchSecret = vi.fn().mockResolvedValue({
+			key: 'hunter2',
+			login: 'alice',
+			additionalFields: {},
+		})
 		const encrypt = vi
 			.spyOn(useShareStore(), 'encryptForRecipient')
 			.mockImplementation(async (snapshot, cert) => ({

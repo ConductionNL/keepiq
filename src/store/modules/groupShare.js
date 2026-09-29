@@ -21,7 +21,7 @@ const MAX_GROUP_RESULTS = 25
  * copies through `register-batch` linked to the group share, so revoking the
  * group share revokes every copy.
  *
- * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#requirement-share-with-a-group
+ * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
  */
 export const useGroupShareStore = defineStore('groupShare', {
 	state: () => ({
@@ -40,7 +40,7 @@ export const useGroupShareStore = defineStore('groupShare', {
 		 *
 		 * @param {string} secretId The source secret id.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#requirement-share-with-a-group
+		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 		 */
 		async fetchGroupShares(secretId) {
 			this.loading = true
@@ -64,7 +64,7 @@ export const useGroupShareStore = defineStore('groupShare', {
 		 *
 		 * @param {string} search The search term.
 		 * @return {Promise<Array<{id: string, label: string}>>}
-		 * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#requirement-share-with-a-group
+		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 		 */
 		async searchGroups(search) {
 			const response = await axios.get(
@@ -107,7 +107,7 @@ export const useGroupShareStore = defineStore('groupShare', {
 		 * @param {string} groupId The Nextcloud group id.
 		 * @return {Promise<{received: number, skipped: number}>} How many members
 		 *   got a copy, and how many did not (no encryption suite, or refused).
-		 * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#scenario-an-owner-shares-with-a-group
+		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 		 */
 		async shareWithGroup(secretId, groupId) {
 			this.loading = true
@@ -210,7 +210,7 @@ export const useGroupShareStore = defineStore('groupShare', {
 		 *
 		 * @param {string} groupShareId The group share id.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#scenario-the-owner-revokes-a-group-share
+		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 		 */
 		async revokeGroupShare(groupShareId) {
 			this.error = null

@@ -8,7 +8,7 @@
   member with an encryption suite, and registers the copies. The form
   emits `shared` with the group and the received / skipped counts.
 
-  @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#requirement-share-with-a-group
+  @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 -->
 <template>
 	<section class="keepiq-group-share-form" data-testid="group-share-form">
@@ -89,7 +89,7 @@ export default {
 		 *
 		 * @param {string} term The search term.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#requirement-share-with-a-group
+		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 		 */
 		async onSearch(term) {
 			this.searching = true
@@ -106,7 +106,7 @@ export default {
 		 * Share the secret with the picked group.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#scenario-an-owner-shares-with-a-group
+		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 		 */
 		async onSubmit() {
 			this.error = null

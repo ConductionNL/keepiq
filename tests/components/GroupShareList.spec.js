@@ -6,7 +6,7 @@
  * group, picks a group, and reads how many members received the secret;
  * a group share can be revoked.
  *
- * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#requirement-share-with-a-group
+ * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
  */
 
 import axios from '@nextcloud/axios'

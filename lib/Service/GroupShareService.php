@@ -104,7 +104,7 @@ class GroupShareService {
 	 * @throws InvalidArgumentException On unauthorized / missing secret / empty group
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#4.2
-	 * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#requirement-share-with-a-group
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 	 */
 	public function createGroupShare(string $secretId, string $groupId, string $userId): array {
 		if ($groupId === '') {
@@ -185,7 +185,7 @@ class GroupShareService {
 	 *
 	 * @throws InvalidArgumentException When the group is out of the sharer's reach
 	 *
-	 * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#requirement-share-with-a-group
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 	 */
 	private function assertGroupShareable(string $groupId, string $userId): void {
 		if ($this->shareManager->allowGroupSharing() === false) {
@@ -212,7 +212,7 @@ class GroupShareService {
 	 * @throws InvalidArgumentException On unauthorized / not found
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#4.3
-	 * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#scenario-the-owner-revokes-a-group-share
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 	 */
 	public function revokeGroupShare(string $groupShareId, string $userId): void {
 		try {

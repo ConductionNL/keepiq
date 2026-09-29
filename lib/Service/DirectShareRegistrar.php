@@ -87,7 +87,7 @@ class DirectShareRegistrar {
 	 * @return array<int,array{sourceSecretId:string,targetUserId:string,status:string,recipientSecretId?:string}>
 	 *
 	 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
-	 * @spec openspec/changes/sharing-group-share-entry-point/specs/sharing-group/spec.md#requirement-share-with-a-group
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 	 */
 	public function registerDirectShares(string $userId, array $shares): array {
 		$report = [];
