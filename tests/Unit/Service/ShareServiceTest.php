@@ -23,6 +23,8 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\GroupShare;
+use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegation;
 use OCA\Keepiq\Db\SecretDelegationMapper;
@@ -57,6 +59,11 @@ class ShareServiceTest extends TestCase {
 	 * @var ShareService
 	 */
 	private ShareService $service;
+
+	/**
+	 * @var GroupShareMapper&MockObject
+	 */
+	private GroupShareMapper $groupShareMapper;
 
 	/**
 	 * Mock share-target mapper.
@@ -112,6 +119,7 @@ class ShareServiceTest extends TestCase {
 		$this->delegationMapper = $this->createMock(originalClassName: SecretDelegationMapper::class);
 		$this->notificationService = $this->createMock(originalClassName: NotificationService::class);
 		$this->db = $this->createMock(originalClassName: IDBConnection::class);
+		$this->groupShareMapper = $this->createMock(originalClassName: GroupShareMapper::class);
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 
 		$this->service = $this->wireService(logger: $logger);
@@ -156,6 +164,7 @@ class ShareServiceTest extends TestCase {
 				secretMapper: $this->secretMapper,
 				copyFactory: $copyFactory,
 				notificationService: $this->notificationService,
+				groupShareMapper: $this->groupShareMapper,
 			),
 			syncService: new ShareSyncService(
 				mapper: $this->mapper,
@@ -702,6 +711,61 @@ class ShareServiceTest extends TestCase {
 		$this->assertSame('self', $report[3]['status']);
 		$this->assertCount(1, $inserted);
 	}//end testRegisterDirectSharesIdempotentOwnerScopedReport()
+
+	/**
+	 * sharing-02: a row carrying a groupShareId links the new ShareTarget
+	 * to that group share, so revoking the group share revokes the copy.
+	 * A group share of a DIFFERENT secret is refused as `invalid`, so a
+	 * caller cannot hang a copy on someone else's group share.
+	 *
+	 * @return void
+	 */
+	public function testRegisterDirectSharesLinksAGroupShareOfTheSameSecret(): void {
+		$mine = $this->makeOwnerSecret('sec-mine', 'alice');
+		$this->secretMapper->method('findById')->willReturn($mine);
+		$this->stubRecipientHasSuite();
+		$this->mapper->method('findBySourceSecretAndTargetUser')
+			->willThrowException(new DoesNotExistException('no row'));
+
+		$ours = new GroupShare();
+		$ours->setId('gs-1');
+		$ours->setSecretId('sec-mine');
+		$theirs = new GroupShare();
+		$theirs->setId('gs-other');
+		$theirs->setSecretId('sec-bobs');
+		$this->groupShareMapper->method('findById')->willReturnCallback(
+			static function (string $id) use ($ours, $theirs): GroupShare {
+				return match ($id) {
+					'gs-1' => $ours,
+					'gs-other' => $theirs,
+					default => throw new DoesNotExistException('missing'),
+				};
+			}
+		);
+
+		$inserted = [];
+		$this->mapper->method('insert')->willReturnCallback(
+			static function ($row) use (&$inserted) {
+				$inserted[] = $row;
+				return $row;
+			}
+		);
+
+		$report = $this->service->registerDirectShares(
+			userId: 'alice',
+			shares: [
+				['sourceSecretId' => 'sec-mine', 'targetUserId' => 'bob', 'encryptedKey' => 'BLOB', 'groupShareId' => 'gs-1'],
+				['sourceSecretId' => 'sec-mine', 'targetUserId' => 'carol', 'encryptedKey' => 'BLOB', 'groupShareId' => 'gs-other'],
+				['sourceSecretId' => 'sec-mine', 'targetUserId' => 'dave', 'encryptedKey' => 'BLOB', 'groupShareId' => 'gs-ghost'],
+			]
+		);
+
+		$this->assertSame('created', $report[0]['status']);
+		$this->assertSame('invalid', $report[1]['status']);
+		$this->assertSame('invalid', $report[2]['status']);
+		$this->assertCount(1, $inserted);
+		$this->assertSame('gs-1', $inserted[0]->getGroupShareId());
+	}//end testRegisterDirectSharesLinksAGroupShareOfTheSameSecret()
 
 	/**
 	 * bulk-actions §8.3: an already-shared pair is `exists` (idempotent

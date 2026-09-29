@@ -1181,7 +1181,20 @@
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Sinu võtme rotatsiooni jätkati, seega neid hädaolukorra kontakte ei saanud üle kanda ja nende hädaolukorra ligipääs eemaldati. Lisa nad uuesti jaotises Hädaolukorra ligipääs, kui soovid neid endiselt.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Sinu võtme rotatsioon eemaldas %n hädaolukorra kontakti. Vaata üle Hädaolukorra ligipääs ja lisa see uuesti, kui soovid seda endiselt.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Sinu võtme rotatsioon eemaldas %n hädaolukorra kontakti. Vaata üle Hädaolukorra ligipääs ja lisa need uuesti, kui soovid neid endiselt.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Sinu võtme rotatsioon eemaldas selle kontakti hädaolukorra ligipääsu. Määra ta uuesti, kui soovid teda endiselt."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Sinu võtme rotatsioon eemaldas selle kontakti hädaolukorra ligipääsu. Määra ta uuesti, kui soovid teda endiselt.",
+        "Shared with groups": "Jagatud gruppidega",
+        "Not shared with any group yet.": "Pole veel ühegi grupiga jagatud.",
+        "Revoke the share with {group}": "Tühista jagamine grupiga {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Jagatud grupiga {group}: {received} liiget said selle kätte, {skipped} mitte, sest neil pole veel krüpteerimist seadistatud.",
+        "Search groups": "Otsi gruppe",
+        "Failed to share": "Jagamine ebaõnnestus",
+        "Columns": "Veerud",
+        "Column {number}": "Veerg {number}",
+        "Map one column to Name. Every secret needs a name.": "Seo üks veerg nimega. Igal saladusel peab olema nimi.",
+        "Notes": "Märkmed",
+        "Do not import": "Ära impordi",
+        "Hide this value": "Peida see väärtus",
+        "Show this value": "Näita seda väärtust"
     },
     "plurals": null
 }

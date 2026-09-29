@@ -1182,7 +1182,20 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Din nyckelrotation återupptogs, så de här nödkontakterna kunde inte föras över och deras nödåtkomst togs bort. Lägg till dem igen under Nödåtkomst om du fortfarande vill ha dem.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Din nyckelrotation tog bort %n nödkontakt. Kontrollera Nödåtkomst och lägg till den igen om du fortfarande vill ha den.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Din nyckelrotation tog bort %n nödkontakter. Kontrollera Nödåtkomst och lägg till dem igen om du fortfarande vill ha dem.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Din nyckelrotation tog bort den här kontaktens nödåtkomst. Utse den igen om du fortfarande vill ha den."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Din nyckelrotation tog bort den här kontaktens nödåtkomst. Utse den igen om du fortfarande vill ha den.",
+        "Shared with groups": "Delad med grupper",
+        "Not shared with any group yet.": "Inte delad med någon grupp än.",
+        "Revoke the share with {group}": "Återkalla delningen med {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Delad med {group}: {received} medlemmar tog emot den, {skipped} gjorde det inte eftersom de inte har konfigurerat kryptering än.",
+        "Search groups": "Sök grupper",
+        "Failed to share": "Delningen misslyckades",
+        "Columns": "Kolumner",
+        "Column {number}": "Kolumn {number}",
+        "Map one column to Name. Every secret needs a name.": "Koppla en kolumn till Namn. Varje hemlighet behöver ett namn.",
+        "Notes": "Anteckningar",
+        "Do not import": "Importera inte",
+        "Hide this value": "Dölj detta värde",
+        "Show this value": "Visa detta värde"
     },
     "nplurals=2; plural=(n != 1);"
 )

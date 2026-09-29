@@ -1182,7 +1182,20 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "A kulcsrotáció folytatódott, ezért ezeket a vészhelyzeti kapcsolattartókat nem lehetett átvinni, és vészhelyzeti hozzáférésüket eltávolítottuk. Ha továbbra is szeretné őket, adja hozzá újra őket a Vészhelyzeti hozzáférés oldalon.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "A kulcsrotáció eltávolított %n vészhelyzeti kapcsolattartót. Nézze meg a Vészhelyzeti hozzáférést, és adja hozzá újra, ha továbbra is szeretné.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "A kulcsrotáció eltávolított %n vészhelyzeti kapcsolattartót. Nézze meg a Vészhelyzeti hozzáférést, és adja hozzá újra őket, ha továbbra is szeretné őket.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "A kulcsrotáció eltávolította ennek a kapcsolattartónak a vészhelyzeti hozzáférését. Jelölje ki újra, ha továbbra is szeretné."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "A kulcsrotáció eltávolította ennek a kapcsolattartónak a vészhelyzeti hozzáférését. Jelölje ki újra, ha továbbra is szeretné.",
+        "Shared with groups": "Megosztva csoportokkal",
+        "Not shared with any group yet.": "Még nincs megosztva egy csoporttal sem.",
+        "Revoke the share with {group}": "Megosztás visszavonása ezzel: {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Megosztva ezzel: {group}. {received} tag megkapta, {skipped} nem, mert még nem állított be titkosítást.",
+        "Search groups": "Csoportok keresése",
+        "Failed to share": "A megosztás sikertelen",
+        "Columns": "Oszlopok",
+        "Column {number}": "{number}. oszlop",
+        "Map one column to Name. Every secret needs a name.": "Rendeljen egy oszlopot a névhez. Minden titoknak kell név.",
+        "Notes": "Jegyzetek",
+        "Do not import": "Ne importálja",
+        "Hide this value": "Érték elrejtése",
+        "Show this value": "Érték megjelenítése"
     },
     "nplurals=2; plural=(n != 1);"
 )

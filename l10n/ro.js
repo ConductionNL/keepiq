@@ -1182,7 +1182,20 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Rotația cheii a fost reluată, așa că aceste contacte de urgență nu au putut fi transferate, iar accesul lor de urgență a fost eliminat. Adăugați-le din nou din Acces de urgență dacă le mai doriți.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Rotația cheii a eliminat %n contact de urgență. Verificați Acces de urgență și adăugați-l din nou dacă îl mai doriți.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Rotația cheii a eliminat %n contacte de urgență. Verificați Acces de urgență și adăugați-le din nou dacă le mai doriți.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rotația cheii a eliminat accesul de urgență al acestui contact. Desemnați-l din nou dacă îl mai doriți."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rotația cheii a eliminat accesul de urgență al acestui contact. Desemnați-l din nou dacă îl mai doriți.",
+        "Shared with groups": "Partajat cu grupuri",
+        "Not shared with any group yet.": "Încă nu este partajat cu niciun grup.",
+        "Revoke the share with {group}": "Revocă partajarea cu {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Partajat cu {group}: {received} membri l-au primit, {skipped} nu, deoarece nu au configurat încă criptarea.",
+        "Search groups": "Caută grupuri",
+        "Failed to share": "Partajarea a eșuat",
+        "Columns": "Coloane",
+        "Column {number}": "Coloana {number}",
+        "Map one column to Name. Every secret needs a name.": "Asociați o coloană cu numele. Fiecare secret are nevoie de un nume.",
+        "Notes": "Note",
+        "Do not import": "Nu importa",
+        "Hide this value": "Ascunde această valoare",
+        "Show this value": "Afișează această valoare"
     },
     "nplurals=2; plural=(n != 1);"
 )

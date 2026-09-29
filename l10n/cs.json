@@ -1181,7 +1181,20 @@
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Rotace klíče byla obnovena, a proto tyto nouzové kontakty nebylo možné převést a jejich přístup pro naléhavé případy byl odebrán. Pokud je stále chcete, přidejte je znovu v části Přístup pro naléhavé případy.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Rotace klíče odebrala %n nouzový kontakt. Zkontrolujte Přístup pro naléhavé případy a přidejte jej znovu, pokud jej stále chcete.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Rotace klíče odebrala %n nouzových kontaktů. Zkontrolujte Přístup pro naléhavé případy a přidejte je znovu, pokud je stále chcete.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rotace klíče odebrala tomuto kontaktu přístup pro naléhavé případy. Pokud jej stále chcete, určete jej znovu."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rotace klíče odebrala tomuto kontaktu přístup pro naléhavé případy. Pokud jej stále chcete, určete jej znovu.",
+        "Shared with groups": "Sdíleno se skupinami",
+        "Not shared with any group yet.": "Zatím nesdíleno s žádnou skupinou.",
+        "Revoke the share with {group}": "Zrušit sdílení se skupinou {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Sdíleno se skupinou {group}: {received} členů to obdrželo, {skipped} ne, protože ještě nemají nastavené šifrování.",
+        "Search groups": "Hledat skupiny",
+        "Failed to share": "Sdílení se nezdařilo",
+        "Columns": "Sloupce",
+        "Column {number}": "Sloupec {number}",
+        "Map one column to Name. Every secret needs a name.": "Přiřaďte jeden sloupec k názvu. Každé tajemství potřebuje název.",
+        "Notes": "Poznámky",
+        "Do not import": "Neimportovat",
+        "Hide this value": "Skrýt tuto hodnotu",
+        "Show this value": "Zobrazit tuto hodnotu"
     },
     "plurals": null
 }

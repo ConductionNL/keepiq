@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
+use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
@@ -57,6 +58,7 @@ class DirectShareRegistrar {
 	 * @param RecipientSecretCopyFactory $copyFactory The recipient-copy factory
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
+	 * @param GroupShareMapper|null $groupShareMapper The group-share mapper (rows linked to a group share)
 	 *
 	 * @return void
 	 *
@@ -68,6 +70,7 @@ class DirectShareRegistrar {
 		private RecipientSecretCopyFactory $copyFactory,
 		private NotificationService $notificationService,
 		?ShareAuditTrail $auditTrail = null,
+		private ?GroupShareMapper $groupShareMapper = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -79,11 +82,13 @@ class DirectShareRegistrar {
 	 * team-folder fan-out registration.
 	 *
 	 * @param string $userId The sharing owner
-	 * @param array<int,array<string,mixed>> $shares Rows {sourceSecretId, targetUserId, encryptedKey, encryptedLogin?, encryptedAdditionalFields?}
+	 * @param array<int,array<string,mixed>> $shares Rows {sourceSecretId, targetUserId, encryptedKey,
+	 *   encryptedLogin?, encryptedAdditionalFields?, groupShareId?}
 	 *
 	 * @return array<int,array{sourceSecretId:string,targetUserId:string,status:string,recipientSecretId?:string}>
 	 *
 	 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 	 */
 	public function registerDirectShares(string $userId, array $shares): array {
 		$report = [];
@@ -166,6 +171,14 @@ class DirectShareRegistrar {
 			];
 		}
 
+		if ($this->groupShareMatches(sourceSecretId: $sourceSecretId, row: $row) === false) {
+			return [
+				'sourceSecretId' => $sourceSecretId,
+				'targetUserId' => $targetUserId,
+				'status' => 'invalid',
+			];
+		}
+
 		return $this->createDirectShare(
 			userId: $userId,
 			sourceSecretId: $sourceSecretId,
@@ -245,6 +258,7 @@ class DirectShareRegistrar {
 		$entity->setSourceSecretId($sourceSecretId);
 		$entity->setTargetUserId($targetUserId);
 		$entity->setSecretId($copy->getId());
+		$entity->setGroupShareId($this->optionalString(value: ($row['groupShareId'] ?? null)));
 		$entity->setCreatedBy($userId);
 		$entity->setCreatedAt(new DateTime());
 		$this->mapper->insert($entity);
@@ -263,6 +277,36 @@ class DirectShareRegistrar {
 			'recipientSecretId' => $copy->getId(),
 		];
 	}//end createDirectShare()
+
+	/**
+	 * Whether a row's optional groupShareId names a group share of the SAME
+	 * source secret. A row without one matches; an unknown group share, one
+	 * of another secret, or no mapper to check with does not (fail closed).
+	 * The owner guard in createDirectShare() then covers the secret itself.
+	 *
+	 * @param string $sourceSecretId The row's source secret
+	 * @param array<string,mixed> $row The row
+	 *
+	 * @return bool
+	 */
+	private function groupShareMatches(string $sourceSecretId, array $row): bool {
+		$groupShareId = $this->optionalString(value: ($row['groupShareId'] ?? null));
+		if ($groupShareId === null) {
+			return true;
+		}
+
+		if ($this->groupShareMapper === null) {
+			return false;
+		}
+
+		try {
+			$groupShare = $this->groupShareMapper->findById($groupShareId);
+		} catch (DoesNotExistException) {
+			return false;
+		}
+
+		return $groupShare->getSecretId() === $sourceSecretId;
+	}//end groupShareMatches()
 
 	/**
 	 * Normalise an optional blob value to a non-empty string or null.

@@ -1182,7 +1182,20 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Votre rotation de clé a été reprise ; ces contacts d'urgence n'ont donc pas pu être transférés et leur accès d'urgence a été supprimé. Ajoutez-les à nouveau depuis Accès d'urgence si vous les souhaitez toujours.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Votre rotation de clé a supprimé %n contact d'urgence. Vérifiez Accès d'urgence et ajoutez-le à nouveau si vous le souhaitez toujours.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Votre rotation de clé a supprimé %n contacts d'urgence. Vérifiez Accès d'urgence et ajoutez-les à nouveau si vous les souhaitez toujours.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Votre rotation de clé a supprimé l'accès d'urgence de ce contact. Désignez-le à nouveau si vous le souhaitez toujours."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Votre rotation de clé a supprimé l'accès d'urgence de ce contact. Désignez-le à nouveau si vous le souhaitez toujours.",
+        "Shared with groups": "Partagé avec des groupes",
+        "Not shared with any group yet.": "Pas encore partagé avec un groupe.",
+        "Revoke the share with {group}": "Révoquer le partage avec {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Partagé avec {group} : {received} membres l'ont reçu, {skipped} non, car ils n'ont pas encore configuré le chiffrement.",
+        "Search groups": "Rechercher des groupes",
+        "Failed to share": "Échec du partage",
+        "Columns": "Colonnes",
+        "Column {number}": "Colonne {number}",
+        "Map one column to Name. Every secret needs a name.": "Associez une colonne au nom. Chaque secret a besoin d'un nom.",
+        "Notes": "Notes",
+        "Do not import": "Ne pas importer",
+        "Hide this value": "Masquer cette valeur",
+        "Show this value": "Afficher cette valeur"
     },
     "nplurals=2; plural=(n != 1);"
 )

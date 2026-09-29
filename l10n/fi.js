@@ -1182,7 +1182,20 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Avaimen kiertoa jatkettiin, joten näitä hätäyhteyshenkilöitä ei voitu siirtää ja heidän hätäkäyttöoikeutensa poistettiin. Lisää heidät uudelleen Hätäkäyttöoikeus-osiosta, jos haluat heidät yhä.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Avaimen kierto poisti %n hätäyhteyshenkilön. Tarkista Hätäkäyttöoikeus ja lisää hänet uudelleen, jos haluat hänet yhä.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Avaimen kierto poisti %n hätäyhteyshenkilöä. Tarkista Hätäkäyttöoikeus ja lisää heidät uudelleen, jos haluat heidät yhä.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Avaimen kierto poisti tämän yhteyshenkilön hätäkäyttöoikeuden. Nimeä hänet uudelleen, jos haluat hänet yhä."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Avaimen kierto poisti tämän yhteyshenkilön hätäkäyttöoikeuden. Nimeä hänet uudelleen, jos haluat hänet yhä.",
+        "Shared with groups": "Jaettu ryhmien kanssa",
+        "Not shared with any group yet.": "Ei vielä jaettu minkään ryhmän kanssa.",
+        "Revoke the share with {group}": "Peru jako ryhmän {group} kanssa",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Jaettu ryhmän {group} kanssa: {received} jäsentä sai sen, {skipped} ei saanut, koska heillä ei ole vielä salausta käytössä.",
+        "Search groups": "Hae ryhmiä",
+        "Failed to share": "Jakaminen epäonnistui",
+        "Columns": "Sarakkeet",
+        "Column {number}": "Sarake {number}",
+        "Map one column to Name. Every secret needs a name.": "Liitä yksi sarake nimeen. Jokainen salaisuus tarvitsee nimen.",
+        "Notes": "Muistiinpanot",
+        "Do not import": "Älä tuo",
+        "Hide this value": "Piilota tämä arvo",
+        "Show this value": "Näytä tämä arvo"
     },
     "nplurals=2; plural=(n != 1);"
 )

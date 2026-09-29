@@ -1182,7 +1182,20 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ротацията на ключа беше възобновена, затова тези контакти за спешен достъп не можаха да бъдат пренесени и достъпът им при спешност беше премахнат. Добавете ги отново от „Достъп при спешност“, ако все още ги искате.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ротацията на ключа премахна %n контакт за спешен достъп. Проверете „Достъп при спешност“ и го добавете отново, ако все още го искате.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ротацията на ключа премахна %n контакта за спешен достъп. Проверете „Достъп при спешност“ и ги добавете отново, ако все още ги искате.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ротацията на ключа премахна достъпа при спешност на този контакт. Определете го отново, ако все още го искате."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ротацията на ключа премахна достъпа при спешност на този контакт. Определете го отново, ако все още го искате.",
+        "Shared with groups": "Споделено с групи",
+        "Not shared with any group yet.": "Все още не е споделено с група.",
+        "Revoke the share with {group}": "Оттегляне на споделянето с {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Споделено с {group}: {received} членове го получиха, {skipped} не, защото все още нямат настроено шифроване.",
+        "Search groups": "Търсене на групи",
+        "Failed to share": "Споделянето не бе успешно",
+        "Columns": "Колони",
+        "Column {number}": "Колона {number}",
+        "Map one column to Name. Every secret needs a name.": "Свържете една колона с името. Всяка тайна трябва да има име.",
+        "Notes": "Бележки",
+        "Do not import": "Не импортирай",
+        "Hide this value": "Скриване на тази стойност",
+        "Show this value": "Показване на тази стойност"
     },
     "nplurals=2; plural=(n != 1);"
 )

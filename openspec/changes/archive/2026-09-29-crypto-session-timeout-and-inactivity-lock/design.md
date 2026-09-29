@@ -30,6 +30,10 @@ A single listener set on `document` calls `updateActivity()` at most once every 
 
 The store keeps `null` for Nextcloud session and a number for 10 or 30 minutes, so the falsy-zero fallback that caused the defect cannot recur.
 
-### D3: One control
+### D3: One control, and it saves
 
-The select in `App.vue` is removed and the settings section is the only place to change it, so the saved and the applied value cannot diverge.
+Corrected at build time (29 Sep). keepiq's personal settings are the user-settings dialog in `App.vue`, which already held the select; `SessionTimeoutSection.vue` was a second, never-mounted copy with a native select. So the select in the user-settings dialog stays and becomes the one control: it reads `sessionStore.timeoutChoice` and saves through `saveTimeoutPreference()` (`PUT /api/settings/user`). The unmounted `SessionTimeoutSection.vue` is deleted. The saved value is loaded when the app mounts, so a reload followed by an unlock uses it.
+
+### D4: An unset timeout is ten minutes
+
+Once Nextcloud session really means no idle timer, the old unset default (`'session'` in `SettingsService::getUserPreferences()` and `AdminSettingsService`) would have switched the idle lock off for every user who never chose. In practice the vault always locked after ten minutes, so the unset default becomes `10min` (`AdminSettingsService::DEFAULT_SESSION_TIMEOUT`). Nextcloud session is now always a choice someone made.

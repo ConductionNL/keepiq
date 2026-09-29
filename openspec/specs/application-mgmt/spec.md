@@ -72,8 +72,9 @@ When a CSR is uploaded during registration, the system MUST use the public key f
 #### Scenario: Register without CSR
 - GIVEN no CSR is uploaded
 - WHEN the application is approved
-- THEN the system MUST generate a 4096-bit RSA key pair, sign the certificate, and create an EncryptionSuite
-- AND the private key MUST be returned to the registrant once (never stored in plaintext)
+- THEN the application MUST become active without an EncryptionSuite
+- AND the system MUST NOT generate, store or return a private key for it (parity row pki-09, decided no on 2026-09-29: the key pair stays with the application, which supplies a CSR)
+- AND writing a secret for the application MUST fail with "Application has no active EncryptionSuite" until a suite exists
 
 ### Requirement: Delete Application
 A vault administrator MUST be able to delete an active application. Deletion is permanent — there is no deactivation or soft-delete state.
@@ -182,7 +183,7 @@ The listing MUST NOT render a request's full token, and MUST NOT expose any subm
 - [ ] Vault administrators can approve or reject pending applications
 - [ ] An approved application gets an EncryptionSuite (via CSR or generated)
 - [ ] If a CSR is uploaded, the private key is not stored — only the signed certificate
-- [ ] If no CSR is uploaded, a key pair is generated and the private key returned once
+- [ ] If no CSR is uploaded, no key pair is generated and no private key is ever returned; the application stays suite-less until it supplies a CSR
 - [ ] Secrets cannot be attributed to pending applications
 - [ ] Writing a secret for an application encrypts it with the app's public certificate
 - [ ] All vault administrators receive a Nextcloud notification when a new application registration is pending

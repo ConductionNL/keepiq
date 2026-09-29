@@ -1182,7 +1182,20 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "La rotació de claus s'ha reprès, per tant aquests contactes d'emergència no s'han pogut traspassar i se'ls ha retirat l'accés d'emergència. Torna'ls a afegir des d'Accés d'emergència si encara els vols.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "La rotació de claus ha retirat %n contacte d'emergència. Revisa Accés d'emergència i torna'l a afegir si encara el vols.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "La rotació de claus ha retirat %n contactes d'emergència. Revisa Accés d'emergència i torna'ls a afegir si encara els vols.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "La rotació de claus ha retirat l'accés d'emergència d'aquest contacte. Torna'l a designar si encara el vols."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "La rotació de claus ha retirat l'accés d'emergència d'aquest contacte. Torna'l a designar si encara el vols.",
+        "Shared with groups": "Compartit amb grups",
+        "Not shared with any group yet.": "Encara no s'ha compartit amb cap grup.",
+        "Revoke the share with {group}": "Revoca la compartició amb {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Compartit amb {group}: {received} membres l'han rebut, {skipped} no perquè encara no han configurat el xifratge.",
+        "Search groups": "Cerca grups",
+        "Failed to share": "No s'ha pogut compartir",
+        "Columns": "Columnes",
+        "Column {number}": "Columna {number}",
+        "Map one column to Name. Every secret needs a name.": "Assigneu una columna al nom. Cada secret necessita un nom.",
+        "Notes": "Notes",
+        "Do not import": "No importis",
+        "Hide this value": "Amaga aquest valor",
+        "Show this value": "Mostra aquest valor"
     },
     "nplurals=2; plural=(n != 1);"
 )

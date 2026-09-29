@@ -103,6 +103,12 @@ export const useImportStore = defineStore('import', {
 		rejected: [],
 		/** @type {Array<object>} The detected/adjusted CSV column mapping. */
 		mapping: [],
+		/** @type {Array<string>} The CSV header row, for the mapping step. */
+		headers: [],
+		/** @type {boolean} Whether the parsed format lets the user remap columns. */
+		adjustableMapping: false,
+		/** @type {string|null} The file text, kept only to re-parse after a remap; cleared on reset. */
+		sourceText: null,
 		/** @type {Object<number,string>} Per-row duplicate resolution: 'skip'|'copy'. */
 		duplicateResolutions: {},
 		/** @type {Array<object>} Rows detected as duplicates of an existing secret. */
@@ -120,6 +126,18 @@ export const useImportStore = defineStore('import', {
 	}),
 
 	getters: {
+		/**
+		 * Whether some column is mapped to the secret name. Always true for a
+		 * format without an adjustable mapping.
+		 *
+		 * @param {object} state The store state.
+		 * @return {boolean}
+		 * @spec openspec/specs/portability-import-mapping/spec.md#requirement-adjustable-csv-mapping
+		 */
+		mappingHasName: (state) =>
+			!state.adjustableMapping
+			|| state.mapping.some((entry) => entry.target === 'name'),
+
 		/**
 		 * The rows that will be committed (accepted, non-duplicate, plus
 		 * duplicates resolved as "import as copy").
@@ -159,7 +177,24 @@ export const useImportStore = defineStore('import', {
 				if (!parser) {
 					throw new Error(`Unknown import format: ${format}`)
 				}
-				const parsed = await parser.parse(text, options)
+				let parsed
+				if (
+					parser.adjustableMapping === true
+					&& typeof parser.parseDetailed === 'function'
+				) {
+					const detailed = await parser.parseDetailed(text, options)
+					parsed = detailed.rows
+					this.mapping = detailed.mapping
+					this.headers = detailed.headers
+					this.adjustableMapping = true
+					this.sourceText = text
+				} else {
+					parsed = await parser.parse(text, options)
+					this.mapping = []
+					this.headers = []
+					this.adjustableMapping = false
+					this.sourceText = null
+				}
 				this.format = format
 				this.rows = this.expandTotpRows(
 					parsed.filter((r) => !r.errors || r.errors.length === 0),
@@ -508,6 +543,21 @@ export const useImportStore = defineStore('import', {
 		},
 
 		/**
+		 * Remap the columns of the parsed CSV and parse it again, so the
+		 * preview and the import both use the new mapping.
+		 *
+		 * @param {Array<{column: string, target: string}>} mapping The new mapping.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/portability-import-mapping/spec.md#requirement-adjustable-csv-mapping
+		 */
+		async applyMapping(mapping) {
+			if (!this.adjustableMapping || this.sourceText === null) {
+				return
+			}
+			await this.parseFile(this.sourceText, this.format, { mapping })
+		},
+
+		/**
 		 * Release ALL plaintext rows + reset the wizard. Called on wizard
 		 * close/destroy so no plaintext survives (encryption-suites Session
 		 * Mechanism / spec persistence rule).
@@ -521,6 +571,9 @@ export const useImportStore = defineStore('import', {
 			this.rows = []
 			this.rejected = []
 			this.mapping = []
+			this.headers = []
+			this.adjustableMapping = false
+			this.sourceText = null
 			this.duplicateResolutions = {}
 			this.duplicates = []
 			this.committedChunks = 0

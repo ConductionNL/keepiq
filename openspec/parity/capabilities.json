@@ -1603,7 +1603,7 @@
       "id": "crypto-06",
       "area": "crypto",
       "name": "Lock the vault by hand, and have it lock itself after a period of inactivity.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -1611,20 +1611,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "building",
-        "evidence": "src/manifest.json:170-173 'Lock vault' menu -> src/App.vue:743 sessionStore.lock(); src/App.vue:779 polls checkTimeout -> src/store/modules/session.js:194 compares against lastActivity, which is set only at unlock (:121,:159) because updateActivity (:204) has no caller (grep updateActivity src: definition only); browser-extension/src/background/service-worker.js:37-38 real idle lock",
+        "state": "built",
+        "evidence": "src/App.vue mounted() registers pointerdown/pointermove/keydown/wheel/scroll/touchstart listeners -> handleActivity -> src/store/modules/session.js noteActivity() (15 s throttle); checkTimeout() compares against lastActivity and skips a null timeout; manual lock unchanged (sessionStore.lock)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "App navigation -> Lock vault; automatic lock via the App.vue timeout poll",
-        "note": "Manual lock works and the vault locks itself on tab close and after a timeout. In the web app that timeout runs from the moment of unlock, not from the last activity, so an active user is locked out mid-work; the browser extension does have a true idle lock.",
-        "defects": [
-          {
-            "at": "src/store/modules/session.js:204",
-            "what": "updateActivity is never called, so the web app's auto-lock is an absolute timer from unlock rather than an inactivity timer.",
-            "issue": null,
-            "needsLiveCheck": true
-          }
-        ],
-        "change": "openspec/changes/crypto-session-timeout-and-inactivity-lock"
+        "reachedOn": "Any vault page while unlocked; the lock screen appears after the chosen idle period",
+        "note": "Built 2026-09-29. Tests: vitest tests/store/session.timeout.spec.js (active user stays unlocked over 25 min, idle user locked, throttle, locked vault ignores activity), tests/components/appSessionWiring.spec.js.",
+        "change": "openspec/changes/archive/2026-09-29-crypto-session-timeout-and-inactivity-lock"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1644,7 +1636,7 @@
       "id": "crypto-07",
       "area": "crypto",
       "name": "Choose your own session timeout.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -1652,26 +1644,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "building",
-        "evidence": "src/App.vue:137-143 Session timeout select in Personal settings -> :873-874 saveTimeout maps session:0, 10min, 30min then '|| 600000' and only sets sessionStore.timeout in memory; no request persists it and App.vue:497 always starts at 'session'; src/components/settings/SessionTimeoutSection.vue:52-66 does GET/PUT session_timeout but is mounted nowhere (grep SessionTimeoutSection src: self only); lib/Service/SettingsService.php:93 stores the key",
+        "state": "built",
+        "evidence": "src/App.vue user-settings Session select -> onTimeoutChange -> src/store/modules/session.js saveTimeoutPreference() PUT /api/settings/user; loadTimeoutPreference() on mount; 'session' held as null (no idle timer); lib/Service/AdminSettingsService.php DEFAULT_SESSION_TIMEOUT = '10min' for an unset value",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "App navigation -> Personal settings -> Session -> Session timeout",
-        "note": "A user can pick 10 or 30 minutes and it applies for the current page session only; it is not saved and resets on reload. The 'Nextcloud session' option maps to 0, which the '|| 600000' fallback turns into 10 minutes, so it silently behaves like 10 minutes.",
-        "defects": [
-          {
-            "at": "src/App.vue:874",
-            "what": "The 'Nextcloud session' choice maps to 0 and the '|| 600000' fallback turns it into a 10-minute timeout.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "src/App.vue:873",
-            "what": "The chosen timeout is never persisted to the server, and the component that does persist it (SessionTimeoutSection.vue) is not mounted, so the choice is lost on reload.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
-        "change": "openspec/changes/crypto-session-timeout-and-inactivity-lock"
+        "reachedOn": "User settings dialog (app navigation, Settings) -> Session -> Session timeout",
+        "note": "Built 2026-09-29. Tests: vitest tests/store/session.timeout.spec.js (load, save, Nextcloud session never locks), PHPUnit SettingsServiceSessionTimeoutTest.",
+        "change": "openspec/changes/archive/2026-09-29-crypto-session-timeout-and-inactivity-lock"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2270,7 +2248,7 @@
       "id": "sharing-02",
       "area": "sharing",
       "name": "Share a secret with a Nextcloud group.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -2278,19 +2256,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "building",
-        "evidence": "lib/Controller/GroupShareController.php and lib/Service/GroupShareService.php implement group shares fully, but src/components/share/GroupShareForm.vue (registry key 'group-share-form') has no cnOpenModal caller anywhere in src/, and no store or component ever calls the /api/v1/secrets/{id}/group-shares endpoints (grep -rn 'group-shares' src/ browser-extension/ cli/: no hits). GroupShareForm.vue also calls useShareStore.encryptForRecipient with a `members` prop no caller ever supplies, not the groupShare backend at all.",
+        "state": "built",
+        "evidence": "src/components/SecretDetailSidebar.vue mounts src/components/share/GroupShareList.vue for owners -> GroupShareForm.vue -> src/store/modules/groupShare.js shareWithGroup: POST /api/v1/secrets/{id}/group-shares (appinfo/routes.php:134, lib/Service/GroupShareService.php createGroupShare honours Nextcloud share settings) then POST /api/v1/shares/register-batch with groupShareId (lib/Service/DirectShareRegistrar.php groupShareMatches); revoke via DELETE /api/v1/group-shares/{id} revokes each member copy through ShareRevocationService",
         "owner": "ConductionNL/keepiq",
-        "note": "A user cannot share a secret with a Nextcloud group today. The backend and a form component exist but nothing in the app opens the form or calls the group-share API.",
-        "defects": [
-          {
-            "at": "src/components/share/GroupShareForm.vue:1",
-            "what": "Group-share form component is registered but never opened by any page or dialog, and its own submit logic calls the wrong store (useShareStore per-user encryption) rather than the group-shares endpoint.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
-        "change": "openspec/changes/sharing-group-share-entry-point"
+        "reachedOn": "Secret sidebar (/secrets, open a secret you own) -> Sharing -> Share with group",
+        "note": "Built 2026-09-29. Tests: GroupShareServiceTest (visibility, skipped count, revoke cascade), ShareServiceTest::testRegisterDirectSharesLinksAGroupShareOfTheSameSecret, GroupShareControllerTest create, vitest groupShare store and GroupShareList.",
+        "change": "openspec/changes/archive/2026-09-29-sharing-group-share-entry-point"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -4477,9 +4448,9 @@
       "nextcloud-passwords": "no",
       "built": {
         "state": "built",
-        "evidence": "src/views/CertificateInventoryView.vue:292 'Renew\u2026' -> src/store/modules/certificate.js:86 POST /api/v1/certificates/{id}/renewal-checklist -> lib/Service/CertificateLifecycleService.php:228 (externally issued checklist); suite rows: CertificateInventoryView.vue:308 -> certificate.js:108 POST /api/v1/certificates/suites/{id}/reissue -> CertificateLifecycleService.php:282",
+        "evidence": "src/views/CertificateInventoryView.vue:292 'Renew…' -> src/store/modules/certificate.js:86 POST /api/v1/certificates/{id}/renewal-checklist -> lib/Service/CertificateLifecycleService.php:228 (externally issued checklist); suite rows: CertificateInventoryView.vue:308 -> certificate.js:108 POST /api/v1/certificates/suites/{id}/reissue -> CertificateLifecycleService.php:282",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Certificates page -> Renew\u2026 on a stored certificate, Re-issue on a suite certificate",
+        "reachedOn": "Certificates page -> Renew… on a stored certificate, Re-issue on a suite certificate",
         "note": "Stored certificates get a fixed checklist for externally issued certificates; certificates Keepiq issued itself (suite certificates) can be re-issued with one click. There is no branch for a stored certificate that Keepiq's CA issued, because Keepiq does not issue those."
       },
       "rowSource": "own",
@@ -6898,7 +6869,7 @@
       "id": "portability-03",
       "area": "portability",
       "name": "Preview and adjust the field mapping before importing.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "no",
@@ -6906,26 +6877,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "building",
-        "evidence": "preview: src/dialogs/ImportWizardDialog.vue:66-117 (first 5 rows, src/dialogs/ImportWizardDialog.vue previewRows). Adjust: src/import/parsers/csv.js:120 accepts options.mapping and csv.js:142 declares adjustableMapping, but the wizard never passes a mapping (ImportWizardDialog.vue:506 parseFile(text, format, {passphrase})) and src/store/modules/import.js:57 mapping state is never written",
+        "state": "built",
+        "evidence": "src/dialogs/ImportWizardDialog.vue mapping step mounts src/components/import/ColumnMapping.vue when store.adjustableMapping -> src/store/modules/import.js applyMapping() re-parses sourceText through csvParser.parseDetailed (src/import/parsers/csv.js); canProceed requires mappingHasName; per-cell toggleReveal on login and password cells",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard -> mapping step",
-        "note": "The user sees a read-only preview of the first five mapped rows. There is no control to remap columns, although the CSV parser supports an explicit mapping.",
-        "defects": [
-          {
-            "at": "src/dialogs/ImportWizardDialog.vue:468",
-            "what": "Sensitive cells are masked with a per-cell reveal, but nothing ever sets revealed[key], so login and password columns can never be revealed in the preview.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "src/store/modules/import.js:57",
-            "what": "The mapping state and the parser's adjustableMapping flag are never used, so column remapping promised by the spec is not wired.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
-        "change": "openspec/changes/portability-import-field-mapping"
+        "reachedOn": "Vault (/secrets) -> Import -> Generic CSV -> pick a file -> mapping step",
+        "note": "Built 2026-09-29. Tests: vitest tests/store/importMapping.spec.js, tests/dialogs/ImportWizardDialog.mapping.spec.js.",
+        "change": "openspec/changes/archive/2026-09-29-portability-import-field-mapping"
       },
       "rowSource": "own",
       "provider": "keepiq",

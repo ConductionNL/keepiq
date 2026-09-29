@@ -1181,7 +1181,20 @@
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ihre Schlüsselrotation wurde fortgesetzt, daher konnten diese Notfallkontakte nicht übernommen werden und ihr Notfallzugriff wurde entfernt. Fügen Sie sie unter Notfallzugriff erneut hinzu, wenn Sie sie noch möchten.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ihre Schlüsselrotation hat %n Notfallkontakt entfernt. Prüfen Sie den Notfallzugriff und fügen Sie ihn erneut hinzu, wenn Sie ihn noch möchten.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ihre Schlüsselrotation hat %n Notfallkontakte entfernt. Prüfen Sie den Notfallzugriff und fügen Sie sie erneut hinzu, wenn Sie sie noch möchten.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ihre Schlüsselrotation hat den Notfallzugriff dieses Kontakts entfernt. Benennen Sie ihn erneut, wenn Sie ihn noch möchten."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ihre Schlüsselrotation hat den Notfallzugriff dieses Kontakts entfernt. Benennen Sie ihn erneut, wenn Sie ihn noch möchten.",
+        "Shared with groups": "Mit Gruppen geteilt",
+        "Not shared with any group yet.": "Noch mit keiner Gruppe geteilt.",
+        "Revoke the share with {group}": "Freigabe für {group} widerrufen",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Mit {group} geteilt: {received} Mitglieder haben es erhalten, {skipped} nicht, weil sie noch keine Verschlüsselung eingerichtet haben.",
+        "Search groups": "Gruppen suchen",
+        "Failed to share": "Teilen fehlgeschlagen",
+        "Columns": "Spalten",
+        "Column {number}": "Spalte {number}",
+        "Map one column to Name. Every secret needs a name.": "Ordnen Sie eine Spalte dem Namen zu. Jedes Geheimnis braucht einen Namen.",
+        "Notes": "Notizen",
+        "Do not import": "Nicht importieren",
+        "Hide this value": "Diesen Wert verbergen",
+        "Show this value": "Diesen Wert anzeigen"
     },
     "plurals": null
 }

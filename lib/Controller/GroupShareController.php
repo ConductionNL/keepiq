@@ -123,6 +123,7 @@ class GroupShareController extends OCSController {
 			data: [
 				'groupShare' => $result['groupShare']->jsonSerialize(),
 				'members' => $result['members'],
+				'skipped' => $result['skipped'],
 			],
 			statusCode: Http::STATUS_CREATED
 		);

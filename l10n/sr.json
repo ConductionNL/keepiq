@@ -1181,7 +1181,20 @@
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ротација кључа је настављена, па ови контакти за хитне случајеве нису могли бити пренети и њихов приступ у хитним случајевима је уклоњен. Додајте их поново у одељку Приступ у хитним случајевима ако их још желите.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ротација кључа је уклонила %n контакт за хитне случајеве. Проверите Приступ у хитним случајевима и додајте га поново ако га још желите.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ротација кључа је уклонила %n контакта за хитне случајеве. Проверите Приступ у хитним случајевима и додајте их поново ако их још желите.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ротација кључа је уклонила приступ у хитним случајевима овог контакта. Одредите га поново ако га још желите."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ротација кључа је уклонила приступ у хитним случајевима овог контакта. Одредите га поново ако га још желите.",
+        "Shared with groups": "Дељено са групама",
+        "Not shared with any group yet.": "Још није дељено ни са једном групом.",
+        "Revoke the share with {group}": "Опозови дељење са групом {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Дељено са групом {group}: {received} чланова је то примило, {skipped} није јер још нису подесили шифровање.",
+        "Search groups": "Претражи групе",
+        "Failed to share": "Дељење није успело",
+        "Columns": "Колоне",
+        "Column {number}": "Колона {number}",
+        "Map one column to Name. Every secret needs a name.": "Повежите једну колону са називом. Свака тајна мора имати назив.",
+        "Notes": "Белешке",
+        "Do not import": "Не увози",
+        "Hide this value": "Сакриј ову вредност",
+        "Show this value": "Прикажи ову вредност"
     },
     "plurals": null
 }

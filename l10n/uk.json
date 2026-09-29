@@ -1181,7 +1181,20 @@
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ротацію ключа було відновлено, тому ці екстрені контакти не вдалося перенести і їхній надзвичайний доступ видалено. Додайте їх знову в розділі «Надзвичайний доступ», якщо вони вам ще потрібні.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ротація ключа видалила %n екстрений контакт. Перевірте «Надзвичайний доступ» і додайте його знову, якщо він вам ще потрібен.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ротація ключа видалила %n екстрених контактів. Перевірте «Надзвичайний доступ» і додайте їх знову, якщо вони вам ще потрібні.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ротація ключа видалила надзвичайний доступ цього контакту. Призначте його знову, якщо він вам ще потрібен."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ротація ключа видалила надзвичайний доступ цього контакту. Призначте його знову, якщо він вам ще потрібен.",
+        "Shared with groups": "Надано доступ групам",
+        "Not shared with any group yet.": "Ще не надано жодній групі.",
+        "Revoke the share with {group}": "Відкликати доступ для {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Надано групі {group}: {received} учасників отримали, {skipped} ні, бо в них ще не налаштовано шифрування.",
+        "Search groups": "Шукати групи",
+        "Failed to share": "Не вдалося надати доступ",
+        "Columns": "Стовпці",
+        "Column {number}": "Стовпець {number}",
+        "Map one column to Name. Every secret needs a name.": "Зіставте один стовпець із назвою. Кожен секрет повинен мати назву.",
+        "Notes": "Нотатки",
+        "Do not import": "Не імпортувати",
+        "Hide this value": "Приховати це значення",
+        "Show this value": "Показати це значення"
     },
     "plurals": null
 }

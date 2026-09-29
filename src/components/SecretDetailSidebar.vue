@@ -677,6 +677,11 @@
 						:secretId="secretId"
 						data-testid="secret-detail-share-list" />
 
+					<GroupShareList
+						v-if="isOwner"
+						:secretId="secretId"
+						data-testid="secret-detail-group-share-list" />
+
 					<DelegationManager
 						v-if="isOwner"
 						:secretId="secretId"
@@ -869,6 +874,7 @@ import SecretActivityTab from './SecretActivityTab.vue'
 import SecretRequestList from './secretRequest/SecretRequestList.vue'
 import AdminHandoverPanel from './share/AdminHandoverPanel.vue'
 import DelegationManager from './share/DelegationManager.vue'
+import GroupShareList from './share/GroupShareList.vue'
 import ShareList from './share/ShareList.vue'
 import ShareRequestForm from './share/ShareRequestForm.vue'
 import TotpDisplay from './TotpDisplay.vue'
@@ -936,6 +942,7 @@ export default {
 		SecretActivityTab,
 		SecretRequestCreateDialog,
 		SecretRequestList,
+		GroupShareList,
 		ShareList,
 		ShareRequestForm,
 		TotpDisplay,

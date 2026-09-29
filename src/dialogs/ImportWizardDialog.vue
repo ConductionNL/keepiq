@@ -75,6 +75,8 @@
 					}}
 				</p>
 
+				<ColumnMapping v-if="store.adjustableMapping" />
+
 				<table class="import-wizard__preview">
 					<thead>
 						<tr>
@@ -99,9 +101,39 @@
 						<tr v-for="row in previewRows" :key="row.sourceRow">
 							<td>{{ row.name }}</td>
 							<td>{{ row.url }}</td>
-							<td>{{ mask(row.login, row.sourceRow + '-login') }}</td>
+							<td>
+								{{ mask(row.login, row.sourceRow + '-login') }}
+								<NcButton
+									v-if="row.login"
+									variant="tertiary"
+									:aria-label="
+										revealLabel(row.sourceRow + '-login')
+									"
+									:data-testid="`import-reveal-${row.sourceRow}-login`"
+									@click="toggleReveal(row.sourceRow + '-login')">
+									{{
+										revealed[row.sourceRow + '-login']
+											? t('keepiq', 'Hide')
+											: t('keepiq', 'Show')
+									}}
+								</NcButton>
+							</td>
 							<td>
 								{{ mask(row.password, row.sourceRow + '-pass') }}
+								<NcButton
+									v-if="row.password"
+									variant="tertiary"
+									:aria-label="
+										revealLabel(row.sourceRow + '-pass')
+									"
+									:data-testid="`import-reveal-${row.sourceRow}-pass`"
+									@click="toggleReveal(row.sourceRow + '-pass')">
+									{{
+										revealed[row.sourceRow + '-pass']
+											? t('keepiq', 'Hide')
+											: t('keepiq', 'Show')
+									}}
+								</NcButton>
 							</td>
 							<td>{{ row.folder }}</td>
 						</tr>
@@ -312,6 +344,7 @@ import {
 	NcPasswordField,
 	NcSelect,
 } from '@nextcloud/vue'
+import ColumnMapping from '../components/import/ColumnMapping.vue'
 import { isKdbx } from '../import/model.js'
 import { listParsers } from '../import/parserRegistry.js'
 import { useImportStore } from '../store/modules/import.js'
@@ -326,6 +359,7 @@ export default {
 	name: 'ImportWizardDialog',
 
 	components: {
+		ColumnMapping,
 		NcButton,
 		NcCheckboxRadioSwitch,
 		NcDialog,
@@ -432,7 +466,7 @@ export default {
 		 */
 		canProceed() {
 			if (this.store.step === 'mapping') {
-				return this.store.rows.length > 0
+				return this.store.rows.length > 0 && this.store.mappingHasName
 			}
 			return true
 		},
@@ -466,6 +500,30 @@ export default {
 				return ''
 			}
 			return this.revealed[key] ? value : '••••••••'
+		},
+
+		/**
+		 * Reveal or hide one preview cell. Only that cell changes.
+		 *
+		 * @param {string} key The reveal key.
+		 * @return {void}
+		 * @spec openspec/specs/portability-import-mapping/spec.md#requirement-revealing-sensitive-preview-cells
+		 */
+		toggleReveal(key) {
+			this.revealed = { ...this.revealed, [key]: !this.revealed[key] }
+		},
+
+		/**
+		 * The accessible name of a cell's reveal button.
+		 *
+		 * @param {string} key The reveal key.
+		 * @return {string}
+		 * @spec openspec/specs/portability-import-mapping/spec.md#requirement-revealing-sensitive-preview-cells
+		 */
+		revealLabel(key) {
+			return this.revealed[key]
+				? t('keepiq', 'Hide this value')
+				: t('keepiq', 'Show this value')
 		},
 
 		/**

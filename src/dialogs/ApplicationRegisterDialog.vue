@@ -15,11 +15,6 @@
   or is clipped by the dialog's content box (invisible control), see
   the history in src/dialogs/MoveDialog.vue.
 
-  When the server returns a one-time private key (because no CSR was
-  supplied) the parent view should mount PrivateKeyDownloadDialog to
-  surface it; that flow is owned by the parent so the key can be
-  copied or downloaded before this dialog closes.
-
   @spec openspec/changes/implement-application-mgmt/tasks.md#task-10.3
 -->
 <template>

@@ -27,3 +27,7 @@ Vendor exports have a known shape; showing selects for them adds a way to break 
 ### D2: The store owns the mapping
 
 The wizard writes the mapping into the import store and both the preview and the import read it from there, so they cannot disagree.
+
+### D3: The store keeps the file text until reset
+
+Added at build time (29 Sep). Re-parsing after a remap needs the file text, so the import store keeps it in `sourceText` for a CSV with an adjustable mapping. It is plaintext of the same kind the parsed rows already hold in memory, it never leaves the tab, and `reset()` (wizard close) clears it with the rows. A single-valued field picked for a second column moves: the column that held it falls back to Do not import.

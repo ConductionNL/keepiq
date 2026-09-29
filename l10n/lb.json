@@ -1181,7 +1181,20 @@
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Är Schlësselrotatioun gouf weidergefouert, dofir konnten dës Noutfallkontakter net iwwerholl ginn an hiren Noutfallzougrëff gouf ewechgeholl. Setzt se nees bäi ënner Noutfallzougrëff, wann Dir se nach wëllt.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Är Schlësselrotatioun huet %n Noutfallkontakt ewechgeholl. Kuckt den Noutfallzougrëff a setzt en nees bäi, wann Dir en nach wëllt.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Är Schlësselrotatioun huet %n Noutfallkontakter ewechgeholl. Kuckt den Noutfallzougrëff a setzt se nees bäi, wann Dir se nach wëllt.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Är Schlësselrotatioun huet den Noutfallzougrëff vun dësem Kontakt ewechgeholl. Bestëmmt en nees, wann Dir en nach wëllt."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Är Schlësselrotatioun huet den Noutfallzougrëff vun dësem Kontakt ewechgeholl. Bestëmmt en nees, wann Dir en nach wëllt.",
+        "Shared with groups": "Mat Gruppen gedeelt",
+        "Not shared with any group yet.": "Nach mat kenger Grupp gedeelt.",
+        "Revoke the share with {group}": "Deele mat {group} zréckzéien",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Mat {group} gedeelt: {received} Memberen hunn et kritt, {skipped} net, well se nach keng Verschlësselung ageriicht hunn.",
+        "Search groups": "Gruppe sichen",
+        "Failed to share": "Deelen ass feelgeschloen",
+        "Columns": "Kolonnen",
+        "Column {number}": "Kolonn {number}",
+        "Map one column to Name. Every secret needs a name.": "Verbannt eng Kolonn mam Numm. All Geheimnis brauch en Numm.",
+        "Notes": "Notizen",
+        "Do not import": "Net importéieren",
+        "Hide this value": "Dëse Wäert verstoppen",
+        "Show this value": "Dëse Wäert weisen"
     },
     "plurals": null
 }

@@ -1182,7 +1182,20 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Your key rotation removed this contact's emergency access. Designate them again if you still want them."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Your key rotation removed this contact's emergency access. Designate them again if you still want them.",
+        "Shared with groups": "Shared with groups",
+        "Not shared with any group yet.": "Not shared with any group yet.",
+        "Revoke the share with {group}": "Revoke the share with {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.",
+        "Search groups": "Search groups",
+        "Failed to share": "Failed to share",
+        "Columns": "Columns",
+        "Column {number}": "Column {number}",
+        "Map one column to Name. Every secret needs a name.": "Map one column to Name. Every secret needs a name.",
+        "Notes": "Notes",
+        "Do not import": "Do not import",
+        "Hide this value": "Hide this value",
+        "Show this value": "Show this value"
     },
     "nplurals=2; plural=(n != 1);"
 )

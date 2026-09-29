@@ -1181,7 +1181,20 @@
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Rotacija ključa se je nadaljevala, zato teh stikov za nujne primere ni bilo mogoče prenesti in njihov dostop v nujnih primerih je bil odstranjen. Če jih še želite, jih znova dodajte v razdelku Dostop v nujnih primerih.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Rotacija ključa je odstranila %n stik za nujne primere. Preverite Dostop v nujnih primerih in ga znova dodajte, če ga še želite.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Rotacija ključa je odstranila %n stikov za nujne primere. Preverite Dostop v nujnih primerih in jih znova dodajte, če jih še želite.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rotacija ključa je odstranila dostop v nujnih primerih za ta stik. Če ga še želite, ga znova določite."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rotacija ključa je odstranila dostop v nujnih primerih za ta stik. Če ga še želite, ga znova določite.",
+        "Shared with groups": "Deljeno s skupinami",
+        "Not shared with any group yet.": "Še ni deljeno z nobeno skupino.",
+        "Revoke the share with {group}": "Prekliči deljenje s skupino {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Deljeno s skupino {group}: {received} članov je to prejelo, {skipped} ne, ker še nimajo nastavljenega šifriranja.",
+        "Search groups": "Išči skupine",
+        "Failed to share": "Deljenje ni uspelo",
+        "Columns": "Stolpci",
+        "Column {number}": "Stolpec {number}",
+        "Map one column to Name. Every secret needs a name.": "En stolpec povežite z imenom. Vsaka skrivnost potrebuje ime.",
+        "Notes": "Opombe",
+        "Do not import": "Ne uvozi",
+        "Hide this value": "Skrij to vrednost",
+        "Show this value": "Pokaži to vrednost"
     },
     "plurals": null
 }

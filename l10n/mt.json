@@ -1181,7 +1181,20 @@
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ir-rotazzjoni taċ-ċavetta tiegħek tkompliet, għalhekk dawn il-kuntatti ta' emerġenza ma setgħux jiġu trasferiti u l-aċċess ta' emerġenza tagħhom tneħħa. Erġa' żidhom minn Aċċess ta' emerġenza jekk għadek tridhom.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ir-rotazzjoni taċ-ċavetta tiegħek neħħiet %n kuntatt ta' emerġenza. Iċċekkja Aċċess ta' emerġenza u erġa' żidu jekk għadek tridu.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ir-rotazzjoni taċ-ċavetta tiegħek neħħiet %n kuntatti ta' emerġenza. Iċċekkja Aċċess ta' emerġenza u erġa' żidhom jekk għadek tridhom.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ir-rotazzjoni taċ-ċavetta tiegħek neħħiet l-aċċess ta' emerġenza ta' dan il-kuntatt. Erġa' aħtru jekk għadek tridu."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ir-rotazzjoni taċ-ċavetta tiegħek neħħiet l-aċċess ta' emerġenza ta' dan il-kuntatt. Erġa' aħtru jekk għadek tridu.",
+        "Shared with groups": "Maqsum ma' gruppi",
+        "Not shared with any group yet.": "Għadu mhux maqsum ma' ebda grupp.",
+        "Revoke the share with {group}": "Irrevoka l-qsim ma' {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Maqsum ma' {group}: {received} membri rċevewh, {skipped} le għax għadhom ma waqqfux il-kriptaġġ.",
+        "Search groups": "Fittex gruppi",
+        "Failed to share": "Il-qsim ma rnexxiex",
+        "Columns": "Kolonni",
+        "Column {number}": "Kolonna {number}",
+        "Map one column to Name. Every secret needs a name.": "Orbot kolonna waħda mal-Isem. Kull sigriet għandu bżonn isem.",
+        "Notes": "Noti",
+        "Do not import": "Timportax",
+        "Hide this value": "Aħbi dan il-valur",
+        "Show this value": "Uri dan il-valur"
     },
     "plurals": null
 }

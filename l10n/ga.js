@@ -1182,7 +1182,20 @@ OC.L10N.register(
         "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Atosaíodh do rothlú eochrach, mar sin níorbh fhéidir na teagmhálaithe éigeandála seo a thabhairt anonn agus baineadh a rochtain éigeandála. Cuir leis arís iad ó Rochtain éigeandála más mian leat iad fós.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Bhain do rothlú eochrach %n teagmhálaí éigeandála. Seiceáil Rochtain éigeandála agus cuir leis arís é más mian leat é fós.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Bhain do rothlú eochrach %n teagmhálaí éigeandála. Seiceáil Rochtain éigeandála agus cuir leis arís iad más mian leat iad fós.",
-        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Bhain do rothlú eochrach rochtain éigeandála an teagmhálaí seo. Ainmnigh arís é más mian leat é fós."
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Bhain do rothlú eochrach rochtain éigeandála an teagmhálaí seo. Ainmnigh arís é más mian leat é fós.",
+        "Shared with groups": "Comhroinnte le grúpaí",
+        "Not shared with any group yet.": "Níor comhroinneadh le grúpa ar bith fós.",
+        "Revoke the share with {group}": "Cealaigh an chomhroinnt le {group}",
+        "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Comhroinnte le {group}: fuair {received} ball é, ní bhfuair {skipped} é mar níl criptiú socraithe acu fós.",
+        "Search groups": "Cuardaigh grúpaí",
+        "Failed to share": "Theip ar an gcomhroinnt",
+        "Columns": "Colúin",
+        "Column {number}": "Colún {number}",
+        "Map one column to Name. Every secret needs a name.": "Nasc colún amháin leis an Ainm. Tá ainm ag teastáil ó gach rún.",
+        "Notes": "Nótaí",
+        "Do not import": "Ná hiompórtáil",
+        "Hide this value": "Folaigh an luach seo",
+        "Show this value": "Taispeáin an luach seo"
     },
     "nplurals=2; plural=(n != 1);"
 )
