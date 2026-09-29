@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "Preklic tega kompleta je izbrisal %n stik zasilnega dostopa.",
         "Revoking this suite deleted %n emergency-access contacts.": "Preklic tega kompleta je izbrisal %n stikov zasilnega dostopa.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Obravnavaj skrivnosti kompleta kot ogrožene (označi za menjavo in obvesti lastnike)",
+        "%n secret could not be decrypted and is not in this export.": "%n skrivnosti ni bilo mogoče dešifrirati in je ni v tem izvozu.",
+        "%n secrets could not be decrypted and are not in this export.": "%n skrivnosti ni bilo mogoče dešifrirati in jih ni v tem izvozu.",
+        "Continue without the secrets that could not be decrypted": "Nadaljuj brez skrivnosti, ki jih ni bilo mogoče dešifrirati",
         "This request is no longer available.": "Ta zahteva ni več na voljo."
     },
     "nplurals=2; plural=(n != 1);"

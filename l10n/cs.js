@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "Odvolání této sady odstranilo %n kontakt nouzového přístupu.",
         "Revoking this suite deleted %n emergency-access contacts.": "Odvolání této sady odstranilo %n kontaktů nouzového přístupu.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Považovat tajemství sady za kompromitovaná (označit k obměně a upozornit vlastníky)",
+        "%n secret could not be decrypted and is not in this export.": "%n tajemství nebylo možné dešifrovat a není v tomto exportu.",
+        "%n secrets could not be decrypted and are not in this export.": "%n tajemství nebylo možné dešifrovat a nejsou v tomto exportu.",
+        "Continue without the secrets that could not be decrypted": "Pokračovat bez tajemství, která nebylo možné dešifrovat",
         "This request is no longer available.": "Tato žádost již není k dispozici."
     },
     "nplurals=2; plural=(n != 1);"

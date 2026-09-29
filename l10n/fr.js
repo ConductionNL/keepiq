@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "La révocation de cette suite a supprimé %n contact d'accès d'urgence.",
         "Revoking this suite deleted %n emergency-access contacts.": "La révocation de cette suite a supprimé %n contacts d'accès d'urgence.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Traiter les secrets de la suite comme compromis (marquer pour rotation et avertir les propriétaires)",
+        "%n secret could not be decrypted and is not in this export.": "%n secret n'a pas pu être déchiffré et ne figure pas dans cet export.",
+        "%n secrets could not be decrypted and are not in this export.": "%n secrets n'ont pas pu être déchiffrés et ne figurent pas dans cet export.",
+        "Continue without the secrets that could not be decrypted": "Continuer sans les secrets qui n'ont pas pu être déchiffrés",
         "This request is no longer available.": "Cette demande n'est plus disponible."
     },
     "nplurals=2; plural=(n != 1);"

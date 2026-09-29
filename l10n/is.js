@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "Afturköllun þessa setts eyddi %n neyðaraðgangstengilið.",
         "Revoking this suite deleted %n emergency-access contacts.": "Afturköllun þessa setts eyddi %n neyðaraðgangstengiliðum.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Meðhöndla leyndarmál settsins sem í hættu (merkja fyrir endurnýjun og láta eigendur vita)",
+        "%n secret could not be decrypted and is not in this export.": "Ekki tókst að afkóða %n leyndarmál og það er ekki í þessum útflutningi.",
+        "%n secrets could not be decrypted and are not in this export.": "Ekki tókst að afkóða %n leyndarmál og þau eru ekki í þessum útflutningi.",
+        "Continue without the secrets that could not be decrypted": "Halda áfram án leyndarmálanna sem ekki tókst að afkóða",
         "This request is no longer available.": "Þessi beiðni er ekki lengur tiltæk."
     },
     "nplurals=2; plural=(n != 1);"

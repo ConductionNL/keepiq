@@ -197,13 +197,34 @@ func (c *Client) MachineToken(applicationID string, key *rsa.PrivateKey, disc *D
 	return tok.AccessToken, nil
 }
 
-// MachineEnvelope is the doriath-machine-secret-v1 envelope (CI fetch, §4.2).
+// MachineEnvelope is the doriath-machine-secret-v1 envelope (CI fetch, §4.2),
+// in the shape lib/Service/MachineSecretEnvelopeService.php serialize()
+// writes: metadata under `secret`, the scheme under `encryption.scheme`, and
+// the base64 ciphertext under `ciphertext.key`, `ciphertext.login` and
+// `ciphertext.additionalFields`. cli/testdata/machine_envelope.json is that
+// serializer's real output, guarded by a PHPUnit test (keepiq#793).
 type MachineEnvelope struct {
-	Format  string `json:"format"`
-	Scheme  string `json:"scheme"`
-	Payload struct {
-		Value string `json:"value"`
-	} `json:"payload"`
+	Format string `json:"format"`
+	Secret struct {
+		ID           string `json:"id"`
+		Name         string `json:"name"`
+		URL          string `json:"url"`
+		FolderPath   string `json:"folderPath"`
+		Type         string `json:"type"`
+		CreatedAt    string `json:"createdAt"`
+		UpdatedAt    string `json:"updatedAt"`
+		KeyUpdatedAt string `json:"keyUpdatedAt"`
+	} `json:"secret"`
+	Encryption struct {
+		SuiteID                string `json:"suiteId"`
+		CertificateFingerprint string `json:"certificateFingerprint"`
+		Scheme                 string `json:"scheme"`
+	} `json:"encryption"`
+	Ciphertext struct {
+		Key              string `json:"key"`
+		Login            string `json:"login"`
+		AdditionalFields string `json:"additionalFields"`
+	} `json:"ciphertext"`
 }
 
 // FetchByName fetches an application secret envelope by name with the bearer

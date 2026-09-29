@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "Tilbagekaldelsen af denne suite fjernede %n nødadgangskontakt.",
         "Revoking this suite deleted %n emergency-access contacts.": "Tilbagekaldelsen af denne suite fjernede %n nødadgangskontakter.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandl suitens hemmeligheder som kompromitterede (markér til rotation, og underret ejere)",
+        "%n secret could not be decrypted and is not in this export.": "%n hemmelighed kunne ikke dekrypteres og er ikke med i denne eksport.",
+        "%n secrets could not be decrypted and are not in this export.": "%n hemmeligheder kunne ikke dekrypteres og er ikke med i denne eksport.",
+        "Continue without the secrets that could not be decrypted": "Fortsæt uden de hemmeligheder, der ikke kunne dekrypteres",
         "This request is no longer available.": "Denne anmodning er ikke længere tilgængelig."
     },
     "nplurals=2; plural=(n != 1);"

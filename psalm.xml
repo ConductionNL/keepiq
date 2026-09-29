@@ -22,6 +22,7 @@
              sibling app is absent. Analysis-only — never loaded at runtime.
              The real classes live in openregister/lib/AppHost/Settings/. -->
         <file name="tests/stubs/openregister-apphost.stub.php" preloadClasses="true" />
+        <file name="tests/stubs/openregister-apphost-bootstrap.stub.php" />
         <!-- Integriq's connection-registry events (adopt-connection-registry).
              ConnectionReporter names them by string behind class_exists
              (ADR-041). Declaration-only stubs, so psalm sees the constructor
@@ -33,12 +34,6 @@
         <UndefinedDocblockClass errorLevel="suppress"/>
         <UndefinedClass>
             <errorLevel type="suppress">
-                <!-- Nextcloud's legacy bootstrap class. There is no OCP
-                     interface for registering another app's autoloader, so the
-                     ADR-040 AppHost prelude in AppInfo\OpenRegisterAutoloader
-                     has to call OC_App::registerAutoloading() directly. It is
-                     server-private and therefore absent from nextcloud/ocp. -->
-                <referencedClass name="OC_App"/>
                 <!-- Nextcloud OCP Classes -->
                 <referencedClass name="OCP\AppFramework\App"/>
                 <referencedClass name="OCP\AppFramework\Bootstrap\IBootstrap"/>

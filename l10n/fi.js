@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "Tämän sarjan peruuttaminen poisti %n hätäkäytön yhteyshenkilön.",
         "Revoking this suite deleted %n emergency-access contacts.": "Tämän sarjan peruuttaminen poisti %n hätäkäytön yhteyshenkilöä.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Käsittele sarjan salaisuuksia vaarantuneina (merkitse kierrätettäväksi ja ilmoita omistajille)",
+        "%n secret could not be decrypted and is not in this export.": "%n salaisuutta ei voitu purkaa, eikä se ole tässä viennissä.",
+        "%n secrets could not be decrypted and are not in this export.": "%n salaisuutta ei voitu purkaa, eivätkä ne ole tässä viennissä.",
+        "Continue without the secrets that could not be decrypted": "Jatka ilman salaisuuksia, joita ei voitu purkaa",
         "This request is no longer available.": "Tämä pyyntö ei ole enää käytettävissä."
     },
     "nplurals=2; plural=(n != 1);"

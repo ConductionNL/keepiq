@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "Revokimi i kësaj suite fshiu %n kontakt të qasjes së emergjencës.",
         "Revoking this suite deleted %n emergency-access contacts.": "Revokimi i kësaj suite fshiu %n kontakte të qasjes së emergjencës.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Trajto sekretet e suitës si të komprometuara (shëno për rotacion dhe njofto pronarët)",
+        "%n secret could not be decrypted and is not in this export.": "%n sekret nuk mund të deshifrohej dhe nuk është në këtë eksport.",
+        "%n secrets could not be decrypted and are not in this export.": "%n sekrete nuk mund të deshifroheshin dhe nuk janë në këtë eksport.",
+        "Continue without the secrets that could not be decrypted": "Vazhdo pa sekretet që nuk mund të deshifroheshin",
         "This request is no longer available.": "Kjo kërkesë nuk është më e disponueshme."
     },
     "nplurals=2; plural=(n != 1);"

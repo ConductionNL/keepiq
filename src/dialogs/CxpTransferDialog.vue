@@ -110,6 +110,34 @@
 					v-model="masterPassword"
 					:label="t('keepiq', 'Re-enter your master password')"
 					data-testid="cxp-master-password" />
+				<!-- Secrets that could not be decrypted are not in the transfer:
+				     say how many before anything is sent (keepiq#794). -->
+				<div
+					v-if="skipped > 0"
+					class="cxp-dialog__skipped"
+					data-testid="cxp-skipped-warning">
+					<NcNoteCard type="warning">
+						{{
+							n(
+								'keepiq',
+								'%n secret could not be decrypted and is not in this export.',
+								'%n secrets could not be decrypted and are not in this export.',
+								skipped,
+							)
+						}}
+					</NcNoteCard>
+					<NcCheckboxRadioSwitch
+						:modelValue="skippedAcknowledged"
+						data-testid="cxp-skipped-ack"
+						@update:modelValue="skippedAcknowledged = $event">
+						{{
+							t(
+								'keepiq',
+								'Continue without the secrets that could not be decrypted',
+							)
+						}}
+					</NcCheckboxRadioSwitch>
+				</div>
 				<NcNoteCard
 					v-if="cxpReport && cxpReport.unmapped.length > 0"
 					type="warning"
@@ -125,7 +153,12 @@
 				</NcNoteCard>
 				<NcButton
 					variant="primary"
-					:disabled="busy || !sendPairingId || !masterPassword"
+					:disabled="
+						busy
+						|| !sendPairingId
+						|| !masterPassword
+						|| (skipped > 0 && !skippedAcknowledged)
+					"
 					data-testid="cxp-do-send"
 					@click="doSend">
 					{{
@@ -200,6 +233,12 @@ export default {
 			default: () => [],
 		},
 
+		/** How many secrets could not be decrypted and are not in `secrets`. */
+		skipped: {
+			type: Number,
+			default: 0,
+		},
+
 		/** Folder rows ({ id, name, parentId }). */
 		folders: {
 			type: Array,
@@ -239,6 +278,8 @@ export default {
 			fetchedRequest: null,
 			cxpReport: null,
 			sent: false,
+			/** Whether the user chose to send without the skipped secrets. */
+			skippedAcknowledged: false,
 		}
 	},
 
@@ -356,9 +397,15 @@ export default {
 		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-keepiq-as-exporting-provider
 		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-client-side-hpke-seal-and-open
 		 * @spec openspec/specs/cxp-transfer/spec.md#requirement-cxp-transfer-emits-an-export-event-with-mode-cxp
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async doSend() {
 			this.error = null
+			// Nothing is sent until the user chose to continue without the
+			// secrets that could not be decrypted (keepiq#794).
+			if (this.skipped > 0 && !this.skippedAcknowledged) {
+				return
+			}
 			this.busy = true
 			try {
 				// Fresh master-password re-auth (client-side proof of knowledge).
@@ -421,10 +468,12 @@ export default {
 		},
 
 		/**
-		 * Close and reset all transient state (releases ephemeral key material).
+		 * Close and reset all transient state (releases ephemeral key material),
+		 * including the acknowledgement of secrets left out (keepiq#794).
 		 *
 		 * @param {boolean} value The open state.
 		 * @return {void}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		onUpdateOpen(value) {
 			if (!value) {
@@ -440,6 +489,7 @@ export default {
 				this.fetchedRequest = null
 				this.cxpReport = null
 				this.sent = false
+				this.skippedAcknowledged = false
 				this.error = null
 			}
 			this.$emit('update:open', value)
@@ -463,6 +513,12 @@ export default {
 		display: flex;
 		flex-direction: column;
 		gap: 10px;
+	}
+
+	&__skipped {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
 	}
 
 	&__code {

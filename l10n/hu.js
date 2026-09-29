@@ -1169,6 +1169,9 @@ OC.L10N.register(
         "Revoking this suite deleted %n emergency-access contact.": "A csomag visszavonása %n vészhozzáférési névjegyet törölt.",
         "Revoking this suite deleted %n emergency-access contacts.": "A csomag visszavonása %n vészhozzáférési névjegyet törölt.",
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "A csomag titkainak kompromittáltként kezelése (megjelölés cserére és a tulajdonosok értesítése)",
+        "%n secret could not be decrypted and is not in this export.": "%n titkot nem sikerült visszafejteni, és nincs benne ebben az exportban.",
+        "%n secrets could not be decrypted and are not in this export.": "%n titkot nem sikerült visszafejteni, és nincsenek benne ebben az exportban.",
+        "Continue without the secrets that could not be decrypted": "Folytatás a vissza nem fejthető titkok nélkül",
         "This request is no longer available.": "Ez a kérelem már nem érhető el."
     },
     "nplurals=2; plural=(n != 1);"
