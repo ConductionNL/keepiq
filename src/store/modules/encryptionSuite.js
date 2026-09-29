@@ -1176,6 +1176,9 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			}
 
 			const migrationId = this.migrationStatus.id
+			// Read now: completion refreshes the status, which is null once the
+			// migration has ended, and the read-back below needs the old suite.
+			const oldSuiteId = this.migrationStatus.oldSuiteId
 
 			// Both suites are resolved from the MIGRATION, never from the session.
 			// During a migration two suites are active, and the session binds to
@@ -1256,9 +1259,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			// acceptMigrationLosses reads back once the owner finishes.
 			outcome.residualContacts =
 				completion?.finalised === true
-					? await this.rotationRemovedContacts(
-							this.migrationStatus?.oldSuiteId ?? oldSuite.id,
-						)
+					? await this.rotationRemovedContacts(oldSuiteId)
 					: []
 
 			return outcome
@@ -1276,7 +1277,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *
 		 * @param {string} oldSuiteId The suite the rotation moved away from.
 		 * @return {Promise<Array<{granteeUserId: string, reason: string}>>} The
-		 *   removed contacts; empty when they cannot be listed.
+		 *   removed contacts; empty (and logged) when they cannot be listed.
 		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
 		async rotationRemovedContacts(oldSuiteId) {
@@ -1286,7 +1287,15 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 					generateUrl('/apps/keepiq/api/v1/emergency-access/contacts'),
 				)
 				contacts = Array.isArray(response.data) ? response.data : []
-			} catch {
+			} catch (e) {
+				// The standing Emergency Access view still shows each removed
+				// contact, so the owner is not left without a notice; log it so a
+				// silent completion screen can be traced (#804 review, round 5).
+				// eslint-disable-next-line no-console
+				console.warn(
+					'Keepiq: could not list the emergency contacts a rotation removed',
+					e,
+				)
 				return []
 			}
 

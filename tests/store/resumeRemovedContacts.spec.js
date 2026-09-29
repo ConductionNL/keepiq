@@ -114,11 +114,16 @@ describe('useEncryptionSuiteStore — contacts removed by a resumed rotation', (
 		])
 	})
 
-	it('names nothing when the contacts cannot be listed', async () => {
+	it('names nothing, and logs why, when the contacts cannot be listed', async () => {
 		mockGets('throw')
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
 		const store = useEncryptionSuiteStore()
 
 		expect(await store.rotationRemovedContacts('old-suite')).toEqual([])
+		expect(warn).toHaveBeenCalledWith(
+			expect.stringContaining('could not list the emergency contacts'),
+			expect.any(Error),
+		)
 	})
 
 	it('reports the removed contacts from resumeMigration, after completion', async () => {
@@ -145,6 +150,9 @@ describe('useEncryptionSuiteStore — contacts removed by a resumed rotation', (
 		})
 		vi.spyOn(store, 'finaliseMigration').mockImplementation(async () => {
 			calls.push('finalise')
+			// As the real completion does: its status refresh finds no
+			// migration once it has ended.
+			store.migrationStatus = null
 			return { finalised: true, needsAcknowledgement: false, message: null }
 		})
 		const removed = vi
