@@ -79,43 +79,6 @@
 			</ul>
 		</section>
 
-		<section
-			v-if="hasPrivateKey"
-			class="keepiq-applications-view__keydialog"
-			data-testid="private-key-dialog">
-			<h3>{{ t('keepiq', 'Save the application private key') }}</h3>
-			<p class="keepiq-applications-view__warning">
-				{{
-					t(
-						'keepiq',
-						'This is the only time the private key is shown. Save it securely; it cannot be recovered.',
-					)
-				}}
-			</p>
-			<textarea
-				:value="store.oneTimePrivateKey"
-				readonly
-				class="keepiq-applications-view__keytext"
-				:aria-label="t('keepiq', 'Private key')"
-				data-testid="private-key-text" />
-			<div class="keepiq-applications-view__actions">
-				<label>
-					<input
-						v-model="acknowledged"
-						type="checkbox"
-						data-testid="acknowledge-key" />
-					{{ t('keepiq', 'I have saved the private key.') }}
-				</label>
-				<button
-					type="button"
-					class="primary"
-					:disabled="acknowledged === false"
-					data-testid="dismiss-key"
-					@click="dismissKey">
-					{{ t('keepiq', 'Dismiss') }}
-				</button>
-			</div>
-		</section>
 	</div>
 </template>
 
@@ -126,8 +89,7 @@ import { useApplicationStore } from '../store/modules/application.js'
  * Admin queue view for registered applications.
  *
  * Loads the pending queue from useApplicationStore, lets admins
- * approve / reject each row, and surfaces the one-time private key
- * returned by an approve-without-CSR via an inline dialog block.
+ * approve / reject each row.
  *
  * @spec openspec/changes/implement-application-mgmt/tasks.md#task-10.7
  */
@@ -137,7 +99,6 @@ export default {
 	data() {
 		return {
 			store: useApplicationStore(),
-			acknowledged: false,
 		}
 	},
 
@@ -149,10 +110,6 @@ export default {
 		pendingCount() {
 			return this.store.pendingCount
 		},
-
-		hasPrivateKey() {
-			return !!this.store.oneTimePrivateKey
-		},
 	},
 
 	async created() {
@@ -161,8 +118,7 @@ export default {
 
 	methods: {
 		/**
-		 * Approve a pending application — server may return a
-		 * private_key when the original request had no CSR.
+		 * Approve a pending application.
 		 *
 		 * @param {string} id The application ID.
 		 * @return {Promise<void>}
@@ -179,17 +135,6 @@ export default {
 		 */
 		async reject(id) {
 			await this.store.rejectApplication(id)
-		},
-
-		/**
-		 * Clear the one-time private-key dialog state after the admin
-		 * has acknowledged saving it.
-		 *
-		 * @return {void}
-		 */
-		dismissKey() {
-			this.store.clearOneTimePrivateKey()
-			this.acknowledged = false
 		},
 	},
 }
@@ -242,27 +187,4 @@ export default {
 	color: var(--color-text-lighter);
 }
 
-.keepiq-applications-view__keydialog {
-	margin-top: 2rem;
-	padding: 1rem;
-	/* --color-warning-rest is not a Nextcloud variable, so this always fell back
-	   to the pale light-theme yellow and the inherited near-white dark-mode text
-	   was unreadable on it. The old #f00 border fallback was wrong twice over:
-	   red for a warning, and unreachable because --color-warning is defined. */
-	border: 1px solid var(--color-warning-text);
-	background: var(--color-background-dark);
-	color: var(--color-main-text);
-}
-
-.keepiq-applications-view__warning {
-	font-weight: 600;
-	color: var(--color-error-text);
-}
-
-.keepiq-applications-view__keytext {
-	width: 100%;
-	min-height: 12rem;
-	font-family: monospace;
-	font-size: 0.8rem;
-}
 </style>

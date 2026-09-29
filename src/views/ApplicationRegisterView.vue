@@ -4,9 +4,9 @@
 
   Developer-facing "register an application" page. Shows the user's own
   application registrations (on the shared CnIndexPage list view) and lets
-  them add new ones via the ApplicationRegisterDialog. When the server returns
-  a one-time private key the PrivateKeyDownloadDialog is shown until the user
-  acknowledges.
+  them add new ones via the ApplicationRegisterDialog. The server never
+  returns a private key (parity row pki-09, decided no), so there is no key
+  download step.
 
   Admins should use `AdminApplicationsView` for the approval queue;
   this view is intentionally non-admin scoped.
@@ -53,20 +53,12 @@
 			:open="dialogOpen"
 			@close="dialogOpen = false"
 			@registered="onRegistered" />
-
-		<PrivateKeyDownloadDialog
-			:open="
-				store.oneTimePrivateKey !== null && store.oneTimePrivateKey !== ''
-			"
-			:privateKey="store.oneTimePrivateKey || ''"
-			@close="onAcknowledgeKey" />
 	</div>
 </template>
 
 <script>
 import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
 import ApplicationRegisterDialog from '../dialogs/ApplicationRegisterDialog.vue'
-import PrivateKeyDownloadDialog from '../dialogs/PrivateKeyDownloadDialog.vue'
 import { useApplicationStore } from '../store/modules/application.js'
 
 export default {
@@ -76,7 +68,6 @@ export default {
 		CnIndexPage,
 		CnStatusBadge,
 		ApplicationRegisterDialog,
-		PrivateKeyDownloadDialog,
 	},
 
 	data() {
@@ -210,10 +201,6 @@ export default {
 			this.dialogOpen = false
 			// Refresh the list so the new row shows up.
 			this.store.fetchApplications().catch(() => {})
-		},
-
-		onAcknowledgeKey() {
-			this.store.clearOneTimePrivateKey()
 		},
 	},
 }
