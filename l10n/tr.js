@@ -1171,7 +1171,8 @@ OC.L10N.register(
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Paketin sırlarını ele geçirilmiş olarak değerlendir (rotasyon için işaretle ve sahiplerini bilgilendir)",
         "%n secret could not be decrypted and is not in this export.": "%n gizli bilginin şifresi çözülemedi ve bu dışa aktarımda yer almıyor.",
         "%n secrets could not be decrypted and are not in this export.": "%n gizli bilginin şifresi çözülemedi ve bunlar bu dışa aktarımda yer almıyor.",
-        "Continue without the secrets that could not be decrypted": "Şifresi çözülemeyen gizli bilgiler olmadan devam et"
+        "Continue without the secrets that could not be decrypted": "Şifresi çözülemeyen gizli bilgiler olmadan devam et",
+        "This request is no longer available.": "Bu istek artık kullanılamıyor."
     },
     "nplurals=2; plural=(n != 1);"
 )

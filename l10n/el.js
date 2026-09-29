@@ -1171,7 +1171,8 @@ OC.L10N.register(
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Αντιμετώπιση των μυστικών της σουίτας ως παραβιασμένων (επισήμανση για εναλλαγή και ειδοποίηση ιδιοκτητών)",
         "%n secret could not be decrypted and is not in this export.": "%n μυστικό δεν ήταν δυνατό να αποκρυπτογραφηθεί και δεν περιλαμβάνεται σε αυτή την εξαγωγή.",
         "%n secrets could not be decrypted and are not in this export.": "%n μυστικά δεν ήταν δυνατό να αποκρυπτογραφηθούν και δεν περιλαμβάνονται σε αυτή την εξαγωγή.",
-        "Continue without the secrets that could not be decrypted": "Συνέχεια χωρίς τα μυστικά που δεν ήταν δυνατό να αποκρυπτογραφηθούν"
+        "Continue without the secrets that could not be decrypted": "Συνέχεια χωρίς τα μυστικά που δεν ήταν δυνατό να αποκρυπτογραφηθούν",
+        "This request is no longer available.": "Αυτό το αίτημα δεν είναι πλέον διαθέσιμο."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -80,6 +80,36 @@ class SecretRequestSuiteLockService {
 	}//end lockByEncryptionSuiteId()
 
 	/**
+	 * Unlock the requests locked on a suite, leaving them on that suite.
+	 *
+	 * The counterpart of lockByEncryptionSuiteId() for a migration that moved
+	 * nothing onto the new suite. unlockAndUpdateSuite() cannot do this: it
+	 * refuses an old and new suite that are the same (#809 review).
+	 *
+	 * @param string $encryptionSuiteId The suite the requests are locked on
+	 *
+	 * @return int The number of requests unlocked
+	 *
+	 * @throws InvalidArgumentException When the suite id is empty
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-migration
+	 */
+	public function unlockInPlace(string $encryptionSuiteId): int {
+		if ($encryptionSuiteId === '') {
+			throw new InvalidArgumentException(message: 'A suite ID is required');
+		}
+
+		$count = $this->mapper->unlockByEncryptionSuiteId($encryptionSuiteId);
+
+		$this->logger->info(
+			'Unlocked ' . $count . ' secret requests on suite ' . $encryptionSuiteId,
+			['app' => 'keepiq']
+		);
+
+		return $count;
+	}//end unlockInPlace()
+
+	/**
 	 * Re-point locked requests at a new EncryptionSuite + reopen them.
 	 *
 	 * @param string $oldEncryptionSuiteId The old EncryptionSuite ID

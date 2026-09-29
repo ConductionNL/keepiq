@@ -1171,7 +1171,8 @@ OC.L10N.register(
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Považovať tajomstvá sady za kompromitované (označiť na výmenu a upozorniť vlastníkov)",
         "%n secret could not be decrypted and is not in this export.": "%n tajomstvo sa nepodarilo dešifrovať a nie je v tomto exporte.",
         "%n secrets could not be decrypted and are not in this export.": "%n tajomstiev sa nepodarilo dešifrovať a nie sú v tomto exporte.",
-        "Continue without the secrets that could not be decrypted": "Pokračovať bez tajomstiev, ktoré sa nepodarilo dešifrovať"
+        "Continue without the secrets that could not be decrypted": "Pokračovať bez tajomstiev, ktoré sa nepodarilo dešifrovať",
+        "This request is no longer available.": "Táto žiadosť už nie je k dispozícii."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1171,7 +1171,8 @@ OC.L10N.register(
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tratează secretele suitei ca fiind compromise (marchează pentru rotire și notifică proprietarii)",
         "%n secret could not be decrypted and is not in this export.": "%n secret nu a putut fi decriptat și nu este în acest export.",
         "%n secrets could not be decrypted and are not in this export.": "%n secrete nu au putut fi decriptate și nu sunt în acest export.",
-        "Continue without the secrets that could not be decrypted": "Continuă fără secretele care nu au putut fi decriptate"
+        "Continue without the secrets that could not be decrypted": "Continuă fără secretele care nu au putut fi decriptate",
+        "This request is no longer available.": "Această cerere nu mai este disponibilă."
     },
     "nplurals=2; plural=(n != 1);"
 )

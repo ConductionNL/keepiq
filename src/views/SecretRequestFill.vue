@@ -264,6 +264,9 @@ export default {
 					)
 				case 'expired':
 					return t('keepiq', 'This request has expired.')
+				case 'unavailable':
+					// The requester's key was revoked (#809 review).
+					return t('keepiq', 'This request is no longer available.')
 				case 'not-found':
 					return t('keepiq', 'This request could not be found.')
 				default:

@@ -1171,7 +1171,8 @@ OC.L10N.register(
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Третирај тајне комплета као компромитоване (означи за ротацију и обавести власнике)",
         "%n secret could not be decrypted and is not in this export.": "%n тајна није могла да се дешифрује и није у овом извозу.",
         "%n secrets could not be decrypted and are not in this export.": "%n тајни није могло да се дешифрује и нису у овом извозу.",
-        "Continue without the secrets that could not be decrypted": "Настави без тајни које није било могуће дешифровати"
+        "Continue without the secrets that could not be decrypted": "Настави без тајни које није било могуће дешифровати",
+        "This request is no longer available.": "Овај захтев више није доступан."
     },
     "nplurals=2; plural=(n != 1);"
 )

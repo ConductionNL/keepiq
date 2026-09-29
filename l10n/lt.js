@@ -1171,7 +1171,8 @@ OC.L10N.register(
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Laikyti rinkinio paslaptis pažeistomis (pažymėti keitimui ir pranešti savininkams)",
         "%n secret could not be decrypted and is not in this export.": "%n paslapties nepavyko iššifruoti, ir jos nėra šiame eksporte.",
         "%n secrets could not be decrypted and are not in this export.": "%n paslapčių nepavyko iššifruoti, ir jų nėra šiame eksporte.",
-        "Continue without the secrets that could not be decrypted": "Tęsti be paslapčių, kurių nepavyko iššifruoti"
+        "Continue without the secrets that could not be decrypted": "Tęsti be paslapčių, kurių nepavyko iššifruoti",
+        "This request is no longer available.": "Ši užklausa nebepasiekiama."
     },
     "nplurals=2; plural=(n != 1);"
 )

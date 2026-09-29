@@ -72,14 +72,11 @@ class SuiteMigrationAbortedListener implements IEventListener {
 
 		try {
 			// Unlock the requests locked at start, keeping them on the OLD
-			// suite: passing the old id as both arguments re-points them to the
-			// suite they are already on (a no-op update) and flips their status
-			// back to pending. The new suite is being discarded, so it must not
-			// become their target.
-			$unlocked = $this->secretRequestService->unlockAndUpdateSuite(
-				$event->getOldSuiteId(),
-				$event->getOldSuiteId()
-			);
+			// suite: nothing moved onto the new suite, which an abort discards
+			// and a compromise termination revokes, so it must not become their
+			// target. unlockAndUpdateSuite(old, old) looked like this but always
+			// threw "must differ", so nothing was ever unlocked (#809 review).
+			$unlocked = $this->secretRequestService->unlockInPlace($event->getOldSuiteId());
 			$this->logger->info(
 				'Keepiq: unlocked SecretRequests after migration abort, kept on the old suite',
 				[

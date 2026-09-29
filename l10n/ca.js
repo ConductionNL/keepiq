@@ -1171,7 +1171,8 @@ OC.L10N.register(
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tracta els secrets de la suite com a compromesos (marca per a rotació i notifica els propietaris)",
         "%n secret could not be decrypted and is not in this export.": "%n secret no s'ha pogut desxifrar i no és en aquesta exportació.",
         "%n secrets could not be decrypted and are not in this export.": "%n secrets no s'han pogut desxifrar i no són en aquesta exportació.",
-        "Continue without the secrets that could not be decrypted": "Continua sense els secrets que no s'han pogut desxifrar"
+        "Continue without the secrets that could not be decrypted": "Continua sense els secrets que no s'han pogut desxifrar",
+        "This request is no longer available.": "Aquesta sol·licitud ja no està disponible."
     },
     "nplurals=2; plural=(n != 1);"
 )

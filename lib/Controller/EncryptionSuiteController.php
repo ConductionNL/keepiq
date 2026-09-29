@@ -25,6 +25,7 @@ use Exception;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
 use OCA\Keepiq\Service\EncryptionSuiteService;
@@ -51,6 +52,12 @@ use RuntimeException;
  *   VaultKeyProofService for the challenge endpoint pushed it to 13; splitting
  *   the challenge onto its own controller would add a route surface for one
  *   trivial method without reducing the domain coupling that the rest carries.
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Same cause: the aggregate
+ *   is the sum of small endpoints that each map their own exceptions to a
+ *   status. It reached the threshold when both revoke paths gained the 409 for
+ *   a suite that is part of an in-progress migration (keepiq#803). Splitting
+ *   the two revoke endpoints off would duplicate validateOwnership() and the
+ *   emergency-access safeguard, not remove any branch.
  */
 class EncryptionSuiteController extends OCSController {
 	/**
@@ -334,6 +341,10 @@ class EncryptionSuiteController extends OCSController {
 			// already call this same helper; revoke() did not.
 			$this->validateOwnership(suite: $this->suiteService->getSuite($id));
 
+			// Not while the suite is part of an in-progress migration: revoking
+			// either end strands it (keepiq#803).
+			$this->migrationService->assertNoMigrationInProgress(suiteId: $id);
+
 			// Refuse to silently destroy a still-usable break-glass path. The
 			// envelope clear runs asynchronously in EmergencyAccessSuiteRevocation-
 			// Listener, downstream of the event revokeSuite dispatches, so the
@@ -357,6 +368,11 @@ class EncryptionSuiteController extends OCSController {
 
 			$suite = $this->suiteService->revokeSuite(id: $id, reason: $reason, revokedBy: $userId);
 			return new JSONResponse(data: $suite->jsonSerialize());
+		} catch (SuiteMigrationInProgressException $e) {
+			return new JSONResponse(
+				data: ['error' => 'migration_in_progress', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (RuntimeException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
@@ -449,6 +465,15 @@ class EncryptionSuiteController extends OCSController {
 		}
 
 		try {
+			// Not while the suite is part of an in-progress migration: revoking
+			// either end strands it (keepiq#803). Checked before anything else.
+			// A COMPROMISE force-revoke is the exception: there the migration is
+			// ended below instead, or whoever is being contained could block the
+			// containment for good by leaving a migration open.
+			if ($markCompromised === false) {
+				$this->migrationService->assertNoMigrationInProgress(suiteId: $id);
+			}
+
 			// Read BEFORE revokeSuite(): the EncryptionSuiteRevokedEvent cascade
 			// clears the grantor's emergency envelopes, so the usable count is
 			// non-zero here only while the contacts still exist.
@@ -466,9 +491,17 @@ class EncryptionSuiteController extends OCSController {
 			$data['emergencyContactsDestroyed'] = $emergencyCount;
 			if ($markCompromised === false) {
 				$data['warning'] = 'The revoked user may still know these secrets; consider rotating them.';
+				return new JSONResponse(data: $data);
 			}
 
+			$data += $this->endMigrationForCompromise(suiteId: $id, reason: $reason, adminUid: $adminUid);
+
 			return new JSONResponse(data: $data);
+		} catch (SuiteMigrationInProgressException $e) {
+			return new JSONResponse(
+				data: ['error' => 'migration_in_progress', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (RuntimeException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
@@ -481,6 +514,48 @@ class EncryptionSuiteController extends OCSController {
 			);
 		}//end try
 	}//end forceRevoke()
+
+	/**
+	 * Revoke the other end of the suite's in-progress migration, then end it.
+	 *
+	 * Part of a compromise force-revoke. The other end is revoked as
+	 * compromised too: during a compromise either end may be the one the
+	 * attacker controls (keepiq#809 review). The migration is terminated LAST,
+	 * so if revoking the other end fails, a retry of the force-revoke still
+	 * finds the open migration and finishes the job.
+	 *
+	 * @param string $suiteId  The suite just force-revoked
+	 * @param string $reason   The admin's reason, reused for the other end
+	 * @param string $adminUid The acting administrator
+	 *
+	 * @return array<string,string> `terminatedMigration` and `alsoRevokedSuite`, or empty when no migration was open
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
+	 */
+	private function endMigrationForCompromise(string $suiteId, string $reason, string $adminUid): array {
+		$migration = $this->migrationService->findInProgressForSuite(suiteId: $suiteId);
+		if ($migration === null) {
+			return [];
+		}
+
+		$otherId = $migration->getOldSuiteId();
+		if ($otherId === $suiteId) {
+			$otherId = $migration->getNewSuiteId();
+		}
+
+		$this->suiteService->revokeSuite(
+			id: $otherId,
+			reason: $reason,
+			revokedBy: $adminUid,
+			markCompromised: true,
+			emergencyContactsDestroyed: $this->emergencyService->countUsableForGrantorSuite($otherId),
+		);
+
+		$this->migrationService->terminateForCompromise(migration: $migration);
+
+		return ['terminatedMigration' => $migration->getId(), 'alsoRevokedSuite' => $otherId];
+
+	}//end endMigrationForCompromise()
 
 	/**
 	 * Initiate compromise recovery: create new suite and migration record.

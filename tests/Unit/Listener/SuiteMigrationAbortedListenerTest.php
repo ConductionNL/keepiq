@@ -5,7 +5,7 @@
  *
  * On an abort the vault returns to the OLD suite, so the listener releases the
  * SecretRequests locked at migration start while keeping them on that suite
- * (unlockAndUpdateSuite(old, old)). It must ignore any other event.
+ * (unlockInPlace(old)). It must ignore any other event.
  *
  * @category Test
  * @package  OCA\Keepiq\Tests\Unit\Listener
@@ -23,6 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Listener;
 
+use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Event\SuiteMigrationAbortedEvent;
 use OCA\Keepiq\Event\SuiteMigrationStartedEvent;
 use OCA\Keepiq\Listener\SuiteMigrationAbortedListener;
@@ -36,15 +37,22 @@ use Psr\Log\LoggerInterface;
  */
 class SuiteMigrationAbortedListenerTest extends TestCase {
 	public function testUnlocksRequestsKeepingTheOldSuite(): void {
-		$service = $this->createMock(SecretRequestSuiteLockService::class);
-		$service->expects($this->once())
-			->method('unlockAndUpdateSuite')
-			->with('old-suite', 'old-suite')
+		// The REAL lock service over a mocked mapper (#809 review): the old test
+		// mocked the service and asserted unlockAndUpdateSuite('old', 'old'),
+		// which the real service always refuses ("must differ"), so the
+		// requests were never unlocked while the test stayed green.
+		$mapper = $this->createMock(SecretRequestMapper::class);
+		$mapper->expects($this->once())
+			->method('unlockByEncryptionSuiteId')
+			->with('old-suite')
 			->willReturn(2);
+		$mapper->expects($this->never())->method('unlockAndUpdateSuite');
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->never())->method('error');
 
 		$listener = new SuiteMigrationAbortedListener(
-			$service,
-			$this->createMock(LoggerInterface::class)
+			new SecretRequestSuiteLockService($mapper, $this->createMock(LoggerInterface::class)),
+			$logger
 		);
 
 		$listener->handle(new SuiteMigrationAbortedEvent(
@@ -56,7 +64,7 @@ class SuiteMigrationAbortedListenerTest extends TestCase {
 
 	public function testIgnoresOtherEvents(): void {
 		$service = $this->createMock(SecretRequestSuiteLockService::class);
-		$service->expects($this->never())->method('unlockAndUpdateSuite');
+		$service->expects($this->never())->method('unlockInPlace');
 
 		$listener = new SuiteMigrationAbortedListener(
 			$service,

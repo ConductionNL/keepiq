@@ -1171,7 +1171,8 @@ OC.L10N.register(
         "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tratar los secretos de la suite como comprometidos (marcar para rotación y notificar a los propietarios)",
         "%n secret could not be decrypted and is not in this export.": "%n secreto no se pudo descifrar y no está en esta exportación.",
         "%n secrets could not be decrypted and are not in this export.": "%n secretos no se pudieron descifrar y no están en esta exportación.",
-        "Continue without the secrets that could not be decrypted": "Continuar sin los secretos que no se pudieron descifrar"
+        "Continue without the secrets that could not be decrypted": "Continuar sin los secretos que no se pudieron descifrar",
+        "This request is no longer available.": "Esta solicitud ya no está disponible."
     },
     "nplurals=2; plural=(n != 1);"
 )
