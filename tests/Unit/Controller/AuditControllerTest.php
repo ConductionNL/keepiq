@@ -19,10 +19,13 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use DateTime;
 use OCA\Keepiq\Controller\AuditController;
+use OCA\Keepiq\Db\AuditEntry;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Service\AuditService;
+use OCA\Keepiq\Service\RecentlyUsedService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -77,6 +80,7 @@ class AuditControllerTest extends TestCase {
 			$this->auditService,
 			$this->secretMapper,
 			$userSession,
+			new RecentlyUsedService(auditService: $this->auditService, secretMapper: $this->secretMapper),
 		);
 	}//end setUp()
 
@@ -170,4 +174,34 @@ class AuditControllerTest extends TestCase {
 		$this->assertSame(3, $captured[1]);
 		$this->assertSame(25, $captured[2]);
 	}//end testAdminIndexPassesFilters()
+
+	/**
+	 * GET /api/v1/secrets/recent lists the session user's own recently read secrets.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-recently-used/spec.md#requirement-recently-used-on-the-dashboard
+	 */
+	public function testRecentlyUsedIsScopedToSessionUser(): void {
+		$entry = new AuditEntry();
+		$entry->setObjectType('secret');
+		$entry->setObjectId('sec-1');
+		$entry->setOccurredAt(new DateTime('2026-09-29 12:00:00'));
+		$this->auditService->expects($this->once())
+			->method('recentlyAccessed')
+			->with('alice', RecentlyUsedService::SCAN_WINDOW)
+			->willReturn([$entry]);
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setName('Mail');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('alice');
+		$this->secretMapper->method('findById')->with('sec-1')->willReturn($secret);
+
+		$response = $this->controller->recent();
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(['sec-1'], array_column($response->getData(), 'id'));
+		$this->assertSame('Mail', $response->getData()[0]['name']);
+	}//end testRecentlyUsedIsScopedToSessionUser()
 }//end class

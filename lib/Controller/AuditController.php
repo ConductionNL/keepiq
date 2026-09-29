@@ -29,6 +29,7 @@ namespace OCA\Keepiq\Controller;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Service\AuditService;
+use OCA\Keepiq\Service\RecentlyUsedService;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -51,6 +52,7 @@ class AuditController extends Controller {
 	 * @param AuditService $auditService The audit service
 	 * @param SecretMapper $secretMapper The secret mapper (for ownership checks)
 	 * @param IUserSession $userSession The user session
+	 * @param RecentlyUsedService $recentlyUsed The Recently used widget source
 	 *
 	 * @return void
 	 */
@@ -59,6 +61,7 @@ class AuditController extends Controller {
 		private AuditService $auditService,
 		private SecretMapper $secretMapper,
 		private IUserSession $userSession,
+		private RecentlyUsedService $recentlyUsed,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -154,6 +157,28 @@ class AuditController extends Controller {
 			]
 		);
 	}//end mine()
+
+	/**
+	 * The session user's recently read secrets, for the dashboard widget.
+	 *
+	 * Scoped to the session user twice over: the audit query reads that user's
+	 * own read events, and each secret must still be owned by that user.
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-recently-used/spec.md#requirement-recently-used-on-the-dashboard
+	 */
+	#[NoAdminRequired]
+	public function recent(): JSONResponse {
+		$userId = $this->uid();
+		if ($userId === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		return new JSONResponse(data: $this->recentlyUsed->forUser(userId: $userId));
+	}//end recent()
 
 	/**
 	 * Admin instance-wide audit view: filterable, paginated, with total count.

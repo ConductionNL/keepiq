@@ -85,6 +85,8 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
 
     // Secret CRUD. The nested link-shares route below is more specific and
     // is registered immediately after, so it still resolves correctly.
+    // Recently used widget (vault-recently-used); before the {id} wildcard.
+    ['name' => 'audit#recent',  'url' => '/api/v1/secrets/recent', 'verb' => 'GET'],
     ['name' => 'secret#index',   'url' => '/api/v1/secrets',      'verb' => 'GET'],
     ['name' => 'secret#create',  'url' => '/api/v1/secrets',      'verb' => 'POST'],
     // Batch import commit (secret-import D7). Accepts arrays of already
