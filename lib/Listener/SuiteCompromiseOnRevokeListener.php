@@ -27,14 +27,11 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Listener;
 
-use DateTime;
-use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RotationPolicyService;
-use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -48,6 +45,8 @@ use Throwable;
  * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
  */
 class SuiteCompromiseOnRevokeListener implements IEventListener {
+	use MarksCompromisedSecrets;
+
 	/**
 	 * Constructor.
 	 *
@@ -136,51 +135,4 @@ class SuiteCompromiseOnRevokeListener implements IEventListener {
 			);
 		}//end try
 	}//end handle()
-
-	/**
-	 * Stamp a Secret possibly-compromised (once) and raise its rotation flag.
-	 *
-	 * The flag is idempotent (rotation-expiry-policies §3.2).
-	 *
-	 * @param Secret $secret The Secret to mark
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
-	 */
-	private function stampAndFlag(Secret $secret): void {
-		if ($secret->getPossiblyCompromisedAt() === null) {
-			$secret->setPossiblyCompromisedAt(new DateTime());
-			$this->secretMapper->update($secret);
-		}
-
-		$this->rotationService?->flag(
-			secretId: $secret->getId(),
-			reason: 'suite_compromise'
-		);
-
-	}//end stampAndFlag()
-
-	/**
-	 * The Secret a warning about $secret should point at: for a shared copy,
-	 * the SOURCE Secret, which its owner can open and has to rotate; otherwise
-	 * $secret itself. Any lookup failure falls back to $secret.
-	 *
-	 * @param Secret $secret The Secret sealed under the affected suite
-	 *
-	 * @return Secret
-	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
-	 */
-	private function resolveTarget(Secret $secret): Secret {
-		try {
-			$row = $this->shareTargetMapper->findByRecipientSecret(
-				recipientSecretId: $secret->getId()
-			);
-			return $this->secretMapper->findById($row->getSourceSecretId());
-		} catch (Throwable) {
-			// Not a shared copy, or its source is gone: the copy itself.
-			return $secret;
-		}
-	}//end resolveTarget()
 }//end class

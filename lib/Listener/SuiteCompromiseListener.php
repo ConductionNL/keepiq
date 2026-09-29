@@ -23,13 +23,11 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Listener;
 
-use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RotationPolicyService;
-use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -43,6 +41,8 @@ use Throwable;
  * @spec openspec/changes/implement-user-sharing/tasks.md#8.4
  */
 class SuiteCompromiseListener implements IEventListener {
+	use MarksCompromisedSecrets;
+
 	/**
 	 * Constructor.
 	 *
@@ -91,13 +91,17 @@ class SuiteCompromiseListener implements IEventListener {
 
 				// Auto-raise a rotation flag per compromised secret
 				// (rotation-expiry-policies §3.2; idempotent).
-				$this->rotationService?->flag(
-					secretId: $secret->getId(),
-					reason: 'suite_compromise'
-				);
+				$this->stampAndFlag(secret: $secret);
 
 				$target = $this->resolveTarget(secret: $secret);
 				$ownerId = (string)$target->getOwnerId();
+
+				// The SOURCE of a shared copy is not sealed under the new
+				// suite, so nothing else in the migration path marks it: stamp
+				// and flag it here, as the revoke path does (keepiq#802).
+				if ($target !== $secret) {
+					$this->stampAndFlag(secret: $target);
+				}
 
 				if ($ownerId === '' || isset($notified[$ownerId]) === true) {
 					continue;
@@ -125,27 +129,4 @@ class SuiteCompromiseListener implements IEventListener {
 			);
 		}//end try
 	}//end handle()
-
-	/**
-	 * The Secret a warning about $secret should point at: for a shared copy,
-	 * the SOURCE Secret, which its owner can open and has to rotate; otherwise
-	 * $secret itself. Any lookup failure falls back to $secret.
-	 *
-	 * @param Secret $secret The Secret sealed under the affected suite
-	 *
-	 * @return Secret
-	 *
-	 * @spec openspec/changes/implement-user-sharing/tasks.md#8.4
-	 */
-	private function resolveTarget(Secret $secret): Secret {
-		try {
-			$row = $this->shareTargetMapper->findByRecipientSecret(
-				recipientSecretId: $secret->getId()
-			);
-			return $this->secretMapper->findById($row->getSourceSecretId());
-		} catch (Throwable) {
-			// Not a shared copy, or its source is gone: the copy itself.
-			return $secret;
-		}
-	}//end resolveTarget()
 }//end class
