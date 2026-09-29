@@ -151,8 +151,6 @@ describe('useApplicationStore', () => {
 		})
 	})
 
-	})
-
 	describe('fetchCertificate', () => {
 		it('returns the certificate from the API', async () => {
 			vi.spyOn(axios, 'get').mockResolvedValue({
