@@ -1188,7 +1188,14 @@ OC.L10N.register(
         "Revoke the share with {group}": "Freigabe für {group} widerrufen",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Mit {group} geteilt: {received} Mitglieder haben es erhalten, {skipped} nicht, weil sie noch keine Verschlüsselung eingerichtet haben.",
         "Search groups": "Gruppen suchen",
-        "Failed to share": "Teilen fehlgeschlagen"
+        "Failed to share": "Teilen fehlgeschlagen",
+        "Columns": "Spalten",
+        "Column {number}": "Spalte {number}",
+        "Map one column to Name. Every secret needs a name.": "Ordnen Sie eine Spalte dem Namen zu. Jedes Geheimnis braucht einen Namen.",
+        "Notes": "Notizen",
+        "Do not import": "Nicht importieren",
+        "Hide this value": "Diesen Wert verbergen",
+        "Show this value": "Diesen Wert anzeigen"
     },
     "nplurals=2; plural=(n != 1);"
 )

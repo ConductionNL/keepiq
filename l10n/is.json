@@ -1187,7 +1187,14 @@
         "Revoke the share with {group}": "Afturkalla deilingu með {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Deilt með {group}: {received} meðlimir fengu það, {skipped} ekki þar sem þeir hafa ekki enn sett upp dulkóðun.",
         "Search groups": "Leita að hópum",
-        "Failed to share": "Ekki tókst að deila"
+        "Failed to share": "Ekki tókst að deila",
+        "Columns": "Dálkar",
+        "Column {number}": "Dálkur {number}",
+        "Map one column to Name. Every secret needs a name.": "Tengdu einn dálk við Nafn. Hvert leyndarmál þarf nafn.",
+        "Notes": "Athugasemdir",
+        "Do not import": "Ekki flytja inn",
+        "Hide this value": "Fela þetta gildi",
+        "Show this value": "Sýna þetta gildi"
     },
     "plurals": null
 }

@@ -1187,7 +1187,14 @@
         "Revoke the share with {group}": "Revocar la partiziun cun {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Partì cun {group}: {received} commembers han retschavì quai, {skipped} betg, perquai ch'els n'han anc betg configurà il criptadi.",
         "Search groups": "Tschertgar gruppas",
-        "Failed to share": "La partiziun n'è betg reussida"
+        "Failed to share": "La partiziun n'è betg reussida",
+        "Columns": "Colonnas",
+        "Column {number}": "Colonna {number}",
+        "Map one column to Name. Every secret needs a name.": "Attribuescha ina colonna al num. Mintga secret dovra in num.",
+        "Notes": "Notizias",
+        "Do not import": "Betg importar",
+        "Hide this value": "Zuppentar questa valur",
+        "Show this value": "Mussar questa valur"
     },
     "plurals": null
 }

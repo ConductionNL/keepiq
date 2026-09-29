@@ -1187,7 +1187,14 @@
         "Revoke the share with {group}": "Revoko ndarjen me {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Ndarë me {group}: {received} anëtarë e morën, {skipped} jo, sepse ende nuk kanë konfiguruar enkriptimin.",
         "Search groups": "Kërko grupe",
-        "Failed to share": "Ndarja dështoi"
+        "Failed to share": "Ndarja dështoi",
+        "Columns": "Kolonat",
+        "Column {number}": "Kolona {number}",
+        "Map one column to Name. Every secret needs a name.": "Lidhni një kolonë me emrin. Çdo sekret ka nevojë për një emër.",
+        "Notes": "Shënime",
+        "Do not import": "Mos importo",
+        "Hide this value": "Fshihe këtë vlerë",
+        "Show this value": "Shfaqe këtë vlerë"
     },
     "plurals": null
 }

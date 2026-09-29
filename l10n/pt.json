@@ -1187,7 +1187,14 @@
         "Revoke the share with {group}": "Revogar a partilha com {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Partilhado com {group}: {received} membros receberam-no, {skipped} não porque ainda não configuraram a encriptação.",
         "Search groups": "Pesquisar grupos",
-        "Failed to share": "Falha ao partilhar"
+        "Failed to share": "Falha ao partilhar",
+        "Columns": "Colunas",
+        "Column {number}": "Coluna {number}",
+        "Map one column to Name. Every secret needs a name.": "Associe uma coluna ao nome. Cada segredo precisa de um nome.",
+        "Notes": "Notas",
+        "Do not import": "Não importar",
+        "Hide this value": "Ocultar este valor",
+        "Show this value": "Mostrar este valor"
     },
     "plurals": null
 }

@@ -1187,7 +1187,14 @@
         "Revoke the share with {group}": "Адклікаць абагульванне з {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Абагулена з {group}: {received} удзельнікаў атрымалі, {skipped} не, бо ў іх яшчэ не наладжана шыфраванне.",
         "Search groups": "Шукаць групы",
-        "Failed to share": "Не ўдалося абагуліць"
+        "Failed to share": "Не ўдалося абагуліць",
+        "Columns": "Слупкі",
+        "Column {number}": "Слупок {number}",
+        "Map one column to Name. Every secret needs a name.": "Звяжыце адзін слупок з назвай. Кожны сакрэт павінен мець назву.",
+        "Notes": "Нататкі",
+        "Do not import": "Не імпартаваць",
+        "Hide this value": "Схаваць гэта значэнне",
+        "Show this value": "Паказаць гэта значэнне"
     },
     "plurals": null
 }

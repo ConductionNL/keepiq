@@ -1188,7 +1188,14 @@ OC.L10N.register(
         "Revoke the share with {group}": "{group} ile paylaşımı geri al",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "{group} ile paylaşıldı: {received} üye aldı, {skipped} üye henüz şifreleme ayarlamadığı için almadı.",
         "Search groups": "Grup ara",
-        "Failed to share": "Paylaşılamadı"
+        "Failed to share": "Paylaşılamadı",
+        "Columns": "Sütunlar",
+        "Column {number}": "Sütun {number}",
+        "Map one column to Name. Every secret needs a name.": "Bir sütunu Ad alanına eşleyin. Her gizli bilginin bir adı olmalı.",
+        "Notes": "Notlar",
+        "Do not import": "İçe aktarma",
+        "Hide this value": "Bu değeri gizle",
+        "Show this value": "Bu değeri göster"
     },
     "nplurals=2; plural=(n != 1);"
 )

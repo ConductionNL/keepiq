@@ -1188,7 +1188,14 @@ OC.L10N.register(
         "Revoke the share with {group}": "Atšaukti bendrinimą su {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Bendrinama su {group}: {received} nariai tai gavo, {skipped} negavo, nes dar nenustatė šifravimo.",
         "Search groups": "Ieškoti grupių",
-        "Failed to share": "Nepavyko bendrinti"
+        "Failed to share": "Nepavyko bendrinti",
+        "Columns": "Stulpeliai",
+        "Column {number}": "Stulpelis {number}",
+        "Map one column to Name. Every secret needs a name.": "Susiekite vieną stulpelį su pavadinimu. Kiekviena paslaptis turi turėti pavadinimą.",
+        "Notes": "Pastabos",
+        "Do not import": "Neimportuoti",
+        "Hide this value": "Slėpti šią reikšmę",
+        "Show this value": "Rodyti šią reikšmę"
     },
     "nplurals=2; plural=(n != 1);"
 )

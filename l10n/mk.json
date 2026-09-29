@@ -1187,7 +1187,14 @@
         "Revoke the share with {group}": "Отповикај го споделувањето со {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Споделено со {group}: {received} членови го примија, {skipped} не, бидејќи сè уште немаат поставено шифрирање.",
         "Search groups": "Пребарај групи",
-        "Failed to share": "Споделувањето не успеа"
+        "Failed to share": "Споделувањето не успеа",
+        "Columns": "Колони",
+        "Column {number}": "Колона {number}",
+        "Map one column to Name. Every secret needs a name.": "Поврзете една колона со името. Секоја тајна треба да има име.",
+        "Notes": "Белешки",
+        "Do not import": "Не увезувај",
+        "Hide this value": "Скриј ја оваа вредност",
+        "Show this value": "Прикажи ја оваа вредност"
     },
     "plurals": null
 }

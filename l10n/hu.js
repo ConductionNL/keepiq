@@ -1188,7 +1188,14 @@ OC.L10N.register(
         "Revoke the share with {group}": "Megosztás visszavonása ezzel: {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Megosztva ezzel: {group}. {received} tag megkapta, {skipped} nem, mert még nem állított be titkosítást.",
         "Search groups": "Csoportok keresése",
-        "Failed to share": "A megosztás sikertelen"
+        "Failed to share": "A megosztás sikertelen",
+        "Columns": "Oszlopok",
+        "Column {number}": "{number}. oszlop",
+        "Map one column to Name. Every secret needs a name.": "Rendeljen egy oszlopot a névhez. Minden titoknak kell név.",
+        "Notes": "Jegyzetek",
+        "Do not import": "Ne importálja",
+        "Hide this value": "Érték elrejtése",
+        "Show this value": "Érték megjelenítése"
     },
     "nplurals=2; plural=(n != 1);"
 )

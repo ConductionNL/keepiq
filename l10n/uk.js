@@ -1188,7 +1188,14 @@ OC.L10N.register(
         "Revoke the share with {group}": "Відкликати доступ для {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Надано групі {group}: {received} учасників отримали, {skipped} ні, бо в них ще не налаштовано шифрування.",
         "Search groups": "Шукати групи",
-        "Failed to share": "Не вдалося надати доступ"
+        "Failed to share": "Не вдалося надати доступ",
+        "Columns": "Стовпці",
+        "Column {number}": "Стовпець {number}",
+        "Map one column to Name. Every secret needs a name.": "Зіставте один стовпець із назвою. Кожен секрет повинен мати назву.",
+        "Notes": "Нотатки",
+        "Do not import": "Не імпортувати",
+        "Hide this value": "Приховати це значення",
+        "Show this value": "Показати це значення"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1188,7 +1188,14 @@ OC.L10N.register(
         "Revoke the share with {group}": "Irrevoka l-qsim ma' {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Maqsum ma' {group}: {received} membri rċevewh, {skipped} le għax għadhom ma waqqfux il-kriptaġġ.",
         "Search groups": "Fittex gruppi",
-        "Failed to share": "Il-qsim ma rnexxiex"
+        "Failed to share": "Il-qsim ma rnexxiex",
+        "Columns": "Kolonni",
+        "Column {number}": "Kolonna {number}",
+        "Map one column to Name. Every secret needs a name.": "Orbot kolonna waħda mal-Isem. Kull sigriet għandu bżonn isem.",
+        "Notes": "Noti",
+        "Do not import": "Timportax",
+        "Hide this value": "Aħbi dan il-valur",
+        "Show this value": "Uri dan il-valur"
     },
     "nplurals=2; plural=(n != 1);"
 )

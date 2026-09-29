@@ -1187,7 +1187,14 @@
         "Revoke the share with {group}": "Trekk tilbake delingen med {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Delt med {group}: {received} medlemmer mottok den, {skipped} gjorde det ikke fordi de ikke har satt opp kryptering ennå.",
         "Search groups": "Søk etter grupper",
-        "Failed to share": "Deling mislyktes"
+        "Failed to share": "Deling mislyktes",
+        "Columns": "Kolonner",
+        "Column {number}": "Kolonne {number}",
+        "Map one column to Name. Every secret needs a name.": "Knytt én kolonne til Navn. Hver hemmelighet trenger et navn.",
+        "Notes": "Notater",
+        "Do not import": "Ikke importer",
+        "Hide this value": "Skjul denne verdien",
+        "Show this value": "Vis denne verdien"
     },
     "plurals": null
 }

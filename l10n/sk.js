@@ -1188,7 +1188,14 @@ OC.L10N.register(
         "Revoke the share with {group}": "Zrušiť zdieľanie so skupinou {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Zdieľané so skupinou {group}: {received} členov to dostalo, {skipped} nie, pretože ešte nemajú nastavené šifrovanie.",
         "Search groups": "Hľadať skupiny",
-        "Failed to share": "Zdieľanie zlyhalo"
+        "Failed to share": "Zdieľanie zlyhalo",
+        "Columns": "Stĺpce",
+        "Column {number}": "Stĺpec {number}",
+        "Map one column to Name. Every secret needs a name.": "Priraďte jeden stĺpec k názvu. Každé tajomstvo potrebuje názov.",
+        "Notes": "Poznámky",
+        "Do not import": "Neimportovať",
+        "Hide this value": "Skryť túto hodnotu",
+        "Show this value": "Zobraziť túto hodnotu"
     },
     "nplurals=2; plural=(n != 1);"
 )

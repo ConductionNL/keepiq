@@ -1188,7 +1188,14 @@ OC.L10N.register(
         "Revoke the share with {group}": "Atsaukt kopīgošanu ar {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Kopīgots ar {group}: {received} dalībnieki to saņēma, {skipped} nesaņēma, jo viņiem vēl nav iestatīta šifrēšana.",
         "Search groups": "Meklēt grupas",
-        "Failed to share": "Kopīgošana neizdevās"
+        "Failed to share": "Kopīgošana neizdevās",
+        "Columns": "Kolonnas",
+        "Column {number}": "Kolonna {number}",
+        "Map one column to Name. Every secret needs a name.": "Piesaistiet vienu kolonnu nosaukumam. Katram noslēpumam vajag nosaukumu.",
+        "Notes": "Piezīmes",
+        "Do not import": "Neimportēt",
+        "Hide this value": "Paslēpt šo vērtību",
+        "Show this value": "Rādīt šo vērtību"
     },
     "nplurals=2; plural=(n != 1);"
 )

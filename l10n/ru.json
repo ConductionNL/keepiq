@@ -1187,7 +1187,14 @@
         "Revoke the share with {group}": "Отозвать доступ для {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Предоставлено группе {group}: {received} участников получили, {skipped} нет, так как у них ещё не настроено шифрование.",
         "Search groups": "Искать группы",
-        "Failed to share": "Не удалось предоставить доступ"
+        "Failed to share": "Не удалось предоставить доступ",
+        "Columns": "Столбцы",
+        "Column {number}": "Столбец {number}",
+        "Map one column to Name. Every secret needs a name.": "Сопоставьте один столбец с названием. У каждого секрета должно быть название.",
+        "Notes": "Заметки",
+        "Do not import": "Не импортировать",
+        "Hide this value": "Скрыть это значение",
+        "Show this value": "Показать это значение"
     },
     "plurals": null
 }

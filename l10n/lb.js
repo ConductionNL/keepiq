@@ -1188,7 +1188,14 @@ OC.L10N.register(
         "Revoke the share with {group}": "Deele mat {group} zréckzéien",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Mat {group} gedeelt: {received} Memberen hunn et kritt, {skipped} net, well se nach keng Verschlësselung ageriicht hunn.",
         "Search groups": "Gruppe sichen",
-        "Failed to share": "Deelen ass feelgeschloen"
+        "Failed to share": "Deelen ass feelgeschloen",
+        "Columns": "Kolonnen",
+        "Column {number}": "Kolonn {number}",
+        "Map one column to Name. Every secret needs a name.": "Verbannt eng Kolonn mam Numm. All Geheimnis brauch en Numm.",
+        "Notes": "Notizen",
+        "Do not import": "Net importéieren",
+        "Hide this value": "Dëse Wäert verstoppen",
+        "Show this value": "Dëse Wäert weisen"
     },
     "nplurals=2; plural=(n != 1);"
 )

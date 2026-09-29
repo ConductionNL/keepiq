@@ -1188,7 +1188,14 @@ OC.L10N.register(
         "Revoke the share with {group}": "Tühista jagamine grupiga {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Jagatud grupiga {group}: {received} liiget said selle kätte, {skipped} mitte, sest neil pole veel krüpteerimist seadistatud.",
         "Search groups": "Otsi gruppe",
-        "Failed to share": "Jagamine ebaõnnestus"
+        "Failed to share": "Jagamine ebaõnnestus",
+        "Columns": "Veerud",
+        "Column {number}": "Veerg {number}",
+        "Map one column to Name. Every secret needs a name.": "Seo üks veerg nimega. Igal saladusel peab olema nimi.",
+        "Notes": "Märkmed",
+        "Do not import": "Ära impordi",
+        "Hide this value": "Peida see väärtus",
+        "Show this value": "Näita seda väärtust"
     },
     "nplurals=2; plural=(n != 1);"
 )

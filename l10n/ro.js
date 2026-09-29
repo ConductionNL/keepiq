@@ -1188,7 +1188,14 @@ OC.L10N.register(
         "Revoke the share with {group}": "Revocă partajarea cu {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Partajat cu {group}: {received} membri l-au primit, {skipped} nu, deoarece nu au configurat încă criptarea.",
         "Search groups": "Caută grupuri",
-        "Failed to share": "Partajarea a eșuat"
+        "Failed to share": "Partajarea a eșuat",
+        "Columns": "Coloane",
+        "Column {number}": "Coloana {number}",
+        "Map one column to Name. Every secret needs a name.": "Asociați o coloană cu numele. Fiecare secret are nevoie de un nume.",
+        "Notes": "Note",
+        "Do not import": "Nu importa",
+        "Hide this value": "Ascunde această valoare",
+        "Show this value": "Afișează această valoare"
     },
     "nplurals=2; plural=(n != 1);"
 )

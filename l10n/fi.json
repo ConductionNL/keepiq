@@ -1187,7 +1187,14 @@
         "Revoke the share with {group}": "Peru jako ryhmän {group} kanssa",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Jaettu ryhmän {group} kanssa: {received} jäsentä sai sen, {skipped} ei saanut, koska heillä ei ole vielä salausta käytössä.",
         "Search groups": "Hae ryhmiä",
-        "Failed to share": "Jakaminen epäonnistui"
+        "Failed to share": "Jakaminen epäonnistui",
+        "Columns": "Sarakkeet",
+        "Column {number}": "Sarake {number}",
+        "Map one column to Name. Every secret needs a name.": "Liitä yksi sarake nimeen. Jokainen salaisuus tarvitsee nimen.",
+        "Notes": "Muistiinpanot",
+        "Do not import": "Älä tuo",
+        "Hide this value": "Piilota tämä arvo",
+        "Show this value": "Näytä tämä arvo"
     },
     "plurals": null
 }

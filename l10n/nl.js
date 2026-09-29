@@ -1193,7 +1193,14 @@ OC.L10N.register(
         "Revoke the share with {group}": "Deling met {group} intrekken",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Gedeeld met {group}: {received} leden hebben het ontvangen, {skipped} niet omdat ze nog geen versleuteling hebben ingesteld.",
         "Search groups": "Groepen zoeken",
-        "Failed to share": "Delen mislukt"
+        "Failed to share": "Delen mislukt",
+        "Columns": "Kolommen",
+        "Column {number}": "Kolom {number}",
+        "Map one column to Name. Every secret needs a name.": "Koppel één kolom aan Naam. Elk geheim heeft een naam nodig.",
+        "Notes": "Notities",
+        "Do not import": "Niet importeren",
+        "Hide this value": "Deze waarde verbergen",
+        "Show this value": "Deze waarde tonen"
     },
     "nplurals=2; plural=(n != 1);"
 )

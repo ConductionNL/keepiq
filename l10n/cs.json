@@ -1187,7 +1187,14 @@
         "Revoke the share with {group}": "Zrušit sdílení se skupinou {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Sdíleno se skupinou {group}: {received} členů to obdrželo, {skipped} ne, protože ještě nemají nastavené šifrování.",
         "Search groups": "Hledat skupiny",
-        "Failed to share": "Sdílení se nezdařilo"
+        "Failed to share": "Sdílení se nezdařilo",
+        "Columns": "Sloupce",
+        "Column {number}": "Sloupec {number}",
+        "Map one column to Name. Every secret needs a name.": "Přiřaďte jeden sloupec k názvu. Každé tajemství potřebuje název.",
+        "Notes": "Poznámky",
+        "Do not import": "Neimportovat",
+        "Hide this value": "Skrýt tuto hodnotu",
+        "Show this value": "Zobrazit tuto hodnotu"
     },
     "plurals": null
 }

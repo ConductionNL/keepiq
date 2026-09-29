@@ -1188,7 +1188,14 @@ OC.L10N.register(
         "Revoke the share with {group}": "Prekliči deljenje s skupino {group}",
         "Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.": "Deljeno s skupino {group}: {received} članov je to prejelo, {skipped} ne, ker še nimajo nastavljenega šifriranja.",
         "Search groups": "Išči skupine",
-        "Failed to share": "Deljenje ni uspelo"
+        "Failed to share": "Deljenje ni uspelo",
+        "Columns": "Stolpci",
+        "Column {number}": "Stolpec {number}",
+        "Map one column to Name. Every secret needs a name.": "En stolpec povežite z imenom. Vsaka skrivnost potrebuje ime.",
+        "Notes": "Opombe",
+        "Do not import": "Ne uvozi",
+        "Hide this value": "Skrij to vrednost",
+        "Show this value": "Pokaži to vrednost"
     },
     "nplurals=2; plural=(n != 1);"
 )
