@@ -15,7 +15,7 @@ Carrying a contact hands the grantor's **new** key to that grantee, and a compro
 Contacts the grantor did not confirm, or that were refused, are invalidated at completion like any other residual contact. The completion sweep records `grantor_rotation_in_flight` for a contact whose break-glass was in flight and `grantor_rotation` for every other residual contact. It MUST NOT guess the grantor's choice from reachability. The grantor MUST be told about every contact a rotation removed, however the rotation reached completion:
 
 - **A rotation started from the recovery form** knows which contacts the grantor ticked, also when the form completes it by retrying or by accepting a loss. Its completion screen MUST prompt the grantor to re-establish an unreachable contact (no active certificate, or a failed re-envelope), and MUST name unconfirmed and in-flight contacts without that prompt.
-- **A resumed rotation** carries no contact and doesn't know the ticks. After completion it MUST read back the contacts the sweep removed. The recovery form's completion screen MUST name them neutrally, without a prompt to re-establish, and the resume banner MUST say how many were removed and point to Emergency Access.
+- **A resumed rotation** carries no contact and doesn't know the ticks. After completion, including a completion by accepting a loss, it MUST read back the contacts the sweep removed. The recovery form's completion screen MUST name them neutrally, without a prompt to re-establish, and the resume banner MUST say how many were removed and point to Emergency Access.
 - **The Emergency Access view** MUST NOT offer to re-establish any contact a rotation invalidated. It MUST show a text-only notice on each one that the rotation removed it, and MUST warn about one whose break-glass was in flight. This also covers a completion screen that was closed unread. A `declined` contact has nothing in flight and counts as not confirmed. The system MUST NOT prompt the grantor to re-establish a contact they did not confirm, and MUST warn, rather than prompt, about a contact whose break-glass was in flight, because that is what a planted contact looks like.
 
 Migrating rather than invalidating is possible because the recovery envelope is rebuilt, not re-wrapped: `buildRecoveryEnvelope` takes the grantor's private key and the grantee's public certificate, both of which the grantor has mid-rotation. Sealing to the grantee's *current* certificate is also more correct than preserving the old envelope, which may escrow a key the grantee has since rotated away from.
@@ -82,6 +82,13 @@ Likewise, if a grantee's EncryptionSuite is revoked, envelopes encrypted to that
 - **AND** A MUST be told that B was removed, on the completion screen or, from the resume banner, as a count pointing to Emergency Access
 - **AND** A MUST NOT be prompted to re-establish B
 - **AND** the Emergency Access view MUST show that a key rotation removed B, with no re-establish action
+
+#### Scenario: A resumed rotation finished by accepting a loss names the contacts it removed
+@e2e exclude Client-side read-back after the loss acknowledgement; covered by vitest on the store and CompromiseRecoveryForm.
+- **GIVEN** A resumed an interrupted rotation, a record still failed, and A has contact B, `granted`, on the old suite
+- **WHEN** A accepts the loss and the rotation completes
+- **THEN** B MUST be invalidated at completion
+- **AND** the recovery form's completion screen MUST name B, without a prompt to re-establish B
 
 #### Scenario: Revocation refuses while a usable emergency contact exists
 @e2e exclude Server-side guard on the revoke path; covered by PHPUnit asserting revocation is refused and the usable-contact count is returned. Live UI run deferred.
