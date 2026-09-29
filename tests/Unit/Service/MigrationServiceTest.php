@@ -707,14 +707,43 @@ class MigrationServiceTest extends TestCase {
 	}//end testFinishedMigrationsDoNotBlockARevoke()
 
 	/**
-	 * A compromise force-revoke ends the suite's in-progress migration
-	 * (keepiq#809 review): without that, whoever holds the session and the
-	 * leaked password could keep the admin's containment blocked forever by
-	 * committing one record so abort is refused, then walking away.
+	 * findInProgressForSuite() returns the suite's open migration and ignores
+	 * finished ones; it changes nothing.
 	 *
 	 * @return void
 	 */
-	public function testTerminateForCompromiseEndsTheInProgressMigration(): void {
+	public function testFindInProgressForSuiteReturnsOnlyTheOpenMigration(): void {
+		$finished = new SuiteMigration();
+		$finished->setId('migration-0');
+		$finished->setStatus('completed');
+		$open = new SuiteMigration();
+		$open->setId('migration-1');
+		$open->setStatus('in_progress');
+		$this->migrationMapper->method('findBySuiteId')->with('suite-1')->willReturn([$finished, $open]);
+		$this->migrationMapper->expects($this->never())->method('update');
+
+		$this->assertSame('migration-1', $this->service->findInProgressForSuite(suiteId: 'suite-1')?->getId());
+	}//end testFindInProgressForSuiteReturnsOnlyTheOpenMigration()
+
+	/**
+	 * Nothing open: nothing found.
+	 *
+	 * @return void
+	 */
+	public function testFindInProgressForSuiteIsNullWithoutAnOpenMigration(): void {
+		$this->migrationMapper->method('findBySuiteId')->willReturn([]);
+
+		$this->assertNull($this->service->findInProgressForSuite(suiteId: 'suite-1'));
+	}//end testFindInProgressForSuiteIsNullWithoutAnOpenMigration()
+
+	/**
+	 * terminateForCompromise() ends the migration as `terminated` and
+	 * dispatches the aborted event, which unlocks the SecretRequests it locked
+	 * (keepiq#809 review).
+	 *
+	 * @return void
+	 */
+	public function testTerminateForCompromiseEndsTheMigration(): void {
 		$dispatcher = $this->createMock(IEventDispatcher::class);
 		$service = new MigrationService(
 			mapper: $this->migrationMapper,
@@ -726,38 +755,18 @@ class MigrationServiceTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 			eventDispatcher: $dispatcher,
 		);
-		$finished = new SuiteMigration();
-		$finished->setId('migration-0');
-		$finished->setOldSuiteId('suite-1');
-		$finished->setNewSuiteId('older');
-		$finished->setStatus('completed');
 		$open = new SuiteMigration();
 		$open->setId('migration-1');
 		$open->setOldSuiteId('suite-1');
 		$open->setNewSuiteId('suite-2');
 		$open->setStatus('in_progress');
-		$this->migrationMapper->method('findBySuiteId')->with('suite-1')->willReturn([$finished, $open]);
 		$this->migrationMapper->expects($this->once())->method('update')
-			->with($this->callback(static fn (SuiteMigration $m): bool => $m->getId() === 'migration-1' && $m->getStatus() === 'terminated'));
+			->with($this->callback(static fn (SuiteMigration $m): bool => $m->getStatus() === 'terminated'));
 		$dispatcher->expects($this->once())->method('dispatchTyped')
 			->with($this->isInstanceOf(SuiteMigrationAbortedEvent::class));
 
-		$terminated = $service->terminateInProgressForCompromise(suiteId: 'suite-1');
+		$service->terminateForCompromise(migration: $open);
 
-		$this->assertSame('migration-1', $terminated?->getId());
 		$this->assertSame('terminated', $open->getStatus());
-		$this->assertSame('completed', $finished->getStatus(), 'a finished migration is left alone');
-	}//end testTerminateForCompromiseEndsTheInProgressMigration()
-
-	/**
-	 * Nothing in progress: nothing is terminated.
-	 *
-	 * @return void
-	 */
-	public function testTerminateForCompromiseIsANoOpWithoutAnOpenMigration(): void {
-		$this->migrationMapper->method('findBySuiteId')->willReturn([]);
-		$this->migrationMapper->expects($this->never())->method('update');
-
-		$this->assertNull($this->service->terminateInProgressForCompromise(suiteId: 'suite-1'));
-	}//end testTerminateForCompromiseIsANoOpWithoutAnOpenMigration()
+	}//end testTerminateForCompromiseEndsTheMigration()
 }//end class

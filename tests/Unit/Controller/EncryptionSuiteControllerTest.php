@@ -1025,44 +1025,110 @@ class EncryptionSuiteControllerTest extends TestCase {
 	}//end testOwnerRevokeRefusesASuiteMidMigration()
 
 	/**
-	 * A compromise force-revoke is not blocked by an in-progress migration: it
-	 * ends the migration and revokes BOTH ends (keepiq#809 review). Otherwise
-	 * the party being contained could keep the admin's containment blocked.
+	 * An in-progress migration between suite-1 (old) and suite-2 (new).
 	 *
-	 * @return void
+	 * @return SuiteMigration
 	 */
-	public function testCompromiseForceRevokeEndsTheMigrationAndRevokesBothEnds(): void {
+	private function openMigration(): SuiteMigration {
 		$migration = new SuiteMigration();
 		$migration->setId('migration-1');
 		$migration->setOldSuiteId('suite-1');
 		$migration->setNewSuiteId('suite-2');
-		$migration->setStatus('terminated');
+		$migration->setStatus('in_progress');
 
-		$this->migrationService->expects($this->never())->method('assertNoMigrationInProgress');
-		$this->migrationService->expects($this->once())
-			->method('terminateInProgressForCompromise')
-			->with('suite-1')
-			->willReturn($migration);
+		return $migration;
+	}//end openMigration()
+
+	/**
+	 * Record revokeSuite() and terminateForCompromise() calls in order.
+	 *
+	 * @param array<int,string> $log  Receives "revoke:<id>" and "terminate:<id>"
+	 * @param string|null       $fail A suite id whose revoke throws, once
+	 *
+	 * @return void
+	 */
+	private function recordCompromiseCalls(array &$log, ?string $fail = null): void {
 		$this->emergencyService->method('countUsableForGrantorSuite')->willReturn(0);
-
-		$revoked = [];
 		$this->suiteService->method('revokeSuite')->willReturnCallback(
-			static function (string $id, string $reason, string $revokedBy, bool $markCompromised = false, int $emergencyContactsDestroyed = 0) use (&$revoked): EncryptionSuite {
-				$revoked[] = [$id, $markCompromised];
+			static function (string $id) use (&$log, &$fail): EncryptionSuite {
+				if ($id === $fail) {
+					$fail = null;
+					throw new RuntimeException('database went away');
+				}
+
+				$log[] = 'revoke:' . $id;
 				$suite = new EncryptionSuite();
 				$suite->setId($id);
 				$suite->setStatus('revoked');
 				return $suite;
 			}
 		);
+		$this->migrationService->method('terminateForCompromise')->willReturnCallback(
+			static function (SuiteMigration $migration) use (&$log): void {
+				$log[] = 'terminate:' . $migration->getId();
+			}
+		);
+	}//end recordCompromiseCalls()
+
+	/**
+	 * A compromise force-revoke is not blocked by an in-progress migration: it
+	 * revokes BOTH ends, and only then ends the migration (keepiq#809 review).
+	 *
+	 * @return void
+	 */
+	public function testCompromiseForceRevokeEndsTheMigrationAndRevokesBothEnds(): void {
+		$this->migrationService->expects($this->never())->method('assertNoMigrationInProgress');
+		$this->migrationService->method('findInProgressForSuite')->with('suite-1')->willReturn($this->openMigration());
+		$log = [];
+		$this->recordCompromiseCalls($log);
 
 		$response = $this->controller->forceRevoke('suite-1', 'account taken over', true);
 
 		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
-		$this->assertSame([['suite-1', true], ['suite-2', true]], $revoked);
+		$this->assertSame(['revoke:suite-1', 'revoke:suite-2', 'terminate:migration-1'], $log);
 		$this->assertSame('migration-1', $response->getData()['terminatedMigration']);
 		$this->assertSame('suite-2', $response->getData()['alsoRevokedSuite']);
 	}//end testCompromiseForceRevokeEndsTheMigrationAndRevokesBothEnds()
+
+	/**
+	 * Force-revoking the NEW end revokes the old end as well (#809 review). In
+	 * the attack this guards against the new end is the attacker's suite, so it
+	 * is the one an admin is likely to pick.
+	 *
+	 * @return void
+	 */
+	public function testCompromiseForceRevokeOfTheNewEndAlsoRevokesTheOldEnd(): void {
+		$this->migrationService->method('findInProgressForSuite')->with('suite-2')->willReturn($this->openMigration());
+		$log = [];
+		$this->recordCompromiseCalls($log);
+
+		$response = $this->controller->forceRevoke('suite-2', 'account taken over', true);
+
+		$this->assertSame(['revoke:suite-2', 'revoke:suite-1', 'terminate:migration-1'], $log);
+		$this->assertSame('suite-1', $response->getData()['alsoRevokedSuite']);
+	}//end testCompromiseForceRevokeOfTheNewEndAlsoRevokesTheOldEnd()
+
+	/**
+	 * If revoking the other end fails, the migration is left open, so a retry
+	 * still finds it and finishes the job (#809 review). Terminating first would
+	 * leave the other end live with nothing pointing back to it.
+	 *
+	 * @return void
+	 */
+	public function testAFailedOtherEndRevokeCanBeRetried(): void {
+		$this->migrationService->method('findInProgressForSuite')->willReturn($this->openMigration());
+		$log = [];
+		$this->recordCompromiseCalls($log, 'suite-2');
+
+		$first = $this->controller->forceRevoke('suite-1', 'account taken over', true);
+		$this->assertNotSame(Http::STATUS_OK, $first->getStatus());
+		$this->assertNotContains('terminate:migration-1', $log, 'nothing may be terminated while the other end is live');
+
+		$retry = $this->controller->forceRevoke('suite-1', 'account taken over', true);
+		$this->assertSame(Http::STATUS_OK, $retry->getStatus());
+		$this->assertContains('revoke:suite-2', $log);
+		$this->assertSame('terminate:migration-1', end($log));
+	}//end testAFailedOtherEndRevokeCanBeRetried()
 
 	/**
 	 * A compromise force-revoke with no migration revokes just the one suite.
@@ -1070,16 +1136,15 @@ class EncryptionSuiteControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testCompromiseForceRevokeWithoutAMigrationRevokesOneSuite(): void {
-		$this->migrationService->method('terminateInProgressForCompromise')->willReturn(null);
-		$this->emergencyService->method('countUsableForGrantorSuite')->willReturn(0);
-		$suite = new EncryptionSuite();
-		$suite->setId('suite-1');
-		$suite->setStatus('revoked');
-		$this->suiteService->expects($this->once())->method('revokeSuite')->willReturn($suite);
+		$this->migrationService->method('findInProgressForSuite')->willReturn(null);
+		$this->migrationService->expects($this->never())->method('terminateForCompromise');
+		$log = [];
+		$this->recordCompromiseCalls($log);
 
 		$response = $this->controller->forceRevoke('suite-1', 'account taken over', true);
 
 		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
+		$this->assertSame(['revoke:suite-1'], $log);
 		$this->assertArrayNotHasKey('terminatedMigration', $response->getData());
 	}//end testCompromiseForceRevokeWithoutAMigrationRevokesOneSuite()
 }//end class

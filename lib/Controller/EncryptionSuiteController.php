@@ -516,11 +516,13 @@ class EncryptionSuiteController extends OCSController {
 	}//end forceRevoke()
 
 	/**
-	 * End the suite's in-progress migration and revoke its other end.
+	 * Revoke the other end of the suite's in-progress migration, then end it.
 	 *
 	 * Part of a compromise force-revoke. The other end is revoked as
 	 * compromised too: during a compromise either end may be the one the
-	 * attacker controls (keepiq#809 review).
+	 * attacker controls (keepiq#809 review). The migration is terminated LAST,
+	 * so if revoking the other end fails, a retry of the force-revoke still
+	 * finds the open migration and finishes the job.
 	 *
 	 * @param string $suiteId  The suite just force-revoked
 	 * @param string $reason   The admin's reason, reused for the other end
@@ -531,7 +533,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
 	 */
 	private function endMigrationForCompromise(string $suiteId, string $reason, string $adminUid): array {
-		$migration = $this->migrationService->terminateInProgressForCompromise(suiteId: $suiteId);
+		$migration = $this->migrationService->findInProgressForSuite(suiteId: $suiteId);
 		if ($migration === null) {
 			return [];
 		}
@@ -540,6 +542,7 @@ class EncryptionSuiteController extends OCSController {
 		if ($otherId === $suiteId) {
 			$otherId = $migration->getNewSuiteId();
 		}
+
 		$this->suiteService->revokeSuite(
 			id: $otherId,
 			reason: $reason,
@@ -547,6 +550,8 @@ class EncryptionSuiteController extends OCSController {
 			markCompromised: true,
 			emergencyContactsDestroyed: $this->emergencyService->countUsableForGrantorSuite($otherId),
 		);
+
+		$this->migrationService->terminateForCompromise(migration: $migration);
 
 		return ['terminatedMigration' => $migration->getId(), 'alsoRevokedSuite' => $otherId];
 
