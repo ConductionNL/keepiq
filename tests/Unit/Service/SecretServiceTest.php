@@ -22,12 +22,15 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\Folder;
+use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
+use OCA\Keepiq\Service\FolderOwnershipGuard;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
@@ -85,6 +88,19 @@ class SecretServiceTest extends TestCase {
 		$this->linkShareService = $this->createMock(LinkShareService::class);
 		$logger = $this->createMock(LoggerInterface::class);
 
+		// Keepiq#795: a folder move is checked against the owner. In these
+		// tests alice owns every folder, through the real guard.
+		$folderMapper = $this->createMock(FolderMapper::class);
+		$folderMapper->method('findById')->willReturnCallback(
+			static function (string $id): Folder {
+				$folder = new Folder();
+				$folder->setId($id);
+				$folder->setOwnerType('user');
+				$folder->setOwnerId('alice');
+				return $folder;
+			}
+		);
+
 		$this->service = new SecretService(
 			mapper: $this->mapper,
 			typeService: $this->typeService,
@@ -92,6 +108,7 @@ class SecretServiceTest extends TestCase {
 			migrationService: $this->migrationService,
 			linkShareService: $this->linkShareService,
 			logger: $logger,
+			folderOwnership: new FolderOwnershipGuard($folderMapper),
 		);
 	}//end setUp()
 
@@ -262,7 +279,7 @@ class SecretServiceTest extends TestCase {
 	 * the PRE-update row; for a placeholder that row has an empty `key`, and
 	 * SecretVersion::$key defaults to '' — so the Entity setter never marked it
 	 * dirty, QBMapper omitted the column, and the NOT NULL constraint on
-	 * doriath_secret_versions.key rejected the insert. The recipient saw
+	 * keepiq_secret_versions.key rejected the insert. The recipient saw
 	 * "Unable to fulfil request".
 	 *
 	 * Skipping is also right on its own terms: a first fill has no earlier value to

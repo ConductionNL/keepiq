@@ -36,6 +36,7 @@ use OCA\Keepiq\Db\SiemSink;
 use OCA\Keepiq\Db\SiemSinkMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
+use OCA\Keepiq\Service\Connection\ConnectionReporter;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -79,8 +80,11 @@ class SiemService {
 	 * @param IGroupManager $groupManager The group manager (admin notifications)
 	 * @param NotificationService|null $notificationService The notification dispatcher
 	 * @param LoggerInterface $logger The logger
+	 * @param ConnectionReporter|null $connectionReporter Tells integriq what a drain met, or nothing when absent
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
 	 */
 	public function __construct(
 		private SiemSinkMapper $sinkMapper,
@@ -90,6 +94,7 @@ class SiemService {
 		private IGroupManager $groupManager,
 		private ?NotificationService $notificationService,
 		private LoggerInterface $logger,
+		private ?ConnectionReporter $connectionReporter = null,
 	) {
 	}//end __construct()
 
@@ -180,13 +185,23 @@ class SiemService {
 	/**
 	 * Drain due rows for every enabled sink in bounded batches (§4.1).
 	 *
+	 * After the drain, the sinks it tried to deliver to are handed to the
+	 * connection reporter, which reports the SIEM export row at most once an
+	 * hour while the outcome stays the same (adopt-connection-registry). The
+	 * drain runs from cron, never from a page request.
+	 *
 	 * @return int Rows delivered
+	 *
+	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
 	 */
 	public function deliverDue(): int {
-		$delivered = 0;
-		foreach ($this->sinkMapper->findEnabled() as $sink) {
+		$delivered    = 0;
+		$enabledSinks = $this->sinkMapper->findEnabled();
+		$attempted    = [];
+		foreach ($enabledSinks as $sink) {
 			$hadDeadBefore = $this->queueMapper->countDead($sink->getId()) > 0;
 			foreach ($this->queueMapper->findDue(sinkId: $sink->getId(), now: new DateTime()) as $item) {
+				$attempted[$sink->getId()] = $sink;
 				if ($this->deliverOne(sink: $sink, item: $item) === true) {
 					++$delivered;
 				}
@@ -198,7 +213,13 @@ class SiemService {
 			if ($hadDeadBefore === false && $this->queueMapper->countDead($sink->getId()) > 0) {
 				$this->notifyDeadLetter(sink: $sink);
 			}
-		}
+		}//end foreach
+
+		$this->connectionReporter?->reportSiemDrain(
+			enabledSinks: count($enabledSinks),
+			attemptedSinks: array_values($attempted),
+			sinkCount: fn (): int => count($this->sinkMapper->findAll())
+		);
 
 		return $delivered;
 	}//end deliverDue()

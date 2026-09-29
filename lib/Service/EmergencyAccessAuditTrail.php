@@ -94,6 +94,43 @@ class EmergencyAccessAuditTrail {
 	}//end recordGranted()
 
 	/**
+	 * Record that a granted contact was carried to the new key in a rotation.
+	 *
+	 * @param string $grantorUserId The grantor (the rotating owner)
+	 * @param string $granteeUserId The grantee
+	 * @param string $id            The emergency-contact id
+	 * @param string $fromSuiteId   The suite rotated away from
+	 * @param string $toSuiteId     The suite the new envelope escrows
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-designate-emergency-contact
+	 */
+	public function recordCarried(
+		string $grantorUserId,
+		string $granteeUserId,
+		string $id,
+		string $fromSuiteId,
+		string $toSuiteId,
+	): void {
+		$this->eventDispatcher->dispatchTyped(
+			$this->auditEvents->forUser(
+				actorId: $grantorUserId,
+				eventType: AuditEventTypes::EMERGENCY_ACCESS_CARRIED,
+				objectType: self::OBJECT_TYPE,
+				objectId: $id,
+				objectName: $granteeUserId,
+				metadata: [
+					'grantorUserId' => $grantorUserId,
+					'granteeUserId' => $granteeUserId,
+					'fromSuiteId' => $fromSuiteId,
+					'toSuiteId' => $toSuiteId,
+				],
+			)
+		);
+	}//end recordCarried()
+
+	/**
 	 * Record that a grantor revoked an emergency contact.
 	 *
 	 * @param string $grantorUserId The grantor Nextcloud user ID

@@ -13,10 +13,6 @@ on:
     # nothing ran; and `feat/**` was uncovered in openregister, because the
     # list said `feature/**`.
     #
-    # The comment that stood here said adding prefixes was not the durable fix,
-    # and that the durable fix was to let the pull_request trigger gate it.
-    # THIS IS THAT CHANGE.
-    #
     # What forced it now: a push to a branch with an open PR ran the SAME 34
     # jobs TWICE on the same commit. `concurrency` cannot dedupe them — the
     # group is suffixed by event name deliberately (.github#540: a
@@ -46,32 +42,6 @@ on:
     branches: [main, master, development, beta]
   workflow_dispatch:
 
-# Deduplicating a `push` run against the `pull_request` run for the SAME head
-# ref is the point of this block, and for a feature branch it is exactly right:
-# two runs of identical jobs, one of them wasted.
-#
-# It is wrong for `main` and `development`, because the push run there is NOT a
-# duplicate — it is the only carrier of the push-only jobs: "Coverage Baseline
-# Check" (`github.event_name == 'push'`), "SBOM" and "Features Extract". And
-# those two branches always have an open PR whose `head_ref` IS the branch
-# name: the standing "Release: merge development into beta" (#126 here).
-# `github.head_ref` on that PR run and `github.ref_name` on the push run both
-# render the identical group `quality-development`, and `cancel-in-progress`
-# then kills whichever started first — normally the push run.
-#
-# HONEST SCOPE OF THE EVIDENCE HERE: unlike most of the fleet, this repo shows
-# NO concurrency-cancelled `development` push run in its last 20 (its two
-# cancellations are the shared workflow's 45-minute cap, not this block), and
-# its push-only jobs demonstrably DO execute — run 31035521461 and 31030407282
-# both report Coverage Baseline Check success. So this change is PREVENTIVE,
-# not a repair of an observed outage: the collision is latent in the expression
-# and has simply not won the race here yet. It is applied for fleet uniformity
-# with openconnector#1158, where the same expression cancelled 15 of the last
-# 20 push runs.
-#
-# Suffixing only the default-branch push keeps feature-branch dedup untouched
-# (`quality-feature/x` for both events, exactly as before) and gives the two
-# default branches' push runs a lane of their own.
 concurrency:
   # SUFFIXED BY EVENT NAME, not just by `-push`.
   #
@@ -92,11 +62,8 @@ concurrency:
   # cancelled and report neither pass nor fail — and a routine that produces
   # no verdict is indistinguishable from one that never ran.
   #
-  # This is hermiq's form, already live there. Pull requests keep the bare
-  # group (so a PR still supersedes its own earlier run); push, dispatch and
-  # schedule each get their own lane.
-  #
-  # THE BRANCH RESTRICTION IS GONE, because it contradicted the sentence above.
+  # Pull requests keep the bare group (so a PR still supersedes its own
+  # earlier run); push, dispatch and schedule each get their own lane.
   #
   # The suffix used to apply only when `ref_name` was `main` or `development`,
   # so on every OTHER branch push and pull_request computed the SAME group —
@@ -143,44 +110,60 @@ permissions:
 
 jobs:
   quality:
+    # Skips the standing "development → beta" sync PR, which would otherwise
+    # re-run the whole pipeline on every merge into development.
     if: (github.event_name != 'pull_request' || github.head_ref != 'development')
     uses: ConductionNL/.github/.github/workflows/quality.yml@main
     with:
       app-name: keepiq
       php-version: "8.3"
       php-test-versions: '["8.3", "8.4"]'
-      # Order matters: the PHPUnit matrix uses the whole list, but the E2E
-      # (Playwright), Newman and Journeydoc jobs all check out
-      # `fromJSON(nextcloud-test-refs)[0]` as their single server. That server
-      # has to be one OpenRegister can load, because `additional-apps` below
-      # installs it and keepiq's AppHost integration delegates to it —
-      # OpenRegister's lib/ContextChat/ContentProvider.php implements
-      # `OCP\ContextChat\IContentProvider`, which exists in stable32 and NOT in
-      # stable31 (verified: raw.githubusercontent.com returns 404 for the
-      # stable31 path). On stable31 every `occ` invocation printed
+      # NO `nextcloud-test-refs` HERE, DELIBERATELY. The shared workflow derives
+      # the matrix from appinfo/info.xml when this input is unset, and a derived
+      # matrix cannot disagree with the declared range. The override that used to
+      # sit here is exactly how the two came apart: it read
+      # `["stable34", "stable32", "stable33"]` while this branch moved info.xml to
+      # `<nextcloud min-version="32" max-version="35"/>`, so NC 35 was advertised
+      # to the App Store with no job touching it — not known-broken, unmeasured.
+      # gate-65 rule 11 is what caught it. Re-adding stable35 by hand fixes today
+      # and leaves the next bump to be remembered in two files; deriving deletes
+      # the second file.
+      #
+      # WHAT THE OVERRIDE WAS PROTECTING, AND WHY IT NO LONGER HAS TO.
+      # Its ORDER carried meaning: E2E (Playwright), Newman and journeydoc-capture
+      # each ran against `fromJSON(nextcloud-test-refs)[0]`, so stable34 had to
+      # lead to keep them off a server OpenRegister cannot load — OpenRegister's
+      # lib/ContextChat/ContentProvider.php implements
+      # `OCP\ContextChat\IContentProvider`, which does not exist before stable32,
+      # and on stable31 every `occ` invocation printed
       # `Interface "OCP\ContextChat\IContentProvider" not found` while loading
       # commands from openregister's info.xml.
       #
-      # The earlier reorder fixed the FIRST-entry problem for E2E/Newman/Journeydoc
-      # but left "stable31 is still covered by the PHPUnit matrix" — and that leg
-      # is broken by the same fact. The phpunit job ALSO installs `additional-apps`
-      # (shared quality.yml, "Checkout additional apps" + "Enabling app: …"), and
-      # its `occ app:enable openregister` failure is only a ::warning::, so the
-      # stable31 leg ran on without OpenRegister loaded. openregister has since
-      # made the floor explicit — `<nextcloud min-version="32"/>`, 8d5181f7a — so
-      # NC31 is now a configuration this fixture cannot produce at all.
+      # Those four jobs no longer read a meaning off a position. The shared
+      # workflow computes a `single-server` output — the numerically HIGHEST
+      # stable branch in the resolved set, and for the derived path the matrix
+      # action's own `branches-max` — and they consume that. The action's
+      # `branches` output is OLDEST-first, so a positional read would have moved
+      # all four onto stable32 silently. List order is now inert, and the one
+      # thing the override bought is structural instead.
       #
-      # Removing stable31 corrects an impossible configuration; it does not reduce
-      # coverage, because nothing was being covered on that leg.
+      # THIS ADDS A stable35 LEG. It was RED BEFORE IT WAS GREEN, deliberately.
+      # `additional-apps` below installs openregister and integriq, and when this
+      # branch was opened (2026-09-15) BOTH still declared `max-version="34"` on
+      # `development`. The shared workflow aborts the job when `occ app:enable`
+      # fails for an additional app — that was once only a ::warning::, which is
+      # how a leg previously ran on WITHOUT OpenRegister loaded and reported
+      # nothing — so the stable35 legs failed at the fixture, not in the tests.
       #
-      # THE LIST IS THE WHOLE DECLARED RANGE. appinfo/info.xml declares
-      # <nextcloud min-version="32" max-version="34"/>, so 32, 33 and 34 each get
-      # a leg. Adopting NC 34 by REPLACING the list left 32 and 33 advertised to
-      # the App Store with no job touching them — the declared floor became the
-      # untested end, which is the same drift as never testing 34, reversed.
-      # stable34 leads because newman, playwright and journeydoc-capture all read
-      # `fromJSON(inputs.nextcloud-test-refs)[0]` as their single server.
-      nextcloud-test-refs: '["stable34", "stable32", "stable33"]'
+      # RESOLVED 2026-09-24: both dependencies now declare
+      # `<nextcloud min-version="32" max-version="35"/>` on `development`, which
+      # is the ref this file pins. Verified by parsing each appinfo/info.xml
+      # rather than grepping, because both files carry comments that quote OTHER
+      # apps' ranges and a grep matches those first.
+      #
+      # The point of deriving the matrix from info.xml stands: the red was the
+      # honest state of NC 35 support while the gap existed, and nothing here
+      # could hide it. Leave it derived.
       enable-psalm: true
       enable-phpstan: true
       enable-phpmetrics: true
@@ -203,8 +186,29 @@ jobs:
       # which reads as an auth problem rather than a typo. Six fleet repos hit
       # this; in pipelinq it killed all four PHPUnit legs and the E2E job at the
       # clone step, so those gates had never executed a single test.
-      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"}]'
+      #
+      # integriq is here because the Integrations page reads integriq's
+      # `app_connection` rows (adopt-connection-registry). Without it the page
+      # shows the missing-dependency screen and
+      # `tests/e2e/workflows/integrations-page.spec.ts` fails on every run.
+      # `app` is `integriq`, verified in its appinfo/info.xml on `development`
+      # on 2026-09-15.
+      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"},{"repo":"ConductionNL/integriq","app":"integriq","ref":"development"}]'
       enable-sbom: true
+
+      # ── Licensing ────────────────────────────────────────────────────────
+      # REUSE findings fail the build. The shared workflow defaults this OFF
+      # because most fleet apps ship no REUSE.toml or LICENSES/ directory;
+      # keepiq ships both and lints at 1467/1467, 0 missing, 0 unused,
+      # compliant with version 3.3 of the REUSE specification.
+      #
+      # The blanket `path = "**"` annotation in REUSE.toml makes every new file
+      # compliant on arrival, whatever its type, so ordinary work cannot trip
+      # this. One regression mode remains — vendoring a file whose own SPDX
+      # header names a licence with no text in LICENSES/ — and non-blocking
+      # that surfaces only as REUSE ❌ in the Quality Report comment, which is
+      # easy to miss.
+      reuse-blocking: true
 
       # ── E2E browser tests ────────────────────────────────────────────────
       # `playwright-test-path` does double duty in the shared workflow:
@@ -251,9 +255,8 @@ jobs:
       # formatter failure mode that made the old `.prettierrc` worth deleting.
       # Centralising the config never stopped drift; the gate does.
       # Measured on this tree before enabling: PASSES, 294 of 310 tracked
-      # frontend files in scope. This repo has TWO documentation trees and both
-      # are excluded by .prettierignore — `docs/` and the separate `docusaurus/`
-      # site, which has its own package.json and its own toolchain.
+      # frontend files in scope. The documentation site in `docs/` is excluded
+      # by .prettierignore: it has its own package.json and its own toolchain.
       # `check:l10n-js` regenerates l10n/<locale>.js from the JSON catalogue and
       # fails when the committed file is stale. Nextcloud serves ONLY the JS half
       # to a browser — raw JSON out of an app directory is a 404 — so a catalogue
@@ -298,3 +301,14 @@ jobs:
       # To hold this repo still for a specific reason, set the input explicitly
       # and say why — it is still honoured. To roll back for everyone, revert on
       # ConductionNL/.github main.
+      # ── Cost controls (see ConductionNL/.github#596, #599) ───────────────
+      # Run PHPUnit and Playwright only when the diff could change their
+      # verdict. Fails safe TOWARDS running: an unreadable diff, a force-push,
+      # a branch creation or a dispatch all run everything, and a filtered
+      # skip is a declared state in the Quality Report, not a missing one.
+      enable-path-filtering: true
+      # PR-time PHPUnit runs the primary PHP against the newest declared
+      # Nextcloud; the full matrix still runs on every push to a default
+      # branch and on the release PR into beta. Breadth moves from
+      # per-commit to per-merge, it is not dropped.
+      reduce-pr-matrix: true

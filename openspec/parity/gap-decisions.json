@@ -1,0 +1,730 @@
+[
+ {
+  "row": "admin-01",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Partial, built, no demand. The missing half is the policy check on the import, extension and write-for-app save paths; no demand row and no competitor yes.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-04",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 5 competitors rate yes (Bitwarden, 1Password, Passbolt, Keeper, HashiCorp Vault). Specified for the missing half: offboarding also removes the leaver's own team folder member rows; revoking derived shares and handing over owned team secrets is built.",
+  "change": "admin-member-overview-and-offboarding",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-08",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: Platform capability: vault users are Nextcloud accounts, and accounts are created and removed by Nextcloud's user backends (LDAP, OIDC, SAML or a SCIM provider app). Recorded in docs/FEATURES.md:330 (Nextcloud-native advantages: Nextcloud users and groups are the identity layer, no separate user directory) and :491 (Keepiq inherits Nextcloud identity, SSO and SCIM included). Matrix corrected: provider nextcloud, owner nextcloud/server.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-09",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: owned by nextcloud/server, a platform capability outside the fleet, per the openspec pass addendum: directory groups are synced by Nextcloud's LDAP and AD backend.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-10",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 3 competitors rate yes (Bitwarden, 1Password, Keeper). Specified for the vault half: a policy that blocks personal vault export and one that requires Nextcloud two-factor login before the vault unlocks; enforcing two-factor login itself stays Nextcloud's.",
+  "change": "admin-vault-policies",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-11",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 4 competitors rate yes (Bitwarden, 1Password, Keeper, HashiCorp Vault). Specified for the missing half: named admin roles with a chosen set of permissions; the whole-section delegation and the vault_admin group are built.",
+  "change": "admin-scoped-roles",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-12",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 4 competitors rate yes (Bitwarden, 1Password, Passbolt, Keeper). Specified for the missing half: a list of which users have set up a vault; the count is built.",
+  "change": "admin-member-overview-and-offboarding",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-13",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 4 competitors rate yes (Bitwarden, Passbolt, Keeper, HashiCorp Vault).",
+  "change": "admin-public-api",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-19",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: owned by nextcloud/server, a platform capability outside the fleet, per the openspec pass addendum: suspending and reactivating an account is Nextcloud user management.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-20",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: owned by nextcloud/server, a platform capability outside the fleet, per the openspec pass addendum: who appears in the people picker is set by Nextcloud's sharing settings.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-21",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: Platform capability: an announcement to every user is what the Nextcloud Announcement center app provides, and every vault user is a Nextcloud user (the matrix note says so). Matrix corrected: provider nextcloud, owner nextcloud/announcementcenter.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-22",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: a tender demand row (https://www.tenderned.nl/aankondigingen/overzicht/295007).",
+  "change": "admin-vault-policies",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-23",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: Platform capability: accounts come from Nextcloud's user backends, so which accounts an organisation manages is decided there, not in Keepiq. Recorded in docs/FEATURES.md:330 and :491 (Keepiq inherits Nextcloud identity). Matrix corrected: provider nextcloud, owner nextcloud/server.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-24",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Single competitor (Bitwarden) with a changelog row only, outside the core area. The session timeout itself is still being wired (crypto-07 is building).",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-25",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 3 competitors rate yes (Bitwarden, HashiCorp Vault, Nextcloud Passwords).",
+  "change": "admin-auto-confirm-members",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-26",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: owned by nextcloud/server, a platform capability outside the fleet, per the openspec pass addendum: each user's last sign-in and two-factor state belong to Nextcloud's user list.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "admin-27",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: a feature request row (https://community.bitwarden.com/t/adjusting-timezone-and-database-backup-schedule-in-bitwarden/59341) and one competitor yes (Nextcloud Passwords).",
+  "change": "admin-scheduled-vault-backups",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "apps-11",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Partial, built, no demand. Revoke works end to end; the missing half is a caller for the self-renew endpoint, with one competitor yes (HashiCorp Vault).",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "apps-17",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 4 competitors rate yes (Bitwarden, 1Password, Keeper, HashiCorp Vault).",
+  "change": "apps-kubernetes-injection",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "apps-18",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 4 competitors rate yes (Bitwarden, 1Password, Keeper, HashiCorp Vault).",
+  "change": "apps-client-libraries-and-ci",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "apps-19",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Single competitor (HashiCorp Vault), no demand, outside the core area.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "apps-20",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 2 competitors rate yes (Keeper, HashiCorp Vault). Matrix corrected: built.state was built while the rating is no and the evidence shows only reminders and a manual mark-rotated flow, so the state is none before this change.",
+  "change": "apps-secret-sync-and-rotation-runner",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "apps-21",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 4 competitors rate yes (Bitwarden, 1Password, Keeper, HashiCorp Vault). Specified for the missing half: client libraries for common languages; the Go command-line client is built.",
+  "change": "apps-client-libraries-and-ci",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "apps-22",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 4 competitors rate yes (Bitwarden, 1Password, Keeper, HashiCorp Vault).",
+  "change": "apps-terraform-provider",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "apps-24",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Single competitor (HashiCorp Vault), no demand, outside the core area.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "apps-25",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 2 competitors rate yes (Keeper, HashiCorp Vault).",
+  "change": "apps-secret-sync-and-rotation-runner",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "audit-14",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 3 competitors rate yes (Bitwarden, 1Password, Keeper). Specified for the missing half: named Splunk, Microsoft Sentinel and CEF presets on the SIEM export; the generic syslog and webhook stream is built.",
+  "change": "audit-siem-vendor-connectors",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "audit-15",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Partial, built, no demand. Alerts for a fixed set of events are built; one competitor yes (Keeper) for a configurable rule engine.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "audit-16",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Single competitor (Bitwarden) with a changelog row only, outside the core area.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "clients-01",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 5 competitors rate yes (Bitwarden, 1Password, Passbolt, Keeper, Nextcloud Passwords). Specified for the missing half: a packaged, signed extension in the browser stores. Matrix corrected: matching already covers shared and team folder secrets, because every recipient copy is a row owned by the recipient (lib/Service/RecipientSecretCopyService.php:112-113, lib/Service/TeamFolderShareService.php:295), so the owner-scoped match (lib/Controller/ExtensionController.php:195) returns them.",
+  "change": "clients-extension-store-release",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "clients-02",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Partial, built, no demand, no competitor yes. The missing half is a per-frame origin check.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "clients-04",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 4 competitors rate yes (Bitwarden, 1Password, Passbolt, Keeper). Specified for the missing half: filling a one-time code field that appears after the login step; filling a code field present at fill time is built.",
+  "change": "clients-extension-store-release",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "clients-06",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 4 competitors rate yes (Bitwarden, 1Password, Passbolt, Keeper). Specified for the missing half: a user-chosen idle period; the fixed 15 minute idle lock is built.",
+  "change": "clients-extension-unlock-lock-and-accounts",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "clients-11",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: Recorded non-goal: openspec/specs/mobile-pwa/spec.md:11 and :49 choose an installable web app instead of native apps ('no native app and no app-store presence', 'MUST NOT introduce ... a native app'), the same record clients-10 is decided no on. The installed web app opens in its own desktop window.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "clients-13",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 3 competitors rate yes (Bitwarden, 1Password, Keeper). Specified as an agent in the existing command-line client, which is a native binary already, so it needs no desktop app.",
+  "change": "clients-ssh-agent",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "clients-14",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Partial, built, no demand. Pairing with an app password works; one competitor yes (Nextcloud Passwords) for a login flow.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "clients-19",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: a feature request row (https://community.bitwarden.com/t/offline-editing-management-of-writeable-vault-items/107) and one competitor yes (1Password). The offline cache records the write queue as a deliberate future change (openspec/specs/offline-readonly-cache/spec.md:128), not a non-goal.",
+  "change": "clients-offline-edits",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "clients-20",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: Recorded non-goal: typing into desktop applications needs a native desktop client, and openspec/specs/mobile-pwa/spec.md:11 and :49 record no native app (the record clients-10 and clients-11 are decided no on).",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "clients-21",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 3 competitors rate yes (Bitwarden, 1Password, Keeper).",
+  "change": "clients-extension-unlock-lock-and-accounts",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "clients-22",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Single competitor (Bitwarden) with a changelog row only, outside the core area. The extension already refuses to fill on a mismatched address.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "crypto-09",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 3 competitors rate yes (Bitwarden, 1Password, Keeper). Specified for the missing half: fingerprint or face unlock in the browser extension; the web app unlock with a platform passkey is built.",
+  "change": "clients-extension-unlock-lock-and-accounts",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "crypto-10",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: owned by nextcloud/server, a platform capability outside the fleet, per the openspec pass addendum: a second factor at sign-in is Nextcloud's two-factor login, which gates reaching the vault.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "crypto-11",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 4 competitors rate yes (Bitwarden, 1Password, Passbolt, HashiCorp Vault). No recorded non-goal: ADR-005 makes administrator revocation the lost-password route and keeps the server keyless, which an opt-in recovery envelope to an organisation recovery certificate keeps.",
+  "change": "crypto-organisation-account-recovery",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "crypto-12",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Partial, built, no demand. A passphrase backup and emergency access are built; one competitor yes (Keeper) for a recovery kit.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "crypto-13",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 3 competitors rate yes (1Password, Passbolt, Keeper).",
+  "change": "crypto-vault-encryption-details",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "crypto-19",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: owned by nextcloud/server, a platform capability outside the fleet, per the openspec pass addendum: single sign-on is Nextcloud's login (user_saml, user_oidc); the vault still unlocks with the master password or a passkey.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "crypto-20",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 2 competitors rate yes (Bitwarden, Passbolt).",
+  "change": "crypto-item-reprompt",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "crypto-21",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: owned by nextcloud/server, a platform capability outside the fleet, per the openspec pass addendum: sessions and app passwords are listed and ended in Nextcloud's Devices and sessions.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "crypto-22",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: Recorded design decision: openspec/specs/secrets/spec.md:14 ('Only the secret's name and URL are stored in plain text to allow listing and searching without decryption') and :566 ('url is stored unencrypted by design, it enables search and Nextcloud unified search integration'). Usernames are already encrypted. Four competitors rate yes and a changelog row exists, so this is flagged for review.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "crypto-23",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: owned by nextcloud/server, a platform capability outside the fleet, per the openspec pass addendum: sign-in throttling and lockout are Nextcloud's brute-force protection and Password policy app.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "crypto-24",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 3 competitors rate yes (Bitwarden, Passbolt, Nextcloud Passwords).",
+  "change": "crypto-new-device-approval",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "health-03",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Partial, built, no demand. Old passwords are listed; one competitor yes (Nextcloud Passwords) for showing the age in days.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "health-08",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 5 competitors rate yes (Bitwarden, 1Password, Passbolt, Keeper, Nextcloud Passwords). Also listed in docs/FEATURES.md:125 (passphrase generation, V1).",
+  "change": "health-passphrase-generator",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "health-09",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Single competitor (Bitwarden), no demand, outside the core area.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "health-10",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Single competitor (1Password), no demand, outside the core area.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "health-11",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 2 competitors rate yes (Bitwarden, 1Password).",
+  "change": "health-site-security-checks",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "health-12",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 3 competitors rate yes (Bitwarden, 1Password, Keeper).",
+  "change": "health-site-security-checks",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "health-13",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: Recorded requirement: openspec/specs/password-health/spec.md:111-112 'No Server-Side Health Knowledge' (no endpoint accepts scores, digests, reuse data or breach verdicts), which an organisation-wide score would need. Three competitors rate yes, so this is flagged for review.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "health-14",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: Recorded requirement: openspec/specs/password-health/spec.md:111-112 'No Server-Side Health Knowledge'; knowing which members hold an at-risk password is exactly the health knowledge the server must not hold.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "health-15",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 2 competitors rate yes (Bitwarden, 1Password).",
+  "change": "health-site-security-checks",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "health-16",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: Recorded requirement: openspec/specs/password-health/spec.md:111-112 'No Server-Side Health Knowledge'; seeing which members hold at-risk passwords for a critical application needs that knowledge on the server.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "pki-03",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Partial, built, no demand, no competitor yes. CA health shows on the admin settings page; the missing half is mounting the dashboard card.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "portability-09",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 5 competitors rate yes (Bitwarden, Passbolt, Keeper, HashiCorp Vault, Nextcloud Passwords). Specified for the missing half: a restore that keeps custom secret types and source row numbers; the encrypted backup and its restore are built.",
+  "change": "portability-export-choice-and-restore-fidelity",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "portability-11",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 3 competitors rate yes (Bitwarden, Passbolt, Nextcloud Passwords). Specified for the missing half: choosing by type, by selected items and by fields; whole vault or one folder is built.",
+  "change": "portability-export-choice-and-restore-fidelity",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "rotation-02",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Partial, built, no demand. The admin default is built; one competitor yes (Passbolt) for letting users extend it.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "rotation-08",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 2 competitors rate yes (Bitwarden, Nextcloud Passwords).",
+  "change": "vault-website-addresses",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "sharing-03",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Partial, built, no demand. Team folder joins are confirmed by the owner's fan-out; one competitor yes (Passbolt) for a per-request approval.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "sharing-12",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Partial, built, no demand. The promotion is built; one competitor yes (Passbolt). It waits on delegation creation, which sharing-11 is building.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "sharing-13",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Single competitor (Keeper), no demand, outside the core area.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "sharing-14",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Partial, built, no demand. Password-protected links are built; one competitor yes (Bitwarden) for a date expiry in the dialog.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "sharing-17",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 2 competitors rate yes (1Password, Keeper).",
+  "change": "sharing-federated-recipients",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "sharing-18",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 4 competitors rate yes (Bitwarden, 1Password, Passbolt, Keeper). The manage grade is named out of scope for v1 in openspec/specs/folder-permission-grades/spec.md:82, a scope boundary of that change, not a non-goal.",
+  "change": "sharing-team-folder-manager-role",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "sharing-23",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Single competitor (Passbolt), no demand, outside the core area.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "sharing-24",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: a tender demand row (https://canadabuys.canada.ca/en/tender-opportunities/25260005); 2 competitors rate yes (Bitwarden, 1Password).",
+  "change": "sharing-use-only-and-expiring-shares",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "sharing-25",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 2 competitors rate yes (Keeper, Nextcloud Passwords).",
+  "change": "sharing-use-only-and-expiring-shares",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "sharing-26",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Partial, built, one competitor yes (HashiCorp Vault) and a changelog row only, outside the core area. Access requests with owner approval are built.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "sharing-27",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Decided no: owned by nextcloud/server, a platform capability outside the fleet, per the openspec pass addendum: group membership is managed by Nextcloud group admins.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "vault-04",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 5 competitors rate yes (Bitwarden, 1Password, Keeper, HashiCorp Vault, Nextcloud Passwords); the core area (vault, the area of the first 30 rows). The bulk-actions spec names a trash a separate change (openspec/specs/bulk-actions/spec.md:94), not a non-goal.",
+  "change": "vault-trash-and-archive",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "vault-09",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 5 competitors rate yes (Bitwarden, 1Password, Passbolt, Keeper, Nextcloud Passwords); the core area (vault, the area of the first 30 rows). Also listed in docs/FEATURES.md:74 (favourite secrets, V1).",
+  "change": "vault-favourites-tags-and-last-used",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "vault-10",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 3 competitors rate yes (1Password, Passbolt, Nextcloud Passwords); the core area (vault, the area of the first 30 rows). Also listed in docs/FEATURES.md:80 (secret tags, Enterprise).",
+  "change": "vault-favourites-tags-and-last-used",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "vault-16",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 4 competitors rate yes (Bitwarden, 1Password, Passbolt, Keeper); the core area (vault, the area of the first 30 rows). Specified for the missing half: a code from a seed kept on a login; the separate authenticator item is built.",
+  "change": "vault-login-totp-codes",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "vault-19",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Partial, built, no demand, one competitor yes (Passbolt). The missing half, exporting a selection, is also covered by portability-export-choice-and-restore-fidelity, which is built for portability-11.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "vault-22",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 4 competitors rate yes (Bitwarden, 1Password, Keeper, Nextcloud Passwords); the core area (vault, the area of the first 30 rows).",
+  "change": "vault-item-clone-preview-and-print",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "vault-24",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: the core area (vault, the area of the first 30 rows) with a feature request row (https://community.bitwarden.com/t/sorting-options-by-date-of-modification-addition-last-use-etc/2484). Specified for the missing half: sorting by date last used; name, date added and date changed are built.",
+  "change": "vault-favourites-tags-and-last-used",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "vault-25",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: the core area (vault, the area of the first 30 rows) with a feature request row (https://community.bitwarden.com/t/duplicate-removal-tool-report-including-merge/648).",
+  "change": "vault-duplicate-finder",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "vault-26",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: the core area (vault, the area of the first 30 rows) with a feature request row (https://community.bitwarden.com/t/view-attachments-without-downloading/52). The encrypted-attachments spec rules out only a server-side preview (openspec/specs/encrypted-attachments/spec.md:147); a preview decrypted in the browser keeps ADR-003.",
+  "change": "vault-item-clone-preview-and-print",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "vault-27",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 2 competitors rate yes (Bitwarden, 1Password); the core area (vault, the area of the first 30 rows).",
+  "change": "vault-trash-and-archive",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "vault-28",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: 4 competitors rate yes (Bitwarden, 1Password, Passbolt, Keeper); the core area (vault, the area of the first 30 rows).",
+  "change": "vault-website-addresses",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "vault-29",
+  "matrix": "keepiq",
+  "decision": "defer",
+  "reason": "Defer: Partial, built, no demand, one competitor yes (HashiCorp Vault). A side-by-side diff is named out of scope for v1 in the version history spec.",
+  "change": null,
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "vault-30",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: a feature request row (https://community.bitwarden.com/t/share-wifi-passwords-via-qr-codes-and-nfc/6472) and one competitor yes (Nextcloud Passwords); the core area (vault, the area of the first 30 rows). Also listed in docs/FEATURES.md:84 (export a single secret to a print-friendly sheet, Enterprise).",
+  "change": "vault-item-clone-preview-and-print",
+  "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "vault-31",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: the core area (vault, the area of the first 30 rows) with a changelog row (https://github.com/marius-wieschollek/passwords/blob/2026.7.0/CHANGELOG.md). Specified for the missing half: a preview image of the site; site icons are built.",
+  "change": "vault-website-addresses",
+  "decidedOn": "2026-09-27"
+ }
+]

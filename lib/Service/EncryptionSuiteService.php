@@ -150,14 +150,31 @@ class EncryptionSuiteService {
 	 * @param string $id The suite ID
 	 * @param string $reason The reason for revocation
 	 * @param string $revokedBy The user who revoked the suite
+	 * @param bool $markCompromised Treat the suite's secrets as compromised (admin force-revoke)
+	 * @param int $emergencyContactsDestroyed Usable emergency contacts cleared by the revoke (audit only)
 	 *
 	 * @return EncryptionSuite
 	 *
 	 * @throws DoesNotExistException
 	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $markCompromised is the
+	 *   administrator's explicit, transient compromise decision (ADR-005),
+	 *   threaded onto the dispatched event and the audit metadata; the owner
+	 *   path leaves it at its default and stays behaviourally unchanged.
+	 * @SuppressWarnings(PHPMD.LongVariable) $emergencyContactsDestroyed is the
+	 *   audit-metadata / response contract name (ADR-005 D5) it threads through;
+	 *   the descriptive name is deliberate and matches the surfaced field.
+	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 */
-	public function revokeSuite(string $id, string $reason, string $revokedBy): EncryptionSuite {
+	public function revokeSuite(
+		string $id,
+		string $reason,
+		string $revokedBy,
+		bool $markCompromised = false,
+		int $emergencyContactsDestroyed = 0,
+	): EncryptionSuite {
 		$suite = $this->mapper->findById($id);
 
 		if ($suite->getStatus() === 'compromised') {
@@ -175,7 +192,10 @@ class EncryptionSuiteService {
 
 		// Implement-user-sharing §10.3 — dispatch a revocation event so
 		// EncryptionSuiteRevokedListener can cascade share-target
-		// cleanup and promote temporary delegations to permanent.
+		// cleanup and promote temporary delegations to permanent. The
+		// compromise flag drives SuiteCompromiseOnRevokeListener on the
+		// same event (admin-suite-revocation D2); it stays false on the
+		// owner path, which never passes $markCompromised.
 		if ($this->eventDispatcher !== null) {
 			$this->eventDispatcher->dispatchTyped(
 				new EncryptionSuiteRevokedEvent(
@@ -183,6 +203,7 @@ class EncryptionSuiteService {
 					ownerType: $suite->getOwnerType(),
 					ownerId: $suite->getOwnerId(),
 					revokedBy: $revokedBy,
+					compromised: $markCompromised,
 				)
 			);
 		}
@@ -193,7 +214,11 @@ class EncryptionSuiteService {
 				eventType: AuditEventTypes::SUITE_REVOKED,
 				objectType: 'suite',
 				objectId: $id,
-				metadata: ['reason' => $reason],
+				metadata: [
+					'reason' => $reason,
+					'markCompromised' => $markCompromised,
+					'emergencyContactsDestroyed' => $emergencyContactsDestroyed,
+				],
 			)
 		);
 

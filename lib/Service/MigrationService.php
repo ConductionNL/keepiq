@@ -25,9 +25,12 @@ use DateTime;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\SuiteMigration;
 use OCA\Keepiq\Db\SuiteMigrationMapper;
+use OCA\Keepiq\Event\SuiteMigrationAbortedEvent;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
 use OCA\Keepiq\Event\SuiteMigrationStartedEvent;
+use OCA\Keepiq\Exception\MigrationAbortRefusedException;
 use OCA\Keepiq\Exception\MigrationIncompleteException;
+use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -221,6 +224,119 @@ class MigrationService {
 			]
 		);
 	}//end completeMigration()
+
+	/**
+	 * Abort a compromise-recovery migration, returning the vault to the old suite.
+	 *
+	 * The abort route the `compromiseRecovery` refusal message already promises.
+	 * It is the non-destructive terminal: completion carries the vault FORWARD to
+	 * the new suite and marks the old one compromised; abort carries it BACK to
+	 * the old suite, which stays `active` and readable.
+	 *
+	 * Abort is permitted ONLY while no record has been committed to the new
+	 * suite. Once a record has moved, the two possible outcomes both lose data —
+	 * discarding the successor strands what has moved, keeping it strands what has
+	 * not — so the migration stays `in_progress` and the caller is pointed at
+	 * resuming. This restriction is also exactly sufficient for the case abort
+	 * exists to remedy: producing a valid re-encrypted record requires the
+	 * plaintext, hence the master password, so a hostile session that never held
+	 * it can never have committed a record and can always be aborted away.
+	 *
+	 * Idempotent by status, like completeMigration: a retried abort on an already
+	 * terminal migration is a no-op, not a second teardown.
+	 *
+	 * @param string $migrationId The migration to abort
+	 *
+	 * @return array<string,mixed> The terminal migration plus an `aborted` flag
+	 *
+	 * @throws MigrationAbortRefusedException When a record has already been committed
+	 *
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
+	 */
+	public function abortMigration(string $migrationId): array {
+		$migration = $this->mapper->findById($migrationId);
+
+		if ($migration->getStatus() !== 'in_progress') {
+			$this->logger->info(
+				'Keepiq: abortMigration called on an already-terminated migration; ignoring',
+				['migrationId' => $migrationId, 'status' => $migration->getStatus()]
+			);
+
+			return [
+				'status' => $migration->getStatus(),
+				'aborted' => false,
+				'alreadyTerminated' => true,
+			];
+		}
+
+		$ownerId = $this->resolveOwnerId(suiteId: $migration->getOldSuiteId());
+
+		// The one gate: nothing may have moved to the new suite yet.
+		$committed = 0;
+		if ($ownerId !== null) {
+			$committed = $this->workService->countCommitted(migration: $migration, ownerId: $ownerId);
+		}
+
+		if ($committed > 0) {
+			throw (new MigrationAbortRefusedException(
+				message: sprintf(
+					'%d record(s) have already been re-encrypted to the new suite, so this '
+					. 'migration can no longer be aborted without losing data. Resume it to finish, '
+					. 'or complete it.',
+					$committed
+				)
+			))->withCommitted($committed);
+		}
+
+		// Terminal, but the RESTORATIVE terminal. The old suite is untouched and
+		// stays active; the successor — created empty moments ago and never
+		// written to — is discarded. It is DELETED rather than revoked on
+		// purpose: revoking a user suite runs the lost-identity cascade
+		// (EncryptionSuiteRevokedListener sweeps the owner's incoming
+		// ShareTargets and promotes their delegations), which would destroy real
+		// state over a migration the abort exists to undo.
+		$migration->setStatus('aborted');
+		$migration->setCompletedAt(new DateTime());
+		$this->mapper->update($migration);
+
+		try {
+			$successor = $this->suiteMapper->findById($migration->getNewSuiteId());
+			$this->suiteMapper->delete($successor);
+		} catch (DoesNotExistException) {
+			// Already gone — nothing to discard.
+			$this->logger->warning(
+				'Keepiq: successor suite already absent during abort',
+				['migrationId' => $migrationId, 'newSuiteId' => $migration->getNewSuiteId()]
+			);
+		}
+
+		$this->workService->clearFailureAccounting(migration: $migration);
+
+		// NOT SuiteMigrationCompletedEvent: that event runs the terminal cascade
+		// (compromise-flagging, link-share revocation, emergency-access
+		// invalidation) which must never fire for an abort. The aborted event
+		// carries the single reaction abort needs — releasing the SecretRequests
+		// that SuiteMigrationStartedListener locked, keeping them on the old
+		// suite — handled by SuiteMigrationAbortedListener.
+		$this->eventDispatcher?->dispatchTyped(
+			new SuiteMigrationAbortedEvent(
+				oldSuiteId: $migration->getOldSuiteId(),
+				newSuiteId: $migration->getNewSuiteId(),
+				migrationId: $migration->getId(),
+			)
+		);
+
+		$this->logger->info(
+			"Keepiq: Compromise recovery aborted for migration {$migrationId}; vault returned to the old suite",
+			['oldSuiteId' => $migration->getOldSuiteId()]
+		);
+
+		return (
+			$migration->jsonSerialize() + [
+				'aborted' => true,
+			]
+		);
+	}//end abortMigration()
 
 	/**
 	 * Run everything that must happen — and must be allowed — before a
@@ -492,6 +608,97 @@ class MigrationService {
 
 		return $ownerId;
 	}//end resolveOwnerId()
+
+	/**
+	 * Refuse when the suite is either end of a migration still in progress.
+	 *
+	 * Revoking the old end blocks the reads the owner's browser needs to
+	 * re-encrypt; revoking the new end strands what was already re-encrypted.
+	 * Either way the migration and the write lock stay `in_progress` with no
+	 * way to finish (keepiq#803). Both revoke paths call this before touching
+	 * anything. It is a check, not a lock: a migration started in the moment
+	 * between this call and revokeSuite() is not caught.
+	 *
+	 * @param string $suiteId The suite about to be revoked
+	 *
+	 * @return void
+	 *
+	 * @throws SuiteMigrationInProgressException When a migration involving the suite is in progress
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
+	 */
+	public function assertNoMigrationInProgress(string $suiteId): void {
+		foreach ($this->mapper->findBySuiteId(suiteId: $suiteId) as $migration) {
+			if ($migration->getStatus() === 'in_progress') {
+				throw new SuiteMigrationInProgressException(
+					message: 'This suite is part of a key migration that is still in progress. '
+					. 'It can be revoked once that migration is completed or aborted.'
+				);
+			}
+		}
+
+	}//end assertNoMigrationInProgress()
+
+	/**
+	 * The suite's in-progress migration, or null. Changes nothing.
+	 *
+	 * @param string $suiteId Either end of the migration
+	 *
+	 * @return SuiteMigration|null
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
+	 */
+	public function findInProgressForSuite(string $suiteId): ?SuiteMigration {
+		foreach ($this->mapper->findBySuiteId(suiteId: $suiteId) as $migration) {
+			if ($migration->getStatus() === 'in_progress') {
+				return $migration;
+			}
+		}
+
+		return null;
+
+	}//end findInProgressForSuite()
+
+	/**
+	 * End a migration for a compromise force-revoke.
+	 *
+	 * The owner's abort refuses once anything is committed, and every migration
+	 * route is owner-only. So whoever holds the session and the leaked password
+	 * could start a recovery, commit one record and walk away, and the admin's
+	 * containment would be blocked for good (keepiq#809 review). A compromise
+	 * force-revoke therefore ends the migration instead: status `terminated`,
+	 * which releases the write lock, plus the same aborted event the owner's
+	 * abort dispatches, which unlocks the SecretRequests it locked and leaves
+	 * them on the old suite. That suite is revoked by then, so their public
+	 * links refuse them (SecretRequestPolicy: reason `unavailable`). The caller revokes BOTH ends first, so a failure
+	 * before this point leaves the migration open for a retry to find.
+	 *
+	 * @param SuiteMigration $migration The in-progress migration
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
+	 */
+	public function terminateForCompromise(SuiteMigration $migration): void {
+		$migration->setStatus('terminated');
+		$migration->setCompletedAt(new DateTime());
+		$this->mapper->update($migration);
+		$this->workService->clearFailureAccounting(migration: $migration);
+
+		$this->eventDispatcher?->dispatchTyped(
+			new SuiteMigrationAbortedEvent(
+				oldSuiteId: $migration->getOldSuiteId(),
+				newSuiteId: $migration->getNewSuiteId(),
+				migrationId: $migration->getId(),
+			)
+		);
+
+		$this->logger->warning(
+			'Keepiq: migration terminated by a compromise force-revoke',
+			['migrationId' => $migration->getId()]
+		);
+
+	}//end terminateForCompromise()
 
 	/**
 	 * Get in-progress migration for a given owner (via their old suite).

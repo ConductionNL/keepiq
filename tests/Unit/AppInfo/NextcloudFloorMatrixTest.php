@@ -125,9 +125,11 @@ class NextcloudFloorMatrixTest extends TestCase {
 	 * workflows carry comments that name refs while explaining they were
 	 * REMOVED, so a comment-blind scan reads legs that do not exist.
 	 *
-	 * @return array<int, int> The major version of every tested leg.
+	 * @return array<int, int>|null The major version of every overridden leg,
+	 *                              or null when the matrix is DERIVED from
+	 *                              appinfo/info.xml (the supported default).
 	 */
-	private function testedRefs(): array {
+	private function testedRefs(): ?array {
 		$path = __DIR__ . '/../../../.github/workflows/code-quality.yml';
 		$this->assertFileExists(
 			$path,
@@ -144,15 +146,22 @@ class NextcloudFloorMatrixTest extends TestCase {
 			$workflow,
 			$matches
 		);
-		$this->assertSame(
-			1,
-			$matched,
-			'Could not find a `nextcloud-test-refs:` line in code-quality.yml. If the key '
-			. 'was renamed, or the input was dropped so the shared workflow default applies, '
-			. 'this test is scanning for something that no longer exists and its green would '
-			. 'be meaningless. NOTE: omitting the input is not neutral — the shared '
-			. 'quality.yml default is ["stable31", "stable32"].'
-		);
+
+		// ABSENT IS THE SUPPORTED CONFIGURATION, and this test used to say the
+		// opposite. It asserted the key was present and warned that "omitting
+		// the input is not neutral — the shared quality.yml default is
+		// ["stable31", "stable32"]". That was true once; the shared workflow
+		// now DERIVES the matrix from appinfo/info.xml when the input is unset.
+		// Its own input description says so: "LEAVE UNSET (default) to derive
+		// the range from appinfo/info.xml, which is the supported configuration
+		// — a derived matrix cannot disagree with the declared range."
+		//
+		// The fallback to the shared default range still exists, but it fires
+		// when NO MANIFEST is found at the derived path, not when the override
+		// is omitted. So that is what the derived branch checks instead.
+		if ($matched !== 1) {
+			return null;
+		}
 
 		$refs = json_decode($matches['json'], true);
 		$this->assertIsArray($refs, 'nextcloud-test-refs must be a JSON array');
@@ -180,12 +189,72 @@ class NextcloudFloorMatrixTest extends TestCase {
 	 */
 	public function testBothDeclarationsAreActuallyReadable(): void {
 		$this->assertGreaterThan(0, $this->declaredFloor());
+
+		$refs = $this->testedRefs();
+		if ($refs === null) {
+			$this->markTestSkipped(
+				'No tested-ref list to read: the matrix is derived from appinfo/info.xml '
+				. '(see testTheMatrixIsDerivedFromTheDeclaredManifest).'
+			);
+		}
+
 		$this->assertNotEmpty(
-			$this->testedRefs(),
+			$refs,
 			'The tested-ref list parsed as empty. An empty list would make every '
 			. 'assertion below pass vacuously.'
 		);
 	}//end testBothDeclarationsAreActuallyReadable()
+
+	/**
+	 * When the matrix is derived, the manifest it is derived from must exist.
+	 *
+	 * @return void
+	 */
+	public function testTheMatrixIsDerivedFromTheDeclaredManifest(): void {
+		if ($this->testedRefs() !== null) {
+			$this->markTestSkipped('The quality workflow overrides nextcloud-test-refs; nothing is derived.');
+		}
+
+		$this->assertDerivationIsWired();
+	}//end testTheMatrixIsDerivedFromTheDeclaredManifest()
+
+	/**
+	 * The manifest the matrix is derived from must actually be there.
+	 *
+	 * This is the failure this test exists to catch once the override is gone.
+	 * The shared workflow reads `nextcloud-info-path` (default
+	 * `appinfo/info.xml`) and, in its own words, "a repo with no manifest at
+	 * this path derives nothing and falls back to the shared default range".
+	 * So a typo in that input, or a manifest moved without updating it, does
+	 * not fail loudly — it silently swaps the declared range for somebody
+	 * else's default, which is the same class of silent narrowing the original
+	 * version of this test was written to prevent.
+	 *
+	 * @return void
+	 */
+	private function assertDerivationIsWired(): void {
+		$workflow = (string)file_get_contents(
+			__DIR__ . '/../../../.github/workflows/code-quality.yml'
+		);
+
+		// Assignment line only, for the same reason testedRefs() parses one:
+		// this workflow's comments quote paths while explaining them.
+		$path = 'appinfo/info.xml';
+		if (preg_match('/^\s*nextcloud-info-path:\s*["\']?(?<path>[^"\'\s#]+)/m', $workflow, $m) === 1) {
+			$path = $m['path'];
+		}
+
+		$this->assertFileExists(
+			__DIR__ . '/../../../' . $path,
+			sprintf(
+				'The quality workflow omits `nextcloud-test-refs`, so the PHPUnit matrix is '
+				. 'DERIVED from "%s" — but no manifest exists there. The shared workflow '
+				. 'derives nothing in that case and falls back to its own default range, so '
+				. 'CI would silently test a range this app never declared.',
+				$path
+			)
+		);
+	}//end assertDerivationIsWired()
 
 	/**
 	 * No CI leg may target a Nextcloud below the declared floor.
@@ -194,9 +263,17 @@ class NextcloudFloorMatrixTest extends TestCase {
 	 */
 	public function testNoTestedLegIsBelowTheDeclaredFloor(): void {
 		$floor = $this->declaredFloor();
+		$refs = $this->testedRefs();
+		if ($refs === null) {
+			$this->markTestSkipped(
+				'The matrix is derived from appinfo/info.xml, so a leg below the floor '
+				. 'is not expressible; the shared workflow owns this check.'
+			);
+		}
+
 		$below = [];
 
-		foreach ($this->testedRefs() as $major) {
+		foreach ($refs as $major) {
 			if ($major < $floor) {
 				$below[] = 'stable' . $major;
 			}
@@ -225,6 +302,12 @@ class NextcloudFloorMatrixTest extends TestCase {
 	public function testTheDeclaredFloorIsActuallyExercised(): void {
 		$floor = $this->declaredFloor();
 		$refs = $this->testedRefs();
+		if ($refs === null) {
+			$this->markTestSkipped(
+				'The matrix is derived from appinfo/info.xml, so every leg is inside the '
+				. 'declared range; the shared workflow owns this check.'
+			);
+		}
 
 		$atOrAbove = array_filter($refs, static fn (int $major): bool => $major >= $floor);
 

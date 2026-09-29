@@ -26,12 +26,14 @@
 		<HoneySection />
 		<OfflineCacheSection />
 		<OffboardingSection />
+		<AdminSuiteSection />
 		<AdminAuditSection />
 	</div>
 </template>
 
 <script>
 import AdminAuditSection from '../../components/settings/AdminAuditSection.vue'
+import AdminSuiteSection from '../../components/settings/AdminSuiteSection.vue'
 import ApplicationQueueSection from '../../components/settings/ApplicationQueueSection.vue'
 import AttachmentLimitsSection from '../../components/settings/AttachmentLimitsSection.vue'
 import BreachCheckSection from '../../components/settings/BreachCheckSection.vue'
@@ -62,6 +64,7 @@ export default {
 		HoneySection,
 		OfflineCacheSection,
 		OffboardingSection,
+		AdminSuiteSection,
 		AdminAuditSection,
 	},
 }

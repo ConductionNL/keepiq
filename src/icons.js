@@ -27,6 +27,7 @@ import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import MapMarkerPath from 'vue-material-design-icons/MapMarkerPath.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
+import PowerPlugOutline from 'vue-material-design-icons/PowerPlugOutline.vue'
 import Pulse from 'vue-material-design-icons/Pulse.vue'
 import ShieldKeyOutline from 'vue-material-design-icons/ShieldKeyOutline.vue'
 import Sitemap from 'vue-material-design-icons/Sitemap.vue'
@@ -48,6 +49,7 @@ export default {
 	LockOutline,
 	MapMarkerPath,
 	Plus,
+	PowerPlugOutline,
 	Pulse,
 	ShieldKeyOutline,
 	Sitemap,

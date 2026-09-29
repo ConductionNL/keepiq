@@ -93,22 +93,22 @@
 			:aiCompanion="true"
 			:supportDialog="showSupportDialog"
 			:manifest="manifest"
-			:customComponents="customComponents"
+			:customComponents="shellCustomComponents"
 			:pageTypes="pageTypes"
 			:registry="registry"
 			appId="keepiq"
 			:translate="translateForApp"
 			:permissions="permissions">
-			<!-- Keepiq's own left rail (restyle Stage 7): manifest-driven
+			<!-- Keepiq's own left rail: manifest-driven
 			     entries PLUS the recursive vault/folder tree, which the
 			     default CnAppNav cannot render. The `.keepiq-shell--locked`
 			     rule below keeps hiding it on the lock screen. -->
 			<template #menu>
 				<KeepiqAppNav :manifest="manifest" />
 			</template>
-			<!-- Secret detail as a right sidebar over the vault list (restyle
-			     Stage 8). CnAppRoot's #sidebar slot is the NcContent-level
-			     mount NcAppSidebar needs to slide in correctly (ADR-017).
+			<!-- Secret detail as a right sidebar over the vault list.
+			     CnAppRoot's #sidebar slot is the NcContent-level mount
+			     NcAppSidebar needs to slide in correctly (ADR-017).
 			     Open/closed state lives in the route's optional :id? segment
 			     (src/utils/detailRoute.js), so /secrets/<id> deep links render
 			     the list WITH the sidebar open and closing drops the segment.
@@ -204,6 +204,35 @@
 											)
 										" />
 								</div>
+
+								<!-- Revocation is guarded by a vault-key proof: the
+								     master password signs the proof and is never sent,
+								     so a stolen session cannot revoke the vault. -->
+								<div style="margin-top: 0.5rem">
+									<NcPasswordField
+										v-model="revokePassword"
+										:label="t('keepiq', 'Your master password')"
+										:disabled="revoking" />
+								</div>
+
+								<!-- The server refuses to silently delete a usable
+								     break-glass path; once it has, name the loss and
+								     the retrieve-first ordering before letting the
+								     user proceed with the deletion acknowledged. -->
+								<NcNoteCard
+									v-if="revokeEmergencyCount > 0"
+									type="error"
+									data-testid="revoke-emergency-warning">
+									{{
+										n(
+											'keepiq',
+											'This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.',
+											'This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.',
+											revokeEmergencyCount,
+										)
+									}}
+								</NcNoteCard>
+
 								<div
 									style="
 										display: flex;
@@ -212,17 +241,32 @@
 									">
 									<NcButton
 										variant="error"
-										:disabled="!revokeReason || revoking"
-										@click="handleRevoke">
+										:disabled="
+											!revokeReason
+											|| !revokePassword
+											|| revoking
+										"
+										data-testid="revoke-confirm"
+										@click="
+											handleRevoke(revokeEmergencyCount > 0)
+										">
 										{{
 											revoking
 												? t('keepiq', 'Revoking…')
-												: t('keepiq', 'Confirm revocation')
+												: revokeEmergencyCount > 0
+													? t(
+															'keepiq',
+															'Revoke and delete emergency access',
+														)
+													: t(
+															'keepiq',
+															'Confirm revocation',
+														)
 										}}
 									</NcButton>
 									<NcButton
 										variant="secondary"
-										@click="revokeConfirm = false">
+										@click="cancelRevoke">
 										{{ t('keepiq', 'Cancel') }}
 									</NcButton>
 								</div>
@@ -259,6 +303,10 @@
 					</NcEmptyContent>
 				</NcAppSettingsSection>
 
+				<!--
+				  Browser extension: hidden until the extension actually ships.
+				  Kept in place — markup, styles and the securitySettingsUrl
+				  computed — so restoring it is a matter of uncommenting.
 				<NcAppSettingsSection
 					id="browser-extension"
 					:name="t('keepiq', 'Browser extension')">
@@ -269,7 +317,7 @@
 						{{
 							t(
 								'keepiq',
-								'The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — decrypting everything inside the extension. The server only ever ships encrypted blobs, so your master password and secrets never leave your device.',
+								'The Keepiq browser extension autofills your logins, provides passkeys, and shows TOTP codes — without your secrets ever leaving your device.',
 							)
 						}}
 					</p>
@@ -313,8 +361,9 @@
 						}}
 					</p>
 				</NcAppSettingsSection>
+				-->
 
-				<!-- Version footer (restyle stage 3): a plain trailing line,
+				<!-- Version footer: a plain trailing line,
 				     matching the legacy UserSettings.vue surface. Hidden when
 				     the initial state is absent. -->
 				<p v-if="appVersion" class="user-settings__version">
@@ -335,11 +384,12 @@ import {
 	NcButton,
 	NcEmptyContent,
 	NcNoteCard,
+	NcPasswordField,
 	NcSelect,
 	NcTextField,
 } from '@nextcloud/vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
-import PuzzleIcon from 'vue-material-design-icons/Puzzle.vue'
+// import PuzzleIcon from 'vue-material-design-icons/Puzzle.vue' // browser-extension section, hidden until it ships
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import TimerIcon from 'vue-material-design-icons/Timer.vue'
 import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
@@ -354,6 +404,7 @@ import {
 	isPublicSurface,
 	LOCK_ROUTE_NAME,
 } from './router/guards.js'
+import { createConnectionHandlers } from './services/connectionRegistry.js'
 import { useEncryptionSuiteStore } from './store/modules/encryptionSuite.js'
 import { useOfflineStore } from './store/modules/offline.js'
 import { useSessionStore } from './store/modules/session.js'
@@ -369,12 +420,13 @@ export default {
 		NcButton,
 		NcEmptyContent,
 		NcNoteCard,
+		NcPasswordField,
 		NcSelect,
 		NcTextField,
 		TimerIcon,
 		ShieldIcon,
 		KeyIcon,
-		PuzzleIcon,
+		// PuzzleIcon, // browser-extension section, hidden until it ships
 		MasterPasswordForm,
 		PasskeyManager,
 		CompromiseRecoveryForm,
@@ -446,9 +498,12 @@ export default {
 			showRecovery: false,
 			revokeConfirm: false,
 			revokeReason: '',
+			revokePassword: '',
 			revoking: false,
 			revokeSuccess: false,
 			revokeError: null,
+			/** @type {number} Usable emergency contacts the server refused to silently delete (0 = none seen). */
+			revokeEmergencyCount: 0,
 			timeoutOptions: [
 				{ value: 'session', label: ncT('keepiq', 'Nextcloud session') },
 				{ value: '10min', label: ncT('keepiq', '10 minutes') },
@@ -458,6 +513,29 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The `customComponents` map CnAppRoot receives: the page components
+		 * main.js derives from src/registry.js, plus the Integrations page's
+		 * Add integration header-action handler (adopt-connection-registry).
+		 *
+		 * The handler is a FUNCTION, because it leaves the app for integriq's
+		 * Connections overview and a header action's `navigate` only pushes a
+		 * route inside this app. CnIndexPage resolves a handler name against
+		 * this map, not against `registry`.
+		 *
+		 * @return {object} Map of name to component or handler.
+		 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+		 */
+		shellCustomComponents() {
+			return {
+				...this.customComponents,
+				...createConnectionHandlers({
+					generateUrl,
+					assign: (url) => window.location.assign(url),
+				}),
+			}
+		},
+
 		/**
 		 * Whether this page is being served to an anonymous recipient.
 		 *
@@ -530,6 +608,8 @@ export default {
 		/**
 		 * Link to Nextcloud personal security settings, where the extension's
 		 * app password is created and revoked (browser-extension-autofill §5.1).
+		 * Kept for the browser-extension section, which is commented out in the
+		 * template until the extension ships.
 		 *
 		 * @return {string}
 		 */
@@ -582,7 +662,7 @@ export default {
 
 		/**
 		 * The secret id whose detail sidebar is open, or null. Derived from
-		 * the list routes' optional `:id?` segment (restyle Stage 8) — other
+		 * the list routes' optional `:id?` segment — other
 		 * id-carrying routes (ApplicationDetail) never open it.
 		 *
 		 * @return {string|null} The open secret's id, or null when closed.
@@ -795,26 +875,60 @@ export default {
 		},
 
 		/**
+		 * Dismiss the revoke confirmation, clearing the entered master password
+		 * and any emergency-loss prompt.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		cancelRevoke() {
+			this.revokeConfirm = false
+			this.revokeReason = ''
+			this.revokePassword = ''
+			this.revokeEmergencyCount = 0
+		},
+
+		/**
 		 * Revoke the current user's encryption suite from the app shell,
-		 * surfacing success/error state to the UI.
+		 * surfacing success/error state to the UI. The master password signs the
+		 * vault-key proof the guarded endpoint requires and is never sent.
 		 *
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 		 */
-		async handleRevoke() {
+		async handleRevoke(acceptEmergencyLoss = false) {
 			this.revoking = true
 			this.revokeError = null
 			this.revokeSuccess = false
 
 			try {
-				await this.suiteStore.revokeSuite(this.revokeReason)
+				await this.suiteStore.revokeSuite(
+					this.revokeReason,
+					this.revokePassword,
+					acceptEmergencyLoss,
+				)
 				this.revokeSuccess = true
 				this.revokeConfirm = false
 				this.revokeReason = ''
+				this.revokePassword = ''
+				this.revokeEmergencyCount = 0
 			} catch (e) {
-				this.revokeError =
-					e.response?.data?.message
-					|| e.message
-					|| ncT('keepiq', 'Failed to revoke suite')
+				// The server refuses to silently delete a usable break-glass path.
+				// Surface the count (never identities) and let the user re-confirm
+				// with the loss acknowledged, rather than showing a generic error.
+				if (
+					e.response?.status === 409
+					&& e.response?.data?.error === 'emergency_access_present'
+				) {
+					this.revokeEmergencyCount =
+						e.response.data.usableEmergencyContacts || 1
+				} else {
+					this.revokeError =
+						e.response?.data?.message
+						|| e.message
+						|| ncT('keepiq', 'Failed to revoke suite')
+				}
 			} finally {
 				this.revoking = false
 			}
@@ -892,6 +1006,16 @@ export default {
 
 .user-settings__suite-info p {
 	margin: 0.25rem 0;
+}
+
+/*
+ * Server CSS zeroes list padding, which left the markers hanging outside
+ * the settings section instead of lining up under the paragraph above.
+ * Logical property so RTL indents on the correct side. Used by the
+ * browser-extension section, which is commented out until it ships.
+ */
+.user-settings__steps {
+	padding-inline-start: 1.5rem;
 }
 
 .user-settings__version {

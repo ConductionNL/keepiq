@@ -1,18 +1,20 @@
 <template>
 	<div class="secret-list-view">
-		<!-- Single pane (restyle Stage 7): folder navigation lives in the app
+		<!-- Single pane: folder navigation lives in the app
 		     nav's folder tree (KeepiqAppNav/NavFolderTree) and in the list's
-		     own subfolder rows + breadcrumbs (Stage 6); the in-page folder
+		     own subfolder rows + breadcrumbs; the in-page folder
 		     sidebar is gone. -->
 		<div class="secret-list-view__main">
 			<ExportDialog
 				:open="exportOpen"
 				:secrets="decryptedSecrets"
+				:skipped="skippedSecrets"
 				:folders="folders"
 				@update:open="exportOpen = $event" />
 			<CxpTransferDialog
 				:open="cxpOpen"
 				:secrets="decryptedSecrets"
+				:skipped="skippedSecrets"
 				:folders="folders"
 				@update:open="cxpOpen = $event"
 				@openImport="importOpen = true" />
@@ -104,7 +106,7 @@
 				@select="onLibrarySelect"
 				@rowClick="onRowOpen"
 				@pageChanged="goToPage">
-				<!-- ONE actions menu (Stage 8 toolbar decision): everything
+				<!-- ONE actions menu: everything
 				     that lived in the title row's Refresh button + "More
 				     actions" overflow, and the inline Select-all checkbox,
 				     folds into the actions bar's own overflow menu.
@@ -114,7 +116,7 @@
 				     entries are turned OFF above — they bypass keepiq's
 				     encrypted import/export flows and duplicated the "My
 				     data" entries. Order: list controls (Select all), the
-				     Stage-5 toolbar actions, the "My data" entries
+				     page's own toolbar actions, the "My data" entries
 				     (secret-export-gdpr §6.5), then the secret-type filter
 				     (passkey-item-type §3.3). data-testids and disabled
 				     conditions are unchanged. -->
@@ -232,7 +234,7 @@
 						</NcActionRadio>
 					</NcActions>
 				</template>
-				<!-- Vault/folder strip (restyle Stage 6, revised): the current
+				<!-- Vault/folder strip (revised): the current
 				     folder's direct subfolders — the VAULTS at root — render as
 				     a distinct section ABOVE the collection in every view mode,
 				     so they never masquerade as secrets in the table or card
@@ -241,7 +243,7 @@
 				     search (team decision: everything visible is searchable),
 				     independent of the secrets' pagination. -->
 				<template #before-collection>
-					<!-- Folder trail (restyle Stage 5): home crumb + parent
+					<!-- Folder trail: home crumb + parent
 					     walk to the current folder (unlinked). BELOW the
 					     actions bar — the bar always owns the top row — and
 					     above the folder strip. Empty at the vault root, so
@@ -333,7 +335,7 @@
 						{{ t('keepiq', 'Delete') }}
 					</NcButton>
 				</template>
-				<!-- Rich empty state (restyle Stage 5). -->
+				<!-- Rich empty state. -->
 				<template #empty>
 					<NcEmptyContent
 						:name="t('keepiq', 'No secrets found')"
@@ -453,10 +455,13 @@
 				</template>
 			</CnIndexPage>
 		</div>
-		<!-- No `:secret` prop: the dialog creates the placeholder itself. -->
+		<!-- No `:secret` prop: the dialog creates the placeholder itself.
+		     `folderId` is the vault or folder being browsed, so the placeholder
+		     is filed where the requester was standing when they asked. -->
 		<SecretRequestCreateDialog
 			v-if="credentialRequestOpen"
 			:open="credentialRequestOpen"
+			:folderId="selectedFolderId"
 			data-testid="credential-request-dialog"
 			@update:open="credentialRequestOpen = $event"
 			@created="onCredentialRequested" />
@@ -607,6 +612,8 @@ export default {
 			teamFolderOpen: false,
 			typeFilter: null,
 			decryptedSecrets: [],
+			/** Secrets the last decryptAllSecrets() could not decrypt (keepiq#794). */
+			skippedSecrets: 0,
 			bulkDialog: null,
 			lastCheckedId: null,
 			/**
@@ -818,9 +825,9 @@ export default {
 		},
 
 		/**
-		 * The current folder's direct subfolders as list rows (restyle
-		 * Stage 6). Filtered by the inline search term — everything visible
-		 * in the list is searchable — and name-sorted as one group.
+		 * The current folder's direct subfolders as list rows.
+		 * Filtered by the inline search term — everything visible in the list
+		 * is searchable — and name-sorted as one group.
 		 *
 		 * NONE at the root (2026-09-03, per Remko, Proton-style): "All
 		 * secrets" is a cross-vault query, not a container the user is
@@ -864,7 +871,7 @@ export default {
 
 		/**
 		 * The page title: the selected folder's name, or "Secrets" at the
-		 * vault root (restyle Stage 5).
+		 * vault root.
 		 *
 		 * @return {string}
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
@@ -916,10 +923,16 @@ export default {
 		},
 
 		/**
-		 * The breadcrumb trail (restyle Stage 5): a Home crumb back to the
+		 * The breadcrumb trail: a Home crumb back to the
 		 * vault root, the ancestor folders as links, the current folder
 		 * last (CnBreadcrumbs renders it unlinked with aria-current). Empty
 		 * at the root — no trail is rendered there.
+		 *
+		 * The Home crumb carries a `label` even though nothing renders it:
+		 * NcBreadcrumb prints the name only for crumbs WITHOUT an icon, but
+		 * declares `name` as a required String, so an icon-only crumb warns
+		 * once per crumb per render ("type check failed for prop name").
+		 * The word matches the nav item pointing at the same route.
 		 *
 		 * @return {Array<object>} CnBreadcrumbs `crumbs` entries.
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
@@ -930,7 +943,11 @@ export default {
 				return []
 			}
 			return [
-				{ icon: 'Home', to: { name: 'SecretList' } },
+				{
+					icon: 'Home',
+					label: t('keepiq', 'Vaults'),
+					to: { name: 'SecretList' },
+				},
 				...trail.map((folder, index) =>
 					index === trail.length - 1
 						? { label: folder.name }
@@ -1202,27 +1219,32 @@ export default {
 
 		/**
 		 * Decrypt every secret the user can read, in the browser, so the export
-		 * dialogs can serialize the full vault. Returns [] when the vault is
-		 * locked (the dialogs then fall back to metadata-only where applicable).
+		 * dialogs can serialize the full vault. A secret that cannot be
+		 * decrypted (a blocked or revoked suite) is left out and counted, so the
+		 * dialogs can say how many are missing (keepiq#794).
 		 *
-		 * @return {Promise<Array<object>>}
+		 * @return {Promise<{secrets: Array<object>, skipped: number}>}
 		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async decryptAllSecrets() {
 			const store = this.secretStore
 			// Pull the WHOLE vault (the export covers everything, not just the
 			// paginated view); paged within the server's per-request cap.
 			await store.fetchAllSecrets()
-			const out = []
+			const secrets = []
+			let skipped = 0
 			for (const secret of store.secrets) {
 				try {
-					out.push(await store.decryptSecret(secret))
+					secrets.push(await store.decryptSecret(secret))
 				} catch {
 					// A secret whose suite is blocked/revoked cannot be decrypted;
-					// skip it rather than failing the whole export.
+					// leave it out rather than failing the whole export, and
+					// count it so the dialog tells the user.
+					skipped += 1
 				}
 			}
-			return out
+			return { secrets, skipped }
 		},
 
 		/**
@@ -1230,9 +1252,12 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async openExport() {
-			this.decryptedSecrets = await this.decryptAllSecrets()
+			const { secrets, skipped } = await this.decryptAllSecrets()
+			this.decryptedSecrets = secrets
+			this.skippedSecrets = skipped
 			this.exportOpen = true
 		},
 
@@ -1242,9 +1267,12 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/cxp-transfer/specs/cxp-transfer/spec.md
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async openCxp() {
-			this.decryptedSecrets = await this.decryptAllSecrets()
+			const { secrets, skipped } = await this.decryptAllSecrets()
+			this.decryptedSecrets = secrets
+			this.skippedSecrets = skipped
 			this.cxpOpen = true
 		},
 
@@ -1255,7 +1283,8 @@ export default {
 		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
 		 */
 		async openGdpr() {
-			this.decryptedSecrets = await this.decryptAllSecrets()
+			const { secrets } = await this.decryptAllSecrets()
+			this.decryptedSecrets = secrets
 			this.gdprOpen = true
 		},
 
@@ -1496,7 +1525,7 @@ export default {
 		},
 
 		/**
-		 * Open a secret's detail sidebar (restyle Stage 8): the optional
+		 * Open a secret's detail sidebar: the optional
 		 * `:id?` segment joins the current list route, so the list stays
 		 * mounted behind the sidebar and the folder context survives in
 		 * the path.
@@ -1538,7 +1567,7 @@ export default {
 		},
 
 		/**
-		 * Navigate into a subfolder row (restyle Stage 6).
+		 * Navigate into a subfolder row.
 		 *
 		 * @param {string} folderId The clicked folder's id.
 		 * @return {void}
@@ -1614,7 +1643,7 @@ export default {
 <style scoped>
 /* No own padding: CnIndexPage already pads the page (5 × baseline); the
    old extra 16px doubled every edge and, with the page title visually
-   hidden (Stage 8), left a dead band between the nav toggle and the bar. */
+   hidden, left a dead band between the nav toggle and the bar. */
 .secret-list-view {
 	height: 100%;
 }
@@ -1633,7 +1662,7 @@ export default {
    guards against design-system themes that flatten the bar's box with
    their own !important rules. */
 .secret-list-view :deep(.cn-index-page) {
-	padding-top: 4px;
+	padding-top: 0;
 }
 
 .secret-list-view :deep(.cn-actions-bar) {
@@ -1643,8 +1672,17 @@ export default {
 	   element its shell reads flat at the small element radius next to the
 	   pill-shaped search and view toggle inside. Other apps keep the
 	   library default — their bars sit mid-page under a title, and that
-	   rounding call is theirs. Fallbacks for older server generations. */
-	border-radius: var(
+	   rounding call is theirs. Fallbacks for older server generations.
+	   Top corners stay square: the bar butts against the page's top edge
+	   (padding-top: 0 above), so rounding there would expose the page
+	   background in two notches instead of reading as a seam. */
+	border-start-start-radius: 0;
+	border-start-end-radius: 0;
+	border-end-start-radius: var(
+		--border-radius-container-large,
+		var(--border-radius-large, 12px)
+	);
+	border-end-end-radius: var(
 		--border-radius-container-large,
 		var(--border-radius-large, 12px)
 	);
@@ -1700,7 +1738,7 @@ export default {
 	gap: 8px;
 }
 
-/* Subfolder rows (restyle Stage 6): full-width, file-manager style. */
+/* Subfolder rows: full-width, file-manager style. */
 .secret-list-view__folder-row {
 	display: flex;
 	align-items: center;

@@ -37,8 +37,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'encryptionSuite#create',            'url' => '/api/v1/suites',                          'verb' => 'POST'],
     ['name' => 'encryptionSuite#updatePrivateKey',  'url' => '/api/v1/suites/{id}/private-key',         'verb' => 'PUT'],
     ['name' => 'encryptionSuite#revoke',            'url' => '/api/v1/suites/{id}/revoke',              'verb' => 'POST'],
+    ['name' => 'encryptionSuite#forceRevoke',       'url' => '/api/v1/suites/{id}/force-revoke',        'verb' => 'POST'],
     ['name' => 'encryptionSuite#reinstate',         'url' => '/api/v1/suites/{id}/reinstate',           'verb' => 'POST'],
     ['name' => 'encryptionSuite#compromiseRecovery','url' => '/api/v1/suites/compromise-recovery',      'verb' => 'POST'],
+    ['name' => 'encryptionSuite#proofChallenge',    'url' => '/api/v1/suites/{id}/proof-challenge',     'verb' => 'GET'],
 
     // CA management (admin-only).
     ['name' => 'cACertificate#getStatus',          'url' => '/api/v1/ca/status',                      'verb' => 'GET'],
@@ -49,6 +51,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // Migration tracking.
     ['name' => 'migration#getStatus',                'url' => '/api/v1/migrations/status',               'verb' => 'GET'],
     ['name' => 'migration#complete',                 'url' => '/api/v1/migrations/{id}/complete',        'verb' => 'POST'],
+    ['name' => 'migration#abort',                    'url' => '/api/v1/migrations/{id}/abort',           'verb' => 'POST'],
 
     // Compromise-recovery migration work loop. One record per request: the
     // browser decrypts with the old private key, re-encrypts under the new one,
@@ -59,6 +62,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'migration#reEncryptSecret',          'url' => '/api/v1/migrations/{id}/secrets/{secretId}', 'verb' => 'POST'],
     ['name' => 'migration#reEncryptVersion',         'url' => '/api/v1/migrations/{id}/versions/{versionId}', 'verb' => 'POST'],
     ['name' => 'migration#reEncryptAttachmentGrant', 'url' => '/api/v1/migrations/{id}/attachment-grants/{grantId}', 'verb' => 'POST'],
+    // Emergency contacts migrate too, but off the gate: the browser mints a fresh
+    // envelope escrowing the new key and re-points the contact here. A contact it
+    // cannot carry is left for the completion sweep to invalidate.
+    ['name' => 'migration#reEnvelopeEmergencyContact', 'url' => '/api/v1/migrations/{id}/emergency-contacts/{contactId}', 'verb' => 'POST'],
 
     // Key generator endpoint (stateless, authenticated).
     ['name' => 'keyGenerator#generate', 'url' => '/api/v1/generate-key', 'verb' => 'POST'],
@@ -116,6 +123,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // Bulk direct-share registration + recipient-cert lookup (bulk-actions §6.1).
     ['name' => 'share#registerBatch',        'url' => '/api/v1/shares/register-batch',        'verb' => 'POST'],
     ['name' => 'share#recipientCertificate', 'url' => '/api/v1/shares/recipient-certificate', 'verb' => 'GET'],
+    // POST, not GET: a candidate list does not belong in a query string,
+    // and the sharee-search pages these ids come from can be long.
+    ['name' => 'share#recipientCertificates', 'url' => '/api/v1/shares/recipient-certificates', 'verb' => 'POST'],
     ['name' => 'share#sync',        'url' => '/api/v1/secrets/{secretId}/sync',         'verb' => 'PUT'],
     ['name' => 'share#destroy',     'url' => '/api/v1/shares/{id}',                     'verb' => 'DELETE'],
 
@@ -280,7 +290,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // The `doriath` segment survives the doriath -> keepiq rename on purpose:
     // it is a published contract URL, not an app id. See the class docblock
     // on DiscoveryController for the full reasoning.
-    ['name' => 'discovery#document', 'url' => '/api/v1/app/.well-known/doriath', 'verb' => 'GET'],
+    // Canonical discovery path. The pre-rename path below is still served
+    // and is retired before the first stable release — see legacyDocument().
+    ['name' => 'discovery#document', 'url' => '/api/v1/app/.well-known/keepiq', 'verb' => 'GET'],
+    ['name' => 'discovery#legacyDocument', 'url' => '/api/v1/app/.well-known/doriath', 'verb' => 'GET'],
 
     // JWT-Bearer token exchange (public; signature-verified).
     ['name' => 'applicationToken#exchange', 'url' => '/api/v1/token', 'verb' => 'POST'],

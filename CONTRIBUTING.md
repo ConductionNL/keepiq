@@ -209,12 +209,12 @@ Each release automatically:
 
 ## Documentation Release Process
 
-Documentation is built with [Docusaurus](https://docusaurus.io/) and deployed to GitHub Pages.
+Documentation is built with [Docusaurus](https://docusaurus.io/) and served by a Cloudflare Worker.
 
-1. Documentation source lives in the `docs/` (or `docusaurus/`) folder on any branch
-2. Push or merge to the `documentation` branch triggers the build
+1. Documentation source lives in the `docs/` folder
+2. A push or merge to `development` triggers the build (`.github/workflows/documentation.yml`)
 3. Docusaurus builds the static site
-4. The site is deployed to GitHub Pages with a custom domain (e.g., `openregister.app`)
+4. The site is published to [keepiq.conduction.nl](https://keepiq.conduction.nl)
 
 Each app has its own documentation site — see the app's README for its URL.
 
@@ -268,3 +268,5 @@ Add labels to categorize your PR in the automated changelog:
 ## License
 
 By contributing, you agree that your contributions will be licensed under the same license as the project (EUPL-1.2 unless stated otherwise).
+
+Licensing is declared repo-wide in `REUSE.toml`, so a new file needs no SPDX header to be compliant; if you add one, it wins over the blanket. Vendoring a file that carries someone else's licence header additionally requires that licence's text in `LICENSES/<SPDX-id>.txt` — otherwise `quality / REUSE compliance` fails the build.

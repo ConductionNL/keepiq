@@ -43,6 +43,39 @@
 				v-model="confirmPassword"
 				:label="t('keepiq', 'Confirm new password')"
 				:disabled="loading" />
+
+			<!-- keepiq#800: carrying a contact hands them the NEW key, and this
+			     runs when someone else may have held the session. The owner
+			     picks; nothing is preselected. -->
+			<div
+				v-if="carriableContacts.length > 0"
+				class="compromise-recovery-form__carry"
+				data-testid="compromise-recovery-carry">
+				<NcNoteCard type="warning">
+					<p>
+						{{
+							t(
+								'keepiq',
+								'Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.',
+							)
+						}}
+					</p>
+				</NcNoteCard>
+				<NcCheckboxRadioSwitch
+					v-for="contact in carriableContacts"
+					:key="contact.id"
+					:modelValue="carryContactIds.includes(contact.id)"
+					:disabled="loading"
+					data-testid="compromise-recovery-carry-item"
+					@update:modelValue="toggleCarry(contact.id, $event)">
+					{{
+						t('keepiq', '{grantee}, waiting period in days: {days}', {
+							grantee: contact.granteeUserId,
+							days: contact.waitPeriodDays,
+						})
+					}}
+				</NcCheckboxRadioSwitch>
+			</div>
 		</template>
 
 		<!-- Surface 2 of 3: during. Driven by the worker, counted across all
@@ -112,13 +145,23 @@
 				</li>
 			</ul>
 
+			<!-- Finishing carries a proof over the old key. When the run was
+			     resumed (the old password is not retained) re-ask for it. -->
+			<NcPasswordField
+				v-if="needsReauth"
+				v-model="oldPassword"
+				:label="
+					t('keepiq', 'Re-enter your previous master password to finish')
+				"
+				:disabled="loading" />
+
 			<div class="compromise-recovery-form__actions">
 				<NcButton :disabled="loading" @click="handleRetry">
 					{{ t('keepiq', 'Try these again') }}
 				</NcButton>
 				<NcButton
 					variant="error"
-					:disabled="loading"
+					:disabled="loading || (needsReauth && oldPassword === '')"
 					@click="handleAcceptLosses">
 					{{
 						n(
@@ -188,6 +231,101 @@
 					</li>
 				</ul>
 			</template>
+
+			<!-- Emergency contacts that could not be re-enveloped (the grantee
+			     had no reachable certificate) were invalidated by the completion
+			     sweep. Name them so the owner re-establishes exactly those; a
+			     rotation where every contact migrated shows nothing here. -->
+			<template v-if="residualContacts.length > 0">
+				<NcNoteCard
+					type="warning"
+					data-testid="compromise-recovery-residual">
+					{{
+						n(
+							'keepiq',
+							'Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.',
+							'Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.',
+							residualContacts.length,
+						)
+					}}
+				</NcNoteCard>
+				<ul class="compromise-recovery-form__list">
+					<li
+						v-for="grantee in residualContacts"
+						:key="grantee"
+						data-testid="compromise-recovery-residual-item">
+						<span class="compromise-recovery-form__list-name">{{
+							grantee
+						}}</span>
+					</li>
+				</ul>
+			</template>
+
+			<!-- #804 review: never nudge the owner to re-add these two. An
+			     unticked or in-flight contact is what a planted one looks like. -->
+			<div
+				v-if="unconfirmedContacts.length > 0"
+				data-testid="compromise-recovery-unconfirmed">
+				<NcNoteCard type="info">
+					{{
+						t(
+							'keepiq',
+							'You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.',
+						)
+					}}
+				</NcNoteCard>
+				<ul class="compromise-recovery-form__list">
+					<li v-for="grantee in unconfirmedContacts" :key="grantee">
+						<span class="compromise-recovery-form__list-name">{{
+							grantee
+						}}</span>
+					</li>
+				</ul>
+			</div>
+
+			<!-- #804 review, round 4: a resumed rotation carries no contact, so
+			     it names the ones the completion sweep removed. Neutral, with no
+			     re-establish prompt: the owner's ticks from the start of the
+			     rotation are not known here. -->
+			<div
+				v-if="removedContacts.length > 0"
+				data-testid="compromise-recovery-removed">
+				<NcNoteCard type="info">
+					{{
+						t(
+							'keepiq',
+							'Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.',
+						)
+					}}
+				</NcNoteCard>
+				<ul class="compromise-recovery-form__list">
+					<li v-for="grantee in removedContacts" :key="grantee">
+						<span class="compromise-recovery-form__list-name">{{
+							grantee
+						}}</span>
+					</li>
+				</ul>
+			</div>
+
+			<div
+				v-if="inFlightContacts.length > 0"
+				data-testid="compromise-recovery-in-flight">
+				<NcNoteCard type="error">
+					{{
+						t(
+							'keepiq',
+							'These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.',
+						)
+					}}
+				</NcNoteCard>
+				<ul class="compromise-recovery-form__list">
+					<li v-for="grantee in inFlightContacts" :key="grantee">
+						<span class="compromise-recovery-form__list-name">{{
+							grantee
+						}}</span>
+					</li>
+				</ul>
+			</div>
 		</template>
 
 		<NcButton
@@ -205,14 +343,22 @@
 </template>
 
 <script>
-import { NcButton, NcNoteCard, NcPasswordField, NcProgressBar } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcNoteCard,
+	NcPasswordField,
+	NcProgressBar,
+} from '@nextcloud/vue'
 import PasswordStrengthMeter from './PasswordStrengthMeter.vue'
 import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
+import { useSessionStore } from '../store/modules/session.js'
 
 export default {
 	name: 'CompromiseRecoveryForm',
 	components: {
 		NcButton,
+		NcCheckboxRadioSwitch,
 		NcNoteCard,
 		NcPasswordField,
 		NcProgressBar,
@@ -233,10 +379,64 @@ export default {
 			result: null,
 			/** @type {string|null} Retained so a retry can resume without re-asking. */
 			activeOldPassword: null,
+			/** @type {boolean} Show the re-auth field when completion needs a fresh proof. */
+			needsReauth: false,
+			/** @type {Array<object>} Emergency contacts this rotation may carry. */
+			carriableContacts: [],
+			/** @type {string[]} The ones the owner ticked; none by default. */
+			carryContactIds: [],
 		}
 	},
 
 	computed: {
+		/**
+		 * Emergency contacts that could not be reached, so were not carried across
+		 * the rotation — the only residual the owner is prompted to re-establish.
+		 * Unconfirmed and in-flight contacts have their own lists below.
+		 * Empty (so the block is hidden) when every contact migrated, before a
+		 * run has terminated, or on a resumed run, whose removed contacts are
+		 * named by removedContacts instead.
+		 *
+		 * @return {string[]} The residual grantee ids.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		residualContacts() {
+			return this.residualWithReason('unreachable')
+		},
+
+		/**
+		 * Contacts the owner left unticked, so they lost emergency access.
+		 *
+		 * @return {string[]} The grantee ids.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		unconfirmedContacts() {
+			return this.residualWithReason('not_confirmed')
+		},
+
+		/**
+		 * Contacts with a break-glass requested or approved, which were not
+		 * given the new key and are flagged as a possible plant.
+		 *
+		 * @return {string[]} The grantee ids.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		inFlightContacts() {
+			return this.residualWithReason('break_glass_in_flight')
+		},
+
+		/**
+		 * Contacts a RESUMED rotation removed. A resumed run carries none, and
+		 * it doesn't know what the owner ticked at the start, so they are named
+		 * without a prompt to re-establish.
+		 *
+		 * @return {string[]} The grantee ids.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		removedContacts() {
+			return this.residualWithReason('removed_by_rotation')
+		},
+
 		/**
 		 * Gate the compromise-recovery submit on matching, strength-valid input.
 		 *
@@ -353,6 +553,21 @@ export default {
 		},
 	},
 
+	/**
+	 * Load the emergency contacts the owner may choose to carry to the new key.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+	 */
+	async mounted() {
+		const suiteId = useSessionStore().suiteId
+		if (!suiteId) {
+			return
+		}
+		this.carriableContacts =
+			await useEncryptionSuiteStore().listCarriableEmergencyContacts(suiteId)
+	},
+
 	methods: {
 		/**
 		 * Track password-strength validity from the strength meter.
@@ -367,6 +582,69 @@ export default {
 		 */
 		onStrengthChange({ isValid }) {
 			this.strengthValid = isValid
+		},
+
+		/**
+		 * The residual grantee ids that carry the given reason.
+		 *
+		 * @param {string} reason `unreachable`, `not_confirmed`, `break_glass_in_flight`
+		 *   or `removed_by_rotation`.
+		 * @return {string[]} The grantee ids.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		residualWithReason(reason) {
+			return (this.result?.residualContacts ?? [])
+				.filter((entry) => entry.reason === reason)
+				.map((entry) => entry.granteeUserId)
+		},
+
+		/**
+		 * The residual list for the completion screen after a later step.
+		 *
+		 * The initiate path's list knows what the owner ticked, so its
+		 * classification wins whenever it has entries — except that a contact
+		 * the completion sweep recorded with a break-glass in flight is shown as
+		 * in flight, because a request made while a loss was pending is what a
+		 * planted contact looks like. With no initiate list, the read-back is
+		 * used as is, naming the removed contacts neutrally (#804 review,
+		 * round 5).
+		 *
+		 * @param {Array<{granteeUserId: string, reason: string}>|undefined} readBack
+		 *   The contacts read back after completion.
+		 * @return {Array<{granteeUserId: string, reason: string}>} The list to show.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		keepResidual(readBack) {
+			const current = this.result?.residualContacts ?? []
+			const fresh = readBack ?? []
+			if (current.length === 0) {
+				return fresh
+			}
+
+			const inFlight = new Set(
+				fresh
+					.filter((entry) => entry.reason === 'break_glass_in_flight')
+					.map((entry) => entry.granteeUserId),
+			)
+
+			return current.map((entry) =>
+				inFlight.has(entry.granteeUserId)
+					? { ...entry, reason: 'break_glass_in_flight' }
+					: entry,
+			)
+		},
+
+		/**
+		 * Tick or untick one emergency contact to carry to the new key.
+		 *
+		 * @param {string} contactId The contact id.
+		 * @param {boolean} carry Whether to carry it.
+		 * @return {void}
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		toggleCarry(contactId, carry) {
+			const others = this.carryContactIds.filter((id) => id !== contactId)
+			this.carryContactIds = carry ? [...others, contactId] : others
 		},
 
 		/**
@@ -386,6 +664,7 @@ export default {
 				const outcome = await store.initiateCompromiseRecovery(
 					this.oldPassword,
 					this.newPassword,
+					[...this.carryContactIds],
 				)
 
 				this.result = outcome
@@ -427,7 +706,13 @@ export default {
 			try {
 				const store = useEncryptionSuiteStore()
 				const outcome = await store.resumeMigration(this.activeOldPassword)
-				this.result = outcome
+				// A retry resumes the run this form started, which knows the
+				// owner's ticks: keep that list rather than the resume's neutral
+				// read-back (#804 review, round 5).
+				this.result = {
+					...outcome,
+					residualContacts: this.keepResidual(outcome.residualContacts),
+				}
 				this.phase = store.migrationNeedsAcknowledgement
 					? 'running'
 					: 'terminal'
@@ -484,13 +769,32 @@ export default {
 				// server counts distinct records currently failed and compares
 				// with a strict `===`. Sending the list length made every click
 				// refused and left the vault write-locked with no way out.
-				await store.acceptMigrationLosses(store.migrationStatus?.id)
+				//
+				// Completion carries a vault-key proof over the OLD key. The old
+				// password is retained from the run when it started here; on a
+				// resumed run it is not, so the field below is re-shown.
+				const completion = await store.acceptMigrationLosses(
+					store.migrationStatus?.id,
+					this.activeOldPassword || this.oldPassword,
+				)
+				this.needsReauth = false
 				this.result = {
 					...(this.result ?? { migrated: 0, droppedVersions: 0 }),
 					failures: this.unrecoverable,
+					residualContacts: this.keepResidual(
+						completion?.residualContacts,
+					),
 				}
 				this.phase = 'terminal'
 			} catch (e) {
+				// A guard refusal (or a missing password) means: re-enter and
+				// retry, not a dead end. Surface the password field.
+				if (
+					e?.code === 'key_proof_required'
+					|| e?.response?.data?.error === 'key_proof_required'
+				) {
+					this.needsReauth = true
+				}
 				this.error = this.describe(e)
 			} finally {
 				this.loading = false

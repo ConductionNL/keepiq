@@ -1,0 +1,26 @@
+{
+    "app": "keepiq",
+    "connections": [
+        {
+            "key": "hibp",
+            "title": "Breach check",
+            "description": "Checks password hash prefixes against Have I Been Pwned, once an admin switches it on and a user opts in.",
+            "order": 10,
+            "settingsUrl": "/settings/admin/keepiq#section-breach-check",
+            "switch": {
+                "configKey": "breach_check_enabled"
+            },
+            "disabledMessage": "Breach checking is switched off. Switch it on under Breach checking in the Keepiq admin settings.",
+            "unconfiguredMessage": "Not checked yet. Keepiq reports here after the next password check reaches Have I Been Pwned."
+        },
+        {
+            "key": "siem",
+            "title": "SIEM audit export",
+            "description": "Forwards whitelisted audit events to syslog or webhook sinks. This row covers every sink.",
+            "order": 20,
+            "settingsUrl": "/settings/admin/keepiq#section-siem",
+            "reportedOnly": true,
+            "unconfiguredMessage": "Not checked yet. Keepiq reports here after it delivers audit events to a sink."
+        }
+    ]
+}
