@@ -402,6 +402,68 @@ describe('CompromiseRecoveryForm', () => {
 		expect(wrapper.vm.phase).toBe('terminal')
 	})
 
+	// #804 review, round 5: a resumed rotation finished by accepting losses
+	// completes here, so the contacts it removed are named here.
+	it('names the contacts removed when a resumed rotation is finished by accepting losses', async () => {
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migration-1' }
+		store.migrationNeedsAcknowledgement = true
+		store.migrationRequiredAcknowledgement = 1
+		vi.spyOn(store, 'acceptMigrationLosses').mockResolvedValue({
+			residualContacts: [
+				{ granteeUserId: 'bob', reason: 'removed_by_rotation' },
+			],
+		})
+
+		const wrapper = mountForm()
+		wrapper.vm.activeOldPassword = 'old-pw'
+		// What a resumed run leaves behind while the loss is pending.
+		wrapper.vm.result = {
+			migrated: 2,
+			droppedVersions: 0,
+			failures: [],
+			residualContacts: [],
+		}
+		await wrapper.vm.handleAcceptLosses()
+		store.migrationNeedsAcknowledgement = false
+		await wrapper.vm.$nextTick()
+
+		const removed = wrapper.find('[data-testid="compromise-recovery-removed"]')
+		expect(removed.exists()).toBe(true)
+		expect(removed.text()).toContain('bob')
+	})
+
+	it('keeps the initiate list when an initiate run is finished by accepting losses', async () => {
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migration-1' }
+		store.migrationNeedsAcknowledgement = true
+		store.migrationRequiredAcknowledgement = 1
+		vi.spyOn(store, 'acceptMigrationLosses').mockResolvedValue({
+			residualContacts: [
+				{ granteeUserId: 'carol', reason: 'removed_by_rotation' },
+			],
+		})
+
+		const wrapper = mountForm()
+		wrapper.vm.activeOldPassword = 'old-pw'
+		wrapper.vm.result = {
+			migrated: 2,
+			droppedVersions: 0,
+			failures: [],
+			residualContacts: [{ granteeUserId: 'carol', reason: 'unreachable' }],
+		}
+		await wrapper.vm.handleAcceptLosses()
+		store.migrationNeedsAcknowledgement = false
+		await wrapper.vm.$nextTick()
+
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-residual"]').exists(),
+		).toBe(true)
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-removed"]').exists(),
+		).toBe(false)
+	})
+
 	it("shows the server's loss count even when the display list is capped", async () => {
 		const store = useEncryptionSuiteStore()
 		store.migrationStatus = { id: 'migration-1' }

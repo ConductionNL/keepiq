@@ -145,6 +145,7 @@ describe('useEncryptionSuiteStore — contacts removed by a resumed rotation', (
 		})
 		vi.spyOn(store, 'finaliseMigration').mockImplementation(async () => {
 			calls.push('finalise')
+			return { finalised: true, needsAcknowledgement: false, message: null }
 		})
 		const removed = vi
 			.spyOn(store, 'rotationRemovedContacts')
@@ -159,6 +160,78 @@ describe('useEncryptionSuiteStore — contacts removed by a resumed rotation', (
 		expect(calls).toEqual(['finalise', 'removed:old-suite'])
 		expect(removed).toHaveBeenCalledTimes(1)
 		expect(outcome.residualContacts).toEqual([
+			{ granteeUserId: 'bob', reason: 'removed_by_rotation' },
+		])
+	})
+
+	// #804 review, round 5: while the server still wants a loss acknowledged,
+	// completion has not happened and the sweep has not run.
+	it('reads back nothing from resumeMigration while a loss needs acknowledging', async () => {
+		mockGets(CONTACTS)
+		const store = useEncryptionSuiteStore()
+		const session = useSessionStore()
+		session.cryptoKey = {}
+		session.suiteId = 'new-suite'
+
+		vi.spyOn(store, 'fetchMigrationStatus').mockImplementation(async () => {
+			store.migrationStatus = {
+				id: 'migr-1',
+				oldSuiteId: 'old-suite',
+				newSuiteId: 'new-suite',
+			}
+		})
+		vi.spyOn(store, 'runMigration').mockResolvedValue({
+			migrated: 2,
+			failed: 1,
+			droppedVersions: 0,
+			failures: [{ store: 'secrets', id: 'secret-1' }],
+			usedWorker: false,
+		})
+		vi.spyOn(store, 'finaliseMigration').mockResolvedValue({
+			finalised: false,
+			needsAcknowledgement: true,
+			requiredAcknowledgement: 1,
+			message: 'acknowledge',
+		})
+		const removed = vi.spyOn(store, 'rotationRemovedContacts')
+
+		const outcome = await store.resumeMigration('old-pw')
+
+		expect(removed).not.toHaveBeenCalled()
+		expect(outcome.residualContacts).toEqual([])
+	})
+
+	it('reports the removed contacts from acceptMigrationLosses, after completion', async () => {
+		mockGets(CONTACTS)
+		vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { droppedVersions: 0, unrecoverable: [] },
+		})
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = {
+			id: 'migr-1',
+			oldSuiteId: 'old-suite',
+			newSuiteId: 'new-suite',
+		}
+		store.migrationRequiredAcknowledgement = 1
+
+		const calls = []
+		// As the real call does once the migration has ended.
+		vi.spyOn(store, 'fetchMigrationStatus').mockImplementation(async () => {
+			calls.push('status')
+			store.migrationStatus = null
+		})
+		vi.spyOn(store, 'rotationRemovedContacts').mockImplementation(
+			async (oldSuiteId) => {
+				calls.push('removed:' + oldSuiteId)
+				return [{ granteeUserId: 'bob', reason: 'removed_by_rotation' }]
+			},
+		)
+
+		const data = await store.acceptMigrationLosses('migr-1', 'old-pw')
+
+		// Only after the completion call, and for the suite the migration left.
+		expect(calls).toEqual(['status', 'removed:old-suite'])
+		expect(data.residualContacts).toEqual([
 			{ granteeUserId: 'bob', reason: 'removed_by_rotation' },
 		])
 	})
