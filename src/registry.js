@@ -37,7 +37,6 @@ import ShareList from './components/share/ShareList.vue'
 import ApplicationRegisterDialog from './dialogs/ApplicationRegisterDialog.vue'
 import FolderCreateDialog from './dialogs/FolderCreateDialog.vue'
 import MoveDialog from './dialogs/MoveDialog.vue'
-import PrivateKeyDownloadDialog from './dialogs/PrivateKeyDownloadDialog.vue'
 import SecretCreateDialog from './dialogs/SecretCreateDialog.vue'
 import SecretDeleteConfirmDialog from './dialogs/SecretDeleteConfirmDialog.vue'
 import SecretEditDialog from './dialogs/SecretEditDialog.vue'
@@ -94,11 +93,6 @@ export default {
 	'application-register': {
 		kind: 'modal',
 		component: ApplicationRegisterDialog,
-		propsSchema: {},
-	},
-	'private-key-download': {
-		kind: 'modal',
-		component: PrivateKeyDownloadDialog,
 		propsSchema: {},
 	},
 	'share-dialog': { kind: 'modal', component: ShareDialog, propsSchema: {} },

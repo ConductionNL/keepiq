@@ -87,17 +87,21 @@ describe('useApplicationStore', () => {
 			expect(store.pendingApplications).toHaveLength(1)
 		})
 
-		it('surfaces the one-time private_key into store state', async () => {
-			const pem =
-				'-----BEGIN PRIVATE KEY-----\nAAAA\n-----END PRIVATE KEY-----'
+		it('keeps no private-key state: the server never returns one (pki-09 decided no)', async () => {
 			vi.spyOn(axios, 'post').mockResolvedValue({
-				data: { id: 'app-x', name: 'X', status: 'active', private_key: pem },
+				data: {
+					id: 'app-x',
+					name: 'X',
+					status: 'active',
+					private_key: 'PEM',
+				},
 			})
 			const store = useApplicationStore()
 			await store.registerApplication({ name: 'X', type: 'internal' })
 
-			expect(store.oneTimePrivateKey).toBe(pem)
-			expect(store.oneTimePrivateKeyAppId).toBe('app-x')
+			expect('oneTimePrivateKey' in store.$state).toBe(false)
+			expect('oneTimePrivateKeyAppId' in store.$state).toBe(false)
+			expect(store.clearOneTimePrivateKey).toBeUndefined()
 		})
 	})
 
@@ -116,19 +120,6 @@ describe('useApplicationStore', () => {
 
 			expect(store.pendingApplications).toHaveLength(0)
 			expect(store.applications[0].status).toBe('active')
-		})
-
-		it('surfaces the private_key returned on no-CSR approval', async () => {
-			vi.spyOn(axios, 'post').mockResolvedValue({
-				data: { id: 'app-1', private_key: 'PEM-2' },
-			})
-			const store = useApplicationStore()
-			store.pendingApplications = [{ id: 'app-1' }]
-
-			await store.approveApplication('app-1')
-
-			expect(store.oneTimePrivateKey).toBe('PEM-2')
-			expect(store.oneTimePrivateKeyAppId).toBe('app-1')
 		})
 	})
 
@@ -162,19 +153,6 @@ describe('useApplicationStore', () => {
 			expect(store.applications.map((a) => a.id)).toEqual(['app-2'])
 			expect(store.pendingApplications).toHaveLength(0)
 			expect(store.currentApplication).toBeNull()
-		})
-	})
-
-	describe('clearOneTimePrivateKey', () => {
-		it('resets transient fields to null', () => {
-			const store = useApplicationStore()
-			store.oneTimePrivateKey = 'leaked'
-			store.oneTimePrivateKeyAppId = 'app-1'
-
-			store.clearOneTimePrivateKey()
-
-			expect(store.oneTimePrivateKey).toBeNull()
-			expect(store.oneTimePrivateKeyAppId).toBeNull()
 		})
 	})
 

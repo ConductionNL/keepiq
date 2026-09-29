@@ -14,7 +14,6 @@ const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0))
 import axios from '@nextcloud/axios'
 import { createPinia, setActivePinia } from 'pinia'
 import AdminApplicationsView from '../../src/views/AdminApplicationsView.vue'
-import { useApplicationStore } from '../../src/store/modules/application.js'
 
 describe('AdminApplicationsView', () => {
 	beforeEach(() => {
@@ -91,45 +90,22 @@ describe('AdminApplicationsView', () => {
 		)
 	})
 
-	it('shows the private-key dialog block when the store carries a one-time key', async () => {
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
+	it('shows no private-key block after an approval, since the server never returns a key (pki-09 decided no)', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: [{ id: 'a1', name: 'A', status: 'pending' }],
+		})
+		vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { id: 'a1', status: 'active', private_key: 'PEM' },
+		})
 
 		const wrapper = mount(AdminApplicationsView)
 		await flushPromises()
-
-		const store = useApplicationStore()
-		store.oneTimePrivateKey = '-----BEGIN PRIVATE KEY-----\nAAAA'
-		store.oneTimePrivateKeyAppId = 'app-1'
-		await wrapper.vm.$nextTick()
+		await wrapper.find('[data-testid="approve-button"]').trigger('click')
+		await flushPromises()
 
 		expect(wrapper.find('[data-testid="private-key-dialog"]').exists()).toBe(
-			true,
+			false,
 		)
-		expect(
-			wrapper.find('[data-testid="private-key-text"]').element.value,
-		).toContain('BEGIN PRIVATE KEY')
-	})
-
-	it('keeps the dismiss button disabled until the acknowledgment checkbox is ticked', async () => {
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
-
-		const wrapper = mount(AdminApplicationsView)
-		await flushPromises()
-
-		const store = useApplicationStore()
-		store.oneTimePrivateKey = 'PEM'
-		await wrapper.vm.$nextTick()
-
-		const dismiss = wrapper.find('[data-testid="dismiss-key"]')
-		expect(dismiss.attributes('disabled')).toBeDefined()
-
-		await wrapper.find('[data-testid="acknowledge-key"]').setChecked()
-		await wrapper.vm.$nextTick()
-
-		expect(dismiss.attributes('disabled')).toBeUndefined()
-
-		await dismiss.trigger('click')
-		await wrapper.vm.$nextTick()
-		expect(store.oneTimePrivateKey).toBeNull()
+		expect(wrapper.text()).not.toContain('PEM')
 	})
 })
