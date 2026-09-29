@@ -1167,7 +1167,8 @@
         "Reinstate suite": "Obnoviť sadu",
         "Revoking this suite deleted %n emergency-access contact.": "Odvolanie tejto sady odstránilo %n kontakt núdzového prístupu.",
         "Revoking this suite deleted %n emergency-access contacts.": "Odvolanie tejto sady odstránilo %n kontaktov núdzového prístupu.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Považovať tajomstvá sady za kompromitované (označiť na výmenu a upozorniť vlastníkov)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Považovať tajomstvá sady za kompromitované (označiť na výmenu a upozorniť vlastníkov)",
+        "This request is no longer available.": "Táto žiadosť už nie je k dispozícii."
     },
     "plurals": null
 }

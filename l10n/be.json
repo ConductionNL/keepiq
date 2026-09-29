@@ -1167,7 +1167,8 @@
         "Reinstate suite": "Аднавіць набор",
         "Revoking this suite deleted %n emergency-access contact.": "Адкліканне гэтага набору выдаліла %n кантакт аварыйнага доступу.",
         "Revoking this suite deleted %n emergency-access contacts.": "Адкліканне гэтага набору выдаліла %n кантактаў аварыйнага доступу.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Лічыць сакрэты набору скампраметаванымі (пазначыць для ратацыі і апавясціць уладальнікаў)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Лічыць сакрэты набору скампраметаванымі (пазначыць для ратацыі і апавясціць уладальнікаў)",
+        "This request is no longer available.": "Гэты запыт больш не даступны."
     },
     "plurals": null
 }

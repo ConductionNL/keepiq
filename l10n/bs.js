@@ -1168,7 +1168,8 @@ OC.L10N.register(
         "Reinstate suite": "Vrati komplet",
         "Revoking this suite deleted %n emergency-access contact.": "Opozivanje ovog kompleta izbrisalo je %n kontakt hitnog pristupa.",
         "Revoking this suite deleted %n emergency-access contacts.": "Opozivanje ovog kompleta izbrisalo je %n kontakata hitnog pristupa.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tretiraj tajne kompleta kao kompromitirane (označi za rotaciju i obavijesti vlasnike)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tretiraj tajne kompleta kao kompromitirane (označi za rotaciju i obavijesti vlasnike)",
+        "This request is no longer available.": "Ovaj zahtjev više nije dostupan."
     },
     "nplurals=2; plural=(n != 1);"
 )

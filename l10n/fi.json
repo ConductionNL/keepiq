@@ -1167,7 +1167,8 @@
         "Reinstate suite": "Palauta sarja",
         "Revoking this suite deleted %n emergency-access contact.": "Tämän sarjan peruuttaminen poisti %n hätäkäytön yhteyshenkilön.",
         "Revoking this suite deleted %n emergency-access contacts.": "Tämän sarjan peruuttaminen poisti %n hätäkäytön yhteyshenkilöä.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Käsittele sarjan salaisuuksia vaarantuneina (merkitse kierrätettäväksi ja ilmoita omistajille)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Käsittele sarjan salaisuuksia vaarantuneina (merkitse kierrätettäväksi ja ilmoita omistajille)",
+        "This request is no longer available.": "Tämä pyyntö ei ole enää käytettävissä."
     },
     "plurals": null
 }

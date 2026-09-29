@@ -1168,7 +1168,8 @@ OC.L10N.register(
         "Reinstate suite": "Återinför svit",
         "Revoking this suite deleted %n emergency-access contact.": "Återkallelsen av denna svit tog bort %n nödåtkomstkontakt.",
         "Revoking this suite deleted %n emergency-access contacts.": "Återkallelsen av denna svit tog bort %n nödåtkomstkontakter.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandla svitens hemligheter som komprometterade (markera för rotation och meddela ägare)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandla svitens hemligheter som komprometterade (markera för rotation och meddela ägare)",
+        "This request is no longer available.": "Den här begäran är inte längre tillgänglig."
     },
     "nplurals=2; plural=(n != 1);"
 )

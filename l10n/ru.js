@@ -1168,7 +1168,8 @@ OC.L10N.register(
         "Reinstate suite": "Восстановить набор",
         "Revoking this suite deleted %n emergency-access contact.": "Отзыв этого набора удалил %n контакт аварийного доступа.",
         "Revoking this suite deleted %n emergency-access contacts.": "Отзыв этого набора удалил %n контактов аварийного доступа.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Считать секреты набора скомпрометированными (отметить для ротации и уведомить владельцев)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Считать секреты набора скомпрометированными (отметить для ротации и уведомить владельцев)",
+        "This request is no longer available.": "Этот запрос больше не доступен."
     },
     "nplurals=2; plural=(n != 1);"
 )

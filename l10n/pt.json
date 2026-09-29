@@ -1167,7 +1167,8 @@
         "Reinstate suite": "Restaurar a suite",
         "Revoking this suite deleted %n emergency-access contact.": "Revogar esta suite eliminou %n contacto de acesso de emergência.",
         "Revoking this suite deleted %n emergency-access contacts.": "Revogar esta suite eliminou %n contactos de acesso de emergência.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tratar os segredos da suite como comprometidos (marcar para rotação e notificar os proprietários)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tratar os segredos da suite como comprometidos (marcar para rotação e notificar os proprietários)",
+        "This request is no longer available.": "Este pedido já não está disponível."
     },
     "plurals": null
 }

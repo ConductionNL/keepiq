@@ -1168,7 +1168,8 @@ OC.L10N.register(
         "Reinstate suite": "Obnovit sadu",
         "Revoking this suite deleted %n emergency-access contact.": "Odvolání této sady odstranilo %n kontakt nouzového přístupu.",
         "Revoking this suite deleted %n emergency-access contacts.": "Odvolání této sady odstranilo %n kontaktů nouzového přístupu.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Považovat tajemství sady za kompromitovaná (označit k obměně a upozornit vlastníky)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Považovat tajemství sady za kompromitovaná (označit k obměně a upozornit vlastníky)",
+        "This request is no longer available.": "Tato žádost již není k dispozici."
     },
     "nplurals=2; plural=(n != 1);"
 )

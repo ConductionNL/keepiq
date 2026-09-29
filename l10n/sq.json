@@ -1167,7 +1167,8 @@
         "Reinstate suite": "Rivendos suitën",
         "Revoking this suite deleted %n emergency-access contact.": "Revokimi i kësaj suite fshiu %n kontakt të qasjes së emergjencës.",
         "Revoking this suite deleted %n emergency-access contacts.": "Revokimi i kësaj suite fshiu %n kontakte të qasjes së emergjencës.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Trajto sekretet e suitës si të komprometuara (shëno për rotacion dhe njofto pronarët)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Trajto sekretet e suitës si të komprometuara (shëno për rotacion dhe njofto pronarët)",
+        "This request is no longer available.": "Kjo kërkesë nuk është më e disponueshme."
     },
     "plurals": null
 }

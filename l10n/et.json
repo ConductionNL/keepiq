@@ -1167,7 +1167,8 @@
         "Reinstate suite": "Taasta komplekt",
         "Revoking this suite deleted %n emergency-access contact.": "Selle komplekti tühistamine kustutas %n hädajuurdepääsu kontakti.",
         "Revoking this suite deleted %n emergency-access contacts.": "Selle komplekti tühistamine kustutas %n hädajuurdepääsu kontakti.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Käsitle komplekti saladusi ohustatuna (märgi rotatsiooniks ja teavita omanikke)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Käsitle komplekti saladusi ohustatuna (märgi rotatsiooniks ja teavita omanikke)",
+        "This request is no longer available.": "See taotlus pole enam saadaval."
     },
     "plurals": null
 }

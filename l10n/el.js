@@ -1168,7 +1168,8 @@ OC.L10N.register(
         "Reinstate suite": "Επαναφορά σουίτας",
         "Revoking this suite deleted %n emergency-access contact.": "Η ανάκληση αυτής της σουίτας διέγραψε %n επαφή πρόσβασης έκτακτης ανάγκης.",
         "Revoking this suite deleted %n emergency-access contacts.": "Η ανάκληση αυτής της σουίτας διέγραψε %n επαφές πρόσβασης έκτακτης ανάγκης.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Αντιμετώπιση των μυστικών της σουίτας ως παραβιασμένων (επισήμανση για εναλλαγή και ειδοποίηση ιδιοκτητών)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Αντιμετώπιση των μυστικών της σουίτας ως παραβιασμένων (επισήμανση για εναλλαγή και ειδοποίηση ιδιοκτητών)",
+        "This request is no longer available.": "Αυτό το αίτημα δεν είναι πλέον διαθέσιμο."
     },
     "nplurals=2; plural=(n != 1);"
 )

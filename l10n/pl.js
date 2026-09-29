@@ -1168,7 +1168,8 @@ OC.L10N.register(
         "Reinstate suite": "Przywróć zestaw",
         "Revoking this suite deleted %n emergency-access contact.": "Unieważnienie tego zestawu usunęło %n kontakt dostępu awaryjnego.",
         "Revoking this suite deleted %n emergency-access contacts.": "Unieważnienie tego zestawu usunęło %n kontaktów dostępu awaryjnego.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Traktuj sekrety zestawu jako naruszone (oznacz do rotacji i powiadom właścicieli)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Traktuj sekrety zestawu jako naruszone (oznacz do rotacji i powiadom właścicieli)",
+        "This request is no longer available.": "Ten wniosek nie jest już dostępny."
     },
     "nplurals=2; plural=(n != 1);"
 )

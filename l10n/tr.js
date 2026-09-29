@@ -1168,7 +1168,8 @@ OC.L10N.register(
         "Reinstate suite": "Paketi yeniden etkinleştir",
         "Revoking this suite deleted %n emergency-access contact.": "Bu paketin iptali %n acil durum erişim kişisini sildi.",
         "Revoking this suite deleted %n emergency-access contacts.": "Bu paketin iptali %n acil durum erişim kişisini sildi.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Paketin sırlarını ele geçirilmiş olarak değerlendir (rotasyon için işaretle ve sahiplerini bilgilendir)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Paketin sırlarını ele geçirilmiş olarak değerlendir (rotasyon için işaretle ve sahiplerini bilgilendir)",
+        "This request is no longer available.": "Bu istek artık kullanılamıyor."
     },
     "nplurals=2; plural=(n != 1);"
 )

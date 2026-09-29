@@ -32,6 +32,8 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Service\SecretRequestPolicy;
@@ -370,4 +372,81 @@ class SecretRequestPolicyTest extends TestCase {
 			$this->assertSame(400, $e->getCode());
 		}
 	}//end testUnknownAndEmptyTokens()
+
+	/**
+	 * A policy whose requests are sealed to a suite in the given status.
+	 *
+	 * @param string|null $suiteStatus The suite status, or null when the suite is gone
+	 *
+	 * @return SecretRequestPolicy
+	 */
+	private function policyWithSuite(?string $suiteStatus): SecretRequestPolicy {
+		$suites = $this->createMock(EncryptionSuiteMapper::class);
+		if ($suiteStatus === null) {
+			$suites->method('findById')->willThrowException(new DoesNotExistException('gone'));
+		} else {
+			$suite = new EncryptionSuite();
+			$suite->setId('suite-1');
+			$suite->setStatus($suiteStatus);
+			$suites->method('findById')->with('suite-1')->willReturn($suite);
+		}
+
+		$request = $this->make(SecretRequest::STATUS_PENDING);
+		$request->setEncryptionSuiteId('suite-1');
+		$this->mapper->method('findByToken')->willReturn($request);
+
+		return new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $suites);
+	}//end policyWithSuite()
+
+	/**
+	 * A pending request sealed to a suite that is no longer active cannot be
+	 * shown or filled (#809 review). After a compromise force-revoke the
+	 * requests go back to pending on the revoked suite, possibly one whose
+	 * private key an attacker holds, so a filled value would be encrypted to it.
+	 *
+	 * @param string|null $suiteStatus A suite status that must refuse, or null for a missing suite
+	 *
+	 * @return void
+	 *
+	 * @dataProvider inactiveSuiteProvider
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function testARequestOnAnInactiveSuiteIsUnavailable(?string $suiteStatus): void {
+		$policy = $this->policyWithSuite(suiteStatus: $suiteStatus);
+
+		$this->assertSame(SecretRequestPolicy::REASON_UNAVAILABLE, $policy->refusalReason(token: 'tok-1'));
+		try {
+			$policy->requireOpenByToken(token: 'tok-1');
+			$this->fail('a request on an inactive suite must be refused');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame(410, $e->getCode());
+		}
+	}//end testARequestOnAnInactiveSuiteIsUnavailable()
+
+	/**
+	 * The suite states that must refuse.
+	 *
+	 * @return array<string, array{0: string|null}>
+	 */
+	public static function inactiveSuiteProvider(): array {
+		return [
+			'revoked' => ['revoked'],
+			'compromised' => ['compromised'],
+			'missing' => [null],
+		];
+	}//end inactiveSuiteProvider()
+
+	/**
+	 * A pending request on an active suite is still open.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	public function testARequestOnAnActiveSuiteIsOpen(): void {
+		$policy = $this->policyWithSuite(suiteStatus: 'active');
+
+		$this->assertSame('req-1', $policy->requireOpenByToken(token: 'tok-1')->getId());
+	}//end testARequestOnAnActiveSuiteIsOpen()
 }//end class

@@ -1168,7 +1168,8 @@ OC.L10N.register(
         "Reinstate suite": "Atkurti rinkinį",
         "Revoking this suite deleted %n emergency-access contact.": "Šio rinkinio atšaukimas pašalino %n avarinės prieigos kontaktą.",
         "Revoking this suite deleted %n emergency-access contacts.": "Šio rinkinio atšaukimas pašalino %n avarinės prieigos kontaktų.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Laikyti rinkinio paslaptis pažeistomis (pažymėti keitimui ir pranešti savininkams)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Laikyti rinkinio paslaptis pažeistomis (pažymėti keitimui ir pranešti savininkams)",
+        "This request is no longer available.": "Ši užklausa nebepasiekiama."
     },
     "nplurals=2; plural=(n != 1);"
 )

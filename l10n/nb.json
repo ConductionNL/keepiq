@@ -1167,7 +1167,8 @@
         "Reinstate suite": "Gjeninnfør suite",
         "Revoking this suite deleted %n emergency-access contact.": "Tilbakekallingen av denne suiten fjernet %n nødtilgangskontakt.",
         "Revoking this suite deleted %n emergency-access contacts.": "Tilbakekallingen av denne suiten fjernet %n nødtilgangskontakter.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandle suitens hemmeligheter som kompromittert (merk for rotasjon og varsle eiere)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandle suitens hemmeligheter som kompromittert (merk for rotasjon og varsle eiere)",
+        "This request is no longer available.": "Denne forespørselen er ikke lenger tilgjengelig."
     },
     "plurals": null
 }

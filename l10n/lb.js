@@ -1168,7 +1168,8 @@ OC.L10N.register(
         "Reinstate suite": "Reinstate suite",
         "Revoking this suite deleted %n emergency-access contact.": "Revoking this suite deleted %n emergency-access contact.",
         "Revoking this suite deleted %n emergency-access contacts.": "Revoking this suite deleted %n emergency-access contacts.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Treat the suite's secrets as compromised (flag for rotation and notify owners)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Treat the suite's secrets as compromised (flag for rotation and notify owners)",
+        "This request is no longer available.": "Dës Ufro ass net méi disponibel."
     },
     "nplurals=2; plural=(n != 1);"
 )

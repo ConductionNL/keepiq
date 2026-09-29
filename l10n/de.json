@@ -1167,7 +1167,8 @@
         "Reinstate suite": "Suite wiederherstellen",
         "Revoking this suite deleted %n emergency-access contact.": "Der Widerruf dieser Suite hat %n Notfallzugangskontakt gelöscht.",
         "Revoking this suite deleted %n emergency-access contacts.": "Der Widerruf dieser Suite hat %n Notfallzugangskontakte gelöscht.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Die Geheimnisse der Suite als kompromittiert behandeln (zur Rotation markieren und Eigentümer benachrichtigen)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Die Geheimnisse der Suite als kompromittiert behandeln (zur Rotation markieren und Eigentümer benachrichtigen)",
+        "This request is no longer available.": "Diese Anfrage ist nicht mehr verfügbar."
     },
     "plurals": null
 }

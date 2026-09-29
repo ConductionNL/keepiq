@@ -1168,7 +1168,8 @@ OC.L10N.register(
         "Reinstate suite": "Restableix la suite",
         "Revoking this suite deleted %n emergency-access contact.": "La revocació d'aquesta suite ha eliminat %n contacte d'accés d'emergència.",
         "Revoking this suite deleted %n emergency-access contacts.": "La revocació d'aquesta suite ha eliminat %n contactes d'accés d'emergència.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tracta els secrets de la suite com a compromesos (marca per a rotació i notifica els propietaris)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Tracta els secrets de la suite com a compromesos (marca per a rotació i notifica els propietaris)",
+        "This request is no longer available.": "Aquesta sol·licitud ja no està disponible."
     },
     "nplurals=2; plural=(n != 1);"
 )

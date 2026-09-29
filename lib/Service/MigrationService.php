@@ -669,7 +669,8 @@ class MigrationService {
 	 * force-revoke therefore ends the migration instead: status `terminated`,
 	 * which releases the write lock, plus the same aborted event the owner's
 	 * abort dispatches, which unlocks the SecretRequests it locked and leaves
-	 * them on the old suite. The caller revokes BOTH ends first, so a failure
+	 * them on the old suite. That suite is revoked by then, so their public
+	 * links refuse them (SecretRequestPolicy: reason `unavailable`). The caller revokes BOTH ends first, so a failure
 	 * before this point leaves the migration open for a retry to find.
 	 *
 	 * @param SuiteMigration $migration The in-progress migration

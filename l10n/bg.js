@@ -1168,7 +1168,8 @@ OC.L10N.register(
         "Reinstate suite": "Възстанови комплекта",
         "Revoking this suite deleted %n emergency-access contact.": "Отменянето на този комплект премахна %n контакт за авариен достъп.",
         "Revoking this suite deleted %n emergency-access contacts.": "Отменянето на този комплект премахна %n контакта за авариен достъп.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Третирай тайните на комплекта като компрометирани (маркирай за ротация и уведоми собствениците)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Третирай тайните на комплекта като компрометирани (маркирай за ротация и уведоми собствениците)",
+        "This request is no longer available.": "Тази заявка вече не е налична."
     },
     "nplurals=2; plural=(n != 1);"
 )

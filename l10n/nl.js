@@ -1173,7 +1173,8 @@ OC.L10N.register(
         "Reinstate suite": "Suite herstellen",
         "Revoking this suite deleted %n emergency-access contact.": "Het intrekken van deze suite verwijderde %n noodtoegangscontact.",
         "Revoking this suite deleted %n emergency-access contacts.": "Het intrekken van deze suite verwijderde %n noodtoegangscontacten.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandel de geheimen van de suite als gecompromitteerd (markeer voor rotatie en waarschuw eigenaren)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Behandel de geheimen van de suite als gecompromitteerd (markeer voor rotatie en waarschuw eigenaren)",
+        "This request is no longer available.": "Dit verzoek is niet langer beschikbaar."
     },
     "nplurals=2; plural=(n != 1);"
 )

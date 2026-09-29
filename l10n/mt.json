@@ -1167,7 +1167,8 @@
         "Reinstate suite": "Reinstate suite",
         "Revoking this suite deleted %n emergency-access contact.": "Revoking this suite deleted %n emergency-access contact.",
         "Revoking this suite deleted %n emergency-access contacts.": "Revoking this suite deleted %n emergency-access contacts.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Treat the suite's secrets as compromised (flag for rotation and notify owners)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Treat the suite's secrets as compromised (flag for rotation and notify owners)",
+        "This request is no longer available.": "Din it-talba m’għadhiex disponibbli."
     },
     "plurals": null
 }

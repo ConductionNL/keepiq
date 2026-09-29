@@ -1167,7 +1167,8 @@
         "Reinstate suite": "Врати комплет",
         "Revoking this suite deleted %n emergency-access contact.": "Отповикувањето на овој комплет избриша %n контакт за итен пристап.",
         "Revoking this suite deleted %n emergency-access contacts.": "Отповикувањето на овој комплет избриша %n контакти за итен пристап.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Третирај ги тајните на комплетот како компромитирани (означи за ротација и извести ги сопствениците)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Третирај ги тајните на комплетот како компромитирани (означи за ротација и извести ги сопствениците)",
+        "This request is no longer available.": "Ова барање повеќе не е достапно."
     },
     "plurals": null
 }

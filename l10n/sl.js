@@ -1168,7 +1168,8 @@ OC.L10N.register(
         "Reinstate suite": "Ponovno vzpostavi komplet",
         "Revoking this suite deleted %n emergency-access contact.": "Preklic tega kompleta je izbrisal %n stik zasilnega dostopa.",
         "Revoking this suite deleted %n emergency-access contacts.": "Preklic tega kompleta je izbrisal %n stikov zasilnega dostopa.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Obravnavaj skrivnosti kompleta kot ogrožene (označi za menjavo in obvesti lastnike)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Obravnavaj skrivnosti kompleta kot ogrožene (označi za menjavo in obvesti lastnike)",
+        "This request is no longer available.": "Ta zahteva ni več na voljo."
     },
     "nplurals=2; plural=(n != 1);"
 )

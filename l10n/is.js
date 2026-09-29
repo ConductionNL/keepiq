@@ -1168,7 +1168,8 @@ OC.L10N.register(
         "Reinstate suite": "Endurvirkja sett",
         "Revoking this suite deleted %n emergency-access contact.": "Afturköllun þessa setts eyddi %n neyðaraðgangstengilið.",
         "Revoking this suite deleted %n emergency-access contacts.": "Afturköllun þessa setts eyddi %n neyðaraðgangstengiliðum.",
-        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Meðhöndla leyndarmál settsins sem í hættu (merkja fyrir endurnýjun og láta eigendur vita)"
+        "Treat the suite's secrets as compromised (flag for rotation and notify owners)": "Meðhöndla leyndarmál settsins sem í hættu (merkja fyrir endurnýjun og láta eigendur vita)",
+        "This request is no longer available.": "Þessi beiðni er ekki lengur tiltæk."
     },
     "nplurals=2; plural=(n != 1);"
 )
