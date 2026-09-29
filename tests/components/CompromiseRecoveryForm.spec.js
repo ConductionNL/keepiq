@@ -502,6 +502,73 @@ describe('CompromiseRecoveryForm', () => {
 		).toBe(false)
 	})
 
+	// Pre-push check on the round-5 fixes: a break-glass requested while the
+	// loss acknowledgement was pending must not stay labelled "not confirmed".
+	it('warns about a contact whose break-glass started while a loss was pending', async () => {
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migration-1' }
+		store.migrationNeedsAcknowledgement = true
+		store.migrationRequiredAcknowledgement = 1
+		vi.spyOn(store, 'acceptMigrationLosses').mockResolvedValue({
+			residualContacts: [
+				{ granteeUserId: 'carol', reason: 'break_glass_in_flight' },
+			],
+		})
+
+		const wrapper = mountForm()
+		wrapper.vm.activeOldPassword = 'old-pw'
+		wrapper.vm.result = {
+			migrated: 2,
+			droppedVersions: 0,
+			failures: [],
+			residualContacts: [{ granteeUserId: 'carol', reason: 'not_confirmed' }],
+		}
+		await wrapper.vm.handleAcceptLosses()
+		store.migrationNeedsAcknowledgement = false
+		await wrapper.vm.$nextTick()
+
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-in-flight"]').text(),
+		).toContain('carol')
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-unconfirmed"]').exists(),
+		).toBe(false)
+	})
+
+	// An initiate run's screen must not grow resumed-rotation copy for a
+	// contact only the read-back knows; the Emergency Access view names it.
+	it('adds no read-back-only contact to an initiate run', async () => {
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migration-1' }
+		store.migrationNeedsAcknowledgement = true
+		store.migrationRequiredAcknowledgement = 1
+		vi.spyOn(store, 'acceptMigrationLosses').mockResolvedValue({
+			residualContacts: [
+				{ granteeUserId: 'carol', reason: 'removed_by_rotation' },
+				{ granteeUserId: 'dave', reason: 'removed_by_rotation' },
+			],
+		})
+
+		const wrapper = mountForm()
+		wrapper.vm.activeOldPassword = 'old-pw'
+		wrapper.vm.result = {
+			migrated: 2,
+			droppedVersions: 0,
+			failures: [],
+			residualContacts: [{ granteeUserId: 'carol', reason: 'unreachable' }],
+		}
+		await wrapper.vm.handleAcceptLosses()
+		store.migrationNeedsAcknowledgement = false
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.vm.result.residualContacts).toEqual([
+			{ granteeUserId: 'carol', reason: 'unreachable' },
+		])
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-removed"]').exists(),
+		).toBe(false)
+	})
+
 	it("shows the server's loss count even when the display list is capped", async () => {
 		const store = useEncryptionSuiteStore()
 		store.migrationStatus = { id: 'migration-1' }

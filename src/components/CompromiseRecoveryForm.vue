@@ -601,10 +601,13 @@ export default {
 		/**
 		 * The residual list for the completion screen after a later step.
 		 *
-		 * The initiate path's list knows what the owner ticked, so it wins
-		 * whenever it has entries. Otherwise the list read back from the server
-		 * after completion is used, which names the removed contacts neutrally
-		 * (#804 review, round 5).
+		 * The initiate path's list knows what the owner ticked, so its
+		 * classification wins whenever it has entries — except that a contact
+		 * the completion sweep recorded with a break-glass in flight is shown as
+		 * in flight, because a request made while a loss was pending is what a
+		 * planted contact looks like. With no initiate list, the read-back is
+		 * used as is, naming the removed contacts neutrally (#804 review,
+		 * round 5).
 		 *
 		 * @param {Array<{granteeUserId: string, reason: string}>|undefined} readBack
 		 *   The contacts read back after completion.
@@ -613,7 +616,22 @@ export default {
 		 */
 		keepResidual(readBack) {
 			const current = this.result?.residualContacts ?? []
-			return current.length > 0 ? current : (readBack ?? [])
+			const fresh = readBack ?? []
+			if (current.length === 0) {
+				return fresh
+			}
+
+			const inFlight = new Set(
+				fresh
+					.filter((entry) => entry.reason === 'break_glass_in_flight')
+					.map((entry) => entry.granteeUserId),
+			)
+
+			return current.map((entry) =>
+				inFlight.has(entry.granteeUserId)
+					? { ...entry, reason: 'break_glass_in_flight' }
+					: entry,
+			)
 		},
 
 		/**
