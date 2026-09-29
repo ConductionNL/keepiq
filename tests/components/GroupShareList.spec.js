@@ -50,11 +50,19 @@ describe('GroupShareList', () => {
 		await flushPromises()
 
 		expect(share).toHaveBeenCalledWith('s-1', 'finance')
-		expect(wrapper.findComponent({ name: 'GroupShareForm' }).exists()).toBe(false)
+		expect(wrapper.findComponent({ name: 'GroupShareForm' }).exists()).toBe(
+			false,
+		)
 		// The test t() stub returns the key untranslated, so the counts are
 		// read from the values the message is rendered with.
-		expect(wrapper.find('[data-testid="group-share-result"]').exists()).toBe(true)
-		expect(wrapper.vm.result).toEqual({ group: 'Finance', received: 3, skipped: 1 })
+		expect(wrapper.find('[data-testid="group-share-result"]').exists()).toBe(
+			true,
+		)
+		expect(wrapper.vm.result).toEqual({
+			group: 'Finance',
+			received: 3,
+			skipped: 1,
+		})
 	})
 
 	it('revokes a group share', async () => {
@@ -67,6 +75,8 @@ describe('GroupShareList', () => {
 
 		expect(del).toHaveBeenCalledWith('/apps/keepiq/api/v1/group-shares/gs-1')
 		expect(wrapper.findAll('[data-testid="group-share-row"]')).toHaveLength(0)
-		expect(wrapper.find('[data-testid="group-share-list-empty"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="group-share-list-empty"]').exists()).toBe(
+			true,
+		)
 	})
 })

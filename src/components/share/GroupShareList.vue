@@ -29,7 +29,11 @@
 				<span class="keepiq-group-share-list__group">{{ row.groupId }}</span>
 				<NcButton
 					variant="tertiary"
-					:aria-label="t('keepiq', 'Revoke the share with {group}', { group: row.groupId })"
+					:aria-label="
+						t('keepiq', 'Revoke the share with {group}', {
+							group: row.groupId,
+						})
+					"
 					data-testid="group-share-row-revoke"
 					@click="onRevoke(row.id)">
 					{{ t('keepiq', 'Revoke') }}
@@ -46,7 +50,11 @@
 				t(
 					'keepiq',
 					'Shared with {group}: {received} members received it, {skipped} did not because they have no encryption set up yet.',
-					{ group: result.group, received: result.received, skipped: result.skipped },
+					{
+						group: result.group,
+						received: result.received,
+						skipped: result.skipped,
+					},
 				)
 			}}
 		</p>
@@ -63,10 +71,7 @@
 			:secretId="secretId"
 			@cancel="formOpen = false"
 			@shared="onShared" />
-		<NcButton
-			v-else
-			data-testid="group-share-open-form"
-			@click="openForm">
+		<NcButton v-else data-testid="group-share-open-form" @click="openForm">
 			{{ t('keepiq', 'Share with group') }}
 		</NcButton>
 	</section>

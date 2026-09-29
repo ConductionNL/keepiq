@@ -123,7 +123,10 @@ export default {
 				)
 				this.$emit('shared', { group: this.selected, ...result })
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || t('keepiq', 'Failed to share')
+				this.error =
+					e?.response?.data?.message
+					|| e?.message
+					|| t('keepiq', 'Failed to share')
 			} finally {
 				this.busy = false
 			}

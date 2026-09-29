@@ -47,7 +47,9 @@ export const useGroupShareStore = defineStore('groupShare', {
 			this.error = null
 			try {
 				const response = await axios.get(
-					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/group-shares`),
+					generateUrl(
+						`/apps/keepiq/api/v1/secrets/${secretId}/group-shares`,
+					),
 				)
 				this.groupShares = Array.isArray(response.data) ? response.data : []
 			} finally {
@@ -112,7 +114,9 @@ export const useGroupShareStore = defineStore('groupShare', {
 			this.error = null
 			try {
 				const created = await axios.post(
-					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/group-shares`),
+					generateUrl(
+						`/apps/keepiq/api/v1/secrets/${secretId}/group-shares`,
+					),
 					{ groupId },
 				)
 				const groupShare = created.data?.groupShare ?? null
@@ -137,21 +141,25 @@ export const useGroupShareStore = defineStore('groupShare', {
 						? response.data.items
 						: []
 					received = items.filter(
-						(item) => item.status === 'created' || item.status === 'exists',
+						(item) =>
+							item.status === 'created' || item.status === 'exists',
 					).length
 					refused = members.length - received
 				}
 
 				if (groupShare !== null) {
 					this.groupShares = [
-						...this.groupShares.filter((row) => row.id !== groupShare.id),
+						...this.groupShares.filter(
+							(row) => row.id !== groupShare.id,
+						),
 						groupShare,
 					]
 				}
 
 				return { received, skipped: skippedByServer + refused }
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to share'
+				this.error =
+					e?.response?.data?.message || e?.message || 'Failed to share'
 				throw e
 			} finally {
 				this.loading = false
@@ -214,7 +222,8 @@ export const useGroupShareStore = defineStore('groupShare', {
 					(row) => row.id !== groupShareId,
 				)
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'Failed to revoke'
+				this.error =
+					e?.response?.data?.message || e?.message || 'Failed to revoke'
 				throw e
 			}
 		},

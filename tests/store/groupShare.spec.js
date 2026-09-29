@@ -36,35 +36,44 @@ describe('useGroupShareStore', () => {
 	})
 
 	it('shares with a group: creates the group share, encrypts per member, registers the copies linked to it', async () => {
-		const post = vi.spyOn(axios, 'post').mockImplementation(async (url, body) => {
-			if (url.endsWith('/group-shares')) {
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockImplementation(async (url, body) => {
+				if (url.endsWith('/group-shares')) {
+					return {
+						data: {
+							groupShare: { id: 'gs-1', groupId: 'finance' },
+							members: [
+								{ userId: 'bob', certificate: 'PEM-BOB' },
+								{ userId: 'carol', certificate: 'PEM-CAROL' },
+								{ userId: 'dave', certificate: 'PEM-DAVE' },
+							],
+							skipped: 1,
+						},
+					}
+				}
 				return {
 					data: {
-						groupShare: { id: 'gs-1', groupId: 'finance' },
-						members: [
-							{ userId: 'bob', certificate: 'PEM-BOB' },
-							{ userId: 'carol', certificate: 'PEM-CAROL' },
-							{ userId: 'dave', certificate: 'PEM-DAVE' },
-						],
-						skipped: 1,
+						items: body.shares.map((row) => ({
+							targetUserId: row.targetUserId,
+							status:
+								row.targetUserId === 'dave' ? 'no_suite' : 'created',
+						})),
 					},
 				}
-			}
-			return {
-				data: {
-					items: body.shares.map((row) => ({
-						targetUserId: row.targetUserId,
-						status: row.targetUserId === 'dave' ? 'no_suite' : 'created',
-					})),
-				},
-			}
-		})
+			})
 		useSecretStore().fetchSecret = vi
 			.fn()
-			.mockResolvedValue({ key: 'hunter2', login: 'alice', additionalFields: {} })
+			.mockResolvedValue({
+				key: 'hunter2',
+				login: 'alice',
+				additionalFields: {},
+			})
 		const encrypt = vi
 			.spyOn(useShareStore(), 'encryptForRecipient')
-			.mockImplementation(async (snapshot, cert) => ({ key: `enc(${snapshot.key},${cert})` }))
+			.mockImplementation(async (snapshot, cert) => ({
+				key: `enc(${snapshot.key},${cert})`,
+			}))
 		const store = useGroupShareStore()
 
 		const result = await store.shareWithGroup('s-1', 'finance')
@@ -107,7 +116,14 @@ describe('useGroupShareStore', () => {
 			data: {
 				ocs: {
 					data: {
-						exact: { groups: [{ label: 'Finance', value: { shareWith: 'finance' } }] },
+						exact: {
+							groups: [
+								{
+									label: 'Finance',
+									value: { shareWith: 'finance' },
+								},
+							],
+						},
 						groups: [
 							{ label: 'Finance', value: { shareWith: 'finance' } },
 							{ label: 'Board', value: { shareWith: 'board' } },
@@ -120,7 +136,10 @@ describe('useGroupShareStore', () => {
 
 		const groups = await store.searchGroups('fin')
 
-		expect(get.mock.calls[0][1].params).toMatchObject({ search: 'fin', shareType: 1 })
+		expect(get.mock.calls[0][1].params).toMatchObject({
+			search: 'fin',
+			shareType: 1,
+		})
 		expect(groups).toEqual([
 			{ id: 'finance', label: 'Finance' },
 			{ id: 'board', label: 'Board' },
