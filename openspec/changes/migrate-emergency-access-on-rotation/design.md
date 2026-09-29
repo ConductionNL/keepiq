@@ -10,7 +10,7 @@ The stated reason is that the owner "cannot re-wrap it alone". That is true of t
 
 **Goals**
 - A compromise-recovery rotation preserves emergency access for every contact whose grantee is still reachable
-- The residual — contacts whose grantee cannot be reached — is invalidated as today, but surfaced so the owner can re-designate, instead of lost silently
+- The residual — contacts that were not carried: an unreachable grantee, or, since keepiq#800, one the owner did not tick or with a break-glass in flight — is invalidated as today, but surfaced to the owner instead of lost silently, with a prompt to re-designate only an unreachable one (keepiq#804)
 - No schema change, no new trust assumption
 
 **Non-Goals**
@@ -30,13 +30,13 @@ This reuses the loop, the per-record commit shape, and the server-side owner/sui
 
 The five migrated stores gate completion: the run cannot finalise while any of their rows remains on the old suite. Emergency contacts are deliberately **not** added to that gate.
 
-The reason is that a contact can be legitimately un-migratable — the grantee left the instance, or revoked their suite, so there is no certificate to seal to. Gating completion on such a row would trap the vault exactly the way the *A Migration Always Has A Way To Terminate* requirement forbids. So emergency contacts stay outside the gate: the loop migrates every reachable one, and `invalidateForGrantorRotation()` runs at completion as it does today — but now finds only the residual, because the migrated contacts already left the old suite. The listener keeps its current code; its meaning narrows from "invalidate all" to "invalidate whatever the loop could not carry".
+The reason is that a contact can be legitimately un-migratable — the grantee left the instance, or revoked their suite, so there is no certificate to seal to. Gating completion on such a row would trap the vault exactly the way the *A Migration Always Has A Way To Terminate* requirement forbids. So emergency contacts stay outside the gate: the loop migrates every reachable one, and `invalidateForGrantorRotation()` runs at completion as it does today — but now finds only the contacts that were not carried, because the carried ones already left the old suite. Since keepiq#800 that is every contact the browser did not carry: an unreachable grantee, one the owner did not tick, and one whose break-glass was in flight (recorded as `grantor_rotation_in_flight`). The listener keeps its current code; its meaning narrows from "invalidate all" to "invalidate whatever the loop did not carry".
 
-This is the least invasive correct design: no new column, no `migration_error` analogue for contacts, no change to the gate or its progress denominator. The trade-off is that a re-envelope that fails transiently (grantee cert briefly unfetchable) is swept into the residual rather than retried to exhaustion — acceptable, because the residual is re-designatable and the failure mode is "prompt to re-establish", never data loss.
+This is the least invasive correct design: no new column, no `migration_error` analogue for contacts, no change to the gate or its progress denominator. The trade-off is that a re-envelope that fails transiently (grantee cert briefly unfetchable) is swept into the residual rather than retried to exhaustion — acceptable, because an unreachable contact is re-designatable and the failure mode is "prompt to re-establish", never data loss. Only an unreachable contact gets that prompt: an unconfirmed or in-flight one is named without it (keepiq#804).
 
 ### D3: The completion summary carries the residual, and the form acts on it
 
-Today the loss is silent. With this change the completion response reports which contacts were invalidated rather than migrated, and `CompromiseRecoveryForm.vue` prompts the owner to re-designate exactly those. A rotation with all grantees reachable prompts nothing; a rotation with an unreachable grantee explains which one and why.
+Today the loss is silent. With this change the completion response reports which contacts were invalidated rather than migrated, and `CompromiseRecoveryForm.vue` prompts the owner to re-designate the unreachable ones, and names unconfirmed and in-flight ones without that prompt (keepiq#804). A rotation with all grantees reachable prompts nothing; a rotation with an unreachable grantee explains which one and why.
 
 ### D4: Bind to the grantee's current certificate, and let that be a feature
 

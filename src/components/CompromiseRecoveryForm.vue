@@ -599,6 +599,42 @@ export default {
 		},
 
 		/**
+		 * The residual list for the completion screen after a later step.
+		 *
+		 * The initiate path's list knows what the owner ticked, so its
+		 * classification wins whenever it has entries — except that a contact
+		 * the completion sweep recorded with a break-glass in flight is shown as
+		 * in flight, because a request made while a loss was pending is what a
+		 * planted contact looks like. With no initiate list, the read-back is
+		 * used as is, naming the removed contacts neutrally (#804 review,
+		 * round 5).
+		 *
+		 * @param {Array<{granteeUserId: string, reason: string}>|undefined} readBack
+		 *   The contacts read back after completion.
+		 * @return {Array<{granteeUserId: string, reason: string}>} The list to show.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		keepResidual(readBack) {
+			const current = this.result?.residualContacts ?? []
+			const fresh = readBack ?? []
+			if (current.length === 0) {
+				return fresh
+			}
+
+			const inFlight = new Set(
+				fresh
+					.filter((entry) => entry.reason === 'break_glass_in_flight')
+					.map((entry) => entry.granteeUserId),
+			)
+
+			return current.map((entry) =>
+				inFlight.has(entry.granteeUserId)
+					? { ...entry, reason: 'break_glass_in_flight' }
+					: entry,
+			)
+		},
+
+		/**
 		 * Tick or untick one emergency contact to carry to the new key.
 		 *
 		 * @param {string} contactId The contact id.
@@ -670,7 +706,13 @@ export default {
 			try {
 				const store = useEncryptionSuiteStore()
 				const outcome = await store.resumeMigration(this.activeOldPassword)
-				this.result = outcome
+				// A retry resumes the run this form started, which knows the
+				// owner's ticks: keep that list rather than the resume's neutral
+				// read-back (#804 review, round 5).
+				this.result = {
+					...outcome,
+					residualContacts: this.keepResidual(outcome.residualContacts),
+				}
 				this.phase = store.migrationNeedsAcknowledgement
 					? 'running'
 					: 'terminal'
@@ -731,7 +773,7 @@ export default {
 				// Completion carries a vault-key proof over the OLD key. The old
 				// password is retained from the run when it started here; on a
 				// resumed run it is not, so the field below is re-shown.
-				await store.acceptMigrationLosses(
+				const completion = await store.acceptMigrationLosses(
 					store.migrationStatus?.id,
 					this.activeOldPassword || this.oldPassword,
 				)
@@ -739,6 +781,9 @@ export default {
 				this.result = {
 					...(this.result ?? { migrated: 0, droppedVersions: 0 }),
 					failures: this.unrecoverable,
+					residualContacts: this.keepResidual(
+						completion?.residualContacts,
+					),
 				}
 				this.phase = 'terminal'
 			} catch (e) {
