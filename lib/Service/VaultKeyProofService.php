@@ -108,7 +108,7 @@ class VaultKeyProofService {
 	 * @param ISecureRandom $secureRandom The challenge randomness source
 	 * @param ITimeFactory $timeFactory The clock, injected for testable expiry
 	 * @param ICacheFactory $cacheFactory Holds consumed nonces, so each proof is single-use
-	 * @param LoggerInterface|null $logger Says so when single use cannot be enforced
+	 * @param LoggerInterface $logger Says so when single use cannot be enforced
 	 *
 	 * @return void
 	 *
@@ -119,7 +119,7 @@ class VaultKeyProofService {
 		private ISecureRandom $secureRandom,
 		private ITimeFactory $timeFactory,
 		private ICacheFactory $cacheFactory,
-		private ?LoggerInterface $logger = null,
+		private LoggerInterface $logger,
 	) {
 	}//end __construct()
 
@@ -267,7 +267,7 @@ class VaultKeyProofService {
 		}
 
 		$this->reuseWarningLogged = true;
-		$this->logger?->warning(
+		$this->logger->warning(
 			'Keepiq: no memcache is configured, so a reused vault-key proof is not detected. '
 			. 'Configure a distributed memcache (memcache.distributed) to make proofs single-use.',
 			['app' => 'keepiq']

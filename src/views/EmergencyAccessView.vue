@@ -277,10 +277,12 @@ export default {
 
 		/**
 		 * Whether to offer Re-establish for a contact: only an invalidated one
-		 * that could not be reached. A key rotation also leaves behind contacts
-		 * the owner chose not to carry and contacts with a break-glass in
-		 * flight, and nudging those back in is what a planted contact is after
-		 * (#804 review).
+		 * that a key rotation did NOT invalidate (for example, the grantee
+		 * revoked their own suite). After a rotation the server cannot tell a
+		 * contact the owner left unticked from one it could not reach, and
+		 * nudging an unticked one back in is what a planted contact is after;
+		 * the recovery form, which knows the ticks, is the only place that
+		 * prompts (#804 review).
 		 *
 		 * @param {object} contact The contact.
 		 * @return {boolean} True to offer Re-establish.
@@ -290,10 +292,9 @@ export default {
 			if (contact.state !== 'invalidated') {
 				return false
 			}
-			return ![
-				'grantor_rotation_not_carried',
-				'grantor_rotation_in_flight',
-			].includes(contact.invalidatedReason)
+			return !String(contact.invalidatedReason ?? '').startsWith(
+				'grantor_rotation',
+			)
 		},
 
 		/**

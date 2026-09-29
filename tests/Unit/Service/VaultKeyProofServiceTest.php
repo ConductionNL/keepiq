@@ -73,6 +73,7 @@ class VaultKeyProofServiceTest extends TestCase {
 			secureRandom: $random,
 			timeFactory: $time,
 			cacheFactory: $this->cacheFactory(cache: $this->memcache()),
+			logger: $this->createMock(LoggerInterface::class),
 		);
 
 		[$this->privateKeyPem, $this->publicKeyPem] = $this->makeKeypair();
@@ -229,6 +230,7 @@ class VaultKeyProofServiceTest extends TestCase {
 			secureRandom: $random,
 			timeFactory: $time,
 			cacheFactory: $this->cacheFactory(cache: $cache),
+			logger: $this->createMock(LoggerInterface::class),
 		);
 
 		[$nonce, $sig] = $this->prove(boundValues: []);

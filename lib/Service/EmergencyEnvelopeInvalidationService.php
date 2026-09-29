@@ -80,13 +80,12 @@ class EmergencyEnvelopeInvalidationService {
 	 * suite. Their envelopes hold the stale private key, so they are marked
 	 * invalid.
 	 *
-	 * Each gets the reason it was not carried, so the view offers Re-establish
-	 * only where that is safe (#804 review):
-	 * - `{reason}_in_flight`: a break-glass was requested or approved, which is
-	 *   what a contact planted with a stolen session looks like;
-	 * - `{reason}_not_carried`: the grantee was reachable, so the owner chose not
-	 *   to carry it (left it unticked, or it was declined);
-	 * - `{reason}`: the grantee had no active suite to seal to (unreachable).
+	 * A contact with a break-glass requested or approved gets `{reason}_in_flight`,
+	 * which the view warns about: that is what a contact planted with a stolen
+	 * session looks like. Every other contact gets `{reason}`. The server cannot
+	 * see which contacts the owner ticked, so it does not try to tell an
+	 * unticked contact from an unreachable one; the view offers Re-establish for
+	 * neither, and only the recovery form prompts (#804 review).
 	 *
 	 * @param string $grantorSuiteId The rotated (old) suite ID
 	 * @param string $reason The invalidation reason tag
@@ -125,13 +124,7 @@ class EmergencyEnvelopeInvalidationService {
 			return $reason . '_in_flight';
 		}
 
-		try {
-			$this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $contact->getGranteeUserId());
-		} catch (DoesNotExistException) {
-			return $reason;
-		}
-
-		return $reason . '_not_carried';
+		return $reason;
 	}//end rotationReason()
 
 	/**

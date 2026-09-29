@@ -4,13 +4,14 @@
  *
  * Component test for the Re-establish prompt in `src/views/EmergencyAccessView.vue`.
  *
- * A compromise recovery leaves three kinds of invalidated contact behind, and
- * only one of them may be nudged back in (#804 review):
- *  - unreachable (reason `grantor_rotation`, or any older reason): Re-establish;
- *  - not carried by the owner's choice (`grantor_rotation_not_carried`):
- *    neutral, no call to action;
- *  - break-glass in flight (`grantor_rotation_in_flight`): a warning, no
- *    call to action, because that is what a planted contact looks like.
+ * No contact a key rotation invalidated is nudged back in from this view
+ * (#804 review). Only the recovery form knows which contacts the owner ticked,
+ * so its completion screen is the one place that prompts re-establishing an
+ * unreachable contact. Here, every `grantor_rotation*` reason gets a neutral
+ * label and no Re-establish, and a break-glass in flight
+ * (`grantor_rotation_in_flight`) also gets a warning, because that is what a
+ * planted contact looks like. An envelope invalidated because the GRANTEE
+ * revoked their own suite (`grantee_revocation`) keeps Re-establish.
  *
  * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
  */
@@ -94,8 +95,8 @@ describe('EmergencyAccessView — re-establish prompt', () => {
 		setActivePinia(createPinia())
 	})
 
-	it.each([['grantor_rotation'], ['grantee_revocation'], [null]])(
-		'offers Re-establish for an unreachable contact (%s)',
+	it.each([['grantee_revocation'], [null]])(
+		'offers Re-establish for a contact not invalidated by a rotation (%s)',
 		async (reason) => {
 			const { wrapper } = await mountView([invalidated(reason)])
 			expect(
@@ -107,18 +108,22 @@ describe('EmergencyAccessView — re-establish prompt', () => {
 		},
 	)
 
-	it('offers nothing for a contact the owner chose not to carry', async () => {
-		const { wrapper } = await mountView([
-			invalidated('grantor_rotation_not_carried'),
-		])
-		expect(wrapper.find('[data-testid="emergency-reestablish"]').exists()).toBe(
-			false,
-		)
-		expect(
-			wrapper.find('[data-testid="emergency-in-flight-warning"]').exists(),
-		).toBe(false)
-		expect(wrapper.find('.emergency-access__state').text()).toBe('Invalidated')
-	})
+	// grantor_rotation_not_carried: rows written by an earlier revision of #804.
+	it.each([['grantor_rotation'], ['grantor_rotation_not_carried']])(
+		'offers nothing for a contact a rotation did not carry (%s)',
+		async (reason) => {
+			const { wrapper } = await mountView([invalidated(reason)])
+			expect(
+				wrapper.find('[data-testid="emergency-reestablish"]').exists(),
+			).toBe(false)
+			expect(
+				wrapper.find('[data-testid="emergency-in-flight-warning"]').exists(),
+			).toBe(false)
+			expect(wrapper.find('.emergency-access__state').text()).toBe(
+				'Invalidated',
+			)
+		},
+	)
 
 	it('warns, and offers nothing, for a contact with a break-glass in flight', async () => {
 		const { wrapper } = await mountView([

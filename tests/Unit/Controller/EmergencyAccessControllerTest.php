@@ -57,19 +57,19 @@ class EmergencyAccessControllerTest extends TestCase {
 	}//end controller()
 
 	/**
-	 * A contact a rotation did not carry.
+	 * A contact whose break-glass was in flight during a rotation.
 	 *
 	 * @return EmergencyContact
 	 */
-	private function notCarried(): EmergencyContact {
+	private function inFlight(): EmergencyContact {
 		$contact = new EmergencyContact();
 		$contact->setId('rel-1');
 		$contact->setGrantorUserId('alice');
 		$contact->setGranteeUserId('bob');
 		$contact->setState(EmergencyContact::STATE_INVALIDATED);
-		$contact->setInvalidatedReason('grantor_rotation_not_carried');
+		$contact->setInvalidatedReason('grantor_rotation_in_flight');
 		return $contact;
-	}//end notCarried()
+	}//end inFlight()
 
 	/**
 	 * The grantor's list says why a contact was invalidated.
@@ -77,9 +77,9 @@ class EmergencyAccessControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testIndexCarriesTheInvalidationReason(): void {
-		$data = $this->controller(userId: 'alice', contact: $this->notCarried())->index()->getData();
+		$data = $this->controller(userId: 'alice', contact: $this->inFlight())->index()->getData();
 
-		$this->assertSame('grantor_rotation_not_carried', $data[0]['invalidatedReason']);
+		$this->assertSame('grantor_rotation_in_flight', $data[0]['invalidatedReason']);
 	}//end testIndexCarriesTheInvalidationReason()
 
 	/**
@@ -89,7 +89,7 @@ class EmergencyAccessControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testIncomingOmitsTheInvalidationReason(): void {
-		$data = $this->controller(userId: 'bob', contact: $this->notCarried())->incoming()->getData();
+		$data = $this->controller(userId: 'bob', contact: $this->inFlight())->incoming()->getData();
 
 		$this->assertArrayNotHasKey('invalidatedReason', $data[0]);
 	}//end testIncomingOmitsTheInvalidationReason()

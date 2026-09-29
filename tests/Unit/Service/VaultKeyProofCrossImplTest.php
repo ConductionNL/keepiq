@@ -37,6 +37,7 @@ use OCP\ICacheFactory;
 use OCP\IConfig;
 use OCP\Security\ISecureRandom;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 
 /**
  * Verifies a browser-produced signature on the PHP side.
@@ -55,6 +56,7 @@ class VaultKeyProofCrossImplTest extends TestCase {
 			secureRandom: $this->createMock(ISecureRandom::class),
 			timeFactory: $this->createMock(ITimeFactory::class),
 			cacheFactory: $this->createMock(ICacheFactory::class),
+			logger: $this->createMock(LoggerInterface::class),
 		);
 
 		$message = $service->signedMessage(
@@ -88,6 +90,7 @@ class VaultKeyProofCrossImplTest extends TestCase {
 			secureRandom: $this->createMock(ISecureRandom::class),
 			timeFactory: $this->createMock(ITimeFactory::class),
 			cacheFactory: $this->createMock(ICacheFactory::class),
+			logger: $this->createMock(LoggerInterface::class),
 		);
 
 		// Same signature, but the server rebuilds the message with a changed

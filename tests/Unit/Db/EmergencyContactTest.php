@@ -37,7 +37,7 @@ class EmergencyContactTest extends TestCase {
 		$contact->setGrantorUserId('alice');
 		$contact->setGranteeUserId('bob');
 		$contact->setState(EmergencyContact::STATE_INVALIDATED);
-		$contact->setInvalidatedReason('grantor_rotation_not_carried');
+		$contact->setInvalidatedReason('grantor_rotation_in_flight');
 		$contact->setRecoveryEnvelope('ENVELOPE');
 		return $contact;
 	}//end contact()
@@ -51,7 +51,7 @@ class EmergencyContactTest extends TestCase {
 	public function testGrantorSerializationCarriesTheInvalidationReason(): void {
 		$data = $this->contact()->jsonSerializeForGrantor();
 
-		$this->assertSame('grantor_rotation_not_carried', $data['invalidatedReason']);
+		$this->assertSame('grantor_rotation_in_flight', $data['invalidatedReason']);
 		$this->assertArrayNotHasKey('recoveryEnvelope', $data);
 	}//end testGrantorSerializationCarriesTheInvalidationReason()
 
