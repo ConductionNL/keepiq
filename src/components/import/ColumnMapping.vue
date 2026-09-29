@@ -59,6 +59,7 @@ export default {
 		 * The fields a column can be imported into.
 		 *
 		 * @return {Array<{value: string, label: string}>}
+		 * @spec openspec/specs/portability-import-mapping/spec.md#requirement-adjustable-csv-mapping
 		 */
 		targetOptions() {
 			return [
