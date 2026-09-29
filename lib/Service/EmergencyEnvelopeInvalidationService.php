@@ -76,9 +76,17 @@ class EmergencyEnvelopeInvalidationService {
 	}//end __construct()
 
 	/**
-	 * Invalidate a grantor's recovery envelopes after their suite is ROTATED
-	 * (compromise recovery). The envelopes hold the stale private key, so they
-	 * are marked invalid and the grantor must re-establish emergency access.
+	 * Invalidate the contacts a ROTATION (compromise recovery) left on the old
+	 * suite. Their envelopes hold the stale private key, so they are marked
+	 * invalid.
+	 *
+	 * Each gets the reason it was not carried, so the view offers Re-establish
+	 * only where that is safe (#804 review):
+	 * - `{reason}_in_flight`: a break-glass was requested or approved, which is
+	 *   what a contact planted with a stolen session looks like;
+	 * - `{reason}_not_carried`: the grantee was reachable, so the owner chose not
+	 *   to carry it (left it unticked, or it was declined);
+	 * - `{reason}`: the grantee had no active suite to seal to (unreachable).
 	 *
 	 * @param string $grantorSuiteId The rotated (old) suite ID
 	 * @param string $reason The invalidation reason tag
@@ -94,12 +102,37 @@ class EmergencyEnvelopeInvalidationService {
 				continue;
 			}
 
-			$this->invalidate(contact: $contact, reason: $reason);
+			$this->invalidate(contact: $contact, reason: $this->rotationReason(contact: $contact, reason: $reason));
 			$count++;
 		}
 
 		return $count;
 	}//end invalidateForGrantorRotation()
+
+	/**
+	 * Why a rotation did not carry $contact (see invalidateForGrantorRotation).
+	 *
+	 * @param EmergencyContact $contact The residual contact
+	 * @param string $reason The base invalidation reason tag
+	 *
+	 * @return string The reason tag to record
+	 *
+	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+	 */
+	private function rotationReason(EmergencyContact $contact, string $reason): string {
+		$inFlight = [EmergencyContact::STATE_REQUESTED, EmergencyContact::STATE_APPROVED];
+		if (in_array($contact->getState(), $inFlight, true) === true) {
+			return $reason . '_in_flight';
+		}
+
+		try {
+			$this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $contact->getGranteeUserId());
+		} catch (DoesNotExistException) {
+			return $reason;
+		}
+
+		return $reason . '_not_carried';
+	}//end rotationReason()
 
 	/**
 	 * Count the grantor's usable (non-invalidated) emergency contacts on a suite.

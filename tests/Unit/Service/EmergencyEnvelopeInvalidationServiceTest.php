@@ -406,6 +406,8 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 		// simply is not in this list — the sweep can only ever see the residual.
 		$residual = $this->contact(grantorSuite: 'old-suite');
 		$this->mapper->method('findByGrantorSuite')->willReturn([$residual]);
+		// The grantee has no active suite: the browser could not seal to them.
+		$this->suiteMapper->method('findActiveByOwner')->willThrowException(new DoesNotExistException('none'));
 
 		$count = $this->service->invalidateForGrantorRotation(grantorSuiteId: 'old-suite');
 
@@ -414,6 +416,43 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 		$this->assertNull($residual->getRecoveryEnvelope());
 		$this->assertSame('grantor_rotation', $residual->getInvalidatedReason());
 	}//end testResidualSweepInvalidatesOnlyOldSuiteContacts()
+
+	/**
+	 * A contact with a break-glass requested or approved was never carried, and
+	 * is recorded as such so the view does not nudge the owner to re-add it:
+	 * that is the shape of a contact planted with a stolen session (#804 review).
+	 *
+	 * @return void
+	 */
+	public function testResidualSweepMarksABreakGlassInFlight(): void {
+		$requested = $this->contact(state: EmergencyContact::STATE_REQUESTED);
+		$approved = $this->contact(state: EmergencyContact::STATE_APPROVED);
+		$this->mapper->method('findByGrantorSuite')->willReturn([$requested, $approved]);
+		$this->suiteMapper->method('findActiveByOwner')->willReturn($this->suite(id: 'grantee-new'));
+
+		$this->service->invalidateForGrantorRotation(grantorSuiteId: 'old-suite');
+
+		$this->assertSame('grantor_rotation_in_flight', $requested->getInvalidatedReason());
+		$this->assertSame('grantor_rotation_in_flight', $approved->getInvalidatedReason());
+	}//end testResidualSweepMarksABreakGlassInFlight()
+
+	/**
+	 * A reachable contact left on the old suite is one the owner chose not to
+	 * carry (unticked, or declined): recorded as not carried, not unreachable.
+	 *
+	 * @return void
+	 */
+	public function testResidualSweepMarksAReachableContactNotCarried(): void {
+		$unticked = $this->contact(state: EmergencyContact::STATE_GRANTED);
+		$declined = $this->contact(state: EmergencyContact::STATE_DECLINED);
+		$this->mapper->method('findByGrantorSuite')->willReturn([$unticked, $declined]);
+		$this->suiteMapper->method('findActiveByOwner')->willReturn($this->suite(id: 'grantee-new'));
+
+		$this->service->invalidateForGrantorRotation(grantorSuiteId: 'old-suite');
+
+		$this->assertSame('grantor_rotation_not_carried', $unticked->getInvalidatedReason());
+		$this->assertSame('grantor_rotation_not_carried', $declined->getInvalidatedReason());
+	}//end testResidualSweepMarksAReachableContactNotCarried()
 
 	/**
 	 * The revoke-safeguard count includes every non-invalidated contact on the
