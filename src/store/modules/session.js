@@ -8,6 +8,23 @@ import { decryptPrivateKey, importPrivateKey } from '../../crypto/index.js'
 const DEFAULT_TIMEOUT = 600000 // 10 minutes
 
 /**
+ * The saved timeout choices in milliseconds. `session` means no idle timer
+ * beyond the Nextcloud session itself, held as `null` so it can never fall
+ * back to a number by accident.
+ */
+export const TIMEOUT_CHOICES = Object.freeze({
+	session: null,
+	'10min': 600000,
+	'30min': 1800000,
+})
+
+/** The choice used when none is saved or the saved one is unknown. */
+export const DEFAULT_TIMEOUT_CHOICE = '10min'
+
+/** Activity is recorded at most once per this many milliseconds. */
+export const ACTIVITY_THROTTLE_MS = 15000
+
+/**
  * Lock-time hooks invoked when the vault locks. The password-health store
  * registers its `reset` here so locking discards all derived health state +
  * terminates the worker, without a static circular import.
@@ -35,8 +52,10 @@ export const useSessionStore = defineStore('session', {
 		cryptoKey: null,
 		/** @type {CryptoKey|null} AES key derived from master password */
 		aesKey: null,
-		/** @type {number} Session timeout in ms */
+		/** @type {number|null} Idle timeout in ms; null = no idle timer (Nextcloud session). */
 		timeout: DEFAULT_TIMEOUT,
+		/** @type {string} The timeout choice the timeout was derived from. */
+		timeoutChoice: DEFAULT_TIMEOUT_CHOICE,
 		/** @type {number} Last activity timestamp */
 		lastActivity: Date.now(),
 		/** @type {string|null} Encrypted private key blob from server */
@@ -191,9 +210,77 @@ export const useSessionStore = defineStore('session', {
 				return
 			}
 
+			if (this.timeout === null) {
+				return
+			}
+
 			if (Date.now() - this.lastActivity > this.timeout) {
 				this.lock()
 			}
+		},
+
+		/**
+		 * Record user activity for the inactivity lock, at most once per
+		 * ACTIVITY_THROTTLE_MS so pointer moves and key presses do not cost a
+		 * store write each. Activity on a locked vault is ignored.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/vault-session-lock/spec.md#requirement-inactivity-lock
+		 */
+		noteActivity() {
+			if (this.cryptoKey === null) {
+				return
+			}
+
+			const now = Date.now()
+			if (now - this.lastActivity >= ACTIVITY_THROTTLE_MS) {
+				this.lastActivity = now
+			}
+		},
+
+		/**
+		 * Apply a timeout choice. An unknown choice falls back to ten minutes.
+		 *
+		 * @param {string} choice One of the TIMEOUT_CHOICES keys.
+		 * @return {void}
+		 * @spec openspec/specs/vault-session-lock/spec.md#requirement-saved-session-timeout
+		 */
+		applyTimeoutChoice(choice) {
+			const known = Object.prototype.hasOwnProperty.call(TIMEOUT_CHOICES, choice)
+			this.timeoutChoice = known ? choice : DEFAULT_TIMEOUT_CHOICE
+			this.timeout = TIMEOUT_CHOICES[this.timeoutChoice]
+		},
+
+		/**
+		 * Load the saved timeout from the user settings. When they cannot be
+		 * read the ten-minute default stays.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/vault-session-lock/spec.md#requirement-saved-session-timeout
+		 */
+		async loadTimeoutPreference() {
+			try {
+				const response = await axios.get(
+					generateUrl('/apps/keepiq/api/settings/user'),
+				)
+				this.applyTimeoutChoice(response.data?.session_timeout)
+			} catch {
+				this.applyTimeoutChoice(DEFAULT_TIMEOUT_CHOICE)
+			}
+		},
+
+		/**
+		 * Save a timeout choice and apply it at once.
+		 *
+		 * @param {string} choice One of the TIMEOUT_CHOICES keys.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/vault-session-lock/spec.md#requirement-saved-session-timeout
+		 */
+		async saveTimeoutPreference(choice) {
+			this.applyTimeoutChoice(choice)
+			await axios.put(generateUrl('/apps/keepiq/api/settings/user'), {
+				session_timeout: this.timeoutChoice,
+			})
 		},
 
 		/**

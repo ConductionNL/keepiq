@@ -254,7 +254,11 @@ class SettingsService {
 	 */
 	public function getUserPreferences(string $userId): array {
 		$appId = Application::APP_ID;
-		$adminDefault = $this->appConfig->getValueString($appId, 'default_session_timeout', 'session');
+		$adminDefault = $this->appConfig->getValueString(
+			$appId,
+			'default_session_timeout',
+			AdminSettingsService::DEFAULT_SESSION_TIMEOUT
+		);
 
 		$prefs = [];
 		foreach (self::USER_PREF_KEYS as $key => $default) {

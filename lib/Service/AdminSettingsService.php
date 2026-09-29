@@ -55,6 +55,13 @@ class AdminSettingsService {
 	private const VALID_SESSION_TIMEOUTS = ['session', '10min', '30min'];
 
 	/**
+	 * The session timeout when neither the admin nor the user chose one. Ten
+	 * minutes is what the vault did in practice before 'session' meant no idle
+	 * timer, so an unset value never switches the idle lock off (crypto-07).
+	 */
+	public const DEFAULT_SESSION_TIMEOUT = '10min';
+
+	/**
 	 * Default audit-log retention window in days (add-secret-audit-trail §4.2).
 	 *
 	 * @var int
@@ -138,7 +145,7 @@ class AdminSettingsService {
 				'default_session_timeout' => $this->appConfig->getValueString(
 					$appId,
 					'default_session_timeout',
-					'session'
+					self::DEFAULT_SESSION_TIMEOUT
 				),
 				'ca_auto_renew_enabled' => $this->appConfig->getValueBool($appId, 'ca_auto_renew_enabled', true),
 				'audit_retention_days' => $this->appConfig->getValueInt(

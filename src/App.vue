@@ -134,12 +134,14 @@
 					</template>
 					<div class="user-settings__field">
 						<NcSelect
-							v-model="sessionTimeout"
+							:modelValue="sessionStore.timeoutChoice"
 							:options="timeoutOptions"
 							:inputLabel="t('keepiq', 'Session timeout')"
 							label="label"
 							:reduce="(opt) => opt.value"
-							@input="saveTimeout" />
+							:clearable="false"
+							data-testid="session-timeout-select"
+							@update:modelValue="onTimeoutChange" />
 					</div>
 				</NcAppSettingsSection>
 
@@ -411,6 +413,16 @@ import { useSessionStore } from './store/modules/session.js'
 import { initializeStores } from './store/store.js'
 import { activeDetailSecretId, closeDetailLocation } from './utils/detailRoute.js'
 
+/** The document events that count as activity for the inactivity lock (crypto-06). */
+const ACTIVITY_EVENTS = Object.freeze([
+	'pointerdown',
+	'pointermove',
+	'keydown',
+	'wheel',
+	'scroll',
+	'touchstart',
+])
+
 export default {
 	name: 'App',
 
@@ -494,7 +506,6 @@ export default {
 			appVersion: loadState('keepiq', 'appVersion', ''),
 			storesReady: false,
 			timeoutInterval: null,
-			sessionTimeout: 'session',
 			showRecovery: false,
 			revokeConfirm: false,
 			revokeReason: '',
@@ -775,6 +786,15 @@ export default {
 			this.offlineStore.syncNow().catch(() => {})
 		}
 
+		// The saved timeout applies from this page load on (crypto-07).
+		this.sessionStore.loadTimeoutPreference()
+
+		// Activity resets the inactivity lock (crypto-06). Passive listeners
+		// on the document; the store throttles the writes.
+		for (const type of ACTIVITY_EVENTS) {
+			document.addEventListener(type, this.handleActivity, { passive: true, capture: true })
+		}
+
 		// Poll every 10 s for session-timeout expiry.
 		this.timeoutInterval = setInterval(() => {
 			this.sessionStore.checkTimeout()
@@ -798,6 +818,9 @@ export default {
 		}
 		document.removeEventListener('visibilitychange', this.handleVisibilityChange)
 		window.removeEventListener('beforeunload', this.handleBeforeUnload)
+		for (const type of ACTIVITY_EVENTS) {
+			document.removeEventListener(type, this.handleActivity, { capture: true })
+		}
 	},
 
 	methods: {
@@ -864,14 +887,24 @@ export default {
 		},
 
 		/**
-		 * Persist the chosen session-timeout preference into the store
-		 * (mapping the enum to a millisecond duration).
+		 * Save the chosen session timeout and apply it at once.
 		 *
-		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * @param {string} choice The timeout choice.
+		 * @return {void}
+		 * @spec openspec/specs/vault-session-lock/spec.md#requirement-saved-session-timeout
 		 */
-		saveTimeout() {
-			const timeouts = { session: 0, '10min': 600000, '30min': 1800000 }
-			this.sessionStore.timeout = timeouts[this.sessionTimeout] || 600000
+		onTimeoutChange(choice) {
+			this.sessionStore.saveTimeoutPreference(choice).catch(() => {})
+		},
+
+		/**
+		 * Record user activity for the inactivity lock.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/vault-session-lock/spec.md#requirement-inactivity-lock
+		 */
+		handleActivity() {
+			this.sessionStore.noteActivity()
 		},
 
 		/**
