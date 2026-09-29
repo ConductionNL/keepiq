@@ -76,9 +76,16 @@ class EmergencyEnvelopeInvalidationService {
 	}//end __construct()
 
 	/**
-	 * Invalidate a grantor's recovery envelopes after their suite is ROTATED
-	 * (compromise recovery). The envelopes hold the stale private key, so they
-	 * are marked invalid and the grantor must re-establish emergency access.
+	 * Invalidate the contacts a ROTATION (compromise recovery) left on the old
+	 * suite. Their envelopes hold the stale private key, so they are marked
+	 * invalid.
+	 *
+	 * A contact with a break-glass requested or approved gets `{reason}_in_flight`,
+	 * which the view warns about: that is what a contact planted with a stolen
+	 * session looks like. Every other contact gets `{reason}`. The server cannot
+	 * see which contacts the owner ticked, so it does not try to tell an
+	 * unticked contact from an unreachable one; the view offers Re-establish for
+	 * neither, and only the recovery form prompts (#804 review).
 	 *
 	 * @param string $grantorSuiteId The rotated (old) suite ID
 	 * @param string $reason The invalidation reason tag
@@ -94,12 +101,31 @@ class EmergencyEnvelopeInvalidationService {
 				continue;
 			}
 
-			$this->invalidate(contact: $contact, reason: $reason);
+			$this->invalidate(contact: $contact, reason: $this->rotationReason(contact: $contact, reason: $reason));
 			$count++;
 		}
 
 		return $count;
 	}//end invalidateForGrantorRotation()
+
+	/**
+	 * Why a rotation did not carry $contact (see invalidateForGrantorRotation).
+	 *
+	 * @param EmergencyContact $contact The residual contact
+	 * @param string $reason The base invalidation reason tag
+	 *
+	 * @return string The reason tag to record
+	 *
+	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+	 */
+	private function rotationReason(EmergencyContact $contact, string $reason): string {
+		$inFlight = [EmergencyContact::STATE_REQUESTED, EmergencyContact::STATE_APPROVED];
+		if (in_array($contact->getState(), $inFlight, true) === true) {
+			return $reason . '_in_flight';
+		}
+
+		return $reason;
+	}//end rotationReason()
 
 	/**
 	 * Count the grantor's usable (non-invalidated) emergency contacts on a suite.
@@ -231,6 +257,19 @@ class EmergencyEnvelopeInvalidationService {
 			throw new ForbiddenException(message: 'Emergency contact is not bound to this migration\'s old suite');
 		}
 
+		// Only a `granted` contact is carried (keepiq#800). A `requested` or
+		// `approved` one has a break-glass in flight: carrying it would release
+		// the NEW private key to that grantee with the wait already served, which
+		// is what a contact planted with a stolen session is waiting for. An
+		// invalidated contact has no envelope to carry. Refused contacts stay on
+		// the old suite, the completion sweep invalidates them, and the grantor
+		// re-designates the ones they still want, with a fresh key proof.
+		if ($contact->getState() !== EmergencyContact::STATE_GRANTED) {
+			throw new ForbiddenException(
+				message: 'Only a granted emergency contact is carried across a key rotation'
+			);
+		}
+
 		$this->assertWellFormedEnvelope(envelope: $recoveryEnvelope);
 
 		// The envelope is only openable by the grantee, so the strongest check the
@@ -251,32 +290,19 @@ class EmergencyEnvelopeInvalidationService {
 		$contact->setGrantorSuiteId($newSuiteId);
 		$contact->setGranteeSuiteId($sealedSuiteId);
 
-		// Re-enveloping carries the escrow across the key rotation; it is NOT a
-		// lifecycle change, so the state is PRESERVED. Forcing STATE_GRANTED would
-		// silently veto an in-flight (`requested`) or `approved` break-glass and
-		// mis-audit that veto as a grant. The one exception is a previously
-		// invalidated contact — the client should not send one, but if it does, a
-		// fresh envelope genuinely re-establishes it, so it becomes granted.
-		if ($contact->getState() === EmergencyContact::STATE_INVALIDATED) {
-			$contact->setState(EmergencyContact::STATE_GRANTED);
-		}
-
 		$contact->setInvalidatedReason(null);
 		$contact->setUpdatedAt(new DateTime());
 		$updated = $this->mapper->update($contact);
 
-		// Audit as a (re-)grant only when the escrow is (re-)established to a
-		// granted contact — never relabel a preserved in-flight or declined
-		// request as a grant.
-		if ($updated->getState() === EmergencyContact::STATE_GRANTED) {
-			$this->auditTrail->recordGranted(
-				grantorUserId: $updated->getGrantorUserId(),
-				granteeUserId: $updated->getGranteeUserId(),
-				id: $updated->getId(),
-				accessLevel: (string)$updated->getAccessLevel(),
-				waitPeriodDays: (int)$updated->getWaitPeriodDays(),
-			);
-		}
+		// Audited as a CARRY, not a grant, so it can't be mistaken for a fresh
+		// designation after an incident (#804 review).
+		$this->auditTrail->recordCarried(
+			grantorUserId: $updated->getGrantorUserId(),
+			granteeUserId: $updated->getGranteeUserId(),
+			id: $updated->getId(),
+			fromSuiteId: $oldSuiteId,
+			toSuiteId: $newSuiteId,
+		);
 
 		return $updated;
 	}//end reEnvelopeForRotation()

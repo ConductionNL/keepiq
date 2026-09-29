@@ -47,7 +47,9 @@ class VaultKeyProofRequired {
 	 * @param string   $subject Whose public key verifies the proof:
 	 *                         'active' (default) — the caller's active suite;
 	 *                         'routeParam:<name>' — the suite named by that route
-	 *                         parameter.
+	 *                         parameter;
+	 *                         'migrationOldSuite' / 'migrationNewSuite' — the old
+	 *                         or new suite of the migration named by route `id`.
 	 * @param string   $purpose A stable public identifier for this operation. A
 	 *                         challenge is bound to one purpose, so a proof
 	 *                         obtained for one guarded operation cannot be

@@ -15,7 +15,7 @@ Design fork still open (see design.md): the client may read the contacts to migr
 - [x] 1.3 Enforce scoping identically to the other migration writes: refuse unless the contact's current `grantor_suite_id` is the migration's `old_suite_id` and the contact's grantor is the migration owner (resolve the acting user via `OCP\IUserSession`)
 - [x] 1.4 Validate the submitted envelope's shape server-side as far as is possible without the grantee's key: it MUST parse, carry the expected `v`/`alg`, and its declared `granteeSuiteId` MUST match the grantee's current active suite (a shape check, not a round-trip — only the grantee can open it)
 - [x] 1.5 Register the route in `appinfo/routes.php` before the SPA catch-all wildcard
-- [x] 1.6 Add a comment at the `invalidateForGrantorRotation()` call site noting it is now a **residual sweep**: after the loop it finds only contacts the migration could not carry (grantee unreachable). Do not "optimise away" the apparent no-op
+- [x] 1.6 Add a comment at the `invalidateForGrantorRotation()` call site noting it is now a **residual sweep**: after the loop it finds only contacts the migration did not carry (grantee unreachable, not ticked by the owner, or break-glass in flight — keepiq#800). Do not "optimise away" the apparent no-op
 
 ## 2. Frontend — Build and Commit the New Envelopes
 
@@ -28,8 +28,10 @@ Design fork still open (see design.md): the client may read the contacts to migr
 ## 3. Frontend — Surface the Residual
 
 - [x] 3.1 Include `residualContacts` (grantee display names) in the migration outcome returned by `initiateCompromiseRecovery`
-- [x] 3.2 In `CompromiseRecoveryForm.vue`, on completion, prompt the owner to re-establish exactly the residual contacts; show nothing about emergency access when every contact migrated
+- [x] 3.2 In `CompromiseRecoveryForm.vue`, on completion, prompt the owner to re-establish only unreachable contacts; name unconfirmed and in-flight contacts, and those a resumed rotation removed, without that prompt; show nothing about emergency access when every contact migrated
 - [x] 3.3 Use `@conduction/nextcloud-vue` components and the NL Design System double-fallback CSS pattern, consistent with the rest of the form
+- [x] 3.4 After a resumed rotation completes (also by accepting a loss), read back the contacts the sweep removed and name them on the completion screen; the resume banner raises a permanent toast with the count and a pointer to Emergency Access (keepiq#804)
+- [x] 3.5 The Emergency Access view offers no Re-establish for a rotation-invalidated contact and shows a text-only notice on it, with a warning for an in-flight one (keepiq#804)
 
 ## 4. Tests
 

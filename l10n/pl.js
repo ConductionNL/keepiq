@@ -1172,7 +1172,17 @@ OC.L10N.register(
         "%n secret could not be decrypted and is not in this export.": "Nie udało się odszyfrować %n sekretu i nie ma go w tym eksporcie.",
         "%n secrets could not be decrypted and are not in this export.": "Nie udało się odszyfrować %n sekretów i nie ma ich w tym eksporcie.",
         "Continue without the secrets that could not be decrypted": "Kontynuuj bez sekretów, których nie udało się odszyfrować",
-        "This request is no longer available.": "Ten wniosek nie jest już dostępny."
+        "This request is no longer available.": "Ten wniosek nie jest już dostępny.",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Wybierz, którzy kontakty awaryjne mogą otrzymać Twój nowy klucz. Zaznacz tylko osoby, które wyznaczyłeś sam i którym nadal ufasz: ktoś, kto miał Twoją sesję, mógł dodać własny kontakt. Niezaznaczone kontakty tracą dostęp awaryjny; możesz je później wyznaczyć ponownie.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, okres oczekiwania w dniach: {days}",
+        "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Nie potwierdziłeś tych kontaktów, więc ich dostęp awaryjny został usunięty. Wyznacz je ponownie tylko wtedy, gdy masz pewność, że dodałeś je sam.",
+        "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Te kontakty miały oczekujący lub zatwierdzony wniosek o dostęp awaryjny, więc nie otrzymały Twojego nowego klucza. Tak wyglądałby kontakt dodany przez kogoś innego: nie wyznaczaj ich ponownie, chyba że wiesz, że wniosek był prawdziwy.",
+        "Invalidated": "Unieważniony",
+        "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Ten kontakt miał oczekujący lub zatwierdzony wniosek o dostęp awaryjny, gdy zmieniałeś klucz, więc nie otrzymał Twojego nowego klucza. Tak wyglądałby kontakt dodany przez kogoś innego: nie wyznaczaj go ponownie, chyba że wiesz, że wniosek był prawdziwy.",
+        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Rotacja klucza została wznowiona, więc tych kontaktów awaryjnych nie dało się przenieść, a ich dostęp awaryjny został usunięty. Dodaj je ponownie w sekcji Dostęp awaryjny, jeśli nadal ich chcesz.",
+        "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Rotacja klucza usunęła %n kontakt awaryjny. Sprawdź Dostęp awaryjny i dodaj go ponownie, jeśli nadal go chcesz.",
+        "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Rotacja klucza usunęła %n kontaktów awaryjnych. Sprawdź Dostęp awaryjny i dodaj je ponownie, jeśli nadal ich chcesz.",
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rotacja klucza usunęła dostęp awaryjny tego kontaktu. Wyznacz go ponownie, jeśli nadal go chcesz."
     },
     "nplurals=2; plural=(n != 1);"
 )

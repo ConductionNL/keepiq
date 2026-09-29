@@ -1171,7 +1171,17 @@
         "%n secret could not be decrypted and is not in this export.": "%n secret nu a putut fi decriptat și nu este în acest export.",
         "%n secrets could not be decrypted and are not in this export.": "%n secrete nu au putut fi decriptate și nu sunt în acest export.",
         "Continue without the secrets that could not be decrypted": "Continuă fără secretele care nu au putut fi decriptate",
-        "This request is no longer available.": "Această cerere nu mai este disponibilă."
+        "This request is no longer available.": "Această cerere nu mai este disponibilă.",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Alegeți ce contacte de urgență pot primi noua dvs. cheie. Bifați doar persoanele pe care le-ați desemnat dvs. și în care încă aveți încredere: cine v-a deținut sesiunea poate să fi adăugat un contact propriu. Contactele nebifate își pierd accesul de urgență; le puteți desemna din nou ulterior.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, perioadă de așteptare în zile: {days}",
+        "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Nu ați confirmat aceste contacte, așa că accesul lor de urgență a fost eliminat. Desemnați-le din nou doar dacă sunteți sigur că le-ați adăugat dvs.",
+        "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Aceste contacte aveau o cerere de acces de urgență în așteptare sau aprobată, așa că nu au primit noua dvs. cheie. Așa ar arăta un contact adăugat de altcineva: nu le desemnați din nou decât dacă știți că cererea a fost autentică.",
+        "Invalidated": "Invalidat",
+        "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Acest contact avea o cerere de acces de urgență în așteptare sau aprobată când v-ați schimbat cheia, așa că nu a primit noua dvs. cheie. Așa ar arăta un contact adăugat de altcineva: nu îl desemnați din nou decât dacă știți că cererea a fost autentică.",
+        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Rotația cheii a fost reluată, așa că aceste contacte de urgență nu au putut fi transferate, iar accesul lor de urgență a fost eliminat. Adăugați-le din nou din Acces de urgență dacă le mai doriți.",
+        "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Rotația cheii a eliminat %n contact de urgență. Verificați Acces de urgență și adăugați-l din nou dacă îl mai doriți.",
+        "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Rotația cheii a eliminat %n contacte de urgență. Verificați Acces de urgență și adăugați-le din nou dacă le mai doriți.",
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rotația cheii a eliminat accesul de urgență al acestui contact. Desemnați-l din nou dacă îl mai doriți."
     },
     "plurals": null
 }

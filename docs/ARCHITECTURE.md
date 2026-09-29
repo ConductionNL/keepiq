@@ -362,9 +362,13 @@ gating on one would wedge the vault, so such a contact is left on the old suite.
 `EmergencyEnvelopeInvalidationService::invalidateForGrantorRotation`, fired by
 `EmergencyAccessSuiteRotationListener` on `SuiteMigrationCompletedEvent`, is now a
 **residual sweep**, not a blanket invalidation: the re-enveloped contacts have
-already left the old suite, so the sweep finds only the residual (unreachable
-grantees), invalidates exactly those, and the client surfaces them for the owner
-to re-establish. Revocation still clears the envelopes outright — it produces no
+already left the old suite, so the sweep finds only the contacts that weren't
+carried: unreachable grantees, contacts the owner didn't tick (or declined), and
+contacts with a break-glass in flight. It invalidates exactly those, recording
+`grantor_rotation_in_flight` for the last group and `grantor_rotation` for the
+rest. The recovery form prompts re-establishing only an unreachable contact. A
+resumed rotation reads the removed contacts back and names them without a
+prompt, and the Emergency Access view shows a text-only notice on each. Revocation still clears the envelopes outright — it produces no
 new key to migrate to — but `EncryptionSuiteController::revoke` now refuses while
 a usable emergency contact exists unless `acceptEmergencyLoss` is given, and the
 refusal surfaces the count (never the identities) so the destruction is a knowing
@@ -649,12 +653,16 @@ Load-bearing design points — change these only deliberately:
   commits to *named* request parameters, each hashed and concatenated in
   declared order. No JSON-canonicalisation agreement between JS and PHP is
   needed; cross-language interop is pinned by `VaultKeyProofCrossImplTest`.
-- **Stateless, expiring challenges.** The nonce is HMAC-authenticated with the
-  instance secret over its random part, the caller, the purpose and an expiry —
-  no server-side store. Deliberately **not** `ICacheFactory`: a null cache on a
-  default install would break the flow. Single-use enforcement is unnecessary
-  because the signature commits to the operation's parameters, so a replay only
-  ever re-authorises the byte-identical operation.
+- **Stateless, expiring challenges; single-use proofs.** The nonce is
+  HMAC-authenticated with the instance secret over its random part, the caller,
+  the purpose and an expiry, so issuing and checking it needs no store. Binding
+  to the operation's parameters is not enough on its own: on an upsert route a
+  replayed designate proof would recreate a contact the owner just revoked. So
+  once a proof verifies, its nonce is consumed in the distributed cache
+  (`keepiq_proof_nonce`, atomic `add()` on a memcache) for the rest of its
+  lifetime, and never before verification. Best-effort: without a memcache the
+  NullCache detects no reuse (logged once as a warning) and the flows keep
+  working.
 - **Not waived for any session type.** The middleware consults no auth backend
   and no token scope, so it behaves identically on SSO, app-password and
   ordinary sessions — its authority is key material, not the login method.

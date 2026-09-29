@@ -34,6 +34,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Controller\EmergencyAccessController;
 use OCA\Keepiq\Controller\EncryptionSuiteController;
+use OCA\Keepiq\Controller\GdprController;
 use OCA\Keepiq\Controller\MigrationController;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use PHPUnit\Framework\TestCase;
@@ -84,6 +85,33 @@ class VaultKeyProofAttributesTest extends TestCase {
 				['reason', 'acceptEmergencyLoss'],
 				'routeParam:id',
 				VaultKeyProofService::PURPOSE_REVOKE_SUITE,
+			],
+			// keepiq#800: designate is an upsert that overwrites any existing
+			// contact's envelope and escrows the key to whoever it names.
+			'designate emergency contact' => [
+				EmergencyAccessController::class,
+				'create',
+				['granteeUserId', 'waitPeriodDays', 'recoveryEnvelope'],
+				'active',
+				VaultKeyProofService::PURPOSE_EMERGENCY_DESIGNATE,
+			],
+			// keepiq#801: overwrites a contact's envelope during a migration.
+			're-envelope emergency contact' => [
+				MigrationController::class,
+				'reEnvelopeEmergencyContact',
+				['id', 'contactId', 'recoveryEnvelope', 'granteeSuiteId'],
+				// The NEW key: during a compromise recovery the old password may
+				// be the leaked one (#804 review).
+				'migrationNewSuite',
+				VaultKeyProofService::PURPOSE_EMERGENCY_RE_ENVELOPE,
+			],
+			// Wipes every secret, suite and migration the user has.
+			'delete account data' => [
+				GdprController::class,
+				'deleteAccountData',
+				['confirmation'],
+				'active',
+				VaultKeyProofService::PURPOSE_DELETE_ACCOUNT_DATA,
 			],
 		];
 	}//end guardedMethodsProvider()

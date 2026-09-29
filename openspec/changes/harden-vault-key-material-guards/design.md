@@ -93,13 +93,15 @@ Signed payload: `nonce || sha256(param_1) || ... || sha256(param_n)`.
 
 Three things fall out. There is no canonicalisation problem — only named scalar parameters, hashed individually, so `crypto.subtle` and PHP never have to agree on JSON key ordering, number formatting or unicode normalisation. The binding is legible at the route rather than buried in the middleware. And the proof travels as a header, so no guarded controller signature grows a `?string $proof` it never reads.
 
-### D5: The nonce is stateless, because the binding makes single-use unnecessary
+### D5: Challenges are issued and checked statelessly; a verified proof is consumed once
 
-`nonce = base64(random) . '.' . HMAC(instance secret, random | uid | purpose | exp)`. The middleware verifies the HMAC and the expiry; no storage, no table.
+`nonce = base64(random) . '.' . HMAC(instance secret, random | uid | purpose | exp)`. Issuing and checking a challenge needs no storage: the middleware verifies the HMAC and the expiry. `purpose` binds the challenge to one route, so a proof for one guarded operation cannot be presented to another, and the signature commits to the operation's parameters.
 
-Replay is not a gap here. Because the signature commits to the operation's parameters, a captured proof only ever re-authorises the byte-identical operation: for `compromiseRecovery` that is the victim's own successor key, for `updatePrivateKey` it is re-setting the envelope already in place. `purpose` binds the challenge to one route, so a proof for one guarded operation cannot be presented to another.
+That binding was first thought to be enough on its own, since a replay would only re-authorise the byte-identical operation. It is not enough. On an upsert route the same parameters can do something different later: a designate proof replayed after the owner revoked that contact would recreate it (#804 review). So a proof MUST also be single-use.
 
-Deliberately **not** `ICacheFactory`: without a configured distributed cache Nextcloud returns a null cache, and a nonce store that silently forgets would break the flow on a default install.
+Once a proof has fully verified, its nonce is consumed in the distributed cache (`keepiq_proof_nonce`, keyed by `sha256(nonce)`, for the rest of the challenge's lifetime), the same way `JwtAuthService` handles `jti`. The write is an atomic `add()` on an `IMemcache`, and `hasKey()` then `set()` otherwise. Only a verified proof is consumed, so a bad signature cannot burn the nonce for the real one.
+
+This is best-effort by the cache's reach. Without a configured memcache Nextcloud hands out a NullCache whose `add()` always succeeds. A reuse is then not detected, but the guarded flows keep working, which was the reason D5 first avoided `ICacheFactory`. The service logs a warning, once per request, when no memcache is available. With a server-local cache a reuse is detected per server. A DB table keyed by `sha256(nonce)` would be atomic on every install; it was weighed and not chosen, to keep a table and its cleanup job out of this change.
 
 ### D6: Abort terminates a migration only while nothing has been committed
 

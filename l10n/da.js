@@ -1172,7 +1172,17 @@ OC.L10N.register(
         "%n secret could not be decrypted and is not in this export.": "%n hemmelighed kunne ikke dekrypteres og er ikke med i denne eksport.",
         "%n secrets could not be decrypted and are not in this export.": "%n hemmeligheder kunne ikke dekrypteres og er ikke med i denne eksport.",
         "Continue without the secrets that could not be decrypted": "Fortsæt uden de hemmeligheder, der ikke kunne dekrypteres",
-        "This request is no longer available.": "Denne anmodning er ikke længere tilgængelig."
+        "This request is no longer available.": "Denne anmodning er ikke længere tilgængelig.",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Vælg hvilke nødkontakter der må modtage din nye nøgle. Sæt kun flueben ved personer, du selv har udpeget og stadig stoler på: den, der havde din session, kan have tilføjet sin egen kontakt. Kontakter uden flueben mister deres nødadgang; du kan udpege dem igen bagefter.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, ventetid i dage: {days}",
+        "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Du bekræftede ikke disse kontakter, så deres nødadgang er fjernet. Udpeg dem kun igen, hvis du er sikker på, at du selv har tilføjet dem.",
+        "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Disse kontakter havde en afventende eller godkendt anmodning om nødadgang, så de fik ikke din nye nøgle. Sådan ville en kontakt tilføjet af en anden se ud: udpeg dem ikke igen, medmindre du ved, at anmodningen var ægte.",
+        "Invalidated": "Ugyldiggjort",
+        "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Denne kontakt havde en afventende eller godkendt anmodning om nødadgang, da du skiftede nøgle, så den fik ikke din nye nøgle. Sådan ville en kontakt tilføjet af en anden se ud: udpeg den ikke igen, medmindre du ved, at anmodningen var ægte.",
+        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Din nøglerotation blev genoptaget, så disse nødkontakter kunne ikke overføres, og deres nødadgang blev fjernet. Tilføj dem igen under Nødadgang, hvis du stadig ønsker dem.",
+        "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Din nøglerotation fjernede %n nødkontakt. Tjek Nødadgang, og tilføj den igen, hvis du stadig ønsker den.",
+        "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Din nøglerotation fjernede %n nødkontakter. Tjek Nødadgang, og tilføj dem igen, hvis du stadig ønsker dem.",
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Din nøglerotation fjernede denne kontakts nødadgang. Udpeg den igen, hvis du stadig ønsker den."
     },
     "nplurals=2; plural=(n != 1);"
 )

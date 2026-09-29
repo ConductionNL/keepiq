@@ -192,23 +192,40 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 		$this->assertSame(EmergencyContact::STATE_GRANTED, $updated->getState());
 		$this->assertSame($this->envelope(), $updated->getRecoveryEnvelope());
 		$this->assertNull($updated->getInvalidatedReason());
-		$this->assertSame(1, $this->auditCount(AuditEventTypes::EMERGENCY_ACCESS_GRANTED));
+
+		// A carry is audited as its own event, not as a fresh grant, so after an
+		// incident it can be told apart from a designation (#804 review).
+		$this->assertSame(0, $this->auditCount(AuditEventTypes::EMERGENCY_ACCESS_GRANTED));
+		$this->assertSame(1, $this->auditCount(AuditEventTypes::EMERGENCY_ACCESS_CARRIED));
+		$carried = array_values(array_filter(
+			$this->dispatched,
+			static fn (AuditEvent $e): bool => $e->getEventType() === AuditEventTypes::EMERGENCY_ACCESS_CARRIED
+		))[0];
+		$this->assertSame('new-suite', $carried->getMetadata()['toSuiteId'] ?? null);
 	}//end testReEnvelopeRepointsToNewSuiteAndKeepsGranted()
 
 	/**
-	 * A re-envelope carries an in-flight break-glass (requested/approved) onto the
-	 * new suite WITHOUT forcing it back to granted — that would silently veto the
-	 * request — and without mis-auditing the carry as a grant.
+	 * Only a `granted` contact is carried across a rotation (keepiq#800).
+	 *
+	 * A `requested` or `approved` contact has a break-glass in flight. Carrying
+	 * it would hand the NEW private key to that grantee with the wait already
+	 * served, which is exactly what a planted contact is after. An invalidated
+	 * contact has no envelope to carry, and reviving it here would re-grant a
+	 * contact through a route that proves nothing about the grantee.
+	 *
+	 * @param string $state The contact state that must be refused.
 	 *
 	 * @return void
+	 *
+	 * @dataProvider uncarriedStateProvider
 	 */
-	public function testReEnvelopePreservesInFlightBreakGlassState(): void {
-		$contact = $this->contact(state: EmergencyContact::STATE_APPROVED);
-		$this->mapper->method('findById')->willReturn($contact);
-		$this->mapper->method('update')->willReturnArgument(0);
+	public function testReEnvelopeRefusesAContactThatIsNotGranted(string $state): void {
+		$this->mapper->method('findById')->willReturn($this->contact(state: $state));
+		$this->mapper->expects($this->never())->method('update');
 		$this->suiteMapper->method('findActiveByOwner')->willReturn($this->suite('grantee-active'));
 
-		$updated = $this->service->reEnvelopeForRotation(
+		$this->expectException(ForbiddenException::class);
+		$this->service->reEnvelopeForRotation(
 			ownerId: 'alice',
 			oldSuiteId: 'old-suite',
 			newSuiteId: 'new-suite',
@@ -216,13 +233,20 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 			recoveryEnvelope: $this->envelope(),
 			sealedSuiteId: 'grantee-active',
 		);
+	}//end testReEnvelopeRefusesAContactThatIsNotGranted()
 
-		// Carried across the rotation (new suite, fresh envelope) but the approved
-		// break-glass is neither vetoed nor relabelled as a grant.
-		$this->assertSame('new-suite', $updated->getGrantorSuiteId());
-		$this->assertSame(EmergencyContact::STATE_APPROVED, $updated->getState());
-		$this->assertSame(0, $this->auditCount(AuditEventTypes::EMERGENCY_ACCESS_GRANTED));
-	}//end testReEnvelopePreservesInFlightBreakGlassState()
+	/**
+	 * The contact states a rotation must not carry.
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function uncarriedStateProvider(): array {
+		return [
+			'requested' => [EmergencyContact::STATE_REQUESTED],
+			'approved' => [EmergencyContact::STATE_APPROVED],
+			'invalidated' => [EmergencyContact::STATE_INVALIDATED],
+		];
+	}//end uncarriedStateProvider()
 
 	/**
 	 * A contact whose grantor is not the migration owner is refused.
@@ -390,6 +414,47 @@ class EmergencyEnvelopeInvalidationServiceTest extends TestCase {
 		$this->assertNull($residual->getRecoveryEnvelope());
 		$this->assertSame('grantor_rotation', $residual->getInvalidatedReason());
 	}//end testResidualSweepInvalidatesOnlyOldSuiteContacts()
+
+	/**
+	 * A contact with a break-glass requested or approved was never carried, and
+	 * is recorded as such so the view does not nudge the owner to re-add it:
+	 * that is the shape of a contact planted with a stolen session (#804 review).
+	 *
+	 * @return void
+	 */
+	public function testResidualSweepMarksABreakGlassInFlight(): void {
+		$requested = $this->contact(state: EmergencyContact::STATE_REQUESTED);
+		$approved = $this->contact(state: EmergencyContact::STATE_APPROVED);
+		$this->mapper->method('findByGrantorSuite')->willReturn([$requested, $approved]);
+
+		$this->service->invalidateForGrantorRotation(grantorSuiteId: 'old-suite');
+
+		$this->assertSame('grantor_rotation_in_flight', $requested->getInvalidatedReason());
+		$this->assertSame('grantor_rotation_in_flight', $approved->getInvalidatedReason());
+	}//end testResidualSweepMarksABreakGlassInFlight()
+
+	/**
+	 * Every residual contact that is not in flight gets the plain reason,
+	 * whatever its state and whether or not its grantee is reachable. The
+	 * server cannot see which contacts the owner ticked, so it does not guess:
+	 * the view offers no Re-establish for any rotation reason, and only the
+	 * recovery form prompts (#804 review, round 3).
+	 *
+	 * @return void
+	 */
+	public function testResidualSweepGivesEveryOtherContactThePlainReason(): void {
+		// Unticked with an unreachable grantee is the case that used to come out
+		// as re-establishable; ticked-but-failed and declined go the same way.
+		$unticked = $this->contact(state: EmergencyContact::STATE_GRANTED);
+		$declined = $this->contact(state: EmergencyContact::STATE_DECLINED);
+		$this->mapper->method('findByGrantorSuite')->willReturn([$unticked, $declined]);
+		$this->suiteMapper->expects($this->never())->method('findActiveByOwner');
+
+		$this->service->invalidateForGrantorRotation(grantorSuiteId: 'old-suite');
+
+		$this->assertSame('grantor_rotation', $unticked->getInvalidatedReason());
+		$this->assertSame('grantor_rotation', $declined->getInvalidatedReason());
+	}//end testResidualSweepGivesEveryOtherContactThePlainReason()
 
 	/**
 	 * The revoke-safeguard count includes every non-invalidated contact on the

@@ -20,11 +20,13 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { sealForRequest } from '../../crypto/cxp.js'
+import { buildKeyProofHeaders, PROOF_PURPOSE } from '../../crypto/keyProof.js'
 import { buildCxfDocument } from '../../cxf/cxf.js'
 import { encryptBackup } from '../../export/backup.js'
 import { generateCsv } from '../../export/csv.js'
 import { assembleGdprPackage } from '../../export/gdprPackage.js'
 import { serializeVault } from '../../export/serializer.js'
+import { useSessionStore } from './session.js'
 
 /**
  * Trigger a local file download from a string blob. No network involved.
@@ -274,22 +276,31 @@ export const useExportStore = defineStore('export', {
 		},
 
 		/**
-		 * Delete all of the user's Keepiq data (GDPR Art. 17). The
-		 * master-password re-auth is verified client-side by the dialog before
-		 * this is called; the typed confirmation phrase is the server gate. The
-		 * password is NEVER sent.
+		 * Delete all of the user's Keepiq data (GDPR Art. 17). The server gates
+		 * this on the typed confirmation phrase AND a vault-key proof, so a stolen
+		 * session alone cannot wipe the vault. The master password only signs the
+		 * proof; it is NEVER sent.
 		 *
 		 * @param {string} confirmation The typed confirmation phrase.
+		 * @param {string} masterPassword The master password, for the proof.
 		 * @return {Promise<object>} The deletion report.
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/changes/harden-vault-key-material-guards/specs/gdpr-compliance/spec.md#requirement-account-data-deletion
 		 */
-		async deleteAccountData(confirmation) {
+		async deleteAccountData(confirmation, masterPassword) {
 			this.loading = true
 			this.error = null
 			try {
+				const session = useSessionStore()
+				const headers = await buildKeyProofHeaders({
+					suiteId: session.suiteId,
+					purpose: PROOF_PURPOSE.DELETE_ACCOUNT_DATA,
+					encryptedPrivateKey: session.encryptedPrivateKey,
+					masterPassword,
+					boundValues: [confirmation],
+				})
 				const response = await axios.delete(
 					generateUrl('/apps/keepiq/api/v1/gdpr/account-data'),
-					{ data: { confirmation } },
+					{ data: { confirmation }, headers },
 				)
 				return response.data
 			} catch (e) {

@@ -55,7 +55,7 @@
     {
       "id": 6,
       "num": "1.6",
-      "title": "Add a comment at the `invalidateForGrantorRotation()` call site noting it is now a **residual sweep**: after the loop it finds only contacts the migration could not carry (grantee unreachable). Do not \"optimise away\" the apparent no-op",
+      "title": "Add a comment at the `invalidateForGrantorRotation()` call site noting it is now a **residual sweep**: after the loop it finds only contacts the migration did not carry (grantee unreachable, not ticked by the owner, or break-glass in flight \u2014 keepiq#800). Do not \"optimise away\" the apparent no-op",
       "status": "pending",
       "spec_ref": null,
       "acceptance_criteria": [],
@@ -118,7 +118,7 @@
     {
       "id": 13,
       "num": "3.2",
-      "title": "In `CompromiseRecoveryForm.vue`, on completion, prompt the owner to re-establish exactly the residual contacts; show nothing about emergency access when every contact migrated",
+      "title": "In `CompromiseRecoveryForm.vue`, on completion, prompt the owner to re-establish only unreachable contacts; name unconfirmed and in-flight contacts, and those a resumed rotation removed, without that prompt; show nothing about emergency access when every contact migrated",
       "status": "pending",
       "spec_ref": null,
       "acceptance_criteria": [],
@@ -128,6 +128,24 @@
       "id": 14,
       "num": "3.3",
       "title": "Use `@conduction/nextcloud-vue` components and the NL Design System double-fallback CSS pattern, consistent with the rest of the form",
+      "status": "pending",
+      "spec_ref": null,
+      "acceptance_criteria": [],
+      "files_likely_affected": []
+    },
+    {
+      "id": 30,
+      "num": "3.4",
+      "title": "After a resumed rotation completes (also by accepting a loss), read back the contacts the sweep removed and name them on the completion screen; the resume banner raises a permanent toast with the count and a pointer to Emergency Access (keepiq#804)",
+      "status": "pending",
+      "spec_ref": null,
+      "acceptance_criteria": [],
+      "files_likely_affected": []
+    },
+    {
+      "id": 31,
+      "num": "3.5",
+      "title": "The Emergency Access view offers no Re-establish for a rotation-invalidated contact and shows a text-only notice on it, with a warning for an in-flight one (keepiq#804)",
       "status": "pending",
       "spec_ref": null,
       "acceptance_criteria": [],

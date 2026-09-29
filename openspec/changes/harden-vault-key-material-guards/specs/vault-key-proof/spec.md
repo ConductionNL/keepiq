@@ -2,7 +2,7 @@
 
 ### Requirement: Irreversible Operations Require A Verified Key Proof
 
-The system MUST refuse any operation that can render vault contents or key material permanently unreadable unless the request carries a **key proof**: a signature, made with the private key of the owner's EncryptionSuite, over a challenge the server issued.
+The system MUST refuse any operation that can render vault contents or key material permanently unreadable, or that escrows the owner's private key to another party, unless the request carries a **key proof**: a signature, made with the private key of the owner's EncryptionSuite, over a challenge the server issued.
 
 The server MUST verify the signature against the public key it already stores for the subject suite. Because a suite's private key exists only inside an AES envelope keyed by PBKDF2-SHA256 over the master password, a verified proof establishes that the caller knows the master password. A Nextcloud session alone MUST NOT be sufficient authority for any such operation.
 
@@ -89,9 +89,18 @@ The system MUST issue key-proof challenges through an endpoint that requires onl
 
 A challenge MUST carry a random component and MUST be authenticated with the instance secret over that component, the caller, the purpose, and an expiry. The system MUST reject an expired or unauthenticated challenge.
 
-The system MUST NOT depend on a distributed cache to hold challenge state. Nextcloud returns a null cache when none is configured, and a challenge store that silently forgets would make the guarded flows unusable on a default installation.
+The system MUST NOT depend on a distributed cache to issue or check a challenge: Nextcloud returns a null cache when none is configured, and the guarded flows MUST keep working on such an installation.
 
-Single-use enforcement is NOT required, because a proof is bound to its operation's parameters and therefore replays only ever re-authorise the byte-identical operation.
+A proof MUST be single-use. Binding a proof to its operation's parameters is not enough on its own: on an upsert route the same parameters can do something different later, and a designate proof replayed after the owner revoked that contact would recreate it. The system MUST therefore consume a proof's nonce when the proof verifies, and MUST refuse the same nonce again for the rest of the challenge's lifetime. The used nonces live in the distributed cache, atomically where the cache supports it. This is best-effort by the cache's reach: without a configured memcache a reuse is not detected, and with a server-local cache it is detected per server. The guarded flows keep working in both cases.
+
+Every refused proof MUST leave a log entry naming the user, the route, the purpose and the reason, because the session-only attacker the guard exists for is exactly the caller that produces refusals.
+
+#### Scenario: A proof cannot be used twice
+@e2e exclude Server-side nonce consumption; covered by PHPUnit on VaultKeyProofService.
+- **GIVEN** a proof that verified and authorised an operation
+- **WHEN** the same nonce and signature are presented again within the challenge's lifetime
+- **THEN** the system MUST refuse with `403` and `error: key_proof_required`
+- **AND** MUST NOT perform the operation again
 
 #### Scenario: An expired challenge is refused
 
@@ -111,7 +120,7 @@ Single-use enforcement is NOT required, because a proof is bound to its operatio
 
 Because a declarative guard fails open when it is omitted, the system MUST carry a test that enumerates every operation required to be guarded and asserts, by reflection, that each carries `#[VaultKeyProofRequired]` with the expected binding and subject.
 
-Adding a route that can render vault contents or key material permanently unreadable without adding it to that enumeration MUST be treated as a defect in this requirement, not as an accepted gap.
+Adding a route that can render vault contents or key material permanently unreadable, or escrow the private key to another party, without adding it to that enumeration MUST be treated as a defect in this requirement, not as an accepted gap.
 
 #### Scenario: A guarded route that loses its attribute fails the build
 

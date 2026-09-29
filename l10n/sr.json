@@ -1171,7 +1171,17 @@
         "%n secret could not be decrypted and is not in this export.": "%n тајна није могла да се дешифрује и није у овом извозу.",
         "%n secrets could not be decrypted and are not in this export.": "%n тајни није могло да се дешифрује и нису у овом извозу.",
         "Continue without the secrets that could not be decrypted": "Настави без тајни које није било могуће дешифровати",
-        "This request is no longer available.": "Овај захтев више није доступан."
+        "This request is no longer available.": "Овај захтев више није доступан.",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Изаберите који контакти за хитне случајеве смеју да приме ваш нови кључ. Означите само особе које сте сами одредили и којима и даље верујете: ко је имао вашу сесију, могао је да дода сопствени контакт. Неозначени контакти губе приступ у хитним случајевима; касније их можете поново одредити.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, период чекања у данима: {days}",
+        "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Нисте потврдили ове контакте, па је њихов приступ у хитним случајевима уклоњен. Поново их одредите само ако сте сигурни да сте их сами додали.",
+        "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Ови контакти су имали захтев за приступ у хитним случајевима на чекању или одобрен, па нису добили ваш нови кључ. Тако би изгледао контакт који је додао неко други: не одређујте их поново осим ако знате да је захтев био стваран.",
+        "Invalidated": "Поништено",
+        "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Овај контакт је имао захтев за приступ у хитним случајевима на чекању или одобрен када сте променили кључ, па није добио ваш нови кључ. Тако би изгледао контакт који је додао неко други: не одређујте га поново осим ако знате да је захтев био стваран.",
+        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ротација кључа је настављена, па ови контакти за хитне случајеве нису могли бити пренети и њихов приступ у хитним случајевима је уклоњен. Додајте их поново у одељку Приступ у хитним случајевима ако их још желите.",
+        "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ротација кључа је уклонила %n контакт за хитне случајеве. Проверите Приступ у хитним случајевима и додајте га поново ако га још желите.",
+        "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ротација кључа је уклонила %n контакта за хитне случајеве. Проверите Приступ у хитним случајевима и додајте их поново ако их још желите.",
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ротација кључа је уклонила приступ у хитним случајевима овог контакта. Одредите га поново ако га још желите."
     },
     "plurals": null
 }

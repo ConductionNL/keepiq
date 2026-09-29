@@ -44,11 +44,19 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Middleware;
 use OCP\IRequest;
 use OCP\IUserSession;
+use Psr\Log\LoggerInterface;
 use ReflectionMethod;
 use Throwable;
 
 /**
  * Enforce #[VaultKeyProofRequired] on the annotated controller methods.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The guard is one place that
+ *   has to see the attribute, the request, the session, the three ways a
+ *   subject suite is resolved (active suite, route parameter, migration end),
+ *   the proof service, its exception and now the logger that records every
+ *   refusal (#804 review). Splitting it would scatter the one check that must
+ *   stay in a single middleware so it cannot be skipped.
  */
 class VaultKeyProofMiddleware extends Middleware {
 	/**
@@ -69,6 +77,7 @@ class VaultKeyProofMiddleware extends Middleware {
 	 * @param EncryptionSuiteService $suiteService Resolves the subject suite
 	 * @param VaultKeyProofService $proofService Verifies the proof
 	 * @param SuiteMigrationMapper $migrationMapper Resolves a migration's old suite
+	 * @param LoggerInterface $logger Records every refused proof
 	 *
 	 * @return void
 	 */
@@ -78,6 +87,7 @@ class VaultKeyProofMiddleware extends Middleware {
 		private EncryptionSuiteService $suiteService,
 		private VaultKeyProofService $proofService,
 		private SuiteMigrationMapper $migrationMapper,
+		private LoggerInterface $logger,
 	) {
 	}//end __construct()
 
@@ -142,6 +152,19 @@ class VaultKeyProofMiddleware extends Middleware {
 		if (($exception instanceof KeyProofRequiredException) === false) {
 			throw $exception;
 		}
+
+		// A refusal is exactly what a session-only attacker produces, so it must
+		// leave a record rather than only a 403 (#804 review).
+		$this->logger->warning(
+			'Keepiq: vault key proof refused on {route}: {reason}',
+			[
+				'app' => 'keepiq',
+				'userId' => $this->userSession->getUser()?->getUID(),
+				'route' => $controller::class . '::' . $methodName,
+				'purpose' => $this->attributeFor(controller: $controller, methodName: $methodName)?->getPurpose(),
+				'reason' => $exception->getMessage(),
+			]
+		);
 
 		return new JSONResponse(
 			data: [
@@ -208,8 +231,22 @@ class VaultKeyProofMiddleware extends Middleware {
 	 * @return EncryptionSuite
 	 *
 	 * @throws KeyProofRequiredException When a named suite is not the caller's own
+	 *
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 	 */
 	private function resolveSubjectSuite(string $subject, string $userId): EncryptionSuite {
+		if ($subject === 'migrationNewSuite') {
+			// The NEW end: during a compromise recovery the old password may be
+			// the leaked one, so a route that must not be usable by whoever holds
+			// it proves the new key, held by whoever started the migration
+			// (#804 review; see MigrationController::reEnvelopeEmergencyContact).
+			$migration = $this->migrationMapper->findById((string)$this->request->getParam('id', ''));
+			return $this->assertOwned(
+				suite: $this->suiteService->getSuite($migration->getNewSuiteId()),
+				userId: $userId
+			);
+		}
+
 		if ($subject === 'migrationOldSuite') {
 			// Completion proves the OLD key, not the new one: at completion both
 			// suites are active so 'active' is ambiguous, and the old key is the

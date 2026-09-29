@@ -1172,7 +1172,17 @@ OC.L10N.register(
         "%n secret could not be decrypted and is not in this export.": "%n сакрэт не ўдалося расшыфраваць, і яго няма ў гэтым экспарце.",
         "%n secrets could not be decrypted and are not in this export.": "%n сакрэтаў не ўдалося расшыфраваць, і іх няма ў гэтым экспарце.",
         "Continue without the secrets that could not be decrypted": "Працягнуць без сакрэтаў, якія не ўдалося расшыфраваць",
-        "This request is no longer available.": "Гэты запыт больш не даступны."
+        "This request is no longer available.": "Гэты запыт больш не даступны.",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Выберыце, якія экстраныя кантакты могуць атрымаць ваш новы ключ. Адзначайце толькі людзей, якіх вы прызначылі самі і якім па-ранейшаму давяраеце: той, хто меў вашу сесію, мог дадаць уласны кантакт. Неадзначаныя кантакты губляюць экстраны доступ; пазней вы можаце прызначыць іх зноў.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, перыяд чакання ў днях: {days}",
+        "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Вы не пацвердзілі гэтыя кантакты, таму іх экстраны доступ выдалены. Прызначайце іх зноў, толькі калі ўпэўнены, што дадалі іх самі.",
+        "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Гэтыя кантакты мелі чаканы або ўхвалены запыт на экстраны доступ, таму не атрымалі ваш новы ключ. Менавіта так выглядаў бы кантакт, дададзены кімсьці іншым: не прызначайце іх зноў, калі не ведаеце, што запыт быў сапраўдным.",
+        "Invalidated": "Ануляваны",
+        "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Гэты кантакт меў чаканы або ўхвалены запыт на экстраны доступ, калі вы змянілі ключ, таму не атрымаў ваш новы ключ. Менавіта так выглядаў бы кантакт, дададзены кімсьці іншым: не прызначайце яго зноў, калі не ведаеце, што запыт быў сапраўдным.",
+        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ратацыя ключа была адноўлена, таму гэтыя экстраныя кантакты не ўдалося перанесці, і іх надзвычайны доступ выдалены. Дадайце іх зноў у раздзеле «Надзвычайны доступ», калі яны вам яшчэ патрэбныя.",
+        "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ратацыя ключа выдаліла %n экстраны кантакт. Праверце «Надзвычайны доступ» і дадайце яго зноў, калі ён вам яшчэ патрэбны.",
+        "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ратацыя ключа выдаліла %n экстраных кантактаў. Праверце «Надзвычайны доступ» і дадайце іх зноў, калі яны вам яшчэ патрэбныя.",
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ратацыя ключа выдаліла надзвычайны доступ гэтага кантакту. Прызначце яго зноў, калі ён вам яшчэ патрэбны."
     },
     "nplurals=2; plural=(n != 1);"
 )

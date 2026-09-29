@@ -1172,7 +1172,17 @@ OC.L10N.register(
         "%n secret could not be decrypted and is not in this export.": "%n secret could not be decrypted and is not in this export.",
         "%n secrets could not be decrypted and are not in this export.": "%n secrets could not be decrypted and are not in this export.",
         "Continue without the secrets that could not be decrypted": "Continue without the secrets that could not be decrypted",
-        "This request is no longer available.": "This request is no longer available."
+        "This request is no longer available.": "This request is no longer available.",
+        "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.",
+        "{grantee}, waiting period in days: {days}": "{grantee}, waiting period in days: {days}",
+        "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.",
+        "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.",
+        "Invalidated": "Invalidated",
+        "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.",
+        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.",
+        "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.",
+        "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.",
+        "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Your key rotation removed this contact's emergency access. Designate them again if you still want them."
     },
     "nplurals=2; plural=(n != 1);"
 )

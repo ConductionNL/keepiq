@@ -100,6 +100,10 @@ final class AuditEventTypes {
 	public const EMERGENCY_ACCESS_ACCESSED = 'emergency_access.accessed';
 	public const EMERGENCY_ACCESS_REVOKED = 'emergency_access.revoked';
 	public const EMERGENCY_ACCESS_INVALIDATED = 'emergency_access.invalidated';
+	// An existing granted contact carried to the new key during a rotation.
+	// Kept apart from GRANTED so a carry can't be mistaken for a fresh
+	// designation, which is what a planted contact would be (#804 review).
+	public const EMERGENCY_ACCESS_CARRIED = 'emergency_access.carried';
 
 	// Export & deletion (consumed from secret-export-gdpr events when present).
 	public const VAULT_EXPORTED = 'vault.exported';
@@ -237,6 +241,7 @@ final class AuditEventTypes {
 		self::EMERGENCY_ACCESS_ACCESSED => ['grantorUserId', 'granteeUserId'],
 		self::EMERGENCY_ACCESS_REVOKED => ['grantorUserId', 'granteeUserId'],
 		self::EMERGENCY_ACCESS_INVALIDATED => ['grantorUserId', 'granteeUserId', 'reason'],
+		self::EMERGENCY_ACCESS_CARRIED => ['grantorUserId', 'granteeUserId', 'fromSuiteId', 'toSuiteId'],
 		self::SECRET_VERSION_RESTORED => ['versionNumber'],
 		// Rotation & expiry — ids/reasons only (§5.2).
 		self::SECRET_EXPIRY_SET => ['expiresAt'],

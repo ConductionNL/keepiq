@@ -99,6 +99,7 @@
 </template>
 
 <script>
+import { showWarning, TOAST_PERMANENT_TIMEOUT } from '@nextcloud/dialogs'
 import { NcButton, NcPasswordField } from '@nextcloud/vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
@@ -224,9 +225,27 @@ export default {
 
 			try {
 				const store = useEncryptionSuiteStore()
-				await store.resumeMigration(this.oldPassword)
+				const outcome = await store.resumeMigration(this.oldPassword)
 				this.oldPassword = ''
 				await store.fetchMigrationRemaining()
+
+				// This banner disappears once the rotation completes, so the
+				// emergency contacts the completion sweep removed are announced in
+				// a toast that stays until dismissed. A count and where to go, no
+				// re-add action: a resumed run doesn't know what the owner ticked
+				// (#804 review).
+				const removed = outcome?.residualContacts?.length ?? 0
+				if (removed > 0) {
+					showWarning(
+						this.n(
+							'keepiq',
+							'Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.',
+							'Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.',
+							removed,
+						),
+						{ timeout: TOAST_PERMANENT_TIMEOUT },
+					)
+				}
 
 				// The store leaves the migration in place when the server wants a
 				// loss acknowledged, so say where that decision now lives instead

@@ -19,11 +19,12 @@
  * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
  */
 
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import CompromiseRecoveryForm from '../../src/components/CompromiseRecoveryForm.vue'
 import { useEncryptionSuiteStore } from '../../src/store/modules/encryptionSuite.js'
+import { useSessionStore } from '../../src/store/modules/session.js'
 
 /**
  * Mount the form with the Nextcloud component surface stubbed out, so the test
@@ -65,6 +66,12 @@ function mountForm() {
 				NcPasswordField: { template: '<input />' },
 				NcProgressBar: { template: '<div class="progress-bar" />' },
 				PasswordStrengthMeter: true,
+				NcCheckboxRadioSwitch: {
+					props: ['modelValue'],
+					emits: ['update:modelValue'],
+					template:
+						'<label class="carry"><input type="checkbox" :checked="modelValue" @change="$emit(\'update:modelValue\', $event.target.checked)" /><slot /></label>',
+				},
 			},
 		},
 	})
@@ -74,6 +81,94 @@ describe('CompromiseRecoveryForm', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		vi.restoreAllMocks()
+	})
+
+	// keepiq#800: a compromise recovery runs exactly when someone else may have
+	// held the session, and carrying a contact hands them the NEW key. So the
+	// owner picks, nothing is preselected, and only the ticked ones go through.
+	describe('emergency contacts to carry', () => {
+		const contacts = [
+			{
+				id: 'rel-1',
+				granteeUserId: 'bob',
+				state: 'granted',
+				waitPeriodDays: 7,
+			},
+			{
+				id: 'rel-2',
+				granteeUserId: 'carol',
+				state: 'granted',
+				waitPeriodDays: 1,
+			},
+		]
+
+		beforeEach(() => {
+			useSessionStore().suiteId = 'old-suite'
+		})
+
+		it('lists the carriable contacts with none preselected', async () => {
+			const store = useEncryptionSuiteStore()
+			const list = vi
+				.spyOn(store, 'listCarriableEmergencyContacts')
+				.mockResolvedValue(contacts)
+
+			const wrapper = mountForm()
+			await flushPromises()
+
+			expect(list).toHaveBeenCalledWith('old-suite')
+			const items = wrapper.findAll(
+				'[data-testid="compromise-recovery-carry-item"]',
+			)
+			expect(items.map((i) => i.text())).toEqual([
+				expect.stringContaining('bob'),
+				expect.stringContaining('carol'),
+			])
+			expect(
+				items.every((i) => i.find('input').element.checked === false),
+			).toBe(true)
+		})
+
+		it('carries only the contacts the owner ticked', async () => {
+			const store = useEncryptionSuiteStore()
+			vi.spyOn(store, 'listCarriableEmergencyContacts').mockResolvedValue(
+				contacts,
+			)
+			const initiate = vi
+				.spyOn(store, 'initiateCompromiseRecovery')
+				.mockResolvedValue({
+					migrated: 0,
+					droppedVersions: 0,
+					failures: [],
+					residualContacts: [
+						{ granteeUserId: 'bob', reason: 'not_confirmed' },
+					],
+				})
+
+			const wrapper = mountForm()
+			await flushPromises()
+			const carol = wrapper.findAll(
+				'[data-testid="compromise-recovery-carry-item"]',
+			)[1]
+			await carol.find('input').setValue(true)
+
+			wrapper.vm.oldPassword = 'old'
+			wrapper.vm.newPassword = 'new'
+			await wrapper.vm.handleSubmit()
+
+			expect(initiate).toHaveBeenCalledWith('old', 'new', ['rel-2'])
+		})
+
+		it('shows no list when there is nothing to carry', async () => {
+			const store = useEncryptionSuiteStore()
+			vi.spyOn(store, 'listCarriableEmergencyContacts').mockResolvedValue([])
+
+			const wrapper = mountForm()
+			await flushPromises()
+
+			expect(
+				wrapper.find('[data-testid="compromise-recovery-carry"]').exists(),
+			).toBe(false)
+		})
 	})
 
 	it('warns before confirming that values must be changed at their source', () => {
@@ -109,14 +204,17 @@ describe('CompromiseRecoveryForm', () => {
 		expect(wrapper.text()).toContain('7 older versions were dropped')
 	})
 
-	it('prompts to re-establish exactly the emergency contacts that were lost', async () => {
+	it('prompts to re-establish only the contacts that could not be reached', async () => {
 		const wrapper = mountForm()
 		wrapper.vm.phase = 'terminal'
 		wrapper.vm.result = {
 			migrated: 3,
 			droppedVersions: 0,
 			failures: [],
-			residualContacts: ['bob', 'carol'],
+			residualContacts: [
+				{ granteeUserId: 'bob', reason: 'unreachable' },
+				{ granteeUserId: 'carol', reason: 'unreachable' },
+			],
 		}
 		await wrapper.vm.$nextTick()
 
@@ -125,6 +223,69 @@ describe('CompromiseRecoveryForm', () => {
 		expect(text).toContain('Re-establish')
 		expect(text).toContain('bob')
 		expect(text).toContain('carol')
+	})
+
+	// #804 review, round 4: a resumed rotation carries no contact, and the owner
+	// must still be told which ones it removed, neutrally.
+	it('names the contacts a resumed rotation removed, without a prompt', async () => {
+		const wrapper = mountForm()
+		wrapper.vm.phase = 'terminal'
+		wrapper.vm.result = {
+			migrated: 3,
+			droppedVersions: 0,
+			failures: [],
+			residualContacts: [
+				{ granteeUserId: 'bob', reason: 'removed_by_rotation' },
+				{ granteeUserId: 'mallory', reason: 'break_glass_in_flight' },
+			],
+		}
+		await wrapper.vm.$nextTick()
+
+		const removed = wrapper.find('[data-testid="compromise-recovery-removed"]')
+		expect(removed.exists()).toBe(true)
+		expect(removed.text()).toContain('bob')
+		expect(removed.text()).toContain('Emergency Access')
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-residual"]').exists(),
+		).toBe(false)
+		expect(wrapper.text()).not.toContain('Re-establish')
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-in-flight"]').text(),
+		).toContain('mallory')
+	})
+
+	// #804 review: an unticked or in-flight contact is the one a planted contact
+	// would be, so the owner must not be nudged to re-add it.
+	it('never nudges the owner to re-add an unconfirmed or in-flight contact', async () => {
+		const wrapper = mountForm()
+		wrapper.vm.phase = 'terminal'
+		wrapper.vm.result = {
+			migrated: 3,
+			droppedVersions: 0,
+			failures: [],
+			residualContacts: [
+				{ granteeUserId: 'dave', reason: 'not_confirmed' },
+				{ granteeUserId: 'mallory', reason: 'break_glass_in_flight' },
+			],
+		}
+		await wrapper.vm.$nextTick()
+
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-residual"]').exists(),
+		).toBe(false)
+		expect(wrapper.text()).not.toContain('Re-establish')
+
+		const unconfirmed = wrapper.find(
+			'[data-testid="compromise-recovery-unconfirmed"]',
+		)
+		expect(unconfirmed.text()).toContain('dave')
+		expect(unconfirmed.text()).toContain('did not confirm')
+
+		const inFlight = wrapper.find(
+			'[data-testid="compromise-recovery-in-flight"]',
+		)
+		expect(inFlight.text()).toContain('mallory')
+		expect(inFlight.text()).toContain('added by someone else')
 	})
 
 	it('says nothing about emergency access when every contact migrated', async () => {
@@ -239,6 +400,173 @@ describe('CompromiseRecoveryForm', () => {
 		// authoritative count from the store rather than being handed one here.
 		expect(accept).toHaveBeenCalledWith('migration-1', 'old-pw')
 		expect(wrapper.vm.phase).toBe('terminal')
+	})
+
+	// #804 review, round 5: a resumed rotation finished by accepting losses
+	// completes here, so the contacts it removed are named here.
+	it('names the contacts removed when a resumed rotation is finished by accepting losses', async () => {
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migration-1' }
+		store.migrationNeedsAcknowledgement = true
+		store.migrationRequiredAcknowledgement = 1
+		vi.spyOn(store, 'acceptMigrationLosses').mockResolvedValue({
+			residualContacts: [
+				{ granteeUserId: 'bob', reason: 'removed_by_rotation' },
+			],
+		})
+
+		const wrapper = mountForm()
+		wrapper.vm.activeOldPassword = 'old-pw'
+		// What a resumed run leaves behind while the loss is pending.
+		wrapper.vm.result = {
+			migrated: 2,
+			droppedVersions: 0,
+			failures: [],
+			residualContacts: [],
+		}
+		await wrapper.vm.handleAcceptLosses()
+		store.migrationNeedsAcknowledgement = false
+		await wrapper.vm.$nextTick()
+
+		const removed = wrapper.find('[data-testid="compromise-recovery-removed"]')
+		expect(removed.exists()).toBe(true)
+		expect(removed.text()).toContain('bob')
+	})
+
+	it('keeps the initiate list when an initiate run is finished by accepting losses', async () => {
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migration-1' }
+		store.migrationNeedsAcknowledgement = true
+		store.migrationRequiredAcknowledgement = 1
+		vi.spyOn(store, 'acceptMigrationLosses').mockResolvedValue({
+			residualContacts: [
+				{ granteeUserId: 'carol', reason: 'removed_by_rotation' },
+			],
+		})
+
+		const wrapper = mountForm()
+		wrapper.vm.activeOldPassword = 'old-pw'
+		wrapper.vm.result = {
+			migrated: 2,
+			droppedVersions: 0,
+			failures: [],
+			residualContacts: [{ granteeUserId: 'carol', reason: 'unreachable' }],
+		}
+		await wrapper.vm.handleAcceptLosses()
+		store.migrationNeedsAcknowledgement = false
+		await wrapper.vm.$nextTick()
+
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-residual"]').exists(),
+		).toBe(true)
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-removed"]').exists(),
+		).toBe(false)
+	})
+
+	// #804 review, round 5: a retry resumes the run this form started, so the
+	// owner's ticks still decide what the completion screen says.
+	it('keeps the initiate list when a retry completes the rotation', async () => {
+		const store = useEncryptionSuiteStore()
+		vi.spyOn(store, 'resumeMigration').mockImplementation(async () => {
+			store.migrationNeedsAcknowledgement = false
+			return {
+				migrated: 1,
+				failed: 0,
+				droppedVersions: 0,
+				failures: [],
+				residualContacts: [
+					{ granteeUserId: 'carol', reason: 'removed_by_rotation' },
+				],
+			}
+		})
+
+		const wrapper = mountForm()
+		wrapper.vm.activeOldPassword = 'old-pw'
+		wrapper.vm.result = {
+			migrated: 2,
+			failed: 1,
+			droppedVersions: 0,
+			failures: [],
+			residualContacts: [{ granteeUserId: 'carol', reason: 'not_confirmed' }],
+		}
+		await wrapper.vm.handleRetry()
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.vm.phase).toBe('terminal')
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-unconfirmed"]').text(),
+		).toContain('carol')
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-removed"]').exists(),
+		).toBe(false)
+	})
+
+	// Pre-push check on the round-5 fixes: a break-glass requested while the
+	// loss acknowledgement was pending must not stay labelled "not confirmed".
+	it('warns about a contact whose break-glass started while a loss was pending', async () => {
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migration-1' }
+		store.migrationNeedsAcknowledgement = true
+		store.migrationRequiredAcknowledgement = 1
+		vi.spyOn(store, 'acceptMigrationLosses').mockResolvedValue({
+			residualContacts: [
+				{ granteeUserId: 'carol', reason: 'break_glass_in_flight' },
+			],
+		})
+
+		const wrapper = mountForm()
+		wrapper.vm.activeOldPassword = 'old-pw'
+		wrapper.vm.result = {
+			migrated: 2,
+			droppedVersions: 0,
+			failures: [],
+			residualContacts: [{ granteeUserId: 'carol', reason: 'not_confirmed' }],
+		}
+		await wrapper.vm.handleAcceptLosses()
+		store.migrationNeedsAcknowledgement = false
+		await wrapper.vm.$nextTick()
+
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-in-flight"]').text(),
+		).toContain('carol')
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-unconfirmed"]').exists(),
+		).toBe(false)
+	})
+
+	// An initiate run's screen must not grow resumed-rotation copy for a
+	// contact only the read-back knows; the Emergency Access view names it.
+	it('adds no read-back-only contact to an initiate run', async () => {
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migration-1' }
+		store.migrationNeedsAcknowledgement = true
+		store.migrationRequiredAcknowledgement = 1
+		vi.spyOn(store, 'acceptMigrationLosses').mockResolvedValue({
+			residualContacts: [
+				{ granteeUserId: 'carol', reason: 'removed_by_rotation' },
+				{ granteeUserId: 'dave', reason: 'removed_by_rotation' },
+			],
+		})
+
+		const wrapper = mountForm()
+		wrapper.vm.activeOldPassword = 'old-pw'
+		wrapper.vm.result = {
+			migrated: 2,
+			droppedVersions: 0,
+			failures: [],
+			residualContacts: [{ granteeUserId: 'carol', reason: 'unreachable' }],
+		}
+		await wrapper.vm.handleAcceptLosses()
+		store.migrationNeedsAcknowledgement = false
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.vm.result.residualContacts).toEqual([
+			{ granteeUserId: 'carol', reason: 'unreachable' },
+		])
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-removed"]').exists(),
+		).toBe(false)
 	})
 
 	it("shows the server's loss count even when the display list is capped", async () => {

@@ -18,12 +18,18 @@
  * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-migration
  */
 
+import { showWarning } from '@nextcloud/dialogs'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import MigrationResumeBanner from '../../src/components/MigrationResumeBanner.vue'
 import { useEncryptionSuiteStore } from '../../src/store/modules/encryptionSuite.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
+
+vi.mock('@nextcloud/dialogs', () => ({
+	showWarning: vi.fn(),
+	TOAST_PERMANENT_TIMEOUT: -1,
+}))
 
 /**
  * Mount with the Nextcloud surface stubbed and interpolating t/n, since the
@@ -170,6 +176,56 @@ describe('MigrationResumeBanner', () => {
 		expect(wrapper.vm.error).toBeNull()
 		// The field must not keep holding the master password afterwards.
 		expect(wrapper.vm.oldPassword).toBe('')
+	})
+
+	// #804 review, round 4: the banner disappears once the rotation completes,
+	// so the contacts it removed are announced in a toast that stays until the
+	// owner dismisses it, pointing at Emergency Access, with no re-add action.
+	it('says how many emergency contacts a resumed rotation removed', async () => {
+		showWarning.mockClear()
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migration-1' }
+		const session = useSessionStore()
+		session.cryptoKey = {}
+		vi.spyOn(store, 'resumeMigration').mockResolvedValue({
+			migrated: 7,
+			failed: 0,
+			residualContacts: [
+				{ granteeUserId: 'bob', reason: 'removed_by_rotation' },
+				{ granteeUserId: 'mallory', reason: 'break_glass_in_flight' },
+			],
+		})
+
+		const wrapper = mountBanner()
+		wrapper.vm.expanded = true
+		wrapper.vm.oldPassword = 'previous-master-password'
+		await wrapper.vm.onResume()
+
+		expect(showWarning).toHaveBeenCalledTimes(1)
+		const [text, options] = showWarning.mock.calls[0]
+		expect(text).toContain('2 emergency contacts')
+		expect(text).toContain('Emergency Access')
+		expect(options).toEqual({ timeout: -1 })
+	})
+
+	it('announces nothing when a resumed rotation removed no contact', async () => {
+		showWarning.mockClear()
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migration-1' }
+		const session = useSessionStore()
+		session.cryptoKey = {}
+		vi.spyOn(store, 'resumeMigration').mockResolvedValue({
+			migrated: 7,
+			failed: 0,
+			residualContacts: [],
+		})
+
+		const wrapper = mountBanner()
+		wrapper.vm.expanded = true
+		wrapper.vm.oldPassword = 'previous-master-password'
+		await wrapper.vm.onResume()
+
+		expect(showWarning).not.toHaveBeenCalled()
 	})
 
 	it('explains where the decision lives when a loss needs acknowledging', async () => {
