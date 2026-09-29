@@ -75,11 +75,13 @@ class EmergencyAccessSuiteRotationListener implements IEventListener {
 			// already re-enveloped every reachable contact onto the new suite
 			// (MigrationController::reEnvelopeEmergencyContact), so those rows no
 			// longer sit on the old suite and this pass skips them. What remains on
-			// the old suite is exactly the residual the browser could not carry —
-			// a grantee with no active certificate to seal to — which genuinely
-			// must be invalidated. Do NOT "optimise away" this apparent no-op: on a
-			// rotation with an unreachable grantee it is the only thing that clears
-			// the stale envelope. The envelope escrows the OLD suite's private key.
+			// the old suite is every contact the browser did not carry — a grantee
+			// with no active certificate to seal to, one the owner did not tick, or
+			// one whose break-glass was in flight (the service records that as
+			// grantor_rotation_in_flight) — and each genuinely must be invalidated.
+			// Do NOT "optimise away" this apparent no-op: on a rotation with a
+			// contact that was not carried it is the only thing that clears the
+			// stale envelope. The envelope escrows the OLD suite's private key.
 			$this->service->invalidateForGrantorRotation(
 				grantorSuiteId: $event->getOldSuiteId(),
 				reason: 'grantor_rotation',
