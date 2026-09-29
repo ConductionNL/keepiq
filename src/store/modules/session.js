@@ -246,7 +246,7 @@ export const useSessionStore = defineStore('session', {
 		 * @spec openspec/specs/vault-session-lock/spec.md#requirement-saved-session-timeout
 		 */
 		applyTimeoutChoice(choice) {
-			const known = Object.prototype.hasOwnProperty.call(TIMEOUT_CHOICES, choice)
+			const known = Object.hasOwn(TIMEOUT_CHOICES, choice)
 			this.timeoutChoice = known ? choice : DEFAULT_TIMEOUT_CHOICE
 			this.timeout = TIMEOUT_CHOICES[this.timeoutChoice]
 		},

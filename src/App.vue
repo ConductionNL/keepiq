@@ -792,7 +792,10 @@ export default {
 		// Activity resets the inactivity lock (crypto-06). Passive listeners
 		// on the document; the store throttles the writes.
 		for (const type of ACTIVITY_EVENTS) {
-			document.addEventListener(type, this.handleActivity, { passive: true, capture: true })
+			document.addEventListener(type, this.handleActivity, {
+				passive: true,
+				capture: true,
+			})
 		}
 
 		// Poll every 10 s for session-timeout expiry.
@@ -819,7 +822,9 @@ export default {
 		document.removeEventListener('visibilitychange', this.handleVisibilityChange)
 		window.removeEventListener('beforeunload', this.handleBeforeUnload)
 		for (const type of ACTIVITY_EVENTS) {
-			document.removeEventListener(type, this.handleActivity, { capture: true })
+			document.removeEventListener(type, this.handleActivity, {
+				capture: true,
+			})
 		}
 	},
 

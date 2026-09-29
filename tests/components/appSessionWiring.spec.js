@@ -47,8 +47,16 @@ describe('App.vue session wiring', () => {
 		const add = vi.spyOn(document, 'addEventListener')
 		const remove = vi.spyOn(document, 'removeEventListener')
 		const context = {
-			sessionStore: { loadTimeoutPreference: vi.fn(), checkTimeout: vi.fn(), isLocked: true },
-			offlineStore: { bindConnectivity: vi.fn(), ensureLockHook: vi.fn(), online: false },
+			sessionStore: {
+				loadTimeoutPreference: vi.fn(),
+				checkTimeout: vi.fn(),
+				isLocked: true,
+			},
+			offlineStore: {
+				bindConnectivity: vi.fn(),
+				ensureLockHook: vi.fn(),
+				online: false,
+			},
 			registerServiceWorker: vi.fn(),
 			handleActivity: () => {},
 			handleVisibilityChange: () => {},
@@ -56,12 +64,21 @@ describe('App.vue session wiring', () => {
 		}
 
 		await App.created.call(context)
-		const added = add.mock.calls.filter(([, fn]) => fn === context.handleActivity).map(([type]) => type)
-		App.beforeUnmount.call({ ...context, timeoutInterval: context.timeoutInterval })
-		const removed = remove.mock.calls.filter(([, fn]) => fn === context.handleActivity).map(([type]) => type)
+		const added = add.mock.calls
+			.filter(([, fn]) => fn === context.handleActivity)
+			.map(([type]) => type)
+		App.beforeUnmount.call({
+			...context,
+			timeoutInterval: context.timeoutInterval,
+		})
+		const removed = remove.mock.calls
+			.filter(([, fn]) => fn === context.handleActivity)
+			.map(([type]) => type)
 
 		expect(context.sessionStore.loadTimeoutPreference).toHaveBeenCalled()
-		expect(added).toEqual(expect.arrayContaining(['pointerdown', 'keydown', 'scroll']))
+		expect(added).toEqual(
+			expect.arrayContaining(['pointerdown', 'keydown', 'scroll']),
+		)
 		expect(removed).toEqual(added)
 		clearInterval(context.timeoutInterval)
 	})
