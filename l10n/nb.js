@@ -1172,6 +1172,7 @@ OC.L10N.register(
         "%n secret could not be decrypted and is not in this export.": "%n hemmelighet kunne ikke dekrypteres og er ikke med i denne eksporten.",
         "%n secrets could not be decrypted and are not in this export.": "%n hemmeligheter kunne ikke dekrypteres og er ikke med i denne eksporten.",
         "Continue without the secrets that could not be decrypted": "Fortsett uten hemmelighetene som ikke kunne dekrypteres",
+        "This request is no longer available.": "Denne forespørselen er ikke lenger tilgjengelig.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Velg hvilke nødkontakter som kan motta den nye nøkkelen din. Kryss bare av for personer du selv har utpekt og fortsatt stoler på: den som hadde økten din, kan ha lagt til en egen kontakt. Kontakter du ikke krysser av, mister nødtilgangen; du kan utpeke dem på nytt etterpå.",
         "{grantee}, waiting period in days: {days}": "{grantee}, ventetid i dager: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Du bekreftet ikke disse kontaktene, så nødtilgangen deres er fjernet. Utpek dem bare på nytt hvis du er sikker på at du selv la dem til.",

@@ -1171,6 +1171,7 @@
         "%n secret could not be decrypted and is not in this export.": "%n paslapties nepavyko iššifruoti, ir jos nėra šiame eksporte.",
         "%n secrets could not be decrypted and are not in this export.": "%n paslapčių nepavyko iššifruoti, ir jų nėra šiame eksporte.",
         "Continue without the secrets that could not be decrypted": "Tęsti be paslapčių, kurių nepavyko iššifruoti",
+        "This request is no longer available.": "Ši užklausa nebepasiekiama.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Pasirinkite, kurie skubios pagalbos kontaktai gali gauti jūsų naują raktą. Pažymėkite tik žmones, kuriuos paskyrėte patys ir kuriais vis dar pasitikite: tas, kas turėjo jūsų seansą, galėjo pridėti savo kontaktą. Nepažymėti kontaktai praranda skubią prieigą; vėliau galėsite juos paskirti iš naujo.",
         "{grantee}, waiting period in days: {days}": "{grantee}, laukimo laikotarpis dienomis: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Nepatvirtinote šių kontaktų, todėl jų skubi prieiga buvo pašalinta. Paskirkite juos iš naujo tik jei esate tikri, kad pridėjote juos patys.",

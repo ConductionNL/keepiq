@@ -1172,6 +1172,7 @@ OC.L10N.register(
         "%n secret could not be decrypted and is not in this export.": "%n tajemství nebylo možné dešifrovat a není v tomto exportu.",
         "%n secrets could not be decrypted and are not in this export.": "%n tajemství nebylo možné dešifrovat a nejsou v tomto exportu.",
         "Continue without the secrets that could not be decrypted": "Pokračovat bez tajemství, která nebylo možné dešifrovat",
+        "This request is no longer available.": "Tato žádost již není k dispozici.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Vyberte, které nouzové kontakty mohou dostat váš nový klíč. Zaškrtněte jen osoby, které jste určili sami a kterým stále důvěřujete: kdo měl vaši relaci, mohl přidat vlastní kontakt. Nezaškrtnuté kontakty ztratí nouzový přístup; později je můžete určit znovu.",
         "{grantee}, waiting period in days: {days}": "{grantee}, čekací doba ve dnech: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Tyto kontakty jste nepotvrdili, a proto byl jejich nouzový přístup odebrán. Určete je znovu jen tehdy, pokud jste si jisti, že jste je přidali sami.",

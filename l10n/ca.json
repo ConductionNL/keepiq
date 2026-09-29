@@ -1171,6 +1171,7 @@
         "%n secret could not be decrypted and is not in this export.": "%n secret no s'ha pogut desxifrar i no és en aquesta exportació.",
         "%n secrets could not be decrypted and are not in this export.": "%n secrets no s'han pogut desxifrar i no són en aquesta exportació.",
         "Continue without the secrets that could not be decrypted": "Continua sense els secrets que no s'han pogut desxifrar",
+        "This request is no longer available.": "Aquesta sol·licitud ja no està disponible.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Trieu quins contactes d'emergència poden rebre la vostra clau nova. Marqueu només persones que heu designat vosaltres i en qui encara confieu: qui tenia la vostra sessió pot haver afegit un contacte propi. Els contactes que no marqueu perden l'accés d'emergència; després els podeu tornar a designar.",
         "{grantee}, waiting period in days: {days}": "{grantee}, període d’espera en dies: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "No has confirmat aquests contactes, per tant se n'ha eliminat l'accés d'emergència. Torna'ls a designar només si estàs segur que els has afegit tu.",

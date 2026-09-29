@@ -1172,6 +1172,7 @@ OC.L10N.register(
         "%n secret could not be decrypted and is not in this export.": "%n secret could not be decrypted and is not in this export.",
         "%n secrets could not be decrypted and are not in this export.": "%n secrets could not be decrypted and are not in this export.",
         "Continue without the secrets that could not be decrypted": "Continue without the secrets that could not be decrypted",
+        "This request is no longer available.": "Níl an t-iarratas seo ar fáil a thuilleadh.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Roghnaigh cé na teagmhálaithe éigeandála a fhéadfaidh d’eochair nua a fháil. Ná cuir tic ach le daoine a d’ainmnigh tú féin agus a bhfuil muinín agat astu fós: d’fhéadfadh an té a raibh do sheisiún aige teagmhálaí dá chuid féin a chur leis. Cailleann teagmhálaithe gan tic a rochtain éigeandála; is féidir leat iad a ainmniú arís ina dhiaidh sin.",
         "{grantee}, waiting period in days: {days}": "{grantee}, tréimhse feithimh i laethanta: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Níor dheimhnigh tú na teagmhálaithe seo, mar sin baineadh a rochtain éigeandála. Ná hainmnigh arís iad ach amháin má tá tú cinnte gur chuir tú féin leis iad.",

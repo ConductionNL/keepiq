@@ -75,3 +75,48 @@ The `SUITE_REVOKED` audit event's metadata MUST carry `{ reason, markCompromised
 - **THEN** the revocation MUST proceed and the emergency access MUST be cleared unconditionally (revocation is authoritative — unlike the owner path, no `acceptEmergencyLoss` gate blocks it)
 - **AND** the count of destroyed usable emergency contacts (`EmergencyEnvelopeInvalidationService::countUsableForGrantorSuite`) MUST be recorded in the `SUITE_REVOKED` audit metadata as `emergencyContactsDestroyed` and surfaced to the administrator as an informational warning
 - **AND** the emergency contacts' identities MUST NOT cross the wire — only the count
+
+### Requirement: A Suite In An In-Progress Migration Cannot Be Revoked
+The system MUST refuse to revoke a suite, by an administrator's force-revoke that is not marked as a compromise or by its owner, while that suite is the old or the new end of a key migration that is still `in_progress` (keepiq#803). Revoking the old end blocks the reads the owner's browser needs to re-encrypt; revoking the new end makes records that were already re-encrypted, or are being written, unreadable. Either way the migration and the vault write lock would stay `in_progress` with no way to finish. The refusal MUST happen before anything is changed, MUST answer `409` with `error: migration_in_progress`, and MUST say that the migration has to be completed or aborted first.
+
+A force-revoke marked as a compromise (`markCompromised: true`) is the exception. The owner's abort is refused once any record has moved, and every migration route is owner-only, so whoever holds the session and the leaked password could otherwise keep the administrator's containment blocked for good by leaving a migration open. A compromise force-revoke therefore MUST NOT be refused for an in-progress migration. Instead it MUST revoke the migration's other end as compromised too, because during a compromise either end may be the one the attacker controls, and only then end the migration (status `terminated`, which releases the write lock and unlocks the SecretRequests the migration locked, leaving them on the old suite). A SecretRequest whose suite is no longer `active` MUST NOT be shown or filled through its public link: the fill page would otherwise hand out the certificate of a suite revoked as compromised, possibly one whose private key the attacker holds. This holds whether or not a migration was open. Ending it last means that if revoking the other end fails, a retry of the force-revoke still finds the open migration and completes the containment.
+
+#### Scenario: Force-revoke of a suite mid-migration is refused
+@e2e exclude Server-side refusal on an admin API route; covered by PHPUnit on EncryptionSuiteController and MigrationService.
+- **GIVEN** user A's suite is the old or the new end of a migration in state `in_progress`
+- **WHEN** an administrator force-revokes that suite
+- **THEN** the system MUST refuse with `409` and `error: migration_in_progress`
+- **AND** the suite, its emergency contacts and the migration MUST be unchanged
+
+#### Scenario: A compromise force-revoke ends an open migration instead of being blocked
+@e2e exclude Server-side admin API behaviour; covered by PHPUnit on EncryptionSuiteController and MigrationService.
+- **GIVEN** someone holding user A's session and leaked password started a compromise recovery, committed one record so that abort is refused, and left the migration `in_progress`
+- **WHEN** an administrator force-revokes either suite of that migration with `markCompromised: true`
+- **THEN** the system MUST revoke the suite without a `409`
+- **AND** it MUST revoke the migration's other suite as compromised as well
+- **AND** only then it MUST set the migration to `terminated`, releasing the write lock and unlocking the SecretRequests the migration locked
+
+#### Scenario: A request on a revoked suite cannot be filled
+@e2e exclude Server-side refusal on a public endpoint; covered by PHPUnit on SecretRequestPolicy and SecretRequestFillController.
+- **GIVEN** a SecretRequest whose suite was force-revoked as compromised, with or without an open migration
+- **WHEN** someone opens or submits its public fill link
+- **THEN** the system MUST refuse with `410` and reason `unavailable`
+- **AND** MUST NOT return that suite's certificate
+
+#### Scenario: A failed containment step can be retried
+@e2e exclude Server-side failure handling; covered by PHPUnit on EncryptionSuiteController.
+- **GIVEN** a compromise force-revoke revoked one end of an in-progress migration, and revoking the other end failed
+- **WHEN** the administrator runs the same force-revoke again
+- **THEN** the system MUST still find the in-progress migration, revoke the other end, and terminate the migration
+
+#### Scenario: The owner's revoke of a suite mid-migration is refused
+@e2e exclude Server-side refusal; covered by PHPUnit on EncryptionSuiteController.
+- **GIVEN** user A's suite is part of a migration in state `in_progress`
+- **WHEN** A revokes that suite
+- **THEN** the system MUST refuse with `409` and `error: migration_in_progress`
+
+#### Scenario: A finished migration does not block revocation
+@e2e exclude Server-side check; covered by PHPUnit on MigrationService.
+- **GIVEN** every migration the suite was part of is `completed`, `completed_with_errors` or `aborted`
+- **WHEN** the suite is revoked
+- **THEN** the migration check MUST NOT refuse it

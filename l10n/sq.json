@@ -1171,6 +1171,7 @@
         "%n secret could not be decrypted and is not in this export.": "%n sekret nuk mund të deshifrohej dhe nuk është në këtë eksport.",
         "%n secrets could not be decrypted and are not in this export.": "%n sekrete nuk mund të deshifroheshin dhe nuk janë në këtë eksport.",
         "Continue without the secrets that could not be decrypted": "Vazhdo pa sekretet që nuk mund të deshifroheshin",
+        "This request is no longer available.": "Kjo kërkesë nuk është më e disponueshme.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Zgjidhni cilët kontakte urgjence mund të marrin çelësin tuaj të ri. Shënoni vetëm personat që i keni caktuar vetë dhe tek të cilët ende keni besim: kushdo që ka pasur seancën tuaj mund të ketë shtuar një kontakt të vetin. Kontaktet që nuk i shënoni humbasin qasjen e urgjencës; mund t’i caktoni sërish më pas.",
         "{grantee}, waiting period in days: {days}": "{grantee}, periudha e pritjes në ditë: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Nuk i konfirmuat këta kontakte, prandaj qasja e tyre e urgjencës u hoq. Caktojini sërish vetëm nëse jeni i sigurt se i keni shtuar vetë.",

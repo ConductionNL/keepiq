@@ -1171,6 +1171,7 @@
         "%n secret could not be decrypted and is not in this export.": "%n hemmelighed kunne ikke dekrypteres og er ikke med i denne eksport.",
         "%n secrets could not be decrypted and are not in this export.": "%n hemmeligheder kunne ikke dekrypteres og er ikke med i denne eksport.",
         "Continue without the secrets that could not be decrypted": "Fortsæt uden de hemmeligheder, der ikke kunne dekrypteres",
+        "This request is no longer available.": "Denne anmodning er ikke længere tilgængelig.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Vælg hvilke nødkontakter der må modtage din nye nøgle. Sæt kun flueben ved personer, du selv har udpeget og stadig stoler på: den, der havde din session, kan have tilføjet sin egen kontakt. Kontakter uden flueben mister deres nødadgang; du kan udpege dem igen bagefter.",
         "{grantee}, waiting period in days: {days}": "{grantee}, ventetid i dage: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Du bekræftede ikke disse kontakter, så deres nødadgang er fjernet. Udpeg dem kun igen, hvis du er sikker på, at du selv har tilføjet dem.",

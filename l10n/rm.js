@@ -1172,6 +1172,7 @@ OC.L10N.register(
         "%n secret could not be decrypted and is not in this export.": "%n secret could not be decrypted and is not in this export.",
         "%n secrets could not be decrypted and are not in this export.": "%n secrets could not be decrypted and are not in this export.",
         "Continue without the secrets that could not be decrypted": "Continue without the secrets that could not be decrypted",
+        "This request is no longer available.": "Questa dumonda n’è betg pli disponibla.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Tschernai tge contacts d’urgenza dastgan retschaiver Vossa nova clav. Marcai mo persunas che Vus avais designà sezs e che Vus fidais anc: tgi che aveva Vossa sessiun ha forsa agiuntà in agen contact. Contacts che Vus na marcais betg perdan lur access d’urgenza; Vus als pudais designar danovamain suenter.",
         "{grantee}, waiting period in days: {days}": "{grantee}, temp d’spetga en dis: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Vus n’avais betg confermà quests contacts, perquai è lur access d’urgenza vegnì allontanà. Designai els danovamain mo sche Vus essas segir d’als avair agiuntà sezs.",

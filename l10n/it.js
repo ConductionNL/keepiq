@@ -1172,6 +1172,7 @@ OC.L10N.register(
         "%n secret could not be decrypted and is not in this export.": "%n segreto non è stato decifrato e non è in questa esportazione.",
         "%n secrets could not be decrypted and are not in this export.": "%n segreti non sono stati decifrati e non sono in questa esportazione.",
         "Continue without the secrets that could not be decrypted": "Continua senza i segreti che non è stato possibile decifrare",
+        "This request is no longer available.": "Questa richiesta non è più disponibile.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Scegli quali contatti di emergenza possono ricevere la tua nuova chiave. Seleziona solo persone che hai designato tu e di cui ti fidi ancora: chi aveva la tua sessione potrebbe aver aggiunto un proprio contatto. I contatti non selezionati perdono l’accesso di emergenza; potrai designarli di nuovo in seguito.",
         "{grantee}, waiting period in days: {days}": "{grantee}, periodo di attesa in giorni: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Non hai confermato questi contatti, quindi il loro accesso di emergenza è stato rimosso. Designali di nuovo solo se sei sicuro di averli aggiunti tu.",

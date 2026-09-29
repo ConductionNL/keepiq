@@ -1171,6 +1171,7 @@
         "%n secret could not be decrypted and is not in this export.": "%n titkot nem sikerült visszafejteni, és nincs benne ebben az exportban.",
         "%n secrets could not be decrypted and are not in this export.": "%n titkot nem sikerült visszafejteni, és nincsenek benne ebben az exportban.",
         "Continue without the secrets that could not be decrypted": "Folytatás a vissza nem fejthető titkok nélkül",
+        "This request is no longer available.": "Ez a kérelem már nem érhető el.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Válassza ki, mely vészhelyzeti kapcsolattartók kaphatják meg az új kulcsát. Csak olyan személyeket jelöljön be, akiket Ön jelölt ki, és akikben továbbra is megbízik: aki a munkamenetét birtokolta, hozzáadhatott saját kapcsolattartót. A be nem jelölt kapcsolattartók elveszítik a vészhelyzeti hozzáférést; később újra kijelölheti őket.",
         "{grantee}, waiting period in days: {days}": "{grantee}, várakozási idő napokban: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Nem erősítette meg ezeket a kapcsolattartókat, ezért vészhelyzeti hozzáférésüket eltávolítottuk. Csak akkor jelölje ki őket újra, ha biztos benne, hogy Ön adta hozzá őket.",

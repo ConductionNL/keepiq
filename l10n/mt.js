@@ -1172,6 +1172,7 @@ OC.L10N.register(
         "%n secret could not be decrypted and is not in this export.": "%n secret could not be decrypted and is not in this export.",
         "%n secrets could not be decrypted and are not in this export.": "%n secrets could not be decrypted and are not in this export.",
         "Continue without the secrets that could not be decrypted": "Continue without the secrets that could not be decrypted",
+        "This request is no longer available.": "Din it-talba m’għadhiex disponibbli.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Agħżel liema kuntatti ta’ emerġenza jistgħu jirċievu ċ-ċavetta l-ġdida tiegħek. Immarka biss nies li ħatart int stess u li għadek tafdahom: min kellu s-sessjoni tiegħek seta’ żied kuntatt tiegħu. Il-kuntatti li ma timmarkax jitilfu l-aċċess ta’ emerġenza; tista’ terġa’ taħtarhom wara.",
         "{grantee}, waiting period in days: {days}": "{grantee}, perjodu ta’ stennija f’jiem: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Ma kkonfermajtx dawn il-kuntatti, għalhekk l-aċċess ta’ emerġenza tagħhom tneħħa. Erġa’ aħtarhom biss jekk inti ċert li żidthom int stess.",

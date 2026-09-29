@@ -1177,6 +1177,7 @@ OC.L10N.register(
         "%n secret could not be decrypted and is not in this export.": "%n geheim kon niet worden ontsleuteld en zit niet in deze export.",
         "%n secrets could not be decrypted and are not in this export.": "%n geheimen konden niet worden ontsleuteld en zitten niet in deze export.",
         "Continue without the secrets that could not be decrypted": "Doorgaan zonder de geheimen die niet konden worden ontsleuteld",
+        "This request is no longer available.": "Dit verzoek is niet langer beschikbaar.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Kies welke noodcontacten je nieuwe sleutel mogen ontvangen. Vink alleen mensen aan die je zelf hebt aangewezen en nog steeds vertrouwt: wie je sessie in handen had, kan zelf een contact hebben toegevoegd. Contacten die je niet aanvinkt, verliezen hun noodtoegang; je kunt ze daarna opnieuw aanwijzen.",
         "{grantee}, waiting period in days: {days}": "{grantee}, wachttijd in dagen: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Je hebt deze contacten niet bevestigd, dus hun noodtoegang is verwijderd. Wijs ze alleen opnieuw aan als je zeker weet dat je ze zelf hebt toegevoegd.",

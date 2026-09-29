@@ -1171,6 +1171,7 @@
         "%n secret could not be decrypted and is not in this export.": "%n saladust ei õnnestunud dekrüpteerida ja see ei ole selles ekspordis.",
         "%n secrets could not be decrypted and are not in this export.": "%n saladust ei õnnestunud dekrüpteerida ja need ei ole selles ekspordis.",
         "Continue without the secrets that could not be decrypted": "Jätka ilma saladusteta, mida ei õnnestunud dekrüpteerida",
+        "This request is no longer available.": "See taotlus pole enam saadaval.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Vali, millised hädaolukorra kontaktid võivad sinu uue võtme saada. Märgi ainult inimesed, kelle määrasid ise ja keda endiselt usaldad: see, kelle käes oli sinu seanss, võis lisada oma kontakti. Märkimata kontaktid kaotavad hädaolukorra juurdepääsu; saad need hiljem uuesti määrata.",
         "{grantee}, waiting period in days: {days}": "{grantee}, ooteaeg päevades: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Sa ei kinnitanud neid kontakte, seega eemaldati nende hädaolukorra juurdepääs. Määra need uuesti ainult siis, kui oled kindel, et lisasid need ise.",

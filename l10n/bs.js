@@ -1172,6 +1172,7 @@ OC.L10N.register(
         "%n secret could not be decrypted and is not in this export.": "%n tajna nije mogla biti dešifrovana i nije u ovom izvozu.",
         "%n secrets could not be decrypted and are not in this export.": "%n tajni nije moglo biti dešifrovano i nisu u ovom izvozu.",
         "Continue without the secrets that could not be decrypted": "Nastavi bez tajni koje nije bilo moguće dešifrovati",
+        "This request is no longer available.": "Ovaj zahtjev više nije dostupan.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Odaberite koji kontakti za hitne slučajeve smiju primiti vaš novi ključ. Označite samo osobe koje ste sami odredili i kojima i dalje vjerujete: ko je imao vašu sesiju, mogao je dodati vlastiti kontakt. Neoznačeni kontakti gube pristup u hitnim slučajevima; kasnije ih možete ponovo odrediti.",
         "{grantee}, waiting period in days: {days}": "{grantee}, period čekanja u danima: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Niste potvrdili ove kontakte pa je njihov pristup u hitnim slučajevima uklonjen. Ponovo ih odredite samo ako ste sigurni da ste ih sami dodali.",

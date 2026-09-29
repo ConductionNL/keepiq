@@ -1172,6 +1172,7 @@ OC.L10N.register(
         "%n secret could not be decrypted and is not in this export.": "%n hemlighet kunde inte dekrypteras och finns inte i den här exporten.",
         "%n secrets could not be decrypted and are not in this export.": "%n hemligheter kunde inte dekrypteras och finns inte i den här exporten.",
         "Continue without the secrets that could not be decrypted": "Fortsätt utan hemligheterna som inte kunde dekrypteras",
+        "This request is no longer available.": "Den här begäran är inte längre tillgänglig.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Välj vilka nödkontakter som får ta emot din nya nyckel. Markera bara personer som du själv har utsett och fortfarande litar på: den som hade din session kan ha lagt till en egen kontakt. Kontakter du inte markerar förlorar sin nödåtkomst; du kan utse dem igen efteråt.",
         "{grantee}, waiting period in days: {days}": "{grantee}, väntetid i dagar: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Du bekräftade inte dessa kontakter, så deras nödåtkomst har tagits bort. Utse dem bara igen om du är säker på att du själv har lagt till dem.",

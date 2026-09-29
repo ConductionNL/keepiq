@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Listener;
 
 use DateTime;
+use OCA\Keepiq\Db\RotationFlag;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
@@ -32,6 +33,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\Event;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * Tests for SuiteCompromiseOnRevokeListener.
@@ -96,9 +98,17 @@ class SuiteCompromiseOnRevokeListenerTest extends TestCase {
 		$rotationService->expects($this->once())
 			->method('flag')
 			->with('secret-1', 'suite_compromise');
+		// The notifier reads snake_case keys; camelCase rendered "a secret" with
+		// no link (#805 review).
 		$notificationService->expects($this->once())
 			->method('notify')
-			->with('secret_compromised', 'alice');
+			->with(
+				'secret_compromised',
+				'alice',
+				$this->callback(static fn (array $params): bool => ($params['secret_id'] ?? null) === 'secret-1'
+					&& ($params['secret_name'] ?? null) === 'prod-db'
+					&& isset($params['secretId']) === false)
+			);
 
 		$listener->handle($this->event(compromised: true));
 
@@ -180,12 +190,13 @@ class SuiteCompromiseOnRevokeListenerTest extends TestCase {
 		$secretMapper = $this->createMock(SecretMapper::class);
 		$shareTargetMapper = $this->createMock(ShareTargetMapper::class);
 		$notificationService = $this->createMock(NotificationService::class);
+		$rotationService = $this->createMock(RotationPolicyService::class);
 		$listener = new SuiteCompromiseOnRevokeListener(
 			secretMapper: $secretMapper,
 			shareTargetMapper: $shareTargetMapper,
 			notificationService: $notificationService,
 			logger: $this->createMock(LoggerInterface::class),
-			rotationService: $this->createMock(RotationPolicyService::class)
+			rotationService: $rotationService
 		);
 
 		$copy = new Secret();
@@ -206,14 +217,183 @@ class SuiteCompromiseOnRevokeListenerTest extends TestCase {
 		$source->setId('src-1');
 		$source->setOwnerType('user');
 		$source->setOwnerId('carol');
-		$secretMapper->method('findById')->willReturn($source);
+		$source->setName('shared-thing-source');
+		$secretMapper->method('findById')->with('src-1')->willReturn($source);
 
+		// The SOURCE is what carol has to rotate, so it is stamped and flagged
+		// too (#802), not only the revoked user's copy.
+		$updated = [];
+		$secretMapper->method('update')->willReturnCallback(
+			static function (Secret $secret) use (&$updated): Secret {
+				$updated[] = $secret->getId();
+				return $secret;
+			}
+		);
+		$flagged = [];
+		// flag() returns a RotationFlag; a callback returning nothing would make
+		// the mock throw, which the listener's catch-all swallows mid-loop.
+		$rotationService->method('flag')->willReturnCallback(
+			static function (string $secretId) use (&$flagged): RotationFlag {
+				$flagged[] = $secretId;
+				return new RotationFlag();
+			}
+		);
+
+		// And the warning points at the source carol can open.
 		$notificationService->expects($this->once())
 			->method('notify')
-			->with('secret_compromised', 'carol');
+			->with(
+				'secret_compromised',
+				'carol',
+				$this->callback(static fn (array $params): bool => ($params['secret_id'] ?? null) === 'src-1'
+					&& ($params['secret_name'] ?? null) === 'shared-thing-source')
+			);
 
 		$listener->handle($this->event(compromised: true));
+
+		$this->assertContains('src-1', $updated, 'the source secret must be stamped');
+		$this->assertNotNull($source->getPossiblyCompromisedAt());
+		$this->assertContains('src-1', $flagged, 'the source secret must be flagged for rotation');
+		$this->assertContains('copy-1', $flagged, 'the copy is still flagged');
+
 	}//end testSharedCopyNotifiesTheSourceOwner()
+
+	/**
+	 * A shared copy whose source is gone warns about the copy itself, quietly:
+	 * that is an expected state, not an error.
+	 *
+	 * @return void
+	 */
+	public function testSourceGoneFallsBackToTheCopy(): void {
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$shareTargetMapper = $this->createMock(ShareTargetMapper::class);
+		$notificationService = $this->createMock(NotificationService::class);
+		$logger = $this->createMock(LoggerInterface::class);
+		$listener = new SuiteCompromiseOnRevokeListener(
+			secretMapper: $secretMapper,
+			shareTargetMapper: $shareTargetMapper,
+			notificationService: $notificationService,
+			logger: $logger
+		);
+
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$copy->setOwnerType('user');
+		$copy->setOwnerId('bob');
+		$copy->setName('shared-thing');
+		$copy->setPossiblyCompromisedAt(new DateTime());
+		$secretMapper->method('findByEncryptionSuiteId')->willReturn([$copy]);
+
+		$shareTarget = new ShareTarget();
+		$shareTarget->setSourceSecretId('src-1');
+		$shareTarget->setSecretId('copy-1');
+		$shareTargetMapper->method('findByRecipientSecret')->willReturn($shareTarget);
+		$secretMapper->method('findById')->willThrowException(new DoesNotExistException('source gone'));
+
+		$logger->expects($this->never())->method('warning');
+		$notificationService->expects($this->once())
+			->method('notify')
+			->with(
+				'secret_compromised',
+				'bob',
+				$this->callback(static fn (array $params): bool => ($params['secret_id'] ?? null) === 'copy-1')
+			);
+
+		$listener->handle($this->event(compromised: true));
+	}//end testSourceGoneFallsBackToTheCopy()
+
+	/**
+	 * A lookup that fails for any other reason still falls back to the copy,
+	 * but is logged: silently warning the wrong owner is the #802 bug.
+	 *
+	 * @return void
+	 */
+	public function testLookupErrorIsLoggedAndFallsBackToTheCopy(): void {
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$shareTargetMapper = $this->createMock(ShareTargetMapper::class);
+		$notificationService = $this->createMock(NotificationService::class);
+		$logger = $this->createMock(LoggerInterface::class);
+		$listener = new SuiteCompromiseOnRevokeListener(
+			secretMapper: $secretMapper,
+			shareTargetMapper: $shareTargetMapper,
+			notificationService: $notificationService,
+			logger: $logger
+		);
+
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$copy->setOwnerType('user');
+		$copy->setOwnerId('bob');
+		$copy->setName('shared-thing');
+		$copy->setPossiblyCompromisedAt(new DateTime());
+		$secretMapper->method('findByEncryptionSuiteId')->willReturn([$copy]);
+		$shareTargetMapper->method('findByRecipientSecret')
+			->willThrowException(new RuntimeException('database unavailable'));
+
+		$logger->expects($this->once())
+			->method('warning')
+			->with($this->stringContains('database unavailable'));
+		$notificationService->expects($this->once())
+			->method('notify')
+			->with('secret_compromised', 'bob', $this->anything());
+
+		$listener->handle($this->event(compromised: true));
+	}//end testLookupErrorIsLoggedAndFallsBackToTheCopy()
+
+	/**
+	 * A secret that cannot be stamped is logged and skipped; it does not stop
+	 * the cascade for the secrets after it.
+	 *
+	 * @return void
+	 */
+	public function testOneFailingSecretDoesNotAbortTheCascade(): void {
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$shareTargetMapper = $this->createMock(ShareTargetMapper::class);
+		$notificationService = $this->createMock(NotificationService::class);
+		$logger = $this->createMock(LoggerInterface::class);
+		$listener = new SuiteCompromiseOnRevokeListener(
+			secretMapper: $secretMapper,
+			shareTargetMapper: $shareTargetMapper,
+			notificationService: $notificationService,
+			logger: $logger
+		);
+
+		$broken = new Secret();
+		$broken->setId('secret-1');
+		$broken->setOwnerType('user');
+		$broken->setOwnerId('alice');
+		$next = new Secret();
+		$next->setId('secret-2');
+		$next->setOwnerType('user');
+		$next->setOwnerId('bob');
+		$secretMapper->method('findByEncryptionSuiteId')->willReturn([$broken, $next]);
+		$shareTargetMapper->method('findByRecipientSecret')
+			->willThrowException(new DoesNotExistException('not shared'));
+		$secretMapper->method('update')->willReturnCallback(
+			static function (Secret $secret): Secret {
+				if ($secret->getId() === 'secret-1') {
+					throw new RuntimeException('write failed');
+				}
+
+				return $secret;
+			}
+		);
+
+		$logger->expects($this->once())
+			->method('warning')
+			->with($this->stringContains('write failed'));
+		$notified = [];
+		$notificationService->method('notify')->willReturnCallback(
+			static function (string $subject, string $recipientId) use (&$notified): bool {
+				$notified[] = $recipientId;
+				return true;
+			}
+		);
+
+		$listener->handle($this->event(compromised: true));
+
+		$this->assertSame(['alice', 'bob'], $notified);
+	}//end testOneFailingSecretDoesNotAbortTheCascade()
 
 	/**
 	 * One owner gets one notification no matter how many of their secrets the

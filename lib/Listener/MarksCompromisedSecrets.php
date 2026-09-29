@@ -1,0 +1,103 @@
+<?php
+
+/**
+ * Keepiq MarksCompromisedSecrets
+ *
+ * The part of the suite-compromise cascade that both compromise listeners
+ * share: resolving a shared copy to its SOURCE Secret, and stamping and
+ * flagging a Secret as possibly compromised. SuiteCompromiseListener (a
+ * completed compromise migration) and SuiteCompromiseOnRevokeListener (an
+ * administrator force-revoke) must treat a shared source the same way, so the
+ * logic lives here once (keepiq#802).
+ *
+ * @category Listener
+ * @package  OCA\Keepiq\Listener
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git-id>
+ *
+ * @link https://conduction.nl
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Keepiq\Listener;
+
+use DateTime;
+use OCA\Keepiq\Db\Secret;
+use OCP\AppFramework\Db\DoesNotExistException;
+use Throwable;
+
+/**
+ * Stamp, flag and resolve Secrets in a suite-compromise blast radius.
+ *
+ * The using class provides $secretMapper, $shareTargetMapper, $logger and
+ * $rotationService.
+ */
+trait MarksCompromisedSecrets {
+	/**
+	 * Stamp a Secret possibly-compromised (once) and raise its rotation flag.
+	 *
+	 * The flag is idempotent (rotation-expiry-policies §3.2). A failure is
+	 * logged and does not stop the cascade for the other Secrets.
+	 *
+	 * @param Secret $secret The Secret to mark
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 */
+	private function stampAndFlag(Secret $secret): void {
+		try {
+			if ($secret->getPossiblyCompromisedAt() === null) {
+				$secret->setPossiblyCompromisedAt(new DateTime());
+				$this->secretMapper->update($secret);
+			}
+
+			$this->rotationService?->flag(
+				secretId: $secret->getId(),
+				reason: 'suite_compromise'
+			);
+		} catch (Throwable $exception) {
+			$this->logger->warning(
+				'Keepiq: could not mark secret ' . $secret->getId() . ' possibly compromised: ' . $exception->getMessage(),
+				['app' => 'keepiq']
+			);
+		}
+	}//end stampAndFlag()
+
+	/**
+	 * The Secret a warning about $secret should point at: for a shared copy,
+	 * the SOURCE Secret, which its owner can open and has to rotate; otherwise
+	 * $secret itself.
+	 *
+	 * Not being a shared copy, or a source that is gone, is expected and falls
+	 * back to $secret quietly. Any other lookup failure falls back too, but is
+	 * logged: it means the source owner is not warned.
+	 *
+	 * @param Secret $secret The Secret sealed under the affected suite
+	 *
+	 * @return Secret
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 */
+	private function resolveTarget(Secret $secret): Secret {
+		try {
+			$row = $this->shareTargetMapper->findByRecipientSecret(
+				recipientSecretId: $secret->getId()
+			);
+			return $this->secretMapper->findById($row->getSourceSecretId());
+		} catch (DoesNotExistException) {
+			return $secret;
+		} catch (Throwable $exception) {
+			$this->logger->warning(
+				'Keepiq: could not resolve the source of secret ' . $secret->getId() . ': ' . $exception->getMessage(),
+				['app' => 'keepiq']
+			);
+			return $secret;
+		}
+	}//end resolveTarget()
+}//end trait

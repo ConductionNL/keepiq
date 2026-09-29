@@ -1172,6 +1172,7 @@ OC.L10N.register(
         "%n secret could not be decrypted and is not in this export.": "%n секрет не удалось расшифровать, и его нет в этом экспорте.",
         "%n secrets could not be decrypted and are not in this export.": "%n секретов не удалось расшифровать, и их нет в этом экспорте.",
         "Continue without the secrets that could not be decrypted": "Продолжить без секретов, которые не удалось расшифровать",
+        "This request is no longer available.": "Этот запрос больше не доступен.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Выберите, какие экстренные контакты могут получить ваш новый ключ. Отмечайте только людей, которых вы назначили сами и которым по-прежнему доверяете: тот, у кого была ваша сессия, мог добавить собственный контакт. Неотмеченные контакты теряют экстренный доступ; позже вы можете назначить их снова.",
         "{grantee}, waiting period in days: {days}": "{grantee}, период ожидания в днях: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Вы не подтвердили эти контакты, поэтому их экстренный доступ удалён. Назначайте их снова, только если уверены, что добавили их сами.",

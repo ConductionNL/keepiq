@@ -136,6 +136,25 @@ describe('SecretRequestFill', () => {
 		expect(text).not.toContain('Request has expired"')
 	})
 
+	it('says a request on a revoked suite is no longer available', async () => {
+		// #809 review: a request sealed to a revoked suite is refused with
+		// reason `unavailable`, and the page must say so in the recipient's
+		// language rather than show the server's English.
+		vi.spyOn(axios, 'get').mockRejectedValue({
+			response: {
+				data: {
+					message: 'Request is no longer available',
+					reason: 'unavailable',
+				},
+			},
+		})
+		const wrapper = mount(SecretRequestFill, { propsData: { token: 'tok-1' } })
+		await flush()
+
+		const text = wrapper.find('[data-testid="fill-load-error"]').text()
+		expect(text).toContain('This request is no longer available.')
+	})
+
 	it('falls back to the server message when the reason is unknown', async () => {
 		// An older server, or a failure the server could not classify. An
 		// untranslated sentence beats a blank page, so the fallback must survive.

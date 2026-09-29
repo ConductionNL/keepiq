@@ -277,6 +277,29 @@ class SecretRequestMapper extends QBMapper {
 	}//end lockByEncryptionSuiteId()
 
 	/**
+	 * Unlock the requests locked on a suite, leaving them on that suite.
+	 *
+	 * For a migration that ended without moving anything onto the new suite
+	 * (an owner's abort, or a compromise force-revoke that terminated it): the
+	 * requests go back to pending where they were.
+	 *
+	 * @param string $encryptionSuiteId The suite the requests are locked on
+	 *
+	 * @return int The number of requests unlocked
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-migration
+	 */
+	public function unlockByEncryptionSuiteId(string $encryptionSuiteId): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('status', $qb->createNamedParameter(SecretRequest::STATUS_PENDING))
+			->where($qb->expr()->eq('encryption_suite_id', $qb->createNamedParameter($encryptionSuiteId)))
+			->andWhere($qb->expr()->eq('status', $qb->createNamedParameter(SecretRequest::STATUS_LOCKED)));
+
+		return $qb->executeStatement();
+	}//end unlockByEncryptionSuiteId()
+
+	/**
 	 * Re-point all locked requests bound to the old EncryptionSuite at
 	 * the new EncryptionSuite + return them to pending.
 	 *

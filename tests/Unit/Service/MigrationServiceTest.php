@@ -12,6 +12,7 @@ use OCA\Keepiq\Event\SuiteMigrationAbortedEvent;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
 use OCA\Keepiq\Exception\MigrationAbortRefusedException;
 use OCA\Keepiq\Exception\MigrationIncompleteException;
+use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
@@ -651,4 +652,121 @@ class MigrationServiceTest extends TestCase {
 
 		$this->assertSame(['drop', 'gate'], $order);
 	}//end testVersionDropRunsBeforeTheGate()
+
+	/**
+	 * A suite at either end of an in-progress migration cannot be revoked
+	 * (keepiq#803): revoking the old end blocks the reads the migration needs,
+	 * revoking the new end strands what it already re-encrypted.
+	 *
+	 * @param string $end Which end of the migration the suite is.
+	 *
+	 * @return void
+	 *
+	 * @dataProvider migrationEndProvider
+	 */
+	public function testASuiteInAnInProgressMigrationIsRefused(string $end): void {
+		$migration = new SuiteMigration();
+		$migration->setId('migration-1');
+		$migration->setOldSuiteId($end === 'old' ? 'suite-1' : 'other-suite');
+		$migration->setNewSuiteId($end === 'new' ? 'suite-1' : 'other-suite');
+		$migration->setStatus('in_progress');
+		$this->migrationMapper->method('findBySuiteId')->with('suite-1')->willReturn([$migration]);
+
+		$this->expectException(SuiteMigrationInProgressException::class);
+		$this->service->assertNoMigrationInProgress(suiteId: 'suite-1');
+	}//end testASuiteInAnInProgressMigrationIsRefused()
+
+	/**
+	 * The two ends of a migration.
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function migrationEndProvider(): array {
+		return ['old suite' => ['old'], 'new suite' => ['new']];
+	}//end migrationEndProvider()
+
+	/**
+	 * Finished migrations, or none, do not block a revoke.
+	 *
+	 * @return void
+	 */
+	public function testFinishedMigrationsDoNotBlockARevoke(): void {
+		$migrations = [];
+		foreach (['completed', 'completed_with_errors', 'aborted'] as $i => $status) {
+			$migration = new SuiteMigration();
+			$migration->setId('migration-' . $i);
+			$migration->setOldSuiteId('suite-1');
+			$migration->setNewSuiteId('other-suite');
+			$migration->setStatus($status);
+			$migrations[] = $migration;
+		}
+		$this->migrationMapper->method('findBySuiteId')->willReturn($migrations);
+
+		$this->service->assertNoMigrationInProgress(suiteId: 'suite-1');
+		$this->addToAssertionCount(1);
+	}//end testFinishedMigrationsDoNotBlockARevoke()
+
+	/**
+	 * findInProgressForSuite() returns the suite's open migration and ignores
+	 * finished ones; it changes nothing.
+	 *
+	 * @return void
+	 */
+	public function testFindInProgressForSuiteReturnsOnlyTheOpenMigration(): void {
+		$finished = new SuiteMigration();
+		$finished->setId('migration-0');
+		$finished->setStatus('completed');
+		$open = new SuiteMigration();
+		$open->setId('migration-1');
+		$open->setStatus('in_progress');
+		$this->migrationMapper->method('findBySuiteId')->with('suite-1')->willReturn([$finished, $open]);
+		$this->migrationMapper->expects($this->never())->method('update');
+
+		$this->assertSame('migration-1', $this->service->findInProgressForSuite(suiteId: 'suite-1')?->getId());
+	}//end testFindInProgressForSuiteReturnsOnlyTheOpenMigration()
+
+	/**
+	 * Nothing open: nothing found.
+	 *
+	 * @return void
+	 */
+	public function testFindInProgressForSuiteIsNullWithoutAnOpenMigration(): void {
+		$this->migrationMapper->method('findBySuiteId')->willReturn([]);
+
+		$this->assertNull($this->service->findInProgressForSuite(suiteId: 'suite-1'));
+	}//end testFindInProgressForSuiteIsNullWithoutAnOpenMigration()
+
+	/**
+	 * terminateForCompromise() ends the migration as `terminated` and
+	 * dispatches the aborted event, which unlocks the SecretRequests it locked
+	 * (keepiq#809 review).
+	 *
+	 * @return void
+	 */
+	public function testTerminateForCompromiseEndsTheMigration(): void {
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$service = new MigrationService(
+			mapper: $this->migrationMapper,
+			suiteMapper: $this->suiteMapper,
+			suiteService: $this->suiteService,
+			linkShareService: $this->linkShareService,
+			workService: $this->workService,
+			writeLockService: $this->writeLockService,
+			logger: $this->createMock(LoggerInterface::class),
+			eventDispatcher: $dispatcher,
+		);
+		$open = new SuiteMigration();
+		$open->setId('migration-1');
+		$open->setOldSuiteId('suite-1');
+		$open->setNewSuiteId('suite-2');
+		$open->setStatus('in_progress');
+		$this->migrationMapper->expects($this->once())->method('update')
+			->with($this->callback(static fn (SuiteMigration $m): bool => $m->getStatus() === 'terminated'));
+		$dispatcher->expects($this->once())->method('dispatchTyped')
+			->with($this->isInstanceOf(SuiteMigrationAbortedEvent::class));
+
+		$service->terminateForCompromise(migration: $open);
+
+		$this->assertSame('terminated', $open->getStatus());
+	}//end testTerminateForCompromiseEndsTheMigration()
 }//end class

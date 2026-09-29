@@ -1172,6 +1172,7 @@ OC.L10N.register(
         "%n secret could not be decrypted and is not in this export.": "Ekki tókst að afkóða %n leyndarmál og það er ekki í þessum útflutningi.",
         "%n secrets could not be decrypted and are not in this export.": "Ekki tókst að afkóða %n leyndarmál og þau eru ekki í þessum útflutningi.",
         "Continue without the secrets that could not be decrypted": "Halda áfram án leyndarmálanna sem ekki tókst að afkóða",
+        "This request is no longer available.": "Þessi beiðni er ekki lengur tiltæk.",
         "Choose which emergency contacts may receive your new key. Only tick people you designated yourself and still trust: whoever held your session may have added a contact of their own. Contacts you leave unticked lose emergency access; you can designate them again afterwards.": "Veldu hvaða neyðartengiliðir mega fá nýja lykilinn þinn. Hakaðu aðeins við fólk sem þú tilnefndir sjálf(ur) og treystir enn: sá sem hafði setuna þína gæti hafa bætt við eigin tengilið. Tengiliðir sem þú hakar ekki við missa neyðaraðgang sinn; þú getur tilnefnt þá aftur síðar.",
         "{grantee}, waiting period in days: {days}": "{grantee}, biðtími í dögum: {days}",
         "You did not confirm these contacts, so their emergency access was removed. Only designate them again if you are sure you added them yourself.": "Þú staðfestir ekki þessa tengiliði, svo neyðaraðgangur þeirra var fjarlægður. Tilnefndu þá aðeins aftur ef þú ert viss um að þú hafir bætt þeim við sjálf(ur).",
