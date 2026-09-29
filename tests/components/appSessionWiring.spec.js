@@ -10,6 +10,8 @@
  * @spec openspec/specs/vault-session-lock/spec.md#requirement-inactivity-lock
  */
 
+import axios from '@nextcloud/axios'
+import { createPinia, setActivePinia } from 'pinia'
 import { describe, expect, it, vi } from 'vitest'
 import App from '../../src/App.vue'
 
@@ -39,6 +41,9 @@ describe('App.vue session wiring', () => {
 	})
 
 	it('listens for activity on mount and stops on unmount', async () => {
+		// created() first initialises the settings store over axios.
+		setActivePinia(createPinia())
+		vi.spyOn(axios, 'get').mockResolvedValue({ data: {} })
 		const add = vi.spyOn(document, 'addEventListener')
 		const remove = vi.spyOn(document, 'removeEventListener')
 		const context = {
