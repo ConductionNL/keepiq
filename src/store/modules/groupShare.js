@@ -173,6 +173,7 @@ export const useGroupShareStore = defineStore('groupShare', {
 		 * @param {string} groupShareId The group share the copies hang on.
 		 * @param {Array<{userId: string, certificate: string}>} members The eligible members.
 		 * @return {Promise<Array<object>>} register-batch rows.
+		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 		 */
 		async encryptForMembers(secretId, groupShareId, members) {
 			const shareStore = useShareStore()

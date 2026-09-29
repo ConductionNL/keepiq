@@ -101,6 +101,13 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * Reload the group shares when the sidebar switches secrets.
+		 *
+		 * @param {string} id The new secret id.
+		 * @return {void}
+		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
+		 */
 		secretId(id) {
 			this.result = null
 			this.formOpen = false
@@ -110,6 +117,12 @@ export default {
 		},
 	},
 
+	/**
+	 * Load the group shares of the secret.
+	 *
+	 * @return {void}
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
+	 */
 	created() {
 		if (this.secretId) {
 			this.store.fetchGroupShares(this.secretId).catch(() => {})
@@ -121,6 +134,7 @@ export default {
 		 * Open the share form and clear the last result.
 		 *
 		 * @return {void}
+		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 		 */
 		openForm() {
 			this.result = null
