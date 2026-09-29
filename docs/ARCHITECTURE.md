@@ -362,9 +362,13 @@ gating on one would wedge the vault, so such a contact is left on the old suite.
 `EmergencyEnvelopeInvalidationService::invalidateForGrantorRotation`, fired by
 `EmergencyAccessSuiteRotationListener` on `SuiteMigrationCompletedEvent`, is now a
 **residual sweep**, not a blanket invalidation: the re-enveloped contacts have
-already left the old suite, so the sweep finds only the residual (unreachable
-grantees), invalidates exactly those, and the client surfaces them for the owner
-to re-establish. Revocation still clears the envelopes outright — it produces no
+already left the old suite, so the sweep finds only the contacts that weren't
+carried: unreachable grantees, contacts the owner didn't tick (or declined), and
+contacts with a break-glass in flight. It invalidates exactly those, recording
+`grantor_rotation_in_flight` for the last group and `grantor_rotation` for the
+rest. The recovery form prompts re-establishing only an unreachable contact. A
+resumed rotation reads the removed contacts back and names them without a
+prompt, and the Emergency Access view shows a text-only notice on each. Revocation still clears the envelopes outright — it produces no
 new key to migrate to — but `EncryptionSuiteController::revoke` now refuses while
 a usable emergency contact exists unless `acceptEmergencyLoss` is given, and the
 refusal surfaces the count (never the identities) so the destruction is a knowing

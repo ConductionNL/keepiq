@@ -88,6 +88,17 @@
 						{{ t('keepiq', 'Re-establish') }}
 					</NcButton>
 					<span
+						v-if="rotationRemoved(c)"
+						class="emergency-access__notice"
+						data-testid="emergency-rotation-notice">
+						{{
+							t(
+								'keepiq',
+								"Your key rotation removed this contact's emergency access. Designate them again if you still want them.",
+							)
+						}}
+					</span>
+					<span
 						v-if="c.invalidatedReason === 'grantor_rotation_in_flight'"
 						class="emergency-access__warning"
 						data-testid="emergency-in-flight-warning">
@@ -126,7 +137,7 @@
 						c.grantorUserId
 					}}</span>
 					<span class="emergency-access__state" :data-state="c.state">{{
-						stateLabel(c)
+						incomingStateLabel(c)
 					}}</span>
 					<NcButton
 						v-if="c.state === 'granted'"
@@ -273,6 +284,42 @@ export default {
 				invalidated: t('keepiq', 'Invalidated (re-establish)'),
 			}
 			return map[contact.state] || contact.state
+		},
+
+		/**
+		 * Label for a contact in the grantee's incoming list. The grantee can't
+		 * re-establish anything and gets no invalidation reason, so an
+		 * invalidated relationship is labelled plainly (#804 review).
+		 *
+		 * @param {object} contact The incoming contact.
+		 * @return {string} The label.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		incomingStateLabel(contact) {
+			if (contact.state === 'invalidated') {
+				return t('keepiq', 'Invalidated')
+			}
+			return this.stateLabel(contact)
+		},
+
+		/**
+		 * Whether a key rotation removed this contact, without a break-glass in
+		 * flight: shown as a text-only notice, with no re-add action, so the
+		 * owner still learns of it after a resumed rotation or a completion
+		 * screen closed unread (#804 review).
+		 *
+		 * @param {object} contact The contact.
+		 * @return {boolean} True to show the notice.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		rotationRemoved(contact) {
+			return (
+				contact.state === 'invalidated'
+				&& String(contact.invalidatedReason ?? '').startsWith(
+					'grantor_rotation',
+				)
+				&& contact.invalidatedReason !== 'grantor_rotation_in_flight'
+			)
 		},
 
 		/**
@@ -482,6 +529,13 @@ export default {
 .emergency-access__state {
 	color: var(--color-text-maxcontrast);
 	min-width: 120px;
+}
+
+.emergency-access__notice {
+	/* Its own line under the contact, like the warning, but neutral. */
+	flex-basis: 100%;
+	order: 1;
+	color: var(--color-text-maxcontrast);
 }
 
 .emergency-access__warning {

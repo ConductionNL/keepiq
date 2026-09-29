@@ -225,6 +225,35 @@ describe('CompromiseRecoveryForm', () => {
 		expect(text).toContain('carol')
 	})
 
+	// #804 review, round 4: a resumed rotation carries no contact, and the owner
+	// must still be told which ones it removed, neutrally.
+	it('names the contacts a resumed rotation removed, without a prompt', async () => {
+		const wrapper = mountForm()
+		wrapper.vm.phase = 'terminal'
+		wrapper.vm.result = {
+			migrated: 3,
+			droppedVersions: 0,
+			failures: [],
+			residualContacts: [
+				{ granteeUserId: 'bob', reason: 'removed_by_rotation' },
+				{ granteeUserId: 'mallory', reason: 'break_glass_in_flight' },
+			],
+		}
+		await wrapper.vm.$nextTick()
+
+		const removed = wrapper.find('[data-testid="compromise-recovery-removed"]')
+		expect(removed.exists()).toBe(true)
+		expect(removed.text()).toContain('bob')
+		expect(removed.text()).toContain('Emergency Access')
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-residual"]').exists(),
+		).toBe(false)
+		expect(wrapper.text()).not.toContain('Re-establish')
+		expect(
+			wrapper.find('[data-testid="compromise-recovery-in-flight"]').text(),
+		).toContain('mallory')
+	})
+
 	// #804 review: an unticked or in-flight contact is the one a planted contact
 	// would be, so the owner must not be nudged to re-add it.
 	it('never nudges the owner to re-add an unconfirmed or in-flight contact', async () => {

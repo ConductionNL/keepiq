@@ -27,14 +27,15 @@ import { useEmergencyAccessStore } from '../../src/store/modules/emergencyAccess
  * network calls are inert, and the given contacts.
  *
  * @param {Array<object>} contacts The grantor's contacts.
+ * @param {Array<object>} [incoming] The contacts where the user is the grantee.
  * @return {Promise<{wrapper: object, store: object}>} The wrapper and store.
  */
-async function mountView(contacts) {
+async function mountView(contacts, incoming = []) {
 	const store = useEmergencyAccessStore()
 	vi.spyOn(store, 'fetchContacts').mockResolvedValue()
 	vi.spyOn(store, 'fetchIncoming').mockResolvedValue()
 	store.contacts = contacts
-	store.incoming = []
+	store.incoming = incoming
 
 	const wrapper = mount(EmergencyAccessView, {
 		global: {
@@ -124,6 +125,40 @@ describe('EmergencyAccessView — re-establish prompt', () => {
 			)
 		},
 	)
+
+	// #804 review, round 4: without the button the owner must still be told, in
+	// the standing view, that a rotation removed the contact.
+	it('says, in text only, that a rotation removed the contact', async () => {
+		const { wrapper } = await mountView([invalidated('grantor_rotation')])
+		const notice = wrapper.find('[data-testid="emergency-rotation-notice"]')
+		expect(notice.exists()).toBe(true)
+		expect(notice.text()).toContain('key rotation')
+		expect(notice.find('button').exists()).toBe(false)
+	})
+
+	it('shows no rotation notice for a contact a rotation did not touch', async () => {
+		const { wrapper } = await mountView([invalidated('grantee_revocation')])
+		expect(
+			wrapper.find('[data-testid="emergency-rotation-notice"]').exists(),
+		).toBe(false)
+	})
+
+	// The grantee's list has no reason and nothing the grantee can re-establish.
+	it('labels an invalidated incoming contact plainly for the grantee', async () => {
+		const { wrapper } = await mountView(
+			[],
+			[
+				{
+					id: 'rel-9',
+					grantorUserId: 'alice',
+					state: 'invalidated',
+					waitPeriodDays: 7,
+				},
+			],
+		)
+		const item = wrapper.find('[data-testid="emergency-incoming-item"]')
+		expect(item.find('.emergency-access__state').text()).toBe('Invalidated')
+	})
 
 	it('warns, and offers nothing, for a contact with a break-glass in flight', async () => {
 		const { wrapper } = await mountView([

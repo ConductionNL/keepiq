@@ -283,6 +283,30 @@
 				</ul>
 			</div>
 
+			<!-- #804 review, round 4: a resumed rotation carries no contact, so
+			     it names the ones the completion sweep removed. Neutral, with no
+			     re-establish prompt: the owner's ticks from the start of the
+			     rotation are not known here. -->
+			<div
+				v-if="removedContacts.length > 0"
+				data-testid="compromise-recovery-removed">
+				<NcNoteCard type="info">
+					{{
+						t(
+							'keepiq',
+							'Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.',
+						)
+					}}
+				</NcNoteCard>
+				<ul class="compromise-recovery-form__list">
+					<li v-for="grantee in removedContacts" :key="grantee">
+						<span class="compromise-recovery-form__list-name">{{
+							grantee
+						}}</span>
+					</li>
+				</ul>
+			</div>
+
 			<div
 				v-if="inFlightContacts.length > 0"
 				data-testid="compromise-recovery-in-flight">
@@ -369,8 +393,9 @@ export default {
 		 * Emergency contacts that could not be reached, so were not carried across
 		 * the rotation — the only residual the owner is prompted to re-establish.
 		 * Unconfirmed and in-flight contacts have their own lists below.
-		 * Empty (so the block is hidden) when every contact migrated, on a resumed
-		 * run that cannot re-envelope, or before a run has terminated.
+		 * Empty (so the block is hidden) when every contact migrated, before a
+		 * run has terminated, or on a resumed run, whose removed contacts are
+		 * named by removedContacts instead.
 		 *
 		 * @return {string[]} The residual grantee ids.
 		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
@@ -398,6 +423,18 @@ export default {
 		 */
 		inFlightContacts() {
 			return this.residualWithReason('break_glass_in_flight')
+		},
+
+		/**
+		 * Contacts a RESUMED rotation removed. A resumed run carries none, and
+		 * it doesn't know what the owner ticked at the start, so they are named
+		 * without a prompt to re-establish.
+		 *
+		 * @return {string[]} The grantee ids.
+		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		removedContacts() {
+			return this.residualWithReason('removed_by_rotation')
 		},
 
 		/**
@@ -550,7 +587,8 @@ export default {
 		/**
 		 * The residual grantee ids that carry the given reason.
 		 *
-		 * @param {string} reason `unreachable`, `not_confirmed` or `break_glass_in_flight`.
+		 * @param {string} reason `unreachable`, `not_confirmed`, `break_glass_in_flight`
+		 *   or `removed_by_rotation`.
 		 * @return {string[]} The grantee ids.
 		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
