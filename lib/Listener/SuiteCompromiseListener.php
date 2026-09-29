@@ -28,7 +28,6 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\RotationPolicyService;
-use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
 use Psr\Log\LoggerInterface;
@@ -42,6 +41,8 @@ use Throwable;
  * @spec openspec/changes/implement-user-sharing/tasks.md#8.4
  */
 class SuiteCompromiseListener implements IEventListener {
+	use MarksCompromisedSecrets;
+
 	/**
 	 * Constructor.
 	 *
@@ -90,15 +91,17 @@ class SuiteCompromiseListener implements IEventListener {
 
 				// Auto-raise a rotation flag per compromised secret
 				// (rotation-expiry-policies §3.2; idempotent).
-				$this->rotationService?->flag(
-					secretId: $secret->getId(),
-					reason: 'suite_compromise'
-				);
+				$this->stampAndFlag(secret: $secret);
 
-				$ownerId = $this->resolveSourceOwner(
-					recipientSecretId: $secret->getId(),
-					fallbackOwnerId: $secret->getOwnerId()
-				);
+				$target = $this->resolveTarget(secret: $secret);
+				$ownerId = (string)$target->getOwnerId();
+
+				// The SOURCE of a shared copy is not sealed under the new
+				// suite, so nothing else in the migration path marks it: stamp
+				// and flag it here, as the revoke path does (keepiq#802).
+				if ($target !== $secret) {
+					$this->stampAndFlag(secret: $target);
+				}
 
 				if ($ownerId === '' || isset($notified[$ownerId]) === true) {
 					continue;
@@ -111,11 +114,11 @@ class SuiteCompromiseListener implements IEventListener {
 						'oldSuiteId' => $event->getOldSuiteId(),
 						'newSuiteId' => $event->getNewSuiteId(),
 						'migrationId' => $event->getMigrationId(),
-						'secretId' => $secret->getId(),
-						'secretName' => $secret->getName(),
+						'secret_id' => $target->getId(),
+						'secret_name' => $target->getName(),
 					],
 					objectType: 'secret',
-					objectId: $secret->getId(),
+					objectId: $target->getId(),
 				);
 				$notified[$ownerId] = true;
 			}//end foreach
@@ -126,36 +129,4 @@ class SuiteCompromiseListener implements IEventListener {
 			);
 		}//end try
 	}//end handle()
-
-	/**
-	 * Resolve a recipient Secret copy back to its source owner via the
-	 * ShareTarget mapper. If the copy is not part of any share (a direct
-	 * owner copy), fall back to the copy's own owner.
-	 *
-	 * @param string $recipientSecretId The recipient Secret ID
-	 * @param string $fallbackOwnerId The fallback owner
-	 *
-	 * @return string
-	 */
-	private function resolveSourceOwner(
-		string $recipientSecretId,
-		string $fallbackOwnerId,
-	): string {
-		try {
-			$row = $this->shareTargetMapper->findByRecipientSecret(
-				recipientSecretId: $recipientSecretId
-			);
-			try {
-				$source = $this->secretMapper->findById($row->getSourceSecretId());
-				return $source->getOwnerId();
-			} catch (DoesNotExistException) {
-				return $fallbackOwnerId;
-			}
-		} catch (DoesNotExistException) {
-			// Not a shared copy — fall back to the secret's own owner.
-			return $fallbackOwnerId;
-		} catch (Throwable) {
-			return $fallbackOwnerId;
-		}
-	}//end resolveSourceOwner()
 }//end class

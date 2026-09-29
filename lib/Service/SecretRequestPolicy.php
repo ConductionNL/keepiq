@@ -85,6 +85,7 @@ class SecretRequestPolicy {
 		self::REASON_FULFILLED,
 		self::REASON_DECLINED,
 		self::REASON_LOCKED,
+		self::REASON_UNAVAILABLE,
 		self::REASON_UNKNOWN,
 	];
 
@@ -124,6 +125,15 @@ class SecretRequestPolicy {
 	public const REASON_LOCKED = 'locked';
 
 	/**
+	 * The request is pending, but the suite it is sealed to is no longer active
+	 * (revoked, compromised or gone). A filled value would be encrypted to a key
+	 * that may be in the wrong hands (#809 review).
+	 *
+	 * @var string
+	 */
+	public const REASON_UNAVAILABLE = 'unavailable';
+
+	/**
 	 * A status this version does not know how to explain.
 	 *
 	 * @var string
@@ -153,6 +163,7 @@ class SecretRequestPolicy {
 		self::REASON_FULFILLED => ['message' => 'Request was already fulfilled', 'code' => 410],
 		self::REASON_DECLINED => ['message' => 'Request was declined', 'code' => 410],
 		self::REASON_LOCKED => ['message' => 'Request is temporarily unavailable', 'code' => 423],
+		self::REASON_UNAVAILABLE => ['message' => 'Request is no longer available', 'code' => 410],
 		self::REASON_UNKNOWN => ['message' => 'Request is in an unknown state', 'code' => 500],
 	];
 
@@ -160,8 +171,9 @@ class SecretRequestPolicy {
 	 * Constructor for SecretRequestPolicy.
 	 *
 	 * @param SecretRequestMapper $mapper The request mapper
+	 * @param EncryptionSuiteMapper $suiteMapper The suite mapper; required, because
+	 *                                           fill refuses a request whose suite is not active
 	 * @param SecretMapper|null $secretMapper Optional Secret mapper for owner lookups
-	 * @param EncryptionSuiteMapper|null $suiteMapper Optional suite mapper
 	 *
 	 * @return void
 	 *
@@ -169,8 +181,8 @@ class SecretRequestPolicy {
 	 */
 	public function __construct(
 		private SecretRequestMapper $mapper,
+		private EncryptionSuiteMapper $suiteMapper,
 		private ?SecretMapper $secretMapper = null,
-		private ?EncryptionSuiteMapper $suiteMapper = null,
 	) {
 	}//end __construct()
 
@@ -283,7 +295,7 @@ class SecretRequestPolicy {
 			return self::REASON_EXPIRED;
 		}
 
-		return match ($entity->getStatus()) {
+		$reason = match ($entity->getStatus()) {
 			SecretRequest::STATUS_LOCKED => self::REASON_LOCKED,
 			SecretRequest::STATUS_FULFILLED => self::REASON_FULFILLED,
 			SecretRequest::STATUS_DECLINED => self::REASON_DECLINED,
@@ -291,7 +303,38 @@ class SecretRequestPolicy {
 			SecretRequest::STATUS_PENDING => self::REASON_OPEN,
 			default => self::REASON_UNKNOWN,
 		};
+
+		// Open only while the suite it is sealed to is still active. After a
+		// compromise force-revoke, with or without a migration, the requests
+		// are pending on a revoked suite, and the fill page would hand out its
+		// certificate (#809 review).
+		if ($reason === self::REASON_OPEN && $this->suiteIsActive(entity: $entity) === false) {
+			return self::REASON_UNAVAILABLE;
+		}
+
+		return $reason;
 	}//end classify()
+
+	/**
+	 * Whether the suite a request is sealed to is still active.
+	 *
+	 * A suite that no longer exists counts as not active (fail closed).
+	 *
+	 * @param SecretRequest $entity The request
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-fill-in-via-link
+	 */
+	private function suiteIsActive(SecretRequest $entity): bool {
+		try {
+			$suite = $this->suiteMapper->findById((string)$entity->getEncryptionSuiteId());
+		} catch (DoesNotExistException) {
+			return false;
+		}
+
+		return $suite->getStatus() === 'active';
+	}//end suiteIsActive()
 
 	/**
 	 * Re-read a request by ID and assert it is still pending. Used by the
@@ -481,17 +524,12 @@ class SecretRequestPolicy {
 	 *
 	 * @throws InvalidArgumentException When the application ID is blank or
 	 *                                  it has no active suite.
-	 * @throws RuntimeException When the suite mapper dependency is not wired.
 	 *
 	 * @spec openspec/specs/secret-requests/spec.md#requirement-create-secret-request
 	 */
 	public function requireApplicationSuiteId(string $applicationId): string {
 		if ($applicationId === '') {
 			throw new InvalidArgumentException(message: 'applicationId is required');
-		}
-
-		if ($this->suiteMapper === null) {
-			throw new RuntimeException(message: 'EncryptionSuite mapper not wired for application requests');
 		}
 
 		try {

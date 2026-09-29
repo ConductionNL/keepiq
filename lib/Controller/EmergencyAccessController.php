@@ -30,9 +30,11 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\EmergencyAccessService;
+use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -79,7 +81,7 @@ class EmergencyAccessController extends OCSController {
 
 		return new JSONResponse(
 			data: array_map(
-				static fn ($c) => $c->jsonSerialize(),
+				static fn ($c) => $c->jsonSerializeForGrantor(),
 				$this->service->listForGrantor(grantorUserId: $userId)
 			)
 		);
@@ -142,6 +144,13 @@ class EmergencyAccessController extends OCSController {
 	 * Designate (or re-establish) an emergency contact. The recovery envelope is
 	 * built in the grantor's browser and supplied as opaque ciphertext.
 	 *
+	 * Guarded by a vault-key proof (keepiq#800). This is an upsert: it creates
+	 * a contact that a later rotation escrows the NEW private key to, and it
+	 * overwrites the envelope of an existing contact. With a session alone
+	 * either one would let a stolen session plant itself as a grantee, or
+	 * destroy break-glass by overwriting an envelope, which the proof on
+	 * destroy() exists to prevent.
+	 *
 	 * @param string $granteeUserId The grantee Nextcloud user ID
 	 * @param int $waitPeriodDays The wait period (1|3|7|30)
 	 * @param string $recoveryEnvelope The grantee-encrypted recovery envelope
@@ -151,9 +160,10 @@ class EmergencyAccessController extends OCSController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-designate-emergency-contact
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/emergency-access/spec.md#requirement-designate-emergency-contact
 	 */
 	#[NoAdminRequired]
+	#[VaultKeyProofRequired(binds: ['granteeUserId', 'waitPeriodDays', 'recoveryEnvelope'], purpose: VaultKeyProofService::PURPOSE_EMERGENCY_DESIGNATE)]
 	public function create(
 		string $granteeUserId,
 		int $waitPeriodDays,
@@ -192,6 +202,7 @@ class EmergencyAccessController extends OCSController {
 	 * @spec openspec/changes/add-emergency-access/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
 	 */
 	#[NoAdminRequired]
+	#[VaultKeyProofRequired(purpose: VaultKeyProofService::PURPOSE_EMERGENCY_DESTROY, binds: ['id'])]
 	public function destroy(string $id): JSONResponse {
 		$userId = $this->requireUserId();
 		if ($userId === null) {

@@ -58,7 +58,7 @@ Progress is shown inside the recovery dialog as `n of m` across every store.
 | Your attachment access | Re-wrapped. Other recipients' access is untouched |
 | Pending fill-in requests | Locked during the migration, then re-pointed to the new key |
 | Link shares | **Revoked.** Their snapshots were sealed to the leaked key; re-share afterwards |
-| Emergency access | **Invalidated.** The envelope is sealed to your contact's key and escrows your old private key, so you cannot re-wrap it alone — re-establish emergency access afterwards |
+| Emergency access | **Carried only for the contacts you tick.** Before the rotation starts you choose which contacts get your new key, and none is ticked by default. A contact that is unticked, unreachable, or has an emergency-access request pending or approved is removed. The completion screen and the Emergency Access page tell you which ones. Add a contact again only if you're sure you added it yourself |
 
 ## If it is interrupted
 

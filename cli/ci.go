@@ -56,16 +56,17 @@ func ciSetup() (c *client.Client, key *rsa.PrivateKey, disc *client.Discovery, b
 }
 
 // fetchDecrypt fetches an application secret by name and decrypts its envelope
-// with the application private key (§4.2). Returns the plaintext value.
+// with the application private key (§4.2). Returns the plaintext value, which
+// the server sends as `ciphertext.key` under the scheme in `encryption.scheme`.
 func fetchDecrypt(c *client.Client, key *rsa.PrivateKey, name, bearer string) (string, error) {
 	env, err := c.FetchByName(name, bearer)
 	if err != nil {
 		return "", err
 	}
-	if env.Scheme != "rsa-oaep-sha256-chunked-v1" {
-		return "", fmt.Errorf("unexpected envelope scheme %q", env.Scheme)
+	if env.Encryption.Scheme != "rsa-oaep-sha256-chunked-v1" {
+		return "", fmt.Errorf("unexpected envelope scheme %q", env.Encryption.Scheme)
 	}
-	return dcrypto.DecryptField(env.Payload.Value, key)
+	return dcrypto.DecryptField(env.Ciphertext.Key, key)
 }
 
 func cmdCIFetch(args []string) error {

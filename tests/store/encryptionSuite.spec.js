@@ -35,6 +35,7 @@
 import axios from '@nextcloud/axios'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { buildKeyProofHeaders } from '../../src/crypto/keyProof.js'
 import { useEncryptionSuiteStore } from '../../src/store/modules/encryptionSuite.js'
 
 const evict = vi.fn(async () => {})
@@ -43,14 +44,37 @@ vi.mock('../../src/store/modules/offline.js', () => ({
 	useOfflineStore: () => ({ evict }),
 }))
 
+// The guarded flows sign a vault-key proof; stub the helper so these tests
+// assert the store's wiring (headers attached, reason bound) without real crypto.
+vi.mock('../../src/crypto/keyProof.js', () => ({
+	HEADER_NONCE: 'X-Keepiq-Key-Proof-Nonce',
+	HEADER_PROOF: 'X-Keepiq-Key-Proof',
+	PROOF_PURPOSE: {
+		COMPROMISE_RECOVERY: 'compromise-recovery',
+		UPDATE_PRIVATE_KEY: 'update-private-key',
+		COMPLETE_MIGRATION: 'complete-migration',
+		EMERGENCY_DESTROY: 'emergency-access-destroy',
+		REVOKE_SUITE: 'revoke-suite',
+	},
+	buildKeyProofHeaders: vi.fn(async () => ({
+		'X-Keepiq-Key-Proof-Nonce': 'test-nonce',
+		'X-Keepiq-Key-Proof': 'test-sig',
+	})),
+}))
+
 describe('useEncryptionSuiteStore — revocation', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		vi.restoreAllMocks()
 		evict.mockClear()
+		buildKeyProofHeaders.mockClear()
+		buildKeyProofHeaders.mockResolvedValue({
+			'X-Keepiq-Key-Proof-Nonce': 'test-nonce',
+			'X-Keepiq-Key-Proof': 'test-sig',
+		})
 	})
 
-	it('POSTs the revocation to the active suite with the supplied reason', async () => {
+	it('signs a vault-key proof and attaches it to the revocation request', async () => {
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({
 			data: {
 				id: 'suite-1',
@@ -61,10 +85,23 @@ describe('useEncryptionSuiteStore — revocation', () => {
 		const store = useEncryptionSuiteStore()
 		store.currentSuite = { id: 'suite-1', status: 'active' }
 
-		await store.revokeSuite('laptop stolen')
+		await store.revokeSuite('laptop stolen', 'master-pw')
+
+		// The proof is made for THIS suite, with the revoke purpose, binding the
+		// reason so a captured proof cannot be replayed against another request.
+		expect(buildKeyProofHeaders).toHaveBeenCalledWith(
+			expect.objectContaining({
+				suiteId: 'suite-1',
+				purpose: 'revoke-suite',
+				masterPassword: 'master-pw',
+				// reason, then acceptEmergencyLoss serialised as the server's
+				// (string) cast — '' for the default false.
+				boundValues: ['laptop stolen', ''],
+			}),
+		)
 
 		expect(post).toHaveBeenCalledTimes(1)
-		const [url, body] = post.mock.calls[0]
+		const [url, body, config] = post.mock.calls[0]
 
 		// The suite id must be in the path — revoking the wrong suite, or a
 		// path built from a stale id, locks a user out of the wrong vault.
@@ -72,9 +109,64 @@ describe('useEncryptionSuiteStore — revocation', () => {
 
 		// The reason is REQUIRED by the spec: status is set alongside
 		// revoked_at, revoked_reason and revoked_by. Dropping it here would
-		// still return 200 and still revoke, losing only the audit trail —
-		// which is exactly why it needs asserting rather than eyeballing.
-		expect(body).toEqual({ reason: 'laptop stolen' })
+		// still return 200 and still revoke, losing only the audit trail.
+		expect(body).toEqual({
+			reason: 'laptop stolen',
+			acceptEmergencyLoss: false,
+		})
+
+		// The guard is enforced by the middleware, so the proof headers MUST ride
+		// the request — a revoke without them is a 401 the user never asked for.
+		expect(config.headers).toMatchObject({
+			'X-Keepiq-Key-Proof-Nonce': 'test-nonce',
+			'X-Keepiq-Key-Proof': 'test-sig',
+		})
+	})
+
+	it('carries the emergency-loss override in the body and the proof', async () => {
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { id: 'suite-1', status: 'revoked' },
+		})
+		const store = useEncryptionSuiteStore()
+		store.currentSuite = { id: 'suite-1', status: 'active' }
+
+		await store.revokeSuite('lost password', 'master-pw', true)
+
+		// Bound into the proof (as '1') as well as sent in the body, so a proof
+		// captured on a no-override revoke cannot be replayed to force it.
+		expect(buildKeyProofHeaders).toHaveBeenCalledWith(
+			expect.objectContaining({
+				boundValues: ['lost password', '1'],
+			}),
+		)
+		expect(post.mock.calls[0][1]).toEqual({
+			reason: 'lost password',
+			acceptEmergencyLoss: true,
+		})
+	})
+
+	it('propagates the 409 emergency-access refusal for the caller to surface', async () => {
+		vi.spyOn(axios, 'post').mockRejectedValue({
+			response: {
+				status: 409,
+				data: {
+					error: 'emergency_access_present',
+					usableEmergencyContacts: 3,
+				},
+			},
+		})
+		const store = useEncryptionSuiteStore()
+		store.currentSuite = { id: 'suite-1', status: 'active' }
+
+		// The refusal must reach the UI so it can show the count and re-confirm —
+		// never be swallowed into a silent success.
+		await expect(
+			store.revokeSuite('lost password', 'master-pw'),
+		).rejects.toMatchObject({
+			response: { data: { usableEmergencyContacts: 3 } },
+		})
+		// The refused revocation must not evict the still-valid offline cache.
+		expect(evict).not.toHaveBeenCalled()
 	})
 
 	it('adopts the revoked suite returned by the server as the current suite', async () => {
@@ -84,7 +176,7 @@ describe('useEncryptionSuiteStore — revocation', () => {
 		const store = useEncryptionSuiteStore()
 		store.currentSuite = { id: 'suite-1', status: 'active' }
 
-		await store.revokeSuite('rotation')
+		await store.revokeSuite('rotation', 'master-pw')
 
 		// Keeping the pre-revocation object would leave the UI showing an
 		// active suite that the server has already revoked.
@@ -98,7 +190,7 @@ describe('useEncryptionSuiteStore — revocation', () => {
 		const store = useEncryptionSuiteStore()
 		store.currentSuite = { id: 'suite-1', status: 'active' }
 
-		await store.revokeSuite('compromised device')
+		await store.revokeSuite('compromised device', 'master-pw')
 
 		// THE SECURITY INVARIANT. Revocation blocks server-side access, but an
 		// offline copy is already decrypted on this device: without the evict
@@ -117,7 +209,9 @@ describe('useEncryptionSuiteStore — revocation', () => {
 
 		// A missing cache must not turn a completed server-side revocation into
 		// a client-side error — the suite IS revoked by this point.
-		await expect(store.revokeSuite('reason')).resolves.toBeUndefined()
+		await expect(
+			store.revokeSuite('reason', 'master-pw'),
+		).resolves.toBeUndefined()
 		expect(store.currentSuite.status).toBe('revoked')
 	})
 
@@ -139,3 +233,113 @@ describe('useEncryptionSuiteStore — revocation', () => {
 // the server deliberately has no endpoint listing who holds a suite, so
 // candidates are named by Nextcloud's sharee search and PROBED
 // (tests/store/share.recipients.spec.js).
+
+describe('useEncryptionSuiteStore — abort migration', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+	})
+
+	it('POSTs the abort to the in-progress migration and clears state on success', async () => {
+		// status GET first resolves in-progress, then 'none' after the abort.
+		const statuses = [
+			{ data: { status: 'in_progress', id: 'migr-1', oldSuiteId: 'old' } },
+			{ data: { status: 'none' } },
+		]
+		vi.spyOn(axios, 'get').mockImplementation(async (url) => {
+			if (url.endsWith('/migrations/status')) {
+				return statuses.shift() ?? { data: { status: 'none' } }
+			}
+			// fetchMigrationRemaining hits /work
+			return { data: { totalRemaining: 0 } }
+		})
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { id: 'migr-1', status: 'aborted', aborted: true },
+		})
+
+		const store = useEncryptionSuiteStore()
+		const result = await store.abortMigration()
+
+		expect(post).toHaveBeenCalledWith(
+			expect.stringContaining('/migrations/migr-1/abort'),
+		)
+		expect(result.aborted).toBe(true)
+		// State re-read afterwards and the banner cleared.
+		expect(store.migrationStatus).toBeNull()
+	})
+
+	it('surfaces a server refusal (records already moved) as a throw and keeps the banner', async () => {
+		vi.spyOn(axios, 'get').mockImplementation(async (url) => {
+			if (url.endsWith('/migrations/status')) {
+				return {
+					data: { status: 'in_progress', id: 'migr-1', oldSuiteId: 'old' },
+				}
+			}
+			return { data: { totalRemaining: 4 } }
+		})
+		vi.spyOn(axios, 'post').mockRejectedValue({
+			response: {
+				status: 409,
+				data: { error: 'migration_abort_refused', committed: 2 },
+			},
+		})
+
+		const store = useEncryptionSuiteStore()
+		await expect(store.abortMigration()).rejects.toMatchObject({
+			response: { data: { committed: 2 } },
+		})
+		// The migration is still there — abort did not clear it.
+		expect(store.migrationStatus).not.toBeNull()
+	})
+
+	it('refuses to abort when there is no migration', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({ data: { status: 'none' } })
+		const post = vi.spyOn(axios, 'post')
+
+		const store = useEncryptionSuiteStore()
+		await expect(store.abortMigration()).rejects.toThrow(/no migration to abort/)
+		expect(post).not.toHaveBeenCalled()
+	})
+})
+
+describe('useEncryptionSuiteStore — completion proof binding', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+		buildKeyProofHeaders.mockClear()
+		buildKeyProofHeaders.mockResolvedValue({
+			'X-Keepiq-Key-Proof-Nonce': 'test-nonce',
+			'X-Keepiq-Key-Proof': 'test-sig',
+		})
+	})
+
+	it('binds the acknowledged loss count into the completion proof', async () => {
+		vi.spyOn(axios, 'get').mockImplementation(async (url) => {
+			if (url.includes('/suites/old-suite')) {
+				return { data: { privateKey: 'OLD-ENC-PK' } }
+			}
+			// completeMigration's trailing fetchMigrationStatus
+			return { data: { status: 'none' } }
+		})
+		vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { droppedVersions: 0, unrecoverable: [] },
+		})
+
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migr-1', oldSuiteId: 'old-suite' }
+		store.migrationRequiredAcknowledgement = 3
+
+		await store.acceptMigrationLosses('migr-1', 'old-pw')
+
+		// The exact replay Wilco flagged: a proof committing only to the id could
+		// be captured on a clean completion and re-presented to finalise with an
+		// unacknowledged loss. The proof MUST bind hasErrors ('1') and the
+		// accepted count ('3'), serialised as the server's (string) cast.
+		expect(buildKeyProofHeaders).toHaveBeenCalledWith(
+			expect.objectContaining({
+				purpose: 'complete-migration',
+				boundValues: ['migr-1', '1', '3'],
+			}),
+		)
+	})
+})

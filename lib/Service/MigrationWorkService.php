@@ -63,6 +63,13 @@ use Throwable;
  *   one generic entry point would mean passing the store as a parameter on a
  *   per-object write path, which the change's design rejected as an IDOR
  *   footgun (hydra-gate-no-admin-idor).
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength) The length is the same three
+ *   near-parallel per-store pairs (count / list / commit / drop), each with the
+ *   per-store owner-scoping guard that must not be shared. The class sat just
+ *   under the threshold; countCommitted — the mirror of countOutstanding needed
+ *   by the abort gate, and dependent on the same three mappers only this class
+ *   holds — tipped it over. Splitting the suite-bound stores into their own
+ *   services is a separate refactor, not part of the abort change.
  *
  * @spec openspec/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
  */
@@ -105,8 +112,11 @@ class MigrationWorkService {
 	 * @param IDBConnection $db The database connection (per-record transactions)
 	 * @param IAppConfig $appConfig The app config (version window override)
 	 * @param LoggerInterface $logger The logger interface
+	 * @param EmergencyEnvelopeInvalidationService $emergencyService Counts re-enveloped contacts for the abort gate
 	 *
 	 * @return void
+	 *
+	 * @spec exclude Constructor wiring only — no domain logic.
 	 */
 	public function __construct(
 		private SecretMapper $secretMapper,
@@ -116,6 +126,7 @@ class MigrationWorkService {
 		private IDBConnection $db,
 		private IAppConfig $appConfig,
 		private LoggerInterface $logger,
+		private EmergencyEnvelopeInvalidationService $emergencyService,
 	) {
 	}//end __construct()
 
@@ -317,6 +328,61 @@ class MigrationWorkService {
 	public function countUnrecoverable(SuiteMigration $migration): int {
 		return $this->failureMapper->countByMigration(migrationId: $migration->getId());
 	}//end countUnrecoverable()
+
+	/**
+	 * How many of the owner's records have been committed to the NEW suite.
+	 *
+	 * The successor suite is created empty at the start of a migration, so any
+	 * of the owner's suite-bound rows now pointing at it is a record the
+	 * migration has moved. This is the mirror of countOutstanding(), which
+	 * counts what still sits on the OLD suite. It is what decides whether a
+	 * migration may still be aborted: abort is only safe while nothing has
+	 * moved, because once a record is on the new suite, discarding that suite
+	 * would strand it and keeping it would strand everything still on the old
+	 * one.
+	 *
+	 * @param SuiteMigration $migration The migration
+	 * @param string $ownerId The owner's user id
+	 *
+	 * @return integer
+	 *
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
+	 */
+	public function countCommitted(SuiteMigration $migration, string $ownerId): int {
+		$newSuiteId = $migration->getNewSuiteId();
+
+		$secrets = $this->secretMapper->countBySuiteForOwner(
+			encryptionSuiteId: $newSuiteId,
+			ownerType: 'user',
+			ownerId: $ownerId
+		);
+		$versions = $this->versionMapper->countBySuiteForOwner(
+			encryptionSuiteId: $newSuiteId,
+			ownerType: 'user',
+			ownerId: $ownerId
+		);
+		$grants = $this->grantMapper->countBySuiteForRecipient(
+			encryptionSuiteId: $newSuiteId,
+			recipientType: 'user',
+			recipientId: $ownerId
+		);
+
+		// Emergency contacts are re-enveloped onto the new suite during the run
+		// (migrate-emergency-access-on-rotation), and that re-envelope OVERWRITES
+		// the old envelope — it cannot be undone. So a contact now bound to the new
+		// suite is a moved record exactly like a re-encrypted secret: aborting past
+		// it would discard the new suite and strand the contact on a deleted suite
+		// with an envelope escrowing a discarded key, while the residual sweep
+		// (which queries the OLD suite) never sees it. Counting it here makes abort
+		// refuse once any contact has been carried, keeping the gate's invariant
+		// whole (a grantor's contacts sit on the grantor's own new suite, so this
+		// count is already owner-scoped).
+		$contacts = $this->emergencyService->countUsableForGrantorSuite(
+			grantorSuiteId: $newSuiteId
+		);
+
+		return ($secrets + $versions + $grants + $contacts);
+	}//end countCommitted()
 
 	/**
 	 * Drop this migration's failure accounting.

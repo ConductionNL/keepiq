@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Listener;
 
 use DateTime;
+use OCA\Keepiq\Db\RotationFlag;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
@@ -27,10 +28,12 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
 use OCA\Keepiq\Listener\SuiteCompromiseListener;
 use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Service\RotationPolicyService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\Event;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 /**
  * Tests for SuiteCompromiseListener.
@@ -46,12 +49,13 @@ class SuiteCompromiseListenerTest extends TestCase {
 		$secretMapper = $this->createMock(SecretMapper::class);
 		$shareTargetMapper = $this->createMock(ShareTargetMapper::class);
 		$notificationService = $this->createMock(NotificationService::class);
-		$logger = $this->createMock(LoggerInterface::class);
+		$rotationService = $this->createMock(RotationPolicyService::class);
 		$listener = new SuiteCompromiseListener(
 			secretMapper: $secretMapper,
 			shareTargetMapper: $shareTargetMapper,
 			notificationService: $notificationService,
-			logger: $logger
+			logger: $this->createMock(LoggerInterface::class),
+			rotationService: $rotationService
 		);
 
 		$event = new SuiteMigrationCompletedEvent(
@@ -83,14 +87,127 @@ class SuiteCompromiseListenerTest extends TestCase {
 		$source->setId('src-1');
 		$source->setOwnerType('user');
 		$source->setOwnerId('alice');
+		$source->setName('shared-thing-source');
 		$secretMapper->method('findById')->willReturn($source);
 
+		// The source is not sealed under the new suite, so nothing else in the
+		// migration path stamps or flags it: this listener has to (#805 review).
+		$updated = [];
+		$secretMapper->method('update')->willReturnCallback(
+			static function (Secret $secret) use (&$updated): Secret {
+				$updated[] = $secret->getId();
+				return $secret;
+			}
+		);
+		$flagged = [];
+		// flag() returns a RotationFlag; a callback returning nothing would make
+		// the mock throw, which the listener's catch-all swallows mid-loop.
+		$rotationService->method('flag')->willReturnCallback(
+			static function (string $secretId) use (&$flagged): RotationFlag {
+				$flagged[] = $secretId;
+				return new RotationFlag();
+			}
+		);
+
+		// snake_case, as the notifier reads it, pointing at the source alice
+		// can open (#805 review).
 		$notificationService->expects($this->once())
 			->method('notify')
-			->with('secret_compromised', 'alice');
+			->with(
+				'secret_compromised',
+				'alice',
+				$this->callback(static fn (array $params): bool => ($params['secret_id'] ?? null) === 'src-1'
+					&& ($params['secret_name'] ?? null) === 'shared-thing-source')
+			);
 
 		$listener->handle($event);
+
+		$this->assertSame(['src-1'], $updated, 'only the un-stamped source is persisted');
+		$this->assertNotNull($source->getPossiblyCompromisedAt(), 'the source must be stamped');
+		$this->assertSame(['copy-1', 'src-1'], $flagged, 'the copy and its source are both flagged');
 	}//end testHandleNotifiesSourceOwnerForSharedCopy()
+
+	/**
+	 * A shared copy whose source is gone warns about the copy itself, quietly:
+	 * that is an expected state, not an error.
+	 *
+	 * @return void
+	 */
+	public function testHandleFallsBackToTheCopyWhenTheSourceIsGone(): void {
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$shareTargetMapper = $this->createMock(ShareTargetMapper::class);
+		$notificationService = $this->createMock(NotificationService::class);
+		$logger = $this->createMock(LoggerInterface::class);
+		$listener = new SuiteCompromiseListener(
+			secretMapper: $secretMapper,
+			shareTargetMapper: $shareTargetMapper,
+			notificationService: $notificationService,
+			logger: $logger
+		);
+
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$copy->setOwnerType('user');
+		$copy->setOwnerId('bob');
+		$copy->setName('shared-thing');
+		$copy->setPossiblyCompromisedAt(new DateTime());
+		$secretMapper->method('findByEncryptionSuiteId')->willReturn([$copy]);
+
+		$shareTarget = new ShareTarget();
+		$shareTarget->setSourceSecretId('src-1');
+		$shareTarget->setSecretId('copy-1');
+		$shareTargetMapper->method('findByRecipientSecret')->willReturn($shareTarget);
+		$secretMapper->method('findById')->willThrowException(new DoesNotExistException('source gone'));
+
+		$logger->expects($this->never())->method('warning');
+		$notificationService->expects($this->once())
+			->method('notify')
+			->with(
+				'secret_compromised',
+				'bob',
+				$this->callback(static fn (array $params): bool => ($params['secret_id'] ?? null) === 'copy-1')
+			);
+
+		$listener->handle(new SuiteMigrationCompletedEvent(oldSuiteId: 'old', newSuiteId: 'new', migrationId: 'mig-1'));
+	}//end testHandleFallsBackToTheCopyWhenTheSourceIsGone()
+
+	/**
+	 * A lookup that fails for any other reason still falls back to the copy,
+	 * but is logged: silently warning the wrong owner is the #802 bug.
+	 *
+	 * @return void
+	 */
+	public function testHandleLogsALookupErrorAndFallsBackToTheCopy(): void {
+		$secretMapper = $this->createMock(SecretMapper::class);
+		$shareTargetMapper = $this->createMock(ShareTargetMapper::class);
+		$notificationService = $this->createMock(NotificationService::class);
+		$logger = $this->createMock(LoggerInterface::class);
+		$listener = new SuiteCompromiseListener(
+			secretMapper: $secretMapper,
+			shareTargetMapper: $shareTargetMapper,
+			notificationService: $notificationService,
+			logger: $logger
+		);
+
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$copy->setOwnerType('user');
+		$copy->setOwnerId('bob');
+		$copy->setName('shared-thing');
+		$copy->setPossiblyCompromisedAt(new DateTime());
+		$secretMapper->method('findByEncryptionSuiteId')->willReturn([$copy]);
+		$shareTargetMapper->method('findByRecipientSecret')
+			->willThrowException(new RuntimeException('database unavailable'));
+
+		$logger->expects($this->once())
+			->method('warning')
+			->with($this->stringContains('database unavailable'));
+		$notificationService->expects($this->once())
+			->method('notify')
+			->with('secret_compromised', 'bob', $this->anything());
+
+		$listener->handle(new SuiteMigrationCompletedEvent(oldSuiteId: 'old', newSuiteId: 'new', migrationId: 'mig-1'));
+	}//end testHandleLogsALookupErrorAndFallsBackToTheCopy()
 
 	/**
 	 * Test the listener falls back to the secret's own owner when the
@@ -129,7 +246,12 @@ class SuiteCompromiseListenerTest extends TestCase {
 
 		$notificationService->expects($this->once())
 			->method('notify')
-			->with('secret_compromised', 'alice');
+			->with(
+				'secret_compromised',
+				'alice',
+				$this->callback(static fn (array $params): bool => ($params['secret_id'] ?? null) === 'copy-1'
+					&& ($params['secret_name'] ?? null) === 'demo')
+			);
 
 		$listener->handle($event);
 	}//end testHandleFallsBackToOwnOwnerWhenNotShared()

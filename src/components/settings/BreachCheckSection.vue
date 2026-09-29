@@ -8,10 +8,14 @@
   municipal / air-gapped instances never make a surprise external call. The
   external-call disclosure is shown explicitly.
 
+  The root id section-breach-check is the anchor lib/Settings/connections.json links the
+  Breach check connection to (adopt-connection-registry). Keep it stable.
+
   @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity
 -->
 <template>
 	<CnSettingsSection
+		id="section-breach-check"
 		:name="t('keepiq', 'Breach checking')"
 		:description="
 			t(

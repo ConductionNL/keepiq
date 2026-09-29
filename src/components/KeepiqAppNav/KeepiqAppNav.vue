@@ -231,6 +231,7 @@ import TeamFolderDialog from '../../modals/TeamFolderDialog.vue'
 import NavFolderTree, { NAV_TREE_MAX_DEPTH } from './NavFolderTree.vue'
 import { useFolderStore } from '../../store/modules/folder.js'
 import { useSessionStore } from '../../store/modules/session.js'
+import { isMenuEntryVisible, menuEntryTo } from '../../utils/navEntries.js'
 
 /**
  * Keepiq's manifest-driven left rail with the recursive vault/folder tree.
@@ -351,16 +352,28 @@ export default {
 		},
 
 		/**
-		 * The manifest menu, order-sorted (entries without order last).
+		 * The manifest menu this user may see, order-sorted (entries without
+		 * order last). An entry marked `permission: "admin"` or
+		 * `visibleIf.appInstalled` is left out when the user is not an instance
+		 * admin or the app is not enabled (src/utils/navEntries.js).
 		 *
 		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
+		 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
 		 */
 		sortedMenu() {
-			return [...(this.manifest?.menu || [])].sort(
-				(a, b) =>
-					(a.order ?? Number.MAX_SAFE_INTEGER)
-					- (b.order ?? Number.MAX_SAFE_INTEGER),
-			)
+			const context = {
+				isAdmin: this.isAdmin,
+				appsWebRoots:
+					(typeof window !== 'undefined' && window.OC?.appswebroots)
+					|| null,
+			}
+			return (this.manifest?.menu || [])
+				.filter((item) => isMenuEntryVisible(item, context))
+				.sort(
+					(a, b) =>
+						(a.order ?? Number.MAX_SAFE_INTEGER)
+						- (b.order ?? Number.MAX_SAFE_INTEGER),
+				)
 		},
 
 		/**
@@ -527,13 +540,16 @@ export default {
 		/**
 		 * Router target for a manifest entry (route entries only) — `:to`
 		 * keeps the rendered anchors' `href$` shape the e2e suite selects on.
+		 * An entry's `query` rides along, so the Integrations entry opens its
+		 * page preset to `app=keepiq`.
 		 *
 		 * @param {object} item The menu entry.
 		 * @return {object|null}
 		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
+		 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
 		 */
 		itemTo(item) {
-			return item.route && !item.action ? { name: item.route } : null
+			return menuEntryTo(item)
 		},
 
 		/**

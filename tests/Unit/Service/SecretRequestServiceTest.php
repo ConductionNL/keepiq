@@ -28,7 +28,9 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretRequest;
 use OCA\Keepiq\Db\SecretRequestMapper;
+use OCA\Keepiq\Event\SuiteMigrationAbortedEvent;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Listener\SuiteMigrationAbortedListener;
 use OCA\Keepiq\Service\NotificationService;
 use OCA\Keepiq\Service\SecretPlaceholderCleaner;
 use OCA\Keepiq\Service\SecretRequestOutbox;
@@ -110,7 +112,7 @@ class SecretRequestServiceTest extends TestCase {
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 		$this->service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper),
+			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -429,7 +431,7 @@ class SecretRequestServiceTest extends TestCase {
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 		$service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper),
+			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
 			outbox: new SecretRequestOutbox(notificationService: $notifier),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -501,7 +503,7 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper),
+			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -541,7 +543,7 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper),
+			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -697,7 +699,7 @@ class SecretRequestServiceTest extends TestCase {
 	private function makeFillService(): SecretRequestService {
 		return new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper),
+			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -738,7 +740,7 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper),
+			policy: new SecretRequestPolicy(mapper: $this->mapper, suiteMapper: $this->activeSuites()),
 			outbox: new SecretRequestOutbox(),
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -860,7 +862,7 @@ class SecretRequestServiceTest extends TestCase {
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 		$service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper, secretMapper: $secretMapper),
+			policy: new SecretRequestPolicy(mapper: $this->mapper, secretMapper: $secretMapper, suiteMapper: $this->activeSuites()),
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -891,7 +893,7 @@ class SecretRequestServiceTest extends TestCase {
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 		$service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper, secretMapper: $secretMapper),
+			policy: new SecretRequestPolicy(mapper: $this->mapper, secretMapper: $secretMapper, suiteMapper: $this->activeSuites()),
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -918,7 +920,7 @@ class SecretRequestServiceTest extends TestCase {
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 		$service = new SecretRequestService(
 			mapper: $this->mapper,
-			policy: new SecretRequestPolicy(mapper: $this->mapper, secretMapper: $secretMapper),
+			policy: new SecretRequestPolicy(mapper: $this->mapper, secretMapper: $secretMapper, suiteMapper: $this->activeSuites()),
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -1189,7 +1191,7 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service = new SecretRequestService(
 			mapper: $mapper,
-			policy: new SecretRequestPolicy(mapper: $mapper, secretMapper: $secretMapper),
+			policy: new SecretRequestPolicy(mapper: $mapper, secretMapper: $secretMapper, suiteMapper: $this->activeSuites()),
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -1232,7 +1234,7 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service = new SecretRequestService(
 			mapper: $mapper,
-			policy: new SecretRequestPolicy(mapper: $mapper, secretMapper: $secretMapper),
+			policy: new SecretRequestPolicy(mapper: $mapper, secretMapper: $secretMapper, suiteMapper: $this->activeSuites()),
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -1281,7 +1283,7 @@ class SecretRequestServiceTest extends TestCase {
 
 		$service = new SecretRequestService(
 			mapper: $mapper,
-			policy: new SecretRequestPolicy(mapper: $mapper, secretMapper: $secretMapper),
+			policy: new SecretRequestPolicy(mapper: $mapper, secretMapper: $secretMapper, suiteMapper: $this->activeSuites()),
 			outbox: new SecretRequestOutbox(),
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
@@ -2001,4 +2003,121 @@ class SecretRequestServiceTest extends TestCase {
 		);
 	}//end testARequestFilledDuringTheSweepIsNotOverwritten()
 
+	/**
+	 * A compromise termination unlocks the requests on the old suite, but their
+	 * public link stays closed (#809 review).
+	 *
+	 * Runs the real chain after terminateForCompromise() dispatches its event:
+	 * SuiteMigrationAbortedListener -> SecretRequestSuiteLockService::unlockInPlace()
+	 * puts the request back to pending on the old suite, which the force-revoke
+	 * has left revoked or compromised; the real policy then refuses it, both on
+	 * the fill page's lookup and in SecretRequestService::fill(). Only the
+	 * mappers are stubbed, over one in-memory request.
+	 *
+	 * @param string $suiteStatus The old suite's state after the force-revoke
+	 *
+	 * @return void
+	 *
+	 * @dataProvider compromisedSuiteProvider
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 */
+	public function testACompromiseTerminationUnlocksButKeepsTheFillLinkClosed(string $suiteStatus): void {
+		$request = $this->buildPending();
+		$request->setEncryptionSuiteId('old-suite');
+		$request->setStatus(SecretRequest::STATUS_LOCKED);
+
+		$mapper = $this->createMock(SecretRequestMapper::class);
+		$mapper->method('unlockByEncryptionSuiteId')->willReturnCallback(
+			static function (string $suiteId) use ($request): int {
+				if ($request->getEncryptionSuiteId() !== $suiteId || $request->getStatus() !== SecretRequest::STATUS_LOCKED) {
+					return 0;
+				}
+
+				$request->setStatus(SecretRequest::STATUS_PENDING);
+				return 1;
+			}
+		);
+		$mapper->method('findByToken')->willReturn($request);
+		$mapper->method('findById')->willReturn($request);
+		$mapper->expects($this->never())->method('update');
+
+		$oldSuite = new EncryptionSuite();
+		$oldSuite->setId('old-suite');
+		$oldSuite->setStatus($suiteStatus);
+		$suites = $this->createMock(EncryptionSuiteMapper::class);
+		$suites->method('findById')->willReturnCallback(
+			static function (string $id) use ($oldSuite): EncryptionSuite {
+				if ($id !== 'old-suite') {
+					throw new DoesNotExistException('no such suite');
+				}
+
+				return $oldSuite;
+			}
+		);
+
+		$logger = $this->createMock(LoggerInterface::class);
+		$listener = new SuiteMigrationAbortedListener(
+			secretRequestService: new SecretRequestSuiteLockService(mapper: $mapper, logger: $logger),
+			logger: $logger,
+		);
+		$listener->handle(new SuiteMigrationAbortedEvent(oldSuiteId: 'old-suite', newSuiteId: 'new-suite', migrationId: 'mig-1'));
+
+		// The unlock is real: the request is pending again, on the old suite.
+		$this->assertSame(SecretRequest::STATUS_PENDING, $request->getStatus());
+		$this->assertSame('old-suite', $request->getEncryptionSuiteId());
+
+		$service = new SecretRequestService(
+			mapper: $mapper,
+			policy: new SecretRequestPolicy(mapper: $mapper, suiteMapper: $suites),
+			outbox: new SecretRequestOutbox(),
+			logger: $logger,
+			writeLockService: $this->createMock(WriteLockService::class),
+			secretMapper: $this->secretMapper,
+			container: $this->container,
+			placeholderCleaner: $this->makeCleaner(),
+		);
+
+		$this->assertSame(SecretRequestPolicy::REASON_UNAVAILABLE, $service->refusalReason(token: 'tok-good'));
+		foreach (['getByToken', 'fill'] as $call) {
+			try {
+				if ($call === 'getByToken') {
+					$service->getByToken(token: 'tok-good');
+				} else {
+					$service->fill(token: 'tok-good', encryptedFields: ['key' => 'CIPHERTEXT']);
+				}
+
+				$this->fail($call . ' must refuse a request on a ' . $suiteStatus . ' suite');
+			} catch (InvalidArgumentException $e) {
+				$this->assertSame(410, $e->getCode(), $call);
+			}
+		}
+	}//end testACompromiseTerminationUnlocksButKeepsTheFillLinkClosed()
+
+	/**
+	 * The states a compromise force-revoke leaves the old suite in.
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function compromisedSuiteProvider(): array {
+		return [
+			'revoked' => ['revoked'],
+			'compromised' => ['compromised'],
+		];
+	}//end compromisedSuiteProvider()
+
+	/**
+	 * A suite mapper whose every suite is active, so the policy's suite check
+	 * passes for tests that are not about it.
+	 *
+	 * @return EncryptionSuiteMapper
+	 */
+	private function activeSuites(): EncryptionSuiteMapper {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setStatus('active');
+		$suites = $this->createMock(EncryptionSuiteMapper::class);
+		$suites->method('findById')->willReturn($suite);
+		return $suites;
+	}//end activeSuites()
 }//end class

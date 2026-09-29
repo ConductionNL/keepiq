@@ -23,7 +23,9 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\SecretRequestFillController;
 use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Db\SecretRequestMapper;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\SecretRequestPolicy;
 use OCA\Keepiq\Service\SecretRequestService;
@@ -295,4 +297,56 @@ class SecretRequestFillControllerTest extends TestCase {
 		$this->assertSame(expected: ['key', 'login'], actual: $data['requested_fields']);
 	}//end testShowNeverDisclosesWhichFieldsAreAlreadyFilled()
 
+	/**
+	 * Route the mocked service through a REAL policy whose request is sealed to a
+	 * revoked suite, so these tests exercise the actual refusal.
+	 *
+	 * @return void
+	 */
+	private function sealedToARevokedSuite(): void {
+		$requests = $this->createMock(SecretRequestMapper::class);
+		$requests->method('findByToken')->willReturn($this->makeRequest());
+		$suite = $this->makeSuite();
+		$suite->setStatus('revoked');
+		$suites = $this->createMock(EncryptionSuiteMapper::class);
+		$suites->method('findById')->willReturn($suite);
+		$policy = new SecretRequestPolicy(mapper: $requests, suiteMapper: $suites);
+
+		$this->secretRequestService->method('getByToken')
+			->willReturnCallback(static fn (string $token): SecretRequest => $policy->requireOpenByToken(token: $token));
+		$this->secretRequestService->method('refusalReason')
+			->willReturnCallback(static fn (string $token): string => $policy->refusalReason(token: $token));
+		$this->secretRequestService->method('fill')
+			->willReturnCallback(static fn (string $token): SecretRequest => $policy->requireOpenByToken(token: $token));
+	}//end sealedToARevokedSuite()
+
+	/**
+	 * A public link to a request on a revoked suite shows nothing to fill in,
+	 * and never hands out that suite's certificate (#809 review).
+	 *
+	 * @return void
+	 */
+	public function testShowRefusesARequestOnARevokedSuite(): void {
+		$this->sealedToARevokedSuite();
+		$this->encryptionSuiteService->expects($this->never())->method('getSuite');
+
+		$response = $this->controller->show('tok-1');
+
+		$this->assertSame(Http::STATUS_GONE, $response->getStatus());
+		$this->assertSame(SecretRequestPolicy::REASON_UNAVAILABLE, $response->getData()['reason']);
+		$this->assertArrayNotHasKey('public_certificate', $response->getData());
+	}//end testShowRefusesARequestOnARevokedSuite()
+
+	/**
+	 * Filling a request on a revoked suite is refused too.
+	 *
+	 * @return void
+	 */
+	public function testFillRefusesARequestOnARevokedSuite(): void {
+		$this->sealedToARevokedSuite();
+
+		$response = $this->controller->fill('tok-1', ['key' => 'CIPHERTEXT']);
+
+		$this->assertSame(Http::STATUS_GONE, $response->getStatus());
+	}//end testFillRefusesARequestOnARevokedSuite()
 }//end class

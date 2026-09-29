@@ -24,12 +24,15 @@ declare(strict_types=1);
 namespace OCA\Keepiq\AppInfo;
 
 use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
+use OCA\Keepiq\Event\SuiteMigrationAbortedEvent;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
 use OCA\Keepiq\Event\SuiteMigrationStartedEvent;
 use OCA\Keepiq\Listener\EmergencyAccessSuiteRevocationListener;
 use OCA\Keepiq\Listener\EmergencyAccessSuiteRotationListener;
 use OCA\Keepiq\Listener\EncryptionSuiteRevokedListener;
 use OCA\Keepiq\Listener\SuiteCompromiseListener;
+use OCA\Keepiq\Listener\SuiteCompromiseOnRevokeListener;
+use OCA\Keepiq\Listener\SuiteMigrationAbortedListener;
 use OCA\Keepiq\Listener\SuiteMigrationCompletedListener;
 use OCA\Keepiq\Listener\SuiteMigrationStartedListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
@@ -37,15 +40,24 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 /**
  * Wires the EncryptionSuite lifecycle listener graph.
  *
- * The three suite events fan out to more than one listener each, and the
- * ORDER of the bindings is not significant — Nextcloud's dispatcher invokes
- * every registered listener for an event and a failure in one is contained by
- * that listener, not by this registration.
+ * The three suite events fan out to more than one listener each. Nextcloud's
+ * dispatcher invokes every registered listener for an event, and a failure in
+ * one is contained by that listener, not by this registration. The ORDER is
+ * not significant, with one exception on the revoke event: the compromise
+ * cascade reads the ShareTargets that EncryptionSuiteRevokedListener deletes,
+ * so it is registered at a higher priority to run first (keepiq#802).
  *
- * Grouped as one registrar because all six listeners share a single trigger
+ * Grouped as one registrar because all the listeners share a single trigger
  * family (a suite started migrating, finished migrating, or was revoked) and
  * a single invariant: no ciphertext may survive a suite it can no longer be
  * decrypted under.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) This registrar's sole job is
+ *   to name the suite-lifecycle event/listener graph, so its coupling is the
+ *   size of that graph and grows by one with each listener it wires (the
+ *   admin-suite-revocation compromise listener is the latest). Splitting it
+ *   would fragment one trigger family across files without reducing any real
+ *   dependency.
  */
 final class SuiteLifecycleEventRegistrar {
 	/**
@@ -70,6 +82,15 @@ final class SuiteLifecycleEventRegistrar {
 			listener: SuiteMigrationCompletedListener::class
 		);
 
+		// Abort: release the SecretRequests locked at start, keeping them on the
+		// old suite. Deliberately bound ONLY to this listener — none of the
+		// terminal-cascade listeners above may react to an abort, since nothing
+		// migrated and the old suite stays active.
+		$context->registerEventListener(
+			event: SuiteMigrationAbortedEvent::class,
+			listener: SuiteMigrationAbortedListener::class
+		);
+
 		// Implement-user-sharing §8 — sharing-graph reactions to suite
 		// revocation and post-migration possibly-compromised flagging.
 		$context->registerEventListener(
@@ -79,6 +100,21 @@ final class SuiteLifecycleEventRegistrar {
 		$context->registerEventListener(
 			event: SuiteMigrationCompletedEvent::class,
 			listener: SuiteCompromiseListener::class
+		);
+
+		// Admin force-revoke compromise cascade (admin-suite-revocation D2):
+		// on the SAME revoke event, but only when the administrator flagged the
+		// revocation as a compromise — stamp/flag/notify over the revoked
+		// suite's blast radius. A no-op on the owner path (flag stays false).
+		// Priority 10 so it runs BEFORE EncryptionSuiteRevokedListener (priority
+		// 0), which deletes the revoked user's inbound ShareTargets. The cascade
+		// resolves each shared copy's source owner through those rows; run after
+		// the sweep it always missed and warned the revoked user instead of the
+		// owners who have to rotate (keepiq#802).
+		$context->registerEventListener(
+			event: EncryptionSuiteRevokedEvent::class,
+			listener: SuiteCompromiseOnRevokeListener::class,
+			priority: 10
 		);
 
 		// Emergency access — invalidate/clear recovery envelopes on a grantor's

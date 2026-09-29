@@ -7,10 +7,14 @@
   category filter, queue cap), test-fire, and delete. Sinks receive
   whitelisted audit metadata only — never secret material.
 
+  The root id section-siem is the anchor lib/Settings/connections.json links the
+  SIEM audit export connection to (adopt-connection-registry). Keep it stable.
+
   @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 -->
 <template>
 	<CnSettingsSection
+		id="section-siem"
 		:name="t('keepiq', 'SIEM audit export')"
 		:description="
 			t(

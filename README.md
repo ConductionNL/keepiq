@@ -101,11 +101,10 @@ keepiq/
 │   ├── architecture/           # App-specific Architectural Decision Records
 │   ├── ROADMAP.md              # Product roadmap
 │   └── changes/                # OpenSpec change directories (created on first change)
-├── docs/                       # Design documentation
+├── docs/                       # Documentation site (Docusaurus) and design documentation
 │   ├── ARCHITECTURE.md         # Standards, data model, integrations
 │   ├── FEATURES.md             # Competitive analysis, feature matrix
 │   └── DESIGN-REFERENCES.md    # Design patterns, ASCII wireframes
-├── docusaurus/                 # Documentation site
 ├── tests/                      # Unit and integration tests
 ├── l10n/                       # Translations — 36 locales, <locale>.json + generated <locale>.js
 ├── .github/workflows/          # CI/CD pipelines

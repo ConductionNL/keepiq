@@ -1,0 +1,368 @@
+<?php
+
+/**
+ * Keepiq Vault Key Proof Service
+ *
+ * Issues and verifies VaultKeyProofs: a proof of master-password knowledge
+ * expressed as a signature, made with the caller's EncryptionSuite private key,
+ * over a server-issued challenge bound to the operation's parameters.
+ *
+ * The challenge is STATELESS to issue and check. It carries a random component
+ * and is authenticated with the instance secret over that component, the
+ * caller, the purpose, and an expiry, so it can be verified without any
+ * server-side store.
+ *
+ * A proof is also SINGLE-USE: a successful verify() consumes its nonce in the
+ * distributed cache for the rest of the challenge's lifetime, and a second use
+ * is refused. The signature commits to the operation's parameters, but that is
+ * not enough on an upsert route: a captured designate proof, replayed after the
+ * owner revoked the contact, would recreate it (#804 review). This follows
+ * JwtAuthService's jti replay protection. The limit is the cache: without a
+ * memcache Nextcloud hands out a null cache, which forgets everything, so reuse
+ * is then not detected. The guarded flows keep working; only the replay
+ * protection degrades. With APCu only, reuse is detected per server.
+ *
+ * The proof is a SIGNATURE, never a decryption. The browser's session key is
+ * non-extractable and decrypt-only, so a decrypt challenge would be satisfiable
+ * by an unlocked tab (and thus by injected script); signing needs the raw
+ * private key, which needs the master password. See the vault-key-proof spec.
+ *
+ * @category Service
+ * @package  OCA\Keepiq\Service
+ *
+ * @author    Conduction Development Team <dev@conductio.nl>
+ * @copyright 2024 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * @version GIT: <git-id>
+ *
+ * @link https://conduction.nl
+ */
+
+declare(strict_types=1);
+
+namespace OCA\Keepiq\Service;
+
+use OCA\Keepiq\Exception\KeyProofRequiredException;
+use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\ICacheFactory;
+use OCP\IConfig;
+use OCP\IMemcache;
+use OCP\Security\ISecureRandom;
+use Psr\Log\LoggerInterface;
+use RuntimeException;
+
+/**
+ * Stateless issuance and verification of vault-key proofs.
+ */
+class VaultKeyProofService {
+	/**
+	 * How long a challenge is valid, in seconds.
+	 */
+	private const TTL = 300;
+
+	/**
+	 * Distributed cache namespace for consumed nonces (single-use proofs).
+	 */
+	public const USED_NONCE_CACHE_NS = 'keepiq_proof_nonce';
+
+	/**
+	 * Stable public purpose identifiers. Both the guarded method's attribute and
+	 * the client's challenge request name one of these, and the challenge is
+	 * bound to it, so a proof for one operation cannot be presented to another.
+	 */
+	public const PURPOSE_COMPROMISE_RECOVERY = 'compromise-recovery';
+	public const PURPOSE_UPDATE_PRIVATE_KEY = 'update-private-key';
+	public const PURPOSE_COMPLETE_MIGRATION = 'complete-migration';
+	public const PURPOSE_EMERGENCY_DESTROY = 'emergency-access-destroy';
+	public const PURPOSE_REVOKE_SUITE = 'revoke-suite';
+	public const PURPOSE_EMERGENCY_DESIGNATE = 'emergency-access-designate';
+	public const PURPOSE_EMERGENCY_RE_ENVELOPE = 'emergency-access-re-envelope';
+	public const PURPOSE_DELETE_ACCOUNT_DATA = 'delete-account-data';
+
+	/**
+	 * The purposes a challenge may be issued for.
+	 */
+	public const ALLOWED_PURPOSES = [
+		self::PURPOSE_COMPROMISE_RECOVERY,
+		self::PURPOSE_UPDATE_PRIVATE_KEY,
+		self::PURPOSE_COMPLETE_MIGRATION,
+		self::PURPOSE_EMERGENCY_DESTROY,
+		self::PURPOSE_REVOKE_SUITE,
+		self::PURPOSE_EMERGENCY_DESIGNATE,
+		self::PURPOSE_EMERGENCY_RE_ENVELOPE,
+		self::PURPOSE_DELETE_ACCOUNT_DATA,
+	];
+
+	/**
+	 * Whether the missing-memcache warning was already logged.
+	 *
+	 * @var boolean
+	 */
+	private bool $reuseWarningLogged = false;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param IConfig $config The system config, for the instance secret
+	 * @param ISecureRandom $secureRandom The challenge randomness source
+	 * @param ITimeFactory $timeFactory The clock, injected for testable expiry
+	 * @param ICacheFactory $cacheFactory Holds consumed nonces, so each proof is single-use
+	 * @param LoggerInterface $logger Says so when single use cannot be enforced
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Constructor wiring only — no domain logic.
+	 */
+	public function __construct(
+		private IConfig $config,
+		private ISecureRandom $secureRandom,
+		private ITimeFactory $timeFactory,
+		private ICacheFactory $cacheFactory,
+		private LoggerInterface $logger,
+	) {
+	}//end __construct()
+
+	/**
+	 * Issue a challenge for a caller and a purpose.
+	 *
+	 * @param string $userId The caller's user id
+	 * @param string $purpose The operation the challenge authorises
+	 *
+	 * @return array{nonce:string,expiresAt:int}
+	 *
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
+	 */
+	public function issueChallenge(string $userId, string $purpose): array {
+		$expiresAt = ($this->timeFactory->getTime() + self::TTL);
+
+		$payload = $this->b64url(raw: (string)json_encode([
+			'r' => base64_encode($this->secureRandom->generate(18)),
+			'u' => $userId,
+			'p' => $purpose,
+			'e' => $expiresAt,
+		]));
+
+		$nonce = $payload . '.' . $this->mac(payload: $payload);
+
+		return ['nonce' => $nonce, 'expiresAt' => $expiresAt];
+	}//end issueChallenge()
+
+	/**
+	 * Verify a proof, or throw.
+	 *
+	 * Every failure path throws the same KeyProofRequiredException with no
+	 * indication of which check failed, so a caller learns only pass/fail.
+	 *
+	 * @param string $nonce The challenge the client echoed back
+	 * @param string $signatureB64 The base64 signature over the bound payload
+	 * @param string $certificatePem The subject suite's certificate (its public key)
+	 * @param string $userId The caller, which the challenge must name
+	 * @param string $purpose The operation, which the challenge must name
+	 * @param string[] $boundValues The request parameter values the proof commits to
+	 *
+	 * @return void
+	 *
+	 * @throws KeyProofRequiredException When the proof is absent, stale, mis-bound or invalid
+	 *
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+	 */
+	public function verify(
+		string $nonce,
+		string $signatureB64,
+		string $certificatePem,
+		string $userId,
+		string $purpose,
+		array $boundValues,
+	): void {
+		$claims = $this->authenticateNonce(nonce: $nonce);
+
+		if (($claims['u'] ?? null) !== $userId || ($claims['p'] ?? null) !== $purpose) {
+			throw new KeyProofRequiredException(message: 'Challenge does not match this operation');
+		}
+
+		if ((int)($claims['e'] ?? 0) < $this->timeFactory->getTime()) {
+			throw new KeyProofRequiredException(message: 'Challenge has expired');
+		}
+
+		$publicKey = openssl_pkey_get_public($certificatePem);
+		if ($publicKey === false) {
+			throw new KeyProofRequiredException(message: 'Subject public key unreadable');
+		}
+
+		$signature = base64_decode($signatureB64, true);
+		if ($signature === false) {
+			throw new KeyProofRequiredException(message: 'Malformed proof');
+		}
+
+		$verified = openssl_verify(
+			$this->signedMessage(nonce: $nonce, boundValues: $boundValues),
+			$signature,
+			$publicKey,
+			OPENSSL_ALGO_SHA256
+		);
+
+		if ($verified !== 1) {
+			throw new KeyProofRequiredException(message: 'Proof does not verify');
+		}
+
+		// Only a proof that fully verified is consumed, so nothing can burn a
+		// nonce it could not have used.
+		$this->consume(nonce: $nonce, expiresAt: (int)$claims['e']);
+	}//end verify()
+
+	/**
+	 * Mark a nonce used for the rest of its lifetime, or refuse a reuse.
+	 *
+	 * Atomic add() where the cache supports it; otherwise hasKey() then set(),
+	 * as JwtAuthService does for jti.
+	 *
+	 * @param string $nonce     The verified challenge
+	 * @param int    $expiresAt When the challenge expires
+	 *
+	 * @return void
+	 *
+	 * @throws KeyProofRequiredException When the nonce was already used
+	 *
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
+	 */
+	private function consume(string $nonce, int $expiresAt): void {
+		if ($this->cacheFactory->isAvailable() === false) {
+			$this->warnReuseUndetected();
+		}
+
+		$cache = $this->cacheFactory->createDistributed(self::USED_NONCE_CACHE_NS);
+		$key = hash('sha256', $nonce);
+		$ttl = max(1, ($expiresAt - $this->timeFactory->getTime()));
+
+		if ($cache instanceof IMemcache) {
+			if ($cache->add($key, 1, $ttl) === false) {
+				throw new KeyProofRequiredException(message: 'Proof already used');
+			}
+
+			return;
+		}
+
+		if ($cache->hasKey($key) === true) {
+			throw new KeyProofRequiredException(message: 'Proof already used');
+		}
+
+		$cache->set($key, 1, $ttl);
+	}//end consume()
+
+	/**
+	 * Log, once per request, that proofs cannot be made single-use here.
+	 *
+	 * Without a configured memcache Nextcloud hands out a NullCache, whose
+	 * add() always succeeds, so a reused proof is not detected. The spec states
+	 * that limit; this makes it visible to an administrator (#804 review).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
+	 */
+	private function warnReuseUndetected(): void {
+		if ($this->reuseWarningLogged === true) {
+			return;
+		}
+
+		$this->reuseWarningLogged = true;
+		$this->logger->warning(
+			'Keepiq: no memcache is configured, so a reused vault-key proof is not detected. '
+			. 'Configure a distributed memcache (memcache.distributed) to make proofs single-use.',
+			['app' => 'keepiq']
+		);
+	}//end warnReuseUndetected()
+
+	/**
+	 * The exact string a valid proof signs: the challenge, then the SHA-256 of
+	 * each bound value in declared order, one per line. The client builds the
+	 * identical string, so only named scalar parameters cross the language
+	 * boundary — no JSON-canonicalisation agreement is needed.
+	 *
+	 * @param string $nonce The challenge
+	 * @param string[] $boundValues The bound request-parameter values, in order
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-a-proof-is-bound-to-the-operation-it-authorises
+	 */
+	public function signedMessage(string $nonce, array $boundValues): string {
+		$lines = [$nonce];
+		foreach ($boundValues as $value) {
+			$lines[] = hash('sha256', (string)$value);
+		}
+
+		return implode("\n", $lines);
+	}//end signedMessage()
+
+	/**
+	 * Recover and authenticate a challenge's claims, or throw.
+	 *
+	 * @param string $nonce The challenge string
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws KeyProofRequiredException When the challenge is absent or forged
+	 */
+	private function authenticateNonce(string $nonce): array {
+		if ($nonce === '') {
+			throw new KeyProofRequiredException(message: 'No challenge presented');
+		}
+
+		$parts = explode('.', $nonce);
+		if (count($parts) !== 2) {
+			throw new KeyProofRequiredException(message: 'Malformed challenge');
+		}
+
+		[$payload, $mac] = $parts;
+		if (hash_equals($this->mac(payload: $payload), $mac) === false) {
+			throw new KeyProofRequiredException(message: 'Challenge failed authentication');
+		}
+
+		$json = base64_decode(strtr($payload, '-_', '+/'), true);
+		if ($json === false) {
+			throw new KeyProofRequiredException(message: 'Unreadable challenge');
+		}
+
+		$claims = json_decode($json, true);
+		if (is_array($claims) === false) {
+			throw new KeyProofRequiredException(message: 'Unreadable challenge');
+		}
+
+		return $claims;
+	}//end authenticateNonce()
+
+	/**
+	 * The HMAC of a payload under the instance secret, base64url-encoded.
+	 *
+	 * @param string $payload The base64url payload
+	 *
+	 * @return string
+	 *
+	 * @throws RuntimeException When the instance secret is unset — a key-material
+	 *   control must fail loudly, not silently degrade to an empty HMAC key.
+	 */
+	private function mac(string $payload): string {
+		$secret = $this->config->getSystemValueString('secret', '');
+		if ($secret === '') {
+			throw new RuntimeException(
+				'Cannot compute a vault-key-proof MAC: the Nextcloud instance secret '
+				. 'is unset. A key-material control must not degrade to an empty key.'
+			);
+		}
+
+		return $this->b64url(raw: hash_hmac('sha256', $payload, $secret, true));
+	}//end mac()
+
+	/**
+	 * URL-safe, unpadded base64.
+	 *
+	 * @param string $raw The raw bytes
+	 *
+	 * @return string
+	 */
+	private function b64url(string $raw): string {
+		return rtrim(strtr(base64_encode($raw), '+/', '-_'), '=');
+	}//end b64url()
+}//end class

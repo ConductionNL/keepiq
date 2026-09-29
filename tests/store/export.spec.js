@@ -19,7 +19,14 @@
 import axios from '@nextcloud/axios'
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { buildKeyProofHeaders, PROOF_PURPOSE } from '../../src/crypto/keyProof.js'
 import { useExportStore } from '../../src/store/modules/export.js'
+import { useSessionStore } from '../../src/store/modules/session.js'
+
+vi.mock('../../src/crypto/keyProof.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	buildKeyProofHeaders: vi.fn(async () => ({ 'X-Keepiq-Key-Proof': 'SIG' })),
+}))
 
 const secrets = [
 	{
@@ -121,16 +128,32 @@ describe('useExportStore', () => {
 		}
 	})
 
-	it('deleteAccountData sends only the confirmation phrase', async () => {
-		let body = null
-		vi.spyOn(axios, 'delete').mockImplementation(async (url, config) => {
-			body = config.data
+	it('deleteAccountData sends the phrase and a key proof, never the password', async () => {
+		let config = null
+		vi.spyOn(axios, 'delete').mockImplementation(async (url, c) => {
+			config = c
 			return { data: { deleted: true, report: { secretsDeleted: 3 } } }
 		})
+		const session = useSessionStore()
+		session.suiteId = 'suite-1'
+		session.encryptedPrivateKey = 'ENVELOPE'
 
 		const store = useExportStore()
-		const report = await store.deleteAccountData('DELETE MY KEEPIQ DATA')
-		expect(body).toEqual({ confirmation: 'DELETE MY KEEPIQ DATA' })
+		const report = await store.deleteAccountData(
+			'DELETE MY KEEPIQ DATA',
+			'master-pw',
+		)
+
+		expect(config.data).toEqual({ confirmation: 'DELETE MY KEEPIQ DATA' })
+		expect(config.headers).toEqual({ 'X-Keepiq-Key-Proof': 'SIG' })
+		expect(JSON.stringify(config)).not.toContain('master-pw')
+		expect(buildKeyProofHeaders).toHaveBeenCalledWith({
+			suiteId: 'suite-1',
+			purpose: PROOF_PURPOSE.DELETE_ACCOUNT_DATA,
+			encryptedPrivateKey: 'ENVELOPE',
+			masterPassword: 'master-pw',
+			boundValues: ['DELETE MY KEEPIQ DATA'],
+		})
 		expect(report.report.secretsDeleted).toBe(3)
 	})
 })
