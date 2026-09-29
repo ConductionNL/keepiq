@@ -22,6 +22,9 @@ const ncStubs = {
 	},
 	NcButton: {
 		props: ['variant', 'disabled'],
+		// Declared, so the listener is not also bound as a native fallthrough
+		// click (which would toggle a reveal twice).
+		emits: ['click'],
 		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcNoteCard: { props: ['type'], template: '<div class="note"><slot /></div>' },
