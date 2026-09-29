@@ -12,7 +12,8 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useImportStore } from '../../src/store/modules/import.js'
 
-const CSV = 'Title,Web address,User,Secret\nGitHub,https://github.com,alice,hunter2\n'
+const CSV =
+	'Title,Web address,User,Secret\nGitHub,https://github.com,alice,hunter2\n'
 
 describe('import store column mapping', () => {
 	beforeEach(() => {

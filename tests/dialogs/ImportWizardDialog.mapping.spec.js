@@ -25,21 +25,36 @@ const ncStubs = {
 		// Declared, so the listener is not also bound as a native fallthrough
 		// click (which would toggle a reveal twice).
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcNoteCard: { props: ['type'], template: '<div class="note"><slot /></div>' },
 	NcSelect: {
-		props: ['options', 'reduce', 'inputLabel', 'clearable', 'modelValue', 'label'],
+		props: [
+			'options',
+			'reduce',
+			'inputLabel',
+			'clearable',
+			'modelValue',
+			'label',
+		],
 		template: '<div class="nc-select" :data-label="inputLabel" />',
 	},
-	NcPasswordField: { props: ['value', 'label'], template: '<input type="password" />' },
-	NcCheckboxRadioSwitch: { props: ['modelValue'], template: '<label><slot /></label>' },
+	NcPasswordField: {
+		props: ['value', 'label'],
+		template: '<input type="password" />',
+	},
+	NcCheckboxRadioSwitch: {
+		props: ['modelValue'],
+		template: '<label><slot /></label>',
+	},
 	NcLoadingIcon: { props: ['size'], template: '<div />' },
 	NcEmptyContent: { props: ['name'], template: '<div><slot /></div>' },
 }
 
 const mountOpts = { global: { stubs: ncStubs, mocks: { t: (app, s) => s } } }
-const CSV = 'Title,Web address,User,Secret\nGitHub,https://github.com,alice,hunter2\n'
+const CSV =
+	'Title,Web address,User,Secret\nGitHub,https://github.com,alice,hunter2\n'
 
 /**
  * Mount the wizard unlocked, on the mapping step of a parsed CSV.
@@ -48,7 +63,10 @@ const CSV = 'Title,Web address,User,Secret\nGitHub,https://github.com,alice,hunt
  */
 async function onMappingStep() {
 	useSessionStore().cryptoKey = { fake: true }
-	const wrapper = mount(ImportWizardDialog, { propsData: { open: true }, ...mountOpts })
+	const wrapper = mount(ImportWizardDialog, {
+		propsData: { open: true },
+		...mountOpts,
+	})
 	const store = useImportStore()
 	await store.parseFile(CSV, 'csv')
 	store.goToStep('mapping')
@@ -64,7 +82,9 @@ describe('ImportWizardDialog column mapping', () => {
 	it('shows one select per CSV column', async () => {
 		const wrapper = await onMappingStep()
 
-		const selects = wrapper.findAll('[data-testid="import-column-mapping"] .nc-select')
+		const selects = wrapper.findAll(
+			'[data-testid="import-column-mapping"] .nc-select',
+		)
 		expect(selects.map((s) => s.attributes('data-label'))).toEqual([
 			'Title',
 			'Web address',
@@ -77,11 +97,15 @@ describe('ImportWizardDialog column mapping', () => {
 		const wrapper = await onMappingStep()
 		const store = useImportStore()
 
-		await store.applyMapping(store.mapping.map((m) => ({ ...m, target: 'ignore' })))
+		await store.applyMapping(
+			store.mapping.map((m) => ({ ...m, target: 'ignore' })),
+		)
 		await wrapper.vm.$nextTick()
 
 		expect(wrapper.vm.canProceed).toBe(false)
-		expect(wrapper.find('[data-testid="import-mapping-no-name"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="import-mapping-no-name"]').exists()).toBe(
+			true,
+		)
 	})
 
 	it('reveals only the cell that was asked for', async () => {

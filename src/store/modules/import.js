@@ -178,7 +178,10 @@ export const useImportStore = defineStore('import', {
 					throw new Error(`Unknown import format: ${format}`)
 				}
 				let parsed
-				if (parser.adjustableMapping === true && typeof parser.parseDetailed === 'function') {
+				if (
+					parser.adjustableMapping === true
+					&& typeof parser.parseDetailed === 'function'
+				) {
 					const detailed = await parser.parseDetailed(text, options)
 					parsed = detailed.rows
 					this.mapping = detailed.mapping

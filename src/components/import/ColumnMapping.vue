@@ -20,7 +20,10 @@
 				<NcSelect
 					:modelValue="entry.target"
 					:options="targetOptions"
-					:inputLabel="entry.column || t('keepiq', 'Column {number}', { number: index + 1 })"
+					:inputLabel="
+						entry.column
+						|| t('keepiq', 'Column {number}', { number: index + 1 })
+					"
 					label="label"
 					:reduce="(opt) => opt.value"
 					:clearable="false"

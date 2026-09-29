@@ -106,10 +106,16 @@
 								<NcButton
 									v-if="row.login"
 									variant="tertiary"
-									:aria-label="revealLabel(row.sourceRow + '-login')"
+									:aria-label="
+										revealLabel(row.sourceRow + '-login')
+									"
 									:data-testid="`import-reveal-${row.sourceRow}-login`"
 									@click="toggleReveal(row.sourceRow + '-login')">
-									{{ revealed[row.sourceRow + '-login'] ? t('keepiq', 'Hide') : t('keepiq', 'Show') }}
+									{{
+										revealed[row.sourceRow + '-login']
+											? t('keepiq', 'Hide')
+											: t('keepiq', 'Show')
+									}}
 								</NcButton>
 							</td>
 							<td>
@@ -117,10 +123,16 @@
 								<NcButton
 									v-if="row.password"
 									variant="tertiary"
-									:aria-label="revealLabel(row.sourceRow + '-pass')"
+									:aria-label="
+										revealLabel(row.sourceRow + '-pass')
+									"
 									:data-testid="`import-reveal-${row.sourceRow}-pass`"
 									@click="toggleReveal(row.sourceRow + '-pass')">
-									{{ revealed[row.sourceRow + '-pass'] ? t('keepiq', 'Hide') : t('keepiq', 'Show') }}
+									{{
+										revealed[row.sourceRow + '-pass']
+											? t('keepiq', 'Hide')
+											: t('keepiq', 'Show')
+									}}
 								</NcButton>
 							</td>
 							<td>{{ row.folder }}</td>
