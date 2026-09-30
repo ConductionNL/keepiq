@@ -50,7 +50,6 @@ class Version001001Date20260930000000 extends SimpleMigrationStep {
 	 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
-		/** @var ISchemaWrapper $schema */
 		$schema = $schemaClosure();
 		if ($schema->hasTable('keepiq_secret_types') === false) {
 			return null;

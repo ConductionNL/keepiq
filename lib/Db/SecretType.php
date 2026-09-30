@@ -147,7 +147,6 @@ class SecretType extends Entity implements JsonSerializable {
 			return [];
 		}
 
-		/** @var list<array{key: string, label: string, kind: string, required: bool}> $decoded */
 		return $decoded;
 	}//end getFieldList()
 
