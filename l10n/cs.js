@@ -1204,7 +1204,26 @@ OC.L10N.register(
         "Could not save your default": "Výchozí hodnotu se nepodařilo uložit",
         "Recently used": "Nedávno použité",
         "Opened": "Otevřeno",
-        "You have not opened any secrets yet": "Zatím jste neotevřeli žádné tajemství"
+        "You have not opened any secrets yet": "Zatím jste neotevřeli žádné tajemství",
+        "Could not delete the item type.": "Typ položky se nepodařilo smazat.",
+        "Could not load the item types.": "Typy položek se nepodařilo načíst.",
+        "Could not save the item type.": "Typ položky se nepodařilo uložit.",
+        "Delete item type": "Smazat typ položky",
+        "Edit item type": "Upravit typ položky",
+        "Fields": "Pole",
+        "Fields: {count}": "Pole: {count}",
+        "Hidden": "Skryté",
+        "Item types": "Typy položek",
+        "Move up": "Posunout nahoru",
+        "New item type": "Nový typ položky",
+        "No item types defined yet.": "Zatím nejsou definovány žádné typy položek.",
+        "Required": "Povinné",
+        "Text": "Text",
+        "This field is required": "Toto pole je povinné",
+        "Web address": "Webová adresa",
+        "{label} (required)": "{label} (povinné)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Smazat „{name}“? Tajemství tohoto typu zůstanou čitelná a stanou se položkami Přihlášení.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Typy položek, které zde definujete, se všem zobrazí v dialogu Nové tajemství se zvolenými poli."
     },
     "nplurals=2; plural=(n != 1);"
 )

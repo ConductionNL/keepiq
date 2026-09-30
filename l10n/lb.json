@@ -1203,7 +1203,26 @@
         "Could not save your default": "Däi Standardwäert konnt net gespäichert ginn",
         "Recently used": "Rezent benotzt",
         "Opened": "Opgemaach",
-        "You have not opened any secrets yet": "Du hues nach keng Geheimnisser opgemaach"
+        "You have not opened any secrets yet": "Du hues nach keng Geheimnisser opgemaach",
+        "Could not delete the item type.": "Den Elementtyp konnt net geläscht ginn.",
+        "Could not load the item types.": "D'Elementtypen konnten net gelueden ginn.",
+        "Could not save the item type.": "Den Elementtyp konnt net gespäichert ginn.",
+        "Delete item type": "Elementtyp läschen",
+        "Edit item type": "Elementtyp änneren",
+        "Fields": "Felder",
+        "Fields: {count}": "Felder: {count}",
+        "Hidden": "Verstoppt",
+        "Item types": "Elementtypen",
+        "Move up": "Erop réckelen",
+        "New item type": "Neien Elementtyp",
+        "No item types defined yet.": "Nach keng Elementtypen definéiert.",
+        "Required": "Obligatoresch",
+        "Text": "Text",
+        "This field is required": "Dëst Feld ass obligatoresch",
+        "Web address": "Webadress",
+        "{label} (required)": "{label} (obligatoresch)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "„{name}“ läschen? Geheimnisser vun dësem Typ bleiwe liesbar a ginn zu Login-Elementer.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Elementtypen, déi s du hei definéiers, erschéngen bei jidderengem am Dialog Neit Geheimnis, mat de Felder, déi s du wiels."
     },
     "plurals": null
 }

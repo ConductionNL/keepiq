@@ -1204,7 +1204,26 @@ OC.L10N.register(
         "Could not save your default": "Kunne ikke lagre standardvalget ditt",
         "Recently used": "Nylig brukt",
         "Opened": "Åpnet",
-        "You have not opened any secrets yet": "Du har ikke åpnet noen hemmeligheter ennå"
+        "You have not opened any secrets yet": "Du har ikke åpnet noen hemmeligheter ennå",
+        "Could not delete the item type.": "Kunne ikke slette elementtypen.",
+        "Could not load the item types.": "Kunne ikke laste inn elementtypene.",
+        "Could not save the item type.": "Kunne ikke lagre elementtypen.",
+        "Delete item type": "Slett elementtype",
+        "Edit item type": "Rediger elementtype",
+        "Fields": "Felt",
+        "Fields: {count}": "Felt: {count}",
+        "Hidden": "Skjult",
+        "Item types": "Elementtyper",
+        "Move up": "Flytt opp",
+        "New item type": "Ny elementtype",
+        "No item types defined yet.": "Ingen elementtyper er definert ennå.",
+        "Required": "Påkrevd",
+        "Text": "Tekst",
+        "This field is required": "Dette feltet er påkrevd",
+        "Web address": "Nettadresse",
+        "{label} (required)": "{label} (påkrevd)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Slette «{name}»? Hemmeligheter av denne typen kan fortsatt leses og blir Innlogging-elementer.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Elementtyper du definerer her, vises for alle i dialogen Ny hemmelighet, med feltene du velger."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1204,7 +1204,26 @@ OC.L10N.register(
         "Could not save your default": "Подразумевану вредност није могуће сачувати",
         "Recently used": "Недавно коришћено",
         "Opened": "Отворено",
-        "You have not opened any secrets yet": "Још ниси отворио ниједну тајну"
+        "You have not opened any secrets yet": "Још ниси отворио ниједну тајну",
+        "Could not delete the item type.": "Врсту ставке није могуће обрисати.",
+        "Could not load the item types.": "Врсте ставки није могуће учитати.",
+        "Could not save the item type.": "Врсту ставке није могуће сачувати.",
+        "Delete item type": "Обриши врсту ставке",
+        "Edit item type": "Уреди врсту ставке",
+        "Fields": "Поља",
+        "Fields: {count}": "Поља: {count}",
+        "Hidden": "Скривено",
+        "Item types": "Врсте ставки",
+        "Move up": "Помери горе",
+        "New item type": "Нова врста ставке",
+        "No item types defined yet.": "Још нема дефинисаних врста ставки.",
+        "Required": "Обавезно",
+        "Text": "Текст",
+        "This field is required": "Ово поље је обавезно",
+        "Web address": "Веб адреса",
+        "{label} (required)": "{label} (обавезно)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Обрисати „{name}”? Тајне ове врсте остају читљиве и постају ставке Пријава.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Врсте ставки које овде дефинишеш свима се приказују у дијалогу Нова тајна, са пољима која изабереш."
     },
     "nplurals=2; plural=(n != 1);"
 )

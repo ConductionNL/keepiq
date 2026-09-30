@@ -1203,7 +1203,26 @@
         "Could not save your default": "Valoarea implicită nu a putut fi salvată",
         "Recently used": "Folosite recent",
         "Opened": "Deschis",
-        "You have not opened any secrets yet": "Nu ai deschis încă niciun secret"
+        "You have not opened any secrets yet": "Nu ai deschis încă niciun secret",
+        "Could not delete the item type.": "Tipul de element nu a putut fi șters.",
+        "Could not load the item types.": "Tipurile de element nu au putut fi încărcate.",
+        "Could not save the item type.": "Tipul de element nu a putut fi salvat.",
+        "Delete item type": "Șterge tipul de element",
+        "Edit item type": "Editează tipul de element",
+        "Fields": "Câmpuri",
+        "Fields: {count}": "Câmpuri: {count}",
+        "Hidden": "Ascuns",
+        "Item types": "Tipuri de element",
+        "Move up": "Mută în sus",
+        "New item type": "Tip de element nou",
+        "No item types defined yet.": "Nu există încă tipuri de element definite.",
+        "Required": "Obligatoriu",
+        "Text": "Text",
+        "This field is required": "Acest câmp este obligatoriu",
+        "Web address": "Adresă web",
+        "{label} (required)": "{label} (obligatoriu)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Ștergi „{name}”? Secretele de acest tip rămân lizibile și devin elemente Autentificare.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Tipurile de element pe care le definești aici apar pentru toți în fereastra Secret nou, cu câmpurile pe care le alegi."
     },
     "plurals": null
 }

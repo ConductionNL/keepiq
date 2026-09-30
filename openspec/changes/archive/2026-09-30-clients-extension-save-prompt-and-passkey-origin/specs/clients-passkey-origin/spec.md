@@ -2,7 +2,7 @@
 
 ### Requirement: Passkey origin binding
 
-The extension MUST derive the origin of a passkey request from the page location in the content script and MUST refuse a request whose relying party id is not equal to, or a registrable suffix of, that origin's host. The `clientDataJSON` origin MUST be that derived origin.
+The extension MUST take the origin of a passkey request from the browser's record of the requesting frame (the runtime message sender), never from the page's own message, and MUST refuse a request whose relying party id is not equal to, or a registrable suffix of, that origin's host. The `clientDataJSON` origin MUST be that derived origin.
 
 #### Scenario: A page asks for another site's rpId
 

@@ -1203,7 +1203,26 @@
         "Could not save your default": "Predvolenú hodnotu sa nepodarilo uložiť",
         "Recently used": "Nedávno použité",
         "Opened": "Otvorené",
-        "You have not opened any secrets yet": "Zatiaľ ste neotvorili žiadne tajomstvo"
+        "You have not opened any secrets yet": "Zatiaľ ste neotvorili žiadne tajomstvo",
+        "Could not delete the item type.": "Typ položky sa nepodarilo odstrániť.",
+        "Could not load the item types.": "Typy položiek sa nepodarilo načítať.",
+        "Could not save the item type.": "Typ položky sa nepodarilo uložiť.",
+        "Delete item type": "Odstrániť typ položky",
+        "Edit item type": "Upraviť typ položky",
+        "Fields": "Polia",
+        "Fields: {count}": "Polia: {count}",
+        "Hidden": "Skryté",
+        "Item types": "Typy položiek",
+        "Move up": "Posunúť nahor",
+        "New item type": "Nový typ položky",
+        "No item types defined yet.": "Zatiaľ nie sú definované žiadne typy položiek.",
+        "Required": "Povinné",
+        "Text": "Text",
+        "This field is required": "Toto pole je povinné",
+        "Web address": "Webová adresa",
+        "{label} (required)": "{label} (povinné)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Odstrániť „{name}“? Tajomstvá tohto typu zostanú čitateľné a stanú sa položkami Prihlásenie.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Typy položiek, ktoré tu definujete, sa všetkým zobrazia v dialógu Nové tajomstvo so zvolenými poľami."
     },
     "plurals": null
 }

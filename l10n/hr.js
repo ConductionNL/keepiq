@@ -1204,7 +1204,26 @@ OC.L10N.register(
         "Could not save your default": "Zadanu vrijednost nije moguće spremiti",
         "Recently used": "Nedavno korišteno",
         "Opened": "Otvoreno",
-        "You have not opened any secrets yet": "Još nisi otvorio nijednu tajnu"
+        "You have not opened any secrets yet": "Još nisi otvorio nijednu tajnu",
+        "Could not delete the item type.": "Vrstu stavke nije moguće izbrisati.",
+        "Could not load the item types.": "Vrste stavki nije moguće učitati.",
+        "Could not save the item type.": "Vrstu stavke nije moguće spremiti.",
+        "Delete item type": "Izbriši vrstu stavke",
+        "Edit item type": "Uredi vrstu stavke",
+        "Fields": "Polja",
+        "Fields: {count}": "Polja: {count}",
+        "Hidden": "Skriveno",
+        "Item types": "Vrste stavki",
+        "Move up": "Pomakni gore",
+        "New item type": "Nova vrsta stavke",
+        "No item types defined yet.": "Još nema definiranih vrsta stavki.",
+        "Required": "Obavezno",
+        "Text": "Tekst",
+        "This field is required": "Ovo je polje obavezno",
+        "Web address": "Web-adresa",
+        "{label} (required)": "{label} (obavezno)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Izbrisati „{name}”? Tajne ove vrste ostaju čitljive i postaju stavke Prijava.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Vrste stavki koje ovdje definiraš svima se prikazuju u dijalogu Nova tajna, s poljima koja odabereš."
     },
     "nplurals=2; plural=(n != 1);"
 )

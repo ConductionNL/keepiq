@@ -1203,7 +1203,26 @@
         "Could not save your default": "Parazgjedhja nuk u ruajt",
         "Recently used": "Përdorur së fundi",
         "Opened": "Hapur",
-        "You have not opened any secrets yet": "Nuk ke hapur ende asnjë sekret"
+        "You have not opened any secrets yet": "Nuk ke hapur ende asnjë sekret",
+        "Could not delete the item type.": "Lloji i elementit nuk u fshi dot.",
+        "Could not load the item types.": "Llojet e elementeve nuk u ngarkuan dot.",
+        "Could not save the item type.": "Lloji i elementit nuk u ruajt dot.",
+        "Delete item type": "Fshi llojin e elementit",
+        "Edit item type": "Ndrysho llojin e elementit",
+        "Fields": "Fushat",
+        "Fields: {count}": "Fushat: {count}",
+        "Hidden": "E fshehur",
+        "Item types": "Llojet e elementeve",
+        "Move up": "Lëviz lart",
+        "New item type": "Lloj i ri elementi",
+        "No item types defined yet.": "Ende nuk ka lloje elementesh të përcaktuara.",
+        "Required": "E detyrueshme",
+        "Text": "Tekst",
+        "This field is required": "Kjo fushë është e detyrueshme",
+        "Web address": "Adresë uebi",
+        "{label} (required)": "{label} (e detyrueshme)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Të fshihet “{name}”? Sekretet e këtij lloji mbeten të lexueshme dhe bëhen elemente Hyrja.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Llojet e elementeve që përcakton këtu u shfaqen të gjithëve te dritarja Sekret i ri, me fushat që zgjedh."
     },
     "plurals": null
 }
