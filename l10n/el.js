@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Σημειώσεις",
         "Do not import": "Να μην εισαχθεί",
         "Hide this value": "Απόκρυψη αυτής της τιμής",
-        "Show this value": "Εμφάνιση αυτής της τιμής"
+        "Show this value": "Εμφάνιση αυτής της τιμής",
+        "Defaults": "Προεπιλογές",
+        "New secrets start as this type, and your secret list opens in this view.": "Τα νέα μυστικά ξεκινούν με αυτόν τον τύπο και η λίστα μυστικών ανοίγει σε αυτή την προβολή.",
+        "Default item type": "Προεπιλεγμένος τύπος στοιχείου",
+        "Cards": "Κάρτες",
+        "Table": "Πίνακας",
+        "Could not save your default": "Δεν ήταν δυνατή η αποθήκευση της προεπιλογής σας",
+        "Recently used": "Πρόσφατα χρησιμοποιημένα",
+        "Opened": "Άνοιξε",
+        "You have not opened any secrets yet": "Δεν έχετε ανοίξει ακόμη κανένα μυστικό"
     },
     "nplurals=2; plural=(n != 1);"
 )

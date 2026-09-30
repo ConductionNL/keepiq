@@ -183,6 +183,10 @@ import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
+import {
+	resolveDefaultTypeId,
+	useUserPreferencesStore,
+} from '../store/modules/userPreferences.js'
 import { membersToObject } from '../utils/additionalFields.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 
@@ -351,6 +355,13 @@ export default {
 		},
 	},
 
+	/**
+	 * Load what the screen needs, including the user's saved defaults.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+	 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+	 */
 	async mounted() {
 		this.policy = await fetchPolicy()
 		const typeStore = useSecretTypeStore()
@@ -358,8 +369,13 @@ export default {
 			await typeStore.fetchTypes()
 		}
 		if (this.typeId === null && typeStore.types.length > 0) {
-			const login = typeStore.types.find((type) => type.name === 'login')
-			this.typeId = login ? login.id : typeStore.types[0].id
+			// The user's saved default type; Login when it no longer exists (vault-20).
+			const prefs = useUserPreferencesStore()
+			await prefs.ensureLoaded()
+			this.typeId = resolveDefaultTypeId(
+				prefs.defaultSecretType,
+				typeStore.types,
+			)
 		}
 		const folderStore = useFolderStore()
 		if (folderStore.folders.length === 0) {

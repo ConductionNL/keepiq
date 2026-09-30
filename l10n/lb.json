@@ -1194,7 +1194,16 @@
         "Notes": "Notizen",
         "Do not import": "Net importéieren",
         "Hide this value": "Dëse Wäert verstoppen",
-        "Show this value": "Dëse Wäert weisen"
+        "Show this value": "Dëse Wäert weisen",
+        "Defaults": "Standardwäerter",
+        "New secrets start as this type, and your secret list opens in this view.": "Nei Geheimnisser fänken als dësen Typ un, an deng Geheimnislëscht mécht sech an dëser Usiicht op.",
+        "Default item type": "Standard-Elementtyp",
+        "Cards": "Kaarten",
+        "Table": "Tabell",
+        "Could not save your default": "Däi Standardwäert konnt net gespäichert ginn",
+        "Recently used": "Rezent benotzt",
+        "Opened": "Opgemaach",
+        "You have not opened any secrets yet": "Du hues nach keng Geheimnisser opgemaach"
     },
     "plurals": null
 }

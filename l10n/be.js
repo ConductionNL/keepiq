@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Нататкі",
         "Do not import": "Не імпартаваць",
         "Hide this value": "Схаваць гэта значэнне",
-        "Show this value": "Паказаць гэта значэнне"
+        "Show this value": "Паказаць гэта значэнне",
+        "Defaults": "Па змаўчанні",
+        "New secrets start as this type, and your secret list opens in this view.": "Новыя сакрэты ствараюцца з гэтым тыпам, а спіс сакрэтаў адкрываецца ў гэтым выглядзе.",
+        "Default item type": "Тып элемента па змаўчанні",
+        "Cards": "Карткі",
+        "Table": "Табліца",
+        "Could not save your default": "Не ўдалося захаваць значэнне па змаўчанні",
+        "Recently used": "Нядаўна выкарыстаныя",
+        "Opened": "Адкрыта",
+        "You have not opened any secrets yet": "Вы яшчэ не адкрывалі сакрэты"
     },
     "nplurals=2; plural=(n != 1);"
 )

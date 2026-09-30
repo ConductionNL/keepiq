@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Anteckningar",
         "Do not import": "Importera inte",
         "Hide this value": "Dölj detta värde",
-        "Show this value": "Visa detta värde"
+        "Show this value": "Visa detta värde",
+        "Defaults": "Standardval",
+        "New secrets start as this type, and your secret list opens in this view.": "Nya hemligheter börjar som denna typ, och din hemlighetslista öppnas i denna vy.",
+        "Default item type": "Standardobjekttyp",
+        "Cards": "Kort",
+        "Table": "Tabell",
+        "Could not save your default": "Det gick inte att spara ditt standardval",
+        "Recently used": "Nyligen använda",
+        "Opened": "Öppnad",
+        "You have not opened any secrets yet": "Du har inte öppnat några hemligheter än"
     },
     "nplurals=2; plural=(n != 1);"
 )

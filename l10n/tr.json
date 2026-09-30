@@ -1194,7 +1194,16 @@
         "Notes": "Notlar",
         "Do not import": "İçe aktarma",
         "Hide this value": "Bu değeri gizle",
-        "Show this value": "Bu değeri göster"
+        "Show this value": "Bu değeri göster",
+        "Defaults": "Varsayılanlar",
+        "New secrets start as this type, and your secret list opens in this view.": "Yeni sırlar bu türle başlar ve sır listeniz bu görünümde açılır.",
+        "Default item type": "Varsayılan öğe türü",
+        "Cards": "Kartlar",
+        "Table": "Tablo",
+        "Could not save your default": "Varsayılanınız kaydedilemedi",
+        "Recently used": "Son kullanılanlar",
+        "Opened": "Açıldı",
+        "You have not opened any secrets yet": "Henüz hiçbir sır açmadınız"
     },
     "plurals": null
 }

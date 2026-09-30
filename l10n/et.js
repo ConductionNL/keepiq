@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Märkmed",
         "Do not import": "Ära impordi",
         "Hide this value": "Peida see väärtus",
-        "Show this value": "Näita seda väärtust"
+        "Show this value": "Näita seda väärtust",
+        "Defaults": "Vaikeväärtused",
+        "New secrets start as this type, and your secret list opens in this view.": "Uued saladused algavad selle tüübiga ja sinu saladuste loend avaneb selles vaates.",
+        "Default item type": "Vaikimisi kirje tüüp",
+        "Cards": "Kaardid",
+        "Table": "Tabel",
+        "Could not save your default": "Vaikeväärtust ei õnnestunud salvestada",
+        "Recently used": "Hiljuti kasutatud",
+        "Opened": "Avatud",
+        "You have not opened any secrets yet": "Sa pole veel ühtegi saladust avanud"
     },
     "nplurals=2; plural=(n != 1);"
 )

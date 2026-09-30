@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Notizias",
         "Do not import": "Betg importar",
         "Hide this value": "Zuppentar questa valur",
-        "Show this value": "Mussar questa valur"
+        "Show this value": "Mussar questa valur",
+        "Defaults": "Valurs predefinidas",
+        "New secrets start as this type, and your secret list opens in this view.": "Novs secrets cumenzan cun quest tip, e tia glista da secrets s'avra en questa vista.",
+        "Default item type": "Tip d'element predefinì",
+        "Cards": "Cartas",
+        "Table": "Tabella",
+        "Could not save your default": "Betg pussaivel da memorisar tia valur predefinida",
+        "Recently used": "Duvrà dacurt",
+        "Opened": "Avert",
+        "You have not opened any secrets yet": "Ti n'has anc avert nagin secret"
     },
     "nplurals=2; plural=(n != 1);"
 )

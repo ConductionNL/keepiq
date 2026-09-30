@@ -1194,7 +1194,16 @@
         "Notes": "Белешке",
         "Do not import": "Не увози",
         "Hide this value": "Сакриј ову вредност",
-        "Show this value": "Прикажи ову вредност"
+        "Show this value": "Прикажи ову вредност",
+        "Defaults": "Подразумевано",
+        "New secrets start as this type, and your secret list opens in this view.": "Нове тајне почињу као ова врста, а твоја листа тајни се отвара у овом приказу.",
+        "Default item type": "Подразумевана врста ставке",
+        "Cards": "Картице",
+        "Table": "Табела",
+        "Could not save your default": "Подразумевану вредност није могуће сачувати",
+        "Recently used": "Недавно коришћено",
+        "Opened": "Отворено",
+        "You have not opened any secrets yet": "Још ниси отворио ниједну тајну"
     },
     "plurals": null
 }

@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Pastabos",
         "Do not import": "Neimportuoti",
         "Hide this value": "Slėpti šią reikšmę",
-        "Show this value": "Rodyti šią reikšmę"
+        "Show this value": "Rodyti šią reikšmę",
+        "Defaults": "Numatytieji",
+        "New secrets start as this type, and your secret list opens in this view.": "Nauji slaptažodžiai prasideda šiuo tipu, o tavo slaptažodžių sąrašas atsidaro šiame rodinyje.",
+        "Default item type": "Numatytasis elemento tipas",
+        "Cards": "Kortelės",
+        "Table": "Lentelė",
+        "Could not save your default": "Nepavyko išsaugoti numatytosios reikšmės",
+        "Recently used": "Neseniai naudoti",
+        "Opened": "Atidaryta",
+        "You have not opened any secrets yet": "Dar neatidarei jokių slaptažodžių"
     },
     "nplurals=2; plural=(n != 1);"
 )

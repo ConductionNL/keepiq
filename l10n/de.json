@@ -1194,7 +1194,16 @@
         "Notes": "Notizen",
         "Do not import": "Nicht importieren",
         "Hide this value": "Diesen Wert verbergen",
-        "Show this value": "Diesen Wert anzeigen"
+        "Show this value": "Diesen Wert anzeigen",
+        "Defaults": "Standardwerte",
+        "New secrets start as this type, and your secret list opens in this view.": "Neue Geheimnisse beginnen mit diesem Typ, und deine Geheimnisliste öffnet sich in dieser Ansicht.",
+        "Default item type": "Standard-Elementtyp",
+        "Cards": "Karten",
+        "Table": "Tabelle",
+        "Could not save your default": "Dein Standardwert konnte nicht gespeichert werden",
+        "Recently used": "Zuletzt verwendet",
+        "Opened": "Geöffnet",
+        "You have not opened any secrets yet": "Du hast noch keine Geheimnisse geöffnet"
     },
     "plurals": null
 }

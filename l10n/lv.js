@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Piezīmes",
         "Do not import": "Neimportēt",
         "Hide this value": "Paslēpt šo vērtību",
-        "Show this value": "Rādīt šo vērtību"
+        "Show this value": "Rādīt šo vērtību",
+        "Defaults": "Noklusējumi",
+        "New secrets start as this type, and your secret list opens in this view.": "Jauni noslēpumi sākas kā šis tips, un tavs noslēpumu saraksts atveras šajā skatā.",
+        "Default item type": "Noklusējuma vienuma tips",
+        "Cards": "Kartītes",
+        "Table": "Tabula",
+        "Could not save your default": "Neizdevās saglabāt tavu noklusējumu",
+        "Recently used": "Nesen izmantotie",
+        "Opened": "Atvērts",
+        "You have not opened any secrets yet": "Tu vēl neesi atvēris nevienu noslēpumu"
     },
     "nplurals=2; plural=(n != 1);"
 )

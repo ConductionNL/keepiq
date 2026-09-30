@@ -1194,7 +1194,16 @@
         "Notes": "Бележки",
         "Do not import": "Не импортирай",
         "Hide this value": "Скриване на тази стойност",
-        "Show this value": "Показване на тази стойност"
+        "Show this value": "Показване на тази стойност",
+        "Defaults": "По подразбиране",
+        "New secrets start as this type, and your secret list opens in this view.": "Новите тайни започват с този тип, а списъкът с тайни се отваря в този изглед.",
+        "Default item type": "Тип елемент по подразбиране",
+        "Cards": "Карти",
+        "Table": "Таблица",
+        "Could not save your default": "Стойността по подразбиране не можа да бъде запазена",
+        "Recently used": "Наскоро използвани",
+        "Opened": "Отворено",
+        "You have not opened any secrets yet": "Все още не сте отваряли тайни"
     },
     "plurals": null
 }

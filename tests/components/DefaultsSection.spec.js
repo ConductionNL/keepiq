@@ -17,7 +17,14 @@ import { useUserPreferencesStore } from '../../src/store/modules/userPreferences
 
 const stubs = {
 	NcSelect: {
-		props: ['options', 'reduce', 'inputLabel', 'clearable', 'modelValue', 'label'],
+		props: [
+			'options',
+			'reduce',
+			'inputLabel',
+			'clearable',
+			'modelValue',
+			'label',
+		],
 		emits: ['update:modelValue'],
 		template: '<div class="nc-select" :data-label="inputLabel" />',
 	},
@@ -56,13 +63,18 @@ describe('DefaultsSection', () => {
 		const wrapper = await mountSection()
 
 		expect(prefs.ensureLoaded).toHaveBeenCalled()
-		expect(wrapper.vm.typeOptions.map((o) => o.value)).toEqual(['login', 'ssh_key'])
+		expect(wrapper.vm.typeOptions.map((o) => o.value)).toEqual([
+			'login',
+			'ssh_key',
+		])
 		expect(wrapper.vm.viewOptions.map((o) => o.value)).toEqual([
 			'list',
 			'cards',
 			'table',
 		])
-		const labels = wrapper.findAll('.nc-select').map((n) => n.attributes('data-label'))
+		const labels = wrapper
+			.findAll('.nc-select')
+			.map((n) => n.attributes('data-label'))
 		expect(labels).toEqual(['Default item type', 'Default view'])
 	})
 

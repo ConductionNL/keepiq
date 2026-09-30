@@ -36,7 +36,9 @@ describe('user preferences store', () => {
 
 		await store.load()
 
-		expect(get).toHaveBeenCalledWith(expect.stringContaining('/apps/keepiq/api/settings/user'))
+		expect(get).toHaveBeenCalledWith(
+			expect.stringContaining('/apps/keepiq/api/settings/user'),
+		)
 		expect(store.defaultSecretType).toBe('ssh_key')
 		expect(store.defaultView).toBe('cards')
 		expect(store.loaded).toBe(true)
@@ -68,10 +70,13 @@ describe('user preferences store', () => {
 
 		await store.save({ defaultSecretType: 'ssh_key', defaultView: 'table' })
 
-		expect(put).toHaveBeenCalledWith(expect.stringContaining('/apps/keepiq/api/settings/user'), {
-			default_secret_type: 'ssh_key',
-			default_view: 'table',
-		})
+		expect(put).toHaveBeenCalledWith(
+			expect.stringContaining('/apps/keepiq/api/settings/user'),
+			{
+				default_secret_type: 'ssh_key',
+				default_view: 'table',
+			},
+		)
 		expect(store.defaultSecretType).toBe('ssh_key')
 		expect(store.defaultView).toBe('table')
 	})

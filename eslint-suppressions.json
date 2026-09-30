@@ -266,11 +266,6 @@
       "count": 1
     }
   },
-  "src/views/DashboardSettingsView.vue": {
-    "@typescript-eslint/no-unused-vars": {
-      "count": 1
-    }
-  },
   "src/views/HealthReportView.vue": {
     "no-console": {
       "count": 5

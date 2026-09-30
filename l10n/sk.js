@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Poznámky",
         "Do not import": "Neimportovať",
         "Hide this value": "Skryť túto hodnotu",
-        "Show this value": "Zobraziť túto hodnotu"
+        "Show this value": "Zobraziť túto hodnotu",
+        "Defaults": "Predvolené",
+        "New secrets start as this type, and your secret list opens in this view.": "Nové tajomstvá začínajú týmto typom a zoznam tajomstiev sa otvorí v tomto zobrazení.",
+        "Default item type": "Predvolený typ položky",
+        "Cards": "Karty",
+        "Table": "Tabuľka",
+        "Could not save your default": "Predvolenú hodnotu sa nepodarilo uložiť",
+        "Recently used": "Nedávno použité",
+        "Opened": "Otvorené",
+        "You have not opened any secrets yet": "Zatiaľ ste neotvorili žiadne tajomstvo"
     },
     "nplurals=2; plural=(n != 1);"
 )

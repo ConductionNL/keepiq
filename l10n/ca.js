@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Notes",
         "Do not import": "No importis",
         "Hide this value": "Amaga aquest valor",
-        "Show this value": "Mostra aquest valor"
+        "Show this value": "Mostra aquest valor",
+        "Defaults": "Valors per defecte",
+        "New secrets start as this type, and your secret list opens in this view.": "Els secrets nous comencen amb aquest tipus i la teva llista de secrets s'obre en aquesta vista.",
+        "Default item type": "Tipus d'element per defecte",
+        "Cards": "Targetes",
+        "Table": "Taula",
+        "Could not save your default": "No s'ha pogut desar el valor per defecte",
+        "Recently used": "Utilitzats recentment",
+        "Opened": "Obert",
+        "You have not opened any secrets yet": "Encara no has obert cap secret"
     },
     "nplurals=2; plural=(n != 1);"
 )

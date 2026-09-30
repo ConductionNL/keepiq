@@ -318,6 +318,32 @@
 						}
 					},
 					{
+						"id": "recently-used",
+						"type": "object-table",
+						"title": "Recently used",
+						"_note": "vault-21: the secrets the user read last, one row per secret, newest first, at most five, only secrets the user still owns (GET /api/v1/secrets/recent, a bare array of id, name, typeId, lastUsedAt; RecentlyUsedService). rowRoute pushes {name: SecretList, params: {id}}, which is /secrets/:id and opens the detail sidebar, router-pushed so the memory-only vault key survives.",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/keepiq/api/v1/secrets/recent"
+							},
+							"columns": [
+								{
+									"key": "name",
+									"label": "Item"
+								},
+								{
+									"key": "lastUsedAt",
+									"label": "Opened",
+									"format": "date-time"
+								}
+							],
+							"limit": 5,
+							"rowRoute": "SecretList",
+							"borderless": true,
+							"emptyText": "You have not opened any secrets yet"
+						}
+					},
+					{
 						"id": "quick-action-new-secret",
 						"type": "tile",
 						"_note": "Union of the bump-ncvue branch's real quick-action tiles with development's ADR-049 placeholder text; wired here in place of the quick-actions-text placeholder since these already point at live deep links. Tile fields sit at the def's top level because CnDashboardPage.getTileConfig() reads them from there, not from content. LINK SHAPE: both in-app tiles use linkType 'route', which the tile widgets push through the host vue-router. linkType 'app' resolved to a FULL page load, and the vault master key is memory-only, so every tile click re-locked the vault and landed on /lock — and the old 'keepiq#/secrets' values were dead weight on top, because main.js routes with createWebHistory and the hash fragment is never read (an earlier revision of this note claimed createWebHashHistory; that stale claim made the hash links look correct on review). The values carry ?action=create / ?action=register, which SecretList and ApplicationRegisterView consume (open the create/register dialog) and then strip from the URL. Requires @conduction/nextcloud-vue with route-type tile support (CnTileWidget/CnDashTileWidget router navigation).",
@@ -425,6 +451,14 @@
 						"gridY": 8,
 						"gridWidth": 3,
 						"gridHeight": 2
+					},
+					{
+						"id": 10,
+						"widgetId": "recently-used",
+						"gridX": 0,
+						"gridY": 10,
+						"gridWidth": 6,
+						"gridHeight": 4
 					}
 				]
 			}

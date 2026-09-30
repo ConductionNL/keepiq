@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Нотатки",
         "Do not import": "Не імпортувати",
         "Hide this value": "Приховати це значення",
-        "Show this value": "Показати це значення"
+        "Show this value": "Показати це значення",
+        "Defaults": "Типові значення",
+        "New secrets start as this type, and your secret list opens in this view.": "Нові секрети створюються з цим типом, а список секретів відкривається в цьому вигляді.",
+        "Default item type": "Типовий тип елемента",
+        "Cards": "Картки",
+        "Table": "Таблиця",
+        "Could not save your default": "Не вдалося зберегти типове значення",
+        "Recently used": "Нещодавно використані",
+        "Opened": "Відкрито",
+        "You have not opened any secrets yet": "Ви ще не відкривали жодного секрету"
     },
     "nplurals=2; plural=(n != 1);"
 )

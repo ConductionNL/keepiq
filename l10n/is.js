@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Athugasemdir",
         "Do not import": "Ekki flytja inn",
         "Hide this value": "Fela þetta gildi",
-        "Show this value": "Sýna þetta gildi"
+        "Show this value": "Sýna þetta gildi",
+        "Defaults": "Sjálfgefin gildi",
+        "New secrets start as this type, and your secret list opens in this view.": "Ný leyndarmál byrja sem þessi tegund og leyndarmálalistinn þinn opnast í þessari sýn.",
+        "Default item type": "Sjálfgefin tegund atriðis",
+        "Cards": "Spjöld",
+        "Table": "Tafla",
+        "Could not save your default": "Ekki tókst að vista sjálfgefna gildið þitt",
+        "Recently used": "Nýlega notað",
+        "Opened": "Opnað",
+        "You have not opened any secrets yet": "Þú hefur ekki opnað nein leyndarmál enn"
     },
     "nplurals=2; plural=(n != 1);"
 )
