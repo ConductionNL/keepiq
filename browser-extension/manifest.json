@@ -16,10 +16,6 @@
     "http://*/*",
     "https://*/*"
   ],
-  "background": {
-    "service_worker": "service-worker.js",
-    "type": "module"
-  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "Keepiq"

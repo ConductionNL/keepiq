@@ -7654,22 +7654,16 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "building",
-        "evidence": "browser-extension/manifest.json:3 manifest_version 3 with background.service_worker; browser-extension/build.mjs:24 targets chrome110 and firefox110; no Safari project",
+        "evidence": "browser-extension/build.mjs builds dist/chromium (module service worker) and dist/firefox (background scripts, gecko id) from manifest.json + manifests/browsers.mjs; .github/workflows/browser-extension.yml loads both headless (load-check/chromium.mjs, firefox.mjs); browser-extension/safari/convert.sh waits for a macOS runner",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "browser-extension (load unpacked in Chrome or Edge)",
-        "note": "One MV3 extension targets Chromium browsers and nominally Firefox. Firefox does not run an MV3 background.service_worker, so the Firefox build is unlikely to load; there is no Safari build and no store listing for any browser.",
+        "reachedOn": "npm run build:extension -> browser-extension/dist/chromium or dist/firefox, loaded in the browser",
+        "note": "Chromium and Firefox packages are built and load-checked (2026-09-30). The Safari half is open: it needs a macOS runner and an Apple developer identity (DECISIONS row 20), task 1.2 of the change.",
         "defects": [
           {
             "at": "browser-extension/build.mjs:1",
             "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
             "issue": null,
             "needsLiveCheck": false
-          },
-          {
-            "at": "browser-extension/manifest.json:22",
-            "what": "The manifest declares only background.service_worker; Firefox MV3 needs background.scripts, so the extension probably fails to start in Firefox despite the README and build target claiming Firefox support.",
-            "issue": null,
-            "needsLiveCheck": true
           }
         ],
         "change": "openspec/changes/clients-extension-firefox-and-safari-builds"
