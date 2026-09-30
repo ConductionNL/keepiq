@@ -25,9 +25,12 @@ import { useSessionStore } from './session.js'
  * would quietly shrink an export to whichever folder the user happened to be
  * browsing — the mirror image of the bug that motivated storing it at all.
  *
- * @type {{folderId: null, typeId: null, search: string}}
+ * `state: 'kept'` is everything not in the trash: an export or an import
+ * reconciliation carries archived secrets too (vault-trash-and-archive).
+ *
+ * @type {{folderId: null, typeId: null, search: string, state: string}}
  */
-const WHOLE_VAULT = { folderId: null, typeId: null, search: '' }
+const WHOLE_VAULT = { folderId: null, typeId: null, search: '', state: 'kept' }
 export const useSecretStore = defineStore('secret', {
 	state: () => ({
 		/** @type {Array<object>} The current page of secrets (metadata + ciphertext). */
@@ -39,7 +42,7 @@ export const useSecretStore = defineStore('secret', {
 		/** @type {boolean} Whether a request is in flight. */
 		loading: false,
 		/** @type {object} Active list filters. */
-		filters: { folderId: null, search: '', typeId: null },
+		filters: { folderId: null, search: '', typeId: null, state: 'live' },
 		/** @type {object} Active sort. */
 		sort: { field: 'name', direction: 'asc' },
 		/** @type {number} The current 1-based page. */
@@ -77,6 +80,7 @@ export const useSecretStore = defineStore('secret', {
 			if ('search' in query) this.filters.search = query.search ?? ''
 			if ('typeId' in query) this.filters.typeId = query.typeId ?? null
 			if ('sort' in query && query.sort) this.sort.field = query.sort
+			if ('state' in query) this.filters.state = query.state || 'live'
 		},
 
 		/**
@@ -97,6 +101,18 @@ export const useSecretStore = defineStore('secret', {
 				// Offline (served from cache): list from the decrypted snapshot
 				// instead of the live API (offline-readonly-cache §4.2).
 				const offline = useOfflineStore()
+				// Trash and archive state (vault-trash-and-archive): live
+				// unless the view names another. The offline snapshot holds
+				// live secrets only, so the Trash and Archive views are empty
+				// offline.
+				const state =
+					('state' in options ? options.state : this.filters.state) || 'live'
+				if (offline.servedFromCache && offline.vault && state !== 'live' && state !== 'kept') {
+					this.secrets = []
+					this.totalCount = 0
+					this.page = 1
+					return
+				}
 				if (offline.servedFromCache && offline.vault) {
 					// PRESENCE, not nullishness: an explicit null means "no filter"
 					// (vault root, or a bulk fetch of the whole vault), which `??`
@@ -157,6 +173,9 @@ export const useSecretStore = defineStore('secret', {
 					'typeId' in options ? options.typeId : this.filters.typeId
 				if (typeId) {
 					params.typeId = typeId
+				}
+				if (state !== 'live') {
+					params.state = state
 				}
 
 				try {
@@ -526,6 +545,27 @@ export const useSecretStore = defineStore('secret', {
 		async deleteSecret(id) {
 			await axios.delete(generateUrl(`/apps/keepiq/api/v1/secrets/${id}`))
 			this.secrets = this.secrets.filter((s) => s.id !== id)
+		},
+
+		/**
+		 * Move a secret between trash and archive states and drop it from the
+		 * list being shown: every action takes it out of the current view.
+		 *
+		 * @param {string} id The secret ID.
+		 * @param {string} action restore, purge, archive or unarchive.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+		 */
+		async changeSecretState(id, action) {
+			const url = generateUrl(`/apps/keepiq/api/v1/secrets/${id}/${action}`)
+			if (action === 'purge') {
+				await axios.delete(url)
+			} else {
+				await axios.post(url)
+			}
+			this.secrets = this.secrets.filter((s) => s.id !== id)
+			this.totalCount = Math.max(0, this.totalCount - 1)
 		},
 
 		/**

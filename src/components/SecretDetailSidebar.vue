@@ -93,6 +93,18 @@
 						</NcActionButton>
 						<NcActionButton
 							:closeAfterClick="true"
+							data-testid="secret-detail-archive"
+							@click="toggleArchive">
+							<template #icon>
+								<ArchiveArrowUpOutline v-if="isArchived" :size="20" />
+								<ArchiveOutline v-else :size="20" />
+							</template>
+							{{
+								isArchived ? t('keepiq', 'Unarchive') : t('keepiq', 'Archive')
+							}}
+						</NcActionButton>
+						<NcActionButton
+							:closeAfterClick="true"
 							data-testid="secret-detail-delete"
 							@click="openDelete">
 							<template #icon>
@@ -839,6 +851,8 @@ import {
 	NcNoteCard,
 } from '@nextcloud/vue'
 import Account from 'vue-material-design-icons/Account.vue'
+import ArchiveArrowUpOutline from 'vue-material-design-icons/ArchiveArrowUpOutline.vue'
+import ArchiveOutline from 'vue-material-design-icons/ArchiveOutline.vue'
 import Autorenew from 'vue-material-design-icons/Autorenew.vue'
 import BeehiveOutline from 'vue-material-design-icons/BeehiveOutline.vue'
 import CalendarMonthOutline from 'vue-material-design-icons/CalendarMonthOutline.vue'
@@ -907,6 +921,8 @@ export default {
 		NcEmptyContent,
 		NcNoteCard,
 		Account,
+		ArchiveArrowUpOutline,
+		ArchiveOutline,
 		Autorenew,
 		BeehiveOutline,
 		CalendarMonthOutline,
@@ -1006,6 +1022,16 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Whether the open secret is archived (vault-trash-and-archive).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+		 */
+		isArchived() {
+			return Boolean(this.secret?.archivedAt)
+		},
+
 		/**
 		 * The sidebar header name: the secret's name once loaded, a generic
 		 * placeholder while loading/errored (NcAppSidebar requires a name).
@@ -1541,6 +1567,27 @@ export default {
 			this.cnOpenModal('secret-share', {
 				secretId: this.secretId,
 			})
+		},
+
+		/**
+		 * Archive the open secret, or bring an archived one back, then close
+		 * the sidebar: either way the secret leaves the list being shown.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+		 */
+		async toggleArchive() {
+			const action = this.isArchived ? 'unarchive' : 'archive'
+			try {
+				await useSecretStore().changeSecretState(this.secretId, action)
+				this.$emit('close')
+			} catch (e) {
+				showError(
+					action === 'archive'
+						? t('keepiq', 'Could not archive the secret')
+						: t('keepiq', 'Could not unarchive the secret'),
+				)
+			}
 		},
 
 		/**
