@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Notatki",
         "Do not import": "Nie importuj",
         "Hide this value": "Ukryj tę wartość",
-        "Show this value": "Pokaż tę wartość"
+        "Show this value": "Pokaż tę wartość",
+        "Defaults": "Domyślne",
+        "New secrets start as this type, and your secret list opens in this view.": "Nowe sekrety zaczynają się od tego typu, a lista sekretów otwiera się w tym widoku.",
+        "Default item type": "Domyślny typ elementu",
+        "Cards": "Karty",
+        "Table": "Tabela",
+        "Could not save your default": "Nie udało się zapisać wartości domyślnej",
+        "Recently used": "Ostatnio używane",
+        "Opened": "Otwarto",
+        "You have not opened any secrets yet": "Nie otwarto jeszcze żadnego sekretu"
     },
     "nplurals=2; plural=(n != 1);"
 )

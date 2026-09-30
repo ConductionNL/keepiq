@@ -1199,7 +1199,16 @@
         "Notes": "Notities",
         "Do not import": "Niet importeren",
         "Hide this value": "Deze waarde verbergen",
-        "Show this value": "Deze waarde tonen"
+        "Show this value": "Deze waarde tonen",
+        "Defaults": "Standaarden",
+        "New secrets start as this type, and your secret list opens in this view.": "Nieuwe geheimen beginnen als dit type, en je lijst met geheimen opent in deze weergave.",
+        "Default item type": "Standaard itemtype",
+        "Cards": "Kaarten",
+        "Table": "Tabel",
+        "Could not save your default": "Je standaard kon niet worden opgeslagen",
+        "Recently used": "Recent gebruikt",
+        "Opened": "Geopend",
+        "You have not opened any secrets yet": "Je hebt nog geen geheimen geopend"
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"

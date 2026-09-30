@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Заметки",
         "Do not import": "Не импортировать",
         "Hide this value": "Скрыть это значение",
-        "Show this value": "Показать это значение"
+        "Show this value": "Показать это значение",
+        "Defaults": "По умолчанию",
+        "New secrets start as this type, and your secret list opens in this view.": "Новые секреты создаются с этим типом, а список секретов открывается в этом виде.",
+        "Default item type": "Тип элемента по умолчанию",
+        "Cards": "Карточки",
+        "Table": "Таблица",
+        "Could not save your default": "Не удалось сохранить значение по умолчанию",
+        "Recently used": "Недавно использованные",
+        "Opened": "Открыто",
+        "You have not opened any secrets yet": "Вы ещё не открывали секреты"
     },
     "nplurals=2; plural=(n != 1);"
 )

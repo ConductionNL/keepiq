@@ -1194,7 +1194,16 @@
         "Notes": "Белешки",
         "Do not import": "Не увезувај",
         "Hide this value": "Скриј ја оваа вредност",
-        "Show this value": "Прикажи ја оваа вредност"
+        "Show this value": "Прикажи ја оваа вредност",
+        "Defaults": "Стандардни",
+        "New secrets start as this type, and your secret list opens in this view.": "Новите тајни започнуваат како овој тип, а твојата листа на тајни се отвора во овој приказ.",
+        "Default item type": "Стандарден тип на ставка",
+        "Cards": "Картички",
+        "Table": "Табела",
+        "Could not save your default": "Не можеше да се зачува стандардната вредност",
+        "Recently used": "Неодамна користени",
+        "Opened": "Отворено",
+        "You have not opened any secrets yet": "Сè уште немаш отворено ниту една тајна"
     },
     "plurals": null
 }

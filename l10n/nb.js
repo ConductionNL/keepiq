@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Notater",
         "Do not import": "Ikke importer",
         "Hide this value": "Skjul denne verdien",
-        "Show this value": "Vis denne verdien"
+        "Show this value": "Vis denne verdien",
+        "Defaults": "Standarder",
+        "New secrets start as this type, and your secret list opens in this view.": "Nye hemmeligheter starter som denne typen, og hemmelighetslisten din åpnes i denne visningen.",
+        "Default item type": "Standard elementtype",
+        "Cards": "Kort",
+        "Table": "Tabell",
+        "Could not save your default": "Kunne ikke lagre standardvalget ditt",
+        "Recently used": "Nylig brukt",
+        "Opened": "Åpnet",
+        "You have not opened any secrets yet": "Du har ikke åpnet noen hemmeligheter ennå"
     },
     "nplurals=2; plural=(n != 1);"
 )

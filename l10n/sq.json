@@ -1194,7 +1194,16 @@
         "Notes": "Shënime",
         "Do not import": "Mos importo",
         "Hide this value": "Fshihe këtë vlerë",
-        "Show this value": "Shfaqe këtë vlerë"
+        "Show this value": "Shfaqe këtë vlerë",
+        "Defaults": "Parazgjedhjet",
+        "New secrets start as this type, and your secret list opens in this view.": "Sekretet e reja fillojnë me këtë lloj dhe lista jote e sekreteve hapet në këtë pamje.",
+        "Default item type": "Lloji i parazgjedhur i elementit",
+        "Cards": "Kartela",
+        "Table": "Tabelë",
+        "Could not save your default": "Parazgjedhja nuk u ruajt",
+        "Recently used": "Përdorur së fundi",
+        "Opened": "Hapur",
+        "You have not opened any secrets yet": "Nuk ke hapur ende asnjë sekret"
     },
     "plurals": null
 }

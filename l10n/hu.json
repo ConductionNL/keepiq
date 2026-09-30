@@ -1194,7 +1194,16 @@
         "Notes": "Jegyzetek",
         "Do not import": "Ne importálja",
         "Hide this value": "Érték elrejtése",
-        "Show this value": "Érték megjelenítése"
+        "Show this value": "Érték megjelenítése",
+        "Defaults": "Alapértelmezések",
+        "New secrets start as this type, and your secret list opens in this view.": "Az új titkok ezzel a típussal indulnak, a titkok listája pedig ebben a nézetben nyílik meg.",
+        "Default item type": "Alapértelmezett elemtípus",
+        "Cards": "Kártyák",
+        "Table": "Táblázat",
+        "Could not save your default": "Nem sikerült menteni az alapértelmezést",
+        "Recently used": "Nemrég használt",
+        "Opened": "Megnyitva",
+        "You have not opened any secrets yet": "Még nem nyitottál meg egy titkot sem"
     },
     "plurals": null
 }

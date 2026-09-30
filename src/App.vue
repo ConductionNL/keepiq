@@ -145,6 +145,13 @@
 					</div>
 				</NcAppSettingsSection>
 
+				<NcAppSettingsSection id="defaults" :name="t('keepiq', 'Defaults')">
+					<template #icon>
+						<TuneVariantIcon :size="20" />
+					</template>
+					<DefaultsSection />
+				</NcAppSettingsSection>
+
 				<NcAppSettingsSection id="security" :name="t('keepiq', 'Security')">
 					<template #icon>
 						<ShieldIcon :size="20" />
@@ -394,12 +401,14 @@ import KeyIcon from 'vue-material-design-icons/Key.vue'
 // import PuzzleIcon from 'vue-material-design-icons/Puzzle.vue' // browser-extension section, hidden until it ships
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import TimerIcon from 'vue-material-design-icons/Timer.vue'
+import TuneVariantIcon from 'vue-material-design-icons/TuneVariant.vue'
 import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
 import KeepiqAppNav from './components/KeepiqAppNav/KeepiqAppNav.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
 import SecretDetailSidebar from './components/SecretDetailSidebar.vue'
+import DefaultsSection from './components/settings/DefaultsSection.vue'
 import {
 	handleLockTransition,
 	isPublicRoute,
@@ -436,6 +445,8 @@ export default {
 		NcSelect,
 		NcTextField,
 		TimerIcon,
+		TuneVariantIcon,
+		DefaultsSection,
 		ShieldIcon,
 		KeyIcon,
 		// PuzzleIcon, // browser-extension section, hidden until it ships
@@ -932,6 +943,7 @@ export default {
 		 * surfacing success/error state to the UI. The master password signs the
 		 * vault-key proof the guarded endpoint requires and is never sent.
 		 *
+		 * @param {boolean} acceptEmergencyLoss Whether the user accepted losing emergency access.
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 		 */

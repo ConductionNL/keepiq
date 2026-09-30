@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Nótaí",
         "Do not import": "Ná hiompórtáil",
         "Hide this value": "Folaigh an luach seo",
-        "Show this value": "Taispeáin an luach seo"
+        "Show this value": "Taispeáin an luach seo",
+        "Defaults": "Réamhshocruithe",
+        "New secrets start as this type, and your secret list opens in this view.": "Tosaíonn rúin nua mar an cineál seo, agus osclaíonn do liosta rún san amharc seo.",
+        "Default item type": "Cineál míre réamhshocraithe",
+        "Cards": "Cártaí",
+        "Table": "Tábla",
+        "Could not save your default": "Níorbh fhéidir do réamhshocrú a shábháil",
+        "Recently used": "Úsáidte le déanaí",
+        "Opened": "Oscailte",
+        "You have not opened any secrets yet": "Níor oscail tú aon rún fós"
     },
     "nplurals=2; plural=(n != 1);"
 )

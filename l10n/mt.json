@@ -1194,7 +1194,16 @@
         "Notes": "Noti",
         "Do not import": "Timportax",
         "Hide this value": "Aħbi dan il-valur",
-        "Show this value": "Uri dan il-valur"
+        "Show this value": "Uri dan il-valur",
+        "Defaults": "Awtomatiċi",
+        "New secrets start as this type, and your secret list opens in this view.": "Is-sigrieti l-ġodda jibdew b'dan it-tip, u l-lista tas-sigrieti tiegħek tiftaħ f'din il-viżta.",
+        "Default item type": "Tip ta' oġġett awtomatiku",
+        "Cards": "Karti",
+        "Table": "Tabella",
+        "Could not save your default": "Ma setax jiġi ssejvjat l-awtomatiku tiegħek",
+        "Recently used": "Użati reċentement",
+        "Opened": "Miftuħ",
+        "You have not opened any secrets yet": "Għadek ma ftaħt l-ebda sigriet"
     },
     "plurals": null
 }

@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Muistiinpanot",
         "Do not import": "Älä tuo",
         "Hide this value": "Piilota tämä arvo",
-        "Show this value": "Näytä tämä arvo"
+        "Show this value": "Näytä tämä arvo",
+        "Defaults": "Oletukset",
+        "New secrets start as this type, and your secret list opens in this view.": "Uudet salaisuudet alkavat tällä tyypillä, ja salaisuuslistasi avautuu tässä näkymässä.",
+        "Default item type": "Oletuskohdetyyppi",
+        "Cards": "Kortit",
+        "Table": "Taulukko",
+        "Could not save your default": "Oletusarvoa ei voitu tallentaa",
+        "Recently used": "Äskettäin käytetyt",
+        "Opened": "Avattu",
+        "You have not opened any secrets yet": "Et ole vielä avannut yhtään salaisuutta"
     },
     "nplurals=2; plural=(n != 1);"
 )

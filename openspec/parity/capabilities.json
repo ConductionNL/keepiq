@@ -1043,7 +1043,7 @@
       "id": "vault-20",
       "area": "vault",
       "name": "Choose a default item type and default view for new items.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "partial",
@@ -1051,19 +1051,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "building",
-        "evidence": "lib/Service/SettingsService.php:98-99 user pref keys default_secret_type and default_view; grep -rn default_secret_type src: no hits; src/views/DashboardSettingsView.vue:36 edits default_view but is in no route or registry (grep DashboardSettingsView src: only a comment)",
+        "state": "built",
+        "evidence": "src/App.vue user-settings dialog -> Defaults section src/components/settings/DefaultsSection.vue -> src/store/modules/userPreferences.js save() PUT /api/settings/user (default_secret_type, default_view); src/dialogs/SecretCreateDialog.vue mounted() resolveDefaultTypeId (saved type, else login); src/views/SecretList.vue listViewMode -> CnIndexPage viewMode; dead src/views/DashboardSettingsView.vue deleted",
         "owner": "ConductionNL/keepiq",
-        "note": "The backend stores both preferences, but no reached screen edits them: the only form is DashboardSettingsView, which no route mounts. The create dialog and list do not read them either; the create dialog preselects the first type.",
-        "defects": [
-          {
-            "at": "src/views/DashboardSettingsView.vue:36",
-            "what": "The settings view that edits default_view is not mounted by any route or registry entry, so the preference cannot be set.",
-            "issue": "#208",
-            "needsLiveCheck": false
-          }
-        ],
-        "change": "openspec/changes/vault-defaults-and-recently-used-widget"
+        "reachedOn": "User settings dialog (app navigation, Settings) -> Defaults; then New secret, and the Secrets list",
+        "note": "Built 2026-09-30. Defect #208 (unmounted DashboardSettingsView) closed by deleting the view and mounting DefaultsSection. Tests: vitest tests/components/DefaultsSection.spec.js, tests/dialogs/SecretCreateDialog.defaultType.spec.js, tests/views/SecretList.defaultView.spec.js, tests/store/userPreferences.spec.js.",
+        "change": "openspec/changes/archive/2026-09-30-vault-defaults-and-recently-used-widget"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1083,7 +1076,7 @@
       "id": "vault-21",
       "area": "vault",
       "name": "See the secrets you used most recently on the dashboard.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "partial",
       "onepassword": "partial",
       "passbolt": "no",
@@ -1091,12 +1084,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "building",
-        "evidence": "src/manifest.json:294 recent-activity-feed widget -> GET /api/v1/audit/me (appinfo/routes.php:378) listing the user's own audit events with item names; lib/Service/AuditService.php:200 recentlyAccessed (secret.read only) has no caller (grep recentlyAccessed lib src: definition only)",
+        "state": "built",
+        "evidence": "src/manifest.json dashboard widget recently-used (object-table, endpointSource /apps/keepiq/api/v1/secrets/recent, rowRoute SecretList) -> appinfo/routes.php audit#recent -> lib/Controller/AuditController.php recent() -> lib/Service/RecentlyUsedService.php forUser() over AuditService::recentlyAccessed(), distinct, owned, not tombstoned, at most five",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Dashboard page (/) -> Recent activity widget",
-        "note": "The dashboard shows your last five audit events of any kind, which includes secret reads by name, but it is an activity log rather than a list of recently used secrets and rows do not open the secret. The dedicated recently-accessed query exists but nothing calls it.",
-        "change": "openspec/changes/vault-defaults-and-recently-used-widget"
+        "reachedOn": "Dashboard page (/) -> Recently used widget; a row opens /secrets/:id",
+        "note": "Built 2026-09-30. Tests: PHPUnit tests/Unit/Service/RecentlyUsedServiceTest.php (distinct newest first, dropped when no longer held, cap five, empty), tests/Unit/Controller/AuditControllerTest.php.",
+        "change": "openspec/changes/archive/2026-09-30-vault-defaults-and-recently-used-widget"
       },
       "rowSource": "own",
       "provider": "keepiq",

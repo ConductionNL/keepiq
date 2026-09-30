@@ -1194,7 +1194,16 @@
         "Notes": "Bilješke",
         "Do not import": "Ne uvozi",
         "Hide this value": "Sakrij ovu vrijednost",
-        "Show this value": "Prikaži ovu vrijednost"
+        "Show this value": "Prikaži ovu vrijednost",
+        "Defaults": "Zadano",
+        "New secrets start as this type, and your secret list opens in this view.": "Nove tajne počinju kao ova vrsta, a tvoj popis tajni otvara se u ovom prikazu.",
+        "Default item type": "Zadana vrsta stavke",
+        "Cards": "Kartice",
+        "Table": "Tablica",
+        "Could not save your default": "Zadanu vrijednost nije moguće spremiti",
+        "Recently used": "Nedavno korišteno",
+        "Opened": "Otvoreno",
+        "You have not opened any secrets yet": "Još nisi otvorio nijednu tajnu"
     },
     "plurals": null
 }

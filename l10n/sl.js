@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Opombe",
         "Do not import": "Ne uvozi",
         "Hide this value": "Skrij to vrednost",
-        "Show this value": "Pokaži to vrednost"
+        "Show this value": "Pokaži to vrednost",
+        "Defaults": "Privzeto",
+        "New secrets start as this type, and your secret list opens in this view.": "Nove skrivnosti se začnejo s to vrsto, seznam skrivnosti pa se odpre v tem pogledu.",
+        "Default item type": "Privzeta vrsta elementa",
+        "Cards": "Kartice",
+        "Table": "Tabela",
+        "Could not save your default": "Privzete vrednosti ni bilo mogoče shraniti",
+        "Recently used": "Nedavno uporabljeno",
+        "Opened": "Odprto",
+        "You have not opened any secrets yet": "Nobene skrivnosti še niste odprli"
     },
     "nplurals=2; plural=(n != 1);"
 )

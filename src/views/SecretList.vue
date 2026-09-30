@@ -76,7 +76,7 @@
 			     "consumer manages its own dialog" opt-out; the @add path is
 			     unaffected because this view listens to it. -->
 			<CnIndexPage
-				viewMode="list"
+				:viewMode="listViewMode"
 				:availableViewModes="['list', 'cards', 'table']"
 				listLabel="List"
 				:showFormDialog="false"
@@ -519,6 +519,10 @@ import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
+import {
+	resolveDefaultView,
+	useUserPreferencesStore,
+} from '../store/modules/userPreferences.js'
 import { secretDetailLocation } from '../utils/detailRoute.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { rootVaultOf, subfolderRows } from '../utils/vaultList.js'
@@ -641,6 +645,16 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The view the list opens in: the user's saved default view.
+		 *
+		 * @return {string} list, cards or table.
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 */
+		listViewMode() {
+			return resolveDefaultView(useUserPreferencesStore().defaultView)
+		},
+
 		/**
 		 * Secret id -> its pending request, for the row indicator.
 		 *
@@ -1109,10 +1123,12 @@ export default {
 
 	/**
 	 * Load types + folders + the first secrets page, then lazily run the
-	 * client-side password-health pass so strength badges appear.
+	 * client-side password-health pass so strength badges appear. Also reads
+	 * the user's saved default view.
 	 *
 	 * @return {Promise<void>}
 	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-strength-scoring-and-badges
+	 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 	 */
 	async mounted() {
 		// The bulk selection is client-only and dies with the lock (§1.2).
@@ -1126,6 +1142,7 @@ export default {
 			// Drives the outstanding-request badge. allSettled, so a failure here
 			// costs the badge and never the list itself.
 			useSecretRequestStore().fetchRequests(),
+			this.loadViewPreference(),
 		])
 		try {
 			await this.reload()
@@ -1143,6 +1160,16 @@ export default {
 
 	methods: {
 		t,
+
+		/**
+		 * Read the saved default view (once per page load).
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 */
+		loadViewPreference() {
+			return useUserPreferencesStore().ensureLoaded()
+		},
 
 		/**
 		 * Per-row selection toggle with shift-click range support

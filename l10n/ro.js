@@ -1195,7 +1195,16 @@ OC.L10N.register(
         "Notes": "Note",
         "Do not import": "Nu importa",
         "Hide this value": "Ascunde această valoare",
-        "Show this value": "Afișează această valoare"
+        "Show this value": "Afișează această valoare",
+        "Defaults": "Valori implicite",
+        "New secrets start as this type, and your secret list opens in this view.": "Secretele noi încep cu acest tip, iar lista ta de secrete se deschide în această vizualizare.",
+        "Default item type": "Tip implicit de element",
+        "Cards": "Carduri",
+        "Table": "Tabel",
+        "Could not save your default": "Valoarea implicită nu a putut fi salvată",
+        "Recently used": "Folosite recent",
+        "Opened": "Deschis",
+        "You have not opened any secrets yet": "Nu ai deschis încă niciun secret"
     },
     "nplurals=2; plural=(n != 1);"
 )
