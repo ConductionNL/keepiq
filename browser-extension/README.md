@@ -56,3 +56,16 @@ The extension shares the web app's `src/crypto` and `src/totp` modules verbatim
 ```sh
 npm run build:extension   # from the repo root
 ```
+
+The build writes one package per browser, from `manifest.json` plus the
+overlay in `manifests/browsers.mjs`:
+
+- `dist/chromium`: Chrome and Edge (load unpacked from `chrome://extensions`).
+- `dist/firefox`: Firefox 115 or later (load from `about:debugging` as a
+  temporary add-on).
+- Safari: made from `dist/chromium` on a Mac, see `safari/README.md`. Not
+  yet part of the pipeline.
+
+`node browser-extension/load-check/chromium.mjs` and `firefox.mjs` start each
+package headless and check its background answers the popup; the
+`Browser extension` workflow runs both.
