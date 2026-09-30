@@ -1203,7 +1203,26 @@
         "Could not save your default": "No s'ha pogut desar el valor per defecte",
         "Recently used": "Utilitzats recentment",
         "Opened": "Obert",
-        "You have not opened any secrets yet": "Encara no has obert cap secret"
+        "You have not opened any secrets yet": "Encara no has obert cap secret",
+        "Could not delete the item type.": "No s'ha pogut suprimir el tipus d'element.",
+        "Could not load the item types.": "No s'han pogut carregar els tipus d'element.",
+        "Could not save the item type.": "No s'ha pogut desar el tipus d'element.",
+        "Delete item type": "Suprimeix el tipus d'element",
+        "Edit item type": "Edita el tipus d'element",
+        "Fields": "Camps",
+        "Fields: {count}": "Camps: {count}",
+        "Hidden": "Ocult",
+        "Item types": "Tipus d'element",
+        "Move up": "Mou amunt",
+        "New item type": "Tipus d'element nou",
+        "No item types defined yet.": "Encara no hi ha cap tipus d'element definit.",
+        "Required": "Obligatori",
+        "Text": "Text",
+        "This field is required": "Aquest camp és obligatori",
+        "Web address": "Adreça web",
+        "{label} (required)": "{label} (obligatori)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Voleu suprimir «{name}»? Els secrets d'aquest tipus continuen llegibles i passen a ser elements d'Inici de sessió.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Els tipus d'element que definiu aquí apareixen per a tothom al diàleg Secret nou, amb els camps que trieu."
     },
     "plurals": null
 }

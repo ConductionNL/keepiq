@@ -88,15 +88,17 @@ class SecretTypeController extends OCSController {
 	 * @param string $name The unique type name
 	 * @param string $label The human-readable label
 	 * @param string $scope The scope (user or global)
+	 * @param array<mixed>|null $fields The fields an item of this type carries
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.2
+	 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
 	 */
 	#[NoAdminRequired]
-	public function create(string $name, string $label, string $scope = 'user'): JSONResponse {
+	public function create(string $name, string $label, string $scope='user', ?array $fields=null): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
@@ -106,7 +108,14 @@ class SecretTypeController extends OCSController {
 		$isAdmin = $this->groupManager->isAdmin($userId);
 
 		try {
-			$type = $this->typeService->createType($name, $label, $scope, $userId, $isAdmin);
+			$type = $this->typeService->createType(
+				name: $name,
+				label: $label,
+				scope: $scope,
+				userId: $userId,
+				isAdmin: $isAdmin,
+				fields: $fields,
+			);
 		} catch (ForbiddenException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (ConflictException $e) {
@@ -123,15 +132,17 @@ class SecretTypeController extends OCSController {
 	 *
 	 * @param string $id The type ID
 	 * @param string $label The new label
+	 * @param array<mixed>|null $fields The new field list, or null to keep it
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.2
+	 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
 	 */
 	#[NoAdminRequired]
-	public function update(string $id, string $label): JSONResponse {
+	public function update(string $id, string $label, ?array $fields=null): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
@@ -141,7 +152,13 @@ class SecretTypeController extends OCSController {
 		$isAdmin = $this->groupManager->isAdmin($userId);
 
 		try {
-			$type = $this->typeService->updateType($id, $label, $userId, $isAdmin);
+			$type = $this->typeService->updateType(
+				id: $id,
+				label: $label,
+				userId: $userId,
+				isAdmin: $isAdmin,
+				fields: $fields,
+			);
 		} catch (ForbiddenException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $e) {

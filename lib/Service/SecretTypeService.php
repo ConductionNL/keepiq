@@ -38,6 +38,28 @@ use Ramsey\Uuid\Uuid;
  * Business logic for SecretType lifecycle.
  */
 class SecretTypeService {
+
+	/**
+	 * The kinds a field of a type can have (admin-18).
+	 *
+	 * @var list<string>
+	 */
+	public const FIELD_KINDS = ['text', 'hidden', 'url', 'email'];
+
+	/**
+	 * The most fields one type may carry.
+	 *
+	 * @var int
+	 */
+	public const MAX_FIELDS = 30;
+
+	/**
+	 * Labels a field may not take: its value is stored under the label in the
+	 * additional-fields blob, and these names route to built-in columns.
+	 *
+	 * @var list<string>
+	 */
+	private const RESERVED_LABELS = ['key', 'login', 'url'];
 	/**
 	 * Constructor for SecretTypeService.
 	 *
@@ -113,6 +135,7 @@ class SecretTypeService {
 	 * @param string $scope The scope (user or global)
 	 * @param string $userId The requesting Nextcloud user ID
 	 * @param bool $isAdmin Whether the requester is an administrator
+	 * @param array<mixed>|null $fields The fields an item of this type carries (admin-18)
 	 *
 	 * @return SecretType
 	 *
@@ -121,6 +144,7 @@ class SecretTypeService {
 	 * @throws ConflictException When the name already exists
 	 *
 	 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+	 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
 	 */
 	public function createType(
 		string $name,
@@ -128,6 +152,7 @@ class SecretTypeService {
 		string $scope,
 		string $userId,
 		bool $isAdmin,
+		?array $fields=null,
 	): SecretType {
 		$name = trim($name);
 		if ($name === '' || $label === '') {
@@ -157,6 +182,7 @@ class SecretTypeService {
 		$type->setLabel($label);
 		$type->setScope($scope);
 		$type->setOwnerId($ownerScopeId);
+		$type->setFieldList($this->normaliseFields(fields: $fields ?? []));
 		$type->setCreatedAt(new DateTime());
 
 		$this->mapper->insert($type);
@@ -172,15 +198,23 @@ class SecretTypeService {
 	 * @param string $label The new label
 	 * @param string $userId The requesting Nextcloud user ID
 	 * @param bool $isAdmin Whether the requester is an administrator
+	 * @param array<mixed>|null $fields The new field list, or null to keep it (admin-18)
 	 *
 	 * @return SecretType
 	 *
 	 * @throws ForbiddenException When the type is a system type or not owned
-	 * @throws InvalidArgumentException When the label is empty
+	 * @throws InvalidArgumentException When the label or the field list is invalid
 	 *
 	 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+	 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
 	 */
-	public function updateType(string $id, string $label, string $userId, bool $isAdmin): SecretType {
+	public function updateType(
+		string $id,
+		string $label,
+		string $userId,
+		bool $isAdmin,
+		?array $fields=null,
+	): SecretType {
 		$label = trim($label);
 		if ($label === '') {
 			throw new InvalidArgumentException('Label is required');
@@ -189,11 +223,78 @@ class SecretTypeService {
 		$type = $this->loadManageable(id: $id, userId: $userId, isAdmin: $isAdmin);
 
 		$type->setLabel($label);
+		if ($fields !== null) {
+			$type->setFieldList($this->normaliseFields(fields: $fields));
+		}
+
 		$this->mapper->update($type);
 		$this->logger->info("Keepiq: secret type {$id} relabelled by {$userId}");
 
 		return $type;
 	}//end updateType()
+
+	/**
+	 * Validate a field list and bring it into its stored shape.
+	 *
+	 * Keys are unique, labels are unique (values are stored under the label)
+	 * and not a built-in member name, kinds are known, at most MAX_FIELDS.
+	 *
+	 * @param array<mixed> $fields The submitted fields
+	 *
+	 * @return list<array{key: string, label: string, kind: string, required: bool}>
+	 *
+	 * @throws InvalidArgumentException When the list is invalid
+	 *
+	 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+	 */
+	private function normaliseFields(array $fields): array {
+		if (count($fields) > self::MAX_FIELDS) {
+			throw new InvalidArgumentException('A type can have at most '.self::MAX_FIELDS.' fields');
+		}
+
+		$out    = [];
+		$keys   = [];
+		$labels = [];
+		foreach ($fields as $field) {
+			if (is_array($field) === false) {
+				throw new InvalidArgumentException('Each field must be an object');
+			}
+
+			$key   = trim((string) ($field['key'] ?? ''));
+			$label = trim((string) ($field['label'] ?? ''));
+			$kind  = (string) ($field['kind'] ?? '');
+			if (preg_match('/^[a-z0-9][a-z0-9_-]{0,63}$/', $key) !== 1) {
+				throw new InvalidArgumentException('A field key must be lowercase letters, digits, dashes or underscores');
+			}
+
+			if ($label === '' || mb_strlen($label) > 128) {
+				throw new InvalidArgumentException('A field label is required and at most 128 characters');
+			}
+
+			if (in_array(mb_strtolower($label), self::RESERVED_LABELS, true) === true) {
+				throw new InvalidArgumentException("A field cannot be called '{$label}'");
+			}
+
+			if (in_array($kind, self::FIELD_KINDS, true) === false) {
+				throw new InvalidArgumentException("Unknown field kind '{$kind}'");
+			}
+
+			if (isset($keys[$key]) === true || isset($labels[mb_strtolower($label)]) === true) {
+				throw new InvalidArgumentException('Field keys and labels must be unique');
+			}
+
+			$keys[$key] = true;
+			$labels[mb_strtolower($label)] = true;
+			$out[] = [
+				'key' => $key,
+				'label' => $label,
+				'kind' => $kind,
+				'required' => ($field['required'] ?? false) === true,
+			];
+		}//end foreach
+
+		return $out;
+	}//end normaliseFields()
 
 	/**
 	 * Delete a custom SecretType, reassigning its secrets to the login type.

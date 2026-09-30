@@ -1204,7 +1204,26 @@ OC.L10N.register(
         "Could not save your default": "Betg pussaivel da memorisar tia valur predefinida",
         "Recently used": "Duvrà dacurt",
         "Opened": "Avert",
-        "You have not opened any secrets yet": "Ti n'has anc avert nagin secret"
+        "You have not opened any secrets yet": "Ti n'has anc avert nagin secret",
+        "Could not delete the item type.": "Betg pussaivel da stizzar il tip d'element.",
+        "Could not load the item types.": "Betg pussaivel da chargiar ils tips d'element.",
+        "Could not save the item type.": "Betg pussaivel da memorisar il tip d'element.",
+        "Delete item type": "Stizzar il tip d'element",
+        "Edit item type": "Modifitgar il tip d'element",
+        "Fields": "Champs",
+        "Fields: {count}": "Champs: {count}",
+        "Hidden": "Zuppà",
+        "Item types": "Tips d'element",
+        "Move up": "Spustar ensi",
+        "New item type": "Nov tip d'element",
+        "No item types defined yet.": "Anc nagins tips d'element definids.",
+        "Required": "Obligatoric",
+        "Text": "Text",
+        "This field is required": "Quest champ è obligatoric",
+        "Web address": "Adressa web",
+        "{label} (required)": "{label} (obligatoric)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Stizzar «{name}»? Ils secrets da quest tip restan legibels e daventan elements Login.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Ils tips d'element che ti defineschas qua cumparan per tuts en il dialog Nov secret, cun ils champs che ti tschernas."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1203,7 +1203,26 @@
         "Could not save your default": "Vaikeväärtust ei õnnestunud salvestada",
         "Recently used": "Hiljuti kasutatud",
         "Opened": "Avatud",
-        "You have not opened any secrets yet": "Sa pole veel ühtegi saladust avanud"
+        "You have not opened any secrets yet": "Sa pole veel ühtegi saladust avanud",
+        "Could not delete the item type.": "Kirje tüüpi ei õnnestunud kustutada.",
+        "Could not load the item types.": "Kirje tüüpe ei õnnestunud laadida.",
+        "Could not save the item type.": "Kirje tüüpi ei õnnestunud salvestada.",
+        "Delete item type": "Kustuta kirje tüüp",
+        "Edit item type": "Muuda kirje tüüpi",
+        "Fields": "Väljad",
+        "Fields: {count}": "Väljad: {count}",
+        "Hidden": "Peidetud",
+        "Item types": "Kirje tüübid",
+        "Move up": "Liiguta üles",
+        "New item type": "Uus kirje tüüp",
+        "No item types defined yet.": "Kirje tüüpe pole veel määratud.",
+        "Required": "Kohustuslik",
+        "Text": "Tekst",
+        "This field is required": "See väli on kohustuslik",
+        "Web address": "Veebiaadress",
+        "{label} (required)": "{label} (kohustuslik)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Kas kustutada „{name}“? Selle tüübi saladused jäävad loetavaks ja muutuvad Sisselogimise kirjeteks.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Siin määratud kirje tüübid ilmuvad kõigile aknas Uus saladus, sinu valitud väljadega."
     },
     "plurals": null
 }

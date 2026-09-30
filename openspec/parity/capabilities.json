@@ -5974,7 +5974,7 @@
       "id": "admin-18",
       "area": "admin",
       "name": "An administrator defines new item types and the fields they carry.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "no",
       "onepassword": "no",
       "passbolt": "no",
@@ -5982,12 +5982,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "building",
-        "evidence": "appinfo/routes.php:75-77 secretType#create/update/destroy -> lib/Controller/SecretTypeController.php; src/store/modules/secretType.js:73 createType has no caller in src (git grep createType src)",
+        "state": "built",
+        "evidence": "Admin settings src/views/settings/Settings.vue -> src/components/settings/ItemTypesSection.vue -> src/dialogs/SecretTypeEditorDialog.vue -> store secretType.createType/updateType({fields}) -> lib/Controller/SecretTypeController.php create/update(fields) -> lib/Service/SecretTypeService.php normaliseFields (unique key and label, not key/login/url, kinds text/hidden/url/email, at most 30) -> lib/Db/SecretType.php fields (migration Version001001Date20260930000000); src/components/TypedFieldsForm.vue in SecretCreateDialog/SecretEditDialog, values into the encrypted additional fields under the label (src/utils/typedFields.js)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing, API only",
-        "note": "Custom secret types exist in the API and store, but no page lets anyone create one.",
-        "change": "openspec/changes/admin-secret-type-editor"
+        "reachedOn": "Administration settings -> Keepiq -> Item types; then New secret with that type",
+        "note": "Built 2026-09-30. Tests: PHPUnit SecretTypeFieldsTest, SecretTypeControllerTest; vitest SecretTypeEditorDialog, ItemTypesSection, SecretCreateDialog.typedFields, SecretEditDialog.typedFields, tests/vitest/typed-fields.spec.js.",
+        "change": "openspec/changes/archive/2026-09-30-admin-secret-type-editor"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",

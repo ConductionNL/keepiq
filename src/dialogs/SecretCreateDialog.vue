@@ -119,6 +119,14 @@
 
 			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
 
+			<TypedFieldsForm
+				v-if="typedFields.length > 0"
+				:fields="typedFields"
+				:values="typedValues"
+				:missing="typedMissing"
+				:disabled="saving"
+				@update:values="onTypedValues" />
+
 			<AdditionalFieldsEditor
 				:members="additionalFields"
 				:disabled="saving"
@@ -170,6 +178,7 @@ import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import DestinationSelect from '../components/DestinationSelect.vue'
+import TypedFieldsForm from '../components/TypedFieldsForm.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import {
 	CARD_TYPE_NAME,
@@ -189,6 +198,11 @@ import {
 } from '../store/modules/userPreferences.js'
 import { membersToObject } from '../utils/additionalFields.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
+import {
+	mergeTypedValues,
+	missingRequired,
+	typedFieldsOf,
+} from '../utils/typedFields.js'
 
 /**
  * Create a secret. The value (and optional login) are RSA-encrypted by the
@@ -200,6 +214,7 @@ export default {
 
 	components: {
 		AdditionalFieldsEditor,
+		TypedFieldsForm,
 		DestinationSelect,
 		Dice5,
 		KeyGeneratorModal,
@@ -236,6 +251,8 @@ export default {
 			url: '',
 			login: '',
 			additionalFields: [],
+			typedValues: {},
+			typedMissing: [],
 			selectedFolderId: this.folderId,
 			saving: false,
 			error: '',
@@ -285,6 +302,17 @@ export default {
 			return type && type.name === 'note'
 				? t('keepiq', 'Note')
 				: t('keepiq', 'Secret value')
+		},
+
+		/**
+		 * The fields an administrator defined on the chosen type; empty for
+		 * the built-in types, which keep their own forms.
+		 *
+		 * @return {Array<object>} The fields.
+		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 */
+		typedFields() {
+			return typedFieldsOf(useSecretTypeStore().typesById[this.typeId])
 		},
 
 		/** The selected type's system name (card-identity-items §3.1). */
@@ -387,6 +415,35 @@ export default {
 		t,
 
 		/**
+		 * Take the typed values and clear the marks of fields now filled.
+		 *
+		 * @param {object} values The values by field key.
+		 * @return {void}
+		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 */
+		onTypedValues(values) {
+			this.typedValues = values
+			this.typedMissing = this.typedMissing.filter((key) =>
+				missingRequired(this.typedFields, values).includes(key),
+			)
+		},
+
+		/**
+		 * The additional-fields object to encrypt: the free members plus the
+		 * typed values.
+		 *
+		 * @return {object} The blob.
+		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-typed-fields-storage
+		 */
+		additionalBlob() {
+			return mergeTypedValues(
+				membersToObject(this.additionalFields),
+				this.typedFields,
+				this.typedValues,
+			)
+		},
+
+		/**
 		 * Forward the open-state change; emit `close` when dismissed.
 		 *
 		 * @param {boolean} value The new open state.
@@ -435,6 +492,11 @@ export default {
 			if (!this.canSubmit) {
 				return
 			}
+			// A required field of the type blocks the save and is marked (admin-18).
+			this.typedMissing = missingRequired(this.typedFields, this.typedValues)
+			if (this.typedMissing.length > 0) {
+				return
+			}
 			this.saving = true
 			this.error = ''
 			try {
@@ -462,12 +524,10 @@ export default {
 					// Only when there ARE members: the store encrypts whatever it is
 					// handed, so passing {} unconditionally would write an empty
 					// ciphertext blob onto every secret ever created here.
-					...(this.additionalFields.length > 0
-						? {
-								additionalFields: membersToObject(
-									this.additionalFields,
-								),
-							}
+					// The typed values ride in the same blob, named by field label,
+					// so the server only ever sees their ciphertext (admin-18).
+					...(Object.keys(this.additionalBlob()).length > 0
+						? { additionalFields: this.additionalBlob() }
 						: {}),
 				})
 				this.$emit('saved', created)

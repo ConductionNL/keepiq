@@ -1203,7 +1203,26 @@
         "Could not save your default": "Dein Standardwert konnte nicht gespeichert werden",
         "Recently used": "Zuletzt verwendet",
         "Opened": "Geöffnet",
-        "You have not opened any secrets yet": "Du hast noch keine Geheimnisse geöffnet"
+        "You have not opened any secrets yet": "Du hast noch keine Geheimnisse geöffnet",
+        "Could not delete the item type.": "Der Elementtyp konnte nicht gelöscht werden.",
+        "Could not load the item types.": "Die Elementtypen konnten nicht geladen werden.",
+        "Could not save the item type.": "Der Elementtyp konnte nicht gespeichert werden.",
+        "Delete item type": "Elementtyp löschen",
+        "Edit item type": "Elementtyp bearbeiten",
+        "Fields": "Felder",
+        "Fields: {count}": "Felder: {count}",
+        "Hidden": "Verborgen",
+        "Item types": "Elementtypen",
+        "Move up": "Nach oben",
+        "New item type": "Neuer Elementtyp",
+        "No item types defined yet.": "Noch keine Elementtypen angelegt.",
+        "Required": "Pflichtfeld",
+        "Text": "Text",
+        "This field is required": "Dieses Feld ist erforderlich",
+        "Web address": "Webadresse",
+        "{label} (required)": "{label} (erforderlich)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "„{name}“ löschen? Geheimnisse dieses Typs bleiben lesbar und werden zu Anmeldung-Elementen.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Elementtypen, die du hier anlegst, erscheinen bei allen im Dialog Neues Geheimnis, mit den Feldern, die du wählst."
     },
     "plurals": null
 }

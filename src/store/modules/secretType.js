@@ -65,14 +65,20 @@ export const useSecretTypeStore = defineStore('secretType', {
 		/**
 		 * Create a custom secret type.
 		 *
-		 * @param {object} data The type fields (name, label, scope).
+		 * @param {object} data The type fields (name, label, scope, and optionally fields).
 		 * @return {Promise<object>} The created type.
 		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
 		 */
 		async createType(data) {
 			const response = await axios.post(
 				generateUrl('/apps/keepiq/api/v1/secret-types'),
-				{ name: data.name, label: data.label, scope: data.scope || 'user' },
+				{
+					name: data.name,
+					label: data.label,
+					scope: data.scope || 'user',
+					...(Array.isArray(data.fields) ? { fields: data.fields } : {}),
+				},
 			)
 			this.types.push(response.data)
 			return response.data
@@ -83,13 +89,15 @@ export const useSecretTypeStore = defineStore('secretType', {
 		 *
 		 * @param {string} id The type ID.
 		 * @param {string} label The new label.
+		 * @param {Array<object>} [fields] The new field list; left out, the fields are kept.
 		 * @return {Promise<object>} The updated type.
 		 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
+		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
 		 */
-		async updateType(id, label) {
+		async updateType(id, label, fields) {
 			const response = await axios.put(
 				generateUrl(`/apps/keepiq/api/v1/secret-types/${id}`),
-				{ label },
+				Array.isArray(fields) ? { label, fields } : { label },
 			)
 			const index = this.types.findIndex((t) => t.id === id)
 			if (index !== -1) {

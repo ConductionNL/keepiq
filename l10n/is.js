@@ -1204,7 +1204,26 @@ OC.L10N.register(
         "Could not save your default": "Ekki tókst að vista sjálfgefna gildið þitt",
         "Recently used": "Nýlega notað",
         "Opened": "Opnað",
-        "You have not opened any secrets yet": "Þú hefur ekki opnað nein leyndarmál enn"
+        "You have not opened any secrets yet": "Þú hefur ekki opnað nein leyndarmál enn",
+        "Could not delete the item type.": "Ekki tókst að eyða tegund atriðis.",
+        "Could not load the item types.": "Ekki tókst að hlaða tegundum atriða.",
+        "Could not save the item type.": "Ekki tókst að vista tegund atriðis.",
+        "Delete item type": "Eyða tegund atriðis",
+        "Edit item type": "Breyta tegund atriðis",
+        "Fields": "Svið",
+        "Fields: {count}": "Svið: {count}",
+        "Hidden": "Falið",
+        "Item types": "Tegundir atriða",
+        "Move up": "Færa upp",
+        "New item type": "Ný tegund atriðis",
+        "No item types defined yet.": "Engar tegundir atriða skilgreindar enn.",
+        "Required": "Nauðsynlegt",
+        "Text": "Texti",
+        "This field is required": "Þetta svið er nauðsynlegt",
+        "Web address": "Veffang",
+        "{label} (required)": "{label} (nauðsynlegt)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Eyða „{name}“? Leyndarmál af þessari tegund verða áfram læsileg og verða Innskráning-atriði.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Tegundir atriða sem þú skilgreinir hér birtast öllum í glugganum Nýtt leyndarmál, með þeim sviðum sem þú velur."
     },
     "nplurals=2; plural=(n != 1);"
 )

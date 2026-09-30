@@ -1203,7 +1203,26 @@
         "Could not save your default": "Neizdevās saglabāt tavu noklusējumu",
         "Recently used": "Nesen izmantotie",
         "Opened": "Atvērts",
-        "You have not opened any secrets yet": "Tu vēl neesi atvēris nevienu noslēpumu"
+        "You have not opened any secrets yet": "Tu vēl neesi atvēris nevienu noslēpumu",
+        "Could not delete the item type.": "Neizdevās dzēst vienuma tipu.",
+        "Could not load the item types.": "Neizdevās ielādēt vienumu tipus.",
+        "Could not save the item type.": "Neizdevās saglabāt vienuma tipu.",
+        "Delete item type": "Dzēst vienuma tipu",
+        "Edit item type": "Rediģēt vienuma tipu",
+        "Fields": "Lauki",
+        "Fields: {count}": "Lauki: {count}",
+        "Hidden": "Slēpts",
+        "Item types": "Vienumu tipi",
+        "Move up": "Pārvietot augšup",
+        "New item type": "Jauns vienuma tips",
+        "No item types defined yet.": "Vēl nav definēts neviens vienuma tips.",
+        "Required": "Obligāts",
+        "Text": "Teksts",
+        "This field is required": "Šis lauks ir obligāts",
+        "Web address": "Tīmekļa adrese",
+        "{label} (required)": "{label} (obligāts)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Dzēst “{name}”? Šī tipa noslēpumi paliek lasāmi un kļūst par Pieteikšanās vienumiem.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Šeit definētie vienumu tipi visiem parādās logā Jauns noslēpums ar tevis izvēlētajiem laukiem."
     },
     "plurals": null
 }

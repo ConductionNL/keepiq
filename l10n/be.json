@@ -1203,7 +1203,26 @@
         "Could not save your default": "Не ўдалося захаваць значэнне па змаўчанні",
         "Recently used": "Нядаўна выкарыстаныя",
         "Opened": "Адкрыта",
-        "You have not opened any secrets yet": "Вы яшчэ не адкрывалі сакрэты"
+        "You have not opened any secrets yet": "Вы яшчэ не адкрывалі сакрэты",
+        "Could not delete the item type.": "Не ўдалося выдаліць тып элемента.",
+        "Could not load the item types.": "Не ўдалося загрузіць тыпы элементаў.",
+        "Could not save the item type.": "Не ўдалося захаваць тып элемента.",
+        "Delete item type": "Выдаліць тып элемента",
+        "Edit item type": "Рэдагаваць тып элемента",
+        "Fields": "Палі",
+        "Fields: {count}": "Палі: {count}",
+        "Hidden": "Схаванае",
+        "Item types": "Тыпы элементаў",
+        "Move up": "Уверх",
+        "New item type": "Новы тып элемента",
+        "No item types defined yet.": "Тыпы элементаў яшчэ не вызначаны.",
+        "Required": "Абавязковае",
+        "Text": "Тэкст",
+        "This field is required": "Гэта поле абавязковае",
+        "Web address": "Вэб-адрас",
+        "{label} (required)": "{label} (абавязкова)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Выдаліць «{name}»? Сакрэты гэтага тыпу застануцца чытэльнымі і стануць элементамі Логін.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Тыпы элементаў, якія вы вызначыце тут, з'явяцца ва ўсіх у акне Новы сакрэт з выбранымі вамі палямі."
     },
     "plurals": null
 }
