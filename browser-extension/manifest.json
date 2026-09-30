@@ -12,9 +12,6 @@
     "idle",
     "windows"
   ],
-  "optional_permissions": [
-    "webAuthenticationProxy"
-  ],
   "host_permissions": [
     "http://*/*",
     "https://*/*"

@@ -7326,7 +7326,7 @@
       "id": "clients-03",
       "area": "clients",
       "name": "Be offered to save or update a login after submitting a form.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -7334,32 +7334,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "building",
-        "evidence": "browser-extension/src/content/content-script.js:134 attachSubmitCapture (submit + Enter) -> :150 captureCurrent -> service-worker.js:240 pendingCapture (memory) -> popup.js:79 'pending-capture' save prompt -> service-worker.js:186 doSaveCapture -> api.js:120 POST /api/v1/secrets",
+        "state": "built",
+        "evidence": "browser-extension/src/content/content-script.js captureCurrent -> service-worker.js doCapture -> src/lib/capture.js classifyCapture (same-site rows, decrypted login match: save / update with id / none) -> content/save-prompt.js showSavePrompt (closed shadow root, trusted clicks only) -> 'capture-decision' -> doSaveCapture (update sends key+login to the matched id, create otherwise); popup fallback unchanged",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "browser-extension popup (browser-extension/src/popup/popup.js) -> save prompt shown the next time the popup is opened",
-        "note": "A submitted login is captured, but the offer only appears when the user opens the popup, and it always creates a new secret. The update branch exists but no capture ever carries an id, so an existing login is never updated.",
-        "defects": [
-          {
-            "at": "browser-extension/build.mjs:1",
-            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "browser-extension/src/background/service-worker.js:198",
-            "what": "doSaveCapture updates only when payload.id is set, but captureCurrent (content-script.js:150) never sets an id, so 'update login' never happens and a changed password creates a duplicate secret.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "browser-extension/src/background/service-worker.js:29",
-            "what": "The pending capture lives in worker memory only, so an MV3 worker shutdown before the user opens the popup drops the offer.",
-            "issue": null,
-            "needsLiveCheck": true
-          }
-        ],
-        "change": "openspec/changes/clients-extension-save-prompt-and-passkey-origin"
+        "reachedOn": "Any website login form: submit, and the Keepiq bar appears top right with Save or Update",
+        "note": "Built 2026-09-30. Tests: vitest tests/extension/saveCapture.spec.js (update with id, unchanged offers nothing, save, trusted click, page click ignored). Store release is still open (clients-extension-store-release), so the extension is loaded from a build.",
+        "change": "openspec/changes/archive/2026-09-30-clients-extension-save-prompt-and-passkey-origin"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7420,7 +7400,7 @@
       "id": "clients-05",
       "area": "clients",
       "name": "Use the extension as a passkey provider on websites.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -7428,32 +7408,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "building",
-        "evidence": "browser-extension/src/content/content-script.js:192 injectShim -> browser-extension/src/content/inpage-shim.js overrides navigator.credentials -> content-script.js:204 relay -> service-worker.js:230 webauthn-create/get -> browser-extension/src/passkey/orchestrator.js:74 handleCreate (consent window, createSecret with passkey typeId) / handleGet (match by rpId, getAssertion browser-extension/src/passkey/webauthn.js:197, counter write-back); native path browser-extension/src/passkey/registration.js:23",
+        "state": "built",
+        "evidence": "browser-extension/src/background/service-worker.js webauthn-create/get take senderOrigin(sender) (passkey/rp.js), never the page payload; passkey/orchestrator.js handleCreate/handleGet refuse with rp-origin-mismatch unless rpIdAllowed(rpId, origin) before consent or any vault read; dead native proxy path (registration.js, optional webAuthenticationProxy) removed",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Any website's WebAuthn call while the extension is unlocked -> Keepiq consent window",
-        "note": "Passkey create and sign run in the extension through the page shim with per-site consent. The Chrome native proxy path never activates because its optional permission is never requested, and the relay trusts an origin the page itself supplies.",
-        "defects": [
-          {
-            "at": "browser-extension/build.mjs:1",
-            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "browser-extension/src/content/content-script.js:212",
-            "what": "The relay forwards data.origin from the page's own postMessage instead of location.origin, and no code checks the rpId against the origin, so a malicious page can ask for an assertion for another site's rpId with a forged origin in clientDataJSON; only the consent window naming that rpId stands in the way.",
-            "issue": null,
-            "needsLiveCheck": true
-          },
-          {
-            "at": "browser-extension/manifest.json:15",
-            "what": "webAuthenticationProxy is an optional permission and nothing calls chrome.permissions.request, so registration.js:26 always finds no proxy and the native Chrome/Edge provider path is dead.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
-        "change": "openspec/changes/clients-extension-save-prompt-and-passkey-origin"
+        "note": "Built 2026-09-30. Tests: vitest tests/extension/passkeyOrigin.spec.js (own host, parent domain, foreign rpId, public suffix, insecure origin, sender origin, orchestrator refuses before vault read). Store release is still open (clients-extension-store-release).",
+        "change": "openspec/changes/archive/2026-09-30-clients-extension-save-prompt-and-passkey-origin"
       },
       "rowSource": "own",
       "provider": "keepiq",

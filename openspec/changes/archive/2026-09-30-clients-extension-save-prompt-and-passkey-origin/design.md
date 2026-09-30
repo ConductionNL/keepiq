@@ -32,3 +32,15 @@ The service worker already holds the vault cache; it matches by origin and usern
 ### D3: Registrable suffix rule
 
 The rpId check follows the WebAuthn rule: equal to the host or a parent domain that is not a public suffix.
+
+### D4: The origin comes from the message sender, and the native proxy path is deleted (added at build, 2026-09-30)
+
+The content script now sends `location.origin`, but the service worker does not rely on it: it takes the origin from the runtime message sender (`sender.origin` on Chromium, the origin of `sender.url` on Firefox), which the page cannot forge. `browser-extension/src/passkey/rp.js` applies the rpId rule. The native `chrome.webAuthenticationProxy` path was dead (its optional permission was never requested) and its fallback derived the origin from the request's own rpId, the very defect this change closes; the shim relay already runs in every browser, so the path and the permission are deleted rather than revived.
+
+### D5: The public suffix check is the extension's approximation (added at build)
+
+`isPublicSuffix` uses the same list as autofill matching (single labels plus common multi-label suffixes such as `co.uk` and `gov.nl`), not the full public suffix list. The consequence of a miss is narrow: a passkey is only found for the exact rpId it was created with, so a page could at most use a passkey created for a bare public suffix, which no real site has.
+
+### D6: A locked vault offers nothing in the page (added at build)
+
+Without the key the worker cannot tell save from update, so it offers nothing in the page and keeps the capture for the popup, which asks to unlock first.
