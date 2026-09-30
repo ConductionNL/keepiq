@@ -253,48 +253,65 @@ class SecretTypeService {
 		}
 
 		$out    = [];
-		$keys   = [];
-		$labels = [];
+		$seen   = [];
 		foreach ($fields as $field) {
-			if (is_array($field) === false) {
-				throw new InvalidArgumentException('Each field must be an object');
-			}
-
-			$key   = trim((string) ($field['key'] ?? ''));
-			$label = trim((string) ($field['label'] ?? ''));
-			$kind  = (string) ($field['kind'] ?? '');
-			if (preg_match('/^[a-z0-9][a-z0-9_-]{0,63}$/', $key) !== 1) {
-				throw new InvalidArgumentException('A field key must be lowercase letters, digits, dashes or underscores');
-			}
-
-			if ($label === '' || mb_strlen($label) > 128) {
-				throw new InvalidArgumentException('A field label is required and at most 128 characters');
-			}
-
-			if (in_array(mb_strtolower($label), self::RESERVED_LABELS, true) === true) {
-				throw new InvalidArgumentException("A field cannot be called '{$label}'");
-			}
-
-			if (in_array($kind, self::FIELD_KINDS, true) === false) {
-				throw new InvalidArgumentException("Unknown field kind '{$kind}'");
-			}
-
-			if (isset($keys[$key]) === true || isset($labels[mb_strtolower($label)]) === true) {
+			$normalised = $this->normaliseField(field: $field);
+			$keyId      = 'k:'.$normalised['key'];
+			$labelId    = 'l:'.mb_strtolower($normalised['label']);
+			if (isset($seen[$keyId]) === true || isset($seen[$labelId]) === true) {
 				throw new InvalidArgumentException('Field keys and labels must be unique');
 			}
 
-			$keys[$key] = true;
-			$labels[mb_strtolower($label)] = true;
-			$out[] = [
-				'key' => $key,
-				'label' => $label,
-				'kind' => $kind,
-				'required' => ($field['required'] ?? false) === true,
-			];
-		}//end foreach
+			$seen[$keyId]   = true;
+			$seen[$labelId] = true;
+			$out[]          = $normalised;
+		}
 
 		return $out;
 	}//end normaliseFields()
+
+	/**
+	 * Validate one field definition and bring it into its stored shape.
+	 *
+	 * @param mixed $field The submitted field
+	 *
+	 * @return array{key: string, label: string, kind: string, required: bool}
+	 *
+	 * @throws InvalidArgumentException When the field is invalid
+	 *
+	 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+	 */
+	private function normaliseField(mixed $field): array {
+		if (is_array($field) === false) {
+			throw new InvalidArgumentException('Each field must be an object');
+		}
+
+		$key   = trim((string) ($field['key'] ?? ''));
+		$label = trim((string) ($field['label'] ?? ''));
+		$kind  = (string) ($field['kind'] ?? '');
+		if (preg_match('/^[a-z0-9][a-z0-9_-]{0,63}$/', $key) !== 1) {
+			throw new InvalidArgumentException('A field key must be lowercase letters, digits, dashes or underscores');
+		}
+
+		if ($label === '' || mb_strlen($label) > 128) {
+			throw new InvalidArgumentException('A field label is required and at most 128 characters');
+		}
+
+		if (in_array(mb_strtolower($label), self::RESERVED_LABELS, true) === true) {
+			throw new InvalidArgumentException("A field cannot be called '{$label}'");
+		}
+
+		if (in_array($kind, self::FIELD_KINDS, true) === false) {
+			throw new InvalidArgumentException("Unknown field kind '{$kind}'");
+		}
+
+		return [
+			'key'      => $key,
+			'label'    => $label,
+			'kind'     => $kind,
+			'required' => ($field['required'] ?? false) === true,
+		];
+	}//end normaliseField()
 
 	/**
 	 * Delete a custom SecretType, reassigning its secrets to the login type.
