@@ -1204,7 +1204,26 @@ OC.L10N.register(
         "Could not save your default": "Nem sikerült menteni az alapértelmezést",
         "Recently used": "Nemrég használt",
         "Opened": "Megnyitva",
-        "You have not opened any secrets yet": "Még nem nyitottál meg egy titkot sem"
+        "You have not opened any secrets yet": "Még nem nyitottál meg egy titkot sem",
+        "Could not delete the item type.": "Az elemtípust nem sikerült törölni.",
+        "Could not load the item types.": "Az elemtípusokat nem sikerült betölteni.",
+        "Could not save the item type.": "Az elemtípust nem sikerült menteni.",
+        "Delete item type": "Elemtípus törlése",
+        "Edit item type": "Elemtípus szerkesztése",
+        "Fields": "Mezők",
+        "Fields: {count}": "Mezők: {count}",
+        "Hidden": "Rejtett",
+        "Item types": "Elemtípusok",
+        "Move up": "Feljebb",
+        "New item type": "Új elemtípus",
+        "No item types defined yet.": "Még nincs megadva elemtípus.",
+        "Required": "Kötelező",
+        "Text": "Szöveg",
+        "This field is required": "Ez a mező kötelező",
+        "Web address": "Webcím",
+        "{label} (required)": "{label} (kötelező)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Törlöd ezt: „{name}”? Az ilyen típusú titkok olvashatók maradnak, és Bejelentkezés elemek lesznek.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Az itt megadott elemtípusok mindenkinek megjelennek az Új titok ablakban, az általad választott mezőkkel."
     },
     "nplurals=2; plural=(n != 1);"
 )

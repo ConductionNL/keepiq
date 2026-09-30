@@ -1203,7 +1203,26 @@
         "Could not save your default": "Не можеше да се зачува стандардната вредност",
         "Recently used": "Неодамна користени",
         "Opened": "Отворено",
-        "You have not opened any secrets yet": "Сè уште немаш отворено ниту една тајна"
+        "You have not opened any secrets yet": "Сè уште немаш отворено ниту една тајна",
+        "Could not delete the item type.": "Типот на ставка не можеше да се избрише.",
+        "Could not load the item types.": "Типовите на ставки не можеа да се вчитаат.",
+        "Could not save the item type.": "Типот на ставка не можеше да се зачува.",
+        "Delete item type": "Избриши тип на ставка",
+        "Edit item type": "Уреди тип на ставка",
+        "Fields": "Полиња",
+        "Fields: {count}": "Полиња: {count}",
+        "Hidden": "Скриено",
+        "Item types": "Типови на ставки",
+        "Move up": "Помести нагоре",
+        "New item type": "Нов тип на ставка",
+        "No item types defined yet.": "Сè уште нема дефинирани типови на ставки.",
+        "Required": "Задолжително",
+        "Text": "Текст",
+        "This field is required": "Ова поле е задолжително",
+        "Web address": "Веб адреса",
+        "{label} (required)": "{label} (задолжително)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Да се избрише „{name}“? Тајните од овој тип остануваат читливи и стануваат ставки Најава.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Типовите на ставки што ги дефинираш тука им се прикажуваат на сите во дијалогот Нова тајна, со полињата што ќе ги избереш."
     },
     "plurals": null
 }

@@ -1203,7 +1203,26 @@
         "Could not save your default": "Не удалось сохранить значение по умолчанию",
         "Recently used": "Недавно использованные",
         "Opened": "Открыто",
-        "You have not opened any secrets yet": "Вы ещё не открывали секреты"
+        "You have not opened any secrets yet": "Вы ещё не открывали секреты",
+        "Could not delete the item type.": "Не удалось удалить тип элемента.",
+        "Could not load the item types.": "Не удалось загрузить типы элементов.",
+        "Could not save the item type.": "Не удалось сохранить тип элемента.",
+        "Delete item type": "Удалить тип элемента",
+        "Edit item type": "Изменить тип элемента",
+        "Fields": "Поля",
+        "Fields: {count}": "Поля: {count}",
+        "Hidden": "Скрытое",
+        "Item types": "Типы элементов",
+        "Move up": "Вверх",
+        "New item type": "Новый тип элемента",
+        "No item types defined yet.": "Типы элементов ещё не определены.",
+        "Required": "Обязательное",
+        "Text": "Текст",
+        "This field is required": "Это поле обязательно",
+        "Web address": "Веб-адрес",
+        "{label} (required)": "{label} (обязательно)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Удалить «{name}»? Секреты этого типа останутся читаемыми и станут элементами Логин.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Типы элементов, которые вы определите здесь, появятся у всех в окне Новый секрет с выбранными вами полями."
     },
     "plurals": null
 }

@@ -1203,7 +1203,26 @@
         "Could not save your default": "Oletusarvoa ei voitu tallentaa",
         "Recently used": "Äskettäin käytetyt",
         "Opened": "Avattu",
-        "You have not opened any secrets yet": "Et ole vielä avannut yhtään salaisuutta"
+        "You have not opened any secrets yet": "Et ole vielä avannut yhtään salaisuutta",
+        "Could not delete the item type.": "Kohdetyyppiä ei voitu poistaa.",
+        "Could not load the item types.": "Kohdetyyppejä ei voitu ladata.",
+        "Could not save the item type.": "Kohdetyyppiä ei voitu tallentaa.",
+        "Delete item type": "Poista kohdetyyppi",
+        "Edit item type": "Muokkaa kohdetyyppiä",
+        "Fields": "Kentät",
+        "Fields: {count}": "Kentät: {count}",
+        "Hidden": "Piilotettu",
+        "Item types": "Kohdetyypit",
+        "Move up": "Siirrä ylös",
+        "New item type": "Uusi kohdetyyppi",
+        "No item types defined yet.": "Kohdetyyppejä ei ole vielä määritetty.",
+        "Required": "Pakollinen",
+        "Text": "Teksti",
+        "This field is required": "Tämä kenttä on pakollinen",
+        "Web address": "Verkko-osoite",
+        "{label} (required)": "{label} (pakollinen)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Poistetaanko ”{name}”? Tämän tyypin salaisuudet pysyvät luettavina ja muuttuvat Kirjaudu-kohteiksi.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Tässä määrittämäsi kohdetyypit näkyvät kaikille Uusi salaisuus -ikkunassa valitsemillasi kentillä."
     },
     "plurals": null
 }

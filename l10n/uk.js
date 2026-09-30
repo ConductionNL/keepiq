@@ -1204,7 +1204,26 @@ OC.L10N.register(
         "Could not save your default": "Не вдалося зберегти типове значення",
         "Recently used": "Нещодавно використані",
         "Opened": "Відкрито",
-        "You have not opened any secrets yet": "Ви ще не відкривали жодного секрету"
+        "You have not opened any secrets yet": "Ви ще не відкривали жодного секрету",
+        "Could not delete the item type.": "Не вдалося видалити тип елемента.",
+        "Could not load the item types.": "Не вдалося завантажити типи елементів.",
+        "Could not save the item type.": "Не вдалося зберегти тип елемента.",
+        "Delete item type": "Видалити тип елемента",
+        "Edit item type": "Редагувати тип елемента",
+        "Fields": "Поля",
+        "Fields: {count}": "Поля: {count}",
+        "Hidden": "Приховане",
+        "Item types": "Типи елементів",
+        "Move up": "Вгору",
+        "New item type": "Новий тип елемента",
+        "No item types defined yet.": "Типи елементів ще не визначено.",
+        "Required": "Обовʼязкове",
+        "Text": "Текст",
+        "This field is required": "Це поле обовʼязкове",
+        "Web address": "Вебадреса",
+        "{label} (required)": "{label} (обовʼязково)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Видалити «{name}»? Секрети цього типу залишаться читабельними й стануть елементами Логін.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Типи елементів, які ви визначите тут, зʼявляться в усіх у вікні Новий секрет із вибраними вами полями."
     },
     "nplurals=2; plural=(n != 1);"
 )

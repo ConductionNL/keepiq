@@ -1204,7 +1204,26 @@ OC.L10N.register(
         "Could not save your default": "Could not save your default",
         "Recently used": "Recently used",
         "Opened": "Opened",
-        "You have not opened any secrets yet": "You have not opened any secrets yet"
+        "You have not opened any secrets yet": "You have not opened any secrets yet",
+        "Could not delete the item type.": "Could not delete the item type.",
+        "Could not load the item types.": "Could not load the item types.",
+        "Could not save the item type.": "Could not save the item type.",
+        "Delete item type": "Delete item type",
+        "Edit item type": "Edit item type",
+        "Fields": "Fields",
+        "Fields: {count}": "Fields: {count}",
+        "Hidden": "Hidden",
+        "Item types": "Item types",
+        "Move up": "Move up",
+        "New item type": "New item type",
+        "No item types defined yet.": "No item types defined yet.",
+        "Required": "Required",
+        "Text": "Text",
+        "This field is required": "This field is required",
+        "Web address": "Web address",
+        "{label} (required)": "{label} (required)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Delete “{name}”? Secrets of this type stay readable and become Login items.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Item types you define here appear in everyone’s New secret dialog, with the fields you choose."
     },
     "nplurals=2; plural=(n != 1);"
 )

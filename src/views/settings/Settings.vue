@@ -25,6 +25,7 @@
 		<SiemSection />
 		<HoneySection />
 		<OfflineCacheSection />
+		<ItemTypesSection />
 		<OffboardingSection />
 		<AdminSuiteSection />
 		<AdminAuditSection />
@@ -40,6 +41,7 @@ import BreachCheckSection from '../../components/settings/BreachCheckSection.vue
 import CaHealthSection from '../../components/settings/CaHealthSection.vue'
 import ComplianceSection from '../../components/settings/ComplianceSection.vue'
 import HoneySection from '../../components/settings/HoneySection.vue'
+import ItemTypesSection from '../../components/settings/ItemTypesSection.vue'
 import MachineLeaseSection from '../../components/settings/MachineLeaseSection.vue'
 import OffboardingSection from '../../components/settings/OffboardingSection.vue'
 import OfflineCacheSection from '../../components/settings/OfflineCacheSection.vue'
@@ -62,6 +64,7 @@ export default {
 		ComplianceSection,
 		SiemSection,
 		HoneySection,
+		ItemTypesSection,
 		OfflineCacheSection,
 		OffboardingSection,
 		AdminSuiteSection,

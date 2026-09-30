@@ -1204,7 +1204,26 @@ OC.L10N.register(
         "Could not save your default": "Impossible d'enregistrer votre valeur par défaut",
         "Recently used": "Récemment utilisés",
         "Opened": "Ouvert",
-        "You have not opened any secrets yet": "Vous n'avez encore ouvert aucun secret"
+        "You have not opened any secrets yet": "Vous n'avez encore ouvert aucun secret",
+        "Could not delete the item type.": "Impossible de supprimer le type d'élément.",
+        "Could not load the item types.": "Impossible de charger les types d'élément.",
+        "Could not save the item type.": "Impossible d'enregistrer le type d'élément.",
+        "Delete item type": "Supprimer le type d'élément",
+        "Edit item type": "Modifier le type d'élément",
+        "Fields": "Champs",
+        "Fields: {count}": "Champs : {count}",
+        "Hidden": "Masqué",
+        "Item types": "Types d'élément",
+        "Move up": "Monter",
+        "New item type": "Nouveau type d'élément",
+        "No item types defined yet.": "Aucun type d'élément défini pour le moment.",
+        "Required": "Obligatoire",
+        "Text": "Texte",
+        "This field is required": "Ce champ est obligatoire",
+        "Web address": "Adresse web",
+        "{label} (required)": "{label} (obligatoire)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Supprimer « {name} » ? Les secrets de ce type restent lisibles et deviennent des éléments Identifiant.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Les types d'élément que vous définissez ici apparaissent pour tous dans la fenêtre Nouveau secret, avec les champs que vous choisissez."
     },
     "nplurals=2; plural=(n != 1);"
 )

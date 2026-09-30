@@ -1203,7 +1203,26 @@
         "Could not save your default": "Níorbh fhéidir do réamhshocrú a shábháil",
         "Recently used": "Úsáidte le déanaí",
         "Opened": "Oscailte",
-        "You have not opened any secrets yet": "Níor oscail tú aon rún fós"
+        "You have not opened any secrets yet": "Níor oscail tú aon rún fós",
+        "Could not delete the item type.": "Níorbh fhéidir an cineál míre a scriosadh.",
+        "Could not load the item types.": "Níorbh fhéidir na cineálacha míre a lódáil.",
+        "Could not save the item type.": "Níorbh fhéidir an cineál míre a shábháil.",
+        "Delete item type": "Scrios an cineál míre",
+        "Edit item type": "Cuir an cineál míre in eagar",
+        "Fields": "Réimsí",
+        "Fields: {count}": "Réimsí: {count}",
+        "Hidden": "Folaithe",
+        "Item types": "Cineálacha míre",
+        "Move up": "Bog suas",
+        "New item type": "Cineál míre nua",
+        "No item types defined yet.": "Níl aon chineál míre sainithe fós.",
+        "Required": "Riachtanach",
+        "Text": "Téacs",
+        "This field is required": "Tá an réimse seo riachtanach",
+        "Web address": "Seoladh gréasáin",
+        "{label} (required)": "{label} (riachtanach)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Scrios “{name}”? Fanann rúin den chineál seo inléite agus éiríonn siad ina míreanna Logáil isteach.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Feictear do chách na cineálacha míre a shainíonn tú anseo sa dialóg Rún nua, leis na réimsí a roghnaíonn tú."
     },
     "plurals": null
 }

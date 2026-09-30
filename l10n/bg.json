@@ -1203,7 +1203,26 @@
         "Could not save your default": "Стойността по подразбиране не можа да бъде запазена",
         "Recently used": "Наскоро използвани",
         "Opened": "Отворено",
-        "You have not opened any secrets yet": "Все още не сте отваряли тайни"
+        "You have not opened any secrets yet": "Все още не сте отваряли тайни",
+        "Could not delete the item type.": "Типът елемент не можа да бъде изтрит.",
+        "Could not load the item types.": "Типовете елементи не можаха да бъдат заредени.",
+        "Could not save the item type.": "Типът елемент не можа да бъде запазен.",
+        "Delete item type": "Изтриване на тип елемент",
+        "Edit item type": "Редактиране на тип елемент",
+        "Fields": "Полета",
+        "Fields: {count}": "Полета: {count}",
+        "Hidden": "Скрито",
+        "Item types": "Типове елементи",
+        "Move up": "Нагоре",
+        "New item type": "Нов тип елемент",
+        "No item types defined yet.": "Все още няма дефинирани типове елементи.",
+        "Required": "Задължително",
+        "Text": "Текст",
+        "This field is required": "Това поле е задължително",
+        "Web address": "Уеб адрес",
+        "{label} (required)": "{label} (задължително)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Да се изтрие ли „{name}“? Тайните от този тип остават четими и стават елементи Вход.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Типовете елементи, които дефинирате тук, се показват на всички в диалога Нова тайна, с полетата, които изберете."
     },
     "plurals": null
 }

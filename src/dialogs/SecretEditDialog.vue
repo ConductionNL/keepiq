@@ -122,6 +122,14 @@
 
 			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
 
+			<TypedFieldsForm
+				v-if="typedFields.length > 0"
+				:fields="typedFields"
+				:values="typedValues"
+				:missing="typedMissing"
+				:disabled="saving || loading"
+				@update:values="onTypedValues" />
+
 			<AdditionalFieldsEditor
 				:members="additionalFields"
 				:disabled="saving || loading"
@@ -162,6 +170,7 @@ import {
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
+import TypedFieldsForm from '../components/TypedFieldsForm.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import {
 	CARD_FIELDS,
@@ -177,6 +186,12 @@ import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
+import {
+	mergeTypedValues,
+	missingRequired,
+	splitTypedValues,
+	typedFieldsOf,
+} from '../utils/typedFields.js'
 
 /**
  * Edit a secret. Loads + decrypts on mount; on save sends only changed fields,
@@ -188,6 +203,7 @@ export default {
 
 	components: {
 		AdditionalFieldsEditor,
+		TypedFieldsForm,
 		ContentSave,
 		Dice5,
 		KeyGeneratorModal,
@@ -228,6 +244,8 @@ export default {
 			url: '',
 			login: '',
 			additionalFields: [],
+			typedValues: {},
+			typedMissing: [],
 			generatorOpen: false,
 			card: { number: '', expiry: '', cvv: '', pin: '', cardholder: '' },
 			identity: {
@@ -269,6 +287,17 @@ export default {
 			return type && type.name === 'note'
 				? t('keepiq', 'Note')
 				: t('keepiq', 'Secret value')
+		},
+
+		/**
+		 * The fields an administrator defined on the chosen type; empty for
+		 * the built-in types, which keep their own forms.
+		 *
+		 * @return {Array<object>} The fields.
+		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 */
+		typedFields() {
+			return typedFieldsOf(useSecretTypeStore().typesById[this.typeId])
 		},
 
 		/** The selected type's system name (card-identity-items §3.1). */
@@ -335,6 +364,20 @@ export default {
 		t,
 
 		/**
+		 * Take the typed values and clear the marks of fields now filled.
+		 *
+		 * @param {object} values The values by field key.
+		 * @return {void}
+		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 */
+		onTypedValues(values) {
+			this.typedValues = values
+			this.typedMissing = this.typedMissing.filter((key) =>
+				missingRequired(this.typedFields, values).includes(key),
+			)
+		},
+
+		/**
 		 * Load + decrypt the secret and seed the form fields.
 		 *
 		 * Seeding the additional fields from the CURRENT decrypted copy is what bounds
@@ -361,7 +404,14 @@ export default {
 				// last-writer-wins window: the whole blob is rewritten on save, so an
 				// edit begun from a stale copy would drop members another session
 				// added meanwhile.
-				this.additionalFields = objectToMembers(secret.additionalFields)
+				// Typed values (admin-18) come out of the same blob into their own
+				// form, so the free-field editor does not list them twice.
+				const split = splitTypedValues(
+					secret.additionalFields,
+					this.typedFields,
+				)
+				this.typedValues = split.values
+				this.additionalFields = objectToMembers(split.rest)
 
 				// Seed the per-type composite fields from the decrypted
 				// payload (card-identity-items §3.1); a legacy plain value
@@ -434,6 +484,11 @@ export default {
 			if (!this.canSubmit) {
 				return
 			}
+			// A required field of the type blocks the save and is marked (admin-18).
+			this.typedMissing = missingRequired(this.typedFields, this.typedValues)
+			if (this.typedMissing.length > 0) {
+				return
+			}
 			this.saving = true
 			this.error = ''
 			try {
@@ -479,9 +534,21 @@ export default {
 				// rather than null when the last member is removed: null would mean
 				// "not provided", which the store reads as "leave the stored blob
 				// alone" — the opposite of what removing the last field means.
-				const nextMembers = membersToObject(this.additionalFields)
-				const priorMembers = membersToObject(
-					objectToMembers(o.additionalFields),
+				const nextMembers = mergeTypedValues(
+					membersToObject(this.additionalFields),
+					this.typedFields,
+					this.typedValues,
+				)
+				// The prior blob in the same shape (free members, then typed values),
+				// so a blob whose typed members only moved is not read as changed.
+				const priorSplit = splitTypedValues(
+					o.additionalFields,
+					this.typedFields,
+				)
+				const priorMembers = mergeTypedValues(
+					membersToObject(objectToMembers(priorSplit.rest)),
+					this.typedFields,
+					priorSplit.values,
 				)
 				if (JSON.stringify(nextMembers) !== JSON.stringify(priorMembers)) {
 					diff.additionalFields = nextMembers

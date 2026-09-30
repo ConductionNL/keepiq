@@ -1203,7 +1203,26 @@
         "Could not save your default": "Nie udało się zapisać wartości domyślnej",
         "Recently used": "Ostatnio używane",
         "Opened": "Otwarto",
-        "You have not opened any secrets yet": "Nie otwarto jeszcze żadnego sekretu"
+        "You have not opened any secrets yet": "Nie otwarto jeszcze żadnego sekretu",
+        "Could not delete the item type.": "Nie udało się usunąć typu elementu.",
+        "Could not load the item types.": "Nie udało się wczytać typów elementów.",
+        "Could not save the item type.": "Nie udało się zapisać typu elementu.",
+        "Delete item type": "Usuń typ elementu",
+        "Edit item type": "Edytuj typ elementu",
+        "Fields": "Pola",
+        "Fields: {count}": "Pola: {count}",
+        "Hidden": "Ukryte",
+        "Item types": "Typy elementów",
+        "Move up": "Przesuń w górę",
+        "New item type": "Nowy typ elementu",
+        "No item types defined yet.": "Nie zdefiniowano jeszcze typów elementów.",
+        "Required": "Wymagane",
+        "Text": "Tekst",
+        "This field is required": "To pole jest wymagane",
+        "Web address": "Adres internetowy",
+        "{label} (required)": "{label} (wymagane)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Usunąć „{name}”? Sekrety tego typu pozostają czytelne i stają się elementami typu Login.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Typy elementów zdefiniowane tutaj pojawiają się u wszystkich w oknie Nowy sekret, z wybranymi przez ciebie polami."
     },
     "plurals": null
 }

@@ -1203,7 +1203,26 @@
         "Could not save your default": "Privzete vrednosti ni bilo mogoče shraniti",
         "Recently used": "Nedavno uporabljeno",
         "Opened": "Odprto",
-        "You have not opened any secrets yet": "Nobene skrivnosti še niste odprli"
+        "You have not opened any secrets yet": "Nobene skrivnosti še niste odprli",
+        "Could not delete the item type.": "Vrste elementa ni bilo mogoče izbrisati.",
+        "Could not load the item types.": "Vrst elementov ni bilo mogoče naložiti.",
+        "Could not save the item type.": "Vrste elementa ni bilo mogoče shraniti.",
+        "Delete item type": "Izbriši vrsto elementa",
+        "Edit item type": "Uredi vrsto elementa",
+        "Fields": "Polja",
+        "Fields: {count}": "Polja: {count}",
+        "Hidden": "Skrito",
+        "Item types": "Vrste elementov",
+        "Move up": "Premakni gor",
+        "New item type": "Nova vrsta elementa",
+        "No item types defined yet.": "Vrste elementov še niso določene.",
+        "Required": "Obvezno",
+        "Text": "Besedilo",
+        "This field is required": "To polje je obvezno",
+        "Web address": "Spletni naslov",
+        "{label} (required)": "{label} (obvezno)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Izbrišem »{name}«? Skrivnosti te vrste ostanejo berljive in postanejo elementi Prijava.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Vrste elementov, ki jih določite tukaj, se vsem prikažejo v oknu Nova skrivnost z izbranimi polji."
     },
     "plurals": null
 }

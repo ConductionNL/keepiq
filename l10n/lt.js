@@ -1204,7 +1204,26 @@ OC.L10N.register(
         "Could not save your default": "Nepavyko išsaugoti numatytosios reikšmės",
         "Recently used": "Neseniai naudoti",
         "Opened": "Atidaryta",
-        "You have not opened any secrets yet": "Dar neatidarei jokių slaptažodžių"
+        "You have not opened any secrets yet": "Dar neatidarei jokių slaptažodžių",
+        "Could not delete the item type.": "Nepavyko ištrinti elemento tipo.",
+        "Could not load the item types.": "Nepavyko įkelti elementų tipų.",
+        "Could not save the item type.": "Nepavyko išsaugoti elemento tipo.",
+        "Delete item type": "Ištrinti elemento tipą",
+        "Edit item type": "Redaguoti elemento tipą",
+        "Fields": "Laukai",
+        "Fields: {count}": "Laukai: {count}",
+        "Hidden": "Paslėptas",
+        "Item types": "Elementų tipai",
+        "Move up": "Perkelti aukštyn",
+        "New item type": "Naujas elemento tipas",
+        "No item types defined yet.": "Elementų tipų dar neapibrėžta.",
+        "Required": "Privalomas",
+        "Text": "Tekstas",
+        "This field is required": "Šis laukas privalomas",
+        "Web address": "Žiniatinklio adresas",
+        "{label} (required)": "{label} (privalomas)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Ištrinti „{name}“? Šio tipo paslaptys lieka skaitomos ir tampa Prisijungimo elementais.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Čia apibrėžti elementų tipai visiems rodomi lange Nauja paslaptis su jūsų pasirinktais laukais."
     },
     "nplurals=2; plural=(n != 1);"
 )

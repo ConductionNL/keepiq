@@ -1203,7 +1203,26 @@
         "Could not save your default": "Δεν ήταν δυνατή η αποθήκευση της προεπιλογής σας",
         "Recently used": "Πρόσφατα χρησιμοποιημένα",
         "Opened": "Άνοιξε",
-        "You have not opened any secrets yet": "Δεν έχετε ανοίξει ακόμη κανένα μυστικό"
+        "You have not opened any secrets yet": "Δεν έχετε ανοίξει ακόμη κανένα μυστικό",
+        "Could not delete the item type.": "Δεν ήταν δυνατή η διαγραφή του τύπου στοιχείου.",
+        "Could not load the item types.": "Δεν ήταν δυνατή η φόρτωση των τύπων στοιχείων.",
+        "Could not save the item type.": "Δεν ήταν δυνατή η αποθήκευση του τύπου στοιχείου.",
+        "Delete item type": "Διαγραφή τύπου στοιχείου",
+        "Edit item type": "Επεξεργασία τύπου στοιχείου",
+        "Fields": "Πεδία",
+        "Fields: {count}": "Πεδία: {count}",
+        "Hidden": "Κρυφό",
+        "Item types": "Τύποι στοιχείων",
+        "Move up": "Μετακίνηση πάνω",
+        "New item type": "Νέος τύπος στοιχείου",
+        "No item types defined yet.": "Δεν έχουν οριστεί ακόμη τύποι στοιχείων.",
+        "Required": "Υποχρεωτικό",
+        "Text": "Κείμενο",
+        "This field is required": "Αυτό το πεδίο είναι υποχρεωτικό",
+        "Web address": "Διεύθυνση ιστού",
+        "{label} (required)": "{label} (υποχρεωτικό)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Διαγραφή του «{name}»; Τα μυστικά αυτού του τύπου παραμένουν αναγνώσιμα και γίνονται στοιχεία Σύνδεσης.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Οι τύποι στοιχείων που ορίζετε εδώ εμφανίζονται σε όλους στο παράθυρο Νέο μυστικό, με τα πεδία που επιλέγετε."
     },
     "plurals": null
 }

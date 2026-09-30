@@ -1204,7 +1204,26 @@ OC.L10N.register(
         "Could not save your default": "Det gick inte att spara ditt standardval",
         "Recently used": "Nyligen använda",
         "Opened": "Öppnad",
-        "You have not opened any secrets yet": "Du har inte öppnat några hemligheter än"
+        "You have not opened any secrets yet": "Du har inte öppnat några hemligheter än",
+        "Could not delete the item type.": "Det gick inte att ta bort objekttypen.",
+        "Could not load the item types.": "Det gick inte att läsa in objekttyperna.",
+        "Could not save the item type.": "Det gick inte att spara objekttypen.",
+        "Delete item type": "Ta bort objekttyp",
+        "Edit item type": "Redigera objekttyp",
+        "Fields": "Fält",
+        "Fields: {count}": "Fält: {count}",
+        "Hidden": "Dold",
+        "Item types": "Objekttyper",
+        "Move up": "Flytta upp",
+        "New item type": "Ny objekttyp",
+        "No item types defined yet.": "Inga objekttyper har definierats än.",
+        "Required": "Obligatoriskt",
+        "Text": "Text",
+        "This field is required": "Det här fältet är obligatoriskt",
+        "Web address": "Webbadress",
+        "{label} (required)": "{label} (obligatoriskt)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Ta bort ”{name}”? Hemligheter av den här typen går fortfarande att läsa och blir Inloggning-objekt.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Objekttyper som du definierar här visas för alla i dialogen Ny hemlighet, med de fält du väljer."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1204,7 +1204,26 @@ OC.L10N.register(
         "Could not save your default": "Ma setax jiġi ssejvjat l-awtomatiku tiegħek",
         "Recently used": "Użati reċentement",
         "Opened": "Miftuħ",
-        "You have not opened any secrets yet": "Għadek ma ftaħt l-ebda sigriet"
+        "You have not opened any secrets yet": "Għadek ma ftaħt l-ebda sigriet",
+        "Could not delete the item type.": "Ma setax jitħassar it-tip ta' oġġett.",
+        "Could not load the item types.": "Ma setgħux jittellgħu t-tipi ta' oġġetti.",
+        "Could not save the item type.": "Ma setax jiġi ssejvjat it-tip ta' oġġett.",
+        "Delete item type": "Ħassar it-tip ta' oġġett",
+        "Edit item type": "Editja t-tip ta' oġġett",
+        "Fields": "Oqsma",
+        "Fields: {count}": "Oqsma: {count}",
+        "Hidden": "Moħbi",
+        "Item types": "Tipi ta' oġġetti",
+        "Move up": "Ċaqlaq 'il fuq",
+        "New item type": "Tip ġdid ta' oġġett",
+        "No item types defined yet.": "Għad m'hemm l-ebda tip ta' oġġett definit.",
+        "Required": "Obbligatorju",
+        "Text": "Test",
+        "This field is required": "Dan il-qasam huwa obbligatorju",
+        "Web address": "Indirizz tal-web",
+        "{label} (required)": "{label} (obbligatorju)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "Tħassar “{name}”? Is-sigrieti ta' dan it-tip jibqgħu jinqraw u jsiru oġġetti Login.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "It-tipi ta' oġġetti li tiddefinixxi hawn jidhru għal kulħadd fid-djalogu Sigriet ġdid, bl-oqsma li tagħżel."
     },
     "nplurals=2; plural=(n != 1);"
 )

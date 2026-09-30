@@ -1203,7 +1203,26 @@
         "Could not save your default": "Varsayılanınız kaydedilemedi",
         "Recently used": "Son kullanılanlar",
         "Opened": "Açıldı",
-        "You have not opened any secrets yet": "Henüz hiçbir sır açmadınız"
+        "You have not opened any secrets yet": "Henüz hiçbir sır açmadınız",
+        "Could not delete the item type.": "Öğe türü silinemedi.",
+        "Could not load the item types.": "Öğe türleri yüklenemedi.",
+        "Could not save the item type.": "Öğe türü kaydedilemedi.",
+        "Delete item type": "Öğe türünü sil",
+        "Edit item type": "Öğe türünü düzenle",
+        "Fields": "Alanlar",
+        "Fields: {count}": "Alanlar: {count}",
+        "Hidden": "Gizli",
+        "Item types": "Öğe türleri",
+        "Move up": "Yukarı taşı",
+        "New item type": "Yeni öğe türü",
+        "No item types defined yet.": "Henüz tanımlı öğe türü yok.",
+        "Required": "Zorunlu",
+        "Text": "Metin",
+        "This field is required": "Bu alan zorunludur",
+        "Web address": "Web adresi",
+        "{label} (required)": "{label} (zorunlu)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "“{name}” silinsin mi? Bu türdeki sırlar okunabilir kalır ve Giriş öğesi olur.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Burada tanımladığınız öğe türleri, seçtiğiniz alanlarla herkesin Yeni gizli penceresinde görünür."
     },
     "plurals": null
 }

@@ -1204,7 +1204,26 @@ OC.L10N.register(
         "Could not save your default": "No se pudo guardar tu valor predeterminado",
         "Recently used": "Usados recientemente",
         "Opened": "Abierto",
-        "You have not opened any secrets yet": "Aún no has abierto ningún secreto"
+        "You have not opened any secrets yet": "Aún no has abierto ningún secreto",
+        "Could not delete the item type.": "No se pudo eliminar el tipo de elemento.",
+        "Could not load the item types.": "No se pudieron cargar los tipos de elemento.",
+        "Could not save the item type.": "No se pudo guardar el tipo de elemento.",
+        "Delete item type": "Eliminar tipo de elemento",
+        "Edit item type": "Editar tipo de elemento",
+        "Fields": "Campos",
+        "Fields: {count}": "Campos: {count}",
+        "Hidden": "Oculto",
+        "Item types": "Tipos de elemento",
+        "Move up": "Subir",
+        "New item type": "Nuevo tipo de elemento",
+        "No item types defined yet.": "Aún no hay tipos de elemento definidos.",
+        "Required": "Obligatorio",
+        "Text": "Texto",
+        "This field is required": "Este campo es obligatorio",
+        "Web address": "Dirección web",
+        "{label} (required)": "{label} (obligatorio)",
+        "Delete “{name}”? Secrets of this type stay readable and become Login items.": "¿Eliminar «{name}»? Los secretos de este tipo siguen siendo legibles y pasan a ser elementos de Inicio de sesión.",
+        "Item types you define here appear in everyone’s New secret dialog, with the fields you choose.": "Los tipos de elemento que definas aquí aparecen para todos en el diálogo Nuevo secreto, con los campos que elijas."
     },
     "nplurals=2; plural=(n != 1);"
 )
