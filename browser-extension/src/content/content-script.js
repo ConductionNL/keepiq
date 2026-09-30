@@ -14,6 +14,8 @@
  * No secret is ever stored here; the worker owns all key material.
  */
 
+import { showSavePrompt } from './save-prompt.js'
+
 const USERNAME_SELECTORS = [
 	'input[autocomplete="username"]',
 	'input[autocomplete="email"]',
@@ -147,21 +149,48 @@ function onSubmit() {
 	captureCurrent()
 }
 
-function captureCurrent() {
+// One capture per submit: Enter and submit both fire for the same form.
+let lastCaptured = ''
+
+/**
+ * Send the submitted login to the worker and show its offer in the page at
+ * once (clients-save-prompt). The worker decides save, update or nothing; the
+ * popup keeps the same offer as a fallback.
+ *
+ * @return {Promise<void>}
+ */
+async function captureCurrent() {
 	const { username, password } = detectLoginFields()
 	if (!password || !password.value) return
+	const login = username ? username.value : ''
+	const stamp = login + '\u0000' + password.value
+	if (stamp === lastCaptured) return
+	lastCaptured = stamp
+	let offer
 	try {
-		chrome.runtime.sendMessage({
+		offer = await chrome.runtime.sendMessage({
 			type: 'capture-credential',
 			payload: {
 				host: location.hostname,
 				url: location.origin,
-				login: username ? username.value : '',
+				login,
 				secret: password.value,
 			},
 		})
 	} catch {
 		// The worker may be asleep; the capture is best-effort.
+		return
+	}
+	if (window.top !== window) return // one bar, in the top frame's view only
+	if (!offer || (offer.action !== 'save' && offer.action !== 'update')) return
+	const choice = await showSavePrompt(offer, location.hostname)
+	try {
+		await chrome.runtime.sendMessage({
+			type: 'capture-decision',
+			payload: { choice },
+		})
+	} catch {
+		// The popup still offers the capture.
 	}
 }
 
@@ -196,7 +225,7 @@ function injectShim() {
 		s.onload = () => s.remove()
 		;(document.head || document.documentElement).appendChild(s)
 	} catch {
-		// CSP may block injection; the native proxy path covers Chrome/Edge.
+		// CSP may block injection; the page then keeps the browser's own authenticator.
 	}
 }
 
@@ -209,7 +238,9 @@ window.addEventListener('message', async (event) => {
 	try {
 		const res = await chrome.runtime.sendMessage({
 			type,
-			payload: { options: data.options, origin: data.origin },
+			// The worker takes the origin from the browser's sender record; this
+			// is only informative and never the page's own claim.
+			payload: { options: data.options, origin: location.origin },
 		})
 		window.postMessage(
 			{

@@ -50,6 +50,18 @@ export function hostOf(input) {
 }
 
 /**
+ * Whether a host is a public suffix under the same approximation: a single
+ * label (`org`, `nl`) or one of the multi-label suffixes above.
+ *
+ * @param {string} host A hostname.
+ * @return {boolean} True for a public suffix.
+ */
+export function isPublicSuffix(host) {
+	const h = hostOf(host)
+	return h !== '' && (h.indexOf('.') === -1 || MULTI_LABEL_SUFFIXES.has(h))
+}
+
+/**
  * The registrable domain (eTLD+1 approximation) of a hostname.
  * @param host
  */

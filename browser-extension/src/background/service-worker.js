@@ -13,15 +13,15 @@
 import * as api from '../lib/api.js'
 import * as vault from '../lib/vault.js'
 import { matchSecrets, hostOf } from '../lib/match.js'
+import { classifyCapture } from '../lib/capture.js'
 import { buildPasskeyOrchestrator } from '../passkey/orchestrator.js'
-import { registerWebAuthnProxy } from '../passkey/registration.js'
+import { senderOrigin } from '../passkey/rp.js'
 import { computeTotp } from '../lib/totp-service.js'
 
 // Passkey provider (extension-passkey-provider): bind the ceremony orchestrator
-// to this worker's api + vault. Used by both the native WebAuthn proxy (Chrome/
-// Edge) and the page-context shim relay (Firefox/others).
+// to this worker's api + vault. Driven by the page-context shim relay in every
+// browser; the origin always comes from the message sender (clients-passkey-origin).
 const passkey = buildPasskeyOrchestrator({ api, vault, loadConfig: api.loadConfig })
-registerWebAuthnProxy(passkey)
 
 const DEFAULT_IDLE_MINUTES = 15
 
@@ -196,7 +196,12 @@ async function doSaveCapture(payload) {
 		encryptionSuiteId: vault.activeSuiteId(),
 	}
 	if (payload.id) {
-		await api.updateSecret(config, payload.id, body)
+		// An update changes the credential only; the saved name and address stay.
+		await api.updateSecret(config, payload.id, {
+			key: encryptedKey,
+			login: encryptedLogin,
+			encryptionSuiteId: body.encryptionSuiteId,
+		})
 	} else {
 		await api.createSecret(config, body)
 	}
@@ -207,6 +212,52 @@ async function doSaveCapture(payload) {
 
 function takePendingCapture() {
 	return pendingCapture
+}
+
+/**
+ * Hold a submitted login and decide the offer (clients-save-prompt): update
+ * when a saved login for the site has this username and another password,
+ * nothing when it has this password, else save. A locked vault cannot tell,
+ * so it offers nothing in the page and leaves the popup fallback.
+ *
+ * @param {object} capture The submitted login from the content script.
+ * @return {Promise<{action: string, name?: string}>} The offer, without ids or secrets.
+ */
+async function doCapture(capture) {
+	pendingCapture = { ...capture }
+	if (!vault.isUnlocked()) return { action: 'locked' }
+	const config = await api.loadConfig()
+	if (!config) return { action: 'none' }
+	let offer
+	try {
+		const rows = await api.match(config, capture.host)
+		offer = await classifyCapture(capture, rows, (row) =>
+			vault.decryptSecret(row),
+		)
+	} catch {
+		return { action: 'none' }
+	}
+	if (offer.action === 'none') {
+		pendingCapture = null
+		return { action: 'none' }
+	}
+	pendingCapture.id = offer.id
+	return { action: offer.action, name: offer.name }
+}
+
+/**
+ * Act on the choice made in the in-page offer.
+ *
+ * @param {{choice: string}} payload save, update or dismiss.
+ * @return {Promise<object>} The save result, or ok.
+ */
+async function doCaptureDecision(payload) {
+	if (!pendingCapture) return { ok: false }
+	if (payload.choice === 'save' || payload.choice === 'update') {
+		return doSaveCapture(pendingCapture)
+	}
+	pendingCapture = null
+	return { ok: true }
 }
 
 // --- message router ---
@@ -226,25 +277,29 @@ const handlers = {
 	'save-capture': doSaveCapture,
 	'totp-for-host': doTotpForHost,
 	'pending-capture': async () => ({ capture: takePendingCapture() }),
-	// WebAuthn ceremonies relayed from the page-context shim (Firefox path).
-	'webauthn-create': async (p) => ({
-		credential: await passkey.handleCreate(p.options, p.origin),
+	'capture-decision': doCaptureDecision,
+	// WebAuthn ceremonies relayed from the page-context shim. The origin is the sender's, as the browser reports it; the page's own
+	// claim in the payload is ignored (clients-passkey-origin).
+	'webauthn-create': async (p, sender) => ({
+		credential: await passkey.handleCreate(p.options, senderOrigin(sender)),
 	}),
-	'webauthn-get': async (p) => ({
-		assertion: await passkey.handleGet(p.options, p.origin),
+	'webauthn-get': async (p, sender) => ({
+		assertion: await passkey.handleGet(p.options, senderOrigin(sender)),
 	}),
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-	// Submit-capture arrives from a content script (has sender.tab); stash it.
+	// Submit-capture arrives from a content script (has sender.tab): hold it and
+	// answer with the offer the page shows at once.
 	if (msg?.type === 'capture-credential') {
-		pendingCapture = { ...msg.payload }
-		sendResponse({ ok: true })
+		doCapture(msg.payload || {})
+			.then((offer) => sendResponse(offer))
+			.catch(() => sendResponse({ action: 'none' }))
 		return true
 	}
 	const handler = handlers[msg?.type]
 	if (!handler) return false
-	handler(msg.payload || {})
+	handler(msg.payload || {}, sender)
 		.then((result) => sendResponse(result))
 		.catch((e) => sendResponse({ error: e.message || String(e) }))
 	return true // async response

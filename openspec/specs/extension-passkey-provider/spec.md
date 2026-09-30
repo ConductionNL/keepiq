@@ -72,7 +72,7 @@ The extension MUST set the user-verification flag only while unlocked, MUST prom
 - [ ] A non-zero signature counter is incremented and persisted via the existing secret-update path; a zero counter is reported as `0` with no write-back
 - [ ] Every ceremony shows a per-site consent prompt; declining or an incompatible RP requirement falls through to the platform authenticator
 - [ ] User verification is asserted only while unlocked; a locked extension prompts for unlock before signing
-- [ ] No new backend route, schema, migration, or audit-event type is introduced; registration is browser-adaptive (native `chrome.webAuthenticationProxy`, else a page-context `navigator.credentials` shim)
+- [ ] No new backend route, schema, migration, or audit-event type is introduced; the page-context `navigator.credentials` shim serves every browser (the unused native `chrome.webAuthenticationProxy` path was removed by clients-extension-save-prompt-and-passkey-origin, 2026-09-30)
 
 ## Notes
 
