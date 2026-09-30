@@ -106,8 +106,14 @@ export const useSecretStore = defineStore('secret', {
 				// live secrets only, so the Trash and Archive views are empty
 				// offline.
 				const state =
-					('state' in options ? options.state : this.filters.state) || 'live'
-				if (offline.servedFromCache && offline.vault && state !== 'live' && state !== 'kept') {
+					('state' in options ? options.state : this.filters.state)
+					|| 'live'
+				if (
+					offline.servedFromCache
+					&& offline.vault
+					&& state !== 'live'
+					&& state !== 'kept'
+				) {
 					this.secrets = []
 					this.totalCount = 0
 					this.page = 1

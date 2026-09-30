@@ -96,11 +96,15 @@
 							data-testid="secret-detail-archive"
 							@click="toggleArchive">
 							<template #icon>
-								<ArchiveArrowUpOutline v-if="isArchived" :size="20" />
+								<ArchiveArrowUpOutline
+									v-if="isArchived"
+									:size="20" />
 								<ArchiveOutline v-else :size="20" />
 							</template>
 							{{
-								isArchived ? t('keepiq', 'Unarchive') : t('keepiq', 'Archive')
+								isArchived
+									? t('keepiq', 'Unarchive')
+									: t('keepiq', 'Archive')
 							}}
 						</NcActionButton>
 						<NcActionButton
@@ -1581,7 +1585,7 @@ export default {
 			try {
 				await useSecretStore().changeSecretState(this.secretId, action)
 				this.$emit('close')
-			} catch (e) {
+			} catch {
 				showError(
 					action === 'archive'
 						? t('keepiq', 'Could not archive the secret')

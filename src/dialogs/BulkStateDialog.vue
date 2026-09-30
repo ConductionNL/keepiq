@@ -105,7 +105,9 @@ export default {
 				archive: this.t('keepiq', 'Archive {count} secrets', { count }),
 				unarchive: this.t('keepiq', 'Unarchive {count} secrets', { count }),
 				restore: this.t('keepiq', 'Restore {count} secrets', { count }),
-				purge: this.t('keepiq', 'Delete {count} secrets for good', { count }),
+				purge: this.t('keepiq', 'Delete {count} secrets for good', {
+					count,
+				}),
 			}[this.action]
 		},
 
@@ -133,10 +135,25 @@ export default {
 		 */
 		note() {
 			return {
-				archive: this.t('keepiq', 'Archived secrets leave the vault list, search, autofill and the health report. They keep their shares. You find them under Archive.'),
-				unarchive: this.t('keepiq', 'These secrets come back to the vault list, search and autofill.'),
-				restore: this.t('keepiq', 'These secrets come back to the vault list. Their old shares do not come back, so share them again where needed.'),
-				purge: this.t('keepiq', 'This deletes the secrets with their attachments and version history. This cannot be undone.'),
+				archive: this.t(
+					'keepiq',
+					'Archived secrets leave the vault list, search, autofill and the health report. They keep their shares. You find them under Archive.',
+				),
+
+				unarchive: this.t(
+					'keepiq',
+					'These secrets come back to the vault list, search and autofill.',
+				),
+
+				restore: this.t(
+					'keepiq',
+					'These secrets come back to the vault list. Their old shares do not come back, so share them again where needed.',
+				),
+
+				purge: this.t(
+					'keepiq',
+					'This deletes the secrets with their attachments and version history. This cannot be undone.',
+				),
 			}[this.action]
 		},
 	},

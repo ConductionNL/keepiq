@@ -63,7 +63,10 @@
 			</label>
 			<label class="attachment-limits__field">
 				<span>{{
-					t('keepiq', 'Days a deleted secret stays in the trash (1 to 365)')
+					t(
+						'keepiq',
+						'Days a deleted secret stays in the trash (1 to 365)',
+					)
 				}}</span>
 				<input
 					v-model.number="trashDays"

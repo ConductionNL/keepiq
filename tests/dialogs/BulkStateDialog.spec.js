@@ -47,7 +47,9 @@ describe('BulkStateDialog', () => {
 	})
 
 	it('restores every selected secret', async () => {
-		const change = vi.spyOn(useSecretStore(), 'changeSecretState').mockResolvedValue()
+		const change = vi
+			.spyOn(useSecretStore(), 'changeSecretState')
+			.mockResolvedValue()
 		const wrapper = mountFor('restore')
 
 		await wrapper.find('[data-testid="bulk-state-run"]').trigger('click')
@@ -58,8 +60,12 @@ describe('BulkStateDialog', () => {
 	})
 
 	it('warns only before deleting for good', () => {
-		expect(mountFor('purge').find('.note').attributes('data-type')).toBe('warning')
-		expect(mountFor('archive').find('.note').attributes('data-type')).toBe('info')
+		expect(mountFor('purge').find('.note').attributes('data-type')).toBe(
+			'warning',
+		)
+		expect(mountFor('archive').find('.note').attributes('data-type')).toBe(
+			'info',
+		)
 		expect(mountFor('archive').text()).toContain('keep their shares')
 	})
 })

@@ -1006,10 +1006,16 @@ export default {
 		 */
 		emptyDescription() {
 			if (this.listState === 'trashed') {
-				return t('keepiq', 'Deleted secrets wait here until the retention period ends, then they are deleted for good.')
+				return t(
+					'keepiq',
+					'Deleted secrets wait here until the retention period ends, then they are deleted for good.',
+				)
 			}
 			if (this.listState === 'archived') {
-				return t('keepiq', 'Archive a secret from its detail panel to keep it out of the vault list, search and autofill.')
+				return t(
+					'keepiq',
+					'Archive a secret from its detail panel to keep it out of the vault list, search and autofill.',
+				)
 			}
 			return t('keepiq', 'Add your first secret using the button above')
 		},

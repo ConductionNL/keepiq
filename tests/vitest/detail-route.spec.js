@@ -115,7 +115,9 @@ describe('detail route in the Archive and Trash views', () => {
 			name: 'SecretArchive',
 			params: { id: 's-1' },
 		})
-		expect(closeDetailLocation({ name: 'SecretArchive', params: { id: 's-1' } })).toEqual({
+		expect(
+			closeDetailLocation({ name: 'SecretArchive', params: { id: 's-1' } }),
+		).toEqual({
 			name: 'SecretArchive',
 		})
 		expect(
@@ -124,6 +126,8 @@ describe('detail route in the Archive and Trash views', () => {
 	})
 
 	it('never opens a sidebar from the Trash route', () => {
-		expect(activeDetailSecretId({ name: 'SecretTrash', params: { id: 's-1' } })).toBeNull()
+		expect(
+			activeDetailSecretId({ name: 'SecretTrash', params: { id: 's-1' } }),
+		).toBeNull()
 	})
 })
