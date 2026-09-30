@@ -60,6 +60,7 @@ export default {
 		 * The preferences store.
 		 *
 		 * @return {object} The store.
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 		 */
 		prefs() {
 			return useUserPreferencesStore()
