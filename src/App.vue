@@ -943,7 +943,7 @@ export default {
 		 * surfacing success/error state to the UI. The master password signs the
 		 * vault-key proof the guarded endpoint requires and is never sent.
 		 *
-		 * @param acceptEmergencyLoss
+		 * @param {boolean} acceptEmergencyLoss Whether the user accepted losing emergency access.
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 		 */

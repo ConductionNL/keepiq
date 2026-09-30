@@ -1123,16 +1123,11 @@ export default {
 
 	/**
 	 * Load types + folders + the first secrets page, then lazily run the
-	 * client-side password-health pass so strength badges appear.
+	 * client-side password-health pass so strength badges appear. Also reads
+	 * the user's saved default view.
 	 *
 	 * @return {Promise<void>}
 	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-strength-scoring-and-badges
-	 */
-	/**
-	 * Load what the screen needs, including the user's saved defaults.
-	 *
-	 * @return {Promise<void>}
-	 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
 	 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 	 */
 	async mounted() {
