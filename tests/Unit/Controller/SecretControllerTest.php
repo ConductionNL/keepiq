@@ -181,18 +181,6 @@ class SecretControllerTest extends TestCase {
 	}//end testCreateReturns201()
 
 	/**
-	 * destroy() deletes and returns a status payload.
-	 *
-	 * @return void
-	 */
-	public function testDestroyReturnsStatus(): void {
-		$this->secretService->expects($this->once())->method('delete')->with('s-1', 'alice');
-
-		$response = $this->controller->destroy('s-1');
-		$this->assertSame('deleted', $response->getData()['status']);
-	}//end testDestroyReturnsStatus()
-
-	/**
 	 * index() returns the service list result.
 	 *
 	 * @return void

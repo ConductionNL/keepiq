@@ -97,7 +97,12 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'import#batchCreate', 'url' => '/api/v1/secrets/import-batch', 'verb' => 'POST'],
     ['name' => 'secret#show',    'url' => '/api/v1/secrets/{id}', 'verb' => 'GET'],
     ['name' => 'secret#update',  'url' => '/api/v1/secrets/{id}', 'verb' => 'PUT'],
-    ['name' => 'secret#destroy', 'url' => '/api/v1/secrets/{id}', 'verb' => 'DELETE'],
+    // Trash and archive (vault-trash-and-archive): DELETE /{id} moves a secret to the trash.
+    ['name' => 'secretTrash#trash',     'url' => '/api/v1/secrets/{id}',           'verb' => 'DELETE'],
+    ['name' => 'secretTrash#restore',   'url' => '/api/v1/secrets/{id}/restore',   'verb' => 'POST'],
+    ['name' => 'secretTrash#purge',     'url' => '/api/v1/secrets/{id}/purge',     'verb' => 'DELETE'],
+    ['name' => 'secretTrash#archive',   'url' => '/api/v1/secrets/{id}/archive',   'verb' => 'POST'],
+    ['name' => 'secretTrash#unarchive', 'url' => '/api/v1/secrets/{id}/unarchive', 'verb' => 'POST'],
 
     // Link sharing — authenticated CRUD (secret owner).
     ['name' => 'linkShare#index',   'url' => '/api/v1/secrets/{secretId}/link-shares', 'verb' => 'GET'],

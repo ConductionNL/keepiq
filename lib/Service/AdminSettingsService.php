@@ -170,6 +170,12 @@ class AdminSettingsService {
 				),
 				'version_retention_count' => $this->appConfig->getValueInt($appId, 'version_retention_count', 20),
 				'version_retention_days' => $this->appConfig->getValueInt($appId, 'version_retention_days', 365),
+				// Trash retention (vault-trash-and-archive D4), 1 to 365 days.
+				'trash_retention_days' => $this->appConfig->getValueInt(
+					$appId,
+					'trash_retention_days',
+					SecretTrashService::RETENTION_DEFAULT
+				),
 				'attachment_max_bytes' => $this->appConfig->getValueInt(
 					$appId,
 					'attachment_max_bytes',
@@ -246,6 +252,7 @@ class AdminSettingsService {
 		$this->updateExpirySettings(data: $data);
 		$this->updateLeaseSettings(data: $data);
 		$this->updateRetentionSettings(data: $data);
+		$this->updateTrashSettings(data: $data);
 
 		return $this->getAdminSettings();
 	}//end updateAdminSettings()
@@ -491,4 +498,28 @@ class AdminSettingsService {
 			$this->appConfig->setValueInt($appId, 'attachment_user_quota_bytes', $quota);
 		}
 	}//end updateRetentionSettings()
+
+	/**
+	 * Validate and persist the trash retention (vault-trash-and-archive D4).
+	 *
+	 * @param array<string,mixed> $data The input data
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the retention is outside 1 to 365 days.
+	 *
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+	 */
+	private function updateTrashSettings(array $data): void {
+		if (isset($data['trash_retention_days']) === false) {
+			return;
+		}
+
+		$days = (int)$data['trash_retention_days'];
+		if ($days < SecretTrashService::RETENTION_MIN || $days > SecretTrashService::RETENTION_MAX) {
+			throw new InvalidArgumentException('trash_retention_days must be between 1 and 365');
+		}
+
+		$this->appConfig->setValueInt(Application::APP_ID, 'trash_retention_days', $days);
+	}//end updateTrashSettings()
 }//end class
