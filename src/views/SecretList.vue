@@ -649,7 +649,7 @@ export default {
 		 * The view the list opens in: the user's saved default view.
 		 *
 		 * @return {string} list, cards or table.
-		 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 		 */
 		listViewMode() {
 			return resolveDefaultView(useUserPreferencesStore().defaultView)
@@ -1128,7 +1128,7 @@ export default {
 	 *
 	 * @return {Promise<void>}
 	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-strength-scoring-and-badges
-	 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+	 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 	 */
 	async mounted() {
 		// The bulk selection is client-only and dies with the lock (§1.2).
@@ -1165,7 +1165,7 @@ export default {
 		 * Read the saved default view (once per page load).
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 		 */
 		loadViewPreference() {
 			return useUserPreferencesStore().ensureLoaded()

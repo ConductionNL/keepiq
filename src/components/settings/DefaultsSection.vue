@@ -6,7 +6,7 @@
   view the secret list opens in (vault-20). Mounted in the user-settings
   dialog in App.vue; saves each choice as soon as it is picked.
 
-  @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+  @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 -->
 <template>
 	<div class="defaults-section">
@@ -69,7 +69,7 @@ export default {
 		 * Every secret type, by name, labelled in the user's language.
 		 *
 		 * @return {Array<{value: string, label: string}>} The options.
-		 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 		 */
 		typeOptions() {
 			return useSecretTypeStore().types.map((type) => ({
@@ -82,7 +82,7 @@ export default {
 		 * The three views the secret list offers.
 		 *
 		 * @return {Array<{value: string, label: string}>} The options.
-		 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 		 */
 		viewOptions() {
 			return [
@@ -97,7 +97,7 @@ export default {
 	 * Read the saved defaults and the type catalogue.
 	 *
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+	 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 	 */
 	async mounted() {
 		const typeStore = useSecretTypeStore()
@@ -115,7 +115,7 @@ export default {
 		 *
 		 * @param {string} name The type name.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 		 */
 		async onTypeChange(name) {
 			await this.saveDefault({ defaultSecretType: name })
@@ -126,7 +126,7 @@ export default {
 		 *
 		 * @param {string} view list, cards or table.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 		 */
 		async onViewChange(view) {
 			await this.saveDefault({ defaultView: view })
@@ -137,7 +137,7 @@ export default {
 		 *
 		 * @param {object} changes The changed default.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 		 */
 		async saveDefault(changes) {
 			try {

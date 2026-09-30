@@ -5,7 +5,7 @@
  * The secret list opens in the view the user saved as default (vault-20).
  * Options-object style, like SecretList.listViews.spec.js.
  *
- * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+ * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
  */
 
 import { createPinia, setActivePinia } from 'pinia'

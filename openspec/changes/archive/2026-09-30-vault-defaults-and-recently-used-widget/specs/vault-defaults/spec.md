@@ -12,9 +12,9 @@ The system MUST let a user choose a default item type and a default list view in
 
 #### Scenario: The list opens in the saved view
 
-- **GIVEN** a user who saved the grid view
+- **GIVEN** a user who saved the cards view
 - **WHEN** the user opens /secrets in a new session
-- **THEN** the list renders in the grid view
+- **THEN** the list renders in the cards view
 
 #### Scenario: A deleted type falls back
 

@@ -19,7 +19,7 @@ export const VIEW_CHOICES = Object.freeze(['list', 'cards', 'table'])
  *
  * @param {string|undefined|null} saved The saved `default_view`.
  * @return {string} One of VIEW_CHOICES.
- * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+ * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
  */
 export function resolveDefaultView(saved) {
 	return VIEW_CHOICES.includes(saved) ? saved : VIEW_CHOICES[0]
@@ -32,7 +32,7 @@ export function resolveDefaultView(saved) {
  * @param {string|undefined|null} saved The saved `default_secret_type` (a type name).
  * @param {Array<{id: string, name: string}>} types The secret types.
  * @return {string|null} A type id, or null when there are no types.
- * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+ * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
  */
 export function resolveDefaultTypeId(saved, types) {
 	const match =
@@ -50,7 +50,7 @@ let pending = null
  * stored server-side as the `default_secret_type` and `default_view` user
  * preferences.
  *
- * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+ * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
  */
 export const useUserPreferencesStore = defineStore('userPreferences', {
 	state: () => ({
@@ -68,7 +68,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
 		 * list view stay.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 		 */
 		async load() {
 			try {
@@ -88,7 +88,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
 		 * Read the saved defaults once per page load.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 		 */
 		ensureLoaded() {
 			if (this.loaded) {
@@ -107,7 +107,7 @@ export const useUserPreferencesStore = defineStore('userPreferences', {
 		 *
 		 * @param {{defaultSecretType?: string, defaultView?: string}} changes The new values.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 		 */
 		async save(changes) {
 			const body = {}

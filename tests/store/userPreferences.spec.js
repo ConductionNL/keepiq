@@ -5,7 +5,7 @@
  * The default item type and default list view the server already stored now
  * load, save and resolve (vault-20).
  *
- * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+ * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
  */
 
 import axios from '@nextcloud/axios'

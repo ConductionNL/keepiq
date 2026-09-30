@@ -5,7 +5,7 @@
  * The create dialog preselects the default item type the user saved, and
  * falls back to Login when that type no longer exists (vault-20).
  *
- * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+ * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
  */
 
 import { mount } from '@vue/test-utils'

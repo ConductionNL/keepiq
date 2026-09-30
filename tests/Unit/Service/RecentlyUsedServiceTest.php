@@ -35,7 +35,7 @@ use PHPUnit\Framework\TestCase;
  * secrets the caller still owns. The real AuditService sits between the
  * service and the audit mapper, so the query it asks for is the one that runs.
  *
- * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-recently-used/spec.md#requirement-recently-used-on-the-dashboard
+ * @spec openspec/specs/vault-recently-used/spec.md#requirement-recently-used-on-the-dashboard
  */
 class RecentlyUsedServiceTest extends TestCase {
 

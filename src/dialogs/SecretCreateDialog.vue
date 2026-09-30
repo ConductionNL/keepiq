@@ -360,7 +360,7 @@ export default {
 	 *
 	 * @return {Promise<void>}
 	 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
-	 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+	 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 	 */
 	async mounted() {
 		this.policy = await fetchPolicy()

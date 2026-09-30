@@ -30,7 +30,7 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 /**
  * Turns the secret.read audit rows into a short list of distinct, live secrets.
  *
- * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-recently-used/spec.md#requirement-recently-used-on-the-dashboard
+ * @spec openspec/specs/vault-recently-used/spec.md#requirement-recently-used-on-the-dashboard
  */
 class RecentlyUsedService {
 
@@ -73,7 +73,7 @@ class RecentlyUsedService {
 	 *
 	 * @return list<array{id: string, name: string, typeId: string, lastUsedAt: string}>
 	 *
-	 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-recently-used/spec.md#requirement-recently-used-on-the-dashboard
+	 * @spec openspec/specs/vault-recently-used/spec.md#requirement-recently-used-on-the-dashboard
 	 */
 	public function forUser(string $userId): array {
 		$rows = [];

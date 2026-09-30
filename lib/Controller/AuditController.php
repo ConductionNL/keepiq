@@ -168,7 +168,7 @@ class AuditController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/vault-defaults-and-recently-used-widget/specs/vault-recently-used/spec.md#requirement-recently-used-on-the-dashboard
+	 * @spec openspec/specs/vault-recently-used/spec.md#requirement-recently-used-on-the-dashboard
 	 */
 	#[NoAdminRequired]
 	public function recent(): JSONResponse {
