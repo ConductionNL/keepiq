@@ -1154,6 +1154,8 @@ class SecretService {
 	 *                         early stop; scan to the ceiling)
 	 *
 	 * @return Secret[]
+	 *
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
 	 */
 	public function fuzzyMatch(string $userId, string $term, int $targetCount = 0): array {
 		$tolerance = 2;

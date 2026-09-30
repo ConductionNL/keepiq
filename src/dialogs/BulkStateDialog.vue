@@ -85,10 +85,22 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The shared selection and run state.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+		 */
 		bulk() {
 			return useBulkStore()
 		},
 
+		/**
+		 * Whether a run started here has ended: the dialog then only reports.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+		 */
 		finished() {
 			return this.ran && !this.bulk.progress.running
 		},
@@ -164,6 +176,7 @@ export default {
 		 *
 		 * @param {string} secretId The secret id.
 		 * @return {Promise<object>}
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
 		 */
 		async changeOne(secretId) {
 			try {

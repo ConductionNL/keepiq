@@ -977,6 +977,7 @@ export default {
 		 * The bulk actions that change a secret's trash or archive state.
 		 *
 		 * @return {Array<string>}
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
 		 */
 		stateActions() {
 			return ['archive', 'unarchive', 'restore', 'purge']
