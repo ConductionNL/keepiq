@@ -38,6 +38,8 @@ use OCP\IDBConnection;
  *   focused query the service layer composes (find/count/search/cascade);
  *   splitting the mapper would scatter the secrets table's access in one
  *   place across several classes for no benefit.
+ * @SuppressWarnings(PHPMD.TooManyMethods) Same reason: one focused query per
+ *   method; the favourite and last-used writes belong with the table.
  */
 class SecretMapper extends QBMapper {
 	/**
@@ -155,6 +157,9 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
 	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-sort-by-date-last-used
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Each argument is one optional
+	 *   filter of the paged list; a parameter object would only rename them.
 	 */
 	public function findByOwner(
 		string $ownerType,
@@ -825,16 +830,16 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @param string   $id      The row
 	 * @param string   $ownerId The holder (a user)
-	 * @param DateTime $at      When it was used
+	 * @param DateTime $usedAt  When it was used
 	 *
 	 * @return int The number of rows changed (0 or 1)
 	 *
 	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-sort-by-date-last-used
 	 */
-	public function markUsed(string $id, string $ownerId, DateTime $at): int {
+	public function markUsed(string $id, string $ownerId, DateTime $usedAt): int {
 		$qb = $this->db->getQueryBuilder();
 		$qb->update($this->getTableName())
-			->set('last_used_at', $qb->createNamedParameter($at->format('Y-m-d H:i:s'), IQueryBuilder::PARAM_STR))
+			->set('last_used_at', $qb->createNamedParameter($usedAt->format('Y-m-d H:i:s'), IQueryBuilder::PARAM_STR))
 			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
 			->andWhere($qb->expr()->eq('owner_type', $qb->createNamedParameter('user')))
 			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));

@@ -101,6 +101,9 @@ class SecretController extends OCSController {
 	 * @spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md#requirement-passkey-listing-filtering-and-site-associated-presentation
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
 	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) The parameters are the
+	 *   route's query string, bound by the framework one by one.
 	 */
 	#[NoAdminRequired]
 	public function index(

@@ -69,6 +69,9 @@ class SecretOrganisationController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The flag is the request body
+	 *   `{favourite: bool}`; it is the data, not a mode switch.
 	 */
 	#[NoAdminRequired]
 	public function favourite(string $id, bool $favourite = false): JSONResponse {

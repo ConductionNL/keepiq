@@ -1129,6 +1129,8 @@ class SecretService {
 	 * @param int $limit The page size
 	 *
 	 * @return array{items: array<int,array<string,mixed>>, total: int, page: int, limit: int}
+	 *
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
 	 */
 	public function search(string $userId, string $term, int $page, int $limit): array {
 		$limit = $this->clampLimit(limit: $limit);

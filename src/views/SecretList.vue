@@ -1437,9 +1437,11 @@ export default {
 
 		/**
 		 * A bulk run finished: refresh the list so moved/deleted rows
-		 * reflect reality; keep the dialog open to show the report.
+		 * reflect reality; keep the dialog open to show the report. A bulk
+		 * tag change also moves the tag counts in the filter menu.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
 		 */
 		async onBulkDone() {
 			await this.reload()

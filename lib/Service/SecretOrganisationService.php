@@ -27,7 +27,6 @@ namespace OCA\Keepiq\Service;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTagMapper;
 use OCA\Keepiq\Exception\NotFoundException;
@@ -134,13 +133,13 @@ class SecretOrganisationService {
 	 * @param string $id     The row
 	 * @param string $userId The user
 	 *
-	 * @return Secret
+	 * @return void
 	 *
 	 * @throws NotFoundException When the row is missing or not the user's
 	 *
 	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-sort-by-date-last-used
 	 */
-	private function held(string $id, string $userId): Secret {
+	private function held(string $id, string $userId): void {
 		try {
 			$secret = $this->mapper->findById($id);
 		} catch (DoesNotExistException|MultipleObjectsReturnedException) {
@@ -150,7 +149,5 @@ class SecretOrganisationService {
 		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
 			throw new NotFoundException(message: 'Secret not found');
 		}
-
-		return $secret;
 	}//end held()
 }//end class

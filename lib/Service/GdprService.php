@@ -40,6 +40,11 @@ use OCA\Keepiq\Db\ShareTargetMapper;
 
 /**
  * Assembles the server-readable half of a GDPR personal-data export.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The export reads every table
+ *   that holds the subject's data; each mapper is one section of the package.
+ * @SuppressWarnings(PHPMD.ExcessiveParameterList) Same reason: one mapper per
+ *   section, injected by the container.
  */
 class GdprService {
 	/**

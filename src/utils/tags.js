@@ -19,6 +19,7 @@ export const MAX_LENGTH = 32
  *
  * @param {Array<string>|null} value The tags.
  * @return {Array<string>}
+ * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
  */
 export function normaliseTags(value) {
 	const seen = []
@@ -38,6 +39,7 @@ export function normaliseTags(value) {
  * @param {Array<string>} a One list.
  * @param {Array<string>} b The other.
  * @return {boolean}
+ * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
  */
 export function sameTags(a, b) {
 	const left = [...(a || [])].sort()
