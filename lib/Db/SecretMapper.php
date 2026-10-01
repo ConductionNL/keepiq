@@ -85,6 +85,7 @@ class SecretMapper extends QBMapper {
 		'url',
 		'created_at',
 		'updated_at',
+		'last_used_at',
 	];
 
 	/**
@@ -147,10 +148,13 @@ class SecretMapper extends QBMapper {
 	 * @param string|null $state  One of the STATE_* constants; null = every row,
 	 *                            trashed and archived included (GDPR, account
 	 *                            deletion and key rotation need them all)
+	 * @param bool|null $favourite Only the holder's starred rows when true
+	 * @param string|null $tag     Only rows the holder tagged with this tag
 	 *
 	 * @return Secret[]
 	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-sort-by-date-last-used
 	 */
 	public function findByOwner(
 		string $ownerType,
@@ -162,6 +166,8 @@ class SecretMapper extends QBMapper {
 		int $offset = 0,
 		?string $typeId = null,
 		?string $state = null,
+		?bool $favourite = null,
+		?string $tag = null,
 	): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
@@ -178,14 +184,16 @@ class SecretMapper extends QBMapper {
 		}
 
 		(new SecretStateFilter())->apply(qb: $qb, state: $state);
+		$organisation = new SecretListOrganisation();
+		$organisation->apply(qb: $qb, ownerId: $ownerId, favourite: $favourite, tag: $tag);
 
 		$dir = 'ASC';
 		if (strtolower($direction) === 'desc') {
 			$dir = 'DESC';
 		}
 
-		$qb->orderBy($this->resolveSortColumn(sort: $sort), $dir)
-			->setMaxResults($limit)
+		$organisation->order(qb: $qb, column: $this->resolveSortColumn(sort: $sort), direction: $dir);
+		$qb->setMaxResults($limit)
 			->setFirstResult($offset);
 
 		return $this->findEntities(query: $qb);
@@ -299,10 +307,13 @@ class SecretMapper extends QBMapper {
 	 * @param string|null $folderId Filter by folder ID (null = no folder filter)
 	 * @param string|null $typeId Filter by secret-type ID (null = all types)
 	 * @param string|null $state  One of the STATE_* constants; null = every row
+	 * @param bool|null $favourite Only the holder's starred rows when true
+	 * @param string|null $tag     Only rows the holder tagged with this tag
 	 *
 	 * @return int
 	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
 	 */
 	public function countByOwner(
 		string $ownerType,
@@ -310,6 +321,8 @@ class SecretMapper extends QBMapper {
 		?string $folderId = null,
 		?string $typeId = null,
 		?string $state = null,
+		?bool $favourite = null,
+		?string $tag = null,
 	): int {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select($qb->func()->count('*', 'cnt'))
@@ -326,6 +339,7 @@ class SecretMapper extends QBMapper {
 		}
 
 		(new SecretStateFilter())->apply(qb: $qb, state: $state);
+		(new SecretListOrganisation())->apply(qb: $qb, ownerId: $ownerId, favourite: $favourite, tag: $tag);
 
 		$result = $qb->executeQuery();
 		$row = $result->fetch();
@@ -781,4 +795,50 @@ class SecretMapper extends QBMapper {
 
 		return $this->findEntities(query: $qb);
 	}//end findBySuiteForOwner()
+	/**
+	 * Star or unstar one holder's row. Keyed by owner as well as id, so a
+	 * row the user does not hold is never touched.
+	 *
+	 * @param string $id        The row
+	 * @param string $ownerId   The holder (a user)
+	 * @param bool   $favourite The new star
+	 *
+	 * @return int The number of rows changed (0 or 1)
+	 *
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+	 */
+	public function setFavourite(string $id, string $ownerId, bool $favourite): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('is_favourite', $qb->createNamedParameter($favourite, IQueryBuilder::PARAM_BOOL))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
+			->andWhere($qb->expr()->eq('owner_type', $qb->createNamedParameter('user')))
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+
+		return $qb->executeStatement();
+	}//end setFavourite()
+
+	/**
+	 * Record that the holder opened or filled a row. Only `last_used_at` is
+	 * written: `updated_at` stays, so a sync lock or a "changed" sort is not
+	 * disturbed by a read.
+	 *
+	 * @param string   $id      The row
+	 * @param string   $ownerId The holder (a user)
+	 * @param DateTime $at      When it was used
+	 *
+	 * @return int The number of rows changed (0 or 1)
+	 *
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-sort-by-date-last-used
+	 */
+	public function markUsed(string $id, string $ownerId, DateTime $at): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('last_used_at', $qb->createNamedParameter($at->format('Y-m-d H:i:s'), IQueryBuilder::PARAM_STR))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
+			->andWhere($qb->expr()->eq('owner_type', $qb->createNamedParameter('user')))
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+
+		return $qb->executeStatement();
+	}//end markUsed()
 }//end class

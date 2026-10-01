@@ -90,6 +90,8 @@ class SecretController extends OCSController {
 	 * @param int $limit Items per page
 	 * @param string|null $typeId Filter by secret-type ID (omit = all types)
 	 * @param string $state live (default), trashed, archived or kept (live and archived)
+	 * @param string|null $favourite '1' or 'true' for only the user's starred secrets
+	 * @param string|null $tag Only secrets the user tagged with this tag
 	 *
 	 * @NoAdminRequired
 	 *
@@ -98,6 +100,7 @@ class SecretController extends OCSController {
 	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
 	 * @spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md#requirement-passkey-listing-filtering-and-site-associated-presentation
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
 	 */
 	#[NoAdminRequired]
 	public function index(
@@ -109,6 +112,8 @@ class SecretController extends OCSController {
 		int $limit = SecretService::DEFAULT_LIMIT,
 		?string $typeId = null,
 		string $state = 'live',
+		?string $favourite = null,
+		?string $tag = null,
 	): JSONResponse {
 		$userId = $this->uid();
 		if ($userId === null) {
@@ -116,7 +121,8 @@ class SecretController extends OCSController {
 		}
 
 		try {
-			$result = $this->secretService->list($userId, $folderId, $sort, $direction, $page, $limit, $typeId, $state);
+			$onlyFavourites = in_array(strtolower((string)$favourite), ['1', 'true'], true);
+			$result = $this->secretService->list($userId, $folderId, $sort, $direction, $page, $limit, $typeId, $state, $onlyFavourites, $tag);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
 		}
@@ -138,6 +144,7 @@ class SecretController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
 	 */
 	#[NoAdminRequired]
 	public function show(string $id): JSONResponse {
@@ -154,7 +161,11 @@ class SecretController extends OCSController {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		}
 
-		return new JSONResponse(data: $secret->jsonSerialize());
+		// The holder's tags ride along for the edit dialog (vault-favourites-tags-and-last-used).
+		$data   = $secret->jsonSerialize();
+		$tagged = $this->secretService->withTags([$data], $userId);
+
+		return new JSONResponse(data: ($tagged[0] ?? $data));
 	}//end show()
 
 	/**

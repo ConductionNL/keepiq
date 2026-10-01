@@ -103,6 +103,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'secretTrash#purge',     'url' => '/api/v1/secrets/{id}/purge',     'verb' => 'DELETE'],
     ['name' => 'secretTrash#archive',   'url' => '/api/v1/secrets/{id}/archive',   'verb' => 'POST'],
     ['name' => 'secretTrash#unarchive', 'url' => '/api/v1/secrets/{id}/unarchive', 'verb' => 'POST'],
+    // Favourites, tags and last used (vault-favourites-tags-and-last-used), the caller's own rows only.
+    ['name' => 'secretOrganisation#favourite', 'url' => '/api/v1/secrets/{id}/favourite', 'verb' => 'PUT'],
+    ['name' => 'secretOrganisation#tags',      'url' => '/api/v1/secrets/{id}/tags',      'verb' => 'PUT'],
+    ['name' => 'secretOrganisation#tagIndex',  'url' => '/api/v1/tags',                   'verb' => 'GET'],
 
     // Link sharing — authenticated CRUD (secret owner).
     ['name' => 'linkShare#index',   'url' => '/api/v1/secrets/{secretId}/link-shares', 'verb' => 'GET'],
@@ -412,4 +416,6 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'extension#pair', 'url' => '/api/v1/extension/pair', 'verb' => 'POST'],
     ['name' => 'extension#unpair', 'url' => '/api/v1/extension/unpair', 'verb' => 'POST'],
     ['name' => 'extension#match', 'url' => '/api/v1/extension/match', 'verb' => 'GET'],
+    // A fill from the extension counts as a use (vault-favourites-tags-and-last-used); 404 for a row the caller does not hold.
+    ['name' => 'secretOrganisation#used', 'url' => '/api/v1/extension/used/{id}', 'verb' => 'POST'],
 ]);

@@ -68,6 +68,7 @@ class GdprService {
 	 * @param SettingsService $settingsService The settings service
 	 * @param \OCA\Keepiq\Db\AttachmentMapper|null $attachmentMapper The attachment mapper (export metadata)
 	 * @param \OCA\Keepiq\Db\AttachmentGrantMapper|null $grantMapper The attachment-grant mapper (export metadata)
+	 * @param \OCA\Keepiq\Db\SecretTagMapper|null $tagMapper The tag mapper (export metadata)
 	 *
 	 * @return void
 	 */
@@ -81,6 +82,7 @@ class GdprService {
 		private SettingsService $settingsService,
 		private ?\OCA\Keepiq\Db\AttachmentMapper $attachmentMapper = null,
 		private ?\OCA\Keepiq\Db\AttachmentGrantMapper $grantMapper = null,
+		private ?\OCA\Keepiq\Db\SecretTagMapper $tagMapper = null,
 	) {
 	}//end __construct()
 
@@ -128,8 +130,46 @@ class GdprService {
 			'requests' => $this->collectRequests(userId: $userId),
 			'settings' => $this->settingsService->getUserPreferences(userId: $userId),
 			'attachments' => $this->collectAttachments(ownedSecrets: $ownedSecrets, userId: $userId),
+			'organisation' => $this->collectOrganisation(ownedSecrets: $ownedSecrets, userId: $userId),
 		];
 	}//end collectMetadata()
+
+	/**
+	 * The subject's stars, tags and last-used times on their own rows
+	 * (vault-favourites-tags-and-last-used), one entry per row that carries
+	 * any of them.
+	 *
+	 * @param array<int,\OCA\Keepiq\Db\Secret> $ownedSecrets The subject's secrets
+	 * @param string $userId The subject
+	 *
+	 * @return list<array{secretId: string, favourite: bool, tags: list<string>, lastUsedAt: string|null}>
+	 *
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+	 */
+	private function collectOrganisation(array $ownedSecrets, string $userId): array {
+		$tags = [];
+		if ($this->tagMapper !== null && $ownedSecrets !== []) {
+			$tags = $this->tagMapper->findTagsBySecretIds(
+				$userId,
+				array_map(static fn (\OCA\Keepiq\Db\Secret $secret): string => (string)$secret->getId(), $ownedSecrets)
+			);
+		}
+
+		$entries = [];
+		foreach ($ownedSecrets as $secret) {
+			$entry = [
+				'secretId' => (string)$secret->getId(),
+				'favourite' => ($secret->getIsFavourite() === true),
+				'tags' => ($tags[(string)$secret->getId()] ?? []),
+				'lastUsedAt' => $secret->getLastUsedAt()?->format('c'),
+			];
+			if ($entry['favourite'] === true || $entry['tags'] !== [] || $entry['lastUsedAt'] !== null) {
+				$entries[] = $entry;
+			}
+		}
+
+		return $entries;
+	}//end collectOrganisation()
 
 	/**
 	 * Collect attachment records for the subject's own secrets: metadata

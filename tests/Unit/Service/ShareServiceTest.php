@@ -596,6 +596,53 @@ class ShareServiceTest extends TestCase {
 	}//end testSyncUpdateWritesEveryCopyAndClearsCompromise()
 
 	/**
+	 * A recipient's star and last-used time survive the owner's edit: the
+	 * sync writes only the value columns of the copy
+	 * (vault-favourites-tags-and-last-used, "A recipient's star survives the owner's edit").
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+	 */
+	public function testSyncUpdateLeavesTheRecipientsStar(): void {
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$source->setUpdatedAt(new DateTime('2026-01-01T00:00:00+00:00'));
+
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$copy->setIsFavourite(true);
+		$copy->setLastUsedAt(new DateTime('2026-09-30T08:00:00+00:00'));
+		// As loaded from the database: nothing pending.
+		$copy->resetUpdatedFields();
+
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
+		$row = new ShareTarget();
+		$row->setSourceSecretId('src-1');
+		$row->setSecretId('copy-1');
+		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
+
+		$written = [];
+		$this->secretMapper->method('update')->willReturnCallback(
+			static function (Secret $secret) use (&$written): Secret {
+				$written = array_keys($secret->getUpdatedFields());
+				return $secret;
+			}
+		);
+
+		$this->service->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'copy-1', 'key' => 'enc-new']],
+			expectedUpdatedAt: '2026-01-01T00:00:00+00:00',
+			userId: 'alice'
+		);
+
+		$this->assertContains('key', $written);
+		$this->assertNotContains('isFavourite', $written);
+		$this->assertNotContains('lastUsedAt', $written);
+		$this->assertTrue($copy->getIsFavourite());
+	}//end testSyncUpdateLeavesTheRecipientsStar()
+
+	/**
 	 * Test syncUpdate optimistic-lock failure.
 	 *
 	 * @return void
