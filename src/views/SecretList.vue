@@ -65,6 +65,12 @@
 				:action="bulkDialog"
 				@close="closeBulkDialog"
 				@done="onBulkDone" />
+			<!-- Tags in bulk (vault-favourites-tags-and-last-used). -->
+			<BulkTagDialog
+				v-if="bulkDialog === 'tag'"
+				:open="true"
+				@close="closeBulkDialog"
+				@done="onBulkDone" />
 			<BulkShareDialog
 				v-if="bulkDialog === 'share'"
 				:open="true"
@@ -231,6 +237,35 @@
 							@update:modelValue="onTypeFilter(option.value)">
 							{{ option.label }}
 						</NcActionRadio>
+						<!-- Favourites and tags (vault-favourites-tags-and-last-used). -->
+						<NcActionSeparator />
+						<NcActionCheckbox
+							:modelValue="favouriteFilter"
+							data-testid="secret-favourite-filter"
+							@update:modelValue="onFavouriteFilter">
+							{{ t('keepiq', 'Favourites') }}
+						</NcActionCheckbox>
+						<template v-if="tagFilterOptions.length > 0">
+							<NcActionCaption :name="t('keepiq', 'Filter by tag')" />
+							<NcActionRadio
+								name="secret-tag-filter"
+								value=""
+								:modelValue="tagFilter ?? ''"
+								data-testid="secret-tag-filter"
+								@update:modelValue="onTagFilter(null)">
+								{{ t('keepiq', 'All tags') }}
+							</NcActionRadio>
+							<NcActionRadio
+								v-for="option in tagFilterOptions"
+								:key="option.value"
+								name="secret-tag-filter"
+								:value="option.value"
+								:modelValue="tagFilter ?? ''"
+								data-testid="secret-tag-filter"
+								@update:modelValue="onTagFilter(option.value)">
+								{{ option.label }}
+							</NcActionRadio>
+						</template>
 						<NcActionSeparator />
 						<NcActionCaption :name="t('keepiq', 'Sort by')" />
 						<NcActionRadio
@@ -368,6 +403,16 @@
 							<AccountGroup :size="20" />
 						</template>
 						{{ t('keepiq', 'Add to team folder') }}
+					</NcButton>
+					<NcButton
+						variant="secondary"
+						:disabled="loading || folderSwitching"
+						data-testid="bulk-open-tag"
+						@click="bulkDialog = 'tag'">
+						<template #icon>
+							<TagOutline :size="20" />
+						</template>
+						{{ t('keepiq', 'Tags') }}
 					</NcButton>
 					<NcButton
 						variant="secondary"
@@ -546,6 +591,7 @@ import Import from 'vue-material-design-icons/Import.vue'
 import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
 import Safe from 'vue-material-design-icons/Safe.vue'
 import ShareVariantOutline from 'vue-material-design-icons/ShareVariantOutline.vue'
+import TagOutline from 'vue-material-design-icons/TagOutline.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import SecretListItem from '../components/SecretListItem.vue'
 import SecretTypeIcon from '../components/SecretTypeIcon.vue'
@@ -556,6 +602,7 @@ import BulkDeleteDialog from '../dialogs/BulkDeleteDialog.vue'
 import BulkMoveDialog from '../dialogs/BulkMoveDialog.vue'
 import BulkShareDialog from '../dialogs/BulkShareDialog.vue'
 import BulkStateDialog from '../dialogs/BulkStateDialog.vue'
+import BulkTagDialog from '../dialogs/BulkTagDialog.vue'
 import BulkTeamFolderDialog from '../dialogs/BulkTeamFolderDialog.vue'
 import CxpTransferDialog from '../dialogs/CxpTransferDialog.vue'
 import ExportDialog from '../dialogs/ExportDialog.vue'
@@ -633,6 +680,8 @@ export default {
 		ArchiveOutline,
 		DeleteRestore,
 		BulkStateDialog,
+		BulkTagDialog,
+		TagOutline,
 		KeyVariant,
 		SecretListItem,
 		SecretTypeIcon,
@@ -673,6 +722,10 @@ export default {
 			importOpen: false,
 			teamFolderOpen: false,
 			typeFilter: null,
+			/** Only the user's starred secrets (vault-favourites-tags-and-last-used). */
+			favouriteFilter: false,
+			/** Only secrets with this tag, or null for all. */
+			tagFilter: null,
 			decryptedSecrets: [],
 			/** Secrets the last decryptAllSecrets() could not decrypt (keepiq#794). */
 			skippedSecrets: 0,
@@ -866,7 +919,21 @@ export default {
 				{ value: 'url', label: t('keepiq', 'URL') },
 				{ value: 'created_at', label: t('keepiq', 'Created') },
 				{ value: 'updated_at', label: t('keepiq', 'Updated') },
+				{ value: 'last_used_at', label: t('keepiq', 'Last used') },
 			]
+		},
+
+		/**
+		 * The user's tags for the filter menu, with how many secrets carry each.
+		 *
+		 * @return {Array<{value: string, label: string}>}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+		 */
+		tagFilterOptions() {
+			return this.secretStore.tags.map((entry) => ({
+				value: entry.tag,
+				label: `${entry.tag} (${entry.count})`,
+			}))
 		},
 
 		/**
@@ -880,7 +947,12 @@ export default {
 		 * @spec exclude Presentation-only active-state derivation for the funnel button.
 		 */
 		filterMenuActive() {
-			return !!this.typeFilter || this.sortField !== 'name'
+			return (
+				!!this.typeFilter
+				|| this.favouriteFilter
+				|| !!this.tagFilter
+				|| this.sortField !== 'name'
+			)
 		},
 
 		/**
@@ -1270,6 +1342,8 @@ export default {
 			// costs the badge and never the list itself.
 			useSecretRequestStore().fetchRequests(),
 			this.loadViewPreference(),
+			// The tag list for the filter menu (vault-favourites-tags-and-last-used).
+			this.secretStore.fetchTags(),
 		])
 		try {
 			await this.reload()
@@ -1369,6 +1443,8 @@ export default {
 		 */
 		async onBulkDone() {
 			await this.reload()
+			// A bulk tag change moves the tag counts in the filter menu.
+			await this.secretStore.fetchTags().catch(() => {})
 		},
 
 		/**
@@ -1617,6 +1693,8 @@ export default {
 				sort: this.sortField,
 				typeId: this.typeFilter,
 				state: this.listState,
+				favourite: this.favouriteFilter,
+				tag: this.tagFilter,
 			})
 			await this.secretStore.fetchSecrets({ page: 1 })
 		},
@@ -1629,6 +1707,30 @@ export default {
 		 */
 		onTypeFilter(typeId) {
 			this.typeFilter = typeId
+			this.reload()
+		},
+
+		/**
+		 * Favourites-only toggle (vault-favourites-tags-and-last-used).
+		 *
+		 * @param {boolean} value Whether to show only starred secrets.
+		 * @return {void}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+		 */
+		onFavouriteFilter(value) {
+			this.favouriteFilter = !!value
+			this.reload()
+		},
+
+		/**
+		 * Tag filter change (vault-favourites-tags-and-last-used).
+		 *
+		 * @param {string|null} tag The tag, or null for all.
+		 * @return {void}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+		 */
+		onTagFilter(tag) {
+			this.tagFilter = tag || null
 			this.reload()
 		},
 
@@ -1676,6 +1778,8 @@ export default {
 				sort: this.sortField,
 				typeId: this.typeFilter,
 				state: this.listState,
+				favourite: this.favouriteFilter,
+				tag: this.tagFilter,
 			})
 			this.secretStore.fetchSecrets({ page: target })
 		},

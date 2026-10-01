@@ -132,6 +132,11 @@
 				:disabled="saving"
 				@update:members="additionalFields = $event" />
 
+			<SecretTagsField
+				:modelValue="tags"
+				:disabled="saving"
+				@update:modelValue="tags = $event" />
+
 			<!-- The shared destination picker (no "Vault root" option, by
 			     design): a secret always lives in a vault, so creating one
 			     at the root cannot be offered. Replaces a local NcSelect
@@ -178,6 +183,7 @@ import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import DestinationSelect from '../components/DestinationSelect.vue'
+import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import {
@@ -216,6 +222,7 @@ export default {
 		AdditionalFieldsEditor,
 		TypedFieldsForm,
 		DestinationSelect,
+		SecretTagsField,
 		Dice5,
 		KeyGeneratorModal,
 		NcButton,
@@ -251,6 +258,7 @@ export default {
 			url: '',
 			login: '',
 			additionalFields: [],
+			tags: [],
 			typedValues: {},
 			typedMissing: [],
 			selectedFolderId: this.folderId,
@@ -530,6 +538,10 @@ export default {
 						? { additionalFields: this.additionalBlob() }
 						: {}),
 				})
+				// Tags are stored apart from the value (vault-favourites-tags-and-last-used).
+				if (this.tags.length > 0 && created?.id) {
+					await useSecretStore().setTags(created.id, this.tags)
+				}
 				this.$emit('saved', created)
 				if (this.onSaved) {
 					this.onSaved(created)

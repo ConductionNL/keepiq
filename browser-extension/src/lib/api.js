@@ -113,6 +113,20 @@ export function getSecret(config, id) {
 }
 
 /**
+ * Tell the server this secret was just filled, so the vault list can sort
+ * by last used (vault-favourites-tags-and-last-used). Sends only the id.
+ * @param config
+ * @param id
+ */
+export function markUsed(config, id) {
+	return request(
+		config,
+		'POST',
+		'/api/v1/extension/used/' + encodeURIComponent(id),
+	)
+}
+
+/**
  * Create a secret from an already-encrypted body (blobs only).
  * @param config
  * @param body

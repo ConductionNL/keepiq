@@ -27,6 +27,15 @@
 			<span v-if="secret.url" class="secret-list-item__url">{{
 				secret.url
 			}}</span>
+			<!-- The holder's own tags (vault-favourites-tags-and-last-used). -->
+			<span
+				v-if="tags.length > 0"
+				class="secret-list-item__tags"
+				data-testid="secret-tags">
+				<span v-for="tag in tags" :key="tag" class="secret-list-item__tag">{{
+					tag
+				}}</span>
+			</span>
 			<!--
 			  Outstanding secret request (request-first-secret-requests). Without
 			  this, a placeholder awaiting its first fill is indistinguishable from
@@ -79,6 +88,29 @@
 			:vault="vault"
 			:data-testid="`secret-vault-dot-${secret.id}`" />
 
+		<!-- The holder's star (vault-favourites-tags-and-last-used). Not on a
+		     trashed row: the trash only offers restore and delete for good. -->
+		<span
+			v-if="!secret.trashedAt"
+			class="secret-list-item__star"
+			@click.stop
+			@keydown.enter.stop
+			@keydown.space.stop>
+			<NcButton
+				variant="tertiary"
+				:pressed="isFavourite"
+				:ariaLabel="starLabel"
+				:title="starLabel"
+				:disabled="starring"
+				:data-testid="`secret-star-${secret.id}`"
+				@click="toggleFavourite">
+				<template #icon>
+					<Star v-if="isFavourite" :size="20" />
+					<StarOutline v-else :size="20" />
+				</template>
+			</NcButton>
+		</span>
+
 		<span v-if="secret.blocked" class="secret-list-item__blocked">
 			<Lock :size="16" />
 			{{ blockedLabel }}
@@ -99,7 +131,11 @@
 </template>
 
 <script>
+import { showError } from '@nextcloud/dialogs'
+import { NcButton } from '@nextcloud/vue'
 import AccountQuestion from 'vue-material-design-icons/AccountQuestion.vue'
+import Star from 'vue-material-design-icons/Star.vue'
+import StarOutline from 'vue-material-design-icons/StarOutline.vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import Lock from 'vue-material-design-icons/Lock.vue'
 import CopyButton from './CopyButton.vue'
@@ -118,6 +154,9 @@ export default {
 
 	components: {
 		AccountQuestion,
+		NcButton,
+		Star,
+		StarOutline,
 		Lock,
 		AlertOutline,
 		CopyButton,
@@ -164,10 +203,43 @@ export default {
 	data() {
 		return {
 			faviconFailed: false,
+			starring: false,
 		}
 	},
 
 	computed: {
+		/**
+		 * Whether the holder starred this row.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+		 */
+		isFavourite() {
+			return this.secret.favourite === true
+		},
+
+		/**
+		 * The star button's accessible name, which says what a click does.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+		 */
+		starLabel() {
+			return this.isFavourite
+				? t('keepiq', 'Remove {name} from favourites', { name: this.secret.name })
+				: t('keepiq', 'Add {name} to favourites', { name: this.secret.name })
+		},
+
+		/**
+		 * The holder's tags on this row.
+		 *
+		 * @return {Array<string>}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+		 */
+		tags() {
+			return Array.isArray(this.secret.tags) ? this.secret.tags : []
+		},
+
 		faviconUrl() {
 			return resolveFaviconUrl(this.secret.url)
 		},
@@ -210,6 +282,23 @@ export default {
 				return
 			}
 			this.$emit('open', this.secret.id)
+		},
+
+		/**
+		 * Star or unstar the row.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+		 */
+		async toggleFavourite() {
+			this.starring = true
+			try {
+				await useSecretStore().setFavourite(this.secret.id, !this.isFavourite)
+			} catch {
+				showError(t('keepiq', 'Could not change the favourite'))
+			} finally {
+				this.starring = false
+			}
 		},
 
 		/**
@@ -263,6 +352,22 @@ export default {
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
+}
+
+.secret-list-item__tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-top: 2px;
+}
+
+.secret-list-item__tag {
+	padding: 0 8px;
+	border-radius: var(--border-radius-pill);
+	background-color: var(--color-background-dark);
+	color: var(--color-main-text);
+	font-size: 0.85em;
+	line-height: 1.6;
 }
 
 .secret-list-item__blocked {

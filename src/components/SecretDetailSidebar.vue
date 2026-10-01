@@ -66,6 +66,28 @@
 					</template>
 					{{ t('keepiq', 'Edit') }}
 				</NcButton>
+				<!-- The holder's star (vault-favourites-tags-and-last-used). -->
+				<NcButton
+					v-if="!offlineReadOnly && secret"
+					variant="tertiary"
+					:pressed="isFavourite"
+					:ariaLabel="
+						isFavourite
+							? t('keepiq', 'Remove from favourites')
+							: t('keepiq', 'Add to favourites')
+					"
+					:title="
+						isFavourite
+							? t('keepiq', 'Remove from favourites')
+							: t('keepiq', 'Add to favourites')
+					"
+					data-testid="secret-detail-star"
+					@click="toggleFavourite">
+					<template #icon>
+						<Star v-if="isFavourite" :size="20" />
+						<StarOutline v-else :size="20" />
+					</template>
+				</NcButton>
 				<NcButton
 					v-if="!offlineReadOnly"
 					variant="secondary"
@@ -879,6 +901,8 @@ import NoteTextOutline from 'vue-material-design-icons/NoteTextOutline.vue'
 import Paperclip from 'vue-material-design-icons/Paperclip.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import ShareVariant from 'vue-material-design-icons/ShareVariant.vue'
+import Star from 'vue-material-design-icons/Star.vue'
+import StarOutline from 'vue-material-design-icons/StarOutline.vue'
 import ShieldOutline from 'vue-material-design-icons/ShieldOutline.vue'
 import Web from 'vue-material-design-icons/Web.vue'
 import SecretRequestCreateDialog from '../dialogs/SecretRequestCreateDialog.vue'
@@ -950,6 +974,8 @@ export default {
 		Paperclip,
 		Pencil,
 		ShareVariant,
+		Star,
+		StarOutline,
 		Web,
 		AdminHandoverPanel,
 		AttachmentPanel,
@@ -1034,6 +1060,16 @@ export default {
 		 */
 		isArchived() {
 			return Boolean(this.secret?.archivedAt)
+		},
+
+		/**
+		 * Whether the holder starred this secret.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+		 */
+		isFavourite() {
+			return this.secret?.favourite === true
 		},
 
 		/**
@@ -1571,6 +1607,22 @@ export default {
 			this.cnOpenModal('secret-share', {
 				secretId: this.secretId,
 			})
+		},
+
+		/**
+		 * Star or unstar the open secret.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+		 */
+		async toggleFavourite() {
+			const favourite = !this.isFavourite
+			try {
+				await useSecretStore().setFavourite(this.secretId, favourite)
+				this.secret = { ...this.secret, favourite }
+			} catch {
+				showError(t('keepiq', 'Could not change the favourite'))
+			}
 		},
 
 		/**
