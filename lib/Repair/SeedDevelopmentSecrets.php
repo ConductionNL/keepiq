@@ -30,6 +30,7 @@ use OCA\Keepiq\Db\Folder;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretTagMapper;
 use OCA\Keepiq\Db\SecretTypeMapper;
 use OCA\Keepiq\Service\EncryptService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -64,6 +65,7 @@ class SeedDevelopmentSecrets implements IRepairStep {
 	 * @param EncryptService $encryptService The encrypt service
 	 * @param IConfig $config The config interface
 	 * @param LoggerInterface $logger The logger interface
+	 * @param SecretTagMapper|null $tagMapper The tag mapper (seeds tags on a few secrets)
 	 *
 	 * @return void
 	 */
@@ -75,6 +77,7 @@ class SeedDevelopmentSecrets implements IRepairStep {
 		private EncryptService $encryptService,
 		private IConfig $config,
 		private LoggerInterface $logger,
+		private ?SecretTagMapper $tagMapper = null,
 	) {
 	}//end __construct()
 
@@ -139,6 +142,9 @@ class SeedDevelopmentSecrets implements IRepairStep {
 				'key' => 'gh_dev_P@ssw0rd!2024',
 				'login' => 'dev-user',
 				'folder' => $workId,
+				'favourite' => true,
+				'tags' => ['on call'],
+				'usedDaysAgo' => 0,
 			],
 			[
 				'name' => 'AWS Console',
@@ -147,6 +153,9 @@ class SeedDevelopmentSecrets implements IRepairStep {
 				'key' => 'AKIAIOSFODNN7EXAMPLE',
 				'login' => 'dev-access-key',
 				'folder' => $workId,
+				'favourite' => true,
+				'tags' => ['finance', 'on call'],
+				'usedDaysAgo' => 1,
 			],
 			[
 				'name' => 'Production Database',
@@ -155,6 +164,8 @@ class SeedDevelopmentSecrets implements IRepairStep {
 				'key' => 'Pr0d-DB-$ecret!',
 				'login' => 'app_service',
 				'folder' => null,
+				'tags' => ['finance'],
+				'usedDaysAgo' => 3,
 			],
 			[
 				'name' => 'SSH Deploy Key',
@@ -163,6 +174,7 @@ class SeedDevelopmentSecrets implements IRepairStep {
 				'key' => "-----BEGIN OPENSSH PRIVATE KEY-----\nb3BlbnNzaC1rZXktdjEA...",
 				'login' => 'deploy',
 				'folder' => null,
+				'usedDaysAgo' => 7,
 			],
 			[
 				'name' => 'TLS Wildcard Certificate',
@@ -261,7 +273,15 @@ class SeedDevelopmentSecrets implements IRepairStep {
 		$secret->setOwnerId(self::DEV_USER_ID);
 		$secret->setCreatedAt($now);
 		$secret->setUpdatedAt($now);
+		// Favourites, tags and last used (vault-favourites-tags-and-last-used seed data).
+		$secret->setIsFavourite(($spec['favourite'] ?? false) === true);
+		if (isset($spec['usedDaysAgo']) === true) {
+			$secret->setLastUsedAt((new DateTime())->modify('-'.(int)$spec['usedDaysAgo'].' days'));
+		}
 
 		$this->secretMapper->insert($secret);
+		if (($spec['tags'] ?? []) !== []) {
+			$this->tagMapper?->replaceForSecret($secret->getId(), self::DEV_USER_ID, $spec['tags']);
+		}
 	}//end createSecret()
 }//end class

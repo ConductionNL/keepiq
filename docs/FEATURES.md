@@ -71,13 +71,13 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | Bulk secret operations (delete, move folder) | **V1** | Efficiency for large vaults |
 | Secret import (CSV, Bitwarden JSON/CSV, KeePass 2.x XML, Nextcloud Passwords backup) | **V1** ✅ Built | Migration from other tools — client-side parse + encrypt, field-mapping preview, folder/collection mapping, duplicate detection, chunked encrypted commit, malformed-row rejection (see `docs/importing.md`) |
 | Secret export (encrypted backup, CSV) | **V1** ✅ Built | Data portability — client-side Argon2id+AES-256-GCM `.doriath-backup` + warning/re-auth-gated plaintext CSV (see `docs/gdpr.md`) |
-| Favorite/pinned secrets | **V1** | Quick access to frequently used secrets |
+| Favorite/pinned secrets | **V1** ✅ Built | Quick access to frequently used secrets: a star per holder and a Favourites filter, plus a Last used sort (`vault-favourites-tags-and-last-used`) |
 | Recently accessed secrets | **V1** | Convenience pattern from all major vaults |
 | Password health scoring per secret | **V1** ✅ | Flag weak, reused, or old passwords (Bitwarden Reports, 1Password Watchtower) — implemented in `password-health` (client-side vault health report) |
 | Secret strength indicator in list view | **V1** ✅ | Color-coded strength badge next to each secret (Passbolt, Bitwarden) — implemented in `password-health` (in-session zxcvbn badge) |
 | Vault search with keyboard shortcut (Ctrl+K) | **V1** | Power-user quick access (1Password pattern) |
 | Dark mode support | **V1** | User preference; Nextcloud supports dark mode natively |
-| Secret tags (in addition to folders) | **Enterprise** | Cross-cutting categorization |
+| Secret tags (in addition to folders) | **Enterprise** ✅ Built | Cross-cutting categorization: plain-text tags per holder, a tag filter and bulk add or remove (`vault-favourites-tags-and-last-used`) |
 | Custom fields per secret type (admin-defined) | **Enterprise** | Organization-specific field requirements |
 | Breach detection (HaveIBeenPwned) for secret values | **V1** ✅ | Opt-in k-anonymity breach check (5-char prefix proxy) — implemented in `password-health`, double-gated (admin + per-user), default off |
 | Password age indicator | **V1** ✅ | Show how old each secret is; flag stale credentials — implemented in `password-health` via server-maintained `key_updated_at` |
