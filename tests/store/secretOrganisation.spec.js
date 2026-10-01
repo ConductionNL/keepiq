@@ -97,7 +97,10 @@ describe('secret store: favourites, tags and last used', () => {
 			data: { id: 'a', favourite: false },
 		})
 		store.setListQuery({ favourite: true })
-		store.secrets = [{ id: 'a', favourite: true }, { id: 'b', favourite: true }]
+		store.secrets = [
+			{ id: 'a', favourite: true },
+			{ id: 'b', favourite: true },
+		]
 		store.totalCount = 2
 		await store.setFavourite('a', false)
 		expect(store.secrets.map((s) => s.id)).toEqual(['b'])
@@ -119,11 +122,9 @@ describe('secret store: favourites, tags and last used', () => {
 	})
 
 	it('removes one tag in bulk and leaves the others', async () => {
-		const put = vi
-			.spyOn(axios, 'put')
-			.mockImplementation(async (url, body) => ({
-				data: { id: url.split('/').at(-2), tags: body.tags },
-			}))
+		const put = vi.spyOn(axios, 'put').mockImplementation(async (url, body) => ({
+			data: { id: url.split('/').at(-2), tags: body.tags },
+		}))
 		store.secrets = [
 			{ id: 'a', tags: ['finance', 'on call'] },
 			{ id: 'b', tags: ['finance'] },
@@ -135,11 +136,9 @@ describe('secret store: favourites, tags and last used', () => {
 	})
 
 	it('adds one tag in bulk without duplicating it', async () => {
-		const put = vi
-			.spyOn(axios, 'put')
-			.mockImplementation(async (url, body) => ({
-				data: { id: url.split('/').at(-2), tags: body.tags },
-			}))
+		const put = vi.spyOn(axios, 'put').mockImplementation(async (url, body) => ({
+			data: { id: url.split('/').at(-2), tags: body.tags },
+		}))
 		store.secrets = [
 			{ id: 'a', tags: ['finance'] },
 			{ id: 'b', tags: [] },

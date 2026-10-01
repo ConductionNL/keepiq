@@ -134,10 +134,10 @@
 import { showError } from '@nextcloud/dialogs'
 import { NcButton } from '@nextcloud/vue'
 import AccountQuestion from 'vue-material-design-icons/AccountQuestion.vue'
-import Star from 'vue-material-design-icons/Star.vue'
-import StarOutline from 'vue-material-design-icons/StarOutline.vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
 import Lock from 'vue-material-design-icons/Lock.vue'
+import Star from 'vue-material-design-icons/Star.vue'
+import StarOutline from 'vue-material-design-icons/StarOutline.vue'
 import CopyButton from './CopyButton.vue'
 import SecretTypeIcon from './SecretTypeIcon.vue'
 import StrengthBadge from './StrengthBadge.vue'
@@ -226,7 +226,9 @@ export default {
 		 */
 		starLabel() {
 			return this.isFavourite
-				? t('keepiq', 'Remove {name} from favourites', { name: this.secret.name })
+				? t('keepiq', 'Remove {name} from favourites', {
+						name: this.secret.name,
+					})
 				: t('keepiq', 'Add {name} to favourites', { name: this.secret.name })
 		},
 
@@ -293,7 +295,10 @@ export default {
 		async toggleFavourite() {
 			this.starring = true
 			try {
-				await useSecretStore().setFavourite(this.secret.id, !this.isFavourite)
+				await useSecretStore().setFavourite(
+					this.secret.id,
+					!this.isFavourite,
+				)
 			} catch {
 				showError(t('keepiq', 'Could not change the favourite'))
 			} finally {

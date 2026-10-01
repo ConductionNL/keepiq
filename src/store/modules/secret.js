@@ -621,9 +621,9 @@ export const useSecretStore = defineStore('secret', {
 		 */
 		organisationFilter(options = {}) {
 			return {
-				favourite: !!(
-					'favourite' in options ? options.favourite : this.filters.favourite
-				),
+				favourite: !!('favourite' in options
+					? options.favourite
+					: this.filters.favourite),
 				tag: ('tag' in options ? options.tag : this.filters.tag) || null,
 			}
 		},
@@ -726,9 +726,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
 		 */
 		async fetchTags() {
-			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/v1/tags'),
-			)
+			const response = await axios.get(generateUrl('/apps/keepiq/api/v1/tags'))
 			this.tags = response.data?.tags || []
 		},
 

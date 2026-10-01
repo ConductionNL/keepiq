@@ -14,10 +14,9 @@ import { normaliseTags, sameTags } from '../../src/utils/tags.js'
 
 describe('normaliseTags', () => {
 	it('trims, lowercases and drops empties and duplicates', () => {
-		expect(normaliseTags([' On Call ', 'FINANCE', 'on call', '', null])).toEqual([
-			'on call',
-			'finance',
-		])
+		expect(normaliseTags([' On Call ', 'FINANCE', 'on call', '', null])).toEqual(
+			['on call', 'finance'],
+		)
 	})
 
 	it('cuts a tag to 32 characters and keeps at most 20', () => {

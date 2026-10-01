@@ -56,7 +56,11 @@ describe('SecretListItem: star and tags', () => {
 	it('shows no star on a trashed row', () => {
 		const wrapper = mount(SecretListItem, {
 			props: {
-				secret: { id: 's-3', name: 'Old', trashedAt: '2026-10-01T00:00:00+00:00' },
+				secret: {
+					id: 's-3',
+					name: 'Old',
+					trashedAt: '2026-10-01T00:00:00+00:00',
+				},
 			},
 		})
 
@@ -65,7 +69,9 @@ describe('SecretListItem: star and tags', () => {
 
 	it('shows the tags as chips, and nothing when there are none', () => {
 		const tagged = mount(SecretListItem, {
-			props: { secret: { id: 's-4', name: 'Pager', tags: ['finance', 'on call'] } },
+			props: {
+				secret: { id: 's-4', name: 'Pager', tags: ['finance', 'on call'] },
+			},
 		})
 		const chips = tagged.findAll('.secret-list-item__tag').map((c) => c.text())
 		expect(chips).toEqual(['finance', 'on call'])

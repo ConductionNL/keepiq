@@ -25,8 +25,6 @@ describe('reportFill', () => {
 
 	it('swallows a failed report so the fill still answers', async () => {
 		const post = vi.fn().mockRejectedValue(new Error('offline'))
-		await expect(reportFill({ filled: true }, 's-1', post)).resolves.toBe(
-			false,
-		)
+		await expect(reportFill({ filled: true }, 's-1', post)).resolves.toBe(false)
 	})
 })
