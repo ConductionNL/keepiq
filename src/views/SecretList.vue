@@ -58,6 +58,13 @@
 				:open="true"
 				@close="closeBulkDialog"
 				@done="onBulkDone" />
+			<!-- Trash and archive (vault-trash-and-archive). -->
+			<BulkStateDialog
+				v-if="stateActions.includes(bulkDialog)"
+				:open="true"
+				:action="bulkDialog"
+				@close="closeBulkDialog"
+				@done="onBulkDone" />
 			<BulkShareDialog
 				v-if="bulkDialog === 'share'"
 				:open="true"
@@ -88,13 +95,17 @@
 				:loading="loading || folderSwitching"
 				:pagination="pagination"
 				:title="pageTitle"
-				:addLabel="offlineReadOnly ? '' : t('keepiq', 'New secret')"
+				:addLabel="
+					offlineReadOnly || listState !== 'live'
+						? ''
+						: t('keepiq', 'New secret')
+				"
 				addIcon="Plus"
-				inlineSearch
+				:inlineSearch="listState === 'live'"
 				:searchValue="searchTerm"
 				:searchPlaceholder="t('keepiq', 'Search secrets')"
 				rowKey="id"
-				:emptyText="t('keepiq', 'No secrets found')"
+				:emptyText="emptyText"
 				:refreshing="loading"
 				:showMassImport="false"
 				:showMassExport="false"
@@ -293,7 +304,41 @@
 				     navigated away" and "the prune watcher saw the new rows"
 				     the strip still shows the OLD view's selection — acting
 				     on it would move/delete secrets from the previous page. -->
-				<template #selection-actions>
+				<template v-if="listState === 'trashed'" #selection-actions>
+					<NcButton
+						variant="secondary"
+						:disabled="loading"
+						data-testid="bulk-open-restore"
+						@click="bulkDialog = 'restore'">
+						<template #icon>
+							<DeleteRestore :size="20" />
+						</template>
+						{{ t('keepiq', 'Restore') }}
+					</NcButton>
+					<NcButton
+						variant="error"
+						:disabled="loading"
+						data-testid="bulk-open-purge"
+						@click="bulkDialog = 'purge'">
+						<template #icon>
+							<TrashCanOutline :size="20" />
+						</template>
+						{{ t('keepiq', 'Delete for good') }}
+					</NcButton>
+				</template>
+				<template v-else-if="listState === 'archived'" #selection-actions>
+					<NcButton
+						variant="secondary"
+						:disabled="loading"
+						data-testid="bulk-open-unarchive"
+						@click="bulkDialog = 'unarchive'">
+						<template #icon>
+							<ArchiveArrowUpOutline :size="20" />
+						</template>
+						{{ t('keepiq', 'Unarchive') }}
+					</NcButton>
+				</template>
+				<template v-else #selection-actions>
 					<NcButton
 						variant="secondary"
 						:disabled="loading || folderSwitching"
@@ -325,6 +370,16 @@
 						{{ t('keepiq', 'Add to team folder') }}
 					</NcButton>
 					<NcButton
+						variant="secondary"
+						:disabled="loading || folderSwitching"
+						data-testid="bulk-open-archive"
+						@click="bulkDialog = 'archive'">
+						<template #icon>
+							<ArchiveOutline :size="20" />
+						</template>
+						{{ t('keepiq', 'Archive') }}
+					</NcButton>
+					<NcButton
 						variant="error"
 						:disabled="loading || folderSwitching"
 						data-testid="bulk-open-delete"
@@ -338,13 +393,8 @@
 				<!-- Rich empty state. -->
 				<template #empty>
 					<NcEmptyContent
-						:name="t('keepiq', 'No secrets found')"
-						:description="
-							t(
-								'keepiq',
-								'Add your first secret using the button above',
-							)
-						">
+						:name="emptyText"
+						:description="emptyDescription">
 						<template #icon>
 							<KeyVariant :size="64" />
 						</template>
@@ -484,6 +534,9 @@ import {
 import { markRaw } from 'vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import AccountQuestion from 'vue-material-design-icons/AccountQuestion.vue'
+import ArchiveArrowUpOutline from 'vue-material-design-icons/ArchiveArrowUpOutline.vue'
+import ArchiveOutline from 'vue-material-design-icons/ArchiveOutline.vue'
+import DeleteRestore from 'vue-material-design-icons/DeleteRestore.vue'
 import FilterIcon from 'vue-material-design-icons/Filter.vue'
 import FilterOutline from 'vue-material-design-icons/FilterOutline.vue'
 import FolderMoveOutline from 'vue-material-design-icons/FolderMoveOutline.vue'
@@ -502,6 +555,7 @@ import AccountDeletionDialog from '../dialogs/AccountDeletionDialog.vue'
 import BulkDeleteDialog from '../dialogs/BulkDeleteDialog.vue'
 import BulkMoveDialog from '../dialogs/BulkMoveDialog.vue'
 import BulkShareDialog from '../dialogs/BulkShareDialog.vue'
+import BulkStateDialog from '../dialogs/BulkStateDialog.vue'
 import BulkTeamFolderDialog from '../dialogs/BulkTeamFolderDialog.vue'
 import CxpTransferDialog from '../dialogs/CxpTransferDialog.vue'
 import ExportDialog from '../dialogs/ExportDialog.vue'
@@ -575,6 +629,10 @@ export default {
 		FolderOutline,
 		ShareVariantOutline,
 		TrashCanOutline,
+		ArchiveArrowUpOutline,
+		ArchiveOutline,
+		DeleteRestore,
+		BulkStateDialog,
 		KeyVariant,
 		SecretListItem,
 		SecretTypeIcon,
@@ -891,7 +949,76 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		pageTitle() {
+			if (this.listState === 'trashed') {
+				return t('keepiq', 'Trash')
+			}
+			if (this.listState === 'archived') {
+				return t('keepiq', 'Archive')
+			}
 			return this.selectedFolderName || t('keepiq', 'Secrets')
+		},
+
+		/**
+		 * Which state the list shows: the Trash and Archive pages reuse this
+		 * view under their own route names (vault-trash-and-archive).
+		 *
+		 * @return {string} live, trashed or archived
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+		 */
+		listState() {
+			return (
+				{ SecretTrash: 'trashed', SecretArchive: 'archived' }[
+					this.$route?.name
+				] || 'live'
+			)
+		},
+
+		/**
+		 * The bulk actions that change a secret's trash or archive state.
+		 *
+		 * @return {Array<string>}
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+		 */
+		stateActions() {
+			return ['archive', 'unarchive', 'restore', 'purge']
+		},
+
+		/**
+		 * The empty state, per view.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+		 */
+		emptyText() {
+			if (this.listState === 'trashed') {
+				return t('keepiq', 'The trash is empty')
+			}
+			if (this.listState === 'archived') {
+				return t('keepiq', 'No archived secrets')
+			}
+			return t('keepiq', 'No secrets found')
+		},
+
+		/**
+		 * The empty state's second line, per view.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+		 */
+		emptyDescription() {
+			if (this.listState === 'trashed') {
+				return t(
+					'keepiq',
+					'Deleted secrets wait here until the retention period ends, then they are deleted for good.',
+				)
+			}
+			if (this.listState === 'archived') {
+				return t(
+					'keepiq',
+					'Archive a secret from its detail panel to keep it out of the vault list, search and autofill.',
+				)
+			}
+			return t('keepiq', 'Add your first secret using the button above')
 		},
 
 		/**
@@ -1489,6 +1616,7 @@ export default {
 				search: this.searchTerm,
 				sort: this.sortField,
 				typeId: this.typeFilter,
+				state: this.listState,
 			})
 			await this.secretStore.fetchSecrets({ page: 1 })
 		},
@@ -1547,6 +1675,7 @@ export default {
 				search: this.searchTerm,
 				sort: this.sortField,
 				typeId: this.typeFilter,
+				state: this.listState,
 			})
 			this.secretStore.fetchSecrets({ page: target })
 		},
@@ -1562,6 +1691,8 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		openSecret(id) {
+			// A trashed secret has no detail view: Restore brings it back first.
+			if (this.listState === 'trashed') return
 			this.$router.push(secretDetailLocation(this.$route, id))
 		},
 

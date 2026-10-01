@@ -104,3 +104,30 @@ describe('activeDetailSecretId', () => {
 		expect(activeDetailSecretId(null)).toBeNull()
 	})
 })
+
+// vault-trash-and-archive: the Archive view keeps its own detail route; the
+// Trash view opens no sidebar at all.
+// @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+describe('detail route in the Archive and Trash views', () => {
+	it('opens and closes the sidebar over the Archive view', () => {
+		const route = { name: 'SecretArchive', params: {} }
+		expect(secretDetailLocation(route, 's-1')).toEqual({
+			name: 'SecretArchive',
+			params: { id: 's-1' },
+		})
+		expect(
+			closeDetailLocation({ name: 'SecretArchive', params: { id: 's-1' } }),
+		).toEqual({
+			name: 'SecretArchive',
+		})
+		expect(
+			activeDetailSecretId({ name: 'SecretArchive', params: { id: 's-1' } }),
+		).toBe('s-1')
+	})
+
+	it('never opens a sidebar from the Trash route', () => {
+		expect(
+			activeDetailSecretId({ name: 'SecretTrash', params: { id: 's-1' } }),
+		).toBeNull()
+	})
+})

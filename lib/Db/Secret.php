@@ -62,6 +62,10 @@ use OCP\AppFramework\Db\Entity;
  * @method DateTime|null getTombstonedAt()
  * @method void setTombstonedAt(?DateTime $tombstonedAt)
  * @method string|null getTombstoneReason()
+ * @method DateTime|null getTrashedAt()
+ * @method void setTrashedAt(?DateTime $trashedAt)
+ * @method DateTime|null getArchivedAt()
+ * @method void setArchivedAt(?DateTime $archivedAt)
  * @method void setTombstoneReason(?string $tombstoneReason)
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
@@ -191,6 +195,23 @@ class Secret extends Entity implements JsonSerializable {
 	protected ?DateTime $tombstonedAt = null;
 
 	/**
+	 * When the owner moved this secret to the trash (nullable = not trashed).
+	 *
+	 * A trashed secret keeps its ciphertext, attachments and versions until
+	 * it is restored or purged (vault-trash-and-archive D1).
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $trashedAt = null;
+
+	/**
+	 * When the owner archived this secret (nullable = not archived).
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $archivedAt = null;
+
+	/**
 	 * The non-personal reason a copy was tombstoned (nullable).
 	 *
 	 * A short enum-ish token (e.g. 'owner-account-deleted'). MUST NOT contain
@@ -264,6 +285,8 @@ class Secret extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'migrationError', type: 'string');
 		$this->addType(fieldName: 'tombstonedAt', type: 'datetime');
 		$this->addType(fieldName: 'tombstoneReason', type: 'string');
+		$this->addType(fieldName: 'trashedAt', type: 'datetime');
+		$this->addType(fieldName: 'archivedAt', type: 'datetime');
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
 		$this->addType(fieldName: 'updatedAt', type: 'datetime');
 	}//end __construct()
@@ -320,6 +343,8 @@ class Secret extends Entity implements JsonSerializable {
 			'possiblyCompromisedAt' => $this->possiblyCompromisedAt?->format('c'),
 			'tombstonedAt' => $this->tombstonedAt?->format('c'),
 			'tombstoneReason' => $this->tombstoneReason,
+			'trashedAt' => $this->trashedAt?->format('c'),
+			'archivedAt' => $this->archivedAt?->format('c'),
 		];
 	}//end jsonSerialize()
 
@@ -353,6 +378,8 @@ class Secret extends Entity implements JsonSerializable {
 			'possiblyCompromisedAt' => $this->possiblyCompromisedAt?->format('c'),
 			'migrationError' => $this->migrationError,
 			'unrecoverable' => ($this->migrationError !== null),
+			'trashedAt' => $this->trashedAt?->format('c'),
+			'archivedAt' => $this->archivedAt?->format('c'),
 			'createdAt' => $this->createdAt?->format('c'),
 			'updatedAt' => $this->updatedAt?->format('c'),
 		];

@@ -89,6 +89,7 @@ class SecretController extends OCSController {
 	 * @param int $page Page number (1-based)
 	 * @param int $limit Items per page
 	 * @param string|null $typeId Filter by secret-type ID (omit = all types)
+	 * @param string $state live (default), trashed, archived or kept (live and archived)
 	 *
 	 * @NoAdminRequired
 	 *
@@ -96,6 +97,7 @@ class SecretController extends OCSController {
 	 *
 	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
 	 * @spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md#requirement-passkey-listing-filtering-and-site-associated-presentation
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
 	 */
 	#[NoAdminRequired]
 	public function index(
@@ -106,14 +108,20 @@ class SecretController extends OCSController {
 		int $page = 1,
 		int $limit = SecretService::DEFAULT_LIMIT,
 		?string $typeId = null,
+		string $state = 'live',
 	): JSONResponse {
 		$userId = $this->uid();
 		if ($userId === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		$result = $this->secretService->list($userId, $folderId, $sort, $direction, $page, $limit, $typeId);
-		if ($search !== null && trim($search) !== '') {
+		try {
+			$result = $this->secretService->list($userId, $folderId, $sort, $direction, $page, $limit, $typeId, $state);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		if ($state === 'live' && $search !== null && trim($search) !== '') {
 			$result = $this->secretService->search($userId, $search, $page, $limit);
 		}
 
@@ -332,33 +340,4 @@ class SecretController extends OCSController {
 
 		return new JSONResponse(data: $secret->jsonSerialize());
 	}//end update()
-
-	/**
-	 * Delete a secret (cascades to its link shares).
-	 *
-	 * @param string $id The secret ID
-	 *
-	 * @NoAdminRequired
-	 *
-	 * @return JSONResponse
-	 *
-	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
-	 */
-	#[NoAdminRequired]
-	public function destroy(string $id): JSONResponse {
-		$userId = $this->uid();
-		if ($userId === null) {
-			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
-		}
-
-		try {
-			$this->secretService->delete($id, $userId);
-		} catch (NotFoundException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
-		} catch (ForbiddenException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
-		}
-
-		return new JSONResponse(data: ['status' => 'deleted']);
-	}//end destroy()
 }//end class

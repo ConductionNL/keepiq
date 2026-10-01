@@ -35,6 +35,12 @@ final class AuditEventTypes {
 	public const SECRET_UPDATED = 'secret.updated';
 	public const SECRET_READ = 'secret.read';
 	public const SECRET_DELETED = 'secret.deleted';
+	// Trash and archive (vault-trash-and-archive): ids and the item name only.
+	public const SECRET_TRASHED = 'secret.trashed';
+	public const SECRET_RESTORED = 'secret.restored';
+	public const SECRET_PURGED = 'secret.purged';
+	public const SECRET_ARCHIVED = 'secret.archived';
+	public const SECRET_UNARCHIVED = 'secret.unarchived';
 
 	// Folder.
 	public const FOLDER_DELETED_CASCADE = 'folder.deleted_cascade';
@@ -200,6 +206,11 @@ final class AuditEventTypes {
 		self::SECRET_UPDATED => ['changedFields'],
 		self::SECRET_READ => [],
 		self::SECRET_DELETED => [],
+		self::SECRET_TRASHED => [],
+		self::SECRET_RESTORED => [],
+		self::SECRET_PURGED => ['reason'],
+		self::SECRET_ARCHIVED => [],
+		self::SECRET_UNARCHIVED => [],
 		self::FOLDER_DELETED_CASCADE => ['secretCount', 'subfolderCount'],
 		self::SHARE_GRANTED => ['recipientType', 'recipientId'],
 		self::SHARE_REVOKED => ['recipientType', 'recipientId'],

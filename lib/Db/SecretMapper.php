@@ -41,6 +41,41 @@ use OCP\IDBConnection;
  */
 class SecretMapper extends QBMapper {
 	/**
+	 * Neither trashed nor archived: the everyday vault.
+	 *
+	 * @var string
+	 */
+	public const STATE_LIVE = 'live';
+
+	/**
+	 * In the trash, waiting for restore or purge.
+	 *
+	 * @var string
+	 */
+	public const STATE_TRASHED = 'trashed';
+
+	/**
+	 * Archived and not trashed.
+	 *
+	 * @var string
+	 */
+	public const STATE_ARCHIVED = 'archived';
+
+	/**
+	 * Everything that is not trashed (live and archived): what an export carries.
+	 *
+	 * @var string
+	 */
+	public const STATE_KEPT = 'kept';
+
+	/**
+	 * The states a list request may name.
+	 *
+	 * @var string[]
+	 */
+	public const LIST_STATES = [self::STATE_LIVE, self::STATE_TRASHED, self::STATE_ARCHIVED, self::STATE_KEPT];
+
+	/**
 	 * The columns a list may be sorted by (allow-list to prevent injection).
 	 *
 	 * @var string[]
@@ -109,8 +144,13 @@ class SecretMapper extends QBMapper {
 	 * @param int $limit Maximum rows
 	 * @param int $offset Row offset
 	 * @param string|null $typeId Filter by secret-type ID (null = all types)
+	 * @param string|null $state  One of the STATE_* constants; null = every row,
+	 *                            trashed and archived included (GDPR, account
+	 *                            deletion and key rotation need them all)
 	 *
 	 * @return Secret[]
+	 *
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
 	 */
 	public function findByOwner(
 		string $ownerType,
@@ -121,6 +161,7 @@ class SecretMapper extends QBMapper {
 		int $limit = 1000,
 		int $offset = 0,
 		?string $typeId = null,
+		?string $state = null,
 	): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
@@ -135,6 +176,8 @@ class SecretMapper extends QBMapper {
 		if ($typeId !== null) {
 			$qb->andWhere($qb->expr()->eq('type_id', $qb->createNamedParameter($typeId)));
 		}
+
+		(new SecretStateFilter())->apply(qb: $qb, state: $state);
 
 		$dir = 'ASC';
 		if (strtolower($direction) === 'desc') {
@@ -255,14 +298,18 @@ class SecretMapper extends QBMapper {
 	 * @param string $ownerId The owner ID
 	 * @param string|null $folderId Filter by folder ID (null = no folder filter)
 	 * @param string|null $typeId Filter by secret-type ID (null = all types)
+	 * @param string|null $state  One of the STATE_* constants; null = every row
 	 *
 	 * @return int
+	 *
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
 	 */
 	public function countByOwner(
 		string $ownerType,
 		string $ownerId,
 		?string $folderId = null,
 		?string $typeId = null,
+		?string $state = null,
 	): int {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select($qb->func()->count('*', 'cnt'))
@@ -277,6 +324,8 @@ class SecretMapper extends QBMapper {
 		if ($typeId !== null) {
 			$qb->andWhere($qb->expr()->eq('type_id', $qb->createNamedParameter($typeId)));
 		}
+
+		(new SecretStateFilter())->apply(qb: $qb, state: $state);
 
 		$result = $qb->executeQuery();
 		$row = $result->fetch();
@@ -407,6 +456,8 @@ class SecretMapper extends QBMapper {
 					$qb->expr()->iLike('url', $qb->createNamedParameter($like))
 				)
 			)
+			->andWhere($qb->expr()->isNull('trashed_at'))
+			->andWhere($qb->expr()->isNull('archived_at'))
 			->setMaxResults(max(1, $limit));
 
 		return $this->findEntities(query: $qb);
@@ -436,6 +487,8 @@ class SecretMapper extends QBMapper {
 					$qb->expr()->iLike('url', $qb->createNamedParameter($like))
 				)
 			)
+			->andWhere($qb->expr()->isNull('trashed_at'))
+			->andWhere($qb->expr()->isNull('archived_at'))
 			->orderBy('name', 'ASC')
 			->setMaxResults($limit);
 

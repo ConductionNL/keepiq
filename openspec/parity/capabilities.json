@@ -528,7 +528,7 @@
       "id": "vault-04",
       "area": "vault",
       "name": "Recover a deleted item from a trash bin before it is gone for good.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -536,11 +536,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-trash-and-archive on 2026-09-27. Before: grep -rniF trash|deletedAt lib src: no soft-delete column or restore path. SecretDeleteConfirmDialog.vue:30 and BulkDeleteDialog.vue:35 both say there is no trash and the delete cannot be undone",
+        "state": "built",
+        "evidence": "lib/Service/SecretTrashService.php trash/restore/purge (sharing revoked at trash through SecretSharingRevoker); DELETE /api/v1/secrets/{id} -> SecretTrashController::trash; POST .../restore, DELETE .../purge; lib/BackgroundJob/PurgeTrashedSecretsJob.php daily purge past trash_retention_days (AdminSettingsService, 1 to 365, default 30); src/views/SecretList.vue Trash view (route SecretTrash, /trash) with Restore and Delete for good (src/dialogs/BulkStateDialog.vue)",
         "owner": "ConductionNL/keepiq",
-        "note": "Deliberate design choice, stated in the delete-confirmation copy itself, not a gap that was missed. Decision 2026-09-27: specified as vault-trash-and-archive; the bulk-actions spec names a trash a separate change (openspec/specs/bulk-actions/spec.md:94), so it is not a recorded non-goal.",
-        "change": "openspec/changes/vault-trash-and-archive"
+        "reachedOn": "Keepiq navigation, Trash: select secrets, Restore or Delete for good",
+        "note": "Built 2026-09-30. Tests: PHPUnit SecretTrashServiceTest, SecretTrashControllerTest, PurgeTrashedSecretsJobTest, SecretServiceTrashStateTest, TrashRetentionSettingTest, SecretStateFilterTest; vitest secretTrashState.spec.js, BulkStateDialog.spec.js, TrashDeleteCopy.spec.js.",
+        "change": "openspec/changes/archive/2026-09-30-vault-trash-and-archive"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1270,7 +1271,7 @@
       "id": "vault-27",
       "area": "vault",
       "name": "Archive an item so it leaves search and autofill without being deleted.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -1278,12 +1279,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-trash-and-archive on 2026-09-27. Before: git grep -i archiv src lib appinfo: no match",
+        "state": "built",
+        "evidence": "lib/Service/SecretTrashService.php archive/unarchive (shares kept); lib/Db/SecretStateFilter.php live excludes archived in the list, fuzzy search, dashboard count and offline cache; SecretMapper::searchByNameOrUrl (extension match) and findForUnifiedSearch always live; health report reads the live list; src/components/SecretDetailSidebar.vue Archive/Unarchive; Archive view (route SecretArchive, /archive)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing",
-        "note": "No archive state; an item is either live or deleted.",
-        "change": "openspec/changes/vault-trash-and-archive"
+        "reachedOn": "Secret detail panel, more actions, Archive; Keepiq navigation, Archive",
+        "note": "Built 2026-09-30. Tests: PHPUnit SecretTrashServiceTest::testArchiveAndUnarchiveKeepShares, SecretStateFilterTest; vitest secretTrashState.spec.js, detail-route.spec.js.",
+        "change": "openspec/changes/archive/2026-09-30-vault-trash-and-archive"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",

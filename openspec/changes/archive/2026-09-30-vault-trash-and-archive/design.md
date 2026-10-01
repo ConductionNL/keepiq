@@ -51,3 +51,11 @@ Keepiq owns its tables (keepiq ADR-001) and has no OpenRegister register, so the
 ## Migration
 
 One migration after `Version001000Date20260908000000`: add `trashed_at` and `archived_at` (datetime, nullable) to `keepiq_secrets` and an index on (`owner_id`, `trashed_at`). Existing rows are live (both null). `<version>` in `appinfo/info.xml` bumps so the migration runs.
+
+## Corrections made while building (2026-09-30)
+
+- **D3**: the state argument defaults to *every row*, not to live. A live default would have hidden trashed rows from GDPR export, account deletion, key rotation, rotation flags and child-data cleanup, which must all keep seeing them. Callers that show the everyday vault pass `live` explicitly (list, fuzzy search, dashboard count, offline cache); the two search queries (extension match and unified search) are always live. The filter lives in `SecretStateFilter` and the cross-user purge query in `SecretTrashMapper`, so `SecretMapper` keeps its size.
+- **D4**: the retention field sits in the existing Attachments and version history admin section, next to the version retention it resembles. The purge loop is in the job.
+- **Folders**: a folder deleted with its contents keeps its immediate delete; the non-goal wording "secrets it deletes go to the trash" is withdrawn for this change.
+- **Trash view**: it opens no detail sidebar; a trashed secret is restored before it is opened. `DELETE /api/v1/secrets/{id}` answers `status: deleted, trashed: true`.
+- **Seed data**: no dev fixture rows were added.

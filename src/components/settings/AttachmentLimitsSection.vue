@@ -8,6 +8,7 @@
 
   @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
   @spec openspec/specs/secret-version-history/spec.md#requirement-admin-configurable-retention-and-pruning
+  @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
 -->
 <template>
 	<CnSettingsSection
@@ -15,7 +16,7 @@
 		:description="
 			t(
 				'keepiq',
-				'Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes) and version-history retention.',
+				'Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.',
 			)
 		">
 		<div class="attachment-limits" data-testid="attachment-limits-section">
@@ -60,6 +61,21 @@
 					data-testid="version-retention-days"
 					@change="save" />
 			</label>
+			<label class="attachment-limits__field">
+				<span>{{
+					t(
+						'keepiq',
+						'Days a deleted secret stays in the trash (1 to 365)',
+					)
+				}}</span>
+				<input
+					v-model.number="trashDays"
+					type="number"
+					min="1"
+					max="365"
+					data-testid="trash-retention-days"
+					@change="save" />
+			</label>
 		</div>
 	</CnSettingsSection>
 </template>
@@ -82,6 +98,7 @@ export default {
 			quotaMib: 100,
 			retentionCount: 20,
 			retentionDays: 365,
+			trashDays: 30,
 			error: null,
 		}
 	},
@@ -105,6 +122,7 @@ export default {
 			)
 			this.retentionCount = response.data.version_retention_count ?? 20
 			this.retentionDays = response.data.version_retention_days ?? 365
+			this.trashDays = response.data.trash_retention_days ?? 30
 		} catch (e) {
 			this.error = e?.response?.data?.message || e?.message
 		}
@@ -126,6 +144,7 @@ export default {
 					attachment_user_quota_bytes: Math.max(1, this.quotaMib) * MIB,
 					version_retention_count: Math.max(1, this.retentionCount),
 					version_retention_days: Math.max(0, this.retentionDays),
+					trash_retention_days: Math.min(365, Math.max(1, this.trashDays)),
 				})
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message

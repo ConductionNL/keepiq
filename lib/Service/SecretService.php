@@ -976,6 +976,8 @@ class SecretService {
 	 *
 	 * @param string $id The secret ID
 	 * @param string $userId The requesting Nextcloud user ID
+	 * @param string|null $purgeReason Set when this delete purges a trashed secret:
+	 *                                 'owner' or 'retention' (vault-trash-and-archive)
 	 *
 	 * @return void
 	 *
@@ -983,8 +985,9 @@ class SecretService {
 	 * @throws ForbiddenException When the secret belongs to another user
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
 	 */
-	public function delete(string $id, string $userId): void {
+	public function delete(string $id, string $userId, ?string $purgeReason = null): void {
 		$secret = $this->loadOwned(id: $id, userId: $userId);
 
 		// Cascade to derived link shares + secret requests + user shares
@@ -1026,15 +1029,34 @@ class SecretService {
 		$this->mapper->delete($secret);
 		$this->logger->info("Keepiq: secret {$id} deleted by {$userId}");
 
-		$this->dispatchAudit(
-			event: $this->auditEvents->forUser(
+		// A purge from the trash (vault-trash-and-archive) records its own
+		// event: by the owner, or by the system when the retention ran out.
+		$event = match ($purgeReason) {
+			null => $this->auditEvents->forUser(
 				actorId: $userId,
 				eventType: AuditEventTypes::SECRET_DELETED,
 				objectType: 'secret',
 				objectId: $id,
 				objectName: $secret->getName(),
-			)
-		);
+			),
+			'retention' => $this->auditEvents->forSystem(
+				eventType: AuditEventTypes::SECRET_PURGED,
+				objectType: 'secret',
+				objectId: $id,
+				objectName: $secret->getName(),
+				metadata: ['reason' => $purgeReason],
+			),
+			default => $this->auditEvents->forUser(
+				actorId: $userId,
+				eventType: AuditEventTypes::SECRET_PURGED,
+				objectType: 'secret',
+				objectId: $id,
+				objectName: $secret->getName(),
+				metadata: ['reason' => $purgeReason],
+			),
+		};
+
+		$this->dispatchAudit(event: $event);
 	}//end delete()
 
 	/**
@@ -1050,8 +1072,11 @@ class SecretService {
 	 * @param int $page The 1-based page number
 	 * @param int $limit The page size
 	 * @param string|null $typeId The secret-type filter (null = all types)
+	 * @param string $state The trash/archive state (SecretMapper::STATE_*), live by default
 	 *
 	 * @return array{items: array<int,array<string,mixed>>, total: int, page: int, limit: int}
+	 *
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
 	 */
 	public function list(
 		string $userId,
@@ -1061,13 +1086,14 @@ class SecretService {
 		int $page,
 		int $limit,
 		?string $typeId = null,
+		string $state = SecretMapper::STATE_LIVE,
 	): array {
 		$limit = $this->clampLimit(limit: $limit);
 		$page = max(1, $page);
 		$offset = (($page - 1) * $limit);
 
-		$secrets = $this->mapper->findByOwner('user', $userId, $folderId, $sort, $direction, $limit, $offset, $typeId);
-		$total = $this->mapper->countByOwner('user', $userId, $folderId, $typeId);
+		$secrets = $this->mapper->findByOwner('user', $userId, $folderId, $sort, $direction, $limit, $offset, $typeId, $state);
+		$total = $this->mapper->countByOwner('user', $userId, $folderId, $typeId, $state);
 
 		return [
 			'items' => array_map([$this, 'serialiseWithBlocking'], $secrets),
@@ -1128,6 +1154,8 @@ class SecretService {
 	 *                         early stop; scan to the ceiling)
 	 *
 	 * @return Secret[]
+	 *
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
 	 */
 	public function fuzzyMatch(string $userId, string $term, int $targetCount = 0): array {
 		$tolerance = 2;
@@ -1155,7 +1183,9 @@ class SecretService {
 				'name',
 				'asc',
 				self::FUZZY_SCAN_PAGE_SIZE,
-				$offset
+				$offset,
+				null,
+				SecretMapper::STATE_LIVE
 			);
 			if ($pageRows === []) {
 				break;

@@ -15,8 +15,8 @@ team-folder-sharing change will make 100+-secret org vaults normal, so bulk is t
 difference between usable and painful. Requested in NC Passwords issue #610 and logged as
 the canonical `bulk-actions` feature at demand 55.
 
-Nothing new is invented: move reuses the metadata-only update path, delete reuses the
-existing irreversible hard-delete cascade (there is no trash), and share / add-to-team-folder
+Nothing new is invented: move reuses the metadata-only update path, delete moves the
+selection to the trash (vault-trash-and-archive), and share / add-to-team-folder
 reuse the per-recipient RSA fan-out and idempotent-upsert pattern from team-folder-sharing.
 
 ## Requirements
@@ -90,14 +90,13 @@ reason, and no new unguarded batch surface may be introduced.
 
 ## Notes
 
-- **No trash today**: `SecretService::delete` is an irreversible hard delete
-  (`lib/Service/SecretService.php:826`, `:852`); a trash/undo is out of scope and would be a
-  separate change.
+- **Trash**: since vault-trash-and-archive (2026-09-30) a bulk delete moves the selection to
+  the trash; restore and delete for good live in the Trash view.
 - Depends on `team-folder-sharing` for the fan-out / idempotent-upsert pattern and the
   add-to-team-folder action.
 - Related specs: secrets (list/delete/move), secrets-write-ui (single-item move/share),
   team-folder-sharing (fan-out), user-sharing (per-recipient share copies).
 - Related ADRs: ADR-001 (own tables, no OpenRegister), ADR-003 (zero-knowledge — server-side
   share fan-out is impossible, so shares are client-driven).
-- Out of scope for v1: trash/undo, bulk value-edit, machine-seam bulk actions,
+- Out of scope for v1: bulk value-edit, machine-seam bulk actions,
   whole-vault (cross-page) select-all.

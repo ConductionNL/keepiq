@@ -90,7 +90,7 @@ class OfflineManifestService {
 
 		$secrets = array_map(
 			static fn (Secret $secret) => $secret->jsonSerialize(),
-			$this->secretMapper->findByOwner(ownerType: 'user', ownerId: $userId)
+			$this->secretMapper->findByOwner(ownerType: 'user', ownerId: $userId, state: SecretMapper::STATE_LIVE)
 		);
 
 		$folders = array_map(

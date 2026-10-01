@@ -119,6 +119,20 @@
 			"order": 20
 		},
 		{
+			"id": "ArchiveMenu",
+			"label": "Archive",
+			"icon": "ArchiveOutline",
+			"route": "SecretArchive",
+			"order": 22
+		},
+		{
+			"id": "TrashMenu",
+			"label": "Trash",
+			"icon": "TrashCanOutline",
+			"route": "SecretTrash",
+			"order": 24
+		},
+		{
 			"id": "ApplicationsMenu",
 			"label": "Applications",
 			"icon": "ApplicationOutline",
@@ -559,6 +573,22 @@
 			"title": "Vault",
 			"component": "SecretList",
 			"_note": "Same vault view filtered to a folder (folderId route param); :id? opens the secret-detail sidebar with the folder context kept in the path."
+		},
+		{
+			"id": "SecretArchive",
+			"route": "/archive/:id?",
+			"type": "custom",
+			"title": "Archive",
+			"component": "SecretList",
+			"_note": "The vault list in its archived state (vault-trash-and-archive): SecretList reads the route name and asks for state=archived. :id? opens the detail sidebar over the Archive view."
+		},
+		{
+			"id": "SecretTrash",
+			"route": "/trash",
+			"type": "custom",
+			"title": "Trash",
+			"component": "SecretList",
+			"_note": "The vault list in its trashed state (vault-trash-and-archive): restore or delete for good through the selection strip. No detail sidebar: a trashed secret is restored before it is opened."
 		},
 		{
 			"id": "ApplicationRegister",
