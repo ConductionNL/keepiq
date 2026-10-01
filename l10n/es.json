@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Límites para los adjuntos cifrados (aplicados en el servidor sobre los bytes cifrados almacenados), conservación del historial de versiones y cuánto tiempo permanecen en la papelera los secretos eliminados.",
         "Days a deleted secret stays in the trash (1 to 365)": "Días que un secreto eliminado permanece en la papelera (1 a 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Esto mueve el secreto a la papelera y termina ahora sus comparticiones. Puedes restaurarlo desde la papelera hasta que termine el periodo de conservación: 30 días, salvo que tu administrador lo haya cambiado.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Esto mueve {count} secretos a la papelera y termina ahora sus comparticiones. Puedes restaurarlos desde la papelera hasta que termine el periodo de conservación."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Esto mueve {count} secretos a la papelera y termina ahora sus comparticiones. Puedes restaurarlos desde la papelera hasta que termine el periodo de conservación.",
+        "Remove {name} from favourites": "Quitar {name} de favoritos",
+        "Add {name} to favourites": "Añadir {name} a favoritos",
+        "Could not change the favourite": "No se pudo cambiar el favorito",
+        "Remove from favourites": "Quitar de favoritos",
+        "Add to favourites": "Añadir a favoritos",
+        "Tags": "Etiquetas",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Las etiquetas no están cifradas. Los administradores del servidor pueden leerlas, como los nombres de carpeta.",
+        "Favourites": "Favoritos",
+        "Filter by tag": "Filtrar por etiqueta",
+        "All tags": "Todas las etiquetas",
+        "Last used": "Último uso",
+        "Tags for {count} secrets": "Etiquetas para {count} secretos",
+        "Tag": "Etiqueta",
+        "Remove tag": "Quitar etiqueta",
+        "Add tag": "Añadir etiqueta",
+        "Could not change the tags. Try again.": "No se pudieron cambiar las etiquetas. Inténtelo de nuevo."
     },
     "plurals": null
 }

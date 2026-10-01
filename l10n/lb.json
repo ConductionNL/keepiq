@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Grenze fir verschlësselt Unhäng (um Server op de gespäicherte verschlësselte Bytes duerchgesat), Oprechterhalung vun der Versiounsgeschicht a wéi laang geläscht Geheimnisser am Pabeierkuerf bleiwen.",
         "Days a deleted secret stays in the trash (1 to 365)": "Deeg, déi e geläscht Geheimnis am Pabeierkuerf bleift (1 bis 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Dëst réckelt d'Geheimnis an de Pabeierkuerf an hält seng Deelunge elo op. Du kanns et aus dem Pabeierkuerf erëmstellen, bis d'Oprechterhalungszäit eriwwer ass: 30 Deeg, ausser däin Administrateur huet dat geännert.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Dëst réckelt Geheimnisser an de Pabeierkuerf ({count}) an hält hir Deelunge elo op. Du kanns se aus dem Pabeierkuerf erëmstellen, bis d'Oprechterhalungszäit eriwwer ass."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Dëst réckelt Geheimnisser an de Pabeierkuerf ({count}) an hält hir Deelunge elo op. Du kanns se aus dem Pabeierkuerf erëmstellen, bis d'Oprechterhalungszäit eriwwer ass.",
+        "Remove {name} from favourites": "{name} aus de Favoritten ewechhuelen",
+        "Add {name} to favourites": "{name} bei d'Favoritten derbäisetzen",
+        "Could not change the favourite": "De Favorit konnt net geännert ginn",
+        "Remove from favourites": "Aus de Favoritten ewechhuelen",
+        "Add to favourites": "Bei d'Favoritten derbäisetzen",
+        "Tags": "Tags",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Tags sinn net verschlësselt. Serveradministrateure kënne se liesen, wéi Dossiersnimm.",
+        "Favourites": "Favoritten",
+        "Filter by tag": "No Tag filteren",
+        "All tags": "All Tags",
+        "Last used": "Fir d'lescht benotzt",
+        "Tags for {count} secrets": "Tags fir {count} Geheimnisser",
+        "Tag": "Tag",
+        "Remove tag": "Tag ewechhuelen",
+        "Add tag": "Tag derbäisetzen",
+        "Could not change the tags. Try again.": "D'Tags konnten net geännert ginn. Probéiert nach eng Kéier."
     },
     "plurals": null
 }

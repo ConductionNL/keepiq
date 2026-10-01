@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Limite pentru atașamentele criptate (aplicate pe server pe octeții criptați stocați), păstrarea istoricului versiunilor și cât timp rămân secretele șterse în coșul de gunoi.",
         "Days a deleted secret stays in the trash (1 to 365)": "Zile în care un secret șters rămâne în coșul de gunoi (1 până la 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Aceasta mută secretul în coșul de gunoi și îi încheie acum partajările. Îl poți restaura din coșul de gunoi până la sfârșitul perioadei de păstrare: 30 de zile, dacă administratorul nu a schimbat-o.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Aceasta mută secrete în coșul de gunoi ({count}) și le încheie acum partajările. Le poți restaura din coșul de gunoi până la sfârșitul perioadei de păstrare."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Aceasta mută secrete în coșul de gunoi ({count}) și le încheie acum partajările. Le poți restaura din coșul de gunoi până la sfârșitul perioadei de păstrare.",
+        "Remove {name} from favourites": "Elimină {name} din favorite",
+        "Add {name} to favourites": "Adaugă {name} la favorite",
+        "Could not change the favourite": "Favoritul nu a putut fi schimbat",
+        "Remove from favourites": "Elimină din favorite",
+        "Add to favourites": "Adaugă la favorite",
+        "Tags": "Etichete",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Etichetele nu sunt criptate. Administratorii serverului le pot citi, la fel ca numele dosarelor.",
+        "Favourites": "Favorite",
+        "Filter by tag": "Filtrează după etichetă",
+        "All tags": "Toate etichetele",
+        "Last used": "Ultima utilizare",
+        "Tags for {count} secrets": "Etichete pentru {count} secrete",
+        "Tag": "Etichetă",
+        "Remove tag": "Elimină eticheta",
+        "Add tag": "Adaugă etichetă",
+        "Could not change the tags. Try again.": "Etichetele nu au putut fi schimbate. Încercați din nou."
     },
     "plurals": null
 }

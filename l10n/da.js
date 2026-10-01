@@ -1250,7 +1250,23 @@ OC.L10N.register(
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Grænser for krypterede vedhæftede filer (håndhævet på serveren i gemte krypterede bytes), opbevaring af versionshistorik og hvor længe slettede hemmeligheder bliver i papirkurven.",
         "Days a deleted secret stays in the trash (1 to 365)": "Dage en slettet hemmelighed bliver i papirkurven (1 til 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Dette flytter hemmeligheden til papirkurven og afslutter dens delinger nu. Du kan gendanne den fra papirkurven, indtil opbevaringsperioden udløber: 30 dage, medmindre din administrator har ændret det.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Dette flytter {count} hemmeligheder til papirkurven og afslutter deres delinger nu. Du kan gendanne dem fra papirkurven, indtil opbevaringsperioden udløber."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Dette flytter {count} hemmeligheder til papirkurven og afslutter deres delinger nu. Du kan gendanne dem fra papirkurven, indtil opbevaringsperioden udløber.",
+        "Remove {name} from favourites": "Fjern {name} fra favoritter",
+        "Add {name} to favourites": "Føj {name} til favoritter",
+        "Could not change the favourite": "Favoritten kunne ikke ændres",
+        "Remove from favourites": "Fjern fra favoritter",
+        "Add to favourites": "Føj til favoritter",
+        "Tags": "Mærker",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Mærker er ikke krypteret. Serveradministratorer kan læse dem, ligesom mappenavne.",
+        "Favourites": "Favoritter",
+        "Filter by tag": "Filtrer efter mærke",
+        "All tags": "Alle mærker",
+        "Last used": "Sidst brugt",
+        "Tags for {count} secrets": "Mærker for {count} hemmeligheder",
+        "Tag": "Mærke",
+        "Remove tag": "Fjern mærke",
+        "Add tag": "Tilføj mærke",
+        "Could not change the tags. Try again.": "Mærkerne kunne ikke ændres. Prøv igen."
     },
     "nplurals=2; plural=(n != 1);"
 )

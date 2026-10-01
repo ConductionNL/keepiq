@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Limitas per agiuntas criptadas (applitgadas sin il server als bytes criptads memorisads), conservaziun da l'istorgia da versiuns e quant ditg che secrets stizzads restan en il chanaster da rument.",
         "Days a deleted secret stays in the trash (1 to 365)": "Dis che in secret stizzà resta en il chanaster da rument (1 fin 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Quai spustescha il secret en il chanaster da rument e terminescha ussa sias parts. Ti al pos restaurar ord il chanaster da rument fin che la perioda da conservaziun è passada: 30 dis, sch'tes administratur n'ha betg midà quai.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Quai spustescha secrets en il chanaster da rument ({count}) e terminescha ussa lur parts. Ti als pos restaurar ord il chanaster da rument fin che la perioda da conservaziun è passada."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Quai spustescha secrets en il chanaster da rument ({count}) e terminescha ussa lur parts. Ti als pos restaurar ord il chanaster da rument fin che la perioda da conservaziun è passada.",
+        "Remove {name} from favourites": "Allontanar {name} dals favurits",
+        "Add {name} to favourites": "Agiuntar {name} als favurits",
+        "Could not change the favourite": "Impussibel da midar il favurit",
+        "Remove from favourites": "Allontanar dals favurits",
+        "Add to favourites": "Agiuntar als favurits",
+        "Tags": "Etichettas",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Las etichettas n'èn betg criptadas. Ils administraturs dal server las pon leger, sco ils nums da ordinaturs.",
+        "Favourites": "Favurits",
+        "Filter by tag": "Filtrar tenor etichetta",
+        "All tags": "Tut las etichettas",
+        "Last used": "Utilisà l'ultima giada",
+        "Tags for {count} secrets": "Etichettas per {count} secrets",
+        "Tag": "Etichetta",
+        "Remove tag": "Allontanar l'etichetta",
+        "Add tag": "Agiuntar ina etichetta",
+        "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada."
     },
     "plurals": null
 }

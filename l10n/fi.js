@@ -1250,7 +1250,23 @@ OC.L10N.register(
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Salattujen liitteiden rajat (valvotaan palvelimella tallennetuissa salatuissa tavuissa), versiohistorian säilytys ja kuinka kauan poistetut salaisuudet pysyvät roskakorissa.",
         "Days a deleted secret stays in the trash (1 to 365)": "Päiviä, jotka poistettu salaisuus pysyy roskakorissa (1–365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Tämä siirtää salaisuuden roskakoriin ja lopettaa sen jaot heti. Voit palauttaa sen roskakorista säilytysajan loppuun asti: 30 päivää, ellei ylläpitäjä ole muuttanut sitä.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Tämä siirtää salaisuudet roskakoriin ({count}) ja lopettaa niiden jaot heti. Voit palauttaa ne roskakorista säilytysajan loppuun asti."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Tämä siirtää salaisuudet roskakoriin ({count}) ja lopettaa niiden jaot heti. Voit palauttaa ne roskakorista säilytysajan loppuun asti.",
+        "Remove {name} from favourites": "Poista {name} suosikeista",
+        "Add {name} to favourites": "Lisää {name} suosikkeihin",
+        "Could not change the favourite": "Suosikkia ei voitu muuttaa",
+        "Remove from favourites": "Poista suosikeista",
+        "Add to favourites": "Lisää suosikkeihin",
+        "Tags": "Tunnisteet",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Tunnisteita ei ole salattu. Palvelimen ylläpitäjät voivat lukea ne, kuten kansioiden nimet.",
+        "Favourites": "Suosikit",
+        "Filter by tag": "Suodata tunnisteen mukaan",
+        "All tags": "Kaikki tunnisteet",
+        "Last used": "Viimeksi käytetty",
+        "Tags for {count} secrets": "Tunnisteet {count} salaisuudelle",
+        "Tag": "Tunniste",
+        "Remove tag": "Poista tunniste",
+        "Add tag": "Lisää tunniste",
+        "Could not change the tags. Try again.": "Tunnisteita ei voitu muuttaa. Yritä uudelleen."
     },
     "nplurals=2; plural=(n != 1);"
 )

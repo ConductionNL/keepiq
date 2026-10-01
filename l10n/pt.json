@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Limites para anexos cifrados (aplicados no servidor aos bytes cifrados guardados), retenção do histórico de versões e durante quanto tempo os segredos eliminados ficam no lixo.",
         "Days a deleted secret stays in the trash (1 to 365)": "Dias que um segredo eliminado fica no lixo (1 a 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Isto move o segredo para o lixo e termina já as partilhas. Pode restaurá-lo do lixo até terminar o período de retenção: 30 dias, a menos que o administrador o tenha alterado.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Isto move {count} segredos para o lixo e termina já as partilhas. Pode restaurá-los do lixo até terminar o período de retenção."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Isto move {count} segredos para o lixo e termina já as partilhas. Pode restaurá-los do lixo até terminar o período de retenção.",
+        "Remove {name} from favourites": "Remover {name} dos favoritos",
+        "Add {name} to favourites": "Adicionar {name} aos favoritos",
+        "Could not change the favourite": "Não foi possível alterar o favorito",
+        "Remove from favourites": "Remover dos favoritos",
+        "Add to favourites": "Adicionar aos favoritos",
+        "Tags": "Etiquetas",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "As etiquetas não são cifradas. Os administradores do servidor podem lê-las, tal como os nomes das pastas.",
+        "Favourites": "Favoritos",
+        "Filter by tag": "Filtrar por etiqueta",
+        "All tags": "Todas as etiquetas",
+        "Last used": "Última utilização",
+        "Tags for {count} secrets": "Etiquetas para {count} segredos",
+        "Tag": "Etiqueta",
+        "Remove tag": "Remover etiqueta",
+        "Add tag": "Adicionar etiqueta",
+        "Could not change the tags. Try again.": "Não foi possível alterar as etiquetas. Tente novamente."
     },
     "plurals": null
 }

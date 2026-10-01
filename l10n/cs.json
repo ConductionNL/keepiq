@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Limity pro šifrované přílohy (vynucované na serveru v uložených šifrovaných bajtech), uchovávání historie verzí a jak dlouho zůstávají smazaná tajemství v koši.",
         "Days a deleted secret stays in the trash (1 to 365)": "Počet dní, kdy smazané tajemství zůstává v koši (1 až 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Tímto se tajemství přesune do koše a jeho sdílení hned skončí. Z koše ho můžete obnovit do konce doby uchování: 30 dní, pokud to správce nezměnil.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Tímto se tajemství přesunou do koše ({count}) a jejich sdílení hned skončí. Z koše je můžete obnovit do konce doby uchování."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Tímto se tajemství přesunou do koše ({count}) a jejich sdílení hned skončí. Z koše je můžete obnovit do konce doby uchování.",
+        "Remove {name} from favourites": "Odebrat {name} z oblíbených",
+        "Add {name} to favourites": "Přidat {name} do oblíbených",
+        "Could not change the favourite": "Oblíbenou položku nelze změnit",
+        "Remove from favourites": "Odebrat z oblíbených",
+        "Add to favourites": "Přidat do oblíbených",
+        "Tags": "Štítky",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Štítky nejsou šifrované. Správci serveru je mohou číst, stejně jako názvy složek.",
+        "Favourites": "Oblíbené",
+        "Filter by tag": "Filtrovat podle štítku",
+        "All tags": "Všechny štítky",
+        "Last used": "Naposledy použito",
+        "Tags for {count} secrets": "Štítky pro {count} tajemství",
+        "Tag": "Štítek",
+        "Remove tag": "Odebrat štítek",
+        "Add tag": "Přidat štítek",
+        "Could not change the tags. Try again.": "Štítky nelze změnit. Zkuste to znovu."
     },
     "plurals": null
 }

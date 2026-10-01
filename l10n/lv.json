@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Šifrēto pielikumu ierobežojumi (tiek piemēroti serverī saglabātajiem šifrētajiem baitiem), versiju vēstures glabāšana un cik ilgi izdzēstie noslēpumi paliek miskastē.",
         "Days a deleted secret stays in the trash (1 to 365)": "Dienas, cik ilgi izdzēsts noslēpums paliek miskastē (no 1 līdz 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Tas pārvieto noslēpumu uz miskasti un uzreiz izbeidz tā kopīgošanu. To var atjaunot no miskastes līdz glabāšanas perioda beigām: 30 dienas, ja vien administrators to nav mainījis.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Tas pārvieto noslēpumus uz miskasti ({count}) un uzreiz izbeidz to kopīgošanu. Tos var atjaunot no miskastes līdz glabāšanas perioda beigām."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Tas pārvieto noslēpumus uz miskasti ({count}) un uzreiz izbeidz to kopīgošanu. Tos var atjaunot no miskastes līdz glabāšanas perioda beigām.",
+        "Remove {name} from favourites": "Noņemt {name} no izlases",
+        "Add {name} to favourites": "Pievienot {name} izlasei",
+        "Could not change the favourite": "Neizdevās mainīt izlasi",
+        "Remove from favourites": "Noņemt no izlases",
+        "Add to favourites": "Pievienot izlasei",
+        "Tags": "Birkas",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Birkas nav šifrētas. Servera administratori tās var lasīt, tāpat kā mapju nosaukumus.",
+        "Favourites": "Izlase",
+        "Filter by tag": "Filtrēt pēc birkas",
+        "All tags": "Visas birkas",
+        "Last used": "Pēdējoreiz lietots",
+        "Tags for {count} secrets": "Birkas {count} noslēpumiem",
+        "Tag": "Birka",
+        "Remove tag": "Noņemt birku",
+        "Add tag": "Pievienot birku",
+        "Could not change the tags. Try again.": "Neizdevās mainīt birkas. Mēģiniet vēlreiz."
     },
     "plurals": null
 }

@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Şifreli ekler için sınırlar (sunucuda saklanan şifreli baytlar üzerinde uygulanır), sürüm geçmişinin saklanması ve silinen gizli bilgilerin çöp kutusunda ne kadar kalacağı.",
         "Days a deleted secret stays in the trash (1 to 365)": "Silinen bir gizli bilginin çöp kutusunda kaldığı gün sayısı (1 ile 365 arası)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Bu işlem gizli bilgiyi çöp kutusuna taşır ve paylaşımlarını hemen sonlandırır. Saklama süresi bitene kadar çöp kutusundan geri yükleyebilirsiniz: yöneticiniz değiştirmediyse 30 gün.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Bu işlem gizli bilgileri çöp kutusuna taşır ({count}) ve paylaşımlarını hemen sonlandırır. Saklama süresi bitene kadar onları çöp kutusundan geri yükleyebilirsiniz."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Bu işlem gizli bilgileri çöp kutusuna taşır ({count}) ve paylaşımlarını hemen sonlandırır. Saklama süresi bitene kadar onları çöp kutusundan geri yükleyebilirsiniz.",
+        "Remove {name} from favourites": "{name} öğesini sık kullanılanlardan kaldır",
+        "Add {name} to favourites": "{name} öğesini sık kullanılanlara ekle",
+        "Could not change the favourite": "Sık kullanılan değiştirilemedi",
+        "Remove from favourites": "Sık kullanılanlardan kaldır",
+        "Add to favourites": "Sık kullanılanlara ekle",
+        "Tags": "Etiketler",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Etiketler şifrelenmez. Sunucu yöneticileri, klasör adları gibi bunları da okuyabilir.",
+        "Favourites": "Sık kullanılanlar",
+        "Filter by tag": "Etikete göre süz",
+        "All tags": "Tüm etiketler",
+        "Last used": "Son kullanım",
+        "Tags for {count} secrets": "{count} gizli bilgi için etiketler",
+        "Tag": "Etiket",
+        "Remove tag": "Etiketi kaldır",
+        "Add tag": "Etiket ekle",
+        "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin."
     },
     "plurals": null
 }

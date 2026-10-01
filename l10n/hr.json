@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Ograničenja za šifrirane privitke (provode se na poslužitelju u spremljenim šifriranim bajtovima), čuvanje povijesti verzija i koliko dugo izbrisane tajne ostaju u smeću.",
         "Days a deleted secret stays in the trash (1 to 365)": "Broj dana koliko izbrisana tajna ostaje u smeću (1 do 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Ovime se tajna premješta u smeće i njezina dijeljenja odmah prestaju. Možete je vratiti iz smeća do kraja razdoblja čuvanja: 30 dana, osim ako je administrator to promijenio.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Ovime se tajne premještaju u smeće ({count}) i njihova dijeljenja odmah prestaju. Možete ih vratiti iz smeća do kraja razdoblja čuvanja."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Ovime se tajne premještaju u smeće ({count}) i njihova dijeljenja odmah prestaju. Možete ih vratiti iz smeća do kraja razdoblja čuvanja.",
+        "Remove {name} from favourites": "Ukloni {name} iz favorita",
+        "Add {name} to favourites": "Dodaj {name} u favorite",
+        "Could not change the favourite": "Favorit nije bilo moguće promijeniti",
+        "Remove from favourites": "Ukloni iz favorita",
+        "Add to favourites": "Dodaj u favorite",
+        "Tags": "Oznake",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Oznake nisu šifrirane. Administratori poslužitelja mogu ih čitati, kao i nazive mapa.",
+        "Favourites": "Favoriti",
+        "Filter by tag": "Filtriraj po oznaci",
+        "All tags": "Sve oznake",
+        "Last used": "Zadnje korišteno",
+        "Tags for {count} secrets": "Oznake za {count} tajni",
+        "Tag": "Oznaka",
+        "Remove tag": "Ukloni oznaku",
+        "Add tag": "Dodaj oznaku",
+        "Could not change the tags. Try again.": "Oznake nije bilo moguće promijeniti. Pokušajte ponovno."
     },
     "plurals": null
 }

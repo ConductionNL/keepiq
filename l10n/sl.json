@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Omejitve za šifrirane priloge (uveljavljene na strežniku v shranjenih šifriranih bajtih), hramba zgodovine različic in kako dolgo izbrisane skrivnosti ostanejo v košu.",
         "Days a deleted secret stays in the trash (1 to 365)": "Število dni, ko izbrisana skrivnost ostane v košu (od 1 do 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "S tem se skrivnost premakne v koš in njena deljenja se takoj končajo. Iz koša jo lahko obnovite do konca obdobja hrambe: 30 dni, razen če je skrbnik to spremenil.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "S tem se skrivnosti premaknejo v koš ({count}) in njihova deljenja se takoj končajo. Iz koša jih lahko obnovite do konca obdobja hrambe."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "S tem se skrivnosti premaknejo v koš ({count}) in njihova deljenja se takoj končajo. Iz koša jih lahko obnovite do konca obdobja hrambe.",
+        "Remove {name} from favourites": "Odstrani {name} iz priljubljenih",
+        "Add {name} to favourites": "Dodaj {name} med priljubljene",
+        "Could not change the favourite": "Priljubljenega ni bilo mogoče spremeniti",
+        "Remove from favourites": "Odstrani iz priljubljenih",
+        "Add to favourites": "Dodaj med priljubljene",
+        "Tags": "Oznake",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Oznake niso šifrirane. Skrbniki strežnika jih lahko berejo, tako kot imena map.",
+        "Favourites": "Priljubljeni",
+        "Filter by tag": "Filtriraj po oznaki",
+        "All tags": "Vse oznake",
+        "Last used": "Nazadnje uporabljeno",
+        "Tags for {count} secrets": "Oznake za {count} skrivnosti",
+        "Tag": "Oznaka",
+        "Remove tag": "Odstrani oznako",
+        "Add tag": "Dodaj oznako",
+        "Could not change the tags. Try again.": "Oznak ni bilo mogoče spremeniti. Poskusite znova."
     },
     "plurals": null
 }

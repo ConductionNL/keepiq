@@ -1250,7 +1250,23 @@ OC.L10N.register(
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Takmörk fyrir dulkóðuð viðhengi (framfylgt á þjóninum í vistuðum dulkóðuðum bætum), geymsla útgáfusögu og hve lengi eydd leyndarmál eru í ruslinu.",
         "Days a deleted secret stays in the trash (1 to 365)": "Dagar sem eytt leyndarmál er í ruslinu (1 til 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Þetta færir leyndarmálið í ruslið og lýkur deilingum þess strax. Þú getur endurheimt það úr ruslinu þar til geymslutímanum lýkur: 30 dagar nema kerfisstjórinn hafi breytt því.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Þetta færir leyndarmál í ruslið ({count}) og lýkur deilingum þeirra strax. Þú getur endurheimt þau úr ruslinu þar til geymslutímanum lýkur."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Þetta færir leyndarmál í ruslið ({count}) og lýkur deilingum þeirra strax. Þú getur endurheimt þau úr ruslinu þar til geymslutímanum lýkur.",
+        "Remove {name} from favourites": "Fjarlægja {name} úr eftirlætum",
+        "Add {name} to favourites": "Bæta {name} við eftirlæti",
+        "Could not change the favourite": "Ekki tókst að breyta eftirlæti",
+        "Remove from favourites": "Fjarlægja úr eftirlætum",
+        "Add to favourites": "Bæta við eftirlæti",
+        "Tags": "Merki",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Merki eru ekki dulrituð. Kerfisstjórar netþjónsins geta lesið þau, eins og möppuheiti.",
+        "Favourites": "Eftirlæti",
+        "Filter by tag": "Sía eftir merki",
+        "All tags": "Öll merki",
+        "Last used": "Síðast notað",
+        "Tags for {count} secrets": "Merki fyrir {count} leyndarmál",
+        "Tag": "Merki",
+        "Remove tag": "Fjarlægja merki",
+        "Add tag": "Bæta við merki",
+        "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur."
     },
     "nplurals=2; plural=(n != 1);"
 )

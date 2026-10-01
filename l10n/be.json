@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Абмежаванні для зашыфраваных укладанняў (прымяняюцца на серверы да захаваных зашыфраваных байтаў), захоўванне гісторыі версій і колькі часу выдаленыя сакрэты застаюцца ў сметніцы.",
         "Days a deleted secret stays in the trash (1 to 365)": "Колькі дзён выдалены сакрэт застаецца ў сметніцы (ад 1 да 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Сакрэт будзе перамешчаны ў сметніцу, а агульны доступ да яго адразу спыніцца. Яго можна аднавіць са сметніцы да канца тэрміну захоўвання: 30 дзён, калі адміністратар не змяніў гэты тэрмін.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Сакрэты будуць перамешчаны ў сметніцу ({count}), а агульны доступ да іх адразу спыніцца. Іх можна аднавіць са сметніцы да канца тэрміну захоўвання."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Сакрэты будуць перамешчаны ў сметніцу ({count}), а агульны доступ да іх адразу спыніцца. Іх можна аднавіць са сметніцы да канца тэрміну захоўвання.",
+        "Remove {name} from favourites": "Прыбраць {name} з абранага",
+        "Add {name} to favourites": "Дадаць {name} у абранае",
+        "Could not change the favourite": "Не ўдалося змяніць абранае",
+        "Remove from favourites": "Прыбраць з абранага",
+        "Add to favourites": "Дадаць у абранае",
+        "Tags": "Меткі",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Меткі не шыфруюцца. Адміністратары сервера могуць іх чытаць, як і назвы папак.",
+        "Favourites": "Абранае",
+        "Filter by tag": "Фільтр па метцы",
+        "All tags": "Усе меткі",
+        "Last used": "Апошняе выкарыстанне",
+        "Tags for {count} secrets": "Меткі для {count} сакрэтаў",
+        "Tag": "Метка",
+        "Remove tag": "Прыбраць метку",
+        "Add tag": "Дадаць метку",
+        "Could not change the tags. Try again.": "Не ўдалося змяніць меткі. Паспрабуйце яшчэ раз."
     },
     "plurals": null
 }

@@ -1250,7 +1250,23 @@ OC.L10N.register(
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Limity zaszyfrowanych załączników (egzekwowane na serwerze w zapisanych bajtach szyfrogramu), przechowywanie historii wersji i jak długo usunięte sekrety pozostają w koszu.",
         "Days a deleted secret stays in the trash (1 to 365)": "Liczba dni, przez które usunięty sekret pozostaje w koszu (od 1 do 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "To przenosi sekret do kosza i od razu kończy jego udostępnienia. Możesz go przywrócić z kosza do końca okresu przechowywania: 30 dni, chyba że administrator to zmienił.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "To przenosi sekrety do kosza ({count}) i od razu kończy ich udostępnienia. Możesz je przywrócić z kosza do końca okresu przechowywania."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "To przenosi sekrety do kosza ({count}) i od razu kończy ich udostępnienia. Możesz je przywrócić z kosza do końca okresu przechowywania.",
+        "Remove {name} from favourites": "Usuń {name} z ulubionych",
+        "Add {name} to favourites": "Dodaj {name} do ulubionych",
+        "Could not change the favourite": "Nie udało się zmienić ulubionego",
+        "Remove from favourites": "Usuń z ulubionych",
+        "Add to favourites": "Dodaj do ulubionych",
+        "Tags": "Tagi",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Tagi nie są szyfrowane. Administratorzy serwera mogą je odczytać, tak jak nazwy folderów.",
+        "Favourites": "Ulubione",
+        "Filter by tag": "Filtruj według tagu",
+        "All tags": "Wszystkie tagi",
+        "Last used": "Ostatnio używane",
+        "Tags for {count} secrets": "Tagi dla {count} sekretów",
+        "Tag": "Tag",
+        "Remove tag": "Usuń tag",
+        "Add tag": "Dodaj tag",
+        "Could not change the tags. Try again.": "Nie udało się zmienić tagów. Spróbuj ponownie."
     },
     "nplurals=2; plural=(n != 1);"
 )

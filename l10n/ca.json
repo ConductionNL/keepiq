@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Límits per als adjunts xifrats (aplicats al servidor sobre els bytes xifrats desats), conservació de l'historial de versions i quant de temps es queden a la paperera els secrets suprimits.",
         "Days a deleted secret stays in the trash (1 to 365)": "Dies que un secret suprimit es queda a la paperera (d'1 a 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Això mou el secret a la paperera i acaba ara les seves comparticions. El podeu restaurar de la paperera fins que s'acabi el període de conservació: 30 dies, llevat que l'administrador l'hagi canviat.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Això mou {count} secrets a la paperera i acaba ara les seves comparticions. Els podeu restaurar de la paperera fins que s'acabi el període de conservació."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Això mou {count} secrets a la paperera i acaba ara les seves comparticions. Els podeu restaurar de la paperera fins que s'acabi el període de conservació.",
+        "Remove {name} from favourites": "Treu {name} dels preferits",
+        "Add {name} to favourites": "Afegeix {name} als preferits",
+        "Could not change the favourite": "No s'ha pogut canviar el preferit",
+        "Remove from favourites": "Treu dels preferits",
+        "Add to favourites": "Afegeix als preferits",
+        "Tags": "Etiquetes",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Les etiquetes no estan xifrades. Els administradors del servidor les poden llegir, com els noms de carpeta.",
+        "Favourites": "Preferits",
+        "Filter by tag": "Filtra per etiqueta",
+        "All tags": "Totes les etiquetes",
+        "Last used": "Darrer ús",
+        "Tags for {count} secrets": "Etiquetes per a {count} secrets",
+        "Tag": "Etiqueta",
+        "Remove tag": "Treu l'etiqueta",
+        "Add tag": "Afegeix una etiqueta",
+        "Could not change the tags. Try again.": "No s'han pogut canviar les etiquetes. Torneu-ho a provar."
     },
     "plurals": null
 }

@@ -1250,7 +1250,23 @@ OC.L10N.register(
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Limites des pièces jointes chiffrées (appliquées côté serveur sur les octets chiffrés stockés), conservation de l'historique des versions et durée de séjour des secrets supprimés dans la corbeille.",
         "Days a deleted secret stays in the trash (1 to 365)": "Jours pendant lesquels un secret supprimé reste dans la corbeille (1 à 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Ceci déplace le secret dans la corbeille et met fin à ses partages dès maintenant. Vous pouvez le restaurer depuis la corbeille jusqu'à la fin de la durée de conservation, soit 30 jours sauf si votre administrateur l'a modifiée.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Ceci déplace {count} secrets dans la corbeille et met fin à leurs partages dès maintenant. Vous pouvez les restaurer depuis la corbeille jusqu'à la fin de la durée de conservation."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Ceci déplace {count} secrets dans la corbeille et met fin à leurs partages dès maintenant. Vous pouvez les restaurer depuis la corbeille jusqu'à la fin de la durée de conservation.",
+        "Remove {name} from favourites": "Retirer {name} des favoris",
+        "Add {name} to favourites": "Ajouter {name} aux favoris",
+        "Could not change the favourite": "Impossible de modifier le favori",
+        "Remove from favourites": "Retirer des favoris",
+        "Add to favourites": "Ajouter aux favoris",
+        "Tags": "Étiquettes",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Les étiquettes ne sont pas chiffrées. Les administrateurs du serveur peuvent les lire, comme les noms de dossiers.",
+        "Favourites": "Favoris",
+        "Filter by tag": "Filtrer par étiquette",
+        "All tags": "Toutes les étiquettes",
+        "Last used": "Dernière utilisation",
+        "Tags for {count} secrets": "Étiquettes pour {count} secrets",
+        "Tag": "Étiquette",
+        "Remove tag": "Retirer l'étiquette",
+        "Add tag": "Ajouter une étiquette",
+        "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez."
     },
     "nplurals=2; plural=(n != 1);"
 )

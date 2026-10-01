@@ -1250,7 +1250,23 @@ OC.L10N.register(
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Grenzen für verschlüsselte Dateianhänge (serverseitig in gespeicherten Chiffretext-Bytes durchgesetzt), Aufbewahrung des Versionsverlaufs und wie lange gelöschte Geheimnisse im Papierkorb bleiben.",
         "Days a deleted secret stays in the trash (1 to 365)": "Tage, die ein gelöschtes Geheimnis im Papierkorb bleibt (1 bis 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Dies verschiebt das Geheimnis in den Papierkorb und beendet seine Freigaben jetzt. Du kannst es aus dem Papierkorb wiederherstellen, bis die Aufbewahrungsfrist endet: 30 Tage, sofern deine Administration das nicht geändert hat.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Dies verschiebt {count} Geheimnisse in den Papierkorb und beendet ihre Freigaben jetzt. Du kannst sie aus dem Papierkorb wiederherstellen, bis die Aufbewahrungsfrist endet."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Dies verschiebt {count} Geheimnisse in den Papierkorb und beendet ihre Freigaben jetzt. Du kannst sie aus dem Papierkorb wiederherstellen, bis die Aufbewahrungsfrist endet.",
+        "Remove {name} from favourites": "{name} aus den Favoriten entfernen",
+        "Add {name} to favourites": "{name} zu den Favoriten hinzufügen",
+        "Could not change the favourite": "Favorit konnte nicht geändert werden",
+        "Remove from favourites": "Aus den Favoriten entfernen",
+        "Add to favourites": "Zu den Favoriten hinzufügen",
+        "Tags": "Schlagwörter",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Schlagwörter sind nicht verschlüsselt. Serveradministratoren können sie lesen, wie Ordnernamen.",
+        "Favourites": "Favoriten",
+        "Filter by tag": "Nach Schlagwort filtern",
+        "All tags": "Alle Schlagwörter",
+        "Last used": "Zuletzt verwendet",
+        "Tags for {count} secrets": "Schlagwörter für {count} Geheimnisse",
+        "Tag": "Schlagwort",
+        "Remove tag": "Schlagwort entfernen",
+        "Add tag": "Schlagwort hinzufügen",
+        "Could not change the tags. Try again.": "Schlagwörter konnten nicht geändert werden. Bitte erneut versuchen."
     },
     "nplurals=2; plural=(n != 1);"
 )

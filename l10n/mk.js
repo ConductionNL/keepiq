@@ -1250,7 +1250,23 @@ OC.L10N.register(
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Ограничувања за шифрирани прилози (се применуваат на серверот во зачуваните шифрирани бајти), чување на историјата на верзии и колку долго избришаните тајни остануваат во корпата.",
         "Days a deleted secret stays in the trash (1 to 365)": "Денови колку што избришана тајна останува во корпата (од 1 до 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Ова ја преместува тајната во корпата и веднаш ги завршува нејзините споделувања. Може да ја вратите од корпата до крајот на периодот на чување: 30 дена, освен ако администраторот не го сменил.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Ова ги преместува тајните во корпата ({count}) и веднаш ги завршува нивните споделувања. Може да ги вратите од корпата до крајот на периодот на чување."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Ова ги преместува тајните во корпата ({count}) и веднаш ги завршува нивните споделувања. Може да ги вратите од корпата до крајот на периодот на чување.",
+        "Remove {name} from favourites": "Отстрани {name} од омилени",
+        "Add {name} to favourites": "Додај {name} во омилени",
+        "Could not change the favourite": "Омиленото не можеше да се промени",
+        "Remove from favourites": "Отстрани од омилени",
+        "Add to favourites": "Додај во омилени",
+        "Tags": "Ознаки",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Ознаките не се шифрирани. Администраторите на серверот можат да ги читаат, како и имињата на папките.",
+        "Favourites": "Омилени",
+        "Filter by tag": "Филтрирај по ознака",
+        "All tags": "Сите ознаки",
+        "Last used": "Последно користено",
+        "Tags for {count} secrets": "Ознаки за {count} тајни",
+        "Tag": "Ознака",
+        "Remove tag": "Отстрани ознака",
+        "Add tag": "Додај ознака",
+        "Could not change the tags. Try again.": "Ознаките не можеа да се променат. Обидете се повторно."
     },
     "nplurals=2; plural=(n != 1);"
 )
