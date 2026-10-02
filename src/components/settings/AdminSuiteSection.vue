@@ -189,6 +189,7 @@ import {
 	NcTextField,
 } from '@nextcloud/vue'
 import { useEncryptionSuiteStore } from '../../store/modules/encryptionSuite.js'
+import { useMemberOverviewStore } from '../../store/modules/memberOverview.js'
 
 /**
  * Admin encryption-suite management section: force-revoke + reinstate.
@@ -223,6 +224,33 @@ export default {
 			cascadeIncomplete: false,
 			cascadeFailed: 0,
 		}
+	},
+
+	computed: {
+		/**
+		 * The member overview store, which carries the prefill from a row.
+		 *
+		 * @return {object}
+		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.2
+		 */
+		memberStore() {
+			return useMemberOverviewStore()
+		},
+	},
+
+	watch: {
+		/**
+		 * A Members row chose "Revoke suite": put its active suite id in the
+		 * suite id field, so the administrator never types it.
+		 *
+		 * @param {string} suiteId The suite handed over by the list.
+		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.2
+		 */
+		'memberStore.revokeSuiteId': function(suiteId) {
+			if (suiteId) {
+				this.suiteId = suiteId
+			}
+		},
 	},
 
 	methods: {
