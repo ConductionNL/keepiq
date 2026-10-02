@@ -106,7 +106,7 @@ class Stub:
             and bool(claims.get("jti"))
         )
 
-    def serve(self, port: int = 0) -> ThreadingHTTPServer:
+    def serve(self, port: int = 0, host: str = "127.0.0.1") -> ThreadingHTTPServer:
         stub = self
 
         class Handler(BaseHTTPRequestHandler):
@@ -194,7 +194,7 @@ class Stub:
 
             do_GET = do_POST = do_PUT = _handle
 
-        server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+        server = ThreadingHTTPServer((host, port), Handler)
         threading.Thread(target=server.serve_forever, daemon=True).start()
         return server
 
@@ -202,6 +202,7 @@ class Stub:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--port", type=int, default=8099)
+    parser.add_argument("--host", default="127.0.0.1", help="address to bind; 0.0.0.0 inside a container")
     parser.add_argument("--application", default="billing")
     parser.add_argument("--add", action="append", default=[], metavar="NAME=VALUE")
     args = parser.parse_args()
@@ -209,8 +210,8 @@ def main() -> None:
     for item in args.add:
         name, _, value = item.partition("=")
         stub.add(name, value)
-    server = stub.serve(args.port)
-    print(f"stub Keepiq on http://127.0.0.1:{server.server_address[1]}{WEBROOT}", flush=True)
+    server = stub.serve(args.port, args.host)
+    print(f"stub Keepiq on http://{args.host}:{server.server_address[1]}{WEBROOT}", flush=True)
     threading.Event().wait()
 
 
