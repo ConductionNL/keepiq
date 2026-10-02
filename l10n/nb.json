@@ -1396,7 +1396,95 @@
         "5 minutes": "5 minutter",
         "15 minutes": "15 minutter",
         "1 hour": "1 time",
-        "4 hours": "4 timer"
+        "4 hours": "4 timer",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n nødkontakt hadde en ventende tilgangsforespørsel da nøkkelrotasjonen fjernet den. Sjekk hvem som spurte før du legger til noen igjen.",
+            "%n nødkontakter hadde en ventende tilgangsforespørsel da nøkkelrotasjonen fjernet dem. Sjekk hvem som spurte før du legger til noen igjen."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n element kan ikke gjengis i CXF og hoppes over.",
+            "%n elementer kan ikke gjengis i CXF og hoppes over."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n eldre versjon ble forkastet, fordi bare nyere historikk kan overføres.",
+            "%n eldre versjoner ble forkastet, fordi bare nyere historikk kan overføres."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n kopi av en hemmelighet må fortsatt krypteres og deles.",
+            "%n kopier av hemmeligheter må fortsatt krypteres og deles."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n hemmelighet kunne ikke dekrypteres og er ikke med i denne eksporten.",
+            "%n hemmeligheter kunne ikke dekrypteres og er ikke med i denne eksporten."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n hemmelighet kunne ikke dekrypteres med den gamle nøkkelen din, så den ble ikke migrert.",
+            "%n hemmeligheter kunne ikke dekrypteres med den gamle nøkkelen din, så de ble ikke migrert."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n hemmelighet ble ikke migrert.",
+            "%n hemmeligheter ble ikke migrert."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n hemmelighet er fortsatt kryptert med den forrige nøkkelen din.",
+            "%n hemmeligheter er fortsatt kryptert med den forrige nøkkelen din."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n hemmelighet ble hoppet over fordi etterfølgeren ennå ikke har en kopi — legg etterfølgeren til i mappen, og kjør på nytt.",
+            "%n hemmeligheter ble hoppet over fordi etterfølgeren ennå ikke har en kopi — legg etterfølgeren til i mappen, og kjør på nytt."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n hemmelighet",
+            "%n hemmeligheter"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n bruker i omfanget har ennå ikke totrinnspålogging og kan ikke åpne hvelvet mens dette er på.",
+            "%n brukere i omfanget har ennå ikke totrinnspålogging og kan ikke åpne hvelvet mens dette er på."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Fullfør likevel, og mist tilgangen til %n hemmelighet",
+            "Fullfør likevel, og mist tilgangen til %n hemmeligheter"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n nytt medlem fikk tilgang til en teammappe.",
+            "%n nye medlemmer fikk tilgang til en teammappe."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Nøkkelrotasjon fullført. %n hemmelighet ble kryptert på nytt med den nye nøkkelen din.",
+            "Nøkkelrotasjon fullført. %n hemmeligheter ble kryptert på nytt med den nye nøkkelen din."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Tilbakekalling av den andre suiten slettet %n nødtilgangskontakt.",
+            "Tilbakekalling av den andre suiten slettet %n nødtilgangskontakter."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Tilbakekallingen av denne suiten fjernet %n nødtilgangskontakt.",
+            "Tilbakekallingen av denne suiten fjernet %n nødtilgangskontakter."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "sett %n gang i lekkasjer",
+            "sett %n ganger i lekkasjer"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "delt med %n hemmelighet",
+            "delt med %n hemmeligheter"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Denne mappen inneholder %n hemmelighet direkte.",
+            "Denne mappen inneholder %n hemmeligheter direkte."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Nøkkelrotasjonen fjernet %n nødkontakt. Sjekk Nødtilgang og legg den til igjen hvis du fortsatt vil ha den.",
+            "Nøkkelrotasjonen fjernet %n nødkontakter. Sjekk Nødtilgang og legg dem til igjen hvis du fortsatt vil ha dem."
+        ]
     },
     "plurals": null
 }

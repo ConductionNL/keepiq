@@ -1396,7 +1396,95 @@
         "5 minutes": "5 Minutten",
         "15 minutes": "15 Minutten",
         "1 hour": "1 Stonn",
-        "4 hours": "4 Stonnen"
+        "4 hours": "4 Stonnen",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n Noutkontakt hat eng oppen Zougrëffsufro, wéi Är Schlësselrotatioun en ewechgeholl huet. Kuckt, wien gefrot huet, ier Dir iergendeen nees derbäisetzt.",
+            "%n Noutkontakter haten eng oppen Zougrëffsufro, wéi Är Schlësselrotatioun se ewechgeholl huet. Kuckt, wien gefrot huet, ier Dir iergendeen nees derbäisetzt."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n Element kann net an CXF duergestallt ginn a gëtt iwwersprongen.",
+            "%n Elementer kënnen net an CXF duergestallt ginn a gi iwwersprongen."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n eeler Versioun gouf verworf, well nëmmen déi rezent Historie mat iwwerdroe ka ginn.",
+            "%n eeler Versioune goufe verworf, well nëmmen déi rezent Historie mat iwwerdroe ka ginn."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n Geheimniskopie muss nach verschlësselt a gedeelt ginn.",
+            "%n Geheimniskopie mussen nach verschlësselt a gedeelt ginn."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n secret could not be decrypted and is not in this export.",
+            "%n secrets could not be decrypted and are not in this export."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n Geheimnis konnt net mat Ärem alen Schlëssel entschlësselt ginn, dofir gouf et net migréiert.",
+            "%n Geheimnisse konnten net mat Ärem alen Schlëssel entschlësselt ginn, dofir goufe si net migréiert."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n Geheimnis gouf net migréiert.",
+            "%n Geheimnisse goufen net migréiert."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n Geheimnis ass nach mat Ärem viregen Schlëssel verschlësselt.",
+            "%n Geheimnisser sinn nach mat Ärem viregen Schlëssel verschlësselt."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n Geheimnis gouf iwwersprongen, well den Nofolger nach keng Kopie huet — setzt den Nofolger an den Dossier a féiert et nach eemol aus.",
+            "%n Geheimnisser goufen iwwersprongen, well den Nofolger nach keng Kopie huet — setzt den Nofolger an den Dossier a féiert et nach eemol aus."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n Geheimnis",
+            "%n Geheimnisser"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n Benotzer am Beräich huet nach keng Zwee-Faktor-Umeldung a kann den Tresor net opmaachen, soulaang dëst un ass.",
+            "%n Benotzer am Beräich hunn nach keng Zwee-Faktor-Umeldung a kënnen den Tresor net opmaachen, soulaang dëst un ass."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Trotzdem ofschléissen an den Zougang zu %n Geheimnis verléieren",
+            "Trotzdem ofschléissen an den Zougang zu %n Geheimnisser verléieren"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n neie Member krut Zougang zu engem Teamdossier.",
+            "%n nei Memberen kruten Zougang zu engem Teamdossier."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Schlësselrotatioun ofgeschloss. %n Geheimnis gouf mat Ärem neien Schlëssel nei verschlësselt.",
+            "Schlësselrotatioun ofgeschloss. %n Geheimnisser goufe mat Ärem neien Schlëssel nei verschlësselt."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "De Widderruff vun der zweeter Suite huet %n Noutzougangskontakt geläscht.",
+            "De Widderruff vun der zweeter Suite huet %n Noutzougangskontakter geläscht."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Revoking this suite deleted %n emergency-access contact.",
+            "Revoking this suite deleted %n emergency-access contacts."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "%n Mol a Lecke gesinn",
+            "%n Mol a Lecke gesinn"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "mat %n Geheimnis gedeelt",
+            "mat %n Geheimnisser gedeelt"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Dësen Dossier enthält direkt %n Geheimnis.",
+            "Dësen Dossier enthält direkt %n Geheimnisser."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Är Schlësselrotatioun huet %n Noutfallkontakt ewechgeholl. Kuckt den Noutfallzougrëff a setzt en nees bäi, wann Dir en nach wëllt.",
+            "Är Schlësselrotatioun huet %n Noutfallkontakter ewechgeholl. Kuckt den Noutfallzougrëff a setzt se nees bäi, wann Dir se nach wëllt."
+        ]
     },
     "plurals": null
 }

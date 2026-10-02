@@ -1396,7 +1396,117 @@
         "5 minutes": "5 хвилин",
         "15 minutes": "15 хвилин",
         "1 hour": "1 година",
-        "4 hours": "4 години"
+        "4 hours": "4 години",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n екстрений контакт мав запит на доступ в очікуванні, коли зміна ключа його видалила. Перевірте, хто запитував, перш ніж знову когось додавати.",
+            "Екстрені контакти (%n) мали запит на доступ в очікуванні, коли зміна ключа їх видалила. Перевірте, хто запитував, перш ніж знову когось додавати.",
+            "Екстрені контакти (%n) мали запит на доступ в очікуванні, коли зміна ключа їх видалила. Перевірте, хто запитував, перш ніж знову когось додавати."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n елемент не можна подати у CXF, він буде пропущений.",
+            "%n елементів не можна подати у CXF, вони будуть пропущені.",
+            "%n елементів не можна подати у CXF, вони будуть пропущені."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n старішу версію було відкинуто, оскільки перенести можна лише нещодавню історію.",
+            "%n старіших версій було відкинуто, оскільки перенести можна лише нещодавню історію.",
+            "%n старіших версій було відкинуто, оскільки перенести можна лише нещодавню історію."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "Ще потрібно зашифрувати та надати %n копію секрету.",
+            "Ще потрібно зашифрувати та надати %n копій секретів.",
+            "Ще потрібно зашифрувати та надати %n копій секретів."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n секрет не вдалося розшифрувати, і його немає в цьому експорті.",
+            "%n секретів не вдалося розшифрувати, і їх немає в цьому експорті.",
+            "%n секретів не вдалося розшифрувати, і їх немає в цьому експорті."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n секрет не вдалося розшифрувати вашим старим ключем, тому він не був перенесений.",
+            "%n секретів не вдалося розшифрувати вашим старим ключем, тому вони не були перенесені.",
+            "%n секретів не вдалося розшифрувати вашим старим ключем, тому вони не були перенесені."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n секрет не був перенесений.",
+            "%n секретів не були перенесені.",
+            "%n секретів не були перенесені."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n секрет усе ще зашифрований вашим попереднім ключем.",
+            "%n секретів усе ще зашифровані вашим попереднім ключем.",
+            "%n секретів усе ще зашифровані вашим попереднім ключем."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n секрет пропущено, оскільки наступник ще не має копії — додайте наступника до теки та запустіть знову.",
+            "%n секретів пропущено, оскільки наступник ще не має копії — додайте наступника до теки та запустіть знову.",
+            "%n секретів пропущено, оскільки наступник ще не має копії — додайте наступника до теки та запустіть знову."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n секрет",
+            "%n секретів",
+            "%n секретів"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n користувач в області дії ще не має двофакторного входу й не може відкрити сховище, поки це ввімкнено.",
+            "Користувачі в області дії (%n) ще не мають двофакторного входу й не можуть відкрити сховище, поки це ввімкнено.",
+            "Користувачі в області дії (%n) ще не мають двофакторного входу й не можуть відкрити сховище, поки це ввімкнено."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Усе одно завершити, втративши доступ до %n секрета",
+            "Усе одно завершити, втративши доступ до %n секретів",
+            "Усе одно завершити, втративши доступ до %n секретів"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n новий учасник отримав доступ до командної теки.",
+            "Нові учасники (%n) отримали доступ до командної теки.",
+            "Нові учасники (%n) отримали доступ до командної теки."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Ротацію ключа завершено. %n секрет було перешифровано вашим новим ключем.",
+            "Ротацію ключа завершено. %n секретів було перешифровано вашим новим ключем.",
+            "Ротацію ключа завершено. %n секретів було перешифровано вашим новим ключем."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Відкликання другого набору видалило %n контакт аварійного доступу.",
+            "Відкликання другого набору видалило %n контактів аварійного доступу.",
+            "Відкликання другого набору видалило %n контактів аварійного доступу."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Відкликання цього набору видалило %n контакт аварійного доступу.",
+            "Відкликання цього набору видалило %n контактів аварійного доступу.",
+            "Відкликання цього набору видалило %n контактів аварійного доступу."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "зустрічається у витоках %n раз",
+            "зустрічається у витоках %n разів",
+            "зустрічається у витоках %n разів"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "надано %n секрету",
+            "надано %n секретам",
+            "надано %n секретам"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Ця тека містить %n секрет безпосередньо.",
+            "Ця тека містить %n секретів безпосередньо.",
+            "Ця тека містить %n секретів безпосередньо."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Ротація ключа видалила %n екстрений контакт. Перевірте «Надзвичайний доступ» і додайте його знову, якщо він вам ще потрібен.",
+            "Ротація ключа видалила %n екстрених контактів. Перевірте «Надзвичайний доступ» і додайте їх знову, якщо вони вам ще потрібні.",
+            "Ротація ключа видалила %n екстрених контактів. Перевірте «Надзвичайний доступ» і додайте їх знову, якщо вони вам ще потрібні."
+        ]
     },
     "plurals": null
 }

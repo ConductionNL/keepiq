@@ -1399,5 +1399,5 @@ OC.L10N.register(
         "1 hour": "1 ura",
         "4 hours": "4 uras"
     },
-    "nplurals=2; plural=(n != 1);"
+    "nplurals=1; plural=0;"
 )
