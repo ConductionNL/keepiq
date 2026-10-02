@@ -574,7 +574,7 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 			'uniqueIndexes' => [],
 		],
 		// Organisation account recovery (crypto-organisation-account-recovery);
-		// also added to existing installs by Version001006Date20261002170000.
+		// also added to existing installs by Version001010Date20261002183000.
 		'recovery_keys' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],

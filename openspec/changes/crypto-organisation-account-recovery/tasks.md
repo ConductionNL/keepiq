@@ -2,7 +2,7 @@
 
 ## 1. Data and configuration
 
-- [x] 1.1 Add the five recovery tables with entities and mappers, a migration step and a `<version>` bump. Verify: a PHPUnit migration test asserts each table and the unique approval index. Done: `lib/Db/Recovery*.php`, the five tables in Version001000's SCHEMA (`ConsolidatedSchemaMigrationTest`) and `Version001006Date20261002170000` for existing installs; unique `keepiq_ra_request_officer_uniq`; `<version>` 0.3.4-unstable.20261002170000.
+- [x] 1.1 Add the five recovery tables with entities and mappers, a migration step and a `<version>` bump. Verify: a PHPUnit migration test asserts each table and the unique approval index. Done: `lib/Db/Recovery*.php`, the five tables in Version001000's SCHEMA (`ConsolidatedSchemaMigrationTest`) and `Version001010Date20261002183000` for existing installs; unique `keepiq_ra_request_officer_uniq`; `<version>` 0.3.4-unstable.20261002183000.
 - [x] 1.2 Add `account_recovery_policy` (default `off`), officer list and threshold handling to the admin settings service, refusing a threshold above the officer count and officers without an active suite. Verify: PHPUnit for each accept and reject path. Done: `RecoveryPolicyService`, `RecoveryAdminController` (`#[AuthorizedAdminSetting]`, `#[PasswordConfirmationRequired]`); `AccountRecoveryTest::testTheAdministratorSettingsAreChecked`, `RecoveryAdminAttributesTest`.
 
 ## 2. Recovery key

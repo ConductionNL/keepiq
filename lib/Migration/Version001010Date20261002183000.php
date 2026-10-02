@@ -33,7 +33,7 @@ use OCP\Migration\SimpleMigrationStep;
  *
  * @spec openspec/changes/crypto-organisation-account-recovery/tasks.md#task-1.1
  */
-class Version001006Date20261002170000 extends SimpleMigrationStep {
+class Version001010Date20261002183000 extends SimpleMigrationStep {
 
 	/**
 	 * Create each table that is missing.
