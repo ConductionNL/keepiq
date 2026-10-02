@@ -59,6 +59,13 @@ class NotificationService {
 		// existing security-notification category (add-emergency-access §4.2).
 		'emergency_access_requested' => 'notify_security',
 		'emergency_access_accessed' => 'notify_security',
+		// Administrator compromise force-revoke (admin-suite-revocation):
+		// the holders of copies of the revoked user's secrets, the grantors
+		// whose vault the revoked key could open (keepiq#872), and the owner
+		// whose emergency contacts the revoke deleted (keepiq#876).
+		'shared_secret_compromised' => 'notify_security',
+		'emergency_grantee_compromised' => 'notify_security',
+		'emergency_access_cleared' => 'notify_security',
 		// Team folder sharing (team-folder-sharing §4.2): fan-out share
 		// to a recipient; group-join approval request to the owner.
 		'team_folder_shared' => 'notify_shares',

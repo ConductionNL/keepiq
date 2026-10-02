@@ -448,6 +448,24 @@ class MigrationService {
 			return;
 		}
 
+		$this->revokeKeyMaterialOfOwner(ownerId: $ownerId);
+	}//end revokeOwnerKeyMaterial()
+
+	/**
+	 * Revoke the link shares and passkeys of an owner whose key pair is dead.
+	 *
+	 * Shared by the owner's compromise recovery (above) and the administrator's
+	 * compromise force-revoke (CompromiseContainmentService), so the two paths
+	 * cannot drift apart again: the force-revoke used to skip this step and left
+	 * the user's link shares serving after containment (keepiq#858).
+	 *
+	 * @param string $ownerId The Nextcloud user whose key material is revoked
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 */
+	public function revokeKeyMaterialOfOwner(string $ownerId): void {
 		// Cascade-revoke every link share created by this user: the public-key
 		// fingerprint baked into each share's encrypted snapshot belongs to the
 		// now-compromised key pair, so any outstanding link must be force-locked
@@ -457,7 +475,7 @@ class MigrationService {
 		// A new key pair invalidates every passkey unlock envelope — the wrapped
 		// unlock key can never open the new suite (passkey-vault-login §D4).
 		$this->passkeyService?->deleteAllOnRotation($ownerId);
-	}//end revokeOwnerKeyMaterial()
+	}//end revokeKeyMaterialOfOwner()
 
 	/**
 	 * Refuse to terminate while rows remain that nobody has attempted.

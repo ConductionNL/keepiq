@@ -76,6 +76,60 @@ The `SUITE_REVOKED` audit event's metadata MUST carry `{ reason, markCompromised
 - **AND** the count of destroyed usable emergency contacts (`EmergencyEnvelopeInvalidationService::countUsableForGrantorSuite`) MUST be recorded in the `SUITE_REVOKED` audit metadata as `emergencyContactsDestroyed` and surfaced to the administrator as an informational warning
 - **AND** the emergency contacts' identities MUST NOT cross the wire — only the count
 
+### Requirement: A Compromise Force-Revoke Contains The Account
+A force-revoke with `markCompromised: true` MUST contain everything the compromised key could reach, not only flag the secrets sealed under it. The system MUST collect the blast radius of every suite it is about to revoke (the named suite and, during an in-progress migration, the other end) BEFORE it revokes any of them, because the revoke cascade deletes the ShareTargets and invalidates the emergency contacts the lookup reads (keepiq#864). The revoke cascade MUST sweep only the ShareTargets of copies sealed under the suite being revoked.
+
+After the revoke the system MUST:
+
+- stamp and flag every secret in the blast radius and, for a shared copy, its source, and warn each affected owner once with the first secret's name and the number of other affected secrets (keepiq#875);
+- warn every user who holds a copy of the revoked user's own secrets, and every grantor whose `approved` emergency grant is sealed to a revoked suite, because that envelope escrows the grantor's private key (keepiq#872);
+- revoke the revoked user's link shares and passkeys through the same helper the owner's compromise recovery uses (keepiq#858);
+- end every Nextcloud session and app password of the revoked user (keepiq#860).
+
+Each step MUST contain its own failure: a failure on one secret, one notification or one cleanup step MUST NOT stop the others. The number of failed steps MUST be returned in the response as `cascade.failed`, with `cascadeIncomplete: true` when it is above zero, so the administrator is not told containment ran when part of it did not (keepiq#863).
+
+Every force-revoke, compromise or not, that deletes usable emergency contacts MUST notify the suite's owner with the number deleted (both ends of a terminated migration counted together), because revocation leaves the owner nothing to look at afterwards (keepiq#876). The response MUST report the other end's count as `alsoRevokedEmergencyContactsDestroyed` (keepiq#877).
+
+#### Scenario: A copy on the second suite of a migration warns its source owner
+@e2e exclude Needs two vault users and an open migration; covered by PHPUnit on CompromiseContainmentService with the real revoke listener.
+- **GIVEN** user A holds a copy of C's secret, sealed under B, the new end of A's in-progress migration
+- **WHEN** an administrator force-revokes A's old suite with `markCompromised: true`
+- **THEN** C MUST be warned about the source secret
+- **AND** the source secret MUST be stamped `possibly_compromised_at` and flagged for rotation
+
+#### Scenario: One failing notification does not stop the cascade
+@e2e exclude Failure injection; covered by PHPUnit on CompromiseContainmentService and EncryptionSuiteController.
+- **GIVEN** the notification for the first owner fails
+- **WHEN** the compromise cascade runs
+- **THEN** the second owner's secrets MUST still be stamped, flagged and warned
+- **AND** the response MUST carry `cascadeIncomplete: true`
+
+#### Scenario: An owner with several affected secrets is told how many
+@e2e exclude Notification content; covered by PHPUnit on CompromiseContainmentService and KeepiqNotifier.
+- **GIVEN** three of A's secrets are in the blast radius
+- **WHEN** the compromise cascade runs
+- **THEN** A MUST get one notification naming the first secret and counting the two others
+
+#### Scenario: Grantors and share recipients are warned
+@e2e exclude Needs several vault users; covered by PHPUnit on CompromiseContainmentService.
+- **GIVEN** D designated A as emergency contact and approved A's request, and B holds a copy of A's secret
+- **WHEN** an administrator force-revokes A's suite with `markCompromised: true`
+- **THEN** D MUST be warned that their vault may be exposed
+- **AND** B MUST be warned about the copy
+
+#### Scenario: The account is contained
+@e2e exclude Ends the sessions of the user under test; covered by PHPUnit on CompromiseContainmentService.
+- **GIVEN** A has a link share and an active session
+- **WHEN** an administrator force-revokes A's suite with `markCompromised: true`
+- **THEN** A's link shares and passkeys MUST be revoked
+- **AND** every session and app password of A MUST be invalidated
+
+#### Scenario: The owner learns their emergency contacts are gone
+@e2e exclude Notification side effect; covered by PHPUnit on CompromiseContainmentService and EncryptionSuiteController.
+- **GIVEN** A's suite has two usable emergency contacts
+- **WHEN** an administrator force-revokes it, with or without `markCompromised`
+- **THEN** A MUST be notified that two emergency contacts were deleted
+
 ### Requirement: A Suite In An In-Progress Migration Cannot Be Revoked
 The system MUST refuse to revoke a suite, by an administrator's force-revoke that is not marked as a compromise or by its owner, while that suite is the old or the new end of a key migration that is still `in_progress` (keepiq#803). Revoking the old end blocks the reads the owner's browser needs to re-encrypt; revoking the new end makes records that were already re-encrypted, or are being written, unreadable. Either way the migration and the vault write lock would stay `in_progress` with no way to finish. The refusal MUST happen before anything is changed, MUST answer `409` with `error: migration_in_progress`, and MUST say that the migration has to be completed or aborted first.
 

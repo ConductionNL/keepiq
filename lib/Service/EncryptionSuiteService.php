@@ -193,9 +193,10 @@ class EncryptionSuiteService {
 		// Implement-user-sharing §10.3 — dispatch a revocation event so
 		// EncryptionSuiteRevokedListener can cascade share-target
 		// cleanup and promote temporary delegations to permanent. The
-		// compromise flag drives SuiteCompromiseOnRevokeListener on the
-		// same event (admin-suite-revocation D2); it stays false on the
-		// owner path, which never passes $markCompromised.
+		// compromise flag is carried on the event for its listeners; the
+		// compromise cascade itself runs from CompromiseContainmentService,
+		// called by the administrator's force-revoke (keepiq#863). It stays
+		// false on the owner path, which never passes $markCompromised.
 		if ($this->eventDispatcher !== null) {
 			$this->eventDispatcher->dispatchTyped(
 				new EncryptionSuiteRevokedEvent(

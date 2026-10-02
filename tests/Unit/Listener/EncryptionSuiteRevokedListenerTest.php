@@ -55,8 +55,8 @@ class EncryptionSuiteRevokedListenerTest extends TestCase {
 		);
 
 		$mapper->expects($this->once())
-			->method('deleteByTargetUser')
-			->with('alice');
+			->method('deleteByTargetUserAndSuite')
+			->with('alice', 'suite-1');
 		$service->expects($this->once())
 			->method('makePermanent')
 			->with('alice')
@@ -87,7 +87,7 @@ class EncryptionSuiteRevokedListenerTest extends TestCase {
 			revokedBy: 'admin'
 		);
 
-		$mapper->expects($this->never())->method('deleteByTargetUser');
+		$mapper->expects($this->never())->method('deleteByTargetUserAndSuite');
 		$service->expects($this->never())->method('makePermanent');
 
 		$listener->handle($event);
@@ -108,7 +108,7 @@ class EncryptionSuiteRevokedListenerTest extends TestCase {
 			logger: $logger
 		);
 
-		$mapper->expects($this->never())->method('deleteByTargetUser');
+		$mapper->expects($this->never())->method('deleteByTargetUserAndSuite');
 
 		$listener->handle($this->createMock(Event::class));
 	}//end testHandleIgnoresUnrelatedEvents()
