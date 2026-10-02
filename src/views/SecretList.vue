@@ -806,7 +806,7 @@ export default {
 		 * export serializer.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 */
 		folders() {
 			return this.folderStore.folders
@@ -817,7 +817,7 @@ export default {
 		 * locked (import requires the session CryptoKey to encrypt rows).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 */
 		vaultLocked() {
 			return useSessionStore().isLocked
@@ -1456,7 +1456,7 @@ export default {
 		 * dialogs can say how many are missing (keepiq#794).
 		 *
 		 * @return {Promise<{secrets: Array<object>, skipped: number}>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async decryptAllSecrets() {
@@ -1483,7 +1483,7 @@ export default {
 		 * Open the export dialog after decrypting the vault client-side.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async openExport() {
@@ -1512,7 +1512,7 @@ export default {
 		 * Open the GDPR export dialog; decrypt the vault if it is unlocked.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
 		async openGdpr() {
 			const { secrets } = await this.decryptAllSecrets()
@@ -1527,7 +1527,7 @@ export default {
 		 * disabled while locked, and the wizard itself renders a lock guard.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 */
 		/**
 		 * The outstanding-request state for a row, or null.
@@ -1637,7 +1637,7 @@ export default {
 		 * imported secrets and any created folders appear.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-import-summary-report
+		 * @spec openspec/specs/secret-import/spec.md#requirement-import-summary-report
 		 */
 		async onImported() {
 			await this.folderStore.fetchFolders()
@@ -1649,7 +1649,7 @@ export default {
 		 * the export dialog.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
 		async onExportFirst() {
 			this.deletionOpen = false

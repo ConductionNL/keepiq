@@ -56,7 +56,7 @@ class AccountSuiteCleanupService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function removeSuites(string $userId, DeletionReport $report): void {
 		$suites = $this->suiteMapper->findByOwner(ownerType: 'user', ownerId: $userId);

@@ -13,7 +13,7 @@
  * strings + History-ignored (KeePass XML), folders + custom fields (Nextcloud
  * Passwords), KDBX magic-byte detection, and the normalized-row contract.
  *
- * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-supported-import-formats
+ * @spec openspec/specs/secret-import/spec.md#requirement-supported-import-formats
  */
 
 import { describe, expect, it } from 'vitest'

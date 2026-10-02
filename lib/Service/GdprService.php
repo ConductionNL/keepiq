@@ -104,7 +104,7 @@ class GdprService {
 	 *
 	 * @return array<string,mixed> The versioned, self-describing metadata document
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function collectMetadata(string $userId): array {
 		$ownedSecrets = $this->secretMapper->findByOwner(

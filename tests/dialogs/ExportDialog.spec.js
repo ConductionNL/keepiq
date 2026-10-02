@@ -15,8 +15,8 @@
  *
  * Runs under jsdom with lightweight stubs for the @nextcloud/vue components.
  *
- * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
- * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+ * @spec openspec/specs/secret-export/spec.md
+ * @spec openspec/specs/gdpr-compliance/spec.md
  */
 
 import { mount } from '@vue/test-utils'
