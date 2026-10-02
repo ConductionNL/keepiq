@@ -130,6 +130,8 @@ final class AuditEventTypes {
 	// Org password policy (org-password-policies §3.1) — config values
 	// only, never secret data.
 	public const PASSWORD_POLICY_UPDATED = 'password_policy.updated';
+	// Vault policies (admin-vault-policies §1.1): before and after snapshot.
+	public const VAULT_POLICY_UPDATED = 'vault_policy.updated';
 
 	// Compliance reporting (compliance-reporting §5.1) — identifiers +
 	// export format only, never an aggregate body.
@@ -262,6 +264,7 @@ final class AuditEventTypes {
 		self::POLICY_EXPIRY_CHANGED => ['scope', 'scopeId'],
 		// Org password policy — before/after config values (§3.1).
 		self::PASSWORD_POLICY_UPDATED => ['before', 'after'],
+		self::VAULT_POLICY_UPDATED => ['before', 'after'],
 		// Compliance reporting — identifiers + format only (§5.1).
 		self::COMPLIANCE_REPORT_GENERATED => ['reportId'],
 		self::COMPLIANCE_REPORT_EXPORTED => ['reportId', 'format'],

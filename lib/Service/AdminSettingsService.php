@@ -101,6 +101,7 @@ class AdminSettingsService {
 	 * @param IEventDispatcher|null $eventDispatcher The audit dispatcher (policy changes)
 	 * @param PasswordPolicyService|null $policyService The org password policy
 	 * @param RegisterConfigurationLoader|null $registerLoader The register-configuration loader
+	 * @param VaultPolicyService|null $vaultPolicies The vault policies (admin-vault-policies)
 	 *
 	 * @return void
 	 *
@@ -115,6 +116,7 @@ class AdminSettingsService {
 		?IEventDispatcher $eventDispatcher = null,
 		?PasswordPolicyService $policyService = null,
 		?RegisterConfigurationLoader $registerLoader = null,
+		private ?VaultPolicyService $vaultPolicies = null,
 	) {
 		$this->policyService = ($policyService ?? new PasswordPolicyService(
 			appConfig: $appConfig,
@@ -217,6 +219,12 @@ class AdminSettingsService {
 			]
 		);
 
+		// Vault policies with their group scopes: admin payload only
+		// (admin-vault-policies §1.2).
+		if ($this->vaultPolicies !== null) {
+			$settings = array_merge($settings, $this->vaultPolicies->read());
+		}
+
 		// Best-effort CA status; never blocks if the service is unavailable.
 		try {
 			$caService = $this->container->get('OCA\Keepiq\Service\CertificateAuthorityService');
@@ -241,6 +249,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 *
 	 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.4
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
 	 */
 	public function updateAdminSettings(array $data): array {
 		// Each group validates and persists one family of keys. Every guard
@@ -253,6 +262,7 @@ class AdminSettingsService {
 		$this->updateLeaseSettings(data: $data);
 		$this->updateRetentionSettings(data: $data);
 		$this->updateTrashSettings(data: $data);
+		$this->vaultPolicies?->update(data: $data);
 
 		return $this->getAdminSettings();
 	}//end updateAdminSettings()
@@ -263,10 +273,20 @@ class AdminSettingsService {
 	 *
 	 * @return array<string,mixed>
 	 *
+	 * @param string|null $userId The session user, for the effective vault policies
+	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
 	 */
-	public function getPolicy(): array {
-		return $this->policyService->getPolicy();
+	public function getPolicy(?string $userId = null): array {
+		$policy = $this->policyService->getPolicy();
+		if ($this->vaultPolicies !== null && $userId !== null) {
+			// Only whether each vault policy applies to THIS user, never
+			// the group lists (admin-vault-policies D1).
+			$policy = array_merge($policy, $this->vaultPolicies->effectiveFor(userId: $userId));
+		}
+
+		return $policy;
 	}//end getPolicy()
 
 	/**

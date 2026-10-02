@@ -184,6 +184,12 @@ class SettingsService {
 			userSession: $userSession,
 			logger: $logger,
 			eventDispatcher: $eventDispatcher,
+			vaultPolicies: new VaultPolicyService(
+				appConfig: $appConfig,
+				groupManager: $groupManager,
+				userSession: $userSession,
+				eventDispatcher: $eventDispatcher,
+			),
 		));
 	}//end __construct()
 
@@ -221,9 +227,10 @@ class SettingsService {
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
 	 */
 	public function getPolicy(): array {
-		return $this->adminSettings->getPolicy();
+		return $this->adminSettings->getPolicy(userId: $this->userSession->getUser()?->getUID());
 	}//end getPolicy()
 
 	/**
