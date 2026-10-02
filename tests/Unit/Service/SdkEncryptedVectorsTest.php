@@ -56,6 +56,7 @@ class SdkEncryptedVectorsTest extends TestCase {
 		return [
 			'go' => ['go'],
 			'python' => ['python'],
+			'js' => ['js'],
 		];
 	}//end libraries()
 

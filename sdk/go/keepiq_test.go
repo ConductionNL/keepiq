@@ -436,3 +436,17 @@ func TestGoEncryptedVector(t *testing.T) {
 	}
 	checkVector(t, path, key)
 }
+
+// Every library's encrypted vector decrypts in Go too. A missing file is
+// skipped here: the producing library's own test fails on it.
+func TestEveryLibraryVector(t *testing.T) {
+	f := loadFixture(t)
+	key, _ := kcrypto.ParsePrivateKey(f.PrivateKeyPem)
+	for _, lang := range []string{"go", "python", "js"} {
+		path := "../testdata/encrypted_by_" + lang + ".json"
+		if _, err := os.Stat(path); err != nil {
+			continue
+		}
+		checkVector(t, path, key)
+	}
+}
