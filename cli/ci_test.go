@@ -164,3 +164,13 @@ func captureOutput(t *testing.T, fn func() error) (string, string, error) {
 	<-done
 	return outBuf.String(), errBuf.String(), runErr
 }
+
+// TestChildEnvironDropsTheApplicationKey: `keepiq ci run` hands the wrapped
+// command its secrets, not the application private key.
+func TestChildEnvironDropsTheApplicationKey(t *testing.T) {
+	got := childEnviron([]string{"PATH=/bin", "KEEPIQ_APP_KEY=-----BEGIN PRIVATE KEY-----", "KEEPIQ_URL=https://x", "KEEPIQ_APP_KEY_FILE=/run/k.pem"})
+	want := []string{"PATH=/bin", "KEEPIQ_URL=https://x", "KEEPIQ_APP_KEY_FILE=/run/k.pem"}
+	if strings.Join(got, "|") != strings.Join(want, "|") {
+		t.Fatalf("child env = %v", got)
+	}
+}
