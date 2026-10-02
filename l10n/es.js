@@ -1592,6 +1592,8 @@ OC.L10N.register(
         "audit log, compliance reports, SIEM export and honey alerts": "registro de auditoría, informes de cumplimiento, exportación SIEM y alertas señuelo",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Cuántas versiones de un secreto se guardan, durante cuánto tiempo y cuánto tiempo permanecen en la papelera los secretos eliminados.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Límites para adjuntos cifrados, aplicados en el servidor en bytes cifrados almacenados.",
+        "Type the suite ID again to confirm": "Vuelva a escribir el ID del conjunto para confirmar",
+        "This does not match the suite ID.": "No coincide con el ID del conjunto.",
         "Confirm with your master password": "Confirme con su contraseña maestra",
         "Confirm": "Confirmar",
         "That master password is not right.": "Esa contraseña maestra no es correcta.",

@@ -1592,6 +1592,8 @@ OC.L10N.register(
         "audit log, compliance reports, SIEM export and honey alerts": "revizijski dnevnik, izvještaji o usklađenosti, SIEM izvoz i upozorenja mamaca",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Koliko verzija tajne se čuva, koliko dugo, i koliko dugo obrisane tajne ostaju u smeću.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Ograničenja za šifrirane priloge, koja server primjenjuje na sačuvane šifrirane bajtove.",
+        "Type the suite ID again to confirm": "Ponovo unesite ID paketa za potvrdu",
+        "This does not match the suite ID.": "Ovo se ne podudara s ID-om paketa.",
         "Confirm with your master password": "Potvrdite glavnom lozinkom",
         "Confirm": "Potvrdi",
         "That master password is not right.": "Ta glavna lozinka nije ispravna.",

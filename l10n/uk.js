@@ -1592,6 +1592,8 @@ OC.L10N.register(
         "audit log, compliance reports, SIEM export and honey alerts": "журнал аудиту, звіти про відповідність, експорт у SIEM і сповіщення про приманки",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Скільки версій секрету зберігається, як довго і як довго видалені секрети залишаються в кошику.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Обмеження для зашифрованих вкладень, які сервер застосовує до збережених зашифрованих байтів.",
+        "Type the suite ID again to confirm": "Введіть ID набору ще раз для підтвердження",
+        "This does not match the suite ID.": "Це не збігається з ID набору.",
         "Confirm with your master password": "Підтвердьте головним паролем",
         "Confirm": "Підтвердити",
         "That master password is not right.": "Цей головний пароль неправильний.",

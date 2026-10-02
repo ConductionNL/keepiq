@@ -1592,6 +1592,8 @@ OC.L10N.register(
         "audit log, compliance reports, SIEM export and honey alerts": "auditilogi, vastavusaruanded, SIEM-eksport ja peibutushoiatused",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Mitu saladuse versiooni säilitatakse, kui kaua, ja kui kaua kustutatud saladused prügikastis püsivad.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Krüpteeritud manuste piirangud, mida server jõustab salvestatud krüpteeritud baitides.",
+        "Type the suite ID again to confirm": "Kinnitamiseks sisestage komplekti ID uuesti",
+        "This does not match the suite ID.": "See ei ühti komplekti ID-ga.",
         "Confirm with your master password": "Kinnitage põhiparooliga",
         "Confirm": "Kinnita",
         "That master password is not right.": "See põhiparool ei ole õige.",

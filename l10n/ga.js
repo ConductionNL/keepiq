@@ -1592,6 +1592,8 @@ OC.L10N.register(
         "audit log, compliance reports, SIEM export and honey alerts": "loga iniúchta, tuarascálacha comhlíonta, easpórtáil SIEM agus foláirimh baoite",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Cé mhéad leagan de rún a choinnítear, ar feadh cé chomh fada, agus cé chomh fada a fhanann rúin scriosta sa bhruscar.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Teorainneacha do cheangaltáin chriptithe, curtha i bhfeidhm ar an bhfreastalaí i mbearta criptithe stóráilte.",
+        "Type the suite ID again to confirm": "Clóscríobh aitheantas na sraithe arís le deimhniú",
+        "This does not match the suite ID.": "Ní hionann é seo agus aitheantas na sraithe.",
         "Confirm with your master password": "Deimhnigh le do phríomhphasfhocal",
         "Confirm": "Deimhnigh",
         "That master password is not right.": "Níl an príomhphasfhocal sin ceart.",

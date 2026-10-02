@@ -1592,6 +1592,8 @@ OC.L10N.register(
         "audit log, compliance reports, SIEM export and honey alerts": "αρχείο ελέγχου, αναφορές συμμόρφωσης, εξαγωγή SIEM και ειδοποιήσεις δολωμάτων",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Πόσες εκδόσεις ενός μυστικού διατηρούνται, για πόσο, και για πόσο μένουν στον κάδο τα διαγραμμένα μυστικά.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Όρια για κρυπτογραφημένα συνημμένα, που επιβάλλει ο διακομιστής στα αποθηκευμένα κρυπτογραφημένα byte.",
+        "Type the suite ID again to confirm": "Πληκτρολογήστε ξανά το αναγνωριστικό σουίτας για επιβεβαίωση",
+        "This does not match the suite ID.": "Δεν ταιριάζει με το αναγνωριστικό σουίτας.",
         "Confirm with your master password": "Επιβεβαίωση με τον κύριο κωδικό πρόσβασης",
         "Confirm": "Επιβεβαίωση",
         "That master password is not right.": "Αυτός ο κύριος κωδικός πρόσβασης δεν είναι σωστός.",

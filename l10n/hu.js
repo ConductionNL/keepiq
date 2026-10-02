@@ -1592,6 +1592,8 @@ OC.L10N.register(
         "audit log, compliance reports, SIEM export and honey alerts": "naplófájl, megfelelőségi jelentések, SIEM-export és csaliriasztások",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Egy titok hány verzióját és mennyi ideig őrizzük meg, és a törölt titkok mennyi ideig maradnak a kukában.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "A titkosított mellékletek korlátai, amelyeket a kiszolgáló a tárolt titkosított bájtokban érvényesít.",
+        "Type the suite ID again to confirm": "A megerősítéshez írja be újra a csomag azonosítóját",
+        "This does not match the suite ID.": "Ez nem egyezik a csomag azonosítójával.",
         "Confirm with your master password": "Megerősítés a főjelszóval",
         "Confirm": "Megerősítés",
         "That master password is not right.": "Ez a főjelszó nem helyes.",

@@ -1592,6 +1592,8 @@ OC.L10N.register(
         "audit log, compliance reports, SIEM export and honey alerts": "audito žurnalas, atitikties ataskaitos, SIEM eksportas ir masalo įspėjimai",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Kiek paslapties versijų saugoma, kiek laiko, ir kiek laiko ištrintos paslaptys lieka šiukšlinėje.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Šifruotų priedų ribos, kurias serveris taiko saugomiems šifruotiems baitams.",
+        "Type the suite ID again to confirm": "Patvirtinkite dar kartą įvesdami rinkinio ID",
+        "This does not match the suite ID.": "Tai nesutampa su rinkinio ID.",
         "Confirm with your master password": "Patvirtinkite pagrindiniu slaptažodžiu",
         "Confirm": "Patvirtinti",
         "That master password is not right.": "Šis pagrindinis slaptažodis neteisingas.",

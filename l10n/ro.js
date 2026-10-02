@@ -1592,6 +1592,8 @@ OC.L10N.register(
         "audit log, compliance reports, SIEM export and honey alerts": "jurnal de audit, rapoarte de conformitate, export SIEM și alerte momeală",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Câte versiuni ale unui secret se păstrează, cât timp și cât timp rămân secretele șterse în coșul de gunoi.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limite pentru atașamentele criptate, aplicate pe server în octeți criptați stocați.",
+        "Type the suite ID again to confirm": "Introduceți din nou ID-ul suitei pentru confirmare",
+        "This does not match the suite ID.": "Nu corespunde cu ID-ul suitei.",
         "Confirm with your master password": "Confirmați cu parola principală",
         "Confirm": "Confirmare",
         "That master password is not right.": "Această parolă principală nu este corectă.",

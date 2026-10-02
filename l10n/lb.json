@@ -1663,6 +1663,8 @@
         "audit log, compliance reports, SIEM export and honey alerts": "Auditprotokoll, Konformitéitsberichter, SIEM-Export an Hunneg-Alarmer",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Wéi vill Versioune vun engem Geheimnis wéi laang gehale ginn, a wéi laang geläschte Geheimnisser an der Poubelle bleiwen.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Grenze fir verschlësselt Unhäng, um Server a gespäicherte verschlësselte Bytes duerchgesat.",
+        "Type the suite ID again to confirm": "Gitt d'Suite-ID nach eng Kéier an fir ze confirméieren",
+        "This does not match the suite ID.": "Dat entsprécht net der Suite-ID.",
         "Confirm with your master password": "Mat Ärem Masterpasswuert confirméieren",
         "Confirm": "Confirméieren",
         "That master password is not right.": "Dëst Masterpasswuert ass net richteg.",

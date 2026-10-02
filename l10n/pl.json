@@ -1687,6 +1687,8 @@
         "audit log, compliance reports, SIEM export and honey alerts": "dziennik audytu, raporty zgodności, eksport SIEM i alerty przynęt",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Ile wersji sekretu jest przechowywanych, jak długo, i jak długo usunięte sekrety pozostają w koszu.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limity zaszyfrowanych załączników, egzekwowane na serwerze w zapisanych zaszyfrowanych bajtach.",
+        "Type the suite ID again to confirm": "Wpisz ponownie ID pakietu, aby potwierdzić",
+        "This does not match the suite ID.": "To nie pasuje do ID pakietu.",
         "Confirm with your master password": "Potwierdź hasłem głównym",
         "Confirm": "Potwierdź",
         "That master password is not right.": "To hasło główne jest nieprawidłowe.",
