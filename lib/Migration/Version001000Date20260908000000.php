@@ -344,6 +344,23 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 				['keepiq_ep_scope_uniq', ['owner_id', 'scope', 'scope_id']],
 			],
 		],
+		'federation_partners' => [
+			'columns' => [
+				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['base_url', Types::STRING, ['notnull' => true, 'length' => 255]],
+				['host', Types::STRING, ['notnull' => true, 'length' => 255]],
+				['root_fingerprint', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['allow_outbound', Types::BOOLEAN, ['notnull' => false, 'default' => false]],
+				['allow_inbound', Types::BOOLEAN, ['notnull' => false, 'default' => false]],
+				['added_by', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['added_at', Types::DATETIME, ['notnull' => true]],
+			],
+			'primary' => ['id'],
+			'indexes' => [],
+			'uniqueIndexes' => [
+				['keepiq_fedp_host_uniq', ['host']],
+			],
+		],
 		'folders' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],

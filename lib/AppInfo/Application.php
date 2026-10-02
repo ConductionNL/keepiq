@@ -171,6 +171,7 @@ class Application extends App implements IBootstrap {
 		(new SuiteLifecycleEventRegistrar())->register(context: $context);
 		(new UserLifecycleEventRegistrar())->register(context: $context);
 		(new AuditStreamEventRegistrar())->register(context: $context);
+		(new FederationEventRegistrar())->register(context: $context);
 
 		// Nextcloud's own extension points: unified search, notifications and
 		// the JWT-Bearer request middleware.
