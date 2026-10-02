@@ -374,7 +374,7 @@ export const useShareStore = defineStore('share', {
 		async syncAsTeamWriter(editedSecretId, plaintext) {
 			const context = await this.fetchWriteContext(editedSecretId)
 			if (
-				context.effectiveGrade !== 'write'
+				!['write', 'manage'].includes(context.effectiveGrade)
 				|| context.sourceSecretId === editedSecretId
 			) {
 				return { updated: 0 }
