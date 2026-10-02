@@ -125,10 +125,16 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+		 */
 		store() {
 			return useAccountRecoveryStore()
 		},
 
+		/**
+		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+		 */
 		request() {
 			// A device-purpose request belongs to "Ask your organisation instead".
 			const request = this.store.myRequest
@@ -168,6 +174,7 @@ export default {
 
 		/**
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 		 */
 		async refresh() {
 			await this.guard(() => this.store.fetchMyRequest())
@@ -189,6 +196,7 @@ export default {
 		/**
 		 * @param {Function} action The action.
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 		 */
 		async guard(action) {
 			this.busy = true

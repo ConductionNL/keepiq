@@ -132,6 +132,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
+		 */
 		officerList() {
 			return this.officersText
 				.split(',')
@@ -159,6 +162,7 @@ export default {
 		/**
 		 * @param {object} data The settings from the server.
 		 * @return {void}
+		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 		 */
 		apply(data) {
 			this.policy = data?.policy ?? 'off'

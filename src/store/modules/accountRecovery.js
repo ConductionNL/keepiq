@@ -37,6 +37,7 @@ const API = '/apps/keepiq/api/v1/recovery'
 export const requestKeyStore = {
 	/**
 	 * @return {Promise<IDBDatabase>}
+	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
 	open() {
 		return new Promise((resolve, reject) => {
@@ -52,6 +53,7 @@ export const requestKeyStore = {
 	 * @param {string} id The request id.
 	 * @param {object} value { privateKey, publicKeyRaw }.
 	 * @return {Promise<void>}
+	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
 	async put(id, value) {
 		const db = await this.open()
@@ -66,6 +68,7 @@ export const requestKeyStore = {
 	/**
 	 * @param {string} id The request id.
 	 * @return {Promise<object|undefined>}
+	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
 	async get(id) {
 		const db = await this.open()
@@ -82,6 +85,7 @@ export const requestKeyStore = {
 	/**
 	 * @param {string} id The request id.
 	 * @return {Promise<void>}
+	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
 	async delete(id) {
 		const db = await this.open()

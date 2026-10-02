@@ -383,4 +383,18 @@ class AccountRecoveryTest extends TestCase {
 		$this->assertTrue($status['enrolled']);
 		$this->assertFalse($status['current'], 'bob re-enrols at his next unlock');
 	}
+
+	public function testTheEnrolmentStatusAndTheOwnCopyReplacementAnswerOnlyTheirOwner(): void {
+		$this->bobAsks();
+		$status = $this->userController('bob')->enrolment()->getData();
+		$this->assertTrue($status['enrolled']);
+		$this->assertSame('optional', $status['policy']);
+		$this->assertFalse($this->userController('mallory')->enrolment()->getData()['enrolled']);
+
+		$keyId = $this->keys->activeKey()->getId();
+		$this->assertSame(Http::STATUS_OK, $this->officerController('omar')->replaceOwnCopy($keyId, 'REWRAPPED-M')->getStatus());
+		$this->assertSame('REWRAPPED-M', $this->officerController('omar')->ownCopy()->getData()['wrappedPrivateKey']);
+		$this->assertSame('WRAPPED-O', $this->officerController('olga')->ownCopy()->getData()['wrappedPrivateKey']);
+		$this->assertSame(Http::STATUS_NOT_FOUND, $this->officerController('mallory')->replaceOwnCopy($keyId, 'X')->getStatus());
+	}
 }

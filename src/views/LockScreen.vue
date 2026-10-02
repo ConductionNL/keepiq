@@ -735,6 +735,9 @@ export default {
 			await this.onApprovedUnlock()
 		},
 
+		/**
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+		 */
 		async onApprovedUnlock() {
 			const returnUrl = this.$route.query.returnUrl || '/'
 			await this.playUnlockAnimation()

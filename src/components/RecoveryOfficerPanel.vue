@@ -132,15 +132,24 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+		 */
 		store() {
 			return useAccountRecoveryStore()
 		},
 
+		/**
+		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+		 */
 		officer() {
 			return this.store.officer
 		},
 	},
 
+	/**
+	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+	 */
 	async created() {
 		try {
 			await this.store.fetchOfficer()

@@ -86,10 +86,16 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+		 */
 		store() {
 			return useAccountRecoveryStore()
 		},
 
+		/**
+		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+		 */
 		status() {
 			return this.store.status
 		},
