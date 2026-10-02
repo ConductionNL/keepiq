@@ -174,6 +174,12 @@ class EncryptionSuiteController extends OCSController {
 	/**
 	 * Create a new EncryptionSuite for the current user.
 	 *
+	 * Refused for a user whose earlier suite was revoked or replaced and who has
+	 * no active suite now: that is exactly the state a force-revoke leaves, and
+	 * a stolen session could otherwise enrol a key pair it owns and become the
+	 * user's identity for every new share (keepiq#860). Such a user enrols
+	 * through reenrol(), which asks for their Nextcloud password first.
+	 *
 	 * @param string $publicKey The PEM-encoded public key
 	 * @param string $encryptedPrivateKey The encrypted private key
 	 *
@@ -182,6 +188,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-re-enrolment-after-a-revocation-requires-a-fresh-password-confirmation
 	 */
 	#[NoAdminRequired]
 	public function create(
@@ -193,6 +200,86 @@ class EncryptionSuiteController extends OCSController {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
+		if ($this->needsFreshConfirmation(userId: $user->getUID()) === true) {
+			return new JSONResponse(
+				data: [
+					'error' => 'reauthentication_required',
+					'message' => 'Your previous vault key was revoked. Confirm your password to set up a new one.',
+				],
+				statusCode: Http::STATUS_FORBIDDEN
+			);
+		}
+
+		return $this->enrol(userId: $user->getUID(), publicKey: $publicKey, encryptedPrivateKey: $encryptedPrivateKey);
+	}//end create()
+
+	/**
+	 * Create a new EncryptionSuite after a revocation, behind a fresh password confirmation.
+	 *
+	 * The same enrolment as create(), guarded by Nextcloud sudo so that a
+	 * session alone cannot replace a revoked identity (keepiq#860). Single
+	 * sign-on accounts that cannot confirm a password pass the guard; ending the
+	 * user's sessions on a compromise force-revoke is what covers them.
+	 *
+	 * @param string $publicKey The PEM-encoded public key
+	 * @param string $encryptedPrivateKey The encrypted private key
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-re-enrolment-after-a-revocation-requires-a-fresh-password-confirmation
+	 */
+	#[NoAdminRequired]
+	#[PasswordConfirmationRequired]
+	public function reenrol(
+		?string $publicKey = null,
+		?string $encryptedPrivateKey = null,
+	): JSONResponse {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		return $this->enrol(userId: $user->getUID(), publicKey: $publicKey, encryptedPrivateKey: $encryptedPrivateKey);
+	}//end reenrol()
+
+	/**
+	 * Whether the user has only retired suites: revoked or replaced, none active.
+	 *
+	 * @param string $userId The Nextcloud user
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-re-enrolment-after-a-revocation-requires-a-fresh-password-confirmation
+	 */
+	private function needsFreshConfirmation(string $userId): bool {
+		$retired = false;
+		foreach ($this->suiteService->getSuitesByOwner(ownerType: 'user', ownerId: $userId) as $suite) {
+			if ($suite->getStatus() === 'active') {
+				return false;
+			}
+
+			if (in_array($suite->getStatus(), ['revoked', 'compromised'], true) === true) {
+				$retired = true;
+			}
+		}
+
+		return $retired;
+	}//end needsFreshConfirmation()
+
+	/**
+	 * Enrol a new suite for a user: the body create() and reenrol() share.
+	 *
+	 * @param string      $userId              The Nextcloud user
+	 * @param string|null $publicKey           The PEM-encoded public key
+	 * @param string|null $encryptedPrivateKey The encrypted private key
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-suite-creation-on-first-login
+	 */
+	private function enrol(string $userId, ?string $publicKey, ?string $encryptedPrivateKey): JSONResponse {
 		// Validate required params HERE so a missing body returns 400, not a 500
 		// from the framework dispatcher failing to bind non-nullable arguments.
 		if ($this->hasKeyMaterial(publicKey: $publicKey, encryptedPrivateKey: $encryptedPrivateKey) === false) {
@@ -201,8 +288,6 @@ class EncryptionSuiteController extends OCSController {
 				statusCode: Http::STATUS_BAD_REQUEST
 			);
 		}
-
-		$userId = $user->getUID();
 
 		// Reject suite creation while a key-compromise migration is in progress —
 		// the old suite must finish re-encrypting data before a new one is registered.
@@ -217,8 +302,8 @@ class EncryptionSuiteController extends OCSController {
 			$suite = $this->suiteService->createSuite(
 				ownerType: 'user',
 				ownerId: $userId,
-				publicKeyPem: $publicKey,
-				encryptedPrivateKey: $encryptedPrivateKey
+				publicKeyPem: (string)$publicKey,
+				encryptedPrivateKey: (string)$encryptedPrivateKey
 			);
 			return new JSONResponse(data: $suite->jsonSerialize(), statusCode: Http::STATUS_CREATED);
 		} catch (ConflictException $e) {
@@ -242,7 +327,7 @@ class EncryptionSuiteController extends OCSController {
 				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
 			);
 		}//end try
-	}//end create()
+	}//end enrol()
 
 	/**
 	 * Update the encrypted private key (routine password change).

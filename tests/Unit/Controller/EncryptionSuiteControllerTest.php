@@ -1306,4 +1306,67 @@ class EncryptionSuiteControllerTest extends TestCase {
 			containment: $containment,
 		);
 	}//end controllerWith()
+	/**
+	 * A user whose suite was revoked and who has no active suite cannot enrol a
+	 * new one with only a session: a stolen session would otherwise replace the
+	 * victim's identity right after the containment (keepiq#860).
+	 *
+	 * @return void
+	 */
+	public function testCreateIsRefusedAfterARevocationWithoutAFreshConfirmation(): void {
+		$revoked = new EncryptionSuite();
+		$revoked->setId('suite-1');
+		$revoked->setStatus('revoked');
+		$this->suiteService->method('getSuitesByOwner')->willReturn([$revoked]);
+		$this->suiteService->expects($this->never())->method('createSuite');
+
+		$response = $this->controller->create('-----BEGIN PUBLIC KEY-----', 'envelope');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame('reauthentication_required', $response->getData()['error']);
+	}//end testCreateIsRefusedAfterARevocationWithoutAFreshConfirmation()
+
+	/**
+	 * A user with an active suite next to a replaced one is not sent to the
+	 * re-enrol route; createSuite() answers with its own conflict.
+	 *
+	 * @return void
+	 */
+	public function testCreateIsNotGatedWhenAnActiveSuiteExists(): void {
+		$old = new EncryptionSuite();
+		$old->setStatus('compromised');
+		$active = new EncryptionSuite();
+		$active->setStatus('active');
+		$this->suiteService->method('getSuitesByOwner')->willReturn([$old, $active]);
+		$this->suiteService->method('createSuite')->willThrowException(new ConflictException('already'));
+
+		$response = $this->controller->create('-----BEGIN PUBLIC KEY-----', 'envelope');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+	}//end testCreateIsNotGatedWhenAnActiveSuiteExists()
+
+	/**
+	 * reenrol() carries Nextcloud sudo, and enrols the user once it passes.
+	 *
+	 * @return void
+	 */
+	public function testReenrolRequiresSudoAndEnrols(): void {
+		$method = new \ReflectionMethod(EncryptionSuiteController::class, 'reenrol');
+		$this->assertCount(1, $method->getAttributes(\OCP\AppFramework\Http\Attribute\PasswordConfirmationRequired::class));
+		$this->assertCount(1, $method->getAttributes(\OCP\AppFramework\Http\Attribute\NoAdminRequired::class));
+
+		$created = new EncryptionSuite();
+		$created->setId('suite-2');
+		$created->setStatus('active');
+		$this->suiteService->expects($this->never())->method('getSuitesByOwner');
+		$this->suiteService->expects($this->once())
+			->method('createSuite')
+			->with('user', 'testuser', '-----BEGIN PUBLIC KEY-----', 'envelope')
+			->willReturn($created);
+
+		$response = $this->controller->reenrol('-----BEGIN PUBLIC KEY-----', 'envelope');
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+	}//end testReenrolRequiresSudoAndEnrols()
+
 }//end class
