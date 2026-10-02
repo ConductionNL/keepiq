@@ -200,6 +200,28 @@ class LinkShareControllerTest extends TestCase {
 	}//end testCreateRejectsInvalidUsageLimit()
 
 	/**
+	 * A caller who may not re-share the secret gets 404, like a missing
+	 * secret (keepiq#214).
+	 *
+	 * @return void
+	 */
+	public function testCreateAnswers404WhenTheCallerMayNotReshare(): void {
+		$this->suiteService->method('getActiveSuite')->willReturn($this->makeSuite());
+		$this->linkShareService->method('create')
+			->willThrowException(new \OCA\Keepiq\Exception\NotFoundException('Secret not found'));
+
+		$response = $this->controller->create(
+			secretId: 'secret-1',
+			encryptedSecretSnapshot: 'blob',
+			argon2idSalt: 'salt',
+			usageLimit: 1,
+			expiresAt: null
+		);
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	}//end testCreateAnswers404WhenTheCallerMayNotReshare()
+
+	/**
 	 * Test create returns 400 when the expiry timestamp is malformed.
 	 *
 	 * @return void

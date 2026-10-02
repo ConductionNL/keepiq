@@ -22,8 +22,17 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\LinkShare;
+use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\SecretDelegation;
+use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTarget;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\LinkShareService;
+use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\WriteLockService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use PHPUnit\Framework\TestCase;
@@ -58,12 +67,211 @@ class LinkShareServiceTest extends TestCase {
 		$this->mapper = $this->createMock(originalClassName: LinkShareMapper::class);
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 
+		// The REAL authorization service over mocked mappers (keepiq#214):
+		// every secret is alice's own unless a test says otherwise.
+		$this->secrets = $this->createMock(SecretMapper::class);
+		$this->secrets->method('findById')->willReturnCallback(
+			fn (string $id): Secret => ($this->secretRows[$id] ?? $this->secret(id: $id, ownerId: 'alice'))
+		);
+		$this->delegations = $this->createMock(SecretDelegationMapper::class);
+		$this->delegations->method('findActiveBySecretAndUser')->willReturnCallback(
+			function (string $secretId, string $userId): SecretDelegation {
+				if (in_array($secretId . '/' . $userId, $this->delegates, true) === true) {
+					return new SecretDelegation();
+				}
+
+				throw new DoesNotExistException('none');
+			}
+		);
+		$this->shareTargets = $this->createMock(ShareTargetMapper::class);
+		$this->shareTargets->method('findByRecipientSecret')->willReturnCallback(
+			function (string $copyId): ShareTarget {
+				if (isset($this->copies[$copyId]) === false) {
+					throw new DoesNotExistException('not a copy');
+				}
+
+				$row = new ShareTarget();
+				$row->setSourceSecretId($this->copies[$copyId]);
+				return $row;
+			}
+		);
+
 		$this->service = new LinkShareService(
 			mapper: $this->mapper,
 			logger: $logger,
 			writeLockService: $this->createMock(WriteLockService::class),
+			shareAuth: new ShareAuthorizationService(
+				secretMapper: $this->secrets,
+				delegationMapper: $this->delegations,
+				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
+				shareTargetMapper: $this->shareTargets,
+			),
 		);
 	}//end setUp()
+
+	/**
+	 * Secret rows by id that override the alice-owned default.
+	 *
+	 * @var array<string,Secret>
+	 */
+	private array $secretRows = [];
+
+	/**
+	 * Active delegations as "secretId/userId".
+	 *
+	 * @var string[]
+	 */
+	private array $delegates = [];
+
+	/**
+	 * Received copies: copy id => source secret id.
+	 *
+	 * @var array<string,string>
+	 */
+	private array $copies = [];
+
+	/**
+	 * The mocked secret mapper.
+	 *
+	 * @var SecretMapper
+	 */
+	private SecretMapper $secrets;
+
+	/**
+	 * The mocked delegation mapper.
+	 *
+	 * @var SecretDelegationMapper
+	 */
+	private SecretDelegationMapper $delegations;
+
+	/**
+	 * The mocked share-target mapper.
+	 *
+	 * @var ShareTargetMapper
+	 */
+	private ShareTargetMapper $shareTargets;
+
+	/**
+	 * Build a user-owned secret row.
+	 *
+	 * @param string $id      The secret id
+	 * @param string $ownerId The owner
+	 *
+	 * @return Secret
+	 */
+	private function secret(string $id, string $ownerId): Secret {
+		$secret = new Secret();
+		$secret->setId($id);
+		$secret->setOwnerType('user');
+		$secret->setOwnerId($ownerId);
+		return $secret;
+	}//end secret()
+
+	/**
+	 * Create a link share as $userId for $secretId with valid fields.
+	 *
+	 * @param string $secretId The secret id
+	 * @param string $userId   The acting user
+	 *
+	 * @return LinkShare
+	 */
+	private function createAs(string $secretId, string $userId): LinkShare {
+		return $this->service->create(
+			secretId: $secretId,
+			encryptedSnapshot: 'the-blob',
+			salt: 'the-salt',
+			encryptionSuiteId: 'suite-1',
+			usageLimit: 1,
+			expiresAt: null,
+			userId: $userId
+		);
+	}//end createAs()
+
+	/**
+	 * The owner may create a link share (keepiq#214).
+	 *
+	 * @return void
+	 */
+	public function testTheOwnerMayCreateALinkShare(): void {
+		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+
+		$this->assertSame('alice', $this->createAs(secretId: 'secret-1', userId: 'alice')->getCreatedBy());
+	}//end testTheOwnerMayCreateALinkShare()
+
+	/**
+	 * A recipient whose share permits re-sharing (an active delegate) may
+	 * create one from their own copy, which is judged by its source.
+	 *
+	 * @return void
+	 */
+	public function testADelegateMayCreateALinkShareFromTheirCopy(): void {
+		$this->secretRows['copy-bob'] = $this->secret(id: 'copy-bob', ownerId: 'bob');
+		$this->copies['copy-bob'] = 'secret-1';
+		$this->delegates[] = 'secret-1/bob';
+		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+
+		$this->assertSame('bob', $this->createAs(secretId: 'copy-bob', userId: 'bob')->getCreatedBy());
+	}//end testADelegateMayCreateALinkShareFromTheirCopy()
+
+	/**
+	 * A plain recipient owns their copy row, but the copy's source is not
+	 * theirs and they hold no delegation: refused, nothing written.
+	 *
+	 * @return void
+	 */
+	public function testAPlainRecipientIsRefused(): void {
+		$this->secretRows['copy-carol'] = $this->secret(id: 'copy-carol', ownerId: 'carol');
+		$this->copies['copy-carol'] = 'secret-1';
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(NotFoundException::class);
+		$this->createAs(secretId: 'copy-carol', userId: 'carol');
+	}//end testAPlainRecipientIsRefused()
+
+	/**
+	 * A stranger naming someone else's secret is refused, nothing written.
+	 *
+	 * @return void
+	 */
+	public function testAStrangerIsRefused(): void {
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(NotFoundException::class);
+		$this->createAs(secretId: 'secret-1', userId: 'mallory');
+	}//end testAStrangerIsRefused()
+
+	/**
+	 * A secret that does not exist gets the same refusal as a foreign one.
+	 *
+	 * @return void
+	 */
+	public function testAMissingSecretIsRefusedTheSameWay(): void {
+		$secrets = $this->createMock(SecretMapper::class);
+		$secrets->method('findById')->willThrowException(new DoesNotExistException('gone'));
+		$service = new LinkShareService(
+			mapper: $this->mapper,
+			logger: $this->createMock(LoggerInterface::class),
+			writeLockService: $this->createMock(WriteLockService::class),
+			shareAuth: new ShareAuthorizationService(
+				secretMapper: $secrets,
+				delegationMapper: $this->delegations,
+				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
+				shareTargetMapper: $this->shareTargets,
+			),
+		);
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(NotFoundException::class);
+		$service->create(
+			secretId: 'nope',
+			encryptedSnapshot: 'the-blob',
+			salt: 'the-salt',
+			encryptionSuiteId: 'suite-1',
+			usageLimit: 1,
+			expiresAt: null,
+			userId: 'alice'
+		);
+	}//end testAMissingSecretIsRefusedTheSameWay()
 
 	/**
 	 * Build a LinkShare entity with sensible defaults for tests.

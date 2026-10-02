@@ -33,7 +33,10 @@ use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Exception\NotFoundException;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 
 /**
  * Authorization decisions for the secret-share lifecycle.
@@ -46,6 +49,7 @@ class ShareAuthorizationService {
 	 * @param SecretDelegationMapper $delegationMapper The Delegation mapper (delegate authorization)
 	 * @param EncryptionSuiteMapper $suiteMapper The EncryptionSuite mapper (recipient precondition)
 	 * @param TeamFolderService|null $teamFolderService The team-folder service (write-grade resolution)
+	 * @param ShareTargetMapper|null $shareTargetMapper Resolves a received copy to its source (keepiq#214)
 	 *
 	 * @return void
 	 *
@@ -56,6 +60,7 @@ class ShareAuthorizationService {
 		private SecretDelegationMapper $delegationMapper,
 		private EncryptionSuiteMapper $suiteMapper,
 		private ?TeamFolderService $teamFolderService = null,
+		private ?ShareTargetMapper $shareTargetMapper = null,
 	) {
 	}//end __construct()
 
@@ -123,6 +128,66 @@ class ShareAuthorizationService {
 			return false;
 		}
 	}//end isOwnerOrDelegate()
+
+	/**
+	 * Refuse unless $userId owns the secret or is an active delegate of it,
+	 * the people whose share permits re-sharing (keepiq#214, a public link).
+	 * A received copy is owned by its recipient, so a copy is judged by its
+	 * SOURCE secret: a plain recipient fails, a delegate passes. A missing
+	 * secret and a foreign one get the same NotFoundException. Fails closed
+	 * when the share-target mapper is not wired.
+	 *
+	 * @param string $secretId The secret (source or received copy) id
+	 * @param string $userId   The acting user
+	 *
+	 * @return void
+	 *
+	 * @throws NotFoundException When the user may not re-share the secret
+	 *
+	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
+	 */
+	public function assertMayReshare(string $secretId, string $userId): void {
+		if ($this->shareTargetMapper === null) {
+			throw new NotFoundException(message: 'Secret not found');
+		}
+
+		try {
+			$secret = $this->loadSecret(secretId: $secretId);
+			$secret = $this->sourceOf(copy: $secret);
+		} catch (InvalidArgumentException) {
+			throw new NotFoundException(message: 'Secret not found');
+		}
+
+		if ($this->isOwnerOrDelegate(secret: $secret, userId: $userId) === false) {
+			throw new NotFoundException(message: 'Secret not found');
+		}
+	}//end assertMayReshare()
+
+	/**
+	 * The source secret of a received copy, or the secret itself when it is
+	 * not a copy.
+	 *
+	 * @param Secret $copy The secret that may be a received copy
+	 *
+	 * @return Secret
+	 *
+	 * @throws InvalidArgumentException When the copy's source cannot be loaded
+	 */
+	private function sourceOf(Secret $copy): Secret {
+		try {
+			$row = $this->shareTargetMapper?->findByRecipientSecret(recipientSecretId: $copy->getId());
+		} catch (DoesNotExistException) {
+			return $copy;
+		} catch (MultipleObjectsReturnedException) {
+			throw new InvalidArgumentException(message: 'Ambiguous copy');
+		}
+
+		if ($row === null) {
+			throw new InvalidArgumentException(message: 'No share-target mapper');
+		}
+
+		return $this->loadSecret(secretId: $row->getSourceSecretId());
+	}//end sourceOf()
 
 	/**
 	 * The caller's effective team-folder grade on a secret, or null when no
