@@ -35,7 +35,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Library-encrypted vectors round-trip through DecryptService.
  *
- * @spec openspec/changes/apps-client-libraries-and-ci/tasks.md#1.4
+ * @spec openspec/specs/client-libraries/spec.md
  */
 class SdkEncryptedVectorsTest extends TestCase {
 

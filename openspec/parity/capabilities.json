@@ -4006,7 +4006,7 @@
       "id": "apps-18",
       "area": "apps",
       "name": "Use a ready-made GitHub Actions or GitLab CI integration.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "unknown",
@@ -4014,11 +4014,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/apps-client-libraries-and-ci on 2026-09-27. Before: grep -rli 'github.action|gitlab.ci|.gitlab-ci' lib src cli browser-extension: no hits (only this repo's own CI workflows use GitHub Actions, which is unrelated to a keepiq integration product)",
-        "note": "No ready-made GitHub Actions or GitLab CI step exists; a pipeline would have to install and script the keepiq CLI itself.",
+        "state": "built",
+        "evidence": "integrations/github-action/action.yml + keepiq-action.sh (run mode via keepiq ci run, export-env masks every line before GITHUB_ENV, checksum-verified install), integrations/gitlab-ci/keepiq.gitlab-ci.yml (.keepiq hidden job), cli-release.yml SHA256SUMS + ghcr.io/conductionnl/keepiq-cli; integrations/test/run.sh passes 9 checks against sdk/testdata/stub_server.py",
         "owner": "ConductionNL/keepiq",
-        "change": "openspec/changes/apps-client-libraries-and-ci"
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/apps-client-libraries-and-ci. Owed: the first cli-v* release with SHA256SUMS and the ghcr image, and the workflow dry runs in CI.",
+        "change": "openspec/changes/archive/2026-10-02-apps-client-libraries-and-ci"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -4095,7 +4096,7 @@
       "id": "apps-21",
       "area": "apps",
       "name": "Use client libraries for common programming languages.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -4103,12 +4104,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/apps-client-libraries-and-ci on 2026-09-27 for the missing half: client libraries for common languages; the Go command-line client is built. Before: cli/ is a single Go CLI (stdlib only) covering human read-only + CI fetch; no client SDKs for other languages exist (no python/node/java package in the repo)",
-        "reachedOn": "keepiq CLI (Go binary, cross-compiled)",
-        "note": "There is one cross-compiled CLI binary, not per-language client libraries; a Python or Node consumer would call the documented HTTP+JWT API directly with no official SDK.",
+        "state": "built",
+        "evidence": "sdk/go (keepiq.New: GetByName, GetByID, List, Create, Update; go test green), sdk/python (keepiq-sdk, 14 tests green), sdk/js (@conduction/keepiq-sdk, 15 vitest tests green); shared vectors in sdk/testdata decrypted by every library and by DecryptService in tests/Unit/Service/SdkEncryptedVectorsTest.php",
         "owner": "ConductionNL/keepiq",
-        "change": "openspec/changes/apps-client-libraries-and-ci"
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/apps-client-libraries-and-ci. Owed: publishing to PyPI and npm (sdk-py-v*, sdk-js-v* tags) and the first sdk/go/v* tag.",
+        "change": "openspec/changes/archive/2026-10-02-apps-client-libraries-and-ci"
       },
       "rowSource": "competitor",
       "provider": "keepiq",

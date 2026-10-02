@@ -47,7 +47,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * The CLI fixture is the real serializer's output, and its ciphertext is real.
  *
- * @spec openspec/changes/apps-client-libraries-and-ci/tasks.md#1.2
+ * @spec openspec/specs/client-libraries/spec.md
  */
 class MachineEnvelopeCliFixtureTest extends TestCase {
 
