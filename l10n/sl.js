@@ -1591,7 +1591,9 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "odhodi iz ekipe, šifrirni nabori in prevzem s strani skrbnika",
         "audit log, compliance reports, SIEM export and honey alerts": "revizijski dnevnik, poročila o skladnosti, izvoz SIEM in opozorila vab",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Koliko različic skrivnosti se hrani, kako dolgo in kako dolgo izbrisane skrivnosti ostanejo v košu.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Omejitve za šifrirane priloge, ki jih strežnik uveljavlja v shranjenih šifriranih bajtih."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Omejitve za šifrirane priloge, ki jih strežnik uveljavlja v shranjenih šifriranih bajtih.",
+        "Type the suite ID again to confirm": "Za potrditev znova vnesite ID nabora",
+        "This does not match the suite ID.": "To se ne ujema z ID-jem nabora."
     },
     "nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);"
 )

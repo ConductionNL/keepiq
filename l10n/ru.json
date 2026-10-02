@@ -1686,7 +1686,9 @@
         "team offboarding, encryption suites and admin handover": "увольнение из команды, наборы шифрования и передача администратору",
         "audit log, compliance reports, SIEM export and honey alerts": "журнал аудита, отчёты о соответствии, экспорт в SIEM и оповещения о приманках",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Сколько версий секрета хранится, как долго и как долго удалённые секреты остаются в корзине.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Ограничения для зашифрованных вложений, применяемые на сервере к хранимым зашифрованным байтам."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Ограничения для зашифрованных вложений, применяемые на сервере к хранимым зашифрованным байтам.",
+        "Type the suite ID again to confirm": "Введите ID набора ещё раз для подтверждения",
+        "This does not match the suite ID.": "Не совпадает с ID набора."
     },
     "plurals": null
 }

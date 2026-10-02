@@ -1591,7 +1591,9 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "tluq mit-tim, suites tal-kriptaġġ u teħid mill-amministratur",
         "audit log, compliance reports, SIEM export and honey alerts": "reġistru tal-verifika, rapporti tal-konformità, esportazzjoni SIEM u twissijiet tal-lixka",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Kemm verżjonijiet ta' sigriet jinżammu, għal kemm żmien, u kemm idumu s-sigrieti mħassra fl-iskart.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limiti għall-annessi kriptati, infurzati fuq is-server f'bytes kriptati maħżuna."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limiti għall-annessi kriptati, infurzati fuq is-server f'bytes kriptati maħżuna.",
+        "Type the suite ID again to confirm": "Erġa' ikteb l-ID tas-suite biex tikkonferma",
+        "This does not match the suite ID.": "Dan ma jaqbilx mal-ID tas-suite."
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

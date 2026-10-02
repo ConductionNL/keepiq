@@ -77,6 +77,7 @@ describe('useEncryptionSuiteStore — administrator force-revocation', () => {
 			id: 'suite-1',
 			reason: 'offboarding',
 			markCompromised: true,
+			confirmSuiteId: 'suite-1',
 		})
 
 		// THE SECURITY INVARIANT. The endpoint's #[PasswordConfirmationRequired]
@@ -94,7 +95,13 @@ describe('useEncryptionSuiteStore — administrator force-revocation', () => {
 		expect(url).toContain('/apps/keepiq/api/v1/suites/suite-1/force-revoke')
 		// The administrator's collected inputs: a required reason and the explicit,
 		// transient compromise decision. No vault-key proof (the admin holds none).
-		expect(body).toEqual({ reason: 'offboarding', markCompromised: true })
+		// The typed suite id is echoed for the backend-independent confirmation
+		// (keepiq#871).
+		expect(body).toEqual({
+			reason: 'offboarding',
+			markCompromised: true,
+			confirmSuiteId: 'suite-1',
+		})
 	})
 
 	it('does NOT post when the administrator cancels the sudo prompt', async () => {
@@ -173,6 +180,7 @@ describe('useEncryptionSuiteStore — administrator force-revocation', () => {
 		expect(post.mock.calls[0][1]).toEqual({
 			reason: 'lost password',
 			markCompromised: false,
+			confirmSuiteId: '',
 		})
 		// A response without the extra keys must not throw — count falls back to 0
 		// and warning to null.

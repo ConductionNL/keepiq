@@ -1591,7 +1591,9 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "заминување од тимот, пакети за шифрирање и преземање од администратор",
         "audit log, compliance reports, SIEM export and honey alerts": "ревизорски дневник, извештаи за усогласеност, SIEM извоз и предупредувања за мамки",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Колку верзии од тајна се чуваат, колку долго, и колку долго избришаните тајни остануваат во корпата.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Ограничувања за шифрирани прилози, што серверот ги применува на зачуваните шифрирани бајти."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Ограничувања за шифрирани прилози, што серверот ги применува на зачуваните шифрирани бајти.",
+        "Type the suite ID again to confirm": "Повторно внесете го ID на пакетот за потврда",
+        "This does not match the suite ID.": "Ова не се совпаѓа со ID на пакетот."
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )
