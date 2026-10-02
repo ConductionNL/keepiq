@@ -159,6 +159,7 @@ class TeamFolderServiceTest extends TestCase {
 				groupManager: $this->groupManager,
 				logger: $this->createMock(originalClassName: LoggerInterface::class),
 				audit: new TeamFolderAuditor(eventDispatcher: null),
+				memberMapper: $this->memberMapper,
 			),
 			audit: new TeamFolderAuditor(eventDispatcher: null),
 			notificationService: $this->notificationService,
@@ -622,8 +623,27 @@ class TeamFolderServiceTest extends TestCase {
 			}
 		);
 
+		// Dave is a direct member of two team folders (#747).
+		$memberA = new TeamFolderMember();
+		$memberA->setId('m-a');
+		$memberB = new TeamFolderMember();
+		$memberB->setId('m-b');
+		$this->memberMapper->method('findUserMemberships')
+			->with('dave')
+			->willReturn([$memberA, $memberB]);
+		$deletedMemberIds = [];
+		$this->memberMapper->method('delete')->willReturnCallback(
+			static function (TeamFolderMember $row) use (&$deletedMemberIds) {
+				$deletedMemberIds[] = $row->getId();
+				return $row;
+			}
+		);
+
 		$summary = $this->service->offboard(leavingUserId: 'dave', successorUserId: 'bob', adminId: 'admin');
 
+		// The leaver is no longer a member, so "Share now" cannot re-share to them.
+		$this->assertSame(['m-a', 'm-b'], $deletedMemberIds);
+		$this->assertSame(2, $summary['removedMemberships']);
 		$this->assertSame(1, $summary['revoked']);
 		$this->assertSame(['st-team'], $deletedShareIds);
 		$this->assertSame(1, $summary['transferred']);
@@ -633,6 +653,31 @@ class TeamFolderServiceTest extends TestCase {
 		$this->assertSame('bob', $insertedDelegations[0]->getDelegatedTo());
 		$this->assertSame([['sec-a', 'bob']], $reassigned);
 	}//end testOffboardRevokesAndTransfers()
+
+	/**
+	 * admin-auto-confirm-members §3.3: the reconcile names who confirmed a
+	 * member when that was not the owner, so the dialog can show it.
+	 *
+	 * @return void
+	 */
+	public function testReconcileNamesTheConfirmers(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder(id: 'tf-ops'));
+		$this->memberMapper->method('findByTeamFolder')->willReturn([]);
+		$this->folderMapper->method('getSubtreeIds')->willReturn(['folder-1']);
+		$this->secretMapper->method('findByOwner')->willReturn([]);
+
+		$byOwner = new ShareTarget();
+		$byOwner->setTargetUserId('bob');
+		$byOwner->setCreatedBy('alice');
+		$byHank = new ShareTarget();
+		$byHank->setTargetUserId('kim');
+		$byHank->setCreatedBy('hank');
+		$this->bulkGrantMapper->method('findByTeamFolder')->with('tf-ops')->willReturn([$byOwner, $byHank]);
+
+		$result = $this->service->reconcile(teamFolderId: 'tf-ops', userId: 'alice');
+
+		$this->assertEquals((object)['kim' => 'hank'], $result['confirmedBy']);
+	}//end testReconcileNamesTheConfirmers()
 
 	/**
 	 * folder-permission-grades §5.1: setMemberGrade is owner-only,

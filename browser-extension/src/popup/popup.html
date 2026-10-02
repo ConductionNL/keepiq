@@ -8,14 +8,23 @@
 </head>
 <body>
 	<main id="app" class="keepiq-popup">
+		<!-- Account switcher (extension-account-switching) -->
+		<header id="account-bar" class="row account-bar" hidden>
+			<label class="account-select-label">Account
+				<select id="account-select" aria-label="Active account"></select>
+			</label>
+			<button id="account-add" class="link">Add account</button>
+		</header>
+
 		<!-- Pairing view -->
 		<section id="view-pair" hidden>
 			<h1>Connect to Keepiq</h1>
 			<label>Server URL<input id="pair-url" type="url" placeholder="https://cloud.example.org" autocomplete="off"></label>
 			<label>Nextcloud user<input id="pair-user" type="text" autocomplete="off"></label>
 			<label>App password<input id="pair-app-password" type="password" autocomplete="off"></label>
-			<p class="hint">Use a Nextcloud <strong>app password</strong> (Settings → Security), not your login password. Revoke it there to unpair.</p>
+			<p class="hint">Use a Nextcloud <strong>app password</strong> (Settings → Security), not your login password. Disconnect deletes it again.</p>
 			<button id="pair-submit" class="primary">Connect</button>
+			<button id="pair-cancel" class="link" hidden>Cancel</button>
 			<p id="pair-error" class="error" role="alert" hidden></p>
 		</section>
 
@@ -25,6 +34,7 @@
 			<label>Master password<input id="unlock-master" type="password" autocomplete="off"></label>
 			<p class="hint">Your master password is used only in this extension to decrypt your vault. It never reaches the server.</p>
 			<button id="unlock-submit" class="primary">Unlock</button>
+			<button id="unlock-biometric" class="link" hidden>Unlock with fingerprint or face</button>
 			<button id="unlock-unpair" class="link">Disconnect</button>
 			<p id="unlock-error" class="error" role="alert" hidden></p>
 		</section>
@@ -33,6 +43,7 @@
 		<section id="view-unlocked" hidden>
 			<header class="row">
 				<span id="active-host" class="host"></span>
+				<button id="settings-btn" class="link">Settings</button>
 				<button id="lock-btn" class="link">Lock</button>
 			</header>
 			<ul id="candidates" class="candidates"></ul>
@@ -45,6 +56,20 @@
 				<button id="save-yes" class="primary">Save</button>
 				<button id="save-no" class="link">Not now</button>
 			</div>
+		</section>
+
+		<!-- Settings view (per account) -->
+		<section id="view-settings" hidden>
+			<h1>Settings for this account</h1>
+			<fieldset class="idle-fieldset">
+				<legend>Lock after being idle for</legend>
+				<div id="idle-choices"></div>
+			</fieldset>
+			<p class="hint">Keepiq also locks when your computer locks.</p>
+			<button id="biometric-enrol" class="link" hidden>Set up fingerprint or face unlock</button>
+			<button id="settings-unpair" class="link">Disconnect this account</button>
+			<button id="settings-back" class="primary">Done</button>
+			<p id="settings-error" class="error" role="alert" hidden></p>
 		</section>
 	</main>
 	<script type="module" src="popup.js"></script>

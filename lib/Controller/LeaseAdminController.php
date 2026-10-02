@@ -131,6 +131,49 @@ class LeaseAdminController extends OCSController {
 	}//end revoke()
 
 	/**
+	 * Read an application's lease policy (admin or registrant only).
+	 *
+	 * Answers the effective policy, the stored override and the instance
+	 * values, plus whether the caller may change it: only an admin may
+	 * (setPolicy()), the registrant sees it read-only. Everyone else gets
+	 * the same 404 as a nonexistent application.
+	 *
+	 * @param string $id The application id
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
+	 */
+	#[NoAdminRequired]
+	public function getPolicy(string $id): JSONResponse {
+		$userId = $this->sessionUserId();
+		if ($userId === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		if ($this->mayManageApplication(applicationId: $id, userId: $userId) === false) {
+			return $this->notFound();
+		}
+
+		// An admin passes the guard without a lookup, so check existence here:
+		// a policy view for an application that does not exist is a 404 too.
+		try {
+			$this->applicationMapper->findById($id);
+		} catch (DoesNotExistException) {
+			return $this->notFound();
+		}
+
+		return new JSONResponse(
+			data: array_merge(
+				$this->leaseService->policyView(applicationId: $id),
+				['canEdit' => $this->groupManager->isAdmin($userId)]
+			)
+		);
+	}//end getPolicy()
+
+	/**
 	 * Store a per-application lease-policy override (admin only).
 	 *
 	 * @param string $id The application id

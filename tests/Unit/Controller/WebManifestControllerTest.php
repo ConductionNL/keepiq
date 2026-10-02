@@ -20,6 +20,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use OCA\Keepiq\Controller\WebManifestController;
+use OCP\Defaults;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 use PHPUnit\Framework\TestCase;
@@ -46,9 +47,13 @@ class WebManifestControllerTest extends TestCase {
 			static fn (string $path): string => 'https://cloud.example' . $path
 		);
 
+		$defaults = $this->createMock(originalClassName: Defaults::class);
+		$defaults->method('getColorPrimary')->willReturn('#00679e');
+
 		$controller = new WebManifestController(
 			request: $this->createMock(originalClassName: IRequest::class),
 			urlGenerator: $url,
+			defaults: $defaults,
 		);
 
 		$response = $controller->manifest();
@@ -59,8 +64,10 @@ class WebManifestControllerTest extends TestCase {
 		$manifest = json_decode($response->getData(), true);
 		$this->assertSame('Keepiq', $manifest['name']);
 		$this->assertSame('standalone', $manifest['display']);
-		$this->assertSame('#21468B', $manifest['theme_color']);
-		$this->assertSame('#21468B', $manifest['background_color']);
+		// The instance theme colour, not a fixed brand colour (#755).
+		$this->assertSame('#00679e', $manifest['theme_color']);
+		$this->assertSame('#00679e', $manifest['background_color']);
+		$this->assertStringNotContainsString('—', $manifest['description']);
 		$this->assertStringContainsString('/apps/keepiq/', $manifest['start_url']);
 		$this->assertSame('/apps/keepiq/', $manifest['scope']);
 
@@ -71,6 +78,16 @@ class WebManifestControllerTest extends TestCase {
 		$sizes = array_unique(array_column($manifest['icons'], 'sizes'));
 		$this->assertContains('192x192', $sizes);
 		$this->assertContains('512x512', $sizes);
+
+		// PNG icons at 192 and 512 for both purposes, and each file exists.
+		$png = array_values(array_filter($manifest['icons'], static fn (array $icon): bool => $icon['type'] === 'image/png'));
+		$this->assertCount(4, $png);
+		foreach ($png as $icon) {
+			$file = __DIR__ . '/../../../img/' . basename($icon['src']);
+			$this->assertFileExists($file);
+			$size = getimagesize($file);
+			$this->assertSame($icon['sizes'], $size[0] . 'x' . $size[1]);
+		}
 
 		// A vault shortcut.
 		$this->assertNotEmpty($manifest['shortcuts']);

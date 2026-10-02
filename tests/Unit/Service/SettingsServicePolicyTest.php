@@ -197,9 +197,15 @@ class SettingsServicePolicyTest extends TestCase {
 				'generator_require_lower',
 				'generator_require_digit',
 				'generator_require_symbol',
+				// Every member's browser reads whether it may offer passphrases.
+				'generator_allow_passphrase',
 				'min_zxcvbn_score',
 				'block_on_hibp_hit',
 				'policy_exempt_types',
+				// admin-auto-confirm-members requires GET /api/settings/policy to
+				// expose the switch: every member's browser reads it to decide
+				// whether to confirm new members. It is a switch, not a list.
+				'team_folder_auto_confirm',
 			],
 			array_keys($policy)
 		);

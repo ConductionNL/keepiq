@@ -20,7 +20,10 @@ $urlGenerator = \OCP\Server::get(\OCP\IURLGenerator::class);
 $manifestUrl  = $urlGenerator->linkToRoute($appId . '.webManifest.manifest');
 $touchIcon    = $urlGenerator->imagePath($appId, 'pwa-icon.svg');
 Util::addHeader('link', ['rel' => 'manifest', 'href' => $manifestUrl]);
-Util::addHeader('meta', ['name' => 'theme-color', 'content' => '#21468B']);
+// The instance theme colour, so an organisation theme (nldesign) reaches the
+// browser chrome instead of a fixed brand colour.
+$themeColor   = \OCP\Server::get(\OCP\Defaults::class)->getColorPrimary();
+Util::addHeader('meta', ['name' => 'theme-color', 'content' => $themeColor]);
 Util::addHeader('meta', ['name' => 'apple-mobile-web-app-capable', 'content' => 'yes']);
 Util::addHeader('meta', ['name' => 'apple-mobile-web-app-status-bar-style', 'content' => 'black-translucent']);
 Util::addHeader('meta', ['name' => 'apple-mobile-web-app-title', 'content' => 'Keepiq']);

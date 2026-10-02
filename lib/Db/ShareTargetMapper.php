@@ -157,6 +157,36 @@ class ShareTargetMapper extends QBMapper {
 	}//end deleteByTargetUser()
 
 	/**
+	 * Delete a recipient's ShareTargets whose copy is sealed under one suite.
+	 *
+	 * The suite-revocation sweep. Scoped to the revoked suite on purpose: a
+	 * compromise force-revoke during a migration revokes two suites of the same
+	 * user, one after the other. An unscoped sweep on the first revoke also
+	 * deleted the rows for the copies on the second suite, so the compromise
+	 * cascade could no longer find their sources' owners (keepiq#864).
+	 *
+	 * @param string $targetUserId The recipient Nextcloud user ID
+	 * @param string $suiteId      The revoked suite the copies are sealed under
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-encryptionsuite-compromise-shared-copy-migration-and-owner-notification
+	 */
+	public function deleteByTargetUserAndSuite(string $targetUserId, string $suiteId): void {
+		$qb = $this->db->getQueryBuilder();
+		$sub = $this->db->getQueryBuilder();
+		$sub->select('id')
+			->from('keepiq_secrets')
+			->where($sub->expr()->eq('encryption_suite_id', $qb->createNamedParameter($suiteId)));
+
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('target_user_id', $qb->createNamedParameter($targetUserId)))
+			->andWhere($qb->expr()->in('secret_id', $qb->createFunction($sub->getSQL())));
+
+		$qb->executeStatement();
+	}//end deleteByTargetUserAndSuite()
+
+	/**
 	 * Reverse-lookup a ShareTarget by the recipient Secret copy ID.
 	 *
 	 * Used by the SuiteCompromiseListener to walk from a flagged

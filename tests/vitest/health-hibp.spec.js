@@ -8,7 +8,8 @@
  * on a fetch error. The full hash and value never leave the browser.
  */
 
-import { describe, expect, it } from 'vitest'
+import axios from '@nextcloud/axios'
+import { describe, expect, it, vi } from 'vitest'
 import { checkValue, matchSuffix, sha1Hex } from '../../src/health/hibp.js'
 
 describe('hibp: sha1Hex', () => {
@@ -63,5 +64,25 @@ describe('hibp: checkValue', () => {
 		}
 		const result = await checkValue('password', fetchRange)
 		expect(result.status).toBe('unavailable')
+	})
+})
+
+describe('hibp: the default range fetcher (keepiq#866)', () => {
+	it('posts the prefix in the body, never in the URL', async () => {
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { suffixes: '' } })
+		const get = vi.spyOn(axios, 'get')
+
+		await checkValue('password')
+
+		expect(get).not.toHaveBeenCalled()
+		expect(post).toHaveBeenCalledTimes(1)
+		const [url, body] = post.mock.calls[0]
+		expect(url).toMatch(/\/apps\/keepiq\/api\/v1\/breach-check\/range$/)
+		expect(url).not.toContain('5BAA6')
+		expect(body).toEqual({ prefix: '5BAA6' })
+		post.mockRestore()
+		get.mockRestore()
 	})
 })

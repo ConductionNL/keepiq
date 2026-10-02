@@ -377,11 +377,12 @@ class TeamFolderService {
 	 * @param string $teamFolderId The TeamFolder UUID
 	 * @param string $userId The caller (must be the owner)
 	 *
-	 * @return array{secrets:array<int,array{id:string,name:string}>,recipients:array<int,array{userId:string,certificate:string}>,missing:array<int,array{secretId:string,userId:string}>}
+	 * @return array{secrets:array<int,array{id:string,name:string}>,recipients:array<int,array{userId:string,certificate:string}>,missing:array<int,array{secretId:string,userId:string}>,confirmedBy:object}
 	 *
 	 * @throws InvalidArgumentException On not found / not authorized
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
+	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.3
 	 */
 	public function reconcile(string $teamFolderId, string $userId): array {
 		$teamFolder = $this->queries->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
@@ -400,6 +401,8 @@ class TeamFolderService {
 			'secrets' => $secrets,
 			'recipients' => $recipients,
 			'missing' => $this->shares->missingPairs(secrets: $secrets, recipients: $recipients),
+			// Members a write-grade colleague confirmed (admin-auto-confirm-members §3.3).
+			'confirmedBy' => (object)$this->shares->confirmers(teamFolder: $teamFolder),
 		];
 	}//end reconcile()
 

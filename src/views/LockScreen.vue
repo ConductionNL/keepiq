@@ -151,6 +151,23 @@
 				  MigrationResumeBanner then asks for the old password and does
 				  the actual resuming.
 				-->
+				<!-- The two-factor vault policy (admin-vault-policies D3): the
+				     server withholds the wrapped key until a provider is on. -->
+				<NcNoteCard
+					v-if="twoFactorRequired"
+					type="warning"
+					data-testid="lock-two-factor-required">
+					{{
+						t(
+							'keepiq',
+							'Your organisation requires two-factor login before you can open your vault.',
+						)
+					}}
+					<a :href="securitySettingsUrl">{{
+						t('keepiq', 'Set up two-factor login')
+					}}</a>
+				</NcNoteCard>
+
 				<NcNoteCard v-if="hasPausedMigration" type="warning">
 					{{
 						t(
@@ -290,6 +307,7 @@
 </template>
 
 <script>
+import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcLoadingIcon, NcNoteCard, NcPasswordField } from '@nextcloud/vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
 import LockIcon from 'vue-material-design-icons/Lock.vue'
@@ -372,6 +390,8 @@ export default {
 			confirmPassword: '',
 			loading: false,
 			error: null,
+			/** Set when the server refused for the two-factor policy. */
+			twoFactorRefused: false,
 			strengthValid: false,
 			passkeyOffered: false,
 			/**
@@ -475,6 +495,31 @@ export default {
 		 */
 		suiteStore() {
 			return useEncryptionSuiteStore()
+		},
+
+		/**
+		 * Whether the two-factor vault policy keeps this vault shut: the
+		 * suite came without its wrapped key, or a setup was refused.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/admin-vault-policies/tasks.md#3.3
+		 */
+		twoFactorRequired() {
+			return (
+				this.twoFactorRefused
+				|| this.suiteStore.currentSuite?.unlockBlocked
+					=== 'two_factor_required'
+			)
+		},
+
+		/**
+		 * Nextcloud's own security settings, where a user enables a provider.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/admin-vault-policies/tasks.md#3.3
+		 */
+		securitySettingsUrl() {
+			return generateUrl('/settings/user/security')
 		},
 
 		/**
@@ -731,6 +776,13 @@ export default {
 						// fall through to the generic error below
 					}
 				}
+				if (e?.code === 'two_factor_required') {
+					// Not a wrong password: the policy withholds the key.
+					// Drop any offline snapshot so it cannot open either.
+					this.twoFactorRefused = true
+					await this.offlineStore.evict()
+					return
+				}
 				this.error = t(
 					'keepiq',
 					'Wrong master password or decryption failed',
@@ -852,6 +904,10 @@ export default {
 				await this.suiteStore.createSuite(this.masterPassword)
 				this.$router.push('/')
 			} catch (e) {
+				if (e?.response?.data?.code === 'two_factor_required') {
+					this.twoFactorRefused = true
+					return
+				}
 				this.error = e.message || t('keepiq', 'Setup failed')
 			} finally {
 				this.loading = false

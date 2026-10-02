@@ -12,8 +12,9 @@
  * rather than invalidated wherever the grantee is still reachable: the browser
  * mints a fresh envelope escrowing the new private key and re-points the
  * contact through reEnvelopeForRotation(). invalidateForGrantorRotation() then
- * runs at completion as a residual SWEEP, catching only the contacts the loop
- * could not carry (grantee has no active suite). Revocation of the grantor's
+ * runs at completion as a residual SWEEP, catching every contact the loop did
+ * not carry: grantee unreachable, not ticked or declined by the owner, or
+ * break-glass in flight (keepiq#800). Revocation of the grantor's
  * suite still DELETES the envelopes outright, because it produces no new key to
  * migrate to.
  *

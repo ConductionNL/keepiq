@@ -176,6 +176,31 @@ class TeamFolderShareService {
 	}//end missingPairs()
 
 	/**
+	 * Who handed each member their copies, when that was not the owner:
+	 * the automatic confirmations of admin-auto-confirm-members, for the
+	 * team folder dialog. User ids only, from the derived share rows.
+	 *
+	 * @param TeamFolder $teamFolder The team folder
+	 *
+	 * @return array<string,string> Confirmer user id keyed by member user id
+	 *
+	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.3
+	 */
+	public function confirmers(TeamFolder $teamFolder): array {
+		$confirmers = [];
+		foreach ($this->bulkGrantMapper->findByTeamFolder(teamFolderId: $teamFolder->getId()) as $row) {
+			$createdBy = $row->getCreatedBy();
+			if ($createdBy === '' || $createdBy === $teamFolder->getOwnerId()) {
+				continue;
+			}
+
+			$confirmers[$row->getTargetUserId()] = $createdBy;
+		}
+
+		return $confirmers;
+	}//end confirmers()
+
+	/**
 	 * Revoke every derived ShareTarget of a team folder (and the
 	 * recipient Secret copies they point at).
 	 *
