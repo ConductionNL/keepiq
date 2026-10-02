@@ -26,6 +26,14 @@ The flow already holds the current master password in order to derive the old AE
 - **THEN** the system MUST refuse with `403` and `error: key_proof_required`
 - **AND** the stored envelope MUST be unchanged
 
+#### Scenario: Envelope replacement on a suite in an open migration or not active is refused
+@e2e exclude Server-side status and migration checks; covered by PHPUnit on EncryptionSuiteController::updatePrivateKey.
+- **GIVEN** a suite that is either end of a migration still `in_progress`, or a suite whose status is not `active`
+- **WHEN** a replacement private-key envelope is submitted, even with a valid key proof
+- **THEN** the system MUST refuse with `409` (`migration_in_progress` or `suite_not_active`)
+- **AND** the stored envelope MUST be unchanged
+- **NOTE** during compromise recovery the old password may be the leaked one, so a proof over the old key is not enough to re-wrap it; on a revoked suite a re-wrap followed by a reinstate would hand the suite back under a password the owner does not know (keepiq#869)
+
 ### Requirement: Master Password Change — Compromise Recovery
 When a user indicates their master password has been compromised, the system MUST initiate a full key rotation: a new RSA key pair is generated, all secrets are re-encrypted, and the old EncryptionSuite is flagged as compromised.
 

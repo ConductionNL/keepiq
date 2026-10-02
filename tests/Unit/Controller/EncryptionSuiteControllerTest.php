@@ -578,6 +578,57 @@ class EncryptionSuiteControllerTest extends TestCase {
 	}//end testUpdatePrivateKeyRefusesAnApplicationSuite()
 
 	/**
+	 * updatePrivateKey refuses a suite that is either end of an open migration
+	 * (keepiq#869).
+	 *
+	 * Whoever holds a leaked old password can sign the proof with the old key, so
+	 * without this a re-wrap of the old suite's envelope under a password only
+	 * they know strands every record the owner has not migrated yet.
+	 *
+	 * @return void
+	 */
+	public function testUpdatePrivateKeyRefusesASuiteMidMigration(): void {
+		$owned = new EncryptionSuite();
+		$owned->setId('suite-1');
+		$owned->setOwnerType('user');
+		$owned->setOwnerId('testuser');
+		$owned->setStatus('active');
+		$this->suiteService->method('getSuite')->with('suite-1')->willReturn($owned);
+		$this->migrationService->expects($this->once())
+			->method('assertNoMigrationInProgress')
+			->with('suite-1')
+			->willThrowException(new SuiteMigrationInProgressException('mid-migration'));
+		$this->suiteService->expects($this->never())->method('updateSuite');
+
+		$response = $this->controller->updatePrivateKey('suite-1', 'attacker-envelope');
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+		$this->assertSame(expected: 'migration_in_progress', actual: $response->getData()['error']);
+	}//end testUpdatePrivateKeyRefusesASuiteMidMigration()
+
+	/**
+	 * updatePrivateKey refuses a suite that is not active (keepiq#869): a
+	 * re-wrap of a revoked suite, followed by an admin reinstate, would hand the
+	 * suite back under a password the owner does not know.
+	 *
+	 * @return void
+	 */
+	public function testUpdatePrivateKeyRefusesARevokedSuite(): void {
+		$revoked = new EncryptionSuite();
+		$revoked->setId('suite-1');
+		$revoked->setOwnerType('user');
+		$revoked->setOwnerId('testuser');
+		$revoked->setStatus('revoked');
+		$this->suiteService->method('getSuite')->with('suite-1')->willReturn($revoked);
+		$this->suiteService->expects($this->never())->method('updateSuite');
+
+		$response = $this->controller->updatePrivateKey('suite-1', 'attacker-envelope');
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+		$this->assertSame(expected: 'suite_not_active', actual: $response->getData()['error']);
+	}//end testUpdatePrivateKeyRefusesARevokedSuite()
+
+	/**
 	 * Test reinstate returns reinstated suite.
 	 *
 	 * @return void

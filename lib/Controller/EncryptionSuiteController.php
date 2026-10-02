@@ -251,6 +251,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/encryption-suites/spec.md#requirement-master-password-change-routine
 	 */
 	#[NoAdminRequired]
 	#[VaultKeyProofRequired(
@@ -263,6 +264,26 @@ class EncryptionSuiteController extends OCSController {
 			$suite = $this->suiteService->getSuite($id);
 			$this->validateOwnership(suite: $suite);
 
+			// Only an active suite, and never one that is either end of an open
+			// migration (keepiq#869). During compromise recovery whoever holds the
+			// leaked old password can sign this proof with the old key; a re-wrap
+			// of the old envelope under a password only they know would strand
+			// every record the owner has not migrated yet. On a revoked suite a
+			// re-wrap followed by a reinstate hands the suite back under that
+			// password. The routine password change runs on the active suite
+			// outside any migration, so it is untouched by both checks.
+			if ($suite->getStatus() !== 'active') {
+				return new JSONResponse(
+					data: [
+						'error' => 'suite_not_active',
+						'message' => 'Only an active suite can have its private key re-wrapped.',
+					],
+					statusCode: Http::STATUS_CONFLICT
+				);
+			}
+
+			$this->migrationService->assertNoMigrationInProgress(suiteId: $id);
+
 			$suite->setPrivateKey($encryptedPrivateKey);
 			// A routine master-password change re-wraps the private key under a
 			// new AES key, so every stored passkey unlock envelope now wraps a
@@ -273,12 +294,17 @@ class EncryptionSuiteController extends OCSController {
 			$this->passkeyService?->markStaleOnPasswordChange($suite->getOwnerId());
 
 			return new JSONResponse(data: $suite->jsonSerialize());
+		} catch (SuiteMigrationInProgressException $e) {
+			return new JSONResponse(
+				data: ['error' => 'migration_in_progress', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (Exception $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
 				statusCode: Http::STATUS_FORBIDDEN
 			);
-		}
+		}//end try
 	}//end updatePrivateKey()
 
 	/**
