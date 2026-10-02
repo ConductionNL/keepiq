@@ -84,7 +84,7 @@ class ApplicationService {
 	 */
 	public function __construct(
 		private ApplicationMapper $mapper,
-		private IGroupManager $groupManager,
+		IGroupManager $groupManager,
 		private LoggerInterface $logger,
 		private ?\OCA\Keepiq\Db\MachineLeaseMapper $leaseMapper = null,
 		private ?\OCA\Keepiq\Db\ApplicationLeasePolicyMapper $leasePolicyMapper = null,
@@ -348,17 +348,6 @@ class ApplicationService {
 	public function countPending(): int {
 		return $this->mapper->countPending();
 	}//end countPending()
-
-	/**
-	 * Convenience helper: check whether a user is in the admin group.
-	 *
-	 * @param string $userId The Nextcloud user ID
-	 *
-	 * @return bool
-	 */
-	public function isAdmin(string $userId): bool {
-		return $this->groupManager->isAdmin($userId);
-	}//end isAdmin()
 
 	/**
 	 * Look up a row by ID, converting DoesNotExistException to a

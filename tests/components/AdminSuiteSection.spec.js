@@ -4,7 +4,8 @@
  *
  * The admin force-revoke result card: no Reinstate after a compromise revoke
  * (keepiq#865), the second suite a compromise revoke also revoked
- * (keepiq#877), and a compromise response that did not complete (keepiq#863).
+ * (keepiq#877), a compromise response that did not complete (keepiq#863), and
+ * the typed suite-id confirmation (keepiq#871).
  *
  * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
  */
@@ -32,6 +33,7 @@ async function revokeWith(markCompromised, outcome) {
 	const wrapper = mount(AdminSuiteSection)
 	await wrapper.setData({
 		suiteId: 'suite-1',
+		confirmSuiteId: 'suite-1',
 		reason: 'taken over',
 		markCompromised,
 	})
@@ -50,6 +52,28 @@ const revokedSuite = {
 describe('AdminSuiteSection', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
+	})
+
+	it('keeps Force-revoke disabled until the typed suite id matches (keepiq#871)', async () => {
+		const wrapper = mount(AdminSuiteSection)
+		const button = () => wrapper.find('[data-testid="admin-suite-force-revoke"]')
+
+		await wrapper.setData({ suiteId: 'suite-1', reason: 'taken over' })
+		expect(button().attributes('disabled')).toBeDefined()
+
+		await wrapper.setData({ confirmSuiteId: 'suite-2' })
+		expect(button().attributes('disabled')).toBeDefined()
+
+		await wrapper.setData({ confirmSuiteId: 'suite-1' })
+		expect(button().attributes('disabled')).toBeUndefined()
+	})
+
+	it('sends the typed suite id with the force-revoke (keepiq#871)', async () => {
+		await revokeWith(false, { suite: revokedSuite })
+
+		expect(useEncryptionSuiteStore().forceRevokeSuite).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'suite-1', confirmSuiteId: 'suite-1' }),
+		)
 	})
 
 	it('offers Reinstate after an ordinary force-revoke', async () => {
