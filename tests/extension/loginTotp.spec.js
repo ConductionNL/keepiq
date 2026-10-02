@@ -19,10 +19,12 @@ const AT = 59000
 
 /** The "ciphertext" is the plaintext with a prefix; decrypt strips it. */
 const decryptField = async (c) => (c ? c.replace(/^enc:/, '') : '')
-const rowWith = (fields) => ({
-	id: 'x',
-	additionalFields: 'enc:' + JSON.stringify(fields),
-})
+function rowWith(fields) {
+	return {
+		id: 'x',
+		additionalFields: 'enc:' + JSON.stringify(fields),
+	}
+}
 const compute = (seed) => computeTotp(seed, AT)
 
 describe('seedFromBlob', () => {
