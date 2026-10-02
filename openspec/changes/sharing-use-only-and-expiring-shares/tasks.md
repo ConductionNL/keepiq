@@ -2,7 +2,7 @@
 
 ## 1. Data and resolver
 
-- [x] 1.1 Add the migration step for the new columns on share targets, group shares, team-folder members and secrets, and bump `<version>`. Verify: a PHPUnit migration test asserts the columns and the `access_expires_at` index. Done: `Version001004Date20261002120000`, `tests/Unit/Migration/UseOnlyExpiringSharesMigrationTest.php`; `<version>` 0.3.4-unstable.20261002120000.
+- [x] 1.1 Add the migration step for the new columns on share targets, group shares, team-folder members and secrets, and bump `<version>`. Verify: a PHPUnit migration test asserts the columns and the `access_expires_at` index. Done: `Version001004Date20261002150000`, `tests/Unit/Migration/UseOnlyExpiringSharesMigrationTest.php`; `<version>` 0.3.4-unstable.20261002150000.
 - [x] 1.2 Add `ShareRestrictionResolver` that materialises `use_only` (all grants use-only) and `access_expires_at` (latest end, none wins) onto each copy, and call it from every share, group share and membership write. Verify: PHPUnit for single grants, mixed grants and removal of the last restricted grant. Done: `lib/Service/ShareRestrictionResolver.php`, `ShareRestriction::combine`; `tests/Unit/Service/ShareRestrictionResolverTest.php`, `ShareRestrictionTest.php`.
 
 ## 2. Setting the flags
