@@ -1,27 +1,44 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-	<meta charset="utf-8">
-	<title>Keepiq unlock</title>
-	<link rel="stylesheet" href="popup.css">
-</head>
-<body>
-	<main class="keepiq-popup">
-		<section id="view-unlock" hidden>
-			<h1>Unlock with fingerprint or face</h1>
-			<p class="hint">Follow your device's prompt. Your master password still works if this fails.</p>
-			<p id="unlock-status" class="hint" role="status"></p>
-		</section>
-		<section id="view-enrol" hidden>
-			<h1>Set up fingerprint or face unlock</h1>
-			<label>Master password<input id="enrol-master" type="password" autocomplete="off"></label>
-			<label>Name for this device<input id="enrol-label" type="text" autocomplete="off" placeholder="Laptop fingerprint"></label>
-			<p class="hint">Your master password is used only on this device to protect the unlock key. It never reaches the server.</p>
-			<button id="enrol-submit" class="primary">Set up</button>
-		</section>
-		<p id="unlock-error" class="error" role="alert" hidden></p>
-		<button id="unlock-close" class="link">Close</button>
-	</main>
-	<script type="module" src="unlock.js"></script>
-</body>
+	<head>
+		<meta charset="utf-8" />
+		<title>Keepiq unlock</title>
+		<link rel="stylesheet" href="popup.css" />
+	</head>
+	<body>
+		<main class="keepiq-popup">
+			<section id="view-unlock" hidden>
+				<h1>Unlock with fingerprint or face</h1>
+				<p class="hint">
+					Follow your device's prompt. Your master password still works if
+					this fails.
+				</p>
+				<p id="unlock-status" class="hint" role="status"></p>
+			</section>
+			<section id="view-enrol" hidden>
+				<h1>Set up fingerprint or face unlock</h1>
+				<label
+					>Master password<input
+						id="enrol-master"
+						type="password"
+						autocomplete="off"
+				/></label>
+				<label
+					>Name for this device<input
+						id="enrol-label"
+						type="text"
+						autocomplete="off"
+						placeholder="Laptop fingerprint"
+				/></label>
+				<p class="hint">
+					Your master password is used only on this device to protect the
+					unlock key. It never reaches the server.
+				</p>
+				<button id="enrol-submit" class="primary">Set up</button>
+			</section>
+			<p id="unlock-error" class="error" role="alert" hidden></p>
+			<button id="unlock-close" class="link">Close</button>
+		</main>
+		<script type="module" src="unlock.js"></script>
+	</body>
 </html>

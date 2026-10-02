@@ -10,7 +10,14 @@
  */
 
 import { generateKey } from '../../../src/generator/generator.js'
-import { sealPayload, sendLink } from '../../../src/send/sendCrypto.js'
+import { deriveAesKeyArgon2id } from '../../../src/crypto/argon2.js'
+import {
+	aesEncrypt,
+	sealPayload,
+	sendLink,
+	toBase64,
+} from '../../../src/send/sendCrypto.js'
+import { installArgon2Wasm } from '../lib/argon2-wasm.js'
 import { credentialPayload, expirySeconds, maxViewsFrom } from '../lib/send-form.js'
 import { buildIndex } from '../lib/vault-index.js'
 
@@ -192,6 +199,7 @@ export function buildVaultHandlers({
 		 * Encrypt and create a send; the link carries the key in its fragment.
 		 *
 		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-create-a-send-from-the-popup
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-send/spec.md#requirement-password-protected-sends
 		 */
 		'send-create': async (payload) => {
 			const account = await unlockedAccount()
@@ -212,17 +220,34 @@ export function buildVaultHandlers({
 				throw new Error('There is nothing to send')
 			}
 			const { encryptedPayload, rawKey } = await sealPayload(plaintext)
-			const send = await api.createSend(account, {
+			const body = {
 				encryptedPayload,
 				payloadType,
 				maxViews: views.maxViews,
 				ttlSeconds: expiry.ttlSeconds,
 				hasPassword: false,
-			})
+			}
+			// With a password the content key is wrapped under an Argon2id key
+			// from it, as the web app does; the link then carries no key.
+			const sendPassword = String(payload.sendPassword || '')
+			if (sendPassword !== '') {
+				installArgon2Wasm()
+				const salt = crypto.getRandomValues(new Uint8Array(16))
+				const kek = await deriveAesKeyArgon2id(sendPassword, salt)
+				body.hasPassword = true
+				body.wrappedKey = await aesEncrypt(kek, rawKey)
+				body.argon2idSalt = toBase64(salt)
+			}
+			const send = await api.createSend(account, body)
 			await touchActivity(account.id)
 			return {
 				id: send?.id || null,
-				link: sendLink(api.publicBase(account), send.token, rawKey),
+				link: sendLink(
+					api.publicBase(account),
+					send.token,
+					body.hasPassword ? null : rawKey,
+				),
+				hasPassword: body.hasPassword,
 			}
 		},
 
