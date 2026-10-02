@@ -635,7 +635,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return int The number of rows deleted
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function deleteByOwnerUser(string $ownerId): int {
 		$qb = $this->db->getQueryBuilder();
@@ -645,6 +645,25 @@ class SecretMapper extends QBMapper {
 
 		return $qb->executeStatement();
 	}//end deleteByOwnerUser()
+
+	/**
+	 * Delete every secret attributed to an application
+	 * (application-mgmt "Delete Application" cascade). Idempotent.
+	 *
+	 * @param string $applicationId The application ID
+	 *
+	 * @return int The number of rows deleted
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-delete-application
+	 */
+	public function deleteByOwnerApplication(string $applicationId): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter('application')))
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($applicationId)));
+
+		return $qb->executeStatement();
+	}//end deleteByOwnerApplication()
 
 	/**
 	 * Mark a recipient copy as a tombstoned, detached share-copy.
@@ -658,7 +677,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function tombstone(string $secretId, string $reason): void {
 		$qb = $this->db->getQueryBuilder();
@@ -678,7 +697,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function reassignOwner(string $secretId, string $newOwnerId): void {
 		$qb = $this->db->getQueryBuilder();

@@ -500,6 +500,41 @@ class ShareServiceTest extends TestCase {
 	}//end testRevokeShareDeletesWhenAuthorized()
 
 	/**
+	 * Keepiq#83: ending every share of a secret (trash or delete) removes
+	 * each recipient's copy too, not only the link rows. A copy already gone
+	 * does not stop the others.
+	 *
+	 * @return void
+	 */
+	public function testDeleteAllForSecretRemovesEveryRecipientCopy(): void {
+		$bob = new ShareTarget();
+		$bob->setSourceSecretId('src-1');
+		$bob->setSecretId('copy-bob');
+		$carol = new ShareTarget();
+		$carol->setSourceSecretId('src-1');
+		$carol->setSecretId('copy-carol');
+		$this->mapper->method('findBySourceSecret')->with('src-1')->willReturn([$bob, $carol]);
+
+		$copyBob = new Secret();
+		$copyBob->setId('copy-bob');
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static function (string $id) use ($copyBob): Secret {
+				if ($id === 'copy-bob') {
+					return $copyBob;
+				}
+
+				throw new DoesNotExistException('gone');
+			}
+		);
+
+		$this->secretMapper->expects($this->once())->method('delete')->with($copyBob);
+		$this->mapper->expects($this->once())->method('deleteBySourceSecret')->with('src-1');
+		$this->db->expects($this->once())->method('commit');
+
+		$this->service->deleteAllForSecret('src-1');
+	}//end testDeleteAllForSecretRemovesEveryRecipientCopy()
+
+	/**
 	 * Test revokeShare rejects unauthorized callers.
 	 *
 	 * @return void

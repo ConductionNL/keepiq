@@ -97,14 +97,23 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
+		 */
 		bulk() {
 			return useBulkStore()
 		},
 
+		/**
+		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
+		 */
 		teamFolderStore() {
 			return useTeamFolderStore()
 		},
 
+		/**
+		 * @spec exclude Store-state passthrough: exposes the fan-out progress object for display.
+		 */
 		fanOut() {
 			return this.teamFolderStore.fanOut
 		},
@@ -145,6 +154,9 @@ export default {
 			})
 		},
 
+		/**
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 */
 		teamFolderOptions() {
 			const folderNames = Object.fromEntries(
 				useFolderStore().folders.map((f) => [f.id, f.name]),
@@ -157,6 +169,9 @@ export default {
 		},
 	},
 
+	/**
+	 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+	 */
 	async mounted() {
 		try {
 			await this.teamFolderStore.fetchTeamFolders()
@@ -171,6 +186,8 @@ export default {
 		 *
 		 * @param {string} secretId The secret id.
 		 * @return {Promise<object>}
+		 *
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
 		 */
 		async moveOne(secretId) {
 			await useSecretStore().updateSecret(secretId, {

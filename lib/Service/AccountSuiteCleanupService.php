@@ -25,11 +25,14 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use OCA\Keepiq\Db\EmergencyContactMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\PasskeyMapper;
 use OCA\Keepiq\Db\SuiteMigrationMapper;
 
 /**
- * Removes a user's encryption suites and their migration records.
+ * Removes a user's encryption suites, their migration records, and the
+ * key material escrowed outside them (emergency envelopes, passkeys).
  */
 class AccountSuiteCleanupService {
 	/**
@@ -37,6 +40,8 @@ class AccountSuiteCleanupService {
 	 *
 	 * @param EncryptionSuiteMapper $suiteMapper The encryption-suite mapper
 	 * @param SuiteMigrationMapper $migrationMapper The suite-migration mapper
+	 * @param EmergencyContactMapper $emergencyMapper The emergency-contact mapper
+	 * @param PasskeyMapper $passkeyMapper The passkey-credential mapper
 	 *
 	 * @return void
 	 *
@@ -45,6 +50,8 @@ class AccountSuiteCleanupService {
 	public function __construct(
 		private EncryptionSuiteMapper $suiteMapper,
 		private SuiteMigrationMapper $migrationMapper,
+		private EmergencyContactMapper $emergencyMapper,
+		private PasskeyMapper $passkeyMapper,
 	) {
 	}//end __construct()
 
@@ -56,7 +63,7 @@ class AccountSuiteCleanupService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function removeSuites(string $userId, DeletionReport $report): void {
 		$suites = $this->suiteMapper->findByOwner(ownerType: 'user', ownerId: $userId);
@@ -68,4 +75,25 @@ class AccountSuiteCleanupService {
 		$this->migrationMapper->deleteBySuiteIds(suiteIds: $suiteIds);
 		$report->suitesDeleted = $this->suiteMapper->deleteByOwnerUser(ownerId: $userId);
 	}//end removeSuites()
+
+	/**
+	 * Remove the key material held OUTSIDE the suite rows: every emergency
+	 * relationship the user is part of (a grantor row escrows the user's
+	 * private key to the grantee) and the user's passkey unlock envelopes.
+	 *
+	 * The suites are hard-deleted through the mapper, so the revoke listener
+	 * that clears envelopes never runs; this step does that work directly.
+	 *
+	 * @param string $userId The departing user
+	 * @param DeletionReport $report The running report
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/gdpr-compliance/spec.md
+	 */
+	public function removeEscrowedKeys(string $userId, DeletionReport $report): void {
+		$report->emergencyDeleted = $this->emergencyMapper->deleteByUser(userId: $userId);
+		$report->passkeysDeleted = count($this->passkeyMapper->findByOwner(ownerId: $userId));
+		$this->passkeyMapper->deleteByOwner(ownerId: $userId);
+	}//end removeEscrowedKeys()
 }//end class

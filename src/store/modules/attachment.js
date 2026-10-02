@@ -106,6 +106,8 @@ export const useAttachmentStore = defineStore('attachment', {
 		 *
 		 * @param {string} wrappedFileKey The RSA-wrapped base64 raw key.
 		 * @return {Promise<CryptoKey>} The AES-GCM file key.
+		 *
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-single-blob-envelope-with-per-recipient-key-wrapping
 		 */
 		async unwrapFileKey(wrappedFileKey) {
 			const session = useSessionStore()

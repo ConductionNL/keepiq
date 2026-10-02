@@ -95,6 +95,14 @@ The dashboard MUST be able to display a widget showing the user's most recently 
 - WHEN they view the dashboard
 - THEN the system SHOULD display up to 5 recently accessed secrets with name and type icon
 
+### Requirement: Dashboard Requires An Unlocked Vault [MVP]
+The dashboard MUST only render after the user has unlocked the vault in this browser. The lock screen is the route in front of it.
+
+#### Scenario: Dashboard route gated by lock
+- GIVEN the vault is locked in this browser
+- WHEN the user opens the dashboard route
+- THEN the app MUST send them to the lock screen, keeping the requested route as the return address
+
 ## User Stories
 
 - As a user, I want to see my vault summary at a glance so that I know how many secrets I manage

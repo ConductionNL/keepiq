@@ -268,6 +268,8 @@ export const useShareStore = defineStore('share', {
 		 * @param {object}              snapshot          Plaintext field map.
 		 * @param {string}              publicCertificate The recipient's PEM certificate.
 		 * @return {Promise<Record<string,string>>}
+		 *
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		async encryptForRecipient(snapshot, publicCertificate) {
 			if (publicCertificate == null || publicCertificate === '') {
@@ -456,6 +458,8 @@ export const useShareStore = defineStore('share', {
 		 * @param {Array<{targetUserId: string, recipientSecretId: string}>} recipients Recipient copies.
 		 * @param {string} groupShareId      The group-share linkage ID.
 		 * @return {Promise<Array<object>>}
+		 *
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-with-group-static-expansion
 		 */
 		async createBatchShares(secretId, recipients, groupShareId) {
 			const created = []
@@ -570,6 +574,8 @@ export const useShareStore = defineStore('share', {
 		 * Reset the store (used on secret detail unmount).
 		 *
 		 * @return {void}
+		 *
+		 * @spec exclude Store lifecycle: clears the share list and error on detail unmount.
 		 */
 		reset() {
 			this.shares = []

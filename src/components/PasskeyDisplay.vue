@@ -120,18 +120,30 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec openspec/specs/passkey-item-type/spec.md#requirement-listing-filtering-and-site-associated-presentation
+		 */
 		credential() {
 			return parsePasskey(this.credentialJson)
 		},
 
+		/**
+		 * @spec openspec/specs/passkey-item-type/spec.md#requirement-listing-filtering-and-site-associated-presentation
+		 */
 		truncatedId() {
 			return truncateCredentialId(this.credential?.credentialId)
 		},
 
+		/**
+		 * @spec openspec/specs/passkey-item-type/spec.md#scenario-passkey-view-masks-the-private-key
+		 */
 		maskedKey() {
 			return '••••••••••••'
 		},
 
+		/**
+		 * @spec exclude Presentation-only formatter: renders the credential creation date in the locale.
+		 */
 		createdDisplay() {
 			const parsed = Date.parse(this.credential?.createdAt ?? '')
 			return Number.isNaN(parsed)

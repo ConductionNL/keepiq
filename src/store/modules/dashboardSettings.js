@@ -80,6 +80,8 @@ export const useDashboardSettingsStore = defineStore('dashboardSettings', {
 		 * @param {string} key The preference key.
 		 * @param {string|null} [fallback] The fallback.
 		 * @return {string|null}
+		 *
+		 * @spec exclude Trivial getter: reads one cached preference value with a fallback.
 		 */
 		get(key, fallback = null) {
 			return this.settings[key] ?? fallback
@@ -94,6 +96,8 @@ export const useDashboardSettingsStore = defineStore('dashboardSettings', {
 		 * @param {string} key The preference key.
 		 * @param {string} value The preference value.
 		 * @return {Promise<string|null>}
+		 *
+		 * @spec openspec/specs/user-settings/spec.md#requirement-default-view-preference-v1
 		 */
 		async set(key, value) {
 			if (ALLOWED_DASHBOARD_KEYS.includes(key) === false) {

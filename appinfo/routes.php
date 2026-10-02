@@ -12,14 +12,23 @@ declare(strict_types=1);
  * /api/metrics URLs are unchanged; their controllers are aliased to the
  * AppHost generic controllers by Bootstrap::register() in Application.php.
  *
- * Every Keepiq domain route is appended via $extra below — it is inserted
+ * Every Keepiq domain route is appended via $extra below. It is inserted
  * before the SPA catch-all so it keeps priority over the /{path} fallback.
- * This file references no OCA\OpenRegister symbol other than the pure array
- * builder Routes::standard(), so it is safe to require even when OpenRegister
- * is disabled.
+ *
+ * The AppHost builder is called behind a class_exists() guard. Nextcloud's
+ * router requires this file for every enabled app on every route-cache miss,
+ * so an unguarded call to a class from another app throws when OpenRegister
+ * is not installed, or installed but disabled (the autoloader prelude skips a
+ * disabled OpenRegister since #712). That throw is not confined to Keepiq: it
+ * answers HTTP 500 on every page of the instance, the login page and the apps
+ * page included (#857, #867). Without OpenRegister the fallback below routes
+ * the dashboard and settings controllers Keepiq ships itself, the domain
+ * routes and the SPA catch-all. The AppHost-only routes (preferences, health,
+ * metrics) are left out, because their controllers only exist as aliases to
+ * OpenRegister classes: a 404 there is honest, a 500 is not.
  */
 
-return \OCA\OpenRegister\AppHost\Routes::standard([
+$extra = [
     // Dashboard summary (domain aggregator — DashboardController::summary()).
     ['name' => 'dashboard#summary', 'url' => '/api/dashboard/summary', 'verb' => 'GET'],
 
@@ -35,6 +44,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'encryptionSuite#index',             'url' => '/api/v1/suites',                          'verb' => 'GET'],
     ['name' => 'encryptionSuite#show',              'url' => '/api/v1/suites/{id}',                     'verb' => 'GET'],
     ['name' => 'encryptionSuite#create',            'url' => '/api/v1/suites',                          'verb' => 'POST'],
+    ['name' => 'encryptionSuite#reenrol',           'url' => '/api/v1/suites/reenrol',                  'verb' => 'POST'],
     ['name' => 'encryptionSuite#updatePrivateKey',  'url' => '/api/v1/suites/{id}/private-key',         'verb' => 'PUT'],
     ['name' => 'encryptionSuite#revoke',            'url' => '/api/v1/suites/{id}/revoke',              'verb' => 'POST'],
     ['name' => 'encryptionSuite#forceRevoke',       'url' => '/api/v1/suites/{id}/force-revoke',        'verb' => 'POST'],
@@ -336,6 +346,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'machineLease#revoke', 'url' => '/api/v1/app/leases/{id}/revoke',  'verb' => 'POST'],
     // Session-authenticated admin/owner lease management.
     ['name' => 'leaseAdmin#index',     'url' => '/api/v1/applications/{id}/leases',       'verb' => 'GET'],
+    ['name' => 'leaseAdmin#getPolicy', 'url' => '/api/v1/applications/{id}/lease-policy', 'verb' => 'GET'],
     ['name' => 'leaseAdmin#setPolicy', 'url' => '/api/v1/applications/{id}/lease-policy', 'verb' => 'PUT'],
     ['name' => 'leaseAdmin#revoke',    'url' => '/api/v1/leases/{leaseId}',               'verb' => 'DELETE'],
 
@@ -376,6 +387,8 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'teamFolder#index',                'url' => '/api/v1/team-folders',                         'verb' => 'GET'],
     ['name' => 'teamFolder#create',               'url' => '/api/v1/team-folders',                         'verb' => 'POST'],
     ['name' => 'teamFolder#offboard',             'url' => '/api/v1/team-folders/offboard',                'verb' => 'POST'],
+    // admin-auto-confirm-members D4: before any /{id} route.
+    ['name' => 'teamFolder#pendingConfirmations', 'url' => '/api/v1/team-folders/pending-confirmations', 'verb' => 'GET'],
     ['name' => 'teamFolderMember#members',        'url' => '/api/v1/team-folders/{id}/members',            'verb' => 'GET'],
     ['name' => 'teamFolderMember#addMember',      'url' => '/api/v1/team-folders/{id}/members',            'verb' => 'POST'],
     ['name' => 'teamFolderMember#removeMember',   'url' => '/api/v1/team-folders/{id}/members/{memberId}', 'verb' => 'DELETE'],
@@ -395,7 +408,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
 
     // Password-health breach-check proxy (password-health §1.5). Prefix-only
     // k-anonymity forward to HIBP; double-gated (admin setting + user opt-in).
-    ['name' => 'breachProxy#range', 'url' => '/api/v1/breach-check/range/{prefix}', 'verb' => 'GET'],
+    // POST with the prefix in the body, never in the URI: Nextcloud stamps the
+    // request URI next to the user id on every log line (keepiq#866).
+    ['name' => 'breachProxy#range', 'url' => '/api/v1/breach-check/range', 'verb' => 'POST'],
 
     // GDPR data-subject endpoints (secret-export-gdpr D3/D4). All self-scoped
     // to the session user — no user selector. Master-password re-auth on the
@@ -422,4 +437,36 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'extension#match', 'url' => '/api/v1/extension/match', 'verb' => 'GET'],
     // A fill from the extension counts as a use (vault-favourites-tags-and-last-used); 404 for a row the caller does not hold.
     ['name' => 'secretOrganisation#used', 'url' => '/api/v1/extension/used/{id}', 'verb' => 'POST'],
-]);
+];
+
+// Preferred path: OpenRegister's AppHost owns the canonical route table.
+// class_exists() autoloads, and answers false rather than throwing when the
+// class cannot be loaded.
+if (class_exists('OCA\OpenRegister\AppHost\Routes') === true) {
+    return \OCA\OpenRegister\AppHost\Routes::standard($extra);
+}
+
+// Fallback: OpenRegister is missing or disabled. Keep the routes whose
+// controllers Keepiq ships itself, so the instance stays up and Keepiq
+// degrades per endpoint instead of taking every app down with it.
+return [
+    'routes' => array_merge(
+        [
+            ['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
+            ['name' => 'settings#index', 'url' => '/api/settings', 'verb' => 'GET'],
+            ['name' => 'settings#create', 'url' => '/api/settings', 'verb' => 'POST'],
+            ['name' => 'settings#update', 'url' => '/api/settings', 'verb' => 'PUT'],
+            ['name' => 'settings#load', 'url' => '/api/settings/load', 'verb' => 'POST'],
+        ],
+        $extra,
+        [
+            [
+                'name'         => 'dashboard#catchAll',
+                'url'          => '/{path}',
+                'verb'         => 'GET',
+                'requirements' => ['path' => '(?!api/).+'],
+                'defaults'     => ['path' => ''],
+            ],
+        ]
+    ),
+];
