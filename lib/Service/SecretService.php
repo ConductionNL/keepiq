@@ -1421,7 +1421,7 @@ class SecretService {
 
 		$stored = $secret->getUpdatedAt();
 		if ($stored === null || $stored->getTimestamp() !== $base->getTimestamp()) {
-			throw new StaleWriteException($secret);
+			throw new StaleWriteException(current: $secret);
 		}
 	}//end assertUnchangedSince()
 
