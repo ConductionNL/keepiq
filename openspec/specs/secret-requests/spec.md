@@ -113,6 +113,14 @@ The consequence MUST be stated rather than implied: the system CANNOT verify tha
 - **THEN** the system MUST accept the blob as satisfying both
 - **AND** MUST NOT claim to have verified their presence, which would require decrypting it
 
+#### Scenario: A fill keeps the owner's other additional fields
+- **GIVEN** a user-owned secret whose `additional_fields` blob already holds members A and B
+- **AND** a request asking only for the additional member C
+- **WHEN** the request is filled
+- **THEN** the system MUST NOT overwrite the stored blob, because the filler cannot read it to merge
+- **AND** MUST keep the filled blob as a pending blob on the secret
+- **AND** the owner's client MUST show A, B and C together, merge the pending blob into the stored one on the next open, and write the merged blob back (keepiq#750)
+
 ### Requirement: Fill In via Link
 Anyone with the fill-in link MUST be able to submit values for the requested fields without authentication.
 

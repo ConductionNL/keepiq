@@ -12,6 +12,7 @@ import {
 import { buildKeyProofHeaders, PROOF_PURPOSE } from '../../crypto/keyProof.js'
 import { createMigrationRunner } from '../../migration/driver.js'
 import { MIGRATION_STORES } from '../../migration/pipeline.js'
+import { usePasskeyStore } from './passkey.js'
 import { onVaultLock, useSessionStore } from './session.js'
 
 /**
@@ -191,6 +192,12 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			)
 
 			session.encryptedPrivateKey = newEncryptedPk
+
+			// The server marks every passkey unlock envelope stale on this
+			// change (passkey-vault-login D4). Reload the list so the settings
+			// show them as stale and ask to re-enroll, instead of still
+			// reading "active" until the page is reloaded.
+			await usePasskeyStore().fetchCredentials()
 		},
 
 		/**

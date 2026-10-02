@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Fjarlægja merki",
         "Add tag": "Bæta við merki",
         "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF-útflutningur er ÓDULKÓÐAÐUR. Hvert lykilorð og innskráningarnafn verður læsilegt sem ódulkóðaður texti í skránni sem er hlaðið niður. Varðveittu hana á öruggum stað og eyddu henni strax eftir notkun.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Hluti af viðbrögðum við öryggisbresti mistókst ({failed} skref). Skoðaðu annál þjónsins og afturkallaðu svítuna aftur til að ljúka því.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Þetta afturkallaði einnig svítu {suite} og lauk lyklaflutningi {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Afturköllun seinni svítunnar eyddi %n neyðaraðgangstengilið.",

@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Quitar etiqueta",
         "Add tag": "Añadir etiqueta",
         "Could not change the tags. Try again.": "No se pudieron cambiar las etiquetas. Inténtelo de nuevo.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Una exportación CXF NO ESTÁ CIFRADA. Todas las contraseñas e inicios de sesión serán legibles como texto plano en el archivo descargado. Guárdelo de forma segura y elimínelo inmediatamente después de usarlo.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Parte de la respuesta al compromiso falló ({failed} paso(s)). Revise el registro del servidor y vuelva a revocar la suite para terminarla.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Esto también revocó la suite {suite} y finalizó la migración de claves {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Revocar la segunda suite eliminó %n contacto de acceso de emergencia.",

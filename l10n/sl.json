@@ -1266,6 +1266,7 @@
         "Remove tag": "Odstrani oznako",
         "Add tag": "Dodaj oznako",
         "Could not change the tags. Try again.": "Oznak ni bilo mogoče spremeniti. Poskusite znova.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Izvoz v CXF NI ŠIFRIRAN. Vsako geslo in prijava bosta v preneseni datoteki berljiva kot navadno besedilo. Datoteko varno shranite in jo takoj po uporabi izbrišite.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Del odziva na ogroženost ni uspel ({failed} korak(ov)). Preverite strežniški dnevnik in nato znova prekličite zbirko, da jo dokončate.",
         "This also revoked suite {suite} and ended key migration {migration}.": "S tem je bila preklicana tudi zbirka {suite} in končana selitev ključev {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Preklic druge zbirke je izbrisal %n stik za nujni dostop.",

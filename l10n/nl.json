@@ -1271,6 +1271,7 @@
         "Remove tag": "Label verwijderen",
         "Add tag": "Label toevoegen",
         "Could not change the tags. Try again.": "Kon de labels niet wijzigen. Probeer het opnieuw.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Een CXF-export is ONVERSLEUTELD. Elk wachtwoord en elke login is leesbaar als platte tekst in het gedownloade bestand. Bewaar het veilig en verwijder het direct na gebruik.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Een deel van de compromitteringsreactie is mislukt ({failed} stap(pen)). Controleer het serverlogboek en trek de suite daarna opnieuw geforceerd in om het af te ronden.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Hiermee is ook suite {suite} ingetrokken en sleutelmigratie {migration} beëindigd.",
         "Revoking the second suite deleted %n emergency-access contact.": "Het intrekken van de tweede suite verwijderde %n noodtoegangscontact.",

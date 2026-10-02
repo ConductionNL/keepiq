@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Neħħi t-tikketta",
         "Add tag": "Żid tikketta",
         "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Esportazzjoni CXF MHIJIEX ENKRIPTATA. Kull password u login se jkunu jinqraw bħala test sempliċi fil-fajl imniżżel. Aħżnu b'mod sigur u ħassru minnufih wara li tużah.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Parti mir-rispons għall-kompromess falliet ({failed} pass(i)). Iċċekkja l-log tas-server, imbagħad erġa' irrevoka s-suite biex tlestih.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Dan irrevoka wkoll is-suite {suite} u temm il-migrazzjoni taċ-ċwievet {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Ir-revoka tat-tieni suite ħassret %n kuntatt ta' aċċess ta' emerġenza.",

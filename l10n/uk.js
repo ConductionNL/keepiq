@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Прибрати мітку",
         "Add tag": "Додати мітку",
         "Could not change the tags. Try again.": "Не вдалося змінити мітки. Спробуйте ще раз.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Експорт до CXF НЕ ЗАШИФРОВАНИЙ. Кожен пароль і логін будуть читабельними як звичайний текст у завантаженому файлі. Зберігайте файл у надійному місці та вилучіть його одразу після використання.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Частину реакції на компрометацію не виконано ({failed} крок(ів)). Перевірте журнал сервера, а потім знову відкличте набір, щоб завершити її.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Це також відкликало набір {suite} і завершило міграцію ключів {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Відкликання другого набору видалило %n контакт аварійного доступу.",

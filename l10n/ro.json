@@ -1266,6 +1266,7 @@
         "Remove tag": "Elimină eticheta",
         "Add tag": "Adaugă etichetă",
         "Could not change the tags. Try again.": "Etichetele nu au putut fi schimbate. Încercați din nou.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Un export CXF NU ESTE CRIPTAT. Fiecare parolă și nume de utilizator vor fi lizibile ca text simplu în fișierul descărcat. Păstrați-l în siguranță și ștergeți-l imediat după utilizare.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "O parte din răspunsul la compromitere a eșuat ({failed} pas(i)). Verificați jurnalul serverului, apoi revocați din nou suita pentru a-l finaliza.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Aceasta a revocat și suita {suite} și a încheiat migrarea cheilor {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Revocarea celei de-a doua suite a șters %n contact de acces de urgență.",

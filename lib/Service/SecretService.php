@@ -335,10 +335,15 @@ class SecretService {
 			throw new InvalidArgumentException('A secret requires a name and a key');
 		}
 
-		// The writing user files the application's secret, so the folder is
-		// checked against that user.
+		// Keepiq#873: a secret may only sit in a folder its OWNER owns, because
+		// the folder owner's delete purges every secret in it. The owner here
+		// is the application, which owns no folder, so this path refuses any
+		// folder exactly like the machine paths do. Without this, the writing
+		// user could purge the application's secret by deleting their folder.
 		$folderId = $this->nullableString(value: $data['folderId'] ?? null);
-		$this->requireFolderOwnedBy(folderId: $folderId, userId: $writingUserId);
+		if ($folderId !== null) {
+			throw new InvalidArgumentException('An application cannot file a secret in a folder');
+		}
 
 		try {
 			$suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
@@ -951,6 +956,8 @@ class SecretService {
 
 		if (array_key_exists('additionalFields', $data) === true) {
 			$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields']));
+			// Request-filled blobs the client merged into this one (keepiq#750).
+			$secret->dropMergedPending(count: (int)($data['mergedPending'] ?? 0));
 		}
 
 		if ($this->shouldSnapshot(before: $preUpdate, after: $secret) === true) {

@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Etiketi kaldır",
         "Add tag": "Etiket ekle",
         "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF dışa aktarımı ŞİFRELENMEMİŞTİR. İndirilen dosyada her parola ve kullanıcı adı düz metin olarak okunabilir olacak. Dosyayı güvenli biçimde saklayın ve kullandıktan hemen sonra silin.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Güvenlik ihlali yanıtının bir kısmı başarısız oldu ({failed} adım). Sunucu günlüğünü kontrol edin, ardından tamamlamak için paketi yeniden iptal edin.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Bu işlem {suite} paketini de iptal etti ve {migration} anahtar taşımasını sonlandırdı.",
         "Revoking the second suite deleted %n emergency-access contact.": "İkinci paketin iptali %n acil erişim kişisini sildi.",

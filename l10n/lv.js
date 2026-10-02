@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Noņemt birku",
         "Add tag": "Pievienot birku",
         "Could not change the tags. Try again.": "Neizdevās mainīt birkas. Mēģiniet vēlreiz.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF eksports NAV ŠIFRĒTS. Katra parole un lietotājvārds lejupielādētajā datnē būs lasāmi kā vienkāršs teksts. Glabājiet to drošā vietā un izdzēsiet tūlīt pēc lietošanas.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Daļa no reakcijas uz kompromitēšanu neizdevās ({failed} solis(-ļi)). Pārbaudiet servera žurnālu un pēc tam atsauciet komplektu vēlreiz, lai to pabeigtu.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Tas atsauca arī komplektu {suite} un pabeidza atslēgu migrāciju {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Otrā komplekta atsaukšana izdzēsa %n ārkārtas piekļuves kontaktu.",

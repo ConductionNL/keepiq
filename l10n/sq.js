@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Hiq etiketën",
         "Add tag": "Shto etiketë",
         "Could not change the tags. Try again.": "Etiketat nuk u ndryshuan dot. Provoni sërish.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Një eksport CXF është I PAKRIPTUAR. Çdo fjalëkalim dhe kredencial hyrjeje do të lexohet si tekst i thjeshtë në skedarin e shkarkuar. Ruajeni në mënyrë të sigurt dhe fshijeni menjëherë pas përdorimit.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Një pjesë e reagimit ndaj komprometimit dështoi ({failed} hap(a)). Kontrolloni regjistrin e serverit, pastaj revokoni sërish paketën për ta përfunduar.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Kjo revokoi edhe paketën {suite} dhe përfundoi migrimin e çelësave {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Revokimi i paketës së dytë fshiu %n kontakt aksesi emergjence.",

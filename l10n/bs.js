@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Ukloni oznaku",
         "Add tag": "Dodaj oznaku",
         "Could not change the tags. Try again.": "Oznake nije moguće promijeniti. Pokušajte ponovo.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Izvoz u CXF NIJE ŠIFRIRAN. Svaka lozinka i prijava bit će čitljiva kao otvoreni tekst u preuzetoj datoteci. Čuvajte je na sigurnom i izbrišite je odmah nakon upotrebe.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Dio odgovora na kompromitaciju nije uspio ({failed} korak(a)). Provjerite zapisnik servera, a zatim ponovo opozovite paket da ga završite.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Time je opozvan i paket {suite} i završena migracija ključeva {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Opoziv drugog paketa izbrisao je %n kontakt za hitni pristup.",

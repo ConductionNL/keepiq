@@ -1266,6 +1266,7 @@
         "Remove tag": "Pašalinti žymę",
         "Add tag": "Pridėti žymę",
         "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF eksportas NĖRA ŠIFRUOTAS. Kiekvienas slaptažodis ir prisijungimo vardas atsisiųstame faile bus perskaitomi kaip paprastas tekstas. Saugokite jį saugiai ir iškart po naudojimo ištrinkite.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Dalis reakcijos į kompromitavimą nepavyko ({failed} žingsnis(-iai)). Patikrinkite serverio žurnalą ir vėl atšaukite rinkinį, kad ją užbaigtumėte.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Tai taip pat atšaukė rinkinį {suite} ir užbaigė raktų perkėlimą {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Antrojo rinkinio atšaukimas ištrynė %n avarinės prieigos kontaktą.",
