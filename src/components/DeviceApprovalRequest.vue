@@ -130,10 +130,16 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+		 */
 		store() {
 			return useDeviceApprovalStore()
 		},
 
+		/**
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+		 */
 		request() {
 			return this.store.request
 		},
@@ -262,6 +268,7 @@ export default {
 		 * Stop waiting and forget the one-time key.
 		 *
 		 * @return {void}
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
 		 */
 		cancel() {
 			this.stopPolling()
@@ -270,6 +277,7 @@ export default {
 
 		/**
 		 * @return {void}
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
 		 */
 		stopPolling() {
 			if (this.timer) {

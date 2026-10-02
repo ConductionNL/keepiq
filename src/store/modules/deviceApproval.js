@@ -151,6 +151,7 @@ export const useDeviceApprovalStore = defineStore('deviceApproval', {
 		 * Forget this device's request and its one-time key.
 		 *
 		 * @return {void}
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
 		 */
 		cancelRequest() {
 			this._oneTime = null
