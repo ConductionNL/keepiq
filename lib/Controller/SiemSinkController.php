@@ -131,6 +131,8 @@ class SiemSinkController extends OCSController {
 	 *   bound by name out of the JSON request body by the Nextcloud router and passed
 	 *   straight into the params array. Nothing here branches on either. Removing them
 	 *   would remove them from the HTTP contract.
+	 *
+	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 	 */
 	#[NoAdminRequired]
 	public function create(
@@ -184,6 +186,8 @@ class SiemSinkController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 	 */
 	#[NoAdminRequired]
 	public function update(
@@ -280,6 +284,8 @@ class SiemSinkController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 	 */
 	#[NoAdminRequired]
 	public function destroy(string $id): JSONResponse {
@@ -305,6 +311,8 @@ class SiemSinkController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 	 */
 	#[NoAdminRequired]
 	public function test(string $id): JSONResponse {

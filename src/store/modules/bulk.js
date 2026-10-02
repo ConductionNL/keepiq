@@ -31,6 +31,8 @@ export const useBulkStore = defineStore('bulk', {
 		 *
 		 * @param {object} state The store state.
 		 * @return {number}
+		 *
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-multi-select-and-bulk-action-bar
 		 */
 		selectionCount(state) {
 			return state.selectedIds.length
@@ -40,6 +42,8 @@ export const useBulkStore = defineStore('bulk', {
 		 *
 		 * @param {object} state The store state.
 		 * @return {Array<object>}
+		 *
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		failedItems(state) {
 			return state.report.filter((r) => r.status === 'failed')
@@ -52,6 +56,8 @@ export const useBulkStore = defineStore('bulk', {
 		 * and MUST NOT survive a lock (bulk-actions §1.2).
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-multi-select-and-bulk-action-bar
 		 */
 		registerLockReset() {
 			onVaultLock(() => this.clearSelection())
@@ -71,6 +77,8 @@ export const useBulkStore = defineStore('bulk', {
 		 * Clear the selection and the last report.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-multi-select-and-bulk-action-bar
 		 */
 		clearSelection() {
 			this.selectedIds = []
@@ -88,6 +96,8 @@ export const useBulkStore = defineStore('bulk', {
 		 * Request cancellation — the runner stops after the current chunk.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		cancel() {
 			if (this.progress.running) {
@@ -107,6 +117,8 @@ export const useBulkStore = defineStore('bulk', {
 		 * @param {Function} perItem Async (secretId) => {status, reason?}; a throw = failed.
 		 * @param {string} label Progress label for the UI.
 		 * @return {Promise<Array<object>>} The per-item report.
+		 *
+		 * @spec openspec/specs/bulk-actions/spec.md#scenario-nothing-is-dropped-silently
 		 */
 		async run(ids, perItem, label) {
 			const unique = [...new Set(ids)]
@@ -165,6 +177,8 @@ export const useBulkStore = defineStore('bulk', {
 		 * @param {Function} perItem The same per-item function.
 		 * @param {string} label Progress label.
 		 * @return {Promise<Array<object>>} The merged report.
+		 *
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		async retryFailed(perItem, label) {
 			const failedIds = this.failedItems.map((r) => r.secretId)

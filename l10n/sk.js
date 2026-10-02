@@ -1267,7 +1267,9 @@ OC.L10N.register(
         "Remove tag": "Odobrať štítok",
         "Add tag": "Pridať štítok",
         "Could not change the tags. Try again.": "Štítky nemožno zmeniť. Skúste to znova.",
-        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Export do CXF NIE JE ZAŠIFROVANÝ. Každé heslo a prihlasovacie meno bude v stiahnutom súbore čitateľné ako otvorený text. Uložte ho bezpečne a hneď po použití odstráňte."
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Export do CXF NIE JE ZAŠIFROVANÝ. Každé heslo a prihlasovacie meno bude v stiahnutom súbore čitateľné ako otvorený text. Uložte ho bezpečne a hneď po použití odstráňte.",
+        "Root certificate expiring soon": "Koreňový certifikát čoskoro vyprší",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Koreňový certifikát trezoru vyprší o %1$d dní. Obnovte ho predtým. Obnovenie znova podpíše každú šifrovaciu sadu."
     },
     "nplurals=2; plural=(n != 1);"
 )

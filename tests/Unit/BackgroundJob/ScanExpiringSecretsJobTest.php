@@ -153,6 +153,25 @@ class ScanExpiringSecretsJobTest extends TestCase {
 	}//end testNotifiesOnlyAtExactThreshold()
 
 	/**
+	 * Keepiq#746: a policy's own reminder days replace the instance-wide
+	 * thresholds for the secrets it scopes. 14 is not an instance threshold.
+	 *
+	 * @return void
+	 */
+	public function testAPolicysOwnReminderDaysAreUsed(): void {
+		$secret = $this->secretExpiringIn('sec-14', 14);
+		$this->rotationService->method('reminderDaysFor')->willReturn([14]);
+		$this->secretMapper->method('findAllUserOwnedPaged')
+			->willReturnOnConsecutiveCalls([$secret], []);
+
+		$this->notificationService->expects($this->once())
+			->method('notify')
+			->with('secret_expiring', 'alice', $this->callback(static fn (array $p): bool => $p['days_left'] === 14));
+
+		$this->runJob();
+	}//end testAPolicysOwnReminderDaysAreUsed()
+
+	/**
 	 * 8.3: an overdue secret raises the policy_expiry flag and notifies
 	 * once; on the next run (flag already open) neither repeats.
 	 *

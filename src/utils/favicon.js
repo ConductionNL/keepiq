@@ -22,6 +22,8 @@ function faviconTemplate() {
  *
  * @param {string|null} url The secret URL.
  * @return {string|null} The hostname, or null when not resolvable.
+ *
+ * @spec exclude Pure helper: parses a hostname out of a secret URL string.
  */
 export function extractDomain(url) {
 	if (!url) {
@@ -40,6 +42,8 @@ export function extractDomain(url) {
  *
  * @param {string|null} url The secret URL.
  * @return {string|null} The favicon URL, or null to use the type icon.
+ *
+ * @spec openspec/changes/archive/2026-06-14-implement-secrets/specs/secrets/spec.md#requirement-favicon-display
  */
 export function resolveFaviconUrl(url) {
 	const template = faviconTemplate()

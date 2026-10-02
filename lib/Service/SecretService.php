@@ -528,9 +528,11 @@ class SecretService {
 	 * @throws InvalidArgumentException When a submitted field is invalid
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
-	 *   independent, flat partial-update branch.
+	 *   independent, flat partial-update branch; every branch is pinned by
+	 *   tests/Unit/Service/SecretServiceMachineWriteTest.php (#152).
 	 * @SuppressWarnings(PHPMD.NPathComplexity)      Same: the branches are
-	 *   independent partial-update guards, not nested logic.
+	 *   independent partial-update guards, not nested logic. Extracting them
+	 *   into helpers trips TooManyMethods on this class instead (measured).
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
 	 */
@@ -1492,6 +1494,8 @@ class SecretService {
 	 *
 	 * @throws NotFoundException When the secret does not exist
 	 * @throws ForbiddenException When the secret belongs to another user
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
 	 */
 	public function findOwned(string $id, string $userId): Secret {
 		return $this->loadOwned(id: $id, userId: $userId);

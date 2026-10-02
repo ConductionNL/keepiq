@@ -82,6 +82,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Presentation state: picks the masked or revealed string for display.
+		 */
 		displayValue() {
 			return this.revealed ? (this.plain ?? '') : this.masked
 		},
@@ -94,6 +97,8 @@ export default {
 		 * Toggle the visibility, decrypting on the first reveal.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		async toggle() {
 			if (!this.revealed && this.plain === null) {
@@ -106,6 +111,8 @@ export default {
 		 * Resolve the plaintext for the copy button, decrypting if needed.
 		 *
 		 * @return {Promise<string>}
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		async resolvePlain() {
 			if (this.plain === null) {

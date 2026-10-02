@@ -273,6 +273,8 @@ class GroupShareService {
 	 * @param string $groupId The Nextcloud group ID
 	 *
 	 * @return string[] List of user IDs
+	 *
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 	 */
 	public function getGroupMembers(string $groupId): array {
 		$group = $this->groupManager->get($groupId);

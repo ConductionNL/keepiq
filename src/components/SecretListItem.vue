@@ -242,6 +242,9 @@ export default {
 			return Array.isArray(this.secret.tags) ? this.secret.tags : []
 		},
 
+		/**
+		 * @spec openspec/changes/archive/2026-06-14-implement-secrets/specs/secrets/spec.md#requirement-favicon-display
+		 */
 		faviconUrl() {
 			return resolveFaviconUrl(this.secret.url)
 		},
@@ -278,6 +281,8 @@ export default {
 		 *
 		 * @param {KeyboardEvent} event The keydown event.
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-secret-list-rows-must-be-keyboard-operable
 		 */
 		onRowActivate(event) {
 			if (event.target !== event.currentTarget) {
@@ -310,6 +315,8 @@ export default {
 		 * Resolve the decrypted key for the copy button.
 		 *
 		 * @return {Promise<string>}
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		async resolveKey() {
 			const secretStore = useSecretStore()

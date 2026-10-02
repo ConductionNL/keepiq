@@ -251,6 +251,8 @@ export default {
 	 * Provide the export/import/session/type stores.
 	 *
 	 * @return {object}
+	 *
+	 * @spec exclude Composition setup: wires four Pinia stores onto the component, no logic.
 	 */
 	setup() {
 		return {
@@ -284,7 +286,11 @@ export default {
 	},
 
 	computed: {
-		/** Type names keyed by id, for the CXF mapping. */
+		/**
+		 * Type names keyed by id, for the CXF mapping.
+		 *
+		 * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-keepiq-type-mapping
+		 */
 		typeNamesById() {
 			const map = {}
 			for (const type of this.typeStore.types || []) {

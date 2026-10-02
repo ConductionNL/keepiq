@@ -153,6 +153,8 @@ export default {
 	/**
 	 * Clamp the controls to the org policy floor (org-password-policies
 	 * §5.2) — the server clamp stays authoritative regardless.
+	 *
+	 * @spec openspec/specs/org-password-policies/spec.md#requirement-generator-locked-to-policy
 	 */
 	async mounted() {
 		const policy = await fetchPolicy()
@@ -177,6 +179,8 @@ export default {
 		 * Proxy the dialog's open state to the parent and reset on close.
 		 *
 		 * @param {boolean} value The new open state.
+		 *
+		 * @spec exclude Event re-emitter: resets transient state and emits update:open.
 		 */
 		onUpdateOpen(value) {
 			if (value === false) {
@@ -187,6 +191,8 @@ export default {
 
 		/**
 		 * Reset transient state (preview + error) when the dialog closes.
+		 *
+		 * @spec exclude Transient UI reset: clears preview, error and loading flags on close.
 		 */
 		reset() {
 			this.generatedKey = ''
@@ -230,6 +236,8 @@ export default {
 
 		/**
 		 * Emit the generated value to the parent and close the dialog.
+		 *
+		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
 		 */
 		use() {
 			if (!this.generatedKey) {
@@ -241,6 +249,8 @@ export default {
 
 		/**
 		 * Copy the generated key to the clipboard.
+		 *
+		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
 		 */
 		async copyToClipboard() {
 			if (!this.generatedKey || !navigator.clipboard) {

@@ -1267,7 +1267,9 @@ OC.L10N.register(
         "Remove tag": "Remove tag",
         "Add tag": "Add tag",
         "Could not change the tags. Try again.": "Could not change the tags. Try again.",
-        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use."
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.",
+        "Root certificate expiring soon": "Root certificate expiring soon",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -102,6 +102,12 @@ The session timeout MUST be configurable per user (Nextcloud session duration, 1
 - WHEN they open Keepiq on device B
 - THEN device B MUST show the lock screen and require master password entry independently
 
+#### Scenario: User views lock screen
+- GIVEN a user who has an encryption suite and has not unlocked the vault in this browser
+- WHEN they open Keepiq
+- THEN the lock screen MUST fill the page, not sit over the app as an overlay
+- AND it MUST offer the master password form to unlock the vault
+
 ### Requirement: Master Password Strength
 The system MUST enforce a minimum strength floor on master passwords using entropy-based scoring (zxcvbn or equivalent). The floor MUST NOT be configurable below the application minimum.
 
