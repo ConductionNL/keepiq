@@ -23,8 +23,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/ConductionNL/keepiq/cli/internal/client"
-	dcrypto "github.com/ConductionNL/keepiq/cli/internal/crypto"
+	"github.com/ConductionNL/keepiq/sdk/go/client"
+	dcrypto "github.com/ConductionNL/keepiq/sdk/go/crypto"
 )
 
 // version is stamped at build time via -ldflags "-X main.version=…".
@@ -55,6 +55,8 @@ func main() {
 		err = cmdCI(args)
 	case "completion":
 		err = cmdCompletion(args)
+	case "install":
+		err = cmdInstall(args)
 	case "help", "--help", "-h":
 		usage()
 	default:
@@ -82,6 +84,7 @@ CI mode (RFC 7523 machine consumer):
   keepiq ci fetch <name> [--output env|json]       fetch+decrypt an application secret
   keepiq ci run <name>[,<name>...] -- <cmd...>      run <cmd> with the secret(s) in its env
 
+  install <path>                                   copy this binary to <path> (init containers)
   version | completion <bash|zsh|fish> | help
 
 v1 is READ-ONLY: no create/edit/update/delete (share fan-out is a follow-up).
@@ -278,12 +281,26 @@ func cmdCompletion(args []string) error {
 	return nil
 }
 
+// childEnviron is the parent environment minus the application private key:
+// the wrapped command gets the secrets it asked for, never the key that can
+// read every other secret of the application.
+func childEnviron(parent []string) []string {
+	out := make([]string, 0, len(parent))
+	for _, kv := range parent {
+		if strings.HasPrefix(kv, "KEEPIQ_APP_KEY=") {
+			continue
+		}
+		out = append(out, kv)
+	}
+	return out
+}
+
 func runChild(env []string, cmd []string) error {
 	if len(cmd) == 0 {
 		return fmt.Errorf("no command after --")
 	}
 	child := exec.Command(cmd[0], cmd[1:]...)
-	child.Env = append(os.Environ(), env...)
+	child.Env = append(childEnviron(os.Environ()), env...)
 	child.Stdin, child.Stdout, child.Stderr = os.Stdin, os.Stdout, os.Stderr
 	return child.Run()
 }

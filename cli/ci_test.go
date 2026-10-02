@@ -10,11 +10,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ConductionNL/keepiq/cli/internal/client"
-	dcrypto "github.com/ConductionNL/keepiq/cli/internal/crypto"
+	keepiq "github.com/ConductionNL/keepiq/sdk/go"
 )
 
-// machineFixture is testdata/machine_envelope.json: an envelope written by the
+// machineFixture is sdk/testdata/machine_envelope.json: an envelope written by the
 // server's real MachineSecretEnvelopeService::serialize() over ciphertext from
 // the real EncryptService, plus the throwaway key that decrypts it. PHPUnit
 // (tests/Unit/Service/MachineEnvelopeCliFixtureTest.php) fails when serialize()
@@ -27,7 +26,7 @@ type machineFixture struct {
 
 func loadMachineFixture(t *testing.T) machineFixture {
 	t.Helper()
-	raw, err := os.ReadFile("testdata/machine_envelope.json")
+	raw, err := os.ReadFile("../sdk/testdata/machine_envelope.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +35,7 @@ func loadMachineFixture(t *testing.T) machineFixture {
 		t.Fatal(err)
 	}
 	if len(f.Envelope) == 0 || f.PrivateKeyPem == "" || f.Plaintext["key"] == "" {
-		t.Fatal("testdata/machine_envelope.json is missing envelope, privateKeyPem or plaintext.key")
+		t.Fatal("sdk/testdata/machine_envelope.json is missing envelope, privateKeyPem or plaintext.key")
 	}
 	return f
 }
@@ -46,8 +45,8 @@ func loadMachineFixture(t *testing.T) machineFixture {
 func stubKeepiq(t *testing.T, envelope []byte) *httptest.Server {
 	t.Helper()
 	mux := http.NewServeMux()
-	mux.HandleFunc("/apps/keepiq/api/v1/app/.well-known/doriath", func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte(`{"apiVersion":1,"tokenEndpoint":"/apps/keepiq/api/v1/app/token","assertion":{"alg":"RS256","audience":"doriath"},"lease":{"supported":true}}`))
+	mux.HandleFunc("/apps/keepiq/api/v1/app/.well-known/keepiq", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"apiVersion":1,"tokenEndpoint":"/apps/keepiq/api/v1/app/token","assertion":{"alg":"RS256","audience":"keepiq"},"lease":{"supported":true}}`))
 	})
 	mux.HandleFunc("/apps/keepiq/api/v1/app/token", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(`{"access_token":"tok","token_type":"Bearer"}`))
@@ -72,21 +71,19 @@ func stubKeepiq(t *testing.T, envelope []byte) *httptest.Server {
 func TestFetchDecryptRealServerEnvelope(t *testing.T) {
 	f := loadMachineFixture(t)
 	srv := stubKeepiq(t, f.Envelope)
-	key, err := dcrypto.ParsePrivateKey(f.PrivateKeyPem)
+	c, err := keepiq.New(srv.URL, "app-cli-fixture", f.PrivateKeyPem)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	c := client.New(srv.URL)
-	got, err := fetchDecrypt(c, key, "ci-fixture-db-password", "tok")
+	got, err := fetchDecrypt(c, "ci-fixture-db-password")
 	if err != nil {
 		t.Fatalf("fetchDecrypt: %v", err)
 	}
-	if got != f.Plaintext["key"] {
-		t.Fatalf("value = %q, want %q", got, f.Plaintext["key"])
+	if got.Key != f.Plaintext["key"] {
+		t.Fatalf("value = %q, want %q", got.Key, f.Plaintext["key"])
 	}
-	if c.LeaseID() != "lease-7" {
-		t.Fatalf("lease id = %q, want lease-7", c.LeaseID())
+	if got.Lease == nil || got.Lease.ID != "lease-7" {
+		t.Fatalf("lease = %+v, want lease-7", got.Lease)
 	}
 }
 
@@ -101,13 +98,12 @@ func TestFetchDecryptRefusesAnUnknownScheme(t *testing.T) {
 	env["encryption"].(map[string]any)["scheme"] = "rsa-oaep-sha1-v0"
 	body, _ := json.Marshal(env)
 	srv := stubKeepiq(t, body)
-	key, err := dcrypto.ParsePrivateKey(f.PrivateKeyPem)
+	c, err := keepiq.New(srv.URL, "app-cli-fixture", f.PrivateKeyPem)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	_, err = fetchDecrypt(client.New(srv.URL), key, "ci-fixture-db-password", "tok")
-	if err == nil || !strings.Contains(err.Error(), `unexpected envelope scheme "rsa-oaep-sha1-v0"`) {
+	_, err = fetchDecrypt(c, "ci-fixture-db-password")
+	if err == nil || !strings.Contains(err.Error(), `unsupported encryption scheme "rsa-oaep-sha1-v0"`) {
 		t.Fatalf("want an unexpected scheme error, got %v", err)
 	}
 }
@@ -167,4 +163,14 @@ func captureOutput(t *testing.T, fn func() error) (string, string, error) {
 	<-done
 	<-done
 	return outBuf.String(), errBuf.String(), runErr
+}
+
+// TestChildEnvironDropsTheApplicationKey: `keepiq ci run` hands the wrapped
+// command its secrets, not the application private key.
+func TestChildEnvironDropsTheApplicationKey(t *testing.T) {
+	got := childEnviron([]string{"PATH=/bin", "KEEPIQ_APP_KEY=-----BEGIN PRIVATE KEY-----", "KEEPIQ_URL=https://x", "KEEPIQ_APP_KEY_FILE=/run/k.pem"})
+	want := []string{"PATH=/bin", "KEEPIQ_URL=https://x", "KEEPIQ_APP_KEY_FILE=/run/k.pem"}
+	if strings.Join(got, "|") != strings.Join(want, "|") {
+		t.Fatalf("child env = %v", got)
+	}
 }
