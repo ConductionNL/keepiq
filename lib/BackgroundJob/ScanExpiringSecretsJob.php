@@ -106,8 +106,10 @@ class ScanExpiringSecretsJob extends TimedJob {
 				try {
 					$this->scanOne(secret: $secret, thresholds: $thresholds, now: $now);
 				} catch (Throwable $exception) {
+					// The class, not the message: a message is unbounded and can
+					// carry whatever the failing call put in it (keepiq#728).
 					$this->logger->warning(
-						'Keepiq: expiry scan failed for secret ' . $secret->getId() . ': ' . $exception->getMessage(),
+						'Keepiq: expiry scan failed for secret '.$secret->getId().': '.$exception::class,
 						['app' => Application::APP_ID]
 					);
 				}
