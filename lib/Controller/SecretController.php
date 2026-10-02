@@ -367,13 +367,13 @@ class SecretController extends OCSController {
 	 * A 403 for a refused write, with the policy code when a vault policy
 	 * refused it (admin-vault-policies D4).
 	 *
-	 * @param \RuntimeException $exception The refusal
+	 * @param ForbiddenException|SuiteBlockedException $exception The refusal
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.1
 	 */
-	private function forbidden(\RuntimeException $exception): JSONResponse {
+	private function forbidden(ForbiddenException|SuiteBlockedException $exception): JSONResponse {
 		$data = ['message' => $exception->getMessage()];
 		if ($exception instanceof ForbiddenException && $exception->policyCode() !== null) {
 			$data['code'] = $exception->policyCode();

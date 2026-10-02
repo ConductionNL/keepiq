@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTypeMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
@@ -93,6 +94,28 @@ class OrgOwnershipGuard {
 			message: 'Your organisation requires this type of secret to be kept in a team folder'
 		);
 	}//end assertAllowed()
+
+	/**
+	 * A move or a type change must not take a covered secret out of the
+	 * user's team folders; other edits are not re-checked.
+	 *
+	 * @param Secret $secret The secret as it will be stored
+	 * @param Secret $before The secret before the update
+	 * @param string $userId The writing user
+	 *
+	 * @return void
+	 *
+	 * @throws PolicyViolationException When the policy refuses the change
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.1
+	 */
+	public function assertKept(Secret $secret, Secret $before, string $userId): void {
+		if ($secret->getFolderId() === $before->getFolderId() && $secret->getTypeId() === $before->getTypeId()) {
+			return;
+		}
+
+		$this->assertAllowed(userId: $userId, typeId: (string)$secret->getTypeId(), folderId: $secret->getFolderId());
+	}//end assertKept()
 
 	/**
 	 * The user's own live secrets that break the ownership policy: covered

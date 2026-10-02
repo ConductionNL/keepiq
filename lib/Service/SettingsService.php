@@ -184,12 +184,6 @@ class SettingsService {
 			userSession: $userSession,
 			logger: $logger,
 			eventDispatcher: $eventDispatcher,
-			vaultPolicies: new VaultPolicyService(
-				appConfig: $appConfig,
-				groupManager: $groupManager,
-				userSession: $userSession,
-				eventDispatcher: $eventDispatcher,
-			),
 		));
 	}//end __construct()
 

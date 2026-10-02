@@ -894,6 +894,10 @@ class SecretService {
 	 *   independent partial-update guards, not nested logic.
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
+	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) One partial-update guard per
+	 *   field, in the order the fields are applied; the vault policy check is one
+	 *   line. Splitting the field guards apart would scatter one update over
+	 *   several methods and the class is at its method limit.
 	 */
 	public function update(string $id, array $data, string $userId): Secret {
 		$this->assertNotWriteLocked(userId: $userId);
@@ -931,15 +935,7 @@ class SecretService {
 			$secret->setTypeId($this->typeService->resolveTypeForSecret($data['typeId'], $userId));
 		}
 
-		// A move or a type change must not take a work login out of a team
-		// folder (admin-vault-policies D4); other edits are not re-checked.
-		if ($secret->getFolderId() !== $preUpdate->getFolderId() || $secret->getTypeId() !== $preUpdate->getTypeId()) {
-			$this->orgOwnership?->assertAllowed(
-				userId: $userId,
-				typeId: (string)$secret->getTypeId(),
-				folderId: $secret->getFolderId()
-			);
-		}
+		$this->orgOwnership?->assertKept(secret: $secret, before: $preUpdate, userId: $userId);
 
 		if (array_key_exists('key', $data) === true) {
 			$key = (string)$data['key'];

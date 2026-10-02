@@ -101,7 +101,6 @@ class AdminSettingsService {
 	 * @param IEventDispatcher|null $eventDispatcher The audit dispatcher (policy changes)
 	 * @param PasswordPolicyService|null $policyService The org password policy
 	 * @param RegisterConfigurationLoader|null $registerLoader The register-configuration loader
-	 * @param VaultPolicyService|null $vaultPolicies The vault policies (admin-vault-policies)
 	 *
 	 * @return void
 	 *
@@ -116,7 +115,6 @@ class AdminSettingsService {
 		?IEventDispatcher $eventDispatcher = null,
 		?PasswordPolicyService $policyService = null,
 		?RegisterConfigurationLoader $registerLoader = null,
-		private ?VaultPolicyService $vaultPolicies = null,
 	) {
 		$this->policyService = ($policyService ?? new PasswordPolicyService(
 			appConfig: $appConfig,
@@ -191,7 +189,7 @@ class AdminSettingsService {
 			],
 			// Org password policy (org-password-policies §1.1) — one reader,
 			// shared with the user-visible getPolicy() floor.
-			$this->policyService->readPolicyKeys(),
+			$this->policyService->readAdminPolicyKeys(),
 			[
 				// Machine leases (machine-secret-leases §2.4).
 				'lease_default_ttl_seconds' => $this->appConfig->getValueInt(
@@ -218,12 +216,6 @@ class AdminSettingsService {
 				),
 			]
 		);
-
-		// Vault policies with their group scopes: admin payload only
-		// (admin-vault-policies §1.2).
-		if ($this->vaultPolicies !== null) {
-			$settings = array_merge($settings, $this->vaultPolicies->read());
-		}
 
 		// Best-effort CA status; never blocks if the service is unavailable.
 		try {
@@ -262,7 +254,6 @@ class AdminSettingsService {
 		$this->updateLeaseSettings(data: $data);
 		$this->updateRetentionSettings(data: $data);
 		$this->updateTrashSettings(data: $data);
-		$this->vaultPolicies?->update(data: $data);
 
 		return $this->getAdminSettings();
 	}//end updateAdminSettings()
@@ -279,14 +270,7 @@ class AdminSettingsService {
 	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
 	 */
 	public function getPolicy(?string $userId = null): array {
-		$policy = $this->policyService->getPolicy();
-		if ($this->vaultPolicies !== null && $userId !== null) {
-			// Only whether each vault policy applies to THIS user, never
-			// the group lists (admin-vault-policies D1).
-			$policy = array_merge($policy, $this->vaultPolicies->effectiveFor(userId: $userId));
-		}
-
-		return $policy;
+		return $this->policyService->getPolicy(userId: $userId);
 	}//end getPolicy()
 
 	/**

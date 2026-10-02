@@ -100,7 +100,11 @@ class VaultPolicyServiceTest extends TestCase {
 			container: $this->createMock(ContainerInterface::class),
 			userSession: $session,
 			logger: $this->createMock(LoggerInterface::class),
-			vaultPolicies: $this->service,
+			policyService: new \OCA\Keepiq\Service\PasswordPolicyService(
+				appConfig: $appConfig,
+				userSession: $session,
+				vaultPolicies: $this->service,
+			),
 		);
 	}//end setUp()
 
