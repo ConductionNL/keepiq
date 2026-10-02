@@ -11,7 +11,7 @@ import (
 )
 
 // serverEnvelope returns the envelope the server's real
-// MachineSecretEnvelopeService::serialize() writes (cli/testdata, guarded by a
+// MachineSecretEnvelopeService::serialize() writes (sdk/testdata, guarded by a
 // PHPUnit test), so this test cannot drift back to a shape only the CLI knows.
 func serverEnvelope(t *testing.T) []byte {
 	t.Helper()
