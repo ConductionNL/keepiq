@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Bain an chlib",
         "Add tag": "Cuir clib leis",
         "Could not change the tags. Try again.": "Níorbh fhéidir na clibeanna a athrú. Bain triail eile as.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Níl easpórtáil CXF CRIPTITHE. Beidh gach pasfhocal agus logáil isteach inléite mar ghnáth-théacs sa chomhad íoslódáilte. Stóráil go sábháilte é agus scrios láithreach é tar éis a úsáide.",
         "Root certificate expiring soon": "Rachaidh an fréamhdheimhniú as feidhm go luath",
         "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Rachaidh fréamhdheimhniú an tsábháilteáin as feidhm i gceann %1$d lá. Athnuaigh é roimhe sin. Síníonn athnuachan gach sraith criptiúcháin arís."
     },

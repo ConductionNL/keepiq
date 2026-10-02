@@ -20,11 +20,14 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Service;
 
 use OCA\Keepiq\Db\DashboardSettingMapper;
+use OCA\Keepiq\Db\EmergencyContactMapper;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Db\PasskeyCredential;
+use OCA\Keepiq\Db\PasskeyMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegation;
 use OCA\Keepiq\Db\SecretDelegationMapper;
@@ -71,6 +74,8 @@ class AccountDeletionServiceTest extends TestCase {
 			'migration' => $this->createMock(SuiteMigrationMapper::class),
 			'setting' => $this->createMock(DashboardSettingMapper::class),
 			'dispatcher' => $this->createMock(IEventDispatcher::class),
+			'emergency' => $this->createMock(EmergencyContactMapper::class),
+			'passkey' => $this->createMock(PasskeyMapper::class),
 		];
 
 		return new AccountDeletionService(
@@ -89,6 +94,8 @@ class AccountDeletionServiceTest extends TestCase {
 			suiteCleanup: new AccountSuiteCleanupService(
 				suiteMapper: $this->m['suite'],
 				migrationMapper: $this->m['migration'],
+				emergencyMapper: $this->m['emergency'],
+				passkeyMapper: $this->m['passkey'],
 			),
 			childData: new SecretChildDataCleaner(secretMapper: $this->m['secret']),
 		);
@@ -320,4 +327,33 @@ class AccountDeletionServiceTest extends TestCase {
 		$this->assertSame(0, $first->secretsDeleted);
 		$this->assertSame(0, $second->secretsDeleted);
 	}//end testIdempotentReRun()
+
+	/**
+	 * Issue #861: the erasure removes every emergency relationship (the grantor
+	 * row escrows the user's private key to the grantee) and every passkey
+	 * unlock envelope, and the report counts both.
+	 *
+	 * @return void
+	 */
+	public function testErasureRemovesEscrowedEmergencyKeysAndPasskeys(): void {
+		$service = $this->build();
+		$this->emptyBaseline();
+
+		$this->m['emergency']->expects($this->once())
+			->method('deleteByUser')
+			->with('alice')
+			->willReturn(2);
+		$this->m['passkey']->method('findByOwner')->with('alice')
+			->willReturn([new PasskeyCredential(), new PasskeyCredential()]);
+		$this->m['passkey']->expects($this->once())
+			->method('deleteByOwner')
+			->with('alice');
+
+		$report = $service->deleteAllFor('alice');
+
+		$this->assertSame(2, $report->emergencyDeleted);
+		$this->assertSame(2, $report->passkeysDeleted);
+		$this->assertSame(2, $report->jsonSerialize()['emergencyContactsDeleted']);
+		$this->assertSame(2, $report->jsonSerialize()['passkeysDeleted']);
+	}//end testErasureRemovesEscrowedEmergencyKeysAndPasskeys()
 }//end class

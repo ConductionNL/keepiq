@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Tag ewechhuelen",
         "Add tag": "Tag derbäisetzen",
         "Could not change the tags. Try again.": "D'Tags konnten net geännert ginn. Probéiert nach eng Kéier.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "En CXF-Export ass NET VERSCHLËSSELT. All Passwuert an all Login sinn am erofgeluedene Fichier als Kloertext ze liesen. Späichert e sécher a läscht en direkt no der Notzung.",
         "Root certificate expiring soon": "De Root-Zertifikat leeft geschwënn of",
         "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "De Root-Zertifikat vum Tresor leeft an %1$d Dag/Deeg of. Erneiert en virdrun. Beim Erneieren gëtt all Verschlësselungssuite nei ënnerschriwwen."
     },

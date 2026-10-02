@@ -621,6 +621,45 @@ describe('useImportStore', () => {
 		})
 	})
 
+	it('imports everything beneath one new folder when asked (keepiq#749)', async () => {
+		await unlockSession()
+		vi.spyOn(useSecretStore(), 'fetchSecrets').mockResolvedValue()
+		let body = null
+		vi.spyOn(axios, 'post').mockImplementation(async (url, payload) => {
+			body = payload
+			return {
+				data: {
+					results: payload.items.map((_, i) => ({
+						index: i,
+						status: 'created',
+						secretId: 's' + i,
+					})),
+				},
+			}
+		})
+
+		const store = useImportStore()
+		store.rows = [
+			{
+				sourceRow: 1,
+				name: 'A',
+				password: 'x',
+				folder: 'Work/CI',
+				errors: [],
+			},
+			{ sourceRow: 2, name: 'B', password: 'y', folder: '', errors: [] },
+		]
+		await store.commit({ rootFolder: 'bitwarden 2026-10-02' })
+
+		expect(body.items[0].folderPath).toEqual([
+			'bitwarden 2026-10-02',
+			'Work',
+			'CI',
+		])
+		expect(body.items[1].folderPath).toEqual(['bitwarden 2026-10-02'])
+		expect(body.folders).toContainEqual(['bitwarden 2026-10-02', 'Work', 'CI'])
+	})
+
 	it('rejects a row below the organisation password policy with its reason (keepiq#746)', async () => {
 		await unlockSession()
 		resetPolicyCache()

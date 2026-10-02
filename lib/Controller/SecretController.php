@@ -306,6 +306,8 @@ class SecretController extends OCSController {
 	 * @param string|null $key The new RSA-encrypted key blob
 	 * @param string|null $login The new RSA-encrypted login blob
 	 * @param string|null $additionalFields The new RSA-encrypted additional fields blob
+	 * @param int|null $mergedPending How many pending request-filled blobs the
+	 *                                client merged into $additionalFields (keepiq#750)
 	 *
 	 * @NoAdminRequired
 	 *
@@ -326,6 +328,7 @@ class SecretController extends OCSController {
 		?string $key = null,
 		?string $login = null,
 		?string $additionalFields = null,
+		?int $mergedPending = null,
 	): JSONResponse {
 		$userId = $this->uid();
 		if ($userId === null) {
@@ -338,6 +341,10 @@ class SecretController extends OCSController {
 			if ($this->request->getParam($field, '__unset__') !== '__unset__') {
 				$data[$field] = ${$field};
 			}
+		}
+
+		if ($mergedPending !== null) {
+			$data['mergedPending'] = $mergedPending;
 		}
 
 		try {

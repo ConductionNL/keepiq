@@ -200,21 +200,55 @@ class SecretServiceFolderOwnershipTest extends TestCase {
 	}//end testUpdateRefusesMovingIntoAFolderOfAnotherUser()
 
 	/**
-	 * An application secret written through the web app is checked against
-	 * the writing user.
+	 * An application secret written through the web app cannot be filed in
+	 * the writing user's own folder either (keepiq#873): the application owns
+	 * the secret and no folder, and the user's folder delete would purge it.
 	 *
 	 * @return void
 	 */
-	public function testCreateForApplicationChecksTheWritingUser(): void {
+	public function testCreateForApplicationRefusesAFolderTheWritingUserOwns(): void {
 		$this->mapper->expects($this->never())->method('insert');
 
-		$this->expectException(ForbiddenException::class);
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->createForApplication(
+			data: ['name' => 'App key', 'key' => 'CIPHERTEXT', 'folderId' => 'folder-alice'],
+			applicationId: 'app-1',
+			writingUserId: 'alice',
+		);
+	}//end testCreateForApplicationRefusesAFolderTheWritingUserOwns()
+
+	/**
+	 * Nor in a folder of another user.
+	 *
+	 * @return void
+	 */
+	public function testCreateForApplicationRefusesAFolderOfAnotherUser(): void {
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
 		$this->service->createForApplication(
 			data: ['name' => 'App key', 'key' => 'CIPHERTEXT', 'folderId' => 'folder-alice'],
 			applicationId: 'app-1',
 			writingUserId: 'bob',
 		);
-	}//end testCreateForApplicationChecksTheWritingUser()
+	}//end testCreateForApplicationRefusesAFolderOfAnotherUser()
+
+	/**
+	 * Without a folder the web write still lands at the root.
+	 *
+	 * @return void
+	 */
+	public function testCreateForApplicationWithoutAFolderIsStored(): void {
+		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+
+		$secret = $this->service->createForApplication(
+			data: ['name' => 'App key', 'key' => 'CIPHERTEXT'],
+			applicationId: 'app-1',
+			writingUserId: 'alice',
+		);
+		$this->assertNull($secret->getFolderId());
+		$this->assertSame('application', $secret->getOwnerType());
+	}//end testCreateForApplicationWithoutAFolderIsStored()
 
 	/**
 	 * An application writing with its machine token owns no folder, so it

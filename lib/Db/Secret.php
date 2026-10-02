@@ -70,6 +70,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setIsFavourite(bool $isFavourite)
  * @method DateTime|null getLastUsedAt()
  * @method void setLastUsedAt(?DateTime $lastUsedAt)
+ * @method string|null getPendingAdditionalFields()
+ * @method void setPendingAdditionalFields(?string $pendingAdditionalFields)
  * @method void setTombstoneReason(?string $tombstoneReason)
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
@@ -233,6 +235,17 @@ class Secret extends Entity implements JsonSerializable {
 	protected ?DateTime $lastUsedAt = null;
 
 	/**
+	 * Extra-field blobs a secret request filled in that the owner has not
+	 * merged yet: a JSON list of ciphertexts, each encrypted to the owner's
+	 * suite (nullable = none). The filler cannot read the owner's own blob,
+	 * so the owner's browser merges these into it on the next open
+	 * (keepiq#750).
+	 *
+	 * @var string|null
+	 */
+	protected ?string $pendingAdditionalFields = null;
+
+	/**
 	 * The non-personal reason a copy was tombstoned (nullable).
 	 *
 	 * A short enum-ish token (e.g. 'owner-account-deleted'). MUST NOT contain
@@ -310,6 +323,7 @@ class Secret extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'archivedAt', type: 'datetime');
 		$this->addType(fieldName: 'isFavourite', type: 'boolean');
 		$this->addType(fieldName: 'lastUsedAt', type: 'datetime');
+		$this->addType(fieldName: 'pendingAdditionalFields', type: 'string');
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
 		$this->addType(fieldName: 'updatedAt', type: 'datetime');
 	}//end __construct()
@@ -370,8 +384,65 @@ class Secret extends Entity implements JsonSerializable {
 			'archivedAt' => $this->archivedAt?->format('c'),
 			'favourite' => ($this->isFavourite === true),
 			'lastUsedAt' => $this->lastUsedAt?->format('c'),
+			'pendingAdditionalFields' => $this->pendingAdditionalFieldList(),
 		];
 	}//end jsonSerialize()
+
+	/**
+	 * The pending extra-field ciphertexts as a list (empty when none).
+	 *
+	 * @return list<string>
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 */
+	public function pendingAdditionalFieldList(): array {
+		if ($this->pendingAdditionalFields === null || $this->pendingAdditionalFields === '') {
+			return [];
+		}
+
+		$decoded = json_decode($this->pendingAdditionalFields, true);
+		if (is_array($decoded) === false) {
+			return [];
+		}
+
+		return array_values(array_filter($decoded, 'is_string'));
+	}//end pendingAdditionalFieldList()
+
+	/**
+	 * Store the pending extra-field ciphertexts (null when the list is empty).
+	 *
+	 * @param list<string> $ciphertexts The pending ciphertexts, oldest first
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 */
+	public function setPendingAdditionalFieldList(array $ciphertexts): void {
+		if ($ciphertexts === []) {
+			$this->setPendingAdditionalFields(null);
+			return;
+		}
+
+		$this->setPendingAdditionalFields(json_encode(array_values($ciphertexts)));
+	}//end setPendingAdditionalFieldList()
+
+	/**
+	 * Drop the oldest $count pending blobs: the ones the owner's client read
+	 * and merged into the blob it just wrote (keepiq#750).
+	 *
+	 * @param int $count How many pending blobs were merged
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 */
+	public function dropMergedPending(int $count): void {
+		if ($count <= 0) {
+			return;
+		}
+
+		$this->setPendingAdditionalFieldList(array_slice($this->pendingAdditionalFieldList(), $count));
+	}//end dropMergedPending()
 
 	/**
 	 * Serialize only plaintext metadata, omitting encrypted blobs.

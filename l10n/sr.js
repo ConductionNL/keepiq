@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Уклони ознаку",
         "Add tag": "Додај ознаку",
         "Could not change the tags. Try again.": "Није могуће променити ознаке. Покушајте поново.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Извоз у CXF НИЈЕ ШИФРОВАН. Свака лозинка и пријава биће читљива као отворени текст у преузетој датотеци. Чувајте је на безбедном месту и избришите је одмах након употребе.",
         "Root certificate expiring soon": "Коренски сертификат ускоро истиче",
         "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Коренски сертификат трезора истиче за %1$d дан(а). Обновите га пре тога. Обнова поново потписује сваки пакет шифровања."
     },

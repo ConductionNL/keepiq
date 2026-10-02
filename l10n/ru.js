@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Убрать метку",
         "Add tag": "Добавить метку",
         "Could not change the tags. Try again.": "Не удалось изменить метки. Попробуйте ещё раз.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Экспорт в CXF НЕ ЗАШИФРОВАН. Каждый пароль и логин будут читаемы как обычный текст в скачанном файле. Храните файл в надёжном месте и удалите сразу после использования.",
         "Root certificate expiring soon": "Срок действия корневого сертификата скоро истечёт",
         "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Срок действия корневого сертификата хранилища истекает через %1$d дн. Обновите его до этого. При обновлении каждый набор шифрования подписывается заново."
     },

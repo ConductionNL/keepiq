@@ -1266,6 +1266,7 @@
         "Remove tag": "Retirer l'étiquette",
         "Add tag": "Ajouter une étiquette",
         "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Un export CXF n'est PAS CHIFFRÉ. Chaque mot de passe et chaque identifiant sera lisible en clair dans le fichier téléchargé. Conservez-le en sécurité et supprimez-le immédiatement après usage.",
         "Root certificate expiring soon": "Le certificat racine expire bientôt",
         "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Le certificat racine du coffre expire dans %1$d jour(s). Renouvelez-le avant cette date. Le renouvellement signe à nouveau chaque suite de chiffrement."
     },

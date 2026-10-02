@@ -173,6 +173,28 @@ describe('KeePass XML parser', () => {
 		expect(jenkins.additionalFields.CustomToken).toBe('tok123')
 	})
 
+	it('stashes a KeePass one-time-code seed as the TOTP seed (keepiq#749)', () => {
+		const rows = parseKeepassXml(`<?xml version="1.0"?>
+<KeePassFile><Root><Group><Name>Database</Name>
+  <Entry>
+    <String><Key>Title</Key><Value>XC</Value></String>
+    <String><Key>Password</Key><Value>p</Value></String>
+    <String><Key>otp</Key><Value>otpauth://totp/x?secret=JBSWY3DPEHPK3PXP</Value></String>
+  </Entry>
+  <Entry>
+    <String><Key>Title</Key><Value>KP</Value></String>
+    <String><Key>Password</Key><Value>p</Value></String>
+    <String><Key>TimeOtp-Secret-Base32</Key><Value>JBSWY3DPEHPK3PXP</Value></String>
+  </Entry>
+</Group></Root></KeePassFile>`)
+		const xc = rows.find((r) => r.name === 'XC')
+		const kp = rows.find((r) => r.name === 'KP')
+		expect(xc.additionalFields).toEqual({
+			totp: 'otpauth://totp/x?secret=JBSWY3DPEHPK3PXP',
+		})
+		expect(kp.additionalFields).toEqual({ totp: 'JBSWY3DPEHPK3PXP' })
+	})
+
 	it('throws when the KeePass root element is missing', () => {
 		expect(() => parseKeepassXml('<NotKeePass/>')).toThrow(/KeePassFile/)
 	})
