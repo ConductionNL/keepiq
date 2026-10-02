@@ -1396,7 +1396,25 @@
         "5 minutes": "5 minutės",
         "15 minutes": "15 minučių",
         "1 hour": "1 valanda",
-        "4 hours": "4 valandos"
+        "4 hours": "4 valandos",
+        "Connector": "Jungtis",
+        "Directory (tenant) ID": "Katalogo (nuomininko) ID",
+        "Application (client) ID": "Programos (kliento) ID",
+        "Data collection rule immutable ID": "Duomenų rinkimo taisyklės nekintamas ID",
+        "Stream name": "Srauto pavadinimas",
+        "Splunk index (optional)": "Splunk indeksas (neprivaloma)",
+        "Sourcetype (optional)": "Sourcetype (neprivaloma)",
+        "Leave blank to keep the current one": "Palikite tuščią, kad liktų dabartinis",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF per syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Duomenų rinkimo galinis taškas (https URL)",
+        "HTTP Event Collector URL (https)": "HTTP Event Collector URL (https)",
+        "Client secret (write-only)": "Kliento paslaptis (tik rašymui)",
+        "HEC token (write-only)": "HEC prieigos raktas (tik rašymui)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Persiųskite leidžiamus audito įvykius į Splunk, Microsoft Sentinel, syslog gavėją arba žiniatinklio kabliuką. Pranešimuose yra tik išvalyti metaduomenys: jokia slapta reikšmė, vardas, prisijungimas ar šifruotas tekstas niekada nepalieka serverio."
     },
     "plurals": null
 }

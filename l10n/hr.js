@@ -1397,7 +1397,25 @@ OC.L10N.register(
         "5 minutes": "5 minuta",
         "15 minutes": "15 minuta",
         "1 hour": "1 sat",
-        "4 hours": "4 sata"
+        "4 hours": "4 sata",
+        "Connector": "Konektor",
+        "Directory (tenant) ID": "ID direktorija (zakupca)",
+        "Application (client) ID": "ID aplikacije (klijenta)",
+        "Data collection rule immutable ID": "Nepromjenjivi ID pravila prikupljanja podataka",
+        "Stream name": "Naziv toka",
+        "Splunk index (optional)": "Splunk indeks (neobavezno)",
+        "Sourcetype (optional)": "Sourcetype (neobavezno)",
+        "Leave blank to keep the current one": "Ostavite prazno da zadržite trenutnu vrijednost",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF preko sysloga",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Krajnja točka prikupljanja podataka (https URL)",
+        "HTTP Event Collector URL (https)": "URL HTTP Event Collectora (https)",
+        "Client secret (write-only)": "Tajna klijenta (samo pisanje)",
+        "HEC token (write-only)": "HEC token (samo pisanje)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Prosljeđujte dopuštene revizijske događaje u Splunk, Microsoft Sentinel, syslog prijamnik ili webhook. Poruke sadrže samo očišćene metapodatke: nijedna tajna vrijednost, ime, prijava ili šifrirani tekst nikada ne napušta poslužitelj."
     },
     "nplurals=2; plural=(n != 1);"
 )

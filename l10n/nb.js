@@ -1397,7 +1397,25 @@ OC.L10N.register(
         "5 minutes": "5 minutter",
         "15 minutes": "15 minutter",
         "1 hour": "1 time",
-        "4 hours": "4 timer"
+        "4 hours": "4 timer",
+        "Connector": "Kobling",
+        "Directory (tenant) ID": "Katalog-ID (leietaker)",
+        "Application (client) ID": "Program-ID (klient)",
+        "Data collection rule immutable ID": "Uforanderlig ID for datainnsamlingsregelen",
+        "Stream name": "Strømnavn",
+        "Splunk index (optional)": "Splunk-indeks (valgfritt)",
+        "Sourcetype (optional)": "Sourcetype (valgfritt)",
+        "Leave blank to keep the current one": "La stå tomt for å beholde den nåværende",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF over syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Endepunkt for datainnsamling (https-URL)",
+        "HTTP Event Collector URL (https)": "HTTP Event Collector-URL (https)",
+        "Client secret (write-only)": "Klienthemmelighet (kun skriving)",
+        "HEC token (write-only)": "HEC-token (kun skriving)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Videresend tillatte revisjonshendelser til Splunk, Microsoft Sentinel, en syslog-mottaker eller en webhook. Meldinger inneholder bare rensede metadata: ingen hemmelig verdi, navn, pålogging eller kryptert tekst forlater noen gang serveren."
     },
     "nplurals=2; plural=(n != 1);"
 )

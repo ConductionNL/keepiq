@@ -1397,7 +1397,25 @@ OC.L10N.register(
         "5 minutes": "5 минути",
         "15 minutes": "15 минути",
         "1 hour": "1 час",
-        "4 hours": "4 часа"
+        "4 hours": "4 часа",
+        "Connector": "Конектор",
+        "Directory (tenant) ID": "ИД на директорията (наемател)",
+        "Application (client) ID": "ИД на приложението (клиент)",
+        "Data collection rule immutable ID": "Неизменим ИД на правилото за събиране на данни",
+        "Stream name": "Име на потока",
+        "Splunk index (optional)": "Индекс в Splunk (по избор)",
+        "Sourcetype (optional)": "Sourcetype (по избор)",
+        "Leave blank to keep the current one": "Оставете празно, за да запазите текущата",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF през syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Крайна точка за събиране на данни (https URL)",
+        "HTTP Event Collector URL (https)": "URL на HTTP Event Collector (https)",
+        "Client secret (write-only)": "Тайна на клиента (само запис)",
+        "HEC token (write-only)": "HEC токен (само запис)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Препращайте разрешените одитни събития към Splunk, Microsoft Sentinel, syslog приемник или webhook. Съобщенията съдържат само изчистени метаданни: никаква тайна стойност, име, потребителско име или шифрован текст никога не напуска сървъра."
     },
     "nplurals=2; plural=(n != 1);"
 )

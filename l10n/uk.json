@@ -1396,7 +1396,25 @@
         "5 minutes": "5 хвилин",
         "15 minutes": "15 хвилин",
         "1 hour": "1 година",
-        "4 hours": "4 години"
+        "4 hours": "4 години",
+        "Connector": "Конектор",
+        "Directory (tenant) ID": "ІД каталогу (орендаря)",
+        "Application (client) ID": "ІД застосунку (клієнта)",
+        "Data collection rule immutable ID": "Незмінний ІД правила збору даних",
+        "Stream name": "Назва потоку",
+        "Splunk index (optional)": "Індекс Splunk (необов'язково)",
+        "Sourcetype (optional)": "Sourcetype (необов'язково)",
+        "Leave blank to keep the current one": "Залиште порожнім, щоб зберегти поточне значення",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF через syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Кінцева точка збору даних (https URL)",
+        "HTTP Event Collector URL (https)": "URL HTTP Event Collector (https)",
+        "Client secret (write-only)": "Секрет клієнта (лише запис)",
+        "HEC token (write-only)": "Токен HEC (лише запис)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Пересилайте дозволені події аудиту до Splunk, Microsoft Sentinel, приймача syslog або вебхука. Повідомлення містять лише очищені метадані: жодне секретне значення, ім'я, логін чи шифротекст ніколи не залишає сервер."
     },
     "plurals": null
 }
