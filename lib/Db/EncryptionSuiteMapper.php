@@ -289,4 +289,46 @@ class EncryptionSuiteMapper extends QBMapper {
 
 		return $qb->executeStatement();
 	}//end deleteByOwnerUser()
+
+	/**
+	 * The status of each owner's newest NON-active suite, in one query.
+	 *
+	 * Used for owners who have no active suite: it tells "revoked" from
+	 * "compromised" from "never set up". Only identifiers and the status
+	 * column are read, never the certificate or the wrapped private key.
+	 *
+	 * @param string   $ownerType The owner type
+	 * @param string[] $ownerIds  The owner IDs to look up
+	 *
+	 * @return array<string,string> Newest non-active status, keyed by owner ID
+	 *
+	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.1
+	 */
+	public function latestInactiveStatusByOwners(string $ownerType, array $ownerIds): array {
+		if ($ownerIds === []) {
+			return [];
+		}
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('owner_id', 'status')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter($ownerType)))
+			->andWhere(
+				$qb->expr()->in('owner_id', $qb->createNamedParameter($ownerIds, IQueryBuilder::PARAM_STR_ARRAY))
+			)
+			->andWhere($qb->expr()->neq('status', $qb->createNamedParameter('active')))
+			->orderBy('created_at', 'DESC')
+			->addOrderBy('id', 'DESC');
+
+		$statuses = [];
+		$result = $qb->executeQuery();
+		while (($row = $result->fetch()) !== false) {
+			// First row per owner wins: the sort puts the newest first.
+			$statuses[(string)$row['owner_id']] ??= (string)$row['status'];
+		}
+
+		$result->closeCursor();
+
+		return $statuses;
+	}//end latestInactiveStatusByOwners()
 }//end class

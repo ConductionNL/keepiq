@@ -310,7 +310,15 @@ final class AuditEventTypes {
 		self::TEAM_FOLDER_UNSHARED => ['folderId', 'revokedCount'],
 		self::TEAM_FOLDER_MEMBER_ADDED => ['memberType', 'memberId'],
 		self::TEAM_FOLDER_MEMBER_REMOVED => ['memberType', 'memberId', 'revokedCount'],
-		self::TEAM_FOLDER_OFFBOARDED => ['leavingUserId', 'successorUserId', 'revokedCount', 'transferredCount'],
+		self::TEAM_FOLDER_OFFBOARDED => [
+			'leavingUserId',
+			'successorUserId',
+			'revokedCount',
+			'transferredCount',
+			// admin-member-overview-and-offboarding §1.3: counts and group ids only.
+			'membershipsRemovedCount',
+			'coveringGroupIds',
+		],
 		// Grade changes — identifiers + the new grade only (§3.3).
 		self::TEAM_FOLDER_GRADE_CHANGED => ['memberType', 'memberId', 'grade'],
 		// Automatic confirmation: counts only, the actor is the confirmer.
