@@ -1268,7 +1268,12 @@
         "Could not change the tags. Try again.": "Níorbh fhéidir na clibeanna a athrú. Bain triail eile as.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Níl easpórtáil CXF CRIPTITHE. Beidh gach pasfhocal agus logáil isteach inléite mar ghnáth-théacs sa chomhad íoslódáilte. Stóráil go sábháilte é agus scrios láithreach é tar éis a úsáide.",
         "Root certificate expiring soon": "Rachaidh an fréamhdheimhniú as feidhm go luath",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Rachaidh fréamhdheimhniú an tsábháilteáin as feidhm i gceann %1$d lá. Athnuaigh é roimhe sin. Síníonn athnuachan gach sraith criptiúcháin arís."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Rachaidh fréamhdheimhniú an tsábháilteáin as feidhm i gceann %1$d lá. Athnuaigh é roimhe sin. Síníonn athnuachan gach sraith criptiúcháin arís.",
+        "Renew root certificate": "Athnuaigh an fréamhtheastas",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Cruthaíonn sé seo fréamhtheastas agus teastas idirmheánach nua. Sínítear gach sraith criptiúcháin ghníomhach arís. Ní féidir é seo a chealú.",
+        "Renew root": "Athnuaigh an fhréamh",
+        "Root renewed. {n} encryption suites signed again.": "Fréamh athnuaite. Sraitheanna criptiúcháin sínithe arís: {n}.",
+        "Could not renew the root certificate.": "Níorbh fhéidir an fréamhtheastas a athnuachan."
     },
     "plurals": null
 }

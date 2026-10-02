@@ -1269,7 +1269,12 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Nie udało się zmienić tagów. Spróbuj ponownie.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Eksport CXF jest NIEZASZYFROWANY. Każde hasło i każdy login będą czytelne jako zwykły tekst w pobranym pliku. Przechowuj go bezpiecznie i usuń natychmiast po użyciu.",
         "Root certificate expiring soon": "Certyfikat główny wkrótce wygaśnie",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certyfikat główny sejfu wygaśnie za %1$d dni. Odnów go wcześniej. Odnowienie ponownie podpisuje każdy zestaw szyfrowania."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certyfikat główny sejfu wygaśnie za %1$d dni. Odnów go wcześniej. Odnowienie ponownie podpisuje każdy zestaw szyfrowania.",
+        "Renew root certificate": "Odnów certyfikat główny",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Zostanie utworzony nowy certyfikat główny i pośredni. Każdy aktywny zestaw szyfrowania zostanie ponownie podpisany. Tej operacji nie można cofnąć.",
+        "Renew root": "Odnów główny",
+        "Root renewed. {n} encryption suites signed again.": "Certyfikat główny odnowiony. Ponownie podpisane zestawy szyfrowania: {n}.",
+        "Could not renew the root certificate.": "Nie udało się odnowić certyfikatu głównego."
     },
     "nplurals=2; plural=(n != 1);"
 )

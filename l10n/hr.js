@@ -1269,7 +1269,12 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Oznake nije bilo moguće promijeniti. Pokušajte ponovno.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Izvoz u CXF NIJE ŠIFRIRAN. Svaka lozinka i prijava bit će čitljiva kao otvoreni tekst u preuzetoj datoteci. Čuvajte je na sigurnom i izbrišite je odmah nakon uporabe.",
         "Root certificate expiring soon": "Korijenski certifikat uskoro istječe",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Korijenski certifikat trezora istječe za %1$d dan(a). Obnovite ga prije toga. Obnova ponovno potpisuje svaki paket šifriranja."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Korijenski certifikat trezora istječe za %1$d dan(a). Obnovite ga prije toga. Obnova ponovno potpisuje svaki paket šifriranja.",
+        "Renew root certificate": "Obnovi korijenski certifikat",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Ovo stvara novi korijenski i posrednički certifikat. Svaki aktivni paket šifriranja ponovno se potpisuje. To se ne može poništiti.",
+        "Renew root": "Obnovi korijen",
+        "Root renewed. {n} encryption suites signed again.": "Korijen obnovljen. Ponovno potpisanih paketa šifriranja: {n}.",
+        "Could not renew the root certificate.": "Korijenski certifikat nije moguće obnoviti."
     },
     "nplurals=2; plural=(n != 1);"
 )

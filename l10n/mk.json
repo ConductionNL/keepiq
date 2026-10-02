@@ -1268,7 +1268,12 @@
         "Could not change the tags. Try again.": "Ознаките не можеа да се променат. Обидете се повторно.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Извозот во CXF НЕ Е ШИФРИРАН. Секоја лозинка и најава ќе биде читлива како отворен текст во преземената датотека. Чувајте ја безбедно и избришете ја веднаш по употребата.",
         "Root certificate expiring soon": "Коренскиот сертификат наскоро истекува",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Коренскиот сертификат на сефот истекува за %1$d ден(а). Обновете го пред тоа. Обновувањето повторно го потпишува секој пакет за шифрирање."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Коренскиот сертификат на сефот истекува за %1$d ден(а). Обновете го пред тоа. Обновувањето повторно го потпишува секој пакет за шифрирање.",
+        "Renew root certificate": "Обнови го коренскиот сертификат",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Ова создава нов коренски и посреднички сертификат. Секој активен пакет за шифрирање повторно се потпишува. Ова не може да се врати.",
+        "Renew root": "Обнови корен",
+        "Root renewed. {n} encryption suites signed again.": "Коренот е обновен. Повторно потпишани пакети за шифрирање: {n}.",
+        "Could not renew the root certificate.": "Коренскиот сертификат не може да се обнови."
     },
     "plurals": null
 }

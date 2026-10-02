@@ -1268,7 +1268,12 @@
         "Could not change the tags. Try again.": "Etichetele nu au putut fi schimbate. Încercați din nou.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Un export CXF NU ESTE CRIPTAT. Fiecare parolă și nume de utilizator vor fi lizibile ca text simplu în fișierul descărcat. Păstrați-l în siguranță și ștergeți-l imediat după utilizare.",
         "Root certificate expiring soon": "Certificatul rădăcină expiră în curând",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certificatul rădăcină al seifului expiră în %1$d zi(le). Reînnoiți-l înainte. Reînnoirea semnează din nou fiecare suită de criptare."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certificatul rădăcină al seifului expiră în %1$d zi(le). Reînnoiți-l înainte. Reînnoirea semnează din nou fiecare suită de criptare.",
+        "Renew root certificate": "Reînnoiește certificatul rădăcină",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Se creează un nou certificat rădăcină și unul intermediar. Fiecare suită de criptare activă este semnată din nou. Acțiunea nu poate fi anulată.",
+        "Renew root": "Reînnoiește rădăcina",
+        "Root renewed. {n} encryption suites signed again.": "Rădăcină reînnoită. Suite de criptare semnate din nou: {n}.",
+        "Could not renew the root certificate.": "Certificatul rădăcină nu a putut fi reînnoit."
     },
     "plurals": null
 }

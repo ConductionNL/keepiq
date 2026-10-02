@@ -1269,7 +1269,12 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "No s'han pogut canviar les etiquetes. Torneu-ho a provar.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Una exportació CXF NO ESTÀ XIFRADA. Totes les contrasenyes i inicis de sessió es podran llegir com a text pla al fitxer baixat. Deseu-lo de manera segura i suprimiu-lo immediatament després d'usar-lo.",
         "Root certificate expiring soon": "El certificat arrel caduca aviat",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "El certificat arrel de la caixa forta caduca d'aquí a %1$d dia(es). Renoveu-lo abans. En renovar-lo es torna a signar cada suite de xifratge."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "El certificat arrel de la caixa forta caduca d'aquí a %1$d dia(es). Renoveu-lo abans. En renovar-lo es torna a signar cada suite de xifratge.",
+        "Renew root certificate": "Renova el certificat arrel",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Això crea un certificat arrel i un d'intermedi nous. Cada conjunt de xifratge actiu es torna a signar. No es pot desfer.",
+        "Renew root": "Renova l'arrel",
+        "Root renewed. {n} encryption suites signed again.": "Arrel renovada. Conjunts de xifratge signats de nou: {n}.",
+        "Could not renew the root certificate.": "No s'ha pogut renovar el certificat arrel."
     },
     "nplurals=2; plural=(n != 1);"
 )

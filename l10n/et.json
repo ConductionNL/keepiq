@@ -1268,7 +1268,12 @@
         "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF-eksport on KRÜPTIMATA. Iga parool ja kasutajanimi on allalaaditud failis loetavad lihttekstina. Hoia seda turvaliselt ja kustuta kohe pärast kasutamist.",
         "Root certificate expiring soon": "Juursertifikaat aegub peagi",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Hoidla juursertifikaat aegub %1$d päeva pärast. Uuenda see enne seda. Uuendamine allkirjastab iga krüpteerimiskomplekti uuesti."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Hoidla juursertifikaat aegub %1$d päeva pärast. Uuenda see enne seda. Uuendamine allkirjastab iga krüpteerimiskomplekti uuesti.",
+        "Renew root certificate": "Uuenda juursertifikaati",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "See loob uue juur- ja vahesertifikaadi. Iga aktiivne krüpteerimiskomplekt allkirjastatakse uuesti. Seda ei saa tagasi võtta.",
+        "Renew root": "Uuenda juurt",
+        "Root renewed. {n} encryption suites signed again.": "Juur uuendatud. Uuesti allkirjastatud krüpteerimiskomplekte: {n}.",
+        "Could not renew the root certificate.": "Juursertifikaati ei õnnestunud uuendada."
     },
     "plurals": null
 }

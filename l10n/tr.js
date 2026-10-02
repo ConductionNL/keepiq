@@ -1269,7 +1269,12 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF dışa aktarımı ŞİFRELENMEMİŞTİR. İndirilen dosyada her parola ve kullanıcı adı düz metin olarak okunabilir olacak. Dosyayı güvenli biçimde saklayın ve kullandıktan hemen sonra silin.",
         "Root certificate expiring soon": "Kök sertifikanın süresi yakında doluyor",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Kasanın kök sertifikasının süresi %1$d gün içinde doluyor. Bundan önce yenileyin. Yenileme her şifreleme paketini yeniden imzalar."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Kasanın kök sertifikasının süresi %1$d gün içinde doluyor. Bundan önce yenileyin. Yenileme her şifreleme paketini yeniden imzalar.",
+        "Renew root certificate": "Kök sertifikayı yenile",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Bu, yeni bir kök ve ara sertifika oluşturur. Her etkin şifreleme paketi yeniden imzalanır. Bu işlem geri alınamaz.",
+        "Renew root": "Kökü yenile",
+        "Root renewed. {n} encryption suites signed again.": "Kök yenilendi. Yeniden imzalanan şifreleme paketi: {n}.",
+        "Could not renew the root certificate.": "Kök sertifika yenilenemedi."
     },
     "nplurals=2; plural=(n != 1);"
 )

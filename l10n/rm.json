@@ -1268,7 +1268,12 @@
         "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "In export CXF N'È BETG CRIPTÀ. Mintga pled-clav e mintga login vegn a pudair vegnir legì sco text cler en la datoteca telechargiada. Conservai la a moda segira e stizzai la immediatamain suenter l'utilisaziun.",
         "Root certificate expiring soon": "Il certificat da ragisch scada prest",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Il certificat da ragisch da la cassaforta scada en %1$d di(s). Renovai el avant. La renovaziun suttascriva danovamain mintga suite da criptaziun."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Il certificat da ragisch da la cassaforta scada en %1$d di(s). Renovai el avant. La renovaziun suttascriva danovamain mintga suite da criptaziun.",
+        "Renew root certificate": "Renovar il certificat radical",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Quai crea in nov certificat radical ed intermediar. Mintga suite da criptaziun activa vegn suttascritta danovamain. Quai na po betg vegnir revocà.",
+        "Renew root": "Renovar la ragisch",
+        "Root renewed. {n} encryption suites signed again.": "Ragisch renovada. Suites da criptaziun suttascrittas danovamain: {n}.",
+        "Could not renew the root certificate.": "Impussibel da renovar il certificat radical."
     },
     "plurals": null
 }

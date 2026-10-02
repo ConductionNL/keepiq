@@ -1268,7 +1268,12 @@
         "Could not change the tags. Try again.": "Não foi possível alterar as etiquetas. Tente novamente.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Uma exportação CXF NÃO É CIFRADA. Todas as palavras-passe e credenciais ficarão legíveis em texto simples no ficheiro descarregado. Guarde-o em segurança e elimine-o imediatamente após o uso.",
         "Root certificate expiring soon": "O certificado raiz expira em breve",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "O certificado raiz do cofre expira em %1$d dia(s). Renove-o antes disso. A renovação volta a assinar cada suíte de cifragem."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "O certificado raiz do cofre expira em %1$d dia(s). Renove-o antes disso. A renovação volta a assinar cada suíte de cifragem.",
+        "Renew root certificate": "Renovar o certificado raiz",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Isto cria um novo certificado raiz e um intermédio. Cada conjunto de cifragem ativo é assinado de novo. Não é possível anular.",
+        "Renew root": "Renovar raiz",
+        "Root renewed. {n} encryption suites signed again.": "Raiz renovada. Conjuntos de cifragem assinados de novo: {n}.",
+        "Could not renew the root certificate.": "Não foi possível renovar o certificado raiz."
     },
     "plurals": null
 }

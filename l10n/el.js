@@ -1269,7 +1269,12 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Μια εξαγωγή CXF ΔΕΝ ΕΙΝΑΙ ΚΡΥΠΤΟΓΡΑΦΗΜΕΝΗ. Κάθε κωδικός πρόσβασης και σύνδεση θα είναι αναγνώσιμα ως απλό κείμενο στο αρχείο που κατεβάζετε. Αποθηκεύστε το με ασφάλεια και διαγράψτε το αμέσως μετά τη χρήση.",
         "Root certificate expiring soon": "Το πιστοποιητικό ρίζας λήγει σύντομα",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Το πιστοποιητικό ρίζας του θησαυροφυλακίου λήγει σε %1$d ημέρα(ες). Ανανεώστε το πριν από τότε. Η ανανέωση υπογράφει ξανά κάθε σουίτα κρυπτογράφησης."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Το πιστοποιητικό ρίζας του θησαυροφυλακίου λήγει σε %1$d ημέρα(ες). Ανανεώστε το πριν από τότε. Η ανανέωση υπογράφει ξανά κάθε σουίτα κρυπτογράφησης.",
+        "Renew root certificate": "Ανανέωση πιστοποιητικού ρίζας",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Δημιουργείται νέο πιστοποιητικό ρίζας και ενδιάμεσο. Κάθε ενεργή σουίτα κρυπτογράφησης υπογράφεται ξανά. Δεν μπορεί να αναιρεθεί.",
+        "Renew root": "Ανανέωση ρίζας",
+        "Root renewed. {n} encryption suites signed again.": "Η ρίζα ανανεώθηκε. Σουίτες κρυπτογράφησης που υπογράφηκαν ξανά: {n}.",
+        "Could not renew the root certificate.": "Δεν ήταν δυνατή η ανανέωση του πιστοποιητικού ρίζας."
     },
     "nplurals=2; plural=(n != 1);"
 )

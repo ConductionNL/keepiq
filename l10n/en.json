@@ -1268,7 +1268,12 @@
         "Could not change the tags. Try again.": "Could not change the tags. Try again.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.",
         "Root certificate expiring soon": "Root certificate expiring soon",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.",
+        "Renew root certificate": "Renew root certificate",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.",
+        "Renew root": "Renew root",
+        "Root renewed. {n} encryption suites signed again.": "Root renewed. {n} encryption suites signed again.",
+        "Could not renew the root certificate.": "Could not renew the root certificate."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

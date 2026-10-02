@@ -1274,7 +1274,12 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Kon de labels niet wijzigen. Probeer het opnieuw.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Een CXF-export is ONVERSLEUTELD. Elk wachtwoord en elke login is leesbaar als platte tekst in het gedownloade bestand. Bewaar het veilig en verwijder het direct na gebruik.",
         "Root certificate expiring soon": "Rootcertificaat verloopt binnenkort",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Het rootcertificaat van de kluis verloopt over %1$d dag(en). Vernieuw het vóór die tijd. Vernieuwen ondertekent elke versleutelingssuite opnieuw."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Het rootcertificaat van de kluis verloopt over %1$d dag(en). Vernieuw het vóór die tijd. Vernieuwen ondertekent elke versleutelingssuite opnieuw.",
+        "Renew root certificate": "Rootcertificaat vernieuwen",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Dit maakt een nieuw root- en tussencertificaat. Elke actieve versleutelingssuite wordt opnieuw ondertekend. Je kunt dit niet ongedaan maken.",
+        "Renew root": "Root vernieuwen",
+        "Root renewed. {n} encryption suites signed again.": "Root vernieuwd. {n} versleutelingssuites opnieuw ondertekend.",
+        "Could not renew the root certificate.": "Het rootcertificaat kon niet worden vernieuwd."
     },
     "nplurals=2; plural=(n != 1);"
 )

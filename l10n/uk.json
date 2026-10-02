@@ -1268,7 +1268,12 @@
         "Could not change the tags. Try again.": "Не вдалося змінити мітки. Спробуйте ще раз.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Експорт до CXF НЕ ЗАШИФРОВАНИЙ. Кожен пароль і логін будуть читабельними як звичайний текст у завантаженому файлі. Зберігайте файл у надійному місці та вилучіть його одразу після використання.",
         "Root certificate expiring soon": "Термін дії кореневого сертифіката скоро спливе",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Термін дії кореневого сертифіката сховища спливає через %1$d дн. Оновіть його до цього. Оновлення заново підписує кожен набір шифрування."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Термін дії кореневого сертифіката сховища спливає через %1$d дн. Оновіть його до цього. Оновлення заново підписує кожен набір шифрування.",
+        "Renew root certificate": "Оновити кореневий сертифікат",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Буде створено нові кореневий і проміжний сертифікати. Кожен активний набір шифрування буде підписано заново. Цю дію не можна скасувати.",
+        "Renew root": "Оновити корінь",
+        "Root renewed. {n} encryption suites signed again.": "Корінь оновлено. Заново підписано наборів шифрування: {n}.",
+        "Could not renew the root certificate.": "Не вдалося оновити кореневий сертифікат."
     },
     "plurals": null
 }

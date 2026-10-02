@@ -1269,7 +1269,12 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Impossibile modificare le etichette. Riprova.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Un'esportazione CXF NON È CIFRATA. Ogni password e ogni nome utente sarà leggibile in chiaro nel file scaricato. Conservalo in modo sicuro ed eliminalo subito dopo l'uso.",
         "Root certificate expiring soon": "Il certificato radice scade a breve",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Il certificato radice della cassaforte scade tra %1$d giorno/i. Rinnovalo prima di allora. Il rinnovo firma di nuovo ogni suite di cifratura."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Il certificato radice della cassaforte scade tra %1$d giorno/i. Rinnovalo prima di allora. Il rinnovo firma di nuovo ogni suite di cifratura.",
+        "Renew root certificate": "Rinnova il certificato radice",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Viene creato un nuovo certificato radice e uno intermedio. Ogni suite di cifratura attiva viene firmata di nuovo. L'operazione non è reversibile.",
+        "Renew root": "Rinnova radice",
+        "Root renewed. {n} encryption suites signed again.": "Radice rinnovata. Suite di cifratura firmate di nuovo: {n}.",
+        "Could not renew the root certificate.": "Impossibile rinnovare il certificato radice."
     },
     "nplurals=2; plural=(n != 1);"
 )

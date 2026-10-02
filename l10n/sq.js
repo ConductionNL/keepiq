@@ -1269,7 +1269,12 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Etiketat nuk u ndryshuan dot. Provoni sërish.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Një eksport CXF është I PAKRIPTUAR. Çdo fjalëkalim dhe kredencial hyrjeje do të lexohet si tekst i thjeshtë në skedarin e shkarkuar. Ruajeni në mënyrë të sigurt dhe fshijeni menjëherë pas përdorimit.",
         "Root certificate expiring soon": "Certifikata rrënjë skadon së shpejti",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certifikata rrënjë e kasafortës skadon pas %1$d dite(ve). Rinovojeni para kësaj. Rinovimi nënshkruan sërish çdo paketë enkriptimi."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certifikata rrënjë e kasafortës skadon pas %1$d dite(ve). Rinovojeni para kësaj. Rinovimi nënshkruan sërish çdo paketë enkriptimi.",
+        "Renew root certificate": "Rinovo certifikatën rrënjë",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Kjo krijon një certifikatë të re rrënjë dhe të ndërmjetme. Çdo paketë aktive enkriptimi nënshkruhet përsëri. Kjo nuk mund të zhbëhet.",
+        "Renew root": "Rinovo rrënjën",
+        "Root renewed. {n} encryption suites signed again.": "Rrënja u rinovua. Paketa enkriptimi të nënshkruara përsëri: {n}.",
+        "Could not renew the root certificate.": "Certifikata rrënjë nuk mund të rinovohej."
     },
     "nplurals=2; plural=(n != 1);"
 )

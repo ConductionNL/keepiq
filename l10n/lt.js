@@ -1269,7 +1269,12 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF eksportas NĖRA ŠIFRUOTAS. Kiekvienas slaptažodis ir prisijungimo vardas atsisiųstame faile bus perskaitomi kaip paprastas tekstas. Saugokite jį saugiai ir iškart po naudojimo ištrinkite.",
         "Root certificate expiring soon": "Šakninio sertifikato galiojimas netrukus baigsis",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Saugyklos šakninio sertifikato galiojimas baigsis po %1$d d. Atnaujinkite jį iki tol. Atnaujinant iš naujo pasirašomas kiekvienas šifravimo rinkinys."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Saugyklos šakninio sertifikato galiojimas baigsis po %1$d d. Atnaujinkite jį iki tol. Atnaujinant iš naujo pasirašomas kiekvienas šifravimo rinkinys.",
+        "Renew root certificate": "Atnaujinti šakninį sertifikatą",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Sukuriamas naujas šakninis ir tarpinis sertifikatas. Kiekvienas aktyvus šifravimo rinkinys pasirašomas iš naujo. To negalima atšaukti.",
+        "Renew root": "Atnaujinti šaknį",
+        "Root renewed. {n} encryption suites signed again.": "Šaknis atnaujinta. Iš naujo pasirašytų šifravimo rinkinių: {n}.",
+        "Could not renew the root certificate.": "Nepavyko atnaujinti šakninio sertifikato."
     },
     "nplurals=2; plural=(n != 1);"
 )

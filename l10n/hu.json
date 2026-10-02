@@ -1268,7 +1268,12 @@
         "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "A CXF-exportálás TITKOSÍTATLAN. A letöltött fájlban minden jelszó és bejelentkezési név olvasható lesz egyszerű szövegként. Tárolja biztonságosan, és használat után azonnal törölje.",
         "Root certificate expiring soon": "A gyökértanúsítvány hamarosan lejár",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "A széf gyökértanúsítványa %1$d nap múlva lejár. Újítsa meg előtte. A megújítás minden titkosítási csomagot újra aláír."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "A széf gyökértanúsítványa %1$d nap múlva lejár. Újítsa meg előtte. A megújítás minden titkosítási csomagot újra aláír.",
+        "Renew root certificate": "Gyökértanúsítvány megújítása",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Ez új gyökér- és köztes tanúsítványt hoz létre. Minden aktív titkosítási csomag újra aláírásra kerül. Ez nem vonható vissza.",
+        "Renew root": "Gyökér megújítása",
+        "Root renewed. {n} encryption suites signed again.": "Gyökér megújítva. Újra aláírt titkosítási csomagok: {n}.",
+        "Could not renew the root certificate.": "A gyökértanúsítvány nem újítható meg."
     },
     "plurals": null
 }

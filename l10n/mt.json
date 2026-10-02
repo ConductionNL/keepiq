@@ -1268,7 +1268,12 @@
         "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Esportazzjoni CXF MHIJIEX ENKRIPTATA. Kull password u login se jkunu jinqraw bħala test sempliċi fil-fajl imniżżel. Aħżnu b'mod sigur u ħassru minnufih wara li tużah.",
         "Root certificate expiring soon": "Iċ-ċertifikat għerq jiskadi dalwaqt",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Iċ-ċertifikat għerq tal-kaxxaforti jiskadi fi żmien %1$d jum/ijiem. Ġeddu qabel dak iż-żmien. It-tiġdid jerġa' jiffirma kull suite tal-encryption."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Iċ-ċertifikat għerq tal-kaxxaforti jiskadi fi żmien %1$d jum/ijiem. Ġeddu qabel dak iż-żmien. It-tiġdid jerġa' jiffirma kull suite tal-encryption.",
+        "Renew root certificate": "Iġġedded iċ-ċertifikat ewlieni",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Dan joħloq ċertifikat ewlieni u intermedju ġodda. Kull suite ta' encryption attiva terġa' tiġi ffirmata. Ma tistax tħassar dan.",
+        "Renew root": "Iġġedded l-għerq",
+        "Root renewed. {n} encryption suites signed again.": "L-għerq ġie mġedded. Suites ta' encryption iffirmati mill-ġdid: {n}.",
+        "Could not renew the root certificate.": "Ma setax jiġi mġedded iċ-ċertifikat ewlieni."
     },
     "plurals": null
 }

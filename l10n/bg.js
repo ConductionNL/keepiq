@@ -1269,7 +1269,12 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Износът в CXF НЕ Е ШИФРИРАН. Всяка парола и потребителско име ще бъдат четими като обикновен текст в изтегления файл. Пазете го на сигурно място и го изтрийте веднага след употреба.",
         "Root certificate expiring soon": "Основният сертификат изтича скоро",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Основният сертификат на трезора изтича след %1$d ден(а). Подновете го преди това. Подновяването подписва отново всеки пакет за шифроване."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Основният сертификат на трезора изтича след %1$d ден(а). Подновете го преди това. Подновяването подписва отново всеки пакет за шифроване.",
+        "Renew root certificate": "Подновяване на основния сертификат",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Създават се нов основен и междинен сертификат. Всеки активен набор за шифроване се подписва отново. Това не може да бъде отменено.",
+        "Renew root": "Подновяване на основния",
+        "Root renewed. {n} encryption suites signed again.": "Основният сертификат е подновен. Наново подписани набори за шифроване: {n}.",
+        "Could not renew the root certificate.": "Основният сертификат не можа да бъде подновен."
     },
     "nplurals=2; plural=(n != 1);"
 )
