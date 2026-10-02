@@ -140,6 +140,7 @@ class SecretService {
 	 *                                                   without it every folder is refused
 	 * @param SecretTagMapper|null $tagMapper The holder's tags (vault-favourites-tags-and-last-used):
 	 *                                        list rows carry them, a delete removes them
+	 * @param OrgOwnershipGuard|null $orgOwnership The team folder ownership policy (admin-vault-policies)
 	 *
 	 * @return void
 	 */
@@ -162,6 +163,7 @@ class SecretService {
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 		private ?FolderOwnershipGuard $folderOwnership = null,
 		private ?SecretTagMapper $tagMapper = null,
+		private ?OrgOwnershipGuard $orgOwnership = null,
 	) {
 	}//end __construct()
 
@@ -266,6 +268,10 @@ class SecretService {
 			$data['typeId'] ?? null,
 			$userId
 		);
+
+		// Work logins live in team folders when the policy says so
+		// (admin-vault-policies D4). Import commits through here too.
+		$this->orgOwnership?->assertAllowed(userId: $userId, typeId: $typeId, folderId: $folderId);
 
 		$now = new DateTime();
 		$secret = new Secret();
@@ -889,6 +895,10 @@ class SecretService {
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
 	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) One partial-update guard per
+	 *   field, in the order the fields are applied; the vault policy check is one
+	 *   line. Splitting the field guards apart would scatter one update over
+	 *   several methods and the class is at its method limit.
 	 */
 	public function update(string $id, array $data, string $userId): Secret {
 		$this->assertNotWriteLocked(userId: $userId);
@@ -925,6 +935,8 @@ class SecretService {
 		if (array_key_exists('typeId', $data) === true) {
 			$secret->setTypeId($this->typeService->resolveTypeForSecret($data['typeId'], $userId));
 		}
+
+		$this->orgOwnership?->assertKept(secret: $secret, before: $preUpdate, userId: $userId);
 
 		if (array_key_exists('key', $data) === true) {
 			$key = (string)$data['key'];

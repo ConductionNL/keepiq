@@ -45,6 +45,7 @@ class SettingsController extends Controller {
 	 * @param SettingsService $settingsService The settings service
 	 * @param IUserSession $userSession The user session
 	 * @param ConnectionReporter|null $connectionReporter Asks integriq to look again after a breach check save, or nothing when absent.
+	 * @param \OCA\Keepiq\Service\TwoFactorGate|null $twoFactor The two-factor gap count (admin-vault-policies §1.3)
 	 *
 	 * @return void
 	 *
@@ -55,6 +56,7 @@ class SettingsController extends Controller {
 		private SettingsService $settingsService,
 		private IUserSession $userSession,
 		private ?ConnectionReporter $connectionReporter = null,
+		private ?\OCA\Keepiq\Service\TwoFactorGate $twoFactor = null,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -228,6 +230,28 @@ class SettingsController extends Controller {
 
 		return new JSONResponse(data: $result);
 	}//end updateAdminSettings()
+
+	/**
+	 * How many users a two-factor vault policy for these groups covers, and
+	 * how many have no second factor yet (admin-vault-policies §1.3). Counts
+	 * only, admin only.
+	 *
+	 * @param array<int,string> $groups The group scope; empty means everyone
+	 *
+	 * @AuthorizedAdminSetting(AdminSettings::class)
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+	 */
+	#[AuthorizedAdminSetting(AdminSettings::class)]
+	public function twoFactorGaps(array $groups = []): JSONResponse {
+		if ($this->twoFactor === null) {
+			return new JSONResponse(data: ['message' => 'Unavailable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
+		}
+
+		return new JSONResponse(data: $this->twoFactor->gapReport(groupIds: array_values(array_map('strval', $groups))));
+	}//end twoFactorGaps()
 
 	/**
 	 * Get the current user's preferences (implement-dashboard-settings §2.3).

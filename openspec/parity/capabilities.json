@@ -4837,7 +4837,7 @@
       "id": "health-08",
       "area": "health",
       "name": "Generate a memorable passphrase made of words.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -4845,11 +4845,10 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/health-passphrase-generator on 2026-09-27. Before: grep -rli 'passphrase|diceware|wordlist' src lib browser-extension/src cli: hits are only export-backup passphrases and import parsers; KeyGeneratorService has no word mode",
+        "state": "built",
+        "evidence": "src/generator/generator.js generatePassphrase (EFF large word list src/generator/eff-large-wordlist.js, crypto.getRandomValues) <- src/dialogs/KeyGeneratorModal.vue Password/Passphrase switch; policy fit + generator_allow_passphrase (lib/Service/PasswordPolicyService.php). Tests: tests/vitest/generator.spec.js, tests/dialogs/KeyGeneratorModal.spec.js, tests/e2e/workflows/key-generator.spec.ts. Change: openspec/changes/client-side-key-generator (supersedes health-passphrase-generator).",
         "owner": "ConductionNL/keepiq",
-        "note": "The generator only produces character strings (or regex-shaped ones); there is no word-based passphrase mode.",
-        "change": "openspec/changes/health-passphrase-generator"
+        "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Generate a strong key -> Passphrase"
       },
       "rowSource": "competitor",
       "provider": "keepiq",

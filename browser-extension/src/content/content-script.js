@@ -14,6 +14,7 @@
  * No secret is ever stored here; the worker owns all key material.
  */
 
+import { frameMayFill } from '../lib/fillScope.js'
 import { showSavePrompt } from './save-prompt.js'
 import { useOnlyPasswordTarget } from '../lib/useOnly.js'
 
@@ -217,9 +218,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 			sendResponse(reportHasLoginForm())
 			return true
 		case 'fill-credential':
+			// A frame of another site (an embedded widget, an advert) stays
+			// silent, so the answer comes from a frame that may fill (#740).
+			if (!frameMayFill(location.hostname, msg.payload?.host)) {
+				return false
+			}
 			sendResponse({ filled: fillCredential(msg.payload) })
 			return true
 		case 'fill-otp':
+			if (!frameMayFill(location.hostname, msg.payload?.host)) {
+				return false
+			}
 			sendResponse({ filled: fillOtp(msg.payload?.code) })
 			return true
 		default:

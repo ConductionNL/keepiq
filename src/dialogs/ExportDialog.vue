@@ -59,113 +59,143 @@
 				</NcCheckboxRadioSwitch>
 			</div>
 
-			<fieldset class="export-dialog__modes">
-				<legend>{{ t('keepiq', 'Export format') }}</legend>
-				<NcCheckboxRadioSwitch
-					:modelValue="mode"
-					value="encrypted-backup"
-					name="export-mode"
-					type="radio"
-					@update:modelValue="mode = $event">
-					{{ t('keepiq', 'Encrypted backup (recommended)') }}
-				</NcCheckboxRadioSwitch>
-				<NcCheckboxRadioSwitch
-					:modelValue="mode"
-					value="plaintext-csv"
-					name="export-mode"
-					type="radio"
-					@update:modelValue="mode = $event">
-					{{ t('keepiq', 'Plaintext CSV (unencrypted)') }}
-				</NcCheckboxRadioSwitch>
-				<NcCheckboxRadioSwitch
-					:modelValue="mode"
-					value="cxf"
-					name="export-mode"
-					type="radio"
-					data-testid="export-mode-cxf"
-					@update:modelValue="mode = $event">
-					{{ t('keepiq', 'FIDO Credential Exchange (CXF, unencrypted)') }}
-				</NcCheckboxRadioSwitch>
-			</fieldset>
-
-			<!-- CXF unmapped-item report: shown BEFORE the download so the
-			     user knows exactly what will not survive the round-trip
-			     (cxf-import-export D4). -->
+			<!-- The export ban (admin-vault-policies §2.2): every file mode is
+			     hidden; the personal data package stays available. -->
 			<NcNoteCard
-				v-if="mode === 'cxf' && cxfReport && cxfReport.unmapped.length"
-				type="warning"
-				data-testid="cxf-unmapped-report">
-				<p>
-					{{ t('keepiq', 'The following will not survive a CXF export:') }}
-				</p>
-				<ul>
-					<li v-for="(entry, idx) in cxfReport.unmapped" :key="idx">
-						{{ entry }}
-					</li>
-				</ul>
-				<p>{{ t('keepiq', 'Export again to proceed anyway.') }}</p>
+				v-if="exportBlocked"
+				type="info"
+				data-testid="export-blocked-by-policy">
+				{{
+					t(
+						'keepiq',
+						'Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.',
+					)
+				}}
 			</NcNoteCard>
 
-			<NcSelect
-				v-model="scopeFolder"
-				:inputLabel="t('keepiq', 'Scope')"
-				:options="scopeOptions"
-				:reduce="(opt) => opt.value"
-				:clearable="false" />
+			<template v-if="!exportBlocked">
+				<fieldset class="export-dialog__modes">
+					<legend>{{ t('keepiq', 'Export format') }}</legend>
+					<NcCheckboxRadioSwitch
+						:modelValue="mode"
+						value="encrypted-backup"
+						name="export-mode"
+						type="radio"
+						@update:modelValue="mode = $event">
+						{{ t('keepiq', 'Encrypted backup (recommended)') }}
+					</NcCheckboxRadioSwitch>
+					<NcCheckboxRadioSwitch
+						:modelValue="mode"
+						value="plaintext-csv"
+						name="export-mode"
+						type="radio"
+						@update:modelValue="mode = $event">
+						{{ t('keepiq', 'Plaintext CSV (unencrypted)') }}
+					</NcCheckboxRadioSwitch>
+					<NcCheckboxRadioSwitch
+						:modelValue="mode"
+						value="cxf"
+						name="export-mode"
+						type="radio"
+						data-testid="export-mode-cxf"
+						@update:modelValue="mode = $event">
+						{{
+							t(
+								'keepiq',
+								'FIDO Credential Exchange (CXF, unencrypted)',
+							)
+						}}
+					</NcCheckboxRadioSwitch>
+				</fieldset>
 
-			<!-- Encrypted backup path -->
-			<div v-if="mode === 'encrypted-backup'" class="export-dialog__backup">
-				<NcPasswordField
-					v-model="passphrase"
-					:label="t('keepiq', 'Backup passphrase')"
-					@update:modelValue="onPassphraseInput" />
-				<p class="export-dialog__hint">
-					{{
-						t(
-							'keepiq',
-							'Choose a strong passphrase and write it down. A backup is the one thing that survives a lost master password — but only if you remember its passphrase.',
-						)
-					}}
-				</p>
-				<p
-					v-if="passphrase"
-					class="export-dialog__strength"
-					:class="'export-dialog__strength--' + passphraseScore">
-					{{ strengthLabel }}
-				</p>
-			</div>
-
-			<!-- Plaintext CSV or CXF path: warning -> ack -> re-auth. Each
-			     names its own format (keepiq#749). -->
-			<div v-else class="export-dialog__csv">
-				<NcNoteCard type="warning" data-testid="export-plaintext-warning">
-					{{
-						mode === 'cxf'
-							? t(
-									'keepiq',
-									'A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.',
-								)
-							: t(
-									'keepiq',
-									'A CSV export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.',
-								)
-					}}
+				<!-- CXF unmapped-item report: shown BEFORE the download so the
+			     user knows exactly what will not survive the round-trip
+			     (cxf-import-export D4). -->
+				<NcNoteCard
+					v-if="mode === 'cxf' && cxfReport && cxfReport.unmapped.length"
+					type="warning"
+					data-testid="cxf-unmapped-report">
+					<p>
+						{{
+							t(
+								'keepiq',
+								'The following will not survive a CXF export:',
+							)
+						}}
+					</p>
+					<ul>
+						<li v-for="(entry, idx) in cxfReport.unmapped" :key="idx">
+							{{ entry }}
+						</li>
+					</ul>
+					<p>{{ t('keepiq', 'Export again to proceed anyway.') }}</p>
 				</NcNoteCard>
-				<NcCheckboxRadioSwitch
-					:modelValue="warningAcknowledged"
-					@update:modelValue="warningAcknowledged = $event">
-					{{
-						t(
-							'keepiq',
-							'I understand the file is unencrypted and will delete it after use',
-						)
-					}}
-				</NcCheckboxRadioSwitch>
-				<NcPasswordField
-					v-if="warningAcknowledged"
-					v-model="masterPassword"
-					:label="t('keepiq', 'Re-enter your master password')" />
-			</div>
+
+				<NcSelect
+					v-model="scopeFolder"
+					:inputLabel="t('keepiq', 'Scope')"
+					:options="scopeOptions"
+					:reduce="(opt) => opt.value"
+					:clearable="false" />
+
+				<!-- Encrypted backup path -->
+				<div
+					v-if="mode === 'encrypted-backup'"
+					class="export-dialog__backup">
+					<NcPasswordField
+						v-model="passphrase"
+						:label="t('keepiq', 'Backup passphrase')"
+						@update:modelValue="onPassphraseInput" />
+					<p class="export-dialog__hint">
+						{{
+							t(
+								'keepiq',
+								'Choose a strong passphrase and write it down. A backup is the one thing that survives a lost master password — but only if you remember its passphrase.',
+							)
+						}}
+					</p>
+					<p
+						v-if="passphrase"
+						class="export-dialog__strength"
+						:class="'export-dialog__strength--' + passphraseScore">
+						{{ strengthLabel }}
+					</p>
+				</div>
+
+				<!-- Plaintext CSV or CXF path: warning -> ack -> re-auth. Each
+			     names its own format (keepiq#749). -->
+				<div v-else class="export-dialog__csv">
+					<NcNoteCard
+						type="warning"
+						data-testid="export-plaintext-warning">
+						{{
+							mode === 'cxf'
+								? t(
+										'keepiq',
+										'A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.',
+									)
+								: t(
+										'keepiq',
+										'A CSV export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.',
+									)
+						}}
+					</NcNoteCard>
+					<NcCheckboxRadioSwitch
+						:modelValue="warningAcknowledged"
+						@update:modelValue="warningAcknowledged = $event">
+						{{
+							t(
+								'keepiq',
+								'I understand the file is unencrypted and will delete it after use',
+							)
+						}}
+					</NcCheckboxRadioSwitch>
+					<NcPasswordField
+						v-if="warningAcknowledged"
+						v-model="masterPassword"
+						:label="t('keepiq', 'Re-enter your master password')" />
+				</div>
+			</template>
 		</div>
 
 		<template #actions>
@@ -193,6 +223,7 @@ import {
 } from '@nextcloud/vue'
 import zxcvbn from 'zxcvbn'
 import { verifyMasterPassword } from '../crypto/reauth.js'
+import { fetchPolicy } from '../policy/policy.js'
 import { useExportStore } from '../store/modules/export.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
@@ -264,6 +295,8 @@ export default {
 			error: null,
 			/** CXF pre-download unmapped-item report (null = not built yet). */
 			cxfReport: null,
+			/** Whether the export ban applies to this user (admin-vault-policies). */
+			exportBlocked: false,
 		}
 	},
 
@@ -332,6 +365,9 @@ export default {
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		canSubmit() {
+			if (this.exportBlocked) {
+				return false
+			}
 			if (this.skipped > 0 && !this.skippedAcknowledged) {
 				return false
 			}
@@ -354,6 +390,17 @@ export default {
 			// A mode switch invalidates the CXF pre-download report.
 			this.cxfReport = null
 		},
+	},
+
+	/**
+	 * Read whether the export ban applies, so the blocked modes are hidden
+	 * before anything is decrypted.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#2.2
+	 */
+	async created() {
+		this.exportBlocked = (await fetchPolicy())?.vault_export_disabled === true
 	},
 
 	methods: {
@@ -449,6 +496,12 @@ export default {
 				this.reset()
 				this.$emit('update:open', false)
 			} catch (e) {
+				// The server refuses the report under the export ban, which
+				// aborts the download; show the policy instead of a raw error.
+				if (e?.response?.data?.code === 'export_disabled_by_policy') {
+					this.exportBlocked = true
+					return
+				}
 				this.error =
 					this.exportStore.error
 					|| (e && e.message)

@@ -234,6 +234,7 @@ class TeamFolderAuditor {
 	 * @param string $successorUserId The successor taking ownership
 	 * @param int $revoked The number of derived shares revoked
 	 * @param int $transferred The number of secrets transferred
+	 * @param int $removedMemberships The number of direct team-folder memberships removed
 	 *
 	 * @return void
 	 *
@@ -245,6 +246,7 @@ class TeamFolderAuditor {
 		string $successorUserId,
 		int $revoked,
 		int $transferred,
+		int $removedMemberships=0,
 	): void {
 		$this->dispatch(
 			event: $this->auditEvents->forUser(
@@ -257,6 +259,7 @@ class TeamFolderAuditor {
 					'leavingUserId' => $leavingUserId,
 					'successorUserId' => $successorUserId,
 					'revokedCount' => $revoked,
+					'removedMembershipCount' => $removedMemberships,
 					'transferredCount' => $transferred,
 				],
 			)
