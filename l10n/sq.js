@@ -1267,7 +1267,9 @@ OC.L10N.register(
         "Remove tag": "Hiq etiketën",
         "Add tag": "Shto etiketë",
         "Could not change the tags. Try again.": "Etiketat nuk u ndryshuan dot. Provoni sërish.",
-        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Një eksport CXF është I PAKRIPTUAR. Çdo fjalëkalim dhe kredencial hyrjeje do të lexohet si tekst i thjeshtë në skedarin e shkarkuar. Ruajeni në mënyrë të sigurt dhe fshijeni menjëherë pas përdorimit."
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Një eksport CXF është I PAKRIPTUAR. Çdo fjalëkalim dhe kredencial hyrjeje do të lexohet si tekst i thjeshtë në skedarin e shkarkuar. Ruajeni në mënyrë të sigurt dhe fshijeni menjëherë pas përdorimit.",
+        "Root certificate expiring soon": "Certifikata rrënjë skadon së shpejti",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certifikata rrënjë e kasafortës skadon pas %1$d dite(ve). Rinovojeni para kësaj. Rinovimi nënshkruan sërish çdo paketë enkriptimi."
     },
     "nplurals=2; plural=(n != 1);"
 )

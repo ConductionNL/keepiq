@@ -163,7 +163,10 @@ class ScanExpiringSecretsJob extends TimedJob {
 		}//end if
 
 		// Approaching: the daily cadence means daysLeft passes each integer
-		// exactly once, so an exact threshold match is naturally deduped.
+		// exactly once, so an exact threshold match is naturally deduped. A
+		// policy that sets its own reminder days replaces the instance-wide
+		// thresholds for the secrets it scopes (keepiq#746).
+		$thresholds = ($this->rotationService->reminderDaysFor(secret: $secret) ?? $thresholds);
 		if (in_array($daysLeft, array_map('intval', $thresholds), true) === true) {
 			$this->notificationService->notify(
 				subject: 'secret_expiring',

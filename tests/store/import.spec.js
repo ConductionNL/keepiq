@@ -25,6 +25,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { rsaDecrypt } from '../../src/crypto/rsa.js'
 import { encryptBackup } from '../../src/export/backup.js'
 import { serializeVault } from '../../src/export/serializer.js'
+import { resetPolicyCache } from '../../src/policy/policy.js'
 import { COMMIT_CHUNK_SIZE, useImportStore } from '../../src/store/modules/import.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
@@ -657,5 +658,48 @@ describe('useImportStore', () => {
 		])
 		expect(body.items[1].folderPath).toEqual(['bitwarden 2026-10-02'])
 		expect(body.folders).toContainEqual(['bitwarden 2026-10-02', 'Work', 'CI'])
+	})
+
+	it('rejects a row below the organisation password policy with its reason (keepiq#746)', async () => {
+		await unlockSession()
+		resetPolicyCache()
+		vi.spyOn(useSecretStore(), 'fetchSecrets').mockResolvedValue()
+		vi.spyOn(axios, 'get').mockImplementation(async (url) => {
+			if (url.endsWith('/settings/policy')) {
+				return { data: { policy_enabled: true, min_zxcvbn_score: 3 } }
+			}
+			return { data: [] }
+		})
+		let body = null
+		vi.spyOn(axios, 'post').mockImplementation(async (url, payload) => {
+			body = payload
+			return {
+				data: {
+					results: payload.items.map((_, i) => ({
+						index: i,
+						status: 'created',
+						secretId: 's' + i,
+					})),
+				},
+			}
+		})
+
+		const store = useImportStore()
+		store.rows = [
+			{ sourceRow: 1, name: 'Weak', password: 'password', errors: [] },
+			{
+				sourceRow: 2,
+				name: 'Strong',
+				password: 'correct-horse-battery-staple-91!',
+				errors: [],
+			},
+		]
+		await store.commit()
+		resetPolicyCache()
+
+		expect(body.items.map((item) => item.name)).toEqual(['Strong'])
+		expect(store.rejected).toHaveLength(1)
+		expect(store.rejected[0].sourceRow).toBe(1)
+		expect(store.rejected[0].reason).toMatch(/below the org minimum/)
 	})
 })

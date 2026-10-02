@@ -1267,7 +1267,9 @@ OC.L10N.register(
         "Remove tag": "Fjern etikett",
         "Add tag": "Legg til etikett",
         "Could not change the tags. Try again.": "Kunne ikke endre etikettene. Prøv igjen.",
-        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "En CXF-eksport er UKRYPTERT. Alle passord og innlogginger vil være lesbare som klartekst i den nedlastede filen. Oppbevar den trygt, og slett den umiddelbart etter bruk."
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "En CXF-eksport er UKRYPTERT. Alle passord og innlogginger vil være lesbare som klartekst i den nedlastede filen. Oppbevar den trygt, og slett den umiddelbart etter bruk.",
+        "Root certificate expiring soon": "Rotsertifikatet utløper snart",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Hvelvets rotsertifikat utløper om %1$d dag(er). Forny det før den tid. Fornyelsen signerer hver krypteringssuite på nytt."
     },
     "nplurals=2; plural=(n != 1);"
 )
