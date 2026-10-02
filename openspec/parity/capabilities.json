@@ -6708,7 +6708,7 @@
       "id": "audit-14",
       "area": "audit",
       "name": "Use ready-made connectors for Splunk, Microsoft Sentinel or similar tools.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -6716,12 +6716,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/audit-siem-vendor-connectors on 2026-09-27 for the missing half: named Splunk, Microsoft Sentinel and CEF presets on the SIEM export; the generic syslog and webhook stream is built. Before: lib/Service/SiemTransport.php:100 generic RFC 5424 syslog and :152 generic HTTPS JSON webhook; grep -i 'splunk|sentinel|datadog|CEF|LEEF' lib src/components/settings/SiemSection.vue: no hits",
+        "state": "built",
+        "evidence": "SiemTransport splunk_hec and sentinel transports and CEF syslog format (lib/Service/Siem/*Formatter.php), write-only ICrypto credential, connector picker in SiemSection.vue, integrations/siem/sentinel/keepiq-dcr.json and integrations/siem/splunk/props.conf; PHPUnit SiemFormattersTest, SiemConnectorTransportTest, SiemSinkServiceConnectorTest, SentinelTemplateTest; vitest SiemSection.spec.js",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Nextcloud admin settings > Keepiq > SIEM section",
-        "note": "No named connectors or vendor formats; Splunk, Sentinel and similar tools can ingest the generic syslog or webhook stream, but the admin has to configure the receiving side.",
-        "change": "openspec/changes/audit-siem-vendor-connectors"
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/audit-siem-vendor-connectors. Owed: the Playwright flow in the E2E job, an az what-if of the template and a Splunk container test-fire.",
+        "change": "openspec/changes/archive/2026-10-02-audit-siem-vendor-connectors"
       },
       "rowSource": "competitor",
       "provider": "keepiq",

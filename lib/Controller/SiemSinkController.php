@@ -27,6 +27,7 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\SiemSink;
+use OCA\Keepiq\Service\Siem\SiemSinkRequest;
 use OCA\Keepiq\Service\SiemService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -111,40 +112,19 @@ class SiemSinkController extends OCSController {
 	}//end index()
 
 	/**
-	 * Create a sink.
-	 *
-	 * @param string $name Display name
-	 * @param string $type 'syslog' or 'webhook'
-	 * @param string $endpoint host:port (syslog) or https URL (webhook)
-	 * @param bool $tls TLS transport for syslog
-	 * @param string $hmacSecret Optional write-only webhook HMAC secret
-	 * @param array $categoryFilter Optional category slugs; empty = all
-	 * @param int $queueCap Per-sink pending-queue cap
-	 * @param bool $enabled Whether delivery is active
+	 * Create a sink. The body carries name, type (syslog, webhook, splunk_hec
+	 * or sentinel), endpoint, tls, hmacSecret, categoryFilter, queueCap,
+	 * enabled, format, credential and connectorOptions; SiemSinkRequest reads
+	 * them with their defaults.
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
-	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $tls and $enabled are not behaviour
-	 *   switches inside this method: they are two fields of the sink being created,
-	 *   bound by name out of the JSON request body by the Nextcloud router and passed
-	 *   straight into the params array. Nothing here branches on either. Removing them
-	 *   would remove them from the HTTP contract.
-	 *
-	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-named-siem-connectors-on-a-sink
 	 */
 	#[NoAdminRequired]
-	public function create(
-		string $name = '',
-		string $type = '',
-		string $endpoint = '',
-		bool $tls = true,
-		string $hmacSecret = '',
-		array $categoryFilter = [],
-		int $queueCap = 1000,
-		bool $enabled = true,
-	): JSONResponse {
+	public function create(): JSONResponse {
 		$adminUid = $this->adminUid();
 		if ($adminUid === null) {
 			return $this->forbidden();
@@ -153,16 +133,7 @@ class SiemSinkController extends OCSController {
 		try {
 			$sink = $this->service->createSink(
 				adminUid: $adminUid,
-				params: [
-					'name' => $name,
-					'type' => $type,
-					'endpoint' => $endpoint,
-					'tls' => $tls,
-					'hmacSecret' => $hmacSecret,
-					'categoryFilter' => $categoryFilter,
-					'queueCap' => $queueCap,
-					'enabled' => $enabled,
-				],
+				params: (new SiemSinkRequest(request: $this->request))->forCreate(),
 			);
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
@@ -172,109 +143,38 @@ class SiemSinkController extends OCSController {
 	}//end create()
 
 	/**
-	 * Update a sink; a blank hmacSecret preserves the stored one (§3.2).
+	 * Update a sink with the fields the body supplies; a blank hmacSecret or
+	 * credential keeps the stored one (§3.2).
 	 *
 	 * @param string $id The sink UUID
-	 * @param string $name Display name
-	 * @param string $endpoint Endpoint (blank preserves)
-	 * @param bool|null $tls TLS transport, null preserves
-	 * @param string $hmacSecret Write-only secret (blank preserves)
-	 * @param array|null $categoryFilter Category slugs, null preserves
-	 * @param int|null $queueCap Queue cap, null preserves
-	 * @param bool|null $enabled Active flag, null preserves
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-connector-credentials-are-write-only-and-encrypted-at-rest
 	 */
 	#[NoAdminRequired]
-	public function update(
-		string $id,
-		string $name = '',
-		string $endpoint = '',
-		?bool $tls = null,
-		string $hmacSecret = '',
-		?array $categoryFilter = null,
-		?int $queueCap = null,
-		?bool $enabled = null,
-	): JSONResponse {
+	public function update(string $id): JSONResponse {
 		$adminUid = $this->adminUid();
 		if ($adminUid === null) {
 			return $this->forbidden();
 		}
 
-		$params = $this->collectSinkChanges(
-			name: $name,
-			endpoint: $endpoint,
-			tls: $tls,
-			hmacSecret: $hmacSecret,
-			categoryFilter: $categoryFilter,
-			queueCap: $queueCap,
-			enabled: $enabled
-		);
-
 		try {
-			$sink = $this->service->updateSink(adminUid: $adminUid, sinkId: $id, params: $params);
+			$sink = $this->service->updateSink(
+				adminUid: $adminUid,
+				sinkId: $id,
+				params: (new SiemSinkRequest(request: $this->request))->forUpdate()
+			);
 		} catch (DoesNotExistException) {
 			return new JSONResponse(data: ['message' => 'Sink not found'], statusCode: Http::STATUS_NOT_FOUND);
+		} catch (InvalidArgumentException $exception) {
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $sink->jsonSerialize());
 	}//end update()
-
-	/**
-	 * Collect the sink fields the caller actually supplied. An empty string
-	 * or a null means "leave unchanged"; hmacSecret is always forwarded
-	 * because the service treats '' as "keep the stored secret".
-	 *
-	 * @param string $name The new display name, or ''
-	 * @param string $endpoint The new endpoint URL, or ''
-	 * @param bool|null $tls The new TLS flag, or null
-	 * @param string $hmacSecret The new HMAC secret, or ''
-	 * @param array<int,string>|null $categoryFilter The new category filter, or null
-	 * @param int|null $queueCap The new queue cap, or null
-	 * @param bool|null $enabled The new enabled flag, or null
-	 *
-	 * @return array<string,mixed> The changed fields only.
-	 */
-	private function collectSinkChanges(
-		string $name,
-		string $endpoint,
-		?bool $tls,
-		string $hmacSecret,
-		?array $categoryFilter,
-		?int $queueCap,
-		?bool $enabled,
-	): array {
-		$params = ['hmacSecret' => $hmacSecret];
-		if ($name !== '') {
-			$params['name'] = $name;
-		}
-
-		if ($endpoint !== '') {
-			$params['endpoint'] = $endpoint;
-		}
-
-		if ($tls !== null) {
-			$params['tls'] = $tls;
-		}
-
-		if ($categoryFilter !== null) {
-			$params['categoryFilter'] = $categoryFilter;
-		}
-
-		if ($queueCap !== null) {
-			$params['queueCap'] = $queueCap;
-		}
-
-		if ($enabled !== null) {
-			$params['enabled'] = $enabled;
-		}
-
-		return $params;
-	}//end collectSinkChanges()
 
 	/**
 	 * Delete a sink and its queued events.
