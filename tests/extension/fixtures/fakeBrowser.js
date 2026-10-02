@@ -40,20 +40,51 @@ export function pageSender(url = 'https://evil.example/') {
 }
 
 /**
+ * An in-memory chrome.storage area.
+ *
+ * @param {Map} map The backing map.
+ * @return {object} get, set and remove.
+ */
+function area(map) {
+	return {
+		get: async (keys) => {
+			const list = Array.isArray(keys) ? keys : [keys]
+			const out = {}
+			for (const k of list) {
+				if (map.has(k)) out[k] = structuredClone(map.get(k))
+			}
+			return out
+		},
+		set: async (items) => {
+			for (const [k, v] of Object.entries(items))
+				map.set(k, structuredClone(v))
+		},
+		remove: async (keys) => {
+			for (const k of Array.isArray(keys) ? keys : [keys]) map.delete(k)
+		},
+	}
+}
+
+/**
  * Install a fake `chrome` global.
  *
  * @param {{tabUrl?: string}} options The active tab URL.
- * @return {object} The fake, with `storage` (the map), `filled` (fill messages) and `setTab`.
+ * @return {object} The fake: `storage` and `session` (the maps), `filled`
+ *   (every message sent to a tab, with its options), `setTab`, and
+ *   `otpFieldOnPage` (whether a fill-otp finds a field).
  */
 export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 	const storage = new Map()
+	const session = new Map()
 	const filled = []
 	let tab = { id: 1, url: tabUrl }
 	const fake = {
 		storage,
+		session,
 		filled,
-		setTab: (url) => {
-			tab = { id: 1, url }
+		otpFieldOnPage: false,
+		setTab: (url, id = 1) => {
+			tab = { id, url }
 		},
 		runtime: {
 			id: EXTENSION_ID,
@@ -62,8 +93,9 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 		},
 		tabs: {
 			query: vi.fn(async () => [tab]),
-			sendMessage: vi.fn(async (tabId, msg) => {
-				filled.push(msg)
+			sendMessage: vi.fn(async (tabId, msg, options) => {
+				filled.push(options ? { ...msg, tabId, options } : msg)
+				if (msg.type === 'fill-otp') return { filled: fake.otpFieldOnPage }
 				return { filled: true }
 			}),
 		},
@@ -71,25 +103,7 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 	}
 	globalThis.chrome = {
 		...fake,
-		storage: {
-			local: {
-				get: async (keys) => {
-					const list = Array.isArray(keys) ? keys : [keys]
-					const out = {}
-					for (const k of list)
-						if (storage.has(k)) out[k] = structuredClone(storage.get(k))
-					return out
-				},
-				set: async (items) => {
-					for (const [k, v] of Object.entries(items))
-						storage.set(k, structuredClone(v))
-				},
-				remove: async (keys) => {
-					for (const k of Array.isArray(keys) ? keys : [keys])
-						storage.delete(k)
-				},
-			},
-		},
+		storage: { local: area(storage), session: area(session) },
 	}
 	return fake
 }
@@ -167,11 +181,15 @@ export function installServer(servers) {
 			return respond(200, { items: s.rows })
 		if (path.startsWith('/api/v1/extension/used/'))
 			return respond(200, { recorded: true })
-		if (path === '/api/v1/secret-types') return respond(200, [])
+		if (path === '/api/v1/secret-types') return respond(200, s.types ?? [])
 		if (path === '/api/settings/policy') return respond(200, null)
 		if (path === '/api/v1/secrets' && method === 'POST')
 			return respond(201, { id: 'new' })
-		if (path.startsWith('/api/v1/secrets/')) return respond(200, s.rows[0])
+		if (path.startsWith('/api/v1/secrets/')) {
+			const id = decodeURIComponent(path.slice('/api/v1/secrets/'.length))
+			const row = s.rows.find((r) => r.id === id)
+			return row ? respond(200, row) : respond(404, {})
+		}
 		if (path === '/api/v1/passkeys/challenge')
 			return respond(200, {
 				challenge: 'Y2hhbGxlbmdlY2hhbGxlbmdlY2hhbGxlbmdlMTIz',
