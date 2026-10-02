@@ -76,13 +76,20 @@ class SiemAuditTrail {
 	 *
 	 * @param string $actorId The admin actor
 	 * @param string $sinkId The sink id
+	 * @param string $type The sink's connector type
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 	 */
-	public function recordSinkUpdated(string $actorId, string $sinkId): void {
-		$this->dispatch(actorId: $actorId, eventType: AuditEventTypes::SIEM_SINK_UPDATED, sinkId: $sinkId);
+	public function recordSinkUpdated(string $actorId, string $sinkId, string $type = ''): void {
+		$extra = [];
+		if ($type !== '') {
+			// The connector type is an identifier; the credential never is.
+			$extra['type'] = $type;
+		}
+
+		$this->dispatch(actorId: $actorId, eventType: AuditEventTypes::SIEM_SINK_UPDATED, sinkId: $sinkId, extra: $extra);
 	}//end recordSinkUpdated()
 
 	/**

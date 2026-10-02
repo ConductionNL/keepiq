@@ -256,8 +256,15 @@ describe('passphrase generation', () => {
 	})
 
 	it('defaults to five list words joined by hyphens', () => {
+		// A fixed random source: four list words carry a hyphen themselves
+		// (drop-down, felt-tip, t-shirt, yo-yo), so splitting a random
+		// default passphrase on "-" cannot count its words.
+		const first = () => 0
+		expect(generatePassphrase({}, null, first)).toBe(
+			Array(5).fill(EFF_LARGE_WORDLIST[0]).join('-'),
+		)
 		repeat(() => {
-			const words = generatePassphrase().split('-')
+			const words = generatePassphrase({ separator: ' ' }).split(' ')
 			expect(words).toHaveLength(5)
 			for (const word of words) {
 				expect(WORDS.has(word)).toBe(true)
@@ -275,10 +282,11 @@ describe('passphrase generation', () => {
 		repeat(() => {
 			const phrase = generatePassphrase({
 				words: 4,
+				separator: ' ',
 				capitalise: true,
 				includeNumber: true,
 			})
-			const words = phrase.split('-')
+			const words = phrase.split(' ')
 			expect(words.every((w) => /^[A-Z]/.test(w))).toBe(true)
 			expect(phrase.match(/[0-9]/g)).toHaveLength(1)
 		})
