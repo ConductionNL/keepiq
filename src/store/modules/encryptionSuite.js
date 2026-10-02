@@ -1487,16 +1487,23 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 */
 		async postNewSuite(body) {
 			try {
-				return await axios.post(generateUrl('/apps/keepiq/api/v1/suites'), body)
+				return await axios.post(
+					generateUrl('/apps/keepiq/api/v1/suites'),
+					body,
+				)
 			} catch (e) {
 				if (e?.response?.data?.error !== 'reauthentication_required') {
 					throw e
 				}
 			}
 
-			const { confirmPassword } = await import('@nextcloud/password-confirmation')
+			const { confirmPassword } =
+				await import('@nextcloud/password-confirmation')
 			await confirmPassword()
-			return axios.post(generateUrl('/apps/keepiq/api/v1/suites/reenrol'), body)
+			return axios.post(
+				generateUrl('/apps/keepiq/api/v1/suites/reenrol'),
+				body,
+			)
 		},
 
 		/**

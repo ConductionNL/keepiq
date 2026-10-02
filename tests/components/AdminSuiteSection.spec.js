@@ -30,13 +30,22 @@ async function revokeWith(markCompromised, outcome) {
 	const store = useEncryptionSuiteStore()
 	store.forceRevokeSuite = vi.fn().mockResolvedValue(outcome)
 	const wrapper = mount(AdminSuiteSection)
-	await wrapper.setData({ suiteId: 'suite-1', reason: 'taken over', markCompromised })
+	await wrapper.setData({
+		suiteId: 'suite-1',
+		reason: 'taken over',
+		markCompromised,
+	})
 	await wrapper.vm.onForceRevoke()
 	await wrapper.vm.$nextTick()
 	return wrapper
 }
 
-const revokedSuite = { id: 'suite-1', ownerId: 'alice', ownerType: 'user', status: 'revoked' }
+const revokedSuite = {
+	id: 'suite-1',
+	ownerId: 'alice',
+	ownerType: 'user',
+	status: 'revoked',
+}
 
 describe('AdminSuiteSection', () => {
 	beforeEach(() => {
@@ -47,10 +56,13 @@ describe('AdminSuiteSection', () => {
 		const wrapper = await revokeWith(false, {
 			suite: revokedSuite,
 			emergencyContactsDestroyed: 0,
-			warning: 'The revoked user may still know these secrets; consider rotating them.',
+			warning:
+				'The revoked user may still know these secrets; consider rotating them.',
 		})
 
-		expect(wrapper.find('[data-testid="admin-suite-reinstate"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="admin-suite-reinstate"]').exists()).toBe(
+			true,
+		)
 	})
 
 	it('shows no Reinstate button after a compromise force-revoke', async () => {
@@ -61,8 +73,12 @@ describe('AdminSuiteSection', () => {
 			cascadeIncomplete: false,
 		})
 
-		expect(wrapper.find('[data-testid="admin-suite-reinstate"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="admin-suite-no-reinstate"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="admin-suite-reinstate"]').exists()).toBe(
+			false,
+		)
+		expect(
+			wrapper.find('[data-testid="admin-suite-no-reinstate"]').exists(),
+		).toBe(true)
 	})
 
 	it('shows the second suite, the ended migration and its emergency count', async () => {
@@ -83,7 +99,9 @@ describe('AdminSuiteSection', () => {
 		expect(wrapper.vm.alsoRevokedSuite).toBe('suite-2')
 		expect(wrapper.vm.terminatedMigration).toBe('migration-1')
 		expect(wrapper.vm.alsoRevokedEmergencyContactsDestroyed).toBe(2)
-		expect(note.text()).toContain('Revoking the second suite deleted %n emergency-access contacts.')
+		expect(note.text()).toContain(
+			'Revoking the second suite deleted %n emergency-access contacts.',
+		)
 	})
 
 	it('says so when the compromise response did not complete', async () => {
@@ -95,7 +113,9 @@ describe('AdminSuiteSection', () => {
 			cascadeFailed: 3,
 		})
 
-		expect(wrapper.find('[data-testid="admin-suite-cascade-incomplete"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="admin-suite-cascade-incomplete"]').exists(),
+		).toBe(true)
 		expect(wrapper.vm.cascadeFailed).toBe(3)
 	})
 
@@ -107,7 +127,11 @@ describe('AdminSuiteSection', () => {
 			cascadeIncomplete: false,
 		})
 
-		expect(wrapper.find('[data-testid="admin-suite-also-revoked"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="admin-suite-cascade-incomplete"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="admin-suite-also-revoked"]').exists(),
+		).toBe(false)
+		expect(
+			wrapper.find('[data-testid="admin-suite-cascade-incomplete"]').exists(),
+		).toBe(false)
 	})
 })

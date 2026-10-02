@@ -286,7 +286,9 @@ describe('useEncryptionSuiteStore — administrator reinstate', () => {
 		const post = vi.spyOn(axios, 'post')
 		const store = useEncryptionSuiteStore()
 
-		await expect(store.reinstateSuiteAdmin('suite-1')).rejects.toThrow(/Dialog closed/)
+		await expect(store.reinstateSuiteAdmin('suite-1')).rejects.toThrow(
+			/Dialog closed/,
+		)
 		expect(post).not.toHaveBeenCalled()
 	})
 
@@ -308,7 +310,9 @@ describe('useEncryptionSuiteStore — re-enrolment after a revocation', () => {
 	})
 
 	it('posts a plain create when the server accepts it, with no sudo', async () => {
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { id: 'suite-1' } })
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { id: 'suite-1' } })
 		const store = useEncryptionSuiteStore()
 
 		await store.postNewSuite({ publicKey: 'pk', encryptedPrivateKey: 'env' })
@@ -319,19 +323,29 @@ describe('useEncryptionSuiteStore — re-enrolment after a revocation', () => {
 	})
 
 	it('confirms the password and re-enrols when the server asks for it (keepiq#860)', async () => {
-		const post = vi.spyOn(axios, 'post')
+		const post = vi
+			.spyOn(axios, 'post')
 			.mockRejectedValueOnce({
-				response: { status: 403, data: { error: 'reauthentication_required' } },
+				response: {
+					status: 403,
+					data: { error: 'reauthentication_required' },
+				},
 			})
 			.mockResolvedValueOnce({ data: { id: 'suite-2' } })
 		const store = useEncryptionSuiteStore()
 
-		const response = await store.postNewSuite({ publicKey: 'pk', encryptedPrivateKey: 'env' })
+		const response = await store.postNewSuite({
+			publicKey: 'pk',
+			encryptedPrivateKey: 'env',
+		})
 
 		expect(response.data.id).toBe('suite-2')
 		expect(post).toHaveBeenCalledTimes(2)
 		expect(post.mock.calls[1][0]).toContain('/apps/keepiq/api/v1/suites/reenrol')
-		expect(post.mock.calls[1][1]).toEqual({ publicKey: 'pk', encryptedPrivateKey: 'env' })
+		expect(post.mock.calls[1][1]).toEqual({
+			publicKey: 'pk',
+			encryptedPrivateKey: 'env',
+		})
 		expect(confirmPassword.mock.invocationCallOrder[0]).toBeLessThan(
 			post.mock.invocationCallOrder[1],
 		)

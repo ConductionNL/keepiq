@@ -119,7 +119,10 @@
 							t(
 								'keepiq',
 								'This also revoked suite {suite} and ended key migration {migration}.',
-								{ suite: alsoRevokedSuite, migration: terminatedMigration || '' },
+								{
+									suite: alsoRevokedSuite,
+									migration: terminatedMigration || '',
+								},
 							)
 						}}
 					</p>
@@ -164,7 +167,12 @@
 					<p
 						v-else-if="revokedAsCompromise"
 						data-testid="admin-suite-no-reinstate">
-						{{ t('keepiq', 'A suite revoked as compromised cannot be reinstated.') }}
+						{{
+							t(
+								'keepiq',
+								'A suite revoked as compromised cannot be reinstated.',
+							)
+						}}
 					</p>
 				</div>
 			</template>
