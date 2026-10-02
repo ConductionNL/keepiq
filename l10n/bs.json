@@ -1265,7 +1265,8 @@
         "Tag": "Oznaka",
         "Remove tag": "Ukloni oznaku",
         "Add tag": "Dodaj oznaku",
-        "Could not change the tags. Try again.": "Oznake nije moguće promijeniti. Pokušajte ponovo."
+        "Could not change the tags. Try again.": "Oznake nije moguće promijeniti. Pokušajte ponovo.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Izvoz u CXF NIJE ŠIFRIRAN. Svaka lozinka i prijava bit će čitljiva kao otvoreni tekst u preuzetoj datoteci. Čuvajte je na sigurnom i izbrišite je odmah nakon upotrebe."
     },
     "plurals": null
 }

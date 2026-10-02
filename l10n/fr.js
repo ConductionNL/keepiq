@@ -1266,7 +1266,8 @@ OC.L10N.register(
         "Tag": "Étiquette",
         "Remove tag": "Retirer l'étiquette",
         "Add tag": "Ajouter une étiquette",
-        "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez."
+        "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Un export CXF n'est PAS CHIFFRÉ. Chaque mot de passe et chaque identifiant sera lisible en clair dans le fichier téléchargé. Conservez-le en sécurité et supprimez-le immédiatement après usage."
     },
     "nplurals=2; plural=(n != 1);"
 )

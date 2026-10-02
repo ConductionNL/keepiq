@@ -1266,7 +1266,8 @@ OC.L10N.register(
         "Tag": "Метка",
         "Remove tag": "Убрать метку",
         "Add tag": "Добавить метку",
-        "Could not change the tags. Try again.": "Не удалось изменить метки. Попробуйте ещё раз."
+        "Could not change the tags. Try again.": "Не удалось изменить метки. Попробуйте ещё раз.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Экспорт в CXF НЕ ЗАШИФРОВАН. Каждый пароль и логин будут читаемы как обычный текст в скачанном файле. Храните файл в надёжном месте и удалите сразу после использования."
     },
     "nplurals=2; plural=(n != 1);"
 )

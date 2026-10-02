@@ -1266,7 +1266,8 @@ OC.L10N.register(
         "Tag": "Ετικέτα",
         "Remove tag": "Αφαίρεση ετικέτας",
         "Add tag": "Προσθήκη ετικέτας",
-        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά."
+        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Μια εξαγωγή CXF ΔΕΝ ΕΙΝΑΙ ΚΡΥΠΤΟΓΡΑΦΗΜΕΝΗ. Κάθε κωδικός πρόσβασης και σύνδεση θα είναι αναγνώσιμα ως απλό κείμενο στο αρχείο που κατεβάζετε. Αποθηκεύστε το με ασφάλεια και διαγράψτε το αμέσως μετά τη χρήση."
     },
     "nplurals=2; plural=(n != 1);"
 )

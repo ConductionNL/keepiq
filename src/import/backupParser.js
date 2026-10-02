@@ -22,7 +22,10 @@ import { registerParser } from './parserRegistry.js'
  */
 function toRows(payload) {
 	const secrets = (payload && payload.secrets) || []
-	return secrets.map((s) => ({
+	// Number every row: duplicate choices, preview keys and rejected-row
+	// reports are all keyed by sourceRow (keepiq#749).
+	return secrets.map((s, index) => ({
+		sourceRow: index + 1,
 		name: s.name ?? '',
 		url: s.url ?? null,
 		login: s.login ?? null,
