@@ -27,6 +27,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use OCP\Authentication\TwoFactorAuth\IRegistry;
+use OCP\IGroupManager;
+use OCP\IUser;
 use OCP\IUserManager;
 
 /**
@@ -49,6 +51,7 @@ class TwoFactorGate {
 	 * @param VaultPolicyService $policies The vault policies
 	 * @param IRegistry $registry Nextcloud's two-factor provider registry
 	 * @param IUserManager $userManager Resolves the user
+	 * @param IGroupManager|null $groupManager Group members, for the admin count
 	 *
 	 * @return void
 	 *
@@ -58,6 +61,7 @@ class TwoFactorGate {
 		private VaultPolicyService $policies,
 		private IRegistry $registry,
 		private IUserManager $userManager,
+		private ?IGroupManager $groupManager = null,
 	) {
 	}//end __construct()
 
@@ -82,12 +86,60 @@ class TwoFactorGate {
 			return true;
 		}
 
-		foreach ($this->registry->getProviderStates($user) as $providerId => $enabled) {
-			if ($enabled === true && in_array($providerId, self::IGNORED_PROVIDERS, true) === false) {
-				return false;
+		return $this->hasSecondFactor(user: $user) === false;
+	}//end blocks()
+
+	/**
+	 * How many users a two-factor policy scoped to these groups would cover,
+	 * and how many of them have no second factor and would lose vault access
+	 * at once. The admin section shows it before saving (design risk D3).
+	 *
+	 * @param string[] $groupIds The scope; empty means every user who logged in
+	 *
+	 * @return array{inScope:int,withoutTwoFactor:int}
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+	 */
+	public function gapReport(array $groupIds): array {
+		$users = [];
+		if ($groupIds === []) {
+			$this->userManager->callForSeenUsers(
+				static function (IUser $user) use (&$users): void {
+					$users[$user->getUID()] = $user;
+				}
+			);
+		} else {
+			foreach ($groupIds as $groupId) {
+				foreach ($this->groupManager?->get($groupId)?->getUsers() ?? [] as $user) {
+					$users[$user->getUID()] = $user;
+				}
 			}
 		}
 
-		return true;
-	}//end blocks()
+		$without = 0;
+		foreach ($users as $user) {
+			if ($this->hasSecondFactor(user: $user) === false) {
+				$without++;
+			}
+		}
+
+		return ['inScope' => count($users), 'withoutTwoFactor' => $without];
+	}//end gapReport()
+
+	/**
+	 * Whether a user has an enabled provider other than backup codes.
+	 *
+	 * @param IUser $user The user
+	 *
+	 * @return bool
+	 */
+	private function hasSecondFactor(IUser $user): bool {
+		foreach ($this->registry->getProviderStates($user) as $providerId => $enabled) {
+			if ($enabled === true && in_array($providerId, self::IGNORED_PROVIDERS, true) === false) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end hasSecondFactor()
 }//end class

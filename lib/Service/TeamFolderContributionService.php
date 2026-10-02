@@ -110,11 +110,7 @@ class TeamFolderContributionService {
 
 		// Authorise on the grade of the target folder, before anything is read
 		// or written. The owner uses the ordinary secret create.
-		$probe = new Secret();
-		$probe->setFolderId($folderId);
-		if ($teamFolder->getOwnerId() === $userId
-			|| $this->queries->resolveGrade(secret: $probe, userId: $userId) !== 'write'
-		) {
+		if ($this->mayContribute(teamFolder: $teamFolder, folderId: $folderId, userId: $userId) === false) {
 			throw new ForbiddenException('Only a member with write access can add a secret to this team folder');
 		}
 
@@ -176,6 +172,118 @@ class TeamFolderContributionService {
 
 		return ['secret' => $secret, 'copies' => $result['created']];
 	}//end contribute()
+
+	/**
+	 * The team folders the user may contribute to: covered by a membership
+	 * row, not owned, with an effective `write` grade on the folder itself.
+	 *
+	 * @param string $userId The session user
+	 *
+	 * @return array<int,array{teamFolderId:string,folderId:string,folderName:string}>
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
+	 */
+	public function contributable(string $userId): array {
+		$found = [];
+		foreach ($this->memberships->membershipRowsForUser(userId: $userId) as $row) {
+			$teamFolderId = (string)$row->getTeamFolderId();
+			if (isset($found[$teamFolderId]) === true) {
+				continue;
+			}
+
+			try {
+				$teamFolder = $this->teamFolderMapper->findById(id: $teamFolderId);
+			} catch (DoesNotExistException) {
+				continue;
+			}
+
+			if ($this->mayContribute(teamFolder: $teamFolder, folderId: $teamFolder->getFolderId(), userId: $userId) === false) {
+				continue;
+			}
+
+			$folderName = '';
+			try {
+				$folderName = $this->folderMapper->findById($teamFolder->getFolderId())->getName();
+			} catch (DoesNotExistException) {
+				// Folder vanished: keep the entry with an empty name.
+			}
+
+			$found[$teamFolderId] = [
+				'teamFolderId' => $teamFolderId,
+				'folderId' => $teamFolder->getFolderId(),
+				'folderName' => $folderName,
+			];
+		}//end foreach
+
+		return array_values($found);
+	}//end contributable()
+
+	/**
+	 * What a write-grade member's browser needs to encrypt a contribution:
+	 * the owner's certificate and every eligible member's certificate.
+	 * Public key material only.
+	 *
+	 * @param string $teamFolderId The team folder
+	 * @param string $userId The contributing member
+	 *
+	 * @return array{teamFolderId:string,folderId:string,ownerCertificate:string,recipients:array<int,array{userId:string,certificate:string}>}
+	 *
+	 * @throws NotFoundException When the team folder is unknown
+	 * @throws ForbiddenException When the caller holds no write grade there
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
+	 */
+	public function context(string $teamFolderId, string $userId): array {
+		$teamFolder = $this->loadTeamFolder(teamFolderId: $teamFolderId);
+		if ($this->mayContribute(teamFolder: $teamFolder, folderId: $teamFolder->getFolderId(), userId: $userId) === false) {
+			throw new ForbiddenException('Only a member with write access can add a secret to this team folder');
+		}
+
+		try {
+			$ownerCertificate = (string)$this->suiteMapper
+				->findActiveByOwner(ownerType: 'user', ownerId: $teamFolder->getOwnerId())
+				->getCertificate();
+		} catch (DoesNotExistException) {
+			throw new NotFoundException('The team folder owner has no active vault');
+		}
+
+		return [
+			'teamFolderId' => $teamFolder->getId(),
+			'folderId' => $teamFolder->getFolderId(),
+			'ownerCertificate' => $ownerCertificate,
+			'recipients' => $this->memberships->eligibleRecipients(
+				userIds: array_values(
+					array_diff(
+						$this->memberships->effectiveUsers(teamFolderId: $teamFolder->getId()),
+						[$teamFolder->getOwnerId()]
+					)
+				)
+			),
+		];
+	}//end context()
+
+	/**
+	 * Whether the user may contribute to a folder of a team folder: not the
+	 * owner, and an effective `write` grade on that folder.
+	 *
+	 * @param TeamFolder $teamFolder The team folder
+	 * @param string $folderId The target folder
+	 * @param string $userId The user
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.2
+	 */
+	private function mayContribute(TeamFolder $teamFolder, string $folderId, string $userId): bool {
+		if ($teamFolder->getOwnerId() === $userId) {
+			return false;
+		}
+
+		$probe = new Secret();
+		$probe->setFolderId($folderId);
+
+		return $this->queries->resolveGrade(secret: $probe, userId: $userId) === 'write';
+	}//end mayContribute()
 
 	/**
 	 * The copy rows the server accepts: one per covered, enabled member with

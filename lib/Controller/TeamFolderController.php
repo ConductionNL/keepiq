@@ -156,6 +156,54 @@ class TeamFolderController extends OCSController {
 	}//end destroy()
 
 	/**
+	 * The team folders the session user may contribute to (write grade, not
+	 * owned), for the secret form's folder picker (admin-vault-policies §4.3).
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
+	 */
+	#[NoAdminRequired]
+	public function contributable(): JSONResponse {
+		$userId = $this->sessionUserId();
+		if ($userId === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		return new JSONResponse(data: $this->contributions->contributable(userId: $userId));
+	}//end contributable()
+
+	/**
+	 * The public certificates a write-grade member encrypts a contribution
+	 * for (admin-vault-policies §4.3). Refused to anyone without write.
+	 *
+	 * @param string $id The TeamFolder UUID
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
+	 */
+	#[NoAdminRequired]
+	public function contributionContext(string $id): JSONResponse {
+		$userId = $this->sessionUserId();
+		if ($userId === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			return new JSONResponse(data: $this->contributions->context(teamFolderId: $id, userId: $userId));
+		} catch (NotFoundException $exception) {
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
+		} catch (ForbiddenException $exception) {
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+		}
+	}//end contributionContext()
+
+	/**
 	 * A write-grade member saves a new secret into a team folder they do not
 	 * own (admin-vault-policies D5). The body carries the owner ciphertext
 	 * (`key`, `login`, `additionalFields`), metadata and one `copies` row per

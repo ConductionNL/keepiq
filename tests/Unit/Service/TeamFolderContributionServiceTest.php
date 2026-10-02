@@ -92,9 +92,14 @@ class TeamFolderContributionServiceTest extends TestCase {
 		}
 		$memberMapper = $this->createMock(TeamFolderMemberMapper::class);
 		$memberMapper->method('findByTeamFolder')->willReturn($members);
+		$memberMapper->method('findUserMemberships')->willReturnCallback(
+			static fn (string $uid): array => array_values(array_filter($members, static fn ($m) => $m->getMemberId() === $uid))
+		);
+		$memberMapper->method('findGroupMemberships')->willReturn([]);
 
 		$folder = new Folder();
 		$folder->setId('folder-ops');
+		$folder->setName('Ops');
 		$folder->setParentId(null);
 		$folderMapper = $this->createMock(FolderMapper::class);
 		$folderMapper->method('findById')->willReturn($folder);
@@ -123,6 +128,7 @@ class TeamFolderContributionServiceTest extends TestCase {
 			return $user;
 		});
 		$groupManager = $this->createMock(IGroupManager::class);
+		$groupManager->method('getUserGroupIds')->willReturn([]);
 
 		$shareTargetMapper = $this->createMock(ShareTargetMapper::class);
 		$shareTargetMapper->method('findBySourceSecretAndTargetUser')->willThrowException(new DoesNotExistException(''));
@@ -260,4 +266,34 @@ class TeamFolderContributionServiceTest extends TestCase {
 			userId: 'hank'
 		);
 	}//end testFolderOutsideTheTeamFolderIsRefused()
+
+	/**
+	 * §4.3: hank may contribute to Ops, jack (read) and lee (no member) may not.
+	 *
+	 * @return void
+	 */
+	public function testContributableListsOnlyWriteFolders(): void {
+		$this->assertSame(
+			[['teamFolderId' => 'tf-ops', 'folderId' => 'folder-ops', 'folderName' => 'Ops']],
+			$this->service->contributable(userId: 'hank')
+		);
+		$this->assertSame([], $this->service->contributable(userId: 'jack'));
+		$this->assertSame([], $this->service->contributable(userId: 'lee'));
+	}//end testContributableListsOnlyWriteFolders()
+
+	/**
+	 * §4.3: the context hands hank the owner and member certificates, and
+	 * refuses jack.
+	 *
+	 * @return void
+	 */
+	public function testContextIsForWriteMembersOnly(): void {
+		$context = $this->service->context(teamFolderId: 'tf-ops', userId: 'hank');
+
+		$this->assertSame('CERT', $context['ownerCertificate']);
+		$this->assertSame(['hank', 'jack'], array_column($context['recipients'], 'userId'));
+
+		$this->expectException(ForbiddenException::class);
+		$this->service->context(teamFolderId: 'tf-ops', userId: 'jack');
+	}//end testContextIsForWriteMembersOnly()
 }//end class

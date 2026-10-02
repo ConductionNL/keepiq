@@ -10,11 +10,13 @@
 
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.4
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.5
+  @spec openspec/changes/admin-vault-policies/tasks.md#1.3
 -->
 <template>
 	<div class="keepiq-settings">
 		<PasswordPolicySection />
 		<OrgPasswordPolicySection />
+		<VaultPolicySection />
 		<BreachCheckSection />
 		<CaHealthSection />
 		<ApplicationQueueSection />
@@ -49,6 +51,7 @@ import OrgPasswordPolicySection from '../../components/settings/OrgPasswordPolic
 import PasswordPolicySection from '../../components/settings/PasswordPolicySection.vue'
 import RotationPolicySection from '../../components/settings/RotationPolicySection.vue'
 import SiemSection from '../../components/settings/SiemSection.vue'
+import VaultPolicySection from '../../components/settings/VaultPolicySection.vue'
 
 export default {
 	name: 'Settings',
@@ -69,6 +72,7 @@ export default {
 		OffboardingSection,
 		AdminSuiteSection,
 		AdminAuditSection,
+		VaultPolicySection,
 	},
 }
 </script>
