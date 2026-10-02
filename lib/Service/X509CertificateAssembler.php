@@ -135,7 +135,7 @@ class X509CertificateAssembler {
 		?string $fallbackCn = null,
 	): ?string {
 		try {
-			$old = X509::load($oldCert);
+			$old = $this->keyLoader->loadCertificate($oldCert);
 			$oldPublic = $old->getPublicKey();
 			if ($oldPublic instanceof PublicKey === false) {
 				return null;
@@ -192,7 +192,7 @@ class X509CertificateAssembler {
 		string $intermediateCertPem,
 		PrivateKey $issuerPrivate,
 	): void {
-		$certificate->copySigningX509Attributes(X509::load($intermediateCertPem));
+		$certificate->copySigningX509Attributes($this->keyLoader->loadCertificate($intermediateCertPem));
 		$issuerPrivate->withPadding(RSA::SIGNATURE_PKCS1)->withHash('sha256')->sign($certificate);
 	}//end signWithIntermediate()
 }//end class
