@@ -109,7 +109,7 @@ class AdminSettings extends AdminAreaSettings {
 	 */
 	protected function provideAreaState(): void {
 		$version = $this->appManager->getAppVersion(Application::APP_ID);
-		// unclosable-gate exclude 'config_version' is written by OpenRegister's AppHost configuration
+		// Gate-59: unclosable-gate exclude 'config_version' is written by OpenRegister's AppHost configuration
 		// import, not by this app; it is only displayed here and guards no setup.
 		$configuredVersion = $this->appConfig->getValueString(Application::APP_ID, 'config_version', '');
 		$this->initialState->provideInitialState('version', $version);
