@@ -86,7 +86,7 @@ class RenewIntermediateCertificate extends TimedJob {
 		$this->logger->info("Keepiq: Intermediate certificate expires in {$daysUntilExpiry} days, auto-renewing");
 
 		try {
-			$count = $this->caService->renewIntermediate(forced: false);
+			$count = $this->caService->renewIntermediate();
 			$this->logger->info("Keepiq: Intermediate auto-renewed, {$count} suites re-signed");
 		} catch (Exception $e) {
 			$this->logger->error(

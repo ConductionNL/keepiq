@@ -111,7 +111,7 @@ class CACertificateController extends OCSController {
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function renewIntermediate(): JSONResponse {
 		try {
-			$count = $this->caService->renewIntermediate(forced: true);
+			$count = $this->caService->renewIntermediateRevokingOld();
 			return new JSONResponse(
 				data: [
 					'message' => "Intermediate renewed, {$count} suites re-signed",
