@@ -655,6 +655,31 @@ class TeamFolderServiceTest extends TestCase {
 	}//end testOffboardRevokesAndTransfers()
 
 	/**
+	 * admin-auto-confirm-members §3.3: the reconcile names who confirmed a
+	 * member when that was not the owner, so the dialog can show it.
+	 *
+	 * @return void
+	 */
+	public function testReconcileNamesTheConfirmers(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder(id: 'tf-ops'));
+		$this->memberMapper->method('findByTeamFolder')->willReturn([]);
+		$this->folderMapper->method('getSubtreeIds')->willReturn(['folder-1']);
+		$this->secretMapper->method('findByOwner')->willReturn([]);
+
+		$byOwner = new ShareTarget();
+		$byOwner->setTargetUserId('bob');
+		$byOwner->setCreatedBy('alice');
+		$byHank = new ShareTarget();
+		$byHank->setTargetUserId('kim');
+		$byHank->setCreatedBy('hank');
+		$this->bulkGrantMapper->method('findByTeamFolder')->with('tf-ops')->willReturn([$byOwner, $byHank]);
+
+		$result = $this->service->reconcile(teamFolderId: 'tf-ops', userId: 'alice');
+
+		$this->assertEquals((object)['kim' => 'hank'], $result['confirmedBy']);
+	}//end testReconcileNamesTheConfirmers()
+
+	/**
 	 * folder-permission-grades §5.1: setMemberGrade is owner-only,
 	 * rejects invalid grades, and touches no secret rows (ciphertext).
 	 *

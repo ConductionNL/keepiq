@@ -672,6 +672,83 @@ class KeepiqNotifierTest extends TestCase {
 	}//end testSecretCompromisedRendersMigrationWarning()
 
 	/**
+	 * secret_compromised for several secrets names the first and counts the
+	 * others, so one name does not read as "only this one" (keepiq#875).
+	 *
+	 * @return void
+	 */
+	public function testSecretCompromisedCountsTheOtherSecrets(): void {
+		$recorded = $this->prepareSubject(
+			subject: 'secret_compromised',
+			params: [
+				'secret_name' => 'prod-db',
+				'secret_id' => '5',
+				'other_count' => 9,
+			]
+		);
+
+		$this->assertSame(
+			expected: 'Your secret "prod-db" and 9 other secret(s) may be compromised and require migration.',
+			actual: $recorded['parsedMessage']
+		);
+	}//end testSecretCompromisedCountsTheOtherSecrets()
+
+	/**
+	 * shared_secret_compromised warns a recipient about their copy (keepiq#872).
+	 *
+	 * @return void
+	 */
+	public function testSharedSecretCompromisedWarnsTheRecipient(): void {
+		$recorded = $this->prepareSubject(
+			subject: 'shared_secret_compromised',
+			params: [
+				'secret_name' => 'wifi',
+				'secret_id' => '7',
+			]
+		);
+
+		$this->assertSame(expected: 'Shared secret may be compromised', actual: $recorded['parsedSubject']);
+		$this->assertSame(
+			expected: 'The secret "wifi" shared with you may be compromised. Change it where it is used.',
+			actual: $recorded['parsedMessage']
+		);
+		$this->assertSame(expected: self::BASE_URL . '/index.php/apps/keepiq/secrets/7', actual: $recorded['link']);
+	}//end testSharedSecretCompromisedWarnsTheRecipient()
+
+	/**
+	 * emergency_grantee_compromised warns the grantor (keepiq#872).
+	 *
+	 * @return void
+	 */
+	public function testEmergencyGranteeCompromisedWarnsTheGrantor(): void {
+		$recorded = $this->prepareSubject(
+			subject: 'emergency_grantee_compromised',
+			params: ['granteeUserId' => 'alice']
+		);
+
+		$this->assertSame(expected: 'Emergency contact compromised', actual: $recorded['parsedSubject']);
+		$this->assertStringStartsWith(
+			prefix: 'alice had approved emergency access to your vault.',
+			string: $recorded['parsedMessage']
+		);
+	}//end testEmergencyGranteeCompromisedWarnsTheGrantor()
+
+	/**
+	 * emergency_access_cleared tells the owner how many contacts went (keepiq#876).
+	 *
+	 * @return void
+	 */
+	public function testEmergencyAccessClearedCountsTheContacts(): void {
+		$recorded = $this->prepareSubject(
+			subject: 'emergency_access_cleared',
+			params: ['count' => 2]
+		);
+
+		$this->assertSame(expected: 'Emergency access removed', actual: $recorded['parsedSubject']);
+		$this->assertStringContainsString(needle: 'deleted 2 emergency contact(s)', haystack: $recorded['parsedMessage']);
+	}//end testEmergencyAccessClearedCountsTheContacts()
+
+	/**
 	 * request_fulfilled: confirms a filled request.
 	 *
 	 * @return void

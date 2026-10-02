@@ -265,4 +265,32 @@ class TeamFolderAuditor {
 			)
 		);
 	}//end offboarded()
+
+	/**
+	 * Record an automatic confirmation run: the confirmer is the actor.
+	 *
+	 * @param string $actorId The confirmer (owner or write-grade member)
+	 * @param string $teamFolderId The team folder
+	 * @param int $confirmedCount The number of copies created
+	 * @param int $memberCount The number of members who received copies
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.3
+	 */
+	public function membersConfirmed(string $actorId, string $teamFolderId, int $confirmedCount, int $memberCount): void {
+		$this->dispatch(
+			event: $this->auditEvents->forUser(
+				actorId: $actorId,
+				eventType: AuditEventTypes::TEAM_FOLDER_MEMBERS_CONFIRMED,
+				objectType: self::OBJECT_TYPE,
+				objectId: $teamFolderId,
+				objectName: '',
+				metadata: [
+					'confirmedCount' => $confirmedCount,
+					'memberCount' => $memberCount,
+				],
+			)
+		);
+	}//end membersConfirmed()
 }//end class
