@@ -101,7 +101,6 @@ class AdminSettingsService {
 	 * @param IEventDispatcher|null $eventDispatcher The audit dispatcher (policy changes)
 	 * @param PasswordPolicyService|null $policyService The org password policy
 	 * @param RegisterConfigurationLoader|null $registerLoader The register-configuration loader
-	 * @param \OCA\Keepiq\Backup\BackupSettings|null $backupSettings The scheduled backup settings
 	 *
 	 * @return void
 	 *
@@ -116,7 +115,6 @@ class AdminSettingsService {
 		?IEventDispatcher $eventDispatcher = null,
 		?PasswordPolicyService $policyService = null,
 		?RegisterConfigurationLoader $registerLoader = null,
-		private ?\OCA\Keepiq\Backup\BackupSettings $backupSettings = null,
 	) {
 		$this->policyService = ($policyService ?? new PasswordPolicyService(
 			appConfig: $appConfig,
@@ -137,7 +135,6 @@ class AdminSettingsService {
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.3
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.1
 	 */
 	public function getAdminSettings(): array {
 		$appId = Application::APP_ID;
@@ -220,11 +217,6 @@ class AdminSettingsService {
 			]
 		);
 
-		// Scheduled vault backups (admin-scheduled-vault-backups §2.1).
-		if ($this->backupSettings !== null) {
-			$settings = array_merge($settings, $this->backupSettings->read());
-		}
-
 		// Best-effort CA status; never blocks if the service is unavailable.
 		try {
 			$caService = $this->container->get('OCA\Keepiq\Service\CertificateAuthorityService');
@@ -249,7 +241,6 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 *
 	 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.4
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.1
 	 */
 	public function updateAdminSettings(array $data): array {
 		// Each group validates and persists one family of keys. Every guard
@@ -262,7 +253,6 @@ class AdminSettingsService {
 		$this->updateLeaseSettings(data: $data);
 		$this->updateRetentionSettings(data: $data);
 		$this->updateTrashSettings(data: $data);
-		$this->backupSettings?->update(data: $data);
 
 		return $this->getAdminSettings();
 	}//end updateAdminSettings()

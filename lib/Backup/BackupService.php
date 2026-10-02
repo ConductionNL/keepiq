@@ -200,7 +200,7 @@ class BackupService {
 	 *
 	 * @return string A readable local path
 	 *
-	 * @throws InvalidArgumentException When no such archive exists
+	 * @throws \InvalidArgumentException When no such archive exists
 	 *
 	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.2
 	 */

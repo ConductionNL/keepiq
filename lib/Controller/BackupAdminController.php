@@ -4,9 +4,10 @@
  * Keepiq Backup Admin Controller
  *
  * What the "Vault backups" admin section shows and does
- * (admin-scheduled-vault-backups §4.1): the last result and the archive
- * list (names, sizes, times, encrypted or not), and "Back up now", which asks
- * the next cron run to back up. Admin only. There is deliberately NO route
+ * (admin-scheduled-vault-backups §2.1, §4.1): the settings (schedule,
+ * retention, public key), the last result and the archive list (names,
+ * sizes, times, encrypted or not), a validated settings save, and "Back up
+ * now", which asks the next cron run to back up. Admin only. There is deliberately NO route
  * that serves archive content: a download link would let anyone with the
  * admin page copy every vault's ciphertext through the browser (design D6).
  *
@@ -27,7 +28,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\AppInfo\Application;
+use InvalidArgumentException;
 use OCA\Keepiq\Backup\BackupService;
+use OCA\Keepiq\Backup\BackupSettings;
 use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -44,6 +47,7 @@ class BackupAdminController extends Controller {
 	 *
 	 * @param IRequest $request The request
 	 * @param BackupService $backups The backup service
+	 * @param BackupSettings $settings The schedule, retention and key
 	 *
 	 * @return void
 	 *
@@ -52,6 +56,7 @@ class BackupAdminController extends Controller {
 	public function __construct(
 		IRequest $request,
 		private BackupService $backups,
+		private BackupSettings $settings,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -65,6 +70,7 @@ class BackupAdminController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
+	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.1
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function index(): JSONResponse {
@@ -78,7 +84,13 @@ class BackupAdminController extends Controller {
 			$this->backups->listArchives()
 		);
 
-		return new JSONResponse(data: ['status' => $this->backups->status(), 'archives' => $archives]);
+		return new JSONResponse(
+			data: [
+				'settings' => $this->settings->read(),
+				'status' => $this->backups->status(),
+				'archives' => $archives,
+			]
+		);
 	}//end index()
 
 	/**
@@ -96,4 +108,25 @@ class BackupAdminController extends Controller {
 
 		return new JSONResponse(data: ['requested' => true], statusCode: Http::STATUS_ACCEPTED);
 	}//end run()
+
+	/**
+	 * Save the backup settings; a bad value is refused with 400 and nothing
+	 * is written.
+	 *
+	 * @AuthorizedAdminSetting(AdminSettings::class)
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.1
+	 */
+	#[AuthorizedAdminSetting(AdminSettings::class)]
+	public function update(): JSONResponse {
+		try {
+			$this->settings->update(data: $this->request->getParams());
+		} catch (InvalidArgumentException $exception) {
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		return new JSONResponse(data: $this->settings->read());
+	}//end update()
 }//end class

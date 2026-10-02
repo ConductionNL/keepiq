@@ -12,7 +12,12 @@
 <template>
 	<CnSettingsSection
 		:name="t('keepiq', 'Vault backups')"
-		:description="t('keepiq', 'Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.')">
+		:description="
+			t(
+				'keepiq',
+				'Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.',
+			)
+		">
 		<div class="vault-backup" data-testid="vault-backup-section">
 			<NcNoteCard v-if="error" type="error" data-testid="vault-backup-error">
 				{{ error }}
@@ -53,7 +58,12 @@
 					@change="save" />
 			</label>
 			<p class="vault-backup__hint">
-				{{ t('keepiq', 'With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.') }}
+				{{
+					t(
+						'keepiq',
+						'With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.',
+					)
+				}}
 			</p>
 
 			<p v-if="status.lastRunAt" data-testid="vault-backup-last">
@@ -65,16 +75,23 @@
 				:disabled="!settings.backup_enabled || requested"
 				data-testid="vault-backup-run"
 				@click="runNow">
-				{{ requested ? t('keepiq', 'Backup requested for the next cron run') : t('keepiq', 'Back up now') }}
+				{{
+					requested
+						? t('keepiq', 'Backup requested for the next cron run')
+						: t('keepiq', 'Back up now')
+				}}
 			</NcButton>
 
-			<table v-if="archives.length > 0" class="vault-backup__list" data-testid="vault-backup-list">
+			<table
+				v-if="archives.length > 0"
+				class="vault-backup__list"
+				data-testid="vault-backup-list">
 				<thead>
 					<tr>
-						<th>{{ t('keepiq', 'Archive') }}</th>
-						<th>{{ t('keepiq', 'Size') }}</th>
-						<th>{{ t('keepiq', 'Written') }}</th>
-						<th>{{ t('keepiq', 'Encrypted') }}</th>
+						<th scope="col">{{ t('keepiq', 'Archive') }}</th>
+						<th scope="col">{{ t('keepiq', 'Size') }}</th>
+						<th scope="col">{{ t('keepiq', 'Written') }}</th>
+						<th scope="col">{{ t('keepiq', 'Encrypted') }}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -82,7 +99,13 @@
 						<td>{{ archive.name }}</td>
 						<td>{{ formatSize(archive.size) }}</td>
 						<td>{{ formatTime(archive.createdAt) }}</td>
-						<td>{{ archive.encrypted ? t('keepiq', 'Yes') : t('keepiq', 'No') }}</td>
+						<td>
+							{{
+								archive.encrypted
+									? t('keepiq', 'Yes')
+									: t('keepiq', 'No')
+							}}
+						</td>
 					</tr>
 				</tbody>
 			</table>
@@ -99,7 +122,12 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
 
-const KEYS = ['backup_enabled', 'backup_interval_hours', 'backup_retention_count', 'backup_recipient_public_key']
+const KEYS = [
+	'backup_enabled',
+	'backup_interval_hours',
+	'backup_retention_count',
+	'backup_recipient_public_key',
+]
 
 export default {
 	name: 'VaultBackupSection',
@@ -114,7 +142,13 @@ export default {
 				backup_recipient_public_key: '',
 			},
 
-			status: { lastRunAt: 0, lastStatus: '', lastError: '', runRequested: false },
+			status: {
+				lastRunAt: 0,
+				lastStatus: '',
+				lastError: '',
+				runRequested: false,
+			},
+
 			archives: [],
 			requested: false,
 			error: null,
@@ -131,7 +165,10 @@ export default {
 		lastResultText() {
 			const when = this.formatTime(this.status.lastRunAt)
 			return this.status.lastStatus === 'failed'
-				? this.t('keepiq', 'Last backup {when} failed: {error}', { when, error: this.status.lastError })
+				? this.t('keepiq', 'Last backup {when} failed: {error}', {
+						when,
+						error: this.status.lastError,
+					})
 				: this.t('keepiq', 'Last backup {when} succeeded.', { when })
 		},
 	},
@@ -144,13 +181,12 @@ export default {
 	 */
 	async created() {
 		try {
-			const [settings, backups] = await Promise.all([
-				axios.get(generateUrl('/apps/keepiq/api/settings/admin')),
-				axios.get(generateUrl('/apps/keepiq/api/settings/admin/backups')),
-			])
+			const backups = await axios.get(
+				generateUrl('/apps/keepiq/api/settings/admin/backups'),
+			)
 			for (const key of KEYS) {
-				if (settings.data?.[key] !== undefined) {
-					this.settings[key] = settings.data[key]
+				if (backups.data?.settings?.[key] !== undefined) {
+					this.settings[key] = backups.data.settings[key]
 				}
 			}
 			this.status = backups.data?.status ?? this.status
@@ -175,7 +211,10 @@ export default {
 				payload[key] = this.settings[key]
 			}
 			try {
-				await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), payload)
+				await axios.put(
+					generateUrl('/apps/keepiq/api/settings/admin/backups'),
+					payload,
+				)
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
 			}
@@ -190,7 +229,9 @@ export default {
 		async runNow() {
 			this.error = null
 			try {
-				await axios.post(generateUrl('/apps/keepiq/api/settings/admin/backups/run'))
+				await axios.post(
+					generateUrl('/apps/keepiq/api/settings/admin/backups/run'),
+				)
 				this.requested = true
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message

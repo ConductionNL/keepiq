@@ -72,6 +72,7 @@ final class BackupTableRegistry {
 		'suite_migr',
 		'team_folder_members',
 		'team_folders',
+		'used_proofs',
 	];
 
 	/**
@@ -79,5 +80,5 @@ final class BackupTableRegistry {
 	 *
 	 * @var string[]
 	 */
-	public const AUTOINCREMENT = ['audit_log', 'migration_failures', 'secret_tags'];
+	public const AUTOINCREMENT = ['audit_log', 'migration_failures', 'secret_tags', 'used_proofs'];
 }//end class
