@@ -1266,7 +1266,21 @@ OC.L10N.register(
         "Tag": "Merki",
         "Remove tag": "Fjarlægja merki",
         "Add tag": "Bæta við merki",
-        "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur."
+        "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur.",
+        "Access ends on (optional)": "Aðgangi lýkur (valfrjálst)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Forrit Keepiq sýna hvorki né afrita lykilorðið. Einhver með tæknikunnáttu getur samt lesið það úr eigin tæki. Skiptu um það þegar aðgangi viðkomandi lýkur.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Þetta leyndarmál er aðeins til notkunar. Skráðu þig inn í gegnum Keepiq-vafraviðbótina.",
+        "Until {date}": "Til {date}",
+        "Use only": "Aðeins notkun",
+        "Use only (can sign in, cannot view or copy)": "Aðeins notkun (getur skráð sig inn, getur ekki skoðað eða afritað)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Þú getur skráð þig inn með þessari innskráningu í gegnum Keepiq-vafraviðbótina. Eigandinn valdi að leyfa þér ekki að skoða eða afrita hana.",
+        "Your access ends on {date}": "Aðgangi þínum lýkur {date}",
+        "Your access to this secret has ended": "Aðgangi þínum að þessu leyndarmáli er lokið",
+        "Your access to \"%s\" ends tomorrow": "Aðgangi þínum að „%s“ lýkur á morgun",
+        "Your access to \"%s\" has ended": "Aðgangi þínum að „%s“ er lokið",
+        "%1$s no longer has access to \"%2$s\"": "%1$s hefur ekki lengur aðgang að „%2$s“",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s gat séð þetta lykilorð. Skiptu um það ef %1$s á ekki lengur að vita það.",
+        "%s could not view this password in Keepiq.": "%s gat ekki skoðað þetta lykilorð í Keepiq."
     },
     "nplurals=2; plural=(n != 1);"
 )

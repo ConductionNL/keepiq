@@ -1265,7 +1265,21 @@
         "Tag": "Etichetta",
         "Remove tag": "Allontanar l'etichetta",
         "Add tag": "Agiuntar ina etichetta",
-        "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada."
+        "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada.",
+        "Access ends on (optional)": "L'access finescha ils (opziunal)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Las apps da Keepiq na mussan ni copieschan il pled-clav. Insatgi cun enconuschientschas tecnicas al po tuttina leger sin ses agen apparat. Mida el cura che l'access finescha.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Quest secret è mo per l'utilisaziun. T'annunzia via l'extensiun dal navigatur da Keepiq.",
+        "Until {date}": "Fin ils {date}",
+        "Use only": "Mo utilisaziun",
+        "Use only (can sign in, cannot view or copy)": "Mo utilisaziun (po s'annunziar, na po betg vesair u copiar)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Ti pos t'annunziar cun quest login via l'extensiun dal navigatur da Keepiq. Il possessur ha decidì da betg ta laschar vesair u copiar el.",
+        "Your access ends on {date}": "Tes access finescha ils {date}",
+        "Your access to this secret has ended": "Tes access a quest secret è finì",
+        "Your access to \"%s\" ends tomorrow": "Tes access a «%s» finescha damaun",
+        "Your access to \"%s\" has ended": "Tes access a «%s» è finì",
+        "%1$s no longer has access to \"%2$s\"": "%1$s n'ha betg pli access a «%2$s»",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s ha pudì vesair quest pled-clav. Mida el, sche %1$s na duess betg pli al enconuscher.",
+        "%s could not view this password in Keepiq.": "%s n'ha betg pudì vesair quest pled-clav en Keepiq."
     },
     "plurals": null
 }

@@ -1265,7 +1265,21 @@
         "Tag": "Clib",
         "Remove tag": "Bain an chlib",
         "Add tag": "Cuir clib leis",
-        "Could not change the tags. Try again.": "Níorbh fhéidir na clibeanna a athrú. Bain triail eile as."
+        "Could not change the tags. Try again.": "Níorbh fhéidir na clibeanna a athrú. Bain triail eile as.",
+        "Access ends on (optional)": "Críochnaíonn rochtain ar (roghnach)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Ní thaispeánfaidh ná ní chóipeálfaidh aipeanna Keepiq an pasfhocal. Is féidir le duine a bhfuil scileanna teicniúla aige é a léamh óna ghléas féin fós. Athraigh é nuair a chríochnaíonn a rochtain.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Is le húsáid amháin an rún seo. Sínigh isteach tríd an síneadh brabhsálaí Keepiq.",
+        "Until {date}": "Go dtí {date}",
+        "Use only": "Úsáid amháin",
+        "Use only (can sign in, cannot view or copy)": "Úsáid amháin (is féidir síniú isteach, ní féidir féachaint air ná é a chóipeáil)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Is féidir leat síniú isteach leis an logáil isteach seo tríd an síneadh brabhsálaí Keepiq. Roghnaigh an t-úinéir gan ligean duit féachaint air ná é a chóipeáil.",
+        "Your access ends on {date}": "Críochnaíonn do rochtain ar {date}",
+        "Your access to this secret has ended": "Tá deireadh le do rochtain ar an rún seo",
+        "Your access to \"%s\" ends tomorrow": "Críochnaíonn do rochtain ar \"%s\" amárach",
+        "Your access to \"%s\" has ended": "Tá deireadh le do rochtain ar \"%s\"",
+        "%1$s no longer has access to \"%2$s\"": "Níl rochtain ag %1$s ar \"%2$s\" a thuilleadh",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "Bhí %1$s in ann an pasfhocal seo a fheiceáil. Athraigh é mura cóir go mbeadh a fhios ag %1$s é a thuilleadh.",
+        "%s could not view this password in Keepiq.": "Ní raibh %s in ann an pasfhocal seo a fheiceáil in Keepiq."
     },
     "plurals": null
 }

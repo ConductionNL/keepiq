@@ -1265,7 +1265,21 @@
         "Tag": "Tag",
         "Remove tag": "Usuń tag",
         "Add tag": "Dodaj tag",
-        "Could not change the tags. Try again.": "Nie udało się zmienić tagów. Spróbuj ponownie."
+        "Could not change the tags. Try again.": "Nie udało się zmienić tagów. Spróbuj ponownie.",
+        "Access ends on (optional)": "Dostęp wygasa (opcjonalnie)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Aplikacje Keepiq nie pokażą ani nie skopiują hasła. Osoba z wiedzą techniczną nadal może odczytać je na własnym urządzeniu. Zmień je, gdy jej dostęp wygaśnie.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Ten sekret jest tylko do użycia. Zaloguj się przez rozszerzenie przeglądarki Keepiq.",
+        "Until {date}": "Do {date}",
+        "Use only": "Tylko użycie",
+        "Use only (can sign in, cannot view or copy)": "Tylko użycie (może się zalogować, nie może wyświetlić ani skopiować)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Możesz zalogować się tym loginem przez rozszerzenie przeglądarki Keepiq. Właściciel nie pozwolił ci go wyświetlać ani kopiować.",
+        "Your access ends on {date}": "Twój dostęp wygasa {date}",
+        "Your access to this secret has ended": "Twój dostęp do tego sekretu wygasł",
+        "Your access to \"%s\" ends tomorrow": "Twój dostęp do „%s” wygasa jutro",
+        "Your access to \"%s\" has ended": "Twój dostęp do „%s” wygasł",
+        "%1$s no longer has access to \"%2$s\"": "%1$s nie ma już dostępu do „%2$s”",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s mógł widzieć to hasło. Zmień je, jeśli %1$s nie powinien go już znać.",
+        "%s could not view this password in Keepiq.": "%s nie mógł wyświetlić tego hasła w Keepiq."
     },
     "plurals": null
 }

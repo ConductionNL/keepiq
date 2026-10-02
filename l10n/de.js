@@ -1266,7 +1266,21 @@ OC.L10N.register(
         "Tag": "Schlagwort",
         "Remove tag": "Schlagwort entfernen",
         "Add tag": "Schlagwort hinzufügen",
-        "Could not change the tags. Try again.": "Schlagwörter konnten nicht geändert werden. Bitte erneut versuchen."
+        "Could not change the tags. Try again.": "Schlagwörter konnten nicht geändert werden. Bitte erneut versuchen.",
+        "Access ends on (optional)": "Zugriff endet am (optional)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Die Apps von Keepiq zeigen oder kopieren das Passwort nicht. Jemand mit technischen Kenntnissen kann es trotzdem auf dem eigenen Gerät auslesen. Ändere es, wenn der Zugriff endet.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Dieses Geheimnis ist nur zur Nutzung freigegeben. Melde dich über die Keepiq-Browsererweiterung an.",
+        "Until {date}": "Bis {date}",
+        "Use only": "Nur verwenden",
+        "Use only (can sign in, cannot view or copy)": "Nur verwenden (anmelden möglich, ansehen oder kopieren nicht)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Du kannst dich mit diesen Zugangsdaten über die Keepiq-Browsererweiterung anmelden. Der Eigentümer hat entschieden, dass du sie nicht ansehen oder kopieren darfst.",
+        "Your access ends on {date}": "Dein Zugriff endet am {date}",
+        "Your access to this secret has ended": "Dein Zugriff auf dieses Geheimnis ist beendet",
+        "Your access to \"%s\" ends tomorrow": "Dein Zugriff auf „%s“ endet morgen",
+        "Your access to \"%s\" has ended": "Dein Zugriff auf „%s“ ist beendet",
+        "%1$s no longer has access to \"%2$s\"": "%1$s hat keinen Zugriff mehr auf „%2$s“",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s konnte dieses Passwort sehen. Ändere es, wenn %1$s es nicht mehr kennen soll.",
+        "%s could not view this password in Keepiq.": "%s konnte dieses Passwort in Keepiq nicht ansehen."
     },
     "nplurals=2; plural=(n != 1);"
 )

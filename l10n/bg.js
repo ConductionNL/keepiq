@@ -1266,7 +1266,21 @@ OC.L10N.register(
         "Tag": "Етикет",
         "Remove tag": "Премахване на етикет",
         "Add tag": "Добавяне на етикет",
-        "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново."
+        "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново.",
+        "Access ends on (optional)": "Достъпът изтича на (по избор)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Приложенията на Keepiq няма да показват или копират паролата. Човек с технически умения все пак може да я прочете от своето устройство. Сменете я, когато достъпът му изтече.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Тази тайна е само за използване. Влезте чрез разширението за браузър на Keepiq.",
+        "Until {date}": "До {date}",
+        "Use only": "Само за използване",
+        "Use only (can sign in, cannot view or copy)": "Само за използване (може да влиза, не може да преглежда или копира)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Можете да влезете с този вход чрез разширението за браузър на Keepiq. Собственикът е избрал да не ви позволява да го преглеждате или копирате.",
+        "Your access ends on {date}": "Достъпът ви изтича на {date}",
+        "Your access to this secret has ended": "Достъпът ви до тази тайна е прекратен",
+        "Your access to \"%s\" ends tomorrow": "Достъпът ви до „%s“ изтича утре",
+        "Your access to \"%s\" has ended": "Достъпът ви до „%s“ е прекратен",
+        "%1$s no longer has access to \"%2$s\"": "%1$s вече няма достъп до „%2$s“",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s можеше да вижда тази парола. Сменете я, ако %1$s вече не трябва да я знае.",
+        "%s could not view this password in Keepiq.": "%s не можеше да види тази парола в Keepiq."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1265,7 +1265,21 @@
         "Tag": "Etichetta",
         "Remove tag": "Rimuovi etichetta",
         "Add tag": "Aggiungi etichetta",
-        "Could not change the tags. Try again.": "Impossibile modificare le etichette. Riprova."
+        "Could not change the tags. Try again.": "Impossibile modificare le etichette. Riprova.",
+        "Access ends on (optional)": "L'accesso termina il (facoltativo)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Le app di Keepiq non mostreranno né copieranno la password. Chi ha competenze tecniche può comunque leggerla dal proprio dispositivo. Cambiala quando il suo accesso termina.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Questo segreto è solo da usare. Accedi tramite l'estensione del browser di Keepiq.",
+        "Until {date}": "Fino al {date}",
+        "Use only": "Solo uso",
+        "Use only (can sign in, cannot view or copy)": "Solo uso (può accedere, non può vedere né copiare)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Puoi accedere con queste credenziali tramite l'estensione del browser di Keepiq. Il proprietario ha scelto di non permetterti di vederle o copiarle.",
+        "Your access ends on {date}": "Il tuo accesso termina il {date}",
+        "Your access to this secret has ended": "Il tuo accesso a questo segreto è terminato",
+        "Your access to \"%s\" ends tomorrow": "Il tuo accesso a \"%s\" termina domani",
+        "Your access to \"%s\" has ended": "Il tuo accesso a \"%s\" è terminato",
+        "%1$s no longer has access to \"%2$s\"": "%1$s non ha più accesso a \"%2$s\"",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s poteva vedere questa password. Cambiala se %1$s non deve più conoscerla.",
+        "%s could not view this password in Keepiq.": "%s non ha potuto vedere questa password in Keepiq."
     },
     "plurals": null
 }
