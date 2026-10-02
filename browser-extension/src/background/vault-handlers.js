@@ -174,20 +174,6 @@ export function buildVaultHandlers({
 		},
 
 		/**
-		 * The org policy, for the generator. Works while locked: it holds no secret.
-		 *
-		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-generator/spec.md#requirement-generator-tab-in-the-popup
-		 */
-		'generator-policy': async () => {
-			const account = await activeAccount()
-			try {
-				return { policy: await api.fetchPolicy(account) }
-			} catch {
-				return { policy: null }
-			}
-		},
-
-		/**
 		 * A strong password for a sign-up field on a page, under the org policy.
 		 *
 		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-generator/spec.md#requirement-suggest-a-strong-password-in-a-sign-up-field

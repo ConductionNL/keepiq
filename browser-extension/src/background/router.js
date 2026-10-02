@@ -25,6 +25,7 @@ import { computeTotp } from '../lib/totp-service.js'
 import { reportFill } from '../lib/usage.js'
 import { isServerSupported } from '../lib/version.js'
 import { buildVaultHandlers } from './vault-handlers.js'
+import { areaOrMemory, buildGeneratorHandlers } from './generator-handlers.js'
 
 /**
  * The messages a content script (a tab) may send. Everything else needs an
@@ -53,6 +54,43 @@ const OTP_INTENTS_KEY = 'keepiq.otpIntents'
 function sessionStore() {
 	return chrome.storage && chrome.storage.session ? chrome.storage.session : null
 }
+
+// The Generator tab's state (clients-extension-complete), built on first use
+// so it binds to the storage areas the browser provides at that time.
+let generatorState = null
+
+function generatorModule() {
+	if (!generatorState) {
+		generatorState = buildGeneratorHandlers({
+			api,
+			activeAccount,
+			activeHost: async () => {
+				const [tab] = await chrome.tabs.query({
+					active: true,
+					currentWindow: true,
+				})
+				try {
+					const url = new URL(tab?.url || '')
+					return url.protocol === 'http:' || url.protocol === 'https:'
+						? url.hostname
+						: ''
+				} catch {
+					return ''
+				}
+			},
+			local: chrome.storage.local,
+			session: areaOrMemory(sessionStore()),
+		})
+	}
+	return generatorState
+}
+
+// Generator history goes whenever an account locks, for any reason.
+vault.onLock((accountId) => {
+	generatorModule()
+		.clearHistory(accountId)
+		.catch(() => {})
+})
 
 async function readIntents() {
 	const store = sessionStore()
@@ -271,6 +309,9 @@ async function doUnpair(payload) {
 	}
 	lockAccount(id)
 	maxIdleByAccount.delete(id)
+	await generatorModule()
+		.forget(id)
+		.catch(() => {})
 	await api.removeAccount(id)
 	return { ok: true, revoked }
 }
@@ -748,6 +789,14 @@ const handlers = {
 	'biometric-options': doBiometricOptions,
 	'biometric-used': doBiometricUsed,
 	'otp-field-detected': doOtpFieldDetected,
+	// Generator tab context, options and history (clients-extension-complete).
+	'generator-context': (p) => generatorModule().handlers['generator-context'](p),
+	'generator-options-save': (p) =>
+		generatorModule().handlers['generator-options-save'](p),
+	'generator-history-add': (p) =>
+		generatorModule().handlers['generator-history-add'](p),
+	'generator-history-clear': (p) =>
+		generatorModule().handlers['generator-history-clear'](p),
 	// Vault, Generator and Send tabs (clients-extension-generator-vault-send).
 	...buildVaultHandlers({
 		api,

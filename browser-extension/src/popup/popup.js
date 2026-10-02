@@ -33,6 +33,7 @@ function show(view) {
 		'view-unlocked',
 		'view-settings',
 		'view-update',
+		'view-locked-generator',
 	]) {
 		$(id).hidden = id !== view
 	}
@@ -252,22 +253,56 @@ let vaultView = null
 let sendView = null
 
 /**
- * Show one tab and open its view.
+ * Show one tab and, unless returning to it, open its view.
  *
  * @param {string} name One of TABS.
- * @param {object} [arg] Passed to the view's open (the Send tab's prefill).
+ * @param {object} [arg] Passed to the view's open (Send prefill, Generator pick mode).
+ * @param {{reopen?: boolean}} [how] reopen false: switch without reloading the view.
  * @return {Promise<void>}
  */
-async function selectTab(name, arg) {
+async function selectTab(name, arg, { reopen = true } = {}) {
 	for (const tab of TABS) {
 		const selected = tab === name
 		$('tab-' + tab).setAttribute('aria-selected', selected ? 'true' : 'false')
 		$('panel-' + tab).hidden = !selected
 	}
+	if (!reopen) return
 	if (name === 'site') await renderUnlocked()
 	if (name === 'vault') await vaultView.open()
-	if (name === 'generator') await generatorView.open()
+	if (name === 'generator') await generatorView.open(arg)
 	if (name === 'send') await sendView.open(arg)
+}
+
+/**
+ * Open the Generator in pick mode for the item form, and come back to the
+ * form (with the user's other input intact) when a value is picked.
+ *
+ * @param {string} kind password or username.
+ * @param {(value: string) => void} onPick Puts the value in the form.
+ * @return {Promise<void>}
+ */
+function pickGenerated(kind, onPick) {
+	return selectTab('generator', {
+		kind,
+		onPick: (value) => {
+			onPick(value)
+			selectTab('vault', undefined, { reopen: false })
+		},
+	})
+}
+
+// The Generator while locked: its panel moves into the locked view and back.
+function openLockedGenerator() {
+	$('locked-generator-slot').appendChild($('panel-generator'))
+	$('panel-generator').hidden = false
+	show('view-locked-generator')
+	return generatorView.open()
+}
+
+function closeLockedGenerator() {
+	$('panel-send').before($('panel-generator'))
+	$('panel-generator').hidden = true
+	return refresh()
 }
 
 function wireTabs() {
@@ -276,12 +311,14 @@ function wireTabs() {
 	sendView = initSend(ctx)
 	vaultView = initVault({
 		...ctx,
-		generatePassword: () => generatorView.generate(),
+		pickGenerated,
 		sendItem: (item) => selectTab('send', item),
 	})
 	for (const tab of TABS) {
 		$('tab-' + tab).addEventListener('click', () => selectTab(tab))
 	}
+	$('locked-generate').addEventListener('click', openLockedGenerator)
+	$('locked-generator-back').addEventListener('click', closeLockedGenerator)
 }
 
 function wire() {

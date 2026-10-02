@@ -260,7 +260,6 @@ describe('generator handlers', () => {
 			},
 		})
 		expect((await handlers['generate-for-field']({})).value).toHaveLength(20)
-		expect((await handlers['generator-policy']({})).policy).toBeNull()
 	})
 })
 

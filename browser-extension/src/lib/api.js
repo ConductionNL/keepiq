@@ -257,6 +257,27 @@ export function unpair(config) {
  * @return {Promise<boolean>} True when Nextcloud deleted the app password.
  * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-pairing-against-the-nextcloud-session
  */
+/**
+ * The Nextcloud email address of the account's user, or '' when it has none
+ * or the server does not answer. Seeds the plus-addressed username.
+ *
+ * @param {object} config The account.
+ * @return {Promise<string>}
+ * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-username-generator
+ */
+export async function fetchAccountEmail(config) {
+	const res = await fetch(base(config) + '/ocs/v2.php/cloud/user?format=json', {
+		headers: {
+			Authorization: authHeader(config),
+			'OCS-APIRequest': 'true',
+			Accept: 'application/json',
+		},
+	})
+	if (!res.ok) return ''
+	const data = await res.json().catch(() => null)
+	return typeof data?.ocs?.data?.email === 'string' ? data.ocs.data.email : ''
+}
+
 export async function revokeAppPassword(config) {
 	const res = await fetch(base(config) + '/ocs/v2.php/core/apppassword', {
 		method: 'DELETE',
