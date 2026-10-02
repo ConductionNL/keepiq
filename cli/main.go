@@ -98,7 +98,7 @@ The master password is prompted per session and never leaves this process.
 `)
 }
 
-// --- flag helpers (stdlib only, minimal) ---
+// --- flag helpers (minimal) ---
 
 func popFlag(args []string, name string) (string, []string) {
 	out := make([]string, 0, len(args))

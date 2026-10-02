@@ -2,7 +2,9 @@ name: CLI Release
 
 # Builds the keepiq-cli single static binary for every supported platform.
 # On a tag push it also uploads the artifacts to the GitHub release. The CLI is
-# stdlib-only Go, so the matrix is a plain cross-compile — no PHP/Node needed.
+# pure Go (stdlib plus the Go project's golang.org/x/crypto and
+# golang.org/x/sys, for the SSH agent), so the matrix is a plain
+# cross-compile with no PHP or Node needed.
 
 on:
   push:
@@ -17,7 +19,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    # No observed runs yet; a Go vet+test of a stdlib-only CLI is minutes at most.
+    # No observed runs yet; vet, test and govulncheck of the CLI are minutes at most.
     timeout-minutes: 20
     defaults:
       run:
@@ -28,12 +30,18 @@ jobs:
         with:
           go-version: "1.22"
       - run: go vet ./...
+      # The SSH agent's integration test runs the real ssh client against a
+      # throwaway sshd on localhost (cli-ssh-agent).
+      - name: Install OpenSSH for the agent integration test
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq openssh-server openssh-client && sudo mkdir -p /run/sshd
       - run: go test ./...
+      # The CLI now has dependencies: check them for known vulnerabilities.
+      - run: go run golang.org/x/vuln/cmd/govulncheck@v1.1.3 ./...
 
   build:
     needs: test
     runs-on: ubuntu-latest
-    # No observed runs yet; a stdlib-only Go cross-compile is minutes at most.
+    # No observed runs yet; a pure-Go cross-compile is minutes at most.
     timeout-minutes: 20
     defaults:
       run:

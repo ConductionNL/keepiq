@@ -1,6 +1,6 @@
 # keepiq-cli
 
-A single static binary, stdlib-only Go client for [Keepiq](../), the
+A single static binary, pure Go client for [Keepiq](../), the
 zero-knowledge Nextcloud secrets manager. It talks to the **same** server
 surfaces the browser app and the openconnector machine consumer already use —
 nothing new server-side — and does **all** decryption client-side, so no
@@ -65,6 +65,99 @@ is touched.
 - The **master password** and the derived unlock key are **never** written to
   disk and never sent in any request — human mode holds them in memory only, for
   the duration of a single command.
+
+## SSH agent
+
+`keepiq ssh-agent` serves the SSH keys in your vault to `ssh`, `git` and
+`scp`. It works on Linux and macOS. On Windows, run it in WSL for now.
+
+The agent keeps every secret of the type **SSH Key** whose private key opens
+without a passphrase. It skips a key that needs a passphrase and names it on
+standard error. Each key shows up under its secret name.
+
+Start it and point your shell at it:
+
+```sh
+eval "$(keepiq ssh-agent)"
+ssh-add -l                 # lists your vault keys
+git clone git@github.com:example/repo.git
+```
+
+The agent asks for your master password once and decrypts the keys in its own
+memory. Nothing decrypted is written to disk, core dumps are off, and the
+server sees the same reads `keepiq show` makes.
+
+Options:
+
+- `--socket <path>`: where to listen. The default is
+  `$XDG_RUNTIME_DIR/keepiq/agent.sock` on Linux and
+  `$TMPDIR/keepiq-<uid>/agent.sock` on macOS. The folder must be yours with
+  mode 0700; the agent refuses anything else.
+- `--folder <name>`: offer only the keys in that folder.
+- `--idle <minutes>`: drop every key after this long without a signature
+  (60 by default, 0 turns it off).
+- `--confirm`: ask before each signature through the program in
+  `SSH_ASKPASS`. Without `SSH_ASKPASS` the agent does not start.
+- `--locked`: start without keys, for a service manager. Unlock it with
+  `ssh-add -X` and your master password; lock it again with `ssh-add -x`.
+
+The vault is the only place keys come from: `ssh-add some_key` and
+`ssh-add -d` are refused. RSA keys sign with SHA-2 only; a client that asks
+for an old `ssh-rsa` (SHA-1) signature is refused.
+
+A connection from another user on the same machine is closed before it can
+ask anything.
+
+### Run it as a service
+
+systemd user unit, `~/.config/systemd/user/keepiq-agent.service`:
+
+```ini
+[Unit]
+Description=Keepiq SSH agent
+
+[Service]
+ExecStart=%h/.local/bin/keepiq ssh-agent --locked --socket %t/keepiq/agent.sock
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+```
+
+```sh
+systemctl --user enable --now keepiq-agent
+export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/keepiq/agent.sock"
+ssh-add -X                 # enter your master password
+```
+
+launchd agent, `~/Library/LaunchAgents/nl.conduction.keepiq-agent.plist`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>nl.conduction.keepiq-agent</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/keepiq</string>
+    <string>ssh-agent</string>
+    <string>--locked</string>
+    <string>--socket</string>
+    <string>/Users/YOU/.keepiq/agent.sock</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><true/>
+</dict>
+</plist>
+```
+
+```sh
+mkdir -m 700 ~/.keepiq
+launchctl load ~/Library/LaunchAgents/nl.conduction.keepiq-agent.plist
+export SSH_AUTH_SOCK=~/.keepiq/agent.sock
+ssh-add -X
+```
 
 ## CI mode
 
