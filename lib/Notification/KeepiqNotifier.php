@@ -113,6 +113,10 @@ class KeepiqNotifier implements INotifier {
 		}
 
 		if ($handled === false) {
+			$handled = $this->renderEmergencySubject(notification: $notification, subject: $subj, params: $params, l: $l);
+		}
+
+		if ($handled === false) {
 			throw new UnknownNotificationException();
 		}
 
@@ -354,6 +358,26 @@ class KeepiqNotifier implements INotifier {
 					)
 				);
 				return true;
+		}//end switch
+
+		return false;
+	}//end renderVaultAccessSubject()
+
+	/**
+	 * Render the emergency-access subjects: requests, grants that were used,
+	 * cleared and compromised contacts. None of them carry a deep-link.
+	 *
+	 * @param INotification $notification The notification to mutate
+	 * @param string $subject The notification subject identifier
+	 * @param array<string,mixed> $params The subject parameters
+	 * @param IL10N $l The localisation helper
+	 *
+	 * @return bool True when this renderer recognised the subject.
+	 *
+	 * @spec openspec/specs/emergency-access/spec.md
+	 */
+	private function renderEmergencySubject(INotification $notification, string $subject, array $params, IL10N $l): bool {
+		switch ($subject) {
 			case 'emergency_access_requested':
 				$granteeName = (string)($params['grantee_name'] ?? $params['granteeUserId'] ?? $l->t('a trusted contact'));
 				$waitDays = (int)($params['waitPeriodDays'] ?? 7);
@@ -395,7 +419,7 @@ class KeepiqNotifier implements INotifier {
 		}//end switch
 
 		return false;
-	}//end renderVaultAccessSubject()
+	}//end renderEmergencySubject()
 
 	/**
 	 * Attach a deep-link to the affected secret, when the params include one.
