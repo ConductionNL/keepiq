@@ -99,32 +99,21 @@ class KeepiqNotifier implements INotifier {
 
 		// Each renderer owns one family of subjects and reports whether it
 		// recognised this one. The first renderer that claims the subject wins.
-		$handled = $this->renderSharingSubject(notification: $notification, subject: $subj, params: $params, l: $l);
-		if ($handled === false) {
-			$handled = $this->renderSecretLifecycleSubject(notification: $notification, subject: $subj, params: $params, l: $l);
+		$renderers = [
+			fn (): bool => $this->renderSharingSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderSecretLifecycleSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderAdminSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderVaultAccessSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderDeviceApprovalSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderRecoverySubject(notification: $notification, subject: $subj, params: $params, l: $l),
+		];
+		foreach ($renderers as $render) {
+			if ($render() === true) {
+				return $notification;
+			}
 		}
 
-		if ($handled === false) {
-			$handled = $this->renderAdminSubject(notification: $notification, subject: $subj, params: $params, l: $l);
-		}
-
-		if ($handled === false) {
-			$handled = $this->renderVaultAccessSubject(notification: $notification, subject: $subj, params: $params, l: $l);
-		}
-
-		if ($handled === false) {
-			$handled = $this->renderDeviceApprovalSubject(notification: $notification, subject: $subj, params: $params, l: $l);
-		}
-
-		if ($handled === false) {
-			$handled = $this->renderRecoverySubject(notification: $notification, subject: $subj, params: $params, l: $l);
-		}
-
-		if ($handled === false) {
-			throw new UnknownNotificationException();
-		}
-
-		return $notification;
+		throw new UnknownNotificationException();
 	}//end prepare()
 
 	/**

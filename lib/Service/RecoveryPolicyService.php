@@ -158,21 +158,8 @@ class RecoveryPolicyService {
 		}
 
 		$named = array_values(array_unique(array_filter($officers, static fn ($uid): bool => is_string($uid) && $uid !== '')));
-		foreach ($named as $uid) {
-			try {
-				$this->suiteMapper->findActiveByOwner('user', $uid);
-			} catch (DoesNotExistException) {
-				throw new InvalidArgumentException(message: 'Officer ' . $uid . ' has no active encryption suite');
-			}
-		}
-
-		if ($policy !== 'off' && $named === []) {
-			throw new InvalidArgumentException(message: 'Name at least one officer before turning recovery on');
-		}
-
-		if ($named !== [] && ($threshold < 1 || $threshold > count($named))) {
-			throw new InvalidArgumentException(message: 'threshold must be between 1 and the number of officers');
-		}
+		$this->assertOfficersUsable(officers: $named);
+		$this->assertThresholdFits(policy: $policy, officers: $named, threshold: $threshold);
 
 		$before  = $this->officers();
 		$removed = array_values(array_diff($before, $named));
@@ -190,4 +177,44 @@ class RecoveryPolicyService {
 
 		return $this->settings() + ['removed' => $removed];
 	}//end update()
+
+	/**
+	 * Refuse an officer without an active suite: they could not hold a copy.
+	 *
+	 * @param string[] $officers The officer user ids
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	private function assertOfficersUsable(array $officers): void {
+		foreach ($officers as $uid) {
+			try {
+				$this->suiteMapper->findActiveByOwner('user', $uid);
+			} catch (DoesNotExistException) {
+				throw new InvalidArgumentException(message: 'Officer ' . $uid . ' has no active encryption suite');
+			}
+		}
+	}//end assertOfficersUsable()
+
+	/**
+	 * Refuse recovery without officers, and a threshold outside 1..officers.
+	 *
+	 * @param string   $policy    The policy
+	 * @param string[] $officers  The officer user ids
+	 * @param int      $threshold The threshold
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException
+	 */
+	private function assertThresholdFits(string $policy, array $officers, int $threshold): void {
+		if ($policy !== 'off' && $officers === []) {
+			throw new InvalidArgumentException(message: 'Name at least one officer before turning recovery on');
+		}
+
+		if ($officers !== [] && ($threshold < 1 || $threshold > count($officers))) {
+			throw new InvalidArgumentException(message: 'threshold must be between 1 and the number of officers');
+		}
+	}//end assertThresholdFits()
 }//end class

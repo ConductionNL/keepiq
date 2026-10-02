@@ -207,7 +207,8 @@ class RecoveryKeyService {
 	 *
 	 * @return void
 	 *
-	 * @throws NotFoundException When the officer holds no copy of that key
+	 * @throws NotFoundException        When the officer holds no copy of that key
+	 * @throws InvalidArgumentException When the officer has no active suite
 	 *
 	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
 	 */

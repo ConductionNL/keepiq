@@ -42,6 +42,8 @@ use Ramsey\Uuid\Uuid;
  *   requests, approvals, enrolments, keys, notifications and the audit trail.
  * @SuppressWarnings(PHPMD.TooManyPublicMethods) One public method per step of
  *   the request lifecycle.
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Every step re-checks who may
+ *   act on which state; keeping those checks next to each other is the point.
  */
 class RecoveryRequestService {
 
@@ -137,13 +139,7 @@ class RecoveryRequestService {
 			throw new ForbiddenException(message: 'You are not enrolled in account recovery');
 		}
 
-		foreach ($this->requests->findByUser($userId) as $old) {
-			if (in_array($old->getStatus(), self::OPEN, true) === true) {
-				$old->setStatus(self::STATUS_EXPIRED);
-				$old->setSealedResult(null);
-				$this->requests->update($old);
-			}
-		}
+		$this->endOpenRequestsOf(userId: $userId);
 
 		$now     = new DateTime();
 		$request = new RecoveryRequest();
@@ -158,19 +154,7 @@ class RecoveryRequestService {
 		$request->setExpiresAt((clone $now)->add(new DateInterval(self::TTL)));
 		$request = $this->requests->insert($request);
 
-		foreach ($this->policy->officers() as $officer) {
-			if ($officer === $userId) {
-				continue;
-			}
-
-			$this->notifications->notify(
-				subject: 'recovery_requested',
-				recipientId: $officer,
-				params: ['user' => $userId],
-				objectType: 'account_recovery',
-				objectId: $request->getId(),
-			);
-		}
+		$this->notifyOfficers(request: $request);
 
 		$this->audit->record(
 			actorId: $userId,
@@ -487,6 +471,46 @@ class RecoveryRequestService {
 	}//end endForSuite()
 
 	/**
+	 * End the user's earlier open requests: one request at a time.
+	 *
+	 * @param string $userId The user
+	 *
+	 * @return void
+	 */
+	private function endOpenRequestsOf(string $userId): void {
+		foreach ($this->requests->findByUser($userId) as $old) {
+			if (in_array($old->getStatus(), self::OPEN, true) === true) {
+				$old->setStatus(self::STATUS_EXPIRED);
+				$old->setSealedResult(null);
+				$this->requests->update($old);
+			}
+		}
+	}//end endOpenRequestsOf()
+
+	/**
+	 * Tell every officer but the requester about a new request.
+	 *
+	 * @param RecoveryRequest $request The request
+	 *
+	 * @return void
+	 */
+	private function notifyOfficers(RecoveryRequest $request): void {
+		foreach ($this->policy->officers() as $officer) {
+			if ($officer === $request->getUserId()) {
+				continue;
+			}
+
+			$this->notifications->notify(
+				subject: 'recovery_requested',
+				recipientId: $officer,
+				params: ['user' => $request->getUserId()],
+				objectType: 'account_recovery',
+				objectId: $request->getId(),
+			);
+		}
+	}//end notifyOfficers()
+
+	/**
 	 * An approved request the officer approved, or the unknown-request answer.
 	 *
 	 * @param string $id         The request
@@ -498,11 +522,11 @@ class RecoveryRequestService {
 	 */
 	private function loadForApprover(string $id, string $officerUid): RecoveryRequest {
 		$request = $this->load(id: $id);
-		$ok      = $this->policy->isOfficer(userId: $officerUid)
+		$allowed = $this->policy->isOfficer(userId: $officerUid)
 			&& $request->getStatus() === self::STATUS_APPROVED
 			&& $this->isLapsed(request: $request) === false
 			&& in_array($officerUid, $this->approverIds(decisions: $this->approvals->findByRequest($id)), true);
-		if ($ok === false) {
+		if ($allowed === false) {
 			throw new NotFoundException(message: 'Request not found');
 		}
 

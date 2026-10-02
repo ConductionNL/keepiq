@@ -126,7 +126,7 @@ class RecoveryUserController extends Controller {
 				publicKey: $publicKey,
 				purpose: $purpose
 			)->jsonSerialize(),
-			created: true
+			successStatus: Http::STATUS_CREATED
 		);
 	}//end createRequest()
 
@@ -159,24 +159,19 @@ class RecoveryUserController extends Controller {
 	/**
 	 * Run a user action and map refusals.
 	 *
-	 * @param callable $action  Receives the caller's uid
-	 * @param bool     $created Whether success is a 201
+	 * @param callable $action        Receives the caller's uid
+	 * @param int      $successStatus The status of a success
 	 *
 	 * @return JSONResponse
 	 */
-	private function run(callable $action, bool $created = false): JSONResponse {
+	private function run(callable $action, int $successStatus = Http::STATUS_OK): JSONResponse {
 		$uid = $this->userSession->getUser()?->getUID();
 		if ($uid === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
 		try {
-			$status = Http::STATUS_OK;
-			if ($created === true) {
-				$status = Http::STATUS_CREATED;
-			}
-
-			return new JSONResponse(data: $action($uid), statusCode: $status);
+			return new JSONResponse(data: $action($uid), statusCode: $successStatus);
 		} catch (ForbiddenException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (NotFoundException) {
