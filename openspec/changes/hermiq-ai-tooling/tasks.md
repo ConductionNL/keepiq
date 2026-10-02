@@ -25,7 +25,7 @@ Depends on OpenRegister's `AttributeToolScanner`, `McpTool` attribute and `IMcpS
 ## 4. Docs and gates
 
 - [x] 4.1 `docs/FEATURES.md`: one line under the security model — MCP tools are metadata-only reads; secret values are never agent-reachable Done.
-- [ ] 4.2 (BLOCKED: the repository has no CHANGELOG.md; not created here) `CHANGELOG.md` entry
+- [x] 4.2 `CHANGELOG.md` entry Done: `CHANGELOG.md` created (Keep a Changelog, Unreleased, Added).
 - [ ] 4.3 (PARTIAL: phpcs and phpstan clean on lib/Mcp and McpRegistrar; check:strict and the hydra gates run by the coordinator) `composer check:strict` clean on new files; run hydra gates (spdx, route-auth n/a, semantic-auth, spec-coverage)
 - [ ] 4.4 (LIVE CHECK OWED) Live: on the dev instance with Hermiq, ask "which certificates expire this month?" and confirm the answer comes from `expiryReport`, the audit entry exists, and no tool result contains a value or ciphertext
 
