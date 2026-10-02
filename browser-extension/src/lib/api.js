@@ -386,6 +386,34 @@ export function updateSecret(config, id, body) {
 	return request(config, 'PUT', '/api/v1/secrets/' + encodeURIComponent(id), body)
 }
 
+/**
+ * The offline manifest: the active suite, every secret row (ciphertext and
+ * plaintext metadata), the folders and the types, in one response.
+ *
+ * @param {object} config The account.
+ * @return {Promise<object>}
+ * @spec openspec/changes/clients-extension-complete/specs/extension-vault-sync/spec.md#requirement-keep-a-snapshot-of-the-vault
+ */
+export function fetchOfflineManifest(config) {
+	return request(config, 'GET', '/api/v1/offline/manifest')
+}
+
+/**
+ * The most recently updated secret and the total, for the cheap "did
+ * anything change" check.
+ *
+ * @param {object} config The account.
+ * @return {Promise<{items: Array<object>, total: number}>}
+ * @spec openspec/changes/clients-extension-complete/specs/extension-vault-sync/spec.md#requirement-sync-when-it-matters-and-cheaply
+ */
+export function latestSecret(config) {
+	return request(
+		config,
+		'GET',
+		'/api/v1/secrets?sort=updated_at&direction=desc&limit=1',
+	)
+}
+
 /** The largest page the secrets list serves (SecretService::MAX_LIMIT). */
 export const SECRETS_PAGE_SIZE = 100
 
