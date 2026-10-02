@@ -1577,7 +1577,31 @@
             "Пользователь всё ещё в группе {groups}, которая входит в командную папку. Удалите его из группы или отключите учётную запись.",
             "Пользователь всё ещё в группах {groups}, которые входят в командные папки. Удалите его из групп или отключите учётную запись.",
             "Пользователь всё ещё в группах {groups}, которые входят в командные папки. Удалите его из групп или отключите учётную запись."
-        ]
+        ],
+        "Allow approval from another device": "Разрешить подтверждение с другого устройства",
+        "App": "Приложение",
+        "Approve a new device": "Подтвердить новое устройство",
+        "Approve from another device": "Подтвердить с другого устройства",
+        "Asked at": "Запрошено в",
+        "Check that the new device shows these words:": "Убедитесь, что новое устройство показывает эти слова:",
+        "Denied. If you did not ask, end your other sessions:": "Отклонено. Если вы этого не запрашивали, завершите другие сеансы:",
+        "Device": "Устройство",
+        "IP address": "IP-адрес",
+        "Let users unlock a new browser by approving it from a device where Keepiq is already unlocked.": "Позволяет пользователям разблокировать новый браузер, подтвердив его с устройства, на котором Keepiq уже разблокирован.",
+        "New device approval": "Подтверждение новых устройств",
+        "Nextcloud security settings": "Настройки безопасности Nextcloud",
+        "Only approve a device you are using right now.": "Подтверждайте только устройство, которым пользуетесь прямо сейчас.",
+        "Open Keepiq on a device where it is unlocked and approve this one. Check that it shows the same words:": "Откройте Keepiq на устройстве, где он разблокирован, и подтвердите это устройство. Убедитесь, что там показаны те же слова:",
+        "The approving device seals the unlock key to the new device. The server only passes it on and cannot open it.": "Подтверждающее устройство запечатывает ключ разблокировки для нового устройства. Сервер только передаёт его и не может его открыть.",
+        "The master password is not right, or the request has ended.": "Мастер-пароль неверен, или запрос завершён.",
+        "The request expired. Ask again or use your master password.": "Срок запроса истёк. Запросите снова или используйте мастер-пароль.",
+        "The request was denied.": "Запрос отклонён.",
+        "Too many requests. Try again in an hour or use your master password.": "Слишком много запросов. Повторите через час или используйте мастер-пароль.",
+        "Unknown device": "Неизвестное устройство",
+        "Web app": "Веб-приложение",
+        "A device": "Устройство",
+        "A new device asks to open your vault": "Новое устройство просит открыть ваше хранилище",
+        "%s asks to be approved. Only approve a device you are using right now.": "%s просит подтверждения. Подтверждайте только устройство, которым пользуетесь прямо сейчас."
     },
     "plurals": null
 }
