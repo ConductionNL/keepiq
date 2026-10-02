@@ -35,7 +35,6 @@ use OCP\App\IAppManager;
 use OCP\Files\AppData\IAppDataFactory;
 use OCP\Files\NotFoundException;
 use OCP\IConfig;
-use OCP\IDBConnection;
 use RuntimeException;
 use ZipArchive;
 
@@ -56,7 +55,7 @@ class ArchiveWriter {
 	/**
 	 * Constructor.
 	 *
-	 * @param IDBConnection $db The database
+	 * @param TableStore $tables The table rows
 	 * @param IAppDataFactory $appDataFactory Attachment blob storage
 	 * @param IAppManager $appManager The app version
 	 * @param IConfig $config The instance id
@@ -67,7 +66,7 @@ class ArchiveWriter {
 	 * @spec exclude Constructor wiring only.
 	 */
 	public function __construct(
-		private IDBConnection $db,
+		private TableStore $tables,
 		private IAppDataFactory $appDataFactory,
 		private IAppManager $appManager,
 		private IConfig $config,
@@ -139,15 +138,12 @@ class ArchiveWriter {
 			throw new RuntimeException('Cannot write ' . $localPath);
 		}
 
-		$qb = $this->db->getQueryBuilder();
-		$result = $qb->select('*')->from(BackupTableRegistry::PREFIX . $table)->executeQuery();
 		$rows = 0;
-		while (($row = $result->fetch()) !== false) {
+		foreach ($this->tables->rows(table: $table) as $row) {
 			fwrite($handle, json_encode($row, JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE) . "\n");
 			$rows++;
 		}
 
-		$result->closeCursor();
 		fclose($handle);
 
 		return $rows;
