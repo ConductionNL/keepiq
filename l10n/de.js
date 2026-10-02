@@ -1266,7 +1266,27 @@ OC.L10N.register(
         "Tag": "Schlagwort",
         "Remove tag": "Schlagwort entfernen",
         "Add tag": "Schlagwort hinzufügen",
-        "Could not change the tags. Try again.": "Schlagwörter konnten nicht geändert werden. Bitte erneut versuchen."
+        "Could not change the tags. Try again.": "Schlagwörter konnten nicht geändert werden. Bitte erneut versuchen.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n Benutzer im Geltungsbereich hat noch keine Zwei-Faktor-Anmeldung und kann den Tresor nicht öffnen, solange dies aktiv ist.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n Benutzer im Geltungsbereich haben noch keine Zwei-Faktor-Anmeldung und können den Tresor nicht öffnen, solange dies aktiv ist.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Backup-Codes zählen nicht. Wenn sich Ihre Benutzer über einen Identitätsanbieter mit eigenem zweiten Faktor anmelden, lassen Sie deren Gruppen weg.",
+        "Block personal vault export": "Export des persönlichen Tresors sperren",
+        "Keep work logins in team folders": "Arbeitszugänge in Teamordnern aufbewahren",
+        "Move to a team folder": "In einen Teamordner verschieben",
+        "Not in a team folder": "Nicht in einem Teamordner",
+        "Only for these groups (empty is everyone)": "Nur für diese Gruppen (leer bedeutet alle)",
+        "Require two-factor login before the vault opens": "Zwei-Faktor-Anmeldung verlangen, bevor sich der Tresor öffnet",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Regeln für jeden Tresor. Jede gilt für alle oder nur für die von Ihnen gewählten Gruppen.",
+        "Secret types that belong in a team folder": "Geheimnistypen, die in einen Teamordner gehören",
+        "Set up two-factor login": "Zwei-Faktor-Anmeldung einrichten",
+        "Team folder you can write to": "Teamordner, in den Sie schreiben können",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Benutzer können keine Sicherung, CSV- oder Übertragungsdatei herunterladen. Ihr persönliches Datenpaket bleibt verfügbar.",
+        "Users cannot save these secret types in a personal folder.": "Benutzer können diese Geheimnistypen nicht in einem persönlichen Ordner speichern.",
+        "Vault policies": "Tresorrichtlinien",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Ihre Organisation erlaubt keinen Export Ihres persönlichen Tresors. Ihr persönliches Datenpaket in den Einstellungen bleibt verfügbar.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Ihre Organisation bewahrt diese Geheimnisse in einem Teamordner auf. Verschieben Sie jedes in einen Teamordner.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Ihre Organisation bewahrt diesen Geheimnistyp in einem Teamordner auf. Wählen Sie einen Ihrer Teamordner oder einen, in den Sie schreiben können.",
+        "Your organisation requires two-factor login before you can open your vault.": "Ihre Organisation verlangt eine Zwei-Faktor-Anmeldung, bevor Sie Ihren Tresor öffnen können."
     },
     "nplurals=2; plural=(n != 1);"
 )

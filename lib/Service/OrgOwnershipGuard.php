@@ -25,7 +25,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTypeMapper;
+use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\PolicyViolationException;
 use OCP\AppFramework\Db\DoesNotExistException;
 
@@ -44,6 +46,8 @@ class OrgOwnershipGuard {
 	 * @param VaultPolicyService $policies The vault policies
 	 * @param TeamFolderQueryService $teamFolders The ancestor team folder walk
 	 * @param SecretTypeMapper $typeMapper Resolves a type id to its name
+	 * @param SecretMapper|null $secretMapper The user's own secrets, for the findings list
+	 * @param ShareTargetMapper|null $shareTargetMapper Tells a received copy from an own secret
 	 *
 	 * @return void
 	 *
@@ -53,6 +57,8 @@ class OrgOwnershipGuard {
 		private VaultPolicyService $policies,
 		private TeamFolderQueryService $teamFolders,
 		private SecretTypeMapper $typeMapper,
+		private ?SecretMapper $secretMapper = null,
+		private ?ShareTargetMapper $shareTargetMapper = null,
 	) {
 	}//end __construct()
 
@@ -78,12 +84,8 @@ class OrgOwnershipGuard {
 			return;
 		}
 
-		if ($folderId !== null && $folderId !== '') {
-			foreach ($this->teamFolders->ancestorTeamFolders(folderId: $folderId) as $teamFolder) {
-				if ($teamFolder->getOwnerId() === $userId) {
-					return;
-				}
-			}
+		if ($this->inOwnTeamFolder(userId: $userId, folderId: $folderId) === true) {
+			return;
 		}
 
 		throw new PolicyViolationException(
@@ -91,6 +93,85 @@ class OrgOwnershipGuard {
 			message: 'Your organisation requires this type of secret to be kept in a team folder'
 		);
 	}//end assertAllowed()
+
+	/**
+	 * The user's own live secrets that break the ownership policy: covered
+	 * type, outside an owned team folder, and not a copy received from
+	 * someone else. Metadata only, for the health report (design D6).
+	 *
+	 * @param string $userId The session user
+	 *
+	 * @return array<int,array{id:string,name:string,typeId:string,folderId:string|null}>
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.4
+	 */
+	public function findings(string $userId): array {
+		if ($this->secretMapper === null
+			|| $this->policies->appliesTo(policy: VaultPolicyService::ORG_OWNERSHIP, userId: $userId) === false
+		) {
+			return [];
+		}
+
+		$types = $this->policies->ownershipTypes();
+		$findings = [];
+		foreach ($this->secretMapper->findByOwner(ownerType: 'user', ownerId: $userId, limit: 100000, state: SecretMapper::STATE_LIVE) as $secret) {
+			$typeId = (string)$secret->getTypeId();
+			if (in_array($this->typeName(typeId: $typeId), $types, true) === false
+				|| $this->inOwnTeamFolder(userId: $userId, folderId: $secret->getFolderId()) === true
+				|| $this->isReceivedCopy(secretId: (string)$secret->getId()) === true
+			) {
+				continue;
+			}
+
+			$findings[] = [
+				'id' => (string)$secret->getId(),
+				'name' => (string)$secret->getName(),
+				'typeId' => $typeId,
+				'folderId' => $secret->getFolderId(),
+			];
+		}
+
+		return $findings;
+	}//end findings()
+
+	/**
+	 * Whether a folder sits in a team folder the user owns.
+	 *
+	 * @param string $userId The user
+	 * @param string|null $folderId The folder, null for the root
+	 *
+	 * @return bool
+	 */
+	private function inOwnTeamFolder(string $userId, ?string $folderId): bool {
+		if ($folderId === null || $folderId === '') {
+			return false;
+		}
+
+		foreach ($this->teamFolders->ancestorTeamFolders(folderId: $folderId) as $teamFolder) {
+			if ($teamFolder->getOwnerId() === $userId) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end inOwnTeamFolder()
+
+	/**
+	 * Whether a secret row is a copy someone shared with the user.
+	 *
+	 * @param string $secretId The secret
+	 *
+	 * @return bool
+	 */
+	private function isReceivedCopy(string $secretId): bool {
+		try {
+			$this->shareTargetMapper?->findByRecipientSecret(recipientSecretId: $secretId);
+		} catch (DoesNotExistException) {
+			return false;
+		}
+
+		return $this->shareTargetMapper !== null;
+	}//end isReceivedCopy()
 
 	/**
 	 * The name of a type id, '' when it is unknown.

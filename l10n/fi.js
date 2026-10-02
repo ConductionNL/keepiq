@@ -1266,7 +1266,27 @@ OC.L10N.register(
         "Tag": "Tunniste",
         "Remove tag": "Poista tunniste",
         "Add tag": "Lisää tunniste",
-        "Could not change the tags. Try again.": "Tunnisteita ei voitu muuttaa. Yritä uudelleen."
+        "Could not change the tags. Try again.": "Tunnisteita ei voitu muuttaa. Yritä uudelleen.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n käyttäjällä soveltamisalassa ei vielä ole kaksivaiheista kirjautumista, eikä hän voi avata holvia, kun tämä on päällä.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n käyttäjällä soveltamisalassa ei vielä ole kaksivaiheista kirjautumista, eivätkä he voi avata holvia, kun tämä on päällä.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Varakoodit eivät kelpaa. Jos käyttäjäsi kirjautuvat identiteetintarjoajan kautta, jolla on oma toinen tekijä, jätä heidän ryhmänsä pois.",
+        "Block personal vault export": "Estä henkilökohtaisen holvin vienti",
+        "Keep work logins in team folders": "Pidä työkirjautumiset tiimikansioissa",
+        "Move to a team folder": "Siirrä tiimikansioon",
+        "Not in a team folder": "Ei tiimikansiossa",
+        "Only for these groups (empty is everyone)": "Vain näille ryhmille (tyhjä tarkoittaa kaikkia)",
+        "Require two-factor login before the vault opens": "Vaadi kaksivaiheinen kirjautuminen ennen holvin avaamista",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Säännöt jokaiselle holville. Kukin koskee kaikkia tai vain valitsemiasi ryhmiä.",
+        "Secret types that belong in a team folder": "Salaisuustyypit, jotka kuuluvat tiimikansioon",
+        "Set up two-factor login": "Ota kaksivaiheinen kirjautuminen käyttöön",
+        "Team folder you can write to": "Tiimikansio, johon voit kirjoittaa",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Käyttäjät eivät voi ladata varmuuskopiota, CSV-tiedostoa tai siirtotiedostoa. Heidän henkilökohtainen tietopakettinsa on yhä saatavilla.",
+        "Users cannot save these secret types in a personal folder.": "Käyttäjät eivät voi tallentaa näitä salaisuustyyppejä henkilökohtaiseen kansioon.",
+        "Vault policies": "Holvin käytännöt",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Organisaatiosi ei salli henkilökohtaisen holvisi vientiä. Henkilökohtainen tietopakettisi asetuksissa on yhä saatavilla.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Organisaatiosi pitää nämä salaisuudet tiimikansiossa. Siirrä jokainen tiimikansioon.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Organisaatiosi pitää tämäntyyppiset salaisuudet tiimikansiossa. Valitse jokin tiimikansioistasi tai sellainen, johon voit kirjoittaa.",
+        "Your organisation requires two-factor login before you can open your vault.": "Organisaatiosi vaatii kaksivaiheisen kirjautumisen ennen kuin voit avata holvisi."
     },
     "nplurals=2; plural=(n != 1);"
 )

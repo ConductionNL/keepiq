@@ -1265,7 +1265,27 @@
         "Tag": "Etiqueta",
         "Remove tag": "Quitar etiqueta",
         "Add tag": "Añadir etiqueta",
-        "Could not change the tags. Try again.": "No se pudieron cambiar las etiquetas. Inténtelo de nuevo."
+        "Could not change the tags. Try again.": "No se pudieron cambiar las etiquetas. Inténtelo de nuevo.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n usuario en el ámbito aún no tiene inicio de sesión en dos pasos y no puede abrir la bóveda mientras esto esté activo.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n usuarios en el ámbito aún no tienen inicio de sesión en dos pasos y no pueden abrir la bóveda mientras esto esté activo.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Los códigos de respaldo no cuentan. Si sus usuarios inician sesión con un proveedor de identidad con su propio segundo factor, excluya sus grupos.",
+        "Block personal vault export": "Bloquear la exportación de la bóveda personal",
+        "Keep work logins in team folders": "Guardar los inicios de sesión de trabajo en carpetas de equipo",
+        "Move to a team folder": "Mover a una carpeta de equipo",
+        "Not in a team folder": "No está en una carpeta de equipo",
+        "Only for these groups (empty is everyone)": "Solo para estos grupos (vacío es todos)",
+        "Require two-factor login before the vault opens": "Exigir inicio de sesión en dos pasos antes de abrir la bóveda",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Reglas para cada bóveda. Cada una se aplica a todos, o solo a los grupos que elija.",
+        "Secret types that belong in a team folder": "Tipos de secreto que van en una carpeta de equipo",
+        "Set up two-factor login": "Configurar el inicio de sesión en dos pasos",
+        "Team folder you can write to": "Carpeta de equipo en la que puede escribir",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Los usuarios no pueden descargar una copia de seguridad, un CSV ni un archivo de transferencia. Su paquete de datos personales sigue disponible.",
+        "Users cannot save these secret types in a personal folder.": "Los usuarios no pueden guardar estos tipos de secreto en una carpeta personal.",
+        "Vault policies": "Políticas de la bóveda",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Su organización no permite exportar su bóveda personal. Su paquete de datos personales en la configuración sigue disponible.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Su organización guarda estos secretos en una carpeta de equipo. Mueva cada uno a una carpeta de equipo.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Su organización guarda este tipo de secreto en una carpeta de equipo. Elija una de sus carpetas de equipo, o una en la que pueda escribir.",
+        "Your organisation requires two-factor login before you can open your vault.": "Su organización exige el inicio de sesión en dos pasos antes de que pueda abrir su bóveda."
     },
     "plurals": null
 }

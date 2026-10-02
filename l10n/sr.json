@@ -1265,7 +1265,27 @@
         "Tag": "Ознака",
         "Remove tag": "Уклони ознаку",
         "Add tag": "Додај ознаку",
-        "Could not change the tags. Try again.": "Није могуће променити ознаке. Покушајте поново."
+        "Could not change the tags. Try again.": "Није могуће променити ознаке. Покушајте поново.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n корисник у опсегу још нема пријаву у два корака и не може да отвори трезор док је ово укључено.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "Корисници у опсегу (%n) још немају пријаву у два корака и не могу да отворе трезор док је ово укључено.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Резервни кодови се не рачунају. Ако се ваши корисници пријављују преко добављача идентитета са сопственим другим фактором, изоставите њихове групе.",
+        "Block personal vault export": "Блокирај извоз личног трезора",
+        "Keep work logins in team folders": "Чувај пословне пријаве у тимским фасциклама",
+        "Move to a team folder": "Премести у тимску фасциклу",
+        "Not in a team folder": "Није у тимској фасцикли",
+        "Only for these groups (empty is everyone)": "Само за ове групе (празно значи сви)",
+        "Require two-factor login before the vault opens": "Захтевај пријаву у два корака пре отварања трезора",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Правила за сваки трезор. Свако важи за све или само за групе које изаберете.",
+        "Secret types that belong in a team folder": "Врсте тајни које припадају у тимску фасциклу",
+        "Set up two-factor login": "Подеси пријаву у два корака",
+        "Team folder you can write to": "Тимска фасцикла у коју можете да пишете",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Корисници не могу да преузму резервну копију, CSV нити датотеку за пренос. Њихов пакет личних података остаје доступан.",
+        "Users cannot save these secret types in a personal folder.": "Корисници не могу да сачувају ове врсте тајни у личну фасциклу.",
+        "Vault policies": "Правила трезора",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Ваша организација не дозвољава извоз вашег личног трезора. Ваш пакет личних података у подешавањима остаје доступан.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Ваша организација чува ове тајне у тимској фасцикли. Преместите сваку у тимску фасциклу.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Ваша организација чува ову врсту тајне у тимској фасцикли. Изаберите једну од својих тимских фасцикли или ону у коју можете да пишете.",
+        "Your organisation requires two-factor login before you can open your vault.": "Ваша организација захтева пријаву у два корака пре него што можете да отворите свој трезор."
     },
     "plurals": null
 }

@@ -1266,7 +1266,27 @@ OC.L10N.register(
         "Tag": "Tagg",
         "Remove tag": "Ta bort tagg",
         "Add tag": "Lägg till tagg",
-        "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen."
+        "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n användare i omfånget har ännu inte tvåstegsinloggning och kan inte öppna valvet medan detta är på.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n användare i omfånget har ännu inte tvåstegsinloggning och kan inte öppna valvet medan detta är på.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Reservkoder räknas inte. Om dina användare loggar in via en identitetsleverantör med egen andra faktor, lämna bort deras grupper.",
+        "Block personal vault export": "Blockera export av personligt valv",
+        "Keep work logins in team folders": "Behåll arbetsinloggningar i teammappar",
+        "Move to a team folder": "Flytta till en teammapp",
+        "Not in a team folder": "Inte i en teammapp",
+        "Only for these groups (empty is everyone)": "Bara för dessa grupper (tomt betyder alla)",
+        "Require two-factor login before the vault opens": "Kräv tvåstegsinloggning innan valvet öppnas",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Regler för varje valv. Varje regel gäller alla, eller bara grupperna du väljer.",
+        "Secret types that belong in a team folder": "Hemlighetstyper som hör hemma i en teammapp",
+        "Set up two-factor login": "Konfigurera tvåstegsinloggning",
+        "Team folder you can write to": "Teammapp du kan skriva i",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Användare kan inte ladda ner en säkerhetskopia, CSV eller överföringsfil. Deras personliga datapaket finns kvar.",
+        "Users cannot save these secret types in a personal folder.": "Användare kan inte spara dessa hemlighetstyper i en personlig mapp.",
+        "Vault policies": "Valvregler",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Din organisation tillåter inte export av ditt personliga valv. Ditt personliga datapaket i inställningarna finns kvar.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Din organisation förvarar dessa hemligheter i en teammapp. Flytta var och en till en teammapp.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Din organisation förvarar den här typen av hemlighet i en teammapp. Välj en av dina teammappar, eller en du kan skriva i.",
+        "Your organisation requires two-factor login before you can open your vault.": "Din organisation kräver tvåstegsinloggning innan du kan öppna ditt valv."
     },
     "nplurals=2; plural=(n != 1);"
 )

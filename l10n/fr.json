@@ -1265,7 +1265,27 @@
         "Tag": "Étiquette",
         "Remove tag": "Retirer l'étiquette",
         "Add tag": "Ajouter une étiquette",
-        "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez."
+        "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n utilisateur concerné n'a pas encore de connexion à deux facteurs et ne peut pas ouvrir le coffre tant que ceci est actif.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n utilisateurs concernés n'ont pas encore de connexion à deux facteurs et ne peuvent pas ouvrir le coffre tant que ceci est actif.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Les codes de secours ne comptent pas. Si vos utilisateurs se connectent via un fournisseur d'identité avec son propre second facteur, excluez leurs groupes.",
+        "Block personal vault export": "Bloquer l'export du coffre personnel",
+        "Keep work logins in team folders": "Garder les identifiants professionnels dans les dossiers d'équipe",
+        "Move to a team folder": "Déplacer vers un dossier d'équipe",
+        "Not in a team folder": "Pas dans un dossier d'équipe",
+        "Only for these groups (empty is everyone)": "Seulement pour ces groupes (vide signifie tout le monde)",
+        "Require two-factor login before the vault opens": "Exiger la connexion à deux facteurs avant l'ouverture du coffre",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Règles pour chaque coffre. Chacune s'applique à tous, ou seulement aux groupes que vous choisissez.",
+        "Secret types that belong in a team folder": "Types de secret qui vont dans un dossier d'équipe",
+        "Set up two-factor login": "Configurer la connexion à deux facteurs",
+        "Team folder you can write to": "Dossier d'équipe où vous pouvez écrire",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Les utilisateurs ne peuvent pas télécharger de sauvegarde, de CSV ni de fichier de transfert. Leur paquet de données personnelles reste disponible.",
+        "Users cannot save these secret types in a personal folder.": "Les utilisateurs ne peuvent pas enregistrer ces types de secret dans un dossier personnel.",
+        "Vault policies": "Règles du coffre",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Votre organisation n'autorise pas l'export de votre coffre personnel. Votre paquet de données personnelles dans vos paramètres reste disponible.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Votre organisation garde ces secrets dans un dossier d'équipe. Déplacez chacun vers un dossier d'équipe.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Votre organisation garde ce type de secret dans un dossier d'équipe. Choisissez un de vos dossiers d'équipe, ou un où vous pouvez écrire.",
+        "Your organisation requires two-factor login before you can open your vault.": "Votre organisation exige la connexion à deux facteurs avant que vous puissiez ouvrir votre coffre."
     },
     "plurals": null
 }

@@ -1266,7 +1266,27 @@ OC.L10N.register(
         "Tag": "Etikett",
         "Remove tag": "Fjern etikett",
         "Add tag": "Legg til etikett",
-        "Could not change the tags. Try again.": "Kunne ikke endre etikettene. Prøv igjen."
+        "Could not change the tags. Try again.": "Kunne ikke endre etikettene. Prøv igjen.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n bruker i omfanget har ennå ikke totrinnspålogging og kan ikke åpne hvelvet mens dette er på.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n brukere i omfanget har ennå ikke totrinnspålogging og kan ikke åpne hvelvet mens dette er på.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Reservekoder teller ikke. Hvis brukerne dine logger på via en identitetsleverandør med egen andre faktor, utelat gruppene deres.",
+        "Block personal vault export": "Blokker eksport av personlig hvelv",
+        "Keep work logins in team folders": "Hold jobbpålogginger i teammapper",
+        "Move to a team folder": "Flytt til en teammappe",
+        "Not in a team folder": "Ikke i en teammappe",
+        "Only for these groups (empty is everyone)": "Bare for disse gruppene (tom betyr alle)",
+        "Require two-factor login before the vault opens": "Krev totrinnspålogging før hvelvet åpnes",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Regler for hvert hvelv. Hver regel gjelder alle, eller bare gruppene du velger.",
+        "Secret types that belong in a team folder": "Hemmelighetstyper som hører hjemme i en teammappe",
+        "Set up two-factor login": "Sett opp totrinnspålogging",
+        "Team folder you can write to": "Teammappe du kan skrive i",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Brukere kan ikke laste ned en sikkerhetskopi, CSV eller overføringsfil. Den personlige datapakken er fortsatt tilgjengelig.",
+        "Users cannot save these secret types in a personal folder.": "Brukere kan ikke lagre disse hemmelighetstypene i en personlig mappe.",
+        "Vault policies": "Hvelvregler",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Organisasjonen din tillater ikke eksport av ditt personlige hvelv. Din personlige datapakke i innstillingene er fortsatt tilgjengelig.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Organisasjonen din holder disse hemmelighetene i en teammappe. Flytt hver enkelt til en teammappe.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Organisasjonen din holder denne typen hemmelighet i en teammappe. Velg en av teammappene dine, eller en du kan skrive i.",
+        "Your organisation requires two-factor login before you can open your vault.": "Organisasjonen din krever totrinnspålogging før du kan åpne hvelvet ditt."
     },
     "nplurals=2; plural=(n != 1);"
 )

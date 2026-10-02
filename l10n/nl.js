@@ -1271,7 +1271,27 @@ OC.L10N.register(
         "Tag": "Label",
         "Remove tag": "Label verwijderen",
         "Add tag": "Label toevoegen",
-        "Could not change the tags. Try again.": "Kon de labels niet wijzigen. Probeer het opnieuw."
+        "Could not change the tags. Try again.": "Kon de labels niet wijzigen. Probeer het opnieuw.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n gebruiker binnen het bereik heeft nog geen tweestapsaanmelding en kan de kluis niet openen zolang dit aan staat.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n gebruikers binnen het bereik hebben nog geen tweestapsaanmelding en kunnen de kluis niet openen zolang dit aan staat.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Back-upcodes tellen niet mee. Melden je gebruikers zich aan via een identiteitsprovider met een eigen tweede factor, laat hun groepen dan weg.",
+        "Block personal vault export": "Export van persoonlijke kluis blokkeren",
+        "Keep work logins in team folders": "Werkinloggegevens in teammappen bewaren",
+        "Move to a team folder": "Naar een teammap verplaatsen",
+        "Not in a team folder": "Niet in een teammap",
+        "Only for these groups (empty is everyone)": "Alleen voor deze groepen (leeg is iedereen)",
+        "Require two-factor login before the vault opens": "Tweestapsaanmelding vereisen voordat de kluis opent",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Regels voor elke kluis. Elke regel geldt voor iedereen, of alleen voor de groepen die je kiest.",
+        "Secret types that belong in a team folder": "Geheimtypen die in een teammap horen",
+        "Set up two-factor login": "Tweestapsaanmelding instellen",
+        "Team folder you can write to": "Teammap waarin je kunt schrijven",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Gebruikers kunnen geen back-up, CSV of overdrachtsbestand downloaden. Hun persoonlijke gegevenspakket blijft beschikbaar.",
+        "Users cannot save these secret types in a personal folder.": "Gebruikers kunnen deze geheimtypen niet in een persoonlijke map opslaan.",
+        "Vault policies": "Kluisbeleid",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Je organisatie staat het exporteren van je persoonlijke kluis niet toe. Je persoonlijke gegevenspakket in je instellingen blijft beschikbaar.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Je organisatie bewaart deze geheimen in een teammap. Verplaats ze stuk voor stuk naar een teammap.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Je organisatie bewaart dit type geheim in een teammap. Kies een van je teammappen, of een waarin je kunt schrijven.",
+        "Your organisation requires two-factor login before you can open your vault.": "Je organisatie vereist tweestapsaanmelding voordat je je kluis kunt openen."
     },
     "nplurals=2; plural=(n != 1);"
 )

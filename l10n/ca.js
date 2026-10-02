@@ -1266,7 +1266,27 @@ OC.L10N.register(
         "Tag": "Etiqueta",
         "Remove tag": "Treu l'etiqueta",
         "Add tag": "Afegeix una etiqueta",
-        "Could not change the tags. Try again.": "No s'han pogut canviar les etiquetes. Torneu-ho a provar."
+        "Could not change the tags. Try again.": "No s'han pogut canviar les etiquetes. Torneu-ho a provar.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n usuari de l'abast encara no té inici de sessió en dos passos i no pot obrir la caixa forta mentre això estigui actiu.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n usuaris de l'abast encara no tenen inici de sessió en dos passos i no poden obrir la caixa forta mentre això estigui actiu.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Els codis de recuperació no compten. Si els usuaris inicien la sessió amb un proveïdor d'identitat amb el seu propi segon factor, excloeu-ne els grups.",
+        "Block personal vault export": "Bloca l'exportació de la caixa forta personal",
+        "Keep work logins in team folders": "Desa els inicis de sessió de feina en carpetes d'equip",
+        "Move to a team folder": "Mou a una carpeta d'equip",
+        "Not in a team folder": "No és en una carpeta d'equip",
+        "Only for these groups (empty is everyone)": "Només per a aquests grups (buit vol dir tothom)",
+        "Require two-factor login before the vault opens": "Exigeix l'inici de sessió en dos passos abans d'obrir la caixa forta",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Normes per a cada caixa forta. Cadascuna s'aplica a tothom o només als grups que trieu.",
+        "Secret types that belong in a team folder": "Tipus de secret que van en una carpeta d'equip",
+        "Set up two-factor login": "Configura l'inici de sessió en dos passos",
+        "Team folder you can write to": "Carpeta d'equip on podeu escriure",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Els usuaris no poden baixar una còpia de seguretat, un CSV ni un fitxer de transferència. El seu paquet de dades personals continua disponible.",
+        "Users cannot save these secret types in a personal folder.": "Els usuaris no poden desar aquests tipus de secret en una carpeta personal.",
+        "Vault policies": "Polítiques de la caixa forta",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "La vostra organització no permet exportar la vostra caixa forta personal. El vostre paquet de dades personals a la configuració continua disponible.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "La vostra organització desa aquests secrets en una carpeta d'equip. Moveu-los un a un a una carpeta d'equip.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "La vostra organització desa aquest tipus de secret en una carpeta d'equip. Trieu una de les vostres carpetes d'equip o una on pugueu escriure.",
+        "Your organisation requires two-factor login before you can open your vault.": "La vostra organització exigeix l'inici de sessió en dos passos abans que pugueu obrir la caixa forta."
     },
     "nplurals=2; plural=(n != 1);"
 )

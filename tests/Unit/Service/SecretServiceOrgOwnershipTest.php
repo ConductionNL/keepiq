@@ -66,6 +66,8 @@ class SecretServiceOrgOwnershipTest extends TestCase {
 
 	private SecretService $service;
 
+	private OrgOwnershipGuard $findingsGuard;
+
 	/**
 	 * Wire the real guards.
 	 *
@@ -140,6 +142,18 @@ class SecretServiceOrgOwnershipTest extends TestCase {
 			auditEvents: new AuditEventFactory(),
 			folderOwnership: new FolderOwnershipGuard($folderMapper),
 			orgOwnership: new OrgOwnershipGuard(policies: $policies, teamFolders: $queries, typeMapper: $typeMapper),
+		);
+
+		$shareTargetMapper = $this->createMock(\OCA\Keepiq\Db\ShareTargetMapper::class);
+		$shareTargetMapper->method('findByRecipientSecret')->willReturnCallback(
+			static fn (string $id) => ($id === 'copy-from-iris' ? new \OCA\Keepiq\Db\ShareTarget() : throw new DoesNotExistException(''))
+		);
+		$this->findingsGuard = new OrgOwnershipGuard(
+			policies: $policies,
+			teamFolders: $queries,
+			typeMapper: $typeMapper,
+			secretMapper: $this->mapper,
+			shareTargetMapper: $shareTargetMapper,
 		);
 	}//end setUp()
 
@@ -266,4 +280,28 @@ class SecretServiceOrgOwnershipTest extends TestCase {
 		$this->assertSame(['failed', 'created'], array_column($result['results'], 'status'));
 		$this->assertStringContainsString('team folder', $result['results'][0]['error']);
 	}//end testImportRefusesThePersonalLoginPerItem()
+
+	/**
+	 * Scenario "Existing personal login is listed": a personal login is
+	 * listed; a login in the team folder, a card and a received copy are not.
+	 *
+	 * @return void
+	 */
+	public function testFindingsListOnlyOwnPersonalWorkLogins(): void {
+		$rows = [];
+		foreach ([['old-login', 'type-login', 'private'], ['team-login', 'type-login', 'sub'], ['visa', 'type-card', 'private'], ['copy-from-iris', 'type-login', null]] as [$id, $type, $folder]) {
+			$secret = new Secret();
+			$secret->setId($id);
+			$secret->setName($id);
+			$secret->setTypeId($type);
+			$secret->setFolderId($folder);
+			$rows[] = $secret;
+		}
+		$this->mapper->method('findByOwner')->willReturn($rows);
+
+		$this->assertSame(['old-login'], array_column($this->findingsGuard->findings(userId: 'gina'), 'id'));
+
+		$this->policyOn = false;
+		$this->assertSame([], $this->findingsGuard->findings(userId: 'gina'));
+	}//end testFindingsListOnlyOwnPersonalWorkLogins()
 }//end class

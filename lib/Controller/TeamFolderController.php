@@ -34,6 +34,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\OrgOwnershipGuard;
 use OCA\Keepiq\Service\TeamFolderContributionService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Http;
@@ -54,6 +55,7 @@ class TeamFolderController extends OCSController {
 	 * @param TeamFolderService $teamFolderService The team-folder service
 	 * @param IUserSession $userSession The user session
 	 * @param TeamFolderContributionService $contributions Write-grade member contributions
+	 * @param OrgOwnershipGuard $ownership The ownership policy findings
 	 *
 	 * @return void
 	 */
@@ -62,6 +64,7 @@ class TeamFolderController extends OCSController {
 		private TeamFolderService $teamFolderService,
 		private IUserSession $userSession,
 		private TeamFolderContributionService $contributions,
+		private OrgOwnershipGuard $ownership,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -174,6 +177,28 @@ class TeamFolderController extends OCSController {
 
 		return new JSONResponse(data: $this->contributions->contributable(userId: $userId));
 	}//end contributable()
+
+	/**
+	 * The session user's own secrets that break the team folder ownership
+	 * policy, for the health report (admin-vault-policies D6). Metadata
+	 * only, scoped to the session user; empty when the policy does not
+	 * apply.
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.4
+	 */
+	#[NoAdminRequired]
+	public function ownershipFindings(): JSONResponse {
+		$userId = $this->sessionUserId();
+		if ($userId === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		return new JSONResponse(data: $this->ownership->findings(userId: $userId));
+	}//end ownershipFindings()
 
 	/**
 	 * The public certificates a write-grade member encrypts a contribution

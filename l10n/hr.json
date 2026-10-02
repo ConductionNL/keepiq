@@ -1265,7 +1265,27 @@
         "Tag": "Oznaka",
         "Remove tag": "Ukloni oznaku",
         "Add tag": "Dodaj oznaku",
-        "Could not change the tags. Try again.": "Oznake nije bilo moguće promijeniti. Pokušajte ponovno."
+        "Could not change the tags. Try again.": "Oznake nije bilo moguće promijeniti. Pokušajte ponovno.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n korisnik u opsegu još nema prijavu u dva koraka i ne može otvoriti trezor dok je ovo uključeno.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "Korisnici u opsegu (%n) još nemaju prijavu u dva koraka i ne mogu otvoriti trezor dok je ovo uključeno.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Rezervni kodovi se ne računaju. Ako se vaši korisnici prijavljuju preko pružatelja identiteta s vlastitim drugim faktorom, izostavite njihove grupe.",
+        "Block personal vault export": "Blokiraj izvoz osobnog trezora",
+        "Keep work logins in team folders": "Čuvaj poslovne prijave u timskim mapama",
+        "Move to a team folder": "Premjesti u timsku mapu",
+        "Not in a team folder": "Nije u timskoj mapi",
+        "Only for these groups (empty is everyone)": "Samo za ove grupe (prazno znači svi)",
+        "Require two-factor login before the vault opens": "Zahtijevaj prijavu u dva koraka prije otvaranja trezora",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Pravila za svaki trezor. Svako vrijedi za sve ili samo za grupe koje odaberete.",
+        "Secret types that belong in a team folder": "Vrste tajni koje pripadaju u timsku mapu",
+        "Set up two-factor login": "Postavi prijavu u dva koraka",
+        "Team folder you can write to": "Timska mapa u koju možete pisati",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Korisnici ne mogu preuzeti sigurnosnu kopiju, CSV ni datoteku za prijenos. Njihov paket osobnih podataka ostaje dostupan.",
+        "Users cannot save these secret types in a personal folder.": "Korisnici ne mogu spremiti ove vrste tajni u osobnu mapu.",
+        "Vault policies": "Pravila trezora",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Vaša organizacija ne dopušta izvoz vašeg osobnog trezora. Vaš paket osobnih podataka u postavkama ostaje dostupan.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Vaša organizacija čuva ove tajne u timskoj mapi. Premjestite svaku u timsku mapu.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Vaša organizacija čuva ovu vrstu tajne u timskoj mapi. Odaberite jednu od svojih timskih mapa ili onu u koju možete pisati.",
+        "Your organisation requires two-factor login before you can open your vault.": "Vaša organizacija zahtijeva prijavu u dva koraka prije nego što možete otvoriti svoj trezor."
     },
     "plurals": null
 }

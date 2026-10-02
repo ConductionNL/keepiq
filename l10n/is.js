@@ -1266,7 +1266,27 @@ OC.L10N.register(
         "Tag": "Merki",
         "Remove tag": "Fjarlægja merki",
         "Add tag": "Bæta við merki",
-        "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur."
+        "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n notandi innan umfangs er ekki enn með tveggja þátta innskráningu og getur ekki opnað hólfið á meðan þetta er virkt.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n notendur innan umfangs eru ekki enn með tveggja þátta innskráningu og geta ekki opnað hólfið á meðan þetta er virkt.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Varakóðar teljast ekki með. Ef notendur skrá sig inn í gegnum auðkennisveitu með eigin annan þátt, slepptu hópum þeirra.",
+        "Block personal vault export": "Loka á útflutning persónulegs hólfs",
+        "Keep work logins in team folders": "Geyma vinnuinnskráningar í teymismöppum",
+        "Move to a team folder": "Færa í teymismöppu",
+        "Not in a team folder": "Ekki í teymismöppu",
+        "Only for these groups (empty is everyone)": "Aðeins fyrir þessa hópa (autt þýðir allir)",
+        "Require two-factor login before the vault opens": "Krefjast tveggja þátta innskráningar áður en hólfið opnast",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Reglur fyrir hvert hólf. Hver gildir fyrir alla, eða aðeins hópana sem þú velur.",
+        "Secret types that belong in a team folder": "Tegundir leyndarmála sem eiga heima í teymismöppu",
+        "Set up two-factor login": "Setja upp tveggja þátta innskráningu",
+        "Team folder you can write to": "Teymismappa sem þú getur skrifað í",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Notendur geta ekki sótt öryggisafrit, CSV eða flutningsskrá. Persónuupplýsingapakki þeirra er áfram aðgengilegur.",
+        "Users cannot save these secret types in a personal folder.": "Notendur geta ekki vistað þessar tegundir leyndarmála í persónulegri möppu.",
+        "Vault policies": "Reglur hólfs",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Fyrirtækið þitt leyfir ekki útflutning á persónulega hólfinu þínu. Persónuupplýsingapakkinn þinn í stillingunum er áfram aðgengilegur.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Fyrirtækið þitt geymir þessi leyndarmál í teymismöppu. Færðu hvert og eitt í teymismöppu.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Fyrirtækið þitt geymir þessa tegund leyndarmáls í teymismöppu. Veldu eina af teymismöppunum þínum, eða eina sem þú getur skrifað í.",
+        "Your organisation requires two-factor login before you can open your vault.": "Fyrirtækið þitt krefst tveggja þátta innskráningar áður en þú getur opnað hólfið þitt."
     },
     "nplurals=2; plural=(n != 1);"
 )

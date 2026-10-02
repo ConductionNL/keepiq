@@ -109,6 +109,7 @@ class TeamFolderControllerTest extends TestCase {
 			teamFolderService: $this->teamFolderService,
 			userSession: $this->userSession,
 			contributions: $this->contributions,
+			ownership: $this->createMock(\OCA\Keepiq\Service\OrgOwnershipGuard::class),
 		);
 	}//end controller()
 

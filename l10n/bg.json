@@ -1265,7 +1265,27 @@
         "Tag": "Етикет",
         "Remove tag": "Премахване на етикет",
         "Add tag": "Добавяне на етикет",
-        "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново."
+        "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n потребител в обхвата все още няма двуфакторно влизане и не може да отвори трезора, докато това е включено.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "Потребители в обхвата (%n) все още нямат двуфакторно влизане и не могат да отворят трезора, докато това е включено.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Резервните кодове не се броят. Ако потребителите ви влизат чрез доставчик на самоличност със собствен втори фактор, изключете групите им.",
+        "Block personal vault export": "Блокиране на износа на личния трезор",
+        "Keep work logins in team folders": "Пазете служебните входове в екипни папки",
+        "Move to a team folder": "Преместване в екипна папка",
+        "Not in a team folder": "Не е в екипна папка",
+        "Only for these groups (empty is everyone)": "Само за тези групи (празно означава всички)",
+        "Require two-factor login before the vault opens": "Изискване на двуфакторно влизане преди отваряне на трезора",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Правила за всеки трезор. Всяко важи за всички или само за групите, които изберете.",
+        "Secret types that belong in a team folder": "Типове тайни, които принадлежат в екипна папка",
+        "Set up two-factor login": "Настройване на двуфакторно влизане",
+        "Team folder you can write to": "Екипна папка, в която можете да пишете",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Потребителите не могат да изтеглят резервно копие, CSV или файл за прехвърляне. Пакетът им с лични данни остава достъпен.",
+        "Users cannot save these secret types in a personal folder.": "Потребителите не могат да запазват тези типове тайни в лична папка.",
+        "Vault policies": "Правила на трезора",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Вашата организация не позволява износ на личния ви трезор. Пакетът ви с лични данни в настройките остава достъпен.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Вашата организация пази тези тайни в екипна папка. Преместете всяка в екипна папка.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Вашата организация пази този тип тайна в екипна папка. Изберете една от екипните си папки или такава, в която можете да пишете.",
+        "Your organisation requires two-factor login before you can open your vault.": "Вашата организация изисква двуфакторно влизане, преди да можете да отворите трезора си."
     },
     "plurals": null
 }

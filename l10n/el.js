@@ -1266,7 +1266,27 @@ OC.L10N.register(
         "Tag": "Ετικέτα",
         "Remove tag": "Αφαίρεση ετικέτας",
         "Add tag": "Προσθήκη ετικέτας",
-        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά."
+        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n χρήστης στο πεδίο εφαρμογής δεν έχει ακόμη σύνδεση δύο παραγόντων και δεν μπορεί να ανοίξει το θησαυροφυλάκιο όσο αυτό είναι ενεργό.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n χρήστες στο πεδίο εφαρμογής δεν έχουν ακόμη σύνδεση δύο παραγόντων και δεν μπορούν να ανοίξουν το θησαυροφυλάκιο όσο αυτό είναι ενεργό.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Οι κωδικοί ανάκτησης δεν μετρούν. Αν οι χρήστες σας συνδέονται μέσω παρόχου ταυτότητας με δικό του δεύτερο παράγοντα, εξαιρέστε τις ομάδες τους.",
+        "Block personal vault export": "Αποκλεισμός εξαγωγής προσωπικού θησαυροφυλακίου",
+        "Keep work logins in team folders": "Φύλαξη εταιρικών στοιχείων σύνδεσης σε φακέλους ομάδας",
+        "Move to a team folder": "Μετακίνηση σε φάκελο ομάδας",
+        "Not in a team folder": "Όχι σε φάκελο ομάδας",
+        "Only for these groups (empty is everyone)": "Μόνο για αυτές τις ομάδες (κενό σημαίνει όλοι)",
+        "Require two-factor login before the vault opens": "Απαίτηση σύνδεσης δύο παραγόντων πριν ανοίξει το θησαυροφυλάκιο",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Κανόνες για κάθε θησαυροφυλάκιο. Ο καθένας ισχύει για όλους ή μόνο για τις ομάδες που επιλέγετε.",
+        "Secret types that belong in a team folder": "Τύποι μυστικών που ανήκουν σε φάκελο ομάδας",
+        "Set up two-factor login": "Ρύθμιση σύνδεσης δύο παραγόντων",
+        "Team folder you can write to": "Φάκελος ομάδας όπου μπορείτε να γράψετε",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Οι χρήστες δεν μπορούν να κατεβάσουν αντίγραφο ασφαλείας, CSV ή αρχείο μεταφοράς. Το πακέτο προσωπικών δεδομένων τους παραμένει διαθέσιμο.",
+        "Users cannot save these secret types in a personal folder.": "Οι χρήστες δεν μπορούν να αποθηκεύσουν αυτούς τους τύπους μυστικών σε προσωπικό φάκελο.",
+        "Vault policies": "Πολιτικές θησαυροφυλακίου",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Ο οργανισμός σας δεν επιτρέπει την εξαγωγή του προσωπικού σας θησαυροφυλακίου. Το πακέτο προσωπικών δεδομένων σας στις ρυθμίσεις παραμένει διαθέσιμο.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Ο οργανισμός σας φυλάει αυτά τα μυστικά σε φάκελο ομάδας. Μετακινήστε το καθένα σε φάκελο ομάδας.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Ο οργανισμός σας φυλάει αυτόν τον τύπο μυστικού σε φάκελο ομάδας. Επιλέξτε έναν από τους φακέλους ομάδας σας ή έναν όπου μπορείτε να γράψετε.",
+        "Your organisation requires two-factor login before you can open your vault.": "Ο οργανισμός σας απαιτεί σύνδεση δύο παραγόντων πριν μπορέσετε να ανοίξετε το θησαυροφυλάκιό σας."
     },
     "nplurals=2; plural=(n != 1);"
 )

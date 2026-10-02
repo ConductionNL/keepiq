@@ -1266,7 +1266,27 @@ OC.L10N.register(
         "Tag": "Címke",
         "Remove tag": "Címke eltávolítása",
         "Add tag": "Címke hozzáadása",
-        "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra."
+        "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "A hatókörben %n felhasználónak még nincs kétlépcsős bejelentkezése, és nem tudja megnyitni a széfet, amíg ez be van kapcsolva.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "A hatókörben %n felhasználónak még nincs kétlépcsős bejelentkezése, és nem tudják megnyitni a széfet, amíg ez be van kapcsolva.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "A tartalékkódok nem számítanak. Ha felhasználói saját második faktorral rendelkező identitásszolgáltatón keresztül lépnek be, hagyja ki a csoportjaikat.",
+        "Block personal vault export": "Személyes széf exportjának tiltása",
+        "Keep work logins in team folders": "Munkahelyi belépések tartása csapatmappákban",
+        "Move to a team folder": "Áthelyezés csapatmappába",
+        "Not in a team folder": "Nincs csapatmappában",
+        "Only for these groups (empty is everyone)": "Csak ezeknek a csoportoknak (üres: mindenki)",
+        "Require two-factor login before the vault opens": "Kétlépcsős bejelentkezés megkövetelése a széf megnyitása előtt",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Szabályok minden széfre. Mindegyik mindenkire vonatkozik, vagy csak a kiválasztott csoportokra.",
+        "Secret types that belong in a team folder": "Csapatmappába tartozó titoktípusok",
+        "Set up two-factor login": "Kétlépcsős bejelentkezés beállítása",
+        "Team folder you can write to": "Csapatmappa, amelybe írhat",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "A felhasználók nem tölthetnek le biztonsági mentést, CSV-t vagy átviteli fájlt. Személyes adatcsomagjuk elérhető marad.",
+        "Users cannot save these secret types in a personal folder.": "A felhasználók nem menthetik ezeket a titoktípusokat személyes mappába.",
+        "Vault policies": "Széfszabályok",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Szervezete nem engedi a személyes széf exportálását. A beállításokban lévő személyes adatcsomagja elérhető marad.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Szervezete ezeket a titkokat csapatmappában tartja. Helyezze át mindegyiket egy csapatmappába.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Szervezete ezt a titoktípust csapatmappában tartja. Válassza az egyik saját csapatmappáját, vagy egyet, amelybe írhat.",
+        "Your organisation requires two-factor login before you can open your vault.": "Szervezete kétlépcsős bejelentkezést követel meg, mielőtt megnyithatja a széfét."
     },
     "nplurals=2; plural=(n != 1);"
 )

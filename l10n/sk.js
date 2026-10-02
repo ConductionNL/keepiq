@@ -1266,7 +1266,27 @@ OC.L10N.register(
         "Tag": "Štítok",
         "Remove tag": "Odobrať štítok",
         "Add tag": "Pridať štítok",
-        "Could not change the tags. Try again.": "Štítky nemožno zmeniť. Skúste to znova."
+        "Could not change the tags. Try again.": "Štítky nemožno zmeniť. Skúste to znova.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n používateľ v rozsahu zatiaľ nemá dvojfázové prihlásenie a nemôže otvoriť trezor, kým je toto zapnuté.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "Používatelia v rozsahu (%n) zatiaľ nemajú dvojfázové prihlásenie a nemôžu otvoriť trezor, kým je toto zapnuté.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Záložné kódy sa nepočítajú. Ak sa vaši používatelia prihlasujú cez poskytovateľa identity s vlastným druhým faktorom, ich skupiny vynechajte.",
+        "Block personal vault export": "Blokovať export osobného trezoru",
+        "Keep work logins in team folders": "Uchovávať pracovné prihlasovacie údaje v tímových priečinkoch",
+        "Move to a team folder": "Presunúť do tímového priečinka",
+        "Not in a team folder": "Nie je v tímovom priečinku",
+        "Only for these groups (empty is everyone)": "Len pre tieto skupiny (prázdne znamená všetkých)",
+        "Require two-factor login before the vault opens": "Vyžadovať dvojfázové prihlásenie pred otvorením trezoru",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Pravidlá pre každý trezor. Každé platí pre všetkých alebo len pre skupiny, ktoré zvolíte.",
+        "Secret types that belong in a team folder": "Typy tajomstiev, ktoré patria do tímového priečinka",
+        "Set up two-factor login": "Nastaviť dvojfázové prihlásenie",
+        "Team folder you can write to": "Tímový priečinok, do ktorého môžete zapisovať",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Používatelia nemôžu stiahnuť zálohu, CSV ani prenosový súbor. Ich balík osobných údajov zostáva dostupný.",
+        "Users cannot save these secret types in a personal folder.": "Používatelia nemôžu ukladať tieto typy tajomstiev do osobného priečinka.",
+        "Vault policies": "Pravidlá trezoru",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Vaša organizácia nepovoľuje export vášho osobného trezoru. Váš balík osobných údajov v nastaveniach zostáva dostupný.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Vaša organizácia uchováva tieto tajomstvá v tímovom priečinku. Presuňte každé do tímového priečinka.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Vaša organizácia uchováva tento typ tajomstva v tímovom priečinku. Vyberte jeden zo svojich tímových priečinkov alebo taký, do ktorého môžete zapisovať.",
+        "Your organisation requires two-factor login before you can open your vault.": "Vaša organizácia vyžaduje dvojfázové prihlásenie, kým budete môcť otvoriť svoj trezor."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1266,7 +1266,27 @@ OC.L10N.register(
         "Tag": "Tag",
         "Remove tag": "Usuń tag",
         "Add tag": "Dodaj tag",
-        "Could not change the tags. Try again.": "Nie udało się zmienić tagów. Spróbuj ponownie."
+        "Could not change the tags. Try again.": "Nie udało się zmienić tagów. Spróbuj ponownie.",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n użytkownik w zakresie nie ma jeszcze logowania dwuetapowego i nie może otworzyć sejfu, dopóki to jest włączone.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "Użytkownicy w zakresie (%n) nie mają jeszcze logowania dwuetapowego i nie mogą otworzyć sejfu, dopóki to jest włączone.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Kody zapasowe się nie liczą. Jeśli użytkownicy logują się przez dostawcę tożsamości z własnym drugim składnikiem, pomiń ich grupy.",
+        "Block personal vault export": "Blokuj eksport osobistego sejfu",
+        "Keep work logins in team folders": "Przechowuj służbowe dane logowania w folderach zespołu",
+        "Move to a team folder": "Przenieś do folderu zespołu",
+        "Not in a team folder": "Nie w folderze zespołu",
+        "Only for these groups (empty is everyone)": "Tylko dla tych grup (puste oznacza wszystkich)",
+        "Require two-factor login before the vault opens": "Wymagaj logowania dwuetapowego przed otwarciem sejfu",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Zasady dla każdego sejfu. Każda dotyczy wszystkich albo tylko wybranych grup.",
+        "Secret types that belong in a team folder": "Typy sekretów, które należą do folderu zespołu",
+        "Set up two-factor login": "Skonfiguruj logowanie dwuetapowe",
+        "Team folder you can write to": "Folder zespołu, w którym możesz zapisywać",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Użytkownicy nie mogą pobrać kopii zapasowej, pliku CSV ani pliku przeniesienia. Ich pakiet danych osobowych pozostaje dostępny.",
+        "Users cannot save these secret types in a personal folder.": "Użytkownicy nie mogą zapisywać tych typów sekretów w folderze osobistym.",
+        "Vault policies": "Zasady sejfu",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Twoja organizacja nie pozwala eksportować osobistego sejfu. Twój pakiet danych osobowych w ustawieniach pozostaje dostępny.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Twoja organizacja przechowuje te sekrety w folderze zespołu. Przenieś każdy do folderu zespołu.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Twoja organizacja przechowuje ten typ sekretu w folderze zespołu. Wybierz jeden ze swoich folderów zespołu lub taki, w którym możesz zapisywać.",
+        "Your organisation requires two-factor login before you can open your vault.": "Twoja organizacja wymaga logowania dwuetapowego, zanim otworzysz sejf."
     },
     "nplurals=2; plural=(n != 1);"
 )
