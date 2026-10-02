@@ -248,6 +248,7 @@ export default {
 		 * Whether the typed confirmation matches the suite id (keepiq#871).
 		 *
 		 * @return {boolean}
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 		 */
 		confirmed() {
 			return this.suiteId !== '' && this.confirmSuiteId === this.suiteId
