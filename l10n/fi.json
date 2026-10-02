@@ -1265,7 +1265,15 @@
         "Tag": "Tunniste",
         "Remove tag": "Poista tunniste",
         "Add tag": "Lisää tunniste",
-        "Could not change the tags. Try again.": "Tunnisteita ei voitu muuttaa. Yritä uudelleen."
+        "Could not change the tags. Try again.": "Tunnisteita ei voitu muuttaa. Yritä uudelleen.",
+        "{member} got access from {confirmer}.": "{member} sai käyttöoikeuden käyttäjältä {confirmer}.",
+        "Automatically confirm new team folder members": "Vahvista uudet tiimikansion jäsenet automaattisesti",
+        "Gave %n new member access to a team folder.": "%n uusi jäsen sai pääsyn tiimikansioon.",
+        "Gave %n new members access to a team folder.": "%n uutta jäsentä sai pääsyn tiimikansioon.",
+        "Give new team folder members access without waiting for the folder owner.": "Anna uusille tiimikansion jäsenille pääsy odottamatta kansion omistajaa.",
+        "New team folder members": "Uudet tiimikansion jäsenet",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Omistaja tai kirjoitusoikeudellinen jäsen vahvistaa heidät avoimesta holvistaan. Keepiq ei koskaan pura salausta palvelimella.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Odotetaan, että kirjoitusoikeudellinen jäsen avaa Keepiqin. Voit myös jakaa nyt."
     },
     "plurals": null
 }

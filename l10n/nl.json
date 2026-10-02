@@ -1270,7 +1270,15 @@
         "Tag": "Label",
         "Remove tag": "Label verwijderen",
         "Add tag": "Label toevoegen",
-        "Could not change the tags. Try again.": "Kon de labels niet wijzigen. Probeer het opnieuw."
+        "Could not change the tags. Try again.": "Kon de labels niet wijzigen. Probeer het opnieuw.",
+        "{member} got access from {confirmer}.": "{member} kreeg toegang van {confirmer}.",
+        "Automatically confirm new team folder members": "Nieuwe teammapleden automatisch bevestigen",
+        "Gave %n new member access to a team folder.": "%n nieuw lid heeft toegang gekregen tot een teammap.",
+        "Gave %n new members access to a team folder.": "%n nieuwe leden hebben toegang gekregen tot een teammap.",
+        "Give new team folder members access without waiting for the folder owner.": "Geef nieuwe teammapleden toegang zonder te wachten op de eigenaar van de map.",
+        "New team folder members": "Nieuwe teammapleden",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "De eigenaar of een lid met schrijfrechten bevestigt hen vanuit de geopende kluis. Keepiq ontsleutelt nooit op de server.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Wacht op een lid met schrijfrechten dat Keepiq opent. Je kunt ook nu delen."
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"

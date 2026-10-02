@@ -1265,7 +1265,15 @@
         "Tag": "Žymė",
         "Remove tag": "Pašalinti žymę",
         "Add tag": "Pridėti žymę",
-        "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą."
+        "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą.",
+        "{member} got access from {confirmer}.": "{member} gavo prieigą iš {confirmer}.",
+        "Automatically confirm new team folder members": "Automatiškai patvirtinti naujus komandos aplankų narius",
+        "Gave %n new member access to a team folder.": "%n naujas narys gavo prieigą prie komandos aplanko.",
+        "Gave %n new members access to a team folder.": "Nauji nariai (%n) gavo prieigą prie komandos aplanko.",
+        "Give new team folder members access without waiting for the folder owner.": "Suteikite prieigą naujiems nariams nelaukdami aplanko savininko.",
+        "New team folder members": "Nauji komandos aplankų nariai",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Savininkas arba narys su rašymo teise juos patvirtina iš atidarytos saugyklos. Keepiq niekada neiššifruoja serveryje.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Laukiama, kol narys su rašymo teise atidarys Keepiq. Taip pat galite bendrinti dabar."
     },
     "plurals": null
 }

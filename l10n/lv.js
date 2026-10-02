@@ -1266,7 +1266,15 @@ OC.L10N.register(
         "Tag": "Birka",
         "Remove tag": "Noņemt birku",
         "Add tag": "Pievienot birku",
-        "Could not change the tags. Try again.": "Neizdevās mainīt birkas. Mēģiniet vēlreiz."
+        "Could not change the tags. Try again.": "Neizdevās mainīt birkas. Mēģiniet vēlreiz.",
+        "{member} got access from {confirmer}.": "{member} saņēma piekļuvi no {confirmer}.",
+        "Automatically confirm new team folder members": "Automātiski apstiprināt jaunus komandas mapju dalībniekus",
+        "Gave %n new member access to a team folder.": "%n jauns dalībnieks saņēma piekļuvi komandas mapei.",
+        "Gave %n new members access to a team folder.": "%n jauni dalībnieki saņēma piekļuvi komandas mapei.",
+        "Give new team folder members access without waiting for the folder owner.": "Dodiet piekļuvi jaunajiem dalībniekiem, negaidot mapes īpašnieku.",
+        "New team folder members": "Jauni komandas mapju dalībnieki",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Īpašnieks vai dalībnieks ar rakstīšanas tiesībām tos apstiprina no atvērtās glabātavas. Keepiq nekad neatšifrē serverī.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Gaida, kamēr dalībnieks ar rakstīšanas tiesībām atvērs Keepiq. Varat kopīgot arī tūlīt."
     },
     "nplurals=2; plural=(n != 1);"
 )

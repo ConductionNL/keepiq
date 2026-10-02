@@ -92,6 +92,17 @@
 					{{ t('keepiq', 'No members yet — add a user or group below.') }}
 				</p>
 
+				<!-- Automatic confirmation (admin-auto-confirm-members §3.3):
+				     who handed a member their copies when it was not the owner. -->
+				<ul
+					v-if="confirmations.length"
+					class="team-folder-dialog__confirmed"
+					data-testid="team-folder-confirmed">
+					<li v-for="row in confirmations" :key="row.memberId">
+						{{ t('keepiq', '{member} got access from {confirmer}.', { member: row.memberId, confirmer: row.confirmerId }) }}
+					</li>
+				</ul>
+
 				<div class="team-folder-dialog__add">
 					<NcSelect
 						v-model="newMemberType"
@@ -147,6 +158,12 @@
 				<div
 					v-if="fanOut.running || pendingCount > 0"
 					class="team-folder-dialog__fanout">
+					<NcNoteCard
+						v-if="!fanOut.running && pendingCount > 0 && autoConfirm"
+						type="info"
+						data-testid="team-folder-waiting-confirmer">
+						{{ t('keepiq', 'Waiting for a member with write access to open Keepiq. You can also share now.') }}
+					</NcNoteCard>
 					<NcNoteCard
 						v-if="!fanOut.running && pendingCount > 0"
 						type="warning"
@@ -209,6 +226,7 @@ import {
 import Account from 'vue-material-design-icons/Account.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import Close from 'vue-material-design-icons/Close.vue'
+import { fetchPolicy } from '../policy/policy.js'
 import { useGroupStore } from '../store/modules/group.js'
 import { useShareStore } from '../store/modules/share.js'
 import { useTeamFolderStore } from '../store/modules/teamFolder.js'
@@ -263,6 +281,10 @@ export default {
 			newMemberType: 'user',
 			newMemberId: '',
 			pendingCount: 0,
+			/** Member user id to the colleague who confirmed them (admin-auto-confirm-members §3.3). */
+			confirmedBy: {},
+			/** Whether the admin switched automatic confirmation on. */
+			autoConfirm: false,
 			/** Pending candidate search, so keystrokes coalesce into one call. */
 			candidateSearchTimer: null,
 		}
@@ -271,6 +293,16 @@ export default {
 	computed: {
 		store() {
 			return useTeamFolderStore()
+		},
+
+		/**
+		 * Members confirmed by a colleague, for the dialog list.
+		 *
+		 * @return {Array<{memberId: string, confirmerId: string}>}
+		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.3
+		 */
+		confirmations() {
+			return Object.entries(this.confirmedBy ?? {}).map(([memberId, confirmerId]) => ({ memberId, confirmerId }))
 		},
 
 		teamFolder() {
@@ -446,9 +478,11 @@ export default {
 		},
 
 		/**
-		 * Refresh the team-folder list and the pending reconcile count.
+		 * Refresh the team-folder list, the pending reconcile count, who
+		 * confirmed whom and whether automatic confirmation is on.
 		 *
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
+		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.3
 		 */
 		async refresh() {
 			// Best-effort and deliberately not awaited into the error path: who
@@ -468,6 +502,8 @@ export default {
 				if (this.teamFolder) {
 					const state = await this.store.reconcile(this.teamFolder.id)
 					this.pendingCount = (state.missing ?? []).length
+					this.confirmedBy = state.confirmedBy ?? {}
+					this.autoConfirm = (await fetchPolicy())?.team_folder_auto_confirm === true
 				}
 			} catch (e) {
 				this.error =

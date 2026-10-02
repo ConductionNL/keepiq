@@ -1265,7 +1265,15 @@
         "Tag": "Етикет",
         "Remove tag": "Премахване на етикет",
         "Add tag": "Добавяне на етикет",
-        "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново."
+        "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново.",
+        "{member} got access from {confirmer}.": "{member} получи достъп от {confirmer}.",
+        "Automatically confirm new team folder members": "Автоматично потвърждаване на нови членове на екипни папки",
+        "Gave %n new member access to a team folder.": "%n нов член получи достъп до екипна папка.",
+        "Gave %n new members access to a team folder.": "Нови членове (%n) получиха достъп до екипна папка.",
+        "Give new team folder members access without waiting for the folder owner.": "Дайте достъп на новите членове, без да чакате собственика на папката.",
+        "New team folder members": "Нови членове на екипни папки",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Собственикът или член с право на запис ги потвърждава от отворения си трезор. Keepiq никога не дешифрира на сървъра.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Изчаква се член с право на запис да отвори Keepiq. Можете да споделите и сега."
     },
     "plurals": null
 }

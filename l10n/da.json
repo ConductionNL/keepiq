@@ -1265,7 +1265,15 @@
         "Tag": "Mærke",
         "Remove tag": "Fjern mærke",
         "Add tag": "Tilføj mærke",
-        "Could not change the tags. Try again.": "Mærkerne kunne ikke ændres. Prøv igen."
+        "Could not change the tags. Try again.": "Mærkerne kunne ikke ændres. Prøv igen.",
+        "{member} got access from {confirmer}.": "{member} fik adgang fra {confirmer}.",
+        "Automatically confirm new team folder members": "Bekræft nye teammappemedlemmer automatisk",
+        "Gave %n new member access to a team folder.": "%n nyt medlem fik adgang til en teammappe.",
+        "Gave %n new members access to a team folder.": "%n nye medlemmer fik adgang til en teammappe.",
+        "Give new team folder members access without waiting for the folder owner.": "Giv nye teammappemedlemmer adgang uden at vente på mappens ejer.",
+        "New team folder members": "Nye teammappemedlemmer",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Ejeren eller et medlem med skriveadgang bekræfter dem fra sin åbne boks. Keepiq dekrypterer aldrig på serveren.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Venter på at et medlem med skriveadgang åbner Keepiq. Du kan også dele nu."
     },
     "plurals": null
 }

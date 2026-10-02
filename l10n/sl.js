@@ -1266,7 +1266,15 @@ OC.L10N.register(
         "Tag": "Oznaka",
         "Remove tag": "Odstrani oznako",
         "Add tag": "Dodaj oznako",
-        "Could not change the tags. Try again.": "Oznak ni bilo mogoče spremeniti. Poskusite znova."
+        "Could not change the tags. Try again.": "Oznak ni bilo mogoče spremeniti. Poskusite znova.",
+        "{member} got access from {confirmer}.": "{member} je dobil dostop od {confirmer}.",
+        "Automatically confirm new team folder members": "Samodejno potrdi nove člane ekipnih map",
+        "Gave %n new member access to a team folder.": "%n nov član je dobil dostop do ekipne mape.",
+        "Gave %n new members access to a team folder.": "Novi člani (%n) so dobili dostop do ekipne mape.",
+        "Give new team folder members access without waiting for the folder owner.": "Novim članom omogočite dostop brez čakanja na lastnika mape.",
+        "New team folder members": "Novi člani ekipnih map",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Lastnik ali član s pravico pisanja jih potrdi iz odprtega trezorja. Keepiq nikoli ne dešifrira na strežniku.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Čakanje, da član s pravico pisanja odpre Keepiq. Lahko pa delite že zdaj."
     },
     "nplurals=2; plural=(n != 1);"
 )

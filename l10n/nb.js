@@ -1266,7 +1266,15 @@ OC.L10N.register(
         "Tag": "Etikett",
         "Remove tag": "Fjern etikett",
         "Add tag": "Legg til etikett",
-        "Could not change the tags. Try again.": "Kunne ikke endre etikettene. Prøv igjen."
+        "Could not change the tags. Try again.": "Kunne ikke endre etikettene. Prøv igjen.",
+        "{member} got access from {confirmer}.": "{member} fikk tilgang fra {confirmer}.",
+        "Automatically confirm new team folder members": "Bekreft nye teammappemedlemmer automatisk",
+        "Gave %n new member access to a team folder.": "%n nytt medlem fikk tilgang til en teammappe.",
+        "Gave %n new members access to a team folder.": "%n nye medlemmer fikk tilgang til en teammappe.",
+        "Give new team folder members access without waiting for the folder owner.": "Gi nye teammappemedlemmer tilgang uten å vente på mappens eier.",
+        "New team folder members": "Nye teammappemedlemmer",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Eieren eller et medlem med skrivetilgang bekrefter dem fra sitt åpne hvelv. Keepiq dekrypterer aldri på serveren.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Venter på at et medlem med skrivetilgang åpner Keepiq. Du kan også dele nå."
     },
     "nplurals=2; plural=(n != 1);"
 )

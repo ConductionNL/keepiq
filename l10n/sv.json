@@ -1265,7 +1265,15 @@
         "Tag": "Tagg",
         "Remove tag": "Ta bort tagg",
         "Add tag": "Lägg till tagg",
-        "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen."
+        "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen.",
+        "{member} got access from {confirmer}.": "{member} fick åtkomst av {confirmer}.",
+        "Automatically confirm new team folder members": "Bekräfta nya teammappsmedlemmar automatiskt",
+        "Gave %n new member access to a team folder.": "%n ny medlem fick åtkomst till en teammapp.",
+        "Gave %n new members access to a team folder.": "%n nya medlemmar fick åtkomst till en teammapp.",
+        "Give new team folder members access without waiting for the folder owner.": "Ge nya teammappsmedlemmar åtkomst utan att vänta på mappens ägare.",
+        "New team folder members": "Nya teammappsmedlemmar",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Ägaren eller en medlem med skrivrätt bekräftar dem från sitt öppna valv. Keepiq dekrypterar aldrig på servern.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Väntar på att en medlem med skrivrätt öppnar Keepiq. Du kan också dela nu."
     },
     "plurals": null
 }

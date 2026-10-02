@@ -1266,7 +1266,15 @@ OC.L10N.register(
         "Tag": "Tikketta",
         "Remove tag": "Neħħi t-tikketta",
         "Add tag": "Żid tikketta",
-        "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova."
+        "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova.",
+        "{member} got access from {confirmer}.": "{member} irċieva aċċess minn {confirmer}.",
+        "Automatically confirm new team folder members": "Ikkonferma awtomatikament membri ġodda tal-folders tat-tim",
+        "Gave %n new member access to a team folder.": "%n membru ġdid irċieva aċċess għal folder tat-tim.",
+        "Gave %n new members access to a team folder.": "%n membri ġodda rċevew aċċess għal folder tat-tim.",
+        "Give new team folder members access without waiting for the folder owner.": "Agħti aċċess lill-membri l-ġodda mingħajr ma tistenna lis-sid tal-folder.",
+        "New team folder members": "Membri ġodda tal-folders tat-tim",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Is-sid jew membru bi dritt tal-kitba jikkonfermahom mill-kaxxaforti miftuħa tiegħu. Keepiq qatt ma jiddekripta fuq is-server.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Qed nistennew membru bi dritt tal-kitba jiftaħ Keepiq. Tista' wkoll taqsam issa."
     },
     "nplurals=2; plural=(n != 1);"
 )

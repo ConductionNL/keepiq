@@ -1265,7 +1265,15 @@
         "Tag": "Schlagwort",
         "Remove tag": "Schlagwort entfernen",
         "Add tag": "Schlagwort hinzufügen",
-        "Could not change the tags. Try again.": "Schlagwörter konnten nicht geändert werden. Bitte erneut versuchen."
+        "Could not change the tags. Try again.": "Schlagwörter konnten nicht geändert werden. Bitte erneut versuchen.",
+        "{member} got access from {confirmer}.": "{member} hat Zugriff von {confirmer} erhalten.",
+        "Automatically confirm new team folder members": "Neue Teamordner-Mitglieder automatisch bestätigen",
+        "Gave %n new member access to a team folder.": "%n neues Mitglied hat Zugriff auf einen Teamordner erhalten.",
+        "Gave %n new members access to a team folder.": "%n neue Mitglieder haben Zugriff auf einen Teamordner erhalten.",
+        "Give new team folder members access without waiting for the folder owner.": "Geben Sie neuen Teamordner-Mitgliedern Zugriff, ohne auf den Ordnereigentümer zu warten.",
+        "New team folder members": "Neue Teamordner-Mitglieder",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Der Eigentümer oder ein Mitglied mit Schreibrechten bestätigt sie aus dem geöffneten Tresor. Keepiq entschlüsselt nie auf dem Server.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Warten auf ein Mitglied mit Schreibrechten, das Keepiq öffnet. Sie können auch jetzt teilen."
     },
     "plurals": null
 }

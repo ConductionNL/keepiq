@@ -1266,7 +1266,15 @@ OC.L10N.register(
         "Tag": "Ετικέτα",
         "Remove tag": "Αφαίρεση ετικέτας",
         "Add tag": "Προσθήκη ετικέτας",
-        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά."
+        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά.",
+        "{member} got access from {confirmer}.": "Ο/Η {member} πήρε πρόσβαση από τον/την {confirmer}.",
+        "Automatically confirm new team folder members": "Αυτόματη επιβεβαίωση νέων μελών φακέλων ομάδας",
+        "Gave %n new member access to a team folder.": "%n νέο μέλος πήρε πρόσβαση σε φάκελο ομάδας.",
+        "Gave %n new members access to a team folder.": "%n νέα μέλη πήραν πρόσβαση σε φάκελο ομάδας.",
+        "Give new team folder members access without waiting for the folder owner.": "Δώστε πρόσβαση στα νέα μέλη χωρίς να περιμένετε τον κάτοχο του φακέλου.",
+        "New team folder members": "Νέα μέλη φακέλων ομάδας",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Ο κάτοχος ή ένα μέλος με δικαίωμα εγγραφής τα επιβεβαιώνει από το ανοιχτό θησαυροφυλάκιο. Το Keepiq δεν αποκρυπτογραφεί ποτέ στον διακομιστή.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Αναμονή για μέλος με δικαίωμα εγγραφής να ανοίξει το Keepiq. Μπορείτε επίσης να μοιραστείτε τώρα."
     },
     "nplurals=2; plural=(n != 1);"
 )

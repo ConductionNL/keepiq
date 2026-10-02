@@ -1265,7 +1265,15 @@
         "Tag": "Etiqueta",
         "Remove tag": "Remover etiqueta",
         "Add tag": "Adicionar etiqueta",
-        "Could not change the tags. Try again.": "Não foi possível alterar as etiquetas. Tente novamente."
+        "Could not change the tags. Try again.": "Não foi possível alterar as etiquetas. Tente novamente.",
+        "{member} got access from {confirmer}.": "{member} recebeu acesso de {confirmer}.",
+        "Automatically confirm new team folder members": "Confirmar automaticamente novos membros das pastas de equipa",
+        "Gave %n new member access to a team folder.": "%n novo membro recebeu acesso a uma pasta de equipa.",
+        "Gave %n new members access to a team folder.": "%n novos membros receberam acesso a uma pasta de equipa.",
+        "Give new team folder members access without waiting for the folder owner.": "Dê acesso aos novos membros sem esperar pelo proprietário da pasta.",
+        "New team folder members": "Novos membros das pastas de equipa",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "O proprietário ou um membro com permissão de escrita confirma-os a partir do cofre aberto. O Keepiq nunca desencripta no servidor.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "A aguardar que um membro com permissão de escrita abra o Keepiq. Também pode partilhar agora."
     },
     "plurals": null
 }

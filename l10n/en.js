@@ -1266,7 +1266,15 @@ OC.L10N.register(
         "Tag": "Tag",
         "Remove tag": "Remove tag",
         "Add tag": "Add tag",
-        "Could not change the tags. Try again.": "Could not change the tags. Try again."
+        "Could not change the tags. Try again.": "Could not change the tags. Try again.",
+        "{member} got access from {confirmer}.": "{member} got access from {confirmer}.",
+        "Automatically confirm new team folder members": "Automatically confirm new team folder members",
+        "Gave %n new member access to a team folder.": "Gave %n new member access to a team folder.",
+        "Gave %n new members access to a team folder.": "Gave %n new members access to a team folder.",
+        "Give new team folder members access without waiting for the folder owner.": "Give new team folder members access without waiting for the folder owner.",
+        "New team folder members": "New team folder members",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Waiting for a member with write access to open Keepiq. You can also share now."
     },
     "nplurals=2; plural=(n != 1);"
 )

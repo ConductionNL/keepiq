@@ -1266,7 +1266,15 @@ OC.L10N.register(
         "Tag": "Étiquette",
         "Remove tag": "Retirer l'étiquette",
         "Add tag": "Ajouter une étiquette",
-        "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez."
+        "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez.",
+        "{member} got access from {confirmer}.": "{member} a reçu l'accès de {confirmer}.",
+        "Automatically confirm new team folder members": "Confirmer automatiquement les nouveaux membres des dossiers d'équipe",
+        "Gave %n new member access to a team folder.": "%n nouveau membre a reçu l'accès à un dossier d'équipe.",
+        "Gave %n new members access to a team folder.": "%n nouveaux membres ont reçu l'accès à un dossier d'équipe.",
+        "Give new team folder members access without waiting for the folder owner.": "Donnez l'accès aux nouveaux membres sans attendre le propriétaire du dossier.",
+        "New team folder members": "Nouveaux membres des dossiers d'équipe",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Le propriétaire ou un membre avec droit d'écriture les confirme depuis son coffre ouvert. Keepiq ne déchiffre jamais sur le serveur.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "En attente d'un membre avec droit d'écriture qui ouvre Keepiq. Vous pouvez aussi partager maintenant."
     },
     "nplurals=2; plural=(n != 1);"
 )

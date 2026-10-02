@@ -1266,7 +1266,15 @@ OC.L10N.register(
         "Tag": "Tag",
         "Remove tag": "Tag ewechhuelen",
         "Add tag": "Tag derbäisetzen",
-        "Could not change the tags. Try again.": "D'Tags konnten net geännert ginn. Probéiert nach eng Kéier."
+        "Could not change the tags. Try again.": "D'Tags konnten net geännert ginn. Probéiert nach eng Kéier.",
+        "{member} got access from {confirmer}.": "{member} krut Zougang vun {confirmer}.",
+        "Automatically confirm new team folder members": "Nei Memberen vun Teamdossieren automatesch bestätegen",
+        "Gave %n new member access to a team folder.": "%n neie Member krut Zougang zu engem Teamdossier.",
+        "Gave %n new members access to a team folder.": "%n nei Memberen kruten Zougang zu engem Teamdossier.",
+        "Give new team folder members access without waiting for the folder owner.": "Gitt neie Memberen Zougang ouni op de Besëtzer vum Dossier ze waarden.",
+        "New team folder members": "Nei Memberen vun Teamdossieren",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "De Besëtzer oder e Member mat Schreifrecht bestätegt se aus sengem oppenen Tresor. Keepiq entschlësselt ni um Server.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Et gëtt gewaart, bis e Member mat Schreifrecht Keepiq opmécht. Dir kënnt och elo deelen."
     },
     "nplurals=2; plural=(n != 1);"
 )

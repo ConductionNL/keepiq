@@ -1266,7 +1266,15 @@ OC.L10N.register(
         "Tag": "Silt",
         "Remove tag": "Eemalda silt",
         "Add tag": "Lisa silt",
-        "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti."
+        "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti.",
+        "{member} got access from {confirmer}.": "{member} sai juurdepääsu kasutajalt {confirmer}.",
+        "Automatically confirm new team folder members": "Kinnita uued meeskonnakaustade liikmed automaatselt",
+        "Gave %n new member access to a team folder.": "%n uus liige sai juurdepääsu meeskonnakaustale.",
+        "Gave %n new members access to a team folder.": "%n uut liiget said juurdepääsu meeskonnakaustale.",
+        "Give new team folder members access without waiting for the folder owner.": "Andke uutele liikmetele juurdepääs kausta omanikku ootamata.",
+        "New team folder members": "Uued meeskonnakaustade liikmed",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Omanik või kirjutusõigusega liige kinnitab nad oma avatud hoidlast. Keepiq ei dekrüpteeri kunagi serveris.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Ootame, et kirjutusõigusega liige avaks Keepiqi. Saate ka kohe jagada."
     },
     "nplurals=2; plural=(n != 1);"
 )

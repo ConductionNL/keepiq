@@ -1265,7 +1265,15 @@
         "Tag": "Ознака",
         "Remove tag": "Отстрани ознака",
         "Add tag": "Додај ознака",
-        "Could not change the tags. Try again.": "Ознаките не можеа да се променат. Обидете се повторно."
+        "Could not change the tags. Try again.": "Ознаките не можеа да се променат. Обидете се повторно.",
+        "{member} got access from {confirmer}.": "{member} доби пристап од {confirmer}.",
+        "Automatically confirm new team folder members": "Автоматски потврди нови членови на тимски папки",
+        "Gave %n new member access to a team folder.": "%n нов член доби пристап до тимска папка.",
+        "Gave %n new members access to a team folder.": "Нови членови (%n) добија пристап до тимска папка.",
+        "Give new team folder members access without waiting for the folder owner.": "Дајте им пристап на новите членови без да чекате на сопственикот на папката.",
+        "New team folder members": "Нови членови на тимски папки",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Сопственикот или член со право на запишување ги потврдува од отворениот сеф. Keepiq никогаш не дешифрира на серверот.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Се чека член со право на запишување да го отвори Keepiq. Може да споделите и сега."
     },
     "plurals": null
 }

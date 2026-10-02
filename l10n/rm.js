@@ -1266,7 +1266,15 @@ OC.L10N.register(
         "Tag": "Etichetta",
         "Remove tag": "Allontanar l'etichetta",
         "Add tag": "Agiuntar ina etichetta",
-        "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada."
+        "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada.",
+        "{member} got access from {confirmer}.": "{member} ha survegnì access da {confirmer}.",
+        "Automatically confirm new team folder members": "Confermar automaticamain novs commembers d'ordinaturs da team",
+        "Gave %n new member access to a team folder.": "%n nov commember ha survegnì access ad in ordinatur da team.",
+        "Gave %n new members access to a team folder.": "%n novs commembers han survegnì access ad in ordinatur da team.",
+        "Give new team folder members access without waiting for the folder owner.": "Dai access als novs commembers senza spetgar sin il possessur da l'ordinatur.",
+        "New team folder members": "Novs commembers d'ordinaturs da team",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Il possessur u in commember cun dretg da scriver als conferma da sia chascha forta averta. Keepiq na decifrescha mai sin il server.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Spetgar fin ch'in commember cun dretg da scriver avra Keepiq. Vus pudais era parter ussa."
     },
     "nplurals=2; plural=(n != 1);"
 )

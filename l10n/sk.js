@@ -1266,7 +1266,15 @@ OC.L10N.register(
         "Tag": "Štítok",
         "Remove tag": "Odobrať štítok",
         "Add tag": "Pridať štítok",
-        "Could not change the tags. Try again.": "Štítky nemožno zmeniť. Skúste to znova."
+        "Could not change the tags. Try again.": "Štítky nemožno zmeniť. Skúste to znova.",
+        "{member} got access from {confirmer}.": "{member} získal prístup od {confirmer}.",
+        "Automatically confirm new team folder members": "Automaticky potvrdzovať nových členov tímových priečinkov",
+        "Gave %n new member access to a team folder.": "%n nový člen získal prístup k tímovému priečinku.",
+        "Gave %n new members access to a team folder.": "Noví členovia (%n) získali prístup k tímovému priečinku.",
+        "Give new team folder members access without waiting for the folder owner.": "Dajte novým členom prístup bez čakania na vlastníka priečinka.",
+        "New team folder members": "Noví členovia tímových priečinkov",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Vlastník alebo člen s právom zápisu ich potvrdí zo svojho otvoreného trezoru. Keepiq nikdy nedešifruje na serveri.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Čaká sa, kým člen s právom zápisu otvorí Keepiq. Môžete aj zdieľať hneď."
     },
     "nplurals=2; plural=(n != 1);"
 )

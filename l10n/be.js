@@ -1266,7 +1266,15 @@ OC.L10N.register(
         "Tag": "Метка",
         "Remove tag": "Прыбраць метку",
         "Add tag": "Дадаць метку",
-        "Could not change the tags. Try again.": "Не ўдалося змяніць меткі. Паспрабуйце яшчэ раз."
+        "Could not change the tags. Try again.": "Не ўдалося змяніць меткі. Паспрабуйце яшчэ раз.",
+        "{member} got access from {confirmer}.": "{member} атрымаў доступ ад {confirmer}.",
+        "Automatically confirm new team folder members": "Аўтаматычна пацвярджаць новых удзельнікаў камандных папак",
+        "Gave %n new member access to a team folder.": "%n новы ўдзельнік атрымаў доступ да каманднай папкі.",
+        "Gave %n new members access to a team folder.": "Новыя ўдзельнікі (%n) атрымалі доступ да каманднай папкі.",
+        "Give new team folder members access without waiting for the folder owner.": "Давайце доступ новым удзельнікам, не чакаючы ўладальніка папкі.",
+        "New team folder members": "Новыя ўдзельнікі камандных папак",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Уладальнік або ўдзельнік з правам запісу пацвярджае іх з адкрытага сховішча. Keepiq ніколі не расшыфроўвае на серверы.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Чаканне, пакуль удзельнік з правам запісу адкрые Keepiq. Можна падзяліцца і зараз."
     },
     "nplurals=2; plural=(n != 1);"
 )

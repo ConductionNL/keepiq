@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 import { decryptPrivateKeyWithRawKey, deriveAesKey } from '../../crypto/aes.js'
 import { decodeEnvelope } from '../../crypto/envelope.js'
 import { decryptPrivateKey, importPrivateKey } from '../../crypto/index.js'
+import { useTeamFolderStore } from './teamFolder.js'
 
 const DEFAULT_TIMEOUT = 600000 // 10 minutes
 
@@ -138,6 +139,7 @@ export const useSessionStore = defineStore('session', {
 			this.certificate = certificate
 			this.suiteId = suiteId
 			this.lastActivity = Date.now()
+			this.afterUnlock()
 		},
 
 		/**
@@ -176,6 +178,23 @@ export const useSessionStore = defineStore('session', {
 			this.certificate = activeSuite.certificate
 			this.suiteId = activeSuite.id
 			this.lastActivity = Date.now()
+			this.afterUnlock()
+		},
+
+		/**
+		 * Work that starts once the vault is open: the background confirmation
+		 * of new team folder members (admin-auto-confirm-members D5). Not
+		 * awaited, so it never delays or breaks an unlock.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.2
+		 */
+		afterUnlock() {
+			try {
+				useTeamFolderStore().startAutoConfirm().catch(() => {})
+			} catch {
+				// Never let a background job break the unlock.
+			}
 		},
 
 		/**
@@ -184,6 +203,12 @@ export const useSessionStore = defineStore('session', {
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		lock() {
+			// Stop confirming members: the key it needs is about to go.
+			try {
+				useTeamFolderStore().stopAutoConfirm()
+			} catch {
+				// A failing stop must never block the lock itself.
+			}
 			this.cryptoKey = null
 			this.aesKey = null
 			this.encryptedPrivateKey = null

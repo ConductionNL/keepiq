@@ -1266,7 +1266,15 @@ OC.L10N.register(
         "Tag": "Merki",
         "Remove tag": "Fjarlægja merki",
         "Add tag": "Bæta við merki",
-        "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur."
+        "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur.",
+        "{member} got access from {confirmer}.": "{member} fékk aðgang frá {confirmer}.",
+        "Automatically confirm new team folder members": "Staðfesta nýja meðlimi teymismappa sjálfkrafa",
+        "Gave %n new member access to a team folder.": "%n nýr meðlimur fékk aðgang að teymismöppu.",
+        "Gave %n new members access to a team folder.": "%n nýir meðlimir fengu aðgang að teymismöppu.",
+        "Give new team folder members access without waiting for the folder owner.": "Gefðu nýjum meðlimum aðgang án þess að bíða eftir eiganda möppunnar.",
+        "New team folder members": "Nýir meðlimir teymismappa",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Eigandinn eða meðlimur með skrifaðgang staðfestir þá úr opnu hólfi sínu. Keepiq afkóðar aldrei á þjóninum.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Beðið eftir að meðlimur með skrifaðgang opni Keepiq. Þú getur líka deilt núna."
     },
     "nplurals=2; plural=(n != 1);"
 )

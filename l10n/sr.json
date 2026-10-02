@@ -1265,7 +1265,15 @@
         "Tag": "Ознака",
         "Remove tag": "Уклони ознаку",
         "Add tag": "Додај ознаку",
-        "Could not change the tags. Try again.": "Није могуће променити ознаке. Покушајте поново."
+        "Could not change the tags. Try again.": "Није могуће променити ознаке. Покушајте поново.",
+        "{member} got access from {confirmer}.": "{member} је добио приступ од {confirmer}.",
+        "Automatically confirm new team folder members": "Аутоматски потврди нове чланове тимских фасцикли",
+        "Gave %n new member access to a team folder.": "%n нови члан добио је приступ тимској фасцикли.",
+        "Gave %n new members access to a team folder.": "Нови чланови (%n) добили су приступ тимској фасцикли.",
+        "Give new team folder members access without waiting for the folder owner.": "Дајте новим члановима приступ без чекања власника фасцикле.",
+        "New team folder members": "Нови чланови тимских фасцикли",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Власник или члан са правом писања потврђује их из отвореног трезора. Keepiq никад не дешифрује на серверу.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Чека се да члан са правом писања отвори Keepiq. Можете и одмах да делите."
     },
     "plurals": null
 }
