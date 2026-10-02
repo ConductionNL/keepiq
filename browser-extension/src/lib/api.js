@@ -146,6 +146,35 @@ export function updateSecret(config, id, body) {
 }
 
 /**
+ * Read the org password policy, the same endpoint the web app reads
+ * (keepiq#746). Resolves to null when it cannot be read: an unavailable
+ * policy never blocks a save.
+ * @param config
+ */
+export async function fetchPolicy(config) {
+	try {
+		return await request(config, 'GET', '/api/settings/policy')
+	} catch {
+		return null
+	}
+}
+
+/**
+ * Fetch the breach suffix list for a 5-character SHA-1 prefix through the
+ * Keepiq proxy. Only the prefix leaves the browser.
+ * @param config
+ * @param prefix
+ */
+export async function breachRange(config, prefix) {
+	const data = await request(
+		config,
+		'GET',
+		'/api/v1/breach-check/range/' + encodeURIComponent(prefix),
+	)
+	return data?.suffixes ?? ''
+}
+
+/**
  * Fetch the secret-type catalogue and return the id of a type by name/slug.
  * @param config
  * @param name
