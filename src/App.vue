@@ -76,12 +76,26 @@
 			v-if="offlineStore.servedFromCache"
 			class="keepiq-offline-banner"
 			data-testid="offline-stale-banner">
-			{{
-				t('keepiq', 'Offline — read-only. Last synced {when}.', {
-					when: syncedLabel,
-				})
-			}}
+			<template v-if="offlineStore.editsQueued">
+				{{
+					t(
+						'keepiq',
+						'Offline. Your changes stay on this device and sync when you are back online. Last synced {when}.',
+						{ when: syncedLabel },
+					)
+				}}
+			</template>
+			<template v-else>
+				{{
+					t('keepiq', 'Offline — read-only. Last synced {when}.', {
+						when: syncedLabel,
+					})
+				}}
+			</template>
 		</div>
+
+		<!-- The offline edit queue: pending count, conflicts, refused changes. -->
+		<OfflineSyncPanel />
 
 		<!-- An interrupted compromise recovery leaves the vault write-locked with
 		     nothing else in the UI saying why, so this sits at shell level rather
@@ -413,6 +427,7 @@ import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
 import KeepiqAppNav from './components/KeepiqAppNav/KeepiqAppNav.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
+import OfflineSyncPanel from './components/OfflineSyncPanel.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
 import SecretDetailSidebar from './components/SecretDetailSidebar.vue'
 import DefaultsSection from './components/settings/DefaultsSection.vue'
@@ -465,6 +480,7 @@ export default {
 		CompromiseRecoveryForm,
 		KeepiqAppNav,
 		MigrationResumeBanner,
+		OfflineSyncPanel,
 		SecretDetailSidebar,
 	},
 
@@ -902,9 +918,17 @@ export default {
 		 * redirect: if the page is still alive shortly after, the normal
 		 * lock transition runs after all and the lock screen appears.
 		 *
+		 * @param {BeforeUnloadEvent} event The unload event.
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-pending-changes-block-logout-and-rotation
 		 */
-		handleBeforeUnload() {
+		handleBeforeUnload(event) {
+			// Offline changes not yet on the server: let the browser ask before
+			// the user leaves, as for a logout (offline-edit-queue D6).
+			if (this.offlineStore.pendingCount > 0 && event) {
+				event.preventDefault()
+				event.returnValue = ''
+			}
 			this.unloading = true
 			this.sessionStore.lock()
 			setTimeout(() => {

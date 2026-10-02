@@ -92,6 +92,10 @@ class OfflineController extends OCSController {
 			return new JSONResponse(data: ['message' => 'No active encryption suite'], statusCode: Http::STATUS_NOT_FOUND);
 		}
 
+		// The offline client needs the edit rule while it has no server to ask
+		// (offline-edit-queue).
+		$manifest['offlineEditsEnabled'] = $this->appConfig->getValueBool(Application::APP_ID, 'offline_edits_enabled', false);
+
 		return new JSONResponse(data: $manifest);
 	}//end manifest()
 }//end class
