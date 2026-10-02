@@ -25,7 +25,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Db;
 
 use DateTime;
+use InvalidArgumentException;
 use JsonSerializable;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCP\AppFramework\Db\Entity;
 
 /**
@@ -83,6 +85,14 @@ use OCP\AppFramework\Db\Entity;
  * @SuppressWarnings(PHPMD.LongVariable) Property names mirror the spec-mandated DB columns.
  */
 class Secret extends Entity implements JsonSerializable {
+
+	/**
+	 * What every share path answers when asked to share a use-only or
+	 * time-limited copy onward (sharing-use-only-and-expiring-shares D4).
+	 *
+	 * @var string
+	 */
+	public const ONWARD_SHARE_REFUSAL = 'A use-only or time-limited copy cannot be shared onward';
 
 	/**
 	 * The plaintext secret name.
@@ -362,6 +372,50 @@ class Secret extends Entity implements JsonSerializable {
 			&& (string)$this->additionalFields === ''
 			&& (string)$this->url === '';
 	}//end holdsNoValues()
+
+	/**
+	 * Whether this is a use-only or time-limited recipient copy, which no
+	 * share path may use as a source (sharing-use-only-and-expiring-shares D4).
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-an-expiring-copy-cannot-be-shared-onward
+	 */
+	public function isRestrictedCopy(): bool {
+		return $this->useOnly === true || $this->accessExpiresAt !== null;
+	}//end isRestrictedCopy()
+
+	/**
+	 * Refuse this secret as the source of a share when it is a use-only or
+	 * time-limited copy (sharing-use-only-and-expiring-shares D4).
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When it is a restricted copy
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 */
+	public function assertOnwardShareable(): void {
+		if ($this->isRestrictedCopy() === true) {
+			throw new InvalidArgumentException(self::ONWARD_SHARE_REFUSAL);
+		}
+	}//end assertOnwardShareable()
+
+	/**
+	 * Refuse an edit of a use-only copy by its holder
+	 * (sharing-use-only-and-expiring-shares D4).
+	 *
+	 * @return void
+	 *
+	 * @throws ForbiddenException When it is a use-only copy
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 */
+	public function assertEditableByHolder(): void {
+		if ($this->useOnly === true) {
+			throw new ForbiddenException(message: 'A use-only copy cannot be changed');
+		}
+	}//end assertEditableByHolder()
 
 	/**
 	 * Serialize the entity to an array for the API, including encrypted blobs.

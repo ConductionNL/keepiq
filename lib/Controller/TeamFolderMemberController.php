@@ -38,6 +38,7 @@ use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Service\ShareRestriction;
+use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -120,6 +121,9 @@ class TeamFolderMemberController extends OCSController {
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#4.1
 	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
+	 *   field the server stores, not a mode switch.
 	 */
 	#[NoAdminRequired]
 	public function addMember(
@@ -140,7 +144,7 @@ class TeamFolderMemberController extends OCSController {
 				memberType: $memberType,
 				memberId: $memberId,
 				userId: $userId,
-				restriction: ShareRestriction::fromRequest(
+				restriction: (new ShareRestrictionRules())->fromRequest(
 					useOnly: $useOnly,
 					expiresAt: $expiresAt,
 					now: new DateTime('now', new DateTimeZone('UTC'))
@@ -268,7 +272,7 @@ class TeamFolderMemberController extends OCSController {
 		try {
 			$restriction = null;
 			if ($useOnly !== null) {
-				$restriction = ShareRestriction::fromRequest(
+				$restriction = (new ShareRestrictionRules())->fromRequest(
 					useOnly: $useOnly,
 					expiresAt: $expiresAt,
 					now: new DateTime('now', new DateTimeZone('UTC'))

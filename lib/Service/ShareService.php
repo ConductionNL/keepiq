@@ -59,6 +59,9 @@ use Throwable;
  *   whose entry points this class re-exports so ShareController and
  *   SecretService keep one seam. Retiring the tag means repointing those two
  *   callers, which is outside this change.
+ *
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) One public method per share
+ *   operation; the use-only change added the restriction update.
  */
 class ShareService {
 
@@ -180,7 +183,7 @@ class ShareService {
 		}
 
 		$this->auth->assertOwnerOrDelegate(secret: $source, userId: $userId);
-		OnwardShareGuard::assertShareable(source: $source);
+		$source->assertOnwardShareable();
 		$this->auth->assertRecipientHasActiveSuite(targetUserId: $targetUserId);
 
 		// Enforce one-share-per-(source,recipient) invariant.

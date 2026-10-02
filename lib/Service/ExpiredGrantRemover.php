@@ -110,7 +110,7 @@ class ExpiredGrantRemover {
 				removal: function () use ($membership): bool {
 					$teamFolder = $this->teamFolderMapper->findById(id: $membership->getTeamFolderId());
 					$this->teamFolders->removeMember(
-						teamFolderId: $teamFolder->getId(),
+						teamFolderId: (string)$teamFolder->getId(),
 						membershipId: $membership->getId(),
 						userId: $teamFolder->getOwnerId()
 					);
@@ -135,7 +135,7 @@ class ExpiredGrantRemover {
 	public function revokeTarget(ShareTarget $target): bool {
 		return $this->asSourceOwner(
 			sourceSecretId: $target->getSourceSecretId(),
-			action: fn (string $ownerId) => $this->revocation->revokeShare(shareId: $target->getId(), userId: $ownerId)
+			action: fn (string $ownerId) => $this->revocation->revokeShare(shareId: (string)$target->getId(), userId: $ownerId)
 		);
 	}//end revokeTarget()
 

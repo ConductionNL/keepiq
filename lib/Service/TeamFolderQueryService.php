@@ -43,6 +43,10 @@ use OCP\IGroupManager;
 
 /**
  * Read-side lookups and ancestor-chain resolution for team folders.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The read side of team folders,
+ *   including the ancestor walks that grades and restrictions both need.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) One public lookup per caller need.
  */
 class TeamFolderQueryService {
 	/**

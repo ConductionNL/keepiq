@@ -80,6 +80,9 @@ class TeamFolderService {
 	 * @return void
 	 *
 	 * @spec exclude Constructor wiring only.
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Constructor DI list; the two
+	 *   optional collaborators recompute copies after a membership change.
 	 */
 	public function __construct(
 		private TeamFolderMapper $mapper,

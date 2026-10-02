@@ -196,7 +196,7 @@ class LinkShareService {
 			return;
 		}
 
-		OnwardShareGuard::assertShareable(source: $source);
+		$source->assertOnwardShareable();
 	}//end assertLinkableSource()
 
 	/**

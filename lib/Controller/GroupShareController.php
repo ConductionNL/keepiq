@@ -32,6 +32,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Service\GroupShareService;
 use OCA\Keepiq\Service\ShareRestriction;
+use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -104,6 +105,9 @@ class GroupShareController extends OCSController {
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#9.2
 	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
+	 *   field the server stores, not a mode switch.
 	 */
 	#[NoAdminRequired]
 	public function create(string $secretId, string $groupId, bool $useOnly = false, ?string $expiresAt = null): JSONResponse {
@@ -117,7 +121,7 @@ class GroupShareController extends OCSController {
 				secretId: $secretId,
 				groupId: $groupId,
 				userId: $user->getUID(),
-				restriction: ShareRestriction::fromRequest(
+				restriction: (new ShareRestrictionRules())->fromRequest(
 					useOnly: $useOnly,
 					expiresAt: $expiresAt,
 					now: new DateTime('now', new DateTimeZone('UTC'))
