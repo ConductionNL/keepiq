@@ -140,7 +140,7 @@ describe('replay', () => {
 		await secrets.updateSecret('s1', { key: 'new-router-password' })
 		goOnline()
 
-		const put = vi.spyOn(axios, 'put').mockImplementation(async (url, body) => {
+		const put = vi.spyOn(axios, 'put').mockImplementation(async (url) => {
 			if (url.endsWith('/sync')) return { data: { updated: 1 } }
 			return { data: { id: 's1', updatedAt: '2026-10-02T12:00:00+00:00' } }
 		})

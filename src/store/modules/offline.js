@@ -494,7 +494,8 @@ export const useOfflineStore = defineStore('offline', {
 		async drop(entry) {
 			await deleteQueueEntry(entry.entryId)
 			this.entries = this.entries.filter((e) => e.entryId !== entry.entryId)
-			const { [entry.entryId]: _gone, ...rest } = this.conflicts
+			const rest = { ...this.conflicts }
+			delete rest[entry.entryId]
 			this.conflicts = rest
 		},
 
