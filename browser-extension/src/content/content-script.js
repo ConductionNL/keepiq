@@ -183,7 +183,13 @@ async function captureCurrent() {
 		return
 	}
 	if (window.top !== window) return // one bar, in the top frame's view only
-	if (!offer || (offer.action !== 'save' && offer.action !== 'update')) return
+	if (!offer) return
+	if (offer.action === 'refused') {
+		// Nothing to decide: the policy refused the password, so only explain.
+		await showSavePrompt(offer, location.hostname)
+		return
+	}
+	if (offer.action !== 'save' && offer.action !== 'update') return
 	const choice = await showSavePrompt(offer, location.hostname)
 	try {
 		await chrome.runtime.sendMessage({

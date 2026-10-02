@@ -105,6 +105,21 @@ The system MUST decrypt and return secret fields when the user has their master 
 - THEN the system MUST return only name, url, and folder_id (no decrypted values)
 - NOTE: the app UI prevents reaching this state — this is an API-level contract only
 
+#### Scenario: Vault route gated by lock
+- GIVEN the vault is locked in this browser
+- WHEN the user opens the vault list route
+- THEN the app MUST send them to the lock screen, keeping the requested route as the return address
+
+#### Scenario: Secret detail route gated by lock
+- GIVEN the vault is locked in this browser
+- WHEN the user opens a secret detail route, for any secret id
+- THEN the app MUST send them to the lock screen, keeping the requested route as the return address
+
+#### Scenario: Folder route gated by lock
+- GIVEN the vault is locked in this browser
+- WHEN the user opens a folder route, for any folder id
+- THEN the app MUST send them to the lock screen, keeping the requested route as the return address
+
 ### Requirement: Update Secret
 The system MUST allow a user to update any field of a secret they own, including moving it to a different folder. Updated encrypted fields MUST be re-encrypted before storage.
 

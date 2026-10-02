@@ -113,6 +113,8 @@ class ComplianceReportController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-immutable-timestamped-evidence-snapshot
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -141,6 +143,8 @@ class ComplianceReportController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-immutable-timestamped-evidence-snapshot
 	 */
 	#[NoAdminRequired]
 	public function show(string $id): JSONResponse {
@@ -161,6 +165,8 @@ class ComplianceReportController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-org-level-metadata-only-compliance-report
 	 */
 	#[NoAdminRequired]
 	public function metrics(): JSONResponse {
@@ -181,6 +187,8 @@ class ComplianceReportController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-csv-and-pdf-export
 	 */
 	#[NoAdminRequired]
 	public function exported(string $id, string $format = ''): JSONResponse {

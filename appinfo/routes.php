@@ -341,6 +341,7 @@ $extra = [
     ['name' => 'machineLease#revoke', 'url' => '/api/v1/app/leases/{id}/revoke',  'verb' => 'POST'],
     // Session-authenticated admin/owner lease management.
     ['name' => 'leaseAdmin#index',     'url' => '/api/v1/applications/{id}/leases',       'verb' => 'GET'],
+    ['name' => 'leaseAdmin#getPolicy', 'url' => '/api/v1/applications/{id}/lease-policy', 'verb' => 'GET'],
     ['name' => 'leaseAdmin#setPolicy', 'url' => '/api/v1/applications/{id}/lease-policy', 'verb' => 'PUT'],
     ['name' => 'leaseAdmin#revoke',    'url' => '/api/v1/leases/{leaseId}',               'verb' => 'DELETE'],
 
@@ -400,7 +401,9 @@ $extra = [
 
     // Password-health breach-check proxy (password-health §1.5). Prefix-only
     // k-anonymity forward to HIBP; double-gated (admin setting + user opt-in).
-    ['name' => 'breachProxy#range', 'url' => '/api/v1/breach-check/range/{prefix}', 'verb' => 'GET'],
+    // POST with the prefix in the body, never in the URI: Nextcloud stamps the
+    // request URI next to the user id on every log line (keepiq#866).
+    ['name' => 'breachProxy#range', 'url' => '/api/v1/breach-check/range', 'verb' => 'POST'],
 
     // GDPR data-subject endpoints (secret-export-gdpr D3/D4). All self-scoped
     // to the session user — no user selector. Master-password re-auth on the

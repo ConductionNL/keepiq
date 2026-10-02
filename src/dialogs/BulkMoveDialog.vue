@@ -91,6 +91,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
+		 */
 		bulk() {
 			return useBulkStore()
 		},

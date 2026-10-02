@@ -222,6 +222,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns the link-share list from the store with no domain logic.
+		 */
 		linkShares() {
 			return useLinkShareStore().linkShares
 		},
@@ -240,6 +243,9 @@ export default {
 			return `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}`
 		},
 
+		/**
+		 * @spec openspec/specs/link-sharing/spec.md#scenario-create-link-share
+		 */
 		usageOptions() {
 			return Array.from({ length: 10 }, (_, i) => ({
 				value: i + 1,
@@ -285,6 +291,8 @@ export default {
 		 *
 		 * @param {boolean} value The new open state.
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-create-link-share
 		 */
 		onUpdateOpen(value) {
 			this.open = value

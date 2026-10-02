@@ -127,6 +127,9 @@ export default {
 
 	emits: ['reclaimed', 'delegated'],
 
+	/**
+	 * @spec exclude Store-ref passthrough: returns the Pinia delegation store with no domain logic.
+	 */
 	setup() {
 		const store = useDelegationStore()
 		const shareStore = useShareStore()
@@ -186,6 +189,9 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-reclaim-delegation
+		 */
 		async onReclaim() {
 			try {
 				const removed = await this.store.reclaimDelegation(this.secretId)

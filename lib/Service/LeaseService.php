@@ -76,6 +76,25 @@ class LeaseService {
 	}//end effectivePolicy()
 
 	/**
+	 * The lease policy of one application as an admin form needs it: what is
+	 * in force, the stored override (null fields inherit), and the instance
+	 * values those nulls fall back to.
+	 *
+	 * @param string $applicationId The application id
+	 *
+	 * @return array{effective: array<string,int|bool>, override: array<string,int|bool|null>, instance: array<string,int|bool>}
+	 *
+	 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
+	 */
+	public function policyView(string $applicationId): array {
+		return [
+			'effective' => $this->policyService->effectivePolicy(applicationId: $applicationId),
+			'override' => $this->policyService->overrideFor(applicationId: $applicationId),
+			'instance' => $this->policyService->instancePolicy(),
+		];
+	}//end policyView()
+
+	/**
 	 * Grant a lease on fetch, or reuse the live one WITHOUT extending it
 	 * (a repeat poll must not creep the expiry; machine-secret-leases
 	 * §2.1).
@@ -220,6 +239,8 @@ class LeaseService {
 	 * @return MachineLease
 	 *
 	 * @throws DoesNotExistException When missing or foreign
+	 *
+	 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-revocation-by-admin-owner-or-application
 	 */
 	public function loadOwned(string $leaseId, string $applicationId): MachineLease {
 		$lease = $this->leaseMapper->findById($leaseId);
@@ -240,6 +261,8 @@ class LeaseService {
 	 * @param string $secretId The fetched secret
 	 *
 	 * @return bool
+	 *
+	 * @spec openspec/specs/machine-secret-leases/spec.md#scenario-block-on-revoke-refuses-re-fetch-when-enabled
 	 */
 	public function fetchBlocked(string $applicationId, string $secretId): bool {
 		$policy = $this->effectivePolicy(applicationId: $applicationId);
@@ -284,6 +307,8 @@ class LeaseService {
 	 * @param string $applicationId The application id
 	 *
 	 * @return MachineLease[]
+	 *
+	 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-revocation-by-admin-owner-or-application
 	 */
 	public function listForApplication(string $applicationId): array {
 		return $this->leaseMapper->findByApplication(applicationId: $applicationId);

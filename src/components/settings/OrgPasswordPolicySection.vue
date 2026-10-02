@@ -150,6 +150,9 @@ export default {
 			]
 		},
 
+		/**
+		 * @spec openspec/specs/org-password-policies/spec.md#requirement-configurable-org-password-policy
+		 */
 		typeOptions() {
 			return useSecretTypeStore().types.map((type) => type.name)
 		},

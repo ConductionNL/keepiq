@@ -16,7 +16,7 @@
   Both modes support scope selection (whole vault or a folder subtree). The
   caller passes already-decrypted secrets + the folder list.
 
-  @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+  @spec openspec/specs/secret-export/spec.md
 -->
 <template>
 	<NcDialog
@@ -242,7 +242,7 @@ export default {
 	 * Provide the export + session Pinia stores to the component.
 	 *
 	 * @return {object}
-	 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+	 * @spec openspec/specs/secret-export/spec.md
 	 */
 	setup() {
 		return {
@@ -268,7 +268,11 @@ export default {
 	},
 
 	computed: {
-		/** typeId → type-name map for the CXF export mapping. */
+		/**
+		 * typeId → type-name map for the CXF export mapping.
+		 *
+		 * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-keepiq-type-mapping
+		 */
 		typeNamesById() {
 			return Object.fromEntries(
 				useSecretTypeStore().types.map((type) => [type.id, type.name]),
@@ -279,7 +283,7 @@ export default {
 		 * Whether an export is in flight (from the store).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 */
 		loading() {
 			return this.exportStore.loading
@@ -289,7 +293,7 @@ export default {
 		 * The scope selector options: the whole vault plus each folder.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 */
 		scopeOptions() {
 			const opts = [
@@ -305,7 +309,7 @@ export default {
 		 * The live passphrase-strength feedback label.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 */
 		strengthLabel() {
 			if (this.passphraseScore >= PASSPHRASE_FLOOR) {
@@ -324,7 +328,7 @@ export default {
 		 * warning acknowledged and a master password entered.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		canSubmit() {
@@ -343,6 +347,9 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * @spec openspec/specs/cxf-import-export/spec.md#requirement-unmapped-item-report
+		 */
 		mode() {
 			// A mode switch invalidates the CXF pre-download report.
 			this.cxfReport = null
@@ -354,7 +361,7 @@ export default {
 		 * Recompute the live zxcvbn passphrase score on each keystroke.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 */
 		onPassphraseInput() {
 			this.passphraseScore = this.passphrase
@@ -366,7 +373,7 @@ export default {
 		 * Build the scope selector for the store action.
 		 *
 		 * @return {object}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 */
 		buildScope() {
 			if (this.scopeFolder === 'vault') {
@@ -380,7 +387,7 @@ export default {
 		 * master-password re-auth before the store action runs.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async onExport() {
@@ -453,7 +460,7 @@ export default {
 		 * Reset the dialog to its initial state (no plaintext retained).
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 */
 		reset() {
 			this.mode = 'encrypted-backup'
@@ -472,7 +479,7 @@ export default {
 		 *
 		 * @param {boolean} value The new open state.
 		 * @return {void}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 */
 		onUpdateOpen(value) {
 			if (!value) {

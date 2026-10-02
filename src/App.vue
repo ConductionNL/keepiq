@@ -645,6 +645,8 @@ export default {
 		 * template until the extension ships.
 		 *
 		 * @return {string}
+		 *
+		 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-pairing-against-the-nextcloud-session
 		 */
 		securitySettingsUrl() {
 			return generateUrl('/settings/user/security')

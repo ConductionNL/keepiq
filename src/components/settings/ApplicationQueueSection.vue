@@ -127,6 +127,11 @@ export default {
 			await this.refresh()
 		},
 
+		/**
+		 * @param {string} date Date value to format.
+		 *
+		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as a locale date string.
+		 */
 		formatDate(date) {
 			if (!date) return ''
 			try {
