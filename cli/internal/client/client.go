@@ -64,7 +64,14 @@ type Suite struct {
 	Certificate string `json:"certificate"`
 	PrivateKey  string `json:"privateKey"`
 	Status      string `json:"status"`
+	// UnlockBlocked names a vault policy that withholds PrivateKey, such as
+	// two_factor_required (admin-vault-policies D3).
+	UnlockBlocked string `json:"unlockBlocked"`
 }
+
+// ErrTwoFactorRequired is returned when the organisation requires Nextcloud
+// two-factor login before the vault unlocks and the account has none.
+var ErrTwoFactorRequired = errors.New("two_factor_required: your organisation requires two-factor login in Nextcloud before you can open your vault")
 
 // Secret is one vault secret (ciphertext fields until decrypted locally).
 type Secret struct {
@@ -86,6 +93,12 @@ func (c *Client) ActiveSuite() (*Suite, error) {
 	}
 	for i := range suites {
 		if suites[i].Status == "active" {
+			if suites[i].UnlockBlocked == "two_factor_required" {
+				return nil, ErrTwoFactorRequired
+			}
+			if suites[i].UnlockBlocked != "" {
+				return nil, fmt.Errorf("vault unlock blocked: %s", suites[i].UnlockBlocked)
+			}
 			return &suites[i], nil
 		}
 	}

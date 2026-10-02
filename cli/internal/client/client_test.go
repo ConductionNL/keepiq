@@ -80,3 +80,19 @@ func TestFetchByNameConditional(t *testing.T) {
 		t.Fatalf("second fetch: want ErrNotModified, got %v", err)
 	}
 }
+
+// TestActiveSuiteTwoFactorRequired: a suite the server sends without its
+// wrapped key under the two-factor policy fails with an error naming
+// two_factor_required, never with a decryption error (admin-vault-policies §3.4).
+func TestActiveSuiteTwoFactorRequired(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`[{"id":"s1","status":"active","certificate":"C","unlockBlocked":"two_factor_required"}]`))
+	}))
+	defer srv.Close()
+
+	_, err := New(srv.URL).ActiveSuite()
+	if !errors.Is(err, ErrTwoFactorRequired) {
+		t.Fatalf("err = %v, want ErrTwoFactorRequired", err)
+	}
+}
