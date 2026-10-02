@@ -24,6 +24,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\BackgroundJob;
 
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\SiemFailureOutcome;
 use OCA\Keepiq\Service\SiemService;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -69,7 +70,7 @@ class DeliverSiemEventsJob extends TimedJob {
 			$this->siemService->deliverDue();
 		} catch (Throwable $exception) {
 			$this->logger->warning(
-				'Keepiq: SIEM delivery drain failed: ' . $exception->getMessage(),
+				'Keepiq: SIEM delivery drain failed: '.(new SiemFailureOutcome())->classOf(exception: $exception),
 				['app' => Application::APP_ID]
 			);
 		}
