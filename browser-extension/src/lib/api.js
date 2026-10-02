@@ -137,6 +137,7 @@ export async function addAccount(config) {
 		appPassword: config.appPassword,
 		label: config.label || '',
 		idleMinutes: DEFAULT_IDLE_MINUTES,
+		serverVersion: config.serverVersion ?? null,
 	}
 	await saveAccounts([...accounts, account])
 	await setActiveAccount(account.id)
@@ -147,7 +148,7 @@ export async function addAccount(config) {
  * Change stored, non-sensitive settings of one account (label, idle delay).
  *
  * @param {string} id The account id.
- * @param {{label?: string, idleMinutes?: number}} patch The changes.
+ * @param {{label?: string, idleMinutes?: number, serverVersion?: string|null}} patch The changes.
  * @return {Promise<object>} The updated account.
  */
 export async function updateAccount(id, patch) {
@@ -161,6 +162,9 @@ export async function updateAccount(id, patch) {
 		account.idleMinutes = patch.idleMinutes
 	}
 	if (patch.label !== undefined) account.label = String(patch.label)
+	if (patch.serverVersion !== undefined) {
+		account.serverVersion = patch.serverVersion ?? null
+	}
 	await saveAccounts(accounts)
 	return account
 }
