@@ -187,6 +187,31 @@
 							)
 						}}
 					</NcNoteCard>
+					<!-- Per-member approval (keepiq#747): share with one waiting
+					     member and hold the others back; "Encrypt and share
+					     now" below still shares with everyone. -->
+					<ul
+						v-if="!fanOut.running && pendingMembers.length > 0"
+						class="team-folder-dialog__pending"
+						data-testid="team-folder-pending-members">
+						<li v-for="memberId in pendingMembers" :key="memberId">
+							<span class="team-folder-dialog__member-name">{{
+								memberId
+							}}</span>
+							<NcButton
+								variant="secondary"
+								:aria-label="
+									t('keepiq', 'Approve {member}', {
+										member: memberId,
+									})
+								"
+								:disabled="busy"
+								:data-testid="`team-folder-approve-${memberId}`"
+								@click="onApproveMember(memberId)">
+								{{ t('keepiq', 'Approve') }}
+							</NcButton>
+						</li>
+					</ul>
 					<NcProgressBar
 						v-if="fanOut.running"
 						:value="progressPercent"
@@ -291,6 +316,8 @@ export default {
 			newMemberType: 'user',
 			newMemberId: '',
 			pendingCount: 0,
+			/** Members still waiting for their copies, one Approve button each (keepiq#747). */
+			pendingMembers: [],
 			/** Member user id to the colleague who confirmed them (admin-auto-confirm-members §3.3). */
 			confirmedBy: {},
 			/** Whether the admin switched automatic confirmation on. */
@@ -534,6 +561,9 @@ export default {
 				if (this.teamFolder) {
 					const state = await this.store.reconcile(this.teamFolder.id)
 					this.pendingCount = (state.missing ?? []).length
+					this.pendingMembers = [
+						...new Set((state.missing ?? []).map((pair) => pair.userId)),
+					]
 					this.confirmedBy = state.confirmedBy ?? {}
 					this.autoConfirm =
 						(await fetchPolicy())?.team_folder_auto_confirm === true
@@ -665,6 +695,27 @@ export default {
 		},
 
 		/**
+		 * Approve one waiting member: share their copies and hold the other
+		 * waiting members back (keepiq#747).
+		 *
+		 * @param {string} memberId The member to approve.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-approve-one-waiting-member
+		 */
+		async onApproveMember(memberId) {
+			this.busy = true
+			this.error = null
+			try {
+				await this.store.approveMember(this.teamFolder.id, memberId)
+				await this.refresh()
+			} catch (e) {
+				this.error = e?.response?.data?.message || e?.message
+			} finally {
+				this.busy = false
+			}
+		},
+
+		/**
 		 * Encrypt and share the copies the reconcile pass found missing.
 		 *
 		 * @return {Promise<void>}
@@ -777,6 +828,22 @@ export default {
 .team-folder-dialog__fanout {
 	display: flex;
 	flex-direction: column;
+	gap: 8px;
+}
+
+.team-folder-dialog__pending {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.team-folder-dialog__pending li {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
 	gap: 8px;
 }
 

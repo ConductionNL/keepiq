@@ -1395,7 +1395,8 @@ OC.L10N.register(
         "Number of words": "Aantal woorden",
         "Passphrase": "Wachtzin",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Stel een minimale kwaliteit in voor geheime waarden. De browser controleert die vóór het versleutelen, zodat de server nooit een waarde ziet.",
-        "Separator": "Scheidingsteken"
+        "Separator": "Scheidingsteken",
+        "Approve {member}": "{member} goedkeuren"
     },
     "nplurals=2; plural=(n != 1);"
 )

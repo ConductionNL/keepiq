@@ -242,6 +242,22 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		},
 
 		/**
+		 * Approve one waiting member (keepiq#747): the server checks that the
+		 * caller owns the team folder and that the member is covered by its
+		 * membership, then only that member's copies are encrypted and shared.
+		 * Everyone else keeps waiting.
+		 *
+		 * @param {string} teamFolderId The team folder.
+		 * @param {string} userId The member to approve.
+		 * @return {Promise<{created: number, cancelled: boolean}>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-approve-one-waiting-member
+		 */
+		async approveMember(teamFolderId, userId) {
+			await this.approveJoin(teamFolderId, userId)
+			return this.runFanOut(teamFolderId, { onlyUserId: userId })
+		},
+
+		/**
 		 * Run the admin offboarding action.
 		 *
 		 * @param {string} leavingUserId   The user being offboarded.
@@ -307,11 +323,14 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * recipient certificate → POST in idempotent chunks.
 		 *
 		 * @param {string} teamFolderId The team folder to fan out.
+		 * @param {object} [options] Options.
+		 * @param {string} [options.onlyUserId] Fan out to this member only
+		 *   (a per-member approval, keepiq#747); every member when omitted.
 		 * @return {Promise<{created: number, cancelled: boolean}>}
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
-		async runFanOut(teamFolderId) {
+		async runFanOut(teamFolderId, { onlyUserId = null } = {}) {
 			const secretStore = useSecretStore()
 			const shareStore = useShareStore()
 
@@ -320,7 +339,9 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 
 			try {
 				const state = await this.reconcile(teamFolderId)
-				const missing = state.missing ?? []
+				const missing = (state.missing ?? []).filter(
+					(pair) => onlyUserId === null || pair.userId === onlyUserId,
+				)
 				this.fanOut.total = missing.length
 				if (missing.length === 0) {
 					return { created: 0, cancelled: false }
