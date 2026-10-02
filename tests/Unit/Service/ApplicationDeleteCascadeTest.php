@@ -162,11 +162,11 @@ class ApplicationDeleteCascadeTest extends TestCase {
 			->willReturn(2);
 		$this->migrationMapper->expects($this->once())->method('deleteBySuiteIds')->with(['suite-app']);
 		$this->suiteMapper->expects($this->once())
-			->method('deleteByOwnerApplication')
-			->with('app-1')
-			->willReturnCallback(static function () use (&$order): int {
+			->method('delete')
+			->with($suite)
+			->willReturnCallback(static function (EncryptionSuite $deleted) use (&$order): EncryptionSuite {
 				$order[] = 'suite';
-				return 1;
+				return $deleted;
 			});
 		$this->appMapper->expects($this->once())
 			->method('delete')

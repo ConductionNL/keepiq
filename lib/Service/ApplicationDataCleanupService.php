@@ -112,13 +112,18 @@ class ApplicationDataCleanupService {
 			userId: SecretRequest::ACTOR_APPLICATION_PREFIX.$applicationId
 		);
 
+		$suites = $this->suiteMapper->findByOwner(ownerType: 'application', ownerId: $applicationId);
 		$suiteIds = [];
-		foreach ($this->suiteMapper->findByOwner(ownerType: 'application', ownerId: $applicationId) as $suite) {
+		foreach ($suites as $suite) {
 			$suiteIds[] = $suite->getId();
 		}
 
 		$this->migrationMapper->deleteBySuiteIds(suiteIds: $suiteIds);
-		$suiteCount = $this->suiteMapper->deleteByOwnerApplication(applicationId: $applicationId);
+		foreach ($suites as $suite) {
+			$this->suiteMapper->delete($suite);
+		}
+
+		$suiteCount = count($suites);
 
 		return ['secrets' => $secretCount, 'suites' => $suiteCount, 'requests' => $requestCount];
 	}//end removeRows()

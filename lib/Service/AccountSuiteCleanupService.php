@@ -92,7 +92,7 @@ class AccountSuiteCleanupService {
 	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
 	 */
 	public function removeEscrowedKeys(string $userId, DeletionReport $report): void {
-		$report->emergencyContactsDeleted = $this->emergencyMapper->deleteByUser(userId: $userId);
+		$report->emergencyDeleted = $this->emergencyMapper->deleteByUser(userId: $userId);
 		$report->passkeysDeleted = count($this->passkeyMapper->findByOwner(ownerId: $userId));
 		$this->passkeyMapper->deleteByOwner(ownerId: $userId);
 	}//end removeEscrowedKeys()

@@ -398,6 +398,8 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {object} secret The secret with ciphertext blobs.
 		 * @return {Promise<object>} A copy of the secret with plaintext fields.
+		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 		 */
 		async decryptSecret(secret) {
 			const session = useSessionStore()

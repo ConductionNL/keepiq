@@ -351,7 +351,7 @@ class AccountDeletionServiceTest extends TestCase {
 
 		$report = $service->deleteAllFor('alice');
 
-		$this->assertSame(2, $report->emergencyContactsDeleted);
+		$this->assertSame(2, $report->emergencyDeleted);
 		$this->assertSame(2, $report->passkeysDeleted);
 		$this->assertSame(2, $report->jsonSerialize()['emergencyContactsDeleted']);
 		$this->assertSame(2, $report->jsonSerialize()['passkeysDeleted']);

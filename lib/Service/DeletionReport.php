@@ -99,7 +99,7 @@ class DeletionReport implements JsonSerializable {
 	 *
 	 * @var int
 	 */
-	public int $emergencyContactsDeleted = 0;
+	public int $emergencyDeleted = 0;
 
 	/**
 	 * Passkey unlock credentials removed.
@@ -126,7 +126,7 @@ class DeletionReport implements JsonSerializable {
 			'requestsDeleted' => $this->requestsDeleted,
 			'suitesDeleted' => $this->suitesDeleted,
 			'settingsDeleted' => $this->settingsDeleted,
-			'emergencyContactsDeleted' => $this->emergencyContactsDeleted,
+			'emergencyContactsDeleted' => $this->emergencyDeleted,
 			'passkeysDeleted' => $this->passkeysDeleted,
 		];
 	}//end jsonSerialize()
