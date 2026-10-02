@@ -89,7 +89,7 @@ class AdminApplicationController extends Controller {
 	}//end index()
 
 	/**
-	 * One application.
+	 * One application, with its public certificate when it is active.
 	 *
 	 * @param string $id The application id
 	 *
@@ -102,10 +102,19 @@ class AdminApplicationController extends Controller {
 	#[AuthorizedAdminSetting(ApplicationAdminSettings::class)]
 	public function show(string $id): JSONResponse {
 		try {
-			return new JSONResponse(data: $this->applications->get($id, $this->actor(), true)->jsonSerialize());
+			$application = $this->applications->get($id, $this->actor(), true)->jsonSerialize();
 		} catch (InvalidArgumentException $exception) {
 			return $this->notFound(message: $exception->getMessage());
 		}
+
+		// The public certificate of an active application, so a script that
+		// registered it from a CSR can read what Keepiq signed.
+		$application['certificate'] = null;
+		if ($application['status'] === 'active') {
+			$application['certificate'] = $this->applications->getCertificate(applicationId: $id);
+		}
+
+		return new JSONResponse(data: $application);
 	}//end show()
 
 	/**

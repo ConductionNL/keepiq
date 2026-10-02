@@ -219,4 +219,26 @@ class AdminApplicationControllerTest extends TestCase {
 
 		$this->assertSame(400, $this->controller()->setLeasePolicy(id: 'app-1', defaultTtl: 5)->getStatus());
 	}//end testARefusedLeasePolicyIs400()
+
+	/**
+	 * Show carries the public certificate of an active application, and
+	 * null for a pending one.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 */
+	public function testShowCarriesTheCertificateOfAnActiveApplication(): void {
+		$active = $this->application(id: 'app-1');
+		$active->setStatus('active');
+		$pending = $this->application(id: 'app-2');
+		$pending->setStatus('pending');
+		$this->applications->method('get')->willReturnCallback(
+			static fn (string $id): Application => ($id === 'app-1' ? $active : $pending)
+		);
+		$this->applications->expects($this->once())->method('getCertificate')->with('app-1')->willReturn('-----BEGIN CERTIFICATE-----');
+
+		$this->assertSame('-----BEGIN CERTIFICATE-----', $this->controller()->show(id: 'app-1')->getData()['certificate']);
+		$this->assertNull($this->controller()->show(id: 'app-2')->getData()['certificate']);
+	}//end testShowCarriesTheCertificateOfAnActiveApplication()
 }//end class

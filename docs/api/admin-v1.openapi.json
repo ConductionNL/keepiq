@@ -392,7 +392,7 @@
       "get": {
         "operationId": "applicationShow",
         "summary": "Read an application",
-        "description": "Admin area: Applications and machine access.",
+        "description": "The application, with its public certificate (PEM) in `certificate` when it is active. Admin area: Applications and machine access.",
         "parameters": [
           {
             "$ref": "#/components/parameters/OcsApiRequest"
