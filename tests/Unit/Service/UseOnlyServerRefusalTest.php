@@ -7,16 +7,21 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 use DateTime;
 use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\FolderMapper;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\LinkShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
+use OCA\Keepiq\Db\TeamFolder;
+use OCA\Keepiq\Db\TeamFolderMemberMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretVersion;
 use OCA\Keepiq\Db\SecretVersionMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\DelegationAuthorizer;
+use OCA\Keepiq\Service\DelegationService;
 use OCA\Keepiq\Service\GroupShareService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
@@ -25,10 +30,12 @@ use OCA\Keepiq\Service\OnwardShareGuard;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\SecretVersionAccessGuard;
+use OCA\Keepiq\Service\TeamFolderMembershipResolver;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\WriteLockService;
 use OCP\IGroupManager;
+use OCP\IUserManager;
 use OCP\Share\IManager as IShareManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -167,5 +174,52 @@ class UseOnlyServerRefusalTest extends TestCase {
 
 		$this->expectExceptionMessage(OnwardShareGuard::REFUSAL);
 		$service->createGroupShare('copy', 'friends', 'bob', new ShareRestriction());
+	}
+
+	/**
+	 * Bob cannot hand his use-only copy over to anyone.
+	 *
+	 * @return void
+	 */
+	public function testADelegationOfAUseOnlyCopyIsRefused(): void {
+		$this->copy->setUseOnly(true);
+		$delegations = $this->createMock(SecretDelegationMapper::class);
+		$delegations->expects($this->never())->method('insert');
+		$service = new DelegationService(
+			mapper: $delegations,
+			authorizer: new DelegationAuthorizer(secretMapper: $this->secrets),
+		);
+
+		$this->expectExceptionMessage(OnwardShareGuard::REFUSAL);
+		$service->createDelegation('copy', 'mallory', 'bob');
+	}
+
+	/**
+	 * A restricted copy filed in Bob's own team folder is never fanned out.
+	 *
+	 * @return void
+	 */
+	public function testTheTeamFolderFanOutLeavesRestrictedCopiesOut(): void {
+		$this->copy->setUseOnly(true);
+		$mine = new Secret();
+		$mine->setId('mine');
+		$mine->setName('Mine');
+		$folders = $this->createMock(FolderMapper::class);
+		$folders->method('getSubtreeIds')->willReturn(['f-1']);
+		$secrets = $this->createMock(SecretMapper::class);
+		$secrets->method('findByOwner')->willReturn([$this->copy, $mine]);
+		$resolver = new TeamFolderMembershipResolver(
+			memberMapper: $this->createMock(TeamFolderMemberMapper::class),
+			folderMapper: $folders,
+			secretMapper: $secrets,
+			suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
+			groupManager: $this->createMock(IGroupManager::class),
+			userManager: $this->createMock(IUserManager::class),
+		);
+		$teamFolder = new TeamFolder();
+		$teamFolder->setFolderId('f-1');
+		$teamFolder->setOwnerId('bob');
+
+		$this->assertSame([['id' => 'mine', 'name' => 'Mine']], $resolver->subtreeSecretRefs($teamFolder));
 	}
 }
