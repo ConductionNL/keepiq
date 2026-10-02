@@ -233,6 +233,23 @@ class MachineSecretEnvelopeServiceTest extends TestCase {
 	}//end testEtagStableAndChanges()
 
 	/**
+	 * If-Match holds for the current tag, for `*` and for a list that contains
+	 * the current tag, and fails for a stale or weak tag (a 412 in the controller).
+	 *
+	 * @return void
+	 */
+	public function testIfMatchHolds(): void {
+		$secret = $this->makeSecret();
+		$current = $this->service->etag($secret);
+
+		$this->assertTrue($this->service->ifMatchHolds($secret, $current));
+		$this->assertTrue($this->service->ifMatchHolds($secret, '*'));
+		$this->assertTrue($this->service->ifMatchHolds($secret, '"stale", ' . $current));
+		$this->assertFalse($this->service->ifMatchHolds($secret, '"stale"'));
+		$this->assertFalse($this->service->ifMatchHolds($secret, 'W/' . $current));
+	}//end testIfMatchHolds()
+
+	/**
 	 * The candidate descriptor carries only non-sensitive metadata, no
 	 * ciphertext.
 	 *
