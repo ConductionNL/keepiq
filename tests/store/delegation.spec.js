@@ -111,4 +111,37 @@ describe('useDelegationStore', () => {
 			expect(store.error).toBeNull()
 		})
 	})
+
+	describe('fetchCapabilities (admin-scoped-roles §3.2)', () => {
+		it('reads canHandover from the capabilities endpoint', async () => {
+			const get = vi
+				.spyOn(axios, 'get')
+				.mockResolvedValue({ data: { canHandover: true } })
+			const store = useDelegationStore()
+			await store.fetchCapabilities()
+
+			expect(get).toHaveBeenCalledWith(
+				'/apps/keepiq/api/v1/delegations/capabilities',
+			)
+			expect(store.canHandover).toBe(true)
+		})
+
+		it('ignores the retired isVaultAdmin flag', async () => {
+			vi.spyOn(axios, 'get').mockResolvedValue({
+				data: { isVaultAdmin: true },
+			})
+			const store = useDelegationStore()
+			await store.fetchCapabilities()
+
+			expect(store.canHandover).toBe(false)
+		})
+
+		it('never offers the takeover after a failed request', async () => {
+			vi.spyOn(axios, 'get').mockRejectedValue(new Error('offline'))
+			const store = useDelegationStore()
+			await store.fetchCapabilities()
+
+			expect(store.canHandover).toBe(false)
+		})
+	})
 })

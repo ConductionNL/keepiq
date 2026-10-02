@@ -13,13 +13,19 @@ The system MUST register five named Keepiq admin settings areas that Nextcloud c
 
 ### Requirement: Every Keepiq admin endpoint is guarded by exactly one area
 
-Every Keepiq endpoint that requires administration MUST be guarded by `#[AuthorizedAdminSetting]` naming exactly one area class, or by `AdminAreaAuthorizer::holds()` naming exactly one area class inside a service. Instance administrators MUST pass every guard. A user outside the area MUST be refused before the controller body runs.
+Every Keepiq endpoint that requires administration MUST be guarded by `#[AuthorizedAdminSetting]` naming exactly one area class, or by `AdminAreaAuthorizer::holds()` naming exactly one area class inside a service. Instance administrators MUST pass every guard. A user outside the area MUST be refused before the controller body runs. The admin settings MUST be read and written per area, through `/api/settings/admin/{general,policies,applications,audit}`, and an area write MUST refuse a key of another area. Version and trash retention MUST belong to Policies.
 
 #### Scenario: Auditor cannot change policies
 
 - **GIVEN** a member of a group delegated only the "Audit and compliance" area
-- **WHEN** they call `PUT /api/settings/admin`
+- **WHEN** they call `PUT /api/settings/admin/policies`
 - **THEN** Nextcloud MUST refuse the request and no setting MUST change
+
+#### Scenario: An area write carries only its own keys
+
+- **GIVEN** a member of a group delegated only the "Audit and compliance" area
+- **WHEN** they call `PUT /api/settings/admin/audit` with `audit_retention_days` and `min_password_length`
+- **THEN** the request MUST answer 400 and no setting MUST change
 
 #### Scenario: Applications holder approves an application
 

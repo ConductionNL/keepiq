@@ -23,6 +23,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use OCA\Keepiq\Tests\Support\AdminAreaFixture;
+use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Settings\AuditAdminSettings;
+use OCA\Keepiq\Settings\ApplicationAdminSettings;
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\ApplicationController;
 use OCA\Keepiq\Service\ApplicationService;
@@ -47,6 +51,8 @@ use PHPUnit\Framework\TestCase;
  *
  */
 class ApplicationControllerCertificateTest extends TestCase {
+	use AdminAreaFixture;
+
 
 	/**
 	 * The mocked application service.
@@ -94,7 +100,7 @@ class ApplicationControllerCertificateTest extends TestCase {
 			request: $this->createMock(IRequest::class),
 			service: $this->service,
 			session: $this->session,
-			groupManager: $this->createMock(IGroupManager::class),
+			areas: $this->areaAuthorizer(),
 			appConfig: $this->createMock(IAppConfig::class)
 		);
 	}//end controller()
@@ -183,4 +189,47 @@ class ApplicationControllerCertificateTest extends TestCase {
 		);
 	}//end testCertificateReturnsNotFoundWhenNoActiveEncryptionSuiteExists()
 
+
+	/**
+	 * A holder of the Applications area who is no instance admin approves a
+	 * pending application, and is recorded as the approver
+	 * (admin-scoped-roles, scenario "Applications holder approves an application").
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.2
+	 */
+	public function testAnApplicationsAreaHolderApprovesAndIsRecordedAsApprover(): void {
+		$this->delegatedAreas = [ApplicationAdminSettings::class];
+		$approved = new Application();
+		$approved->setId('app-1');
+		$this->service->expects($this->once())
+			->method('approve')
+			->with('app-1', 'appadmin', true)
+			->willReturn($approved);
+
+		$response = $this->controller(userId: 'appadmin')->approve(id: 'app-1');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+	}//end testAnApplicationsAreaHolderApprovesAndIsRecordedAsApprover()
+
+	/**
+	 * A holder of only the Audit area reaches the service as a non-admin,
+	 * which refuses, and the controller answers 403 (admin-scoped-roles §2.2).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.2
+	 */
+	public function testAnAuditAreaHolderCannotApprove(): void {
+		$this->delegatedAreas = [AuditAdminSettings::class];
+		$this->service->expects($this->once())
+			->method('approve')
+			->with('app-1', 'auditor', false)
+			->willThrowException(new InvalidArgumentException('Only admins can approve applications'));
+
+		$response = $this->controller(userId: 'auditor')->approve(id: 'app-1');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+	}//end testAnAuditAreaHolderCannotApprove()
 }//end class

@@ -7,11 +7,21 @@ export const useSettingsStore = defineStore('settings', {
 		loading: false,
 		hasOpenRegisters: false,
 		isAdmin: false,
+		/** @type {string[]} The admin areas the user holds (admin-scoped-roles). */
+		adminAreas: [],
 	}),
 
 	getters: {
 		getSettings: (state) => state.settings,
 		getIsAdmin: (state) => state.isAdmin,
+		/**
+		 * Whether the user holds one admin area.
+		 *
+		 * @param {object} state The store state
+		 * @return {function(string): boolean} Area key to held
+		 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.5
+		 */
+		holdsArea: (state) => (area) => state.adminAreas.includes(area),
 	},
 
 	actions: {
@@ -35,6 +45,9 @@ export const useSettingsStore = defineStore('settings', {
 					this.settings = data
 					this.hasOpenRegisters = !!data?.openregisters
 					this.isAdmin = !!data?.isAdmin
+					this.adminAreas = Array.isArray(data?.adminAreas)
+						? data.adminAreas
+						: []
 					return data
 				}
 			} catch (error) {

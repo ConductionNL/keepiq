@@ -23,7 +23,7 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 use OCA\Keepiq\Controller\SettingsController;
 use OCA\Keepiq\Service\TwoFactorGate;
 use OCA\Keepiq\Service\VaultPolicyService;
-use OCA\Keepiq\Settings\AdminSettings;
+use OCA\Keepiq\Settings\PolicyAdminSettings;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\Authentication\TwoFactorAuth\IRegistry;
@@ -112,7 +112,7 @@ class TwoFactorGateTest extends TestCase {
 	public function testGapEndpointIsAdminOnly(): void {
 		$method = new ReflectionMethod(SettingsController::class, 'twoFactorGaps');
 
-		$this->assertSame([AdminSettings::class], $method->getAttributes(AuthorizedAdminSetting::class)[0]->getArguments());
+		$this->assertSame([PolicyAdminSettings::class], $method->getAttributes(AuthorizedAdminSetting::class)[0]->getArguments());
 		$this->assertSame([], $method->getAttributes(NoAdminRequired::class));
 	}//end testGapEndpointIsAdminOnly()
 }//end class

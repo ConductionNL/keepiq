@@ -76,7 +76,7 @@ export default {
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin'),
+				generateUrl('/apps/keepiq/api/settings/admin/policies'),
 			)
 			this.maxAgeDays = response.data.expiry_default_max_age_days ?? 0
 			const days = response.data.expiry_reminder_days
@@ -110,10 +110,16 @@ export default {
 				return
 			}
 			try {
-				await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
-					expiry_default_max_age_days: Math.max(0, this.maxAgeDays || 0),
-					expiry_reminder_days: thresholds,
-				})
+				await axios.put(
+					generateUrl('/apps/keepiq/api/settings/admin/policies'),
+					{
+						expiry_default_max_age_days: Math.max(
+							0,
+							this.maxAgeDays || 0,
+						),
+						expiry_reminder_days: thresholds,
+					},
+				)
 				this.reminderCsv = thresholds.join(', ')
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
