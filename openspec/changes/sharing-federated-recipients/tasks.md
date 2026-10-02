@@ -8,15 +8,15 @@
 
 ## 2. Certificate lookup
 
-- [ ] 2.1 Add the partner-facing `GET /api/v1/federation/recipient-certificate` that verifies the signed OCM request, answers only inbound partners and users who allow receiving, and otherwise answers as for an unknown user. Verify: PHPUnit for an unsigned request, a non-partner, a user who opted out and an allowed lookup.
-- [ ] 2.2 Add the owner-facing lookup that parses the cloud id with `ICloudIdManager`, calls the partner through `IOCMDiscoveryService::requestRemoteOcmEndpoint()`, and returns the certificate chain. Verify: PHPUnit with a mocked discovery service.
+- [ ] 2.1 Advertise the OCM capability `keepiq` through a `LocalOCMDiscoveryEvent` listener while a partner exists, and answer `POST /ocm/keepiq/recipient-certificate` in an `OCMEndpointRequestEvent` listener that takes the signer from `getRemote()`, refuses unsigned requests and signers that are not inbound partners, answers only users of this instance who allow receiving and hold an active suite, and otherwise answers as for an unknown user. Verify: PHPUnit with the real event classes for an unsigned request, a non-partner, a user who opted out, an unknown user and an allowed lookup.
+- [ ] 2.2 Add the owner-facing lookup that parses the cloud id with `ICloudIdManager`, calls the partner's `/ocm/keepiq/recipient-certificate` through `IOCMDiscoveryService::requestRemoteOcmEndpoint('keepiq', ...)`, and returns the certificate chain. Verify: PHPUnit with a mocked discovery service.
 - [ ] 2.3 In the share dialog, add the federated recipient option, verify the chain against the pinned root and the common name in the browser, show the fingerprint, and encrypt. Verify: vitest refuses a chain that ends at another root and a mismatched common name.
 
 ## 3. Delivery
 
 - [ ] 3.1 Register the `keepiq-secret` OCM provider in `Application.php` and send outbound shares with `sendCloudShare()` after `POST /api/v1/secrets/{id}/federated-shares` stores the ciphertext. Verify: PHPUnit asserts the OCM share carries no ciphertext.
 - [ ] 3.2 Implement `shareReceived()` (inbound partner check, pending row, notification) and the "Incoming from other organisations" list with accept and decline. Verify: PHPUnit for a non-partner sender and a pending row; vitest for the list.
-- [ ] 3.3 On acceptance, pull the ciphertext from the sender's `GET /api/v1/federation/shares/{id}` with the shared secret in a signed request, and store a read-only `Secret` owned by the recipient. Verify: PHPUnit for the pull, the stored flags, and refusal of a wrong shared secret.
+- [ ] 3.3 On acceptance, pull the ciphertext from the sender's `/ocm/keepiq/shares/{id}` through `requestRemoteOcmEndpoint()` with the shared secret in the payload, and store a read-only `Secret` owned by the recipient. The sender's `OCMEndpointRequestEvent` listener answers only the recipient partner's signer with the matching shared secret. Verify: PHPUnit for the pull, the stored flags, and refusal of a wrong shared secret, another signer and an unsigned request.
 - [ ] 3.4 Refuse every write to a `read_only` secret for its owner (update, sync, share onward, link share). Verify: PHPUnit for each refused route.
 
 ## 4. Sync and revocation
