@@ -1276,7 +1276,25 @@
         "Your current master password": "Twoje obecne hasło główne",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n kontakt awaryjny miał oczekujący wniosek o dostęp, gdy rotacja klucza go usunęła. Sprawdź, kto prosił, zanim dodasz kogokolwiek ponownie.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "Kontakty awaryjne (%n) miały oczekujący wniosek o dostęp, gdy rotacja klucza je usunęła. Sprawdź, kto prosił, zanim dodasz kogokolwiek ponownie.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Te kontakty awaryjne nie zostały przeniesione do nowego klucza. Ich dostęp awaryjny został usunięty. Dodaj je ponownie w Dostępie awaryjnym, jeśli nadal ich chcesz."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Te kontakty awaryjne nie zostały przeniesione do nowego klucza. Ich dostęp awaryjny został usunięty. Dodaj je ponownie w Dostępie awaryjnym, jeśli nadal ich chcesz.",
+        "Renew root certificate": "Odnów certyfikat główny",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Zostanie utworzony nowy certyfikat główny i pośredni. Każdy aktywny zestaw szyfrowania zostanie ponownie podpisany. Tej operacji nie można cofnąć.",
+        "Renew root": "Odnów główny",
+        "Root renewed. {n} encryption suites signed again.": "Certyfikat główny odnowiony. Ponownie podpisane zestawy szyfrowania: {n}.",
+        "Could not renew the root certificate.": "Nie udało się odnowić certyfikatu głównego.",
+        "Lease policy for this application": "Zasady dzierżawy dla tej aplikacji",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Obecnie obowiązuje: domyślnie {default} sekund, najwyżej {max} sekund.",
+        "Leases are not renewable": "Dzierżaw nie można odnawiać",
+        "Lease policy saved.": "Zasady dzierżawy zapisane.",
+        "Leave a field empty to use the instance value.": "Pozostaw pole puste, aby użyć wartości instancji.",
+        "Instance value: {value}": "Wartość instancji: {value}",
+        "Renewal": "Odnawianie",
+        "Use the instance value ({value})": "Użyj wartości instancji ({value})",
+        "Allowed": "Dozwolone",
+        "Not allowed": "Niedozwolone",
+        "Save lease policy": "Zapisz zasady dzierżawy",
+        "Only an administrator can change this policy.": "Tylko administrator może zmienić te zasady.",
+        "Could not save the lease policy.": "Nie udało się zapisać zasad dzierżawy."
     },
     "plurals": null
 }

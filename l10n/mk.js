@@ -1277,7 +1277,25 @@ OC.L10N.register(
         "Your current master password": "Вашата тековна главна лозинка",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n контакт за итни случаи имаше барање за пристап на чекање кога ротацијата на клучот го отстрани. Проверете кој побарал пред повторно да додадете некого.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "Контактите за итни случаи (%n) имаа барање за пристап на чекање кога ротацијата на клучот ги отстрани. Проверете кој побарал пред повторно да додадете некого.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Овие контакти за итни случаи не се пренесени на вашиот нов клуч. Нивниот итен пристап е отстранет. Додајте ги повторно во Итен пристап ако сè уште ги сакате."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Овие контакти за итни случаи не се пренесени на вашиот нов клуч. Нивниот итен пристап е отстранет. Додајте ги повторно во Итен пристап ако сè уште ги сакате.",
+        "Renew root certificate": "Обнови го коренскиот сертификат",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Ова создава нов коренски и посреднички сертификат. Секој активен пакет за шифрирање повторно се потпишува. Ова не може да се врати.",
+        "Renew root": "Обнови корен",
+        "Root renewed. {n} encryption suites signed again.": "Коренот е обновен. Повторно потпишани пакети за шифрирање: {n}.",
+        "Could not renew the root certificate.": "Коренскиот сертификат не може да се обнови.",
+        "Lease policy for this application": "Политика за закуп за оваа апликација",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Сега важи: стандардно {default} секунди, најмногу {max} секунди.",
+        "Leases are not renewable": "Закупите не можат да се обновуваат",
+        "Lease policy saved.": "Политиката за закуп е зачувана.",
+        "Leave a field empty to use the instance value.": "Оставете поле празно за да се користи вредноста на инстанцата.",
+        "Instance value: {value}": "Вредност на инстанцата: {value}",
+        "Renewal": "Обновување",
+        "Use the instance value ({value})": "Користи ја вредноста на инстанцата ({value})",
+        "Allowed": "Дозволено",
+        "Not allowed": "Не е дозволено",
+        "Save lease policy": "Зачувај политика за закуп",
+        "Only an administrator can change this policy.": "Само администратор може да ја промени оваа политика.",
+        "Could not save the lease policy.": "Политиката за закуп не може да се зачува."
     },
     "nplurals=2; plural=(n != 1);"
 )

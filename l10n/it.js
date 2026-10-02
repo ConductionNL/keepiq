@@ -1277,7 +1277,25 @@ OC.L10N.register(
         "Your current master password": "La tua password principale attuale",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n contatto di emergenza aveva una richiesta di accesso in sospeso quando la rotazione della chiave lo ha rimosso. Controlla chi l'ha chiesta prima di aggiungere di nuovo qualcuno.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n contatti di emergenza avevano una richiesta di accesso in sospeso quando la rotazione della chiave li ha rimossi. Controlla chi l'ha chiesta prima di aggiungere di nuovo qualcuno.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Questi contatti di emergenza non sono stati trasferiti alla tua nuova chiave. Il loro accesso di emergenza è stato rimosso. Aggiungili di nuovo da Accesso di emergenza se li vuoi ancora."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Questi contatti di emergenza non sono stati trasferiti alla tua nuova chiave. Il loro accesso di emergenza è stato rimosso. Aggiungili di nuovo da Accesso di emergenza se li vuoi ancora.",
+        "Renew root certificate": "Rinnova il certificato radice",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Viene creato un nuovo certificato radice e uno intermedio. Ogni suite di cifratura attiva viene firmata di nuovo. L'operazione non è reversibile.",
+        "Renew root": "Rinnova radice",
+        "Root renewed. {n} encryption suites signed again.": "Radice rinnovata. Suite di cifratura firmate di nuovo: {n}.",
+        "Could not renew the root certificate.": "Impossibile rinnovare il certificato radice.",
+        "Lease policy for this application": "Criterio di lease per questa applicazione",
+        "In force now: {default} seconds by default, {max} seconds at most.": "In vigore ora: {default} secondi per impostazione predefinita, al massimo {max} secondi.",
+        "Leases are not renewable": "I lease non sono rinnovabili",
+        "Lease policy saved.": "Criterio di lease salvato.",
+        "Leave a field empty to use the instance value.": "Lascia vuoto un campo per usare il valore dell'istanza.",
+        "Instance value: {value}": "Valore dell'istanza: {value}",
+        "Renewal": "Rinnovo",
+        "Use the instance value ({value})": "Usa il valore dell'istanza ({value})",
+        "Allowed": "Consentito",
+        "Not allowed": "Non consentito",
+        "Save lease policy": "Salva criterio di lease",
+        "Only an administrator can change this policy.": "Solo un amministratore può modificare questo criterio.",
+        "Could not save the lease policy.": "Impossibile salvare il criterio di lease."
     },
     "nplurals=2; plural=(n != 1);"
 )

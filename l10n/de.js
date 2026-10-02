@@ -1277,7 +1277,25 @@ OC.L10N.register(
         "Your current master password": "Ihr aktuelles Master-Passwort",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n Notfallkontakt hatte eine offene Zugriffsanfrage, als Ihre Schlüsselrotation ihn entfernte. Prüfen Sie, wer angefragt hat, bevor Sie jemanden erneut hinzufügen.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n Notfallkontakte hatten eine offene Zugriffsanfrage, als Ihre Schlüsselrotation sie entfernte. Prüfen Sie, wer angefragt hat, bevor Sie jemanden erneut hinzufügen.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Diese Notfallkontakte wurden nicht zu Ihrem neuen Schlüssel übernommen. Ihr Notfallzugriff wurde entfernt. Fügen Sie sie unter Notfallzugriff erneut hinzu, wenn Sie sie noch möchten."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Diese Notfallkontakte wurden nicht zu Ihrem neuen Schlüssel übernommen. Ihr Notfallzugriff wurde entfernt. Fügen Sie sie unter Notfallzugriff erneut hinzu, wenn Sie sie noch möchten.",
+        "Renew root certificate": "Stammzertifikat erneuern",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Dadurch werden ein neues Stamm- und Zwischenzertifikat erstellt. Jede aktive Verschlüsselungssuite wird neu signiert. Das lässt sich nicht rückgängig machen.",
+        "Renew root": "Stamm erneuern",
+        "Root renewed. {n} encryption suites signed again.": "Stamm erneuert. {n} Verschlüsselungssuiten neu signiert.",
+        "Could not renew the root certificate.": "Das Stammzertifikat konnte nicht erneuert werden.",
+        "Lease policy for this application": "Lease-Richtlinie für diese Anwendung",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Jetzt gültig: standardmäßig {default} Sekunden, höchstens {max} Sekunden.",
+        "Leases are not renewable": "Leases sind nicht verlängerbar",
+        "Lease policy saved.": "Lease-Richtlinie gespeichert.",
+        "Leave a field empty to use the instance value.": "Lass ein Feld leer, um den Wert der Instanz zu verwenden.",
+        "Instance value: {value}": "Wert der Instanz: {value}",
+        "Renewal": "Verlängerung",
+        "Use the instance value ({value})": "Wert der Instanz verwenden ({value})",
+        "Allowed": "Erlaubt",
+        "Not allowed": "Nicht erlaubt",
+        "Save lease policy": "Lease-Richtlinie speichern",
+        "Only an administrator can change this policy.": "Nur eine Administratorin oder ein Administrator kann diese Richtlinie ändern.",
+        "Could not save the lease policy.": "Die Lease-Richtlinie konnte nicht gespeichert werden."
     },
     "nplurals=2; plural=(n != 1);"
 )

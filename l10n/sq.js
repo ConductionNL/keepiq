@@ -1277,7 +1277,25 @@ OC.L10N.register(
         "Your current master password": "Fjalëkalimi yt kryesor aktual",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n kontakt urgjence kishte një kërkesë aksesi në pritje kur rrotullimi i çelësit e hoqi. Kontrollo kush e kërkoi para se të shtosh dikë përsëri.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n kontakte urgjence kishin një kërkesë aksesi në pritje kur rrotullimi i çelësit i hoqi. Kontrollo kush e kërkoi para se të shtosh dikë përsëri.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Këto kontakte urgjence nuk u transferuan te çelësi yt i ri. Aksesi i tyre i urgjencës u hoq. Shtoji përsëri te Aksesi i urgjencës nëse i do ende."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Këto kontakte urgjence nuk u transferuan te çelësi yt i ri. Aksesi i tyre i urgjencës u hoq. Shtoji përsëri te Aksesi i urgjencës nëse i do ende.",
+        "Renew root certificate": "Rinovo certifikatën rrënjë",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Kjo krijon një certifikatë të re rrënjë dhe të ndërmjetme. Çdo paketë aktive enkriptimi nënshkruhet përsëri. Kjo nuk mund të zhbëhet.",
+        "Renew root": "Rinovo rrënjën",
+        "Root renewed. {n} encryption suites signed again.": "Rrënja u rinovua. Paketa enkriptimi të nënshkruara përsëri: {n}.",
+        "Could not renew the root certificate.": "Certifikata rrënjë nuk mund të rinovohej.",
+        "Lease policy for this application": "Politika e qirasë për këtë aplikacion",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Në fuqi tani: {default} sekonda si parazgjedhje, më së shumti {max} sekonda.",
+        "Leases are not renewable": "Qiratë nuk mund të rinovohen",
+        "Lease policy saved.": "Politika e qirasë u ruajt.",
+        "Leave a field empty to use the instance value.": "Lëreni një fushë bosh për të përdorur vlerën e instancës.",
+        "Instance value: {value}": "Vlera e instancës: {value}",
+        "Renewal": "Rinovimi",
+        "Use the instance value ({value})": "Përdor vlerën e instancës ({value})",
+        "Allowed": "Lejohet",
+        "Not allowed": "Nuk lejohet",
+        "Save lease policy": "Ruaj politikën e qirasë",
+        "Only an administrator can change this policy.": "Vetëm një administrator mund ta ndryshojë këtë politikë.",
+        "Could not save the lease policy.": "Politika e qirasë nuk mund të ruhej."
     },
     "nplurals=2; plural=(n != 1);"
 )

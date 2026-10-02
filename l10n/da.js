@@ -1277,7 +1277,25 @@ OC.L10N.register(
         "Your current master password": "Din nuværende hovedadgangskode",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n nødkontakt havde en ventende adgangsanmodning, da din nøglerotation fjernede den. Tjek, hvem der spurgte, før du tilføjer nogen igen.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n nødkontakter havde en ventende adgangsanmodning, da din nøglerotation fjernede dem. Tjek, hvem der spurgte, før du tilføjer nogen igen.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Disse nødkontakter blev ikke overført til din nye nøgle. Deres nødadgang blev fjernet. Tilføj dem igen under Nødadgang, hvis du stadig ønsker dem."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Disse nødkontakter blev ikke overført til din nye nøgle. Deres nødadgang blev fjernet. Tilføj dem igen under Nødadgang, hvis du stadig ønsker dem.",
+        "Renew root certificate": "Forny rodcertifikat",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Dette opretter et nyt rod- og mellemcertifikat. Hver aktiv krypteringspakke signeres igen. Det kan ikke fortrydes.",
+        "Renew root": "Forny rod",
+        "Root renewed. {n} encryption suites signed again.": "Rod fornyet. {n} krypteringspakker signeret igen.",
+        "Could not renew the root certificate.": "Rodcertifikatet kunne ikke fornyes.",
+        "Lease policy for this application": "Lejepolitik for denne applikation",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Gælder nu: {default} sekunder som standard, højst {max} sekunder.",
+        "Leases are not renewable": "Lejemål kan ikke fornyes",
+        "Lease policy saved.": "Lejepolitik gemt.",
+        "Leave a field empty to use the instance value.": "Lad et felt stå tomt for at bruge instansens værdi.",
+        "Instance value: {value}": "Instansens værdi: {value}",
+        "Renewal": "Fornyelse",
+        "Use the instance value ({value})": "Brug instansens værdi ({value})",
+        "Allowed": "Tilladt",
+        "Not allowed": "Ikke tilladt",
+        "Save lease policy": "Gem lejepolitik",
+        "Only an administrator can change this policy.": "Kun en administrator kan ændre denne politik.",
+        "Could not save the lease policy.": "Lejepolitikken kunne ikke gemmes."
     },
     "nplurals=2; plural=(n != 1);"
 )

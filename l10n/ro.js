@@ -1277,7 +1277,25 @@ OC.L10N.register(
         "Your current master password": "Parola principală actuală",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n contact de urgență avea o cerere de acces în așteptare când rotația cheii l-a eliminat. Verificați cine a cerut înainte să adăugați pe cineva din nou.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n contacte de urgență aveau o cerere de acces în așteptare când rotația cheii le-a eliminat. Verificați cine a cerut înainte să adăugați pe cineva din nou.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Aceste contacte de urgență nu au fost transferate pe noua cheie. Accesul lor de urgență a fost eliminat. Adăugați-le din nou din Acces de urgență dacă le mai doriți."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Aceste contacte de urgență nu au fost transferate pe noua cheie. Accesul lor de urgență a fost eliminat. Adăugați-le din nou din Acces de urgență dacă le mai doriți.",
+        "Renew root certificate": "Reînnoiește certificatul rădăcină",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Se creează un nou certificat rădăcină și unul intermediar. Fiecare suită de criptare activă este semnată din nou. Acțiunea nu poate fi anulată.",
+        "Renew root": "Reînnoiește rădăcina",
+        "Root renewed. {n} encryption suites signed again.": "Rădăcină reînnoită. Suite de criptare semnate din nou: {n}.",
+        "Could not renew the root certificate.": "Certificatul rădăcină nu a putut fi reînnoit.",
+        "Lease policy for this application": "Politica de închiriere pentru această aplicație",
+        "In force now: {default} seconds by default, {max} seconds at most.": "În vigoare acum: implicit {default} secunde, cel mult {max} secunde.",
+        "Leases are not renewable": "Închirierile nu pot fi reînnoite",
+        "Lease policy saved.": "Politica de închiriere a fost salvată.",
+        "Leave a field empty to use the instance value.": "Lasă un câmp gol pentru a folosi valoarea instanței.",
+        "Instance value: {value}": "Valoarea instanței: {value}",
+        "Renewal": "Reînnoire",
+        "Use the instance value ({value})": "Folosește valoarea instanței ({value})",
+        "Allowed": "Permis",
+        "Not allowed": "Nepermis",
+        "Save lease policy": "Salvează politica de închiriere",
+        "Only an administrator can change this policy.": "Doar un administrator poate modifica această politică.",
+        "Could not save the lease policy.": "Politica de închiriere nu a putut fi salvată."
     },
     "nplurals=2; plural=(n != 1);"
 )

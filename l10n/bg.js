@@ -1277,7 +1277,25 @@ OC.L10N.register(
         "Your current master password": "Текущата ви главна парола",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n контакт за спешни случаи имаше чакаща заявка за достъп, когато смяната на ключа го премахна. Проверете кой е поискал, преди да добавите някого отново.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "Контактите за спешни случаи (%n) имаха чакаща заявка за достъп, когато смяната на ключа ги премахна. Проверете кой е поискал, преди да добавите някого отново.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Тези контакти за спешни случаи не бяха прехвърлени към новия ви ключ. Спешният им достъп беше премахнат. Добавете ги отново от Спешен достъп, ако все още ги искате."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Тези контакти за спешни случаи не бяха прехвърлени към новия ви ключ. Спешният им достъп беше премахнат. Добавете ги отново от Спешен достъп, ако все още ги искате.",
+        "Renew root certificate": "Подновяване на основния сертификат",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Създават се нов основен и междинен сертификат. Всеки активен набор за шифроване се подписва отново. Това не може да бъде отменено.",
+        "Renew root": "Подновяване на основния",
+        "Root renewed. {n} encryption suites signed again.": "Основният сертификат е подновен. Наново подписани набори за шифроване: {n}.",
+        "Could not renew the root certificate.": "Основният сертификат не можа да бъде подновен.",
+        "Lease policy for this application": "Политика за наем за това приложение",
+        "In force now: {default} seconds by default, {max} seconds at most.": "В сила сега: {default} секунди по подразбиране, най-много {max} секунди.",
+        "Leases are not renewable": "Наемите не могат да се подновяват",
+        "Lease policy saved.": "Политиката за наем е запазена.",
+        "Leave a field empty to use the instance value.": "Оставете поле празно, за да използвате стойността на инстанцията.",
+        "Instance value: {value}": "Стойност на инстанцията: {value}",
+        "Renewal": "Подновяване",
+        "Use the instance value ({value})": "Използване на стойността на инстанцията ({value})",
+        "Allowed": "Разрешено",
+        "Not allowed": "Не е разрешено",
+        "Save lease policy": "Запазване на политиката за наем",
+        "Only an administrator can change this policy.": "Само администратор може да промени тази политика.",
+        "Could not save the lease policy.": "Политиката за наем не можа да бъде запазена."
     },
     "nplurals=2; plural=(n != 1);"
 )

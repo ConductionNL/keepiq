@@ -1277,7 +1277,25 @@ OC.L10N.register(
         "Your current master password": "Il-password ewlenija attwali tiegħek",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n kuntatt ta' emerġenza kellu talba għal aċċess pendenti meta r-rotazzjoni taċ-ċavetta neħħietu. Iċċekkja min talab qabel ma żżid lil xi ħadd mill-ġdid.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n kuntatti ta' emerġenza kellhom talba għal aċċess pendenti meta r-rotazzjoni taċ-ċavetta neħħiethom. Iċċekkja min talab qabel ma żżid lil xi ħadd mill-ġdid.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Dawn il-kuntatti ta' emerġenza ma ġewx trasferiti għaċ-ċavetta l-ġdida tiegħek. L-aċċess ta' emerġenza tagħhom tneħħa. Erġa' żidhom minn Aċċess ta' emerġenza jekk għadek trid."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Dawn il-kuntatti ta' emerġenza ma ġewx trasferiti għaċ-ċavetta l-ġdida tiegħek. L-aċċess ta' emerġenza tagħhom tneħħa. Erġa' żidhom minn Aċċess ta' emerġenza jekk għadek trid.",
+        "Renew root certificate": "Iġġedded iċ-ċertifikat ewlieni",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Dan joħloq ċertifikat ewlieni u intermedju ġodda. Kull suite ta' encryption attiva terġa' tiġi ffirmata. Ma tistax tħassar dan.",
+        "Renew root": "Iġġedded l-għerq",
+        "Root renewed. {n} encryption suites signed again.": "L-għerq ġie mġedded. Suites ta' encryption iffirmati mill-ġdid: {n}.",
+        "Could not renew the root certificate.": "Ma setax jiġi mġedded iċ-ċertifikat ewlieni.",
+        "Lease policy for this application": "Politika tal-kiri għal din l-applikazzjoni",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Fis-seħħ issa: {default} sekonda b'mod awtomatiku, l-iktar {max} sekonda.",
+        "Leases are not renewable": "Il-kiri ma jistax jiġġedded",
+        "Lease policy saved.": "Il-politika tal-kiri ġiet salvata.",
+        "Leave a field empty to use the instance value.": "Ħalli qasam vojt biex tuża l-valur tal-istanza.",
+        "Instance value: {value}": "Valur tal-istanza: {value}",
+        "Renewal": "Tiġdid",
+        "Use the instance value ({value})": "Uża l-valur tal-istanza ({value})",
+        "Allowed": "Permess",
+        "Not allowed": "Mhux permess",
+        "Save lease policy": "Issalva l-politika tal-kiri",
+        "Only an administrator can change this policy.": "Amministratur biss jista' jibdel din il-politika.",
+        "Could not save the lease policy.": "Il-politika tal-kiri ma setgħetx tiġi salvata."
     },
     "nplurals=2; plural=(n != 1);"
 )

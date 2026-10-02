@@ -1276,7 +1276,25 @@
         "Your current master password": "A jelenlegi mesterjelszava",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n vészhelyzeti kapcsolattartónak függő hozzáférési kérelme volt, amikor a kulcscsere eltávolította. Ellenőrizze, ki kérte, mielőtt bárkit újra hozzáad.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n vészhelyzeti kapcsolattartónak függő hozzáférési kérelme volt, amikor a kulcscsere eltávolította őket. Ellenőrizze, ki kérte, mielőtt bárkit újra hozzáad.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ezek a vészhelyzeti kapcsolattartók nem kerültek át az új kulcsára. A vészhelyzeti hozzáférésüket eltávolítottuk. Adja hozzá őket újra a Vészhelyzeti hozzáférésben, ha még szeretné."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ezek a vészhelyzeti kapcsolattartók nem kerültek át az új kulcsára. A vészhelyzeti hozzáférésüket eltávolítottuk. Adja hozzá őket újra a Vészhelyzeti hozzáférésben, ha még szeretné.",
+        "Renew root certificate": "Gyökértanúsítvány megújítása",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Ez új gyökér- és köztes tanúsítványt hoz létre. Minden aktív titkosítási csomag újra aláírásra kerül. Ez nem vonható vissza.",
+        "Renew root": "Gyökér megújítása",
+        "Root renewed. {n} encryption suites signed again.": "Gyökér megújítva. Újra aláírt titkosítási csomagok: {n}.",
+        "Could not renew the root certificate.": "A gyökértanúsítvány nem újítható meg.",
+        "Lease policy for this application": "Bérleti szabályzat ehhez az alkalmazáshoz",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Jelenleg érvényes: alapértelmezés szerint {default} másodperc, legfeljebb {max} másodperc.",
+        "Leases are not renewable": "A bérletek nem újíthatók meg",
+        "Lease policy saved.": "Bérleti szabályzat mentve.",
+        "Leave a field empty to use the instance value.": "Hagyjon üresen egy mezőt a példány értékének használatához.",
+        "Instance value: {value}": "Példány értéke: {value}",
+        "Renewal": "Megújítás",
+        "Use the instance value ({value})": "A példány értékének használata ({value})",
+        "Allowed": "Engedélyezett",
+        "Not allowed": "Nem engedélyezett",
+        "Save lease policy": "Bérleti szabályzat mentése",
+        "Only an administrator can change this policy.": "Ezt a szabályzatot csak rendszergazda módosíthatja.",
+        "Could not save the lease policy.": "A bérleti szabályzat nem menthető."
     },
     "plurals": null
 }

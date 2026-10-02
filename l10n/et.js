@@ -1277,7 +1277,25 @@ OC.L10N.register(
         "Your current master password": "Sinu praegune põhiparool",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n hädaabikontaktil oli ootel juurdepääsutaotlus, kui võtmevahetus ta eemaldas. Kontrolli, kes küsis, enne kui kedagi uuesti lisad.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n hädaabikontaktil oli ootel juurdepääsutaotlus, kui võtmevahetus nad eemaldas. Kontrolli, kes küsis, enne kui kedagi uuesti lisad.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Neid hädaabikontakte ei viidud üle sinu uuele võtmele. Nende hädajuurdepääs eemaldati. Lisa nad uuesti jaotises Hädajuurdepääs, kui soovid neid endiselt."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Neid hädaabikontakte ei viidud üle sinu uuele võtmele. Nende hädajuurdepääs eemaldati. Lisa nad uuesti jaotises Hädajuurdepääs, kui soovid neid endiselt.",
+        "Renew root certificate": "Uuenda juursertifikaati",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "See loob uue juur- ja vahesertifikaadi. Iga aktiivne krüpteerimiskomplekt allkirjastatakse uuesti. Seda ei saa tagasi võtta.",
+        "Renew root": "Uuenda juurt",
+        "Root renewed. {n} encryption suites signed again.": "Juur uuendatud. Uuesti allkirjastatud krüpteerimiskomplekte: {n}.",
+        "Could not renew the root certificate.": "Juursertifikaati ei õnnestunud uuendada.",
+        "Lease policy for this application": "Selle rakenduse rendipoliitika",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Praegu kehtib: vaikimisi {default} sekundit, kuni {max} sekundit.",
+        "Leases are not renewable": "Rente ei saa pikendada",
+        "Lease policy saved.": "Rendipoliitika salvestatud.",
+        "Leave a field empty to use the instance value.": "Jäta väli tühjaks, et kasutada eksemplari väärtust.",
+        "Instance value: {value}": "Eksemplari väärtus: {value}",
+        "Renewal": "Pikendamine",
+        "Use the instance value ({value})": "Kasuta eksemplari väärtust ({value})",
+        "Allowed": "Lubatud",
+        "Not allowed": "Pole lubatud",
+        "Save lease policy": "Salvesta rendipoliitika",
+        "Only an administrator can change this policy.": "Seda poliitikat saab muuta ainult administraator.",
+        "Could not save the lease policy.": "Rendipoliitikat ei õnnestunud salvestada."
     },
     "nplurals=2; plural=(n != 1);"
 )

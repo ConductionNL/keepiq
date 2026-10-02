@@ -1277,7 +1277,25 @@ OC.L10N.register(
         "Your current master password": "Núverandi aðallykilorð þitt",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n neyðartengiliður var með opna aðgangsbeiðni þegar lyklaskiptin fjarlægðu hann. Athugaðu hver bað um aðgang áður en þú bætir einhverjum við aftur.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n neyðartengiliðir voru með opna aðgangsbeiðni þegar lyklaskiptin fjarlægðu þá. Athugaðu hver bað um aðgang áður en þú bætir einhverjum við aftur.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Þessir neyðartengiliðir voru ekki fluttir yfir á nýja lykilinn þinn. Neyðaraðgangur þeirra var fjarlægður. Bættu þeim við aftur í Neyðaraðgangi ef þú vilt þá enn."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Þessir neyðartengiliðir voru ekki fluttir yfir á nýja lykilinn þinn. Neyðaraðgangur þeirra var fjarlægður. Bættu þeim við aftur í Neyðaraðgangi ef þú vilt þá enn.",
+        "Renew root certificate": "Endurnýja rótarskilríki",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Þetta býr til nýtt rótar- og millistigsskilríki. Hver virk dulkóðunarsvíta er undirrituð aftur. Ekki er hægt að afturkalla þetta.",
+        "Renew root": "Endurnýja rót",
+        "Root renewed. {n} encryption suites signed again.": "Rót endurnýjuð. Dulkóðunarsvítur undirritaðar aftur: {n}.",
+        "Could not renew the root certificate.": "Ekki tókst að endurnýja rótarskilríkið.",
+        "Lease policy for this application": "Leigustefna fyrir þetta forrit",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Í gildi núna: sjálfgefið {default} sekúndur, mest {max} sekúndur.",
+        "Leases are not renewable": "Ekki er hægt að endurnýja leigur",
+        "Lease policy saved.": "Leigustefna vistuð.",
+        "Leave a field empty to use the instance value.": "Skildu reit eftir tóman til að nota gildi tilviksins.",
+        "Instance value: {value}": "Gildi tilviks: {value}",
+        "Renewal": "Endurnýjun",
+        "Use the instance value ({value})": "Nota gildi tilviksins ({value})",
+        "Allowed": "Leyft",
+        "Not allowed": "Ekki leyft",
+        "Save lease policy": "Vista leigustefnu",
+        "Only an administrator can change this policy.": "Aðeins stjórnandi getur breytt þessari stefnu.",
+        "Could not save the lease policy.": "Ekki tókst að vista leigustefnuna."
     },
     "nplurals=2; plural=(n != 1);"
 )

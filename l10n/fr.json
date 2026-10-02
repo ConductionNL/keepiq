@@ -1276,7 +1276,25 @@
         "Your current master password": "Votre mot de passe principal actuel",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n contact d'urgence avait une demande d'accès en attente quand votre rotation de clé l'a supprimé. Vérifiez qui l'a demandé avant de rajouter quelqu'un.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n contacts d'urgence avaient une demande d'accès en attente quand votre rotation de clé les a supprimés. Vérifiez qui l'a demandé avant de rajouter quelqu'un.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ces contacts d'urgence n'ont pas été transférés vers votre nouvelle clé. Leur accès d'urgence a été supprimé. Ajoutez-les à nouveau depuis Accès d'urgence si vous les voulez encore."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ces contacts d'urgence n'ont pas été transférés vers votre nouvelle clé. Leur accès d'urgence a été supprimé. Ajoutez-les à nouveau depuis Accès d'urgence si vous les voulez encore.",
+        "Renew root certificate": "Renouveler le certificat racine",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Cela crée un nouveau certificat racine et un nouveau certificat intermédiaire. Chaque suite de chiffrement active est signée à nouveau. Cette action est irréversible.",
+        "Renew root": "Renouveler la racine",
+        "Root renewed. {n} encryption suites signed again.": "Racine renouvelée. Suites de chiffrement signées à nouveau : {n}.",
+        "Could not renew the root certificate.": "Impossible de renouveler le certificat racine.",
+        "Lease policy for this application": "Politique de bail pour cette application",
+        "In force now: {default} seconds by default, {max} seconds at most.": "En vigueur : {default} secondes par défaut, {max} secondes au maximum.",
+        "Leases are not renewable": "Les baux ne sont pas renouvelables",
+        "Lease policy saved.": "Politique de bail enregistrée.",
+        "Leave a field empty to use the instance value.": "Laissez un champ vide pour utiliser la valeur de l'instance.",
+        "Instance value: {value}": "Valeur de l'instance : {value}",
+        "Renewal": "Renouvellement",
+        "Use the instance value ({value})": "Utiliser la valeur de l'instance ({value})",
+        "Allowed": "Autorisé",
+        "Not allowed": "Non autorisé",
+        "Save lease policy": "Enregistrer la politique de bail",
+        "Only an administrator can change this policy.": "Seul un administrateur peut modifier cette politique.",
+        "Could not save the lease policy.": "Impossible d'enregistrer la politique de bail."
     },
     "plurals": null
 }

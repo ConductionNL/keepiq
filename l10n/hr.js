@@ -1277,7 +1277,25 @@ OC.L10N.register(
         "Your current master password": "Vaša trenutna glavna lozinka",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n kontakt za hitne slučajeve imao je zahtjev za pristup na čekanju kada ga je rotacija ključa uklonila. Provjerite tko je tražio prije nego što ikoga ponovno dodate.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "Kontakti za hitne slučajeve (%n) imali su zahtjev za pristup na čekanju kada ih je rotacija ključa uklonila. Provjerite tko je tražio prije nego što ikoga ponovno dodate.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ti kontakti za hitne slučajeve nisu preneseni na vaš novi ključ. Njihov hitni pristup je uklonjen. Ponovno ih dodajte u Hitnom pristupu ako ih još želite."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ti kontakti za hitne slučajeve nisu preneseni na vaš novi ključ. Njihov hitni pristup je uklonjen. Ponovno ih dodajte u Hitnom pristupu ako ih još želite.",
+        "Renew root certificate": "Obnovi korijenski certifikat",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Ovo stvara novi korijenski i posrednički certifikat. Svaki aktivni paket šifriranja ponovno se potpisuje. To se ne može poništiti.",
+        "Renew root": "Obnovi korijen",
+        "Root renewed. {n} encryption suites signed again.": "Korijen obnovljen. Ponovno potpisanih paketa šifriranja: {n}.",
+        "Could not renew the root certificate.": "Korijenski certifikat nije moguće obnoviti.",
+        "Lease policy for this application": "Pravila zakupa za ovu aplikaciju",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Trenutačno vrijedi: zadano {default} sekundi, najviše {max} sekundi.",
+        "Leases are not renewable": "Zakupi se ne mogu obnavljati",
+        "Lease policy saved.": "Pravila zakupa spremljena.",
+        "Leave a field empty to use the instance value.": "Ostavite polje prazno za korištenje vrijednosti instance.",
+        "Instance value: {value}": "Vrijednost instance: {value}",
+        "Renewal": "Obnavljanje",
+        "Use the instance value ({value})": "Koristi vrijednost instance ({value})",
+        "Allowed": "Dopušteno",
+        "Not allowed": "Nije dopušteno",
+        "Save lease policy": "Spremi pravila zakupa",
+        "Only an administrator can change this policy.": "Samo administrator može promijeniti ova pravila.",
+        "Could not save the lease policy.": "Pravila zakupa nije moguće spremiti."
     },
     "nplurals=2; plural=(n != 1);"
 )

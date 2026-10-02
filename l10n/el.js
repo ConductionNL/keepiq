@@ -1277,7 +1277,25 @@ OC.L10N.register(
         "Your current master password": "Ο τρέχων κύριος κωδικός σας",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n επαφή έκτακτης ανάγκης είχε εκκρεμές αίτημα πρόσβασης όταν η εναλλαγή κλειδιού την αφαίρεσε. Ελέγξτε ποιος το ζήτησε πριν προσθέσετε ξανά κάποιον.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n επαφές έκτακτης ανάγκης είχαν εκκρεμές αίτημα πρόσβασης όταν η εναλλαγή κλειδιού τις αφαίρεσε. Ελέγξτε ποιος το ζήτησε πριν προσθέσετε ξανά κάποιον.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Αυτές οι επαφές έκτακτης ανάγκης δεν μεταφέρθηκαν στο νέο σας κλειδί. Η πρόσβαση έκτακτης ανάγκης τους αφαιρέθηκε. Προσθέστε τις ξανά από την Πρόσβαση έκτακτης ανάγκης αν τις θέλετε ακόμα."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Αυτές οι επαφές έκτακτης ανάγκης δεν μεταφέρθηκαν στο νέο σας κλειδί. Η πρόσβαση έκτακτης ανάγκης τους αφαιρέθηκε. Προσθέστε τις ξανά από την Πρόσβαση έκτακτης ανάγκης αν τις θέλετε ακόμα.",
+        "Renew root certificate": "Ανανέωση πιστοποιητικού ρίζας",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Δημιουργείται νέο πιστοποιητικό ρίζας και ενδιάμεσο. Κάθε ενεργή σουίτα κρυπτογράφησης υπογράφεται ξανά. Δεν μπορεί να αναιρεθεί.",
+        "Renew root": "Ανανέωση ρίζας",
+        "Root renewed. {n} encryption suites signed again.": "Η ρίζα ανανεώθηκε. Σουίτες κρυπτογράφησης που υπογράφηκαν ξανά: {n}.",
+        "Could not renew the root certificate.": "Δεν ήταν δυνατή η ανανέωση του πιστοποιητικού ρίζας.",
+        "Lease policy for this application": "Πολιτική μίσθωσης για αυτή την εφαρμογή",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Ισχύει τώρα: {default} δευτερόλεπτα από προεπιλογή, το πολύ {max} δευτερόλεπτα.",
+        "Leases are not renewable": "Οι μισθώσεις δεν ανανεώνονται",
+        "Lease policy saved.": "Η πολιτική μίσθωσης αποθηκεύτηκε.",
+        "Leave a field empty to use the instance value.": "Αφήστε ένα πεδίο κενό για να χρησιμοποιηθεί η τιμή της εγκατάστασης.",
+        "Instance value: {value}": "Τιμή εγκατάστασης: {value}",
+        "Renewal": "Ανανέωση",
+        "Use the instance value ({value})": "Χρήση της τιμής εγκατάστασης ({value})",
+        "Allowed": "Επιτρέπεται",
+        "Not allowed": "Δεν επιτρέπεται",
+        "Save lease policy": "Αποθήκευση πολιτικής μίσθωσης",
+        "Only an administrator can change this policy.": "Μόνο ένας διαχειριστής μπορεί να αλλάξει αυτή την πολιτική.",
+        "Could not save the lease policy.": "Δεν ήταν δυνατή η αποθήκευση της πολιτικής μίσθωσης."
     },
     "nplurals=2; plural=(n != 1);"
 )

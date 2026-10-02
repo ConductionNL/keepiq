@@ -1277,7 +1277,25 @@ OC.L10N.register(
         "Your current master password": "Tes pled-clav principal actual",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n contact d'urgenza aveva ina dumonda d'access pendenta cura che la rotaziun da la clav l'ha allontanà. Controllescha tgi che ha dumandà avant che agiuntar puspè insatgi.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n contacts d'urgenza avevan ina dumonda d'access pendenta cura che la rotaziun da la clav als ha allontanà. Controllescha tgi che ha dumandà avant che agiuntar puspè insatgi.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Quests contacts d'urgenza n'èn betg vegnids transferids sin tia nova clav. Lur access d'urgenza è vegnì allontanà. Agiunta els puspè sut Access d'urgenza, sche ti vuls anc els."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Quests contacts d'urgenza n'èn betg vegnids transferids sin tia nova clav. Lur access d'urgenza è vegnì allontanà. Agiunta els puspè sut Access d'urgenza, sche ti vuls anc els.",
+        "Renew root certificate": "Renovar il certificat radical",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Quai crea in nov certificat radical ed intermediar. Mintga suite da criptaziun activa vegn suttascritta danovamain. Quai na po betg vegnir revocà.",
+        "Renew root": "Renovar la ragisch",
+        "Root renewed. {n} encryption suites signed again.": "Ragisch renovada. Suites da criptaziun suttascrittas danovamain: {n}.",
+        "Could not renew the root certificate.": "Impussibel da renovar il certificat radical.",
+        "Lease policy for this application": "Directiva da lease per questa applicaziun",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Ussa en vigur: {default} secundas sco standard, maximalmain {max} secundas.",
+        "Leases are not renewable": "Leases na pon betg vegnir prolungads",
+        "Lease policy saved.": "Directiva da lease memorisada.",
+        "Leave a field empty to use the instance value.": "Lascha in champ vid per utilisar la valur da l'instanza.",
+        "Instance value: {value}": "Valur da l'instanza: {value}",
+        "Renewal": "Prolungaziun",
+        "Use the instance value ({value})": "Utilisar la valur da l'instanza ({value})",
+        "Allowed": "Permess",
+        "Not allowed": "Betg permess",
+        "Save lease policy": "Memorisar la directiva da lease",
+        "Only an administrator can change this policy.": "Mo in administratur po midar questa directiva.",
+        "Could not save the lease policy.": "Impussibel da memorisar la directiva da lease."
     },
     "nplurals=2; plural=(n != 1);"
 )

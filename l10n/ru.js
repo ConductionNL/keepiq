@@ -1277,7 +1277,25 @@ OC.L10N.register(
         "Your current master password": "Ваш текущий мастер-пароль",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "У %n экстренного контакта был ожидающий запрос доступа, когда смена ключа удалила его. Проверьте, кто запрашивал, прежде чем снова кого-либо добавлять.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "У экстренных контактов (%n) был ожидающий запрос доступа, когда смена ключа удалила их. Проверьте, кто запрашивал, прежде чем снова кого-либо добавлять.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Эти экстренные контакты не были перенесены на ваш новый ключ. Их экстренный доступ удалён. Добавьте их снова в разделе Экстренный доступ, если они вам ещё нужны."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Эти экстренные контакты не были перенесены на ваш новый ключ. Их экстренный доступ удалён. Добавьте их снова в разделе Экстренный доступ, если они вам ещё нужны.",
+        "Renew root certificate": "Обновить корневой сертификат",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Будут созданы новые корневой и промежуточный сертификаты. Каждый активный набор шифрования будет подписан заново. Это действие нельзя отменить.",
+        "Renew root": "Обновить корень",
+        "Root renewed. {n} encryption suites signed again.": "Корень обновлён. Заново подписано наборов шифрования: {n}.",
+        "Could not renew the root certificate.": "Не удалось обновить корневой сертификат.",
+        "Lease policy for this application": "Политика аренды для этого приложения",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Сейчас действует: по умолчанию {default} секунд, не более {max} секунд.",
+        "Leases are not renewable": "Аренду нельзя продлевать",
+        "Lease policy saved.": "Политика аренды сохранена.",
+        "Leave a field empty to use the instance value.": "Оставьте поле пустым, чтобы использовать значение экземпляра.",
+        "Instance value: {value}": "Значение экземпляра: {value}",
+        "Renewal": "Продление",
+        "Use the instance value ({value})": "Использовать значение экземпляра ({value})",
+        "Allowed": "Разрешено",
+        "Not allowed": "Не разрешено",
+        "Save lease policy": "Сохранить политику аренды",
+        "Only an administrator can change this policy.": "Изменить эту политику может только администратор.",
+        "Could not save the lease policy.": "Не удалось сохранить политику аренды."
     },
     "nplurals=2; plural=(n != 1);"
 )

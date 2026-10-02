@@ -1277,7 +1277,25 @@ OC.L10N.register(
         "Your current master password": "Nykyinen pääsalasanasi",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n hätäyhteyshenkilöllä oli avoin käyttöoikeuspyyntö, kun avainkierto poisti hänet. Tarkista, kuka pyysi, ennen kuin lisäät ketään uudelleen.",
         "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n hätäyhteyshenkilöllä oli avoin käyttöoikeuspyyntö, kun avainkierto poisti heidät. Tarkista, kuka pyysi, ennen kuin lisäät ketään uudelleen.",
-        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Näitä hätäyhteyshenkilöitä ei siirretty uuteen avaimeesi. Heidän hätäkäyttöoikeutensa poistettiin. Lisää heidät uudelleen Hätäkäytöstä, jos haluat heidät yhä."
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Näitä hätäyhteyshenkilöitä ei siirretty uuteen avaimeesi. Heidän hätäkäyttöoikeutensa poistettiin. Lisää heidät uudelleen Hätäkäytöstä, jos haluat heidät yhä.",
+        "Renew root certificate": "Uusi juurivarmenne",
+        "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Tämä luo uuden juuri- ja välivarmenteen. Jokainen aktiivinen salauspaketti allekirjoitetaan uudelleen. Tätä ei voi perua.",
+        "Renew root": "Uusi juuri",
+        "Root renewed. {n} encryption suites signed again.": "Juuri uusittu. Uudelleen allekirjoitettuja salauspaketteja: {n}.",
+        "Could not renew the root certificate.": "Juurivarmennetta ei voitu uusia.",
+        "Lease policy for this application": "Tämän sovelluksen vuokrauskäytäntö",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Voimassa nyt: oletuksena {default} sekuntia, enintään {max} sekuntia.",
+        "Leases are not renewable": "Vuokria ei voi uusia",
+        "Lease policy saved.": "Vuokrauskäytäntö tallennettu.",
+        "Leave a field empty to use the instance value.": "Jätä kenttä tyhjäksi käyttääksesi instanssin arvoa.",
+        "Instance value: {value}": "Instanssin arvo: {value}",
+        "Renewal": "Uusiminen",
+        "Use the instance value ({value})": "Käytä instanssin arvoa ({value})",
+        "Allowed": "Sallittu",
+        "Not allowed": "Ei sallittu",
+        "Save lease policy": "Tallenna vuokrauskäytäntö",
+        "Only an administrator can change this policy.": "Vain ylläpitäjä voi muuttaa tätä käytäntöä.",
+        "Could not save the lease policy.": "Vuokrauskäytäntöä ei voitu tallentaa."
     },
     "nplurals=2; plural=(n != 1);"
 )
