@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Ta bort tagg",
         "Add tag": "Lägg till tagg",
         "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "En CXF-export är OKRYPTERAD. Varje lösenord och inloggning blir läsbar som klartext i den hämtade filen. Förvara den säkert och ta bort den omedelbart efter användning.",
         "Could not approve the application. It is still in the queue.": "Ansökan kunde inte godkännas. Den ligger fortfarande i kön.",
         "Could not reject the application. It is still in the queue.": "Ansökan kunde inte avslås. Den ligger fortfarande i kön.",
         "Removed the user from {count} team folders.": "Användaren togs bort från {count} teammappar.",

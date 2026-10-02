@@ -1266,6 +1266,7 @@
         "Remove tag": "Fjern mærke",
         "Add tag": "Tilføj mærke",
         "Could not change the tags. Try again.": "Mærkerne kunne ikke ændres. Prøv igen.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "En CXF-eksport er UKRYPTERET. Alle adgangskoder og logins vil kunne læses som klartekst i den hentede fil. Opbevar den sikkert, og slet den umiddelbart efter brug.",
         "Could not approve the application. It is still in the queue.": "Ansøgningen kunne ikke godkendes. Den er stadig i køen.",
         "Could not reject the application. It is still in the queue.": "Ansøgningen kunne ikke afvises. Den er stadig i køen.",
         "Removed the user from {count} team folders.": "Brugeren blev fjernet fra {count} teammapper.",

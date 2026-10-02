@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Премахване на етикет",
         "Add tag": "Добавяне на етикет",
         "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Износът в CXF НЕ Е ШИФРИРАН. Всяка парола и потребителско име ще бъдат четими като обикновен текст в изтегления файл. Пазете го на сигурно място и го изтрийте веднага след употреба.",
         "Could not approve the application. It is still in the queue.": "Заявката не можа да бъде одобрена. Тя все още е в опашката.",
         "Could not reject the application. It is still in the queue.": "Заявката не можа да бъде отхвърлена. Тя все още е в опашката.",
         "Removed the user from {count} team folders.": "Потребителят е премахнат от {count} екипни папки.",

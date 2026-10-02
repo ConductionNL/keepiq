@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Убрать метку",
         "Add tag": "Добавить метку",
         "Could not change the tags. Try again.": "Не удалось изменить метки. Попробуйте ещё раз.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Экспорт в CXF НЕ ЗАШИФРОВАН. Каждый пароль и логин будут читаемы как обычный текст в скачанном файле. Храните файл в надёжном месте и удалите сразу после использования.",
         "Could not approve the application. It is still in the queue.": "Не удалось одобрить заявку. Она всё ещё в очереди.",
         "Could not reject the application. It is still in the queue.": "Не удалось отклонить заявку. Она всё ещё в очереди.",
         "Removed the user from {count} team folders.": "Пользователь удалён из командных папок: {count}.",

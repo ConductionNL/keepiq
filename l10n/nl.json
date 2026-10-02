@@ -1271,6 +1271,7 @@
         "Remove tag": "Label verwijderen",
         "Add tag": "Label toevoegen",
         "Could not change the tags. Try again.": "Kon de labels niet wijzigen. Probeer het opnieuw.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Een CXF-export is ONVERSLEUTELD. Elk wachtwoord en elke login is leesbaar als platte tekst in het gedownloade bestand. Bewaar het veilig en verwijder het direct na gebruik.",
         "Could not approve the application. It is still in the queue.": "Kan de aanvraag niet goedkeuren. Deze staat nog in de wachtrij.",
         "Could not reject the application. It is still in the queue.": "Kan de aanvraag niet afwijzen. Deze staat nog in de wachtrij.",
         "Removed the user from {count} team folders.": "Gebruiker verwijderd uit {count} teammappen.",

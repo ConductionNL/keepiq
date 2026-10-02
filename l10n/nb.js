@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Fjern etikett",
         "Add tag": "Legg til etikett",
         "Could not change the tags. Try again.": "Kunne ikke endre etikettene. Prøv igjen.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "En CXF-eksport er UKRYPTERT. Alle passord og innlogginger vil være lesbare som klartekst i den nedlastede filen. Oppbevar den trygt, og slett den umiddelbart etter bruk.",
         "Could not approve the application. It is still in the queue.": "Kunne ikke godkjenne søknaden. Den står fortsatt i køen.",
         "Could not reject the application. It is still in the queue.": "Kunne ikke avvise søknaden. Den står fortsatt i køen.",
         "Removed the user from {count} team folders.": "Fjernet brukeren fra {count} teammapper.",

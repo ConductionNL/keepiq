@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Fjarlægja merki",
         "Add tag": "Bæta við merki",
         "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF-útflutningur er ÓDULKÓÐAÐUR. Hvert lykilorð og innskráningarnafn verður læsilegt sem ódulkóðaður texti í skránni sem er hlaðið niður. Varðveittu hana á öruggum stað og eyddu henni strax eftir notkun.",
         "Could not approve the application. It is still in the queue.": "Ekki tókst að samþykkja umsóknina. Hún er enn í biðröð.",
         "Could not reject the application. It is still in the queue.": "Ekki tókst að hafna umsókninni. Hún er enn í biðröð.",
         "Removed the user from {count} team folders.": "Notandinn var fjarlægður úr {count} teymismöppum.",

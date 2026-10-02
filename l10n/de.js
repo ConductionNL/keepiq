@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Schlagwort entfernen",
         "Add tag": "Schlagwort hinzufügen",
         "Could not change the tags. Try again.": "Schlagwörter konnten nicht geändert werden. Bitte erneut versuchen.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Ein CXF-Export ist UNVERSCHLÜSSELT. Jedes Passwort und jeder Login ist in der heruntergeladenen Datei als Klartext lesbar. Bewahren Sie sie sicher auf und löschen Sie sie unmittelbar nach der Verwendung.",
         "Could not approve the application. It is still in the queue.": "Der Antrag konnte nicht genehmigt werden. Er befindet sich noch in der Warteschlange.",
         "Could not reject the application. It is still in the queue.": "Der Antrag konnte nicht abgelehnt werden. Er befindet sich noch in der Warteschlange.",
         "Removed the user from {count} team folders.": "Benutzer aus {count} Teamordnern entfernt.",

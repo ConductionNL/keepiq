@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Etiketi kaldır",
         "Add tag": "Etiket ekle",
         "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF dışa aktarımı ŞİFRELENMEMİŞTİR. İndirilen dosyada her parola ve kullanıcı adı düz metin olarak okunabilir olacak. Dosyayı güvenli biçimde saklayın ve kullandıktan hemen sonra silin.",
         "Could not approve the application. It is still in the queue.": "Başvuru onaylanamadı. Hâlâ kuyrukta.",
         "Could not reject the application. It is still in the queue.": "Başvuru reddedilemedi. Hâlâ kuyrukta.",
         "Removed the user from {count} team folders.": "Kullanıcı {count} takım klasöründen çıkarıldı.",

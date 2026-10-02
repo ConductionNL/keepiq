@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Allontanar l'etichetta",
         "Add tag": "Agiuntar ina etichetta",
         "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "In export CXF N'È BETG CRIPTÀ. Mintga pled-clav e mintga login vegn a pudair vegnir legì sco text cler en la datoteca telechargiada. Conservai la a moda segira e stizzai la immediatamain suenter l'utilisaziun.",
         "Could not approve the application. It is still in the queue.": "Betg reussì d'approvar la dumonda. Ella è anc adina en la colonna.",
         "Could not reject the application. It is still in the queue.": "Betg reussì da refusar la dumonda. Ella è anc adina en la colonna.",
         "Removed the user from {count} team folders.": "Allontanà l'utilisader da {count} ordinaturs da team.",

@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Neħħi t-tikketta",
         "Add tag": "Żid tikketta",
         "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Esportazzjoni CXF MHIJIEX ENKRIPTATA. Kull password u login se jkunu jinqraw bħala test sempliċi fil-fajl imniżżel. Aħżnu b'mod sigur u ħassru minnufih wara li tużah.",
         "Could not approve the application. It is still in the queue.": "L-applikazzjoni ma setgħetx tiġi approvata. Għadha fil-kju.",
         "Could not reject the application. It is still in the queue.": "L-applikazzjoni ma setgħetx tiġi miċħuda. Għadha fil-kju.",
         "Removed the user from {count} team folders.": "L-utent tneħħa minn {count} folders tat-tim.",

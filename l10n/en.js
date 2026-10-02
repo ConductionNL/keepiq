@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Remove tag",
         "Add tag": "Add tag",
         "Could not change the tags. Try again.": "Could not change the tags. Try again.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.",
         "Could not approve the application. It is still in the queue.": "Could not approve the application. It is still in the queue.",
         "Could not reject the application. It is still in the queue.": "Could not reject the application. It is still in the queue.",
         "Removed the user from {count} team folders.": "Removed the user from {count} team folders.",

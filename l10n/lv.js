@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Noņemt birku",
         "Add tag": "Pievienot birku",
         "Could not change the tags. Try again.": "Neizdevās mainīt birkas. Mēģiniet vēlreiz.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF eksports NAV ŠIFRĒTS. Katra parole un lietotājvārds lejupielādētajā datnē būs lasāmi kā vienkāršs teksts. Glabājiet to drošā vietā un izdzēsiet tūlīt pēc lietošanas.",
         "Could not approve the application. It is still in the queue.": "Neizdevās apstiprināt pieteikumu. Tas joprojām ir rindā.",
         "Could not reject the application. It is still in the queue.": "Neizdevās noraidīt pieteikumu. Tas joprojām ir rindā.",
         "Removed the user from {count} team folders.": "Lietotājs noņemts no {count} komandas mapēm.",

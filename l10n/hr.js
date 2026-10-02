@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Ukloni oznaku",
         "Add tag": "Dodaj oznaku",
         "Could not change the tags. Try again.": "Oznake nije bilo moguće promijeniti. Pokušajte ponovno.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Izvoz u CXF NIJE ŠIFRIRAN. Svaka lozinka i prijava bit će čitljiva kao otvoreni tekst u preuzetoj datoteci. Čuvajte je na sigurnom i izbrišite je odmah nakon uporabe.",
         "Could not approve the application. It is still in the queue.": "Zahtjev nije moguće odobriti. Još je u redu čekanja.",
         "Could not reject the application. It is still in the queue.": "Zahtjev nije moguće odbiti. Još je u redu čekanja.",
         "Removed the user from {count} team folders.": "Korisnik je uklonjen iz {count} timskih mapa.",

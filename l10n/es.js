@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Quitar etiqueta",
         "Add tag": "Añadir etiqueta",
         "Could not change the tags. Try again.": "No se pudieron cambiar las etiquetas. Inténtelo de nuevo.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Una exportación CXF NO ESTÁ CIFRADA. Todas las contraseñas e inicios de sesión serán legibles como texto plano en el archivo descargado. Guárdelo de forma segura y elimínelo inmediatamente después de usarlo.",
         "Could not approve the application. It is still in the queue.": "No se pudo aprobar la solicitud. Sigue en la cola.",
         "Could not reject the application. It is still in the queue.": "No se pudo rechazar la solicitud. Sigue en la cola.",
         "Removed the user from {count} team folders.": "Se eliminó al usuario de {count} carpetas de equipo.",

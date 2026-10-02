@@ -84,6 +84,30 @@ class EmergencyContactMapper extends QBMapper {
 	}//end findByGrantor()
 
 	/**
+	 * Delete every relationship the user is part of, as grantor or as grantee
+	 * (GDPR Art. 17 erasure). A grantor row holds the user's private key
+	 * escrowed to the grantee, so it must not survive the erasure.
+	 *
+	 * @param string $userId The Nextcloud user ID
+	 *
+	 * @return int The number of rows deleted
+	 *
+	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 */
+	public function deleteByUser(string $userId): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where(
+				$qb->expr()->orX(
+					$qb->expr()->eq('grantor_user_id', $qb->createNamedParameter($userId)),
+					$qb->expr()->eq('grantee_user_id', $qb->createNamedParameter($userId))
+				)
+			);
+
+		return $qb->executeStatement();
+	}//end deleteByUser()
+
+	/**
 	 * List all relationships where the user is the grantee (incoming access).
 	 *
 	 * @param string $granteeUserId The grantee Nextcloud user ID

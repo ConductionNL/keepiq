@@ -1266,6 +1266,7 @@
         "Remove tag": "Poista tunniste",
         "Add tag": "Lisää tunniste",
         "Could not change the tags. Try again.": "Tunnisteita ei voitu muuttaa. Yritä uudelleen.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF-vienti on SALAAMATON. Jokainen salasana ja käyttäjätunnus on luettavissa selkokielisenä ladatussa tiedostossa. Säilytä se turvallisesti ja poista se heti käytön jälkeen.",
         "Could not approve the application. It is still in the queue.": "Hakemusta ei voitu hyväksyä. Se on yhä jonossa.",
         "Could not reject the application. It is still in the queue.": "Hakemusta ei voitu hylätä. Se on yhä jonossa.",
         "Removed the user from {count} team folders.": "Käyttäjä poistettiin {count} tiimikansiosta.",

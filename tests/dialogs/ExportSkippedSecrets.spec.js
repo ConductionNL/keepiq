@@ -28,7 +28,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { parse } from 'vue/compiler-sfc'
 import CxpTransferDialog from '../../src/dialogs/CxpTransferDialog.vue'
 import ExportDialog from '../../src/dialogs/ExportDialog.vue'
+import GdprExportDialog from '../../src/dialogs/GdprExportDialog.vue'
 import SecretList from '../../src/views/SecretList.vue'
+import { useSecretStore } from '../../src/store/modules/secret.js'
+import { useSessionStore } from '../../src/store/modules/session.js'
 
 const ncStubs = {
 	NcDialog: {
@@ -268,5 +271,86 @@ describe('CxpTransferDialog: the skipped count is shown before anything is sent'
 		wrapper.vm.skippedAcknowledged = true
 		await wrapper.vm.$nextTick()
 		expect(send.attributes('disabled')).toBeUndefined()
+	})
+})
+
+describe('SecretList: a row under a blocked suite is counted, not exported blank (keepiq#862)', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+	})
+
+	it('counts a jsonSerializeBlocked() row through the REAL decryptSecret', async () => {
+		// The real store: decryptSecret() does not throw for a blocked row (it
+		// carries no ciphertext), so only an explicit check can count it.
+		const store = useSecretStore()
+		useSessionStore().cryptoKey = { fake: 'unlocked' }
+		store.secrets = [
+			{ id: 's1', name: 'Plain metadata only' },
+			{
+				id: 's2',
+				name: 'Under a revoked suite',
+				blocked: true,
+				blockedReason: 'Encryption suite is revoked',
+			},
+		]
+		store.fetchAllSecrets = vi.fn().mockResolvedValue()
+		const ctx = { secretStore: store }
+
+		const result = await SecretList.methods.decryptAllSecrets.call(ctx)
+
+		expect(result.skipped).toBe(1)
+		expect(result.secrets.map((s) => s.id)).toEqual(['s1'])
+	})
+})
+
+describe('GDPR export: the skipped count reaches the dialog and holds the download (keepiq#874)', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+	})
+
+	it('openGdpr() hands the skipped count on, and the template binds it', async () => {
+		const ctx = listContext()
+		ctx.gdprOpen = false
+
+		await SecretList.methods.openGdpr.call(ctx)
+
+		expect(ctx.gdprOpen).toBe(true)
+		expect(ctx.skippedSecrets).toBe(1)
+
+		const source = readFileSync(
+			resolve(__dirname, '../../src/views/SecretList.vue'),
+			'utf8',
+		)
+		const ast = parse(source).descriptor.template.ast
+		const gdprDialogs = findElements(ast, 'GdprExportDialog')
+		expect(gdprDialogs).toHaveLength(1)
+		expect(boundProp(gdprDialogs[0], 'skipped')).toBe('skippedSecrets')
+	})
+
+	it('shows the count and holds the download until the user continues', async () => {
+		useSessionStore().cryptoKey = { fake: 'unlocked' }
+		const wrapper = mount(GdprExportDialog, {
+			props: { open: true, secrets: [], folders: [], skipped: 2 },
+			...mountOpts,
+		})
+		const exportGdprPackage = vi
+			.spyOn(wrapper.vm.exportStore, 'exportGdprPackage')
+			.mockResolvedValue()
+
+		const warning = wrapper.find('[data-testid="gdpr-skipped-warning"]')
+		expect(warning.exists()).toBe(true)
+		expect(warning.text()).toContain(
+			'2 secrets could not be decrypted and are not in this export.',
+		)
+		const download = wrapper.find('[data-testid="gdpr-download"]')
+		expect(download.attributes('disabled')).toBeDefined()
+		await wrapper.vm.onDownload()
+		expect(exportGdprPackage).not.toHaveBeenCalled()
+
+		wrapper.vm.skippedAcknowledged = true
+		await wrapper.vm.$nextTick()
+		expect(download.attributes('disabled')).toBeUndefined()
+		await wrapper.vm.onDownload()
+		expect(exportGdprPackage).toHaveBeenCalledTimes(1)
 	})
 })

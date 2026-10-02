@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Címke eltávolítása",
         "Add tag": "Címke hozzáadása",
         "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "A CXF-exportálás TITKOSÍTATLAN. A letöltött fájlban minden jelszó és bejelentkezési név olvasható lesz egyszerű szövegként. Tárolja biztonságosan, és használat után azonnal törölje.",
         "Could not approve the application. It is still in the queue.": "Nem sikerült jóváhagyni a kérelmet. Még mindig a sorban van.",
         "Could not reject the application. It is still in the queue.": "Nem sikerült elutasítani a kérelmet. Még mindig a sorban van.",
         "Removed the user from {count} team folders.": "A felhasználó eltávolítva {count} csapatmappából.",

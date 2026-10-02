@@ -1267,6 +1267,7 @@ OC.L10N.register(
         "Remove tag": "Hiq etiketën",
         "Add tag": "Shto etiketë",
         "Could not change the tags. Try again.": "Etiketat nuk u ndryshuan dot. Provoni sërish.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Një eksport CXF është I PAKRIPTUAR. Çdo fjalëkalim dhe kredencial hyrjeje do të lexohet si tekst i thjeshtë në skedarin e shkarkuar. Ruajeni në mënyrë të sigurt dhe fshijeni menjëherë pas përdorimit.",
         "Could not approve the application. It is still in the queue.": "Aplikimi nuk u miratua dot. Është ende në radhë.",
         "Could not reject the application. It is still in the queue.": "Aplikimi nuk u refuzua dot. Është ende në radhë.",
         "Removed the user from {count} team folders.": "Përdoruesi u hoq nga {count} dosje ekipi.",

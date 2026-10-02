@@ -1266,6 +1266,7 @@
         "Remove tag": "Treu l'etiqueta",
         "Add tag": "Afegeix una etiqueta",
         "Could not change the tags. Try again.": "No s'han pogut canviar les etiquetes. Torneu-ho a provar.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Una exportació CXF NO ESTÀ XIFRADA. Totes les contrasenyes i inicis de sessió es podran llegir com a text pla al fitxer baixat. Deseu-lo de manera segura i suprimiu-lo immediatament després d'usar-lo.",
         "Could not approve the application. It is still in the queue.": "No s'ha pogut aprovar la sol·licitud. Encara és a la cua.",
         "Could not reject the application. It is still in the queue.": "No s'ha pogut rebutjar la sol·licitud. Encara és a la cua.",
         "Removed the user from {count} team folders.": "S'ha tret l'usuari de {count} carpetes d'equip.",

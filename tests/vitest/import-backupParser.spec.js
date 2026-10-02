@@ -54,6 +54,16 @@ describe('backup parser registry', () => {
 		})
 	})
 
+	it('numbers restored rows so duplicates and rejections stay apart (keepiq#749)', async () => {
+		const two = {
+			...payload,
+			secrets: [payload.secrets[0], { ...payload.secrets[0], name: 'GCP' }],
+		}
+		const envelope = await encryptBackup(two, 'restore-pass-1')
+		const rows = await parseBackup(envelope, { passphrase: 'restore-pass-1' })
+		expect(rows.map((row) => row.sourceRow)).toEqual([1, 2])
+	})
+
 	it('throws on a wrong restore passphrase and yields no rows', async () => {
 		const envelope = await encryptBackup(payload, 'restore-pass-1')
 		await expect(parseBackup(envelope, { passphrase: 'nope' })).rejects.toThrow()
