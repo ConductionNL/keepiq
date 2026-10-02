@@ -93,6 +93,11 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * @param {string} id The item id.
+		 *
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-visibility
+		 */
 		secretId(id) {
 			if (id) {
 				this.store.fetchShares(id).catch(() => {})
@@ -100,6 +105,9 @@ export default {
 		},
 	},
 
+	/**
+	 * @spec openspec/specs/user-sharing/spec.md#scenario-owner-views-share-list
+	 */
 	async created() {
 		if (this.secretId) {
 			await this.store.fetchShares(this.secretId).catch(() => {})
@@ -107,6 +115,11 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * @param {string} shareId The share id.
+		 *
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
+		 */
 		onRevoke(shareId) {
 			this.store.revokeShare(shareId).catch(() => {})
 		},

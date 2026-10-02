@@ -95,6 +95,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Presentation state: picks the masked or revealed string for display.
+		 */
 		displayValue() {
 			return this.revealed ? (this.plain ?? '') : this.masked
 		},
@@ -108,6 +111,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		async toggle() {
 			if (this.useOnly) {
@@ -124,6 +128,7 @@ export default {
 		 *
 		 * @return {Promise<string>}
 		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		async resolvePlain() {
 			if (this.useOnly) {

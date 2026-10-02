@@ -118,6 +118,12 @@ class MigrationController extends OCSController {
 		}
 	}//end getStatus()
 
+	#[NoAdminRequired]
+	#[VaultKeyProofRequired(
+		binds: ['id', 'hasErrors', 'acceptUnrecoverable'],
+		subject: 'migrationOldSuite',
+		purpose: VaultKeyProofService::PURPOSE_COMPLETE_MIGRATION
+	)]
 	/**
 	 * Complete a migration.
 	 *
@@ -135,13 +141,8 @@ class MigrationController extends OCSController {
 	 *   Splitting the method would split the route and change the HTTP contract.
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-4
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
 	 */
-	#[NoAdminRequired]
-	#[VaultKeyProofRequired(
-		binds: ['id', 'hasErrors', 'acceptUnrecoverable'],
-		subject: 'migrationOldSuite',
-		purpose: VaultKeyProofService::PURPOSE_COMPLETE_MIGRATION
-	)]
 	public function complete(string $id, bool $hasErrors = false, ?int $acceptUnrecoverable = null): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
@@ -208,6 +209,13 @@ class MigrationController extends OCSController {
 	 * active. Permitted only while no record has been committed to the new suite;
 	 * once records have moved the server refuses and points at resuming.
 	 *
+	 * Guarded by a proof over the NEW suite's key (keepiq#859). Undoing a
+	 * containment step must not be possible with the credential the step
+	 * contains: a stolen session could otherwise poll the migration status and
+	 * abort the owner's recovery every time it started, and a leaked old
+	 * password must not be enough either. Only whoever holds the key the
+	 * rotation is moving to can call it off.
+	 *
 	 * @param string $id The migration ID
 	 *
 	 * @NoAdminRequired
@@ -217,6 +225,7 @@ class MigrationController extends OCSController {
 	 * @spec openspec/changes/harden-vault-key-material-guards/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
 	 */
 	#[NoAdminRequired]
+	#[VaultKeyProofRequired(binds: ['id'], subject: 'migrationNewSuite', purpose: VaultKeyProofService::PURPOSE_ABORT_MIGRATION)]
 	public function abort(string $id): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
@@ -226,7 +235,7 @@ class MigrationController extends OCSController {
 		try {
 			$this->requireOwnMigration(migrationId: $id, userId: $user->getUID());
 
-			$result = $this->migrationService->abortMigration(migrationId: $id);
+			$result = $this->migrationService->abortMigration(migrationId: $id, actorId: $user->getUID());
 			return new JSONResponse(data: $result);
 		} catch (ForbiddenException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);

@@ -83,6 +83,8 @@ class EphemeralSendAccessController extends Controller {
 	 * @param string $token The URL token
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -102,6 +104,8 @@ class EphemeralSendAccessController extends Controller {
 	 * @param string $token The URL token
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-burn-after-read-and-optional-expiry
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -120,6 +124,8 @@ class EphemeralSendAccessController extends Controller {
 	 * @param string $token The URL token
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/ephemeral-send/spec.md#scenario-brute-force-attempts-burn-the-send
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]

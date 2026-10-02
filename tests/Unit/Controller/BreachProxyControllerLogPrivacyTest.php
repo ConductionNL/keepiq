@@ -91,6 +91,28 @@ class BreachProxyControllerLogPrivacyTest extends TestCase {
 	}//end setUp()
 
 	/**
+	 * Keepiq#866: the prefix travels in the POST body, never in the request
+	 * URI. Nextcloud's log envelope stamps the request URI next to the user
+	 * id on every line written during the request, so a prefix in the path
+	 * paired the two whatever the line itself said.
+	 *
+	 * @return void
+	 */
+	public function testTheRouteCarriesThePrefixInTheBodyNotTheUri(): void {
+		$source = (string)file_get_contents(filename: __DIR__.'/../../../appinfo/routes.php');
+		$found = preg_match(
+			pattern: "/\\['name'\\s*=>\\s*'breachProxy#range',\\s*'url'\\s*=>\\s*'([^']+)',\\s*'verb'\\s*=>\\s*'([A-Z]+)'\\]/",
+			subject: $source,
+			matches: $route
+		);
+
+		$this->assertSame(expected: 1, actual: $found, message: 'breachProxy#range route not found');
+		$this->assertSame(expected: '/api/v1/breach-check/range', actual: $route[1]);
+		$this->assertSame(expected: 'POST', actual: $route[2]);
+		$this->assertStringNotContainsString(needle: '{prefix}', haystack: $route[1]);
+	}//end testTheRouteCarriesThePrefixInTheBodyNotTheUri()
+
+	/**
 	 * A failed lookup logs neither the prefix nor the URL, and names the class and status.
 	 *
 	 * The exception message is shaped like the one Nextcloud's Guzzle-backed

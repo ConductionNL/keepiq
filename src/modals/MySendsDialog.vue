@@ -94,11 +94,17 @@ export default {
 
 	emits: ['close'],
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
+		 */
 		store() {
 			return useEphemeralSendStore()
 		},
 	},
 
+	/**
+	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-manage-and-revoke-sends
+	 */
 	async mounted() {
 		try {
 			await this.store.fetchSends()
@@ -113,6 +119,8 @@ export default {
 		 *
 		 * @param {string} id The send id.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-manage-and-revoke-sends
 		 */
 		async onRevoke(id) {
 			try {
@@ -127,6 +135,8 @@ export default {
 		 *
 		 * @param {string} iso The ISO timestamp.
 		 * @return {string}
+		 *
+		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as locale text.
 		 */
 		formatDate(iso) {
 			const parsed = Date.parse(iso ?? '')

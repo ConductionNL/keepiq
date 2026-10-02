@@ -13,7 +13,7 @@
  * strings + History-ignored (KeePass XML), folders + custom fields (Nextcloud
  * Passwords), KDBX magic-byte detection, and the normalized-row contract.
  *
- * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-supported-import-formats
+ * @spec openspec/specs/secret-import/spec.md#requirement-supported-import-formats
  */
 
 import { describe, expect, it } from 'vitest'
@@ -171,6 +171,28 @@ describe('KeePass XML parser', () => {
 		expect(jenkins.login).toBe('ci')
 		expect(jenkins.url).toBe('https://ci.test')
 		expect(jenkins.additionalFields.CustomToken).toBe('tok123')
+	})
+
+	it('stashes a KeePass one-time-code seed as the TOTP seed (keepiq#749)', () => {
+		const rows = parseKeepassXml(`<?xml version="1.0"?>
+<KeePassFile><Root><Group><Name>Database</Name>
+  <Entry>
+    <String><Key>Title</Key><Value>XC</Value></String>
+    <String><Key>Password</Key><Value>p</Value></String>
+    <String><Key>otp</Key><Value>otpauth://totp/x?secret=JBSWY3DPEHPK3PXP</Value></String>
+  </Entry>
+  <Entry>
+    <String><Key>Title</Key><Value>KP</Value></String>
+    <String><Key>Password</Key><Value>p</Value></String>
+    <String><Key>TimeOtp-Secret-Base32</Key><Value>JBSWY3DPEHPK3PXP</Value></String>
+  </Entry>
+</Group></Root></KeePassFile>`)
+		const xc = rows.find((r) => r.name === 'XC')
+		const kp = rows.find((r) => r.name === 'KP')
+		expect(xc.additionalFields).toEqual({
+			totp: 'otpauth://totp/x?secret=JBSWY3DPEHPK3PXP',
+		})
+		expect(kp.additionalFields).toEqual({ totp: 'JBSWY3DPEHPK3PXP' })
 	})
 
 	it('throws when the KeePass root element is missing', () => {

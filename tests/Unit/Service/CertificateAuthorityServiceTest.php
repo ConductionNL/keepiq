@@ -390,7 +390,7 @@ class CertificateAuthorityServiceTest extends TestCase {
 		// No active suites to re-sign.
 		$this->suiteMapper->method('findAllActiveWithLimit')->willReturn([]);
 
-		$count = $this->service->renewIntermediate(forced: false);
+		$count = $this->service->renewIntermediate();
 
 		// No suites to re-sign.
 		$this->assertEquals(expected: 0, actual: $count);
@@ -434,7 +434,7 @@ class CertificateAuthorityServiceTest extends TestCase {
 		$this->caCertMapper->expects($this->once())->method('update');
 		$this->suiteMapper->method('findAllActiveWithLimit')->willReturn([]);
 
-		$count = $this->service->renewIntermediate(forced: true);
+		$count = $this->service->renewIntermediateRevokingOld();
 
 		$this->assertEquals(expected: 0, actual: $count);
 		// Forced: revokedAt should be set.
@@ -503,7 +503,7 @@ class CertificateAuthorityServiceTest extends TestCase {
 		$this->suiteMapper->method('findAllActiveWithLimit')
 			->willReturnOnConsecutiveCalls([$suite], []);
 
-		$this->service->renewIntermediate(forced: false);
+		$this->service->renewIntermediate();
 
 		// Whatever certificate the suite ends up with, its public key (modulus)
 		// MUST be the original — never a throwaway pair the server can't match.
@@ -647,7 +647,7 @@ class CertificateAuthorityServiceTest extends TestCase {
 		// CSR-based path could never do this and silently kept old certs.)
 		$this->suiteMapper->expects($this->exactly(2))->method('update');
 
-		$count = $this->service->renewIntermediate(forced: false);
+		$count = $this->service->renewIntermediate();
 
 		$this->assertEquals(expected: 2, actual: $count);
 

@@ -163,6 +163,36 @@ class RotationPolicyService {
 	}//end configuredExpiryCandidates()
 
 	/**
+	 * The reminder days the policies that scope this secret ask for: the
+	 * union of every applicable policy's own `reminder_days`, or null when
+	 * none sets any, so the caller falls back to the instance thresholds
+	 * (keepiq#746).
+	 *
+	 * @param Secret $secret The secret row
+	 *
+	 * @return array<int,int>|null
+	 *
+	 * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
+	 */
+	public function reminderDaysFor(Secret $secret): ?array {
+		$days = null;
+		foreach ($this->policyMapper->findApplicable(ownerId: $secret->getOwnerId()) as $policy) {
+			$own = $policy->decodedReminderDays();
+			if ($own === null || $this->policyApplies(policy: $policy, secret: $secret) === false) {
+				continue;
+			}
+
+			$days = array_merge($days ?? [], array_map('intval', $own));
+		}
+
+		if ($days === null) {
+			return null;
+		}
+
+		return array_values(array_unique($days));
+	}//end reminderDaysFor()
+
+	/**
 	 * Whether a policy's scope matches a secret.
 	 *
 	 * @param ExpiryPolicy $policy The policy
@@ -188,6 +218,8 @@ class RotationPolicyService {
 	 * @param string $userId The caller
 	 *
 	 * @return ExpiryPolicy[]
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 	 */
 	public function listPolicies(string $userId): array {
 		return $this->policyMapper->findApplicable(ownerId: $userId);
@@ -325,6 +357,8 @@ class RotationPolicyService {
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException On not found / foreign owner
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 	 */
 	public function deletePolicy(string $policyId, string $userId): void {
 		try {

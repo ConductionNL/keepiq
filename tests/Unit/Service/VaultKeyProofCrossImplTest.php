@@ -31,9 +31,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use OCA\Keepiq\Db\UsedProofNonceMapper;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\ICacheFactory;
 use OCP\IConfig;
 use OCP\Security\ISecureRandom;
 use PHPUnit\Framework\TestCase;
@@ -55,7 +55,7 @@ class VaultKeyProofCrossImplTest extends TestCase {
 			config: $this->createMock(IConfig::class),
 			secureRandom: $this->createMock(ISecureRandom::class),
 			timeFactory: $this->createMock(ITimeFactory::class),
-			cacheFactory: $this->createMock(ICacheFactory::class),
+			usedNonces: $this->createMock(UsedProofNonceMapper::class),
 			logger: $this->createMock(LoggerInterface::class),
 		);
 
@@ -89,7 +89,7 @@ class VaultKeyProofCrossImplTest extends TestCase {
 			config: $this->createMock(IConfig::class),
 			secureRandom: $this->createMock(ISecureRandom::class),
 			timeFactory: $this->createMock(ITimeFactory::class),
-			cacheFactory: $this->createMock(ICacheFactory::class),
+			usedNonces: $this->createMock(UsedProofNonceMapper::class),
 			logger: $this->createMock(LoggerInterface::class),
 		);
 

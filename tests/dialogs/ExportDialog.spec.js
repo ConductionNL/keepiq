@@ -15,8 +15,8 @@
  *
  * Runs under jsdom with lightweight stubs for the @nextcloud/vue components.
  *
- * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
- * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+ * @spec openspec/specs/secret-export/spec.md
+ * @spec openspec/specs/gdpr-compliance/spec.md
  */
 
 import { mount } from '@vue/test-utils'
@@ -104,6 +104,29 @@ describe('ExportDialog', () => {
 		await wrapper.vm.onExport()
 		expect(csvSpy).not.toHaveBeenCalled()
 		expect(wrapper.vm.error).toBeTruthy()
+	})
+})
+
+describe('ExportDialog: the plaintext warning names the chosen format (keepiq#749)', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+	})
+
+	it('says CXF for a CXF export and CSV for a CSV export', async () => {
+		const wrapper = mount(ExportDialog, {
+			propsData: { open: true, secrets: [], folders: [] },
+			...mountOpts,
+		})
+		wrapper.vm.mode = 'cxf'
+		await wrapper.vm.$nextTick()
+		const warning = () =>
+			wrapper.find('[data-testid="export-plaintext-warning"]').text()
+		expect(warning()).toContain('A CXF export is UNENCRYPTED.')
+		expect(warning()).not.toContain('CSV')
+
+		wrapper.vm.mode = 'plaintext-csv'
+		await wrapper.vm.$nextTick()
+		expect(warning()).toContain('A CSV export is UNENCRYPTED.')
 	})
 })
 

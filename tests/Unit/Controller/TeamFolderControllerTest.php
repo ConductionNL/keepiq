@@ -28,6 +28,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\TeamFolderController;
+use OCA\Keepiq\Service\TeamFolderConfirmationService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Http;
 use OCP\IRequest;
@@ -68,6 +69,13 @@ class TeamFolderControllerTest extends TestCase {
 	private IUserSession&MockObject $userSession;
 
 	/**
+	 * The mocked confirmation service.
+	 *
+	 * @var TeamFolderConfirmationService&MockObject
+	 */
+	private TeamFolderConfirmationService&MockObject $confirmations;
+
+	/**
 	 * Set up the mocks shared by every test.
 	 *
 	 * @return void
@@ -78,6 +86,7 @@ class TeamFolderControllerTest extends TestCase {
 		$this->request = $this->createMock(IRequest::class);
 		$this->teamFolderService = $this->createMock(TeamFolderService::class);
 		$this->userSession = $this->createMock(IUserSession::class);
+		$this->confirmations = $this->createMock(TeamFolderConfirmationService::class);
 	}//end setUp()
 
 	/**
@@ -96,10 +105,23 @@ class TeamFolderControllerTest extends TestCase {
 			$this->userSession->method('getUser')->willReturn($user);
 		}
 
+		// The confirmation service routes an owner's chunk to the plain
+		// fan-out; the double forwards exactly that, so these tests keep
+		// asserting on the fan-out service.
+		$confirmations = $this->confirmations;
+		$confirmations->method('registerShares')->willReturnCallback(
+			fn (string $teamFolderId, array $rows, string $userId): array => $this->teamFolderService->registerFanOutShares(
+				teamFolderId: $teamFolderId,
+				shares: $rows,
+				userId: $userId
+			)
+		);
+
 		return new TeamFolderController(
 			request: $this->request,
 			teamFolderService: $this->teamFolderService,
-			userSession: $this->userSession
+			userSession: $this->userSession,
+			confirmations: $confirmations,
 		);
 	}//end controller()
 
@@ -258,4 +280,35 @@ class TeamFolderControllerTest extends TestCase {
 		$this->assertSame(['message' => 'Unauthorized'], $response->getData());
 	}//end testRegisterSharesRejectsAnAnonymousCallerBeforeTheService()
 
+
+	/**
+	 * GET /api/v1/team-folders/pending-confirmations asks for the SESSION
+	 * user's folders only, and reports the switch (admin-auto-confirm-members §2.1).
+	 *
+	 * @return void
+	 */
+	public function testPendingConfirmationsAreScopedToTheSessionUser(): void {
+		$this->confirmations->method('isEnabled')->willReturn(true);
+		$this->confirmations->expects($this->once())->method('pendingConfirmations')
+			->with('hank')
+			->willReturn([['teamFolderId' => 'tf-ops']]);
+
+		$response = $this->controller('hank')->pendingConfirmations();
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['enabled' => true, 'folders' => [['teamFolderId' => 'tf-ops']]], $response->getData());
+	}//end testPendingConfirmationsAreScopedToTheSessionUser()
+
+	/**
+	 * An anonymous caller is refused before the service runs.
+	 *
+	 * @return void
+	 */
+	public function testPendingConfirmationsRejectsAnAnonymousCaller(): void {
+		$this->confirmations->expects($this->never())->method('pendingConfirmations');
+
+		$response = $this->controller(null)->pendingConfirmations();
+
+		$this->assertSame(401, $response->getStatus());
+	}//end testPendingConfirmationsRejectsAnAnonymousCaller()
 }//end class

@@ -133,10 +133,16 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns the Pinia rotation store with no domain logic.
+		 */
 		store() {
 			return useRotationStore()
 		},
 
+		/**
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotation-surfaced-on-dashboard-and-health-report
+		 */
 		openFlag() {
 			return this.store.flagsBySecretId[this.secretId] || null
 		},
@@ -161,6 +167,9 @@ export default {
 			return reasons[this.openFlag?.reason] || this.t('keepiq', 'Rotation due')
 		},
 
+		/**
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-approaching-expiry-and-overdue-reminders
+		 */
 		daysLeft() {
 			if (!this.effectiveExpiry) {
 				return null
@@ -170,6 +179,9 @@ export default {
 			)
 		},
 
+		/**
+		 * @spec exclude Presentation-only: maps the days-left value to a chip CSS class.
+		 */
 		expiryChipClass() {
 			if (this.daysLeft === null) {
 				return ''
@@ -211,6 +223,8 @@ export default {
 		 * Load the expiry pair and the caller's open flags.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
 		 */
 		async load() {
 			try {
@@ -231,6 +245,8 @@ export default {
 		 * Save the edited expiry date.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
 		 */
 		async onSave() {
 			if (!this.editValue) {
@@ -257,6 +273,8 @@ export default {
 		 * Clear the per-secret expiry (policies may still apply).
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
 		 */
 		async onClear() {
 			try {
@@ -277,6 +295,8 @@ export default {
 		 * Manually flag this secret for rotation (IDs only).
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotate-after-breach-and-rotate-after-compromise-flagging
 		 */
 		async onFlag() {
 			try {
@@ -292,6 +312,8 @@ export default {
 		 * Mark rotated — only resolves on a server-proven key advance.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-proven-mark-rotated-flow
 		 */
 		async onMarkRotated() {
 			try {
@@ -310,6 +332,8 @@ export default {
 		 * Dismiss the open flag without rotation.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotate-after-breach-and-rotate-after-compromise-flagging
 		 */
 		async onDismiss() {
 			try {

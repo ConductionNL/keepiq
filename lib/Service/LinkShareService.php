@@ -213,6 +213,8 @@ class LinkShareService {
 	 * @return LinkShare
 	 *
 	 * @throws RuntimeException When the token is invalid, expired, or exhausted
+	 *
+	 * @spec openspec/specs/link-sharing/spec.md#requirement-access-via-link
 	 */
 	public function getByToken(string $token): LinkShare {
 		try {
@@ -323,6 +325,8 @@ class LinkShareService {
 	 * @param string $userId The requesting Nextcloud user ID
 	 *
 	 * @return LinkShare[]
+	 *
+	 * @spec openspec/specs/link-sharing/spec.md#requirement-multiple-concurrent-link-shares
 	 */
 	public function listBySecret(string $secretId, string $userId): array {
 		$shares = $this->mapper->findBySecretId($secretId);

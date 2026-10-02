@@ -89,7 +89,21 @@ operators and works councils know it is the default.
 `link_share.access_failed`, `link_share.revoked`, `link_share.auto_deleted`,
 `request.created`, `request.fulfilled`, `request.re_requested`,
 `request.revoked`, `suite.revoked`, `suite.reinstated`,
-`suite.recovery_started`, `suite.recovery_completed`, `application.registered`,
+`suite.recovery_started`, `suite.recovery_completed`, `suite.recovery_aborted`,
+`suite.migration_terminated`, `suite.revoke_refused`, `key_proof.refused`,
+`application.registered`,
 `application.approved`, `application.rejected`, `application.deleted`,
 `application.token_issued`, `application.secret_retrieved`, `vault.exported`,
 `vault.gdpr_exported`, `vault.account_deleted`.
+
+Refusals on the containment paths are recorded too, so an attack shows up in
+the trail and the SIEM export and not only in `nextcloud.log`:
+
+- `key_proof.refused`: a request to a route that needs a master password proof
+  was refused. Metadata: the route, the purpose and the reason. The proof
+  itself is never recorded.
+- `suite.revoke_refused`: an administrator force-revoke was refused. Metadata:
+  a fixed reason code and whether a compromise revoke was asked for.
+- `suite.recovery_aborted`: the owner called off a compromise recovery before
+  any secret moved. `suite.migration_terminated`: a compromise force-revoke
+  ended a recovery that was still running.

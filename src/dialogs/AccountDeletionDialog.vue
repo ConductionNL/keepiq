@@ -12,7 +12,7 @@
   Offers a non-blocking "export first" suggestion. On success, shows the
   per-entity deletion report returned by the server.
 
-  @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+  @spec openspec/specs/gdpr-compliance/spec.md
 -->
 <template>
 	<NcDialog
@@ -130,7 +130,7 @@ export default {
 	 * Provide the export + session Pinia stores to the component.
 	 *
 	 * @return {object}
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	setup() {
 		return {
@@ -153,7 +153,7 @@ export default {
 		 * Whether a deletion is in flight (from the store).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
 		loading() {
 			return this.exportStore.loading
@@ -163,7 +163,7 @@ export default {
 		 * The confirmation-field label including the exact required phrase.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
 		confirmationLabel() {
 			return this.t('keepiq', 'Type "{phrase}" to confirm', {
@@ -176,7 +176,7 @@ export default {
 		 * confirmation phrase must be present (double-gated).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
 		canSubmit() {
 			return (
@@ -192,7 +192,7 @@ export default {
 		 * and lock the vault on success.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
 		async onDelete() {
 			this.error = null
@@ -223,7 +223,7 @@ export default {
 		 * Reset the dialog state (no master password retained).
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
 		reset() {
 			this.masterPassword = ''
@@ -237,7 +237,7 @@ export default {
 		 *
 		 * @param {boolean} value The new open state.
 		 * @return {void}
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
 		onUpdateOpen(value) {
 			if (!value) {

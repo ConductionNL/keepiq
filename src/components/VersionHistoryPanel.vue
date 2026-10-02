@@ -105,11 +105,17 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns the Pinia secret-version store with no domain logic.
+		 */
 		store() {
 			return useSecretVersionStore()
 		},
 	},
 
+	/**
+	 * @spec openspec/specs/secret-version-history/spec.md#requirement-list-view-and-restore-versions
+	 */
 	async mounted() {
 		try {
 			await this.store.fetchVersions(this.secretId)
@@ -144,6 +150,8 @@ export default {
 		 * Confirmed restore + recipient propagation.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/secret-version-history/spec.md#scenario-restore-becomes-a-new-head-and-syncs
 		 */
 		async onRestore() {
 			const version = this.confirmVersion
@@ -164,6 +172,8 @@ export default {
 		 *
 		 * @param {string} iso The ISO timestamp.
 		 * @return {string}
+		 *
+		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as a locale date string.
 		 */
 		formatDate(iso) {
 			const parsed = Date.parse(iso ?? '')

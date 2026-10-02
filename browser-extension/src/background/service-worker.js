@@ -14,6 +14,7 @@ import * as api from '../lib/api.js'
 import * as vault from '../lib/vault.js'
 import { matchSecrets, hostOf } from '../lib/match.js'
 import { classifyCapture } from '../lib/capture.js'
+import { policyRefusal } from '../lib/policy.js'
 import { buildPasskeyOrchestrator } from '../passkey/orchestrator.js'
 import { senderOrigin } from '../passkey/rp.js'
 import { computeTotp } from '../lib/totp-service.js'
@@ -216,12 +217,31 @@ async function totpCodeForHost(host) {
 }
 
 /**
- * Save or update a captured credential (encrypted client-side).
+ * Why the org password policy refuses a captured password, or null
+ * (keepiq#746). Runs before anything is encrypted, as the web app does.
+ *
+ * @param {object} config The paired config.
+ * @param {string} value The captured password.
+ * @return {Promise<string|null>} The refusal reason, or null.
+ */
+async function policyRefusalFor(config, value) {
+	const policy = await api.fetchPolicy(config)
+	return policyRefusal(policy, value, (prefix) => api.breachRange(config, prefix))
+}
+
+/**
+ * Save or update a captured credential (encrypted client-side). A password
+ * the org policy refuses is not saved; the reason comes back as the error.
  * @param payload
  */
 async function doSaveCapture(payload) {
 	if (!vault.isUnlocked()) throw new Error('vault is locked')
 	const config = await api.loadConfig()
+	const refusal = await policyRefusalFor(config, payload.secret)
+	if (refusal !== null) {
+		pendingCapture = null
+		throw new Error(refusal)
+	}
 	const encryptedKey = await vault.encryptField(payload.secret)
 	const encryptedLogin = await vault.encryptField(payload.login || '')
 	const body = {
@@ -282,6 +302,12 @@ async function doCapture(capture) {
 	if (offer.action === 'none') {
 		pendingCapture = null
 		return { action: 'none' }
+	}
+	// Say so in the page instead of offering a save the policy would refuse.
+	const refusal = await policyRefusalFor(config, capture.secret)
+	if (refusal !== null) {
+		pendingCapture = null
+		return { action: 'refused', reason: refusal }
 	}
 	pendingCapture.id = offer.id
 	return { action: offer.action, name: offer.name }

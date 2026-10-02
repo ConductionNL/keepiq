@@ -14,7 +14,7 @@
  *
  * Runs under node; argon2-browser is aliased to the deterministic stub.
  *
- * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+ * @spec openspec/specs/secret-export/spec.md
  */
 
 import { describe, expect, it } from 'vitest'

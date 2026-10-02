@@ -94,6 +94,9 @@ export default {
 		}
 	},
 
+	/**
+	 * @spec exclude Lifecycle teardown: clears the pending copied-indicator timer on unmount.
+	 */
 	beforeUnmount() {
 		if (this.timer) {
 			clearTimeout(this.timer)
@@ -112,6 +115,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+		 * @spec openspec/specs/mobile-pwa/spec.md#scenario-copy-inside-the-tap-gesture-honest-failure-without-a-secure-context
 		 */
 		async prewarm() {
 			if (this.useOnly) {
@@ -132,6 +136,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+		 * @spec openspec/specs/mobile-pwa/spec.md#requirement-mobile-webcrypto-and-clipboard-verification
 		 */
 		async onCopy() {
 			if (this.useOnly) {
@@ -168,6 +173,8 @@ export default {
 		 *
 		 * @param {string} text The text to write.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/mobile-pwa/spec.md#requirement-mobile-webcrypto-and-clipboard-verification
 		 */
 		async writeClipboard(text) {
 			if (navigator.clipboard && navigator.clipboard.writeText) {

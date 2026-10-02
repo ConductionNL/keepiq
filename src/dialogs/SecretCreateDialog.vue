@@ -280,6 +280,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-state passthrough: reads the session lock flag for display gating.
+		 */
 		locked() {
 			return useSessionStore().isLocked
 		},
@@ -323,7 +326,11 @@ export default {
 			return typedFieldsOf(useSecretTypeStore().typesById[this.typeId])
 		},
 
-		/** The selected type's system name (card-identity-items §3.1). */
+		/**
+		 * The selected type's system name (card-identity-items §3.1).
+		 *
+		 * @spec exclude Trivial lookup: resolves the selected type id to its name.
+		 */
 		selectedTypeName() {
 			return useSecretTypeStore().typesById[this.typeId]?.name ?? ''
 		},
@@ -336,12 +343,20 @@ export default {
 			return this.selectedTypeName === IDENTITY_TYPE_NAME
 		},
 
-		/** Best-effort Luhn hint — never blocks saving (§3.2). */
+		/**
+		 * Best-effort Luhn hint — never blocks saving (§3.2).
+		 *
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-payment-card-and-identity-system-types
+		 */
 		luhnOk() {
 			return luhnValid(this.card.number)
 		},
 
-		/** The value serialized for the encrypted key field. */
+		/**
+		 * The value serialized for the encrypted key field.
+		 *
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
+		 */
 		effectiveValue() {
 			if (this.isCard) {
 				return serializeCard(this.card)
@@ -358,6 +373,8 @@ export default {
 		 * disabled until compliant. Never POSTs a non-compliant value.
 		 *
 		 * @return {{compliant: boolean, reason: string|null}}
+		 *
+		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
 		 */
 		policyVerdict() {
 			if (this.isCard || this.isIdentity) {
@@ -456,6 +473,8 @@ export default {
 		 *
 		 * @param {boolean} value The new open state.
 		 * @return {void}
+		 *
+		 * @spec exclude Event re-emitter: syncs the open flag and emits close to the parent.
 		 */
 		onUpdateOpen(value) {
 			this.open = value
@@ -468,6 +487,8 @@ export default {
 		 * Open the key generator dialog.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
 		 */
 		openGenerator() {
 			this.generatorOpen = true
@@ -478,6 +499,8 @@ export default {
 		 *
 		 * @param {string} key The generated key.
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
 		 */
 		onGenerated(key) {
 			if (typeof key === 'string' && key.length > 0) {

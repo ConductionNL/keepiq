@@ -335,10 +335,15 @@ class SecretService {
 			throw new InvalidArgumentException('A secret requires a name and a key');
 		}
 
-		// The writing user files the application's secret, so the folder is
-		// checked against that user.
+		// Keepiq#873: a secret may only sit in a folder its OWNER owns, because
+		// the folder owner's delete purges every secret in it. The owner here
+		// is the application, which owns no folder, so this path refuses any
+		// folder exactly like the machine paths do. Without this, the writing
+		// user could purge the application's secret by deleting their folder.
 		$folderId = $this->nullableString(value: $data['folderId'] ?? null);
-		$this->requireFolderOwnedBy(folderId: $folderId, userId: $writingUserId);
+		if ($folderId !== null) {
+			throw new InvalidArgumentException('An application cannot file a secret in a folder');
+		}
 
 		try {
 			$suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
@@ -523,9 +528,11 @@ class SecretService {
 	 * @throws InvalidArgumentException When a submitted field is invalid
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
-	 *   independent, flat partial-update branch.
+	 *   independent, flat partial-update branch; every branch is pinned by
+	 *   tests/Unit/Service/SecretServiceMachineWriteTest.php (#152).
 	 * @SuppressWarnings(PHPMD.NPathComplexity)      Same: the branches are
-	 *   independent partial-update guards, not nested logic.
+	 *   independent partial-update guards, not nested logic. Extracting them
+	 *   into helpers trips TooManyMethods on this class instead (measured).
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
 	 */
@@ -886,8 +893,7 @@ class SecretService {
 	public function update(string $id, array $data, string $userId): Secret {
 		$this->assertNotWriteLocked(userId: $userId);
 
-		$secret = $this->loadOwned(id: $id, userId: $userId);
-		$secret->assertEditableByHolder();
+		$secret = $this->loadOwned(id: $id, userId: $userId)->assertEditableByHolder();
 
 		// Pre-update snapshot source (secret-version-history §2.2): captured
 		// BEFORE any mutation; persisted below only when a field actually
@@ -953,6 +959,8 @@ class SecretService {
 
 		if (array_key_exists('additionalFields', $data) === true) {
 			$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields']));
+			// Request-filled blobs the client merged into this one (keepiq#750).
+			$secret->dropMergedPending(count: (int)($data['mergedPending'] ?? 0));
 		}
 
 		if ($this->shouldSnapshot(before: $preUpdate, after: $secret) === true) {
@@ -1427,7 +1435,7 @@ class SecretService {
 	 *
 	 * @throws SuiteBlockedException When no active suite exists
 	 *
-	 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+	 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 	 */
 	public function assertActiveSuite(string $userId): void {
 		$this->getActiveSuiteOrBlock(userId: $userId);
@@ -1494,6 +1502,8 @@ class SecretService {
 	 *
 	 * @throws NotFoundException When the secret does not exist
 	 * @throws ForbiddenException When the secret belongs to another user
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
 	 */
 	public function findOwned(string $id, string $userId): Secret {
 		return $this->loadOwned(id: $id, userId: $userId);

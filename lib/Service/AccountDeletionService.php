@@ -103,7 +103,7 @@ class AccountDeletionService {
 	 *
 	 * @return DeletionReport The per-entity counts
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function deleteAllFor(string $userId, string $trigger = 'user-deleted'): DeletionReport {
 		$report = new DeletionReport();
@@ -141,6 +141,10 @@ class AccountDeletionService {
 
 		// Suites (cert + encrypted private key) and their migration records.
 		$this->suiteCleanup->removeSuites(userId: $userId, report: $report);
+
+		// Key material escrowed outside the suites: emergency envelopes (both
+		// sides) and passkey unlock envelopes.
+		$this->suiteCleanup->removeEscrowedKeys(userId: $userId, report: $report);
 
 		// Settings / preferences.
 		$this->settingMapper->deleteByUser(userId: $userId);

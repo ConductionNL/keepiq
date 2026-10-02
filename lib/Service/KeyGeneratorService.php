@@ -175,6 +175,8 @@ class KeyGeneratorService {
 	 * @SuppressWarnings(PHPMD.LongVariable)        Same reason: the name is the wire field name
 	 *   posted by src/dialogs/KeyGeneratorModal.vue and is called out above as part of
 	 *   the public API contract, so it is not free to shorten.
+	 *
+	 * @spec openspec/specs/key-generator/spec.md#requirement-default-generation
 	 */
 	public function generate(
 		int $length = 16,
