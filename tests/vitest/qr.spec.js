@@ -1,3 +1,4 @@
+import QRCode from 'qrcode'
 /**
  * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  *
@@ -6,10 +7,10 @@
  * RGBA pixels the way a canvas would hand them over.
  */
 import { describe, expect, it } from 'vitest'
-import QRCode from 'qrcode'
 import { decodeQrPixels } from '../../src/totp/qr.js'
 
-const URI = 'otpauth://totp/Example:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Example'
+const URI =
+	'otpauth://totp/Example:alice@example.com?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Example'
 
 /**
  * Render a QR matrix to RGBA pixels with a quiet zone, `scale` pixels a module.
@@ -29,7 +30,8 @@ function pixelsFor(text, scale = 4) {
 			if (!qr.modules.get(y, x)) continue
 			for (let dy = 0; dy < scale; dy++) {
 				for (let dx = 0; dx < scale; dx++) {
-					const px = ((y + quiet) * scale + dy) * width + (x + quiet) * scale + dx
+					const px =
+						((y + quiet) * scale + dy) * width + (x + quiet) * scale + dx
 					data[px * 4] = 0
 					data[px * 4 + 1] = 0
 					data[px * 4 + 2] = 0

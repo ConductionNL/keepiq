@@ -28,7 +28,6 @@ use OCA\Keepiq\Controller\RotationController;
 use OCA\Keepiq\Db\ExpiryPolicy;
 use OCA\Keepiq\Db\RotationFlag;
 use OCA\Keepiq\Db\Secret;
-use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\RotationPolicyService;
 use OCA\Keepiq\Service\SecretService;
@@ -285,7 +284,7 @@ class RotationControllerTest extends TestCase {
 		$this->secretService->expects($this->once())
 			->method('setExpiry')
 			->with('cc000000-0000-4000-8000-00000000000c', null, 'alice')
-			->willThrowException(new ForbiddenException('not the owner'));
+			->willThrowException(new NotFoundException('Secret not found'));
 		$this->rotationService->expects($this->never())->method('resolveEffectiveExpiry');
 
 		$response = $controller->setExpiry(id: 'cc000000-0000-4000-8000-00000000000c');
@@ -410,7 +409,7 @@ class RotationControllerTest extends TestCase {
 		$this->secretService->expects($this->once())
 			->method('findOwned')
 			->with('11000000-0000-4000-8000-000000000011', 'alice')
-			->willThrowException(new ForbiddenException('not the owner'));
+			->willThrowException(new NotFoundException('Secret not found'));
 		$this->rotationService->expects($this->never())->method('resolveEffectiveExpiry');
 
 		$response = $controller->getExpiry(id: '11000000-0000-4000-8000-000000000011');

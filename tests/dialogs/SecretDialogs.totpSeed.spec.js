@@ -128,17 +128,24 @@ describe('the Authenticator key of a login', () => {
 
 	it('edit: a changed seed rewrites the blob with the seed under totp', async () => {
 		const wrapper = await mountEdit({ pin: '1234' })
-		const update = vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({ id: 's1' })
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
 
 		wrapper.vm.totpSeed = URI
 		await wrapper.vm.submit()
 
-		expect(update.mock.calls[0][1].additionalFields).toEqual({ pin: '1234', totp: URI })
+		expect(update.mock.calls[0][1].additionalFields).toEqual({
+			pin: '1234',
+			totp: URI,
+		})
 	})
 
 	it('edit: a legacy otp member is read as the seed and an untouched save sends no blob', async () => {
 		const wrapper = await mountEdit({ otp: URI })
-		const update = vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({ id: 's1' })
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({ id: 's1' })
 
 		expect(wrapper.vm.totpSeed).toBe(URI)
 		wrapper.vm.name = 'renamed'
@@ -151,7 +158,9 @@ describe('the Authenticator key of a login', () => {
 		const wrapper = await mountEdit({ otp: 'just text' }, 'note')
 
 		expect(wrapper.vm.totpSeed).toBe('')
-		expect(wrapper.vm.additionalFields).toEqual([{ name: 'otp', value: 'just text' }])
+		expect(wrapper.vm.additionalFields).toEqual([
+			{ name: 'otp', value: 'just text' },
+		])
 		expect(wrapper.find('[data-testid="secret-totp-seed"]').exists()).toBe(false)
 	})
 

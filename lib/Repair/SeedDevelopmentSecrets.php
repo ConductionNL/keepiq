@@ -134,7 +134,30 @@ class SeedDevelopmentSecrets implements IRepairStep {
 		$workId = $this->createFolder(name: 'Work', parentId: null);
 		$personalId = $this->createFolder(name: 'Personal', parentId: null);
 
-		$secrets = [
+		$secrets = $this->fixtureSpecs(workId: $workId, personalId: $personalId);
+
+		$count = 0;
+		foreach ($secrets as $spec) {
+			$this->createSecret(spec: $spec, typeIds: $typeIds, certificate: $certificate, suiteId: $suiteId);
+			$count++;
+		}
+
+		$output->info('Keepiq: seeded ' . $count . ' development secrets in 2 folders');
+		$this->logger->info('Keepiq dev seed: created ' . $count . ' secrets');
+	}//end run()
+
+	/**
+	 * The fixture secrets, as plaintext specs encrypted by createSecret().
+	 *
+	 * @param string $workId     The Work folder id
+	 * @param string $personalId The Personal folder id
+	 *
+	 * @return list<array<string,mixed>>
+	 *
+	 * @spec exclude Debug-only fixture data, see run().
+	 */
+	private function fixtureSpecs(string $workId, string $personalId): array {
+		return [
 			[
 				'name' => 'GitHub',
 				'url' => 'https://github.com',
@@ -206,16 +229,7 @@ class SeedDevelopmentSecrets implements IRepairStep {
 				],
 			],
 		];
-
-		$count = 0;
-		foreach ($secrets as $spec) {
-			$this->createSecret(spec: $spec, typeIds: $typeIds, certificate: $certificate, suiteId: $suiteId);
-			$count++;
-		}
-
-		$output->info('Keepiq: seeded ' . $count . ' development secrets in 2 folders');
-		$this->logger->info('Keepiq dev seed: created ' . $count . ' secrets');
-	}//end run()
+	}//end fixtureSpecs()
 
 	/**
 	 * Build a name => id map of the system secret types.

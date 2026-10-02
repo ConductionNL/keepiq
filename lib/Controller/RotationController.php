@@ -106,7 +106,7 @@ class RotationController extends OCSController {
 
 		try {
 			$secret = $this->secretService->setExpiry(id: $id, expiresAt: $when, userId: $userId);
-		} catch (NotFoundException|ForbiddenException) {
+		} catch (NotFoundException) {
 			return new JSONResponse(data: ['message' => 'Not found'], statusCode: Http::STATUS_NOT_FOUND);
 		}
 
@@ -138,7 +138,7 @@ class RotationController extends OCSController {
 
 		try {
 			$secret = $this->secretService->findOwned(id: $id, userId: $userId);
-		} catch (NotFoundException|ForbiddenException) {
+		} catch (NotFoundException) {
 			return new JSONResponse(data: ['message' => 'Not found'], statusCode: Http::STATUS_NOT_FOUND);
 		}
 

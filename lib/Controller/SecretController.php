@@ -160,7 +160,7 @@ class SecretController extends OCSController {
 			$secret = $this->secretService->get($id, $userId);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
-		} catch (ForbiddenException|SuiteBlockedException $e) {
+		} catch (SuiteBlockedException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		}
 

@@ -181,9 +181,8 @@ import {
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
-import SecretTotpSeedField from '../components/SecretTotpSeedField.vue'
-import { SEED_FIELD_NAMES, seedFromAdditionalFields, withSeed } from '../totp/seedField.js'
 import SecretTagsField from '../components/SecretTagsField.vue'
+import SecretTotpSeedField from '../components/SecretTotpSeedField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import {
@@ -198,6 +197,11 @@ import {
 import { evaluateHibp, evaluateScore, fetchPolicy } from '../policy/policy.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import {
+	SEED_FIELD_NAMES,
+	seedFromAdditionalFields,
+	withSeed,
+} from '../totp/seedField.js'
 import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { sameTags } from '../utils/tags.js'

@@ -21,7 +21,6 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use OCA\Keepiq\Controller\SecretController;
 use OCA\Keepiq\Db\Secret;
-use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
@@ -108,16 +107,17 @@ class SecretControllerTest extends TestCase {
 	}//end testShowReturnsCiphertext()
 
 	/**
-	 * show() on another user's secret returns 403.
+	 * show() on another user's secret answers 404 like a missing one: the
+	 * service refuses it with NotFound (vault-login-totp-codes).
 	 *
 	 * @return void
 	 */
-	public function testShowForeignSecretForbidden(): void {
-		$this->secretService->method('get')->willThrowException(new ForbiddenException('nope'));
+	public function testShowForeignSecretAnswersNotFound(): void {
+		$this->secretService->method('get')->willThrowException(new NotFoundException('Secret not found'));
 
 		$response = $this->controller->show('s-1');
-		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
-	}//end testShowForeignSecretForbidden()
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	}//end testShowForeignSecretAnswersNotFound()
 
 	/**
 	 * show() on a missing secret returns 404.

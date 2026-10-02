@@ -55,7 +55,10 @@ export function memberNameError(name, taken = [], reserved = []) {
 
 	// Case-insensitive: `Key` reaches the same column as `key`, so accepting it
 	// would produce exactly the misrouting this rule exists to prevent.
-	const builtIn = [...RESERVED_MEMBER_NAMES, ...reserved.map((r) => r.toLowerCase())]
+	const builtIn = [
+		...RESERVED_MEMBER_NAMES,
+		...reserved.map((r) => r.toLowerCase()),
+	]
 	if (builtIn.includes(trimmed.toLowerCase()) === true) {
 		// Context-neutral wording on purpose. This message is now shared with the
 		// REQUEST dialog, where the reserved fields are tickboxes rather than fields

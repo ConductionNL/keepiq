@@ -11,14 +11,14 @@
  */
 
 import * as api from '../lib/api.js'
-import * as vault from '../lib/vault.js'
-import { matchSecrets, hostOf } from '../lib/match.js'
 import { classifyCapture } from '../lib/capture.js'
-import { buildPasskeyOrchestrator } from '../passkey/orchestrator.js'
-import { senderOrigin } from '../passkey/rp.js'
+import { loginTotpCode } from '../lib/login-totp.js'
+import { hostOf, matchSecrets } from '../lib/match.js'
 import { computeTotp } from '../lib/totp-service.js'
 import { reportFill } from '../lib/usage.js'
-import { loginTotpCode } from '../lib/login-totp.js'
+import * as vault from '../lib/vault.js'
+import { buildPasskeyOrchestrator } from '../passkey/orchestrator.js'
+import { senderOrigin } from '../passkey/rp.js'
 
 // Passkey provider (extension-passkey-provider): bind the ceremony orchestrator
 // to this worker's api + vault. Driven by the page-context shim relay in every
@@ -30,12 +30,18 @@ const DEFAULT_IDLE_MINUTES = 15
 // A pending submit-capture, surfaced to the popup for save/update confirmation.
 let pendingCapture = null
 
+/**
+ *
+ */
 async function idleMs() {
 	const config = await api.loadConfig()
 	const minutes = (config && config.idleMinutes) || DEFAULT_IDLE_MINUTES
 	return minutes * 60 * 1000
 }
 
+/**
+ *
+ */
 async function touchActivity() {
 	vault.armIdleLock(await idleMs())
 }
@@ -51,6 +57,10 @@ async function getState() {
 	}
 }
 
+/**
+ *
+ * @param payload
+ */
 async function doPair(payload) {
 	const config = {
 		url: payload.url,
@@ -63,6 +73,9 @@ async function doPair(payload) {
 	return { ok: true }
 }
 
+/**
+ *
+ */
 async function doUnpair() {
 	const config = await api.loadConfig()
 	if (config) {
@@ -77,6 +90,10 @@ async function doUnpair() {
 	return { ok: true }
 }
 
+/**
+ *
+ * @param payload
+ */
 async function doUnlock(payload) {
 	const config = await api.loadConfig()
 	if (!config) throw new Error('not paired')
@@ -88,6 +105,7 @@ async function doUnlock(payload) {
 /**
  * Candidate list for a host — metadata only (id/name/url). No decryption
  * happens here; a locked-but-paired extension can still list names/urls.
+ *
  * @param payload
  */
 async function doMatch(payload) {
@@ -110,6 +128,7 @@ let blobCache = new Map()
 
 /**
  * Decrypt the chosen secret and fill it into the active tab.
+ *
  * @param payload
  */
 async function doFill(payload) {
@@ -180,6 +199,7 @@ async function doTotpForHost(payload) {
 
 /**
  * Compute the TOTP code for a matched host, if any (auto-copy on fill).
+ *
  * @param {string} host
  * @return {Promise<string|null>}
  */
@@ -194,6 +214,7 @@ async function totpCodeForHost(host) {
 
 /**
  * Save or update a captured credential (encrypted client-side).
+ *
  * @param payload
  */
 async function doSaveCapture(payload) {
@@ -223,6 +244,9 @@ async function doSaveCapture(payload) {
 	return { ok: true }
 }
 
+/**
+ *
+ */
 function takePendingCapture() {
 	return pendingCapture
 }

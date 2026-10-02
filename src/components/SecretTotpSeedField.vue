@@ -34,13 +34,18 @@
 				tabindex="-1"
 				:aria-label="t('keepiq', 'QR image')"
 				data-testid="secret-totp-qr-file"
-				@change="onFile">
+				@change="onFile" />
 		</div>
 		<p v-if="qrError" class="secret-totp-seed-field__error" role="alert">
 			{{ qrError }}
 		</p>
 		<p class="secret-totp-seed-field__help">
-			{{ t('keepiq', 'Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.') }}
+			{{
+				t(
+					'keepiq',
+					'Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.',
+				)
+			}}
 		</p>
 	</div>
 </template>

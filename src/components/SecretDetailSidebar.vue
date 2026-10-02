@@ -920,7 +920,6 @@ import GroupShareList from './share/GroupShareList.vue'
 import ShareList from './share/ShareList.vue'
 import ShareRequestForm from './share/ShareRequestForm.vue'
 import TotpDisplay from './TotpDisplay.vue'
-import { seedFromAdditionalFields } from '../totp/seedField.js'
 import VaultIndicator from './VaultIndicator.vue'
 import VersionHistoryPanel from './VersionHistoryPanel.vue'
 import { cardLast4, parsePayload } from '../cardIdentity/cardIdentity.js'
@@ -928,6 +927,7 @@ import { useFolderStore } from '../store/modules/folder.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { seedFromAdditionalFields } from '../totp/seedField.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { rootVaultOf } from '../utils/vaultList.js'
 
@@ -1224,7 +1224,9 @@ export default {
 			if (!this.secret) {
 				return false
 			}
-			return useSecretTypeStore().typesById[this.secret.typeId]?.name === 'login'
+			return (
+				useSecretTypeStore().typesById[this.secret.typeId]?.name === 'login'
+			)
 		},
 
 		/**

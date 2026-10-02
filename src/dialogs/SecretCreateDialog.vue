@@ -188,10 +188,9 @@ import {
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
-import SecretTotpSeedField from '../components/SecretTotpSeedField.vue'
-import { SEED_FIELD_NAMES, withSeed } from '../totp/seedField.js'
 import DestinationSelect from '../components/DestinationSelect.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
+import SecretTotpSeedField from '../components/SecretTotpSeedField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import {
@@ -210,6 +209,7 @@ import {
 	resolveDefaultTypeId,
 	useUserPreferencesStore,
 } from '../store/modules/userPreferences.js'
+import { SEED_FIELD_NAMES, withSeed } from '../totp/seedField.js'
 import { membersToObject } from '../utils/additionalFields.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import {

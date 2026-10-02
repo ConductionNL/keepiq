@@ -11,12 +11,14 @@ import { cxfToRows, parseCxfDocument } from '../../src/cxf/cxf.js'
 
 const SEED = 'otpauth://totp/x?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ'
 
-const doc = (items) => ({
-	version: { major: 1, minor: 0 },
-	exporter: 'other-vault',
-	timestamp: 1750000000,
-	accounts: [{ id: 'acc-1', userName: 'alice', items }],
-})
+function doc(items) {
+	return {
+		version: { major: 1, minor: 0 },
+		exporter: 'other-vault',
+		timestamp: 1750000000,
+		accounts: [{ id: 'acc-1', userName: 'alice', items }],
+	}
+}
 
 const login = {
 	type: 'basic-auth',
@@ -28,9 +30,17 @@ const login = {
 
 describe('CXF login with a TOTP credential', () => {
 	it('attaches the seed to the login of the same item', () => {
-		const rows = cxfToRows(parseCxfDocument(doc([
-			{ id: 'i1', title: 'Example', credentials: [login, { type: 'totp', url: SEED }] },
-		])))
+		const rows = cxfToRows(
+			parseCxfDocument(
+				doc([
+					{
+						id: 'i1',
+						title: 'Example',
+						credentials: [login, { type: 'totp', url: SEED }],
+					},
+				]),
+			),
+		)
 
 		expect(rows).toHaveLength(1)
 		expect(rows[0].type).toBe('login')
@@ -39,18 +49,37 @@ describe('CXF login with a TOTP credential', () => {
 	})
 
 	it('also when the TOTP credential comes first', () => {
-		const rows = cxfToRows(parseCxfDocument(doc([
-			{ id: 'i1', title: 'Example', credentials: [{ type: 'totp', secret: 'GEZDGNBVGY3TQOJQ' }, login] },
-		])))
+		const rows = cxfToRows(
+			parseCxfDocument(
+				doc([
+					{
+						id: 'i1',
+						title: 'Example',
+						credentials: [
+							{ type: 'totp', secret: 'GEZDGNBVGY3TQOJQ' },
+							login,
+						],
+					},
+				]),
+			),
+		)
 
 		expect(rows).toHaveLength(1)
 		expect(rows[0].additionalFields.totp).toBe('GEZDGNBVGY3TQOJQ')
 	})
 
 	it('keeps a TOTP credential on an item without a login as an Authenticator item', () => {
-		const rows = cxfToRows(parseCxfDocument(doc([
-			{ id: 'i1', title: 'Only code', credentials: [{ type: 'totp', url: SEED }] },
-		])))
+		const rows = cxfToRows(
+			parseCxfDocument(
+				doc([
+					{
+						id: 'i1',
+						title: 'Only code',
+						credentials: [{ type: 'totp', url: SEED }],
+					},
+				]),
+			),
+		)
 
 		expect(rows).toHaveLength(1)
 		expect(rows[0].type).toBe('totp')

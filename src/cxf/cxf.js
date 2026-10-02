@@ -291,10 +291,10 @@ export function cxfToRows(doc) {
 			)
 			const seedCredential = hasLogin
 				? credentials.find(
-					(c) =>
-						String(c?.type ?? '') === 'totp'
-						&& (fieldValue(c.url) || fieldValue(c.secret)) !== '',
-				)
+						(c) =>
+							String(c?.type ?? '') === 'totp'
+							&& (fieldValue(c.url) || fieldValue(c.secret)) !== '',
+					)
 				: undefined
 			let seedAttached = false
 			for (const credential of credentials) {

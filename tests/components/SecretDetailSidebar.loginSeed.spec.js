@@ -30,7 +30,10 @@ const stubAll = {
 	CopyButton: { template: '<button />' },
 	PasswordField: { template: '<input />' },
 	ShareList: { template: '<div />' },
-	TotpDisplay: { props: ['seed'], template: '<output class="totp-stub">{{ seed ? "code" : "" }}</output>' },
+	TotpDisplay: {
+		props: ['seed'],
+		template: '<output class="totp-stub">{{ seed ? "code" : "" }}</output>',
+	},
 }
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
@@ -89,26 +92,38 @@ describe('SecretDetailSidebar: the code of a login', () => {
 	it('reads a legacy otpauth member as the seed', async () => {
 		const wrapper = await mountDetail({ otpauth: SEED })
 
-		expect(wrapper.findComponent('[data-testid="secret-detail-totp"]').props('seed')).toBe(SEED)
+		expect(
+			wrapper
+				.findComponent('[data-testid="secret-detail-totp"]')
+				.props('seed'),
+		).toBe(SEED)
 		expect(wrapper.vm.hasAdditionalFields).toBe(false)
 	})
 
 	it('shows no code row for a login without a seed', async () => {
 		const wrapper = await mountDetail({ pin: '1234' })
 
-		expect(wrapper.find('[data-testid="secret-detail-totp"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="secret-detail-totp"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('hands a malformed seed to the code row, which shows the invalid state', async () => {
 		const wrapper = await mountDetail({ totp: 'not a seed' })
 
-		expect(wrapper.findComponent('[data-testid="secret-detail-totp"]').props('seed')).toBe('not a seed')
+		expect(
+			wrapper
+				.findComponent('[data-testid="secret-detail-totp"]')
+				.props('seed'),
+		).toBe('not a seed')
 	})
 
 	it('leaves a member named totp on a note in the list', async () => {
 		const wrapper = await mountDetail({ totp: 'text' }, 'note')
 
-		expect(wrapper.find('[data-testid="secret-detail-totp"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="secret-detail-totp"]').exists()).toBe(
+			false,
+		)
 		expect(wrapper.text()).toContain('totp')
 	})
 })
