@@ -218,4 +218,78 @@ class PasskeyServiceTest extends TestCase {
 		$this->expectException(DoesNotExistException::class);
 		$this->service->revoke(uid: 'alice', id: 'missing');
 	}//end testRevokeMissingThrows()
+
+	/**
+	 * A credential of a given client kind and relying party.
+	 *
+	 * @param string $id The credential id
+	 * @param string $kind web or extension
+	 * @param string|null $rpId The relying party id
+	 *
+	 * @return PasskeyCredential
+	 */
+	private function makeClientCredential(string $id, string $kind, ?string $rpId): PasskeyCredential {
+		$credential = $this->makeCredential($id);
+		$credential->setClientKind($kind);
+		$credential->setRpId($rpId);
+
+		return $credential;
+	}//end makeClientCredential()
+
+	/**
+	 * The web app never receives an extension credential, and the extension
+	 * never receives a web credential or another extension's credential.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/extension-biometric-unlock/spec.md#requirement-extension-credentials-are-visible-and-revocable-in-the-web-app
+	 */
+	public function testLoginOptionsSeparatesWebAndExtensionCredentials(): void {
+		$this->mapper->method('findActiveByOwner')->willReturn([
+			$this->makeClientCredential('web1', 'web', null),
+			$this->makeClientCredential('ext1', 'extension', 'abcdefghijklmnop'),
+			$this->makeClientCredential('ext2', 'extension', 'otherextensionid'),
+		]);
+
+		$web = $this->service->loginOptions('alice');
+		$this->assertSame(['web1'], array_column($web['credentials'], 'id'));
+
+		$extension = $this->service->loginOptions(uid: 'alice', client: 'extension', rpId: 'abcdefghijklmnop');
+		$this->assertSame(['ext1'], array_column($extension['credentials'], 'id'));
+
+		// An extension request without its relying party gets nothing.
+		$noRp = $this->service->loginOptions(uid: 'alice', client: 'extension', rpId: '');
+		$this->assertSame([], $noRp['credentials']);
+	}//end testLoginOptionsSeparatesWebAndExtensionCredentials()
+
+	/**
+	 * Enrolment stores the client kind and relying party; an extension
+	 * credential needs its relying party and an unknown kind is refused.
+	 *
+	 * @return void
+	 */
+	public function testEnrollStoresClientKindAndRpId(): void {
+		$this->mapper->method('findByCredentialId')->willReturn(null);
+		$this->mapper->method('insert')->willReturnArgument(0);
+
+		$credential = $this->service->enroll(
+			uid: 'alice',
+			dto: ['credentialId' => 'c', 'prfSalt' => 's', 'wrappedUnlockKey' => 'e', 'clientKind' => 'extension', 'rpId' => 'abcdefghijklmnop'],
+		);
+		$this->assertSame('extension', $credential->getClientKind());
+		$this->assertSame('abcdefghijklmnop', $credential->getRpId());
+		$this->assertSame('extension', $credential->jsonSerialize()['clientKind']);
+
+		$web = $this->service->enroll(uid: 'alice', dto: ['credentialId' => 'w', 'prfSalt' => 's', 'wrappedUnlockKey' => 'e']);
+		$this->assertSame('web', $web->getClientKind());
+
+		foreach ([['clientKind' => 'extension'], ['clientKind' => 'desktop']] as $extra) {
+			try {
+				$this->service->enroll(uid: 'alice', dto: ['credentialId' => 'x', 'prfSalt' => 's', 'wrappedUnlockKey' => 'e'] + $extra);
+				$this->fail('enrol accepted ' . json_encode($extra));
+			} catch (InvalidArgumentException) {
+				$this->addToAssertionCount(1);
+			}
+		}
+	}//end testEnrollStoresClientKindAndRpId()
 }//end class

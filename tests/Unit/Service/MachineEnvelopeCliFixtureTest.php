@@ -3,7 +3,7 @@
 /**
  * Guards the CLI's envelope fixture against the real envelope serializer.
  *
- * `cli/testdata/machine_envelope.json` is what the Go CLI tests decrypt. It
+ * `sdk/testdata/machine_envelope.json` is what the Go CLI tests decrypt. It
  * holds an envelope written by the real MachineSecretEnvelopeService with
  * ciphertext from the real EncryptService, plus the throwaway RSA-4096 key
  * that decrypts it. This test proves the committed file is still exactly what
@@ -15,7 +15,7 @@
  *
  *   KEEPIQ_WRITE_CLI_FIXTURE=1 ./vendor/bin/phpunit --filter MachineEnvelopeCliFixtureTest
  *
- * then run `go test ./...` in `cli/`.
+ * then run `go test ./...` in `sdk/go/` and `cli/`.
  *
  * @category Test
  * @package  OCA\Keepiq\Tests\Unit\Service
@@ -47,7 +47,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * The CLI fixture is the real serializer's output, and its ciphertext is real.
  *
- * @spec openspec/changes/apps-client-libraries-and-ci/tasks.md#1.2
+ * @spec openspec/specs/client-libraries/spec.md
  */
 class MachineEnvelopeCliFixtureTest extends TestCase {
 
@@ -56,7 +56,7 @@ class MachineEnvelopeCliFixtureTest extends TestCase {
 	 *
 	 * @var string
 	 */
-	private const FIXTURE = __DIR__ . '/../../../cli/testdata/machine_envelope.json';
+	private const FIXTURE = __DIR__ . '/../../../sdk/testdata/machine_envelope.json';
 
 	/**
 	 * The folder id the rebuilt secret carries (the envelope only holds the path).
@@ -101,8 +101,8 @@ class MachineEnvelopeCliFixtureTest extends TestCase {
 		$this->assertSame(
 			$envelope,
 			$service->serialize($secret),
-			'cli/testdata/machine_envelope.json no longer matches MachineSecretEnvelopeService::serialize(); '
-			. 'regenerate it (see this class docblock) and run go test in cli/.'
+			'sdk/testdata/machine_envelope.json no longer matches MachineSecretEnvelopeService::serialize(); '
+			. 'regenerate it (see this class docblock) and run go test in sdk/go/ and cli/.'
 		);
 
 		$this->assertSame(self::PLAINTEXT, $fixture['plaintext']);
