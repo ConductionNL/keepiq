@@ -48,7 +48,13 @@ export function pageSender(url = 'https://evil.example/') {
 function area(map) {
 	return {
 		get: async (keys) => {
-			const list = Array.isArray(keys) ? keys : [keys]
+			// null reads everything, as chrome.storage does.
+			const list =
+				keys === null || keys === undefined
+					? [...map.keys()]
+					: Array.isArray(keys)
+						? keys
+						: [keys]
 			const out = {}
 			for (const k of list) {
 				if (map.has(k)) out[k] = structuredClone(map.get(k))

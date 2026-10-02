@@ -21,7 +21,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use OCA\Keepiq\Controller\MemberOverviewController;
 use OCA\Keepiq\Service\MemberOverviewService;
-use OCA\Keepiq\Settings\AdminSettings;
+use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -37,7 +37,7 @@ use ReflectionMethod;
  * Nextcloud's SecurityMiddleware refuses a non-admin before the controller
  * body runs, and it decides from the DISPATCHED method's attributes. So the
  * refusal for a regular user is exactly: the method carries
- * `#[AuthorizedAdminSetting(AdminSettings::class)]` and nothing that opens
+ * `#[AuthorizedAdminSetting(PeopleAdminSettings::class)]` (the People area, admin-scoped-roles) and nothing that opens
  * it wider (`NoAdminRequired`, `PublicPage`, `SubAdminRequired`).
  */
 class MemberOverviewControllerTest extends TestCase {
@@ -51,7 +51,7 @@ class MemberOverviewControllerTest extends TestCase {
 
 		$guards = $method->getAttributes(AuthorizedAdminSetting::class);
 		$this->assertCount(1, $guards);
-		$this->assertSame(AdminSettings::class, $guards[0]->newInstance()->getSettings());
+		$this->assertSame(PeopleAdminSettings::class, $guards[0]->newInstance()->getSettings());
 
 		foreach ([NoAdminRequired::class, PublicPage::class, SubAdminRequired::class] as $widening) {
 			$this->assertSame([], $method->getAttributes($widening), $widening . ' would let a regular user in');
