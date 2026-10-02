@@ -8,7 +8,7 @@
 - [ ] 2.1 Implement the reconcile loop: token cache, by-name fetch with ETag, fingerprint check, in-memory decrypt, target Secret with owner reference, requeue. Verify with envtest tests against an httptest stub serving envelopes from `sdk/testdata/`.
 - [ ] 2.2 Set `Ready` conditions and events for 404, 409 with candidates, token refusal and fingerprint mismatch, never including a value. Verify with envtest tests that assert status and events contain no plaintext.
 - [ ] 2.3 Patch a checksum annotation on each restart target when a value changes. Verify with an envtest test that the Deployment template annotation changes once per rotation.
-- [ ] 2.4 Renew leases before expiry and refetch after a refused renewal. Verify with envtest tests against a stub that advertises leases and one that does not.
+- [ ] 2.4 Fetch each item again before its lease expires (the one renewal path; keepiq#753 removed the renew route). Verify with envtest tests against a stub that advertises leases and one that does not.
 
 ## 3. Distribution
 

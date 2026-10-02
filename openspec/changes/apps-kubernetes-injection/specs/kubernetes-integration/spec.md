@@ -46,13 +46,13 @@ The operator MUST report `Ready=False` with a reason and an event for an unknown
 
 ### Requirement: Leases are honoured when advertised
 
-When the discovery document advertises lease support, the operator MUST record the `Doriath-Lease-Id` and `Doriath-Lease-Expires` headers in the resource status, MUST renew the lease through `POST /api/v1/app/leases/{id}/renew` before it expires, and MUST refetch after a refused renewal. Against an instance without lease support it MUST work unchanged.
+When the discovery document advertises lease support, the operator MUST record the `Doriath-Lease-Id` and `Doriath-Lease-Expires` headers in the resource status and MUST fetch the item again before the lease expires, which is the one renewal path (keepiq#753: there is no renew route). Against an instance without lease support it MUST work unchanged.
 
-#### Scenario: Lease is renewed before expiry
+#### Scenario: The item is fetched again before the lease expires
 
-- **GIVEN** an instance that advertises leases and a lease that expires in two minutes
-- **WHEN** the operator's next loop runs
-- **THEN** the operator MUST renew the lease and record the new expiry in status
+- **GIVEN** an instance that advertises leases and a lease that expires before the operator's next loop
+- **WHEN** the operator's loop runs
+- **THEN** the operator MUST fetch the item again and record the new lease id and expiry in status
 
 ### Requirement: Pods can receive values without a Kubernetes Secret
 

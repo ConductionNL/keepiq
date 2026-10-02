@@ -271,31 +271,6 @@ func (c *Client) LeaseSupported() (bool, error) {
 	return d.Lease.Supported, nil
 }
 
-// RenewLease extends a lease the server attached to an earlier read and
-// returns its new expiry. A lease the server will not renew (revoked, at its
-// maximum, or unknown) is an *APIError with status 409 or ErrNotFound.
-func (c *Client) RenewLease(id string) (*Lease, error) {
-	addr := c.endpoint("", "/apps/keepiq/api/v1/app/leases/{id}/renew", "{id}", id)
-	resp, body, err := c.do(http.MethodPost, addr, nil, "")
-	if err != nil {
-		return nil, err
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, c.statusError(resp.StatusCode, body, id)
-	}
-	var l struct {
-		ID        string `json:"id"`
-		ExpiresAt string `json:"expiresAt"`
-	}
-	if err := json.Unmarshal(body, &l); err != nil {
-		return nil, fmt.Errorf("keepiq: decode lease: %w", err)
-	}
-	if l.ID == "" {
-		l.ID = id
-	}
-	return &Lease{ID: l.ID, Expires: l.ExpiresAt}, nil
-}
-
 // GetByID reads one secret by id.
 func (c *Client) GetByID(id string) (*Secret, error) {
 	d, err := c.discover()

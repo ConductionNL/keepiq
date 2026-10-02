@@ -4,7 +4,8 @@
 // RS256 signature against the application key, as JwtAuthService does), the
 // secrets routes (list with updated_since, by id, by name with 404 / envelope /
 // 409 candidates, create, update) with ETags and 304, and, when enabled, the
-// lease headers and lease renewal. Every request body is recorded so a test can
+// lease headers (there is no renew route; a consumer fetches again).
+// Every request body is recorded so a test can
 // prove no plaintext was sent.
 //
 // The default key and the first secret come from sdk/testdata/machine_envelope.json,
@@ -76,8 +77,6 @@ type Stub struct {
 	RevokeNext  bool
 	Leases      bool          // advertise and attach leases
 	LeaseTTL    time.Duration // lease lifetime when Leases is on
-	RefuseRenew bool          // answer 409 to a renewal
-	Renewals    int
 	leases      map[string]time.Time
 	leaseSeq    int
 	updates     int
@@ -213,22 +212,7 @@ func (s *Stub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 401, map[string]any{"message": "Bearer token required"})
 		return
 	}
-	leasePrefix := Webroot + "/apps/keepiq/api/v1/app/leases/"
 	switch {
-	case strings.HasPrefix(p, leasePrefix) && strings.HasSuffix(p, "/renew") && r.Method == http.MethodPost:
-		id := strings.TrimSuffix(strings.TrimPrefix(p, leasePrefix), "/renew")
-		if _, ok := s.leases[id]; !ok {
-			writeJSON(w, 404, map[string]any{"message": "Lease not found"})
-			return
-		}
-		if s.RefuseRenew {
-			writeJSON(w, 409, map[string]any{"message": "Lease cannot be renewed"})
-			return
-		}
-		s.Renewals++
-		exp := s.Now().Add(s.LeaseTTL).UTC()
-		s.leases[id] = exp
-		writeJSON(w, 200, map[string]any{"id": id, "applicationId": s.App, "expiresAt": exp.Format(time.RFC3339), "status": "active", "renewedCount": s.Renewals})
 	case p == api && r.Method == http.MethodGet:
 		since := r.URL.Query().Get("updated_since")
 		ids := make([]string, 0, len(s.Envelopes))
