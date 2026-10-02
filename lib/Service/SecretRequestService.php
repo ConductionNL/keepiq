@@ -287,6 +287,22 @@ class SecretRequestService {
 			);
 		}
 
+		$this->writeFilledValues(secret: $secret, data: $data);
+	}//end persistFilledValues()
+
+	/**
+	 * Write the filled values through the owner's update path: the
+	 * application's, or the user's after holding back a filled extra-field
+	 * blob that would overwrite the owner's own (keepiq#750).
+	 *
+	 * @param Secret $secret The secret the request writes to
+	 * @param array<string,mixed> $data The values to write
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 */
+	private function writeFilledValues(Secret $secret, array $data): void {
 		$secretService = $this->container->get(SecretService::class);
 
 		if ($secret->getOwnerType() === 'application') {
@@ -299,12 +315,49 @@ class SecretRequestService {
 			return;
 		}
 
+		$data = $this->holdBackAdditionalFields(secret: $secret, data: $data);
+		if ($data === []) {
+			return;
+		}
+
 		$secretService->update(
 			id: $secret->getId(),
 			data: $data,
 			userId: $secret->getOwnerId()
 		);
-	}//end persistFilledValues()
+	}//end writeFilledValues()
+
+	/**
+	 * Keep a filled extra-field blob apart when the owner already has one
+	 * (keepiq#750). The filler cannot read the owner's blob, so storing the
+	 * filled one in its place wiped every other extra field. It is appended
+	 * to the secret's pending list instead, and the owner's browser merges
+	 * it on the next open. With no stored blob there is nothing to lose and
+	 * the filled blob is written as is.
+	 *
+	 * @param Secret $secret The user-owned secret the request writes to
+	 * @param array<string,mixed> $data The values to write
+	 *
+	 * @return array<string,mixed> The values still to write through update()
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 */
+	private function holdBackAdditionalFields(Secret $secret, array $data): array {
+		$blob = $data[SecretRequestPolicy::ADDITIONAL_BLOB] ?? null;
+		$stored = $secret->getAdditionalFields();
+		if (is_string($blob) === false || $stored === null || $stored === '') {
+			return $data;
+		}
+
+		$pending = $secret->pendingAdditionalFieldList();
+		$pending[] = $blob;
+		$secret->setPendingAdditionalFieldList($pending);
+		$this->secretMapper->update($secret);
+
+		unset($data[SecretRequestPolicy::ADDITIONAL_BLOB]);
+
+		return $data;
+	}//end holdBackAdditionalFields()
 
 	/**
 	 * Create a new pending secret request.
