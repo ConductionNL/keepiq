@@ -18,7 +18,14 @@ export const CONNECTORS = {
 	sentinel: {
 		type: 'sentinel',
 		format: 'json',
-		fields: ['endpoint', 'tenantId', 'clientId', 'dcrImmutableId', 'streamName', 'credential'],
+		fields: [
+			'endpoint',
+			'tenantId',
+			'clientId',
+			'dcrImmutableId',
+			'streamName',
+			'credential',
+		],
 	},
 	syslog_cef: {
 		type: 'syslog',
@@ -82,7 +89,10 @@ export function formIsValid(form, creating) {
 	if (connector.type !== 'syslog' && !form.endpoint.startsWith('https://')) {
 		return false
 	}
-	if (form.connector === 'sentinel' && ['tenantId', 'clientId', 'dcrImmutableId'].some((f) => !form[f])) {
+	if (
+		form.connector === 'sentinel'
+		&& ['tenantId', 'clientId', 'dcrImmutableId'].some((f) => !form[f])
+	) {
 		return false
 	}
 	if (creating && connector.fields.includes('credential') && !form.credential) {
@@ -114,7 +124,9 @@ export function requestBody(form) {
 	}
 	const options = OPTION_FIELDS[form.connector]
 	if (options) {
-		body.connectorOptions = Object.fromEntries(options.filter((f) => form[f]).map((f) => [f, form[f]]))
+		body.connectorOptions = Object.fromEntries(
+			options.filter((f) => form[f]).map((f) => [f, form[f]]),
+		)
 		if (form.connector === 'sentinel') {
 			body.connectorOptions.dataCollectionEndpoint = form.endpoint
 		}

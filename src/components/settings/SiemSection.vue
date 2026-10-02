@@ -261,7 +261,12 @@ import {
 	NcSelect,
 	NcTextField,
 } from '@nextcloud/vue'
-import { connectorOf, fieldsFor, formIsValid, requestBody } from './siemConnectors.js'
+import {
+	connectorOf,
+	fieldsFor,
+	formIsValid,
+	requestBody,
+} from './siemConnectors.js'
 
 /**
  * Audit-event category slugs (prefix before the first dot of an event
@@ -350,7 +355,10 @@ export default {
 		 */
 		connectorOptions() {
 			return [
-				{ id: 'splunk_hec', label: t('keepiq', 'Splunk HTTP Event Collector') },
+				{
+					id: 'splunk_hec',
+					label: t('keepiq', 'Splunk HTTP Event Collector'),
+				},
 				{ id: 'sentinel', label: t('keepiq', 'Microsoft Sentinel') },
 				{ id: 'syslog_cef', label: t('keepiq', 'CEF over syslog') },
 				{ id: 'syslog_json', label: t('keepiq', 'Syslog JSON') },
@@ -364,10 +372,19 @@ export default {
 		 * @spec exclude Two-way binding between the picker object and the connector key.
 		 */
 		connectorOption: {
+			/**
+			 * @spec exclude Two-way binding: the picker object for the connector key.
+			 */
 			get() {
-				return this.connectorOptions.find((o) => o.id === this.form.connector)
+				return this.connectorOptions.find(
+					(o) => o.id === this.form.connector,
+				)
 			},
 
+			/**
+			 * @param {object} option The picked entry.
+			 * @spec exclude Two-way binding: stores the picked connector key.
+			 */
 			set(option) {
 				this.form.connector = option?.id ?? 'splunk_hec'
 			},
@@ -393,7 +410,9 @@ export default {
 		 */
 		endpointPlaceholder() {
 			return {
-				splunk_hec: 'https://splunk.example.org:8088/services/collector/event',
+				splunk_hec:
+					'https://splunk.example.org:8088/services/collector/event',
+
 				sentinel: 'https://keepiq-dce.westeurope-1.ingest.monitor.azure.com',
 				syslog_cef: 'siem.example.org:6514',
 				syslog_json: 'siem.example.org:6514',
