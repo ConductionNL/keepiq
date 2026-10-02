@@ -51,6 +51,12 @@
 					cred.label || t('keepiq', 'Passkey')
 				}}</span>
 				<span
+					v-if="cred.clientKind === 'extension'"
+					class="passkey-manager__client"
+					:data-testid="`passkey-client-${cred.id}`"
+					>{{ t('keepiq', 'Browser extension') }}</span
+				>
+				<span
 					:class="`passkey-manager__status passkey-manager__status--${cred.status}`"
 					>{{ cred.status }}</span
 				>
@@ -232,6 +238,14 @@ export default {
 			padding: 4px 0;
 			border-bottom: 1px solid var(--color-border);
 		}
+	}
+
+	&__client {
+		font-size: 0.85em;
+		padding: 0 6px;
+		border: 1px solid var(--color-border);
+		border-radius: var(--border-radius-pill, 12px);
+		color: var(--color-text-maxcontrast);
 	}
 
 	&__label {
