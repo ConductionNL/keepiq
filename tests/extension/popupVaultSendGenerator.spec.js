@@ -98,7 +98,9 @@ describe('Generator tab', () => {
 		)
 		passphrase.checked = true
 		passphrase.dispatchEvent(new Event('change'))
-		expect($('gen-output').textContent.split('-')).toHaveLength(5)
+		// Five words joined by hyphens; four list words carry a hyphen
+		// themselves, so the shape is checked instead of a split count.
+		expect($('gen-output').textContent).toMatch(/^[a-z]+(-[a-z]+){4,}$/)
 
 		expect(server.calls.some((c) => c.url.includes('generate-key'))).toBe(false)
 	})
