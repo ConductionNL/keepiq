@@ -91,9 +91,9 @@ A challenge MUST carry a random component and MUST be authenticated with the ins
 
 The system MUST NOT depend on a distributed cache to issue or check a challenge: Nextcloud returns a null cache when none is configured, and the guarded flows MUST keep working on such an installation.
 
-A proof MUST be single-use. Binding a proof to its operation's parameters is not enough on its own: on an upsert route the same parameters can do something different later, and a designate proof replayed after the owner revoked that contact would recreate it. The system MUST therefore consume a proof's nonce when the proof verifies, and MUST refuse the same nonce again for the rest of the challenge's lifetime. The used nonces live in the distributed cache, atomically where the cache supports it. This is best-effort by the cache's reach: without a configured memcache a reuse is not detected, and with a server-local cache it is detected per server. The guarded flows keep working in both cases.
+A proof MUST be single-use. Binding a proof to its operation's parameters is not enough on its own: on an upsert route the same parameters can do something different later, and a designate proof replayed after the owner revoked that contact would recreate it. The system MUST therefore consume a proof's nonce when the proof verifies, and MUST refuse the same nonce again for the rest of the challenge's lifetime. The used nonces live in the database, as a hash under a unique index, so the first use wins on every install: without a memcache, with a server-local one, and across the nodes of a cluster (keepiq#868). A distributed cache is not enough: without a memcache Nextcloud hands out a null cache that forgets everything, and with APCu alone a replay against another node succeeds. If the use cannot be recorded, the proof MUST be refused. A claim MAY be deleted once its challenge has expired, because an expired challenge is refused on its own. Issuing and checking a challenge stays stateless; only consumption is stored.
 
-Every refused proof MUST leave a log entry naming the user, the route, the purpose and the reason, because the session-only attacker the guard exists for is exactly the caller that produces refusals.
+Every refused proof MUST leave a log entry naming the user, the route, the purpose and the reason, because the session-only attacker the guard exists for is exactly the caller that produces refusals. It MUST also record a `key_proof.refused` audit entry with the same route, purpose and reason, so the audit trail and the SIEM export see the probing too (keepiq#870). Neither record MAY contain the proof, the nonce or the signature.
 
 #### Scenario: A proof cannot be used twice
 @e2e exclude Server-side nonce consumption; covered by PHPUnit on VaultKeyProofService.
@@ -101,6 +101,7 @@ Every refused proof MUST leave a log entry naming the user, the route, the purpo
 - **WHEN** the same nonce and signature are presented again within the challenge's lifetime
 - **THEN** the system MUST refuse with `403` and `error: key_proof_required`
 - **AND** MUST NOT perform the operation again
+- **AND** this MUST hold on an install without a memcache, and on a cluster where the second request reaches another node
 
 #### Scenario: An expired challenge is refused
 
