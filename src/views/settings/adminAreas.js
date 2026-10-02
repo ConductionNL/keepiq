@@ -47,7 +47,7 @@ export const ADMIN_AREAS = [
 	},
 	{
 		key: 'people',
-		sections: ['OffboardingSection', 'AdminSuiteSection'],
+		sections: ['MemberOverviewSection', 'OffboardingSection', 'AdminSuiteSection'],
 	},
 	{
 		key: 'audit',

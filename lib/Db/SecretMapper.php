@@ -865,4 +865,43 @@ class SecretMapper extends QBMapper {
 
 		return $qb->executeStatement();
 	}//end markUsed()
+
+	/**
+	 * Count the live secret rows each user owns, in one grouped query.
+	 *
+	 * Tombstoned rows are left out. Users without a row are absent from the
+	 * result; the caller reads them as zero.
+	 *
+	 * @param string[] $ownerIds The user IDs to count for
+	 *
+	 * @return array<string,int> Row count keyed by user ID
+	 *
+	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.1
+	 */
+	public function countByUserOwners(array $ownerIds): array {
+		if ($ownerIds === []) {
+			return [];
+		}
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('owner_id')
+			->selectAlias($qb->func()->count('id'), 'row_count')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter('user')))
+			->andWhere(
+				$qb->expr()->in('owner_id', $qb->createNamedParameter($ownerIds, IQueryBuilder::PARAM_STR_ARRAY))
+			)
+			->andWhere($qb->expr()->isNull('tombstoned_at'))
+			->groupBy('owner_id');
+
+		$counts = [];
+		$result = $qb->executeQuery();
+		while (($row = $result->fetch()) !== false) {
+			$counts[(string)$row['owner_id']] = (int)$row['row_count'];
+		}
+
+		$result->closeCursor();
+
+		return $counts;
+	}//end countByUserOwners()
 }//end class

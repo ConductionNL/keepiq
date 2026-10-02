@@ -416,6 +416,11 @@ $extra = [
     ['name' => 'teamFolderMember#approveJoin',    'url' => '/api/v1/team-folders/{id}/approve-join',       'verb' => 'POST'],
     ['name' => 'teamFolder#destroy',              'url' => '/api/v1/team-folders/{id}',                    'verb' => 'DELETE'],
 
+    // Admin member overview (admin-member-overview-and-offboarding D4): admin
+    // only, metadata only. Under /api/v1/admin/ so admin-public-api can
+    // document it without a rename.
+    ['name' => 'memberOverview#index', 'url' => '/api/v1/admin/members', 'verb' => 'GET'],
+
     // Audit trail (add-secret-audit-trail §4.1). Specific /secret/{id} and
     // /me routes come before the admin instance-wide /audit collection.
     ['name' => 'audit#secret', 'url' => '/api/v1/audit/secret/{id}', 'verb' => 'GET'],

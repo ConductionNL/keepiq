@@ -33,6 +33,7 @@ import ExtensionSection from '../../components/settings/ExtensionSection.vue'
 import HoneySection from '../../components/settings/HoneySection.vue'
 import ItemTypesSection from '../../components/settings/ItemTypesSection.vue'
 import MachineLeaseSection from '../../components/settings/MachineLeaseSection.vue'
+import MemberOverviewSection from '../../components/settings/MemberOverviewSection.vue'
 import OffboardingSection from '../../components/settings/OffboardingSection.vue'
 import OfflineCacheSection from '../../components/settings/OfflineCacheSection.vue'
 import OrgPasswordPolicySection from '../../components/settings/OrgPasswordPolicySection.vue'
@@ -65,6 +66,7 @@ export default {
 		ItemTypesSection,
 		OfflineCacheSection,
 		ExtensionSection,
+		MemberOverviewSection,
 		OffboardingSection,
 		AdminSuiteSection,
 		AdminAuditSection,
