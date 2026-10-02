@@ -1269,7 +1269,15 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Не вдалося змінити мітки. Спробуйте ще раз.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Експорт до CXF НЕ ЗАШИФРОВАНИЙ. Кожен пароль і логін будуть читабельними як звичайний текст у завантаженому файлі. Зберігайте файл у надійному місці та вилучіть його одразу після використання.",
         "Root certificate expiring soon": "Термін дії кореневого сертифіката скоро спливе",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Термін дії кореневого сертифіката сховища спливає через %1$d дн. Оновіть його до цього. Оновлення заново підписує кожен набір шифрування."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Термін дії кореневого сертифіката сховища спливає через %1$d дн. Оновіть його до цього. Оновлення заново підписує кожен набір шифрування.",
+        "Compromise recovery aborted": "Відновлення після компрометації перервано",
+        "Key rotation ended by a compromise revoke": "Зміну ключа завершено відкликанням через компрометацію",
+        "Encryption suite revoke refused": "Відкликання набору шифрування відхилено",
+        "Master password proof refused": "Підтвердження головного пароля відхилено",
+        "Your current master password": "Ваш поточний головний пароль",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n екстрений контакт мав запит на доступ в очікуванні, коли зміна ключа його видалила. Перевірте, хто запитував, перш ніж знову когось додавати.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "Екстрені контакти (%n) мали запит на доступ в очікуванні, коли зміна ключа їх видалила. Перевірте, хто запитував, перш ніж знову когось додавати.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ці екстрені контакти не перенесено на ваш новий ключ. Їхній екстрений доступ видалено. Додайте їх знову в розділі Екстрений доступ, якщо вони вам ще потрібні."
     },
     "nplurals=2; plural=(n != 1);"
 )

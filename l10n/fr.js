@@ -1269,7 +1269,15 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Un export CXF n'est PAS CHIFFRÉ. Chaque mot de passe et chaque identifiant sera lisible en clair dans le fichier téléchargé. Conservez-le en sécurité et supprimez-le immédiatement après usage.",
         "Root certificate expiring soon": "Le certificat racine expire bientôt",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Le certificat racine du coffre expire dans %1$d jour(s). Renouvelez-le avant cette date. Le renouvellement signe à nouveau chaque suite de chiffrement."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Le certificat racine du coffre expire dans %1$d jour(s). Renouvelez-le avant cette date. Le renouvellement signe à nouveau chaque suite de chiffrement.",
+        "Compromise recovery aborted": "Récupération après compromission annulée",
+        "Key rotation ended by a compromise revoke": "Rotation de clé terminée par une révocation pour compromission",
+        "Encryption suite revoke refused": "Révocation de la suite de chiffrement refusée",
+        "Master password proof refused": "Preuve du mot de passe principal refusée",
+        "Your current master password": "Votre mot de passe principal actuel",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n contact d'urgence avait une demande d'accès en attente quand votre rotation de clé l'a supprimé. Vérifiez qui l'a demandé avant de rajouter quelqu'un.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n contacts d'urgence avaient une demande d'accès en attente quand votre rotation de clé les a supprimés. Vérifiez qui l'a demandé avant de rajouter quelqu'un.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ces contacts d'urgence n'ont pas été transférés vers votre nouvelle clé. Leur accès d'urgence a été supprimé. Ajoutez-les à nouveau depuis Accès d'urgence si vous les voulez encore."
     },
     "nplurals=2; plural=(n != 1);"
 )

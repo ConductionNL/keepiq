@@ -1517,10 +1517,16 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * is the only safe route — so this surfaces that as an error for the
 		 * banner rather than pretending it succeeded.
 		 *
+		 * The server requires a vault-key proof over the NEW suite's key
+		 * (keepiq#859), so a stolen session cannot call the owner's recovery
+		 * off. That is the key the session is unlocked with, so the password
+		 * asked for is the current master password.
+		 *
+		 * @param {string} masterPassword The current (new) master password.
 		 * @return {Promise<object>} The server's terminal result.
 		 * @spec openspec/changes/harden-vault-key-material-guards/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
 		 */
-		async abortMigration() {
+		async abortMigration(masterPassword) {
 			await this.fetchMigrationStatus()
 			if (this.migrationStatus === null) {
 				throw new Error('There is no migration to abort')
@@ -1528,10 +1534,24 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 			const migrationId = this.migrationStatus.id
 			try {
+				const { data: newSuite } = await axios.get(
+					generateUrl(
+						`/apps/keepiq/api/v1/suites/${this.migrationStatus.newSuiteId}`,
+					),
+				)
+				const headers = await buildKeyProofHeaders({
+					suiteId: newSuite.id,
+					purpose: PROOF_PURPOSE.ABORT_MIGRATION,
+					encryptedPrivateKey: newSuite.privateKey,
+					masterPassword,
+					boundValues: [migrationId],
+				})
 				const { data } = await axios.post(
 					generateUrl(
 						`/apps/keepiq/api/v1/migrations/${migrationId}/abort`,
 					),
+					{},
+					{ headers },
 				)
 				return data
 			} finally {

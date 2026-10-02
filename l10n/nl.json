@@ -1273,7 +1273,15 @@
         "Could not change the tags. Try again.": "Kon de labels niet wijzigen. Probeer het opnieuw.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Een CXF-export is ONVERSLEUTELD. Elk wachtwoord en elke login is leesbaar als platte tekst in het gedownloade bestand. Bewaar het veilig en verwijder het direct na gebruik.",
         "Root certificate expiring soon": "Rootcertificaat verloopt binnenkort",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Het rootcertificaat van de kluis verloopt over %1$d dag(en). Vernieuw het vóór die tijd. Vernieuwen ondertekent elke versleutelingssuite opnieuw."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Het rootcertificaat van de kluis verloopt over %1$d dag(en). Vernieuw het vóór die tijd. Vernieuwen ondertekent elke versleutelingssuite opnieuw.",
+        "Compromise recovery aborted": "Herstel na compromittering afgebroken",
+        "Key rotation ended by a compromise revoke": "Sleutelrotatie beëindigd door een intrekking wegens compromittering",
+        "Encryption suite revoke refused": "Intrekken van versleutelingssuite geweigerd",
+        "Master password proof refused": "Bewijs van hoofdwachtwoord geweigerd",
+        "Your current master password": "Je huidige hoofdwachtwoord",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n noodcontact had een openstaand toegangsverzoek toen je sleutelrotatie het verwijderde. Controleer wie het vroeg voordat je iemand opnieuw toevoegt.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n noodcontacten hadden een openstaand toegangsverzoek toen je sleutelrotatie ze verwijderde. Controleer wie het vroeg voordat je iemand opnieuw toevoegt.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Deze noodcontacten zijn niet meegenomen naar je nieuwe sleutel. Hun noodtoegang is verwijderd. Voeg ze opnieuw toe via Noodtoegang als je ze nog wilt."
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"
