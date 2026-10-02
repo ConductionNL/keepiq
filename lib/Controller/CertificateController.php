@@ -116,6 +116,8 @@ class CertificateController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/certificate-lifecycle/spec.md#scenario-client-submits-parsed-metadata-for-a-stored-certificate
 	 */
 	#[NoAdminRequired]
 	public function submitMetadata(
@@ -163,6 +165,8 @@ class CertificateController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-guided-renewal-by-certificate-origin
 	 */
 	#[NoAdminRequired]
 	public function renewalChecklist(string $secretId): JSONResponse {
@@ -189,6 +193,8 @@ class CertificateController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/certificate-lifecycle/spec.md#scenario-suite-certificate-re-issued-preserving-its-public-key
 	 */
 	#[NoAdminRequired]
 	public function reissueSuite(string $suiteId): JSONResponse {

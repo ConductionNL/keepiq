@@ -321,4 +321,32 @@ class RotationPolicyServiceTest extends TestCase {
 		$this->assertSame('sec-hit', $inserted[0]->getSecretId());
 		$this->assertSame('suite_compromise', $inserted[0]->getReason());
 	}//end testFlagCompromisedSecretsRaisesOnlyMarked()
+
+	/**
+	 * Keepiq#746: the reminder days of the policies that scope a secret are
+	 * read; a policy for another type is not, and none set means null.
+	 *
+	 * @return void
+	 */
+	public function testReminderDaysComeFromTheApplicablePolicies(): void {
+		$own = $this->policy(90);
+		$own->setReminderDays(json_encode([14, 3]));
+		$other = $this->policy(90, 'type', 'type-note');
+		$other->setReminderDays(json_encode([60]));
+		$silent = $this->policy(30);
+		$this->policyMapper->method('findApplicable')->willReturn([$own, $other, $silent]);
+
+		$this->assertSame([14, 3], $this->service->reminderDaysFor($this->ownedSecret()));
+	}//end testReminderDaysComeFromTheApplicablePolicies()
+
+	/**
+	 * Without a policy that sets reminder days the instance thresholds apply.
+	 *
+	 * @return void
+	 */
+	public function testNoPolicyReminderDaysMeansNull(): void {
+		$this->policyMapper->method('findApplicable')->willReturn([$this->policy(90)]);
+
+		$this->assertNull($this->service->reminderDaysFor($this->ownedSecret()));
+	}//end testNoPolicyReminderDaysMeansNull()
 }//end class

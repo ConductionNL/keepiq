@@ -78,6 +78,7 @@ class ApplicationService {
 	 * @param ApplicationLifecycleService|null $lifecycle The admission transitions
 	 * @param ApplicationSuiteProvisioner|null $suiteProvisioner The EncryptionSuite provisioner
 	 * @param ApplicationAuditTrail|null $auditTrail The application audit trail
+	 * @param ApplicationDataCleanupService|null $dataCleanup The secrets/suite/requests delete cascade
 	 *
 	 * @return void
 	 */
@@ -90,6 +91,7 @@ class ApplicationService {
 		?ApplicationLifecycleService $lifecycle = null,
 		?ApplicationSuiteProvisioner $suiteProvisioner = null,
 		?ApplicationAuditTrail $auditTrail = null,
+		private ?ApplicationDataCleanupService $dataCleanup = null,
 	) {
 		$this->suiteProvisioner = ($suiteProvisioner ?? new ApplicationSuiteProvisioner(logger: $logger));
 		$this->auditTrail = ($auditTrail ?? new ApplicationAuditTrail());
@@ -185,9 +187,11 @@ class ApplicationService {
 	}//end reject()
 
 	/**
-	 * Delete an application. Admin-only. The full cascade (Secrets +
-	 * EncryptionSuite + SecretRequests) lands with the dedicated build
-	 * cycle once those services accept owner_type=application.
+	 * Delete an application. Admin-only. Its secrets, secret requests and
+	 * encryption suite go first, in one transaction (keepiq#753), so a
+	 * failure leaves the application in place for a retry rather than
+	 * orphaned rows nobody can see; then the row, its leases and the audit
+	 * entry.
 	 *
 	 * @param string $applicationId The application ID
 	 * @param bool $isAdmin Whether the caller is an admin
@@ -197,6 +201,7 @@ class ApplicationService {
 	 * @throws InvalidArgumentException
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.7
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-delete-application
 	 */
 	public function delete(string $applicationId, bool $isAdmin): void {
 		if ($isAdmin === false) {
@@ -206,6 +211,10 @@ class ApplicationService {
 		$entity = $this->findOr400(applicationId: $applicationId);
 
 		$applicationName = $entity->getName();
+
+		// Secrets (owner_type=application), their requests, the requests
+		// the application created, and its encryption suite.
+		$this->dataCleanup?->removeFor(applicationId: $applicationId);
 
 		$this->mapper->delete($entity);
 
@@ -261,6 +270,8 @@ class ApplicationService {
 	 * @return Application
 	 *
 	 * @throws InvalidArgumentException
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
 	 */
 	public function get(string $applicationId, string $userId, bool $isAdmin): Application {
 		$entity = $this->findOr400(applicationId: $applicationId);
@@ -283,6 +294,8 @@ class ApplicationService {
 	 * @param bool $isAdmin Whether the caller is an admin
 	 *
 	 * @return Application[]
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
 	 */
 	public function listForUser(string $userId, bool $isAdmin): array {
 		if ($isAdmin === true) {
@@ -314,6 +327,8 @@ class ApplicationService {
 	 * @return Application[]
 	 *
 	 * @throws InvalidArgumentException
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-approval-queue
 	 */
 	public function listPending(bool $isAdmin): array {
 		if ($isAdmin === false) {
@@ -327,6 +342,8 @@ class ApplicationService {
 	 * Count the pending applications — exposed for the dashboard summary.
 	 *
 	 * @return int
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-pending-applications-counter-on-dashboard
 	 */
 	public function countPending(): int {
 		return $this->mapper->countPending();

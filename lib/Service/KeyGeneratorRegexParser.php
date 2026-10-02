@@ -62,6 +62,8 @@ class KeyGeneratorRegexParser {
 	 * @param string $pattern The raw regex pattern
 	 *
 	 * @return string The delimited pattern
+	 *
+	 * @spec openspec/specs/key-generator/spec.md#requirement-regex-override
 	 */
 	public function delimit(string $pattern): string {
 		if ($pattern === '') {
@@ -87,6 +89,8 @@ class KeyGeneratorRegexParser {
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException When the pattern is invalid
+	 *
+	 * @spec openspec/specs/key-generator/spec.md#requirement-regex-override
 	 */
 	public function assertValid(string $delimited): void {
 		set_error_handler(
@@ -145,6 +149,8 @@ class KeyGeneratorRegexParser {
 	 * @return string The resolved character set (each char unique)
 	 *
 	 * @throws InvalidArgumentException When no character class can be determined
+	 *
+	 * @spec openspec/specs/key-generator/spec.md#requirement-regex-override
 	 */
 	public function extractCharset(string $regex): string {
 		if (preg_match('/\[(\^?)((?:\\\\.|[^\]\\\\])*)\]/', $regex, $matches) !== 1) {

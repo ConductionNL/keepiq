@@ -79,7 +79,7 @@ class AccountShareCleanupService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function transferDelegatedSecrets(string $userId, array $ownedSecrets, DeletionReport $report): void {
 		$ownedIds = [];
@@ -121,7 +121,7 @@ class AccountShareCleanupService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function detachGrantedShares(array $ownedSecrets, DeletionReport $report): void {
 		foreach ($ownedSecrets as $secret) {
@@ -157,7 +157,7 @@ class AccountShareCleanupService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function removeReceivedShares(string $userId, DeletionReport $report): void {
 		$report->sharesRemoved = count($this->shareMapper->findByTargetUser(targetUserId: $userId));

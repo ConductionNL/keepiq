@@ -74,6 +74,8 @@ class PasskeyService {
 	 * A fresh 32-byte base64 WebAuthn challenge.
 	 *
 	 * @return string
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
 	 */
 	public function freshChallenge(): string {
 		return base64_encode($this->secureRandom->generate(32, ISecureRandom::CHAR_ALPHANUMERIC . '+/='));
@@ -91,6 +93,8 @@ class PasskeyService {
 	 * @return PasskeyCredential
 	 *
 	 * @throws InvalidArgumentException On a missing envelope / duplicate credential
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
 	 */
 	public function enroll(string $uid, array $dto): PasskeyCredential {
 		$credentialId = (string)($dto['credentialId'] ?? '');
@@ -130,6 +134,8 @@ class PasskeyService {
 	 * @param string $uid The calling owner
 	 *
 	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
 	 */
 	public function loginOptions(string $uid): array {
 		$epoch = $this->currentEpoch(uid: $uid);
@@ -166,6 +172,8 @@ class PasskeyService {
 	 * @param string $id The credential UUID
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkeys-are-manageable-revocable-and-owner-scoped
 	 */
 	public function recordUse(string $uid, string $id): void {
 		try {
@@ -188,6 +196,8 @@ class PasskeyService {
 	 *
 	 * @throws DoesNotExistException When missing
 	 * @throws InvalidArgumentException When not owned
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkeys-are-manageable-revocable-and-owner-scoped
 	 */
 	public function revoke(string $uid, string $id): void {
 		$credential = $this->ownedCredential(uid: $uid, id: $id);
@@ -201,6 +211,8 @@ class PasskeyService {
 	 * @param string $uid The owner
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-envelopes-are-invalidated-when-the-unlock-key-changes
 	 */
 	public function markStaleOnPasswordChange(string $uid): void {
 		$this->mapper->markOwnerStale($uid);
@@ -213,6 +225,8 @@ class PasskeyService {
 	 * @param string $uid The owner
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#scenario-compromise-recovery-deletes-all-passkey-envelopes
 	 */
 	public function deleteAllOnRotation(string $uid): void {
 		$this->mapper->deleteByOwner($uid);

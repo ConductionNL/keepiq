@@ -13,7 +13,7 @@
   wizard reads nothing. Closing the wizard resets the store, releasing every
   plaintext row (encryption-suites Session Mechanism).
 
-  @spec openspec/changes/secret-import/specs/secret-import/spec.md
+  @spec openspec/specs/secret-import/spec.md
 -->
 <template>
 	<NcDialog
@@ -388,6 +388,8 @@ export default {
 			passphrase: '',
 			kdbxDetected: false,
 			underOneFolder: false,
+			/** The picked file's name, for the one-folder import (keepiq#749). */
+			sourceName: '',
 			revealed: {},
 		}
 	},
@@ -398,7 +400,7 @@ export default {
 		 * blocks the wizard and reads no file (lock-screen guard, spec).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 */
 		locked() {
 			return this.session.isLocked
@@ -408,7 +410,7 @@ export default {
 		 * The registered parser formats as select options.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-supported-import-formats
+		 * @spec openspec/specs/secret-import/spec.md#requirement-supported-import-formats
 		 */
 		formatOptions() {
 			return listParsers().map((p) => ({ value: p.id, label: p.label }))
@@ -418,7 +420,7 @@ export default {
 		 * Whether the selected format needs a passphrase (backup restore).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-supported-import-formats
+		 * @spec openspec/specs/secret-import/spec.md#requirement-supported-import-formats
 		 */
 		requiresPassphrase() {
 			const parser = listParsers().find((p) => p.id === this.format)
@@ -429,7 +431,7 @@ export default {
 		 * Duplicate-resolution select options.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-duplicate-detection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-duplicate-detection
 		 */
 		resolutionOptions() {
 			return [
@@ -442,7 +444,7 @@ export default {
 		 * The first five parsed rows, for the mapping preview.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
+		 * @spec openspec/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		previewRows() {
 			return this.store.rows.slice(0, 5)
@@ -452,7 +454,7 @@ export default {
 		 * Whether a Back button is shown for the current step.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
+		 * @spec openspec/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		canGoBack() {
 			return ['mapping', 'folders', 'duplicates'].includes(this.store.step)
@@ -462,7 +464,7 @@ export default {
 		 * Whether the primary action can proceed from the current step.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
+		 * @spec openspec/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		canProceed() {
 			if (this.store.step === 'mapping') {
@@ -475,7 +477,7 @@ export default {
 		 * The primary-button label for the current step.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
+		 * @spec openspec/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		nextLabel() {
 			return this.store.step === 'duplicates'
@@ -493,7 +495,7 @@ export default {
 		 * @param {string} value The cell value.
 		 * @param {string} key The reveal key.
 		 * @return {string} The masked or revealed value.
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
+		 * @spec openspec/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		mask(value, key) {
 			if (value == null || value === '') {
@@ -531,7 +533,7 @@ export default {
 		 *
 		 * @param {Event} event The file input change event.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-supported-import-formats
+		 * @spec openspec/specs/secret-import/spec.md#requirement-supported-import-formats
 		 */
 		async onFilePicked(event) {
 			this.kdbxDetected = false
@@ -550,6 +552,7 @@ export default {
 				return
 			}
 			const text = await file.text()
+			this.sourceName = file.name
 			try {
 				await this.store.parseFile(text, this.format, {
 					passphrase: this.passphrase,
@@ -561,10 +564,26 @@ export default {
 		},
 
 		/**
+		 * The name of the one new folder everything is imported under: the
+		 * source file's name without its extension (or the format, for a
+		 * transfer that had no file), and today's date (keepiq#749).
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 */
+		oneFolderName() {
+			const base =
+				this.sourceName.replace(/\.[^.]+$/, '').trim()
+				|| String(this.store.format || this.format || 'import')
+			const today = new Date().toISOString().slice(0, 10)
+			return `${base} ${today}`
+		},
+
+		/**
 		 * Advance the wizard from the current step.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 		 */
 		async next() {
 			if (this.store.step === 'mapping') {
@@ -574,7 +593,9 @@ export default {
 				this.store.goToStep('duplicates')
 			} else if (this.store.step === 'duplicates') {
 				try {
-					await this.store.commit()
+					await this.store.commit({
+						rootFolder: this.underOneFolder ? this.oneFolderName() : '',
+					})
 					this.$emit('imported')
 				} catch {
 					// store.error already surfaced.
@@ -586,7 +607,7 @@ export default {
 		 * Step backwards in the wizard.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
+		 * @spec openspec/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		back() {
 			const order = ['pick', 'mapping', 'folders', 'duplicates']
@@ -600,7 +621,7 @@ export default {
 		 * Download the rejected rows as a client-side CSV (never uploaded).
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-malformed-row-rejection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-malformed-row-rejection
 		 */
 		downloadRejected() {
 			const csv = this.store.rejectedCsv()
@@ -620,7 +641,7 @@ export default {
 		 *
 		 * @param {boolean} value The open state.
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 */
 		onUpdateOpen(value) {
 			if (!value) {
@@ -628,6 +649,7 @@ export default {
 				this.kdbxDetected = false
 				this.passphrase = ''
 				this.underOneFolder = false
+				this.sourceName = ''
 				this.revealed = {}
 			}
 			this.$emit('update:open', value)
@@ -641,7 +663,11 @@ export default {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
-	min-width: 480px;
+	max-width: 100%;
+
+	@media (min-width: 600px) {
+		min-width: 480px;
+	}
 
 	&__file input {
 		display: block;

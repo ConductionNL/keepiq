@@ -125,6 +125,8 @@ class HoneyController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 	 */
 	#[NoAdminRequired]
 	public function unflag(string $id): JSONResponse {
@@ -152,6 +154,8 @@ class HoneyController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 	 */
 	#[NoAdminRequired]
 	public function status(string $id): JSONResponse {
@@ -180,6 +184,8 @@ class HoneyController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 	 */
 	#[NoAdminRequired]
 	public function alerts(): JSONResponse {
@@ -204,6 +210,8 @@ class HoneyController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-alert-storms-are-rate-limited-and-per-accessor-snoozable
 	 */
 	#[NoAdminRequired]
 	public function acknowledge(string $id): JSONResponse {
@@ -233,6 +241,8 @@ class HoneyController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-alert-storms-are-rate-limited-and-per-accessor-snoozable
 	 */
 	#[NoAdminRequired]
 	public function snooze(string $id, int $hours = 24): JSONResponse {
