@@ -113,6 +113,7 @@ class KeepiqNotifier implements INotifier {
 			fn (): bool => $this->renderVaultAccessSubject(notification: $notification, subject: $subj, params: $params, l: $l),
 			fn (): bool => $this->renderEmergencySubject(notification: $notification, subject: $subj, params: $params, l: $l),
 			fn (): bool => $this->renderDeviceApprovalSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderRecoverySubject(notification: $notification, subject: $subj, params: $params, l: $l),
 			fn (): bool => $this->renderAccessEndSubject(notification: $notification, subject: $subj, params: $params, l: $l),
 		];
 		foreach ($renderers as $render) {
@@ -189,6 +190,45 @@ class KeepiqNotifier implements INotifier {
 
 		return false;
 	}//end renderSharingSubject()
+
+	/**
+	 * Render the organisation account recovery subjects
+	 * (crypto-organisation-account-recovery 5.2). All link to the app.
+	 *
+	 * @param INotification $notification The notification to mutate
+	 * @param string $subject The notification subject identifier
+	 * @param array<string,mixed> $params The subject parameters
+	 * @param IL10N $l The localisation helper
+	 *
+	 * @return bool True when this renderer recognised the subject.
+	 *
+	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+	 */
+	private function renderRecoverySubject(INotification $notification, string $subject, array $params, IL10N $l): bool {
+		$texts = [
+			'recovery_officer_named' => (string)$l->t('You are now an account recovery officer'),
+			'recovery_requested' => (string)$l->t(
+				'%s asks to recover their account. Compare the words with them before you approve.',
+				[(string)($params['user'] ?? $l->t('A user'))]
+			),
+			'recovery_declined' => (string)$l->t('Your account recovery request was declined'),
+			'recovery_ready' => (string)$l->t('Your account recovery is ready. Open Keepiq in the browser you asked from.'),
+		];
+		if (isset($texts[$subject]) === false) {
+			return false;
+		}
+
+		$notification->setParsedSubject($texts[$subject]);
+		try {
+			$notification->setLink(
+				$this->url->getAbsoluteURL($this->url->linkToRoute(Application::APP_ID . '.dashboard.page'))
+			);
+		} catch (InvalidArgumentException) {
+			// The link is optional; the notification still says what happened.
+		}
+
+		return true;
+	}//end renderRecoverySubject()
 
 	/**
 	 * Render a new device's request to open the vault

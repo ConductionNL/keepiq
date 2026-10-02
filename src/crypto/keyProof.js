@@ -35,6 +35,7 @@ export const PROOF_PURPOSE = {
 	DELETE_ACCOUNT_DATA: 'delete-account-data',
 	ABORT_MIGRATION: 'abort-migration',
 	APPROVE_DEVICE: 'approve-device',
+	APPROVE_ACCOUNT_RECOVERY: 'approve-account-recovery',
 }
 
 /**
