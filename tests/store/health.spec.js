@@ -173,4 +173,36 @@ describe('useHealthStore', () => {
 		expect(store.summary.analysedCount).toBe(1)
 		expect(store.findings.some((f) => f.id === 't')).toBe(false)
 	})
+
+	it('analyses every secret, not only the first page of 100 (keepiq#745)', async () => {
+		const session = useSessionStore()
+		session.cryptoKey = { fake: true }
+		const secret = (n) => ({
+			id: 's' + n,
+			name: 'S' + n,
+			key: 'enc:value-' + n,
+			blocked: false,
+		})
+		const pageOne = Array.from({ length: 100 }, (_, i) => secret(i))
+		const pageTwo = [secret(100), { ...secret(101), key: 'enc:value-0' }]
+		const get = vi.spyOn(axios, 'get').mockImplementation(async (url, cfg) => {
+			const page = cfg?.params?.page ?? 1
+			return {
+				data: { items: page === 1 ? pageOne : pageTwo, total: 102 },
+			}
+		})
+
+		const store = useHealthStore()
+		await store.analyseVault({
+			stalenessThreshold: 'never',
+			breachEnabled: false,
+		})
+
+		const secretPages = get.mock.calls.filter(([url]) =>
+			/\/api\/v1\/secrets$/.test(url),
+		)
+		expect(secretPages.map(([, cfg]) => cfg.params.page)).toEqual([1, 2])
+		// The reuse between row 0 (page one) and row 101 (page two) is found.
+		expect(store.summary.reusedCount).toBe(2)
+	})
 })

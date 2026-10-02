@@ -10,7 +10,7 @@
  *    round-trip).
  *  - A wrong passphrase throws and yields NO rows.
  *
- * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+ * @spec openspec/specs/secret-export/spec.md
  */
 
 import { describe, expect, it } from 'vitest'

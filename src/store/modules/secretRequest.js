@@ -393,6 +393,8 @@ export const useSecretRequestStore = defineStore('secretRequest', {
 		 * Reset the focused-secret slice of state.
 		 *
 		 * @return {void}
+		 *
+		 * @spec exclude Store lifecycle: clears the focused-secret request slice on unmount.
 		 */
 		reset() {
 			this.secretRequests = []

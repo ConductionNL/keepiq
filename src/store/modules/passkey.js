@@ -109,26 +109,49 @@ export const usePasskeyStore = defineStore('passkey', {
 			const userId = new TextEncoder().encode(
 				window.OC?.getCurrentUser?.()?.uid || 'keepiq-user',
 			)
-			const created = await navigator.credentials.create({
-				publicKey: {
-					rp: { id: RP_ID, name: 'Keepiq' },
-					user: {
-						id: userId,
-						name: label || 'Keepiq vault',
-						displayName: label || 'Keepiq vault',
+			// Exclude the passkeys that unlock the vault now. Every enrolment
+			// uses the same user handle, so an authenticator that already holds
+			// one would replace it and leave its earlier row unusable. Stale
+			// passkeys are not listed, so re-enrolling after a master password
+			// change still works on the same device.
+			const activeResp = await axios.get(
+				generateUrl('/apps/keepiq/api/v1/passkeys/login-options'),
+			)
+			const excludeCredentials = (activeResp.data?.credentials ?? []).map(
+				(c) => ({ type: 'public-key', id: fromBase64Url(c.credentialId) }),
+			)
+			let created
+			try {
+				created = await navigator.credentials.create({
+					publicKey: {
+						rp: { id: RP_ID, name: 'Keepiq' },
+						user: {
+							id: userId,
+							name: label || 'Keepiq vault',
+							displayName: label || 'Keepiq vault',
+						},
+						challenge,
+						pubKeyCredParams: [
+							{ type: 'public-key', alg: -7 },
+							{ type: 'public-key', alg: -257 },
+						],
+						authenticatorSelection: {
+							residentKey: 'preferred',
+							userVerification: 'preferred',
+						},
+						excludeCredentials,
+						extensions: { prf: {} },
 					},
-					challenge,
-					pubKeyCredParams: [
-						{ type: 'public-key', alg: -7 },
-						{ type: 'public-key', alg: -257 },
-					],
-					authenticatorSelection: {
-						residentKey: 'preferred',
-						userVerification: 'preferred',
-					},
-					extensions: { prf: {} },
-				},
-			})
+				})
+			} catch (e) {
+				if (e?.name === 'InvalidStateError') {
+					throw new Error(
+						'This authenticator already unlocks your vault. Revoke its passkey first to enroll it again.',
+						{ cause: e },
+					)
+				}
+				throw e
+			}
 
 			// 2. PRF must be enabled by this authenticator.
 			const ext = created.getClientExtensionResults()
@@ -207,12 +230,18 @@ export const usePasskeyStore = defineStore('passkey', {
 				type: 'public-key',
 				id: fromBase64Url(c.credentialId),
 			}))
-			// Same PRF salt the envelope was wrapped with (from the first cred
-			// the authenticator satisfies — allowCredentials narrows it).
-			const prfSalt = Uint8Array.from(
-				atob(options.credentials[0].prfSalt),
-				(ch) => ch.charCodeAt(0),
-			)
+			// Every enrolment drew its own PRF salt, and the authenticator
+			// picks which passkey answers. So each credential gets its own salt
+			// through evalByCredential, keyed by its base64url id; a single
+			// `eval` salt only fits the first passkey (keepiq#744).
+			const saltOf = (credential) =>
+				Uint8Array.from(atob(credential.prfSalt), (ch) => ch.charCodeAt(0))
+			const evalByCredential = {}
+			for (const credential of options.credentials) {
+				evalByCredential[
+					toBase64Url(fromBase64Url(credential.credentialId))
+				] = { first: saltOf(credential) }
+			}
 
 			const assertion = await navigator.credentials.get({
 				publicKey: {
@@ -220,13 +249,14 @@ export const usePasskeyStore = defineStore('passkey', {
 					rpId: RP_ID,
 					allowCredentials,
 					userVerification: 'preferred',
-					extensions: { prf: { eval: { first: prfSalt } } },
+					extensions: { prf: { evalByCredential } },
 				},
 			})
 			const usedId = toBase64Url(assertion.rawId)
 			const cred =
-				options.credentials.find((c) => c.credentialId === usedId)
-				|| options.credentials[0]
+				options.credentials.find(
+					(c) => toBase64Url(fromBase64Url(c.credentialId)) === usedId,
+				) || options.credentials[0]
 			const prfOutput =
 				assertion.getClientExtensionResults()?.prf?.results?.first
 			if (!prfOutput) {

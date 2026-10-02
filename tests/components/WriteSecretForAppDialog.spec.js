@@ -21,10 +21,12 @@
  * @spec openspec/changes/implement-application-mgmt/tasks.md#task-10.6
  */
 
+import axios from '@nextcloud/axios'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import WriteSecretForAppDialog from '../../src/dialogs/WriteSecretForAppDialog.vue'
+import { resetPolicyCache } from '../../src/policy/policy.js'
 import { useApplicationStore } from '../../src/store/modules/application.js'
 
 const ncStubs = {
@@ -217,5 +219,32 @@ describe('WriteSecretForAppDialog', () => {
 		expect(wrapper.vm.error).toBe('')
 		expect(wrapper.vm.success).toBe(false)
 		expect(wrapper.emitted('close')).toBeTruthy()
+	})
+
+	it('refuses a value below the organisation password policy before encrypting (keepiq#746)', async () => {
+		resetPolicyCache()
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { policy_enabled: true, min_zxcvbn_score: 3 },
+		})
+		const store = useApplicationStore()
+		const write = vi
+			.spyOn(store, 'writeSecretForApplication')
+			.mockResolvedValue({})
+		const wrapper = mount(WriteSecretForAppDialog, {
+			propsData: {
+				open: true,
+				applicationId: 'app-1',
+				applicationName: 'App',
+			},
+			global: { stubs: ncStubs },
+		})
+		wrapper.vm.name = 'DB password'
+		wrapper.vm.value = 'password'
+
+		await wrapper.vm.submit()
+		resetPolicyCache()
+
+		expect(write).not.toHaveBeenCalled()
+		expect(wrapper.vm.error).toMatch(/below the org minimum/)
 	})
 })

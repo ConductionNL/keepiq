@@ -875,6 +875,23 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 				['keepiq_tfm_membership_uniq', ['team_folder_id', 'member_type', 'member_id']],
 			],
 		],
+		// Consumed vault-key-proof challenges, so every proof is single-use on every
+		// install (keepiq#868); also added to existing installs by
+		// Version001004Date20261002120000.
+		'used_proofs' => [
+			'columns' => [
+				['id', Types::BIGINT, ['notnull' => true, 'autoincrement' => true, 'unsigned' => true]],
+				['nonce_hash', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['expires_at', Types::BIGINT, ['notnull' => true]],
+			],
+			'primary' => ['id'],
+			'indexes' => [
+				['keepiq_used_proofs_exp', ['expires_at']],
+			],
+			'uniqueIndexes' => [
+				['keepiq_used_proofs_hash', ['nonce_hash']],
+			],
+		],
 		'team_folders' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],

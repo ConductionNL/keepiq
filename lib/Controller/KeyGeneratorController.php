@@ -76,6 +76,8 @@ class KeyGeneratorController extends OCSController {
 	 * @SuppressWarnings(PHPMD.LongVariable)        $includeSpecialCharacters is the wire
 	 *   field name posted by src/dialogs/KeyGeneratorModal.vue; because the router
 	 *   binds by name, shortening the parameter would break the frontend contract.
+	 *
+	 * @spec openspec/specs/key-generator/spec.md#requirement-configuration-fields
 	 */
 	#[NoAdminRequired]
 	public function generate(

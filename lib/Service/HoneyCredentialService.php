@@ -74,6 +74,8 @@ class HoneyCredentialService {
 	 *
 	 * @throws DoesNotExistException When the secret does not exist
 	 * @throws InvalidArgumentException When the caller may not flag it
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 	 */
 	public function flag(string $secretId, string $actorId, bool $isAdmin, ?string $note = null): HoneyFlag {
 		$secret = $this->secretMapper->findById($secretId);
@@ -112,6 +114,8 @@ class HoneyCredentialService {
 	 *
 	 * @throws DoesNotExistException When the secret is not flagged
 	 * @throws InvalidArgumentException When the caller may not unflag it
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 	 */
 	public function unflag(string $secretId, string $actorId, bool $isAdmin): void {
 		$flag = $this->flagMapper->findBySecretId($secretId);
@@ -132,6 +136,8 @@ class HoneyCredentialService {
 	 * @return HoneyFlag|null
 	 *
 	 * @throws InvalidArgumentException When the caller may not see it
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 	 */
 	public function getFlag(string $secretId, string $actorId, bool $isAdmin): ?HoneyFlag {
 		try {
@@ -154,6 +160,8 @@ class HoneyCredentialService {
 	 * @param bool $isAdmin Whether the caller is an admin
 	 *
 	 * @return HoneyAlert[]
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 	 */
 	public function listAlerts(string $actorId, bool $isAdmin): array {
 		if ($isAdmin === true) {
@@ -179,6 +187,8 @@ class HoneyCredentialService {
 	 *
 	 * @throws DoesNotExistException When the alert is missing
 	 * @throws InvalidArgumentException When the caller may not act on it
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-alert-storms-are-rate-limited-and-per-accessor-snoozable
 	 */
 	public function acknowledge(string $alertId, string $actorId, bool $isAdmin): HoneyAlert {
 		$alert = $this->guardedAlert(alertId: $alertId, actorId: $actorId, isAdmin: $isAdmin);
@@ -201,6 +211,8 @@ class HoneyCredentialService {
 	 *
 	 * @throws DoesNotExistException When the alert is missing
 	 * @throws InvalidArgumentException When the caller may not act on it
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-alert-storms-are-rate-limited-and-per-accessor-snoozable
 	 */
 	public function snooze(string $alertId, string $actorId, bool $isAdmin, int $hours = 24): HoneyAlert {
 		$alert = $this->guardedAlert(alertId: $alertId, actorId: $actorId, isAdmin: $isAdmin);

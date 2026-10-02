@@ -6,11 +6,11 @@
   Lets an administrator force-revoke any suite by id — a required reason and a
   markCompromised toggle — and reinstate a revoked one. Force-revoke carries
   #[PasswordConfirmationRequired], so the Nextcloud sudo (password-confirmation)
-  flow runs before the request; reinstate is admin-guarded with no sudo. Only
+  flow runs before the request; reinstate carries the same sudo. Only
   the destroyed-usable emergency-contact count crosses the wire, never contact
   identities.
 
-  @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+  @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 -->
 <template>
 	<CnSettingsSection
@@ -103,6 +103,52 @@
 					{{ warning }}
 				</NcNoteCard>
 
+				<!-- Part of the compromise response failed: the suite is revoked,
+				     but some owners may be unwarned or some cleanup undone
+				     (keepiq#863). Running the force-revoke again repeats it. -->
+				<NcNoteCard
+					v-if="cascadeIncomplete"
+					type="error"
+					data-testid="admin-suite-cascade-incomplete">
+					{{
+						t(
+							'keepiq',
+							'Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.',
+							{ failed: cascadeFailed },
+						)
+					}}
+				</NcNoteCard>
+
+				<!-- A compromise revoke during a key migration also revoked the
+				     migration's other suite and ended the migration (keepiq#877). -->
+				<NcNoteCard
+					v-if="alsoRevokedSuite"
+					type="warning"
+					data-testid="admin-suite-also-revoked">
+					<p>
+						{{
+							t(
+								'keepiq',
+								'This also revoked suite {suite} and ended key migration {migration}.',
+								{
+									suite: alsoRevokedSuite,
+									migration: terminatedMigration || '',
+								},
+							)
+						}}
+					</p>
+					<p>
+						{{
+							n(
+								'keepiq',
+								'Revoking the second suite deleted %n emergency-access contact.',
+								'Revoking the second suite deleted %n emergency-access contacts.',
+								alsoRevokedEmergencyContactsDestroyed,
+							)
+						}}
+					</p>
+				</NcNoteCard>
+
 				<div class="admin-suite__result" data-testid="admin-suite-result">
 					<p>
 						<strong>{{ t('keepiq', 'Suite ID') }}:</strong>
@@ -118,15 +164,27 @@
 					</p>
 
 					<!-- Reinstate is shown only for a suite in `revoked` status,
-					     mirroring reinstateSuite()'s own precondition. -->
+					     mirroring reinstateSuite()'s own precondition, and never
+					     after a compromise revoke: the server refuses that, and
+					     one click must not undo a containment (keepiq#865). -->
 					<NcButton
-						v-if="result.status === 'revoked'"
+						v-if="result.status === 'revoked' && !revokedAsCompromise"
 						variant="secondary"
 						:disabled="busy"
 						data-testid="admin-suite-reinstate"
 						@click="onReinstate">
 						{{ t('keepiq', 'Reinstate suite') }}
 					</NcButton>
+					<p
+						v-else-if="revokedAsCompromise"
+						data-testid="admin-suite-no-reinstate">
+						{{
+							t(
+								'keepiq',
+								'A suite revoked as compromised cannot be reinstated.',
+							)
+						}}
+					</p>
 				</div>
 			</template>
 		</div>
@@ -148,7 +206,7 @@ import { useEncryptionSuiteStore } from '../../store/modules/encryptionSuite.js'
 /**
  * Admin encryption-suite management section: force-revoke + reinstate.
  *
- * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
  */
 export default {
 	name: 'AdminSuiteSection',
@@ -171,6 +229,12 @@ export default {
 			result: null,
 			emergencyContactsDestroyed: 0,
 			warning: null,
+			revokedAsCompromise: false,
+			alsoRevokedSuite: null,
+			terminatedMigration: null,
+			alsoRevokedEmergencyContactsDestroyed: 0,
+			cascadeIncomplete: false,
+			cascadeFailed: 0,
 			/** Whether the suite's owner is enrolled in account recovery. */
 			enrolledInRecovery: false,
 		}
@@ -214,21 +278,27 @@ export default {
 		 * compromise was not marked) the rotation warning are surfaced.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 		 */
 		async onForceRevoke() {
 			this.busy = true
 			this.error = null
 			try {
-				const { suite, emergencyContactsDestroyed, warning } =
-					await useEncryptionSuiteStore().forceRevokeSuite({
-						id: this.suiteId,
-						reason: this.reason,
-						markCompromised: this.markCompromised,
-					})
-				this.result = suite
-				this.emergencyContactsDestroyed = emergencyContactsDestroyed
-				this.warning = warning
+				const outcome = await useEncryptionSuiteStore().forceRevokeSuite({
+					id: this.suiteId,
+					reason: this.reason,
+					markCompromised: this.markCompromised,
+				})
+				this.result = outcome.suite
+				this.emergencyContactsDestroyed = outcome.emergencyContactsDestroyed
+				this.warning = outcome.warning
+				this.revokedAsCompromise = this.markCompromised
+				this.alsoRevokedSuite = outcome.alsoRevokedSuite ?? null
+				this.terminatedMigration = outcome.terminatedMigration ?? null
+				this.alsoRevokedEmergencyContactsDestroyed =
+					outcome.alsoRevokedEmergencyContactsDestroyed ?? 0
+				this.cascadeIncomplete = outcome.cascadeIncomplete === true
+				this.cascadeFailed = outcome.cascadeFailed ?? 0
 			} catch (e) {
 				// A cancelled sudo prompt or a server refusal must surface, never
 				// be swallowed into a silent success. Contact identities never
@@ -243,11 +313,12 @@ export default {
 		},
 
 		/**
-		 * Reinstate the last-revoked suite via the admin-only reinstate endpoint
-		 * (no sudo). Refreshes the rendered result with the reinstated suite.
+		 * Reinstate the last-revoked suite via the admin-only reinstate endpoint.
+		 * The store runs the sudo flow first (keepiq#865). Refreshes the rendered
+		 * result with the reinstated suite.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 		 */
 		async onReinstate() {
 			this.busy = true

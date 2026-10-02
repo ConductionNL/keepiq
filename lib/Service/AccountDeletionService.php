@@ -103,7 +103,7 @@ class AccountDeletionService {
 	 *
 	 * @return DeletionReport The per-entity counts
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function deleteAllFor(string $userId, string $trigger = 'user-deleted'): DeletionReport {
 		$report = new DeletionReport();

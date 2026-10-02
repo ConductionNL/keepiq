@@ -23,6 +23,7 @@ import { defineStore } from 'pinia'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
 import { dedupeKey, folderSegments } from '../../import/model.js'
 import { getParser } from '../../import/parserRegistry.js'
+import { evaluateScore, fetchPolicy } from '../../policy/policy.js'
 import { useSecretStore } from './secret.js'
 import { useSecretTypeStore } from './secretType.js'
 import { useSessionStore } from './session.js'
@@ -167,7 +168,7 @@ export const useImportStore = defineStore('import', {
 		 * @param {string} format The parser/format id.
 		 * @param {object} [options] Parser options (CSV mapping, backup passphrase).
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-supported-import-formats
+		 * @spec openspec/specs/secret-import/spec.md#requirement-supported-import-formats
 		 */
 		async parseFile(text, format, options = {}) {
 			this.loading = true
@@ -267,7 +268,7 @@ export const useImportStore = defineStore('import', {
 		 * secret list API already returns — never decrypts the vault (design D6).
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-duplicate-detection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-duplicate-detection
 		 */
 		async detectDuplicates() {
 			const secretStore = useSecretStore()
@@ -292,7 +293,7 @@ export const useImportStore = defineStore('import', {
 		 * @param {number} sourceRow The duplicate row's source position.
 		 * @param {string} resolution 'skip' or 'copy'.
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-duplicate-detection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-duplicate-detection
 		 */
 		resolveDuplicate(sourceRow, resolution) {
 			this.duplicateResolutions = {
@@ -306,7 +307,7 @@ export const useImportStore = defineStore('import', {
 		 *
 		 * @param {string} resolution 'skip' or 'copy'.
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-duplicate-detection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-duplicate-detection
 		 */
 		resolveAllDuplicates(resolution) {
 			const resolutions = {}
@@ -326,7 +327,7 @@ export const useImportStore = defineStore('import', {
 		 * @param {string|null} typeId The vault type id resolved for the row's
 		 *   `type` (see typeIdResolver), or null for the server's default type.
 		 * @return {Promise<object>} The ciphertext-only item.
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 */
@@ -362,6 +363,51 @@ export const useImportStore = defineStore('import', {
 		},
 
 		/**
+		 * Hold every row to the organisation password policy, as the create
+		 * and edit dialogs do (keepiq#746). The server cannot check a value it
+		 * only sees encrypted, so the check runs here, before encryption. A
+		 * row below the policy is taken out of `rows` (in place) and listed
+		 * as rejected with the policy's reason.
+		 *
+		 * @param {Array<object>} rows The rows about to be committed (mutated).
+		 * @param {Array<object>} types The vault's secret types ({ id, name }).
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 */
+		async dropPolicyRejected(rows, types) {
+			const policy = await fetchPolicy()
+			if (!policy || policy.policy_enabled !== true) {
+				return
+			}
+			const nameById = new Map(
+				(Array.isArray(types) ? types : []).map((type) => [
+					type.id,
+					type.name,
+				]),
+			)
+			const kept = []
+			for (const row of rows) {
+				const typeName =
+					nameById.get(row.type) || row.type || DEFAULT_TYPE_NAME
+				const verdict = evaluateScore(
+					policy,
+					typeName,
+					String(row.password ?? ''),
+				)
+				if (verdict.compliant) {
+					kept.push(row)
+				} else {
+					this.rejected.push({
+						sourceRow: row.sourceRow,
+						reason: verdict.reason,
+						name: row.name,
+					})
+				}
+			}
+			rows.splice(0, rows.length, ...kept)
+		},
+
+		/**
 		 * Commit the accepted rows: encrypt client-side, POST in chunks of 50 with
 		 * one retry per failed chunk, fold per-index + chunk failures into the
 		 * rejected list, and build the transient summary (design D7/D8).
@@ -371,7 +417,7 @@ export const useImportStore = defineStore('import', {
 		 *   folder with this name; the source folders keep their hierarchy
 		 *   below it (keepiq#749).
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 */
 		async commit(options = {}) {
@@ -416,6 +462,7 @@ export const useImportStore = defineStore('import', {
 				}
 			}
 			const typeIdFor = typeIdResolver(typeStore.types)
+			await this.dropPolicyRejected(rows, typeStore.types)
 
 			// Encrypt every row client-side BEFORE any request leaves the browser.
 			const items = []
@@ -501,7 +548,7 @@ export const useImportStore = defineStore('import', {
 		 *
 		 * @param {object} body The chunk body ({ folders, items }).
 		 * @return {Promise<object|null>} The response data, or null after two failures.
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 		 */
 		async postChunk(body) {
 			for (let attempt = 0; attempt < 2; attempt++) {
@@ -526,7 +573,7 @@ export const useImportStore = defineStore('import', {
 		 * plaintext-adjacent data, so this stays local.
 		 *
 		 * @return {string} The rejected-rows CSV text.
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-malformed-row-rejection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-malformed-row-rejection
 		 */
 		rejectedCsv() {
 			const lines = ['row,name,reason']
@@ -547,7 +594,7 @@ export const useImportStore = defineStore('import', {
 		 *
 		 * @param {string} step The target step.
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
+		 * @spec openspec/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		goToStep(step) {
 			this.step = step
@@ -574,7 +621,7 @@ export const useImportStore = defineStore('import', {
 		 * Mechanism / spec persistence rule).
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 */
 		reset() {
 			this.step = 'pick'

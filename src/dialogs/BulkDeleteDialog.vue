@@ -112,6 +112,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
+		 */
 		bulk() {
 			return useBulkStore()
 		},
@@ -147,14 +150,23 @@ export default {
 			})
 		},
 
+		/**
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 */
 		needsTypedConfirmation() {
 			return this.bulk.selectionCount > TYPED_CONFIRMATION_THRESHOLD
 		},
 
+		/**
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 */
 		confirmWord() {
 			return `DELETE ${this.bulk.selectionCount}`
 		},
 
+		/**
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 */
 		confirmed() {
 			if (!this.needsTypedConfirmation) {
 				return true
@@ -170,6 +182,8 @@ export default {
 		 *
 		 * @param {string} secretId The secret id.
 		 * @return {Promise<object>}
+		 *
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
 		 */
 		async deleteOne(secretId) {
 			try {

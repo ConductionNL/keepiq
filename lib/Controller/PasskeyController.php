@@ -106,6 +106,8 @@ class PasskeyController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
 	 */
 	#[NoAdminRequired]
 	public function challenge(): JSONResponse {
@@ -132,6 +134,8 @@ class PasskeyController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
 	 */
 	#[NoAdminRequired]
 	public function create(
@@ -175,6 +179,8 @@ class PasskeyController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
 	 */
 	#[NoAdminRequired]
 	public function loginOptions(): JSONResponse {
@@ -194,6 +200,8 @@ class PasskeyController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkeys-are-manageable-revocable-and-owner-scoped
 	 */
 	#[NoAdminRequired]
 	public function used(string $id): JSONResponse {
@@ -215,6 +223,8 @@ class PasskeyController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkeys-are-manageable-revocable-and-owner-scoped
 	 */
 	#[NoAdminRequired]
 	public function destroy(string $id): JSONResponse {

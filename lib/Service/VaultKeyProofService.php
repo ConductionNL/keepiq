@@ -12,15 +12,13 @@
  * caller, the purpose, and an expiry, so it can be verified without any
  * server-side store.
  *
- * A proof is also SINGLE-USE: a successful verify() consumes its nonce in the
- * distributed cache for the rest of the challenge's lifetime, and a second use
- * is refused. The signature commits to the operation's parameters, but that is
- * not enough on an upsert route: a captured designate proof, replayed after the
- * owner revoked the contact, would recreate it (#804 review). This follows
- * JwtAuthService's jti replay protection. The limit is the cache: without a
- * memcache Nextcloud hands out a null cache, which forgets everything, so reuse
- * is then not detected. The guarded flows keep working; only the replay
- * protection degrades. With APCu only, reuse is detected per server.
+ * A proof is also SINGLE-USE: a successful verify() records a hash of its
+ * nonce in the database (keepiq_used_proofs, unique on the hash) for the rest
+ * of the challenge's lifetime, and a second use is refused. The signature
+ * commits to the operation's parameters, but that is not enough on an upsert
+ * route: a captured designate proof, replayed after the owner revoked the
+ * contact, would recreate it (#804 review). The database makes this hold on
+ * every install and across cluster nodes; a memcache did not (keepiq#868).
  *
  * The proof is a SIGNATURE, never a decryption. The browser's session key is
  * non-extractable and decrypt-only, so a decrypt challenge would be satisfiable
@@ -43,14 +41,14 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use OCA\Keepiq\Db\UsedProofNonceMapper;
 use OCA\Keepiq\Exception\KeyProofRequiredException;
 use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\ICacheFactory;
 use OCP\IConfig;
-use OCP\IMemcache;
 use OCP\Security\ISecureRandom;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Throwable;
 
 /**
  * Stateless issuance and verification of vault-key proofs.
@@ -60,11 +58,6 @@ class VaultKeyProofService {
 	 * How long a challenge is valid, in seconds.
 	 */
 	private const TTL = 300;
-
-	/**
-	 * Distributed cache namespace for consumed nonces (single-use proofs).
-	 */
-	public const USED_NONCE_CACHE_NS = 'keepiq_proof_nonce';
 
 	/**
 	 * Stable public purpose identifiers. Both the guarded method's attribute and
@@ -79,6 +72,7 @@ class VaultKeyProofService {
 	public const PURPOSE_EMERGENCY_DESIGNATE = 'emergency-access-designate';
 	public const PURPOSE_EMERGENCY_RE_ENVELOPE = 'emergency-access-re-envelope';
 	public const PURPOSE_DELETE_ACCOUNT_DATA = 'delete-account-data';
+	public const PURPOSE_ABORT_MIGRATION = 'abort-migration';
 	public const PURPOSE_APPROVE_DEVICE = 'approve-device';
 	public const PURPOSE_APPROVE_ACCOUNT_RECOVERY = 'approve-account-recovery';
 
@@ -94,16 +88,10 @@ class VaultKeyProofService {
 		self::PURPOSE_EMERGENCY_DESIGNATE,
 		self::PURPOSE_EMERGENCY_RE_ENVELOPE,
 		self::PURPOSE_DELETE_ACCOUNT_DATA,
+		self::PURPOSE_ABORT_MIGRATION,
 		self::PURPOSE_APPROVE_DEVICE,
 		self::PURPOSE_APPROVE_ACCOUNT_RECOVERY,
 	];
-
-	/**
-	 * Whether the missing-memcache warning was already logged.
-	 *
-	 * @var boolean
-	 */
-	private bool $reuseWarningLogged = false;
 
 	/**
 	 * Constructor.
@@ -111,8 +99,8 @@ class VaultKeyProofService {
 	 * @param IConfig $config The system config, for the instance secret
 	 * @param ISecureRandom $secureRandom The challenge randomness source
 	 * @param ITimeFactory $timeFactory The clock, injected for testable expiry
-	 * @param ICacheFactory $cacheFactory Holds consumed nonces, so each proof is single-use
-	 * @param LoggerInterface $logger Says so when single use cannot be enforced
+	 * @param UsedProofNonceMapper $usedNonces Holds consumed nonces, so each proof is single-use
+	 * @param LoggerInterface $logger Records a store failure that refused a proof
 	 *
 	 * @return void
 	 *
@@ -122,7 +110,7 @@ class VaultKeyProofService {
 		private IConfig $config,
 		private ISecureRandom $secureRandom,
 		private ITimeFactory $timeFactory,
-		private ICacheFactory $cacheFactory,
+		private UsedProofNonceMapper $usedNonces,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -218,65 +206,41 @@ class VaultKeyProofService {
 	/**
 	 * Mark a nonce used for the rest of its lifetime, or refuse a reuse.
 	 *
-	 * Atomic add() where the cache supports it; otherwise hasKey() then set(),
-	 * as JwtAuthService does for jti.
+	 * The database is the authority (keepiq#868): a unique index on the
+	 * nonce's hash makes the first claim win on every install, with or
+	 * without a memcache, and across every node of a cluster. The cache this
+	 * replaced was a no-op without a memcache and per node with APCu alone,
+	 * so "single-use" silently weakened to "within five minutes, per node".
+	 *
+	 * Fails closed: if the claim cannot be recorded, the proof is refused.
+	 * Expired claims are swept first; they protect nothing, since an expired
+	 * challenge is refused on its own.
 	 *
 	 * @param string $nonce     The verified challenge
 	 * @param int    $expiresAt When the challenge expires
 	 *
 	 * @return void
 	 *
-	 * @throws KeyProofRequiredException When the nonce was already used
+	 * @throws KeyProofRequiredException When the nonce was already used, or the claim could not be recorded
 	 *
 	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
 	 */
 	private function consume(string $nonce, int $expiresAt): void {
-		if ($this->cacheFactory->isAvailable() === false) {
-			$this->warnReuseUndetected();
+		try {
+			$this->usedNonces->deleteExpired($this->timeFactory->getTime());
+			$claimed = $this->usedNonces->claim(nonceHash: hash('sha256', $nonce), expiresAt: $expiresAt);
+		} catch (Throwable $e) {
+			$this->logger->error(
+				'Keepiq: could not record a used vault-key proof; refusing it',
+				['app' => 'keepiq', 'exception' => $e]
+			);
+			throw new KeyProofRequiredException(message: 'Proof could not be recorded as used');
 		}
 
-		$cache = $this->cacheFactory->createDistributed(self::USED_NONCE_CACHE_NS);
-		$key = hash('sha256', $nonce);
-		$ttl = max(1, ($expiresAt - $this->timeFactory->getTime()));
-
-		if ($cache instanceof IMemcache) {
-			if ($cache->add($key, 1, $ttl) === false) {
-				throw new KeyProofRequiredException(message: 'Proof already used');
-			}
-
-			return;
-		}
-
-		if ($cache->hasKey($key) === true) {
+		if ($claimed === false) {
 			throw new KeyProofRequiredException(message: 'Proof already used');
 		}
-
-		$cache->set($key, 1, $ttl);
 	}//end consume()
-
-	/**
-	 * Log, once per request, that proofs cannot be made single-use here.
-	 *
-	 * Without a configured memcache Nextcloud hands out a NullCache, whose
-	 * add() always succeeds, so a reused proof is not detected. The spec states
-	 * that limit; this makes it visible to an administrator (#804 review).
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
-	 */
-	private function warnReuseUndetected(): void {
-		if ($this->reuseWarningLogged === true) {
-			return;
-		}
-
-		$this->reuseWarningLogged = true;
-		$this->logger->warning(
-			'Keepiq: no memcache is configured, so a reused vault-key proof is not detected. '
-			. 'Configure a distributed memcache (memcache.distributed) to make proofs single-use.',
-			['app' => 'keepiq']
-		);
-	}//end warnReuseUndetected()
 
 	/**
 	 * The exact string a valid proof signs: the challenge, then the SHA-256 of

@@ -119,6 +119,9 @@ export default {
 			return labels[this.score]
 		},
 
+		/**
+		 * @spec openspec/specs/admin-settings/spec.md#requirement-master-password-policy-mvp
+		 */
 		isValid() {
 			return (
 				this.password.length >= this.effectiveMinLength
