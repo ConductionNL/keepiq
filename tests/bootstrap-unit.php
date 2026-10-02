@@ -116,6 +116,11 @@ if ($ncLoaded === false && $autoloader instanceof \Composer\Autoload\ClassLoader
 	$autoloader->addPsr4('NCU\\', __DIR__ . '/../vendor/nextcloud/ocp/NCU/');
 }
 
+// Keepiq's own test helpers (tests/Support), shared across test files.
+if ($autoloader instanceof \Composer\Autoload\ClassLoader) {
+	$autoloader->addPsr4('OCA\\Keepiq\\Tests\\Support\\', __DIR__ . '/Support/');
+}
+
 // Register Test\ namespace for NC test classes.
 $serverTestsLib = __DIR__ . '/../../../tests/lib/';
 if (is_dir($serverTestsLib)) {

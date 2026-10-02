@@ -1457,7 +1457,236 @@
         "This secret changed while you were offline": "Ši paslaptis pasikeitė, kol buvote neprisijungę",
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Ištrynėte šią paslaptį neprisijungę, bet nuo to laiko ji buvo pakeista serveryje. Pasirinkite, kurią versiją palikti.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Jūsų raktai buvo pakeisti kitame įrenginyje. Įveskite ankstesnį pagrindinį slaptažodį, kad sinchronizuotumėte pakeitimus neprisijungus, arba juos atmeskite.",
-        "Your offline change": "Jūsų pakeitimas neprisijungus"
+        "Your offline change": "Jūsų pakeitimas neprisijungus",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n skubios pagalbos kontaktas turėjo laukiančią prieigos užklausą, kai rakto keitimas jį pašalino. Patikrinkite, kas prašė, prieš vėl ką nors pridėdami.",
+            "%n skubios pagalbos kontaktai turėjo laukiančią prieigos užklausą, kai rakto keitimas juos pašalino. Patikrinkite, kas prašė, prieš vėl ką nors pridėdami.",
+            "%n skubios pagalbos kontaktai turėjo laukiančią prieigos užklausą, kai rakto keitimas juos pašalino. Patikrinkite, kas prašė, prieš vėl ką nors pridėdami."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n elemento negalima pateikti CXF formatu, jis bus praleistas.",
+            "%n elementų negalima pateikti CXF formatu, jie bus praleisti.",
+            "%n elementų negalima pateikti CXF formatu, jie bus praleisti."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n senesnė versija buvo atmesta, nes galima perkelti tik naujausią istoriją.",
+            "%n senesnės versijos buvo atmestos, nes galima perkelti tik naujausią istoriją.",
+            "%n senesnės versijos buvo atmestos, nes galima perkelti tik naujausią istoriją."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "Dar reikia užšifruoti ir bendrinti %n paslapties kopiją.",
+            "Dar reikia užšifruoti ir bendrinti %n paslapčių kopijas.",
+            "Dar reikia užšifruoti ir bendrinti %n paslapčių kopijas."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n paslapties nepavyko iššifruoti, ir jos nėra šiame eksporte.",
+            "%n paslapčių nepavyko iššifruoti, ir jų nėra šiame eksporte.",
+            "%n paslapčių nepavyko iššifruoti, ir jų nėra šiame eksporte."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n paslapties nepavyko iššifruoti jūsų senuoju raktu, todėl ji nebuvo perkelta.",
+            "%n paslapčių nepavyko iššifruoti jūsų senuoju raktu, todėl jos nebuvo perkeltos.",
+            "%n paslapčių nepavyko iššifruoti jūsų senuoju raktu, todėl jos nebuvo perkeltos."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n paslaptis nebuvo perkelta.",
+            "%n paslapčių nebuvo perkelta.",
+            "%n paslapčių nebuvo perkelta."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n paslaptis vis dar užšifruota jūsų ankstesniuoju raktu.",
+            "%n paslapčių vis dar užšifruota jūsų ankstesniuoju raktu.",
+            "%n paslapčių vis dar užšifruota jūsų ankstesniuoju raktu."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n paslaptis praleista, nes perėmėjas dar neturi kopijos — įtraukite perėmėją į aplanką ir vykdykite pakartotinai.",
+            "%n paslapčių praleista, nes perėmėjas dar neturi kopijos — įtraukite perėmėją į aplanką ir vykdykite pakartotinai.",
+            "%n paslapčių praleista, nes perėmėjas dar neturi kopijos — įtraukite perėmėją į aplanką ir vykdykite pakartotinai."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n paslaptis",
+            "%n paslaptys",
+            "%n paslaptys"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n naudotojas taikymo srityje dar neturi dviejų veiksnių prisijungimo ir negali atidaryti saugyklos, kol tai įjungta.",
+            "Naudotojai taikymo srityje (%n) dar neturi dviejų veiksnių prisijungimo ir negali atidaryti saugyklos, kol tai įjungta.",
+            "Naudotojai taikymo srityje (%n) dar neturi dviejų veiksnių prisijungimo ir negali atidaryti saugyklos, kol tai įjungta."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Vis tiek užbaigti, prarandant prieigą prie %n paslapties",
+            "Vis tiek užbaigti, prarandant prieigą prie %n paslapčių",
+            "Vis tiek užbaigti, prarandant prieigą prie %n paslapčių"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n naujas narys gavo prieigą prie komandos aplanko.",
+            "Nauji nariai (%n) gavo prieigą prie komandos aplanko.",
+            "Nauji nariai (%n) gavo prieigą prie komandos aplanko."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Rakto rotacija užbaigta. %n paslaptis buvo iš naujo užšifruota jūsų naujuoju raktu.",
+            "Rakto rotacija užbaigta. %n paslapčių buvo iš naujo užšifruota jūsų naujuoju raktu.",
+            "Rakto rotacija užbaigta. %n paslapčių buvo iš naujo užšifruota jūsų naujuoju raktu."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Antrojo rinkinio atšaukimas ištrynė %n avarinės prieigos kontaktą.",
+            "Antrojo rinkinio atšaukimas ištrynė %n avarinės prieigos kontaktų.",
+            "Antrojo rinkinio atšaukimas ištrynė %n avarinės prieigos kontaktų."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Šio rinkinio atšaukimas pašalino %n avarinės prieigos kontaktą.",
+            "Šio rinkinio atšaukimas pašalino %n avarinės prieigos kontaktų.",
+            "Šio rinkinio atšaukimas pašalino %n avarinės prieigos kontaktų."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "pastebėta nuotėkiuose %n kartą",
+            "pastebėta nuotėkiuose %n kartus",
+            "pastebėta nuotėkiuose %n kartus"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "bendrinama su %n paslaptimi",
+            "bendrinama su %n paslaptimis",
+            "bendrinama su %n paslaptimis"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Šiame aplanke tiesiogiai yra %n paslaptis.",
+            "Šiame aplanke tiesiogiai yra %n paslapčių.",
+            "Šiame aplanke tiesiogiai yra %n paslapčių."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Rakto rotacija pašalino %n skubios prieigos kontaktą. Patikrinkite „Prieiga nenumatytais atvejais“ ir vėl jį pridėkite, jei jo vis dar norite.",
+            "Rakto rotacija pašalino %n skubios prieigos kontaktus. Patikrinkite „Prieiga nenumatytais atvejais“ ir vėl juos pridėkite, jei jų vis dar norite.",
+            "Rakto rotacija pašalino %n skubios prieigos kontaktus. Patikrinkite „Prieiga nenumatytais atvejais“ ir vėl juos pridėkite, jei jų vis dar norite."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n pakeitimas laukia sinchronizavimo",
+            "%n pakeitimai laukia sinchronizavimo",
+            "%n pakeitimai laukia sinchronizavimo"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Naudotojas vis dar yra grupėje {groups}, kuri yra komandos aplanko narė. Pašalinkite jį iš grupės arba išjunkite paskyrą.",
+            "Naudotojas vis dar yra grupėse {groups}, kurios yra komandos aplankų narės. Pašalinkite jį iš grupių arba išjunkite paskyrą.",
+            "Naudotojas vis dar yra grupėse {groups}, kurios yra komandos aplankų narės. Pašalinkite jį iš grupių arba išjunkite paskyrą."
+        ],
+        "Allow approval from another device": "Leisti patvirtinti iš kito įrenginio",
+        "App": "Programėlė",
+        "Approve a new device": "Patvirtinti naują įrenginį",
+        "Approve from another device": "Patvirtinti iš kito įrenginio",
+        "Asked at": "Paprašyta",
+        "Check that the new device shows these words:": "Patikrinkite, ar naujasis įrenginys rodo šiuos žodžius:",
+        "Denied. If you did not ask, end your other sessions:": "Atmesta. Jei to neprašėte, užbaikite kitas savo sesijas:",
+        "Device": "Įrenginys",
+        "IP address": "IP adresas",
+        "Let users unlock a new browser by approving it from a device where Keepiq is already unlocked.": "Leisti naudotojams atrakinti naują naršyklę, patvirtinant ją iš įrenginio, kuriame Keepiq jau atrakintas.",
+        "New device approval": "Naujų įrenginių patvirtinimas",
+        "Nextcloud security settings": "Nextcloud saugumo nustatymai",
+        "Only approve a device you are using right now.": "Tvirtinkite tik įrenginį, kurį naudojate būtent dabar.",
+        "Open Keepiq on a device where it is unlocked and approve this one. Check that it shows the same words:": "Atidarykite Keepiq įrenginyje, kuriame jis atrakintas, ir patvirtinkite šį įrenginį. Patikrinkite, ar jis rodo tuos pačius žodžius:",
+        "The approving device seals the unlock key to the new device. The server only passes it on and cannot open it.": "Tvirtinantis įrenginys užantspauduoja atrakinimo raktą naujajam įrenginiui. Serveris jį tik perduoda ir negali jo atidaryti.",
+        "The master password is not right, or the request has ended.": "Pagrindinis slaptažodis neteisingas arba užklausa baigėsi.",
+        "The request expired. Ask again or use your master password.": "Užklausos laikas baigėsi. Paprašykite dar kartą arba naudokite pagrindinį slaptažodį.",
+        "The request was denied.": "Užklausa atmesta.",
+        "Too many requests. Try again in an hour or use your master password.": "Per daug užklausų. Bandykite dar kartą po valandos arba naudokite pagrindinį slaptažodį.",
+        "Unknown device": "Nežinomas įrenginys",
+        "Web app": "Žiniatinklio programėlė",
+        "A device": "Įrenginys",
+        "A new device asks to open your vault": "Naujas įrenginys prašo atidaryti jūsų saugyklą",
+        "%s asks to be approved. Only approve a device you are using right now.": "%s prašo patvirtinimo. Tvirtinkite tik įrenginį, kurį naudojate būtent dabar.",
+        "Access ends on (optional)": "Prieiga baigiasi (neprivaloma)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Keepiq programėlės nerodys ir nekopijuos slaptažodžio. Techninių žinių turintis asmuo vis tiek gali jį perskaityti savo įrenginyje. Pakeiskite jį, kai prieiga baigsis.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Šią paslaptį galima tik naudoti. Prisijunkite per Keepiq naršyklės plėtinį.",
+        "Until {date}": "Iki {date}",
+        "Use only": "Tik naudoti",
+        "Use only (can sign in, cannot view or copy)": "Tik naudoti (gali prisijungti, negali peržiūrėti ar kopijuoti)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Galite prisijungti šiais prisijungimo duomenimis per Keepiq naršyklės plėtinį. Savininkas nusprendė neleisti jums jų peržiūrėti ar kopijuoti.",
+        "Your access ends on {date}": "Jūsų prieiga baigiasi {date}",
+        "Your access to this secret has ended": "Jūsų prieiga prie šios paslapties baigėsi",
+        "Your access to \"%s\" ends tomorrow": "Jūsų prieiga prie „%s“ baigiasi rytoj",
+        "Your access to \"%s\" has ended": "Jūsų prieiga prie „%s“ baigėsi",
+        "%1$s no longer has access to \"%2$s\"": "%1$s nebeturi prieigos prie „%2$s“",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s galėjo matyti šį slaptažodį. Pakeiskite jį, jei %1$s nebeturėtų jo žinoti.",
+        "%s could not view this password in Keepiq.": "%s negalėjo peržiūrėti šio slaptažodžio Keepiq.",
+        "{approvals} of {threshold} approvals": "{approvals} iš {threshold} patvirtinimų",
+        "a recovery officer": "atkūrimo pareigūnas",
+        "Account recovery": "Paskyros atkūrimas",
+        "Approvals needed": "Reikia patvirtinimų",
+        "Ask {user} which words they see, by phone or in person. They must be:": "Paklauskite {user}, kokius žodžius jis mato, telefonu arba asmeniškai. Jie turi būti:",
+        "Check again": "Tikrinti dar kartą",
+        "Create the recovery key": "Sukurti atkūrimo raktą",
+        "Create the recovery key. Your browser makes it and gives each officer a copy only they can open.": "Sukurkite atkūrimo raktą. Jūsų naršyklė jį sukuria ir kiekvienam pareigūnui duoda kopiją, kurią atidaryti gali tik jis.",
+        "Decline": "Atmesti",
+        "Enrol in account recovery": "Užsiregistruoti paskyros atkūrimui",
+        "Enrol so your organisation can help you get your vault back if you forget your master password.": "Užsiregistruokite, kad jūsų organizacija galėtų padėti susigrąžinti saugyklą, jei pamiršite pagrindinį slaptažodį.",
+        "Every user is enrolled": "Visi naudotojai užsiregistravę",
+        "Finish the recovery in the browser you asked from.": "Užbaikite atkūrimą naršyklėje, iš kurios jo prašėte.",
+        "Forgot your master password?": "Pamiršote pagrindinį slaptažodį?",
+        "Hand the key over": "Perduoti raktą",
+        "Let users who forgot their master password get their vault back, approved by recovery officers you name.": "Leiskite pagrindinį slaptažodį pamiršusiems naudotojams susigrąžinti saugyklą, patvirtinus jūsų paskirtiems atkūrimo pareigūnams.",
+        "New master password": "Naujas pagrindinis slaptažodis",
+        "No one is asking to recover their account.": "Niekas neprašo atkurti savo paskyros.",
+        "No recovery key yet. One of the officers creates it in their Keepiq settings.": "Atkūrimo rakto dar nėra. Vienas iš pareigūnų jį sukuria savo Keepiq nustatymuose.",
+        "Off": "Išjungta",
+        "Officer {user} has no encryption set up yet.": "Pareigūnas {user} dar nenustatė šifravimo.",
+        "Officers (user IDs, separated by commas)": "Pareigūnai (naudotojų ID, atskirti kableliais)",
+        "Policy": "Taisyklės",
+        "Publish this fingerprint internally, so users can check it before they enrol.": "Paskelbkite šį kontrolinį kodą organizacijos viduje, kad naudotojai galėtų jį patikrinti prieš registruodamiesi.",
+        "Recovered with help from {officer}. Rotate your vault key now in Settings, Security: \"My master password was compromised\".": "Atkurta padedant {officer}. Dabar pakeiskite saugyklos raktą: Nustatymai, Saugumas: \"Mano pagrindinis slaptažodis buvo atskleistas\".",
+        "Recovery key fingerprint: {fingerprint}": "Atkūrimo rakto kontrolinis kodas: {fingerprint}",
+        "Recovery officer": "Atkūrimo pareigūnas",
+        "Removed officers lose their copy now, but may have opened it before. Have an officer create a new recovery key.": "Pašalinti pareigūnai dabar praranda savo kopiją, bet galėjo ją atidaryti anksčiau. Paprašykite pareigūno sukurti naują atkūrimo raktą.",
+        "Repeat the new master password": "Pakartokite naują pagrindinį slaptažodį",
+        "Retire this recovery key": "Nebenaudoti šio atkūrimo rakto",
+        "Set the new master password": "Nustatyti naują pagrindinį slaptažodį",
+        "The recovery certificate is not issued by this Keepiq. Do not enrol and tell your administrator.": "Atkūrimo sertifikato išdavė ne šis Keepiq. Nesiregistruokite ir praneškite administratoriui.",
+        "The words match, approve": "Žodžiai sutampa, patvirtinti",
+        "This user is enrolled in account recovery. Recovering keeps their secrets; revoking deletes their enrolment.": "Šis naudotojas užsiregistravęs paskyros atkūrimui. Atkūrimas išsaugo jo paslaptis; atšaukimas ištrina jo registraciją.",
+        "Users may enrol": "Naudotojai gali registruotis",
+        "Withdraw from account recovery": "Atsisakyti paskyros atkūrimo",
+        "You are enrolled in account recovery. Recovery key fingerprint: {fingerprint}": "Esate užsiregistravę paskyros atkūrimui. Atkūrimo rakto kontrolinis kodas: {fingerprint}",
+        "You are enrolled. If you forget your master password, your organisation can help you get your vault back.": "Esate užsiregistravę. Jei pamiršite pagrindinį slaptažodį, jūsų organizacija gali padėti susigrąžinti saugyklą.",
+        "Your key is back. Choose a new master password.": "Jūsų raktas grąžintas. Pasirinkite naują pagrindinį slaptažodį.",
+        "Your recovery officers have been told. Read them these words when they call or meet you:": "Jūsų atkūrimo pareigūnai informuoti. Perskaitykite jiems šiuos žodžius, kai jie paskambins ar susitiksite:",
+        "You are now an account recovery officer": "Dabar esate paskyrų atkūrimo pareigūnas",
+        "%s asks to recover their account. Compare the words with them before you approve.": "%s prašo atkurti savo paskyrą. Prieš patvirtindami palyginkite su juo žodžius.",
+        "A user": "Naudotojas",
+        "Your account recovery request was declined": "Jūsų paskyros atkūrimo užklausa atmesta",
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Jūsų paskyros atkūrimas paruoštas. Atidarykite Keepiq naršyklėje, iš kurios jo prašėte.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} prašo vieną kartą atrakinti naują įrenginį. Pagrindinis slaptažodis lieka tas pats.",
+        "Ask your organisation instead": "Verčiau kreipkitės į savo organizaciją",
+        "The request ended. Ask again or use your master password.": "Užklausa baigėsi. Paprašykite dar kartą arba naudokite pagrindinį slaptažodį.",
+        "Added by {user}": "Pridėjo {user}",
+        "Editor": "Redaktorius",
+        "Manager": "Vadovas",
+        "Role of {member}": "{member} vaidmuo",
+        "Team folders you manage": "Jūsų valdomi komandos aplankai",
+        "Viewer": "Peržiūrėtojas",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Neturite šių paslapčių kopijos, todėl nauji nariai jų dar negavo. Savininkas gali jomis pasidalyti: {names}",
+        "Admin areas": "Administravimo sritys",
+        "Give a group only the parts of Keepiq administration it needs.": "Suteikite grupei tik tas Keepiq administravimo dalis, kurių jai reikia.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Senoje grupėje vault_admin yra narių: {count}. Ji vis dar laikoma sritimi Žmonės ir išėjimas, kol vėlesnė versija ją pašalins. Vietoj to deleguokite šią sritį grupei.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Deleguokite vieną ar daugiau sričių grupei administravimo teisių puslapyje. Egzemplioriaus administratoriai turi visas sritis.",
+        "Open administration privileges": "Atverti administravimo teises",
+        "Policies": "Politikos",
+        "Applications and machine access": "Programos ir mašinų prieiga",
+        "People and offboarding": "Žmonės ir išėjimas",
+        "Audit and compliance": "Auditas ir atitiktis",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "versija, sertifikavimo institucija, priedai, neprisijungus naudojama talpykla, nutekėjimų patikra, paslapčių tipai ir atsarginės kopijos",
+        "master password, organisation password, vault policies, rotation, version history and trash": "pagrindinis slaptažodis, organizacijos slaptažodis, saugyklos politikos, rotacija, versijų istorija ir šiukšlinė",
+        "application queue, application requests and machine leases": "programų eilė, programų užklausos ir mašinų nuomos",
+        "team offboarding, encryption suites and admin handover": "išėjimas iš komandos, šifravimo rinkiniai ir administratoriaus perėmimas",
+        "audit log, compliance reports, SIEM export and honey alerts": "audito žurnalas, atitikties ataskaitos, SIEM eksportas ir masalo įspėjimai",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Kiek paslapties versijų saugoma, kiek laiko, ir kiek laiko ištrintos paslaptys lieka šiukšlinėje.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Šifruotų priedų ribos, kurias serveris taiko saugomiems šifruotiems baitams."
     },
     "plurals": null
 }

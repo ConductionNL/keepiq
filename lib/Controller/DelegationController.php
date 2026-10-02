@@ -144,7 +144,7 @@ class DelegationController extends OCSController {
 	 * a request body flag that switches which check runs is the shape that
 	 * makes a takeover look like an ordinary delegation in the audit trail.
 	 *
-	 * The service enforces the rest — vault_admin membership, that the
+	 * The service enforces the rest — the People admin area, that the
 	 * initiator is not already the owner, and that they already hold a share
 	 * of the secret. A handover widens WHO may act on a secret already shared
 	 * with the admin; it never grants reach over a secret they cannot see.
@@ -189,7 +189,8 @@ class DelegationController extends OCSController {
 	 * to know whether to offer the takeover, which is half of why the
 	 * handover path stayed unreachable.
 	 *
-	 * Reports group membership only — never a per-secret decision. The
+	 * Reports the People area check only (admin-scoped-roles D5), never a
+	 * per-secret decision. The
 	 * per-secret preconditions live in the service and are enforced on the
 	 * write, so a stale or spoofed `true` here buys nothing.
 	 *
@@ -207,7 +208,7 @@ class DelegationController extends OCSController {
 		}
 
 		return new JSONResponse(
-			data: ['isVaultAdmin' => $this->delegationService->isVaultAdmin(userId: $user->getUID())]
+			data: ['canHandover' => $this->delegationService->canHandover(userId: $user->getUID())]
 		);
 	}//end capabilities()
 

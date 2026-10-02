@@ -34,7 +34,7 @@ use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\VaultKeyProofService;
-use OCA\Keepiq\Settings\AdminSettings;
+use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -564,14 +564,14 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @param string $id The suite ID
 	 *
-	 * @AuthorizedAdminSetting(AdminSettings::class)
+	 * @AuthorizedAdminSetting(PeopleAdminSettings::class)
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
 	 */
-	#[AuthorizedAdminSetting(AdminSettings::class)]
+	#[AuthorizedAdminSetting(PeopleAdminSettings::class)]
 	#[PasswordConfirmationRequired]
 	public function reinstate(string $id): JSONResponse {
 		$userId = $this->userSession->getUser()->getUID();
@@ -616,7 +616,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @param string $reason The required, free-form revocation reason
 	 * @param bool $markCompromised Treat the suite's secrets as compromised (default false)
 	 *
-	 * @AuthorizedAdminSetting(AdminSettings::class)
+	 * @AuthorizedAdminSetting(PeopleAdminSettings::class)
 	 *
 	 * @return JSONResponse
 	 *
@@ -627,7 +627,7 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 */
-	#[AuthorizedAdminSetting(AdminSettings::class)]
+	#[AuthorizedAdminSetting(PeopleAdminSettings::class)]
 	#[PasswordConfirmationRequired]
 	public function forceRevoke(string $id, string $reason, bool $markCompromised = false): JSONResponse {
 		$admin = $this->userSession->getUser();

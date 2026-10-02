@@ -34,6 +34,8 @@ use OCP\IDBConnection;
  * @template-extends QBMapper<TeamFolderMember>
  */
 class TeamFolderMemberMapper extends QBMapper {
+	use ExpiringGrantQueries;
+
 	/**
 	 * Constructor for TeamFolderMemberMapper.
 	 *
