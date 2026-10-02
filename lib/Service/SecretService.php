@@ -1427,7 +1427,7 @@ class SecretService {
 	 *
 	 * @throws SuiteBlockedException When no active suite exists
 	 *
-	 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+	 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 	 */
 	public function assertActiveSuite(string $userId): void {
 		$this->getActiveSuiteOrBlock(userId: $userId);

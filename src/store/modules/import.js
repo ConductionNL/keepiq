@@ -168,7 +168,7 @@ export const useImportStore = defineStore('import', {
 		 * @param {string} format The parser/format id.
 		 * @param {object} [options] Parser options (CSV mapping, backup passphrase).
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-supported-import-formats
+		 * @spec openspec/specs/secret-import/spec.md#requirement-supported-import-formats
 		 */
 		async parseFile(text, format, options = {}) {
 			this.loading = true
@@ -268,7 +268,7 @@ export const useImportStore = defineStore('import', {
 		 * secret list API already returns — never decrypts the vault (design D6).
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-duplicate-detection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-duplicate-detection
 		 */
 		async detectDuplicates() {
 			const secretStore = useSecretStore()
@@ -293,7 +293,7 @@ export const useImportStore = defineStore('import', {
 		 * @param {number} sourceRow The duplicate row's source position.
 		 * @param {string} resolution 'skip' or 'copy'.
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-duplicate-detection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-duplicate-detection
 		 */
 		resolveDuplicate(sourceRow, resolution) {
 			this.duplicateResolutions = {
@@ -307,7 +307,7 @@ export const useImportStore = defineStore('import', {
 		 *
 		 * @param {string} resolution 'skip' or 'copy'.
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-duplicate-detection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-duplicate-detection
 		 */
 		resolveAllDuplicates(resolution) {
 			const resolutions = {}
@@ -327,7 +327,7 @@ export const useImportStore = defineStore('import', {
 		 * @param {string|null} typeId The vault type id resolved for the row's
 		 *   `type` (see typeIdResolver), or null for the server's default type.
 		 * @return {Promise<object>} The ciphertext-only item.
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 */
@@ -372,7 +372,7 @@ export const useImportStore = defineStore('import', {
 		 * @param {Array<object>} rows The rows about to be committed (mutated).
 		 * @param {Array<object>} types The vault's secret types ({ id, name }).
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 		 */
 		async dropPolicyRejected(rows, types) {
 			const policy = await fetchPolicy()
@@ -417,7 +417,7 @@ export const useImportStore = defineStore('import', {
 		 *   folder with this name; the source folders keep their hierarchy
 		 *   below it (keepiq#749).
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 */
 		async commit(options = {}) {
@@ -548,7 +548,7 @@ export const useImportStore = defineStore('import', {
 		 *
 		 * @param {object} body The chunk body ({ folders, items }).
 		 * @return {Promise<object|null>} The response data, or null after two failures.
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 		 */
 		async postChunk(body) {
 			for (let attempt = 0; attempt < 2; attempt++) {
@@ -573,7 +573,7 @@ export const useImportStore = defineStore('import', {
 		 * plaintext-adjacent data, so this stays local.
 		 *
 		 * @return {string} The rejected-rows CSV text.
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-malformed-row-rejection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-malformed-row-rejection
 		 */
 		rejectedCsv() {
 			const lines = ['row,name,reason']
@@ -594,7 +594,7 @@ export const useImportStore = defineStore('import', {
 		 *
 		 * @param {string} step The target step.
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
+		 * @spec openspec/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		goToStep(step) {
 			this.step = step
@@ -621,7 +621,7 @@ export const useImportStore = defineStore('import', {
 		 * Mechanism / spec persistence rule).
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 */
 		reset() {
 			this.step = 'pick'

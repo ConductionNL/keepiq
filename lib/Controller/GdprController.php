@@ -89,7 +89,7 @@ class GdprController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	#[NoAdminRequired]
 	public function metadata(): JSONResponse {

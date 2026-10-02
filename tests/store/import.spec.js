@@ -16,7 +16,7 @@
  *
  * Runs under jsdom for Pinia + WebCrypto (the real RSA encrypt path).
  *
- * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+ * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
  */
 
 import axios from '@nextcloud/axios'

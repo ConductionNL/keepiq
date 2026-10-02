@@ -13,7 +13,7 @@
  *
  * Runs under jsdom for Pinia reactivity + the AES-GCM encrypt path.
  *
- * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+ * @spec openspec/specs/secret-export/spec.md
  */
 
 import axios from '@nextcloud/axios'
