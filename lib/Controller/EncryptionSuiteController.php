@@ -258,6 +258,9 @@ class EncryptionSuiteController extends OCSController {
 		subject: 'routeParam:id',
 		purpose: VaultKeyProofService::PURPOSE_UPDATE_PRIVATE_KEY
 	)]
+	/**
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-master-password-change-routine
+	 */
 	public function updatePrivateKey(string $id, string $encryptedPrivateKey): JSONResponse {
 		try {
 			$suite = $this->suiteService->getSuite($id);
@@ -576,6 +579,9 @@ class EncryptionSuiteController extends OCSController {
 		subject: 'active',
 		purpose: VaultKeyProofService::PURPOSE_COMPROMISE_RECOVERY
 	)]
+	/**
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-master-password-change-compromise-recovery
+	 */
 	public function compromiseRecovery(
 		string $publicKey,
 		string $encryptedPrivateKey,

@@ -142,6 +142,9 @@ class MigrationController extends OCSController {
 		subject: 'migrationOldSuite',
 		purpose: VaultKeyProofService::PURPOSE_COMPLETE_MIGRATION
 	)]
+	/**
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
+	 */
 	public function complete(string $id, bool $hasErrors = false, ?int $acceptUnrecoverable = null): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
