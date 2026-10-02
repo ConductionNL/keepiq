@@ -1265,7 +1265,12 @@
         "Tag": "Tikketta",
         "Remove tag": "Neħħi t-tikketta",
         "Add tag": "Żid tikketta",
-        "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova."
+        "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Parti mir-rispons għall-kompromess falliet ({failed} pass(i)). Iċċekkja l-log tas-server, imbagħad erġa' irrevoka s-suite biex tlestih.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Dan irrevoka wkoll is-suite {suite} u temm il-migrazzjoni taċ-ċwievet {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Ir-revoka tat-tieni suite ħassret %n kuntatt ta' aċċess ta' emerġenza.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Ir-revoka tat-tieni suite ħassret %n kuntatti ta' aċċess ta' emerġenza.",
+        "A suite revoked as compromised cannot be reinstated.": "Suite irrevokata bħala kompromessa ma tistax terġa' tiddaħħal."
     },
     "plurals": null
 }

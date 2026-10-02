@@ -1265,7 +1265,12 @@
         "Tag": "Метка",
         "Remove tag": "Убрать метку",
         "Add tag": "Добавить метку",
-        "Could not change the tags. Try again.": "Не удалось изменить метки. Попробуйте ещё раз."
+        "Could not change the tags. Try again.": "Не удалось изменить метки. Попробуйте ещё раз.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Часть реакции на компрометацию не выполнена ({failed} шаг(ов)). Проверьте журнал сервера, затем снова отзовите набор, чтобы завершить её.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Это также отозвало набор {suite} и завершило миграцию ключей {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Отзыв второго набора удалил %n контакт аварийного доступа.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Отзыв второго набора удалил %n контактов аварийного доступа.",
+        "A suite revoked as compromised cannot be reinstated.": "Набор, отозванный как скомпрометированный, нельзя восстановить."
     },
     "plurals": null
 }

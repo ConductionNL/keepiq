@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Етикет",
         "Remove tag": "Премахване на етикет",
         "Add tag": "Добавяне на етикет",
-        "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново."
+        "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Част от реакцията при компрометиране се провали ({failed} стъпка(и)). Проверете сървърния дневник и отново отменете пакета, за да я завършите.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Това отмени и пакета {suite} и прекрати миграцията на ключове {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Отмяната на втория пакет изтри %n контакт за спешен достъп.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Отмяната на втория пакет изтри %n контакта за спешен достъп.",
+        "A suite revoked as compromised cannot be reinstated.": "Пакет, отменен като компрометиран, не може да бъде възстановен."
     },
     "nplurals=2; plural=(n != 1);"
 )

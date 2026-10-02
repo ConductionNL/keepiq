@@ -1265,7 +1265,12 @@
         "Tag": "Mærke",
         "Remove tag": "Fjern mærke",
         "Add tag": "Tilføj mærke",
-        "Could not change the tags. Try again.": "Mærkerne kunne ikke ændres. Prøv igen."
+        "Could not change the tags. Try again.": "Mærkerne kunne ikke ændres. Prøv igen.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "En del af kompromitteringsreaktionen mislykkedes ({failed} trin). Tjek serverloggen, og tilbagekald derefter suiten igen for at afslutte.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Dette tilbagekaldte også suite {suite} og afsluttede nøglemigrering {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Tilbagekaldelse af den anden suite slettede %n nødadgangskontakt.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Tilbagekaldelse af den anden suite slettede %n nødadgangskontakter.",
+        "A suite revoked as compromised cannot be reinstated.": "En suite, der er tilbagekaldt som kompromitteret, kan ikke genindsættes."
     },
     "plurals": null
 }

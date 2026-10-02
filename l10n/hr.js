@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Oznaka",
         "Remove tag": "Ukloni oznaku",
         "Add tag": "Dodaj oznaku",
-        "Could not change the tags. Try again.": "Oznake nije bilo moguće promijeniti. Pokušajte ponovno."
+        "Could not change the tags. Try again.": "Oznake nije bilo moguće promijeniti. Pokušajte ponovno.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Dio odgovora na kompromitaciju nije uspio ({failed} korak(a)). Provjerite zapisnik poslužitelja, a zatim ponovno opozovite paket da biste ga dovršili.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Time je opozvan i paket {suite} te završena migracija ključeva {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Opoziv drugog paketa izbrisao je %n kontakt za hitni pristup.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Opoziv drugog paketa izbrisao je %n kontakata za hitni pristup.",
+        "A suite revoked as compromised cannot be reinstated.": "Paket opozvan kao kompromitiran ne može se vratiti."
     },
     "nplurals=2; plural=(n != 1);"
 )

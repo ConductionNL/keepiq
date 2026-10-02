@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Étiquette",
         "Remove tag": "Retirer l'étiquette",
         "Add tag": "Ajouter une étiquette",
-        "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez."
+        "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Une partie de la réponse à la compromission a échoué ({failed} étape(s)). Consultez le journal du serveur, puis révoquez à nouveau la suite pour terminer.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Cela a aussi révoqué la suite {suite} et mis fin à la migration de clés {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "La révocation de la deuxième suite a supprimé %n contact d'accès d'urgence.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "La révocation de la deuxième suite a supprimé %n contacts d'accès d'urgence.",
+        "A suite revoked as compromised cannot be reinstated.": "Une suite révoquée comme compromise ne peut pas être rétablie."
     },
     "nplurals=2; plural=(n != 1);"
 )

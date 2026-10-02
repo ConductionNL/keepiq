@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Etichetta",
         "Remove tag": "Allontanar l'etichetta",
         "Add tag": "Agiuntar ina etichetta",
-        "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada."
+        "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Ina part da la reacziun a la cumpromissiun n’è betg reussida ({failed} pass). Controllai il protocol dal server e revocai lura danovamain la suite per la terminar.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Quai ha er revocà la suite {suite} e terminà la migraziun da clavs {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "La revocaziun da la segunda suite ha stizzà %n contact d’access d’urgenza.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "La revocaziun da la segunda suite ha stizzà %n contacts d’access d’urgenza.",
+        "A suite revoked as compromised cannot be reinstated.": "Ina suite revocada sco cumpromessa na po betg vegnir restituida."
     },
     "nplurals=2; plural=(n != 1);"
 )

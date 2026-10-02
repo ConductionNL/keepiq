@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Tag",
         "Remove tag": "Remove tag",
         "Add tag": "Add tag",
-        "Could not change the tags. Try again.": "Could not change the tags. Try again."
+        "Could not change the tags. Try again.": "Could not change the tags. Try again.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "This also revoked suite {suite} and ended key migration {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Revoking the second suite deleted %n emergency-access contact.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Revoking the second suite deleted %n emergency-access contacts.",
+        "A suite revoked as compromised cannot be reinstated.": "A suite revoked as compromised cannot be reinstated."
     },
     "nplurals=2; plural=(n != 1);"
 )

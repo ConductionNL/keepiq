@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Oznaka",
         "Remove tag": "Odstrani oznako",
         "Add tag": "Dodaj oznako",
-        "Could not change the tags. Try again.": "Oznak ni bilo mogoče spremeniti. Poskusite znova."
+        "Could not change the tags. Try again.": "Oznak ni bilo mogoče spremeniti. Poskusite znova.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Del odziva na ogroženost ni uspel ({failed} korak(ov)). Preverite strežniški dnevnik in nato znova prekličite zbirko, da jo dokončate.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "S tem je bila preklicana tudi zbirka {suite} in končana selitev ključev {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Preklic druge zbirke je izbrisal %n stik za nujni dostop.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Preklic druge zbirke je izbrisal %n stikov za nujni dostop.",
+        "A suite revoked as compromised cannot be reinstated.": "Zbirke, preklicane kot ogrožene, ni mogoče obnoviti."
     },
     "nplurals=2; plural=(n != 1);"
 )

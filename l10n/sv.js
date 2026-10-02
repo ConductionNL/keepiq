@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Tagg",
         "Remove tag": "Ta bort tagg",
         "Add tag": "Lägg till tagg",
-        "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen."
+        "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "En del av kompromissvaret misslyckades ({failed} steg). Kontrollera serverloggen och återkalla sedan sviten igen för att slutföra.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Detta återkallade även svit {suite} och avslutade nyckelmigrering {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Återkallandet av den andra sviten tog bort %n nödåtkomstkontakt.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Återkallandet av den andra sviten tog bort %n nödåtkomstkontakter.",
+        "A suite revoked as compromised cannot be reinstated.": "En svit som återkallats som komprometterad kan inte återställas."
     },
     "nplurals=2; plural=(n != 1);"
 )

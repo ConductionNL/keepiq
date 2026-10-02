@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Silt",
         "Remove tag": "Eemalda silt",
         "Add tag": "Lisa silt",
-        "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti."
+        "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Osa ohustumisele reageerimisest ebaõnnestus ({failed} samm(u)). Kontrollige serveri logi ja tühistage seejärel komplekt uuesti, et see lõpetada.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "See tühistas ka komplekti {suite} ja lõpetas võtmete migratsiooni {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Teise komplekti tühistamine kustutas %n hädaabijuurdepääsu kontakti.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Teise komplekti tühistamine kustutas %n hädaabijuurdepääsu kontakti.",
+        "A suite revoked as compromised cannot be reinstated.": "Ohustatuna tühistatud komplekti ei saa taastada."
     },
     "nplurals=2; plural=(n != 1);"
 )

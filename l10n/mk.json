@@ -1265,7 +1265,12 @@
         "Tag": "Ознака",
         "Remove tag": "Отстрани ознака",
         "Add tag": "Додај ознака",
-        "Could not change the tags. Try again.": "Ознаките не можеа да се променат. Обидете се повторно."
+        "Could not change the tags. Try again.": "Ознаките не можеа да се променат. Обидете се повторно.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Дел од одговорот на компромитирање не успеа ({failed} чекор(и)). Проверете го дневникот на серверот, а потоа повторно отповикајте го пакетот за да го завршите.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Со ова е отповикан и пакетот {suite} и завршена миграцијата на клучеви {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Отповикувањето на вториот пакет избриша %n контакт за итен пристап.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Отповикувањето на вториот пакет избриша %n контакти за итен пристап.",
+        "A suite revoked as compromised cannot be reinstated.": "Пакет отповикан како компромитиран не може да се врати."
     },
     "plurals": null
 }

@@ -130,6 +130,50 @@ Every force-revoke, compromise or not, that deletes usable emergency contacts MU
 - **WHEN** an administrator force-revokes it, with or without `markCompromised`
 - **THEN** A MUST be notified that two emergency contacts were deleted
 
+### Requirement: A Suite Revoked As Compromised Cannot Be Reinstated
+Reinstating a suite re-opens every secret under its key. The admin `reinstate()` endpoint MUST therefore carry `#[PasswordConfirmationRequired]` like force-revoke does, and the admin UI MUST run the password confirmation before the request (keepiq#865).
+
+The system MUST refuse to reinstate a suite whose last `SUITE_REVOKED` audit entry carries `markCompromised: true`. The compromise decision stays off the suite row (ADR-005), so the audit entry is the record. When no `SUITE_REVOKED` entry can be found for the suite, the system MUST refuse as well: nothing shows the revocation was a harmless one. The system MUST also refuse when the suite's owner already has another active suite, because a reinstate would leave them with two. Each refusal MUST answer `409` with `error` set to `revoked_as_compromised` or `owner_has_active_suite`, and MUST change nothing.
+
+The admin UI MUST NOT offer Reinstate for a suite it has just revoked as compromised.
+
+#### Scenario: Reinstating a compromise revoke is refused
+@e2e exclude Server-side refusal on an admin API route behind sudo; covered by PHPUnit on EncryptionSuiteService and EncryptionSuiteController, and vitest on AdminSuiteSection.
+- **GIVEN** an administrator force-revoked suite S with `markCompromised: true`
+- **WHEN** an administrator reinstates S
+- **THEN** the system MUST refuse with `409` and `error: revoked_as_compromised`
+- **AND** S MUST stay revoked
+
+#### Scenario: Reinstating next to an active suite is refused
+@e2e exclude Server-side refusal; covered by PHPUnit on EncryptionSuiteService.
+- **GIVEN** suite S was revoked without compromise and its owner has since set up a new active suite
+- **WHEN** an administrator reinstates S
+- **THEN** the system MUST refuse with `409` and `error: owner_has_active_suite`
+
+#### Scenario: No Reinstate button after a compromise revoke
+@e2e exclude Covered by vitest on AdminSuiteSection; the live flow needs sudo.
+- **GIVEN** an administrator just force-revoked a suite with `markCompromised: true`
+- **WHEN** the result is shown
+- **THEN** the Reinstate button MUST NOT be shown
+
+### Requirement: Re-Enrolment After A Revocation Requires A Fresh Password Confirmation
+A user whose suites are all revoked or replaced, with none active, MUST NOT be able to enrol a new suite with only a session. `POST /api/v1/suites` MUST refuse such a user with `403` and `error: reauthentication_required`, and the user MUST enrol through `POST /api/v1/suites/reenrol`, which carries `#[PasswordConfirmationRequired]` (keepiq#860). Without this, a stolen session that survived an administrator's containment could enrol a key pair it owns and receive every new share and emergency designation meant for the user. The browser MUST confirm the password and retry on the re-enrol route when it gets that refusal.
+
+Accounts that cannot confirm a password (single sign-on) pass the sudo guard. For them the protection is that a compromise force-revoke ends every session and app password (see Requirement: A Compromise Force-Revoke Contains The Account).
+
+#### Scenario: A session alone cannot replace a revoked identity
+@e2e exclude Needs a revoked user session; covered by PHPUnit on EncryptionSuiteController and vitest on the encryptionSuite store.
+- **GIVEN** user A's only suite was force-revoked
+- **WHEN** a session of A posts a new suite to `/api/v1/suites`
+- **THEN** the system MUST refuse with `403` and `error: reauthentication_required`
+- **AND** MUST NOT create a suite
+
+#### Scenario: Re-enrolment after a password confirmation
+@e2e exclude Needs the Nextcloud password confirmation dialog; covered by PHPUnit and vitest.
+- **GIVEN** user A's only suite was revoked
+- **WHEN** A confirms their Nextcloud password and posts the new suite to `/api/v1/suites/reenrol`
+- **THEN** the system MUST create the suite
+
 ### Requirement: A Suite In An In-Progress Migration Cannot Be Revoked
 The system MUST refuse to revoke a suite, by an administrator's force-revoke that is not marked as a compromise or by its owner, while that suite is the old or the new end of a key migration that is still `in_progress` (keepiq#803). Revoking the old end blocks the reads the owner's browser needs to re-encrypt; revoking the new end makes records that were already re-encrypted, or are being written, unreadable. Either way the migration and the vault write lock would stay `in_progress` with no way to finish. The refusal MUST happen before anything is changed, MUST answer `409` with `error: migration_in_progress`, and MUST say that the migration has to be completed or aborted first.
 

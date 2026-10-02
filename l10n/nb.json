@@ -1265,7 +1265,12 @@
         "Tag": "Etikett",
         "Remove tag": "Fjern etikett",
         "Add tag": "Legg til etikett",
-        "Could not change the tags. Try again.": "Kunne ikke endre etikettene. Prøv igjen."
+        "Could not change the tags. Try again.": "Kunne ikke endre etikettene. Prøv igjen.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "En del av kompromitteringsresponsen mislyktes ({failed} trinn). Sjekk serverloggen, og tilbakekall deretter suiten på nytt for å fullføre.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Dette tilbakekalte også suite {suite} og avsluttet nøkkelmigrering {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Tilbakekalling av den andre suiten slettet %n nødtilgangskontakt.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Tilbakekalling av den andre suiten slettet %n nødtilgangskontakter.",
+        "A suite revoked as compromised cannot be reinstated.": "En suite som er tilbakekalt som kompromittert, kan ikke gjenopprettes."
     },
     "plurals": null
 }

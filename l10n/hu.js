@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Címke",
         "Remove tag": "Címke eltávolítása",
         "Add tag": "Címke hozzáadása",
-        "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra."
+        "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "A kompromittálásra adott válasz egy része sikertelen volt ({failed} lépés). Ellenőrizze a kiszolgáló naplóját, majd vonja vissza újra a csomagot a befejezéshez.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Ez a(z) {suite} csomagot is visszavonta, és befejezte a(z) {migration} kulcsmigrációt.",
+        "Revoking the second suite deleted %n emergency-access contact.": "A második csomag visszavonása %n vészhelyzeti hozzáférési kapcsolatot törölt.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "A második csomag visszavonása %n vészhelyzeti hozzáférési kapcsolatot törölt.",
+        "A suite revoked as compromised cannot be reinstated.": "A kompromittáltként visszavont csomag nem állítható vissza."
     },
     "nplurals=2; plural=(n != 1);"
 )

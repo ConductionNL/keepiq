@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Etiket",
         "Remove tag": "Etiketi kaldır",
         "Add tag": "Etiket ekle",
-        "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin."
+        "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Güvenlik ihlali yanıtının bir kısmı başarısız oldu ({failed} adım). Sunucu günlüğünü kontrol edin, ardından tamamlamak için paketi yeniden iptal edin.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Bu işlem {suite} paketini de iptal etti ve {migration} anahtar taşımasını sonlandırdı.",
+        "Revoking the second suite deleted %n emergency-access contact.": "İkinci paketin iptali %n acil erişim kişisini sildi.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "İkinci paketin iptali %n acil erişim kişisini sildi.",
+        "A suite revoked as compromised cannot be reinstated.": "İhlal edilmiş olarak iptal edilen bir paket geri yüklenemez."
     },
     "nplurals=2; plural=(n != 1);"
 )

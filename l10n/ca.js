@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Etiqueta",
         "Remove tag": "Treu l'etiqueta",
         "Add tag": "Afegeix una etiqueta",
-        "Could not change the tags. Try again.": "No s'han pogut canviar les etiquetes. Torneu-ho a provar."
+        "Could not change the tags. Try again.": "No s'han pogut canviar les etiquetes. Torneu-ho a provar.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Part de la resposta al compromís ha fallat ({failed} pas(sos)). Consulteu el registre del servidor i torneu a revocar la suite per acabar-la.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Això també ha revocat la suite {suite} i ha finalitzat la migració de claus {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Revocar la segona suite ha suprimit %n contacte d'accés d'emergència.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Revocar la segona suite ha suprimit %n contactes d'accés d'emergència.",
+        "A suite revoked as compromised cannot be reinstated.": "Una suite revocada com a compromesa no es pot restablir."
     },
     "nplurals=2; plural=(n != 1);"
 )

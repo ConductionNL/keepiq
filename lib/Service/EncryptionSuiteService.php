@@ -24,10 +24,12 @@ namespace OCA\Keepiq\Service;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuite;
+use OCA\Keepiq\Db\AuditEntryMapper;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
+use OCA\Keepiq\Exception\ReinstateRefusedException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -48,6 +50,7 @@ class EncryptionSuiteService {
 	 * @param LoggerInterface $logger The logger interface
 	 * @param IEventDispatcher|null $eventDispatcher The event dispatcher
 	 * @param AuditEventFactory $auditEvents The audit-event factory
+	 * @param AuditEntryMapper|null $auditEntries The audit trail (reads how a suite was revoked)
 	 *
 	 * @return void
 	 */
@@ -57,6 +60,7 @@ class EncryptionSuiteService {
 		private LoggerInterface $logger,
 		private ?IEventDispatcher $eventDispatcher = null,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
+		private ?AuditEntryMapper $auditEntries = null,
 	) {
 	}//end __construct()
 
@@ -229,14 +233,24 @@ class EncryptionSuiteService {
 	/**
 	 * Reinstate a revoked EncryptionSuite. Re-signs the public key with the active intermediate.
 	 *
+	 * Refused for a suite revoked as compromised: reinstating it re-opens every
+	 * secret under a key the administrator declared to be in an attacker's
+	 * hands. ADR-005 keeps that decision off the suite row, so it is read from
+	 * the suite's last SUITE_REVOKED audit entry; when no such entry can be
+	 * found the reinstate is refused too, because the revocation cannot be
+	 * shown to be a harmless one. Also refused when the owner already has
+	 * another active suite, which would leave them with two (keepiq#865).
+	 *
 	 * @param string $id The suite ID
 	 * @param string $reinstatedBy The user who reinstated the suite
 	 *
 	 * @return EncryptionSuite
 	 *
 	 * @throws DoesNotExistException
+	 * @throws ReinstateRefusedException
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
 	 */
 	public function reinstateSuite(string $id, string $reinstatedBy): EncryptionSuite {
 		$suite = $this->mapper->findById($id);
@@ -246,6 +260,8 @@ class EncryptionSuiteService {
 				'Only revoked suites can be reinstated (current status: ' . $suite->getStatus() . ')'
 			);
 		}
+
+		$this->assertReinstatable(suite: $suite);
 
 		// Re-sign the existing public key with the active intermediate.
 		$newCertificate = $this->provisioning->reissueCertificateForSuite(suite: $suite);
@@ -270,6 +286,61 @@ class EncryptionSuiteService {
 
 		return $suite;
 	}//end reinstateSuite()
+
+	/**
+	 * Refuse a reinstate that would undo a containment or duplicate an identity.
+	 *
+	 * @param EncryptionSuite $suite The revoked suite
+	 *
+	 * @return void
+	 *
+	 * @throws ReinstateRefusedException
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
+	 */
+	private function assertReinstatable(EncryptionSuite $suite): void {
+		$revokedAsCompromise = $this->wasRevokedAsCompromise(suiteId: (string)$suite->getId());
+		if ($revokedAsCompromise !== false) {
+			throw new ReinstateRefusedException(
+				error: 'revoked_as_compromised',
+				message: 'This suite was revoked as compromised, or its revocation cannot be confirmed. '
+					. 'Its owner has to set up a new vault instead.'
+			);
+		}
+
+		if ($this->mapper->countActiveByOwner($suite->getOwnerType(), $suite->getOwnerId()) > 0) {
+			throw new ReinstateRefusedException(
+				error: 'owner_has_active_suite',
+				message: 'The owner already has an active suite. Reinstating this one would give them two.'
+			);
+		}
+	}//end assertReinstatable()
+
+	/**
+	 * Whether the suite's last revocation was marked as a compromise.
+	 *
+	 * @param string $suiteId The suite
+	 *
+	 * @return bool|null True or false from the last SUITE_REVOKED entry, null when none is found
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
+	 */
+	private function wasRevokedAsCompromise(string $suiteId): ?bool {
+		if ($this->auditEntries === null) {
+			return null;
+		}
+
+		foreach ($this->auditEntries->findByObject(objectType: 'suite', objectId: $suiteId) as $entry) {
+			if ($entry->getEventType() !== AuditEventTypes::SUITE_REVOKED) {
+				continue;
+			}
+
+			$metadata = json_decode((string)$entry->getMetadata(), true);
+			return is_array($metadata) === true && ($metadata['markCompromised'] ?? false) === true;
+		}
+
+		return null;
+	}//end wasRevokedAsCompromise()
 
 	/**
 	 * Mark an EncryptionSuite as compromised. Called immediately when

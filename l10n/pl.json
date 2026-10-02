@@ -1265,7 +1265,12 @@
         "Tag": "Tag",
         "Remove tag": "Usuń tag",
         "Add tag": "Dodaj tag",
-        "Could not change the tags. Try again.": "Nie udało się zmienić tagów. Spróbuj ponownie."
+        "Could not change the tags. Try again.": "Nie udało się zmienić tagów. Spróbuj ponownie.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Część reakcji na naruszenie nie powiodła się ({failed} krok(ów)). Sprawdź dziennik serwera, a następnie ponownie unieważnij zestaw, aby ją dokończyć.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Unieważniło to także zestaw {suite} i zakończyło migrację kluczy {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Unieważnienie drugiego zestawu usunęło %n kontakt dostępu awaryjnego.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Unieważnienie drugiego zestawu usunęło %n kontaktów dostępu awaryjnego.",
+        "A suite revoked as compromised cannot be reinstated.": "Zestawu unieważnionego jako naruszony nie można przywrócić."
     },
     "plurals": null
 }

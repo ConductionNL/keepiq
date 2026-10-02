@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Ετικέτα",
         "Remove tag": "Αφαίρεση ετικέτας",
         "Add tag": "Προσθήκη ετικέτας",
-        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά."
+        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Μέρος της απόκρισης στην παραβίαση απέτυχε ({failed} βήμα(τα)). Ελέγξτε το αρχείο καταγραφής του διακομιστή και ανακαλέστε ξανά τη σουίτα για να ολοκληρωθεί.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Αυτό ανακάλεσε επίσης τη σουίτα {suite} και τερμάτισε τη μετάβαση κλειδιών {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Η ανάκληση της δεύτερης σουίτας διέγραψε %n επαφή πρόσβασης έκτακτης ανάγκης.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Η ανάκληση της δεύτερης σουίτας διέγραψε %n επαφές πρόσβασης έκτακτης ανάγκης.",
+        "A suite revoked as compromised cannot be reinstated.": "Μια σουίτα που ανακλήθηκε ως παραβιασμένη δεν μπορεί να αποκατασταθεί."
     },
     "nplurals=2; plural=(n != 1);"
 )

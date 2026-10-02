@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Štítek",
         "Remove tag": "Odebrat štítek",
         "Add tag": "Přidat štítek",
-        "Could not change the tags. Try again.": "Štítky nelze změnit. Zkuste to znovu."
+        "Could not change the tags. Try again.": "Štítky nelze změnit. Zkuste to znovu.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Část reakce na kompromitaci selhala ({failed} krok(ů)). Zkontrolujte protokol serveru a poté sadu znovu odvolejte, abyste ji dokončili.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Tím byla odvolána také sada {suite} a ukončena migrace klíčů {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Odvolání druhé sady smazalo %n kontakt nouzového přístupu.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Odvolání druhé sady smazalo %n kontaktů nouzového přístupu.",
+        "A suite revoked as compromised cannot be reinstated.": "Sadu odvolanou jako kompromitovanou nelze obnovit."
     },
     "nplurals=2; plural=(n != 1);"
 )

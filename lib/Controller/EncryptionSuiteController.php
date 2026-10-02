@@ -25,6 +25,7 @@ use Exception;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ConflictException;
+use OCA\Keepiq\Exception\ReinstateRefusedException;
 use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Db\SuiteMigration;
@@ -478,6 +479,11 @@ class EncryptionSuiteController extends OCSController {
 	/**
 	 * Reinstate a revoked EncryptionSuite (admin only).
 	 *
+	 * Reinstating re-opens every secret under the key, so it carries the same
+	 * Nextcloud sudo as force-revoke: sudo used to guard only the safe direction
+	 * (keepiq#865). A suite revoked as compromised, or whose owner already has
+	 * another active suite, is refused with 409 (see reinstateSuite()).
+	 *
 	 * @param string $id The suite ID
 	 *
 	 * @AuthorizedAdminSetting(AdminSettings::class)
@@ -485,14 +491,21 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
+	#[PasswordConfirmationRequired]
 	public function reinstate(string $id): JSONResponse {
 		$userId = $this->userSession->getUser()->getUID();
 
 		try {
 			$suite = $this->suiteService->reinstateSuite(id: $id, reinstatedBy: $userId);
 			return new JSONResponse(data: $suite->jsonSerialize());
+		} catch (ReinstateRefusedException $e) {
+			return new JSONResponse(
+				data: ['error' => $e->getError(), 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],

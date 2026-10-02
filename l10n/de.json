@@ -1265,7 +1265,12 @@
         "Tag": "Schlagwort",
         "Remove tag": "Schlagwort entfernen",
         "Add tag": "Schlagwort hinzufügen",
-        "Could not change the tags. Try again.": "Schlagwörter konnten nicht geändert werden. Bitte erneut versuchen."
+        "Could not change the tags. Try again.": "Schlagwörter konnten nicht geändert werden. Bitte erneut versuchen.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Ein Teil der Kompromittierungsreaktion ist fehlgeschlagen ({failed} Schritt(e)). Prüfen Sie das Serverprotokoll und widerrufen Sie die Suite dann erneut, um sie abzuschließen.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Dadurch wurde auch die Suite {suite} widerrufen und die Schlüsselmigration {migration} beendet.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Der Widerruf der zweiten Suite hat %n Notfallzugangskontakt gelöscht.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Der Widerruf der zweiten Suite hat %n Notfallzugangskontakte gelöscht.",
+        "A suite revoked as compromised cannot be reinstated.": "Eine als kompromittiert widerrufene Suite kann nicht wiederhergestellt werden."
     },
     "plurals": null
 }

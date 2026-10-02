@@ -1369,4 +1369,37 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
 	}//end testReenrolRequiresSudoAndEnrols()
 
+	/**
+	 * reinstate() carries Nextcloud sudo, like force-revoke: it is the
+	 * dangerous direction (keepiq#865).
+	 *
+	 * @return void
+	 */
+	public function testReinstateRequiresSudo(): void {
+		$method = new \ReflectionMethod(EncryptionSuiteController::class, 'reinstate');
+
+		$this->assertCount(1, $method->getAttributes(\OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting::class));
+		$this->assertCount(
+			expectedCount: 1,
+			haystack: $method->getAttributes(\OCP\AppFramework\Http\Attribute\PasswordConfirmationRequired::class),
+			message: 'reinstate must require Nextcloud sudo'
+		);
+	}//end testReinstateRequiresSudo()
+
+	/**
+	 * A refused reinstate reaches the administrator as a 409 with its reason.
+	 *
+	 * @return void
+	 */
+	public function testAReinstateOfACompromiseRevokeIsRefusedWith409(): void {
+		$this->suiteService->method('reinstateSuite')->willThrowException(
+			new \OCA\Keepiq\Exception\ReinstateRefusedException('revoked_as_compromised', 'compromised')
+		);
+
+		$response = $this->controller->reinstate('suite-1');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame('revoked_as_compromised', $response->getData()['error']);
+	}//end testAReinstateOfACompromiseRevokeIsRefusedWith409()
+
 }//end class

@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Žymė",
         "Remove tag": "Pašalinti žymę",
         "Add tag": "Pridėti žymę",
-        "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą."
+        "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Dalis reakcijos į kompromitavimą nepavyko ({failed} žingsnis(-iai)). Patikrinkite serverio žurnalą ir vėl atšaukite rinkinį, kad ją užbaigtumėte.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Tai taip pat atšaukė rinkinį {suite} ir užbaigė raktų perkėlimą {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Antrojo rinkinio atšaukimas ištrynė %n avarinės prieigos kontaktą.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Antrojo rinkinio atšaukimas ištrynė %n avarinės prieigos kontaktų.",
+        "A suite revoked as compromised cannot be reinstated.": "Rinkinio, atšaukto kaip kompromituoto, atkurti negalima."
     },
     "nplurals=2; plural=(n != 1);"
 )

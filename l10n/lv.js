@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Birka",
         "Remove tag": "Noņemt birku",
         "Add tag": "Pievienot birku",
-        "Could not change the tags. Try again.": "Neizdevās mainīt birkas. Mēģiniet vēlreiz."
+        "Could not change the tags. Try again.": "Neizdevās mainīt birkas. Mēģiniet vēlreiz.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Daļa no reakcijas uz kompromitēšanu neizdevās ({failed} solis(-ļi)). Pārbaudiet servera žurnālu un pēc tam atsauciet komplektu vēlreiz, lai to pabeigtu.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Tas atsauca arī komplektu {suite} un pabeidza atslēgu migrāciju {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Otrā komplekta atsaukšana izdzēsa %n ārkārtas piekļuves kontaktu.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Otrā komplekta atsaukšana izdzēsa %n ārkārtas piekļuves kontaktus.",
+        "A suite revoked as compromised cannot be reinstated.": "Komplektu, kas atsaukts kā kompromitēts, nevar atjaunot."
     },
     "nplurals=2; plural=(n != 1);"
 )

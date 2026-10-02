@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Merki",
         "Remove tag": "Fjarlægja merki",
         "Add tag": "Bæta við merki",
-        "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur."
+        "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Hluti af viðbrögðum við öryggisbresti mistókst ({failed} skref). Skoðaðu annál þjónsins og afturkallaðu svítuna aftur til að ljúka því.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Þetta afturkallaði einnig svítu {suite} og lauk lyklaflutningi {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Afturköllun seinni svítunnar eyddi %n neyðaraðgangstengilið.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Afturköllun seinni svítunnar eyddi %n neyðaraðgangstengiliðum.",
+        "A suite revoked as compromised cannot be reinstated.": "Ekki er hægt að endurheimta svítu sem var afturkölluð sem í hættu."
     },
     "nplurals=2; plural=(n != 1);"
 )

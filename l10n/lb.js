@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Tag",
         "Remove tag": "Tag ewechhuelen",
         "Add tag": "Tag derbäisetzen",
-        "Could not change the tags. Try again.": "D'Tags konnten net geännert ginn. Probéiert nach eng Kéier."
+        "Could not change the tags. Try again.": "D'Tags konnten net geännert ginn. Probéiert nach eng Kéier.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "En Deel vun der Reaktioun op d’Kompromittéierung ass feelgeschloen ({failed} Schrëtt). Kontrolléiert de Serverprotokoll a widderrufft d’Suite dann nach eng Kéier, fir se ofzeschléissen.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Domat gouf och d’Suite {suite} widderruff an d’Schlësselmigratioun {migration} ofgeschloss.",
+        "Revoking the second suite deleted %n emergency-access contact.": "De Widderruff vun der zweeter Suite huet %n Noutzougangskontakt geläscht.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "De Widderruff vun der zweeter Suite huet %n Noutzougangskontakter geläscht.",
+        "A suite revoked as compromised cannot be reinstated.": "Eng Suite, déi als kompromittéiert widderruff gouf, kann net erëm hiergestallt ginn."
     },
     "nplurals=2; plural=(n != 1);"
 )

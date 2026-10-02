@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Tunniste",
         "Remove tag": "Poista tunniste",
         "Add tag": "Lisää tunniste",
-        "Could not change the tags. Try again.": "Tunnisteita ei voitu muuttaa. Yritä uudelleen."
+        "Could not change the tags. Try again.": "Tunnisteita ei voitu muuttaa. Yritä uudelleen.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Osa vaarantumisvasteesta epäonnistui ({failed} vaihe(tta)). Tarkista palvelimen loki ja peru sitten sarja uudelleen viimeistelläksesi sen.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Tämä perui myös sarjan {suite} ja päätti avainten siirron {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Toisen sarjan peruminen poisti %n hätäkäyttöyhteystiedon.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Toisen sarjan peruminen poisti %n hätäkäyttöyhteystietoa.",
+        "A suite revoked as compromised cannot be reinstated.": "Vaarantuneena perutun sarjan palauttaminen ei ole mahdollista."
     },
     "nplurals=2; plural=(n != 1);"
 )

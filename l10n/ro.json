@@ -1265,7 +1265,12 @@
         "Tag": "Etichetă",
         "Remove tag": "Elimină eticheta",
         "Add tag": "Adaugă etichetă",
-        "Could not change the tags. Try again.": "Etichetele nu au putut fi schimbate. Încercați din nou."
+        "Could not change the tags. Try again.": "Etichetele nu au putut fi schimbate. Încercați din nou.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "O parte din răspunsul la compromitere a eșuat ({failed} pas(i)). Verificați jurnalul serverului, apoi revocați din nou suita pentru a-l finaliza.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Aceasta a revocat și suita {suite} și a încheiat migrarea cheilor {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Revocarea celei de-a doua suite a șters %n contact de acces de urgență.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Revocarea celei de-a doua suite a șters %n contacte de acces de urgență.",
+        "A suite revoked as compromised cannot be reinstated.": "O suită revocată ca fiind compromisă nu poate fi restabilită."
     },
     "plurals": null
 }
