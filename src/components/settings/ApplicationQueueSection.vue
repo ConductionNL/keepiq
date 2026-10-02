@@ -39,6 +39,7 @@
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
+import { showError } from '@nextcloud/dialogs'
 import { generateUrl } from '@nextcloud/router'
 
 export default {
@@ -92,9 +93,16 @@ export default {
 		 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-4.3
 		 */
 		async approve(app) {
-			await axios.post(
-				generateUrl(`/apps/keepiq/api/v1/applications/${app.id}/approve`),
-			)
+			// A failed call leaves the row where it is and says so, rather than
+			// an unhandled rejection the admin never sees (#755).
+			try {
+				await axios.post(
+					generateUrl(`/apps/keepiq/api/v1/applications/${app.id}/approve`),
+				)
+			} catch {
+				showError(t('keepiq', 'Could not approve the application. It is still in the queue.'))
+				return
+			}
 			await this.refresh()
 		},
 
@@ -106,9 +114,16 @@ export default {
 		 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-4.3
 		 */
 		async reject(app) {
-			await axios.post(
-				generateUrl(`/apps/keepiq/api/v1/applications/${app.id}/reject`),
-			)
+			// A failed call leaves the row where it is and says so, rather than
+			// an unhandled rejection the admin never sees (#755).
+			try {
+				await axios.post(
+					generateUrl(`/apps/keepiq/api/v1/applications/${app.id}/reject`),
+				)
+			} catch {
+				showError(t('keepiq', 'Could not reject the application. It is still in the queue.'))
+				return
+			}
 			await this.refresh()
 		},
 
