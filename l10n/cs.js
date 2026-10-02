@@ -1575,7 +1575,23 @@ OC.L10N.register(
         "Role of {member}": "Role uživatele {member}",
         "Team folders you manage": "Týmové složky, které spravujete",
         "Viewer": "Čtenář",
-        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nemáte kopii těchto tajemství, takže je noví členové zatím nedostali. Vlastník je může sdílet: {names}"
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nemáte kopii těchto tajemství, takže je noví členové zatím nedostali. Vlastník je může sdílet: {names}",
+        "Admin areas": "Oblasti správy",
+        "Give a group only the parts of Keepiq administration it needs.": "Dejte skupině jen ty části správy Keepiq, které potřebuje.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Stará skupina vault_admin má členů: {count}. Stále se počítá jako oblast Lidé a odchody, dokud ji pozdější verze neodstraní. Místo toho tuto oblast delegujte na skupinu.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegujte jednu nebo více oblastí na skupinu na stránce oprávnění ke správě. Správci instance mají každou oblast.",
+        "Open administration privileges": "Otevřít oprávnění ke správě",
+        "Policies": "Zásady",
+        "Applications and machine access": "Aplikace a přístup strojů",
+        "People and offboarding": "Lidé a odchody",
+        "Audit and compliance": "Audit a shoda",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "verze, certifikační autorita, přílohy, offline mezipaměť, kontrola úniků, typy tajemství a zálohy",
+        "master password, organisation password, vault policies, rotation, version history and trash": "hlavní heslo, heslo organizace, zásady trezoru, rotace, historie verzí a koš",
+        "application queue, application requests and machine leases": "fronta aplikací, požadavky aplikací a pronájmy strojů",
+        "team offboarding, encryption suites and admin handover": "odchody z týmu, šifrovací sady a převzetí správcem",
+        "audit log, compliance reports, SIEM export and honey alerts": "auditní protokol, zprávy o shodě, export SIEM a návnadová upozornění",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Kolik verzí tajemství se uchovává, jak dlouho a jak dlouho zůstávají smazaná tajemství v koši.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limity šifrovaných příloh, vynucované na serveru v uložených šifrovaných bajtech."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

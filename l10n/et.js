@@ -1575,7 +1575,23 @@ OC.L10N.register(
         "Role of {member}": "Kasutaja {member} roll",
         "Team folders you manage": "Meeskonnakaustad, mida haldad",
         "Viewer": "Vaataja",
-        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Sul pole nende saladuste koopiat, seega uued liikmed pole neid veel saanud. Omanik saab neid jagada: {names}"
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Sul pole nende saladuste koopiat, seega uued liikmed pole neid veel saanud. Omanik saab neid jagada: {names}",
+        "Admin areas": "Halduse alad",
+        "Give a group only the parts of Keepiq administration it needs.": "Andke rühmale ainult need Keepiqi halduse osad, mida see vajab.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Vanas rühmas vault_admin on {count} liiget. See loetakse endiselt alaks Inimesed ja lahkumine, kuni hilisem versioon selle eemaldab. Delegeerige see ala hoopis rühmale.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegeerige üks või mitu ala rühmale halduse õiguste lehel. Eksemplari administraatoritel on kõik alad.",
+        "Open administration privileges": "Ava halduse õigused",
+        "Policies": "Reeglid",
+        "Applications and machine access": "Rakendused ja masinate juurdepääs",
+        "People and offboarding": "Inimesed ja lahkumine",
+        "Audit and compliance": "Audit ja vastavus",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "versioon, sertifitseerimisasutus, manused, võrguühenduseta vahemälu, lekete kontroll, saladuste tüübid ja varukoopiad",
+        "master password, organisation password, vault policies, rotation, version history and trash": "ülemparool, organisatsiooni parool, hoidla reeglid, roteerimine, versiooniajalugu ja prügikast",
+        "application queue, application requests and machine leases": "rakenduste järjekord, rakenduste päringud ja masinate rendid",
+        "team offboarding, encryption suites and admin handover": "meeskonnast lahkumine, krüpteerimiskomplektid ja administraatori ülevõtmine",
+        "audit log, compliance reports, SIEM export and honey alerts": "auditilogi, vastavusaruanded, SIEM-eksport ja peibutushoiatused",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Mitu saladuse versiooni säilitatakse, kui kaua, ja kui kaua kustutatud saladused prügikastis püsivad.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Krüpteeritud manuste piirangud, mida server jõustab salvestatud krüpteeritud baitides."
     },
     "nplurals=2; plural=(n != 1);"
 )

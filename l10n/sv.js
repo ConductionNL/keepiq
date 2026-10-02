@@ -1575,7 +1575,23 @@ OC.L10N.register(
         "Role of {member}": "Roll för {member}",
         "Team folders you manage": "Teammappar som du hanterar",
         "Viewer": "Läsare",
-        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Du har ingen kopia av dessa hemligheter, så de nya medlemmarna har inte fått dem än. Ägaren kan dela dem: {names}"
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Du har ingen kopia av dessa hemligheter, så de nya medlemmarna har inte fått dem än. Ägaren kan dela dem: {names}",
+        "Admin areas": "Administrationsområden",
+        "Give a group only the parts of Keepiq administration it needs.": "Ge en grupp bara de delar av Keepiq-administrationen som den behöver.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Den gamla gruppen vault_admin har {count} medlemmar. Den räknas fortfarande som området Personer och avslut, tills en senare version tar bort den. Delegera hellre det området till en grupp.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegera ett eller flera områden till en grupp på sidan för administrationsbehörigheter. Instansadministratörer har alla områden.",
+        "Open administration privileges": "Öppna administrationsbehörigheter",
+        "Policies": "Policyer",
+        "Applications and machine access": "Applikationer och maskinåtkomst",
+        "People and offboarding": "Personer och avslut",
+        "Audit and compliance": "Granskning och efterlevnad",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "version, certifikatutfärdare, bilagor, offlinecache, läckkontroll, hemlighetstyper och säkerhetskopior",
+        "master password, organisation password, vault policies, rotation, version history and trash": "huvudlösenord, organisationslösenord, valvpolicyer, rotation, versionshistorik och papperskorg",
+        "application queue, application requests and machine leases": "applikationskö, applikationsförfrågningar och maskinleasar",
+        "team offboarding, encryption suites and admin handover": "teamavslut, krypteringssviter och övertagande av administratör",
+        "audit log, compliance reports, SIEM export and honey alerts": "granskningslogg, efterlevnadsrapporter, SIEM-export och lockbeteslarm",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Hur många versioner av en hemlighet som sparas, hur länge, och hur länge raderade hemligheter ligger kvar i papperskorgen.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Gränser för krypterade bilagor, som servern tillämpar i lagrade krypterade byte."
     },
     "nplurals=2; plural=(n != 1);"
 )

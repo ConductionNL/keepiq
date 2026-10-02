@@ -1670,7 +1670,23 @@
         "Role of {member}": "Ról {member}",
         "Team folders you manage": "Fillteáin foirne a bhainistíonn tú",
         "Viewer": "Breathnóir",
-        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Níl cóip de na rúin seo agat, mar sin níor fhaigh na baill nua iad fós. Is féidir leis an úinéir iad a roinnt: {names}"
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Níl cóip de na rúin seo agat, mar sin níor fhaigh na baill nua iad fós. Is féidir leis an úinéir iad a roinnt: {names}",
+        "Admin areas": "Réimsí riaracháin",
+        "Give a group only the parts of Keepiq administration it needs.": "Tabhair do ghrúpa na codanna de riarachán Keepiq a theastaíonn uaidh amháin.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Tá {count} ball sa sean-ghrúpa vault_admin. Áirítear fós é mar an réimse Daoine agus imeachtaí, go dtí go mbainfidh leagan níos déanaí é. Tarmligh an réimse sin chuig grúpa ina ionad.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Tarmligh réimse amháin nó níos mó chuig grúpa ar leathanach na bpribhléidí riaracháin. Tá gach réimse ag riarthóirí an chásanna.",
+        "Open administration privileges": "Oscail pribhléidí riaracháin",
+        "Policies": "Polasaithe",
+        "Applications and machine access": "Feidhmchláir agus rochtain meaisíní",
+        "People and offboarding": "Daoine agus imeachtaí",
+        "Audit and compliance": "Iniúchadh agus comhlíonadh",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "leagan, údarás deimhnithe, ceangaltáin, taisce as líne, seiceáil sceitheadh, cineálacha rún agus cúltacaí",
+        "master password, organisation password, vault policies, rotation, version history and trash": "máistirfhocal faire, focal faire na heagraíochta, polasaithe an chruinneacháin, rothlú, stair leaganacha agus bruscar",
+        "application queue, application requests and machine leases": "scuaine feidhmchlár, iarratais feidhmchlár agus léasanna meaisín",
+        "team offboarding, encryption suites and admin handover": "imeachtaí ón bhfoireann, sraitheanna criptithe agus gabháil seilbhe ag riarthóir",
+        "audit log, compliance reports, SIEM export and honey alerts": "loga iniúchta, tuarascálacha comhlíonta, easpórtáil SIEM agus foláirimh baoite",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Cé mhéad leagan de rún a choinnítear, ar feadh cé chomh fada, agus cé chomh fada a fhanann rúin scriosta sa bhruscar.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Teorainneacha do cheangaltáin chriptithe, curtha i bhfeidhm ar an bhfreastalaí i mbearta criptithe stóráilte."
     },
     "plurals": null
 }
