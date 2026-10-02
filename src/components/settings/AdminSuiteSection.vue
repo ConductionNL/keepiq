@@ -10,7 +10,7 @@
   the destroyed-usable emergency-contact count crosses the wire, never contact
   identities.
 
-  @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+  @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 -->
 <template>
 	<CnSettingsSection
@@ -185,7 +185,7 @@ import { useEncryptionSuiteStore } from '../../store/modules/encryptionSuite.js'
 /**
  * Admin encryption-suite management section: force-revoke + reinstate.
  *
- * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
  */
 export default {
 	name: 'AdminSuiteSection',
@@ -226,7 +226,7 @@ export default {
 		 * compromise was not marked) the rotation warning are surfaced.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 		 */
 		async onForceRevoke() {
 			this.busy = true
@@ -266,7 +266,7 @@ export default {
 		 * result with the reinstated suite.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 		 */
 		async onReinstate() {
 			this.busy = true

@@ -2020,7 +2020,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @dataProvider compromisedSuiteProvider
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 */
 	public function testACompromiseTerminationUnlocksButKeepsTheFillLinkClosed(string $suiteStatus): void {
 		$request = $this->buildPending();

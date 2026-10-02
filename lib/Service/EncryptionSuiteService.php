@@ -170,7 +170,7 @@ class EncryptionSuiteService {
 	 *   the descriptive name is deliberate and matches the surfaced field.
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 */
 	public function revokeSuite(
 		string $id,
@@ -250,7 +250,7 @@ class EncryptionSuiteService {
 	 * @throws ReinstateRefusedException
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
 	 */
 	public function reinstateSuite(string $id, string $reinstatedBy): EncryptionSuite {
 		$suite = $this->mapper->findById($id);
@@ -296,7 +296,7 @@ class EncryptionSuiteService {
 	 *
 	 * @throws ReinstateRefusedException
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
 	 */
 	private function assertReinstatable(EncryptionSuite $suite): void {
 		$revokedAsCompromise = $this->wasRevokedAsCompromise(suiteId: (string)$suite->getId());
@@ -323,7 +323,7 @@ class EncryptionSuiteService {
 	 *
 	 * @return bool|null True or false from the last SUITE_REVOKED entry, null when none is found
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
 	 */
 	private function wasRevokedAsCompromise(string $suiteId): ?bool {
 		if ($this->auditEntries === null) {

@@ -50,7 +50,7 @@ use Throwable;
  *   session domains meet; each dependency is one thing the compromised key
  *   could reach.
  *
- * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
  */
 class CompromiseContainmentService {
 	use MarksCompromisedSecrets;
@@ -91,7 +91,7 @@ class CompromiseContainmentService {
 	 *
 	 * @return CompromiseBlastRadius
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
 	 */
 	public function collect(array $suiteIds): CompromiseBlastRadius {
 		$radius = new CompromiseBlastRadius();
@@ -116,7 +116,7 @@ class CompromiseContainmentService {
 	 *
 	 * @return array{stamped: int, notified: int, failed: int}
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
 	 */
 	public function contain(CompromiseBlastRadius $radius, EncryptionSuite $suite, string $revokedBy): array {
 		$tally = ['stamped' => 0, 'notified' => 0, 'failed' => $radius->getFailures()];
@@ -152,7 +152,7 @@ class CompromiseContainmentService {
 	 *
 	 * @return bool True when a notice went out
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 */
 	public function notifyEmergencyAccessCleared(EncryptionSuite $suite, int $count): bool {
 		if ($count <= 0 || $suite->getOwnerType() !== 'user') {

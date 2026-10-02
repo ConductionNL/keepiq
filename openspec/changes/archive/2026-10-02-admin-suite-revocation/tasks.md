@@ -36,6 +36,17 @@ Scope is the administrator force-revoke endpoint (ADR-005). No database migratio
 - [x] 5.1 Run the hydra gates locally: route-auth and semantic-auth (the new admin+sudo-guarded route), no-admin-idor (the method is admin-guarded like `reinstate()`, not `NoAdminRequired`), gate-16 spec-coverage (`@spec` on the new backend + frontend methods), route-reachability (route ↔ method)
 - [x] 5.2 Confirm no migration and no `<version>` bump apply (gate-110 does not apply): `revoked_reason` is reused, `markCompromised` is transient, no new column
 
+## 6. Follow-up fixes from the #691 post-merge review
+
+- [x] 6.1 Move the compromise cascade from `SuiteCompromiseOnRevokeListener` into `CompromiseContainmentService`, called by the force-revoke: collect the blast radius of both migration ends before any revoke, and scope the revoke sweep to the revoked suite's copies (keepiq#864)
+- [x] 6.2 Contain and count every step's failure; return `cascade` and `cascadeIncomplete` in the force-revoke response (keepiq#863)
+- [x] 6.3 One notice per owner naming the first secret and counting the others (keepiq#875)
+- [x] 6.4 Warn holders of copies of the revoked user's secrets and grantors of approved emergency grants to them (keepiq#872)
+- [x] 6.5 Revoke the revoked user's link shares and passkeys through the owner-recovery helper, and end their sessions and app passwords (keepiq#858, keepiq#860)
+- [x] 6.6 Refuse a session-only `create()` after a revocation; add the sudo-guarded `reenrol()` and the browser retry (keepiq#860)
+- [x] 6.7 Put sudo on `reinstate()`; refuse reinstating a compromise revoke, an unconfirmable revocation, or next to another active suite; hide Reinstate after a compromise revoke (keepiq#865)
+- [x] 6.8 Notify the owner how many emergency contacts a force-revoke deleted, return the second suite's count, and show the second suite, ended migration and incomplete cascade in the admin UI (keepiq#876, keepiq#877)
+
 ## Acceptance Criteria
 
 - `POST /api/v1/suites/{id}/force-revoke` revokes any suite by id (user- or application-owned), guarded by `AuthorizedAdminSetting` + `PasswordConfirmationRequired`, recording the administrator as `revokedBy`

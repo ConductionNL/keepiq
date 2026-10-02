@@ -22,7 +22,7 @@
  * `markCompromised` was left off the server's rotation-may-be-warranted warning
  * is surfaced too. Contact identities never cross the wire (count only).
  *
- * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
  */
 
 import axios from '@nextcloud/axios'

@@ -6,7 +6,7 @@
  * (keepiq#865), the second suite a compromise revoke also revoked
  * (keepiq#877), and a compromise response that did not complete (keepiq#863).
  *
- * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
  */
 
 import { mount } from '@vue/test-utils'

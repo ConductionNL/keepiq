@@ -1428,7 +1428,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *   `warning` (only when `markCompromised` was false), and for a compromise
 		 *   revoke `alsoRevokedSuite`, `terminatedMigration`,
 		 *   `alsoRevokedEmergencyContactsDestroyed`, `cascadeIncomplete` and `cascadeFailed`.
-		 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 		 */
 		async forceRevokeSuite({ id, reason, markCompromised = false }) {
 			if (!id) {
@@ -1476,7 +1476,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *
 		 * @param {object} body The publicKey and encryptedPrivateKey to register.
 		 * @return {Promise<object>} The axios response with the created suite.
-		 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-re-enrolment-after-a-revocation-requires-a-fresh-password-confirmation
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-re-enrolment-after-a-revocation-requires-a-fresh-password-confirmation
 		 */
 		async postNewSuite(body) {
 			try {
@@ -1502,7 +1502,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *
 		 * @param {string} id The suite id to reinstate.
 		 * @return {Promise<object>} The reinstated suite JSON.
-		 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 		 */
 		async reinstateSuiteAdmin(id) {
 			if (!id) {

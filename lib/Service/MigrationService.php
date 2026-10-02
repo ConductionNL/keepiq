@@ -463,7 +463,7 @@ class MigrationService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
 	 */
 	public function revokeKeyMaterialOfOwner(string $ownerId): void {
 		// Cascade-revoke every link share created by this user: the public-key
@@ -643,7 +643,7 @@ class MigrationService {
 	 *
 	 * @throws SuiteMigrationInProgressException When a migration involving the suite is in progress
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
 	 */
 	public function assertNoMigrationInProgress(string $suiteId): void {
 		foreach ($this->mapper->findBySuiteId(suiteId: $suiteId) as $migration) {
@@ -664,7 +664,7 @@ class MigrationService {
 	 *
 	 * @return SuiteMigration|null
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
 	 */
 	public function findInProgressForSuite(string $suiteId): ?SuiteMigration {
 		foreach ($this->mapper->findBySuiteId(suiteId: $suiteId) as $migration) {
@@ -695,7 +695,7 @@ class MigrationService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
 	 */
 	public function terminateForCompromise(SuiteMigration $migration): void {
 		$migration->setStatus('terminated');

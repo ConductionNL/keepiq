@@ -28,7 +28,7 @@ use OCA\Keepiq\Db\Secret;
 /**
  * The secrets, shared copies and emergency grantors one containment touches.
  *
- * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
  */
 final class CompromiseBlastRadius {
 	/**
@@ -68,7 +68,7 @@ final class CompromiseBlastRadius {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
 	 */
 	public function addSealed(Secret $secret, Secret $target): void {
 		$this->sealed[] = ['secret' => $secret, 'target' => $target];
@@ -82,7 +82,7 @@ final class CompromiseBlastRadius {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
 	 */
 	public function addOutbound(string $recipientId, Secret $copy): void {
 		$this->outbound[] = ['recipientId' => $recipientId, 'copy' => $copy];
@@ -96,7 +96,7 @@ final class CompromiseBlastRadius {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
 	 */
 	public function addGrantor(string $grantorId, string $granteeId): void {
 		$this->grantors[] = ['grantorId' => $grantorId, 'granteeId' => $granteeId];
@@ -107,7 +107,7 @@ final class CompromiseBlastRadius {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
 	 */
 	public function addFailure(): void {
 		$this->failures++;
@@ -118,7 +118,7 @@ final class CompromiseBlastRadius {
 	 *
 	 * @return list<array{secret: Secret, target: Secret}>
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
 	 */
 	public function getSealed(): array {
 		return $this->sealed;
@@ -129,7 +129,7 @@ final class CompromiseBlastRadius {
 	 *
 	 * @return list<array{recipientId: string, copy: Secret}>
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
 	 */
 	public function getOutbound(): array {
 		return $this->outbound;
@@ -140,7 +140,7 @@ final class CompromiseBlastRadius {
 	 *
 	 * @return list<array{grantorId: string, granteeId: string}>
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
 	 */
 	public function getGrantors(): array {
 		return $this->grantors;
@@ -151,7 +151,7 @@ final class CompromiseBlastRadius {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
 	 */
 	public function getFailures(): int {
 		return $this->failures;

@@ -189,7 +189,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-re-enrolment-after-a-revocation-requires-a-fresh-password-confirmation
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-re-enrolment-after-a-revocation-requires-a-fresh-password-confirmation
 	 */
 	#[NoAdminRequired]
 	public function create(
@@ -229,7 +229,7 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-re-enrolment-after-a-revocation-requires-a-fresh-password-confirmation
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-re-enrolment-after-a-revocation-requires-a-fresh-password-confirmation
 	 */
 	#[NoAdminRequired]
 	#[PasswordConfirmationRequired]
@@ -252,7 +252,7 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-re-enrolment-after-a-revocation-requires-a-fresh-password-confirmation
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-re-enrolment-after-a-revocation-requires-a-fresh-password-confirmation
 	 */
 	private function needsFreshConfirmation(string $userId): bool {
 		$retired = false;
@@ -491,7 +491,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	#[PasswordConfirmationRequired]
@@ -547,7 +547,7 @@ class EncryptionSuiteController extends OCSController {
 	 *   POST body and bound by name by the router (ADR-005), not a mode switch:
 	 *   it only drives the compromise cascade branch on the revoke event.
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	#[PasswordConfirmationRequired]
@@ -634,7 +634,7 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @return array<string,mixed> The response body
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
 	 */
 	private function forceRevokeAsCompromise(string $suiteId, string $reason, string $adminUid): array {
 		$migration = $this->migrationService->findInProgressForSuite(suiteId: $suiteId);
@@ -698,7 +698,7 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @return array{terminatedMigration: string, alsoRevokedSuite: string, alsoRevokedEmergencyContactsDestroyed: int}
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
 	 */
 	private function endMigrationForCompromise(
 		SuiteMigration $migration,

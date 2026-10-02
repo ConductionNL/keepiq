@@ -170,7 +170,7 @@ class ShareTargetMapper extends QBMapper {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/user-sharing/spec.md#requirement-encryptionsuite-compromise-shared-copy-migration-and-owner-notification
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-encryptionsuite-compromise-shared-copy-migration-and-owner-notification
 	 */
 	public function deleteByTargetUserAndSuite(string $targetUserId, string $suiteId): void {
 		$sub = $this->db->getQueryBuilder();

@@ -49,7 +49,7 @@ trait MarksCompromisedSecrets {
 	 *
 	 * @return bool True when the Secret was stamped and flagged
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 */
 	private function stampAndFlag(Secret $secret): bool {
 		try {
@@ -85,7 +85,7 @@ trait MarksCompromisedSecrets {
 	 *
 	 * @return Secret
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 */
 	private function resolveTarget(Secret $secret): Secret {
 		try {

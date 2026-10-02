@@ -27,7 +27,7 @@ namespace OCA\Keepiq\Exception;
 /**
  * A reinstate refused for a reason the administrator has to see.
  *
- * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
  */
 class ReinstateRefusedException extends ConflictException {
 	/**
@@ -46,6 +46,8 @@ class ReinstateRefusedException extends ConflictException {
 	 * The machine-readable reason.
 	 *
 	 * @return string
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
 	 */
 	public function getError(): string {
 		return $this->error;
