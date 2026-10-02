@@ -95,7 +95,7 @@ class DiscoveryControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/apps-secret-sync-and-rotation-runner/specs/secret-store-api/spec.md
+	 * @spec openspec/specs/secret-store-api/spec.md
 	 */
 	public function testDocumentAdvertisesConditionalWriteAndExpiresAt(): void {
 		$data = $this->controller->document()->getData();

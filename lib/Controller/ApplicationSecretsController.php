@@ -370,7 +370,7 @@ class ApplicationSecretsController extends ApplicationApiController {
 	 *
 	 * @return JSONResponse|null The refusal, or null when the write may go ahead
 	 *
-	 * @spec openspec/changes/apps-secret-sync-and-rotation-runner/specs/secret-store-api/spec.md
+	 * @spec openspec/specs/secret-store-api/spec.md
 	 */
 	private function checkIfMatch(string $id, string $applicationId): ?JSONResponse {
 		$header = trim($this->request->getHeader('If-Match'));

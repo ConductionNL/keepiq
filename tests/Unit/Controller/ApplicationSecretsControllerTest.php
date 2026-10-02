@@ -340,7 +340,7 @@ class ApplicationSecretsControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/apps-secret-sync-and-rotation-runner/specs/secret-store-api/spec.md
+	 * @spec openspec/specs/secret-store-api/spec.md
 	 */
 	public function testUpdateWithMatchingIfMatchWrites(): void {
 		$current = $this->secret('s1', 'pg-app-password');
@@ -363,7 +363,7 @@ class ApplicationSecretsControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/apps-secret-sync-and-rotation-runner/specs/secret-store-api/spec.md
+	 * @spec openspec/specs/secret-store-api/spec.md
 	 */
 	public function testUpdateWithStaleIfMatchReturns412(): void {
 		$read = $this->secret('s1', 'pg-app-password');
