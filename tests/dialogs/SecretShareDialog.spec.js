@@ -138,6 +138,41 @@ describe('SecretShareDialog', () => {
 		expect(wrapper.emitted('saved')).toBeTruthy()
 	})
 
+	it('sends the picked expiry date as the end of that day (#754)', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
+		useSecretStore().fetchSecret = vi.fn().mockResolvedValue({ id: 'secret-42', name: 'PAT', key: 'k' })
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { id: 'ls-002', token: 'tok-002', linkUrl: '/share/link/tok-002', usageLimit: 1, usageCount: 0 },
+		})
+
+		const wrapper = mount(SecretShareDialog, {
+			propsData: { secretId: 'secret-42' },
+			global: { stubs: ncStubs },
+		})
+		await wrapper.vm.$nextTick()
+		await wrapper.find('[data-testid="link-share-expiry"]').setValue('2031-05-17')
+		await wrapper.vm.createLink()
+
+		expect(post.mock.calls[0][1].expiresAt).toBe(new Date('2031-05-17T23:59:59').toISOString())
+	})
+
+	it('sends no expiry when no date is picked', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
+		useSecretStore().fetchSecret = vi.fn().mockResolvedValue({ id: 'secret-42', name: 'PAT', key: 'k' })
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { id: 'ls-003', token: 'tok-003', linkUrl: '/share/link/tok-003', usageLimit: 1, usageCount: 0 },
+		})
+
+		const wrapper = mount(SecretShareDialog, {
+			propsData: { secretId: 'secret-42' },
+			global: { stubs: ncStubs },
+		})
+		await wrapper.vm.$nextTick()
+		await wrapper.vm.createLink()
+
+		expect(post.mock.calls[0][1].expiresAt).toBeNull()
+	})
+
 	it('revoke delegates to the store deleteLinkShare action', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({
 			data: [{ id: 'ls-1', token: 't1', usageLimit: 1, usageCount: 0 }],
