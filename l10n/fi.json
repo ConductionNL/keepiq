@@ -1279,7 +1279,14 @@
         "Your access to \"%s\" has ended": "Käyttöoikeutesi kohteeseen ”%s” on päättynyt",
         "%1$s no longer has access to \"%2$s\"": "Käyttäjällä %1$s ei ole enää käyttöoikeutta kohteeseen ”%2$s”",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s pystyi näkemään tämän salasanan. Vaihda se, jos %1$s ei enää saa tietää sitä.",
-        "%s could not view this password in Keepiq.": "%s ei voinut nähdä tätä salasanaa Keepiqissä."
+        "%s could not view this password in Keepiq.": "%s ei voinut nähdä tätä salasanaa Keepiqissä.",
+        "Added by {user}": "Lisännyt {user}",
+        "Editor": "Muokkaaja",
+        "Manager": "Ylläpitäjä",
+        "Role of {member}": "Käyttäjän {member} rooli",
+        "Team folders you manage": "Hallitsemasi tiimikansiot",
+        "Viewer": "Katselija",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Sinulla ei ole kopiota näistä salaisuuksista, joten uudet jäsenet eivät ole vielä saaneet niitä. Omistaja voi jakaa ne: {names}"
     },
     "plurals": null
 }

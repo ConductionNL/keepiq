@@ -1279,7 +1279,14 @@
         "Your access to \"%s\" has ended": "Η πρόσβασή σας στο «%s» έληξε",
         "%1$s no longer has access to \"%2$s\"": "Ο χρήστης %1$s δεν έχει πλέον πρόσβαση στο «%2$s»",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "Ο χρήστης %1$s μπορούσε να δει αυτόν τον κωδικό. Αλλάξτε τον αν ο χρήστης %1$s δεν πρέπει πλέον να τον γνωρίζει.",
-        "%s could not view this password in Keepiq.": "Ο χρήστης %s δεν μπορούσε να δει αυτόν τον κωδικό στο Keepiq."
+        "%s could not view this password in Keepiq.": "Ο χρήστης %s δεν μπορούσε να δει αυτόν τον κωδικό στο Keepiq.",
+        "Added by {user}": "Προστέθηκε από {user}",
+        "Editor": "Συντάκτης",
+        "Manager": "Διαχειριστής",
+        "Role of {member}": "Ρόλος του {member}",
+        "Team folders you manage": "Ομαδικοί φάκελοι που διαχειρίζεστε",
+        "Viewer": "Θεατής",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Δεν έχετε αντίγραφο αυτών των μυστικών, οπότε τα νέα μέλη δεν τα έχουν λάβει ακόμα. Ο κάτοχος μπορεί να τα κοινοποιήσει: {names}"
     },
     "plurals": null
 }

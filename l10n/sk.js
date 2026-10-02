@@ -1280,7 +1280,14 @@ OC.L10N.register(
         "Your access to \"%s\" has ended": "Váš prístup k „%s“ skončil",
         "%1$s no longer has access to \"%2$s\"": "%1$s už nemá prístup k „%2$s“",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s mohol(a) vidieť toto heslo. Zmeňte ho, ak by ho %1$s už nemal(a) poznať.",
-        "%s could not view this password in Keepiq.": "%s nemohol(a) zobraziť toto heslo v Keepiq."
+        "%s could not view this password in Keepiq.": "%s nemohol(a) zobraziť toto heslo v Keepiq.",
+        "Added by {user}": "Pridal(a) {user}",
+        "Editor": "Editor",
+        "Manager": "Správca",
+        "Role of {member}": "Rola používateľa {member}",
+        "Team folders you manage": "Tímové priečinky, ktoré spravujete",
+        "Viewer": "Čitateľ",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nemáte kópiu týchto tajomstiev, takže ich noví členovia zatiaľ nedostali. Vlastník ich môže zdieľať: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

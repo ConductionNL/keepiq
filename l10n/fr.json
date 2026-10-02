@@ -1279,7 +1279,14 @@
         "Your access to \"%s\" has ended": "Votre accès à « %s » a pris fin",
         "%1$s no longer has access to \"%2$s\"": "%1$s n'a plus accès à « %2$s »",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s pouvait voir ce mot de passe. Changez-le si %1$s ne doit plus le connaître.",
-        "%s could not view this password in Keepiq.": "%s n'a pas pu afficher ce mot de passe dans Keepiq."
+        "%s could not view this password in Keepiq.": "%s n'a pas pu afficher ce mot de passe dans Keepiq.",
+        "Added by {user}": "Ajouté par {user}",
+        "Editor": "Éditeur",
+        "Manager": "Gestionnaire",
+        "Role of {member}": "Rôle de {member}",
+        "Team folders you manage": "Dossiers d'équipe que vous gérez",
+        "Viewer": "Lecteur",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Vous n'avez aucune copie de ces secrets, les nouveaux membres ne les ont donc pas encore reçus. Le propriétaire peut les partager : {names}"
     },
     "plurals": null
 }

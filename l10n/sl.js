@@ -1280,7 +1280,14 @@ OC.L10N.register(
         "Your access to \"%s\" has ended": "Vaš dostop do »%s« je potekel",
         "%1$s no longer has access to \"%2$s\"": "%1$s nima več dostopa do »%2$s«",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s je lahko videl(a) to geslo. Zamenjajte ga, če ga %1$s ne sme več poznati.",
-        "%s could not view this password in Keepiq.": "%s tega gesla v Keepiq ni mogel(a) videti."
+        "%s could not view this password in Keepiq.": "%s tega gesla v Keepiq ni mogel(a) videti.",
+        "Added by {user}": "Dodal(a) {user}",
+        "Editor": "Urednik",
+        "Manager": "Upravitelj",
+        "Role of {member}": "Vloga uporabnika {member}",
+        "Team folders you manage": "Skupinske mape, ki jih upravljate",
+        "Viewer": "Bralec",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nimate kopije teh skrivnosti, zato jih novi člani še niso prejeli. Lastnik jih lahko deli: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

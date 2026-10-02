@@ -1280,7 +1280,14 @@ OC.L10N.register(
         "Your access to \"%s\" has ended": "El vostre accés a «%s» ha acabat",
         "%1$s no longer has access to \"%2$s\"": "%1$s ja no té accés a «%2$s»",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s podia veure aquesta contrasenya. Canvieu-la si %1$s ja no l'ha de conèixer.",
-        "%s could not view this password in Keepiq.": "%s no ha pogut veure aquesta contrasenya al Keepiq."
+        "%s could not view this password in Keepiq.": "%s no ha pogut veure aquesta contrasenya al Keepiq.",
+        "Added by {user}": "Afegit per {user}",
+        "Editor": "Editor",
+        "Manager": "Gestor",
+        "Role of {member}": "Rol de {member}",
+        "Team folders you manage": "Carpetes d'equip que gestioneu",
+        "Viewer": "Lector",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "No teniu cap còpia d'aquests secrets, així que els nous membres encara no els han rebut. El propietari els pot compartir: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

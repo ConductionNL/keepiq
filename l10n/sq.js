@@ -1280,7 +1280,14 @@ OC.L10N.register(
         "Your access to \"%s\" has ended": "Qasja juaj në \"%s\" ka përfunduar",
         "%1$s no longer has access to \"%2$s\"": "%1$s nuk ka më qasje në \"%2$s\"",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s mund ta shihte këtë fjalëkalim. Ndryshojeni nëse %1$s nuk duhet ta dijë më.",
-        "%s could not view this password in Keepiq.": "%s nuk mundi ta shihte këtë fjalëkalim në Keepiq."
+        "%s could not view this password in Keepiq.": "%s nuk mundi ta shihte këtë fjalëkalim në Keepiq.",
+        "Added by {user}": "Shtuar nga {user}",
+        "Editor": "Redaktor",
+        "Manager": "Menaxher",
+        "Role of {member}": "Roli i {member}",
+        "Team folders you manage": "Dosjet e ekipit që menaxhoni",
+        "Viewer": "Shikues",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nuk keni kopje të këtyre sekreteve, prandaj anëtarët e rinj nuk i kanë marrë ende. Pronari mund t'i ndajë: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

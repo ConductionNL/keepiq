@@ -1285,7 +1285,14 @@ OC.L10N.register(
         "Your access to \"%s\" has ended": "Je toegang tot \"%s\" is beëindigd",
         "%1$s no longer has access to \"%2$s\"": "%1$s heeft geen toegang meer tot \"%2$s\"",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s kon dit wachtwoord zien. Wijzig het als %1$s het niet meer mag weten.",
-        "%s could not view this password in Keepiq.": "%s kon dit wachtwoord niet bekijken in Keepiq."
+        "%s could not view this password in Keepiq.": "%s kon dit wachtwoord niet bekijken in Keepiq.",
+        "Added by {user}": "Toegevoegd door {user}",
+        "Editor": "Bewerker",
+        "Manager": "Beheerder",
+        "Role of {member}": "Rol van {member}",
+        "Team folders you manage": "Teammappen die je beheert",
+        "Viewer": "Lezer",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Je hebt geen kopie van deze geheimen, dus de nieuwe leden hebben ze nog niet gekregen. De eigenaar kan ze delen: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

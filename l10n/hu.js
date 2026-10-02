@@ -1280,7 +1280,14 @@ OC.L10N.register(
         "Your access to \"%s\" has ended": "A(z) „%s” elemhez való hozzáférése véget ért",
         "%1$s no longer has access to \"%2$s\"": "%1$s már nem fér hozzá a(z) „%2$s” elemhez",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s láthatta ezt a jelszót. Változtassa meg, ha %1$s már nem ismerheti.",
-        "%s could not view this password in Keepiq.": "%s nem tekinthette meg ezt a jelszót a Keepiqben."
+        "%s could not view this password in Keepiq.": "%s nem tekinthette meg ezt a jelszót a Keepiqben.",
+        "Added by {user}": "Hozzáadta: {user}",
+        "Editor": "Szerkesztő",
+        "Manager": "Kezelő",
+        "Role of {member}": "{member} szerepköre",
+        "Team folders you manage": "Az Ön által kezelt csapatmappák",
+        "Viewer": "Megtekintő",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Önnek nincs másolata ezekről a titkokról, ezért az új tagok még nem kapták meg őket. A tulajdonos megoszthatja őket: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

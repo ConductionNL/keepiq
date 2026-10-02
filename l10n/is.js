@@ -1280,7 +1280,14 @@ OC.L10N.register(
         "Your access to \"%s\" has ended": "Aðgangi þínum að „%s“ er lokið",
         "%1$s no longer has access to \"%2$s\"": "%1$s hefur ekki lengur aðgang að „%2$s“",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s gat séð þetta lykilorð. Skiptu um það ef %1$s á ekki lengur að vita það.",
-        "%s could not view this password in Keepiq.": "%s gat ekki skoðað þetta lykilorð í Keepiq."
+        "%s could not view this password in Keepiq.": "%s gat ekki skoðað þetta lykilorð í Keepiq.",
+        "Added by {user}": "Bætt við af {user}",
+        "Editor": "Ritstjóri",
+        "Manager": "Stjórnandi",
+        "Role of {member}": "Hlutverk {member}",
+        "Team folders you manage": "Teymismöppur sem þú stjórnar",
+        "Viewer": "Lesandi",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Þú átt ekkert afrit af þessum leyndarmálum, svo nýju meðlimirnir hafa ekki fengið þau enn. Eigandinn getur deilt þeim: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

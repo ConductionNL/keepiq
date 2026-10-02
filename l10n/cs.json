@@ -1279,7 +1279,14 @@
         "Your access to \"%s\" has ended": "Váš přístup k „%s“ skončil",
         "%1$s no longer has access to \"%2$s\"": "%1$s už nemá přístup k „%2$s“",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s mohl(a) vidět toto heslo. Změňte ho, pokud by ho %1$s už neměl(a) znát.",
-        "%s could not view this password in Keepiq.": "%s nemohl(a) toto heslo v Keepiq zobrazit."
+        "%s could not view this password in Keepiq.": "%s nemohl(a) toto heslo v Keepiq zobrazit.",
+        "Added by {user}": "Přidal(a) {user}",
+        "Editor": "Editor",
+        "Manager": "Správce",
+        "Role of {member}": "Role uživatele {member}",
+        "Team folders you manage": "Týmové složky, které spravujete",
+        "Viewer": "Čtenář",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nemáte kopii těchto tajemství, takže je noví členové zatím nedostali. Vlastník je může sdílet: {names}"
     },
     "plurals": null
 }

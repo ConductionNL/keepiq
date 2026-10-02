@@ -1279,7 +1279,14 @@
         "Your access to \"%s\" has ended": "Din adgang til \"%s\" er ophørt",
         "%1$s no longer has access to \"%2$s\"": "%1$s har ikke længere adgang til \"%2$s\"",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s kunne se denne adgangskode. Skift den, hvis %1$s ikke længere skal kende den.",
-        "%s could not view this password in Keepiq.": "%s kunne ikke se denne adgangskode i Keepiq."
+        "%s could not view this password in Keepiq.": "%s kunne ikke se denne adgangskode i Keepiq.",
+        "Added by {user}": "Tilføjet af {user}",
+        "Editor": "Redaktør",
+        "Manager": "Administrator",
+        "Role of {member}": "Rolle for {member}",
+        "Team folders you manage": "Teammapper, du administrerer",
+        "Viewer": "Læser",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Du har ingen kopi af disse hemmeligheder, så de nye medlemmer har ikke fået dem endnu. Ejeren kan dele dem: {names}"
     },
     "plurals": null
 }

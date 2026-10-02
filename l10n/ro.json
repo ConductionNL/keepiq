@@ -1279,7 +1279,14 @@
         "Your access to \"%s\" has ended": "Accesul dvs. la „%s” s-a încheiat",
         "%1$s no longer has access to \"%2$s\"": "%1$s nu mai are acces la „%2$s”",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s putea vedea această parolă. Schimbați-o dacă %1$s nu ar mai trebui să o cunoască.",
-        "%s could not view this password in Keepiq.": "%s nu a putut vizualiza această parolă în Keepiq."
+        "%s could not view this password in Keepiq.": "%s nu a putut vizualiza această parolă în Keepiq.",
+        "Added by {user}": "Adăugat de {user}",
+        "Editor": "Editor",
+        "Manager": "Manager",
+        "Role of {member}": "Rolul lui {member}",
+        "Team folders you manage": "Dosare de echipă pe care le gestionați",
+        "Viewer": "Cititor",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nu dețineți o copie a acestor secrete, deci noii membri nu le-au primit încă. Proprietarul le poate partaja: {names}"
     },
     "plurals": null
 }

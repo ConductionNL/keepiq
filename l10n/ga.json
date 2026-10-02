@@ -1279,7 +1279,14 @@
         "Your access to \"%s\" has ended": "Tá deireadh le do rochtain ar \"%s\"",
         "%1$s no longer has access to \"%2$s\"": "Níl rochtain ag %1$s ar \"%2$s\" a thuilleadh",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "Bhí %1$s in ann an pasfhocal seo a fheiceáil. Athraigh é mura cóir go mbeadh a fhios ag %1$s é a thuilleadh.",
-        "%s could not view this password in Keepiq.": "Ní raibh %s in ann an pasfhocal seo a fheiceáil in Keepiq."
+        "%s could not view this password in Keepiq.": "Ní raibh %s in ann an pasfhocal seo a fheiceáil in Keepiq.",
+        "Added by {user}": "Curtha leis ag {user}",
+        "Editor": "Eagarthóir",
+        "Manager": "Bainisteoir",
+        "Role of {member}": "Ról {member}",
+        "Team folders you manage": "Fillteáin foirne a bhainistíonn tú",
+        "Viewer": "Breathnóir",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Níl cóip de na rúin seo agat, mar sin níor fhaigh na baill nua iad fós. Is féidir leis an úinéir iad a roinnt: {names}"
     },
     "plurals": null
 }

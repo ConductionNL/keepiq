@@ -1280,7 +1280,14 @@ OC.L10N.register(
         "Your access to \"%s\" has ended": "Din åtkomst till ”%s” har upphört",
         "%1$s no longer has access to \"%2$s\"": "%1$s har inte längre åtkomst till ”%2$s”",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s kunde se det här lösenordet. Byt det om %1$s inte längre ska känna till det.",
-        "%s could not view this password in Keepiq.": "%s kunde inte visa det här lösenordet i Keepiq."
+        "%s could not view this password in Keepiq.": "%s kunde inte visa det här lösenordet i Keepiq.",
+        "Added by {user}": "Tillagd av {user}",
+        "Editor": "Redigerare",
+        "Manager": "Ansvarig",
+        "Role of {member}": "Roll för {member}",
+        "Team folders you manage": "Teammappar som du hanterar",
+        "Viewer": "Läsare",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Du har ingen kopia av dessa hemligheter, så de nya medlemmarna har inte fått dem än. Ägaren kan dela dem: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

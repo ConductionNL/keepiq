@@ -1280,7 +1280,14 @@ OC.L10N.register(
         "Your access to \"%s\" has ended": "Ären Zougang zu „%s“ ass ofgelaf",
         "%1$s no longer has access to \"%2$s\"": "%1$s huet keen Zougang méi zu „%2$s“",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s konnt dëst Passwuert gesinn. Ännert et, wann %1$s et net méi kenne soll.",
-        "%s could not view this password in Keepiq.": "%s konnt dëst Passwuert a Keepiq net gesinn."
+        "%s could not view this password in Keepiq.": "%s konnt dëst Passwuert a Keepiq net gesinn.",
+        "Added by {user}": "Bäigesat vun {user}",
+        "Editor": "Editeur",
+        "Manager": "Manager",
+        "Role of {member}": "Roll vun {member}",
+        "Team folders you manage": "Teamdossieren, déi Dir verwalt",
+        "Viewer": "Lieser",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Dir hutt keng Kopie vun dëse Geheimnisser, dofir hunn déi nei Memberen se nach net kritt. De Besëtzer kann se deelen: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

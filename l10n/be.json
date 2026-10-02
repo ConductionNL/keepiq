@@ -1279,7 +1279,14 @@
         "Your access to \"%s\" has ended": "Ваш доступ да «%s» скончыўся",
         "%1$s no longer has access to \"%2$s\"": "%1$s больш не мае доступу да «%2$s»",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s мог(ла) бачыць гэты пароль. Змяніце яго, калі %1$s больш не павінен(на) яго ведаць.",
-        "%s could not view this password in Keepiq.": "%s не змог(ла) праглядзець гэты пароль у Keepiq."
+        "%s could not view this password in Keepiq.": "%s не змог(ла) праглядзець гэты пароль у Keepiq.",
+        "Added by {user}": "Дададзена карыстальнікам {user}",
+        "Editor": "Рэдактар",
+        "Manager": "Кіраўнік",
+        "Role of {member}": "Роля {member}",
+        "Team folders you manage": "Камандныя папкі, якімі вы кіруеце",
+        "Viewer": "Глядач",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "У вас няма копіі гэтых сакрэтаў, таму новыя ўдзельнікі іх яшчэ не атрымалі. Уладальнік можа падзяліцца імі: {names}"
     },
     "plurals": null
 }

@@ -1280,7 +1280,14 @@ OC.L10N.register(
         "Your access to \"%s\" has ended": "Ваш доступ до «%s» закінчився",
         "%1$s no longer has access to \"%2$s\"": "%1$s більше не має доступу до «%2$s»",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s міг(ла) бачити цей пароль. Змініть його, якщо %1$s більше не має його знати.",
-        "%s could not view this password in Keepiq.": "%s не зміг(ла) переглянути цей пароль у Keepiq."
+        "%s could not view this password in Keepiq.": "%s не зміг(ла) переглянути цей пароль у Keepiq.",
+        "Added by {user}": "Додано користувачем {user}",
+        "Editor": "Редактор",
+        "Manager": "Менеджер",
+        "Role of {member}": "Роль {member}",
+        "Team folders you manage": "Командні теки, якими ви керуєте",
+        "Viewer": "Читач",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "У вас немає копії цих секретів, тому нові учасники їх ще не отримали. Власник може поділитися ними: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

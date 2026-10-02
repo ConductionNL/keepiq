@@ -1280,7 +1280,14 @@ OC.L10N.register(
         "Your access to \"%s\" has ended": "Tes access a «%s» è finì",
         "%1$s no longer has access to \"%2$s\"": "%1$s n'ha betg pli access a «%2$s»",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s ha pudì vesair quest pled-clav. Mida el, sche %1$s na duess betg pli al enconuscher.",
-        "%s could not view this password in Keepiq.": "%s n'ha betg pudì vesair quest pled-clav en Keepiq."
+        "%s could not view this password in Keepiq.": "%s n'ha betg pudì vesair quest pled-clav en Keepiq.",
+        "Added by {user}": "Agiuntà da {user}",
+        "Editor": "Editur",
+        "Manager": "Administratur",
+        "Role of {member}": "Rolla da {member}",
+        "Team folders you manage": "Ordinaturs da team che Vus administrais",
+        "Viewer": "Lectur",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Vus n'avais nagina copia da quests secrets, perquai n'han ils novs commembers anc betg survegnì els. Il proprietari als po parter: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

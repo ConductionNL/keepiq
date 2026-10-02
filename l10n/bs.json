@@ -1279,7 +1279,14 @@
         "Your access to \"%s\" has ended": "Vaš pristup stavci \"%s\" je istekao",
         "%1$s no longer has access to \"%2$s\"": "%1$s više nema pristup stavci \"%2$s\"",
         "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s je mogao/la vidjeti ovu lozinku. Promijenite je ako %1$s više ne treba da je zna.",
-        "%s could not view this password in Keepiq.": "%s nije mogao/la vidjeti ovu lozinku u Keepiq."
+        "%s could not view this password in Keepiq.": "%s nije mogao/la vidjeti ovu lozinku u Keepiq.",
+        "Added by {user}": "Dodao/la {user}",
+        "Editor": "Urednik",
+        "Manager": "Upravitelj",
+        "Role of {member}": "Uloga korisnika {member}",
+        "Team folders you manage": "Timske mape kojima upravljate",
+        "Viewer": "Preglednik",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nemate kopiju ovih tajni, pa ih novi članovi još nisu dobili. Vlasnik ih može podijeliti: {names}"
     },
     "plurals": null
 }
