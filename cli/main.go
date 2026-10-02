@@ -12,7 +12,9 @@
 // requires re-wrapping the value under every recipient's public key (the share
 // fan-out), which is a separate, larger surface deferred to a follow-up.
 //
-// Single static binary, stdlib only — cross-compile with GOOS/GOARCH.
+// Single static binary, pure Go — cross-compile with GOOS/GOARCH. The only
+// dependencies are the Go project's own golang.org/x/crypto and
+// golang.org/x/sys, for the SSH agent (cli-ssh-agent).
 package main
 
 import (
@@ -55,6 +57,8 @@ func main() {
 		err = cmdCI(args)
 	case "completion":
 		err = cmdCompletion(args)
+	case "ssh-agent":
+		err = cmdSSHAgent(args)
 	case "help", "--help", "-h":
 		usage()
 	default:
@@ -81,6 +85,11 @@ Human mode (decrypts client-side):
 CI mode (RFC 7523 machine consumer):
   keepiq ci fetch <name> [--output env|json]       fetch+decrypt an application secret
   keepiq ci run <name>[,<name>...] -- <cmd...>      run <cmd> with the secret(s) in its env
+
+SSH agent (Linux and macOS):
+  keepiq ssh-agent [--socket <path>] [--confirm] [--idle <minutes>] [--folder <name>] [--locked]
+                                                   serve your vault SSH keys to ssh and git;
+                                                   eval its output to set SSH_AUTH_SOCK
 
   version | completion <bash|zsh|fish> | help
 
@@ -267,11 +276,11 @@ func cmdCompletion(args []string) error {
 	// A minimal, valid completion script per shell (§1.3).
 	switch shell {
 	case "bash":
-		fmt.Print("complete -W 'login list show get copy ci version completion help' keepiq\n")
+		fmt.Print("complete -W 'login list show get copy ci ssh-agent version completion help' keepiq\n")
 	case "zsh":
-		fmt.Print("#compdef keepiq\ncompadd login list show get copy ci version completion help\n")
+		fmt.Print("#compdef keepiq\ncompadd login list show get copy ci ssh-agent version completion help\n")
 	case "fish":
-		fmt.Print("complete -c keepiq -a 'login list show get copy ci version completion help'\n")
+		fmt.Print("complete -c keepiq -a 'login list show get copy ci ssh-agent version completion help'\n")
 	default:
 		return fmt.Errorf("unsupported shell %q (bash|zsh|fish)", shell)
 	}
