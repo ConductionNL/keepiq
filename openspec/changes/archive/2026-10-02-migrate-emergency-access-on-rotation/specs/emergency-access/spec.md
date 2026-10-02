@@ -58,9 +58,10 @@ Likewise, if a grantee's EncryptionSuite is revoked, envelopes encrypted to that
 - **WHEN** A opens the Emergency Access view
 - **THEN** B MUST be shown with a warning and without a Re-establish action
 
-#### Scenario: Suite rotation invalidates only the unreachable residual
+#### Scenario: Suite rotation invalidates envelopes
 @e2e exclude Server-side listener sweep after the migration loop; covered by PHPUnit (contacts remaining on the old suite are invalidated) and the completion-summary assertion.
-- **GIVEN** A has emergency contacts B (active suite) and C (no active suite)
+- **NOTE** kept under its original name so the archive replaces the old scenario: rotation now invalidates only the residual a rotation did not carry
+- **GIVEN** A has emergency contacts B (active suite, confirmed by A for the carry) and C (no active suite)
 - **WHEN** A performs compromise recovery and rotates their EncryptionSuite
 - **THEN** B MUST be migrated to the new suite
 - **AND** C MUST be invalidated

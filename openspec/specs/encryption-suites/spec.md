@@ -212,9 +212,9 @@ The disposition of each store is fixed as follows. All fields listed as re-encry
 | `keepiq_attachment_grants` | `wrapped_file_key` (RSA-wrapped per-file AES key) | Re-wrap the rotating owner's own grants under the new suite. Grants belonging to other recipients MUST NOT be altered |
 | `keepiq_secret_requests` | No ciphertext of its own; `encryption_suite_id` selects the certificate used to encrypt future submissions | Lock for the duration of the migration, then unlock and re-point to the new suite |
 | `keepiq_link_shares` | `encrypted_secret_snapshot` | Revoke (cascade), unchanged from current behaviour |
-| `keepiq_emergency_contacts` | `recovery_envelope` | Invalidate, unchanged. The envelope is wrapped to the *grantee's* certificate and escrows the grantor's old private key as its plaintext, so the rotating owner cannot re-wrap it alone; the grantor MUST be prompted to re-establish emergency access (see the `emergency-access` spec) |
+| `keepiq_emergency_contacts` | `recovery_envelope` | Re-envelope under the new key where the grantee is reachable, then invalidate only the residual. For each contact still bound to the old suite whose grantee has an active certificate, the browser builds a fresh envelope escrowing the **new** private key sealed to that certificate and re-points `grantor_suite_id` to the new suite, keeping `state = granted`. Every other contact on the old suite (unreachable, not confirmed, or with a break-glass in flight) is invalidated at completion, and the grantor is told which ones were removed (see the `emergency-access` spec). This is not a re-wrap of the old envelope — `buildRecoveryEnvelope` needs only the new private key (held during rotation) and the grantee's public certificate (see the `emergency-access` spec) |
 
-Re-encryption of `keepiq_secrets`, `keepiq_secret_versions` and `keepiq_attachment_grants` MUST happen in the browser under the same rules as ordinary migration: the old private key decrypts and the new public key encrypts, both as WebCrypto `CryptoKey` objects, and only ciphertext crosses the wire. RSA has a per-chunk plaintext cap (446 bytes at RSA-4096), so every value MUST be re-chunked against the new key rather than having its existing chunk framing reused.
+Re-encryption of `keepiq_secrets`, `keepiq_secret_versions` and `keepiq_attachment_grants` MUST happen in the browser under the same rules as ordinary migration: the old private key decrypts and the new public key encrypts, both as WebCrypto `CryptoKey` objects, and only ciphertext crosses the wire. Emergency contacts are the one migrated store not produced by decrypt-then-re-encrypt: the browser builds a fresh recovery envelope from the new private key and the grantee's fetched certificate, so no old-key decrypt is involved. Unlike the three re-encrypted stores, emergency contacts MUST NOT gate completion — a contact whose grantee is unreachable can never be re-enveloped, and gating on it would make the write lock inescapable; such contacts are swept into invalidation at completion instead. RSA has a per-chunk plaintext cap (446 bytes at RSA-4096), so every value MUST be re-chunked against the new key rather than having its existing chunk framing reused.
 
 Owner and suite scoping MUST be enforced server-side on every re-encryption write, resolving the acting user through the Nextcloud `OCP\IUserSession` the surrounding controllers already use: a write MUST be refused unless the target row's current `encryption_suite_id` is the migration's `old_suite_id` and the row is owned by the migration's owner.
 
@@ -251,6 +251,24 @@ Owner and suite scoping MUST be enforced server-side on every re-encryption writ
 - **WHEN** the client requests completion of the migration
 - **THEN** the server MUST refuse to mark the migration terminal
 - **AND** the migration MUST remain `in_progress` with the write lock held
+
+#### Scenario: A reachable emergency contact is re-enveloped, not invalidated
+
+@e2e exclude Client builds the envelope and the server re-points the row; verifying the envelope opens needs the grantee's key in a second context. Covered by PHPUnit on the re-point endpoint and unit tests of the envelope builder.
+- **GIVEN** a rotating owner with an emergency contact whose grantee has an active suite
+- **WHEN** the migration processes emergency contacts
+- **THEN** a fresh recovery envelope escrowing the new private key MUST be built and the contact re-pointed to the new suite with `state = granted`
+- **AND** the contact MUST NOT be invalidated
+- **AND** the completion MUST NOT gate on that contact
+
+#### Scenario: An unreachable emergency contact does not trap the vault
+
+@e2e exclude Server-side listener sweep after the loop; covered by PHPUnit asserting the residual is invalidated and completion still terminates.
+- **GIVEN** a rotating owner with an emergency contact whose grantee has no active suite
+- **WHEN** the migration processes emergency contacts and then completes
+- **THEN** that contact MUST be invalidated by the completion sweep
+- **AND** completion MUST NOT be blocked by it
+- **AND** the owner MUST be told that this specific contact was removed (see the `emergency-access` spec for where)
 
 ### Requirement: A Migration Always Has A Way To Terminate
 

@@ -304,7 +304,7 @@ export default {
 		 *
 		 * @param {Array<{reason: string}>} residual The read-back of removed contacts.
 		 * @return {void}
-		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 * @spec openspec/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
 		announceRemovedContacts(residual) {
 			const inFlight = residual.filter((c) => c.reason === 'break_glass_in_flight').length
