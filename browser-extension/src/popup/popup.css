@@ -192,3 +192,10 @@ button.link {
 	width: auto;
 	margin: 0;
 }
+
+/* The verification phrase: the words the user compares on both devices. */
+.phrase {
+	font-size: 15px;
+	font-weight: 600;
+	margin: 12px 0;
+}

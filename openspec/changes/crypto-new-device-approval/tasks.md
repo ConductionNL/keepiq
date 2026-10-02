@@ -17,7 +17,7 @@
 
 ## 3. Extension
 
-- [ ] 3.1 Add "Approve from another device" to the locked popup, sealing and unlocking through the worker's raw-key unlock. Verify: vitest with a mocked API unlocks the worker from an approved request. **Blocked**: needs the worker raw-key unlock that `clients-extension-unlock-lock-and-accounts` task 3.2 adds; written to POLICY.md as a design question.
+- [x] 3.1 Add "Approve from another device" to the locked popup, sealing and unlocking through the worker's raw-key unlock. Verify: vitest with a mocked API unlocks the worker from an approved request. Done on top of #921's raw-key unlock: `browser-extension/src/lib/deviceApproval.js` holds the one-time key and request secret in worker memory only, the router answers `device-approval-state/start/poll/cancel` (extension pages only), the popup shows the phrase and polls every three seconds. `tests/extension/deviceApproval.spec.js` unlocks the real router from a key sealed with the web app's `sealUnlockKey`, and refuses a key sealed for another request id, a denial, a web-page sender and a disabled feature.
 
 ## 4. Officer path
 

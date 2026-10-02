@@ -16,6 +16,7 @@
 
 import * as api from '../lib/api.js'
 import * as vault from '../lib/vault.js'
+import * as deviceApproval from '../lib/deviceApproval.js'
 import { matchSecrets, hostOf, registrableDomain } from '../lib/match.js'
 import { classifyCapture } from '../lib/capture.js'
 import { policyRefusal } from '../lib/policy.js'
@@ -267,6 +268,7 @@ async function doUnpair(payload) {
 		revoked = false
 	}
 	lockAccount(id)
+	deviceApproval.forget(id)
 	maxIdleByAccount.delete(id)
 	await api.removeAccount(id)
 	return { ok: true, revoked }
@@ -334,6 +336,60 @@ async function doUnlockRaw(payload) {
 	}
 	await refreshPolicy(account)
 	await touchActivity(account.id)
+	return { ok: true }
+}
+
+/**
+ * Whether device approval is on, and the active account's open request.
+ *
+ * @return {Promise<{enabled: boolean, request: object|null}>}
+ * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+ */
+async function doDeviceApprovalState() {
+	const account = await activeAccount()
+	return {
+		enabled: await api.deviceApprovalEnabled(account),
+		request: deviceApproval.current(account.id),
+	}
+}
+
+/**
+ * Start "Approve from another device" for the active account.
+ *
+ * @return {Promise<object>} The request: id, phrase, expiry and status.
+ * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+ */
+async function doDeviceApprovalStart() {
+	const account = await activeAccount()
+	const agent = globalThis.navigator?.userAgent ?? ''
+	return { request: await deviceApproval.start(account, agent) }
+}
+
+/**
+ * Poll the active account's request once; an approval unlocks the account
+ * through the same raw-key unlock as a passkey.
+ *
+ * @return {Promise<{status: string}>}
+ * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+ */
+async function doDeviceApprovalPoll() {
+	const account = await activeAccount()
+	const status = await deviceApproval.poll(account, async (rawKey) => {
+		await vault.unlockWithRawKey(account.id, account, rawKey)
+		await refreshPolicy(account)
+		await touchActivity(account.id)
+	})
+	return { status }
+}
+
+/**
+ * Stop waiting for an approval.
+ *
+ * @return {Promise<{ok: boolean}>}
+ * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+ */
+async function doDeviceApprovalCancel() {
+	await deviceApproval.cancel(await activeAccount())
 	return { ok: true }
 }
 
@@ -729,6 +785,10 @@ const handlers = {
 	'set-idle': doSetIdle,
 	unlock: doUnlock,
 	'unlock-raw': doUnlockRaw,
+	'device-approval-state': doDeviceApprovalState,
+	'device-approval-start': doDeviceApprovalStart,
+	'device-approval-poll': doDeviceApprovalPoll,
+	'device-approval-cancel': doDeviceApprovalCancel,
 	lock: async (payload) => {
 		if (payload.accountId) lockAccount(payload.accountId)
 		else lockEverything()
