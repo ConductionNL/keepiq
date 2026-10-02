@@ -1458,6 +1458,102 @@
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Hai eliminato questo segreto offline, ma nel frattempo è stato modificato sul server. Scegli quale versione mantenere.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Le tue chiavi sono state cambiate su un altro dispositivo. Inserisci la password principale precedente per sincronizzare le modifiche offline, oppure scartale.",
         "Your offline change": "La tua modifica offline",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n contatto di emergenza aveva una richiesta di accesso in sospeso quando la rotazione della chiave lo ha rimosso. Controlla chi l'ha chiesta prima di aggiungere di nuovo qualcuno.",
+            "%n contatti di emergenza avevano una richiesta di accesso in sospeso quando la rotazione della chiave li ha rimossi. Controlla chi l'ha chiesta prima di aggiungere di nuovo qualcuno."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n elemento non può essere rappresentato in CXF e verrà ignorato.",
+            "%n elementi non possono essere rappresentati in CXF e verranno ignorati."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n versione più vecchia è stata scartata perché è possibile trasferire solo la cronologia recente.",
+            "%n versioni più vecchie sono state scartate perché è possibile trasferire solo la cronologia recente."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n copia del segreto deve ancora essere cifrata e condivisa.",
+            "%n copie del segreto devono ancora essere cifrate e condivise."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n segreto non è stato decifrato e non è in questa esportazione.",
+            "%n segreti non sono stati decifrati e non sono in questa esportazione."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n segreto non è stato possibile decifrarlo con la tua vecchia chiave, quindi non è stato migrato.",
+            "%n segreti non è stato possibile decifrarli con la tua vecchia chiave, quindi non sono stati migrati."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n segreto non è stato migrato.",
+            "%n segreti non sono stati migrati."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n segreto è ancora cifrato con la tua chiave precedente.",
+            "%n segreti sono ancora cifrati con la tua chiave precedente."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n segreto è stato ignorato perché il successore non ne possiede ancora una copia: aggiungi il successore alla cartella ed esegui di nuovo l'operazione.",
+            "%n segreti sono stati ignorati perché il successore non ne possiede ancora una copia: aggiungi il successore alla cartella ed esegui di nuovo l'operazione."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n segreto",
+            "%n segreti"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n utente nell'ambito non ha ancora l'accesso a due fattori e non può aprire la cassaforte finché questa opzione è attiva.",
+            "%n utenti nell'ambito non hanno ancora l'accesso a due fattori e non possono aprire la cassaforte finché questa opzione è attiva."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Termina comunque, perdendo l'accesso a %n segreto",
+            "Termina comunque, perdendo l'accesso a %n segreti"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n nuovo membro ha ricevuto l'accesso a una cartella del team.",
+            "%n nuovi membri hanno ricevuto l'accesso a una cartella del team."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Rotazione della chiave completata. %n segreto è stato ricifrato con la tua nuova chiave.",
+            "Rotazione della chiave completata. %n segreti sono stati ricifrati con la tua nuova chiave."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "La revoca della seconda suite ha eliminato %n contatto di accesso di emergenza.",
+            "La revoca della seconda suite ha eliminato %n contatti di accesso di emergenza."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "La revoca di questa suite ha eliminato %n contatto di accesso di emergenza.",
+            "La revoca di questa suite ha eliminato %n contatti di accesso di emergenza."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "visto %n volta nelle violazioni",
+            "visto %n volte nelle violazioni"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "condiviso con %n segreto",
+            "condiviso con %n segreti"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Questa cartella contiene direttamente %n segreto.",
+            "Questa cartella contiene direttamente %n segreti."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "La rotazione della chiave ha rimosso %n contatto di emergenza. Controlla Accesso di emergenza e aggiungilo di nuovo se lo vuoi ancora.",
+            "La rotazione della chiave ha rimosso %n contatti di emergenza. Controlla Accesso di emergenza e aggiungili di nuovo se li vuoi ancora."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n modifica in attesa di sincronizzazione",
+            "%n modifiche in attesa di sincronizzazione"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "L'utente è ancora nel gruppo {groups}, membro di una cartella del team. Rimuovilo dal gruppo o disattiva l'account.",
+            "L'utente è ancora nei gruppi {groups}, membri di cartelle del team. Rimuovilo dai gruppi o disattiva l'account."
+        ],
         "Allow approval from another device": "Consenti l'approvazione da un altro dispositivo",
         "App": "App",
         "Approve a new device": "Approva un nuovo dispositivo",

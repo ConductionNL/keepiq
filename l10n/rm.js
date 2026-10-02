@@ -1532,5 +1532,5 @@ OC.L10N.register(
         "Ask your organisation instead": "Dumonda empè tia organisaziun",
         "The request ended. Ask again or use your master password.": "La dumonda è terminada. Dumonda anc ina giada u utilisescha tes pled-clav principal."
     },
-    "nplurals=2; plural=(n != 1);"
+    "nplurals=1; plural=0;"
 )

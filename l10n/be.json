@@ -1458,6 +1458,126 @@
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Вы выдалілі гэты сакрэт без сеткі, але з таго часу яго змянілі на серверы. Выберыце, якую версію пакінуць.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Вашы ключы змяніліся на іншай прыладзе. Увядзіце папярэдні галоўны пароль, каб сінхранізаваць змены без сеткі, або адкіньце іх.",
         "Your offline change": "Ваша змена без сеткі",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "У %n экстранага кантакту быў запыт доступу ў чаканні, калі змена ключа выдаліла яго. Праверце, хто запытваў, перш чым зноў кагосьці дадаваць.",
+            "У экстраных кантактаў (%n) быў запыт доступу ў чаканні, калі змена ключа выдаліла іх. Праверце, хто запытваў, перш чым зноў кагосьці дадаваць.",
+            "У экстраных кантактаў (%n) быў запыт доступу ў чаканні, калі змена ключа выдаліла іх. Праверце, хто запытваў, перш чым зноў кагосьці дадаваць."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n элемент нельга падаць у CXF, ён будзе прапушчаны.",
+            "%n элементаў нельга падаць у CXF, яны будуць прапушчаны.",
+            "%n элементаў нельга падаць у CXF, яны будуць прапушчаны."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n старая версія была выдалена, бо перанесці можна толькі нядаўнюю гісторыю.",
+            "%n старых версій былі выдалены, бо перанесці можна толькі нядаўнюю гісторыю.",
+            "%n старых версій былі выдалены, бо перанесці можна толькі нядаўнюю гісторыю."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "Яшчэ трэба зашыфраваць і даць %n копію сакрэту.",
+            "Яшчэ трэба зашыфраваць і даць %n копій сакрэтаў.",
+            "Яшчэ трэба зашыфраваць і даць %n копій сакрэтаў."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n сакрэт не ўдалося расшыфраваць, і яго няма ў гэтым экспарце.",
+            "%n сакрэтаў не ўдалося расшыфраваць, і іх няма ў гэтым экспарце.",
+            "%n сакрэтаў не ўдалося расшыфраваць, і іх няма ў гэтым экспарце."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n сакрэт не ўдалося расшыфраваць вашым старым ключом, таму ён не быў перанесены.",
+            "%n сакрэтаў не ўдалося расшыфраваць вашым старым ключом, таму яны не былі перанесены.",
+            "%n сакрэтаў не ўдалося расшыфраваць вашым старым ключом, таму яны не былі перанесены."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n сакрэт не быў перанесены.",
+            "%n сакрэтаў не былі перанесены.",
+            "%n сакрэтаў не былі перанесены."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n сакрэт усё яшчэ зашыфраваны вашым папярэднім ключом.",
+            "%n сакрэтаў усё яшчэ зашыфраваныя вашым папярэднім ключом.",
+            "%n сакрэтаў усё яшчэ зашыфраваныя вашым папярэднім ключом."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n сакрэт прапушчаны, бо ў наступніка яшчэ няма копіі — дадайце наступніка ў папку і запусціце нанова.",
+            "%n сакрэтаў прапушчана, бо ў наступніка яшчэ няма копіі — дадайце наступніка ў папку і запусціце нанова.",
+            "%n сакрэтаў прапушчана, бо ў наступніка яшчэ няма копіі — дадайце наступніка ў папку і запусціце нанова."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n сакрэт",
+            "%n сакрэтаў",
+            "%n сакрэтаў"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n карыстальнік у вобласці дзеяння яшчэ не мае двухфактарнага ўваходу і не можа адкрыць сховішча, пакуль гэта ўключана.",
+            "Карыстальнікі ў вобласці дзеяння (%n) яшчэ не маюць двухфактарнага ўваходу і не могуць адкрыць сховішча, пакуль гэта ўключана.",
+            "Карыстальнікі ў вобласці дзеяння (%n) яшчэ не маюць двухфактарнага ўваходу і не могуць адкрыць сховішча, пакуль гэта ўключана."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Усё роўна завяршыць, страціўшы доступ да %n сакрэту",
+            "Усё роўна завяршыць, страціўшы доступ да %n сакрэтаў",
+            "Усё роўна завяршыць, страціўшы доступ да %n сакрэтаў"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n новы ўдзельнік атрымаў доступ да каманднай папкі.",
+            "Новыя ўдзельнікі (%n) атрымалі доступ да каманднай папкі.",
+            "Новыя ўдзельнікі (%n) атрымалі доступ да каманднай папкі."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Ратацыя ключа завершана. %n сакрэт перашыфраваны вашым новым ключом.",
+            "Ратацыя ключа завершана. %n сакрэтаў перашыфравана вашым новым ключом.",
+            "Ратацыя ключа завершана. %n сакрэтаў перашыфравана вашым новым ключом."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Адкліканне другога набору выдаліла %n кантакт аварыйнага доступу.",
+            "Адкліканне другога набору выдаліла %n кантактаў аварыйнага доступу.",
+            "Адкліканне другога набору выдаліла %n кантактаў аварыйнага доступу."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Адкліканне гэтага набору выдаліла %n кантакт аварыйнага доступу.",
+            "Адкліканне гэтага набору выдаліла %n кантактаў аварыйнага доступу.",
+            "Адкліканне гэтага набору выдаліла %n кантактаў аварыйнага доступу."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "сустракаецца ў ўцечках %n раз",
+            "сустракаецца ў ўцечках %n разоў",
+            "сустракаецца ў ўцечках %n разоў"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "дадзена %n сакрэту",
+            "дадзена %n сакрэтам",
+            "дадзена %n сакрэтам"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Гэта папка змяшчае %n сакрэт напрамую.",
+            "Гэта папка змяшчае %n сакрэтаў напрамую.",
+            "Гэта папка змяшчае %n сакрэтаў напрамую."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Ратацыя ключа выдаліла %n экстраны кантакт. Праверце «Надзвычайны доступ» і дадайце яго зноў, калі ён вам яшчэ патрэбны.",
+            "Ратацыя ключа выдаліла %n экстраных кантактаў. Праверце «Надзвычайны доступ» і дадайце іх зноў, калі яны вам яшчэ патрэбныя.",
+            "Ратацыя ключа выдаліла %n экстраных кантактаў. Праверце «Надзвычайны доступ» і дадайце іх зноў, калі яны вам яшчэ патрэбныя."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n змена чакае сінхранізацыі",
+            "%n змен чакаюць сінхранізацыі",
+            "%n змен чакаюць сінхранізацыі"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Карыстальнік усё яшчэ ў групе {groups}, якая ўваходзіць у камандную папку. Выдаліце яго з групы або адключыце ўліковы запіс.",
+            "Карыстальнік усё яшчэ ў групах {groups}, якія ўваходзяць у камандныя папкі. Выдаліце яго з груп або адключыце ўліковы запіс.",
+            "Карыстальнік усё яшчэ ў групах {groups}, якія ўваходзяць у камандныя папкі. Выдаліце яго з груп або адключыце ўліковы запіс."
+        ],
         "Allow approval from another device": "Дазволіць пацвярджэнне з іншай прылады",
         "App": "Праграма",
         "Approve a new device": "Пацвердзіць новую прыладу",
