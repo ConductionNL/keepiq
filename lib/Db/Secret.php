@@ -66,6 +66,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setTrashedAt(?DateTime $trashedAt)
  * @method DateTime|null getArchivedAt()
  * @method void setArchivedAt(?DateTime $archivedAt)
+ * @method bool|null getIsFavourite()
+ * @method void setIsFavourite(bool $isFavourite)
+ * @method DateTime|null getLastUsedAt()
+ * @method void setLastUsedAt(?DateTime $lastUsedAt)
  * @method void setTombstoneReason(?string $tombstoneReason)
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
@@ -212,6 +216,23 @@ class Secret extends Entity implements JsonSerializable {
 	protected ?DateTime $archivedAt = null;
 
 	/**
+	 * Whether the holder of this row starred it (vault-favourites-tags-and-last-used D1).
+	 *
+	 * Per row, so a recipient's copy carries its own star.
+	 *
+	 * @var boolean|null
+	 */
+	protected ?bool $isFavourite = false;
+
+	/**
+	 * When the holder last opened the value or filled it from the extension
+	 * (nullable = never).
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $lastUsedAt = null;
+
+	/**
 	 * The non-personal reason a copy was tombstoned (nullable).
 	 *
 	 * A short enum-ish token (e.g. 'owner-account-deleted'). MUST NOT contain
@@ -287,6 +308,8 @@ class Secret extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'tombstoneReason', type: 'string');
 		$this->addType(fieldName: 'trashedAt', type: 'datetime');
 		$this->addType(fieldName: 'archivedAt', type: 'datetime');
+		$this->addType(fieldName: 'isFavourite', type: 'boolean');
+		$this->addType(fieldName: 'lastUsedAt', type: 'datetime');
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
 		$this->addType(fieldName: 'updatedAt', type: 'datetime');
 	}//end __construct()
@@ -345,6 +368,8 @@ class Secret extends Entity implements JsonSerializable {
 			'tombstoneReason' => $this->tombstoneReason,
 			'trashedAt' => $this->trashedAt?->format('c'),
 			'archivedAt' => $this->archivedAt?->format('c'),
+			'favourite' => ($this->isFavourite === true),
+			'lastUsedAt' => $this->lastUsedAt?->format('c'),
 		];
 	}//end jsonSerialize()
 
@@ -380,6 +405,8 @@ class Secret extends Entity implements JsonSerializable {
 			'unrecoverable' => ($this->migrationError !== null),
 			'trashedAt' => $this->trashedAt?->format('c'),
 			'archivedAt' => $this->archivedAt?->format('c'),
+			'favourite' => ($this->isFavourite === true),
+			'lastUsedAt' => $this->lastUsedAt?->format('c'),
 			'createdAt' => $this->createdAt?->format('c'),
 			'updatedAt' => $this->updatedAt?->format('c'),
 		];

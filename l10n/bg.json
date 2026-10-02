@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Ограничения за шифровани прикачени файлове (прилагат се на сървъра върху съхранените шифровани байтове), съхранение на историята на версиите и колко дълго изтритите тайни остават в кошчето.",
         "Days a deleted secret stays in the trash (1 to 365)": "Дни, през които изтрита тайна остава в кошчето (от 1 до 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Това премества тайната в кошчето и прекратява споделянията ѝ веднага. Можете да я възстановите от кошчето до края на срока на съхранение: 30 дни, освен ако администраторът не го е променил.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Това премества тайните в кошчето ({count}) и прекратява споделянията им веднага. Можете да ги възстановите от кошчето до края на срока на съхранение."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Това премества тайните в кошчето ({count}) и прекратява споделянията им веднага. Можете да ги възстановите от кошчето до края на срока на съхранение.",
+        "Remove {name} from favourites": "Премахване на {name} от любими",
+        "Add {name} to favourites": "Добавяне на {name} към любими",
+        "Could not change the favourite": "Любимото не можа да бъде променено",
+        "Remove from favourites": "Премахване от любими",
+        "Add to favourites": "Добавяне към любими",
+        "Tags": "Етикети",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Етикетите не са шифровани. Администраторите на сървъра могат да ги четат, както и имената на папките.",
+        "Favourites": "Любими",
+        "Filter by tag": "Филтриране по етикет",
+        "All tags": "Всички етикети",
+        "Last used": "Последно използвано",
+        "Tags for {count} secrets": "Етикети за {count} тайни",
+        "Tag": "Етикет",
+        "Remove tag": "Премахване на етикет",
+        "Add tag": "Добавяне на етикет",
+        "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново."
     },
     "plurals": null
 }

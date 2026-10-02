@@ -1250,7 +1250,23 @@ OC.L10N.register(
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Όρια για κρυπτογραφημένα συνημμένα (επιβάλλονται στον διακομιστή στα αποθηκευμένα κρυπτογραφημένα byte), διατήρηση ιστορικού εκδόσεων και πόσο μένουν στον κάδο τα διαγραμμένα μυστικά.",
         "Days a deleted secret stays in the trash (1 to 365)": "Ημέρες που ένα διαγραμμένο μυστικό μένει στον κάδο (1 έως 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Αυτό μεταφέρει το μυστικό στον κάδο και τερματίζει τώρα τις κοινοποιήσεις του. Μπορείτε να το επαναφέρετε από τον κάδο μέχρι να λήξει η περίοδος διατήρησης: 30 ημέρες, εκτός αν την άλλαξε ο διαχειριστής σας.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Αυτό μεταφέρει μυστικά στον κάδο ({count}) και τερματίζει τώρα τις κοινοποιήσεις τους. Μπορείτε να τα επαναφέρετε από τον κάδο μέχρι να λήξει η περίοδος διατήρησης."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Αυτό μεταφέρει μυστικά στον κάδο ({count}) και τερματίζει τώρα τις κοινοποιήσεις τους. Μπορείτε να τα επαναφέρετε από τον κάδο μέχρι να λήξει η περίοδος διατήρησης.",
+        "Remove {name} from favourites": "Αφαίρεση του {name} από τα αγαπημένα",
+        "Add {name} to favourites": "Προσθήκη του {name} στα αγαπημένα",
+        "Could not change the favourite": "Δεν ήταν δυνατή η αλλαγή του αγαπημένου",
+        "Remove from favourites": "Αφαίρεση από τα αγαπημένα",
+        "Add to favourites": "Προσθήκη στα αγαπημένα",
+        "Tags": "Ετικέτες",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Οι ετικέτες δεν είναι κρυπτογραφημένες. Οι διαχειριστές του διακομιστή μπορούν να τις διαβάσουν, όπως τα ονόματα φακέλων.",
+        "Favourites": "Αγαπημένα",
+        "Filter by tag": "Φιλτράρισμα κατά ετικέτα",
+        "All tags": "Όλες οι ετικέτες",
+        "Last used": "Τελευταία χρήση",
+        "Tags for {count} secrets": "Ετικέτες για {count} μυστικά",
+        "Tag": "Ετικέτα",
+        "Remove tag": "Αφαίρεση ετικέτας",
+        "Add tag": "Προσθήκη ετικέτας",
+        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά."
     },
     "nplurals=2; plural=(n != 1);"
 )

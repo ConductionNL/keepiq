@@ -135,6 +135,11 @@
 				:disabled="saving || loading"
 				@update:members="additionalFields = $event" />
 
+			<SecretTagsField
+				:modelValue="tags"
+				:disabled="saving || loading"
+				@update:modelValue="tags = $event" />
+
 			<NcNoteCard
 				v-if="!policyVerdict.compliant"
 				type="warning"
@@ -170,6 +175,7 @@ import {
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
+import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import {
@@ -186,6 +192,7 @@ import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
+import { sameTags } from '../utils/tags.js'
 import {
 	mergeTypedValues,
 	missingRequired,
@@ -203,6 +210,7 @@ export default {
 
 	components: {
 		AdditionalFieldsEditor,
+		SecretTagsField,
 		TypedFieldsForm,
 		ContentSave,
 		Dice5,
@@ -244,6 +252,7 @@ export default {
 			url: '',
 			login: '',
 			additionalFields: [],
+			tags: [],
 			typedValues: {},
 			typedMissing: [],
 			generatorOpen: false,
@@ -399,6 +408,7 @@ export default {
 				this.value = secret.key || ''
 				this.url = secret.url || ''
 				this.login = secret.login || ''
+				this.tags = Array.isArray(secret.tags) ? [...secret.tags] : []
 				// From the DECRYPTED blob the store already parsed. Pre-filling from
 				// the current decrypted copy is also what bounds the known
 				// last-writer-wins window: the whole blob is rewritten on save, so an
@@ -560,6 +570,11 @@ export default {
 						this.secretId,
 						diff,
 					)
+				}
+				// Tags are the holder's own, stored apart from the value
+				// (vault-favourites-tags-and-last-used).
+				if (!sameTags(this.tags, o.tags)) {
+					await useSecretStore().setTags(this.secretId, this.tags)
 				}
 				this.$emit('saved', updated)
 				if (this.onSaved) {

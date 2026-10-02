@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Ограничения для зашифрованных вложений (применяются на сервере к сохранённым зашифрованным байтам), хранение истории версий и срок, в течение которого удалённые секреты остаются в корзине.",
         "Days a deleted secret stays in the trash (1 to 365)": "Сколько дней удалённый секрет остаётся в корзине (от 1 до 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Секрет будет перемещён в корзину, а общий доступ к нему сразу прекратится. Его можно восстановить из корзины до конца срока хранения: 30 дней, если администратор не изменил этот срок.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Секреты будут перемещены в корзину ({count}), а общий доступ к ним сразу прекратится. Их можно восстановить из корзины до конца срока хранения."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Секреты будут перемещены в корзину ({count}), а общий доступ к ним сразу прекратится. Их можно восстановить из корзины до конца срока хранения.",
+        "Remove {name} from favourites": "Убрать {name} из избранного",
+        "Add {name} to favourites": "Добавить {name} в избранное",
+        "Could not change the favourite": "Не удалось изменить избранное",
+        "Remove from favourites": "Убрать из избранного",
+        "Add to favourites": "Добавить в избранное",
+        "Tags": "Метки",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Метки не шифруются. Администраторы сервера могут их прочитать, как и названия папок.",
+        "Favourites": "Избранное",
+        "Filter by tag": "Фильтр по метке",
+        "All tags": "Все метки",
+        "Last used": "Последнее использование",
+        "Tags for {count} secrets": "Метки для {count} секретов",
+        "Tag": "Метка",
+        "Remove tag": "Убрать метку",
+        "Add tag": "Добавить метку",
+        "Could not change the tags. Try again.": "Не удалось изменить метки. Попробуйте ещё раз."
     },
     "plurals": null
 }

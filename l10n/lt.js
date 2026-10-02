@@ -1250,7 +1250,23 @@ OC.L10N.register(
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Šifruotų priedų ribos (taikomos serveryje saugomiems šifruotiems baitams), versijų istorijos saugojimas ir kiek laiko ištrintos paslaptys lieka šiukšlinėje.",
         "Days a deleted secret stays in the trash (1 to 365)": "Dienos, kiek ištrinta paslaptis lieka šiukšlinėje (nuo 1 iki 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Tai perkelia paslaptį į šiukšlinę ir iš karto nutraukia jos bendrinimus. Ją galite atkurti iš šiukšlinės, kol baigsis saugojimo laikotarpis: 30 dienų, nebent administratorius jį pakeitė.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Tai perkelia paslaptis į šiukšlinę ({count}) ir iš karto nutraukia jų bendrinimus. Jas galite atkurti iš šiukšlinės, kol baigsis saugojimo laikotarpis."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Tai perkelia paslaptis į šiukšlinę ({count}) ir iš karto nutraukia jų bendrinimus. Jas galite atkurti iš šiukšlinės, kol baigsis saugojimo laikotarpis.",
+        "Remove {name} from favourites": "Pašalinti {name} iš mėgstamų",
+        "Add {name} to favourites": "Pridėti {name} prie mėgstamų",
+        "Could not change the favourite": "Nepavyko pakeisti mėgstamo",
+        "Remove from favourites": "Pašalinti iš mėgstamų",
+        "Add to favourites": "Pridėti prie mėgstamų",
+        "Tags": "Žymės",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Žymės nėra šifruojamos. Serverio administratoriai gali jas skaityti, kaip ir aplankų pavadinimus.",
+        "Favourites": "Mėgstami",
+        "Filter by tag": "Filtruoti pagal žymę",
+        "All tags": "Visos žymės",
+        "Last used": "Paskutinį kartą naudota",
+        "Tags for {count} secrets": "Žymės {count} paslaptims",
+        "Tag": "Žymė",
+        "Remove tag": "Pašalinti žymę",
+        "Add tag": "Pridėti žymę",
+        "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1250,7 +1250,23 @@ OC.L10N.register(
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.",
         "Days a deleted secret stays in the trash (1 to 365)": "Days a deleted secret stays in the trash (1 to 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.",
+        "Remove {name} from favourites": "Remove {name} from favourites",
+        "Add {name} to favourites": "Add {name} to favourites",
+        "Could not change the favourite": "Could not change the favourite",
+        "Remove from favourites": "Remove from favourites",
+        "Add to favourites": "Add to favourites",
+        "Tags": "Tags",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Tags are not encrypted. Server administrators can read them, as they can folder names.",
+        "Favourites": "Favourites",
+        "Filter by tag": "Filter by tag",
+        "All tags": "All tags",
+        "Last used": "Last used",
+        "Tags for {count} secrets": "Tags for {count} secrets",
+        "Tag": "Tag",
+        "Remove tag": "Remove tag",
+        "Add tag": "Add tag",
+        "Could not change the tags. Try again.": "Could not change the tags. Try again."
     },
     "nplurals=2; plural=(n != 1);"
 )

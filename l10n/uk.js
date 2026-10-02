@@ -1250,7 +1250,23 @@ OC.L10N.register(
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Обмеження для зашифрованих вкладень (застосовуються на сервері до збережених зашифрованих байтів), зберігання історії версій і скільки часу видалені секрети залишаються в кошику.",
         "Days a deleted secret stays in the trash (1 to 365)": "Скільки днів видалений секрет залишається в кошику (від 1 до 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Секрет буде переміщено до кошика, а спільний доступ до нього одразу припиниться. Його можна відновити з кошика до кінця строку зберігання: 30 днів, якщо адміністратор не змінив цей строк.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Секрети буде переміщено до кошика ({count}), а спільний доступ до них одразу припиниться. Їх можна відновити з кошика до кінця строку зберігання."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Секрети буде переміщено до кошика ({count}), а спільний доступ до них одразу припиниться. Їх можна відновити з кошика до кінця строку зберігання.",
+        "Remove {name} from favourites": "Прибрати {name} з обраного",
+        "Add {name} to favourites": "Додати {name} до обраного",
+        "Could not change the favourite": "Не вдалося змінити обране",
+        "Remove from favourites": "Прибрати з обраного",
+        "Add to favourites": "Додати до обраного",
+        "Tags": "Мітки",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Мітки не шифруються. Адміністратори сервера можуть їх читати, як і назви тек.",
+        "Favourites": "Обране",
+        "Filter by tag": "Фільтр за міткою",
+        "All tags": "Усі мітки",
+        "Last used": "Останнє використання",
+        "Tags for {count} secrets": "Мітки для {count} секретів",
+        "Tag": "Мітка",
+        "Remove tag": "Прибрати мітку",
+        "Add tag": "Додати мітку",
+        "Could not change the tags. Try again.": "Не вдалося змінити мітки. Спробуйте ще раз."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Gränser för krypterade bilagor (tillämpas på servern på lagrade krypterade byte), lagring av versionshistorik och hur länge borttagna hemligheter ligger kvar i papperskorgen.",
         "Days a deleted secret stays in the trash (1 to 365)": "Dagar som en borttagen hemlighet ligger kvar i papperskorgen (1 till 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Detta flyttar hemligheten till papperskorgen och avslutar dess delningar nu. Du kan återställa den från papperskorgen tills lagringstiden tar slut: 30 dagar om inte din administratör har ändrat det.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Detta flyttar {count} hemligheter till papperskorgen och avslutar deras delningar nu. Du kan återställa dem från papperskorgen tills lagringstiden tar slut."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Detta flyttar {count} hemligheter till papperskorgen och avslutar deras delningar nu. Du kan återställa dem från papperskorgen tills lagringstiden tar slut.",
+        "Remove {name} from favourites": "Ta bort {name} från favoriter",
+        "Add {name} to favourites": "Lägg till {name} i favoriter",
+        "Could not change the favourite": "Det gick inte att ändra favoriten",
+        "Remove from favourites": "Ta bort från favoriter",
+        "Add to favourites": "Lägg till i favoriter",
+        "Tags": "Taggar",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Taggar är inte krypterade. Serveradministratörer kan läsa dem, precis som mappnamn.",
+        "Favourites": "Favoriter",
+        "Filter by tag": "Filtrera efter tagg",
+        "All tags": "Alla taggar",
+        "Last used": "Senast använd",
+        "Tags for {count} secrets": "Taggar för {count} hemligheter",
+        "Tag": "Tagg",
+        "Remove tag": "Ta bort tagg",
+        "Add tag": "Lägg till tagg",
+        "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen."
     },
     "plurals": null
 }

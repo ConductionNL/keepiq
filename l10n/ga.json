@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Teorainneacha do cheangaltáin chriptithe (curtha i bhfeidhm ar an bhfreastalaí i mbearta criptithe stóráilte), coinneáil stair leaganacha agus cá fhad a fhanann rúin scriosta sa bhruscar.",
         "Days a deleted secret stays in the trash (1 to 365)": "Laethanta a fhanann rún scriosta sa bhruscar (1 go 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Bogann sé seo an rún go dtí an bruscar agus cuireann sé deireadh lena chomhroinnt anois. Is féidir leat é a aisghabháil ón mbruscar go dtí go gcríochnaíonn an tréimhse choinneála: 30 lá, mura bhfuil sé athraithe ag do riarthóir.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Bogann sé seo rúin go dtí an bruscar ({count}) agus cuireann sé deireadh lena gcomhroinnt anois. Is féidir leat iad a aisghabháil ón mbruscar go dtí go gcríochnaíonn an tréimhse choinneála."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Bogann sé seo rúin go dtí an bruscar ({count}) agus cuireann sé deireadh lena gcomhroinnt anois. Is féidir leat iad a aisghabháil ón mbruscar go dtí go gcríochnaíonn an tréimhse choinneála.",
+        "Remove {name} from favourites": "Bain {name} as na ceanáin",
+        "Add {name} to favourites": "Cuir {name} leis na ceanáin",
+        "Could not change the favourite": "Níorbh fhéidir an ceanán a athrú",
+        "Remove from favourites": "Bain as na ceanáin",
+        "Add to favourites": "Cuir leis na ceanáin",
+        "Tags": "Clibeanna",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Níl na clibeanna criptithe. Is féidir le riarthóirí an fhreastalaí iad a léamh, mar is féidir leo ainmneacha fillteán.",
+        "Favourites": "Ceanáin",
+        "Filter by tag": "Scag de réir clibe",
+        "All tags": "Gach clib",
+        "Last used": "Úsáidte go deireanach",
+        "Tags for {count} secrets": "Clibeanna do {count} rún",
+        "Tag": "Clib",
+        "Remove tag": "Bain an chlib",
+        "Add tag": "Cuir clib leis",
+        "Could not change the tags. Try again.": "Níorbh fhéidir na clibeanna a athrú. Bain triail eile as."
     },
     "plurals": null
 }

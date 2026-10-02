@@ -36,6 +36,7 @@ use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretTagMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
@@ -137,6 +138,8 @@ class SecretService {
 	 * @param AuditEventFactory $auditEvents The audit-event factory
 	 * @param FolderOwnershipGuard|null $folderOwnership Checks a secret's folder belongs to its owner (keepiq#795);
 	 *                                                   without it every folder is refused
+	 * @param SecretTagMapper|null $tagMapper The holder's tags (vault-favourites-tags-and-last-used):
+	 *                                        list rows carry them, a delete removes them
 	 *
 	 * @return void
 	 */
@@ -158,6 +161,7 @@ class SecretService {
 		private ?RotationPolicyService $rotationService = null,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 		private ?FolderOwnershipGuard $folderOwnership = null,
+		private ?SecretTagMapper $tagMapper = null,
 	) {
 	}//end __construct()
 
@@ -801,6 +805,7 @@ class SecretService {
 	 * @throws SuiteBlockedException When the encryption suite is revoked/compromised
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-sort-by-date-last-used
 	 */
 	public function get(string $id, string $userId): Secret {
 		$secret = $this->loadOwned(id: $id, userId: $userId);
@@ -821,6 +826,10 @@ class SecretService {
 				objectName: $secret->getName(),
 			)
 		);
+
+		// Opening the value is a use (vault-favourites-tags-and-last-used D3);
+		// the list and search never come through here.
+		$this->mapper->markUsed($secret->getId(), $userId, new DateTime());
 
 		return $secret;
 	}//end get()
@@ -1026,6 +1035,9 @@ class SecretService {
 		// Rotation-flag cascade (rotation-expiry-policies).
 		$this->rotationService?->deleteForSecret($id);
 
+		// The holder's tags (vault-favourites-tags-and-last-used).
+		$this->tagMapper?->deleteBySecret($id);
+
 		$this->mapper->delete($secret);
 		$this->logger->info("Keepiq: secret {$id} deleted by {$userId}");
 
@@ -1073,10 +1085,13 @@ class SecretService {
 	 * @param int $limit The page size
 	 * @param string|null $typeId The secret-type filter (null = all types)
 	 * @param string $state The trash/archive state (SecretMapper::STATE_*), live by default
+	 * @param bool|null $favourite Only the user's starred secrets when true
+	 * @param string|null $tag Only secrets the user tagged with this tag
 	 *
 	 * @return array{items: array<int,array<string,mixed>>, total: int, page: int, limit: int}
 	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
 	 */
 	public function list(
 		string $userId,
@@ -1087,16 +1102,18 @@ class SecretService {
 		int $limit,
 		?string $typeId = null,
 		string $state = SecretMapper::STATE_LIVE,
+		?bool $favourite = null,
+		?string $tag = null,
 	): array {
 		$limit = $this->clampLimit(limit: $limit);
 		$page = max(1, $page);
 		$offset = (($page - 1) * $limit);
 
-		$secrets = $this->mapper->findByOwner('user', $userId, $folderId, $sort, $direction, $limit, $offset, $typeId, $state);
-		$total = $this->mapper->countByOwner('user', $userId, $folderId, $typeId, $state);
+		$secrets = $this->mapper->findByOwner('user', $userId, $folderId, $sort, $direction, $limit, $offset, $typeId, $state, $favourite, $tag);
+		$total = $this->mapper->countByOwner('user', $userId, $folderId, $typeId, $state, $favourite, $tag);
 
 		return [
-			'items' => array_map([$this, 'serialiseWithBlocking'], $secrets),
+			'items' => $this->withTags(items: array_map([$this, 'serialiseWithBlocking'], $secrets), userId: $userId),
 			'total' => $total,
 			'page' => $page,
 			'limit' => $limit,
@@ -1112,6 +1129,8 @@ class SecretService {
 	 * @param int $limit The page size
 	 *
 	 * @return array{items: array<int,array<string,mixed>>, total: int, page: int, limit: int}
+	 *
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
 	 */
 	public function search(string $userId, string $term, int $page, int $limit): array {
 		$limit = $this->clampLimit(limit: $limit);
@@ -1131,7 +1150,7 @@ class SecretService {
 		$window = array_slice($matched, $offset, $limit);
 
 		return [
-			'items' => array_map([$this, 'serialiseWithBlocking'], $window),
+			'items' => $this->withTags(items: array_map([$this, 'serialiseWithBlocking'], $window), userId: $userId),
 			'total' => $total,
 			'page' => $page,
 			'limit' => $limit,
@@ -1283,6 +1302,30 @@ class SecretService {
 
 		return false;
 	}//end isFuzzyHit()
+
+	/**
+	 * Add the holder's tags to serialised secrets (vault-favourites-tags-and-last-used).
+	 * Every item gets a `tags` list, empty when it has none or no tag mapper is wired.
+	 *
+	 * @param array<int,array<string,mixed>> $items  Serialised secrets of the user
+	 * @param string                         $userId The holder
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+	 */
+	public function withTags(array $items, string $userId): array {
+		$tags = [];
+		if ($this->tagMapper !== null && $items !== []) {
+			$tags = $this->tagMapper->findTagsBySecretIds($userId, array_map(static fn (array $item): string => (string)$item['id'], $items));
+		}
+
+		foreach ($items as $index => $item) {
+			$items[$index]['tags'] = ($tags[(string)$item['id']] ?? []);
+		}
+
+		return $items;
+	}//end withTags()
 
 	/**
 	 * Serialise a secret, withholding encrypted blobs when its suite blocks.

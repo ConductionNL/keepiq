@@ -1250,7 +1250,23 @@ OC.L10N.register(
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Limiti per gli allegati cifrati (applicati sul server ai byte cifrati salvati), conservazione della cronologia delle versioni e per quanto tempo i segreti eliminati restano nel cestino.",
         "Days a deleted secret stays in the trash (1 to 365)": "Giorni in cui un segreto eliminato resta nel cestino (da 1 a 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Questo sposta il segreto nel cestino e termina subito le sue condivisioni. Puoi ripristinarlo dal cestino fino alla fine del periodo di conservazione: 30 giorni, salvo modifiche del tuo amministratore.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Questo sposta {count} segreti nel cestino e termina subito le loro condivisioni. Puoi ripristinarli dal cestino fino alla fine del periodo di conservazione."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Questo sposta {count} segreti nel cestino e termina subito le loro condivisioni. Puoi ripristinarli dal cestino fino alla fine del periodo di conservazione.",
+        "Remove {name} from favourites": "Rimuovi {name} dai preferiti",
+        "Add {name} to favourites": "Aggiungi {name} ai preferiti",
+        "Could not change the favourite": "Impossibile modificare il preferito",
+        "Remove from favourites": "Rimuovi dai preferiti",
+        "Add to favourites": "Aggiungi ai preferiti",
+        "Tags": "Etichette",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Le etichette non sono cifrate. Gli amministratori del server possono leggerle, come i nomi delle cartelle.",
+        "Favourites": "Preferiti",
+        "Filter by tag": "Filtra per etichetta",
+        "All tags": "Tutte le etichette",
+        "Last used": "Ultimo utilizzo",
+        "Tags for {count} secrets": "Etichette per {count} segreti",
+        "Tag": "Etichetta",
+        "Remove tag": "Rimuovi etichetta",
+        "Add tag": "Aggiungi etichetta",
+        "Could not change the tags. Try again.": "Impossibile modificare le etichette. Riprova."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -30,7 +30,7 @@ At development `4c214a9d`:
 
 **D3. Last used means a value was opened or filled.** `SecretService::get()` sets `last_used_at` next to its existing `secret.read` event. A new route `POST /api/v1/extension/used/{id}` (session or paired app password, owner-scoped) lets the extension report a fill after `doFill()` succeeds. Opening the list does not count. Alternative: derive last used from the audit log (`AuditService::recentlyAccessed()`). Rejected: the audit log is pruned by retention and is not indexed for a sort.
 
-**D4. Filters join the existing query.** `findByOwner()` and `countByOwner()` take `?bool $favourite` and `?string $tag`; the tag filter is an `EXISTS` subquery on `keepiq_secret_tags`. `last_used_at` sorts with nulls last.
+**D4. Filters join the existing query.** `findByOwner()` and `countByOwner()` take `?bool $favourite` and `?string $tag`; the tag filter is an `EXISTS` subquery on `keepiq_secret_tags`. `last_used_at` sorts with nulls last. Corrected at build (2 Oct): the tag filter is an `IN` subquery on `keepiq_secret_tags` (same rows as `EXISTS`, no correlated alias needed), nulls last is a `CASE WHEN last_used_at IS NULL` order term so it holds on every database in both directions, and every sort but name breaks ties by name. The used-route sits beside the extension's other routes with `#[NoCSRFRequired]`, as `pair` and `unpair` do.
 
 ## Security and zero-knowledge
 

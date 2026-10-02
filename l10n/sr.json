@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Ограничења за шифроване прилоге (спроводе се на серверу у сачуваним шифрованим бајтовима), чување историје верзија и колико дуго обрисане тајне остају у отпаду.",
         "Days a deleted secret stays in the trash (1 to 365)": "Број дана колико обрисана тајна остаје у отпаду (1 до 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Овим се тајна премешта у отпад и њена дељења одмах престају. Можете је вратити из отпада до краја периода чувања: 30 дана, осим ако је администратор то променио.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Овим се тајне премештају у отпад ({count}) и њихова дељења одмах престају. Можете их вратити из отпада до краја периода чувања."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Овим се тајне премештају у отпад ({count}) и њихова дељења одмах престају. Можете их вратити из отпада до краја периода чувања.",
+        "Remove {name} from favourites": "Уклони {name} из омиљених",
+        "Add {name} to favourites": "Додај {name} у омиљене",
+        "Could not change the favourite": "Није могуће променити омиљено",
+        "Remove from favourites": "Уклони из омиљених",
+        "Add to favourites": "Додај у омиљене",
+        "Tags": "Ознаке",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Ознаке нису шифроване. Администратори сервера могу да их читају, као и називе фасцикли.",
+        "Favourites": "Омиљено",
+        "Filter by tag": "Филтрирај по ознаци",
+        "All tags": "Све ознаке",
+        "Last used": "Последње коришћено",
+        "Tags for {count} secrets": "Ознаке за {count} тајни",
+        "Tag": "Ознака",
+        "Remove tag": "Уклони ознаку",
+        "Add tag": "Додај ознаку",
+        "Could not change the tags. Try again.": "Није могуће променити ознаке. Покушајте поново."
     },
     "plurals": null
 }

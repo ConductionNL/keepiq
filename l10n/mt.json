@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Limiti għall-annessi kriptati (infurzati fuq is-server fuq il-bytes kriptati maħżuna), żamma tal-istorja tal-verżjonijiet u kemm idumu s-sigrieti mħassra fil-barmil.",
         "Days a deleted secret stays in the trash (1 to 365)": "Jiem li sigriet imħassar jibqa' fil-barmil (minn 1 sa 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Dan imexxi s-sigriet fil-barmil u jtemm il-qsim tiegħu issa. Tista' tirrestawrah mill-barmil sakemm jintemm il-perjodu taż-żamma: 30 jum, sakemm l-amministratur tiegħek ma bidlux.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Dan imexxi sigrieti fil-barmil ({count}) u jtemm il-qsim tagħhom issa. Tista' tirrestawrahom mill-barmil sakemm jintemm il-perjodu taż-żamma."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Dan imexxi sigrieti fil-barmil ({count}) u jtemm il-qsim tagħhom issa. Tista' tirrestawrahom mill-barmil sakemm jintemm il-perjodu taż-żamma.",
+        "Remove {name} from favourites": "Neħħi {name} mill-favoriti",
+        "Add {name} to favourites": "Żid {name} mal-favoriti",
+        "Could not change the favourite": "Ma setax jinbidel il-favorit",
+        "Remove from favourites": "Neħħi mill-favoriti",
+        "Add to favourites": "Żid mal-favoriti",
+        "Tags": "Tikketti",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "It-tikketti mhumiex kriptati. L-amministraturi tas-server jistgħu jaqrawhom, bħall-ismijiet tal-folders.",
+        "Favourites": "Favoriti",
+        "Filter by tag": "Iffiltra skont it-tikketta",
+        "All tags": "It-tikketti kollha",
+        "Last used": "L-aħħar użu",
+        "Tags for {count} secrets": "Tikketti għal {count} sigrieti",
+        "Tag": "Tikketta",
+        "Remove tag": "Neħħi t-tikketta",
+        "Add tag": "Żid tikketta",
+        "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova."
     },
     "plurals": null
 }

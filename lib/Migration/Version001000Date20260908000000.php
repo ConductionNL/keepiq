@@ -569,6 +569,23 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 				['keepiq_sr_token_uniq', ['token']],
 			],
 		],
+		// Favourites, tags and last used (vault-favourites-tags-and-last-used); also
+		// added to existing installs by Version001003Date20261002000000.
+		'secret_tags' => [
+			'columns' => [
+				['id', Types::BIGINT, ['notnull' => true, 'autoincrement' => true, 'unsigned' => true]],
+				['secret_id', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['owner_id', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['tag', Types::STRING, ['notnull' => true, 'length' => 32]],
+			],
+			'primary' => ['id'],
+			'indexes' => [
+				['keepiq_sec_tags_owner_tag', ['owner_id', 'tag']],
+			],
+			'uniqueIndexes' => [
+				['keepiq_sec_tags_secret_tag', ['secret_id', 'tag']],
+			],
+		],
 		'secret_types' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],

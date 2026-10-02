@@ -1250,7 +1250,23 @@ OC.L10N.register(
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Krüpteeritud manuste piirangud (serveris jõustatud salvestatud krüpteeritud baitides), versiooniajaloo säilitamine ja kui kaua kustutatud saladused prügikastis püsivad.",
         "Days a deleted secret stays in the trash (1 to 365)": "Päevad, mil kustutatud saladus püsib prügikastis (1 kuni 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "See viib saladuse prügikasti ja lõpetab selle jagamised kohe. Saad selle prügikastist taastada säilitusaja lõpuni: 30 päeva, kui administraator pole seda muutnud.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "See viib saladused prügikasti ({count}) ja lõpetab nende jagamised kohe. Saad need prügikastist taastada säilitusaja lõpuni."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "See viib saladused prügikasti ({count}) ja lõpetab nende jagamised kohe. Saad need prügikastist taastada säilitusaja lõpuni.",
+        "Remove {name} from favourites": "Eemalda {name} lemmikutest",
+        "Add {name} to favourites": "Lisa {name} lemmikutesse",
+        "Could not change the favourite": "Lemmikut ei õnnestunud muuta",
+        "Remove from favourites": "Eemalda lemmikutest",
+        "Add to favourites": "Lisa lemmikutesse",
+        "Tags": "Sildid",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Sildid ei ole krüpteeritud. Serveri administraatorid saavad neid lugeda, nagu kaustade nimesid.",
+        "Favourites": "Lemmikud",
+        "Filter by tag": "Filtreeri sildi järgi",
+        "All tags": "Kõik sildid",
+        "Last used": "Viimati kasutatud",
+        "Tags for {count} secrets": "Sildid {count} saladusele",
+        "Tag": "Silt",
+        "Remove tag": "Eemalda silt",
+        "Add tag": "Lisa silt",
+        "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Grenser for krypterte vedlegg (håndheves på serveren i lagrede krypterte byte), oppbevaring av versjonshistorikk og hvor lenge slettede hemmeligheter blir liggende i papirkurven.",
         "Days a deleted secret stays in the trash (1 to 365)": "Dager en slettet hemmelighet blir liggende i papirkurven (1 til 365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Dette flytter hemmeligheten til papirkurven og avslutter delingene nå. Du kan gjenopprette den fra papirkurven til oppbevaringstiden er ute: 30 dager, med mindre administratoren har endret det.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Dette flytter {count} hemmeligheter til papirkurven og avslutter delingene nå. Du kan gjenopprette dem fra papirkurven til oppbevaringstiden er ute."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Dette flytter {count} hemmeligheter til papirkurven og avslutter delingene nå. Du kan gjenopprette dem fra papirkurven til oppbevaringstiden er ute.",
+        "Remove {name} from favourites": "Fjern {name} fra favoritter",
+        "Add {name} to favourites": "Legg {name} til i favoritter",
+        "Could not change the favourite": "Kunne ikke endre favoritten",
+        "Remove from favourites": "Fjern fra favoritter",
+        "Add to favourites": "Legg til i favoritter",
+        "Tags": "Etiketter",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "Etiketter er ikke kryptert. Serveradministratorer kan lese dem, som mappenavn.",
+        "Favourites": "Favoritter",
+        "Filter by tag": "Filtrer etter etikett",
+        "All tags": "Alle etiketter",
+        "Last used": "Sist brukt",
+        "Tags for {count} secrets": "Etiketter for {count} hemmeligheter",
+        "Tag": "Etikett",
+        "Remove tag": "Fjern etikett",
+        "Add tag": "Legg til etikett",
+        "Could not change the tags. Try again.": "Kunne ikke endre etikettene. Prøv igjen."
     },
     "plurals": null
 }

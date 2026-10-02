@@ -30,7 +30,14 @@ import { useSessionStore } from './session.js'
  *
  * @type {{folderId: null, typeId: null, search: string, state: string}}
  */
-const WHOLE_VAULT = { folderId: null, typeId: null, search: '', state: 'kept' }
+const WHOLE_VAULT = {
+	folderId: null,
+	typeId: null,
+	search: '',
+	state: 'kept',
+	favourite: false,
+	tag: null,
+}
 export const useSecretStore = defineStore('secret', {
 	state: () => ({
 		/** @type {Array<object>} The current page of secrets (metadata + ciphertext). */
@@ -42,7 +49,16 @@ export const useSecretStore = defineStore('secret', {
 		/** @type {boolean} Whether a request is in flight. */
 		loading: false,
 		/** @type {object} Active list filters. */
-		filters: { folderId: null, search: '', typeId: null, state: 'live' },
+		filters: {
+			folderId: null,
+			search: '',
+			typeId: null,
+			state: 'live',
+			favourite: false,
+			tag: null,
+		},
+		/** @type {Array<{tag: string, count: number}>} The holder's tags, for the filter menu. */
+		tags: [],
 		/** @type {object} Active sort. */
 		sort: { field: 'name', direction: 'asc' },
 		/** @type {number} The current 1-based page. */
@@ -79,8 +95,14 @@ export const useSecretStore = defineStore('secret', {
 			if ('folderId' in query) this.filters.folderId = query.folderId ?? null
 			if ('search' in query) this.filters.search = query.search ?? ''
 			if ('typeId' in query) this.filters.typeId = query.typeId ?? null
-			if ('sort' in query && query.sort) this.sort.field = query.sort
+			if ('sort' in query && query.sort) {
+				this.sort.field = query.sort
+				// Last used reads newest first; every other sort keeps ascending.
+				this.sort.direction = query.sort === 'last_used_at' ? 'desc' : 'asc'
+			}
 			if ('state' in query) this.filters.state = query.state || 'live'
+			if ('favourite' in query) this.filters.favourite = !!query.favourite
+			if ('tag' in query) this.filters.tag = query.tag || null
 		},
 
 		/**
@@ -136,12 +158,19 @@ export const useSecretStore = defineStore('secret', {
 					// silently showed the whole vault while offline.
 					const typeId =
 						'typeId' in options ? options.typeId : this.filters.typeId
+					const { favourite, tag } = this.organisationFilter(options)
 					let items = offline.vault.secrets
 					if (folderId) {
 						items = items.filter((s) => s.folderId === folderId)
 					}
 					if (typeId) {
 						items = items.filter((s) => s.typeId === typeId)
+					}
+					if (favourite) {
+						items = items.filter((s) => s.favourite)
+					}
+					if (tag) {
+						items = items.filter((s) => (s.tags || []).includes(tag))
 					}
 					if (search) {
 						items = items.filter(
@@ -182,6 +211,14 @@ export const useSecretStore = defineStore('secret', {
 				}
 				if (state !== 'live') {
 					params.state = state
+				}
+				// Favourites and tags (vault-favourites-tags-and-last-used).
+				const { favourite, tag } = this.organisationFilter(options)
+				if (favourite) {
+					params.favourite = 1
+				}
+				if (tag) {
+					params.tag = tag
 				}
 
 				try {
@@ -572,6 +609,125 @@ export const useSecretStore = defineStore('secret', {
 			}
 			this.secrets = this.secrets.filter((s) => s.id !== id)
 			this.totalCount = Math.max(0, this.totalCount - 1)
+		},
+
+		/**
+		 * The favourite and tag filters a fetch uses: the options' own when
+		 * present, else the stored list query.
+		 *
+		 * @param {object} options The fetch options.
+		 * @return {{favourite: boolean, tag: string|null}}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+		 */
+		organisationFilter(options = {}) {
+			return {
+				favourite: !!('favourite' in options
+					? options.favourite
+					: this.filters.favourite),
+				tag: ('tag' in options ? options.tag : this.filters.tag) || null,
+			}
+		},
+
+		/**
+		 * Star or unstar one of the user's secrets and mark the row in place.
+		 * In the Favourites view an unstarred row leaves the list.
+		 *
+		 * @param {string} id The secret ID.
+		 * @param {boolean} favourite The new star.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+		 */
+		async setFavourite(id, favourite) {
+			await axios.put(
+				generateUrl(`/apps/keepiq/api/v1/secrets/${id}/favourite`),
+				{ favourite },
+			)
+			if (!favourite && this.filters.favourite) {
+				const before = this.secrets.length
+				this.secrets = this.secrets.filter((s) => s.id !== id)
+				this.totalCount = Math.max(
+					0,
+					this.totalCount - (before - this.secrets.length),
+				)
+				return
+			}
+			this.secrets = this.secrets.map((s) =>
+				s.id === id ? { ...s, favourite } : s,
+			)
+			if (this.currentSecret?.id === id) {
+				this.currentSecret = { ...this.currentSecret, favourite }
+			}
+		},
+
+		/**
+		 * Replace the tags on one of the user's secrets, keep the set the
+		 * server stored (trimmed, lowercase), and reload the tag list.
+		 *
+		 * @param {string} id The secret ID.
+		 * @param {Array<string>} tags The tags.
+		 * @return {Promise<Array<string>>} The stored tags.
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+		 */
+		async setTags(id, tags) {
+			const response = await axios.put(
+				generateUrl(`/apps/keepiq/api/v1/secrets/${id}/tags`),
+				{ tags },
+			)
+			const stored = response.data?.tags || []
+			this.secrets = this.secrets.map((s) =>
+				s.id === id ? { ...s, tags: stored } : s,
+			)
+			await this.fetchTags()
+			return stored
+		},
+
+		/**
+		 * Add one tag to, or remove it from, a selection of secrets. Rows that
+		 * already have (or lack) it are left alone.
+		 *
+		 * @param {Array<string>} ids The selected secret IDs.
+		 * @param {string} tag The tag.
+		 * @param {boolean} add True to add, false to remove.
+		 * @return {Promise<number>} How many secrets changed.
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+		 */
+		async changeTagInBulk(ids, tag, add) {
+			const wanted = (tag || '').trim().toLowerCase()
+			if (!wanted) return 0
+			let changed = 0
+			for (const id of ids) {
+				const row = this.secrets.find((s) => s.id === id)
+				// Only rows on screen: their current tags are known, so the
+				// PUT cannot wipe tags this view never loaded.
+				if (!row) continue
+				const current = row.tags || []
+				const has = current.includes(wanted)
+				if (has === add) continue
+				const next = add
+					? [...current, wanted]
+					: current.filter((t) => t !== wanted)
+				const response = await axios.put(
+					generateUrl(`/apps/keepiq/api/v1/secrets/${id}/tags`),
+					{ tags: next },
+				)
+				const stored = response.data?.tags || next
+				this.secrets = this.secrets.map((s) =>
+					s.id === id ? { ...s, tags: stored } : s,
+				)
+				changed++
+			}
+			return changed
+		},
+
+		/**
+		 * Load the user's tags with their counts, for the filter menu.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+		 */
+		async fetchTags() {
+			const response = await axios.get(generateUrl('/apps/keepiq/api/v1/tags'))
+			this.tags = response.data?.tags || []
 		},
 
 		/**

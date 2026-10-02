@@ -1249,7 +1249,23 @@
         "Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes), version-history retention and how long deleted secrets stay in the trash.": "Korlátok a titkosított mellékletekhez (a kiszolgálón érvényesítve a tárolt titkosított bájtokra), a verzióelőzmények megőrzése és hogy meddig maradnak a törölt titkok a kukában.",
         "Days a deleted secret stays in the trash (1 to 365)": "Hány napig marad egy törölt titok a kukában (1–365)",
         "This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.": "Ez a kukába helyezi a titkot, és most megszünteti a megosztásait. A megőrzési idő végéig visszaállíthatod a kukából: 30 nap, hacsak a rendszergazda nem módosította.",
-        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Ez a kukába helyezi a titkokat ({count}), és most megszünteti a megosztásaikat. A megőrzési idő végéig visszaállíthatod őket a kukából."
+        "This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.": "Ez a kukába helyezi a titkokat ({count}), és most megszünteti a megosztásaikat. A megőrzési idő végéig visszaállíthatod őket a kukából.",
+        "Remove {name} from favourites": "{name} eltávolítása a kedvencek közül",
+        "Add {name} to favourites": "{name} hozzáadása a kedvencekhez",
+        "Could not change the favourite": "Nem sikerült módosítani a kedvencet",
+        "Remove from favourites": "Eltávolítás a kedvencek közül",
+        "Add to favourites": "Hozzáadás a kedvencekhez",
+        "Tags": "Címkék",
+        "Tags are not encrypted. Server administrators can read them, as they can folder names.": "A címkék nincsenek titkosítva. A kiszolgáló rendszergazdái olvashatják őket, akárcsak a mappaneveket.",
+        "Favourites": "Kedvencek",
+        "Filter by tag": "Szűrés címke szerint",
+        "All tags": "Minden címke",
+        "Last used": "Utoljára használva",
+        "Tags for {count} secrets": "Címkék {count} titokhoz",
+        "Tag": "Címke",
+        "Remove tag": "Címke eltávolítása",
+        "Add tag": "Címke hozzáadása",
+        "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra."
     },
     "plurals": null
 }

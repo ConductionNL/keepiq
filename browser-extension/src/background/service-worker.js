@@ -17,6 +17,7 @@ import { classifyCapture } from '../lib/capture.js'
 import { buildPasskeyOrchestrator } from '../passkey/orchestrator.js'
 import { senderOrigin } from '../passkey/rp.js'
 import { computeTotp } from '../lib/totp-service.js'
+import { reportFill } from '../lib/usage.js'
 
 // Passkey provider (extension-passkey-provider): bind the ceremony orchestrator
 // to this worker's api + vault. Driven by the page-context shim relay in every
@@ -125,6 +126,11 @@ async function doFill(payload) {
 			payload: { login, secret },
 		})
 		.catch(() => ({ filled: false }))
+	// A fill counts as a use for the vault's Last used sort; a failed report
+	// never fails the fill (vault-favourites-tags-and-last-used).
+	await reportFill(results, payload.id, async (id) =>
+		api.markUsed(await api.loadConfig(), id),
+	)
 	// Auto-copy a matched TOTP code so it is one paste away on the 2FA prompt
 	// (extension-totp-autofill §3). The popup performs the clipboard write +
 	// scheduled clear (a service worker has no clipboard access).
