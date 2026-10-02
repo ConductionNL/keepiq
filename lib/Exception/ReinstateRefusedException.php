@@ -39,7 +39,7 @@ class ReinstateRefusedException extends ConflictException {
 	 * @return void
 	 */
 	public function __construct(private string $error, string $message) {
-		parent::__construct($message);
+		parent::__construct(message: $message);
 	}//end __construct()
 
 	/**
