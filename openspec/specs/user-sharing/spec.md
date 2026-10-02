@@ -367,7 +367,7 @@ The original owner MUST be able to reclaim ownership at any time while delegatio
 - AND the original owner is sole owner again
 
 ### Requirement: Permanent Transfer on Suite Revocation
-When the original owner's EncryptionSuite is revoked or deleted, all temporary delegations for their secrets MUST automatically become permanent.
+When the original owner's EncryptionSuite is revoked or deleted, all temporary delegations for their secrets MUST automatically become permanent, except on an administrator's compromise force-revoke, which revokes them (keepiq#817, ADR-005).
 
 #### Scenario: Original owner's suite revoked or deleted
 - GIVEN secret S has one or more active temporary delegations (is_permanent = false)
@@ -375,6 +375,13 @@ When the original owner's EncryptionSuite is revoked or deleted, all temporary d
 - THEN all SecretDelegation records for S MUST have `is_permanent` set to true and `made_permanent_at` set to now
 - AND the original owner's (now inaccessible) copy MUST be deleted
 - AND the delegates retain co-owner rights permanently — reclaim is no longer possible
+
+#### Scenario: Original owner's suite force-revoked as compromised
+- GIVEN the original owner has created one or more temporary delegations (is_permanent = false)
+- WHEN an administrator force-revokes the owner's EncryptionSuite with `markCompromised: true`
+- THEN every temporary SecretDelegation the owner created MUST be deleted instead of promoted
+- AND each removal MUST be audited as `share.delegation_reclaimed` with the administrator as actor
+- AND permanent delegations MUST NOT be touched
 
 ### Requirement: Revoke Share
 The system MUST allow the original owner to revoke a share, removing the recipient's copy.

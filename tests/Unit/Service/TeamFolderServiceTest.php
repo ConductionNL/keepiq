@@ -22,6 +22,8 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Folder;
@@ -47,6 +49,7 @@ use OCA\Keepiq\Service\TeamFolderService;
 use OCA\Keepiq\Service\TeamFolderShareService;
 use OCA\Keepiq\Service\TeamSecretTransferService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IDBConnection;
 use OCP\IGroup;
 use OCP\IGroupManager;
@@ -90,6 +93,13 @@ class TeamFolderServiceTest extends TestCase {
 	private IUserManager&MockObject $userManager;
 
 	private NotificationService&MockObject $notificationService;
+
+	/**
+	 * Audit events dispatched by the offboarding auditor.
+	 *
+	 * @var array<int,AuditEvent>
+	 */
+	private array $auditEvents = [];
 
 	/**
 	 * Build the service with fresh mocks.
@@ -158,8 +168,9 @@ class TeamFolderServiceTest extends TestCase {
 				),
 				groupManager: $this->groupManager,
 				logger: $this->createMock(originalClassName: LoggerInterface::class),
-				audit: new TeamFolderAuditor(eventDispatcher: null),
+				audit: new TeamFolderAuditor(eventDispatcher: $this->auditDispatcher()),
 				memberMapper: $this->memberMapper,
+				memberships: $memberships,
 			),
 			audit: new TeamFolderAuditor(eventDispatcher: null),
 			notificationService: $this->notificationService,
@@ -176,6 +187,19 @@ class TeamFolderServiceTest extends TestCase {
 	 *
 	 * @return Folder
 	 */
+	private function auditDispatcher(): IEventDispatcher {
+		$dispatcher = $this->createMock(originalClassName: IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(
+			function (object $event): void {
+				if ($event instanceof AuditEvent) {
+					$this->auditEvents[] = $event;
+				}
+			}
+		);
+
+		return $dispatcher;
+	}//end auditDispatcher()
+
 	private function buildFolder(string $id, string $ownerId = 'alice', ?string $parentId = null): Folder {
 		$folder = new Folder();
 		$folder->setId($id);
@@ -643,7 +667,8 @@ class TeamFolderServiceTest extends TestCase {
 
 		// The leaver is no longer a member, so "Share now" cannot re-share to them.
 		$this->assertSame(['m-a', 'm-b'], $deletedMemberIds);
-		$this->assertSame(2, $summary['removedMemberships']);
+		$this->assertSame(2, $summary['membershipsRemoved']);
+		$this->assertSame([], $summary['stillCoveredByGroups']);
 		$this->assertSame(1, $summary['revoked']);
 		$this->assertSame(['st-team'], $deletedShareIds);
 		$this->assertSame(1, $summary['transferred']);
@@ -678,6 +703,135 @@ class TeamFolderServiceTest extends TestCase {
 
 		$this->assertEquals((object)['kim' => 'hank'], $result['confirmedBy']);
 	}//end testReconcileNamesTheConfirmers()
+
+	/**
+	 * admin-member-overview-and-offboarding §1.1 and §1.2: offboarding deletes
+	 * only the leaver's direct user rows, keeps the group row that covers them,
+	 * reports that group, and runs the deletion AFTER the transfer.
+	 *
+	 * @return void
+	 */
+	public function testOffboardRemovesDirectRowsAndReportsCoveringGroups(): void {
+		$this->groupManager->method('isAdmin')->willReturn(true);
+		$this->shareTargetMapper->method('findByTargetUser')->willReturn([]);
+		$this->mapper->method('findByOwner')->willReturn([]);
+
+		$order = [];
+		$direct = $this->buildMember(type: 'user', id: 'carol', tfId: 'tf-ops');
+		$group = $this->buildMember(type: 'group', id: 'finance-team', tfId: 'tf-finance');
+		$this->memberMapper->method('findUserMemberships')->with('carol')->willReturnCallback(
+			static function () use (&$order, $direct): array {
+				$order[] = 'findUserMemberships';
+				return [$direct];
+			}
+		);
+		$this->memberMapper->method('findGroupMemberships')->with('finance-team')->willReturn([$group]);
+		$carol = $this->createMock(originalClassName: IUser::class);
+		$carol->method('getUID')->willReturn('carol');
+		$this->userManager->method('get')->willReturn($carol);
+		$this->groupManager->method('getUserGroupIds')->willReturn(['finance-team']);
+
+		$deleted = [];
+		$this->memberMapper->method('delete')->willReturnCallback(
+			static function (TeamFolderMember $row) use (&$deleted) {
+				$deleted[] = $row->getId();
+				return $row;
+			}
+		);
+		$this->mapper->expects($this->atLeastOnce())->method('findByOwner')->willReturnCallback(
+			static function () use (&$order): array {
+				$order[] = 'transfer';
+				return [];
+			}
+		);
+
+		$summary = $this->service->offboard(leavingUserId: 'carol', successorUserId: 'dave', adminId: 'admin');
+
+		// Only the direct row goes; the group row covers colleagues and stays.
+		$this->assertSame(['m-user-carol'], $deleted);
+		$this->assertSame(1, $summary['membershipsRemoved']);
+		$this->assertSame(
+			[['teamFolderId' => 'tf-finance', 'groupId' => 'finance-team']],
+			$summary['stillCoveredByGroups']
+		);
+		// The transfer runs before the rows are deleted (design D1).
+		$this->assertSame('transfer', $order[0]);
+	}//end testOffboardRemovesDirectRowsAndReportsCoveringGroups()
+
+	/**
+	 * admin-member-overview-and-offboarding §1.3: the TEAM_FOLDER_OFFBOARDED
+	 * event keeps the removed row count and the covering group ids through
+	 * the audit whitelist, and carries no key material.
+	 *
+	 * @return void
+	 */
+	public function testOffboardAuditCarriesRemovedCountAndCoveringGroups(): void {
+		$this->groupManager->method('isAdmin')->willReturn(true);
+		$this->shareTargetMapper->method('findByTargetUser')->willReturn([]);
+		$this->mapper->method('findByOwner')->willReturn([]);
+		$this->memberMapper->method('findUserMemberships')->willReturn(
+			[$this->buildMember(type: 'user', id: 'carol', tfId: 'tf-ops')]
+		);
+		$this->memberMapper->method('findGroupMemberships')->willReturn(
+			[$this->buildMember(type: 'group', id: 'finance-team', tfId: 'tf-finance')]
+		);
+		$this->memberMapper->method('delete')->willReturnArgument(0);
+		$this->userManager->method('get')->willReturn($this->createMock(originalClassName: IUser::class));
+		$this->groupManager->method('getUserGroupIds')->willReturn(['finance-team']);
+
+		$this->service->offboard(leavingUserId: 'carol', successorUserId: 'dave', adminId: 'admin');
+
+		$this->assertCount(1, $this->auditEvents);
+		$event = $this->auditEvents[0];
+		$this->assertSame(AuditEventTypes::TEAM_FOLDER_OFFBOARDED, $event->getEventType());
+		$metadata = $event->getMetadata();
+		$this->assertSame(1, $metadata['membershipsRemovedCount']);
+		$this->assertSame(['finance-team'], $metadata['coveringGroupIds']);
+
+		// Every key the auditor sends survives the whitelist: none is dropped.
+		$whitelist = AuditEventTypes::WHITELIST[AuditEventTypes::TEAM_FOLDER_OFFBOARDED];
+		$this->assertSame([], array_values(array_diff(array_keys($metadata), $whitelist)));
+	}//end testOffboardAuditCarriesRemovedCountAndCoveringGroups()
+
+	/**
+	 * admin-member-overview-and-offboarding §1.4: a disabled account that a
+	 * group row still covers, and that still has an active suite, is not a
+	 * recipient and appears in no missing pair of the reconcile.
+	 *
+	 * @return void
+	 */
+	public function testReconcileSkipsDisabledAccount(): void {
+		$this->mapper->method('findById')->willReturn($this->buildTeamFolder(id: 'tf-finance'));
+		$this->memberMapper->method('findByTeamFolder')->willReturn(
+			[$this->buildMember(type: 'group', id: 'finance-team', tfId: 'tf-finance')]
+		);
+		$this->groupManager->method('get')->willReturn($this->buildGroup(userIds: ['bob', 'carol']));
+		$this->folderMapper->method('getSubtreeIds')->willReturn(['folder-1']);
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setName('Bank');
+		$this->secretMapper->method('findByOwner')->willReturn([$secret]);
+		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')
+			->willThrowException(new DoesNotExistException(''));
+
+		$bob = $this->createMock(originalClassName: IUser::class);
+		$bob->method('isEnabled')->willReturn(true);
+		$carol = $this->createMock(originalClassName: IUser::class);
+		$carol->method('isEnabled')->willReturn(false);
+		$this->userManager->method('get')->willReturnCallback(
+			static fn (string $uid) => ($uid === 'carol' ? $carol : $bob)
+		);
+
+		// Both still hold an active suite: offboarding does not revoke it.
+		$suite = new EncryptionSuite();
+		$suite->setCertificate('-----BEGIN CERTIFICATE-----');
+		$this->suiteMapper->method('findActiveByOwner')->willReturn($suite);
+
+		$result = $this->service->reconcile(teamFolderId: 'tf-finance', userId: 'alice');
+
+		$this->assertSame(['bob'], array_column($result['recipients'], 'userId'));
+		$this->assertSame(['bob'], array_values(array_unique(array_column($result['missing'], 'userId'))));
+	}//end testReconcileSkipsDisabledAccount()
 
 	/**
 	 * folder-permission-grades §5.1: setMemberGrade is owner-only,
@@ -783,4 +937,82 @@ class TeamFolderServiceTest extends TestCase {
 		// carol: no memberships anywhere -> null.
 		$this->assertNull($this->service->resolveGrade(secret: $secret, userId: 'carol'));
 	}//end testResolveGradeMaxAlongAncestorsAndGroups()
+
+	/**
+	 * Use-only is offered with the read grade only (sharing-use-only-and-
+	 * expiring-shares task 2.2): refused with write, accepted with read,
+	 * and promoting a use-only member to write lifts it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 */
+	public function testUseOnlyIsRefusedWithTheWriteGrade(): void {
+		$teamFolder = new \OCA\Keepiq\Db\TeamFolder();
+		$teamFolder->setId('tf-1');
+		$teamFolder->setFolderId('folder-1');
+		$teamFolder->setOwnerId('alice');
+		$this->mapper->method('findById')->willReturn($teamFolder);
+
+		$member = new \OCA\Keepiq\Db\TeamFolderMember();
+		$member->setId('mem-1');
+		$member->setTeamFolderId('tf-1');
+		$member->setMemberType('user');
+		$member->setMemberId('bob');
+		$this->memberMapper->method('findById')->willReturn($member);
+		$this->memberMapper->method('update')->willReturnCallback(static fn ($row) => $row);
+
+		$end = new \DateTime('2099-01-01T00:00:00Z');
+		try {
+			$this->service->setMemberGrade(
+				teamFolderId: 'tf-1',
+				memberId: 'mem-1',
+				grade: 'write',
+				ownerId: 'alice',
+				restriction: new \OCA\Keepiq\Service\ShareRestriction(useOnly: true, expiresAt: $end),
+			);
+			$this->fail('use-only with write must be refused');
+		} catch (InvalidArgumentException $exception) {
+			$this->assertStringContainsString('read grade only', $exception->getMessage());
+		}
+
+		$read = $this->service->setMemberGrade(
+			teamFolderId: 'tf-1',
+			memberId: 'mem-1',
+			grade: 'read',
+			ownerId: 'alice',
+			restriction: new \OCA\Keepiq\Service\ShareRestriction(useOnly: true, expiresAt: $end),
+		);
+		$this->assertTrue($read->getUseOnly());
+		$this->assertEquals($end, $read->getExpiresAt());
+
+		$promoted = $this->service->setMemberGrade(teamFolderId: 'tf-1', memberId: 'mem-1', grade: 'write', ownerId: 'alice');
+		$this->assertFalse($promoted->getUseOnly(), 'an editor sees the value, so use-only is lifted');
+		$this->assertEquals($end, $promoted->getExpiresAt(), 'the end date stays');
+	}//end testUseOnlyIsRefusedWithTheWriteGrade()
+
+	/**
+	 * A non-owner cannot set either option on a membership.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 */
+	public function testANonOwnerCannotRestrictAMembership(): void {
+		$teamFolder = new \OCA\Keepiq\Db\TeamFolder();
+		$teamFolder->setId('tf-1');
+		$teamFolder->setFolderId('folder-1');
+		$teamFolder->setOwnerId('alice');
+		$this->mapper->method('findById')->willReturn($teamFolder);
+		$this->memberMapper->expects($this->never())->method('update');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->setMemberGrade(
+			teamFolderId: 'tf-1',
+			memberId: 'mem-1',
+			grade: 'read',
+			ownerId: 'bob',
+			restriction: new \OCA\Keepiq\Service\ShareRestriction(useOnly: false, expiresAt: null),
+		);
+	}//end testANonOwnerCannotRestrictAMembership()
 }//end class

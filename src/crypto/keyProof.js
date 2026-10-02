@@ -39,6 +39,8 @@ export const PROOF_PURPOSE = {
 	SHARE_REGISTER_BATCH: 'share-register-batch',
 	DELEGATION_CREATE: 'delegation-create',
 	DELEGATION_HANDOVER: 'delegation-handover',
+	APPROVE_DEVICE: 'approve-device',
+	APPROVE_ACCOUNT_RECOVERY: 'approve-account-recovery',
 }
 
 /**

@@ -80,6 +80,8 @@ class VaultKeyProofService {
 	public const PURPOSE_SHARE_REGISTER_BATCH = 'share-register-batch';
 	public const PURPOSE_DELEGATION_CREATE = 'delegation-create';
 	public const PURPOSE_DELEGATION_HANDOVER = 'delegation-handover';
+	public const PURPOSE_APPROVE_DEVICE = 'approve-device';
+	public const PURPOSE_APPROVE_ACCOUNT_RECOVERY = 'approve-account-recovery';
 
 	/**
 	 * The purposes a challenge may be issued for.
@@ -98,6 +100,8 @@ class VaultKeyProofService {
 		self::PURPOSE_SHARE_REGISTER_BATCH,
 		self::PURPOSE_DELEGATION_CREATE,
 		self::PURPOSE_DELEGATION_HANDOVER,
+		self::PURPOSE_APPROVE_DEVICE,
+		self::PURPOSE_APPROVE_ACCOUNT_RECOVERY,
 	];
 
 	/**

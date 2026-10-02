@@ -42,6 +42,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedAt(DateTime $createdAt)
  * @method string getGrade()
  * @method void setGrade(string $grade)
+ * @method bool|null getUseOnly()
+ * @method void setUseOnly(bool $useOnly)
+ * @method DateTime|null getExpiresAt()
+ * @method void setExpiresAt(?DateTime $expiresAt)
  */
 class TeamFolderMember extends Entity implements JsonSerializable {
 
@@ -95,6 +99,21 @@ class TeamFolderMember extends Entity implements JsonSerializable {
 	protected string $grade = '';
 
 	/**
+	 * Whether the recipient may only use the value, not view or copy it
+	 * (sharing-use-only-and-expiring-shares D1).
+	 *
+	 * @var boolean|null
+	 */
+	protected ?bool $useOnly = false;
+
+	/**
+	 * When the access this grant gives ends (nullable = no end).
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $expiresAt = null;
+
+	/**
 	 * The UUID primary key.
 	 *
 	 * @var string
@@ -134,6 +153,8 @@ class TeamFolderMember extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'addedBy', type: 'string');
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
 		$this->addType(fieldName: 'grade', type: 'string');
+		$this->addType(fieldName: 'useOnly', type: 'boolean');
+		$this->addType(fieldName: 'expiresAt', type: 'datetime');
 	}//end __construct()
 
 	/**
@@ -163,6 +184,8 @@ class TeamFolderMember extends Entity implements JsonSerializable {
 			'addedBy' => $this->addedBy,
 			'createdAt' => $this->createdAt?->format('c'),
 			'grade' => $this->effectiveGrade(),
+			'useOnly' => ($this->useOnly === true),
+			'expiresAt' => $this->expiresAt?->format('c'),
 		];
 	}//end jsonSerialize()
 }//end class
