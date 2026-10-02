@@ -307,7 +307,9 @@ export default {
 		 * @spec openspec/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
 		announceRemovedContacts(residual) {
-			const inFlight = residual.filter((c) => c.reason === 'break_glass_in_flight').length
+			const inFlight = residual.filter(
+				(c) => c.reason === 'break_glass_in_flight',
+			).length
 			const removed = residual.length - inFlight
 			if (removed > 0) {
 				showWarning(

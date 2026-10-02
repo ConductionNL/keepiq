@@ -244,7 +244,14 @@ describe('useEncryptionSuiteStore — abort migration', () => {
 	it('POSTs the abort with a proof over the NEW key and clears state on success', async () => {
 		// status GET first resolves in-progress, then 'none' after the abort.
 		const statuses = [
-			{ data: { status: 'in_progress', id: 'migr-1', oldSuiteId: 'old', newSuiteId: 'new' } },
+			{
+				data: {
+					status: 'in_progress',
+					id: 'migr-1',
+					oldSuiteId: 'old',
+					newSuiteId: 'new',
+				},
+			},
 			{ data: { status: 'none' } },
 		]
 		vi.spyOn(axios, 'get').mockImplementation(async (url) => {
@@ -276,7 +283,12 @@ describe('useEncryptionSuiteStore — abort migration', () => {
 		expect(post).toHaveBeenCalledWith(
 			expect.stringContaining('/migrations/migr-1/abort'),
 			{},
-			{ headers: { 'X-Keepiq-Key-Proof-Nonce': 'test-nonce', 'X-Keepiq-Key-Proof': 'test-sig' } },
+			{
+				headers: {
+					'X-Keepiq-Key-Proof-Nonce': 'test-nonce',
+					'X-Keepiq-Key-Proof': 'test-sig',
+				},
+			},
 		)
 		expect(result.aborted).toBe(true)
 		// State re-read afterwards and the banner cleared.
@@ -287,7 +299,12 @@ describe('useEncryptionSuiteStore — abort migration', () => {
 		vi.spyOn(axios, 'get').mockImplementation(async (url) => {
 			if (url.endsWith('/migrations/status')) {
 				return {
-					data: { status: 'in_progress', id: 'migr-1', oldSuiteId: 'old', newSuiteId: 'new' },
+					data: {
+						status: 'in_progress',
+						id: 'migr-1',
+						oldSuiteId: 'old',
+						newSuiteId: 'new',
+					},
 				}
 			}
 			if (url.endsWith('/suites/new')) {
@@ -315,7 +332,9 @@ describe('useEncryptionSuiteStore — abort migration', () => {
 		const post = vi.spyOn(axios, 'post')
 
 		const store = useEncryptionSuiteStore()
-		await expect(store.abortMigration('current-pw')).rejects.toThrow(/no migration to abort/)
+		await expect(store.abortMigration('current-pw')).rejects.toThrow(
+			/no migration to abort/,
+		)
 		expect(post).not.toHaveBeenCalled()
 	})
 })

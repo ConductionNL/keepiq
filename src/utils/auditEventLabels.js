@@ -39,7 +39,10 @@ export function auditEventLabel(eventType) {
 		'suite.recovery_started': t('keepiq', 'Compromise recovery started'),
 		'suite.recovery_completed': t('keepiq', 'Compromise recovery completed'),
 		'suite.recovery_aborted': t('keepiq', 'Compromise recovery aborted'),
-		'suite.migration_terminated': t('keepiq', 'Key rotation ended by a compromise revoke'),
+		'suite.migration_terminated': t(
+			'keepiq',
+			'Key rotation ended by a compromise revoke',
+		),
 		'suite.revoke_refused': t('keepiq', 'Encryption suite revoke refused'),
 		'key_proof.refused': t('keepiq', 'Master password proof refused'),
 		'application.registered': t('keepiq', 'Application registered'),

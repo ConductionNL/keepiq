@@ -938,6 +938,38 @@ class EncryptionSuiteControllerTest extends TestCase {
 	}//end testForceRevokeRejectsAnEmptyReason()
 
 	/**
+	 * A refused force-revoke reaches the audit trail with a fixed reason code,
+	 * so an attack on the containment path is visible (keepiq#870).
+	 *
+	 * @return void
+	 */
+	public function testForceRevokeRecordsAnEmptyReasonRefusal(): void {
+		$this->suiteService->expects($this->once())
+			->method('recordRevokeRefused')
+			->with('suite-1', 'testuser', 'empty_reason', true);
+
+		$this->controller->forceRevoke('suite-1', '   ', markCompromised: true);
+	}//end testForceRevokeRecordsAnEmptyReasonRefusal()
+
+	/**
+	 * A force-revoke refused because the suite is in a migration is audited as
+	 * migration_in_progress, never with the exception message (keepiq#870).
+	 *
+	 * @return void
+	 */
+	public function testForceRevokeRecordsAMigrationInProgressRefusal(): void {
+		$this->migrationService->method('assertNoMigrationInProgress')
+			->willThrowException(new \OCA\Keepiq\Exception\SuiteMigrationInProgressException('suite-1 is migrating'));
+		$this->suiteService->expects($this->once())
+			->method('recordRevokeRefused')
+			->with('suite-1', 'testuser', 'migration_in_progress', false);
+
+		$response = $this->controller->forceRevoke('suite-1', 'routine');
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+	}//end testForceRevokeRecordsAMigrationInProgressRefusal()
+
+	/**
 	 * An application-owned suite is force-revoked by the same endpoint, with the
 	 * administrator recorded as revokedBy and no ownership check or vault-key
 	 * proof — the whole point is a cross-owner admin action (ADR-005).

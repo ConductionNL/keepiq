@@ -210,7 +210,9 @@ describe('MigrationResumeBanner', () => {
 		expect(text).toContain('Emergency Access')
 		expect(options).toEqual({ timeout: -1 })
 		const [warning, warningOptions] = showWarning.mock.calls[1]
-		expect(warning).toContain('1 emergency contact had an access request pending')
+		expect(warning).toContain(
+			'1 emergency contact had an access request pending',
+		)
 		expect(warning).not.toMatch(/add (it|them) again/)
 		expect(warningOptions).toEqual({ timeout: -1 })
 	})
@@ -247,7 +249,9 @@ describe('MigrationResumeBanner', () => {
 		store.migrationStatus = { id: 'migration-1' }
 		const session = useSessionStore()
 		session.cryptoKey = {}
-		const abort = vi.spyOn(store, 'abortMigration').mockResolvedValue({ aborted: true })
+		const abort = vi
+			.spyOn(store, 'abortMigration')
+			.mockResolvedValue({ aborted: true })
 
 		const wrapper = mountBanner()
 		wrapper.vm.expanded = true

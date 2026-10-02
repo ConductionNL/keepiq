@@ -426,7 +426,10 @@ describe('CompromiseRecoveryForm', () => {
 		store.migrationNeedsAcknowledgement = false
 		await wrapper.vm.$nextTick()
 
-		expect(store.acceptMigrationLosses).toHaveBeenCalledWith('migration-1', 'old-pw')
+		expect(store.acceptMigrationLosses).toHaveBeenCalledWith(
+			'migration-1',
+			'old-pw',
+		)
 		const removed = wrapper.find('[data-testid="compromise-recovery-removed"]')
 		expect(removed.exists()).toBe(true)
 		expect(removed.text()).toContain('bob')
