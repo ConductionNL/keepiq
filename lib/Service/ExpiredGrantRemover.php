@@ -89,13 +89,13 @@ class ExpiredGrantRemover {
 	 */
 	public function removeExpired(DateTime $now): int {
 		$removed = 0;
-		foreach ($this->targetMapper->findEndingBetween(null, $now) as $target) {
-			$removed += $this->attempt(fn (): bool => $this->removeDirectShare(target: $target, now: $now));
+		foreach ($this->targetMapper->findEndingBetween(from: null, to: $now) as $target) {
+			$removed += $this->attempt(removal: fn (): bool => $this->removeDirectShare(target: $target, now: $now));
 		}
 
-		foreach ($this->groupShareMapper->findEndingBetween(null, $now) as $groupShare) {
+		foreach ($this->groupShareMapper->findEndingBetween(from: null, to: $now) as $groupShare) {
 			$removed += $this->attempt(
-				fn (): bool => $this->asSourceOwner(
+				removal: fn (): bool => $this->asSourceOwner(
 					sourceSecretId: $groupShare->getSecretId(),
 					action: fn (string $ownerId) => $this->groupShares->revokeGroupShare(
 						groupShareId: $groupShare->getId(),
@@ -105,9 +105,9 @@ class ExpiredGrantRemover {
 			);
 		}
 
-		foreach ($this->memberMapper->findEndingBetween(null, $now) as $membership) {
+		foreach ($this->memberMapper->findEndingBetween(from: null, to: $now) as $membership) {
 			$removed += $this->attempt(
-				function () use ($membership): bool {
+				removal: function () use ($membership): bool {
 					$teamFolder = $this->teamFolderMapper->findById(id: $membership->getTeamFolderId());
 					$this->teamFolders->removeMember(
 						teamFolderId: $teamFolder->getId(),
@@ -190,7 +190,11 @@ class ExpiredGrantRemover {
 	 */
 	private function attempt(callable $removal): int {
 		try {
-			return ($removal() === true) ? 1 : 0;
+			if ($removal() === true) {
+				return 1;
+			}
+
+			return 0;
 		} catch (Throwable $exception) {
 			$this->logger->error(
 				'Keepiq: could not remove an expired grant: ' . $exception->getMessage(),
