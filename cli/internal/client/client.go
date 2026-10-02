@@ -78,7 +78,7 @@ type Secret struct {
 	AdditionalFields string `json:"additionalFields"`
 	// UseOnly marks a copy the holder may fill but never see or copy
 	// (sharing-use-only-and-expiring-shares D3).
-	UseOnly          bool   `json:"useOnly"`
+	UseOnly bool `json:"useOnly"`
 }
 
 // ActiveSuite fetches the caller's active suite (human mode).
