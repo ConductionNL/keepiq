@@ -264,8 +264,9 @@ class MigrationControllerTest extends TestCase {
 		$aborted = new SuiteMigration();
 		$aborted->setId('migr-1');
 		$aborted->setStatus('aborted');
+		// The acting user is threaded through for the audit record (keepiq#859).
 		$this->migrationService->method('abortMigration')
-			->with('migr-1')
+			->with('migr-1', 'testuser')
 			->willReturn($aborted->jsonSerialize() + ['aborted' => true]);
 
 		$response = $this->controller->abort('migr-1');

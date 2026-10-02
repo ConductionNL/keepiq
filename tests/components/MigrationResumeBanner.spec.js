@@ -201,11 +201,64 @@ describe('MigrationResumeBanner', () => {
 		wrapper.vm.oldPassword = 'previous-master-password'
 		await wrapper.vm.onResume()
 
-		expect(showWarning).toHaveBeenCalledTimes(1)
+		// keepiq#880 item 1: the re-add sentence counts only the contacts the
+		// rotation removed; the in-flight one gets its own warning, without a
+		// nudge to add it back, because that is what a planted contact looks like.
+		expect(showWarning).toHaveBeenCalledTimes(2)
 		const [text, options] = showWarning.mock.calls[0]
-		expect(text).toContain('2 emergency contacts')
+		expect(text).toContain('1 emergency contact.')
 		expect(text).toContain('Emergency Access')
 		expect(options).toEqual({ timeout: -1 })
+		const [warning, warningOptions] = showWarning.mock.calls[1]
+		expect(warning).toContain('1 emergency contact had an access request pending')
+		expect(warning).not.toMatch(/add (it|them) again/)
+		expect(warningOptions).toEqual({ timeout: -1 })
+	})
+
+	it('raises no re-add text when the only removed contact was in flight', async () => {
+		showWarning.mockClear()
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migration-1' }
+		const session = useSessionStore()
+		session.cryptoKey = {}
+		vi.spyOn(store, 'resumeMigration').mockResolvedValue({
+			migrated: 7,
+			failed: 0,
+			residualContacts: [
+				{ granteeUserId: 'mallory', reason: 'break_glass_in_flight' },
+			],
+		})
+
+		const wrapper = mountBanner()
+		wrapper.vm.expanded = true
+		wrapper.vm.oldPassword = 'previous-master-password'
+		await wrapper.vm.onResume()
+
+		expect(showWarning).toHaveBeenCalledTimes(1)
+		const [text] = showWarning.mock.calls[0]
+		expect(text).toContain('access request pending')
+		expect(text).not.toMatch(/add (it|them) again/)
+	})
+
+	// keepiq#859: abort is proof-gated over the key the rotation moves to,
+	// which is the current master password.
+	it('asks for the current master password to abort and passes it on', async () => {
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migration-1' }
+		const session = useSessionStore()
+		session.cryptoKey = {}
+		const abort = vi.spyOn(store, 'abortMigration').mockResolvedValue({ aborted: true })
+
+		const wrapper = mountBanner()
+		wrapper.vm.expanded = true
+		await wrapper.vm.$nextTick()
+		expect(wrapper.text()).toContain('Your current master password')
+
+		wrapper.vm.abortPassword = 'current-master-password'
+		await wrapper.vm.onAbort()
+
+		expect(abort).toHaveBeenCalledWith('current-master-password')
+		expect(wrapper.vm.abortPassword).toBe('')
 	})
 
 	it('announces nothing when a resumed rotation removed no contact', async () => {

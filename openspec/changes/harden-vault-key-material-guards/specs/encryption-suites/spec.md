@@ -122,17 +122,30 @@ On abort the system MUST:
 
 Abort MUST NOT dispatch the migration-completed event. That event is what invalidates the owner's emergency-access recovery envelopes, and abort exists precisely to avoid that loss.
 
-Abort MUST NOT require a key proof. It is restorative — it returns the vault to a suite that is still `active` and readable — and requiring proof of a key would leave a wedged vault wedged, including one wedged by a rotation the owner never authorised. A caller who aborts another user's legitimate rotation causes a nuisance the owner can simply repeat, which is not comparable to permanent loss.
+Abort MUST require a verified key proof over the **new** suite's private key, bound to the migration id (keepiq#859). The threat compromise recovery contains is a stolen session. With a session alone, that session could poll the migration status and abort the owner's recovery every time it started, before the first record moved, so containment could be undone indefinitely with the credential it contains. A proof over the old key would not help either, because during compromise recovery the old password may be the leaked one. Only whoever holds the key the rotation is moving to can call it off.
+
+The cost of this choice: a rotation started by someone else, with a leaked old password, cannot be aborted by the owner, who does not hold that rotation's new key. That case is contained by an administrator's compromise force-revoke, which ends the migration.
+
+Every abort MUST be recorded in the audit trail as `suite.recovery_aborted`, with the acting user, the old suite as the object, and the migration and new suite ids. A refused abort and a no-op abort MUST NOT record one.
 
 #### Scenario: Aborting an untouched migration restores the old suite
 
 @e2e exclude Terminal status transition, suite status and write-lock release are server-side. Covered by PHPUnit on the abort path.
 - **GIVEN** a migration `in_progress` with no record committed to the new suite
-- **WHEN** abort is requested by the owner
+- **WHEN** abort is requested by the owner with a valid proof over the new suite's key
 - **THEN** the migration MUST become `aborted`
 - **AND** the old suite MUST remain `active` with every record still bound to it
 - **AND** the successor suite MUST be deleted (not revoked, which would cascade the user-suite revocation side effects)
 - **AND** the write lock MUST be released and locked SecretRequests MUST be unlocked
+
+- **AND** a `suite.recovery_aborted` audit entry MUST be recorded, actored by the owner
+
+#### Scenario: Abort without a proof over the new key is refused
+@e2e exclude Middleware enforcement on a session-authenticated route; covered by VaultKeyProofAttributesTest and VaultKeyProofMiddlewareTest.
+- **GIVEN** a migration `in_progress` with no record committed to the new suite
+- **WHEN** abort is requested with a session alone, or with a proof over the old suite's key
+- **THEN** the system MUST refuse with `403` and `error: key_proof_required`
+- **AND** the migration MUST stay `in_progress`
 
 #### Scenario: Aborting after records have moved is refused
 
