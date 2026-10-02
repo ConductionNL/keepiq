@@ -1362,7 +1362,27 @@ OC.L10N.register(
         "Vault backups": "Tresorsécherungen",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Mat engem Schlëssel gëtt all Archiv fir hie verschlësselt. Hält de private Schlëssel ausserhalb vun dësem Server: Dir braucht en fir ze kontrolléieren oder ze restauréieren.",
         "Written": "Geschriwwen",
-        "Yes": "Jo"
+        "Yes": "Jo",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n Benotzer am Beräich huet nach keng Zwee-Faktor-Umeldung a kann den Tresor net opmaachen, soulaang dëst un ass.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n Benotzer am Beräich hunn nach keng Zwee-Faktor-Umeldung a kënnen den Tresor net opmaachen, soulaang dëst un ass.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Backup-Coden zielen net. Wann Är Benotzer sech iwwer en Identitéitsubidder mat engem eegene zweete Faktor umellen, loosst hir Gruppen ewech.",
+        "Block personal vault export": "Export vum perséinlechen Tresor spären",
+        "Keep work logins in team folders": "Aarbechtsumeldungen an Teamdossieren halen",
+        "Move to a team folder": "An en Teamdossier réckelen",
+        "Not in a team folder": "Net an engem Teamdossier",
+        "Only for these groups (empty is everyone)": "Nëmme fir dës Gruppen (eidel heescht jiddereen)",
+        "Require two-factor login before the vault opens": "Zwee-Faktor-Umeldung ufroen, ier den Tresor opgeet",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Reegele fir all Tresor. All Reegel gëllt fir jiddereen oder nëmme fir déi Gruppen, déi Dir wielt.",
+        "Secret types that belong in a team folder": "Geheimnistypen, déi an en Teamdossier gehéieren",
+        "Set up two-factor login": "Zwee-Faktor-Umeldung ariichten",
+        "Team folder you can write to": "Teamdossier, an deen Dir schreiwe kënnt",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Benotzer kënne keng Sécherung, CSV oder Transferdatei eroflueden. Hire perséinlechen Datepak bleift disponibel.",
+        "Users cannot save these secret types in a personal folder.": "Benotzer kënnen dës Geheimnistypen net an engem perséinlechen Dossier späicheren.",
+        "Vault policies": "Tresorreegelen",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Är Organisatioun erlaabt keen Export vun Ärem perséinlechen Tresor. Äre perséinlechen Datepak an den Astellunge bleift disponibel.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Är Organisatioun hält dës Geheimnisser an engem Teamdossier. Réckelt all eenzelt an en Teamdossier.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Är Organisatioun hält dësen Typ vu Geheimnis an engem Teamdossier. Wielt ee vun Ären Teamdossieren oder een, an deen Dir schreiwe kënnt.",
+        "Your organisation requires two-factor login before you can open your vault.": "Är Organisatioun verlaangt eng Zwee-Faktor-Umeldung, ier Dir Ären Tresor opmaache kënnt."
     },
     "nplurals=2; plural=(n != 1);"
 )

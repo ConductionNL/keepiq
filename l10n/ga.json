@@ -1361,7 +1361,27 @@
         "Vault backups": "Cúltacaí an chruinneacháin",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Le heochair, criptítear gach cartlann di. Coinnigh an eochair phríobháideach lasmuigh den fhreastalaí seo: teastaíonn sí chun fíorú nó athchóiriú.",
         "Written": "Scríofa",
-        "Yes": "Tá"
+        "Yes": "Tá",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "Níl logáil isteach dhá fhachtóir ag %n úsáideoir sa raon fós agus ní féidir leis an cruinneachán a oscailt fad atá sé seo ar siúl.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "Níl logáil isteach dhá fhachtóir ag %n úsáideoir sa raon fós agus ní féidir leo an cruinneachán a oscailt fad atá sé seo ar siúl.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Ní chomhairtear cóid chúltaca. Má logálann d'úsáideoirí isteach trí sholáthraí aitheantais a bhfuil a dhara fachtóir féin aige, fág a ngrúpaí amach.",
+        "Block personal vault export": "Cuir bac ar onnmhairiú an chruinneacháin phearsanta",
+        "Keep work logins in team folders": "Coinnigh logálacha oibre i bhfillteáin foirne",
+        "Move to a team folder": "Bog go fillteán foirne",
+        "Not in a team folder": "Ní i bhfillteán foirne",
+        "Only for these groups (empty is everyone)": "Do na grúpaí seo amháin (folamh = gach duine)",
+        "Require two-factor login before the vault opens": "Éiligh logáil isteach dhá fhachtóir sula n-osclaíonn an cruinneachán",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Rialacha do gach cruinneachán. Baineann gach ceann le gach duine, nó leis na grúpaí a roghnaíonn tú amháin.",
+        "Secret types that belong in a team folder": "Cineálacha rúin a bhaineann le fillteán foirne",
+        "Set up two-factor login": "Socraigh logáil isteach dhá fhachtóir",
+        "Team folder you can write to": "Fillteán foirne inar féidir leat scríobh",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Ní féidir le húsáideoirí cúltaca, CSV ná comhad aistrithe a íoslódáil. Fanann a bpacáiste sonraí pearsanta ar fáil.",
+        "Users cannot save these secret types in a personal folder.": "Ní féidir le húsáideoirí na cineálacha rúin seo a shábháil i bhfillteán pearsanta.",
+        "Vault policies": "Polasaithe an chruinneacháin",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Ní cheadaíonn d'eagraíocht do chruinneachán pearsanta a onnmhairiú. Fanann do phacáiste sonraí pearsanta i do shocruithe ar fáil.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Coinníonn d'eagraíocht na rúin seo i bhfillteán foirne. Bog gach ceann go fillteán foirne.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Coinníonn d'eagraíocht an cineál rúin seo i bhfillteán foirne. Roghnaigh ceann de d'fhillteáin foirne, nó ceann inar féidir leat scríobh.",
+        "Your organisation requires two-factor login before you can open your vault.": "Éilíonn d'eagraíocht logáil isteach dhá fhachtóir sular féidir leat do chruinneachán a oscailt."
     },
     "plurals": null
 }

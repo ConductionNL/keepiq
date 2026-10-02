@@ -1362,7 +1362,27 @@ OC.L10N.register(
         "Vault backups": "Рэзервовыя копіі сховішча",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "З ключом кожны архіў шыфруецца для яго. Захоўвайце закрыты ключ па-за гэтым серверам: ён патрэбны для праверкі ці аднаўлення.",
         "Written": "Запісана",
-        "Yes": "Так"
+        "Yes": "Так",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n карыстальнік у вобласці дзеяння яшчэ не мае двухфактарнага ўваходу і не можа адкрыць сховішча, пакуль гэта ўключана.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "Карыстальнікі ў вобласці дзеяння (%n) яшчэ не маюць двухфактарнага ўваходу і не могуць адкрыць сховішча, пакуль гэта ўключана.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Рэзервовыя коды не ўлічваюцца. Калі вашы карыстальнікі ўваходзяць праз пастаўшчыка ідэнтычнасці з уласным другім фактарам, выключыце іх групы.",
+        "Block personal vault export": "Забараніць экспарт асабістага сховішча",
+        "Keep work logins in team folders": "Захоўваць працоўныя ўліковыя даныя ў камандных папках",
+        "Move to a team folder": "Перамясціць у камандную папку",
+        "Not in a team folder": "Не ў каманднай папцы",
+        "Only for these groups (empty is everyone)": "Толькі для гэтых груп (пуста азначае ўсіх)",
+        "Require two-factor login before the vault opens": "Патрабаваць двухфактарны ўваход перад адкрыццём сховішча",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Правілы для кожнага сховішча. Кожнае дзейнічае для ўсіх або толькі для выбраных груп.",
+        "Secret types that belong in a team folder": "Тыпы сакрэтаў, якія належаць да каманднай папкі",
+        "Set up two-factor login": "Наладзіць двухфактарны ўваход",
+        "Team folder you can write to": "Камандная папка, у якую вы можаце запісваць",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Карыстальнікі не могуць спампаваць рэзервовую копію, CSV ці файл пераносу. Іх пакет асабістых даных застаецца даступным.",
+        "Users cannot save these secret types in a personal folder.": "Карыстальнікі не могуць захоўваць гэтыя тыпы сакрэтаў у асабістай папцы.",
+        "Vault policies": "Правілы сховішча",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Ваша арганізацыя не дазваляе экспарт асабістага сховішча. Ваш пакет асабістых даных у наладах застаецца даступным.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Ваша арганізацыя захоўвае гэтыя сакрэты ў каманднай папцы. Перамясціце кожны ў камандную папку.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Ваша арганізацыя захоўвае гэты тып сакрэту ў каманднай папцы. Выберыце адну са сваіх камандных папак або тую, у якую вы можаце запісваць.",
+        "Your organisation requires two-factor login before you can open your vault.": "Ваша арганізацыя патрабуе двухфактарны ўваход, перш чым вы зможаце адкрыць сховішча."
     },
     "nplurals=2; plural=(n != 1);"
 )

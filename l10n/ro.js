@@ -1362,7 +1362,27 @@ OC.L10N.register(
         "Vault backups": "Copiile seifului",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Cu o cheie, fiecare arhivă este criptată pentru ea. Păstrați cheia privată în afara acestui server: aveți nevoie de ea pentru verificare sau restaurare.",
         "Written": "Scrisă",
-        "Yes": "Da"
+        "Yes": "Da",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n utilizator din domeniu nu are încă autentificare în doi pași și nu poate deschide seiful cât timp aceasta este activă.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n utilizatori din domeniu nu au încă autentificare în doi pași și nu pot deschide seiful cât timp aceasta este activă.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Codurile de rezervă nu contează. Dacă utilizatorii se conectează printr-un furnizor de identitate cu propriul al doilea factor, excludeți grupurile lor.",
+        "Block personal vault export": "Blochează exportul seifului personal",
+        "Keep work logins in team folders": "Păstrează datele de autentificare de serviciu în dosare de echipă",
+        "Move to a team folder": "Mută într-un dosar de echipă",
+        "Not in a team folder": "Nu este într-un dosar de echipă",
+        "Only for these groups (empty is everyone)": "Doar pentru aceste grupuri (gol înseamnă toți)",
+        "Require two-factor login before the vault opens": "Cere autentificare în doi pași înainte de deschiderea seifului",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Reguli pentru fiecare seif. Fiecare se aplică tuturor sau doar grupurilor alese.",
+        "Secret types that belong in a team folder": "Tipuri de secrete care aparțin unui dosar de echipă",
+        "Set up two-factor login": "Configurează autentificarea în doi pași",
+        "Team folder you can write to": "Dosar de echipă în care puteți scrie",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Utilizatorii nu pot descărca o copie de rezervă, un CSV sau un fișier de transfer. Pachetul lor de date personale rămâne disponibil.",
+        "Users cannot save these secret types in a personal folder.": "Utilizatorii nu pot salva aceste tipuri de secrete într-un dosar personal.",
+        "Vault policies": "Politicile seifului",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Organizația dvs. nu permite exportul seifului personal. Pachetul de date personale din setări rămâne disponibil.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Organizația dvs. păstrează aceste secrete într-un dosar de echipă. Mutați fiecare într-un dosar de echipă.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Organizația dvs. păstrează acest tip de secret într-un dosar de echipă. Alegeți unul dintre dosarele dvs. de echipă sau unul în care puteți scrie.",
+        "Your organisation requires two-factor login before you can open your vault.": "Organizația dvs. cere autentificare în doi pași înainte să vă puteți deschide seiful."
     },
     "nplurals=2; plural=(n != 1);"
 )

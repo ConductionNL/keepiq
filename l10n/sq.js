@@ -1362,7 +1362,27 @@ OC.L10N.register(
         "Vault backups": "Kopjet e kasafortës",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Me një çelës, çdo arkiv shifrohet për të. Mbajeni çelësin privat jashtë këtij serveri: ju duhet për verifikim ose rikthim.",
         "Written": "Shkruar",
-        "Yes": "Po"
+        "Yes": "Po",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n përdorues në fushëveprim ende nuk ka hyrje me dy faktorë dhe nuk mund ta hapë kasafortën sa kohë që kjo është aktive.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n përdorues në fushëveprim ende nuk kanë hyrje me dy faktorë dhe nuk mund ta hapin kasafortën sa kohë që kjo është aktive.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Kodet rezervë nuk llogariten. Nëse përdoruesit hyjnë përmes një ofruesi identiteti me faktorin e vet të dytë, lërini jashtë grupet e tyre.",
+        "Block personal vault export": "Blloko eksportin e kasafortës personale",
+        "Keep work logins in team folders": "Mbaj kredencialet e punës në dosje ekipi",
+        "Move to a team folder": "Zhvendose në një dosje ekipi",
+        "Not in a team folder": "Jo në një dosje ekipi",
+        "Only for these groups (empty is everyone)": "Vetëm për këto grupe (bosh do të thotë të gjithë)",
+        "Require two-factor login before the vault opens": "Kërko hyrje me dy faktorë para se të hapet kasaforta",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Rregulla për çdo kasafortë. Secili vlen për të gjithë, ose vetëm për grupet që zgjidhni.",
+        "Secret types that belong in a team folder": "Lloje sekretesh që i përkasin një dosjeje ekipi",
+        "Set up two-factor login": "Konfiguro hyrjen me dy faktorë",
+        "Team folder you can write to": "Dosje ekipi ku mund të shkruani",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Përdoruesit nuk mund të shkarkojnë kopje rezervë, CSV ose skedar transferimi. Paketa e tyre e të dhënave personale mbetet e disponueshme.",
+        "Users cannot save these secret types in a personal folder.": "Përdoruesit nuk mund t'i ruajnë këto lloje sekretesh në një dosje personale.",
+        "Vault policies": "Politikat e kasafortës",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Organizata juaj nuk lejon eksportin e kasafortës suaj personale. Paketa juaj e të dhënave personale në cilësime mbetet e disponueshme.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Organizata juaj i mban këto sekrete në një dosje ekipi. Zhvendoseni secilin në një dosje ekipi.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Organizata juaj e mban këtë lloj sekreti në një dosje ekipi. Zgjidhni një nga dosjet tuaja të ekipit, ose një ku mund të shkruani.",
+        "Your organisation requires two-factor login before you can open your vault.": "Organizata juaj kërkon hyrje me dy faktorë para se të mund ta hapni kasafortën tuaj."
     },
     "nplurals=2; plural=(n != 1);"
 )

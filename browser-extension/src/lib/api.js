@@ -104,12 +104,24 @@ export async function revokeAppPassword(config) {
 /**
  * Fetch the caller's active EncryptionSuite (private-key envelope + certificate).
  * @param config
+ * @spec openspec/changes/admin-vault-policies/tasks.md#3.4
  */
 export async function fetchActiveSuite(config) {
 	const suites = await request(config, 'GET', '/api/v1/suites')
 	const list = Array.isArray(suites) ? suites : suites.items || []
 	const active = list.find((s) => s.status === 'active')
 	if (!active) throw new Error('no active encryption suite')
+	// The two-factor vault policy withholds the wrapped key
+	// (admin-vault-policies D3): name the reason, never a decryption error.
+	if (active.unlockBlocked) {
+		const err = new Error(
+			active.unlockBlocked === 'two_factor_required'
+				? 'two_factor_required: your organisation requires two-factor login in Nextcloud before you can open your vault'
+				: `vault unlock blocked: ${active.unlockBlocked}`,
+		)
+		err.code = active.unlockBlocked
+		throw err
+	}
 	return active
 }
 

@@ -1361,7 +1361,27 @@
         "Vault backups": "Kopije trezora",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "S ključem se svaka arhiva šifruje za njega. Privatni ključ čuvajte izvan ovog servera: trebate ga za provjeru ili vraćanje.",
         "Written": "Zapisano",
-        "Yes": "Da"
+        "Yes": "Da",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n korisnik u opsegu još nema prijavu u dva koraka i ne može otvoriti trezor dok je ovo uključeno.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "Korisnici u opsegu (%n) još nemaju prijavu u dva koraka i ne mogu otvoriti trezor dok je ovo uključeno.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Rezervni kodovi se ne računaju. Ako se vaši korisnici prijavljuju preko pružatelja identiteta s vlastitim drugim faktorom, izostavite njihove grupe.",
+        "Block personal vault export": "Blokiraj izvoz ličnog trezora",
+        "Keep work logins in team folders": "Čuvaj poslovne prijave u timskim folderima",
+        "Move to a team folder": "Premjesti u timski folder",
+        "Not in a team folder": "Nije u timskom folderu",
+        "Only for these groups (empty is everyone)": "Samo za ove grupe (prazno znači svi)",
+        "Require two-factor login before the vault opens": "Zahtijevaj prijavu u dva koraka prije otvaranja trezora",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Pravila za svaki trezor. Svako vrijedi za sve ili samo za grupe koje odaberete.",
+        "Secret types that belong in a team folder": "Vrste tajni koje pripadaju u timski folder",
+        "Set up two-factor login": "Postavi prijavu u dva koraka",
+        "Team folder you can write to": "Timski folder u koji možete pisati",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Korisnici ne mogu preuzeti sigurnosnu kopiju, CSV ni datoteku za prijenos. Njihov paket ličnih podataka ostaje dostupan.",
+        "Users cannot save these secret types in a personal folder.": "Korisnici ne mogu spremiti ove vrste tajni u lični folder.",
+        "Vault policies": "Pravila trezora",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Vaša organizacija ne dozvoljava izvoz vašeg ličnog trezora. Vaš paket ličnih podataka u postavkama ostaje dostupan.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Vaša organizacija čuva ove tajne u timskom folderu. Premjestite svaku u timski folder.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Vaša organizacija čuva ovu vrstu tajne u timskom folderu. Odaberite jedan od svojih timskih foldera ili onaj u koji možete pisati.",
+        "Your organisation requires two-factor login before you can open your vault.": "Vaša organizacija zahtijeva prijavu u dva koraka prije nego što možete otvoriti svoj trezor."
     },
     "plurals": null
 }

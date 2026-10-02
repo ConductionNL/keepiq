@@ -1361,7 +1361,27 @@
         "Vault backups": "Backups tal-kaxxaforti",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "B'ċavetta, kull arkivju jiġi kriptat għaliha. Żomm iċ-ċavetta privata barra minn dan is-server: għandek bżonnha biex tivverifika jew tirrestawra.",
         "Written": "Miktub",
-        "Yes": "Iva"
+        "Yes": "Iva",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n utent fil-kamp għad m'għandux dħul b'żewġ fatturi u ma jistax jiftaħ il-kaxxaforti waqt li dan ikun mixgħul.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n utenti fil-kamp għad m'għandhomx dħul b'żewġ fatturi u ma jistgħux jiftħu l-kaxxaforti waqt li dan ikun mixgħul.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Il-kodiċijiet ta' riżerva ma jgħoddux. Jekk l-utenti tiegħek jidħlu permezz ta' fornitur tal-identità b'fattur ieħor tiegħu, ħalli barra l-gruppi tagħhom.",
+        "Block personal vault export": "Imblokka l-esportazzjoni tal-kaxxaforti personali",
+        "Keep work logins in team folders": "Żomm il-kredenzjali tax-xogħol f'folders tat-tim",
+        "Move to a team folder": "Mexxi għal folder tat-tim",
+        "Not in a team folder": "Mhux f'folder tat-tim",
+        "Only for these groups (empty is everyone)": "Biss għal dawn il-gruppi (vojt ifisser kulħadd)",
+        "Require two-factor login before the vault opens": "Itlob dħul b'żewġ fatturi qabel ma tinfetaħ il-kaxxaforti",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Regoli għal kull kaxxaforti. Kull waħda tapplika għal kulħadd, jew biss għall-gruppi li tagħżel.",
+        "Secret types that belong in a team folder": "Tipi ta' sigrieti li jappartjenu f'folder tat-tim",
+        "Set up two-factor login": "Issettja d-dħul b'żewġ fatturi",
+        "Team folder you can write to": "Folder tat-tim fejn tista' tikteb",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "L-utenti ma jistgħux iniżżlu backup, CSV jew fajl ta' trasferiment. Il-pakkett tad-data personali tagħhom jibqa' disponibbli.",
+        "Users cannot save these secret types in a personal folder.": "L-utenti ma jistgħux jissejvjaw dawn it-tipi ta' sigrieti f'folder personali.",
+        "Vault policies": "Politiki tal-kaxxaforti",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "L-organizzazzjoni tiegħek ma tippermettix l-esportazzjoni tal-kaxxaforti personali tiegħek. Il-pakkett tad-data personali fis-settings jibqa' disponibbli.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "L-organizzazzjoni tiegħek iżżomm dawn is-sigrieti f'folder tat-tim. Mexxi kull wieħed għal folder tat-tim.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "L-organizzazzjoni tiegħek iżżomm dan it-tip ta' sigriet f'folder tat-tim. Agħżel wieħed mill-folders tat-tim tiegħek, jew wieħed fejn tista' tikteb.",
+        "Your organisation requires two-factor login before you can open your vault.": "L-organizzazzjoni tiegħek titlob dħul b'żewġ fatturi qabel ma tkun tista' tiftaħ il-kaxxaforti tiegħek."
     },
     "plurals": null
 }

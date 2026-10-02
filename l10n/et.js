@@ -1362,7 +1362,27 @@ OC.L10N.register(
         "Vault backups": "Hoidla varundused",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Võtmega krüpteeritakse iga arhiiv selle jaoks. Hoidke privaatvõtit sellest serverist väljas: seda on vaja kontrollimiseks või taastamiseks.",
         "Written": "Kirjutatud",
-        "Yes": "Jah"
+        "Yes": "Jah",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n kasutajal ulatuses pole veel kaheastmelist sisselogimist ega saa ta hoidlat avada, kuni see on sees.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n kasutajal ulatuses pole veel kaheastmelist sisselogimist ega saa nad hoidlat avada, kuni see on sees.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Varukoodid ei loe. Kui kasutajad logivad sisse identiteedipakkuja kaudu, millel on oma teine tegur, jätke nende grupid välja.",
+        "Block personal vault export": "Blokeeri isikliku hoidla eksport",
+        "Keep work logins in team folders": "Hoia töökontode andmeid meeskonnakaustades",
+        "Move to a team folder": "Teisalda meeskonnakausta",
+        "Not in a team folder": "Pole meeskonnakaustas",
+        "Only for these groups (empty is everyone)": "Ainult nendele gruppidele (tühi tähendab kõiki)",
+        "Require two-factor login before the vault opens": "Nõua enne hoidla avamist kaheastmelist sisselogimist",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Reeglid igale hoidlale. Iga reegel kehtib kõigile või ainult valitud gruppidele.",
+        "Secret types that belong in a team folder": "Saladuste tüübid, mis kuuluvad meeskonnakausta",
+        "Set up two-factor login": "Seadista kaheastmeline sisselogimine",
+        "Team folder you can write to": "Meeskonnakaust, kuhu saate kirjutada",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Kasutajad ei saa alla laadida varukoopiat, CSV-d ega ülekandefaili. Nende isikuandmete pakett jääb kättesaadavaks.",
+        "Users cannot save these secret types in a personal folder.": "Kasutajad ei saa neid saladuste tüüpe isiklikku kausta salvestada.",
+        "Vault policies": "Hoidla reeglid",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Teie organisatsioon ei luba teie isikliku hoidla eksporti. Teie isikuandmete pakett seadetes jääb kättesaadavaks.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Teie organisatsioon hoiab neid saladusi meeskonnakaustas. Teisaldage igaüks meeskonnakausta.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Teie organisatsioon hoiab seda tüüpi saladust meeskonnakaustas. Valige üks oma meeskonnakaustadest või selline, kuhu saate kirjutada.",
+        "Your organisation requires two-factor login before you can open your vault.": "Teie organisatsioon nõuab kaheastmelist sisselogimist, enne kui saate oma hoidla avada."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -77,6 +77,7 @@ export const useSessionStore = defineStore('session', {
 		 *
 		 * @param {string} masterPassword
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * @spec openspec/changes/admin-vault-policies/tasks.md#3.3
 		 */
 		async unlock(masterPassword) {
 			// Fetch the user's encryption suite from the API.
@@ -88,6 +89,14 @@ export const useSessionStore = defineStore('session', {
 
 			if (!activeSuite) {
 				throw new Error('No active EncryptionSuite found')
+			}
+
+			// The two-factor vault policy withholds the wrapped key
+			// (admin-vault-policies D3): say so, never "wrong password".
+			if (activeSuite.unlockBlocked) {
+				throw Object.assign(new Error(activeSuite.unlockBlocked), {
+					code: activeSuite.unlockBlocked,
+				})
 			}
 
 			await this.unlockFromBlob({

@@ -1361,7 +1361,27 @@
         "Vault backups": "Резервные копии хранилища",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "С ключом каждый архив шифруется для него. Храните закрытый ключ вне этого сервера: он нужен для проверки или восстановления.",
         "Written": "Записан",
-        "Yes": "Да"
+        "Yes": "Да",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n пользователь в области действия ещё не настроил двухфакторный вход и не может открыть хранилище, пока это включено.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "Пользователи в области действия (%n) ещё не настроили двухфакторный вход и не могут открыть хранилище, пока это включено.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Резервные коды не учитываются. Если ваши пользователи входят через поставщика удостоверений со своим вторым фактором, исключите их группы.",
+        "Block personal vault export": "Запретить экспорт личного хранилища",
+        "Keep work logins in team folders": "Хранить рабочие учётные данные в командных папках",
+        "Move to a team folder": "Переместить в командную папку",
+        "Not in a team folder": "Не в командной папке",
+        "Only for these groups (empty is everyone)": "Только для этих групп (пусто означает всех)",
+        "Require two-factor login before the vault opens": "Требовать двухфакторный вход перед открытием хранилища",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Правила для каждого хранилища. Каждое действует для всех или только для выбранных групп.",
+        "Secret types that belong in a team folder": "Типы секретов, которые хранятся в командной папке",
+        "Set up two-factor login": "Настроить двухфакторный вход",
+        "Team folder you can write to": "Командная папка, в которую вы можете записывать",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Пользователи не могут скачать резервную копию, CSV или файл переноса. Их пакет личных данных остаётся доступным.",
+        "Users cannot save these secret types in a personal folder.": "Пользователи не могут сохранять эти типы секретов в личной папке.",
+        "Vault policies": "Правила хранилища",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Ваша организация не разрешает экспорт личного хранилища. Ваш пакет личных данных в настройках остаётся доступным.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Ваша организация хранит эти секреты в командной папке. Переместите каждый в командную папку.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Ваша организация хранит этот тип секрета в командной папке. Выберите одну из своих командных папок или ту, в которую вы можете записывать.",
+        "Your organisation requires two-factor login before you can open your vault.": "Ваша организация требует двухфакторный вход, прежде чем вы сможете открыть хранилище."
     },
     "plurals": null
 }

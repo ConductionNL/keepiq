@@ -1362,7 +1362,27 @@ OC.L10N.register(
         "Vault backups": "Резервні копії сховища",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "З ключем кожен архів шифрується для нього. Зберігайте закритий ключ поза цим сервером: він потрібен для перевірки чи відновлення.",
         "Written": "Записано",
-        "Yes": "Так"
+        "Yes": "Так",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n користувач в області дії ще не має двофакторного входу й не може відкрити сховище, поки це ввімкнено.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "Користувачі в області дії (%n) ще не мають двофакторного входу й не можуть відкрити сховище, поки це ввімкнено.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Резервні коди не враховуються. Якщо ваші користувачі входять через постачальника ідентичності з власним другим фактором, виключіть їхні групи.",
+        "Block personal vault export": "Заборонити експорт особистого сховища",
+        "Keep work logins in team folders": "Зберігати робочі облікові дані в командних теках",
+        "Move to a team folder": "Перемістити до командної теки",
+        "Not in a team folder": "Не в командній теці",
+        "Only for these groups (empty is everyone)": "Лише для цих груп (порожньо означає всіх)",
+        "Require two-factor login before the vault opens": "Вимагати двофакторний вхід перед відкриттям сховища",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Правила для кожного сховища. Кожне діє для всіх або лише для вибраних груп.",
+        "Secret types that belong in a team folder": "Типи секретів, що належать до командної теки",
+        "Set up two-factor login": "Налаштувати двофакторний вхід",
+        "Team folder you can write to": "Командна тека, до якої ви можете записувати",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Користувачі не можуть завантажити резервну копію, CSV чи файл перенесення. Їхній пакет особистих даних лишається доступним.",
+        "Users cannot save these secret types in a personal folder.": "Користувачі не можуть зберігати ці типи секретів в особистій теці.",
+        "Vault policies": "Правила сховища",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Ваша організація не дозволяє експорт особистого сховища. Ваш пакет особистих даних у налаштуваннях лишається доступним.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Ваша організація зберігає ці секрети в командній теці. Перемістіть кожен до командної теки.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Ваша організація зберігає цей тип секрету в командній теці. Виберіть одну зі своїх командних тек або ту, до якої ви можете записувати.",
+        "Your organisation requires two-factor login before you can open your vault.": "Ваша організація вимагає двофакторний вхід, перш ніж ви зможете відкрити сховище."
     },
     "nplurals=2; plural=(n != 1);"
 )

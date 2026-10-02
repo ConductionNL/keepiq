@@ -109,6 +109,7 @@ class PasswordPolicyService {
 	 * @param IUserSession $userSession The user session (audit actor)
 	 * @param IEventDispatcher|null $eventDispatcher The audit dispatcher (policy changes)
 	 * @param AuditEventFactory $auditEvents The audit-event factory
+	 * @param VaultPolicyService|null $vaultPolicies The vault policies (admin-vault-policies)
 	 *
 	 * @return void
 	 *
@@ -119,6 +120,7 @@ class PasswordPolicyService {
 		private IUserSession $userSession,
 		private ?IEventDispatcher $eventDispatcher = null,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
+		private ?VaultPolicyService $vaultPolicies = null,
 	) {
 	}//end __construct()
 
@@ -138,14 +140,16 @@ class PasswordPolicyService {
 	 * `Repair\InitializeSettings` write them; `getValueInt()` on a
 	 * string-typed app-config key raises a type conflict in Nextcloud.
 	 *
+	 * @param string|null $userId The session user, for the effective vault policies
+	 *
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
 	 */
-	public function getPolicy(): array {
+	public function getPolicy(?string $userId = null): array {
 		$appId = Application::APP_ID;
 
-		return array_merge(
+		$policy = array_merge(
 			[
 				'master_password_min_length' => (int)$this->appConfig->getValueString(
 					$appId,
@@ -160,6 +164,14 @@ class PasswordPolicyService {
 			],
 			$this->readPolicyKeys()
 		);
+
+		if ($this->vaultPolicies !== null && $userId !== null) {
+			// Only whether each vault policy applies to THIS user, never the
+			// group lists (admin-vault-policies D1).
+			$policy = array_merge($policy, $this->vaultPolicies->effectiveFor(userId: $userId));
+		}
+
+		return $policy;
 	}//end getPolicy()
 
 	/**
@@ -193,6 +205,19 @@ class PasswordPolicyService {
 	}//end readPolicyKeys()
 
 	/**
+	 * The policy keys the admin page shows: the org password policy and,
+	 * when wired, the vault policies with their group scopes. Admin only;
+	 * the user-facing getPolicy() never carries the group lists.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
+	 */
+	public function readAdminPolicyKeys(): array {
+		return array_merge($this->readPolicyKeys(), $this->vaultPolicies?->read() ?? []);
+	}//end readAdminPolicyKeys()
+
+	/**
 	 * Validate + persist the org password-policy keys and dispatch the
 	 * `password_policy.updated` audit event with before/after values —
 	 * never any secret data (org-password-policies §1.1/§3.1).
@@ -207,6 +232,8 @@ class PasswordPolicyService {
 	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.1
 	 */
 	public function updatePolicySettings(array $data): void {
+		$this->vaultPolicies?->update(data: $data);
+
 		$touched = array_values(array_intersect(self::POLICY_KEYS, array_keys($data)));
 		if ($touched === []) {
 			return;

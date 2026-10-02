@@ -1361,7 +1361,27 @@
         "Vault backups": "Cópias do cofre",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Com uma chave, cada arquivo é cifrado para ela. Guarde a chave privada fora deste servidor: precisa dela para verificar ou restaurar.",
         "Written": "Escrito",
-        "Yes": "Sim"
+        "Yes": "Sim",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n utilizador abrangido ainda não tem autenticação de dois fatores e não pode abrir o cofre enquanto isto estiver ativo.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n utilizadores abrangidos ainda não têm autenticação de dois fatores e não podem abrir o cofre enquanto isto estiver ativo.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Os códigos de recuperação não contam. Se os seus utilizadores entram através de um fornecedor de identidade com o seu próprio segundo fator, exclua os seus grupos.",
+        "Block personal vault export": "Bloquear a exportação do cofre pessoal",
+        "Keep work logins in team folders": "Manter os acessos de trabalho em pastas de equipa",
+        "Move to a team folder": "Mover para uma pasta de equipa",
+        "Not in a team folder": "Não está numa pasta de equipa",
+        "Only for these groups (empty is everyone)": "Apenas para estes grupos (vazio é todos)",
+        "Require two-factor login before the vault opens": "Exigir autenticação de dois fatores antes de abrir o cofre",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Regras para cada cofre. Cada uma aplica-se a todos, ou apenas aos grupos que escolher.",
+        "Secret types that belong in a team folder": "Tipos de segredo que pertencem a uma pasta de equipa",
+        "Set up two-factor login": "Configurar a autenticação de dois fatores",
+        "Team folder you can write to": "Pasta de equipa onde pode escrever",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Os utilizadores não podem descarregar uma cópia de segurança, um CSV ou um ficheiro de transferência. O seu pacote de dados pessoais continua disponível.",
+        "Users cannot save these secret types in a personal folder.": "Os utilizadores não podem guardar estes tipos de segredo numa pasta pessoal.",
+        "Vault policies": "Políticas do cofre",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "A sua organização não permite exportar o seu cofre pessoal. O seu pacote de dados pessoais nas definições continua disponível.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "A sua organização guarda estes segredos numa pasta de equipa. Mova cada um para uma pasta de equipa.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "A sua organização guarda este tipo de segredo numa pasta de equipa. Escolha uma das suas pastas de equipa, ou uma onde pode escrever.",
+        "Your organisation requires two-factor login before you can open your vault.": "A sua organização exige autenticação de dois fatores antes de poder abrir o seu cofre."
     },
     "plurals": null
 }

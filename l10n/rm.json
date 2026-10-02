@@ -1361,7 +1361,27 @@
         "Vault backups": "Copias da segirezza da la chascha forta",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Cun ina clav vegn mintga archiv criptà per ella. Tegnai la clav privata ordaifer quest server: Vus duvrais ella per verifitgar u restaurar.",
         "Written": "Scrit",
-        "Yes": "Gea"
+        "Yes": "Gea",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n utilisader en il champ n'ha anc nagina annunzia en dus pass e na po betg avrir la chascha forta uschè ditg che quai è activà.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n utilisaders en il champ n'han anc nagina annunzia en dus pass e na pon betg avrir la chascha forta uschè ditg che quai è activà.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Codes da reserva na dumbran betg. Sche Voss utilisaders s'annunzian via in purschider d'identitad cun agen segund factur, laschai ora lur gruppas.",
+        "Block personal vault export": "Bloccar l'export da la chascha forta persunala",
+        "Keep work logins in team folders": "Tegnair las annunzias da lavur en ordinaturs da team",
+        "Move to a team folder": "Spustar en in ordinatur da team",
+        "Not in a team folder": "Betg en in ordinatur da team",
+        "Only for these groups (empty is everyone)": "Mo per questas gruppas (vid munta tuts)",
+        "Require two-factor login before the vault opens": "Pretender l'annunzia en dus pass avant che la chascha forta s'avra",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Reglas per mintga chascha forta. Mintgina vala per tuts u mo per las gruppas che Vus tschernis.",
+        "Secret types that belong in a team folder": "Tips da secrets che tutgan en in ordinatur da team",
+        "Set up two-factor login": "Configurar l'annunzia en dus pass",
+        "Team folder you can write to": "Ordinatur da team en il qual Vus pudais scriver",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Utilisaders na pon betg telechargiar ina copia da segirezza, in CSV u ina datoteca da transfer. Lur pachet da datas persunalas resta disponibel.",
+        "Users cannot save these secret types in a personal folder.": "Utilisaders na pon betg memorisar quests tips da secrets en in ordinatur persunal.",
+        "Vault policies": "Directivas da la chascha forta",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Vossa organisaziun na permetta betg d'exportar Vossa chascha forta persunala. Voss pachet da datas persunalas en las configuraziuns resta disponibel.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Vossa organisaziun tegna quests secrets en in ordinatur da team. Spustai mintgin en in ordinatur da team.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Vossa organisaziun tegna quest tip da secret en in ordinatur da team. Tschernai in da Voss ordinaturs da team u in en il qual Vus pudais scriver.",
+        "Your organisation requires two-factor login before you can open your vault.": "Vossa organisaziun pretenda l'annunzia en dus pass avant che Vus pudais avrir Vossa chascha forta."
     },
     "plurals": null
 }

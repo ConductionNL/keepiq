@@ -1362,7 +1362,27 @@ OC.L10N.register(
         "Vault backups": "Varnostne kopije trezorja",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "S ključem se vsak arhiv šifrira zanj. Zasebni ključ hranite zunaj tega strežnika: potrebujete ga za preverjanje ali obnovo.",
         "Written": "Zapisano",
-        "Yes": "Da"
+        "Yes": "Da",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n uporabnik v obsegu še nima dvostopenjske prijave in ne more odpreti trezorja, dokler je to vklopljeno.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "Uporabniki v obsegu (%n) še nimajo dvostopenjske prijave in ne morejo odpreti trezorja, dokler je to vklopljeno.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Rezervne kode ne štejejo. Če se vaši uporabniki prijavljajo prek ponudnika identitete z lastnim drugim faktorjem, izpustite njihove skupine.",
+        "Block personal vault export": "Blokiraj izvoz osebnega trezorja",
+        "Keep work logins in team folders": "Službene prijave hrani v ekipnih mapah",
+        "Move to a team folder": "Premakni v ekipno mapo",
+        "Not in a team folder": "Ni v ekipni mapi",
+        "Only for these groups (empty is everyone)": "Samo za te skupine (prazno pomeni vse)",
+        "Require two-factor login before the vault opens": "Zahtevaj dvostopenjsko prijavo pred odprtjem trezorja",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Pravila za vsak trezor. Vsako velja za vse ali le za skupine, ki jih izberete.",
+        "Secret types that belong in a team folder": "Vrste skrivnosti, ki sodijo v ekipno mapo",
+        "Set up two-factor login": "Nastavi dvostopenjsko prijavo",
+        "Team folder you can write to": "Ekipna mapa, v katero lahko pišete",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Uporabniki ne morejo prenesti varnostne kopije, CSV ali datoteke za prenos. Njihov paket osebnih podatkov ostane na voljo.",
+        "Users cannot save these secret types in a personal folder.": "Uporabniki teh vrst skrivnosti ne morejo shraniti v osebno mapo.",
+        "Vault policies": "Pravila trezorja",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Vaša organizacija ne dovoli izvoza vašega osebnega trezorja. Vaš paket osebnih podatkov v nastavitvah ostane na voljo.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Vaša organizacija hrani te skrivnosti v ekipni mapi. Vsako premaknite v ekipno mapo.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Vaša organizacija hrani to vrsto skrivnosti v ekipni mapi. Izberite eno od svojih ekipnih map ali tisto, v katero lahko pišete.",
+        "Your organisation requires two-factor login before you can open your vault.": "Vaša organizacija zahteva dvostopenjsko prijavo, preden lahko odprete svoj trezor."
     },
     "nplurals=2; plural=(n != 1);"
 )
