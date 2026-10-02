@@ -100,7 +100,7 @@ class DeviceApprovalController extends Controller {
 				publicKey: $publicKey,
 				clientKind: $clientKind,
 				label: $deviceLabel,
-				ip: $this->request->getRemoteAddress(),
+				address: $this->request->getRemoteAddress(),
 				agent: (string)$this->request->getHeader('User-Agent'),
 			);
 		} catch (ForbiddenException $e) {

@@ -214,12 +214,8 @@ class AdminSettingsService {
 					'offline_cache_enabled',
 					true
 				),
-				// New device approval (crypto-new-device-approval D5) — default on.
-				'device_approval_enabled' => $this->appConfig->getValueBool(
-					$appId,
-					DeviceApprovalService::ENABLED_KEY,
-					true
-				),
+				// New device approval (crypto-new-device-approval D5), default on.
+				'device_approval_enabled' => $this->appConfig->getValueBool($appId, 'device_approval_enabled', true),
 			]
 		);
 
@@ -375,7 +371,7 @@ class AdminSettingsService {
 		}
 
 		if (isset($data['device_approval_enabled']) === true) {
-			$this->appConfig->setValueBool($appId, DeviceApprovalService::ENABLED_KEY, (bool)$data['device_approval_enabled']);
+			$this->appConfig->setValueBool($appId, 'device_approval_enabled', (bool)$data['device_approval_enabled']);
 		}
 	}//end updateInstanceSettings()
 

@@ -109,7 +109,7 @@ class DeviceApprovalService {
 	 * @param string $publicKey  The one-time X25519 public key (base64, 32 bytes)
 	 * @param string $clientKind `web` or `extension`
 	 * @param string $label      The device label
-	 * @param string $ip         The caller's IP address
+	 * @param string $address    The caller's IP address
 	 * @param string $agent      The caller's user agent
 	 *
 	 * @return array{id:string,requestSecret:string,expiresAt:string}
@@ -126,7 +126,7 @@ class DeviceApprovalService {
 		string $publicKey,
 		string $clientKind,
 		string $label,
-		string $ip,
+		string $address,
 		string $agent,
 	): array {
 		if ($this->isEnabled() === false) {
@@ -150,7 +150,7 @@ class DeviceApprovalService {
 		$request->setUserId($userId);
 		$request->setClientKind($clientKind);
 		$request->setDeviceLabel(mb_substr(trim($label), 0, 255));
-		$request->setRequesterIp(mb_substr($ip, 0, 64));
+		$request->setRequesterIp(mb_substr($address, 0, 64));
 		$request->setRequesterAgent(mb_substr($agent, 0, 512));
 		$request->setRequestPublicKey($publicKey);
 		$request->setRequestSecretHash(hash('sha256', $secret));
