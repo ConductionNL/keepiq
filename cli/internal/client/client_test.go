@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strings"
 	"testing"
 )
 
@@ -78,5 +79,85 @@ func TestFetchByNameConditional(t *testing.T) {
 	// Unchanged re-fetch → 304 → ErrNotModified.
 	if _, err := c.FetchByName("DB_PASSWORD", "tok"); !errors.Is(err, ErrNotModified) {
 		t.Fatalf("second fetch: want ErrNotModified, got %v", err)
+	}
+}
+
+// TestDiscoverUsesTheKeepiqPath verifies discovery asks for the canonical
+// .well-known/keepiq document and never touches the doriath alias when the
+// canonical path answers (#755).
+func TestDiscoverUsesTheKeepiqPath(t *testing.T) {
+	var paths []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.URL.Path)
+		if r.URL.Path != discoveryPath {
+			http.NotFound(w, r)
+			return
+		}
+		_, _ = w.Write([]byte(`{"apiVersion":1,"assertion":{"audience":"keepiq"}}`))
+	}))
+	defer srv.Close()
+
+	d, err := New(srv.URL).Discover()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if d.Assertion.Audience != "keepiq" {
+		t.Errorf("audience = %q", d.Assertion.Audience)
+	}
+	if len(paths) != 1 || paths[0] != "/apps/keepiq/api/v1/app/.well-known/keepiq" {
+		t.Errorf("requested %v, want only the keepiq path", paths)
+	}
+}
+
+// TestDiscoverFallsBackToTheDoriathPathOn404 keeps the CLI working against a
+// server that predates the canonical path.
+func TestDiscoverFallsBackToTheDoriathPathOn404(t *testing.T) {
+	var paths []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		paths = append(paths, r.URL.Path)
+		if r.URL.Path != legacyDiscoveryPath {
+			http.NotFound(w, r)
+			return
+		}
+		_, _ = w.Write([]byte(`{"apiVersion":1}`))
+	}))
+	defer srv.Close()
+
+	if _, err := New(srv.URL).Discover(); err != nil {
+		t.Fatal(err)
+	}
+	if len(paths) != 2 || paths[1] != legacyDiscoveryPath {
+		t.Errorf("requested %v, want keepiq then doriath", paths)
+	}
+}
+
+// TestDiscoverDoesNotFallBackOnOtherErrors keeps a 401 a 401: only a missing
+// canonical path is a reason to try the alias.
+func TestDiscoverDoesNotFallBackOnOtherErrors(t *testing.T) {
+	calls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		calls++
+		w.WriteHeader(http.StatusUnauthorized)
+	}))
+	defer srv.Close()
+
+	if _, err := New(srv.URL).Discover(); err == nil {
+		t.Fatal("want an error on 401")
+	}
+	if calls != 1 {
+		t.Errorf("calls = %d, want 1", calls)
+	}
+}
+
+// TestDefaultAudienceIsTheCanonicalOne pins the fallback audience to the
+// server's AudiencePolicy::CANONICAL_AUDIENCE, not the pre-rename name.
+func TestDefaultAudienceIsTheCanonicalOne(t *testing.T) {
+	src, err := os.ReadFile("../../../lib/Service/AudiencePolicy.php")
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := `CANONICAL_AUDIENCE = '` + DefaultAudience + `'`
+	if !strings.Contains(string(src), want) {
+		t.Errorf("AudiencePolicy.php does not declare %s", want)
 	}
 }

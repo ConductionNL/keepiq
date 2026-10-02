@@ -34,6 +34,7 @@ use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\DataDisplayResponse;
+use OCP\Defaults;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 
@@ -46,12 +47,14 @@ class WebManifestController extends Controller {
 	 *
 	 * @param IRequest $request The HTTP request
 	 * @param IURLGenerator $urlGenerator Builds absolute asset + scope URLs
+	 * @param Defaults $defaults The instance theming, for the browser chrome colour
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		IRequest $request,
 		private IURLGenerator $urlGenerator,
+		private Defaults $defaults,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -78,16 +81,22 @@ class WebManifestController extends Controller {
 		$scope = $this->urlGenerator->linkToRoute('keepiq.dashboard.page');
 		$maskable = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath(Application::APP_ID, 'pwa-icon-maskable.svg'));
 		$anyIcon = $this->urlGenerator->getAbsoluteURL($this->urlGenerator->imagePath(Application::APP_ID, 'pwa-icon.svg'));
+		// Raster copies: some mobile browsers only offer to install with PNG
+		// icons at 192 and 512 pixels.
+		$pngIcon = fn (string $name): string => $this->urlGenerator->getAbsoluteURL(
+			$this->urlGenerator->imagePath(Application::APP_ID, $name)
+		);
+		// The instance theme colour (nldesign or the admin's theming), so an
+		// organisation theme reaches the browser chrome too.
+		$themeColor = $this->defaults->getColorPrimary();
 
 		$manifest = [
 			'name' => 'Keepiq',
 			'short_name' => 'Keepiq',
-			'description' => 'Encrypted secrets manager — your zero-knowledge vault.',
+			'description' => 'Encrypted secrets manager and zero-knowledge vault.',
 			'display' => 'standalone',
-			// NL Design System / brand tokens (cobalt) — the app icon is a
-			// brand asset; the browser chrome colour matches it.
-			'theme_color' => '#21468B',
-			'background_color' => '#21468B',
+			'theme_color' => $themeColor,
+			'background_color' => $themeColor,
 			'start_url' => $startUrl,
 			'scope' => $scope,
 			'orientation' => 'portrait-primary',
@@ -96,6 +105,10 @@ class WebManifestController extends Controller {
 				['src' => $anyIcon, 'sizes' => '512x512', 'type' => 'image/svg+xml', 'purpose' => 'any'],
 				['src' => $maskable, 'sizes' => '192x192', 'type' => 'image/svg+xml', 'purpose' => 'maskable'],
 				['src' => $maskable, 'sizes' => '512x512', 'type' => 'image/svg+xml', 'purpose' => 'maskable'],
+				['src' => $pngIcon('pwa-icon-192.png'), 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'any'],
+				['src' => $pngIcon('pwa-icon-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'any'],
+				['src' => $pngIcon('pwa-icon-maskable-192.png'), 'sizes' => '192x192', 'type' => 'image/png', 'purpose' => 'maskable'],
+				['src' => $pngIcon('pwa-icon-maskable-512.png'), 'sizes' => '512x512', 'type' => 'image/png', 'purpose' => 'maskable'],
 			],
 			'shortcuts' => [
 				[

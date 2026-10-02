@@ -218,7 +218,11 @@ describe('matching and filling use the active account only', () => {
 		expect(res.filled).toBe(true)
 		expect(browser.filled[0]).toEqual({
 			type: 'fill-credential',
-			payload: { login: 'home-user', secret: 'home-password' },
+			payload: {
+				login: 'home-user',
+				secret: 'home-password',
+				host: 'example.com',
+			},
 		})
 	})
 
