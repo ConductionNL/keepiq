@@ -233,15 +233,10 @@ class AdminSettingsService {
 				),
 				// The longest idle lock delay a user may pick in the browser extension.
 				'extension_max_idle_minutes' => $this->extensionMaxIdleMinutes(),
-				// Offline read-only cache (offline-readonly-cache §1.1) — default on.
-				'offline_cache_enabled' => $this->appConfig->getValueBool(
-					$appId,
-					'offline_cache_enabled',
-					true
-				),
 				// New device approval (crypto-new-device-approval D5), default on.
 				'device_approval_enabled' => $this->appConfig->getValueBool($appId, 'device_approval_enabled', true),
-			]
+			],
+			$this->offlineSettings()
 		);
 
 		// Best-effort CA status; never blocks if the service is unavailable.
@@ -257,6 +252,23 @@ class AdminSettingsService {
 
 		return $settings;
 	}//end getAdminSettings()
+
+	/**
+	 * The offline cache switches: offline reading (default on) and offline
+	 * edits (default off).
+	 *
+	 * @return array<string,bool>
+	 *
+	 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-an-admin-can-disable-offline-caching-org-wide
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-administrators-control-offline-edits
+	 */
+	private function offlineSettings(): array {
+		$appId = Application::APP_ID;
+		return [
+			'offline_cache_enabled' => $this->appConfig->getValueBool($appId, 'offline_cache_enabled', true),
+			'offline_edits_enabled' => $this->appConfig->getValueBool($appId, 'offline_edits_enabled', false),
+		];
+	}//end offlineSettings()
 
 	/**
 	 * Update admin-scoped settings with validation (implement-dashboard-settings §1.4).
@@ -402,6 +414,10 @@ class AdminSettingsService {
 
 		if (isset($data['device_approval_enabled']) === true) {
 			$this->appConfig->setValueBool($appId, 'device_approval_enabled', (bool)$data['device_approval_enabled']);
+		}
+
+		if (isset($data['offline_edits_enabled']) === true) {
+			$this->appConfig->setValueBool($appId, 'offline_edits_enabled', (bool)$data['offline_edits_enabled']);
 		}
 	}//end updateInstanceSettings()
 

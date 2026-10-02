@@ -161,6 +161,43 @@ class OfflineControllerTest extends TestCase {
 	}//end testManifestReturnsOwnerScopedCiphertextSnapshot()
 
 	/**
+	 * The manifest carries the offline edits rule: off unless set
+	 * (offline-edit-queue).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-administrators-control-offline-edits
+	 */
+	public function testManifestCarriesTheOfflineEditsRule(): void {
+		foreach ([null => false, 'on' => true] as $stored => $expected) {
+			$appConfig = $this->createMock(IAppConfig::class);
+			$appConfig->method('getValueBool')->willReturnCallback(
+				static fn (string $app, string $key, bool $default) => $key === 'offline_edits_enabled' ? ($stored === 'on' ? true : $default) : true
+			);
+			$suite = new EncryptionSuite();
+			$suite->setId('suite-1');
+			$this->suiteMapper->method('findActiveByOwner')->willReturn($suite);
+			$this->secretMapper->method('findByOwner')->willReturn([]);
+			$this->folderMapper->method('findByOwner')->willReturn([]);
+			$this->typeMapper->method('findAvailableForUser')->willReturn([]);
+			$controller = new OfflineController(
+				request: $this->createMock(IRequest::class),
+				manifestService: new OfflineManifestService(
+					suiteMapper: $this->suiteMapper,
+					secretMapper: $this->secretMapper,
+					folderMapper: $this->folderMapper,
+					typeMapper: $this->typeMapper,
+					twoFactor: $this->twoFactorGate(),
+				),
+				appConfig: $appConfig,
+				userSession: $this->userSession,
+			);
+
+			$this->assertSame($expected, $controller->manifest()->getData()['offlineEditsEnabled']);
+		}
+	}//end testManifestCarriesTheOfflineEditsRule()
+
+	/**
 	 * A REAL TwoFactorGate whose policy applies when $twoFactorBlocks is
 	 * set; alice has no provider enabled.
 	 *
