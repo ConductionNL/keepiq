@@ -17,7 +17,7 @@ import (
 	"strings"
 	"time"
 
-	dcrypto "github.com/ConductionNL/keepiq/cli/internal/crypto"
+	dcrypto "github.com/ConductionNL/keepiq/sdk/go/crypto"
 )
 
 // ErrNotModified is returned by a conditional fetch when the server answers 304
@@ -231,7 +231,7 @@ func (c *Client) MachineToken(applicationID string, key *rsa.PrivateKey, disc *D
 // in the shape lib/Service/MachineSecretEnvelopeService.php serialize()
 // writes: metadata under `secret`, the scheme under `encryption.scheme`, and
 // the base64 ciphertext under `ciphertext.key`, `ciphertext.login` and
-// `ciphertext.additionalFields`. cli/testdata/machine_envelope.json is that
+// `ciphertext.additionalFields`. sdk/testdata/machine_envelope.json is that
 // serializer's real output, guarded by a PHPUnit test (keepiq#793).
 type MachineEnvelope struct {
 	Format string `json:"format"`

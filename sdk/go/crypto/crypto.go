@@ -22,6 +22,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/hmac"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
@@ -37,7 +38,10 @@ const (
 	envelopeVersion  = 1
 	saltLen          = 16
 	ivLen            = 12
-	rsaBlockSize     = 512
+	// oaepSHA256Overhead is the OAEP padding cost with SHA-256 (2*32+2 bytes):
+	// a 4096-bit key carries 512-66 = 446 plaintext bytes per block, the
+	// RSA_CHUNK_SIZE that lib/Service/EncryptService.php and the browser use.
+	oaepSHA256Overhead = 2*sha256.Size + 2
 )
 
 // UnlockedSuite is the in-memory result of a human unlock: the suite's RSA
@@ -117,11 +121,15 @@ func UnwrapPrivateKey(blobBase64, masterPassword string) (string, error) {
 	return string(pt), nil
 }
 
-// ParsePrivateKey parses a PKCS8 RSA private-key PEM.
+// ParsePrivateKey parses an RSA private-key PEM (PKCS#8, or PKCS#1).
 func ParsePrivateKey(pemStr string) (*rsa.PrivateKey, error) {
 	blockPem, _ := pem.Decode([]byte(pemStr))
 	if blockPem == nil {
 		return nil, errors.New("no PEM block in private key")
+	}
+	if blockPem.Type == "RSA PRIVATE KEY" {
+		// PKCS#1, as `openssl genrsa` writes it on older OpenSSL.
+		return x509.ParsePKCS1PrivateKey(blockPem.Bytes)
 	}
 	parsed, err := x509.ParsePKCS8PrivateKey(blockPem.Bytes)
 	if err != nil {
@@ -145,13 +153,14 @@ func DecryptField(ciphertextBase64 string, key *rsa.PrivateKey) (string, error) 
 		return "", errors.New("field ciphertext too short")
 	}
 	chunks := binary.BigEndian.Uint32(raw[0:4])
-	if int(chunks)*rsaBlockSize != len(raw)-4 {
+	blockSize := key.Size()
+	if int(chunks)*blockSize != len(raw)-4 {
 		return "", fmt.Errorf("field length %d inconsistent with chunk count %d", len(raw), chunks)
 	}
 	var out []byte
 	for i := 0; i < int(chunks); i++ {
-		start := 4 + i*rsaBlockSize
-		block := raw[start : start+rsaBlockSize]
+		start := 4 + i*blockSize
+		block := raw[start : start+blockSize]
 		pt, err := rsa.DecryptOAEP(sha256.New(), nil, key, block, nil)
 		if err != nil {
 			return "", fmt.Errorf("RSA-OAEP decrypt chunk %d: %w", i, err)
@@ -159,6 +168,41 @@ func DecryptField(ciphertextBase64 string, key *rsa.PrivateKey) (string, error) 
 		out = append(out, pt...)
 	}
 	return string(out), nil
+}
+
+// EncryptField is the inverse of DecryptField and the same recipe as the
+// browser's rsaEncrypt and lib/Service/EncryptService.php rsaEncrypt():
+// the UTF-8 plaintext is split into key-size-minus-66-byte chunks (446 for
+// RSA-4096), each chunk is RSA-OAEP-SHA256 encrypted, and the result is base64
+// of [4-byte big-endian chunk count][one key-size block per chunk]. An empty
+// plaintext is one empty chunk, as on the server.
+func EncryptField(plaintext string, pub *rsa.PublicKey) (string, error) {
+	chunkSize := pub.Size() - oaepSHA256Overhead
+	if chunkSize <= 0 {
+		return "", errors.New("public key too small for RSA-OAEP-SHA256")
+	}
+	data := []byte(plaintext)
+	var chunks [][]byte
+	for i := 0; i < len(data); i += chunkSize {
+		end := i + chunkSize
+		if end > len(data) {
+			end = len(data)
+		}
+		chunks = append(chunks, data[i:end])
+	}
+	if len(chunks) == 0 {
+		chunks = [][]byte{{}}
+	}
+	out := make([]byte, 4, 4+len(chunks)*pub.Size())
+	binary.BigEndian.PutUint32(out, uint32(len(chunks)))
+	for i, chunk := range chunks {
+		block, err := rsa.EncryptOAEP(sha256.New(), rand.Reader, pub, chunk, nil)
+		if err != nil {
+			return "", fmt.Errorf("RSA-OAEP encrypt chunk %d: %w", i, err)
+		}
+		out = append(out, block...)
+	}
+	return base64.StdEncoding.EncodeToString(out), nil
 }
 
 // CertificateFingerprint returns the sha256:-prefixed fingerprint of a PEM
