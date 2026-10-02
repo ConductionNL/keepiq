@@ -1270,7 +1270,8 @@
         "Tag": "Label",
         "Remove tag": "Label verwijderen",
         "Add tag": "Label toevoegen",
-        "Could not change the tags. Try again.": "Kon de labels niet wijzigen. Probeer het opnieuw."
+        "Could not change the tags. Try again.": "Kon de labels niet wijzigen. Probeer het opnieuw.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Een CXF-export is ONVERSLEUTELD. Elk wachtwoord en elke login is leesbaar als platte tekst in het gedownloade bestand. Bewaar het veilig en verwijder het direct na gebruik."
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"

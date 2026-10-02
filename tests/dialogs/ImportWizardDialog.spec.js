@@ -100,6 +100,41 @@ describe('ImportWizardDialog', () => {
 		expect(wrapper.vm.canProceed).toBe(true)
 	})
 
+	it('passes the one-folder choice to the commit, named after the file and date (keepiq#749)', async () => {
+		useSessionStore().cryptoKey = { fake: true }
+		const wrapper = mount(ImportWizardDialog, {
+			propsData: { open: true },
+			...mountOpts,
+		})
+		const store = useImportStore()
+		const commit = vi.spyOn(store, 'commit').mockResolvedValue()
+		store.goToStep('duplicates')
+		wrapper.vm.sourceName = 'bitwarden_export.json'
+		wrapper.vm.underOneFolder = true
+
+		await wrapper.vm.next()
+
+		const today = new Date().toISOString().slice(0, 10)
+		expect(commit).toHaveBeenCalledWith({
+			rootFolder: `bitwarden_export ${today}`,
+		})
+	})
+
+	it('commits without a root folder when the switch is off', async () => {
+		useSessionStore().cryptoKey = { fake: true }
+		const wrapper = mount(ImportWizardDialog, {
+			propsData: { open: true },
+			...mountOpts,
+		})
+		const store = useImportStore()
+		const commit = vi.spyOn(store, 'commit').mockResolvedValue()
+		store.goToStep('duplicates')
+
+		await wrapper.vm.next()
+
+		expect(commit).toHaveBeenCalledWith({ rootFolder: '' })
+	})
+
 	it('abandoning before commit resets the store and creates nothing', async () => {
 		useSessionStore().cryptoKey = { fake: true }
 		const wrapper = mount(ImportWizardDialog, {

@@ -1266,7 +1266,8 @@ OC.L10N.register(
         "Tag": "Címke",
         "Remove tag": "Címke eltávolítása",
         "Add tag": "Címke hozzáadása",
-        "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra."
+        "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "A CXF-exportálás TITKOSÍTATLAN. A letöltött fájlban minden jelszó és bejelentkezési név olvasható lesz egyszerű szövegként. Tárolja biztonságosan, és használat után azonnal törölje."
     },
     "nplurals=2; plural=(n != 1);"
 )

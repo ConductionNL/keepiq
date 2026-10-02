@@ -1265,7 +1265,8 @@
         "Tag": "Etichetta",
         "Remove tag": "Allontanar l'etichetta",
         "Add tag": "Agiuntar ina etichetta",
-        "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada."
+        "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "In export CXF N'È BETG CRIPTÀ. Mintga pled-clav e mintga login vegn a pudair vegnir legì sco text cler en la datoteca telechargiada. Conservai la a moda segira e stizzai la immediatamain suenter l'utilisaziun."
     },
     "plurals": null
 }
