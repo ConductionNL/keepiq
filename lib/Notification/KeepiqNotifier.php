@@ -282,6 +282,14 @@ class KeepiqNotifier implements INotifier {
 					(string)$l->t('%s shared a team folder with you. Its secrets are now in your vault.', [$sharedBy])
 				);
 				return true;
+			case 'team_folder_member_confirmed':
+				$confirmedBy = (string)($params['confirmedBy'] ?? $l->t('a member'));
+				$confirmedMembers = implode(', ', array_map('strval', (array)($params['memberIds'] ?? [])));
+				$notification->setParsedSubject((string)$l->t('New team folder members confirmed'));
+				$notification->setParsedMessage(
+					(string)$l->t('%1$s gave %2$s access to your team folder.', [$confirmedBy, $confirmedMembers])
+				);
+				return true;
 			case 'team_folder_join_request':
 				$newMemberId = (string)($params['newMemberId'] ?? $l->t('a user'));
 				$joinGroupId = (string)($params['groupId'] ?? '');
