@@ -115,7 +115,7 @@ export default {
 		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-administrators-control-offline-edits
 		 */
 		async saveEdits() {
-			await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
+			await axios.put(generateUrl('/apps/keepiq/api/settings/admin/general'), {
 				offline_edits_enabled: this.editsEnabled,
 			})
 		},

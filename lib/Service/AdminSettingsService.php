@@ -96,6 +96,7 @@ class AdminSettingsService {
 			'ca_auto_renew_enabled',
 			'breach_check_enabled',
 			'offline_cache_enabled',
+			'offline_edits_enabled',
 			'attachment_max_bytes',
 			'attachment_user_quota_bytes',
 		],
