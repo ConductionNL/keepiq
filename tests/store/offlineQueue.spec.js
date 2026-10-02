@@ -24,6 +24,7 @@ import {
 } from '../vitest/fixtures/rsa-fixtures.js'
 
 const stored = new Map()
+let snapshot = null
 vi.mock('../../src/offline/cache.js', () => ({
 	isCacheAvailable: () => true,
 	readQueue: async () => [...stored.values()].map((e) => structuredClone(e)),
@@ -34,7 +35,7 @@ vi.mock('../../src/offline/cache.js', () => ({
 		stored.delete(id)
 	},
 	clearQueue: async () => stored.clear(),
-	readSnapshot: async () => null,
+	readSnapshot: async () => snapshot,
 	writeSnapshot: async () => true,
 	purge: async () => {},
 }))
@@ -82,6 +83,7 @@ function goOnline() {
 
 beforeEach(() => {
 	stored.clear()
+	snapshot = null
 	setActivePinia(createPinia())
 	vi.restoreAllMocks()
 })
@@ -209,11 +211,9 @@ describe('replay', () => {
 		await goOffline()
 		await secrets.updateSecret('s1', { name: 'Offline name' })
 		goOnline()
-		const put = vi
-			.spyOn(axios, 'put')
-			.mockRejectedValueOnce({
-				response: { status: 409, data: { current: { updatedAt: 'x' } } },
-			})
+		const put = vi.spyOn(axios, 'put').mockRejectedValueOnce({
+			response: { status: 409, data: { current: { updatedAt: 'x' } } },
+		})
 		await offline.replayQueue()
 		await offline.resolveConflict(offline.conflictEntries[0].entryId, 'server')
 		expect(put).toHaveBeenCalledTimes(1)
@@ -290,5 +290,54 @@ describe('replay', () => {
 			useEncryptionSuiteStore().initiateCompromiseRecovery('old', 'new'),
 		).rejects.toThrow('before you rotate')
 		expect(post).not.toHaveBeenCalled()
+	})
+
+	it('reopens changes made under keys rotated elsewhere with the previous password', async () => {
+		const { encryptPrivateKey } = await import('../../src/crypto/aes.js')
+		const { sealEntry, openEntry } = await import('../../src/offline/queue.js')
+		const oldPub = await importPublicKey(RSA4096_PUBLIC_KEY_SPKI_PEM)
+		snapshot = {
+			suite: {
+				id: 'old-suite',
+				privateKey: await encryptPrivateKey(
+					RSA4096_PRIVATE_KEY_PKCS8_PEM,
+					'old-pw',
+				),
+			},
+		}
+		const old = await sealEntry(
+			{
+				op: 'update',
+				secretId: 's1',
+				suiteId: 'old-suite',
+				body: { key: await rsaEncrypt('offline-value', oldPub) },
+			},
+			RSA4096_PUBLIC_KEY_SPKI_PEM,
+		)
+		stored.set(old.entryId, old)
+
+		// The session now runs on the new suite (the secondary key pair).
+		session = useSessionStore()
+		session.cryptoKey = await importPrivateKey(
+			RSA4096_SECONDARY_PRIVATE_KEY_PKCS8_PEM,
+		)
+		session.certificate = RSA4096_SECONDARY_PUBLIC_KEY_SPKI_PEM
+		session.suiteId = 'new-suite'
+		offline = useOfflineStore()
+		await offline.loadQueue()
+		expect(offline.foreignEntries).toHaveLength(1)
+		expect(offline.pendingCount).toBe(1)
+
+		await expect(
+			offline.reopenWithPreviousPassword('wrong'),
+		).rejects.toBeTruthy()
+		expect(await offline.reopenWithPreviousPassword('old-pw')).toBe(1)
+
+		expect(offline.foreignEntries).toHaveLength(0)
+		const reopened = await openEntry([...stored.values()][0], session.cryptoKey)
+		expect(reopened.suiteId).toBe('new-suite')
+		expect(await rsaDecrypt(reopened.body.key, session.cryptoKey)).toBe(
+			'offline-value',
+		)
 	})
 })

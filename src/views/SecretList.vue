@@ -843,7 +843,7 @@ export default {
 		 *
 		 * @return {boolean}
 		 *
-		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-offline-mode-is-strictly-read-only
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-sharing-and-membership-actions-stay-online-only
 		 */
 		offlineReadOnly() {
 			return useOfflineStore().readOnly

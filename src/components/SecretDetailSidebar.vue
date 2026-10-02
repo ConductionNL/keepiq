@@ -1420,7 +1420,7 @@ export default {
 		 * all write actions on the detail are hidden (offline-readonly-cache §4.2).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-offline-mode-is-strictly-read-only
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-sharing-and-membership-actions-stay-online-only
 		 */
 		offlineReadOnly() {
 			return useOfflineStore().readOnly
