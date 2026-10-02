@@ -26,6 +26,7 @@ use OCA\Keepiq\Service\NotificationService;
 use OCP\IL10N;
 use OCP\IURLGenerator;
 use OCP\L10N\IFactory;
+use OCP\Notification\IAction;
 use OCP\Notification\INotification;
 use OCP\Notification\UnknownNotificationException;
 use PHPUnit\Framework\TestCase;
@@ -375,6 +376,160 @@ class KeepiqNotifierTest extends TestCase {
 	}//end testShareRequestRendersRequester()
 
 	/**
+	 * Run prepare() and collect the parsed actions it adds.
+	 *
+	 * @param string $subject The notification subject identifier
+	 * @param array<string,mixed> $params The subject parameters
+	 *
+	 * @return array<int,array<string,mixed>> One entry per action: label, parsedLabel, link, method, primary
+	 */
+	private function actionsFor(string $subject, array $params): array {
+		$notification = $this->notificationDouble(subject: $subject, params: $params);
+		$actions = [];
+		$notification->method('createAction')->willReturnCallback(
+			function () use (&$actions): IAction {
+				$index = count($actions);
+				$actions[$index] = [];
+				$action = $this->createMock(originalClassName: IAction::class);
+				$action->method('setLabel')->willReturnCallback(
+					static function (string $label) use (&$actions, $index, $action): IAction {
+						$actions[$index]['label'] = $label;
+						return $action;
+					}
+				);
+				$action->method('setParsedLabel')->willReturnCallback(
+					static function (string $label) use (&$actions, $index, $action): IAction {
+						$actions[$index]['parsedLabel'] = $label;
+						return $action;
+					}
+				);
+				$action->method('setLink')->willReturnCallback(
+					static function (string $link, string $method) use (&$actions, $index, $action): IAction {
+						$actions[$index]['link'] = $link;
+						$actions[$index]['method'] = $method;
+						return $action;
+					}
+				);
+				$action->method('setPrimary')->willReturnCallback(
+					static function (bool $primary) use (&$actions, $index, $action): IAction {
+						$actions[$index]['primary'] = $primary;
+						return $action;
+					}
+				);
+				return $action;
+			}
+		);
+		$added = 0;
+		$notification->method('addParsedAction')->willReturnCallback(
+			static function () use (&$added, $notification): INotification {
+				$added++;
+				return $notification;
+			}
+		);
+
+		$this->notifier->prepare(notification: $notification, languageCode: 'en');
+		$this->assertSame(count($actions), $added, 'Every created action is added.');
+
+		return $actions;
+	}//end actionsFor()
+
+	/**
+	 * share_request with the payload ShareRequestService::submitShareRequest()
+	 * really sends: camelCase keys. It used to render "a user" and "a secret"
+	 * with no link, because the renderer read snake_case only (#747).
+	 *
+	 * @return void
+	 */
+	public function testShareRequestRendersTheRealServicePayload(): void {
+		$params = [
+			'sourceSecretId' => 'sec-7',
+			'secretName' => 'API token',
+			'requesterId' => 'bob',
+			'targetUserId' => 'carol',
+		];
+		$recorded = $this->prepareSubject(subject: 'share_request', params: $params);
+
+		$this->assertSame(
+			expected: 'bob asks you to share the secret "API token" with carol.',
+			actual: $recorded['parsedMessage']
+		);
+		$this->assertSame(
+			expected: self::BASE_URL . '/index.php/apps/keepiq/secrets/sec-7',
+			actual: $recorded['link']
+		);
+	}//end testShareRequestRendersTheRealServicePayload()
+
+	/**
+	 * share_request: the owner can approve (opens Keepiq, which encrypts the
+	 * copy) or deny (a POST to the deny endpoint) from the notification.
+	 *
+	 * @return void
+	 */
+	public function testShareRequestCarriesApproveAndDenyActions(): void {
+		$actions = $this->actionsFor(
+			subject: 'share_request',
+			params: [
+				'sourceSecretId' => 'sec-7',
+				'secretName' => 'API token',
+				'requesterId' => 'bob',
+				'targetUserId' => 'carol',
+			]
+		);
+
+		$query = 'sourceSecretId=sec-7&requesterId=bob&targetUserId=carol';
+		$this->assertCount(2, $actions);
+		$this->assertSame('approve', $actions[0]['label']);
+		$this->assertSame('WEB', $actions[0]['method']);
+		$this->assertTrue($actions[0]['primary']);
+		$this->assertSame(self::BASE_URL . '/index.php/apps/keepiq/approvals/share-request?' . $query, $actions[0]['link']);
+		$this->assertSame('deny', $actions[1]['label']);
+		$this->assertSame('POST', $actions[1]['method']);
+		$this->assertSame(self::BASE_URL . '/index.php/apps/keepiq/api/v1/share-requests/deny?' . $query, $actions[1]['link']);
+	}//end testShareRequestCarriesApproveAndDenyActions()
+
+	/**
+	 * group_member_added with the payload GroupShareService::handleNewGroupMember()
+	 * really sends, and its approve and deny actions.
+	 *
+	 * @return void
+	 */
+	public function testGroupMemberAddedRendersTheRealServicePayloadWithActions(): void {
+		$params = [
+			'newMemberId' => 'dave',
+			'groupId' => 'ops',
+			'secretId' => 'sec-9',
+			'secretName' => 'Vault seal',
+			'groupShareId' => 'gs-1',
+		];
+		$recorded = $this->prepareSubject(subject: 'group_member_added', params: $params);
+		$this->assertStringContainsString('"ops"', $recorded['parsedMessage']);
+		$this->assertStringContainsString('"Vault seal"', $recorded['parsedMessage']);
+		$this->assertSame(self::BASE_URL . '/index.php/apps/keepiq/secrets/sec-9', $recorded['link']);
+
+		$actions = $this->actionsFor(subject: 'group_member_added', params: $params);
+		$this->assertCount(2, $actions);
+		$this->assertSame(
+			self::BASE_URL . '/index.php/apps/keepiq/approvals/group-member?groupShareId=gs-1&newMemberId=dave&secretId=sec-9',
+			$actions[0]['link']
+		);
+		$this->assertSame(
+			self::BASE_URL . '/index.php/apps/keepiq/api/v1/group-shares/gs-1/deny-new-member?newMemberId=dave',
+			$actions[1]['link']
+		);
+		$this->assertSame('POST', $actions[1]['method']);
+	}//end testGroupMemberAddedRendersTheRealServicePayloadWithActions()
+
+	/**
+	 * A share request without its three ids gets no actions: an action that
+	 * cannot name the request would approve nothing.
+	 *
+	 * @return void
+	 */
+	public function testShareRequestWithoutIdsHasNoActions(): void {
+		$this->assertSame([], $this->actionsFor(subject: 'share_request', params: ['secretName' => 'x']));
+	}//end testShareRequestWithoutIdsHasNoActions()
+
+	/**
 	 * share_request: the requester placeholder is used when unnamed.
 	 *
 	 * @return void
@@ -515,6 +670,83 @@ class KeepiqNotifierTest extends TestCase {
 			actual: $recorded['link']
 		);
 	}//end testSecretCompromisedRendersMigrationWarning()
+
+	/**
+	 * secret_compromised for several secrets names the first and counts the
+	 * others, so one name does not read as "only this one" (keepiq#875).
+	 *
+	 * @return void
+	 */
+	public function testSecretCompromisedCountsTheOtherSecrets(): void {
+		$recorded = $this->prepareSubject(
+			subject: 'secret_compromised',
+			params: [
+				'secret_name' => 'prod-db',
+				'secret_id' => '5',
+				'other_count' => 9,
+			]
+		);
+
+		$this->assertSame(
+			expected: 'Your secret "prod-db" and 9 other secret(s) may be compromised and require migration.',
+			actual: $recorded['parsedMessage']
+		);
+	}//end testSecretCompromisedCountsTheOtherSecrets()
+
+	/**
+	 * shared_secret_compromised warns a recipient about their copy (keepiq#872).
+	 *
+	 * @return void
+	 */
+	public function testSharedSecretCompromisedWarnsTheRecipient(): void {
+		$recorded = $this->prepareSubject(
+			subject: 'shared_secret_compromised',
+			params: [
+				'secret_name' => 'wifi',
+				'secret_id' => '7',
+			]
+		);
+
+		$this->assertSame(expected: 'Shared secret may be compromised', actual: $recorded['parsedSubject']);
+		$this->assertSame(
+			expected: 'The secret "wifi" shared with you may be compromised. Change it where it is used.',
+			actual: $recorded['parsedMessage']
+		);
+		$this->assertSame(expected: self::BASE_URL . '/index.php/apps/keepiq/secrets/7', actual: $recorded['link']);
+	}//end testSharedSecretCompromisedWarnsTheRecipient()
+
+	/**
+	 * emergency_grantee_compromised warns the grantor (keepiq#872).
+	 *
+	 * @return void
+	 */
+	public function testEmergencyGranteeCompromisedWarnsTheGrantor(): void {
+		$recorded = $this->prepareSubject(
+			subject: 'emergency_grantee_compromised',
+			params: ['granteeUserId' => 'alice']
+		);
+
+		$this->assertSame(expected: 'Emergency contact compromised', actual: $recorded['parsedSubject']);
+		$this->assertStringStartsWith(
+			prefix: 'alice had approved emergency access to your vault.',
+			string: $recorded['parsedMessage']
+		);
+	}//end testEmergencyGranteeCompromisedWarnsTheGrantor()
+
+	/**
+	 * emergency_access_cleared tells the owner how many contacts went (keepiq#876).
+	 *
+	 * @return void
+	 */
+	public function testEmergencyAccessClearedCountsTheContacts(): void {
+		$recorded = $this->prepareSubject(
+			subject: 'emergency_access_cleared',
+			params: ['count' => 2]
+		);
+
+		$this->assertSame(expected: 'Emergency access removed', actual: $recorded['parsedSubject']);
+		$this->assertStringContainsString(needle: 'deleted 2 emergency contact(s)', haystack: $recorded['parsedMessage']);
+	}//end testEmergencyAccessClearedCountsTheContacts()
 
 	/**
 	 * request_fulfilled: confirms a filled request.

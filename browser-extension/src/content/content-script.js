@@ -14,6 +14,7 @@
  * No secret is ever stored here; the worker owns all key material.
  */
 
+import { frameMayFill } from '../lib/fillScope.js'
 import { showSavePrompt } from './save-prompt.js'
 
 const USERNAME_SELECTORS = [
@@ -182,7 +183,13 @@ async function captureCurrent() {
 		return
 	}
 	if (window.top !== window) return // one bar, in the top frame's view only
-	if (!offer || (offer.action !== 'save' && offer.action !== 'update')) return
+	if (!offer) return
+	if (offer.action === 'refused') {
+		// Nothing to decide: the policy refused the password, so only explain.
+		await showSavePrompt(offer, location.hostname)
+		return
+	}
+	if (offer.action !== 'save' && offer.action !== 'update') return
 	const choice = await showSavePrompt(offer, location.hostname)
 	try {
 		await chrome.runtime.sendMessage({
@@ -202,9 +209,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 			sendResponse(reportHasLoginForm())
 			return true
 		case 'fill-credential':
+			// A frame of another site (an embedded widget, an advert) stays
+			// silent, so the answer comes from a frame that may fill (#740).
+			if (!frameMayFill(location.hostname, msg.payload?.host)) {
+				return false
+			}
 			sendResponse({ filled: fillCredential(msg.payload) })
 			return true
 		case 'fill-otp':
+			if (!frameMayFill(location.hostname, msg.payload?.host)) {
+				return false
+			}
 			sendResponse({ filled: fillOtp(msg.payload?.code) })
 			return true
 		default:

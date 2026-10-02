@@ -29,6 +29,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
+use OCA\Keepiq\Db\TeamFolderMemberMapper;
 use OCP\IGroupManager;
 use Psr\Log\LoggerInterface;
 
@@ -52,6 +53,7 @@ class TeamFolderOffboardingService {
 	 * @param IGroupManager $groupManager The Nextcloud group manager
 	 * @param LoggerInterface $logger The logger
 	 * @param TeamFolderAuditor $audit The team-folder auditor
+	 * @param TeamFolderMemberMapper $memberMapper The team-folder member rows
 	 *
 	 * @return void
 	 *
@@ -63,18 +65,20 @@ class TeamFolderOffboardingService {
 		private IGroupManager $groupManager,
 		private LoggerInterface $logger,
 		private TeamFolderAuditor $audit,
+		private TeamFolderMemberMapper $memberMapper,
 	) {
 	}//end __construct()
 
 	/**
-	 * Revoke every team-folder-derived share held by the leaving user, then
-	 * transfer each team secret the leaver OWNS to the successor.
+	 * Revoke every team-folder-derived share held by the leaving user,
+	 * remove the leaver's direct team-folder memberships, then transfer each
+	 * team secret the leaver OWNS to the successor.
 	 *
 	 * @param string $leavingUserId The user being offboarded
 	 * @param string $successorUserId The user taking over owned team secrets
 	 * @param string $adminId The caller (instance admin or vault_admin)
 	 *
-	 * @return array{revoked:int,transferred:int,skipped:array<int,string>}
+	 * @return array{revoked:int,removedMemberships:int,transferred:int,skipped:array<int,string>}
 	 *
 	 * @throws InvalidArgumentException On invalid input / not authorized
 	 *
@@ -94,6 +98,12 @@ class TeamFolderOffboardingService {
 		// Step 1 — revoke every team-folder-derived share held by the leaver.
 		$revoked = $this->shares->revokeTeamSharesForUser(targetUserId: $leavingUserId);
 
+		// Step 1b — remove the leaver's direct member rows. Revoking the shares
+		// alone left the leaver a member, so the owner's next "Share now" for
+		// pending members handed the secrets straight back (#747). A membership
+		// through a group is the group's business and stays.
+		$removedMemberships = $this->removeDirectMemberships(userId: $leavingUserId);
+
 		// Step 2 — transfer team secrets the leaver owns to the successor.
 		$transfer = $this->transfers->transfer(
 			leavingUserId: $leavingUserId,
@@ -104,7 +114,8 @@ class TeamFolderOffboardingService {
 		$skipped = $transfer['skipped'];
 
 		$this->logger->info(
-			'Offboarded ' . $leavingUserId . ': revoked ' . $revoked . ' team shares, transferred '
+			'Offboarded ' . $leavingUserId . ': revoked ' . $revoked . ' team shares, removed '
+			. $removedMemberships . ' team-folder memberships, transferred '
 			. $transferred . ' secrets to ' . $successorUserId,
 			['app' => 'keepiq']
 		);
@@ -115,14 +126,35 @@ class TeamFolderOffboardingService {
 			successorUserId: $successorUserId,
 			revoked: $revoked,
 			transferred: $transferred,
+			removedMemberships: $removedMemberships,
 		);
 
 		return [
 			'revoked' => $revoked,
+			'removedMemberships' => $removedMemberships,
 			'transferred' => $transferred,
 			'skipped' => $skipped,
 		];
 	}//end offboard()
+
+	/**
+	 * Delete every direct user-type team-folder membership of a user.
+	 *
+	 * @param string $userId The user being offboarded
+	 *
+	 * @return int The number of member rows removed
+	 *
+	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-admin-offboarding
+	 */
+	private function removeDirectMemberships(string $userId): int {
+		$removed = 0;
+		foreach ($this->memberMapper->findUserMemberships(userId: $userId) as $membership) {
+			$this->memberMapper->delete(entity: $membership);
+			$removed++;
+		}
+
+		return $removed;
+	}//end removeDirectMemberships()
 
 	/**
 	 * Assert the caller may run the offboarding action: a Nextcloud

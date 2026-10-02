@@ -74,7 +74,29 @@
 				@click="forceRenewIntermediate">
 				{{ t('keepiq', 'Force renew intermediate') }}
 			</NcButton>
+
+			<NcButton
+				v-if="caStatus?.root"
+				variant="error"
+				:disabled="loading"
+				data-testid="ca-renew-root"
+				@click="renewRootOpen = true">
+				{{ t('keepiq', 'Renew root') }}
+			</NcButton>
+
+			<p
+				v-if="renewRootResult"
+				class="ca-health__result"
+				data-testid="ca-renew-root-result">
+				{{ renewRootResult }}
+			</p>
 		</div>
+
+		<CaRenewRootConfirmDialog
+			:open="renewRootOpen"
+			:busy="loading"
+			@update:open="renewRootOpen = $event"
+			@confirm="renewRoot" />
 	</CnSettingsSection>
 </template>
 
@@ -83,15 +105,18 @@ import { CnSettingsSection } from '@conduction/nextcloud-vue'
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton } from '@nextcloud/vue'
+import CaRenewRootConfirmDialog from '../../dialogs/CaRenewRootConfirmDialog.vue'
 
 export default {
 	name: 'CaHealthSection',
-	components: { NcButton, CnSettingsSection },
+	components: { NcButton, CnSettingsSection, CaRenewRootConfirmDialog },
 
 	data() {
 		return {
 			caStatus: null,
 			loading: false,
+			renewRootOpen: false,
+			renewRootResult: '',
 		}
 	},
 
@@ -171,6 +196,38 @@ export default {
 			await this.fetchStatus()
 			this.loading = false
 		},
+
+		/**
+		 * Admin action: renew the root certificate after the admin confirmed it
+		 * in the dialog. The server re-signs every active suite and answers
+		 * with the count, which is shown back so the admin sees the reach.
+		 *
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-ca-certificate-renewal
+		 */
+		async renewRoot() {
+			this.loading = true
+			this.renewRootResult = ''
+			try {
+				const response = await axios.post(
+					generateUrl('/apps/keepiq/api/v1/ca/renew-root'),
+				)
+				this.renewRootResult = this.t(
+					'keepiq',
+					'Root renewed. {n} encryption suites signed again.',
+					{ n: response.data?.resignedCount ?? 0 },
+				)
+				this.renewRootOpen = false
+				await this.fetchStatus()
+			} catch {
+				this.renewRootResult = this.t(
+					'keepiq',
+					'Could not renew the root certificate.',
+				)
+				this.renewRootOpen = false
+			} finally {
+				this.loading = false
+			}
+		},
 	},
 }
 </script>
@@ -200,6 +257,10 @@ export default {
 
 .ca-health__indicator--red {
 	background: var(--color-error-text);
+}
+
+.ca-health__result {
+	margin-top: 0.5rem;
 }
 
 .ca-health__indicator--grey {

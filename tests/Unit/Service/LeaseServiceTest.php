@@ -21,6 +21,7 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 
 use DateTime;
 use InvalidArgumentException;
+use OCA\Keepiq\Db\ApplicationLeasePolicy;
 use OCA\Keepiq\Db\ApplicationLeasePolicyMapper;
 use OCA\Keepiq\Db\MachineLease;
 use OCA\Keepiq\Db\MachineLeaseMapper;
@@ -248,4 +249,44 @@ class LeaseServiceTest extends TestCase {
 		$this->assertCount(1, $updated);
 		$this->assertSame('expired', $updated[0]->getStatus());
 	}//end testExpireDueTransitionsOnlyOverdue()
+
+	/**
+	 * With no override row the policy view reports nulls for the override
+	 * and the instance defaults as both instance and effective (keepiq#753).
+	 *
+	 * @return void
+	 */
+	public function testPolicyViewWithoutOverrideInheritsTheInstanceDefaults(): void {
+		$view = $this->service->policyView(applicationId: 'app-1');
+
+		$this->assertSame(['defaultTtl' => null, 'maxTtl' => null, 'renewable' => null], $view['override']);
+		$this->assertSame(['defaultTtl' => 900, 'maxTtl' => 86400, 'renewable' => true], $view['instance']);
+		$this->assertSame(900, $view['effective']['defaultTtl']);
+		$this->assertSame(86400, $view['effective']['maxTtl']);
+	}//end testPolicyViewWithoutOverrideInheritsTheInstanceDefaults()
+
+	/**
+	 * A stored override is reported field by field; an unset field stays
+	 * null so the form can show it as inherited.
+	 *
+	 * @return void
+	 */
+	public function testOverrideForReportsTheStoredFieldsAndKeepsInheritedOnesNull(): void {
+		$row = new ApplicationLeasePolicy();
+		$row->setApplicationId('app-1');
+		$row->setMaxTtlSeconds(1800);
+		$row->setRenewable(false);
+
+		$mapper = $this->createMock(originalClassName: ApplicationLeasePolicyMapper::class);
+		$mapper->method('findByApplication')->with('app-1')->willReturn($row);
+		$service = new LeasePolicyService(
+			policyMapper: $mapper,
+			appConfig: $this->createMock(originalClassName: IAppConfig::class),
+		);
+
+		$this->assertSame(
+			['defaultTtl' => null, 'maxTtl' => 1800, 'renewable' => false],
+			$service->overrideFor(applicationId: 'app-1')
+		);
+	}//end testOverrideForReportsTheStoredFieldsAndKeepsInheritedOnesNull()
 }//end class
