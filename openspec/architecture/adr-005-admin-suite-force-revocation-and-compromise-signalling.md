@@ -27,7 +27,8 @@ Application-owned suites additionally have no human owner who can produce a
 proof at all, so administrator revocation is their only revocation path.
 
 Revocation is destructive: `EncryptionSuiteRevokedListener` deletes the owner's
-inbound `ShareTarget`s, promotes their temporary delegations, and the emergency
+inbound `ShareTarget`s, promotes their temporary delegations (or, on a
+compromise, revokes them; see below), and the emergency
 listener clears their break-glass recovery envelopes; all secret reads are then
 refused.
 
@@ -99,6 +100,18 @@ recordable). No new column, no migration.
   revoke path (no migration; scope is the revoked suite itself).
 - When `false`, no cascade runs, and the UI shows a warning that the revoked
   user still knows these secrets and rotation may be warranted.
+
+**Temporary delegations on a compromise** (keepiq#817, decided 2 October 2026).
+Every revoke used to promote the revoked user's temporary delegations to
+permanent. On a `markCompromised: true` force-revoke, `EncryptionSuiteRevokedListener`
+now deletes those temporary delegations instead, and audits each removal as
+`share.delegation_reclaimed` with the administrator as actor. Permanent
+delegations are not touched. A temporary delegation is the cheapest foothold to
+create from a stolen session, and promoting it would make the foothold
+permanent during the incident response. The cost is that a legitimate stand-in
+loses delegated rights (they keep their own share) and has to be re-delegated
+by the re-onboarded owner. A revoke that is not marked compromised still
+promotes, as before.
 
 **Emergency access** is cleared unconditionally — revocation is authoritative —
 but the count of destroyed *usable* emergency contacts

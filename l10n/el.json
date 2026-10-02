@@ -1266,6 +1266,61 @@
         "Remove tag": "Αφαίρεση ετικέτας",
         "Add tag": "Προσθήκη ετικέτας",
         "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά.",
+        "Could not approve the application. It is still in the queue.": "Δεν ήταν δυνατή η έγκριση της αίτησης. Βρίσκεται ακόμη στην ουρά.",
+        "Could not reject the application. It is still in the queue.": "Δεν ήταν δυνατή η απόρριψη της αίτησης. Βρίσκεται ακόμη στην ουρά.",
+        "Removed the user from {count} team folders.": "Ο χρήστης αφαιρέθηκε από {count} φακέλους ομάδας.",
+        "Approve a share": "Έγκριση κοινής χρήσης",
+        "This approval link is incomplete. Open it again from the notification.": "Αυτός ο σύνδεσμος έγκρισης είναι ελλιπής. Ανοίξτε τον ξανά από την ειδοποίηση.",
+        "Deny": "Άρνηση",
+        "{user} joined a group you share a secret with. Share the secret with them too?": "Ο χρήστης {user} εντάχθηκε σε μια ομάδα με την οποία μοιράζεστε ένα μυστικό. Να μοιραστεί το μυστικό και μαζί του;",
+        "{requester} asks you to share a secret with {user}.": "Ο χρήστης {requester} σας ζητά να μοιραστείτε ένα μυστικό με τον χρήστη {user}.",
+        "Shared. The recipient can now open the secret.": "Κοινοποιήθηκε. Ο παραλήπτης μπορεί πλέον να ανοίξει το μυστικό.",
+        "The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.": "Ο παραλήπτης δεν έχει ρυθμίσει ακόμη το Keepiq, οπότε δεν κοινοποιήθηκε τίποτα. Δοκιμάστε ξανά όταν το κάνει.",
+        "Could not share the secret. Only its owner can approve this.": "Δεν ήταν δυνατή η κοινή χρήση του μυστικού. Μόνο ο κάτοχός του μπορεί να το εγκρίνει.",
+        "Could not share the secret. Try again.": "Δεν ήταν δυνατή η κοινή χρήση του μυστικού. Δοκιμάστε ξανά.",
+        "Denied. Nothing was shared.": "Απορρίφθηκε. Δεν κοινοποιήθηκε τίποτα.",
+        "Could not deny the request. Try again.": "Δεν ήταν δυνατή η άρνηση του αιτήματος. Δοκιμάστε ξανά.",
+        "%1$s asks you to share the secret \"%2$s\" with %3$s.": "Ο χρήστης %1$s σας ζητά να μοιραστείτε το μυστικό \"%2$s\" με τον χρήστη %3$s.",
+        "Expires on (optional)": "Λήγει στις (προαιρετικό)",
+        "Hand over to": "Παράδοση σε",
+        "Choose a recipient": "Επιλέξτε παραλήπτη",
+        "Hand over temporarily": "Προσωρινή παράδοση",
+        "Expiry rules": "Κανόνες λήξης",
+        "Set how long passwords of one item type or in one folder may live, and when to be reminded. When several dates apply, the earliest one counts.": "Ορίστε πόσο καιρό μπορούν να ισχύουν οι κωδικοί ενός τύπου στοιχείου ή ενός φακέλου και πότε θα λαμβάνετε υπενθύμιση. Όταν ισχύουν πολλές ημερομηνίες, μετράει η νωρίτερη.",
+        "Delete rule": "Διαγραφή κανόνα",
+        "Set by your administrator": "Ορίστηκε από τον διαχειριστή σας",
+        "No expiry rules yet.": "Δεν υπάρχουν ακόμη κανόνες λήξης.",
+        "Applies to": "Ισχύει για",
+        "Item type": "Τύπος στοιχείου",
+        "Maximum age in days (empty for reminders only)": "Μέγιστη ηλικία σε ημέρες (κενό μόνο για υπενθυμίσεις)",
+        "Remind me this many days before, comma separated": "Υπενθύμιση τόσες ημέρες πριν, χωρισμένες με κόμμα",
+        "Save rule": "Αποθήκευση κανόνα",
+        "An item type": "Ένας τύπος στοιχείου",
+        "A folder": "Ένας φάκελος",
+        "Folder {name}": "Φάκελος {name}",
+        "Type {name}": "Τύπος {name}",
+        "Expires after {days} days": "Λήγει μετά από {days} ημέρες",
+        "Reminders {days} days before": "Υπενθυμίσεις {days} ημέρες πριν",
+        "Could not save the expiry rule.": "Δεν ήταν δυνατή η αποθήκευση του κανόνα λήξης.",
+        "Could not delete the expiry rule.": "Δεν ήταν δυνατή η διαγραφή του κανόνα λήξης.",
+        "All statuses": "Όλες οι καταστάσεις",
+        "Compromised": "Παραβιασμένη",
+        "Could not load the members.": "Δεν ήταν δυνατή η φόρτωση των μελών.",
+        "Emergency contact": "Επαφή έκτακτης ανάγκης",
+        "Leaving user": "Αποχωρών χρήστης",
+        "No": "Όχι",
+        "No users match this filter.": "Κανένας χρήστης δεν ταιριάζει σε αυτό το φίλτρο.",
+        "Not set up": "Δεν έχει ρυθμιστεί",
+        "Revoke suite": "Ανάκληση σουίτας",
+        "Revoked": "Ανακλήθηκε",
+        "Search users": "Αναζήτηση χρηστών",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Δείτε ποιοι χρήστες έχουν ρυθμίσει θησαυροφυλάκιο. Ξεκινήστε την αποχώρηση ή ανακαλέστε μια σουίτα από μια γραμμή.",
+        "Successor": "Διάδοχος",
+        "Team folders": "Φάκελοι ομάδας",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Ο χρήστης είναι ακόμη στην ομάδα {groups}, που είναι μέλος φακέλου ομάδας. Αφαιρέστε τον από την ομάδα ή απενεργοποιήστε τον λογαριασμό.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Ο χρήστης είναι ακόμη στις ομάδες {groups}, που είναι μέλη φακέλων ομάδας. Αφαιρέστε τον από τις ομάδες ή απενεργοποιήστε τον λογαριασμό.",
+        "Vault status": "Κατάσταση θησαυροφυλακίου",
+        "Yes": "Ναι",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Μια εξαγωγή CXF ΔΕΝ ΕΙΝΑΙ ΚΡΥΠΤΟΓΡΑΦΗΜΕΝΗ. Κάθε κωδικός πρόσβασης και σύνδεση θα είναι αναγνώσιμα ως απλό κείμενο στο αρχείο που κατεβάζετε. Αποθηκεύστε το με ασφάλεια και διαγράψτε το αμέσως μετά τη χρήση.",
         "Root certificate expiring soon": "Το πιστοποιητικό ρίζας λήγει σύντομα",
         "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Το πιστοποιητικό ρίζας του θησαυροφυλακίου λήγει σε %1$d ημέρα(ες). Ανανεώστε το πριν από τότε. Η ανανέωση υπογράφει ξανά κάθε σουίτα κρυπτογράφησης.",
@@ -1308,43 +1363,6 @@
         "Revoking the second suite deleted %n emergency-access contact.": "Η ανάκληση της δεύτερης σουίτας διέγραψε %n επαφή πρόσβασης έκτακτης ανάγκης.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Η ανάκληση της δεύτερης σουίτας διέγραψε %n επαφές πρόσβασης έκτακτης ανάγκης.",
         "A suite revoked as compromised cannot be reinstated.": "Μια σουίτα που ανακλήθηκε ως παραβιασμένη δεν μπορεί να αποκατασταθεί.",
-        "Could not approve the application. It is still in the queue.": "Δεν ήταν δυνατή η έγκριση της αίτησης. Βρίσκεται ακόμη στην ουρά.",
-        "Could not reject the application. It is still in the queue.": "Δεν ήταν δυνατή η απόρριψη της αίτησης. Βρίσκεται ακόμη στην ουρά.",
-        "Removed the user from {count} team folders.": "Ο χρήστης αφαιρέθηκε από {count} φακέλους ομάδας.",
-        "Approve a share": "Έγκριση κοινής χρήσης",
-        "This approval link is incomplete. Open it again from the notification.": "Αυτός ο σύνδεσμος έγκρισης είναι ελλιπής. Ανοίξτε τον ξανά από την ειδοποίηση.",
-        "Deny": "Άρνηση",
-        "{user} joined a group you share a secret with. Share the secret with them too?": "Ο χρήστης {user} εντάχθηκε σε μια ομάδα με την οποία μοιράζεστε ένα μυστικό. Να μοιραστεί το μυστικό και μαζί του;",
-        "{requester} asks you to share a secret with {user}.": "Ο χρήστης {requester} σας ζητά να μοιραστείτε ένα μυστικό με τον χρήστη {user}.",
-        "Shared. The recipient can now open the secret.": "Κοινοποιήθηκε. Ο παραλήπτης μπορεί πλέον να ανοίξει το μυστικό.",
-        "The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.": "Ο παραλήπτης δεν έχει ρυθμίσει ακόμη το Keepiq, οπότε δεν κοινοποιήθηκε τίποτα. Δοκιμάστε ξανά όταν το κάνει.",
-        "Could not share the secret. Only its owner can approve this.": "Δεν ήταν δυνατή η κοινή χρήση του μυστικού. Μόνο ο κάτοχός του μπορεί να το εγκρίνει.",
-        "Could not share the secret. Try again.": "Δεν ήταν δυνατή η κοινή χρήση του μυστικού. Δοκιμάστε ξανά.",
-        "Denied. Nothing was shared.": "Απορρίφθηκε. Δεν κοινοποιήθηκε τίποτα.",
-        "Could not deny the request. Try again.": "Δεν ήταν δυνατή η άρνηση του αιτήματος. Δοκιμάστε ξανά.",
-        "%1$s asks you to share the secret \"%2$s\" with %3$s.": "Ο χρήστης %1$s σας ζητά να μοιραστείτε το μυστικό \"%2$s\" με τον χρήστη %3$s.",
-        "Expires on (optional)": "Λήγει στις (προαιρετικό)",
-        "Hand over to": "Παράδοση σε",
-        "Choose a recipient": "Επιλέξτε παραλήπτη",
-        "Hand over temporarily": "Προσωρινή παράδοση",
-        "Expiry rules": "Κανόνες λήξης",
-        "Set how long passwords of one item type or in one folder may live, and when to be reminded. When several dates apply, the earliest one counts.": "Ορίστε πόσο καιρό μπορούν να ισχύουν οι κωδικοί ενός τύπου στοιχείου ή ενός φακέλου και πότε θα λαμβάνετε υπενθύμιση. Όταν ισχύουν πολλές ημερομηνίες, μετράει η νωρίτερη.",
-        "Delete rule": "Διαγραφή κανόνα",
-        "Set by your administrator": "Ορίστηκε από τον διαχειριστή σας",
-        "No expiry rules yet.": "Δεν υπάρχουν ακόμη κανόνες λήξης.",
-        "Applies to": "Ισχύει για",
-        "Item type": "Τύπος στοιχείου",
-        "Maximum age in days (empty for reminders only)": "Μέγιστη ηλικία σε ημέρες (κενό μόνο για υπενθυμίσεις)",
-        "Remind me this many days before, comma separated": "Υπενθύμιση τόσες ημέρες πριν, χωρισμένες με κόμμα",
-        "Save rule": "Αποθήκευση κανόνα",
-        "An item type": "Ένας τύπος στοιχείου",
-        "A folder": "Ένας φάκελος",
-        "Folder {name}": "Φάκελος {name}",
-        "Type {name}": "Τύπος {name}",
-        "Expires after {days} days": "Λήγει μετά από {days} ημέρες",
-        "Reminders {days} days before": "Υπενθυμίσεις {days} ημέρες πριν",
-        "Could not save the expiry rule.": "Δεν ήταν δυνατή η αποθήκευση του κανόνα λήξης.",
-        "Could not delete the expiry rule.": "Δεν ήταν δυνατή η διαγραφή του κανόνα λήξης.",
         "Archives to keep": "Αρχεία προς διατήρηση",
         "Back up every vault automatically": "Αυτόματο αντίγραφο κάθε θησαυροφυλακίου",
         "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Δημιουργήστε αντίγραφο κάθε θησαυροφυλακίου βάσει προγράμματος. Τα αρχεία περιέχουν μόνο κρυπτοκείμενο και επαναφέρονται με occ.",
@@ -1355,13 +1373,11 @@
         "Every (hours)": "Κάθε (ώρες)",
         "Last backup {when} failed: {error}": "Το τελευταίο αντίγραφο {when} απέτυχε: {error}",
         "Last backup {when} succeeded.": "Το τελευταίο αντίγραφο {when} ολοκληρώθηκε.",
-        "No": "Όχι",
         "No archives yet.": "Δεν υπάρχουν ακόμη αρχεία.",
         "Size": "Μέγεθος",
         "Vault backups": "Αντίγραφα θησαυροφυλακίου",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Με κλειδί, κάθε αρχείο κρυπτογραφείται για αυτό. Κρατήστε το ιδιωτικό κλειδί εκτός αυτού του διακομιστή: το χρειάζεστε για έλεγχο ή επαναφορά.",
         "Written": "Γράφτηκε",
-        "Yes": "Ναι",
         "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n χρήστης στο πεδίο εφαρμογής δεν έχει ακόμη σύνδεση δύο παραγόντων και δεν μπορεί να ανοίξει το θησαυροφυλάκιο όσο αυτό είναι ενεργό.",
         "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n χρήστες στο πεδίο εφαρμογής δεν έχουν ακόμη σύνδεση δύο παραγόντων και δεν μπορούν να ανοίξουν το θησαυροφυλάκιο όσο αυτό είναι ενεργό.",
         "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Οι κωδικοί ανάκτησης δεν μετρούν. Αν οι χρήστες σας συνδέονται μέσω παρόχου ταυτότητας με δικό του δεύτερο παράγοντα, εξαιρέστε τις ομάδες τους.",
@@ -1442,6 +1458,126 @@
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Διαγράψατε αυτό το μυστικό εκτός σύνδεσης, αλλά στο μεταξύ άλλαξε στον διακομιστή. Επιλέξτε ποια έκδοση θα κρατήσετε.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Τα κλειδιά σας άλλαξαν σε άλλη συσκευή. Εισαγάγετε τον προηγούμενο κύριο κωδικό για να συγχρονίσετε τις αλλαγές εκτός σύνδεσης, ή απορρίψτε τις.",
         "Your offline change": "Η αλλαγή σας εκτός σύνδεσης",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n επαφή έκτακτης ανάγκης είχε εκκρεμές αίτημα πρόσβασης όταν η εναλλαγή κλειδιού την αφαίρεσε. Ελέγξτε ποιος το ζήτησε πριν προσθέσετε ξανά κάποιον.",
+            "%n επαφές έκτακτης ανάγκης είχαν εκκρεμές αίτημα πρόσβασης όταν η εναλλαγή κλειδιού τις αφαίρεσε. Ελέγξτε ποιος το ζήτησε πριν προσθέσετε ξανά κάποιον."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n στοιχείο δεν μπορεί να αναπαρασταθεί σε CXF και θα παραλειφθεί.",
+            "%n στοιχεία δεν μπορούν να αναπαρασταθούν σε CXF και θα παραλειφθούν."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n παλαιότερη έκδοση απορρίφθηκε, επειδή μόνο το πρόσφατο ιστορικό μπορεί να μεταφερθεί.",
+            "%n παλαιότερες εκδόσεις απορρίφθηκαν, επειδή μόνο το πρόσφατο ιστορικό μπορεί να μεταφερθεί."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n αντίγραφο μυστικού πρέπει ακόμη να κρυπτογραφηθεί και να κοινοποιηθεί.",
+            "%n αντίγραφα μυστικών πρέπει ακόμη να κρυπτογραφηθούν και να κοινοποιηθούν."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n μυστικό δεν ήταν δυνατό να αποκρυπτογραφηθεί και δεν περιλαμβάνεται σε αυτή την εξαγωγή.",
+            "%n μυστικά δεν ήταν δυνατό να αποκρυπτογραφηθούν και δεν περιλαμβάνονται σε αυτή την εξαγωγή."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n μυστικό δεν μπόρεσε να αποκρυπτογραφηθεί με το παλιό σας κλειδί, γι' αυτό δεν μεταφέρθηκε.",
+            "%n μυστικά δεν μπόρεσαν να αποκρυπτογραφηθούν με το παλιό σας κλειδί, γι' αυτό δεν μεταφέρθηκαν."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n μυστικό δεν μεταφέρθηκε.",
+            "%n μυστικά δεν μεταφέρθηκαν."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n μυστικό είναι ακόμη κρυπτογραφημένο με το προηγούμενο κλειδί σας.",
+            "%n μυστικά είναι ακόμη κρυπτογραφημένα με το προηγούμενο κλειδί σας."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n μυστικό παραλείφθηκε επειδή ο διάδοχος δεν έχει ακόμη αντίγραφο — προσθέστε τον διάδοχο στον φάκελο και εκτελέστε ξανά.",
+            "%n μυστικά παραλείφθηκαν επειδή ο διάδοχος δεν έχει ακόμη αντίγραφο — προσθέστε τον διάδοχο στον φάκελο και εκτελέστε ξανά."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n μυστικό",
+            "%n μυστικά"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n χρήστης στο πεδίο εφαρμογής δεν έχει ακόμη σύνδεση δύο παραγόντων και δεν μπορεί να ανοίξει το θησαυροφυλάκιο όσο αυτό είναι ενεργό.",
+            "%n χρήστες στο πεδίο εφαρμογής δεν έχουν ακόμη σύνδεση δύο παραγόντων και δεν μπορούν να ανοίξουν το θησαυροφυλάκιο όσο αυτό είναι ενεργό."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Ολοκλήρωση παρ' όλα αυτά, με απώλεια πρόσβασης σε %n μυστικό",
+            "Ολοκλήρωση παρ' όλα αυτά, με απώλεια πρόσβασης σε %n μυστικά"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n νέο μέλος πήρε πρόσβαση σε φάκελο ομάδας.",
+            "%n νέα μέλη πήραν πρόσβαση σε φάκελο ομάδας."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Η εναλλαγή κλειδιού ολοκληρώθηκε. %n μυστικό επανακρυπτογραφήθηκε με το νέο σας κλειδί.",
+            "Η εναλλαγή κλειδιού ολοκληρώθηκε. %n μυστικά επανακρυπτογραφήθηκαν με το νέο σας κλειδί."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Η ανάκληση της δεύτερης σουίτας διέγραψε %n επαφή πρόσβασης έκτακτης ανάγκης.",
+            "Η ανάκληση της δεύτερης σουίτας διέγραψε %n επαφές πρόσβασης έκτακτης ανάγκης."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Η ανάκληση αυτής της σουίτας διέγραψε %n επαφή πρόσβασης έκτακτης ανάγκης.",
+            "Η ανάκληση αυτής της σουίτας διέγραψε %n επαφές πρόσβασης έκτακτης ανάγκης."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "εμφανίστηκε %n φορά σε παραβιάσεις",
+            "εμφανίστηκε %n φορές σε παραβιάσεις"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "κοινοποιημένο σε %n μυστικό",
+            "κοινοποιημένο σε %n μυστικά"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Αυτός ο φάκελος περιέχει %n μυστικό άμεσα.",
+            "Αυτός ο φάκελος περιέχει %n μυστικά άμεσα."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Η εναλλαγή κλειδιού αφαίρεσε %n επαφή έκτακτης ανάγκης. Ελέγξτε την Πρόσβαση έκτακτης ανάγκης και προσθέστε την ξανά, αν τη θέλετε ακόμα.",
+            "Η εναλλαγή κλειδιού αφαίρεσε %n επαφές έκτακτης ανάγκης. Ελέγξτε την Πρόσβαση έκτακτης ανάγκης και προσθέστε τις ξανά, αν τις θέλετε ακόμα."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n αλλαγή περιμένει συγχρονισμό",
+            "%n αλλαγές περιμένουν συγχρονισμό"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Ο χρήστης είναι ακόμη στην ομάδα {groups}, που είναι μέλος φακέλου ομάδας. Αφαιρέστε τον από την ομάδα ή απενεργοποιήστε τον λογαριασμό.",
+            "Ο χρήστης είναι ακόμη στις ομάδες {groups}, που είναι μέλη φακέλων ομάδας. Αφαιρέστε τον από τις ομάδες ή απενεργοποιήστε τον λογαριασμό."
+        ],
+        "Allow approval from another device": "Να επιτρέπεται η έγκριση από άλλη συσκευή",
+        "App": "Εφαρμογή",
+        "Approve a new device": "Έγκριση νέας συσκευής",
+        "Approve from another device": "Έγκριση από άλλη συσκευή",
+        "Asked at": "Ζητήθηκε στις",
+        "Check that the new device shows these words:": "Ελέγξτε ότι η νέα συσκευή εμφανίζει αυτές τις λέξεις:",
+        "Denied. If you did not ask, end your other sessions:": "Απορρίφθηκε. Αν δεν το ζητήσατε εσείς, τερματίστε τις άλλες συνεδρίες σας:",
+        "Device": "Συσκευή",
+        "IP address": "Διεύθυνση IP",
+        "Let users unlock a new browser by approving it from a device where Keepiq is already unlocked.": "Επιτρέψτε στους χρήστες να ξεκλειδώνουν ένα νέο πρόγραμμα περιήγησης εγκρίνοντάς το από μια συσκευή όπου το Keepiq είναι ήδη ξεκλείδωτο.",
+        "New device approval": "Έγκριση νέων συσκευών",
+        "Nextcloud security settings": "Ρυθμίσεις ασφαλείας Nextcloud",
+        "Only approve a device you are using right now.": "Εγκρίνετε μόνο μια συσκευή που χρησιμοποιείτε αυτή τη στιγμή.",
+        "Open Keepiq on a device where it is unlocked and approve this one. Check that it shows the same words:": "Ανοίξτε το Keepiq σε μια συσκευή όπου είναι ξεκλείδωτο και εγκρίνετε αυτή τη συσκευή. Ελέγξτε ότι εμφανίζει τις ίδιες λέξεις:",
+        "The approving device seals the unlock key to the new device. The server only passes it on and cannot open it.": "Η συσκευή που εγκρίνει σφραγίζει το κλειδί ξεκλειδώματος για τη νέα συσκευή. Ο διακομιστής απλώς το μεταβιβάζει και δεν μπορεί να το ανοίξει.",
+        "The master password is not right, or the request has ended.": "Ο κύριος κωδικός πρόσβασης δεν είναι σωστός ή το αίτημα έχει λήξει.",
+        "The request expired. Ask again or use your master password.": "Το αίτημα έληξε. Ζητήστε ξανά ή χρησιμοποιήστε τον κύριο κωδικό πρόσβασης.",
+        "The request was denied.": "Το αίτημα απορρίφθηκε.",
+        "Too many requests. Try again in an hour or use your master password.": "Πάρα πολλά αιτήματα. Δοκιμάστε ξανά σε μία ώρα ή χρησιμοποιήστε τον κύριο κωδικό πρόσβασης.",
+        "Unknown device": "Άγνωστη συσκευή",
+        "Web app": "Εφαρμογή ιστού",
+        "A device": "Μια συσκευή",
+        "A new device asks to open your vault": "Μια νέα συσκευή ζητά να ανοίξει το θησαυροφυλάκιό σας",
+        "%s asks to be approved. Only approve a device you are using right now.": "%s ζητά έγκριση. Εγκρίνετε μόνο μια συσκευή που χρησιμοποιείτε αυτή τη στιγμή.",
         "Type the suite ID again to confirm": "Πληκτρολογήστε ξανά το αναγνωριστικό σουίτας για επιβεβαίωση",
         "This does not match the suite ID.": "Δεν ταιριάζει με το αναγνωριστικό σουίτας."
     },

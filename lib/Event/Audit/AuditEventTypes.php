@@ -193,6 +193,13 @@ final class AuditEventTypes {
 	// high-severity tripwire marker; channel only, never secret data.
 	public const HONEY_ACCESSED = 'honey.accessed';
 
+	// New device approval (crypto-new-device-approval D5), identifiers only.
+	public const DEVICE_APPROVAL_REQUESTED = 'device_approval.requested';
+	public const DEVICE_APPROVAL_APPROVED = 'device_approval.approved';
+	public const DEVICE_APPROVAL_DENIED = 'device_approval.denied';
+	public const DEVICE_APPROVAL_EXPIRED = 'device_approval.expired';
+	public const DEVICE_APPROVAL_PICKED_UP = 'device_approval.picked_up';
+
 	/**
 	 * Metadata keys that MUST NEVER appear in any audit entry, in any position.
 	 * Recording any of these is rejected with an exception — defense in depth so
@@ -310,7 +317,15 @@ final class AuditEventTypes {
 		self::TEAM_FOLDER_UNSHARED => ['folderId', 'revokedCount'],
 		self::TEAM_FOLDER_MEMBER_ADDED => ['memberType', 'memberId'],
 		self::TEAM_FOLDER_MEMBER_REMOVED => ['memberType', 'memberId', 'revokedCount'],
-		self::TEAM_FOLDER_OFFBOARDED => ['leavingUserId', 'successorUserId', 'revokedCount', 'transferredCount'],
+		self::TEAM_FOLDER_OFFBOARDED => [
+			'leavingUserId',
+			'successorUserId',
+			'revokedCount',
+			'transferredCount',
+			// Member offboarding (admin-member-overview-and-offboarding §1.3): counts and group ids only.
+			'membershipsRemovedCount',
+			'coveringGroupIds',
+		],
 		// Grade changes — identifiers + the new grade only (§3.3).
 		self::TEAM_FOLDER_GRADE_CHANGED => ['memberType', 'memberId', 'grade'],
 		// Automatic confirmation: counts only, the actor is the confirmer.
@@ -325,6 +340,11 @@ final class AuditEventTypes {
 		self::CERTIFICATE_RENEWAL_MARKED => [],
 		// Honey tripwire — the access channel only (§D6).
 		self::HONEY_ACCESSED => ['channel'],
+		self::DEVICE_APPROVAL_REQUESTED => ['clientKind'],
+		self::DEVICE_APPROVAL_APPROVED => [],
+		self::DEVICE_APPROVAL_DENIED => [],
+		self::DEVICE_APPROVAL_EXPIRED => [],
+		self::DEVICE_APPROVAL_PICKED_UP => [],
 	];
 
 	/**

@@ -400,6 +400,9 @@
 				</p>
 			</template>
 		</CnAppRoot>
+		<!-- New device approval (crypto-new-device-approval D3): an unlocked
+		     vault answers requests from the user's other devices. -->
+		<DeviceApprovalDialog :active="!isLocked && offlineStore.online" />
 	</div>
 </template>
 
@@ -432,6 +435,7 @@ import PasskeyManager from './components/PasskeyManager.vue'
 import SecretDetailSidebar from './components/SecretDetailSidebar.vue'
 import DefaultsSection from './components/settings/DefaultsSection.vue'
 import ExpiryPoliciesSection from './components/settings/ExpiryPoliciesSection.vue'
+import DeviceApprovalDialog from './dialogs/DeviceApprovalDialog.vue'
 import {
 	handleLockTransition,
 	isPublicRoute,
@@ -461,6 +465,7 @@ export default {
 
 	components: {
 		CnAppRoot,
+		DeviceApprovalDialog,
 		NcAppSettingsSection,
 		NcButton,
 		NcEmptyContent,

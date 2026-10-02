@@ -17,92 +17,15 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { deriveAesKeyArgon2id } from '../../crypto/argon2.js'
-
-const IV_LENGTH = 12
-
-/**
- * Base64-encode bytes.
- *
- * @param {Uint8Array} bytes The bytes.
- * @return {string}
- */
-function toBase64(bytes) {
-	let binary = ''
-	for (const b of bytes) {
-		binary += String.fromCharCode(b)
-	}
-	return btoa(binary)
-}
-
-/**
- * Base64-decode to bytes.
- *
- * @param {string} base64 The base64 string.
- * @return {Uint8Array}
- */
-function fromBase64(base64) {
-	const binary = atob(base64)
-	const bytes = new Uint8Array(binary.length)
-	for (let i = 0; i < binary.length; i++) {
-		bytes[i] = binary.charCodeAt(i)
-	}
-	return bytes
-}
-
-/**
- * URL-fragment-safe base64url encode/decode for the content key.
- *
- * @param {Uint8Array} bytes The bytes.
- * @return {string}
- */
-function toBase64Url(bytes) {
-	return toBase64(bytes).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-}
-
-/**
- * Decode a base64url fragment key.
- *
- * @param {string} base64url The base64url string.
- * @return {Uint8Array}
- */
-function fromBase64Url(base64url) {
-	const base64 = base64url.replace(/-/g, '+').replace(/_/g, '/')
-	return fromBase64(base64 + '='.repeat((4 - (base64.length % 4)) % 4))
-}
-
-/**
- * AES-256-GCM encrypt with an IV-prefixed base64 result.
- *
- * @param {CryptoKey} key The AES key.
- * @param {Uint8Array} plaintext The plaintext bytes.
- * @return {Promise<string>} base64(IV||ciphertext).
- */
-async function aesEncrypt(key, plaintext) {
-	const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH))
-	const ciphertext = new Uint8Array(
-		await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, plaintext),
-	)
-	const combined = new Uint8Array(iv.length + ciphertext.length)
-	combined.set(iv, 0)
-	combined.set(ciphertext, iv.length)
-	return toBase64(combined)
-}
-
-/**
- * AES-256-GCM decrypt an IV-prefixed base64 blob.
- *
- * @param {CryptoKey} key The AES key.
- * @param {string} blob base64(IV||ciphertext).
- * @return {Promise<Uint8Array>} The plaintext bytes.
- */
-async function aesDecrypt(key, blob) {
-	const combined = fromBase64(blob)
-	const iv = combined.slice(0, IV_LENGTH)
-	const ciphertext = combined.slice(IV_LENGTH)
-	return new Uint8Array(
-		await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, ciphertext),
-	)
-}
+import {
+	aesDecrypt,
+	aesEncrypt,
+	fromBase64,
+	fromBase64Url,
+	sealPayload,
+	sendLink,
+	toBase64,
+} from '../../send/sendCrypto.js'
 
 export const useEphemeralSendStore = defineStore('ephemeralSend', {
 	state: () => ({
@@ -129,18 +52,7 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-create-a-standalone-ephemeral-send
 		 */
 		async createSend({ payload, payloadType, maxViews, ttlSeconds, password }) {
-			const contentKey = await crypto.subtle.generateKey(
-				{ name: 'AES-GCM', length: 256 },
-				true,
-				['encrypt', 'decrypt'],
-			)
-			const rawKey = new Uint8Array(
-				await crypto.subtle.exportKey('raw', contentKey),
-			)
-			const encryptedPayload = await aesEncrypt(
-				contentKey,
-				new TextEncoder().encode(payload),
-			)
+			const { encryptedPayload, rawKey } = await sealPayload(payload)
 
 			const body = {
 				encryptedPayload,
@@ -166,17 +78,14 @@ export const useEphemeralSendStore = defineStore('ephemeralSend', {
 			// The /public shell serves the SPA as #[PublicPage] so an
 			// account-less recipient reaches the access route. A PATH, not
 			// a hash route: the router is createWebHistory and never reads
-			// the fragment (the fragment is reserved for the key below).
-			const base =
-				window.location.origin
-				+ generateUrl('/apps/keepiq/public')
-				+ '/send/'
-				+ encodeURIComponent(token)
-			// Fragment-mode: the content key NEVER reaches the server — it
-			// rides in the URL fragment (`#k=`), which the browser does not
-			// transmit. A real `?k=` query would be sent (and logged) on
-			// every load of the link.
-			return password !== '' ? base : `${base}#k=${toBase64Url(rawKey)}`
+			// the fragment (the fragment is reserved for the key). The key
+			// rides the fragment only without a password; it never reaches
+			// the server either way.
+			return sendLink(
+				window.location.origin + generateUrl('/apps/keepiq/public'),
+				token,
+				password !== '' ? null : rawKey,
+			)
 		},
 
 		/**

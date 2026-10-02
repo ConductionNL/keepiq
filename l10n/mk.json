@@ -1266,6 +1266,61 @@
         "Remove tag": "Отстрани ознака",
         "Add tag": "Додај ознака",
         "Could not change the tags. Try again.": "Ознаките не можеа да се променат. Обидете се повторно.",
+        "Could not approve the application. It is still in the queue.": "Апликацијата не може да се одобри. Сè уште е во редицата.",
+        "Could not reject the application. It is still in the queue.": "Апликацијата не може да се одбие. Сè уште е во редицата.",
+        "Removed the user from {count} team folders.": "Корисникот е отстранет од {count} тимски папки.",
+        "Approve a share": "Одобри споделување",
+        "This approval link is incomplete. Open it again from the notification.": "Оваа врска за одобрување е нецелосна. Отворете ја повторно од известувањето.",
+        "Deny": "Одбиј",
+        "{user} joined a group you share a secret with. Share the secret with them too?": "{user} се приклучи на група со која споделувате тајна. Да ја споделите тајната и со него?",
+        "{requester} asks you to share a secret with {user}.": "{requester} бара од вас да споделите тајна со {user}.",
+        "Shared. The recipient can now open the secret.": "Споделено. Примачот сега може да ја отвори тајната.",
+        "The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.": "Примачот сè уште не го поставил Keepiq, па ништо не е споделено. Обидете се повторно откако ќе го постави.",
+        "Could not share the secret. Only its owner can approve this.": "Тајната не може да се сподели. Само нејзиниот сопственик може да го одобри ова.",
+        "Could not share the secret. Try again.": "Тајната не може да се сподели. Обидете се повторно.",
+        "Denied. Nothing was shared.": "Одбиено. Ништо не е споделено.",
+        "Could not deny the request. Try again.": "Барањето не може да се одбие. Обидете се повторно.",
+        "%1$s asks you to share the secret \"%2$s\" with %3$s.": "%1$s бара од вас да ја споделите тајната \"%2$s\" со %3$s.",
+        "Expires on (optional)": "Истекува на (по избор)",
+        "Hand over to": "Предај на",
+        "Choose a recipient": "Изберете примач",
+        "Hand over temporarily": "Предај привремено",
+        "Expiry rules": "Правила за истекување",
+        "Set how long passwords of one item type or in one folder may live, and when to be reminded. When several dates apply, the earliest one counts.": "Поставете колку долго смеат да важат лозинките од еден тип ставка или во една папка и кога да добиете потсетник. Кога важат повеќе датуми, се смета најраниот.",
+        "Delete rule": "Избриши правило",
+        "Set by your administrator": "Поставено од вашиот администратор",
+        "No expiry rules yet.": "Сè уште нема правила за истекување.",
+        "Applies to": "Се однесува на",
+        "Item type": "Тип на ставка",
+        "Maximum age in days (empty for reminders only)": "Максимална старост во денови (празно само за потсетници)",
+        "Remind me this many days before, comma separated": "Потсети ме толку денови пред, одвоени со запирка",
+        "Save rule": "Зачувај правило",
+        "An item type": "Тип на ставка",
+        "A folder": "Папка",
+        "Folder {name}": "Папка {name}",
+        "Type {name}": "Тип {name}",
+        "Expires after {days} days": "Истекува по {days} дена",
+        "Reminders {days} days before": "Потсетници {days} дена пред",
+        "Could not save the expiry rule.": "Правилото за истекување не може да се зачува.",
+        "Could not delete the expiry rule.": "Правилото за истекување не може да се избрише.",
+        "All statuses": "Сите статуси",
+        "Compromised": "Компромитиран",
+        "Could not load the members.": "Членовите не може да се вчитаат.",
+        "Emergency contact": "Контакт за итни случаи",
+        "Leaving user": "Корисник што заминува",
+        "No": "Не",
+        "No users match this filter.": "Ниеден корисник не одговара на овој филтер.",
+        "Not set up": "Не е поставено",
+        "Revoke suite": "Отповикај пакет",
+        "Revoked": "Отповикан",
+        "Search users": "Пребарај корисници",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Видете кои корисници поставиле сеф. Започнете одјавување или отповикајте пакет од ред.",
+        "Successor": "Наследник",
+        "Team folders": "Тимски папки",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Корисникот е сè уште во групата {groups}, која е членка на тимска папка. Отстранете го од групата или оневозможете ја сметката.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Корисникот е сè уште во групите {groups}, кои се членки на тимски папки. Отстранете го од групите или оневозможете ја сметката.",
+        "Vault status": "Статус на сефот",
+        "Yes": "Да",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Извозот во CXF НЕ Е ШИФРИРАН. Секоја лозинка и најава ќе биде читлива како отворен текст во преземената датотека. Чувајте ја безбедно и избришете ја веднаш по употребата.",
         "Root certificate expiring soon": "Коренскиот сертификат наскоро истекува",
         "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Коренскиот сертификат на сефот истекува за %1$d ден(а). Обновете го пред тоа. Обновувањето повторно го потпишува секој пакет за шифрирање.",
@@ -1308,43 +1363,6 @@
         "Revoking the second suite deleted %n emergency-access contact.": "Отповикувањето на вториот пакет избриша %n контакт за итен пристап.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Отповикувањето на вториот пакет избриша %n контакти за итен пристап.",
         "A suite revoked as compromised cannot be reinstated.": "Пакет отповикан како компромитиран не може да се врати.",
-        "Could not approve the application. It is still in the queue.": "Апликацијата не може да се одобри. Сè уште е во редицата.",
-        "Could not reject the application. It is still in the queue.": "Апликацијата не може да се одбие. Сè уште е во редицата.",
-        "Removed the user from {count} team folders.": "Корисникот е отстранет од {count} тимски папки.",
-        "Approve a share": "Одобри споделување",
-        "This approval link is incomplete. Open it again from the notification.": "Оваа врска за одобрување е нецелосна. Отворете ја повторно од известувањето.",
-        "Deny": "Одбиј",
-        "{user} joined a group you share a secret with. Share the secret with them too?": "{user} се приклучи на група со која споделувате тајна. Да ја споделите тајната и со него?",
-        "{requester} asks you to share a secret with {user}.": "{requester} бара од вас да споделите тајна со {user}.",
-        "Shared. The recipient can now open the secret.": "Споделено. Примачот сега може да ја отвори тајната.",
-        "The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.": "Примачот сè уште не го поставил Keepiq, па ништо не е споделено. Обидете се повторно откако ќе го постави.",
-        "Could not share the secret. Only its owner can approve this.": "Тајната не може да се сподели. Само нејзиниот сопственик може да го одобри ова.",
-        "Could not share the secret. Try again.": "Тајната не може да се сподели. Обидете се повторно.",
-        "Denied. Nothing was shared.": "Одбиено. Ништо не е споделено.",
-        "Could not deny the request. Try again.": "Барањето не може да се одбие. Обидете се повторно.",
-        "%1$s asks you to share the secret \"%2$s\" with %3$s.": "%1$s бара од вас да ја споделите тајната \"%2$s\" со %3$s.",
-        "Expires on (optional)": "Истекува на (по избор)",
-        "Hand over to": "Предај на",
-        "Choose a recipient": "Изберете примач",
-        "Hand over temporarily": "Предај привремено",
-        "Expiry rules": "Правила за истекување",
-        "Set how long passwords of one item type or in one folder may live, and when to be reminded. When several dates apply, the earliest one counts.": "Поставете колку долго смеат да важат лозинките од еден тип ставка или во една папка и кога да добиете потсетник. Кога важат повеќе датуми, се смета најраниот.",
-        "Delete rule": "Избриши правило",
-        "Set by your administrator": "Поставено од вашиот администратор",
-        "No expiry rules yet.": "Сè уште нема правила за истекување.",
-        "Applies to": "Се однесува на",
-        "Item type": "Тип на ставка",
-        "Maximum age in days (empty for reminders only)": "Максимална старост во денови (празно само за потсетници)",
-        "Remind me this many days before, comma separated": "Потсети ме толку денови пред, одвоени со запирка",
-        "Save rule": "Зачувај правило",
-        "An item type": "Тип на ставка",
-        "A folder": "Папка",
-        "Folder {name}": "Папка {name}",
-        "Type {name}": "Тип {name}",
-        "Expires after {days} days": "Истекува по {days} дена",
-        "Reminders {days} days before": "Потсетници {days} дена пред",
-        "Could not save the expiry rule.": "Правилото за истекување не може да се зачува.",
-        "Could not delete the expiry rule.": "Правилото за истекување не може да се избрише.",
         "Archives to keep": "Архиви за чување",
         "Back up every vault automatically": "Автоматски направи резервна копија на секој сеф",
         "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Правете резервна копија на секој сеф според распоред. Архивите содржат само шифриран текст и се враќаат со occ.",
@@ -1355,13 +1373,11 @@
         "Every (hours)": "На секои (часа)",
         "Last backup {when} failed: {error}": "Последната копија {when} не успеа: {error}",
         "Last backup {when} succeeded.": "Последната копија {when} успеа.",
-        "No": "Не",
         "No archives yet.": "Сè уште нема архиви.",
         "Size": "Големина",
         "Vault backups": "Резервни копии на сефот",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Со клуч секоја архива се шифрира за него. Чувајте го приватниот клуч надвор од овој сервер: ви треба за проверка или враќање.",
         "Written": "Запишано",
-        "Yes": "Да",
         "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n корисник во опсегот сè уште нема најава во два чекора и не може да го отвори сефот додека ова е вклучено.",
         "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "Корисниците во опсегот (%n) сè уште немаат најава во два чекора и не можат да го отворат сефот додека ова е вклучено.",
         "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Резервните кодови не се сметаат. Ако вашите корисници се најавуваат преку давател на идентитет со сопствен втор фактор, изоставете ги нивните групи.",
@@ -1442,6 +1458,126 @@
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Ја избришавте оваа тајна без мрежа, но оттогаш е променета на серверот. Изберете која верзија да ја задржите.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Вашите клучеви беа променети на друг уред. Внесете ја претходната главна лозинка за да ги синхронизирате промените без мрежа, или отфрлете ги.",
         "Your offline change": "Вашата промена без мрежа",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n контакт за итни случаи имаше барање за пристап на чекање кога ротацијата на клучот го отстрани. Проверете кој побарал пред повторно да додадете некого.",
+            "Контактите за итни случаи (%n) имаа барање за пристап на чекање кога ротацијата на клучот ги отстрани. Проверете кој побарал пред повторно да додадете некого."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n елемент не може да се претстави во CXF и ќе биде прескокнат.",
+            "%n елементи не можат да се претстават во CXF и ќе бидат прескокнати."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n постара верзија беше отфрлена, бидејќи може да се пренесе само неодамнешната историја.",
+            "%n постари верзии беа отфрлени, бидејќи може да се пренесе само неодамнешната историја."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n копија од тајна сè уште треба да се шифрира и сподели.",
+            "%n копии од тајни сè уште треба да се шифрираат и споделат."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n тајна не можеше да се дешифрира и не е во овој извоз.",
+            "%n тајни не можеа да се дешифрираат и не се во овој извоз."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n тајна не можеше да се дешифрира со вашиот стар клуч, па затоа не беше пренесена.",
+            "%n тајни не можеа да се дешифрираат со вашиот стар клуч, па затоа не беа пренесени."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n тајна не беше пренесена.",
+            "%n тајни не беа пренесени."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n тајна сè уште е шифрирана со вашиот претходен клуч.",
+            "%n тајни сè уште се шифрирани со вашиот претходен клуч."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n тајна беше прескокната бидејќи наследникот сè уште нема копија — додајте го наследникот во папката и извршете повторно.",
+            "%n тајни беа прескокнати бидејќи наследникот сè уште нема копија — додајте го наследникот во папката и извршете повторно."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n тајна",
+            "%n тајни"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n корисник во опсегот сè уште нема најава во два чекора и не може да го отвори сефот додека ова е вклучено.",
+            "Корисниците во опсегот (%n) сè уште немаат најава во два чекора и не можат да го отворат сефот додека ова е вклучено."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Сепак заврши, губејќи пристап до %n тајна",
+            "Сепак заврши, губејќи пристап до %n тајни"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n нов член доби пристап до тимска папка.",
+            "Нови членови (%n) добија пристап до тимска папка."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Ротацијата на клучот е завршена. %n тајна беше повторно шифрирана со вашиот нов клуч.",
+            "Ротацијата на клучот е завршена. %n тајни беа повторно шифрирани со вашиот нов клуч."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Отповикувањето на вториот пакет избриша %n контакт за итен пристап.",
+            "Отповикувањето на вториот пакет избриша %n контакти за итен пристап."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Отповикувањето на овој комплет избриша %n контакт за итен пристап.",
+            "Отповикувањето на овој комплет избриша %n контакти за итен пристап."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "забележано %n пат во протечени податоци",
+            "забележано %n пати во протечени податоци"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "споделено со %n тајна",
+            "споделено со %n тајни"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Оваа папка содржи директно %n тајна.",
+            "Оваа папка содржи директно %n тајни."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Ротацијата на клучот отстрани %n контакт за итни случаи. Проверете „Пристап во итни случаи“ и додајте го повторно ако сè уште го сакате.",
+            "Ротацијата на клучот отстрани %n контакти за итни случаи. Проверете „Пристап во итни случаи“ и додајте ги повторно ако сè уште ги сакате."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n промена чека синхронизација",
+            "%n промени чекаат синхронизација"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Корисникот е сè уште во групата {groups}, која е членка на тимска папка. Отстранете го од групата или оневозможете ја сметката.",
+            "Корисникот е сè уште во групите {groups}, кои се членки на тимски папки. Отстранете го од групите или оневозможете ја сметката."
+        ],
+        "Allow approval from another device": "Дозволи одобрување од друг уред",
+        "App": "Апликација",
+        "Approve a new device": "Одобри нов уред",
+        "Approve from another device": "Одобри од друг уред",
+        "Asked at": "Побарано во",
+        "Check that the new device shows these words:": "Проверете дали новиот уред ги прикажува овие зборови:",
+        "Denied. If you did not ask, end your other sessions:": "Одбиено. Ако не го побаравте ова, завршете ги другите сесии:",
+        "Device": "Уред",
+        "IP address": "IP адреса",
+        "Let users unlock a new browser by approving it from a device where Keepiq is already unlocked.": "Овозможи корисниците да отклучат нов прелистувач со одобрување од уред на кој Keepiq е веќе отклучен.",
+        "New device approval": "Одобрување нови уреди",
+        "Nextcloud security settings": "Безбедносни поставки на Nextcloud",
+        "Only approve a device you are using right now.": "Одобрете само уред што го користите токму сега.",
+        "Open Keepiq on a device where it is unlocked and approve this one. Check that it shows the same words:": "Отворете го Keepiq на уред на кој е отклучен и одобрете го овој уред. Проверете дали ги прикажува истите зборови:",
+        "The approving device seals the unlock key to the new device. The server only passes it on and cannot open it.": "Уредот што одобрува го запечатува клучот за отклучување за новиот уред. Серверот само го препраќа и не може да го отвори.",
+        "The master password is not right, or the request has ended.": "Главната лозинка не е точна или барањето заврши.",
+        "The request expired. Ask again or use your master password.": "Барањето истече. Побарајте повторно или користете ја главната лозинка.",
+        "The request was denied.": "Барањето беше одбиено.",
+        "Too many requests. Try again in an hour or use your master password.": "Премногу барања. Обидете се повторно за еден час или користете ја главната лозинка.",
+        "Unknown device": "Непознат уред",
+        "Web app": "Веб-апликација",
+        "A device": "Уред",
+        "A new device asks to open your vault": "Нов уред бара да го отвори вашиот сеф",
+        "%s asks to be approved. Only approve a device you are using right now.": "%s бара одобрување. Одобрете само уред што го користите токму сега.",
         "Type the suite ID again to confirm": "Повторно внесете го ID на пакетот за потврда",
         "This does not match the suite ID.": "Ова не се совпаѓа со ID на пакетот."
     },
