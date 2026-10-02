@@ -400,7 +400,9 @@ $extra = [
 
     // Password-health breach-check proxy (password-health §1.5). Prefix-only
     // k-anonymity forward to HIBP; double-gated (admin setting + user opt-in).
-    ['name' => 'breachProxy#range', 'url' => '/api/v1/breach-check/range/{prefix}', 'verb' => 'GET'],
+    // POST with the prefix in the body, never in the URI: Nextcloud stamps the
+    // request URI next to the user id on every log line (keepiq#866).
+    ['name' => 'breachProxy#range', 'url' => '/api/v1/breach-check/range', 'verb' => 'POST'],
 
     // GDPR data-subject endpoints (secret-export-gdpr D3/D4). All self-scoped
     // to the session user — no user selector. Master-password re-auth on the
