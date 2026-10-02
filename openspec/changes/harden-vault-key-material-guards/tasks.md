@@ -72,5 +72,7 @@ Section 3 (abort) is independently useful and can be split into its own PR if th
 - [x] 7.2 Confirmed gate-110 does not apply: no `lib/Migration/` files added and `appinfo/info.xml` `<version>` unchanged (the abort `aborted` status is a plain string-column value)
 - [x] 7.3 Documented in `docs/ARCHITECTURE.md` §4.2: the guarded-route table, the attribute contract, the load-bearing design points, and the rule that a new destructive route MUST be added to `VaultKeyProofAttributesTest`
 - [x] 7.4 Every branch commit carries `Assisted-by: ClaudeCode:claude-opus-5` and no `Signed-off-by` (keepiq does not require DCO — that is Nextcloud's policy, for nextcloud/* repos)
-- [ ] 7.5 The PR description discloses AI tool use, in the contributor's own words, and links issue #395
+- [x] 7.5 The PR description discloses AI tool use, in the contributor's own words, and links issue #395 (PR #677: "Closes #673 ... and closes #395", AI assistance section)
 - [ ] 7.6 Before opening: re-read #395's "Verification status" — the chain was never executed end to end. Reproduce the lockout on a throwaway account against pre-fix code, then confirm the same steps are refused post-fix. This is the issue's own first task and it is still outstanding
+
+_Status 2 Oct 2026 (keepiq issue lane A2): this change stays open. 6.5, 6.6 and 7.6 need a running instance (a request-pipeline 403 for each guarded route, and the #395 lockout reproduced before and refused after); they are listed as live checks owed on the lane PR. Since the last review: abort is now proof-gated (3.9, keepiq#859), `updatePrivateKey` refuses mid-migration and non-active suites (keepiq#869), proofs are single-use through the database (keepiq#868), and refusals are audited (keepiq#870)._
