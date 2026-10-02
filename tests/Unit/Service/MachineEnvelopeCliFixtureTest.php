@@ -141,6 +141,9 @@ class MachineEnvelopeCliFixtureTest extends TestCase {
 		$secret->setCreatedAt(new DateTime($envelope['secret']['createdAt']));
 		$secret->setUpdatedAt(new DateTime($envelope['secret']['updatedAt']));
 		$secret->setKeyUpdatedAt(new DateTime($envelope['secret']['keyUpdatedAt']));
+		if ($envelope['secret']['expiresAt'] !== null) {
+			$secret->setExpiresAt(new DateTime($envelope['secret']['expiresAt']));
+		}
 		return $secret;
 	}//end secretFromEnvelope()
 
