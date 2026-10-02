@@ -19,9 +19,17 @@ import ApplicationLeasePolicyForm from '../../src/components/application/Applica
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
-function view(canEdit, override = { defaultTtl: 600, maxTtl: null, renewable: null }) {
+function view(
+	canEdit,
+	override = { defaultTtl: 600, maxTtl: null, renewable: null },
+) {
 	return {
-		effective: { defaultTtl: 600, maxTtl: 3600, renewable: true, blockOnRevoke: false },
+		effective: {
+			defaultTtl: 600,
+			maxTtl: 3600,
+			renewable: true,
+			blockOnRevoke: false,
+		},
 		override,
 		instance: { defaultTtl: 900, maxTtl: 3600, renewable: true },
 		canEdit,
@@ -37,7 +45,8 @@ function mountForm() {
 					methods: {
 						t: (_app, key, vars) =>
 							Object.entries(vars || {}).reduce(
-								(acc, [name, value]) => acc.replace(`{${name}}`, value),
+								(acc, [name, value]) =>
+									acc.replace(`{${name}}`, value),
 								key,
 							),
 					},
@@ -62,11 +71,21 @@ describe('ApplicationLeasePolicyForm', () => {
 		const wrapper = mountForm()
 		await flush()
 
-		expect(get.mock.calls[0][0]).toContain('/apps/keepiq/api/v1/applications/app-1/lease-policy')
-		expect(wrapper.find('[data-testid="lease-policy-effective"]').text()).toContain('600 seconds by default, 3600 seconds at most')
-		expect(wrapper.find('[data-testid="lease-policy-default-ttl"]').element.value).toBe('600')
-		expect(wrapper.find('[data-testid="lease-policy-max-ttl"]').element.value).toBe('')
-		expect(wrapper.find('[data-testid="lease-policy-renewable"]').element.value).toBe('inherit')
+		expect(get.mock.calls[0][0]).toContain(
+			'/apps/keepiq/api/v1/applications/app-1/lease-policy',
+		)
+		expect(
+			wrapper.find('[data-testid="lease-policy-effective"]').text(),
+		).toContain('600 seconds by default, 3600 seconds at most')
+		expect(
+			wrapper.find('[data-testid="lease-policy-default-ttl"]').element.value,
+		).toBe('600')
+		expect(
+			wrapper.find('[data-testid="lease-policy-max-ttl"]').element.value,
+		).toBe('')
+		expect(
+			wrapper.find('[data-testid="lease-policy-renewable"]').element.value,
+		).toBe('inherit')
 	})
 
 	it('saves the override with empty fields as inherit', async () => {
@@ -82,15 +101,26 @@ describe('ApplicationLeasePolicyForm', () => {
 		await flush()
 
 		expect(put).toHaveBeenCalledTimes(1)
-		expect(put.mock.calls[0][0]).toContain('/apps/keepiq/api/v1/applications/app-1/lease-policy')
-		expect(put.mock.calls[0][1]).toEqual({ defaultTtl: null, maxTtl: 1800, renewable: false })
-		expect(wrapper.find('[data-testid="lease-policy-saved"]').exists()).toBe(true)
+		expect(put.mock.calls[0][0]).toContain(
+			'/apps/keepiq/api/v1/applications/app-1/lease-policy',
+		)
+		expect(put.mock.calls[0][1]).toEqual({
+			defaultTtl: null,
+			maxTtl: 1800,
+			renewable: false,
+		})
+		expect(wrapper.find('[data-testid="lease-policy-saved"]').exists()).toBe(
+			true,
+		)
 	})
 
 	it('shows the server refusal instead of a saved notice', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: view(true) })
 		vi.spyOn(axios, 'put').mockRejectedValue({
-			response: { status: 400, data: { message: 'Lease TTLs must be at least 60 seconds' } },
+			response: {
+				status: 400,
+				data: { message: 'Lease TTLs must be at least 60 seconds' },
+			},
 		})
 		const wrapper = mountForm()
 		await flush()
@@ -98,8 +128,12 @@ describe('ApplicationLeasePolicyForm', () => {
 		await wrapper.find('form').trigger('submit')
 		await flush()
 
-		expect(wrapper.find('[data-testid="lease-policy-error"]').text()).toContain('at least 60 seconds')
-		expect(wrapper.find('[data-testid="lease-policy-saved"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="lease-policy-error"]').text()).toContain(
+			'at least 60 seconds',
+		)
+		expect(wrapper.find('[data-testid="lease-policy-saved"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('is read-only for the registrant: no fields and no save', async () => {
@@ -108,10 +142,16 @@ describe('ApplicationLeasePolicyForm', () => {
 		const wrapper = mountForm()
 		await flush()
 
-		expect(wrapper.find('[data-testid="lease-policy-effective"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="lease-policy-effective"]').exists()).toBe(
+			true,
+		)
 		expect(wrapper.find('form').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="lease-policy-save"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="lease-policy-readonly"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="lease-policy-save"]').exists()).toBe(
+			false,
+		)
+		expect(wrapper.find('[data-testid="lease-policy-readonly"]').exists()).toBe(
+			true,
+		)
 		expect(put).not.toHaveBeenCalled()
 	})
 
@@ -120,7 +160,11 @@ describe('ApplicationLeasePolicyForm', () => {
 		const wrapper = mountForm()
 		await flush()
 
-		expect(wrapper.find('[data-testid="application-lease-policy"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="lease-policy-error"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="application-lease-policy"]').exists(),
+		).toBe(false)
+		expect(wrapper.find('[data-testid="lease-policy-error"]').exists()).toBe(
+			false,
+		)
 	})
 })

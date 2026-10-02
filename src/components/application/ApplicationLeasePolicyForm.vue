@@ -22,7 +22,10 @@
 				t(
 					'keepiq',
 					'In force now: {default} seconds by default, {max} seconds at most.',
-					{ default: view.effective.defaultTtl, max: view.effective.maxTtl },
+					{
+						default: view.effective.defaultTtl,
+						max: view.effective.maxTtl,
+					},
 				)
 			}}
 			{{
@@ -39,7 +42,10 @@
 			{{ t('keepiq', 'Lease policy saved.') }}
 		</NcNoteCard>
 
-		<form v-if="view.canEdit" class="lease-policy-form__fields" @submit.prevent="save">
+		<form
+			v-if="view.canEdit"
+			class="lease-policy-form__fields"
+			@submit.prevent="save">
 			<p class="lease-policy-form__hint">
 				{{ t('keepiq', 'Leave a field empty to use the instance value.') }}
 			</p>
@@ -49,8 +55,12 @@
 					v-model="defaultTtl"
 					type="number"
 					min="60"
-					:placeholder="t('keepiq', 'Instance value: {value}', { value: view.instance.defaultTtl })"
-					data-testid="lease-policy-default-ttl">
+					:placeholder="
+						t('keepiq', 'Instance value: {value}', {
+							value: view.instance.defaultTtl,
+						})
+					"
+					data-testid="lease-policy-default-ttl" />
 			</label>
 			<label class="lease-policy-form__field">
 				<span>{{ t('keepiq', 'Maximum lease TTL (seconds)') }}</span>
@@ -58,8 +68,12 @@
 					v-model="maxTtl"
 					type="number"
 					min="60"
-					:placeholder="t('keepiq', 'Instance value: {value}', { value: view.instance.maxTtl })"
-					data-testid="lease-policy-max-ttl">
+					:placeholder="
+						t('keepiq', 'Instance value: {value}', {
+							value: view.instance.maxTtl,
+						})
+					"
+					data-testid="lease-policy-max-ttl" />
 			</label>
 			<label class="lease-policy-form__field">
 				<span>{{ t('keepiq', 'Renewal') }}</span>
@@ -89,7 +103,10 @@
 				{{ t('keepiq', 'Save lease policy') }}
 			</NcButton>
 		</form>
-		<p v-else class="lease-policy-form__hint" data-testid="lease-policy-readonly">
+		<p
+			v-else
+			class="lease-policy-form__hint"
+			data-testid="lease-policy-readonly">
 			{{ t('keepiq', 'Only an administrator can change this policy.') }}
 		</p>
 	</section>
@@ -191,7 +208,8 @@ export default {
 				this.applyView(await store.fetchPolicy(this.applicationId))
 				this.saved = true
 			} catch (e) {
-				this.error = e?.response?.data?.message
+				this.error =
+					e?.response?.data?.message
 					|| this.t('keepiq', 'Could not save the lease policy.')
 			} finally {
 				this.saving = false

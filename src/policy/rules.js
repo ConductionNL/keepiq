@@ -37,11 +37,13 @@ export function isExemptType(policy, typeName) {
  * @return {boolean}
  */
 function applies(policy, typeName, value) {
-	return Boolean(policy)
+	return (
+		Boolean(policy)
 		&& policy.policy_enabled === true
 		&& !isExemptType(policy, typeName)
 		&& typeof value === 'string'
 		&& value !== ''
+	)
 }
 
 /**

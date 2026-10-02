@@ -97,9 +97,9 @@ describe('CaHealthSection renew root', () => {
 
 		expect(post).toHaveBeenCalledTimes(1)
 		expect(post.mock.calls[0][0]).toContain('/apps/keepiq/api/v1/ca/renew-root')
-		expect(wrapper.find('[data-testid="ca-renew-root-result"]').text()).toContain(
-			'7',
-		)
+		expect(
+			wrapper.find('[data-testid="ca-renew-root-result"]').text(),
+		).toContain('7')
 		expect(wrapper.find('[data-testid="ca-renew-root-warning"]').exists()).toBe(
 			false,
 		)
