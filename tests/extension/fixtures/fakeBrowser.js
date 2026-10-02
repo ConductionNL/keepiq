@@ -149,7 +149,15 @@ export function installServer(servers) {
 		if (!server) return respond(404, {})
 		const [base, s] = server
 		const path = url.slice((base + '/index.php/apps/keepiq').length)
-		if (path === '/api/v1/extension/pair') return respond(200, { ok: true })
+		if (path === '/api/v1/extension/pair') {
+			return respond(200, {
+				ok: true,
+				serverVersion:
+					'serverVersion' in s
+						? s.serverVersion
+						: '0.3.4-unstable.20261002180000',
+			})
+		}
 		if (path === '/api/v1/extension/unpair') return respond(200, { ok: true })
 		if (path === '/api/v1/suites') return respond(200, [s.suite])
 		if (path === '/api/v1/extension/policy') {

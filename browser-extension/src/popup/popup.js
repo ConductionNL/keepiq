@@ -29,6 +29,7 @@ function show(view) {
 		'view-locked',
 		'view-unlocked',
 		'view-settings',
+		'view-update',
 	]) {
 		$(id).hidden = id !== view
 	}
@@ -228,6 +229,9 @@ async function refresh() {
 	$('pair-cancel').hidden = !paired
 	if (!paired || adding) {
 		show('view-pair')
+	} else if (state.serverOutdated) {
+		// Nothing else works against an older server: say so, ask nothing.
+		show('view-update')
 	} else if (!state.unlocked) {
 		show('view-locked')
 		await renderBiometricUnlock()
