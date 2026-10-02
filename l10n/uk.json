@@ -1178,7 +1178,6 @@
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Ці контакти мали очікуваний або схвалений запит на екстрений доступ, тому не отримали ваш новий ключ. Саме так виглядав би контакт, доданий кимось іншим: не призначайте їх знову, якщо не знаєте, що запит був справжнім.",
         "Invalidated": "Анульовано",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Цей контакт мав очікуваний або схвалений запит на екстрений доступ, коли ви змінили ключ, тому не отримав ваш новий ключ. Саме так виглядав би контакт, доданий кимось іншим: не призначайте його знову, якщо не знаєте, що запит був справжнім.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ротацію ключа було відновлено, тому ці екстрені контакти не вдалося перенести і їхній надзвичайний доступ видалено. Додайте їх знову в розділі «Надзвичайний доступ», якщо вони вам ще потрібні.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ротація ключа видалила %n екстрений контакт. Перевірте «Надзвичайний доступ» і додайте його знову, якщо він вам ще потрібен.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ротація ключа видалила %n екстрених контактів. Перевірте «Надзвичайний доступ» і додайте їх знову, якщо вони вам ще потрібні.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ротація ключа видалила надзвичайний доступ цього контакту. Призначте його знову, якщо він вам ще потрібен.",
@@ -1265,7 +1264,15 @@
         "Tag": "Мітка",
         "Remove tag": "Прибрати мітку",
         "Add tag": "Додати мітку",
-        "Could not change the tags. Try again.": "Не вдалося змінити мітки. Спробуйте ще раз."
+        "Could not change the tags. Try again.": "Не вдалося змінити мітки. Спробуйте ще раз.",
+        "Compromise recovery aborted": "Відновлення після компрометації перервано",
+        "Key rotation ended by a compromise revoke": "Зміну ключа завершено відкликанням через компрометацію",
+        "Encryption suite revoke refused": "Відкликання набору шифрування відхилено",
+        "Master password proof refused": "Підтвердження головного пароля відхилено",
+        "Your current master password": "Ваш поточний головний пароль",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n екстрений контакт мав запит на доступ в очікуванні, коли зміна ключа його видалила. Перевірте, хто запитував, перш ніж знову когось додавати.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "Екстрені контакти (%n) мали запит на доступ в очікуванні, коли зміна ключа їх видалила. Перевірте, хто запитував, перш ніж знову когось додавати.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ці екстрені контакти не перенесено на ваш новий ключ. Їхній екстрений доступ видалено. Додайте їх знову в розділі Екстрений доступ, якщо вони вам ще потрібні."
     },
     "plurals": null
 }

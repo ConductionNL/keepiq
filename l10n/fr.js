@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Ces contacts avaient une demande d'accès d'urgence en attente ou approuvée ; ils n'ont donc pas reçu votre nouvelle clé. C'est ainsi que se présenterait un contact ajouté par quelqu'un d'autre : ne les désignez pas à nouveau, sauf si vous savez que la demande était légitime.",
         "Invalidated": "Invalidé",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Ce contact avait une demande d'accès d'urgence en attente ou approuvée lorsque vous avez changé votre clé ; il n'a donc pas reçu votre nouvelle clé. C'est ainsi que se présenterait un contact ajouté par quelqu'un d'autre : ne le désignez pas à nouveau, sauf si vous savez que la demande était légitime.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Votre rotation de clé a été reprise ; ces contacts d'urgence n'ont donc pas pu être transférés et leur accès d'urgence a été supprimé. Ajoutez-les à nouveau depuis Accès d'urgence si vous les souhaitez toujours.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Votre rotation de clé a supprimé %n contact d'urgence. Vérifiez Accès d'urgence et ajoutez-le à nouveau si vous le souhaitez toujours.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Votre rotation de clé a supprimé %n contacts d'urgence. Vérifiez Accès d'urgence et ajoutez-les à nouveau si vous les souhaitez toujours.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Votre rotation de clé a supprimé l'accès d'urgence de ce contact. Désignez-le à nouveau si vous le souhaitez toujours.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Étiquette",
         "Remove tag": "Retirer l'étiquette",
         "Add tag": "Ajouter une étiquette",
-        "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez."
+        "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez.",
+        "Compromise recovery aborted": "Récupération après compromission annulée",
+        "Key rotation ended by a compromise revoke": "Rotation de clé terminée par une révocation pour compromission",
+        "Encryption suite revoke refused": "Révocation de la suite de chiffrement refusée",
+        "Master password proof refused": "Preuve du mot de passe principal refusée",
+        "Your current master password": "Votre mot de passe principal actuel",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n contact d'urgence avait une demande d'accès en attente quand votre rotation de clé l'a supprimé. Vérifiez qui l'a demandé avant de rajouter quelqu'un.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n contacts d'urgence avaient une demande d'accès en attente quand votre rotation de clé les a supprimés. Vérifiez qui l'a demandé avant de rajouter quelqu'un.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ces contacts d'urgence n'ont pas été transférés vers votre nouvelle clé. Leur accès d'urgence a été supprimé. Ajoutez-les à nouveau depuis Accès d'urgence si vous les voulez encore."
     },
     "nplurals=2; plural=(n != 1);"
 )

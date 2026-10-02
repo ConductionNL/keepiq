@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Disse kontaktene hadde en ventende eller godkjent forespørsel om nødtilgang, så de fikk ikke den nye nøkkelen din. Slik ville en kontakt lagt til av noen andre sett ut: ikke utpek dem på nytt med mindre du vet at forespørselen var ekte.",
         "Invalidated": "Ugyldiggjort",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Denne kontakten hadde en ventende eller godkjent forespørsel om nødtilgang da du byttet nøkkel, så den fikk ikke den nye nøkkelen din. Slik ville en kontakt lagt til av noen andre sett ut: ikke utpek den på nytt med mindre du vet at forespørselen var ekte.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Nøkkelrotasjonen ble gjenopptatt, så disse nødkontaktene kunne ikke overføres, og nødtilgangen deres ble fjernet. Legg dem til igjen under Nødtilgang hvis du fortsatt vil ha dem.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Nøkkelrotasjonen fjernet %n nødkontakt. Sjekk Nødtilgang og legg den til igjen hvis du fortsatt vil ha den.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Nøkkelrotasjonen fjernet %n nødkontakter. Sjekk Nødtilgang og legg dem til igjen hvis du fortsatt vil ha dem.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Nøkkelrotasjonen fjernet nødtilgangen til denne kontakten. Utpek den på nytt hvis du fortsatt vil ha den.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Etikett",
         "Remove tag": "Fjern etikett",
         "Add tag": "Legg til etikett",
-        "Could not change the tags. Try again.": "Kunne ikke endre etikettene. Prøv igjen."
+        "Could not change the tags. Try again.": "Kunne ikke endre etikettene. Prøv igjen.",
+        "Compromise recovery aborted": "Gjenoppretting etter kompromittering avbrutt",
+        "Key rotation ended by a compromise revoke": "Nøkkelrotasjon avsluttet av en tilbakekalling på grunn av kompromittering",
+        "Encryption suite revoke refused": "Tilbakekalling av krypteringssuite avvist",
+        "Master password proof refused": "Bevis for hovedpassord avvist",
+        "Your current master password": "Ditt nåværende hovedpassord",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n nødkontakt hadde en ventende tilgangsforespørsel da nøkkelrotasjonen fjernet den. Sjekk hvem som spurte før du legger til noen igjen.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n nødkontakter hadde en ventende tilgangsforespørsel da nøkkelrotasjonen fjernet dem. Sjekk hvem som spurte før du legger til noen igjen.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Disse nødkontaktene ble ikke overført til den nye nøkkelen din. Nødtilgangen deres ble fjernet. Legg dem til igjen under Nødtilgang hvis du fortsatt vil ha dem."
     },
     "nplurals=2; plural=(n != 1);"
 )

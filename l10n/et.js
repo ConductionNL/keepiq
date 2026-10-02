@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Neil kontaktidel oli ootel või kinnitatud hädaolukorra juurdepääsu taotlus, seega nad ei saanud sinu uut võtit. Nii näeks välja kontakt, kelle lisas keegi teine: ära määra neid uuesti, kui sa ei tea, et taotlus oli ehtne.",
         "Invalidated": "Kehtetuks muudetud",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Sellel kontaktil oli võtme vahetamise ajal ootel või kinnitatud hädaolukorra juurdepääsu taotlus, seega ta ei saanud sinu uut võtit. Nii näeks välja kontakt, kelle lisas keegi teine: ära määra teda uuesti, kui sa ei tea, et taotlus oli ehtne.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Sinu võtme rotatsiooni jätkati, seega neid hädaolukorra kontakte ei saanud üle kanda ja nende hädaolukorra ligipääs eemaldati. Lisa nad uuesti jaotises Hädaolukorra ligipääs, kui soovid neid endiselt.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Sinu võtme rotatsioon eemaldas %n hädaolukorra kontakti. Vaata üle Hädaolukorra ligipääs ja lisa see uuesti, kui soovid seda endiselt.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Sinu võtme rotatsioon eemaldas %n hädaolukorra kontakti. Vaata üle Hädaolukorra ligipääs ja lisa need uuesti, kui soovid neid endiselt.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Sinu võtme rotatsioon eemaldas selle kontakti hädaolukorra ligipääsu. Määra ta uuesti, kui soovid teda endiselt.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Silt",
         "Remove tag": "Eemalda silt",
         "Add tag": "Lisa silt",
-        "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti."
+        "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti.",
+        "Compromise recovery aborted": "Kompromiteerimisjärgne taastamine katkestatud",
+        "Key rotation ended by a compromise revoke": "Võtmevahetus lõpetati kompromiteerimise tõttu tehtud tühistamisega",
+        "Encryption suite revoke refused": "Krüpteerimiskomplekti tühistamine keelatud",
+        "Master password proof refused": "Põhiparooli tõend keelatud",
+        "Your current master password": "Sinu praegune põhiparool",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n hädaabikontaktil oli ootel juurdepääsutaotlus, kui võtmevahetus ta eemaldas. Kontrolli, kes küsis, enne kui kedagi uuesti lisad.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n hädaabikontaktil oli ootel juurdepääsutaotlus, kui võtmevahetus nad eemaldas. Kontrolli, kes küsis, enne kui kedagi uuesti lisad.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Neid hädaabikontakte ei viidud üle sinu uuele võtmele. Nende hädajuurdepääs eemaldati. Lisa nad uuesti jaotises Hädajuurdepääs, kui soovid neid endiselt."
     },
     "nplurals=2; plural=(n != 1);"
 )

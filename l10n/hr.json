@@ -1178,7 +1178,6 @@
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Ovi kontakti imali su zahtjev za pristup u hitnim slučajevima na čekanju ili odobren pa nisu dobili vaš novi ključ. Tako bi izgledao kontakt koji je dodao netko drugi: ne određujte ih ponovno osim ako znate da je zahtjev bio stvaran.",
         "Invalidated": "Poništeno",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Ovaj kontakt imao je zahtjev za pristup u hitnim slučajevima na čekanju ili odobren kada ste promijenili ključ pa nije dobio vaš novi ključ. Tako bi izgledao kontakt koji je dodao netko drugi: ne određujte ga ponovno osim ako znate da je zahtjev bio stvaran.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Rotacija ključa je nastavljena pa ovi kontakti za pristup u nuždi nisu mogli biti preneseni i njihov pristup u nuždi je uklonjen. Dodajte ih ponovno u odjeljku Pristup u nuždi ako ih još želite.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Rotacija ključa uklonila je %n kontakt za pristup u nuždi. Provjerite Pristup u nuždi i dodajte ga ponovno ako ga još želite.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Rotacija ključa uklonila je %n kontakta za pristup u nuždi. Provjerite Pristup u nuždi i dodajte ih ponovno ako ih još želite.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rotacija ključa uklonila je pristup u nuždi ovog kontakta. Odredite ga ponovno ako ga još želite.",
@@ -1265,7 +1264,15 @@
         "Tag": "Oznaka",
         "Remove tag": "Ukloni oznaku",
         "Add tag": "Dodaj oznaku",
-        "Could not change the tags. Try again.": "Oznake nije bilo moguće promijeniti. Pokušajte ponovno."
+        "Could not change the tags. Try again.": "Oznake nije bilo moguće promijeniti. Pokušajte ponovno.",
+        "Compromise recovery aborted": "Oporavak nakon kompromitacije prekinut",
+        "Key rotation ended by a compromise revoke": "Rotacija ključa završena opozivom zbog kompromitacije",
+        "Encryption suite revoke refused": "Opoziv paketa šifriranja odbijen",
+        "Master password proof refused": "Dokaz glavne lozinke odbijen",
+        "Your current master password": "Vaša trenutna glavna lozinka",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n kontakt za hitne slučajeve imao je zahtjev za pristup na čekanju kada ga je rotacija ključa uklonila. Provjerite tko je tražio prije nego što ikoga ponovno dodate.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "Kontakti za hitne slučajeve (%n) imali su zahtjev za pristup na čekanju kada ih je rotacija ključa uklonila. Provjerite tko je tražio prije nego što ikoga ponovno dodate.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ti kontakti za hitne slučajeve nisu preneseni na vaš novi ključ. Njihov hitni pristup je uklonjen. Ponovno ih dodajte u Hitnom pristupu ako ih još želite."
     },
     "plurals": null
 }

@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Dawn il-kuntatti kellhom talba għal aċċess ta’ emerġenza pendenti jew approvata, għalhekk ma rċevewx iċ-ċavetta l-ġdida tiegħek. Hekk jidher kuntatt miżjud minn xi ħadd ieħor: terġax taħtarhom sakemm ma tkunx taf li t-talba kienet ġenwina.",
         "Invalidated": "Invalidat",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Dan il-kuntatt kellu talba għal aċċess ta’ emerġenza pendenti jew approvata meta biddilt iċ-ċavetta tiegħek, għalhekk ma rċeviex iċ-ċavetta l-ġdida tiegħek. Hekk jidher kuntatt miżjud minn xi ħadd ieħor: terġax taħtru sakemm ma tkunx taf li t-talba kienet ġenwina.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ir-rotazzjoni taċ-ċavetta tiegħek tkompliet, għalhekk dawn il-kuntatti ta' emerġenza ma setgħux jiġu trasferiti u l-aċċess ta' emerġenza tagħhom tneħħa. Erġa' żidhom minn Aċċess ta' emerġenza jekk għadek tridhom.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ir-rotazzjoni taċ-ċavetta tiegħek neħħiet %n kuntatt ta' emerġenza. Iċċekkja Aċċess ta' emerġenza u erġa' żidu jekk għadek tridu.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ir-rotazzjoni taċ-ċavetta tiegħek neħħiet %n kuntatti ta' emerġenza. Iċċekkja Aċċess ta' emerġenza u erġa' żidhom jekk għadek tridhom.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ir-rotazzjoni taċ-ċavetta tiegħek neħħiet l-aċċess ta' emerġenza ta' dan il-kuntatt. Erġa' aħtru jekk għadek tridu.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Tikketta",
         "Remove tag": "Neħħi t-tikketta",
         "Add tag": "Żid tikketta",
-        "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova."
+        "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova.",
+        "Compromise recovery aborted": "L-irkupru wara kompromess twaqqaf",
+        "Key rotation ended by a compromise revoke": "Ir-rotazzjoni taċ-ċavetta ntemmet b'revoka minħabba kompromess",
+        "Encryption suite revoke refused": "Ir-revoka tas-suite tal-encryption ġiet miċħuda",
+        "Master password proof refused": "Il-prova tal-password ewlenija ġiet miċħuda",
+        "Your current master password": "Il-password ewlenija attwali tiegħek",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n kuntatt ta' emerġenza kellu talba għal aċċess pendenti meta r-rotazzjoni taċ-ċavetta neħħietu. Iċċekkja min talab qabel ma żżid lil xi ħadd mill-ġdid.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n kuntatti ta' emerġenza kellhom talba għal aċċess pendenti meta r-rotazzjoni taċ-ċavetta neħħiethom. Iċċekkja min talab qabel ma żżid lil xi ħadd mill-ġdid.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Dawn il-kuntatti ta' emerġenza ma ġewx trasferiti għaċ-ċavetta l-ġdida tiegħek. L-aċċess ta' emerġenza tagħhom tneħħa. Erġa' żidhom minn Aċċess ta' emerġenza jekk għadek trid."
     },
     "nplurals=2; plural=(n != 1);"
 )

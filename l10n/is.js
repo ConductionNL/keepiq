@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Þessir tengiliðir áttu biðandi eða samþykkta beiðni um neyðaraðgang, svo þeir fengu ekki nýja lykilinn þinn. Þannig myndi tengiliður sem einhver annar bætti við líta út: tilnefndu þá ekki aftur nema þú vitir að beiðnin hafi verið ósvikin.",
         "Invalidated": "Ógilt",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Þessi tengiliður átti biðandi eða samþykkta beiðni um neyðaraðgang þegar þú skiptir um lykil, svo hann fékk ekki nýja lykilinn þinn. Þannig myndi tengiliður sem einhver annar bætti við líta út: tilnefndu hann ekki aftur nema þú vitir að beiðnin hafi verið ósvikin.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Lyklasnúningurinn var hafinn aftur, svo ekki var hægt að færa þessa neyðartengiliði yfir og neyðaraðgangur þeirra var fjarlægður. Bættu þeim aftur við í Neyðaraðgangi ef þú vilt þá enn.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Lyklasnúningurinn fjarlægði %n neyðartengilið. Skoðaðu Neyðaraðgang og bættu honum aftur við ef þú vilt hann enn.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Lyklasnúningurinn fjarlægði %n neyðartengiliði. Skoðaðu Neyðaraðgang og bættu þeim aftur við ef þú vilt þá enn.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Lyklasnúningurinn fjarlægði neyðaraðgang þessa tengiliðar. Tilnefndu hann aftur ef þú vilt hann enn.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Merki",
         "Remove tag": "Fjarlægja merki",
         "Add tag": "Bæta við merki",
-        "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur."
+        "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur.",
+        "Compromise recovery aborted": "Endurheimt eftir innbrot hætt",
+        "Key rotation ended by a compromise revoke": "Lyklaskiptum lokið með afturköllun vegna innbrots",
+        "Encryption suite revoke refused": "Afturköllun dulkóðunarsvítu hafnað",
+        "Master password proof refused": "Sönnun aðallykilorðs hafnað",
+        "Your current master password": "Núverandi aðallykilorð þitt",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n neyðartengiliður var með opna aðgangsbeiðni þegar lyklaskiptin fjarlægðu hann. Athugaðu hver bað um aðgang áður en þú bætir einhverjum við aftur.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n neyðartengiliðir voru með opna aðgangsbeiðni þegar lyklaskiptin fjarlægðu þá. Athugaðu hver bað um aðgang áður en þú bætir einhverjum við aftur.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Þessir neyðartengiliðir voru ekki fluttir yfir á nýja lykilinn þinn. Neyðaraðgangur þeirra var fjarlægður. Bættu þeim við aftur í Neyðaraðgangi ef þú vilt þá enn."
     },
     "nplurals=2; plural=(n != 1);"
 )

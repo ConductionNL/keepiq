@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Αυτές οι επαφές είχαν εκκρεμές ή εγκεκριμένο αίτημα πρόσβασης έκτακτης ανάγκης, οπότε δεν έλαβαν το νέο σας κλειδί. Έτσι θα έμοιαζε μια επαφή που πρόσθεσε κάποιος άλλος: μην τις ορίσετε ξανά, εκτός αν ξέρετε ότι το αίτημα ήταν γνήσιο.",
         "Invalidated": "Ακυρώθηκε",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Αυτή η επαφή είχε εκκρεμές ή εγκεκριμένο αίτημα πρόσβασης έκτακτης ανάγκης όταν αλλάξατε το κλειδί σας, οπότε δεν έλαβε το νέο σας κλειδί. Έτσι θα έμοιαζε μια επαφή που πρόσθεσε κάποιος άλλος: μην την ορίσετε ξανά, εκτός αν ξέρετε ότι το αίτημα ήταν γνήσιο.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Η εναλλαγή κλειδιού συνεχίστηκε, οπότε αυτές οι επαφές έκτακτης ανάγκης δεν μπόρεσαν να μεταφερθούν και η πρόσβασή τους έκτακτης ανάγκης αφαιρέθηκε. Προσθέστε τις ξανά από την Πρόσβαση έκτακτης ανάγκης, αν τις θέλετε ακόμα.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Η εναλλαγή κλειδιού αφαίρεσε %n επαφή έκτακτης ανάγκης. Ελέγξτε την Πρόσβαση έκτακτης ανάγκης και προσθέστε την ξανά, αν τη θέλετε ακόμα.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Η εναλλαγή κλειδιού αφαίρεσε %n επαφές έκτακτης ανάγκης. Ελέγξτε την Πρόσβαση έκτακτης ανάγκης και προσθέστε τις ξανά, αν τις θέλετε ακόμα.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Η εναλλαγή κλειδιού αφαίρεσε την πρόσβαση έκτακτης ανάγκης αυτής της επαφής. Ορίστε την ξανά, αν τη θέλετε ακόμα.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Ετικέτα",
         "Remove tag": "Αφαίρεση ετικέτας",
         "Add tag": "Προσθήκη ετικέτας",
-        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά."
+        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά.",
+        "Compromise recovery aborted": "Η ανάκτηση μετά από παραβίαση ακυρώθηκε",
+        "Key rotation ended by a compromise revoke": "Η εναλλαγή κλειδιού τερματίστηκε από ανάκληση λόγω παραβίασης",
+        "Encryption suite revoke refused": "Η ανάκληση της σουίτας κρυπτογράφησης απορρίφθηκε",
+        "Master password proof refused": "Η απόδειξη του κύριου κωδικού απορρίφθηκε",
+        "Your current master password": "Ο τρέχων κύριος κωδικός σας",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n επαφή έκτακτης ανάγκης είχε εκκρεμές αίτημα πρόσβασης όταν η εναλλαγή κλειδιού την αφαίρεσε. Ελέγξτε ποιος το ζήτησε πριν προσθέσετε ξανά κάποιον.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n επαφές έκτακτης ανάγκης είχαν εκκρεμές αίτημα πρόσβασης όταν η εναλλαγή κλειδιού τις αφαίρεσε. Ελέγξτε ποιος το ζήτησε πριν προσθέσετε ξανά κάποιον.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Αυτές οι επαφές έκτακτης ανάγκης δεν μεταφέρθηκαν στο νέο σας κλειδί. Η πρόσβαση έκτακτης ανάγκης τους αφαιρέθηκε. Προσθέστε τις ξανά από την Πρόσβαση έκτακτης ανάγκης αν τις θέλετε ακόμα."
     },
     "nplurals=2; plural=(n != 1);"
 )

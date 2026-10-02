@@ -416,8 +416,38 @@ describe('CompromiseRecoveryForm', () => {
 		})
 
 		const wrapper = mountForm()
+		// The live resumed state (keepiq#880 item 3): the form is opened from
+		// the banner, so this form started nothing. No result and no retained
+		// password; the old password comes in through the re-auth field.
+		wrapper.vm.result = null
+		wrapper.vm.activeOldPassword = null
+		wrapper.vm.oldPassword = 'old-pw'
+		await wrapper.vm.handleAcceptLosses()
+		store.migrationNeedsAcknowledgement = false
+		await wrapper.vm.$nextTick()
+
+		expect(store.acceptMigrationLosses).toHaveBeenCalledWith('migration-1', 'old-pw')
+		const removed = wrapper.find('[data-testid="compromise-recovery-removed"]')
+		expect(removed.exists()).toBe(true)
+		expect(removed.text()).toContain('bob')
+	})
+
+	// keepiq#880 item 3: an initiate run whose own list came back empty (the
+	// contacts could not be listed) is not a resumed run. Finishing it by
+	// accepting a loss must not tell the owner their rotation "was resumed".
+	it('does not call an initiate run with an empty list resumed', async () => {
+		const store = useEncryptionSuiteStore()
+		store.migrationStatus = { id: 'migration-1' }
+		store.migrationNeedsAcknowledgement = true
+		store.migrationRequiredAcknowledgement = 1
+		vi.spyOn(store, 'acceptMigrationLosses').mockResolvedValue({
+			residualContacts: [
+				{ granteeUserId: 'bob', reason: 'removed_by_rotation' },
+			],
+		})
+
+		const wrapper = mountForm()
 		wrapper.vm.activeOldPassword = 'old-pw'
-		// What a resumed run leaves behind while the loss is pending.
 		wrapper.vm.result = {
 			migrated: 2,
 			droppedVersions: 0,
@@ -431,6 +461,7 @@ describe('CompromiseRecoveryForm', () => {
 		const removed = wrapper.find('[data-testid="compromise-recovery-removed"]')
 		expect(removed.exists()).toBe(true)
 		expect(removed.text()).toContain('bob')
+		expect(wrapper.text()).not.toContain('was resumed')
 	})
 
 	it('keeps the initiate list when an initiate run is finished by accepting losses', async () => {

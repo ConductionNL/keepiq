@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Estes contactos tinham um pedido de acesso de emergência pendente ou aprovado, pelo que não receberam a sua nova chave. É assim que se apresentaria um contacto adicionado por outra pessoa: não os designe novamente, a menos que saiba que o pedido era genuíno.",
         "Invalidated": "Invalidado",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Este contacto tinha um pedido de acesso de emergência pendente ou aprovado quando mudou a sua chave, pelo que não recebeu a sua nova chave. É assim que se apresentaria um contacto adicionado por outra pessoa: não o designe novamente, a menos que saiba que o pedido era genuíno.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "A rotação da chave foi retomada, pelo que estes contactos de emergência não puderam ser transferidos e o seu acesso de emergência foi removido. Adicione-os novamente em Acesso de emergência se ainda os quiser.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "A rotação da chave removeu %n contacto de emergência. Verifique Acesso de emergência e adicione-o novamente se ainda o quiser.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "A rotação da chave removeu %n contactos de emergência. Verifique Acesso de emergência e adicione-os novamente se ainda os quiser.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "A rotação da chave removeu o acesso de emergência deste contacto. Designe-o novamente se ainda o quiser.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Etiqueta",
         "Remove tag": "Remover etiqueta",
         "Add tag": "Adicionar etiqueta",
-        "Could not change the tags. Try again.": "Não foi possível alterar as etiquetas. Tente novamente."
+        "Could not change the tags. Try again.": "Não foi possível alterar as etiquetas. Tente novamente.",
+        "Compromise recovery aborted": "Recuperação após comprometimento cancelada",
+        "Key rotation ended by a compromise revoke": "Rotação de chave terminada por uma revogação por comprometimento",
+        "Encryption suite revoke refused": "Revogação do conjunto de cifragem recusada",
+        "Master password proof refused": "Prova da palavra-passe mestra recusada",
+        "Your current master password": "A sua palavra-passe mestra atual",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n contacto de emergência tinha um pedido de acesso pendente quando a rotação de chave o removeu. Verifique quem o pediu antes de voltar a adicionar alguém.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n contactos de emergência tinham um pedido de acesso pendente quando a rotação de chave os removeu. Verifique quem o pediu antes de voltar a adicionar alguém.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Estes contactos de emergência não foram transferidos para a sua nova chave. O acesso de emergência deles foi removido. Adicione-os novamente em Acesso de emergência se ainda os quiser."
     },
     "nplurals=2; plural=(n != 1);"
 )

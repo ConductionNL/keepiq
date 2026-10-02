@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Tieto kontakty mali čakajúcu alebo schválenú žiadosť o núdzový prístup, a preto nedostali váš nový kľúč. Takto by vyzeral kontakt, ktorý pridal niekto iný: neurčujte ich znova, pokiaľ neviete, že žiadosť bola skutočná.",
         "Invalidated": "Zneplatnené",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Tento kontakt mal pri zmene vášho kľúča čakajúcu alebo schválenú žiadosť o núdzový prístup, a preto nedostal váš nový kľúč. Takto by vyzeral kontakt, ktorý pridal niekto iný: neurčujte ho znova, pokiaľ neviete, že žiadosť bola skutočná.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Rotácia kľúča bola obnovená, a preto tieto núdzové kontakty nebolo možné preniesť a ich prístup pre naliehavé prípady bol odstránený. Ak ich stále chcete, pridajte ich znova v časti Prístup pre naliehavé prípady.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Rotácia kľúča odstránila %n núdzový kontakt. Skontrolujte Prístup pre naliehavé prípady a pridajte ho znova, ak ho stále chcete.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Rotácia kľúča odstránila %n núdzových kontaktov. Skontrolujte Prístup pre naliehavé prípady a pridajte ich znova, ak ich stále chcete.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rotácia kľúča odstránila tomuto kontaktu prístup pre naliehavé prípady. Ak ho stále chcete, určte ho znova.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Štítok",
         "Remove tag": "Odobrať štítok",
         "Add tag": "Pridať štítok",
-        "Could not change the tags. Try again.": "Štítky nemožno zmeniť. Skúste to znova."
+        "Could not change the tags. Try again.": "Štítky nemožno zmeniť. Skúste to znova.",
+        "Compromise recovery aborted": "Obnova po kompromitácii prerušená",
+        "Key rotation ended by a compromise revoke": "Rotácia kľúča ukončená odvolaním pre kompromitáciu",
+        "Encryption suite revoke refused": "Odvolanie šifrovacej sady zamietnuté",
+        "Master password proof refused": "Dôkaz hlavného hesla zamietnutý",
+        "Your current master password": "Vaše súčasné hlavné heslo",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n núdzový kontakt mal nevybavenú žiadosť o prístup, keď ho rotácia kľúča odstránila. Skôr ako niekoho znova pridáte, overte, kto žiadal.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "Núdzové kontakty (%n) mali nevybavenú žiadosť o prístup, keď ich rotácia kľúča odstránila. Skôr ako niekoho znova pridáte, overte, kto žiadal.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Tieto núdzové kontakty neboli prenesené na váš nový kľúč. Ich núdzový prístup bol odstránený. Ak ich stále chcete, pridajte ich znova v Núdzovom prístupe."
     },
     "nplurals=2; plural=(n != 1);"
 )

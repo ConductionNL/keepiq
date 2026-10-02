@@ -1178,7 +1178,6 @@
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Тези контакти имаха чакаща или одобрена заявка за спешен достъп, затова не получиха новия ви ключ. Така би изглеждал контакт, добавен от някой друг: не ги определяйте отново, освен ако не знаете, че заявката е истинска.",
         "Invalidated": "Обезсилено",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Този контакт имаше чакаща или одобрена заявка за спешен достъп, когато сменихте ключа си, затова не получи новия ви ключ. Така би изглеждал контакт, добавен от някой друг: не го определяйте отново, освен ако не знаете, че заявката е истинска.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ротацията на ключа беше възобновена, затова тези контакти за спешен достъп не можаха да бъдат пренесени и достъпът им при спешност беше премахнат. Добавете ги отново от „Достъп при спешност“, ако все още ги искате.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ротацията на ключа премахна %n контакт за спешен достъп. Проверете „Достъп при спешност“ и го добавете отново, ако все още го искате.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ротацията на ключа премахна %n контакта за спешен достъп. Проверете „Достъп при спешност“ и ги добавете отново, ако все още ги искате.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ротацията на ключа премахна достъпа при спешност на този контакт. Определете го отново, ако все още го искате.",
@@ -1265,7 +1264,15 @@
         "Tag": "Етикет",
         "Remove tag": "Премахване на етикет",
         "Add tag": "Добавяне на етикет",
-        "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново."
+        "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново.",
+        "Compromise recovery aborted": "Възстановяването след компрометиране е прекратено",
+        "Key rotation ended by a compromise revoke": "Смяната на ключа е прекратена от отмяна поради компрометиране",
+        "Encryption suite revoke refused": "Отмяната на комплекта за шифроване е отказана",
+        "Master password proof refused": "Доказът за главната парола е отказан",
+        "Your current master password": "Текущата ви главна парола",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n контакт за спешни случаи имаше чакаща заявка за достъп, когато смяната на ключа го премахна. Проверете кой е поискал, преди да добавите някого отново.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "Контактите за спешни случаи (%n) имаха чакаща заявка за достъп, когато смяната на ключа ги премахна. Проверете кой е поискал, преди да добавите някого отново.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Тези контакти за спешни случаи не бяха прехвърлени към новия ви ключ. Спешният им достъп беше премахнат. Добавете ги отново от Спешен достъп, ако все още ги искате."
     },
     "plurals": null
 }

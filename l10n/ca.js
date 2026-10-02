@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Aquests contactes tenien una sol·licitud d'accés d'emergència pendent o aprovada, per tant no han rebut la teva clau nova. Així és com es veuria un contacte afegit per una altra persona: no els tornis a designar tret que sàpigues que la sol·licitud era legítima.",
         "Invalidated": "Invalidat",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Aquest contacte tenia una sol·licitud d'accés d'emergència pendent o aprovada quan vas canviar la clau, per tant no ha rebut la teva clau nova. Així és com es veuria un contacte afegit per una altra persona: no el tornis a designar tret que sàpigues que la sol·licitud era legítima.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "La rotació de claus s'ha reprès, per tant aquests contactes d'emergència no s'han pogut traspassar i se'ls ha retirat l'accés d'emergència. Torna'ls a afegir des d'Accés d'emergència si encara els vols.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "La rotació de claus ha retirat %n contacte d'emergència. Revisa Accés d'emergència i torna'l a afegir si encara el vols.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "La rotació de claus ha retirat %n contactes d'emergència. Revisa Accés d'emergència i torna'ls a afegir si encara els vols.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "La rotació de claus ha retirat l'accés d'emergència d'aquest contacte. Torna'l a designar si encara el vols.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Etiqueta",
         "Remove tag": "Treu l'etiqueta",
         "Add tag": "Afegeix una etiqueta",
-        "Could not change the tags. Try again.": "No s'han pogut canviar les etiquetes. Torneu-ho a provar."
+        "Could not change the tags. Try again.": "No s'han pogut canviar les etiquetes. Torneu-ho a provar.",
+        "Compromise recovery aborted": "Recuperació després de compromís cancel·lada",
+        "Key rotation ended by a compromise revoke": "Rotació de clau finalitzada per una revocació per compromís",
+        "Encryption suite revoke refused": "Revocació del conjunt de xifratge rebutjada",
+        "Master password proof refused": "Prova de la contrasenya mestra rebutjada",
+        "Your current master password": "La teva contrasenya mestra actual",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n contacte d'emergència tenia una sol·licitud d'accés pendent quan la rotació de clau el va eliminar. Comprova qui la va demanar abans de tornar a afegir ningú.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n contactes d'emergència tenien una sol·licitud d'accés pendent quan la rotació de clau els va eliminar. Comprova qui la va demanar abans de tornar a afegir ningú.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Aquests contactes d'emergència no s'han traspassat a la teva clau nova. S'ha eliminat el seu accés d'emergència. Torna'ls a afegir des d'Accés d'emergència si encara els vols."
     },
     "nplurals=2; plural=(n != 1);"
 )

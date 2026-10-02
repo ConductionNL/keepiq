@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Bu kişilerin bekleyen veya onaylanmış bir acil durum erişimi isteği vardı, bu nedenle yeni anahtarınızı almadılar. Başka biri tarafından eklenmiş bir kişi böyle görünürdü: isteğin gerçek olduğunu bilmiyorsanız onları yeniden atamayın.",
         "Invalidated": "Geçersiz kılındı",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Anahtarınızı değiştirdiğinizde bu kişinin bekleyen veya onaylanmış bir acil durum erişimi isteği vardı, bu nedenle yeni anahtarınızı almadı. Başka biri tarafından eklenmiş bir kişi böyle görünürdü: isteğin gerçek olduğunu bilmiyorsanız onu yeniden atamayın.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Anahtar döndürmeniz sürdürüldü, bu nedenle bu acil durum kişileri aktarılamadı ve acil durum erişimleri kaldırıldı. Hâlâ istiyorsanız onları Acil durum erişimi bölümünden yeniden ekleyin.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Anahtar döndürmeniz %n acil durum kişisini kaldırdı. Acil durum erişimini kontrol edin ve hâlâ istiyorsanız yeniden ekleyin.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Anahtar döndürmeniz %n acil durum kişisini kaldırdı. Acil durum erişimini kontrol edin ve hâlâ istiyorsanız onları yeniden ekleyin.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Anahtar döndürmeniz bu kişinin acil durum erişimini kaldırdı. Hâlâ istiyorsanız onu yeniden atayın.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Etiket",
         "Remove tag": "Etiketi kaldır",
         "Add tag": "Etiket ekle",
-        "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin."
+        "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin.",
+        "Compromise recovery aborted": "Ele geçirilme sonrası kurtarma iptal edildi",
+        "Key rotation ended by a compromise revoke": "Anahtar değişimi, ele geçirilme nedeniyle yapılan bir iptalle sonlandırıldı",
+        "Encryption suite revoke refused": "Şifreleme paketi iptali reddedildi",
+        "Master password proof refused": "Ana parola kanıtı reddedildi",
+        "Your current master password": "Geçerli ana parolanız",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n acil durum kişisinin, anahtar değişimi onu kaldırdığında bekleyen bir erişim isteği vardı. Birini yeniden eklemeden önce kimin istediğini kontrol edin.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n acil durum kişisinin, anahtar değişimi onları kaldırdığında bekleyen bir erişim isteği vardı. Birini yeniden eklemeden önce kimin istediğini kontrol edin.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Bu acil durum kişileri yeni anahtarınıza aktarılmadı. Acil durum erişimleri kaldırıldı. Hâlâ istiyorsanız Acil durum erişimi bölümünden yeniden ekleyin."
     },
     "nplurals=2; plural=(n != 1);"
 )

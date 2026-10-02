@@ -1178,7 +1178,6 @@
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Für diese Kontakte war eine Anfrage auf Notfallzugang offen oder bereits genehmigt, daher haben sie Ihren neuen Schlüssel nicht erhalten. So sähe ein Kontakt aus, den jemand anderes hinzugefügt hat: Benennen Sie sie nicht erneut, es sei denn, Sie wissen, dass die Anfrage echt war.",
         "Invalidated": "Ungültig geworden",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Für diesen Kontakt war beim Wechsel Ihres Schlüssels eine Anfrage auf Notfallzugang offen oder bereits genehmigt, daher hat er Ihren neuen Schlüssel nicht erhalten. So sähe ein Kontakt aus, den jemand anderes hinzugefügt hat: Benennen Sie ihn nicht erneut, es sei denn, Sie wissen, dass die Anfrage echt war.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ihre Schlüsselrotation wurde fortgesetzt, daher konnten diese Notfallkontakte nicht übernommen werden und ihr Notfallzugriff wurde entfernt. Fügen Sie sie unter Notfallzugriff erneut hinzu, wenn Sie sie noch möchten.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ihre Schlüsselrotation hat %n Notfallkontakt entfernt. Prüfen Sie den Notfallzugriff und fügen Sie ihn erneut hinzu, wenn Sie ihn noch möchten.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ihre Schlüsselrotation hat %n Notfallkontakte entfernt. Prüfen Sie den Notfallzugriff und fügen Sie sie erneut hinzu, wenn Sie sie noch möchten.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ihre Schlüsselrotation hat den Notfallzugriff dieses Kontakts entfernt. Benennen Sie ihn erneut, wenn Sie ihn noch möchten.",
@@ -1265,7 +1264,15 @@
         "Tag": "Schlagwort",
         "Remove tag": "Schlagwort entfernen",
         "Add tag": "Schlagwort hinzufügen",
-        "Could not change the tags. Try again.": "Schlagwörter konnten nicht geändert werden. Bitte erneut versuchen."
+        "Could not change the tags. Try again.": "Schlagwörter konnten nicht geändert werden. Bitte erneut versuchen.",
+        "Compromise recovery aborted": "Kompromittierungs-Wiederherstellung abgebrochen",
+        "Key rotation ended by a compromise revoke": "Schlüsselrotation durch einen Kompromittierungs-Widerruf beendet",
+        "Encryption suite revoke refused": "Widerruf der Verschlüsselungssuite abgelehnt",
+        "Master password proof refused": "Nachweis des Master-Passworts abgelehnt",
+        "Your current master password": "Ihr aktuelles Master-Passwort",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n Notfallkontakt hatte eine offene Zugriffsanfrage, als Ihre Schlüsselrotation ihn entfernte. Prüfen Sie, wer angefragt hat, bevor Sie jemanden erneut hinzufügen.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n Notfallkontakte hatten eine offene Zugriffsanfrage, als Ihre Schlüsselrotation sie entfernte. Prüfen Sie, wer angefragt hat, bevor Sie jemanden erneut hinzufügen.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Diese Notfallkontakte wurden nicht zu Ihrem neuen Schlüssel übernommen. Ihr Notfallzugriff wurde entfernt. Fügen Sie sie unter Notfallzugriff erneut hinzu, wenn Sie sie noch möchten."
     },
     "plurals": null
 }

@@ -1178,7 +1178,6 @@
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Disse kontakter havde en afventende eller godkendt anmodning om nødadgang, så de fik ikke din nye nøgle. Sådan ville en kontakt tilføjet af en anden se ud: udpeg dem ikke igen, medmindre du ved, at anmodningen var ægte.",
         "Invalidated": "Ugyldiggjort",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Denne kontakt havde en afventende eller godkendt anmodning om nødadgang, da du skiftede nøgle, så den fik ikke din nye nøgle. Sådan ville en kontakt tilføjet af en anden se ud: udpeg den ikke igen, medmindre du ved, at anmodningen var ægte.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Din nøglerotation blev genoptaget, så disse nødkontakter kunne ikke overføres, og deres nødadgang blev fjernet. Tilføj dem igen under Nødadgang, hvis du stadig ønsker dem.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Din nøglerotation fjernede %n nødkontakt. Tjek Nødadgang, og tilføj den igen, hvis du stadig ønsker den.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Din nøglerotation fjernede %n nødkontakter. Tjek Nødadgang, og tilføj dem igen, hvis du stadig ønsker dem.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Din nøglerotation fjernede denne kontakts nødadgang. Udpeg den igen, hvis du stadig ønsker den.",
@@ -1265,7 +1264,15 @@
         "Tag": "Mærke",
         "Remove tag": "Fjern mærke",
         "Add tag": "Tilføj mærke",
-        "Could not change the tags. Try again.": "Mærkerne kunne ikke ændres. Prøv igen."
+        "Could not change the tags. Try again.": "Mærkerne kunne ikke ændres. Prøv igen.",
+        "Compromise recovery aborted": "Gendannelse efter kompromittering afbrudt",
+        "Key rotation ended by a compromise revoke": "Nøglerotation afsluttet af en tilbagekaldelse pga. kompromittering",
+        "Encryption suite revoke refused": "Tilbagekaldelse af krypteringssuite afvist",
+        "Master password proof refused": "Bevis for hovedadgangskode afvist",
+        "Your current master password": "Din nuværende hovedadgangskode",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n nødkontakt havde en ventende adgangsanmodning, da din nøglerotation fjernede den. Tjek, hvem der spurgte, før du tilføjer nogen igen.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n nødkontakter havde en ventende adgangsanmodning, da din nøglerotation fjernede dem. Tjek, hvem der spurgte, før du tilføjer nogen igen.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Disse nødkontakter blev ikke overført til din nye nøgle. Deres nødadgang blev fjernet. Tilføj dem igen under Nødadgang, hvis du stadig ønsker dem."
     },
     "plurals": null
 }

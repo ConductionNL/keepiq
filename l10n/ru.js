@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "У этих контактов был ожидающий или одобренный запрос на экстренный доступ, поэтому они не получили ваш новый ключ. Именно так выглядел бы контакт, добавленный кем-то другим: не назначайте их снова, если не знаете, что запрос был настоящим.",
         "Invalidated": "Аннулировано",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "У этого контакта был ожидающий или одобренный запрос на экстренный доступ, когда вы сменили ключ, поэтому он не получил ваш новый ключ. Именно так выглядел бы контакт, добавленный кем-то другим: не назначайте его снова, если не знаете, что запрос был настоящим.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ротация ключа была возобновлена, поэтому эти экстренные контакты не удалось перенести и их экстренный доступ удалён. Добавьте их снова в разделе «Экстренный доступ», если они вам ещё нужны.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ротация ключа удалила %n экстренный контакт. Проверьте «Экстренный доступ» и добавьте его снова, если он вам ещё нужен.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ротация ключа удалила %n экстренных контактов. Проверьте «Экстренный доступ» и добавьте их снова, если они вам ещё нужны.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ротация ключа удалила экстренный доступ этого контакта. Назначьте его снова, если он вам ещё нужен.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Метка",
         "Remove tag": "Убрать метку",
         "Add tag": "Добавить метку",
-        "Could not change the tags. Try again.": "Не удалось изменить метки. Попробуйте ещё раз."
+        "Could not change the tags. Try again.": "Не удалось изменить метки. Попробуйте ещё раз.",
+        "Compromise recovery aborted": "Восстановление после компрометации прервано",
+        "Key rotation ended by a compromise revoke": "Смена ключа завершена отзывом из-за компрометации",
+        "Encryption suite revoke refused": "Отзыв набора шифрования отклонён",
+        "Master password proof refused": "Подтверждение мастер-пароля отклонено",
+        "Your current master password": "Ваш текущий мастер-пароль",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "У %n экстренного контакта был ожидающий запрос доступа, когда смена ключа удалила его. Проверьте, кто запрашивал, прежде чем снова кого-либо добавлять.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "У экстренных контактов (%n) был ожидающий запрос доступа, когда смена ключа удалила их. Проверьте, кто запрашивал, прежде чем снова кого-либо добавлять.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Эти экстренные контакты не были перенесены на ваш новый ключ. Их экстренный доступ удалён. Добавьте их снова в разделе Экстренный доступ, если они вам ещё нужны."
     },
     "nplurals=2; plural=(n != 1);"
 )

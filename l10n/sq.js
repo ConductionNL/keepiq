@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Këta kontakte kishin një kërkesë për qasje urgjence në pritje ose të miratuar, prandaj nuk morën çelësin tuaj të ri. Kështu do të dukej një kontakt i shtuar nga dikush tjetër: mos i caktoni sërish, përveç nëse e dini se kërkesa ishte e vërtetë.",
         "Invalidated": "E pavlefshme",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Ky kontakt kishte një kërkesë për qasje urgjence në pritje ose të miratuar kur ndërruat çelësin, prandaj nuk mori çelësin tuaj të ri. Kështu do të dukej një kontakt i shtuar nga dikush tjetër: mos e caktoni sërish, përveç nëse e dini se kërkesa ishte e vërtetë.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Rrotullimi i kyçit u rifillua, prandaj këta kontakte emergjence nuk mund të barteshin dhe aksesi i tyre i emergjencës u hoq. Shtojini përsëri nga Aksesi i emergjencës nëse i doni ende.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Rrotullimi i kyçit hoqi %n kontakt emergjence. Kontrolloni Aksesin e emergjencës dhe shtojeni përsëri nëse e doni ende.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Rrotullimi i kyçit hoqi %n kontakte emergjence. Kontrolloni Aksesin e emergjencës dhe shtojini përsëri nëse i doni ende.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rrotullimi i kyçit hoqi aksesin e emergjencës së këtij kontakti. Caktojeni përsëri nëse e doni ende.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Etiketë",
         "Remove tag": "Hiq etiketën",
         "Add tag": "Shto etiketë",
-        "Could not change the tags. Try again.": "Etiketat nuk u ndryshuan dot. Provoni sërish."
+        "Could not change the tags. Try again.": "Etiketat nuk u ndryshuan dot. Provoni sërish.",
+        "Compromise recovery aborted": "Rikuperimi pas komprometimit u ndërpre",
+        "Key rotation ended by a compromise revoke": "Rrotullimi i çelësit përfundoi nga një revokim për shkak të komprometimit",
+        "Encryption suite revoke refused": "Revokimi i paketës së enkriptimit u refuzua",
+        "Master password proof refused": "Prova e fjalëkalimit kryesor u refuzua",
+        "Your current master password": "Fjalëkalimi yt kryesor aktual",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n kontakt urgjence kishte një kërkesë aksesi në pritje kur rrotullimi i çelësit e hoqi. Kontrollo kush e kërkoi para se të shtosh dikë përsëri.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n kontakte urgjence kishin një kërkesë aksesi në pritje kur rrotullimi i çelësit i hoqi. Kontrollo kush e kërkoi para se të shtosh dikë përsëri.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Këto kontakte urgjence nuk u transferuan te çelësi yt i ri. Aksesi i tyre i urgjencës u hoq. Shtoji përsëri te Aksesi i urgjencës nëse i do ende."
     },
     "nplurals=2; plural=(n != 1);"
 )

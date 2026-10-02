@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Ezeknek a kapcsolattartóknak függőben lévő vagy jóváhagyott vészhelyzeti hozzáférési kérelmük volt, ezért nem kapták meg az új kulcsát. Így nézne ki egy mások által hozzáadott kapcsolattartó: ne jelölje ki őket újra, hacsak nem tudja, hogy a kérelem valódi volt.",
         "Invalidated": "Érvénytelenítve",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Ennek a kapcsolattartónak függőben lévő vagy jóváhagyott vészhelyzeti hozzáférési kérelme volt, amikor lecserélte a kulcsát, ezért nem kapta meg az új kulcsát. Így nézne ki egy mások által hozzáadott kapcsolattartó: ne jelölje ki újra, hacsak nem tudja, hogy a kérelem valódi volt.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "A kulcsrotáció folytatódott, ezért ezeket a vészhelyzeti kapcsolattartókat nem lehetett átvinni, és vészhelyzeti hozzáférésüket eltávolítottuk. Ha továbbra is szeretné őket, adja hozzá újra őket a Vészhelyzeti hozzáférés oldalon.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "A kulcsrotáció eltávolított %n vészhelyzeti kapcsolattartót. Nézze meg a Vészhelyzeti hozzáférést, és adja hozzá újra, ha továbbra is szeretné.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "A kulcsrotáció eltávolított %n vészhelyzeti kapcsolattartót. Nézze meg a Vészhelyzeti hozzáférést, és adja hozzá újra őket, ha továbbra is szeretné őket.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "A kulcsrotáció eltávolította ennek a kapcsolattartónak a vészhelyzeti hozzáférését. Jelölje ki újra, ha továbbra is szeretné.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Címke",
         "Remove tag": "Címke eltávolítása",
         "Add tag": "Címke hozzáadása",
-        "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra."
+        "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra.",
+        "Compromise recovery aborted": "A kompromittálás utáni helyreállítás megszakítva",
+        "Key rotation ended by a compromise revoke": "A kulcscserét egy kompromittálás miatti visszavonás fejezte be",
+        "Encryption suite revoke refused": "A titkosítási csomag visszavonása elutasítva",
+        "Master password proof refused": "A mesterjelszó igazolása elutasítva",
+        "Your current master password": "A jelenlegi mesterjelszava",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n vészhelyzeti kapcsolattartónak függő hozzáférési kérelme volt, amikor a kulcscsere eltávolította. Ellenőrizze, ki kérte, mielőtt bárkit újra hozzáad.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n vészhelyzeti kapcsolattartónak függő hozzáférési kérelme volt, amikor a kulcscsere eltávolította őket. Ellenőrizze, ki kérte, mielőtt bárkit újra hozzáad.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ezek a vészhelyzeti kapcsolattartók nem kerültek át az új kulcsára. A vészhelyzeti hozzáférésüket eltávolítottuk. Adja hozzá őket újra a Vészhelyzeti hozzáférésben, ha még szeretné."
     },
     "nplurals=2; plural=(n != 1);"
 )

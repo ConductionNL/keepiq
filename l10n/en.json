@@ -1178,7 +1178,6 @@
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.",
         "Invalidated": "Invalidated",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Your key rotation removed this contact's emergency access. Designate them again if you still want them.",
@@ -1265,7 +1264,15 @@
         "Tag": "Tag",
         "Remove tag": "Remove tag",
         "Add tag": "Add tag",
-        "Could not change the tags. Try again.": "Could not change the tags. Try again."
+        "Could not change the tags. Try again.": "Could not change the tags. Try again.",
+        "Compromise recovery aborted": "Compromise recovery aborted",
+        "Key rotation ended by a compromise revoke": "Key rotation ended by a compromise revoke",
+        "Encryption suite revoke refused": "Encryption suite revoke refused",
+        "Master password proof refused": "Master password proof refused",
+        "Your current master password": "Your current master password",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

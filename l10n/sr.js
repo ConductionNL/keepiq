@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Ови контакти су имали захтев за приступ у хитним случајевима на чекању или одобрен, па нису добили ваш нови кључ. Тако би изгледао контакт који је додао неко други: не одређујте их поново осим ако знате да је захтев био стваран.",
         "Invalidated": "Поништено",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Овај контакт је имао захтев за приступ у хитним случајевима на чекању или одобрен када сте променили кључ, па није добио ваш нови кључ. Тако би изгледао контакт који је додао неко други: не одређујте га поново осим ако знате да је захтев био стваран.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ротација кључа је настављена, па ови контакти за хитне случајеве нису могли бити пренети и њихов приступ у хитним случајевима је уклоњен. Додајте их поново у одељку Приступ у хитним случајевима ако их још желите.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Ротација кључа је уклонила %n контакт за хитне случајеве. Проверите Приступ у хитним случајевима и додајте га поново ако га још желите.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Ротација кључа је уклонила %n контакта за хитне случајеве. Проверите Приступ у хитним случајевима и додајте их поново ако их још желите.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Ротација кључа је уклонила приступ у хитним случајевима овог контакта. Одредите га поново ако га још желите.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Ознака",
         "Remove tag": "Уклони ознаку",
         "Add tag": "Додај ознаку",
-        "Could not change the tags. Try again.": "Није могуће променити ознаке. Покушајте поново."
+        "Could not change the tags. Try again.": "Није могуће променити ознаке. Покушајте поново.",
+        "Compromise recovery aborted": "Опоравак након компромитовања прекинут",
+        "Key rotation ended by a compromise revoke": "Ротација кључа завршена опозивом због компромитовања",
+        "Encryption suite revoke refused": "Опозив пакета за шифровање одбијен",
+        "Master password proof refused": "Доказ главне лозинке одбијен",
+        "Your current master password": "Ваша тренутна главна лозинка",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n контакт за хитне случајеве имао је захтев за приступ на чекању када га је ротација кључа уклонила. Проверите ко је тражио пре него што поново додате било кога.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "Контакти за хитне случајеве (%n) имали су захтев за приступ на чекању када их је ротација кључа уклонила. Проверите ко је тражио пре него што поново додате било кога.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Ови контакти за хитне случајеве нису пренети на ваш нови кључ. Њихов хитни приступ је уклоњен. Поново их додајте у Хитном приступу ако их још желите."
     },
     "nplurals=2; plural=(n != 1);"
 )

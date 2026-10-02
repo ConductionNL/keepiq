@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Bhí iarratas ar rochtain éigeandála ar feitheamh nó ceadaithe ag na teagmhálaithe seo, mar sin ní bhfuair siad d’eochair nua. Sin mar a bheadh teagmhálaí a chuir duine eile leis: ná hainmnigh arís iad mura bhfuil a fhios agat go raibh an t-iarratas fíor.",
         "Invalidated": "Neamhbhailithe",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Bhí iarratas ar rochtain éigeandála ar feitheamh nó ceadaithe ag an teagmhálaí seo nuair a d’athraigh tú d’eochair, mar sin ní bhfuair sé d’eochair nua. Sin mar a bheadh teagmhálaí a chuir duine eile leis: ná hainmnigh arís é mura bhfuil a fhios agat go raibh an t-iarratas fíor.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Atosaíodh do rothlú eochrach, mar sin níorbh fhéidir na teagmhálaithe éigeandála seo a thabhairt anonn agus baineadh a rochtain éigeandála. Cuir leis arís iad ó Rochtain éigeandála más mian leat iad fós.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Bhain do rothlú eochrach %n teagmhálaí éigeandála. Seiceáil Rochtain éigeandála agus cuir leis arís é más mian leat é fós.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Bhain do rothlú eochrach %n teagmhálaí éigeandála. Seiceáil Rochtain éigeandála agus cuir leis arís iad más mian leat iad fós.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Bhain do rothlú eochrach rochtain éigeandála an teagmhálaí seo. Ainmnigh arís é más mian leat é fós.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Clib",
         "Remove tag": "Bain an chlib",
         "Add tag": "Cuir clib leis",
-        "Could not change the tags. Try again.": "Níorbh fhéidir na clibeanna a athrú. Bain triail eile as."
+        "Could not change the tags. Try again.": "Níorbh fhéidir na clibeanna a athrú. Bain triail eile as.",
+        "Compromise recovery aborted": "Cealaíodh an t-aisghabháil tar éis comhréitigh",
+        "Key rotation ended by a compromise revoke": "Cuireadh deireadh le malartú eochrach le cúlghairm mar gheall ar chomhréiteach",
+        "Encryption suite revoke refused": "Diúltaíodh do chúlghairm na sraithe criptiúcháin",
+        "Master password proof refused": "Diúltaíodh do chruthúnas an phríomhfhocail faire",
+        "Your current master password": "Do phríomhfhocal faire reatha",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "Bhí iarratas rochtana ar feitheamh ag %n teagmhálaí éigeandála nuair a bhain do mhalartú eochrach é. Seiceáil cé a d'iarr sula gcuireann tú duine ar bith ar ais.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "Bhí iarratas rochtana ar feitheamh ag %n teagmhálaí éigeandála nuair a bhain do mhalartú eochrach iad. Seiceáil cé a d'iarr sula gcuireann tú duine ar bith ar ais.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Níor aistríodh na teagmhálaithe éigeandála seo chuig d'eochair nua. Baineadh a rochtain éigeandála. Cuir ar ais iad ó Rochtain éigeandála más mian leat iad fós."
     },
     "nplurals=2; plural=(n != 1);"
 )

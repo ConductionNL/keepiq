@@ -1179,7 +1179,6 @@ OC.L10N.register(
         "These contacts had an emergency-access request pending or approved, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Šie kontaktai turėjo laukiančią arba patvirtintą skubios prieigos užklausą, todėl negavo jūsų naujo rakto. Taip atrodytų kontaktas, kurį pridėjo kažkas kitas: nepaskirkite jų iš naujo, nebent žinote, kad užklausa buvo tikra.",
         "Invalidated": "Anuliuota",
         "This contact had an emergency-access request pending or approved when you rotated your key, so they did not receive your new key. That is how a contact added by someone else would look: do not designate them again unless you know the request was genuine.": "Šis kontaktas turėjo laukiančią arba patvirtintą skubios prieigos užklausą, kai pakeitėte raktą, todėl negavo jūsų naujo rakto. Taip atrodytų kontaktas, kurį pridėjo kažkas kitas: nepaskirkite jo iš naujo, nebent žinote, kad užklausa buvo tikra.",
-        "Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.": "Rakto rotacija buvo pratęsta, todėl šių skubios prieigos kontaktų nepavyko perkelti ir jų prieiga nenumatytais atvejais pašalinta. Jei jų vis dar norite, vėl pridėkite juos skiltyje „Prieiga nenumatytais atvejais“.",
         "Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.": "Rakto rotacija pašalino %n skubios prieigos kontaktą. Patikrinkite „Prieiga nenumatytais atvejais“ ir vėl jį pridėkite, jei jo vis dar norite.",
         "Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.": "Rakto rotacija pašalino %n skubios prieigos kontaktus. Patikrinkite „Prieiga nenumatytais atvejais“ ir vėl juos pridėkite, jei jų vis dar norite.",
         "Your key rotation removed this contact's emergency access. Designate them again if you still want them.": "Rakto rotacija pašalino šio kontakto prieigą nenumatytais atvejais. Jei jo vis dar norite, paskirkite jį iš naujo.",
@@ -1266,7 +1265,15 @@ OC.L10N.register(
         "Tag": "Žymė",
         "Remove tag": "Pašalinti žymę",
         "Add tag": "Pridėti žymę",
-        "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą."
+        "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą.",
+        "Compromise recovery aborted": "Atkūrimas po kompromitavimo nutrauktas",
+        "Key rotation ended by a compromise revoke": "Rakto keitimą užbaigė atšaukimas dėl kompromitavimo",
+        "Encryption suite revoke refused": "Šifravimo rinkinio atšaukimas atmestas",
+        "Master password proof refused": "Pagrindinio slaptažodžio įrodymas atmestas",
+        "Your current master password": "Jūsų dabartinis pagrindinis slaptažodis",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n skubios pagalbos kontaktas turėjo laukiančią prieigos užklausą, kai rakto keitimas jį pašalino. Patikrinkite, kas prašė, prieš vėl ką nors pridėdami.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n skubios pagalbos kontaktai turėjo laukiančią prieigos užklausą, kai rakto keitimas juos pašalino. Patikrinkite, kas prašė, prieš vėl ką nors pridėdami.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Šie skubios pagalbos kontaktai nebuvo perkelti į jūsų naują raktą. Jų skubi prieiga pašalinta. Vėl pridėkite juos skiltyje Skubi prieiga, jei jų vis dar norite."
     },
     "nplurals=2; plural=(n != 1);"
 )
