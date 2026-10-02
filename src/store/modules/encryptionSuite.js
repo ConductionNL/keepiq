@@ -227,12 +227,20 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *   The migration outcome, including the emergency contacts that were not
 		 *   re-enveloped, each with why (see migrateEmergencyContacts).
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-pending-changes-block-logout-and-rotation
 		 */
 		async initiateCompromiseRecovery(
 			oldPassword,
 			newPassword,
 			carryContactIds = [],
 		) {
+			// Offline changes are sealed to the current certificate: a rotation
+			// waits until they are synced or discarded (offline-edit-queue D6).
+			const { useOfflineStore: offlineStoreOf } = await import('./offline.js')
+			const offline = offlineStoreOf()
+			await offline.loadQueue()
+			offline.assertNoPendingChanges()
+
 			const { publicKeyPem, privateKey } = await generateKeyPair()
 
 			// Export new private key as PEM.
