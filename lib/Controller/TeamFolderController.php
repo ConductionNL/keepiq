@@ -32,6 +32,9 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Service\TeamFolderContributionService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -50,6 +53,7 @@ class TeamFolderController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param TeamFolderService $teamFolderService The team-folder service
 	 * @param IUserSession $userSession The user session
+	 * @param TeamFolderContributionService $contributions Write-grade member contributions
 	 *
 	 * @return void
 	 */
@@ -57,6 +61,7 @@ class TeamFolderController extends OCSController {
 		IRequest $request,
 		private TeamFolderService $teamFolderService,
 		private IUserSession $userSession,
+		private TeamFolderContributionService $contributions,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -149,6 +154,49 @@ class TeamFolderController extends OCSController {
 
 		return new JSONResponse(data: ['revoked' => $revoked]);
 	}//end destroy()
+
+	/**
+	 * A write-grade member saves a new secret into a team folder they do not
+	 * own (admin-vault-policies D5). The body carries the owner ciphertext
+	 * (`key`, `login`, `additionalFields`), metadata and one `copies` row per
+	 * member. The grade is checked in the service before anything is stored;
+	 * a read-grade member or a non-member gets 403.
+	 *
+	 * @param string $id The TeamFolder UUID
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.2
+	 */
+	#[NoAdminRequired]
+	public function contribute(string $id): JSONResponse {
+		$userId = $this->sessionUserId();
+		if ($userId === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		$data = [];
+		foreach (['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields', 'copies'] as $field) {
+			$data[$field] = $this->request->getParam($field);
+		}
+
+		try {
+			$result = $this->contributions->contribute(teamFolderId: $id, data: $data, userId: $userId);
+		} catch (NotFoundException $exception) {
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
+		} catch (ForbiddenException $exception) {
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+		} catch (InvalidArgumentException $exception) {
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		return new JSONResponse(
+			data: ['secret' => $result['secret']->jsonSerialize(), 'copies' => $result['copies']],
+			statusCode: Http::STATUS_CREATED
+		);
+	}//end contribute()
 
 	/**
 	 * Reconciliation: expected fan-out state + missing (secret ×

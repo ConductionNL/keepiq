@@ -389,6 +389,8 @@ $extra = [
     ['name' => 'share#writeContext',              'url' => '/api/v1/secrets/{id}/write-context',           'verb' => 'GET'],
     ['name' => 'teamFolder#reconcile',            'url' => '/api/v1/team-folders/{id}/reconcile',          'verb' => 'GET'],
     ['name' => 'teamFolder#registerShares',       'url' => '/api/v1/team-folders/{id}/shares',             'verb' => 'POST'],
+    // Write-grade member contribution (admin-vault-policies D5).
+    ['name' => 'teamFolder#contribute',           'url' => '/api/v1/team-folders/{id}/secrets',            'verb' => 'POST'],
     ['name' => 'teamFolderMember#approveJoin',    'url' => '/api/v1/team-folders/{id}/approve-join',       'verb' => 'POST'],
     ['name' => 'teamFolder#destroy',              'url' => '/api/v1/team-folders/{id}',                    'verb' => 'DELETE'],
 

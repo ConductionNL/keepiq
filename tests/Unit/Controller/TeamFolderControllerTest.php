@@ -68,6 +68,13 @@ class TeamFolderControllerTest extends TestCase {
 	private IUserSession&MockObject $userSession;
 
 	/**
+	 * The mocked contribution service.
+	 *
+	 * @var \OCA\Keepiq\Service\TeamFolderContributionService&MockObject
+	 */
+	private \OCA\Keepiq\Service\TeamFolderContributionService&MockObject $contributions;
+
+	/**
 	 * Set up the mocks shared by every test.
 	 *
 	 * @return void
@@ -78,6 +85,7 @@ class TeamFolderControllerTest extends TestCase {
 		$this->request = $this->createMock(IRequest::class);
 		$this->teamFolderService = $this->createMock(TeamFolderService::class);
 		$this->userSession = $this->createMock(IUserSession::class);
+		$this->contributions = $this->createMock(\OCA\Keepiq\Service\TeamFolderContributionService::class);
 	}//end setUp()
 
 	/**
@@ -99,7 +107,8 @@ class TeamFolderControllerTest extends TestCase {
 		return new TeamFolderController(
 			request: $this->request,
 			teamFolderService: $this->teamFolderService,
-			userSession: $this->userSession
+			userSession: $this->userSession,
+			contributions: $this->contributions,
 		);
 	}//end controller()
 
@@ -258,4 +267,31 @@ class TeamFolderControllerTest extends TestCase {
 		$this->assertSame(['message' => 'Unauthorized'], $response->getData());
 	}//end testRegisterSharesRejectsAnAnonymousCallerBeforeTheService()
 
+
+	/**
+	 * admin-vault-policies §4.2: the service's grade refusal reaches a
+	 * read-grade member as 403, for the session user only.
+	 *
+	 * @return void
+	 */
+	public function testContributeRefusalIs403ForTheSessionUser(): void {
+		$this->contributions->expects($this->once())->method('contribute')
+			->with('tf-ops', $this->anything(), 'jack')
+			->willThrowException(new \OCA\Keepiq\Exception\ForbiddenException('read grade'));
+
+		$response = $this->controller('jack')->contribute(id: 'tf-ops');
+
+		$this->assertSame(403, $response->getStatus());
+	}//end testContributeRefusalIs403ForTheSessionUser()
+
+	/**
+	 * An anonymous caller never reaches the service.
+	 *
+	 * @return void
+	 */
+	public function testContributeRejectsAnAnonymousCaller(): void {
+		$this->contributions->expects($this->never())->method('contribute');
+
+		$this->assertSame(401, $this->controller(null)->contribute(id: 'tf-ops')->getStatus());
+	}//end testContributeRejectsAnAnonymousCaller()
 }//end class
