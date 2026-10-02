@@ -1549,6 +1549,10 @@
         "_%n change waiting to sync_::_%n changes waiting to sync_": [
             "%n módosítás várakozik szinkronizálásra",
             "%n módosítás várakozik szinkronizálásra"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "A felhasználó még a(z) {groups} csoportban van, amely egy csapatmappa tagja. Távolítsa el a csoportból, vagy tiltsa le a fiókot.",
+            "A felhasználó még a(z) {groups} csoportokban van, amelyek csapatmappák tagjai. Távolítsa el a csoportokból, vagy tiltsa le a fiókot."
         ]
     },
     "plurals": null

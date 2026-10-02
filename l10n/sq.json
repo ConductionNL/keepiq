@@ -1549,6 +1549,10 @@
         "_%n change waiting to sync_::_%n changes waiting to sync_": [
             "%n ndryshim pret sinkronizimin",
             "%n ndryshime presin sinkronizimin"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Përdoruesi është ende në grupin {groups}, që është anëtar i një dosjeje ekipi. Hiqeni nga grupi ose çaktivizoni llogarinë.",
+            "Përdoruesi është ende në grupet {groups}, që janë anëtare të dosjeve të ekipit. Hiqeni nga grupet ose çaktivizoni llogarinë."
         ]
     },
     "plurals": null

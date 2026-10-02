@@ -1595,6 +1595,12 @@
             "%n sprememb čaka na sinhronizacijo",
             "%n sprememb čaka na sinhronizacijo",
             "%n sprememb čaka na sinhronizacijo"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Uporabnik je še vedno v skupini {groups}, ki je članica ekipne mape. Odstranite ga iz skupine ali onemogočite račun.",
+            "Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun.",
+            "Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun.",
+            "Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun."
         ]
     },
     "plurals": null

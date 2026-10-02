@@ -1549,6 +1549,10 @@
         "_%n change waiting to sync_::_%n changes waiting to sync_": [
             "%n muudatus ootab sünkroonimist",
             "%n muudatust ootab sünkroonimist"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Kasutaja on endiselt grupis {groups}, mis on meeskonnakausta liige. Eemaldage ta grupist või keelake konto.",
+            "Kasutaja on endiselt gruppides {groups}, mis on meeskonnakaustade liikmed. Eemaldage ta gruppidest või keelake konto."
         ]
     },
     "plurals": null

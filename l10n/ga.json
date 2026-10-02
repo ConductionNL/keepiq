@@ -1572,6 +1572,11 @@
             "%n athrú ag fanacht le sioncrónú",
             "%n athrú ag fanacht le sioncrónú",
             "%n athrú ag fanacht le sioncrónú"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Tá an t-úsáideoir fós sa ghrúpa {groups}, atá ina bhall d'fhillteán foirne. Bain é den ghrúpa nó díchumasaigh an cuntas.",
+            "Tá an t-úsáideoir fós sna grúpaí {groups}, atá ina mbaill d'fhillteáin foirne. Bain é de na grúpaí nó díchumasaigh an cuntas.",
+            "Tá an t-úsáideoir fós sna grúpaí {groups}, atá ina mbaill d'fhillteáin foirne. Bain é de na grúpaí nó díchumasaigh an cuntas."
         ]
     },
     "plurals": null

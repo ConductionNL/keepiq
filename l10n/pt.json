@@ -1549,6 +1549,10 @@
         "_%n change waiting to sync_::_%n changes waiting to sync_": [
             "%n alteração a aguardar sincronização",
             "%n alterações a aguardar sincronização"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "O utilizador ainda está no grupo {groups}, que é membro de uma pasta de equipa. Remova-o do grupo ou desative a conta.",
+            "O utilizador ainda está nos grupos {groups}, que são membros de pastas de equipa. Remova-o dos grupos ou desative a conta."
         ]
     },
     "plurals": null

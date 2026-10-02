@@ -1572,6 +1572,11 @@
             "%n izmaiņa gaida sinhronizāciju",
             "%n izmaiņas gaida sinhronizāciju",
             "%n izmaiņas gaida sinhronizāciju"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Lietotājs joprojām ir grupā {groups}, kas ir komandas mapes dalībniece. Noņemiet viņu no grupas vai atspējojiet kontu.",
+            "Lietotājs joprojām ir grupās {groups}, kas ir komandas mapju dalībnieces. Noņemiet viņu no grupām vai atspējojiet kontu.",
+            "Lietotājs joprojām ir grupās {groups}, kas ir komandas mapju dalībnieces. Noņemiet viņu no grupām vai atspējojiet kontu."
         ]
     },
     "plurals": null

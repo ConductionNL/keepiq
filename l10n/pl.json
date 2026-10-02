@@ -1572,6 +1572,11 @@
             "%n zmiana czeka na synchronizację",
             "%n zmian czeka na synchronizację",
             "%n zmian czeka na synchronizację"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Użytkownik nadal jest w grupie {groups}, która jest członkiem folderu zespołu. Usuń go z grupy lub wyłącz konto.",
+            "Użytkownik nadal jest w grupach {groups}, które są członkami folderów zespołu. Usuń go z grup lub wyłącz konto.",
+            "Użytkownik nadal jest w grupach {groups}, które są członkami folderów zespołu. Usuń go z grup lub wyłącz konto."
         ]
     },
     "plurals": null

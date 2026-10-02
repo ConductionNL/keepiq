@@ -1549,6 +1549,10 @@
         "_%n change waiting to sync_::_%n changes waiting to sync_": [
             "%n Ännerung waart op d'Synchronisatioun",
             "%n Ännerunge waarden op d'Synchronisatioun"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "De Benotzer ass nach am Grupp {groups}, deen Member vun engem Teamdossier ass. Huelt hien aus dem Grupp eraus oder desaktivéiert de Kont.",
+            "De Benotzer ass nach an de Gruppen {groups}, déi Member vun Teamdossiere sinn. Huelt hien aus de Gruppen eraus oder desaktivéiert de Kont."
         ]
     },
     "plurals": null

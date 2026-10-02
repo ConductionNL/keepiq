@@ -1572,6 +1572,11 @@
             "%n změna čeká na synchronizaci",
             "%n změn čeká na synchronizaci",
             "%n změn čeká na synchronizaci"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Uživatel je stále ve skupině {groups}, která je členem týmové složky. Odeberte ho ze skupiny nebo zakažte účet.",
+            "Uživatel je stále ve skupinách {groups}, které jsou členy týmových složek. Odeberte ho ze skupin nebo zakažte účet.",
+            "Uživatel je stále ve skupinách {groups}, které jsou členy týmových složek. Odeberte ho ze skupin nebo zakažte účet."
         ]
     },
     "plurals": null

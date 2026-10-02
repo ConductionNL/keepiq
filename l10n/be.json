@@ -1572,6 +1572,11 @@
             "%n змена чакае сінхранізацыі",
             "%n змен чакаюць сінхранізацыі",
             "%n змен чакаюць сінхранізацыі"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Карыстальнік усё яшчэ ў групе {groups}, якая ўваходзіць у камандную папку. Выдаліце яго з групы або адключыце ўліковы запіс.",
+            "Карыстальнік усё яшчэ ў групах {groups}, якія ўваходзяць у камандныя папкі. Выдаліце яго з груп або адключыце ўліковы запіс.",
+            "Карыстальнік усё яшчэ ў групах {groups}, якія ўваходзяць у камандныя папкі. Выдаліце яго з груп або адключыце ўліковы запіс."
         ]
     },
     "plurals": null

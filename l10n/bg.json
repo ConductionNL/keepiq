@@ -1549,6 +1549,10 @@
         "_%n change waiting to sync_::_%n changes waiting to sync_": [
             "%n промяна чака синхронизиране",
             "%n промени чакат синхронизиране"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Потребителят все още е в група {groups}, която е член на екипна папка. Премахнете го от групата или деактивирайте акаунта.",
+            "Потребителят все още е в групи {groups}, които са членове на екипни папки. Премахнете го от групите или деактивирайте акаунта."
         ]
     },
     "plurals": null

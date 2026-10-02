@@ -1572,6 +1572,11 @@
             "%n modificare așteaptă sincronizarea",
             "%n modificări așteaptă sincronizarea",
             "%n modificări așteaptă sincronizarea"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Utilizatorul este încă în grupul {groups}, care este membru al unui dosar de echipă. Scoateți-l din grup sau dezactivați contul.",
+            "Utilizatorul este încă în grupurile {groups}, care sunt membre ale unor dosare de echipă. Scoateți-l din grupuri sau dezactivați contul.",
+            "Utilizatorul este încă în grupurile {groups}, care sunt membre ale unor dosare de echipă. Scoateți-l din grupuri sau dezactivați contul."
         ]
     },
     "plurals": null

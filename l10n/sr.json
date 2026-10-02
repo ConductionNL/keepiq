@@ -1572,6 +1572,11 @@
             "%n измена чека синхронизацију",
             "%n измена чека синхронизацију",
             "%n измена чека синхронизацију"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Корисник је још у групи {groups}, која је чланица тимске фасцикле. Уклоните га из групе или онемогућите налог.",
+            "Корисник је још у групама {groups}, које су чланице тимских фасцикли. Уклоните га из група или онемогућите налог.",
+            "Корисник је још у групама {groups}, које су чланице тимских фасцикли. Уклоните га из група или онемогућите налог."
         ]
     },
     "plurals": null

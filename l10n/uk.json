@@ -1572,6 +1572,11 @@
             "%n зміна очікує синхронізації",
             "%n змін очікують синхронізації",
             "%n змін очікують синхронізації"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Користувач досі в групі {groups}, яка є учасником командної теки. Вилучіть його з групи або вимкніть обліковий запис.",
+            "Користувач досі в групах {groups}, які є учасниками командних тек. Вилучіть його з груп або вимкніть обліковий запис.",
+            "Користувач досі в групах {groups}, які є учасниками командних тек. Вилучіть його з груп або вимкніть обліковий запис."
         ]
     },
     "plurals": null

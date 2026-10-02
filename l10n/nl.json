@@ -1554,6 +1554,10 @@
         "_%n change waiting to sync_::_%n changes waiting to sync_": [
             "%n wijziging wacht op synchronisatie",
             "%n wijzigingen wachten op synchronisatie"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "De gebruiker zit nog in groep {groups}, die lid is van een teammap. Haal de gebruiker uit de groep of schakel het account uit.",
+            "De gebruiker zit nog in groepen {groups}, die lid zijn van teammappen. Haal de gebruiker uit de groepen of schakel het account uit."
         ]
     },
     "plurals": null,

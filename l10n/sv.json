@@ -1549,6 +1549,10 @@
         "_%n change waiting to sync_::_%n changes waiting to sync_": [
             "%n ändring väntar på synkronisering",
             "%n ändringar väntar på synkronisering"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Användaren finns fortfarande i gruppen {groups}, som är medlem i en teammapp. Ta bort användaren från gruppen eller inaktivera kontot.",
+            "Användaren finns fortfarande i grupperna {groups}, som är medlemmar i teammappar. Ta bort användaren från grupperna eller inaktivera kontot."
         ]
     },
     "plurals": null

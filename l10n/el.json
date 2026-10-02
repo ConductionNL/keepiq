@@ -1549,6 +1549,10 @@
         "_%n change waiting to sync_::_%n changes waiting to sync_": [
             "%n αλλαγή περιμένει συγχρονισμό",
             "%n αλλαγές περιμένουν συγχρονισμό"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Ο χρήστης είναι ακόμη στην ομάδα {groups}, που είναι μέλος φακέλου ομάδας. Αφαιρέστε τον από την ομάδα ή απενεργοποιήστε τον λογαριασμό.",
+            "Ο χρήστης είναι ακόμη στις ομάδες {groups}, που είναι μέλη φακέλων ομάδας. Αφαιρέστε τον από τις ομάδες ή απενεργοποιήστε τον λογαριασμό."
         ]
     },
     "plurals": null

@@ -1572,6 +1572,11 @@
             "%n изменение ожидает синхронизации",
             "%n изменений ожидают синхронизации",
             "%n изменений ожидают синхронизации"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Пользователь всё ещё в группе {groups}, которая входит в командную папку. Удалите его из группы или отключите учётную запись.",
+            "Пользователь всё ещё в группах {groups}, которые входят в командные папки. Удалите его из групп или отключите учётную запись.",
+            "Пользователь всё ещё в группах {groups}, которые входят в командные папки. Удалите его из групп или отключите учётную запись."
         ]
     },
     "plurals": null

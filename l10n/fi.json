@@ -1549,6 +1549,10 @@
         "_%n change waiting to sync_::_%n changes waiting to sync_": [
             "%n muutos odottaa synkronointia",
             "%n muutosta odottaa synkronointia"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Käyttäjä on yhä ryhmässä {groups}, joka on tiimikansion jäsen. Poista käyttäjä ryhmästä tai poista tili käytöstä.",
+            "Käyttäjä on yhä ryhmissä {groups}, jotka ovat tiimikansioiden jäseniä. Poista käyttäjä ryhmistä tai poista tili käytöstä."
         ]
     },
     "plurals": null
