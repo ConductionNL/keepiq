@@ -34,6 +34,7 @@ export const PROOF_PURPOSE = {
 	EMERGENCY_RE_ENVELOPE: 'emergency-access-re-envelope',
 	DELETE_ACCOUNT_DATA: 'delete-account-data',
 	APPROVE_DEVICE: 'approve-device',
+	APPROVE_ACCOUNT_RECOVERY: 'approve-account-recovery',
 }
 
 /**

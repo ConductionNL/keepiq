@@ -80,6 +80,7 @@ class VaultKeyProofService {
 	public const PURPOSE_EMERGENCY_RE_ENVELOPE = 'emergency-access-re-envelope';
 	public const PURPOSE_DELETE_ACCOUNT_DATA = 'delete-account-data';
 	public const PURPOSE_APPROVE_DEVICE = 'approve-device';
+	public const PURPOSE_APPROVE_ACCOUNT_RECOVERY = 'approve-account-recovery';
 
 	/**
 	 * The purposes a challenge may be issued for.
@@ -94,6 +95,7 @@ class VaultKeyProofService {
 		self::PURPOSE_EMERGENCY_RE_ENVELOPE,
 		self::PURPOSE_DELETE_ACCOUNT_DATA,
 		self::PURPOSE_APPROVE_DEVICE,
+		self::PURPOSE_APPROVE_ACCOUNT_RECOVERY,
 	];
 
 	/**

@@ -79,6 +79,12 @@ class NotificationService {
 		// New device approval (crypto-new-device-approval D5): someone
 		// signed in as this user asks to open the vault. Always shown.
 		'device_approval_requested' => null,
+		// Organisation account recovery (crypto-organisation-account-recovery
+		// 5.2): security events, never suppressible.
+		'recovery_officer_named' => null,
+		'recovery_requested' => null,
+		'recovery_declined' => null,
+		'recovery_ready' => null,
 	];
 
 	/**

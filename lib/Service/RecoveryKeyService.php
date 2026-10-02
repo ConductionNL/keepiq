@@ -255,7 +255,11 @@ class RecoveryKeyService {
 	public static function fingerprint(string $certificatePem): string {
 		$body = preg_replace('/-----(BEGIN|END) CERTIFICATE-----|\s+/', '', $certificatePem);
 		$der  = base64_decode((string)$body, true);
-		return hash('sha256', ($der === false) ? $certificatePem : $der);
+		if ($der === false) {
+			return hash('sha256', $certificatePem);
+		}
+
+		return hash('sha256', $der);
 	}//end fingerprint()
 
 	/**
