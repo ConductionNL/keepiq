@@ -1336,7 +1336,10 @@
         "%s asks to recover their account. Compare the words with them before you approve.": "%s cere recuperarea contului. Comparați cuvintele cu această persoană înainte de a aproba.",
         "A user": "Un utilizator",
         "Your account recovery request was declined": "Cererea dvs. de recuperare a contului a fost refuzată",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Recuperarea contului este gata. Deschideți Keepiq în browserul din care ați cerut-o."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Recuperarea contului este gata. Deschideți Keepiq în browserul din care ați cerut-o.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} cere deblocarea unui dispozitiv nou o singură dată. Parola principală rămâne aceeași.",
+        "Ask your organisation instead": "Întrebați mai bine organizația",
+        "The request ended. Ask again or use your master password.": "Cererea s-a încheiat. Cereți din nou sau folosiți parola principală."
     },
     "plurals": null
 }

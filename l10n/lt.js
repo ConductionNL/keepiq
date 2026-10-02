@@ -1337,7 +1337,10 @@ OC.L10N.register(
         "%s asks to recover their account. Compare the words with them before you approve.": "%s prašo atkurti savo paskyrą. Prieš patvirtindami palyginkite su juo žodžius.",
         "A user": "Naudotojas",
         "Your account recovery request was declined": "Jūsų paskyros atkūrimo užklausa atmesta",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Jūsų paskyros atkūrimas paruoštas. Atidarykite Keepiq naršyklėje, iš kurios jo prašėte."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Jūsų paskyros atkūrimas paruoštas. Atidarykite Keepiq naršyklėje, iš kurios jo prašėte.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} prašo vieną kartą atrakinti naują įrenginį. Pagrindinis slaptažodis lieka tas pats.",
+        "Ask your organisation instead": "Verčiau kreipkitės į savo organizaciją",
+        "The request ended. Ask again or use your master password.": "Užklausa baigėsi. Paprašykite dar kartą arba naudokite pagrindinį slaptažodį."
     },
     "nplurals=2; plural=(n != 1);"
 )

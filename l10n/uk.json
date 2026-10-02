@@ -1336,7 +1336,10 @@
         "%s asks to recover their account. Compare the words with them before you approve.": "%s просить відновити обліковий запис. Звірте з ним слова перед підтвердженням.",
         "A user": "Користувач",
         "Your account recovery request was declined": "Ваш запит на відновлення облікового запису відхилено",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Відновлення облікового запису готове. Відкрийте Keepiq у браузері, з якого ви його запитали."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Відновлення облікового запису готове. Відкрийте Keepiq у браузері, з якого ви його запитали.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} просить один раз розблокувати новий пристрій. Головний пароль залишається тим самим.",
+        "Ask your organisation instead": "Краще звернутися до своєї організації",
+        "The request ended. Ask again or use your master password.": "Запит завершено. Надішліть його знову або скористайтеся головним паролем."
     },
     "plurals": null
 }

@@ -1336,7 +1336,10 @@
         "%s asks to recover their account. Compare the words with them before you approve.": "%s žiada o obnovu účtu. Pred schválením s ním porovnajte slová.",
         "A user": "Používateľ",
         "Your account recovery request was declined": "Vaša žiadosť o obnovu účtu bola zamietnutá",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Obnova účtu je pripravená. Otvorte Keepiq v prehliadači, z ktorého ste žiadali."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Obnova účtu je pripravená. Otvorte Keepiq v prehliadači, z ktorého ste žiadali.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} žiada o jednorazové odomknutie nového zariadenia. Hlavné heslo zostáva rovnaké.",
+        "Ask your organisation instead": "Radšej požiadať svoju organizáciu",
+        "The request ended. Ask again or use your master password.": "Žiadosť skončila. Požiadajte znova alebo použite hlavné heslo."
     },
     "plurals": null
 }

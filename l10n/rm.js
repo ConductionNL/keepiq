@@ -1337,7 +1337,10 @@ OC.L10N.register(
         "%s asks to recover their account. Compare the words with them before you approve.": "%s dumonda da recuperar ses conto. Cumparegliai ils pleds cun quella persuna avant ch'approvar.",
         "A user": "In utilisader",
         "Your account recovery request was declined": "Vossa dumonda da recupero dal conto è vegnida refusada",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Il recupero da Voss conto è pront. Avri Keepiq en il navigatur nua che Vus avais dumandà."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Il recupero da Voss conto è pront. Avri Keepiq en il navigatur nua che Vus avais dumandà.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} dumonda da debloccar ina giada in nov apparat. Il pled-clav principal resta il medem.",
+        "Ask your organisation instead": "Dumonda empè tia organisaziun",
+        "The request ended. Ask again or use your master password.": "La dumonda è terminada. Dumonda anc ina giada u utilisescha tes pled-clav principal."
     },
     "nplurals=2; plural=(n != 1);"
 )

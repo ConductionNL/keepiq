@@ -1336,7 +1336,10 @@
         "%s asks to recover their account. Compare the words with them before you approve.": "%s pede para recuperar a conta. Compare as palavras com essa pessoa antes de aprovar.",
         "A user": "Um utilizador",
         "Your account recovery request was declined": "O seu pedido de recuperação de conta foi recusado",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "A recuperação da sua conta está pronta. Abra o Keepiq no navegador a partir do qual a pediu."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "A recuperação da sua conta está pronta. Abra o Keepiq no navegador a partir do qual a pediu.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} pede para desbloquear um novo dispositivo uma única vez. A palavra-passe mestra mantém-se.",
+        "Ask your organisation instead": "Em vez disso, peça à sua organização",
+        "The request ended. Ask again or use your master password.": "O pedido terminou. Peça novamente ou use a sua palavra-passe mestra."
     },
     "plurals": null
 }

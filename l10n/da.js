@@ -1337,7 +1337,10 @@ OC.L10N.register(
         "%s asks to recover their account. Compare the words with them before you approve.": "%s beder om at gendanne sin konto. Sammenlign ordene med personen, før du godkender.",
         "A user": "En bruger",
         "Your account recovery request was declined": "Din anmodning om kontogendannelse blev afvist",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Din kontogendannelse er klar. Åbn Keepiq i den browser, du spurgte fra."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Din kontogendannelse er klar. Åbn Keepiq i den browser, du spurgte fra.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} beder om at låse en ny enhed op én gang. Hovedadgangskoden forbliver den samme.",
+        "Ask your organisation instead": "Spørg din organisation i stedet",
+        "The request ended. Ask again or use your master password.": "Anmodningen er afsluttet. Spørg igen, eller brug din hovedadgangskode."
     },
     "nplurals=2; plural=(n != 1);"
 )

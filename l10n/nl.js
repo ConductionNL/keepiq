@@ -1342,7 +1342,10 @@ OC.L10N.register(
         "%s asks to recover their account. Compare the words with them before you approve.": "%s vraagt om accountherstel. Vergelijk de woorden met die persoon voordat je goedkeurt.",
         "A user": "Een gebruiker",
         "Your account recovery request was declined": "Je verzoek om accountherstel is geweigerd",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Je accountherstel staat klaar. Open Keepiq in de browser waarin je het aanvroeg."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Je accountherstel staat klaar. Open Keepiq in de browser waarin je het aanvroeg.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} vraagt om een nieuw apparaat eenmalig te ontgrendelen. Het hoofdwachtwoord blijft hetzelfde.",
+        "Ask your organisation instead": "Vraag het liever aan je organisatie",
+        "The request ended. Ask again or use your master password.": "Het verzoek is beëindigd. Vraag het opnieuw of gebruik je hoofdwachtwoord."
     },
     "nplurals=2; plural=(n != 1);"
 )

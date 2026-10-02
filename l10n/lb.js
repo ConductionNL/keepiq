@@ -1337,7 +1337,10 @@ OC.L10N.register(
         "%s asks to recover their account. Compare the words with them before you approve.": "%s freet no der Erëmhierstellung vum Kont. Vergläicht d'Wierder mat der Persoun, ier Dir fräigitt.",
         "A user": "E Benotzer",
         "Your account recovery request was declined": "Är Ufro fir d'Kont-Erëmhierstellung gouf refuséiert",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Är Kont-Erëmhierstellung ass prett. Maacht Keepiq an dem Browser op, aus deem Dir se ugefrot hutt."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Är Kont-Erëmhierstellung ass prett. Maacht Keepiq an dem Browser op, aus deem Dir se ugefrot hutt.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} freet, en neien Apparat eemol z'entspären. D'Master-Passwuert bleift d'selwecht.",
+        "Ask your organisation instead": "Frot amplaz Är Organisatioun",
+        "The request ended. Ask again or use your master password.": "D'Ufro ass eriwwer. Frot nach eng Kéier oder benotzt Äert Master-Passwuert."
     },
     "nplurals=2; plural=(n != 1);"
 )

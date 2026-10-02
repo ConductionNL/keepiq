@@ -1336,7 +1336,10 @@
         "%s asks to recover their account. Compare the words with them before you approve.": "%s biður um endurheimt aðgangs. Berðu orðin saman við viðkomandi áður en þú samþykkir.",
         "A user": "Notandi",
         "Your account recovery request was declined": "Beiðni þinni um endurheimt aðgangs var hafnað",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Endurheimt aðgangsins er tilbúin. Opnaðu Keepiq í vafranum sem þú baðst um hana úr."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Endurheimt aðgangsins er tilbúin. Opnaðu Keepiq í vafranum sem þú baðst um hana úr.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} biður um að opna nýtt tæki einu sinni. Aðallykilorðið helst óbreytt.",
+        "Ask your organisation instead": "Biddu frekar stofnunina þína",
+        "The request ended. Ask again or use your master password.": "Beiðninni er lokið. Biddu aftur eða notaðu aðallykilorðið þitt."
     },
     "plurals": null
 }

@@ -1337,7 +1337,10 @@ OC.L10N.register(
         "%s asks to recover their account. Compare the words with them before you approve.": "%s kërkon të rikuperojë llogarinë. Krahasoni fjalët me të para se të miratoni.",
         "A user": "Një përdorues",
         "Your account recovery request was declined": "Kërkesa juaj për rikuperimin e llogarisë u refuzua",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Rikuperimi i llogarisë suaj është gati. Hapni Keepiq në shfletuesin nga i cili e kërkuat."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Rikuperimi i llogarisë suaj është gati. Hapni Keepiq në shfletuesin nga i cili e kërkuat.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} kërkon që një pajisje e re të shkyçet një herë. Fjalëkalimi kryesor mbetet i njëjtë.",
+        "Ask your organisation instead": "Pyet më mirë organizatën tënde",
+        "The request ended. Ask again or use your master password.": "Kërkesa përfundoi. Kërko përsëri ose përdor fjalëkalimin kryesor."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1337,7 +1337,10 @@ OC.L10N.register(
         "%s asks to recover their account. Compare the words with them before you approve.": "%s demana recuperar el seu compte. Compareu les paraules amb aquesta persona abans d'aprovar.",
         "A user": "Un usuari",
         "Your account recovery request was declined": "S'ha rebutjat la vostra sol·licitud de recuperació del compte",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "La recuperació del compte està llesta. Obriu Keepiq al navegador des d'on la vau demanar."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "La recuperació del compte està llesta. Obriu Keepiq al navegador des d'on la vau demanar.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} demana desbloquejar un dispositiu nou una sola vegada. Conserva la seva contrasenya mestra.",
+        "Ask your organisation instead": "Demana-ho a la teva organització",
+        "The request ended. Ask again or use your master password.": "La sol·licitud ha finalitzat. Torna-ho a demanar o fes servir la contrasenya mestra."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1337,7 +1337,10 @@ OC.L10N.register(
         "%s asks to recover their account. Compare the words with them before you approve.": "%s palub oma kontot taastada. Võrrelge enne kinnitamist temaga sõnu.",
         "A user": "Kasutaja",
         "Your account recovery request was declined": "Teie konto taastamise taotlus lükati tagasi",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Teie konto taastamine on valmis. Avage Keepiq brauseris, kust selle küsisite."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Teie konto taastamine on valmis. Avage Keepiq brauseris, kust selle küsisite.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} palub uue seadme ühekordset avamist. Ülemparool jääb samaks.",
+        "Ask your organisation instead": "Küsi hoopis oma organisatsioonilt",
+        "The request ended. Ask again or use your master password.": "Taotlus lõppes. Küsi uuesti või kasuta oma ülemparooli."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1336,7 +1336,10 @@
         "%s asks to recover their account. Compare the words with them before you approve.": "Tá %s ag iarraidh a gcuntas a aisghabháil. Cuir na focail i gcomparáid leo sula bhfaomhann tú.",
         "A user": "Úsáideoir",
         "Your account recovery request was declined": "Diúltaíodh d'iarratas ar aisghabháil cuntais",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Tá d'aisghabháil cuntais réidh. Oscail Keepiq sa bhrabhsálaí ónar iarr tú í."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Tá d'aisghabháil cuntais réidh. Oscail Keepiq sa bhrabhsálaí ónar iarr tú í.",
+        "{user} asks to unlock a new device once. They keep their master password.": "Iarrann {user} gléas nua a dhíghlasáil uair amháin. Coinníonn siad a bpríomhfhocal faire.",
+        "Ask your organisation instead": "Iarr ar d'eagraíocht ina ionad sin",
+        "The request ended. Ask again or use your master password.": "Tá an t-iarratas thart. Iarr arís nó úsáid do phríomhfhocal faire."
     },
     "plurals": null
 }

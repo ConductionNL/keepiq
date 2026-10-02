@@ -1337,7 +1337,10 @@ OC.L10N.register(
         "%s asks to recover their account. Compare the words with them before you approve.": "%s qed jitlob li jirkupra l-kont tiegħu. Qabbel il-kliem miegħu qabel ma tapprova.",
         "A user": "Utent",
         "Your account recovery request was declined": "It-talba tiegħek għall-irkupru tal-kont ġiet miċħuda",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "L-irkupru tal-kont tiegħek huwa lest. Iftaħ Keepiq fil-browser li minnu tlabt."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "L-irkupru tal-kont tiegħek huwa lest. Iftaħ Keepiq fil-browser li minnu tlabt.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} qed jitlob li jiftaħ apparat ġdid darba waħda. Il-password ewlenija tibqa' l-istess.",
+        "Ask your organisation instead": "Minflok, staqsi lill-organizzazzjoni tiegħek",
+        "The request ended. Ask again or use your master password.": "It-talba ntemmet. Erġa' itlob jew uża l-password ewlenija tiegħek."
     },
     "nplurals=2; plural=(n != 1);"
 )

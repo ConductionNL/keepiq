@@ -1336,7 +1336,10 @@
         "%s asks to recover their account. Compare the words with them before you approve.": "%s kéri a fiókja helyreállítását. Jóváhagyás előtt hasonlítsa össze vele a szavakat.",
         "A user": "Egy felhasználó",
         "Your account recovery request was declined": "A fiók-helyreállítási kérelmét elutasították",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "A fiók-helyreállítás kész. Nyissa meg a Keepiq alkalmazást abban a böngészőben, amelyből kérte."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "A fiók-helyreállítás kész. Nyissa meg a Keepiq alkalmazást abban a böngészőben, amelyből kérte.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} egy új eszköz egyszeri feloldását kéri. A mesterjelszó változatlan marad.",
+        "Ask your organisation instead": "Kérje inkább a szervezetétől",
+        "The request ended. Ask again or use your master password.": "A kérés lezárult. Kérje újra, vagy használja a mesterjelszavát."
     },
     "plurals": null
 }

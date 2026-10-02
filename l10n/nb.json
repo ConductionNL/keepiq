@@ -1336,7 +1336,10 @@
         "%s asks to recover their account. Compare the words with them before you approve.": "%s ber om å gjenopprette kontoen sin. Sammenlign ordene med personen før du godkjenner.",
         "A user": "En bruker",
         "Your account recovery request was declined": "Forespørselen din om kontogjenoppretting ble avslått",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Kontogjenopprettingen din er klar. Åpne Keepiq i nettleseren du spurte fra."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Kontogjenopprettingen din er klar. Åpne Keepiq i nettleseren du spurte fra.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} ber om å låse opp en ny enhet én gang. Hovedpassordet forblir det samme.",
+        "Ask your organisation instead": "Spør organisasjonen din i stedet",
+        "The request ended. Ask again or use your master password.": "Forespørselen er avsluttet. Spør igjen eller bruk hovedpassordet ditt."
     },
     "plurals": null
 }

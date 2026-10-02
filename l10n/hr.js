@@ -1337,7 +1337,10 @@ OC.L10N.register(
         "%s asks to recover their account. Compare the words with them before you approve.": "%s traži oporavak računa. Usporedite riječi s njim prije odobravanja.",
         "A user": "Korisnik",
         "Your account recovery request was declined": "Vaš zahtjev za oporavak računa je odbijen",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Oporavak računa je spreman. Otvorite Keepiq u pregledniku iz kojeg ste ga zatražili."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Oporavak računa je spreman. Otvorite Keepiq u pregledniku iz kojeg ste ga zatražili.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} traži jednokratno otključavanje novog uređaja. Glavna lozinka ostaje ista.",
+        "Ask your organisation instead": "Umjesto toga pitajte svoju organizaciju",
+        "The request ended. Ask again or use your master password.": "Zahtjev je završio. Zatražite ponovno ili upotrijebite glavnu lozinku."
     },
     "nplurals=2; plural=(n != 1);"
 )

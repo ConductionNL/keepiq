@@ -1337,7 +1337,10 @@ OC.L10N.register(
         "%s asks to recover their account. Compare the words with them before you approve.": "%s asks to recover their account. Compare the words with them before you approve.",
         "A user": "A user",
         "Your account recovery request was declined": "Your account recovery request was declined",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Your account recovery is ready. Open Keepiq in the browser you asked from."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Your account recovery is ready. Open Keepiq in the browser you asked from.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} asks to unlock a new device once. They keep their master password.",
+        "Ask your organisation instead": "Ask your organisation instead",
+        "The request ended. Ask again or use your master password.": "The request ended. Ask again or use your master password."
     },
     "nplurals=2; plural=(n != 1);"
 )

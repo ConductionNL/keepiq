@@ -1336,7 +1336,10 @@
         "%s asks to recover their account. Compare the words with them before you approve.": "%s hesabını kurtarmak istiyor. Onaylamadan önce kelimeleri onunla karşılaştırın.",
         "A user": "Bir kullanıcı",
         "Your account recovery request was declined": "Hesap kurtarma isteğiniz reddedildi",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Hesap kurtarmanız hazır. Keepiq'i istediğiniz tarayıcıda açın."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Hesap kurtarmanız hazır. Keepiq'i istediğiniz tarayıcıda açın.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user}, yeni bir cihazın kilidinin bir kez açılmasını istiyor. Ana parola aynı kalır.",
+        "Ask your organisation instead": "Bunun yerine kuruluşunuza sorun",
+        "The request ended. Ask again or use your master password.": "İstek sona erdi. Yeniden isteyin ya da ana parolanızı kullanın."
     },
     "plurals": null
 }

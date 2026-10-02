@@ -1337,7 +1337,10 @@ OC.L10N.register(
         "%s asks to recover their account. Compare the words with them before you approve.": "%s lūdz atkopt savu kontu. Pirms apstiprināšanas salīdziniet ar viņu vārdus.",
         "A user": "Lietotājs",
         "Your account recovery request was declined": "Jūsu konta atkopšanas pieprasījums tika noraidīts",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Jūsu konta atkopšana ir gatava. Atveriet Keepiq pārlūkā, no kura to pieprasījāt."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Jūsu konta atkopšana ir gatava. Atveriet Keepiq pārlūkā, no kura to pieprasījāt.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} lūdz vienreiz atbloķēt jaunu ierīci. Galvenā parole paliek nemainīga.",
+        "Ask your organisation instead": "Tā vietā jautājiet savai organizācijai",
+        "The request ended. Ask again or use your master password.": "Pieprasījums beidzās. Lūdziet vēlreiz vai izmantojiet savu galveno paroli."
     },
     "nplurals=2; plural=(n != 1);"
 )

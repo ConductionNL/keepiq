@@ -1336,7 +1336,10 @@
         "%s asks to recover their account. Compare the words with them before you approve.": "Ο/Η %s ζητά ανάκτηση του λογαριασμού. Συγκρίνετε τις λέξεις μαζί του πριν εγκρίνετε.",
         "A user": "Ένας χρήστης",
         "Your account recovery request was declined": "Το αίτημα ανάκτησης λογαριασμού απορρίφθηκε",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Η ανάκτηση του λογαριασμού σας είναι έτοιμη. Ανοίξτε το Keepiq στο πρόγραμμα περιήγησης από το οποίο την ζητήσατε."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Η ανάκτηση του λογαριασμού σας είναι έτοιμη. Ανοίξτε το Keepiq στο πρόγραμμα περιήγησης από το οποίο την ζητήσατε.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} ζητά εφάπαξ ξεκλείδωμα μιας νέας συσκευής. Ο κύριος κωδικός πρόσβασης παραμένει ίδιος.",
+        "Ask your organisation instead": "Ρωτήστε καλύτερα τον οργανισμό σας",
+        "The request ended. Ask again or use your master password.": "Το αίτημα έληξε. Ζητήστε ξανά ή χρησιμοποιήστε τον κύριο κωδικό πρόσβασης."
     },
     "plurals": null
 }

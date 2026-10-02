@@ -1337,7 +1337,10 @@ OC.L10N.register(
         "%s asks to recover their account. Compare the words with them before you approve.": "%s žádá o obnovu účtu. Před schválením s ním porovnejte slova.",
         "A user": "Uživatel",
         "Your account recovery request was declined": "Vaše žádost o obnovu účtu byla zamítnuta",
-        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Obnova účtu je připravena. Otevřete Keepiq v prohlížeči, ze kterého jste žádali."
+        "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Obnova účtu je připravena. Otevřete Keepiq v prohlížeči, ze kterého jste žádali.",
+        "{user} asks to unlock a new device once. They keep their master password.": "{user} žádá o jednorázové odemčení nového zařízení. Hlavní heslo zůstává stejné.",
+        "Ask your organisation instead": "Raději požádat svou organizaci",
+        "The request ended. Ask again or use your master password.": "Žádost skončila. Požádejte znovu nebo použijte hlavní heslo."
     },
     "nplurals=2; plural=(n != 1);"
 )
