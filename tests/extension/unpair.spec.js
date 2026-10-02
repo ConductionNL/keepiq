@@ -47,14 +47,22 @@ describe('the worker unpair handler', () => {
 						listener = fn
 					},
 				},
-				getURL: (p) => p,
+				id: 'ext',
+				getURL: (p) => 'chrome-extension://ext/' + p,
 			},
 			storage: {
 				local: {
-					get: async (key) => ({ [key]: store[key] }),
+					get: async (keys) => {
+						const out = {}
+						for (const k of Array.isArray(keys) ? keys : [keys]) {
+							if (k in store) out[k] = store[k]
+						}
+						return out
+					},
 					set: async (obj) => Object.assign(store, obj),
-					remove: async (key) => {
-						delete store[key]
+					remove: async (keys) => {
+						for (const k of Array.isArray(keys) ? keys : [keys])
+							delete store[k]
 					},
 				},
 				session: {
@@ -68,21 +76,28 @@ describe('the worker unpair handler', () => {
 	})
 
 	it('deletes the app password and clears the pairing', async () => {
-		store['keepiq.config'] = CONFIG
+		// One paired account (extension-account-switching).
+		store['keepiq.accounts'] = [{ id: 'a1', ...CONFIG, idleMinutes: 15 }]
+		store['keepiq.activeAccountId'] = 'a1'
 		const fetch = vi
 			.fn()
 			.mockResolvedValue({ ok: true, status: 200, json: async () => ({}) })
 		vi.stubGlobal('fetch', fetch)
 
 		const result = await new Promise((resolve) => {
-			listener({ type: 'unpair' }, {}, resolve)
+			// Disconnect comes from the popup, an extension page.
+			listener(
+				{ type: 'unpair' },
+				{ id: 'ext', url: 'chrome-extension://ext/popup.html' },
+				resolve,
+			)
 		})
 
 		expect(
 			fetch.mock.calls.map(([url, init]) => `${init.method} ${url}`),
 		).toContain('DELETE https://cloud.example/ocs/v2.php/core/apppassword')
 		expect(result).toEqual({ ok: true, revoked: true })
-		expect(store['keepiq.config']).toBeUndefined()
+		expect(store['keepiq.accounts']).toEqual([])
 		vi.unstubAllGlobals()
 	})
 })
