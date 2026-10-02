@@ -1390,7 +1390,23 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Admin areas": "Вобласці адміністравання",
+        "Give a group only the parts of Keepiq administration it needs.": "Дайце групе толькі тыя часткі адміністравання Keepiq, якія ёй патрэбныя.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "У старой групе vault_admin удзельнікаў: {count}. Яна ўсё яшчэ лічыцца вобласцю «Людзі і звальненне», пакуль пазнейшая версія яе не выдаліць. Замест гэтага дэлегуйце гэтую вобласць групе.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Дэлегуйце адну ці некалькі абласцей групе на старонцы правоў адміністравання. Адміністратары экзэмпляра маюць усе вобласці.",
+        "Open administration privileges": "Адкрыць правы адміністравання",
+        "Policies": "Палітыкі",
+        "Applications and machine access": "Праграмы і доступ машын",
+        "People and offboarding": "Людзі і звальненне",
+        "Audit and compliance": "Аўдыт і адпаведнасць",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "версія, цэнтр сертыфікацыі, далучэнні, аўтаномны кэш, праверка ўцечак, тыпы сакрэтаў і рэзервовыя копіі",
+        "master password, organisation password, vault policies, rotation, version history and trash": "галоўны пароль, пароль арганізацыі, палітыкі сховішча, ратацыя, гісторыя версій і сметніца",
+        "application queue, application requests and machine leases": "чарга праграм, запыты праграм і арэнды машын",
+        "team offboarding, encryption suites and admin handover": "звальненне з каманды, наборы шыфравання і перадача адміністратару",
+        "audit log, compliance reports, SIEM export and honey alerts": "журнал аўдыту, справаздачы аб адпаведнасці, экспарт у SIEM і абвесткі пра прынады",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Колькі версій сакрэту захоўваецца, як доўга і як доўга выдаленыя сакрэты застаюцца ў сметніцы.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Абмежаванні для зашыфраваных далучэнняў, якія сервер прымяняе да захаваных зашыфраваных байтаў."
     },
     "nplurals=2; plural=(n != 1);"
 )

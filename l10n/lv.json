@@ -1389,7 +1389,23 @@
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Admin areas": "Pārvaldības jomas",
+        "Give a group only the parts of Keepiq administration it needs.": "Piešķiriet grupai tikai tās Keepiq pārvaldības daļas, kas tai vajadzīgas.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Vecajā grupā vault_admin ir {count} dalībnieki. Tā joprojām skaitās joma Cilvēki un aiziešana, līdz vēlāka versija to noņems. Tā vietā deleģējiet šo jomu grupai.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Deleģējiet vienu vai vairākas jomas grupai pārvaldības tiesību lapā. Instances administratoriem ir visas jomas.",
+        "Open administration privileges": "Atvērt pārvaldības tiesības",
+        "Policies": "Politikas",
+        "Applications and machine access": "Lietotnes un mašīnu piekļuve",
+        "People and offboarding": "Cilvēki un aiziešana",
+        "Audit and compliance": "Audits un atbilstība",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "versija, sertificēšanas iestāde, pielikumi, bezsaistes kešatmiņa, noplūžu pārbaude, noslēpumu tipi un rezerves kopijas",
+        "master password, organisation password, vault policies, rotation, version history and trash": "galvenā parole, organizācijas parole, glabātuves politikas, rotācija, versiju vēsture un miskaste",
+        "application queue, application requests and machine leases": "lietotņu rinda, lietotņu pieprasījumi un mašīnu nomas",
+        "team offboarding, encryption suites and admin handover": "aiziešana no komandas, šifrēšanas komplekti un administratora pārņemšana",
+        "audit log, compliance reports, SIEM export and honey alerts": "audita žurnāls, atbilstības atskaites, SIEM eksports un ēsmas brīdinājumi",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Cik noslēpuma versiju tiek glabātas, cik ilgi, un cik ilgi dzēsti noslēpumi paliek miskastē.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Šifrētu pielikumu ierobežojumi, ko serveris piemēro saglabātos šifrētos baitos."
     },
     "plurals": null
 }

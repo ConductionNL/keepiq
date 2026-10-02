@@ -1389,7 +1389,23 @@
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Admin areas": "Obszary administracji",
+        "Give a group only the parts of Keepiq administration it needs.": "Daj grupie tylko te części administracji Keepiq, których potrzebuje.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Stara grupa vault_admin ma członków: {count}. Nadal liczy się jako obszar Osoby i odejścia, dopóki późniejsza wersja tego nie usunie. Zamiast tego przekaż ten obszar grupie.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Przekaż jeden lub więcej obszarów grupie na stronie uprawnień administracyjnych. Administratorzy instancji mają każdy obszar.",
+        "Open administration privileges": "Otwórz uprawnienia administracyjne",
+        "Policies": "Zasady",
+        "Applications and machine access": "Aplikacje i dostęp maszyn",
+        "People and offboarding": "Osoby i odejścia",
+        "Audit and compliance": "Audyt i zgodność",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "wersja, urząd certyfikacji, załączniki, pamięć podręczna offline, sprawdzanie wycieków, typy sekretów i kopie zapasowe",
+        "master password, organisation password, vault policies, rotation, version history and trash": "hasło główne, hasło organizacji, zasady sejfu, rotacja, historia wersji i kosz",
+        "application queue, application requests and machine leases": "kolejka aplikacji, żądania aplikacji i dzierżawy maszyn",
+        "team offboarding, encryption suites and admin handover": "odejścia z zespołu, zestawy szyfrowania i przejęcie przez administratora",
+        "audit log, compliance reports, SIEM export and honey alerts": "dziennik audytu, raporty zgodności, eksport SIEM i alerty przynęt",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Ile wersji sekretu jest przechowywanych, jak długo, i jak długo usunięte sekrety pozostają w koszu.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limity zaszyfrowanych załączników, egzekwowane na serwerze w zapisanych zaszyfrowanych bajtach."
     },
     "plurals": null
 }

@@ -1390,7 +1390,23 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Admin areas": "Secturs d'administraziun",
+        "Give a group only the parts of Keepiq administration it needs.": "Dai ad ina gruppa mo las parts da l'administraziun da Keepiq ch'ella dovra.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "La veglia gruppa vault_admin ha {count} commembers. Ella vala anc sco il sectur Persunas e partenzas, fin ch'ina versiun posteriura l'allontanescha. Delegai empè quel sectur ad ina gruppa.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegai in u plirs secturs ad ina gruppa sin la pagina dals privilegis d'administraziun. Ils administraturs da l'instanza han mintga sectur.",
+        "Open administration privileges": "Avrir ils privilegis d'administraziun",
+        "Policies": "Directivas",
+        "Applications and machine access": "Applicaziuns ed access da maschinas",
+        "People and offboarding": "Persunas e partenzas",
+        "Audit and compliance": "Revisiun e conformitad",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "versiun, autoritad da certificaziun, agiuntas, cache offline, controlla da perditas, tips da secrets e copias da segirezza",
+        "master password, organisation password, vault policies, rotation, version history and trash": "pled-clav principal, pled-clav da l'organisaziun, directivas da la chascha, rotaziun, istorgia da versiuns e chanaster",
+        "application queue, application requests and machine leases": "rait d'applicaziuns, dumondas d'applicaziuns e fittanzas da maschinas",
+        "team offboarding, encryption suites and admin handover": "partenzas dal team, suites da criptaziun e surpigliada da l'administratur",
+        "audit log, compliance reports, SIEM export and honey alerts": "protocol da revisiun, rapports da conformitad, export SIEM ed avertiments d'eschca",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Quantas versiuns d'in secret vegnan tegnidas, quant ditg, e quant ditg ch'ils secrets stizzads restan en il chanaster.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limitas per agiuntas criptadas, applitgadas sin il server en bytes criptads memorisads."
     },
     "nplurals=2; plural=(n != 1);"
 )

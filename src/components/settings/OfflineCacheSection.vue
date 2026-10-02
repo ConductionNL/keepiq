@@ -64,7 +64,7 @@ export default {
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin'),
+				generateUrl('/apps/keepiq/api/settings/admin/general'),
 			)
 			this.enabled =
 				response.data?.offline_cache_enabled !== false
@@ -82,7 +82,7 @@ export default {
 		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-an-admin-can-disable-offline-caching-org-wide
 		 */
 		async save() {
-			await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
+			await axios.put(generateUrl('/apps/keepiq/api/settings/admin/general'), {
 				offline_cache_enabled: this.enabled,
 			})
 		},

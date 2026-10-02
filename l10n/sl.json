@@ -1389,7 +1389,23 @@
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Admin areas": "Področja upravljanja",
+        "Give a group only the parts of Keepiq administration it needs.": "Skupini dajte samo tiste dele upravljanja Keepiq, ki jih potrebuje.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Stara skupina vault_admin ima članov: {count}. Še vedno šteje kot področje Ljudje in odhodi, dokler je poznejša različica ne odstrani. Namesto tega to področje dodelite skupini.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Dodelite eno ali več področij skupini na strani skrbniških pravic. Skrbniki primerka imajo vsa področja.",
+        "Open administration privileges": "Odpri skrbniške pravice",
+        "Policies": "Pravilniki",
+        "Applications and machine access": "Aplikacije in dostop strojev",
+        "People and offboarding": "Ljudje in odhodi",
+        "Audit and compliance": "Revizija in skladnost",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "različica, overitelj potrdil, priloge, predpomnilnik brez povezave, preverjanje uhajanja, vrste skrivnosti in varnostne kopije",
+        "master password, organisation password, vault policies, rotation, version history and trash": "glavno geslo, geslo organizacije, pravilniki trezorja, rotacija, zgodovina različic in koš",
+        "application queue, application requests and machine leases": "vrsta aplikacij, zahteve aplikacij in najemi strojev",
+        "team offboarding, encryption suites and admin handover": "odhodi iz ekipe, šifrirni nabori in prevzem s strani skrbnika",
+        "audit log, compliance reports, SIEM export and honey alerts": "revizijski dnevnik, poročila o skladnosti, izvoz SIEM in opozorila vab",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Koliko različic skrivnosti se hrani, kako dolgo in kako dolgo izbrisane skrivnosti ostanejo v košu.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Omejitve za šifrirane priloge, ki jih strežnik uveljavlja v shranjenih šifriranih bajtih."
     },
     "plurals": null
 }

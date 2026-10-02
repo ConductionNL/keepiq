@@ -47,9 +47,12 @@ describe('TeamFolderAutoConfirmSection', () => {
 		await wrapper.find('[data-testid="auto-confirm-enabled"]').setValue(true)
 		await flushPromises()
 
-		expect(put).toHaveBeenCalledWith('/apps/keepiq/api/settings/admin', {
-			team_folder_auto_confirm: true,
-		})
+		expect(put).toHaveBeenCalledWith(
+			'/apps/keepiq/api/settings/admin/policies',
+			{
+				team_folder_auto_confirm: true,
+			},
+		)
 	})
 
 	it('shows the server refusal', async () => {

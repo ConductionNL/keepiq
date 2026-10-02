@@ -1390,7 +1390,23 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Admin areas": "Yönetim alanları",
+        "Give a group only the parts of Keepiq administration it needs.": "Bir gruba Keepiq yönetiminin yalnızca ihtiyaç duyduğu bölümlerini verin.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Eski vault_admin grubunun {count} üyesi var. Daha sonraki bir sürüm kaldırana kadar hâlâ Kişiler ve ayrılanlar alanı sayılıyor. Bunun yerine o alanı bir gruba devredin.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Yönetim yetkileri sayfasında bir gruba bir veya daha fazla alan devredin. Örnek yöneticileri her alana sahiptir.",
+        "Open administration privileges": "Yönetim yetkilerini aç",
+        "Policies": "İlkeler",
+        "Applications and machine access": "Uygulamalar ve makine erişimi",
+        "People and offboarding": "Kişiler ve ayrılanlar",
+        "Audit and compliance": "Denetim ve uyumluluk",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "sürüm, sertifika yetkilisi, ekler, çevrimdışı önbellek, sızıntı denetimi, gizli bilgi türleri ve yedekler",
+        "master password, organisation password, vault policies, rotation, version history and trash": "ana parola, kuruluş parolası, kasa ilkeleri, rotasyon, sürüm geçmişi ve çöp kutusu",
+        "application queue, application requests and machine leases": "uygulama kuyruğu, uygulama istekleri ve makine kiralamaları",
+        "team offboarding, encryption suites and admin handover": "ekipten ayrılanlar, şifreleme paketleri ve yönetici devralması",
+        "audit log, compliance reports, SIEM export and honey alerts": "denetim günlüğü, uyumluluk raporları, SIEM dışa aktarımı ve tuzak uyarıları",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Bir gizli bilginin kaç sürümünün ne kadar süre saklandığı ve silinen gizli bilgilerin çöp kutusunda ne kadar kaldığı.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Şifreli ekler için sınırlar; sunucu bunları depolanan şifreli baytlarda uygular."
     },
     "nplurals=2; plural=(n != 1);"
 )

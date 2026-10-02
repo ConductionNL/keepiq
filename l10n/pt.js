@@ -1390,7 +1390,23 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Admin areas": "Áreas de administração",
+        "Give a group only the parts of Keepiq administration it needs.": "Dê a um grupo apenas as partes da administração do Keepiq de que precisa.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "O antigo grupo vault_admin tem {count} membros. Ainda conta como a área Pessoas e saídas, até que uma versão posterior o remova. Delegue essa área a um grupo em vez disso.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegue uma ou mais áreas a um grupo na página de privilégios de administração. Os administradores da instância têm todas as áreas.",
+        "Open administration privileges": "Abrir privilégios de administração",
+        "Policies": "Políticas",
+        "Applications and machine access": "Aplicações e acesso de máquinas",
+        "People and offboarding": "Pessoas e saídas",
+        "Audit and compliance": "Auditoria e conformidade",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "versão, autoridade de certificação, anexos, cache offline, verificação de fugas, tipos de segredos e cópias de segurança",
+        "master password, organisation password, vault policies, rotation, version history and trash": "palavra-passe mestra, palavra-passe da organização, políticas do cofre, rotação, histórico de versões e lixo",
+        "application queue, application requests and machine leases": "fila de aplicações, pedidos de aplicações e concessões de máquinas",
+        "team offboarding, encryption suites and admin handover": "saídas da equipa, suites de cifra e transferência pelo administrador",
+        "audit log, compliance reports, SIEM export and honey alerts": "registo de auditoria, relatórios de conformidade, exportação SIEM e alertas isco",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Quantas versões de um segredo são guardadas, durante quanto tempo, e quanto tempo os segredos eliminados ficam no lixo.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limites para anexos cifrados, aplicados no servidor em bytes cifrados armazenados."
     },
     "nplurals=2; plural=(n != 1);"
 )

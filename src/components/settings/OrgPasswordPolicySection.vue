@@ -179,7 +179,7 @@ export default {
 				await typeStore.fetchTypes()
 			}
 			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin'),
+				generateUrl('/apps/keepiq/api/settings/admin/policies'),
 			)
 			for (const key of Object.keys(this.policy)) {
 				if (response.data[key] !== undefined) {
@@ -205,10 +205,13 @@ export default {
 		async save() {
 			this.error = null
 			try {
-				await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
-					...this.policy,
-					policy_exempt_types: this.exemptTypes,
-				})
+				await axios.put(
+					generateUrl('/apps/keepiq/api/settings/admin/policies'),
+					{
+						...this.policy,
+						policy_exempt_types: this.exemptTypes,
+					},
+				)
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
 			}

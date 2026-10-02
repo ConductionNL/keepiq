@@ -1389,7 +1389,23 @@
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Admin areas": "Felügyeleti területek",
+        "Give a group only the parts of Keepiq administration it needs.": "Csak azokat a Keepiq-felügyeleti részeket adja egy csoportnak, amelyekre szüksége van.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "A régi vault_admin csoportnak {count} tagja van. Még mindig az Emberek és kilépés területnek számít, amíg egy későbbi verzió el nem távolítja. Ehelyett delegálja azt a területet egy csoportnak.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegáljon egy vagy több területet egy csoportnak a felügyeleti jogosultságok oldalon. A példány rendszergazdái minden területtel rendelkeznek.",
+        "Open administration privileges": "Felügyeleti jogosultságok megnyitása",
+        "Policies": "Házirendek",
+        "Applications and machine access": "Alkalmazások és gépi hozzáférés",
+        "People and offboarding": "Emberek és kilépés",
+        "Audit and compliance": "Naplózás és megfelelőség",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "verzió, hitelesítésszolgáltató, mellékletek, offline gyorsítótár, szivárgásellenőrzés, titoktípusok és biztonsági mentések",
+        "master password, organisation password, vault policies, rotation, version history and trash": "mesterjelszó, szervezeti jelszó, széfházirendek, rotáció, verzióelőzmények és kuka",
+        "application queue, application requests and machine leases": "alkalmazássor, alkalmazáskérések és gépi bérletek",
+        "team offboarding, encryption suites and admin handover": "csapatból való kilépés, titkosítási csomagok és rendszergazdai átvétel",
+        "audit log, compliance reports, SIEM export and honey alerts": "naplófájl, megfelelőségi jelentések, SIEM-export és csaliriasztások",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Egy titok hány verzióját és mennyi ideig őrizzük meg, és a törölt titkok mennyi ideig maradnak a kukában.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "A titkosított mellékletek korlátai, amelyeket a kiszolgáló a tárolt titkosított bájtokban érvényesít."
     },
     "plurals": null
 }
