@@ -69,6 +69,10 @@ class RecipientStatusController extends Controller {
 	 *
 	 * @NoAdminRequired
 	 *
+	 * @no-admin-idor-exempt Reads no object by a caller-chosen id: RecipientStatusService::statusFor()
+	 *   reruns Nextcloud's sharee search as the caller and answers only for ids that search returns,
+	 *   which is exactly the set the caller may already see in the share dialog.
+	 *
 	 * @return JSONResponse `{recipients: [{userId, hasSuite}]}`
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-recipient-search-marks-who-cannot-receive-a-share
