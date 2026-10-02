@@ -120,10 +120,18 @@ async function doFill(payload) {
 	await touchActivity()
 	const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
 	if (!tab) return { filled: false }
+	let host = ''
+	try {
+		host = tab.url ? new URL(tab.url).hostname : ''
+	} catch {
+		host = ''
+	}
+	// Every frame gets the message; only frames on this host fill (#740).
+	if (!host) return { filled: false }
 	const results = await chrome.tabs
 		.sendMessage(tab.id, {
 			type: 'fill-credential',
-			payload: { login, secret },
+			payload: { login, secret, host },
 		})
 		.catch(() => ({ filled: false }))
 	// A fill counts as a use for the vault's Last used sort; a failed report
@@ -134,18 +142,12 @@ async function doFill(payload) {
 	// Auto-copy a matched TOTP code so it is one paste away on the 2FA prompt
 	// (extension-totp-autofill §3). The popup performs the clipboard write +
 	// scheduled clear (a service worker has no clipboard access).
-	let host = ''
-	try {
-		host = tab.url ? new URL(tab.url).hostname : ''
-	} catch {
-		host = ''
-	}
-	const totpCode = host ? await totpCodeForHost(host) : null
+	const totpCode = await totpCodeForHost(host)
 	if (totpCode) {
 		// Best-effort: fill a detected OTP field on the page; the popup also
 		// copies the code as the fallback (extension-totp-autofill §4.1).
 		chrome.tabs
-			.sendMessage(tab.id, { type: 'fill-otp', payload: { code: totpCode } })
+			.sendMessage(tab.id, { type: 'fill-otp', payload: { code: totpCode, host } })
 			.catch(() => {})
 	}
 	return { filled: !!results?.filled, totpCode }
