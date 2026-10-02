@@ -1,0 +1,81 @@
+name: Terraform provider
+
+# Tests the provider in integrations/terraform-provider-keepiq on pull
+# requests (unit tests, and the end-to-end test that drives Terraform and
+# fails when a plan or the state holds a value), checks docs/ is generated
+# from the current schema, and on a tf-v* tag copies the module to the mirror
+# repository ConductionNL/terraform-provider-keepiq, where GoReleaser signs and
+# publishes the release for the Terraform and OpenTofu registries.
+
+on:
+  push:
+    branches: [main, development]
+    paths: ["integrations/terraform-provider-keepiq/**", "sdk/go/**", "sdk/testdata/**", ".github/workflows/integrations-terraform.yml"]
+    tags: ["tf-v*"]
+  pull_request:
+    branches: [main, development, beta]
+    paths: ["integrations/terraform-provider-keepiq/**", "sdk/go/**", "sdk/testdata/**", ".github/workflows/integrations-terraform.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: integrations/terraform-provider-keepiq
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache-dependency-path: integrations/terraform-provider-keepiq/go.sum
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.11.4"
+          terraform_wrapper: false
+      - run: go vet ./...
+      - run: KEEPIQ_TF_BIN="$(command -v terraform)" go test ./...
+      - name: docs/ is current
+        run: bash scripts/docs.sh "$(command -v terraform)" --check
+
+  mirror:
+    if: startsWith(github.ref, 'refs/tags/tf-v')
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - name: Build the mirror tree
+        run: |
+          version="${GITHUB_REF_NAME#tf-v}"
+          sdk="$(git tag --list 'sdk/go/v*' --sort=-v:refname | head -1)"
+          test -n "$sdk" || { echo "::error::no sdk/go/v* tag: release the Go library first"; exit 1; }
+          rm -rf "$RUNNER_TEMP/mirror" && cp -r integrations/terraform-provider-keepiq "$RUNNER_TEMP/mirror"
+          cd "$RUNNER_TEMP/mirror"
+          go mod edit -dropreplace github.com/ConductionNL/keepiq/sdk/go -require "github.com/ConductionNL/keepiq/sdk/go@${sdk#sdk/go/}"
+          go mod tidy
+          go build ./...
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+      - name: Push to ConductionNL/terraform-provider-keepiq
+        env:
+          DEPLOY_KEY: ${{ secrets.TF_MIRROR_DEPLOY_KEY }}
+        run: |
+          test -n "$DEPLOY_KEY" || { echo "::error::TF_MIRROR_DEPLOY_KEY is not set (one-time organisation admin step)"; exit 1; }
+          mkdir -p ~/.ssh && printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/mirror && chmod 600 ~/.ssh/mirror
+          export GIT_SSH_COMMAND="ssh -i ~/.ssh/mirror -o StrictHostKeyChecking=accept-new"
+          git clone git@github.com:ConductionNL/terraform-provider-keepiq.git "$RUNNER_TEMP/out"
+          rsync -a --delete --exclude .git "$RUNNER_TEMP/mirror/" "$RUNNER_TEMP/out/"
+          cd "$RUNNER_TEMP/out"
+          git config user.name "keepiq release" && git config user.email "info@conduction.nl"
+          git add -A && git commit -m "Release v${VERSION} from ConductionNL/keepiq ${GITHUB_SHA}" || true
+          git tag "v${VERSION}"
+          git push origin HEAD "v${VERSION}"
