@@ -208,19 +208,8 @@ class AdminSettingsService {
 					'lease_revocation_blocks_refetch',
 					false
 				),
-				// Offline read-only cache (offline-readonly-cache §1.1) — default on.
-				'offline_cache_enabled' => $this->appConfig->getValueBool(
-					$appId,
-					'offline_cache_enabled',
-					true
-				),
-				// Offline edits (offline-edit-queue): off until an administrator turns them on.
-				'offline_edits_enabled' => $this->appConfig->getValueBool(
-					$appId,
-					'offline_edits_enabled',
-					false
-				),
-			]
+			],
+			$this->offlineSettings()
 		);
 
 		// Best-effort CA status; never blocks if the service is unavailable.
@@ -236,6 +225,23 @@ class AdminSettingsService {
 
 		return $settings;
 	}//end getAdminSettings()
+
+	/**
+	 * The offline cache switches: offline reading (default on) and offline
+	 * edits (default off).
+	 *
+	 * @return array<string,bool>
+	 *
+	 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-an-admin-can-disable-offline-caching-org-wide
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-administrators-control-offline-edits
+	 */
+	private function offlineSettings(): array {
+		$appId = Application::APP_ID;
+		return [
+			'offline_cache_enabled' => $this->appConfig->getValueBool($appId, 'offline_cache_enabled', true),
+			'offline_edits_enabled' => $this->appConfig->getValueBool($appId, 'offline_edits_enabled', false),
+		];
+	}//end offlineSettings()
 
 	/**
 	 * Update admin-scoped settings with validation (implement-dashboard-settings §1.4).

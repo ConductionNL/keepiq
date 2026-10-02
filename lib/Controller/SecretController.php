@@ -27,7 +27,6 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
-use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCA\Keepiq\Service\SecretService;
@@ -295,85 +294,4 @@ class SecretController extends OCSController {
 
 		return $this->secretService->create($data, $userId);
 	}//end createOwnedSecret()
-
-	/**
-	 * Update a secret. Only the supplied fields are changed.
-	 *
-	 * @param string $id The secret ID
-	 * @param string|null $name The new name
-	 * @param string|null $url The new URL
-	 * @param string|null $typeId The new type ID
-	 * @param string|null $folderId The new folder ID
-	 * @param string|null $key The new RSA-encrypted key blob
-	 * @param string|null $login The new RSA-encrypted login blob
-	 * @param string|null $additionalFields The new RSA-encrypted additional fields blob
-	 * @param int|null $mergedPending How many pending request-filled blobs the
-	 *                                client merged into $additionalFields (keepiq#750)
-	 * @param string|null $baseUpdatedAt The version the change was made from; when the
-	 *                                   secret changed since, nothing is written and the
-	 *                                   answer is 409 with the current row (offline-edit-queue)
-	 *
-	 * @NoAdminRequired
-	 *
-	 * @return JSONResponse
-	 *
-	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
-	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Each parameter is read indirectly via the
-	 *   variable-variable ${$field} loop that forwards only fields present in the request.
-	 */
-	#[NoAdminRequired]
-	public function update(
-		string $id,
-		?string $name = null,
-		?string $url = null,
-		?string $typeId = null,
-		?string $folderId = null,
-		?string $key = null,
-		?string $login = null,
-		?string $additionalFields = null,
-		?int $mergedPending = null,
-		?string $baseUpdatedAt = null,
-	): JSONResponse {
-		$userId = $this->uid();
-		if ($userId === null) {
-			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
-		}
-
-		// Only forward fields that were explicitly provided in the request.
-		$data = [];
-		foreach (['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields'] as $field) {
-			if ($this->request->getParam($field, '__unset__') !== '__unset__') {
-				$data[$field] = ${$field};
-			}
-		}
-
-		if ($mergedPending !== null) {
-			$data['mergedPending'] = $mergedPending;
-		}
-
-		if ($baseUpdatedAt !== null) {
-			$data['baseUpdatedAt'] = $baseUpdatedAt;
-		}
-
-		try {
-			$secret = $this->secretService->update($id, $data, $userId);
-		} catch (StaleWriteException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage(), 'current' => $e->getCurrent()->jsonSerialize()],
-				statusCode: Http::STATUS_CONFLICT
-			);
-		} catch (NotFoundException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
-		} catch (ForbiddenException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
-		} catch (WriteLockedException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: self::STATUS_LOCKED);
-		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
-		}
-
-		return new JSONResponse(data: $secret->jsonSerialize());
-	}//end update()
 }//end class

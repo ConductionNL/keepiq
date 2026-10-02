@@ -42,7 +42,6 @@ use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
-use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -141,6 +140,7 @@ class SecretService {
 	 *                                                   without it every folder is refused
 	 * @param SecretTagMapper|null $tagMapper The holder's tags (vault-favourites-tags-and-last-used):
 	 *                                        list rows carry them, a delete removes them
+	 * @param OfflineEditGuard $editGuard Refuses an offline edit made on an older version
 	 *
 	 * @return void
 	 */
@@ -163,6 +163,7 @@ class SecretService {
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 		private ?FolderOwnershipGuard $folderOwnership = null,
 		private ?SecretTagMapper $tagMapper = null,
+		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
 	) {
 	}//end __construct()
 
@@ -882,6 +883,7 @@ class SecretService {
 	 * @throws ForbiddenException When the secret belongs to another user
 	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 * @throws InvalidArgumentException When a provided field is invalid
+	 * @throws \OCA\Keepiq\Exception\StaleWriteException When `baseUpdatedAt` names an older version
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
 	 *   independent, flat partial-update branch.
@@ -895,10 +897,7 @@ class SecretService {
 
 		$secret = $this->loadOwned(id: $id, userId: $userId);
 
-		// An offline edit names the version it was made from; a secret that
-		// changed since is refused untouched (offline-edit-queue).
-		self::assertUnchangedSince(secret: $secret, baseUpdatedAt: $data['baseUpdatedAt'] ?? null);
-		unset($data['baseUpdatedAt']);
+		$data = $this->editGuard->checkedUpdate(secret: $secret, data: $data);
 
 		// Pre-update snapshot source (secret-version-history §2.2): captured
 		// BEFORE any mutation; persisted below only when a field actually
@@ -945,15 +944,11 @@ class SecretService {
 				$secret->setKey($key);
 				$secret->setKeyUpdatedAt(new DateTime());
 
-				// The possibly-compromised warning says "this value was exposed,
-				// replace it at its source". Replacing the value is exactly what
-				// just happened, so the warning has been answered and is cleared.
-				// It is cleared HERE and nowhere else in this method on purpose:
-				// a rename, a folder move, a type change or a metadata edit
-				// leaves the exposed value in place and must leave the warning
-				// standing. The same-ciphertext guard above means a client that
-				// resends the unchanged key alongside a rename does not clear it
-				// either.
+				// The possibly-compromised warning says "replace this exposed value
+				// at its source"; a new value answers it, so it is cleared HERE and
+				// nowhere else: a rename, folder move, type change or metadata edit
+				// leaves the exposed value, and the warning, in place. A resent
+				// unchanged key does not clear it either (same-ciphertext guard).
 				$secret->setPossiblyCompromisedAt(null);
 			}
 		}//end if
@@ -1395,37 +1390,6 @@ class SecretService {
 	}//end suiteBlockReason()
 
 	/**
-	 * Refuse a write based on an older version of the secret. A null or empty
-	 * base means the caller did not ask for the check, as online clients do.
-	 *
-	 * @param Secret $secret The stored secret
-	 * @param mixed $baseUpdatedAt The `updatedAt` the client's copy was made from
-	 *
-	 * @return void
-	 *
-	 * @throws StaleWriteException When the secret changed since
-	 * @throws InvalidArgumentException When the base is not a date
-	 *
-	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
-	 */
-	public static function assertUnchangedSince(Secret $secret, mixed $baseUpdatedAt): void {
-		if ($baseUpdatedAt === null || $baseUpdatedAt === '') {
-			return;
-		}
-
-		try {
-			$base = new DateTime((string)$baseUpdatedAt);
-		} catch (\Exception) {
-			throw new InvalidArgumentException('baseUpdatedAt must be a date');
-		}
-
-		$stored = $secret->getUpdatedAt();
-		if ($stored === null || $stored->getTimestamp() !== $base->getTimestamp()) {
-			throw new StaleWriteException(current: $secret);
-		}
-	}//end assertUnchangedSince()
-
-	/**
 	 * Load a secret and verify the requester owns it.
 	 *
 	 * @param string $id The secret ID
@@ -1526,16 +1490,23 @@ class SecretService {
 	 *
 	 * @param string $id The secret UUID
 	 * @param string $userId The caller (must own the secret)
+	 * @param string|null $baseUpdatedAt The version an offline change was made from; a
+	 *                                   secret changed since is refused (offline-edit-queue)
 	 *
 	 * @return Secret
 	 *
 	 * @throws NotFoundException When the secret does not exist
 	 * @throws ForbiddenException When the secret belongs to another user
+	 * @throws \OCA\Keepiq\Exception\StaleWriteException When it changed since `baseUpdatedAt`
 	 *
 	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
-	public function findOwned(string $id, string $userId): Secret {
-		return $this->loadOwned(id: $id, userId: $userId);
+	public function findOwned(string $id, string $userId, ?string $baseUpdatedAt=null): Secret {
+		$secret = $this->loadOwned(id: $id, userId: $userId);
+		$this->editGuard->assertUnchangedSince(secret: $secret, baseUpdatedAt: $baseUpdatedAt);
+
+		return $secret;
 	}//end findOwned()
 
 	/**

@@ -252,6 +252,56 @@ class SecretTrashServiceTest extends TestCase {
 	}//end testEventTypesAreWhitelisted()
 
 	/**
+	 * A trash service over the REAL SecretService, so the offline delete
+	 * precondition runs through findOwned as in production.
+	 *
+	 * @param Secret $stored The secret the store holds
+	 *
+	 * @return SecretTrashService
+	 */
+	private function serviceOverRealSecretService(Secret $stored): SecretTrashService {
+		$store = $this->createMock(SecretMapper::class);
+		$store->method('findById')->willReturn($stored);
+		$secretService = new SecretService(
+			mapper: $store,
+			typeService: $this->createMock(\OCA\Keepiq\Service\SecretTypeService::class),
+			suiteMapper: $this->createMock(\OCA\Keepiq\Db\EncryptionSuiteMapper::class),
+			migrationService: $this->createMock(\OCA\Keepiq\Service\MigrationService::class),
+			linkShareService: $this->linkShares,
+			logger: $this->createMock(LoggerInterface::class),
+		);
+
+		return new SecretTrashService(
+			mapper: $this->mapper,
+			secretService: $secretService,
+			sharingRevoker: new SecretSharingRevoker(
+				linkShareService: $this->linkShares,
+				secretRequestService: $this->requests,
+				shareService: $this->shares,
+				groupShareMapper: $this->groupShares,
+				delegationMapper: $this->delegations,
+			),
+			auditService: $this->createMock(AuditService::class),
+			logger: $this->createMock(LoggerInterface::class),
+		);
+	}//end serviceOverRealSecretService()
+
+	/**
+	 * A stored secret owned by alice, last changed at 10:00.
+	 *
+	 * @return Secret
+	 */
+	private function storedSecret(): Secret {
+		$secret = new Secret();
+		$secret->setId('s-1');
+		$secret->setName('Router');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('alice');
+		$secret->setUpdatedAt(new DateTime('2026-10-02T10:00:00+00:00'));
+		return $secret;
+	}//end storedSecret()
+
+	/**
 	 * An offline delete based on an older version leaves the secret and its
 	 * sharing alone (offline-edit-queue).
 	 *
@@ -260,14 +310,14 @@ class SecretTrashServiceTest extends TestCase {
 	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
 	public function testTrashWithAStaleBaseChangesNothing(): void {
-		$secret = $this->secret();
-		$secret->setUpdatedAt(new DateTime('2026-10-02T10:00:00+00:00'));
+		$secret = $this->storedSecret();
+		$service = $this->serviceOverRealSecretService($secret);
 		$this->linkShares->expects($this->never())->method('deleteBySecretId');
 		$this->mapper->expects($this->never())->method('update');
 
 		$this->expectException(\OCA\Keepiq\Exception\StaleWriteException::class);
 		try {
-			$this->service->trash('s-1', 'alice', '2026-10-01T10:00:00+00:00');
+			$service->trash('s-1', 'alice', '2026-10-01T10:00:00+00:00');
 		} finally {
 			$this->assertNull($secret->getTrashedAt());
 		}
@@ -279,11 +329,11 @@ class SecretTrashServiceTest extends TestCase {
 	 * @return void
 	 */
 	public function testTrashWithAMatchingBaseTrashes(): void {
-		$secret = $this->secret();
-		$secret->setUpdatedAt(new DateTime('2026-10-02T10:00:00+00:00'));
+		$secret = $this->storedSecret();
+		$service = $this->serviceOverRealSecretService($secret);
 		$this->mapper->expects($this->once())->method('update');
 
-		$this->service->trash('s-1', 'alice', '2026-10-02T10:00:00+00:00');
+		$service->trash('s-1', 'alice', '2026-10-02T10:00:00+00:00');
 
 		$this->assertNotNull($secret->getTrashedAt());
 	}//end testTrashWithAMatchingBaseTrashes()

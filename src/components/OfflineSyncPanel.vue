@@ -120,6 +120,11 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Whether anything about the queue needs showing.
+		 *
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+		 */
 		visible() {
 			return (
 				this.offline.pendingCount > 0
@@ -133,6 +138,11 @@ export default {
 		t,
 		n,
 
+		/**
+		 * The name a queued change is shown under.
+		 *
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+		 */
 		entryName(entry) {
 			return entry.body?.name || t('keepiq', 'Secret')
 		},

@@ -141,6 +141,11 @@ export default {
 			}
 		},
 
+		/**
+		 * Pass the dialog open state up.
+		 *
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+		 */
 		onUpdateOpen(value) {
 			this.$emit('update:open', value)
 		},

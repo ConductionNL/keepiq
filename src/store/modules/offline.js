@@ -398,6 +398,7 @@ export const useOfflineStore = defineStore('offline', {
 		 *
 		 * @param {object} entry The opened entry.
 		 * @return {Promise<string>}
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-runs-through-the-online-paths-with-a-fresh-fan-out
 		 */
 		async replayOne(entry) {
 			const base = `/apps/keepiq/api/v1/secrets`
@@ -482,6 +483,11 @@ export const useOfflineStore = defineStore('offline', {
 			await shares.syncAsTeamWriter(entry.secretId, plaintext)
 		},
 
+		/**
+		 * Store a new status for an entry, resealed.
+		 *
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-failed-entries-are-kept-never-dropped-silently
+		 */
 		async setStatus(entry, status) {
 			const session = useSessionStore()
 			const updated = { ...entry, status }
@@ -491,6 +497,11 @@ export const useOfflineStore = defineStore('offline', {
 			)
 		},
 
+		/**
+		 * Remove a synced or discarded entry from the store and from memory.
+		 *
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-replay-runs-through-the-online-paths-with-a-fresh-fan-out
+		 */
 		async drop(entry) {
 			await deleteQueueEntry(entry.entryId)
 			this.entries = this.entries.filter((e) => e.entryId !== entry.entryId)
@@ -599,6 +610,7 @@ export const useOfflineStore = defineStore('offline', {
 		 * Drop every entry sealed under a previous suite.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-pending-changes-block-logout-and-rotation
 		 */
 		async discardForeignEntries() {
 			for (const stored of this.foreignEntries) {
