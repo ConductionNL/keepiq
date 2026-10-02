@@ -226,6 +226,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
+		 */
 		store() {
 			return useApplicationStore()
 		},
@@ -249,6 +252,9 @@ export default {
 			return useSettingsStore().isAdmin === true
 		},
 
+		/**
+		 * @spec exclude Store-state passthrough: returns the current application record.
+		 */
 		application() {
 			return this.store.currentApplication
 		},
@@ -270,12 +276,18 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec exclude Presentation gate: shows the delete button; the server enforces admin-only delete.
+		 */
 		canDelete() {
 			// Server enforces admin-only delete; the button is only
 			// rendered when the row is visible to the current user.
 			return this.application?.status !== undefined
 		},
 
+		/**
+		 * @spec exclude Trivial getter: reads the application id from prop or route.
+		 */
 		routeId() {
 			return this.id || this.$route?.params?.id || ''
 		},
@@ -284,6 +296,9 @@ export default {
 	watch: {
 		routeId: {
 			immediate: true,
+			/**
+			 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
+			 */
 			handler(value) {
 				if (value) {
 					this.load(value)
@@ -317,6 +332,9 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-encryptionsuite-via-csr
+		 */
 		async loadCertificate(id) {
 			this.suiteLoading = true
 			this.certificate = ''
@@ -331,6 +349,9 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as locale text.
+		 */
 		formatDate(iso) {
 			if (!iso) {
 				return ''
@@ -343,20 +364,32 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec exclude Navigation plumbing: routes back to the application register.
+		 */
 		goBack() {
 			if (this.$router) {
 				this.$router.push({ name: 'ApplicationRegister' })
 			}
 		},
 
+		/**
+		 * @spec exclude Presentation state: opens the write-secret dialog.
+		 */
 		openWriteDialog() {
 			this.writeDialogOpen = true
 		},
 
+		/**
+		 * @spec exclude Presentation state: closes the write-secret dialog.
+		 */
 		closeWriteDialog() {
 			this.writeDialogOpen = false
 		},
 
+		/**
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
 		onSecretWritten() {
 			this.writeDialogOpen = false
 			// Panel re-fetches its own list via the @written bridge.

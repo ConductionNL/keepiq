@@ -274,6 +274,9 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec exclude Presentation-only: masks inputs whose field name looks secret.
+		 */
 		inputType(field) {
 			const name = String(field || '').toLowerCase()
 			if (

@@ -784,18 +784,30 @@ export default {
 			return map
 		},
 
+		/**
+		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
+		 */
 		secretStore() {
 			return useSecretStore()
 		},
 
+		/**
+		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
+		 */
 		folderStore() {
 			return useFolderStore()
 		},
 
+		/**
+		 * @spec exclude Store-state passthrough: returns the loaded secrets array.
+		 */
 		secrets() {
 			return this.secretStore.secrets
 		},
 
+		/**
+		 * @spec exclude Store-state passthrough: returns the loading flag for the spinner.
+		 */
 		loading() {
 			return this.secretStore.loading
 		},
@@ -829,21 +841,33 @@ export default {
 		 * are disabled while true.
 		 *
 		 * @return {boolean}
+		 *
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-offline-mode-is-strictly-read-only
 		 */
 		offlineReadOnly() {
 			return useOfflineStore().readOnly
 		},
 
+		/**
+		 * @spec exclude Trivial getter: reads the folder id from the route params.
+		 */
 		selectedFolderId() {
 			return this.$route.params.folderId || null
 		},
 
-		/** Display name of the selected folder for the team-sharing dialog. */
+		/**
+		 * Display name of the selected folder for the team-sharing dialog.
+		 *
+		 * @spec exclude Presentation getter: resolves the selected folder to its display name.
+		 */
 		selectedFolderName() {
 			const folder = this.folders.find((f) => f.id === this.selectedFolderId)
 			return folder?.name ?? ''
 		},
 
+		/**
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 */
 		pagination() {
 			return {
 				page: this.secretStore.page,
@@ -1241,12 +1265,20 @@ export default {
 			return items
 		},
 
-		/** Bulk selection store (bulk-actions §1). */
+		/**
+		 * Bulk selection store (bulk-actions §1).
+		 *
+		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
+		 */
 		bulkStore() {
 			return useBulkStore()
 		},
 
-		/** Whether every secret in the current view is selected. */
+		/**
+		 * Whether every secret in the current view is selected.
+		 *
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-multi-select-and-bulk-action-bar
+		 */
 		allCurrentSelected() {
 			return (
 				this.secrets.length > 0
@@ -1430,7 +1462,11 @@ export default {
 			this.bulkStore.setSelection([...ids])
 		},
 
-		/** Close whichever bulk dialog is open. */
+		/**
+		 * Close whichever bulk dialog is open.
+		 *
+		 * @spec exclude Presentation state: clears which bulk dialog is open.
+		 */
 		closeBulkDialog() {
 			this.bulkDialog = null
 		},
@@ -1625,6 +1661,9 @@ export default {
 			])
 		},
 
+		/**
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 */
 		openImport() {
 			if (this.vaultLocked) {
 				return
@@ -1706,6 +1745,8 @@ export default {
 		 *
 		 * @param {string|null} typeId The selected type id (null = all).
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
 		 */
 		onTypeFilter(typeId) {
 			this.typeFilter = typeId
@@ -1741,6 +1782,8 @@ export default {
 		 *
 		 * @param {string} value The current search value.
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-search
 		 */
 		onSearch(value) {
 			this.searchTerm = value
@@ -1757,6 +1800,8 @@ export default {
 		 *
 		 * @param {string} value The chosen sort field.
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
 		 */
 		onSort(value) {
 			this.sortField = value
@@ -1846,6 +1891,8 @@ export default {
 		 * future toast wiring; kept so the event has a handler.
 		 *
 		 * @return {void}
+		 *
+		 * @spec exclude No-op event sink: swallows the copied event; nothing happens.
 		 */
 		onCopied() {},
 
@@ -1893,6 +1940,8 @@ export default {
 		 *
 		 * @param {{ parentId: (string|null) }} [payload] The parent folder id.
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/secrets-write-ui/spec.md#scenario-create-a-folder
 		 */
 		openCreateFolder({ parentId } = {}) {
 			this.cnOpenModal('folder-create', {
