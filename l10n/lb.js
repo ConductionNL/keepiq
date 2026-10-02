@@ -1266,7 +1266,8 @@ OC.L10N.register(
         "Tag": "Tag",
         "Remove tag": "Tag ewechhuelen",
         "Add tag": "Tag derbäisetzen",
-        "Could not change the tags. Try again.": "D'Tags konnten net geännert ginn. Probéiert nach eng Kéier."
+        "Could not change the tags. Try again.": "D'Tags konnten net geännert ginn. Probéiert nach eng Kéier.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "En CXF-Export ass NET VERSCHLËSSELT. All Passwuert an all Login sinn am erofgeluedene Fichier als Kloertext ze liesen. Späichert e sécher a läscht en direkt no der Notzung."
     },
     "nplurals=2; plural=(n != 1);"
 )

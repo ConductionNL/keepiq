@@ -1266,7 +1266,8 @@ OC.L10N.register(
         "Tag": "Birka",
         "Remove tag": "Noņemt birku",
         "Add tag": "Pievienot birku",
-        "Could not change the tags. Try again.": "Neizdevās mainīt birkas. Mēģiniet vēlreiz."
+        "Could not change the tags. Try again.": "Neizdevās mainīt birkas. Mēģiniet vēlreiz.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF eksports NAV ŠIFRĒTS. Katra parole un lietotājvārds lejupielādētajā datnē būs lasāmi kā vienkāršs teksts. Glabājiet to drošā vietā un izdzēsiet tūlīt pēc lietošanas."
     },
     "nplurals=2; plural=(n != 1);"
 )

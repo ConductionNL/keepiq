@@ -1266,7 +1266,8 @@ OC.L10N.register(
         "Tag": "Žymė",
         "Remove tag": "Pašalinti žymę",
         "Add tag": "Pridėti žymę",
-        "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą."
+        "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF eksportas NĖRA ŠIFRUOTAS. Kiekvienas slaptažodis ir prisijungimo vardas atsisiųstame faile bus perskaitomi kaip paprastas tekstas. Saugokite jį saugiai ir iškart po naudojimo ištrinkite."
     },
     "nplurals=2; plural=(n != 1);"
 )

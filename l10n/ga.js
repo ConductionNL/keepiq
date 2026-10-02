@@ -1266,7 +1266,8 @@ OC.L10N.register(
         "Tag": "Clib",
         "Remove tag": "Bain an chlib",
         "Add tag": "Cuir clib leis",
-        "Could not change the tags. Try again.": "Níorbh fhéidir na clibeanna a athrú. Bain triail eile as."
+        "Could not change the tags. Try again.": "Níorbh fhéidir na clibeanna a athrú. Bain triail eile as.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Níl easpórtáil CXF CRIPTITHE. Beidh gach pasfhocal agus logáil isteach inléite mar ghnáth-théacs sa chomhad íoslódáilte. Stóráil go sábháilte é agus scrios láithreach é tar éis a úsáide."
     },
     "nplurals=2; plural=(n != 1);"
 )

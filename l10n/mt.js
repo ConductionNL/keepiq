@@ -1266,7 +1266,8 @@ OC.L10N.register(
         "Tag": "Tikketta",
         "Remove tag": "Neħħi t-tikketta",
         "Add tag": "Żid tikketta",
-        "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova."
+        "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Esportazzjoni CXF MHIJIEX ENKRIPTATA. Kull password u login se jkunu jinqraw bħala test sempliċi fil-fajl imniżżel. Aħżnu b'mod sigur u ħassru minnufih wara li tużah."
     },
     "nplurals=2; plural=(n != 1);"
 )
