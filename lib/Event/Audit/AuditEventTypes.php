@@ -178,6 +178,10 @@ final class AuditEventTypes {
 	public const SIEM_SINK_DELETED = 'siem.sink_deleted';
 	public const SIEM_SINK_TESTED = 'siem.sink_tested';
 
+	// An AI agent called a Keepiq MCP read tool (hermiq-ai-tooling): the tool
+	// name and a result count, never an entry name, subject or value.
+	public const MCP_TOOL_INVOKED = 'mcp.tool_invoked';
+
 	// Certificate lifecycle (certificate-lifecycle §5) — identifiers
 	// only; no PEM, key, or secret value is ever recorded.
 	public const CERTIFICATE_REISSUED = 'certificate.reissued';
@@ -309,6 +313,7 @@ final class AuditEventTypes {
 		self::SIEM_SINK_UPDATED => ['sinkId'],
 		self::SIEM_SINK_DELETED => ['sinkId'],
 		self::SIEM_SINK_TESTED => ['sinkId', 'outcome'],
+		self::MCP_TOOL_INVOKED => ['tool', 'resultCount'],
 		// Certificate lifecycle — identifiers only, never PEM/key.
 		self::CERTIFICATE_REISSUED => ['suiteId'],
 		self::CERTIFICATE_RENEWAL_MARKED => [],
