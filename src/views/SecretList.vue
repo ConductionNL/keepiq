@@ -103,7 +103,7 @@
 				:pagination="pagination"
 				:title="pageTitle"
 				:addLabel="
-					offlineReadOnly || listState !== 'live'
+					(offlineReadOnly && !offlineEditsQueued) || listState !== 'live'
 						? ''
 						: t('keepiq', 'New secret')
 				"
@@ -850,6 +850,18 @@ export default {
 		},
 
 		/**
+		 * Offline with offline edits allowed: New secret stays available and
+		 * goes into the sync queue; folders, import and requests stay
+		 * online-only.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
+		 */
+		offlineEditsQueued() {
+			return useOfflineStore().editsQueued
+		},
+
+		/**
 		 * @spec exclude Trivial getter: reads the folder id from the route params.
 		 */
 		selectedFolderId() {
@@ -1035,7 +1047,19 @@ export default {
 			if (this.folderSwitching) {
 				return []
 			}
-			return this.secrets
+			// A change made offline is marked until it syncs (offline-edit-queue).
+			return this.secrets.map((secret) =>
+				secret.pendingSync
+					? {
+							...secret,
+							name:
+								secret.name
+								+ ' ('
+								+ t('keepiq', 'Not synced yet')
+								+ ')',
+						}
+					: secret,
+			)
 		},
 
 		/**
