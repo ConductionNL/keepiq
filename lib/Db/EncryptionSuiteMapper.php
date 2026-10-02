@@ -289,4 +289,23 @@ class EncryptionSuiteMapper extends QBMapper {
 
 		return $qb->executeStatement();
 	}//end deleteByOwnerUser()
+
+	/**
+	 * Delete an application's encryption suites (certificate rows)
+	 * (application-mgmt "Delete Application" cascade). Idempotent.
+	 *
+	 * @param string $applicationId The application ID
+	 *
+	 * @return int The number of rows deleted
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-delete-application
+	 */
+	public function deleteByOwnerApplication(string $applicationId): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter('application')))
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($applicationId)));
+
+		return $qb->executeStatement();
+	}//end deleteByOwnerApplication()
 }//end class
