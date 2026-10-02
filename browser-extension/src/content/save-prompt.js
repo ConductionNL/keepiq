@@ -16,9 +16,17 @@ export const PROMPT_TTL_MS = 30000
  *
  * @param {{action: string, name?: string}} offer The offer from the worker.
  * @param {string} host The site host.
- * @return {{text: string, primary: string}} The message and the main button.
+ * @return {{text: string, primary: string|null}} The message and the main button (null: none).
  */
 export function promptCopy(offer, host) {
+	if (offer.action === 'refused') {
+		// The org password policy refuses this password (keepiq#746): explain,
+		// and offer no save button.
+		return {
+			text: `Keepiq did not save this login for ${host}. ${offer.reason || ''}`.trim(),
+			primary: null,
+		}
+	}
 	if (offer.action === 'update') {
 		return {
 			text: `Update the password of ${offer.name || host} in Keepiq?`,
@@ -77,12 +85,16 @@ export function showSavePrompt(
 	actions.className = 'actions'
 	const later = doc.createElement('button')
 	later.type = 'button'
-	later.textContent = 'Not now'
+	later.textContent = primary === null ? 'Close' : 'Not now'
 	const main = doc.createElement('button')
 	main.type = 'button'
 	main.className = 'primary'
 	main.textContent = primary
-	actions.append(later, main)
+	if (primary === null) {
+		actions.append(later)
+	} else {
+		actions.append(later, main)
+	}
 	bar.append(message, actions)
 	root.append(style, bar)
 	;(doc.body || doc.documentElement).appendChild(holder)
@@ -104,6 +116,6 @@ export function showSavePrompt(
 		}
 		main.addEventListener('click', onClick(offer.action))
 		later.addEventListener('click', onClick('dismiss'))
-		main.focus?.()
+		;(primary === null ? later : main).focus?.()
 	})
 }
