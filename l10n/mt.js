@@ -1397,7 +1397,25 @@ OC.L10N.register(
         "5 minutes": "5 minuti",
         "15 minutes": "15-il minuta",
         "1 hour": "siegħa",
-        "4 hours": "4 sigħat"
+        "4 hours": "4 sigħat",
+        "Connector": "Konnettur",
+        "Directory (tenant) ID": "ID tad-direttorju (kerrej)",
+        "Application (client) ID": "ID tal-applikazzjoni (klijent)",
+        "Data collection rule immutable ID": "ID immutabbli tar-regola tal-ġbir tad-dejta",
+        "Stream name": "Isem tal-fluss",
+        "Splunk index (optional)": "Indiċi Splunk (mhux obbligatorju)",
+        "Sourcetype (optional)": "Sourcetype (mhux obbligatorju)",
+        "Leave blank to keep the current one": "Ħallih vojt biex iżżomm dak attwali",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF permezz ta' syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Punt finali tal-ġbir tad-dejta (URL https)",
+        "HTTP Event Collector URL (https)": "URL tal-HTTP Event Collector (https)",
+        "Client secret (write-only)": "Sigriet tal-klijent (kitba biss)",
+        "HEC token (write-only)": "Token HEC (kitba biss)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Ibgħat l-avvenimenti tal-awditjar permessi lil Splunk, Microsoft Sentinel, riċevitur syslog jew webhook. Il-messaġġi jġorru biss metadejta mnaddfa: l-ebda valur sigriet, isem, login jew test kriptat ma jitlaq qatt mis-server."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1397,7 +1397,25 @@ OC.L10N.register(
         "5 minutes": "5 Minuten",
         "15 minutes": "15 Minuten",
         "1 hour": "1 Stunde",
-        "4 hours": "4 Stunden"
+        "4 hours": "4 Stunden",
+        "Connector": "Konnektor",
+        "Directory (tenant) ID": "Verzeichnis-ID (Mandant)",
+        "Application (client) ID": "Anwendungs-ID (Client)",
+        "Data collection rule immutable ID": "Unveränderliche ID der Datensammlungsregel",
+        "Stream name": "Streamname",
+        "Splunk index (optional)": "Splunk-Index (optional)",
+        "Sourcetype (optional)": "Sourcetype (optional)",
+        "Leave blank to keep the current one": "Leer lassen, um den aktuellen Wert zu behalten",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF über Syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Datensammlungsendpunkt (https-URL)",
+        "HTTP Event Collector URL (https)": "HTTP-Event-Collector-URL (https)",
+        "Client secret (write-only)": "Clientgeheimnis (nur schreiben)",
+        "HEC token (write-only)": "HEC-Token (nur schreiben)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Erlaubte Audit-Ereignisse an Splunk, Microsoft Sentinel, einen Syslog-Empfänger oder einen Webhook weiterleiten. Nachrichten enthalten nur bereinigte Metadaten: Kein geheimer Wert, Name, Login oder Geheimtext verlässt je den Server."
     },
     "nplurals=2; plural=(n != 1);"
 )

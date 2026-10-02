@@ -1396,7 +1396,25 @@
         "5 minutes": "5 minuts",
         "15 minutes": "15 minuts",
         "1 hour": "1 hora",
-        "4 hours": "4 hores"
+        "4 hours": "4 hores",
+        "Connector": "Connector",
+        "Directory (tenant) ID": "ID del directori (inquilí)",
+        "Application (client) ID": "ID de l'aplicació (client)",
+        "Data collection rule immutable ID": "ID immutable de la regla de recollida de dades",
+        "Stream name": "Nom del flux",
+        "Splunk index (optional)": "Índex de Splunk (opcional)",
+        "Sourcetype (optional)": "Sourcetype (opcional)",
+        "Leave blank to keep the current one": "Deixeu-ho en blanc per mantenir l'actual",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF per syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Punt final de recollida de dades (URL https)",
+        "HTTP Event Collector URL (https)": "URL de l'HTTP Event Collector (https)",
+        "Client secret (write-only)": "Secret del client (només escriptura)",
+        "HEC token (write-only)": "Testimoni HEC (només escriptura)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Reenvia els esdeveniments d'auditoria permesos a Splunk, Microsoft Sentinel, un receptor syslog o un webhook. Els missatges només duen metadades netejades: cap valor secret, nom, inici de sessió o text xifrat surt mai del servidor."
     },
     "plurals": null
 }
