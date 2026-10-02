@@ -102,10 +102,16 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-state passthrough: returns the pending applications list for rendering.
+		 */
 		pending() {
 			return this.store.pendingApplications
 		},
 
+		/**
+		 * @spec exclude Store-state passthrough: returns the pending count for the heading badge.
+		 */
 		pendingCount() {
 			return this.store.pendingCount
 		},
@@ -121,6 +127,8 @@ export default {
 		 *
 		 * @param {string} id The application ID.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-approval-queue
 		 */
 		async approve(id) {
 			await this.store.approveApplication(id)
@@ -131,6 +139,8 @@ export default {
 		 *
 		 * @param {string} id The application ID.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-approval-queue
 		 */
 		async reject(id) {
 			await this.store.rejectApplication(id)

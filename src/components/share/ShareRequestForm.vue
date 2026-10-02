@@ -100,6 +100,11 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * @param {number} now Current time in milliseconds.
+		 *
+		 * @spec exclude Form-state reset: clears the recipient, error and submitting flags when the form opens.
+		 */
 		open(now) {
 			if (now === true) {
 				this.targetUserId = ''

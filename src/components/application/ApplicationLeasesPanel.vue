@@ -106,15 +106,24 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns the Pinia lease store with no domain logic.
+		 */
 		store() {
 			return useLeaseStore()
 		},
 
+		/**
+		 * @spec exclude Store passthrough: returns the lease store list unchanged.
+		 */
 		leases() {
 			return this.store.leases
 		},
 	},
 
+	/**
+	 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-revocation-by-admin-owner-or-application
+	 */
 	async mounted() {
 		try {
 			await this.store.fetchForApplication(this.applicationId)
@@ -137,6 +146,8 @@ export default {
 		 *
 		 * @param {object} lease The lease row.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-revocation-by-admin-owner-or-application
 		 */
 		async onRevoke(lease) {
 			try {
@@ -155,6 +166,8 @@ export default {
 		 *
 		 * @param {string} iso The ISO timestamp.
 		 * @return {string}
+		 *
+		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as a locale date string.
 		 */
 		formatDate(iso) {
 			const parsed = Date.parse(iso ?? '')

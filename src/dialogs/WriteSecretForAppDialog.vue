@@ -152,6 +152,9 @@ export default {
 				: this.t('keepiq', 'Write secret')
 		},
 
+		/**
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
 		canSubmit() {
 			return (
 				this.applicationId !== ''
@@ -175,6 +178,11 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * @param {boolean} value Whether the dialog is open.
+		 *
+		 * @spec exclude Event re-emitter: resets the form and emits close when the dialog closes.
+		 */
 		onUpdateOpen(value) {
 			if (!value) {
 				this.reset()
@@ -182,6 +190,9 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec exclude Transient UI reset: clears the form fields, error and success flags.
+		 */
 		reset() {
 			this.name = ''
 			this.url = ''
@@ -260,6 +271,9 @@ export default {
 			return evaluateHibp(policy, 'login', this.value)
 		},
 
+		/**
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
 		parseAdditional() {
 			const raw = this.additionalFields.trim()
 			if (raw === '') {

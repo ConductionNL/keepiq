@@ -1269,7 +1269,15 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Nie udało się zmienić tagów. Spróbuj ponownie.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Eksport CXF jest NIEZASZYFROWANY. Każde hasło i każdy login będą czytelne jako zwykły tekst w pobranym pliku. Przechowuj go bezpiecznie i usuń natychmiast po użyciu.",
         "Root certificate expiring soon": "Certyfikat główny wkrótce wygaśnie",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certyfikat główny sejfu wygaśnie za %1$d dni. Odnów go wcześniej. Odnowienie ponownie podpisuje każdy zestaw szyfrowania."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certyfikat główny sejfu wygaśnie za %1$d dni. Odnów go wcześniej. Odnowienie ponownie podpisuje każdy zestaw szyfrowania.",
+        "Compromise recovery aborted": "Odzyskiwanie po naruszeniu przerwane",
+        "Key rotation ended by a compromise revoke": "Rotacja klucza zakończona odwołaniem z powodu naruszenia",
+        "Encryption suite revoke refused": "Odwołanie pakietu szyfrowania odrzucone",
+        "Master password proof refused": "Dowód hasła głównego odrzucony",
+        "Your current master password": "Twoje obecne hasło główne",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n kontakt awaryjny miał oczekujący wniosek o dostęp, gdy rotacja klucza go usunęła. Sprawdź, kto prosił, zanim dodasz kogokolwiek ponownie.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "Kontakty awaryjne (%n) miały oczekujący wniosek o dostęp, gdy rotacja klucza je usunęła. Sprawdź, kto prosił, zanim dodasz kogokolwiek ponownie.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Te kontakty awaryjne nie zostały przeniesione do nowego klucza. Ich dostęp awaryjny został usunięty. Dodaj je ponownie w Dostępie awaryjnym, jeśli nadal ich chcesz."
     },
     "nplurals=2; plural=(n != 1);"
 )

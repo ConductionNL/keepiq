@@ -90,6 +90,8 @@ class EphemeralSendController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-manage-and-revoke-sends
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -114,6 +116,8 @@ class EphemeralSendController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-manage-and-revoke-sends
 	 */
 	#[NoAdminRequired]
 	public function destroy(string $id): JSONResponse {

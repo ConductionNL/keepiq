@@ -122,6 +122,8 @@ Abort sets `aborted`, clears failure accounting, revokes the unused successor su
 
 Abort carries **no** `#[VaultKeyProofRequired]`, deliberately. It is restorative: it returns the vault to the old suite, still `active`. An attacker aborting a victim's legitimate rotation is a nuisance the victim can simply redo, whereas a proof requirement on abort would leave a wedged vault wedged.
 
+**Reversed by keepiq#859 (2 Oct 2026).** The nuisance reading above underrated the threat this change contains. A stolen session can poll `GET /migrations/status` and abort the owner's recovery every time it starts, before the first record moves, so containment is undone indefinitely with the very credential it contains. Abort now carries `#[VaultKeyProofRequired(binds: ['id'], subject: 'migrationNewSuite')]`: only whoever holds the key the rotation moves to can call it off. A rotation started with a leaked old password is contained by the administrator's compromise force-revoke instead, which terminates the migration. Every abort is audited as `suite.recovery_aborted`.
+
 ### D7: Coverage is guarded by a test, because attribute guards fail open by omission
 
 The failure mode of every declarative guard is the route that forgets it: nothing errors, the guard is simply absent. Notably, NC's own `PasswordConfirmationMiddleware` shows the same shape from the inside — `canConfirmPassword()`, the `SCOPE_SKIP_PASSWORD_VALIDATION` token scope and an `excludedUserBackEnds` list for SAML each `return;` and the guard disappears rather than failing.

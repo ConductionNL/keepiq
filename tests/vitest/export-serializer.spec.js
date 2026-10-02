@@ -8,7 +8,7 @@
  *  - Whole-vault serialization with relative folder paths.
  *  - Folder-scoped serialization includes only the selected subtree's secrets.
  *
- * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+ * @spec openspec/specs/secret-export/spec.md
  */
 
 import { describe, expect, it } from 'vitest'

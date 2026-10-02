@@ -13,7 +13,7 @@
   wizard reads nothing. Closing the wizard resets the store, releasing every
   plaintext row (encryption-suites Session Mechanism).
 
-  @spec openspec/changes/secret-import/specs/secret-import/spec.md
+  @spec openspec/specs/secret-import/spec.md
 -->
 <template>
 	<NcDialog
@@ -400,7 +400,7 @@ export default {
 		 * blocks the wizard and reads no file (lock-screen guard, spec).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 */
 		locked() {
 			return this.session.isLocked
@@ -410,7 +410,7 @@ export default {
 		 * The registered parser formats as select options.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-supported-import-formats
+		 * @spec openspec/specs/secret-import/spec.md#requirement-supported-import-formats
 		 */
 		formatOptions() {
 			return listParsers().map((p) => ({ value: p.id, label: p.label }))
@@ -420,7 +420,7 @@ export default {
 		 * Whether the selected format needs a passphrase (backup restore).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-supported-import-formats
+		 * @spec openspec/specs/secret-import/spec.md#requirement-supported-import-formats
 		 */
 		requiresPassphrase() {
 			const parser = listParsers().find((p) => p.id === this.format)
@@ -431,7 +431,7 @@ export default {
 		 * Duplicate-resolution select options.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-duplicate-detection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-duplicate-detection
 		 */
 		resolutionOptions() {
 			return [
@@ -444,7 +444,7 @@ export default {
 		 * The first five parsed rows, for the mapping preview.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
+		 * @spec openspec/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		previewRows() {
 			return this.store.rows.slice(0, 5)
@@ -454,7 +454,7 @@ export default {
 		 * Whether a Back button is shown for the current step.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
+		 * @spec openspec/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		canGoBack() {
 			return ['mapping', 'folders', 'duplicates'].includes(this.store.step)
@@ -464,7 +464,7 @@ export default {
 		 * Whether the primary action can proceed from the current step.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
+		 * @spec openspec/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		canProceed() {
 			if (this.store.step === 'mapping') {
@@ -477,7 +477,7 @@ export default {
 		 * The primary-button label for the current step.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
+		 * @spec openspec/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		nextLabel() {
 			return this.store.step === 'duplicates'
@@ -495,7 +495,7 @@ export default {
 		 * @param {string} value The cell value.
 		 * @param {string} key The reveal key.
 		 * @return {string} The masked or revealed value.
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
+		 * @spec openspec/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		mask(value, key) {
 			if (value == null || value === '') {
@@ -533,7 +533,7 @@ export default {
 		 *
 		 * @param {Event} event The file input change event.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-supported-import-formats
+		 * @spec openspec/specs/secret-import/spec.md#requirement-supported-import-formats
 		 */
 		async onFilePicked(event) {
 			this.kdbxDetected = false
@@ -569,7 +569,7 @@ export default {
 		 * transfer that had no file), and today's date (keepiq#749).
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 		 */
 		oneFolderName() {
 			const base =
@@ -583,7 +583,7 @@ export default {
 		 * Advance the wizard from the current step.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 		 */
 		async next() {
 			if (this.store.step === 'mapping') {
@@ -607,7 +607,7 @@ export default {
 		 * Step backwards in the wizard.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
+		 * @spec openspec/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		back() {
 			const order = ['pick', 'mapping', 'folders', 'duplicates']
@@ -621,7 +621,7 @@ export default {
 		 * Download the rejected rows as a client-side CSV (never uploaded).
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-malformed-row-rejection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-malformed-row-rejection
 		 */
 		downloadRejected() {
 			const csv = this.store.rejectedCsv()
@@ -641,7 +641,7 @@ export default {
 		 *
 		 * @param {boolean} value The open state.
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 */
 		onUpdateOpen(value) {
 			if (!value) {

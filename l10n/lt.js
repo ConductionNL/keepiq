@@ -1269,7 +1269,15 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF eksportas NĖRA ŠIFRUOTAS. Kiekvienas slaptažodis ir prisijungimo vardas atsisiųstame faile bus perskaitomi kaip paprastas tekstas. Saugokite jį saugiai ir iškart po naudojimo ištrinkite.",
         "Root certificate expiring soon": "Šakninio sertifikato galiojimas netrukus baigsis",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Saugyklos šakninio sertifikato galiojimas baigsis po %1$d d. Atnaujinkite jį iki tol. Atnaujinant iš naujo pasirašomas kiekvienas šifravimo rinkinys."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Saugyklos šakninio sertifikato galiojimas baigsis po %1$d d. Atnaujinkite jį iki tol. Atnaujinant iš naujo pasirašomas kiekvienas šifravimo rinkinys.",
+        "Compromise recovery aborted": "Atkūrimas po kompromitavimo nutrauktas",
+        "Key rotation ended by a compromise revoke": "Rakto keitimą užbaigė atšaukimas dėl kompromitavimo",
+        "Encryption suite revoke refused": "Šifravimo rinkinio atšaukimas atmestas",
+        "Master password proof refused": "Pagrindinio slaptažodžio įrodymas atmestas",
+        "Your current master password": "Jūsų dabartinis pagrindinis slaptažodis",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n skubios pagalbos kontaktas turėjo laukiančią prieigos užklausą, kai rakto keitimas jį pašalino. Patikrinkite, kas prašė, prieš vėl ką nors pridėdami.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n skubios pagalbos kontaktai turėjo laukiančią prieigos užklausą, kai rakto keitimas juos pašalino. Patikrinkite, kas prašė, prieš vėl ką nors pridėdami.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Šie skubios pagalbos kontaktai nebuvo perkelti į jūsų naują raktą. Jų skubi prieiga pašalinta. Vėl pridėkite juos skiltyje Skubi prieiga, jei jų vis dar norite."
     },
     "nplurals=2; plural=(n != 1);"
 )

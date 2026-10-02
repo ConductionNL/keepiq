@@ -309,7 +309,11 @@ export default {
 			return typedFieldsOf(useSecretTypeStore().typesById[this.typeId])
 		},
 
-		/** The selected type's system name (card-identity-items §3.1). */
+		/**
+		 * The selected type's system name (card-identity-items §3.1).
+		 *
+		 * @spec exclude Trivial lookup: resolves the selected type id to its name.
+		 */
 		selectedTypeName() {
 			return useSecretTypeStore().typesById[this.typeId]?.name ?? ''
 		},
@@ -322,7 +326,11 @@ export default {
 			return this.selectedTypeName === IDENTITY_TYPE_NAME
 		},
 
-		/** The value serialized for the encrypted key field. */
+		/**
+		 * The value serialized for the encrypted key field.
+		 *
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
+		 */
 		effectiveValue() {
 			if (this.isCard) {
 				return serializeCard(this.card)
@@ -338,6 +346,8 @@ export default {
 		 * unchanged value is never re-gated.
 		 *
 		 * @return {{compliant: boolean, reason: string|null}}
+		 *
+		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
 		 */
 		policyVerdict() {
 			if (
@@ -350,6 +360,9 @@ export default {
 			return evaluateScore(this.policy, this.selectedTypeName, this.value)
 		},
 
+		/**
+		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
+		 */
 		canSubmit() {
 			return (
 				!this.loading
@@ -360,6 +373,9 @@ export default {
 		},
 	},
 
+	/**
+	 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+	 */
 	async mounted() {
 		this.policy = await fetchPolicy()
 		const typeStore = useSecretTypeStore()
@@ -454,6 +470,8 @@ export default {
 		 *
 		 * @param {boolean} value The new open state.
 		 * @return {void}
+		 *
+		 * @spec exclude Event re-emitter: syncs the open flag and emits close to the parent.
 		 */
 		onUpdateOpen(value) {
 			this.open = value
@@ -466,6 +484,8 @@ export default {
 		 * Open the key generator dialog.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
 		 */
 		openGenerator() {
 			this.generatorOpen = true
@@ -476,6 +496,8 @@ export default {
 		 *
 		 * @param {string} key The generated key.
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
 		 */
 		onGenerated(key) {
 			if (typeof key === 'string' && key.length > 0) {

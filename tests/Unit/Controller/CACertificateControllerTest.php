@@ -116,9 +116,11 @@ class CACertificateControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testRenewIntermediateReturnsCountAndStatus(): void {
-		$this->caService->method('renewIntermediate')
-			->with(true)
+		// The admin endpoint is the compromise path: it must revoke the old
+		// intermediate, never take the scheduled (non-revoking) rollover.
+		$this->caService->expects($this->once())->method('renewIntermediateRevokingOld')
 			->willReturn(5);
+		$this->caService->expects($this->never())->method('renewIntermediate');
 
 		$statusData = [
 			'status' => 'healthy',
@@ -142,7 +144,7 @@ class CACertificateControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testRenewIntermediateReturns500OnFailure(): void {
-		$this->caService->method('renewIntermediate')
+		$this->caService->method('renewIntermediateRevokingOld')
 			->willThrowException(new RuntimeException('Renew failed'));
 
 		$response = $this->controller->renewIntermediate();

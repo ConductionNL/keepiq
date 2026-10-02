@@ -244,6 +244,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-state passthrough: reads the session lock flag for display gating.
+		 */
 		locked() {
 			return this.session.isLocked
 		},
@@ -285,6 +288,8 @@ export default {
 		 *
 		 * @param {object} row The stored-secret inventory row.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-guided-renewal-by-certificate-origin
 		 */
 		async onChecklist(row) {
 			this.busy = true
@@ -323,6 +328,8 @@ export default {
 		 *
 		 * @param {string} iso The notAfter ISO timestamp.
 		 * @return {string} CSS class.
+		 *
+		 * @spec exclude Presentation-only: maps days-to-expiry to a CSS warning class.
 		 */
 		expiryClass(iso) {
 			const daysLeft = (new Date(iso).getTime() - Date.now()) / 86400000
@@ -340,6 +347,8 @@ export default {
 		 *
 		 * @param {string} iso The ISO timestamp.
 		 * @return {string} Localised date.
+		 *
+		 * @spec exclude Presentation-only formatter: renders an ISO date as locale text.
 		 */
 		formatDate(iso) {
 			return new Date(iso).toLocaleDateString()

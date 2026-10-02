@@ -160,6 +160,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec openspec/specs/compliance-reporting/spec.md#requirement-org-level-metadata-only-compliance-report
+		 */
 		openFlagTotal() {
 			const byReason = this.metrics?.rotationPosture?.openFlagsByReason ?? {}
 			return Object.values(byReason).reduce((total, count) => total + count, 0)
@@ -237,6 +240,8 @@ export default {
 		 *
 		 * @param {string} iso The ISO timestamp.
 		 * @return {string}
+		 *
+		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as a locale date string.
 		 */
 		formatDate(iso) {
 			const parsed = Date.parse(iso ?? '')

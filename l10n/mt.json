@@ -1268,7 +1268,15 @@
         "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Esportazzjoni CXF MHIJIEX ENKRIPTATA. Kull password u login se jkunu jinqraw bħala test sempliċi fil-fajl imniżżel. Aħżnu b'mod sigur u ħassru minnufih wara li tużah.",
         "Root certificate expiring soon": "Iċ-ċertifikat għerq jiskadi dalwaqt",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Iċ-ċertifikat għerq tal-kaxxaforti jiskadi fi żmien %1$d jum/ijiem. Ġeddu qabel dak iż-żmien. It-tiġdid jerġa' jiffirma kull suite tal-encryption."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Iċ-ċertifikat għerq tal-kaxxaforti jiskadi fi żmien %1$d jum/ijiem. Ġeddu qabel dak iż-żmien. It-tiġdid jerġa' jiffirma kull suite tal-encryption.",
+        "Compromise recovery aborted": "L-irkupru wara kompromess twaqqaf",
+        "Key rotation ended by a compromise revoke": "Ir-rotazzjoni taċ-ċavetta ntemmet b'revoka minħabba kompromess",
+        "Encryption suite revoke refused": "Ir-revoka tas-suite tal-encryption ġiet miċħuda",
+        "Master password proof refused": "Il-prova tal-password ewlenija ġiet miċħuda",
+        "Your current master password": "Il-password ewlenija attwali tiegħek",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n kuntatt ta' emerġenza kellu talba għal aċċess pendenti meta r-rotazzjoni taċ-ċavetta neħħietu. Iċċekkja min talab qabel ma żżid lil xi ħadd mill-ġdid.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n kuntatti ta' emerġenza kellhom talba għal aċċess pendenti meta r-rotazzjoni taċ-ċavetta neħħiethom. Iċċekkja min talab qabel ma żżid lil xi ħadd mill-ġdid.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Dawn il-kuntatti ta' emerġenza ma ġewx trasferiti għaċ-ċavetta l-ġdida tiegħek. L-aċċess ta' emerġenza tagħhom tneħħa. Erġa' żidhom minn Aċċess ta' emerġenza jekk għadek trid."
     },
     "plurals": null
 }

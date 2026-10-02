@@ -1269,7 +1269,15 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Etichetele nu au putut fi schimbate. Încercați din nou.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Un export CXF NU ESTE CRIPTAT. Fiecare parolă și nume de utilizator vor fi lizibile ca text simplu în fișierul descărcat. Păstrați-l în siguranță și ștergeți-l imediat după utilizare.",
         "Root certificate expiring soon": "Certificatul rădăcină expiră în curând",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certificatul rădăcină al seifului expiră în %1$d zi(le). Reînnoiți-l înainte. Reînnoirea semnează din nou fiecare suită de criptare."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certificatul rădăcină al seifului expiră în %1$d zi(le). Reînnoiți-l înainte. Reînnoirea semnează din nou fiecare suită de criptare.",
+        "Compromise recovery aborted": "Recuperarea după compromitere a fost anulată",
+        "Key rotation ended by a compromise revoke": "Rotația cheii a fost încheiată de o revocare pentru compromitere",
+        "Encryption suite revoke refused": "Revocarea suitei de criptare a fost refuzată",
+        "Master password proof refused": "Dovada parolei principale a fost refuzată",
+        "Your current master password": "Parola principală actuală",
+        "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n contact de urgență avea o cerere de acces în așteptare când rotația cheii l-a eliminat. Verificați cine a cerut înainte să adăugați pe cineva din nou.",
+        "%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.": "%n contacte de urgență aveau o cerere de acces în așteptare când rotația cheii le-a eliminat. Verificați cine a cerut înainte să adăugați pe cineva din nou.",
+        "These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.": "Aceste contacte de urgență nu au fost transferate pe noua cheie. Accesul lor de urgență a fost eliminat. Adăugați-le din nou din Acces de urgență dacă le mai doriți."
     },
     "nplurals=2; plural=(n != 1);"
 )

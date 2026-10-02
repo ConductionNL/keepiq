@@ -221,7 +221,9 @@ class SiemSinkService {
 			$this->transport->deliver(sink: $sink, payloadJson: $payload);
 		} catch (Throwable $exception) {
 			$outcome = 'failed';
-			$error = $exception->getMessage();
+			// The admin sees class, status and host, never the message, which
+			// names the full sink URL with any token in it (keepiq#728).
+			$error = $this->transport->describeFailure(exception: $exception, sink: $sink);
 		}
 
 		$this->auditTrail->recordSinkTested(actorId: $adminUid, sinkId: $sinkId, outcome: $outcome);
