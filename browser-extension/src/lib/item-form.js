@@ -259,7 +259,7 @@ export function writeErrorMessage(error) {
 		return 'Vault is temporarily locked for a key migration, try again later'
 	if (error?.status === 403)
 		return 'Your encryption suite is blocked, open Keepiq to resolve it'
-	if (error?.status === 400) {
+	if (error?.status === 400 || error?.status === 409) {
 		try {
 			const message = JSON.parse(error.body || '{}').message
 			if (message) return String(message)

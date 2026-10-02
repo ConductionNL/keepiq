@@ -21,6 +21,7 @@ import { installArgon2Wasm } from '../lib/argon2-wasm.js'
 import { credentialPayload, expirySeconds, maxViewsFrom } from '../lib/send-form.js'
 import { buildIndex } from '../lib/vault-index.js'
 import { writeErrorMessage } from '../lib/item-form.js'
+import { folderNameProblem } from '../lib/folder-rules.js'
 
 /** Longest secret name the server stores. */
 export const MAX_NAME_LENGTH = 255
@@ -273,6 +274,80 @@ export function buildVaultHandlers({
 			}
 			rowCache.delete(account.id)
 			return { ok: true }
+		},
+
+		/**
+		 * Create a folder.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 */
+		'folder-create': async (payload) => {
+			const account = await unlockedAccount()
+			const problem = folderNameProblem(payload.name)
+			if (problem) throw new Error(problem)
+			try {
+				const folder = await api.createFolder(account, {
+					name: String(payload.name).trim(),
+					parentId: payload.parentId || null,
+				})
+				return { ok: true, id: folder?.id || null }
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
+		},
+
+		/**
+		 * Rename a folder.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 */
+		'folder-rename': async (payload) => {
+			const account = await unlockedAccount()
+			const problem = folderNameProblem(payload.name)
+			if (problem) throw new Error(problem)
+			try {
+				await api.renameFolder(
+					account,
+					payload.id,
+					String(payload.name).trim(),
+				)
+				return { ok: true }
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
+		},
+
+		/**
+		 * What a folder holds, to choose how to delete it.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 */
+		'folder-children': async (payload) => {
+			const account = await unlockedAccount()
+			try {
+				return await api.folderChildren(account, payload.id)
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
+		},
+
+		/**
+		 * Delete a folder with the user's choice for what it holds.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 */
+		'folder-delete': async (payload) => {
+			const account = await unlockedAccount()
+			try {
+				await api.deleteFolder(account, payload.id, {
+					cascade: payload.cascade,
+					resolution: payload.resolution,
+				})
+				rowCache.delete(account.id)
+				return { ok: true }
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
 		},
 
 		/**

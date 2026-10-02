@@ -16,7 +16,7 @@
 
 ## 3. Folder manager
 
-- [ ] 3.1 Create, rename, delete.
+- [x] 3.1 Folder manager: tree, add, rename, delete with the server's protocol, the not-encrypted notice, New folder in the picker. Verify: `tests/extension/folders.spec.js`, live in Chromium.
 
 ## 4. Offline vault cache and sync
 

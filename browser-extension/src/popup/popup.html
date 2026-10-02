@@ -81,8 +81,35 @@
 						<label>Type<select id="vault-type"><option value="">All types</option></select></label>
 					</div>
 					<button id="vault-new" class="primary">New item</button>
+					<button id="vault-folders-open" class="link">Folders</button>
 					<p id="vault-status" class="hint" role="status"></p>
 					<ul id="vault-list" class="candidates"></ul>
+				</div>
+
+				<div id="vault-folders" hidden>
+					<button id="folders-back" class="link">Back to the vault</button>
+					<h2>Folders</h2>
+					<div id="folders-notice" class="hint" hidden>
+						<p>Folder names are not encrypted. Server administrators can read them.</p>
+						<button id="folders-notice-ok" class="link">Got it</button>
+					</div>
+					<form id="folder-add" novalidate>
+						<label>New folder<input id="folder-add-name" type="text" maxlength="255" autocomplete="off"></label>
+						<label>Inside<select id="folder-add-parent"><option value="">No folder</option></select></label>
+						<button id="folder-add-save" type="submit" class="primary">Add folder</button>
+					</form>
+					<ul id="folder-tree" class="candidates"></ul>
+					<div id="folder-delete" hidden>
+						<p id="folder-delete-text"></p>
+						<label id="folder-delete-items-label" hidden>Its items<select id="folder-delete-items">
+							<option value="move">Move to the parent folder</option>
+							<option value="delete">Delete them</option>
+						</select></label>
+						<div id="folder-delete-subfolders"></div>
+						<button id="folder-delete-confirm" class="primary danger">Delete folder</button>
+						<button id="folder-delete-cancel" class="link">Cancel</button>
+					</div>
+					<p id="folders-error" class="error" role="alert" hidden></p>
 				</div>
 
 				<div id="vault-detail" hidden>

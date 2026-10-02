@@ -18,9 +18,11 @@ import {
 	validateDraft,
 } from '../lib/item-form.js'
 import { filterIndex, folderChoices, presentTypes } from '../lib/vault-index.js'
+import { initFolders } from './folder-view.js'
 import { clearDetail, renderDetail } from './item-detail.js'
 
 const UNSAVED = 'You have unsaved changes. Discard them?'
+const NEW_FOLDER = '__new__'
 
 /**
  * Replace a select's options after its first option.
@@ -75,7 +77,12 @@ export function initVault({
 	 * @param {'vault-browse'|'vault-detail'|'vault-edit'} view The view id.
 	 */
 	function showView(view) {
-		for (const id of ['vault-browse', 'vault-detail', 'vault-edit']) {
+		for (const id of [
+			'vault-browse',
+			'vault-detail',
+			'vault-edit',
+			'vault-folders',
+		]) {
 			$(id).hidden = id !== view
 		}
 		if (view !== 'vault-edit') form = null
@@ -281,7 +288,7 @@ export function initVault({
 			types.find((t) => t.id === typeId)?.name || item?.typeName || 'login'
 		const draft = draftFromItem(item, typeName)
 		if (clone) draft.name += ' - Clone'
-		fillSelect($('edit-folder'), folderOptions(), doc)
+		fillEditFolders()
 		layoutFor(draft.kind)
 		$('edit-name').value = draft.name
 		$('edit-url').value = draft.url
@@ -312,6 +319,23 @@ export function initVault({
 		$('edit-name').focus()
 	}
 
+	/** Fill the form's folder picker, with "New folder…" at the end. */
+	function fillEditFolders() {
+		fillSelect(
+			$('edit-folder'),
+			[...folderOptions(), { value: NEW_FOLDER, label: 'New folder…' }],
+			doc,
+		)
+	}
+
+	/** Reload the folders only, keeping the form as it is. */
+	async function reloadFolders() {
+		const result = await send('vault-list')
+		if (result.error) return
+		folders = result.folders || []
+		fillEditFolders()
+	}
+
 	/** Load the index, folders and types from the worker. */
 	async function load() {
 		$('vault-status').textContent = 'Loading…'
@@ -336,6 +360,37 @@ export function initVault({
 	for (const id of ['vault-search', 'vault-folder', 'vault-type']) {
 		$(id).addEventListener('input', renderList)
 	}
+	const folderView = initFolders({
+		$,
+		send,
+		showError,
+		getFolders: () => folders,
+		reload: load,
+		doc,
+	})
+	$('vault-folders-open').addEventListener('click', async () => {
+		showView('vault-folders')
+		await folderView.render()
+	})
+	$('folders-back').addEventListener('click', () => showView('vault-browse'))
+	// The form's folder picker can make a folder on the spot.
+	$('edit-folder').addEventListener('change', async () => {
+		if ($('edit-folder').value !== NEW_FOLDER) return
+		const name = window.prompt('Name of the new folder')
+		if (!name) {
+			$('edit-folder').value = ''
+			return
+		}
+		const res = await send('folder-create', { name, parentId: null })
+		if (res.error) {
+			$('edit-folder').value = ''
+			return showError('edit-error', res.error)
+		}
+		const keep = readDraft()
+		await reloadFolders()
+		$('edit-folder').value = res.id || ''
+		$('edit-name').value = keep.name
+	})
 	$('vault-new').addEventListener('click', () => openEdit(null))
 	$('detail-back').addEventListener('click', () => showView('vault-browse'))
 	$('detail-open-web').addEventListener('click', () => {

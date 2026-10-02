@@ -381,3 +381,15 @@ fieldset.fields {
 	margin: 8px 0;
 	padding: 6px;
 }
+
+/* Folder manager (clients-extension-complete) */
+.folder-name {
+	flex: 1;
+}
+
+#folder-delete {
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	padding: 8px;
+	margin: 8px 0;
+}

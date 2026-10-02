@@ -44,3 +44,18 @@ Clone MUST open the add form filled from the item with " - Clone" after the name
 - **GIVEN** an open item in Work
 - **WHEN** the user moves it to Work / Clients
 - **THEN** the update carries only the folder
+
+### Requirement: Manage folders
+The Vault tab MUST offer a folder manager that shows the folders as a tree, sorted by name, and lets the user add a folder (inside another or at the top), rename one (only the name is sent) and delete one. A blank name or a name with a slash MUST be refused before sending. Deleting MUST follow the server's protocol: an empty folder after "Delete <name>? This cannot be undone."; a folder with items only after the user chose to move them to the parent or delete them; a folder with subfolders only with a choice for its own items and, for every direct subfolder, keep, move its items or delete. The manager MUST say once that folder names are not encrypted. The item form's folder picker MUST offer "New folder…".
+
+#### Scenario: Add a folder inside another
+@e2e exclude Browser-extension popup. Covered by tests/extension/folders.spec.js ("adds a folder inside another, and refuses a slash").
+- **GIVEN** the folder manager
+- **WHEN** the user adds "Invoices" inside Work
+- **THEN** the folder is created with Work as parent and shows in the tree
+
+#### Scenario: Delete a folder with subfolders
+@e2e exclude Browser-extension popup. Covered by tests/extension/folders.spec.js ("deletes a folder with subfolders with a plan for every subfolder").
+- **GIVEN** Work holds items and the subfolder Clients
+- **WHEN** the user chooses to move Clients' items and confirms
+- **THEN** the delete request carries a plan for Work's items and for Clients
