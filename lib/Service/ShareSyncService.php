@@ -98,6 +98,7 @@ class ShareSyncService {
 	 * @throws InvalidArgumentException When validation or optimistic-lock check fails
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function syncUpdate(
 		string $secretId,
@@ -106,6 +107,11 @@ class ShareSyncService {
 		string $userId,
 	): int {
 		$source = $this->auth->loadSecret(secretId: $secretId);
+		if ($source->getUseOnly() === true) {
+			// A use-only copy is never written by its holder (D4).
+			throw new InvalidArgumentException(message: 'A use-only copy cannot be changed');
+		}
+
 		$isWriter = $this->resolveSyncWriter(source: $source, userId: $userId);
 		$this->assertSyncSourceUnchanged(source: $source, expectedUpdatedAt: $expectedUpdatedAt);
 

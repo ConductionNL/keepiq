@@ -32,6 +32,7 @@
 		<HoneySection />
 		<OfflineCacheSection />
 		<DeviceApprovalSection />
+		<AccountRecoverySection />
 		<ExtensionSection />
 		<FederationPartnersSection />
 		<ItemTypesSection />
@@ -44,6 +45,7 @@
 </template>
 
 <script>
+import AccountRecoverySection from '../../components/settings/AccountRecoverySection.vue'
 import AdminAuditSection from '../../components/settings/AdminAuditSection.vue'
 import AdminSuiteSection from '../../components/settings/AdminSuiteSection.vue'
 import ApplicationQueueSection from '../../components/settings/ApplicationQueueSection.vue'
@@ -86,6 +88,7 @@ export default {
 		ItemTypesSection,
 		OfflineCacheSection,
 		DeviceApprovalSection,
+		AccountRecoverySection,
 		ExtensionSection,
 		FederationPartnersSection,
 		MemberOverviewSection,

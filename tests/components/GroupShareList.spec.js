@@ -49,7 +49,10 @@ describe('GroupShareList', () => {
 		await form.find('form').trigger('submit')
 		await flushPromises()
 
-		expect(share).toHaveBeenCalledWith('s-1', 'finance')
+		expect(share).toHaveBeenCalledWith('s-1', 'finance', {
+			useOnly: false,
+			expiresAt: null,
+		})
 		expect(wrapper.findComponent({ name: 'GroupShareForm' }).exists()).toBe(
 			false,
 		)

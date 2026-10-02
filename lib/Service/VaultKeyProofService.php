@@ -74,6 +74,7 @@ class VaultKeyProofService {
 	public const PURPOSE_DELETE_ACCOUNT_DATA = 'delete-account-data';
 	public const PURPOSE_ABORT_MIGRATION = 'abort-migration';
 	public const PURPOSE_APPROVE_DEVICE = 'approve-device';
+	public const PURPOSE_APPROVE_ACCOUNT_RECOVERY = 'approve-account-recovery';
 
 	/**
 	 * The purposes a challenge may be issued for.
@@ -89,6 +90,7 @@ class VaultKeyProofService {
 		self::PURPOSE_DELETE_ACCOUNT_DATA,
 		self::PURPOSE_ABORT_MIGRATION,
 		self::PURPOSE_APPROVE_DEVICE,
+		self::PURPOSE_APPROVE_ACCOUNT_RECOVERY,
 	];
 
 	/**

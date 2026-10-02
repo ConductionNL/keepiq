@@ -937,4 +937,82 @@ class TeamFolderServiceTest extends TestCase {
 		// carol: no memberships anywhere -> null.
 		$this->assertNull($this->service->resolveGrade(secret: $secret, userId: 'carol'));
 	}//end testResolveGradeMaxAlongAncestorsAndGroups()
+
+	/**
+	 * Use-only is offered with the read grade only (sharing-use-only-and-
+	 * expiring-shares task 2.2): refused with write, accepted with read,
+	 * and promoting a use-only member to write lifts it.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 */
+	public function testUseOnlyIsRefusedWithTheWriteGrade(): void {
+		$teamFolder = new \OCA\Keepiq\Db\TeamFolder();
+		$teamFolder->setId('tf-1');
+		$teamFolder->setFolderId('folder-1');
+		$teamFolder->setOwnerId('alice');
+		$this->mapper->method('findById')->willReturn($teamFolder);
+
+		$member = new \OCA\Keepiq\Db\TeamFolderMember();
+		$member->setId('mem-1');
+		$member->setTeamFolderId('tf-1');
+		$member->setMemberType('user');
+		$member->setMemberId('bob');
+		$this->memberMapper->method('findById')->willReturn($member);
+		$this->memberMapper->method('update')->willReturnCallback(static fn ($row) => $row);
+
+		$end = new \DateTime('2099-01-01T00:00:00Z');
+		try {
+			$this->service->setMemberGrade(
+				teamFolderId: 'tf-1',
+				memberId: 'mem-1',
+				grade: 'write',
+				ownerId: 'alice',
+				restriction: new \OCA\Keepiq\Service\ShareRestriction(useOnly: true, expiresAt: $end),
+			);
+			$this->fail('use-only with write must be refused');
+		} catch (InvalidArgumentException $exception) {
+			$this->assertStringContainsString('read grade only', $exception->getMessage());
+		}
+
+		$read = $this->service->setMemberGrade(
+			teamFolderId: 'tf-1',
+			memberId: 'mem-1',
+			grade: 'read',
+			ownerId: 'alice',
+			restriction: new \OCA\Keepiq\Service\ShareRestriction(useOnly: true, expiresAt: $end),
+		);
+		$this->assertTrue($read->getUseOnly());
+		$this->assertEquals($end, $read->getExpiresAt());
+
+		$promoted = $this->service->setMemberGrade(teamFolderId: 'tf-1', memberId: 'mem-1', grade: 'write', ownerId: 'alice');
+		$this->assertFalse($promoted->getUseOnly(), 'an editor sees the value, so use-only is lifted');
+		$this->assertEquals($end, $promoted->getExpiresAt(), 'the end date stays');
+	}//end testUseOnlyIsRefusedWithTheWriteGrade()
+
+	/**
+	 * A non-owner cannot set either option on a membership.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 */
+	public function testANonOwnerCannotRestrictAMembership(): void {
+		$teamFolder = new \OCA\Keepiq\Db\TeamFolder();
+		$teamFolder->setId('tf-1');
+		$teamFolder->setFolderId('folder-1');
+		$teamFolder->setOwnerId('alice');
+		$this->mapper->method('findById')->willReturn($teamFolder);
+		$this->memberMapper->expects($this->never())->method('update');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->setMemberGrade(
+			teamFolderId: 'tf-1',
+			memberId: 'mem-1',
+			grade: 'read',
+			ownerId: 'bob',
+			restriction: new \OCA\Keepiq\Service\ShareRestriction(useOnly: false, expiresAt: null),
+		);
+	}//end testANonOwnerCannotRestrictAMembership()
 }//end class
