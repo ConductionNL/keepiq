@@ -385,6 +385,7 @@ $extra = [
     ['name' => 'teamFolder#offboard',             'url' => '/api/v1/team-folders/offboard',                'verb' => 'POST'],
     // Contributable team folders (admin-vault-policies §4.3): before any /{id} route.
     ['name' => 'teamFolder#contributable',        'url' => '/api/v1/team-folders/contributable',           'verb' => 'GET'],
+    ['name' => 'teamFolder#ownershipFindings',    'url' => '/api/v1/team-folders/ownership-findings',      'verb' => 'GET'],
     ['name' => 'teamFolderMember#members',        'url' => '/api/v1/team-folders/{id}/members',            'verb' => 'GET'],
     ['name' => 'teamFolderMember#addMember',      'url' => '/api/v1/team-folders/{id}/members',            'verb' => 'POST'],
     ['name' => 'teamFolderMember#removeMember',   'url' => '/api/v1/team-folders/{id}/members/{memberId}', 'verb' => 'DELETE'],
