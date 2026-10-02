@@ -63,7 +63,7 @@ export default {
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin/policies'),
+				generateUrl('/apps/keepiq/api/settings/admin/general'),
 			)
 			this.enabled =
 				response.data?.device_approval_enabled !== false
@@ -81,7 +81,7 @@ export default {
 		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
 		 */
 		async save() {
-			await axios.put(generateUrl('/apps/keepiq/api/settings/admin/policies'), {
+			await axios.put(generateUrl('/apps/keepiq/api/settings/admin/general'), {
 				device_approval_enabled: this.enabled,
 			})
 		},

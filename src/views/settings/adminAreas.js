@@ -25,6 +25,7 @@ export const ADMIN_AREAS = [
 			'AttachmentLimitsSection',
 			'OfflineCacheSection',
 			'BreachCheckSection',
+			'DeviceApprovalSection',
 			'ItemTypesSection',
 			'VaultBackupSection',
 		],
@@ -39,7 +40,6 @@ export const ADMIN_AREAS = [
 			'RotationPolicySection',
 			'RetentionPolicySection',
 			'ExtensionSection',
-			'DeviceApprovalSection',
 		],
 	},
 	{

@@ -173,6 +173,22 @@ class AdminSettingsAreaTest extends TestCase {
 	}//end testAnAreaWriteStoresItsOwnKeys()
 
 	/**
+	 * A key an area accepts is also written by that area's save: device
+	 * approval and offline edits are General, and their writer is General's,
+	 * so a save there is never accepted and dropped.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 */
+	public function testGeneralWritesTheDeviceApprovalAndOfflineEditSwitches(): void {
+		$this->service->updateAreaSettings(area: 'general', data: ['device_approval_enabled' => false, 'offline_edits_enabled' => true]);
+
+		$this->assertFalse($this->written['device_approval_enabled']);
+		$this->assertTrue($this->written['offline_edits_enabled']);
+	}//end testGeneralWritesTheDeviceApprovalAndOfflineEditSwitches()
+
+	/**
 	 * An unknown area is refused.
 	 *
 	 * @return void
