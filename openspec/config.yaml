@@ -12,7 +12,7 @@ context: |
 
   Architecture:
     Pattern: Thick backend — Keepiq owns all database tables and handles all encryption server-side
-    Data layer: Own Doctrine entities and migrations (no OpenRegister dependency)
+    Data layer: Own Doctrine entities and migrations (no OpenRegister data layer; the app shell uses the OpenRegister AppHost, so OpenRegister must be installed and enabled)
     Encryption: RSA-4096 for secrets, AES-256 for private keys; always E2E (see ADR-003 revised)
     Frontend: Vue 2.7 + Pinia stores; browser users decrypt client-side via WebCrypto API
     Backend: Controllers, Services, and Entities; DecryptService + EncryptService (stateless crypto for internal NC apps)
