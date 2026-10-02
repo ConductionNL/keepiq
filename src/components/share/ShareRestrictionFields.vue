@@ -67,6 +67,7 @@ export default {
 		 * Today as YYYY-MM-DD, the earliest end date the picker offers.
 		 *
 		 * @return {string}
+		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.3
 		 */
 		today() {
 			const now = new Date()

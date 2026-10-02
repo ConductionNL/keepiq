@@ -555,6 +555,13 @@ export default {
 			}, CANDIDATE_SEARCH_DEBOUNCE_MS)
 		},
 
+		/**
+		 * Add a member with its use-only flag and end date, then run the
+		 * fan-out for the new member.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+		 */
 		async onAddMember() {
 			this.busy = true
 			this.error = null
