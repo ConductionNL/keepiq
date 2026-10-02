@@ -8,9 +8,9 @@ import (
 	"time"
 
 	"crypto/rsa"
-	"github.com/ConductionNL/keepiq/cli/internal/client"
+	"github.com/ConductionNL/keepiq/sdk/go/client"
 
-	dcrypto "github.com/ConductionNL/keepiq/cli/internal/crypto"
+	dcrypto "github.com/ConductionNL/keepiq/sdk/go/crypto"
 )
 
 // ciSetup loads the CI-mode inputs: the instance URL (KEEPIQ_URL), the

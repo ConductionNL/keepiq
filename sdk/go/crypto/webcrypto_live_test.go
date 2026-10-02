@@ -15,7 +15,7 @@ func TestWebCryptoLiveEnvelope(t *testing.T) {
 	// runs in CI; KEEPIQ_LIVE_ENV overrides it with a freshly-captured one.
 	path := os.Getenv("KEEPIQ_LIVE_ENV")
 	if path == "" {
-		path = "testdata/webcrypto_envelope.json"
+		path = "../../testdata/webcrypto_envelope.json"
 	}
 	raw, err := os.ReadFile(path)
 	if err != nil {

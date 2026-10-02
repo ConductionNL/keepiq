@@ -23,8 +23,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/ConductionNL/keepiq/cli/internal/client"
-	dcrypto "github.com/ConductionNL/keepiq/cli/internal/crypto"
+	"github.com/ConductionNL/keepiq/sdk/go/client"
+	dcrypto "github.com/ConductionNL/keepiq/sdk/go/crypto"
 )
 
 // version is stamped at build time via -ldflags "-X main.version=…".

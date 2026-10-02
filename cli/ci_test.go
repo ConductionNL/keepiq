@@ -10,11 +10,11 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ConductionNL/keepiq/cli/internal/client"
-	dcrypto "github.com/ConductionNL/keepiq/cli/internal/crypto"
+	"github.com/ConductionNL/keepiq/sdk/go/client"
+	dcrypto "github.com/ConductionNL/keepiq/sdk/go/crypto"
 )
 
-// machineFixture is testdata/machine_envelope.json: an envelope written by the
+// machineFixture is sdk/testdata/machine_envelope.json: an envelope written by the
 // server's real MachineSecretEnvelopeService::serialize() over ciphertext from
 // the real EncryptService, plus the throwaway key that decrypts it. PHPUnit
 // (tests/Unit/Service/MachineEnvelopeCliFixtureTest.php) fails when serialize()
@@ -27,7 +27,7 @@ type machineFixture struct {
 
 func loadMachineFixture(t *testing.T) machineFixture {
 	t.Helper()
-	raw, err := os.ReadFile("testdata/machine_envelope.json")
+	raw, err := os.ReadFile("../sdk/testdata/machine_envelope.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -36,7 +36,7 @@ func loadMachineFixture(t *testing.T) machineFixture {
 		t.Fatal(err)
 	}
 	if len(f.Envelope) == 0 || f.PrivateKeyPem == "" || f.Plaintext["key"] == "" {
-		t.Fatal("testdata/machine_envelope.json is missing envelope, privateKeyPem or plaintext.key")
+		t.Fatal("sdk/testdata/machine_envelope.json is missing envelope, privateKeyPem or plaintext.key")
 	}
 	return f
 }
