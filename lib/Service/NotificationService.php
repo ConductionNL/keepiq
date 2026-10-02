@@ -70,6 +70,9 @@ class NotificationService {
 		// to a recipient; group-join approval request to the owner.
 		'team_folder_shared' => 'notify_shares',
 		'team_folder_join_request' => 'notify_group_shares',
+		// Automatic member confirmation (admin-auto-confirm-members D6): the
+		// owner learns who confirmed whom, under the same group-share toggle.
+		'team_folder_member_confirmed' => 'notify_group_shares',
 		// Rotation & expiry (rotation-expiry-policies §4): approaching
 		// expiry reminders and the overdue/rotation-due flag.
 		'secret_expiring' => 'notify_security',

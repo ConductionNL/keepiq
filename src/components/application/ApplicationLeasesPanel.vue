@@ -78,16 +78,20 @@
 				</tr>
 			</tbody>
 		</table>
+
+		<ApplicationLeasePolicyForm :applicationId="applicationId" />
 	</section>
 </template>
 
 <script>
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
+import ApplicationLeasePolicyForm from './ApplicationLeasePolicyForm.vue'
 import { useLeaseStore } from '../../store/modules/lease.js'
 
 export default {
 	name: 'ApplicationLeasesPanel',
 	components: {
+		ApplicationLeasePolicyForm,
 		NcButton,
 		NcNoteCard,
 	},

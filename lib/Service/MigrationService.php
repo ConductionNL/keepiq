@@ -25,6 +25,8 @@ use DateTime;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\SuiteMigration;
 use OCA\Keepiq\Db\SuiteMigrationMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Event\SuiteMigrationAbortedEvent;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
 use OCA\Keepiq\Event\SuiteMigrationStartedEvent;
@@ -104,6 +106,15 @@ class MigrationService {
 				)
 			);
 		}
+
+		// The audit record of the start. It used to be written by
+		// markCompromised at COMPLETION, so a recovery that was started and
+		// then aborted left no trace at all (keepiq#870).
+		$this->dispatchSuiteAudit(
+			actorId: $this->resolveOwnerId(suiteId: $oldSuiteId),
+			eventType: AuditEventTypes::SUITE_RECOVERY_STARTED,
+			migration: $migration,
+		);
 
 		return $migration;
 	}//end initiateCompromiseRecovery()
@@ -245,7 +256,8 @@ class MigrationService {
 	 * Idempotent by status, like completeMigration: a retried abort on an already
 	 * terminal migration is a no-op, not a second teardown.
 	 *
-	 * @param string $migrationId The migration to abort
+	 * @param string      $migrationId The migration to abort
+	 * @param string|null $actorId     Who aborted it, for the audit trail; the owner when null
 	 *
 	 * @return array<string,mixed> The terminal migration plus an `aborted` flag
 	 *
@@ -253,7 +265,7 @@ class MigrationService {
 	 *
 	 * @spec openspec/changes/harden-vault-key-material-guards/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
 	 */
-	public function abortMigration(string $migrationId): array {
+	public function abortMigration(string $migrationId, ?string $actorId = null): array {
 		$migration = $this->mapper->findById($migrationId);
 
 		if ($migration->getStatus() !== 'in_progress') {
@@ -329,6 +341,14 @@ class MigrationService {
 		$this->logger->info(
 			"Keepiq: Compromise recovery aborted for migration {$migrationId}; vault returned to the old suite",
 			['oldSuiteId' => $migration->getOldSuiteId()]
+		);
+
+		// An abort undoes a containment step, so it must reach the audit trail
+		// and the SIEM, not only nextcloud.log (keepiq#859, keepiq#870).
+		$this->dispatchSuiteAudit(
+			actorId: ($actorId ?? $ownerId),
+			eventType: AuditEventTypes::SUITE_RECOVERY_ABORTED,
+			migration: $migration,
 		);
 
 		return (
@@ -692,12 +712,14 @@ class MigrationService {
 	 * before this point leaves the migration open for a retry to find.
 	 *
 	 * @param SuiteMigration $migration The in-progress migration
+	 * @param string|null    $actorId   The administrator who force-revoked, for the audit trail;
+	 *                                  recorded as a system action when null
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
 	 */
-	public function terminateForCompromise(SuiteMigration $migration): void {
+	public function terminateForCompromise(SuiteMigration $migration, ?string $actorId = null): void {
 		$migration->setStatus('terminated');
 		$migration->setCompletedAt(new DateTime());
 		$this->mapper->update($migration);
@@ -716,7 +738,57 @@ class MigrationService {
 			['migrationId' => $migration->getId()]
 		);
 
+		// The termination itself is audited (keepiq#870), apart from the two
+		// suite revokes the caller already recorded.
+		$this->dispatchSuiteAudit(
+			actorId: $actorId,
+			eventType: AuditEventTypes::SUITE_MIGRATION_TERMINATED,
+			migration: $migration,
+		);
+
 	}//end terminateForCompromise()
+
+	/**
+	 * Record a migration-lifecycle audit event against the old suite.
+	 *
+	 * The object is the old suite, the suite the vault was on when the
+	 * migration began, so every lifecycle event of one recovery lands on the
+	 * same object in the trail. Only ids are recorded, never key material.
+	 *
+	 * @param string|null    $actorId   The acting user; a system event when null
+	 * @param string         $eventType One of the AuditEventTypes SUITE_* constants
+	 * @param SuiteMigration $migration The migration
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
+	 */
+	private function dispatchSuiteAudit(?string $actorId, string $eventType, SuiteMigration $migration): void {
+		$metadata = [
+			'migrationId' => $migration->getId(),
+			'oldSuiteId' => $migration->getOldSuiteId(),
+			'newSuiteId' => $migration->getNewSuiteId(),
+		];
+
+		// Built directly rather than through AuditEventFactory: the constructor
+		// already takes nine collaborators, and a tenth crosses PHPMD ExcessiveParameterList.
+		$actorType = AuditEvent::ACTOR_USER;
+		if ($actorId === null || $actorId === '') {
+			$actorType = AuditEvent::ACTOR_SYSTEM;
+			$actorId = null;
+		}
+
+		$this->eventDispatcher?->dispatchTyped(
+			new AuditEvent(
+				actorType: $actorType,
+				actorId: $actorId,
+				eventType: $eventType,
+				objectType: 'suite',
+				objectId: $migration->getOldSuiteId(),
+				metadata: $metadata,
+			)
+		);
+	}//end dispatchSuiteAudit()
 
 	/**
 	 * Get in-progress migration for a given owner (via their old suite).

@@ -109,26 +109,49 @@ export const usePasskeyStore = defineStore('passkey', {
 			const userId = new TextEncoder().encode(
 				window.OC?.getCurrentUser?.()?.uid || 'keepiq-user',
 			)
-			const created = await navigator.credentials.create({
-				publicKey: {
-					rp: { id: RP_ID, name: 'Keepiq' },
-					user: {
-						id: userId,
-						name: label || 'Keepiq vault',
-						displayName: label || 'Keepiq vault',
+			// Exclude the passkeys that unlock the vault now. Every enrolment
+			// uses the same user handle, so an authenticator that already holds
+			// one would replace it and leave its earlier row unusable. Stale
+			// passkeys are not listed, so re-enrolling after a master password
+			// change still works on the same device.
+			const activeResp = await axios.get(
+				generateUrl('/apps/keepiq/api/v1/passkeys/login-options'),
+			)
+			const excludeCredentials = (activeResp.data?.credentials ?? []).map(
+				(c) => ({ type: 'public-key', id: fromBase64Url(c.credentialId) }),
+			)
+			let created
+			try {
+				created = await navigator.credentials.create({
+					publicKey: {
+						rp: { id: RP_ID, name: 'Keepiq' },
+						user: {
+							id: userId,
+							name: label || 'Keepiq vault',
+							displayName: label || 'Keepiq vault',
+						},
+						challenge,
+						pubKeyCredParams: [
+							{ type: 'public-key', alg: -7 },
+							{ type: 'public-key', alg: -257 },
+						],
+						authenticatorSelection: {
+							residentKey: 'preferred',
+							userVerification: 'preferred',
+						},
+						excludeCredentials,
+						extensions: { prf: {} },
 					},
-					challenge,
-					pubKeyCredParams: [
-						{ type: 'public-key', alg: -7 },
-						{ type: 'public-key', alg: -257 },
-					],
-					authenticatorSelection: {
-						residentKey: 'preferred',
-						userVerification: 'preferred',
-					},
-					extensions: { prf: {} },
-				},
-			})
+				})
+			} catch (e) {
+				if (e?.name === 'InvalidStateError') {
+					throw new Error(
+						'This authenticator already unlocks your vault. Revoke its passkey first to enroll it again.',
+						{ cause: e },
+					)
+				}
+				throw e
+			}
 
 			// 2. PRF must be enabled by this authenticator.
 			const ext = created.getClientExtensionResults()

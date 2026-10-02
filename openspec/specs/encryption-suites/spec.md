@@ -218,9 +218,9 @@ The disposition of each store is fixed as follows. All fields listed as re-encry
 | `keepiq_attachment_grants` | `wrapped_file_key` (RSA-wrapped per-file AES key) | Re-wrap the rotating owner's own grants under the new suite. Grants belonging to other recipients MUST NOT be altered |
 | `keepiq_secret_requests` | No ciphertext of its own; `encryption_suite_id` selects the certificate used to encrypt future submissions | Lock for the duration of the migration, then unlock and re-point to the new suite |
 | `keepiq_link_shares` | `encrypted_secret_snapshot` | Revoke (cascade), unchanged from current behaviour |
-| `keepiq_emergency_contacts` | `recovery_envelope` | Invalidate, unchanged. The envelope is wrapped to the *grantee's* certificate and escrows the grantor's old private key as its plaintext, so the rotating owner cannot re-wrap it alone; the grantor MUST be prompted to re-establish emergency access (see the `emergency-access` spec) |
+| `keepiq_emergency_contacts` | `recovery_envelope` | Re-envelope under the new key where the grantee is reachable, then invalidate only the residual. For each contact still bound to the old suite whose grantee has an active certificate, the browser builds a fresh envelope escrowing the **new** private key sealed to that certificate and re-points `grantor_suite_id` to the new suite, keeping `state = granted`. Every other contact on the old suite (unreachable, not confirmed, or with a break-glass in flight) is invalidated at completion, and the grantor is told which ones were removed (see the `emergency-access` spec). This is not a re-wrap of the old envelope — `buildRecoveryEnvelope` needs only the new private key (held during rotation) and the grantee's public certificate (see the `emergency-access` spec) |
 
-Re-encryption of `keepiq_secrets`, `keepiq_secret_versions` and `keepiq_attachment_grants` MUST happen in the browser under the same rules as ordinary migration: the old private key decrypts and the new public key encrypts, both as WebCrypto `CryptoKey` objects, and only ciphertext crosses the wire. RSA has a per-chunk plaintext cap (446 bytes at RSA-4096), so every value MUST be re-chunked against the new key rather than having its existing chunk framing reused.
+Re-encryption of `keepiq_secrets`, `keepiq_secret_versions` and `keepiq_attachment_grants` MUST happen in the browser under the same rules as ordinary migration: the old private key decrypts and the new public key encrypts, both as WebCrypto `CryptoKey` objects, and only ciphertext crosses the wire. Emergency contacts are the one migrated store not produced by decrypt-then-re-encrypt: the browser builds a fresh recovery envelope from the new private key and the grantee's fetched certificate, so no old-key decrypt is involved. Unlike the three re-encrypted stores, emergency contacts MUST NOT gate completion — a contact whose grantee is unreachable can never be re-enveloped, and gating on it would make the write lock inescapable; such contacts are swept into invalidation at completion instead. RSA has a per-chunk plaintext cap (446 bytes at RSA-4096), so every value MUST be re-chunked against the new key rather than having its existing chunk framing reused.
 
 Owner and suite scoping MUST be enforced server-side on every re-encryption write, resolving the acting user through the Nextcloud `OCP\IUserSession` the surrounding controllers already use: a write MUST be refused unless the target row's current `encryption_suite_id` is the migration's `old_suite_id` and the row is owned by the migration's owner.
 
@@ -257,6 +257,24 @@ Owner and suite scoping MUST be enforced server-side on every re-encryption writ
 - **WHEN** the client requests completion of the migration
 - **THEN** the server MUST refuse to mark the migration terminal
 - **AND** the migration MUST remain `in_progress` with the write lock held
+
+#### Scenario: A reachable emergency contact is re-enveloped, not invalidated
+
+@e2e exclude Client builds the envelope and the server re-points the row; verifying the envelope opens needs the grantee's key in a second context. Covered by PHPUnit on the re-point endpoint and unit tests of the envelope builder.
+- **GIVEN** a rotating owner with an emergency contact whose grantee has an active suite
+- **WHEN** the migration processes emergency contacts
+- **THEN** a fresh recovery envelope escrowing the new private key MUST be built and the contact re-pointed to the new suite with `state = granted`
+- **AND** the contact MUST NOT be invalidated
+- **AND** the completion MUST NOT gate on that contact
+
+#### Scenario: An unreachable emergency contact does not trap the vault
+
+@e2e exclude Server-side listener sweep after the loop; covered by PHPUnit asserting the residual is invalidated and completion still terminates.
+- **GIVEN** a rotating owner with an emergency contact whose grantee has no active suite
+- **WHEN** the migration processes emergency contacts and then completes
+- **THEN** that contact MUST be invalidated by the completion sweep
+- **AND** completion MUST NOT be blocked by it
+- **AND** the owner MUST be told that this specific contact was removed (see the `emergency-access` spec for where)
 
 ### Requirement: A Migration Always Has A Way To Terminate
 
@@ -765,6 +783,44 @@ A force-revoke marked as a compromise (`markCompromised: true`) is the exception
 - **GIVEN** every migration the suite was part of is `completed`, `completed_with_errors` or `aborted`
 - **WHEN** the suite is revoked
 - **THEN** the migration check MUST NOT refuse it
+
+### Requirement: Suite Self-Service Operations Are Owner-Scoped
+
+The suite self-service endpoints — viewing a suite (`show`), replacing its private-key envelope (`updatePrivateKey`), and revoking it (`revoke`) — MUST act only on a suite the calling session owns as a user: the suite's `owner_type` is `user` and its `owner_id` is the current user id. The system MUST refuse any other suite, whether it belongs to another user or to an application.
+
+An application-owned suite MUST NOT be viewable, modifiable, or revocable through these self-service endpoints by any user, including an administrator. Application suites are managed through the application-lifecycle endpoints, and a destructive operation on one — revocation blocks every secret bound to it — MUST NOT be reachable from a user session that merely knows the suite id. The ownership check MUST express this as "the caller owns this suite", not as "the suite is not some *other* user's": a check written the second way silently admits every non-user suite, which is how an application suite becomes revocable by an unrelated session.
+
+The refusal MUST NOT depend on how the session was authenticated; it is an authorization boundary over the suite's ownership, not a property of the login.
+
+#### Scenario: A user cannot revoke another user's suite
+@e2e exclude Controller-level authorization with no DOM surface; covered by PHPUnit EncryptionSuiteControllerTest.
+- **GIVEN** an authenticated user
+- **AND** an EncryptionSuite owned by a different user
+- **WHEN** they request to revoke it by id
+- **THEN** the system MUST refuse and MUST NOT call the revocation service
+
+#### Scenario: A user cannot revoke an application's suite
+@e2e exclude Controller-level authorization with no DOM surface; covered by PHPUnit EncryptionSuiteControllerTest.
+- **GIVEN** an authenticated non-admin user with no relationship to an application
+- **AND** an EncryptionSuite whose `owner_type` is `application`
+- **WHEN** they request to revoke that suite by id
+- **THEN** the system MUST refuse with an access-denied response
+- **AND** MUST NOT call the revocation service
+- **AND** the application's suite MUST remain `active`
+
+#### Scenario: A user cannot overwrite an application suite's private-key envelope
+@e2e exclude Controller-level authorization with no DOM surface; covered by PHPUnit EncryptionSuiteControllerTest.
+- **GIVEN** an authenticated non-admin user
+- **AND** an EncryptionSuite whose `owner_type` is `application`
+- **WHEN** they submit a replacement private-key envelope for that suite by id
+- **THEN** the system MUST refuse and MUST NOT persist any change to the suite
+
+#### Scenario: A user manages their own suite normally
+@e2e exclude Covered by PHPUnit EncryptionSuiteControllerTest happy-path cases.
+- **GIVEN** an authenticated user
+- **AND** an EncryptionSuite they own (`owner_type` `user`, `owner_id` the caller)
+- **WHEN** they view, re-key, or revoke it
+- **THEN** the system MUST allow the operation
 
 ## User Stories
 
