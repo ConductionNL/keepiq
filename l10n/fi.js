@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Vanhenee {days} päivän kuluttua",
         "Reminders {days} days before": "Muistutukset {days} päivää ennen",
         "Could not save the expiry rule.": "Vanhenemissääntöä ei voitu tallentaa.",
-        "Could not delete the expiry rule.": "Vanhenemissääntöä ei voitu poistaa."
+        "Could not delete the expiry rule.": "Vanhenemissääntöä ei voitu poistaa.",
+        "Archives to keep": "Säilytettävät arkistot",
+        "Back up every vault automatically": "Varmuuskopioi jokainen holvi automaattisesti",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Varmuuskopioi jokainen holvi aikataulun mukaan. Arkistot sisältävät vain salattua tekstiä, ja ne palautetaan occ-komennolla.",
+        "Back up now": "Varmuuskopioi nyt",
+        "Backup public key (PEM, optional)": "Varmuuskopion julkinen avain (PEM, valinnainen)",
+        "Backup requested for the next cron run": "Varmuuskopio pyydetty seuraavalle cron-ajolle",
+        "Encrypted": "Salattu",
+        "Every (hours)": "Joka (tuntia)",
+        "Last backup {when} failed: {error}": "Viimeisin varmuuskopio {when} epäonnistui: {error}",
+        "Last backup {when} succeeded.": "Viimeisin varmuuskopio {when} onnistui.",
+        "No": "Ei",
+        "No archives yet.": "Ei vielä arkistoja.",
+        "Size": "Koko",
+        "Vault backups": "Holvin varmuuskopiot",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Avaimen kanssa jokainen arkisto salataan sille. Säilytä yksityinen avain tämän palvelimen ulkopuolella: tarvitset sitä tarkistamiseen tai palauttamiseen.",
+        "Written": "Kirjoitettu",
+        "Yes": "Kyllä"
     },
     "nplurals=2; plural=(n != 1);"
 )

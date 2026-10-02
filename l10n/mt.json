@@ -1344,7 +1344,24 @@
         "Expires after {days} days": "Jiskadi wara {days} jiem",
         "Reminders {days} days before": "Tfakkiriet {days} jiem qabel",
         "Could not save the expiry rule.": "Ir-regola tal-iskadenza ma setgħetx tiġi ssejvjata.",
-        "Could not delete the expiry rule.": "Ir-regola tal-iskadenza ma setgħetx titħassar."
+        "Could not delete the expiry rule.": "Ir-regola tal-iskadenza ma setgħetx titħassar.",
+        "Archives to keep": "Arkivji li għandhom jinżammu",
+        "Back up every vault automatically": "Agħmel backup ta' kull kaxxaforti awtomatikament",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Agħmel backup ta' kull kaxxaforti skont skeda. L-arkivji fihom biss test kriptat u jiġu rrestawrati b'occ.",
+        "Back up now": "Agħmel backup issa",
+        "Backup public key (PEM, optional)": "Ċavetta pubblika tal-backup (PEM, mhux obbligatorja)",
+        "Backup requested for the next cron run": "Backup mitlub għall-ġirja li jmiss ta' cron",
+        "Encrypted": "Kriptat",
+        "Every (hours)": "Kull (sigħat)",
+        "Last backup {when} failed: {error}": "L-aħħar backup {when} falla: {error}",
+        "Last backup {when} succeeded.": "L-aħħar backup {when} irnexxa.",
+        "No": "Le",
+        "No archives yet.": "Għad m'hemmx arkivji.",
+        "Size": "Daqs",
+        "Vault backups": "Backups tal-kaxxaforti",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "B'ċavetta, kull arkivju jiġi kriptat għaliha. Żomm iċ-ċavetta privata barra minn dan is-server: għandek bżonnha biex tivverifika jew tirrestawra.",
+        "Written": "Miktub",
+        "Yes": "Iva"
     },
     "plurals": null
 }

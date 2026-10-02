@@ -10,6 +10,7 @@
 
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.4
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.5
+  @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
   @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.2
 -->
 <template>
@@ -31,6 +32,7 @@
 		<OffboardingSection />
 		<AdminSuiteSection />
 		<AdminAuditSection />
+		<VaultBackupSection />
 	</div>
 </template>
 
@@ -52,6 +54,7 @@ import PasswordPolicySection from '../../components/settings/PasswordPolicySecti
 import RotationPolicySection from '../../components/settings/RotationPolicySection.vue'
 import SiemSection from '../../components/settings/SiemSection.vue'
 import TeamFolderAutoConfirmSection from '../../components/settings/TeamFolderAutoConfirmSection.vue'
+import VaultBackupSection from '../../components/settings/VaultBackupSection.vue'
 
 export default {
 	name: 'Settings',
@@ -73,6 +76,7 @@ export default {
 		OffboardingSection,
 		AdminSuiteSection,
 		AdminAuditSection,
+		VaultBackupSection,
 	},
 }
 </script>

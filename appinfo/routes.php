@@ -35,6 +35,11 @@ $extra = [
     // Admin + user settings split (implement-dashboard-settings §2.4).
     ['name' => 'settings#getAdminSettings',    'url' => '/api/settings/admin', 'verb' => 'GET'],
     ['name' => 'settings#updateAdminSettings', 'url' => '/api/settings/admin', 'verb' => 'PUT'],
+    // Vault backups (admin-scheduled-vault-backups §4.1): status, list and a
+    // run request. No route serves archive content (design D6).
+    ['name' => 'backupAdmin#index', 'url' => '/api/settings/admin/backups',     'verb' => 'GET'],
+    ['name' => 'backupAdmin#update', 'url' => '/api/settings/admin/backups',    'verb' => 'PUT'],
+    ['name' => 'backupAdmin#run',   'url' => '/api/settings/admin/backups/run', 'verb' => 'POST'],
     ['name' => 'settings#getUserSettings',     'url' => '/api/settings/user',  'verb' => 'GET'],
     // Read-only org password policy for write dialogs (org-password-policies §1.3).
     ['name' => 'settings#getPolicy',           'url' => '/api/settings/policy', 'verb' => 'GET'],

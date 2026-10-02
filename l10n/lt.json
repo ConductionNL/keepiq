@@ -1344,7 +1344,24 @@
         "Expires after {days} days": "Baigia galioti po {days} d.",
         "Reminders {days} days before": "Priminimai likus {days} d.",
         "Could not save the expiry rule.": "Nepavyko įrašyti galiojimo taisyklės.",
-        "Could not delete the expiry rule.": "Nepavyko ištrinti galiojimo taisyklės."
+        "Could not delete the expiry rule.": "Nepavyko ištrinti galiojimo taisyklės.",
+        "Archives to keep": "Saugomi archyvai",
+        "Back up every vault automatically": "Automatiškai daryti kiekvienos saugyklos kopiją",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Darykite kiekvienos saugyklos kopiją pagal tvarkaraštį. Archyvuose yra tik šifruotas tekstas, jie atkuriami su occ.",
+        "Back up now": "Daryti kopiją dabar",
+        "Backup public key (PEM, optional)": "Kopijos viešasis raktas (PEM, neprivaloma)",
+        "Backup requested for the next cron run": "Kopija užsakyta kitam cron paleidimui",
+        "Encrypted": "Šifruota",
+        "Every (hours)": "Kas (valandų)",
+        "Last backup {when} failed: {error}": "Paskutinė kopija {when} nepavyko: {error}",
+        "Last backup {when} succeeded.": "Paskutinė kopija {when} pavyko.",
+        "No": "Ne",
+        "No archives yet.": "Archyvų dar nėra.",
+        "Size": "Dydis",
+        "Vault backups": "Saugyklos kopijos",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Su raktu kiekvienas archyvas šifruojamas jam. Laikykite privatųjį raktą už šio serverio ribų: jo reikia tikrinimui ar atkūrimui.",
+        "Written": "Įrašyta",
+        "Yes": "Taip"
     },
     "plurals": null
 }

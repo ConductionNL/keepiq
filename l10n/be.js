@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Тэрмін мінае праз {days} дз.",
         "Reminders {days} days before": "Нагадванні за {days} дз.",
         "Could not save the expiry rule.": "Не ўдалося захаваць правіла тэрміну дзеяння.",
-        "Could not delete the expiry rule.": "Не ўдалося выдаліць правіла тэрміну дзеяння."
+        "Could not delete the expiry rule.": "Не ўдалося выдаліць правіла тэрміну дзеяння.",
+        "Archives to keep": "Колькі архіваў захоўваць",
+        "Back up every vault automatically": "Аўтаматычна ствараць копію кожнага сховішча",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Стварайце копію кожнага сховішча па раскладзе. Архівы ўтрымліваюць толькі шыфратэкст і аднаўляюцца праз occ.",
+        "Back up now": "Стварыць копію зараз",
+        "Backup public key (PEM, optional)": "Адкрыты ключ рэзервовай копіі (PEM, неабавязкова)",
+        "Backup requested for the next cron run": "Копію запытана на наступны запуск cron",
+        "Encrypted": "Зашыфравана",
+        "Every (hours)": "Кожныя (гадзін)",
+        "Last backup {when} failed: {error}": "Апошняя копія {when} не ўдалася: {error}",
+        "Last backup {when} succeeded.": "Апошняя копія {when} створана.",
+        "No": "Не",
+        "No archives yet.": "Архіваў пакуль няма.",
+        "Size": "Памер",
+        "Vault backups": "Рэзервовыя копіі сховішча",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "З ключом кожны архіў шыфруецца для яго. Захоўвайце закрыты ключ па-за гэтым серверам: ён патрэбны для праверкі ці аднаўлення.",
+        "Written": "Запісана",
+        "Yes": "Так"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1344,7 +1344,24 @@
         "Expires after {days} days": "Skadon pas {days} ditësh",
         "Reminders {days} days before": "Kujtesa {days} ditë përpara",
         "Could not save the expiry rule.": "Rregulli i skadimit nuk u ruajt dot.",
-        "Could not delete the expiry rule.": "Rregulli i skadimit nuk u fshi dot."
+        "Could not delete the expiry rule.": "Rregulli i skadimit nuk u fshi dot.",
+        "Archives to keep": "Arkiva për t'u mbajtur",
+        "Back up every vault automatically": "Bëj kopje rezervë të çdo kasaforte automatikisht",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Bëni kopje rezervë të çdo kasaforte sipas orarit. Arkivat përmbajnë vetëm tekst të shifruar dhe rikthehen me occ.",
+        "Back up now": "Bëj kopje tani",
+        "Backup public key (PEM, optional)": "Çelësi publik i kopjes (PEM, opsional)",
+        "Backup requested for the next cron run": "Kopja u kërkua për ekzekutimin e ardhshëm të cron",
+        "Encrypted": "I shifruar",
+        "Every (hours)": "Çdo (orë)",
+        "Last backup {when} failed: {error}": "Kopja e fundit {when} dështoi: {error}",
+        "Last backup {when} succeeded.": "Kopja e fundit {when} u krye.",
+        "No": "Jo",
+        "No archives yet.": "Ende pa arkiva.",
+        "Size": "Madhësia",
+        "Vault backups": "Kopjet e kasafortës",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Me një çelës, çdo arkiv shifrohet për të. Mbajeni çelësin privat jashtë këtij serveri: ju duhet për verifikim ose rikthim.",
+        "Written": "Shkruar",
+        "Yes": "Po"
     },
     "plurals": null
 }

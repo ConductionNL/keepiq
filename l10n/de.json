@@ -1344,7 +1344,24 @@
         "Expires after {days} days": "Läuft nach {days} Tagen ab",
         "Reminders {days} days before": "Erinnerungen {days} Tage vorher",
         "Could not save the expiry rule.": "Die Ablaufregel konnte nicht gespeichert werden.",
-        "Could not delete the expiry rule.": "Die Ablaufregel konnte nicht gelöscht werden."
+        "Could not delete the expiry rule.": "Die Ablaufregel konnte nicht gelöscht werden.",
+        "Archives to keep": "Aufzubewahrende Archive",
+        "Back up every vault automatically": "Jeden Tresor automatisch sichern",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Sichern Sie jeden Tresor nach Zeitplan. Archive enthalten nur Chiffretext und werden mit occ wiederhergestellt.",
+        "Back up now": "Jetzt sichern",
+        "Backup public key (PEM, optional)": "Öffentlicher Sicherungsschlüssel (PEM, optional)",
+        "Backup requested for the next cron run": "Sicherung für den nächsten Cron-Lauf angefordert",
+        "Encrypted": "Verschlüsselt",
+        "Every (hours)": "Alle (Stunden)",
+        "Last backup {when} failed: {error}": "Letzte Sicherung {when} fehlgeschlagen: {error}",
+        "Last backup {when} succeeded.": "Letzte Sicherung {when} erfolgreich.",
+        "No": "Nein",
+        "No archives yet.": "Noch keine Archive.",
+        "Size": "Größe",
+        "Vault backups": "Tresorsicherungen",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Mit einem Schlüssel wird jedes Archiv damit verschlüsselt. Bewahren Sie den privaten Schlüssel außerhalb dieses Servers auf: Sie brauchen ihn zum Prüfen oder Wiederherstellen.",
+        "Written": "Geschrieben",
+        "Yes": "Ja"
     },
     "plurals": null
 }

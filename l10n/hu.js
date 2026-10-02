@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "{days} nap után lejár",
         "Reminders {days} days before": "Emlékeztetők {days} nappal előtte",
         "Could not save the expiry rule.": "Nem sikerült menteni a lejárati szabályt.",
-        "Could not delete the expiry rule.": "Nem sikerült törölni a lejárati szabályt."
+        "Could not delete the expiry rule.": "Nem sikerült törölni a lejárati szabályt.",
+        "Archives to keep": "Megtartandó archívumok",
+        "Back up every vault automatically": "Minden széf automatikus mentése",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Mentse minden széfet ütemezetten. Az archívumok csak titkosított szöveget tartalmaznak, és occ-vel állíthatók vissza.",
+        "Back up now": "Mentés most",
+        "Backup public key (PEM, optional)": "Mentési nyilvános kulcs (PEM, nem kötelező)",
+        "Backup requested for the next cron run": "Mentés kérve a következő cron-futásra",
+        "Encrypted": "Titkosított",
+        "Every (hours)": "Minden (óra)",
+        "Last backup {when} failed: {error}": "Az utolsó mentés {when} sikertelen: {error}",
+        "Last backup {when} succeeded.": "Az utolsó mentés {when} sikeres.",
+        "No": "Nem",
+        "No archives yet.": "Még nincs archívum.",
+        "Size": "Méret",
+        "Vault backups": "Széfmentések",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Kulccsal minden archívum annak titkosítva készül. A privát kulcsot e szerveren kívül tartsa: ellenőrzéshez vagy visszaállításhoz kell.",
+        "Written": "Írva",
+        "Yes": "Igen"
     },
     "nplurals=2; plural=(n != 1);"
 )

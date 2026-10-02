@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Caduca al cap de {days} dies",
         "Reminders {days} days before": "Recordatoris {days} dies abans",
         "Could not save the expiry rule.": "No s'ha pogut desar la regla de caducitat.",
-        "Could not delete the expiry rule.": "No s'ha pogut suprimir la regla de caducitat."
+        "Could not delete the expiry rule.": "No s'ha pogut suprimir la regla de caducitat.",
+        "Archives to keep": "Arxius que cal conservar",
+        "Back up every vault automatically": "Fes còpia de cada caixa forta automàticament",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Feu còpia de cada caixa forta segons una planificació. Els arxius només contenen text xifrat i es restauren amb occ.",
+        "Back up now": "Fes còpia ara",
+        "Backup public key (PEM, optional)": "Clau pública de còpia (PEM, opcional)",
+        "Backup requested for the next cron run": "Còpia sol·licitada per a la propera execució de cron",
+        "Encrypted": "Xifrat",
+        "Every (hours)": "Cada (hores)",
+        "Last backup {when} failed: {error}": "La darrera còpia {when} ha fallat: {error}",
+        "Last backup {when} succeeded.": "La darrera còpia {when} ha funcionat.",
+        "No": "No",
+        "No archives yet.": "Encara no hi ha arxius.",
+        "Size": "Mida",
+        "Vault backups": "Còpies de la caixa forta",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Amb una clau, cada arxiu es xifra per a ella. Guardeu la clau privada fora d'aquest servidor: la necessiteu per verificar o restaurar.",
+        "Written": "Escrit",
+        "Yes": "Sí"
     },
     "nplurals=2; plural=(n != 1);"
 )

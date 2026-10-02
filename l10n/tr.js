@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "{days} gün sonra sona erer",
         "Reminders {days} days before": "{days} gün önce hatırlatma",
         "Could not save the expiry rule.": "Sona erme kuralı kaydedilemedi.",
-        "Could not delete the expiry rule.": "Sona erme kuralı silinemedi."
+        "Could not delete the expiry rule.": "Sona erme kuralı silinemedi.",
+        "Archives to keep": "Saklanacak arşivler",
+        "Back up every vault automatically": "Her kasayı otomatik yedekle",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Her kasayı bir zamanlamayla yedekleyin. Arşivler yalnızca şifreli metin içerir ve occ ile geri yüklenir.",
+        "Back up now": "Şimdi yedekle",
+        "Backup public key (PEM, optional)": "Yedek ortak anahtarı (PEM, isteğe bağlı)",
+        "Backup requested for the next cron run": "Yedek bir sonraki cron çalışması için istendi",
+        "Encrypted": "Şifreli",
+        "Every (hours)": "Her (saat)",
+        "Last backup {when} failed: {error}": "Son yedek {when} başarısız: {error}",
+        "Last backup {when} succeeded.": "Son yedek {when} başarılı.",
+        "No": "Hayır",
+        "No archives yet.": "Henüz arşiv yok.",
+        "Size": "Boyut",
+        "Vault backups": "Kasa yedekleri",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Bir anahtarla her arşiv ona göre şifrelenir. Özel anahtarı bu sunucunun dışında tutun: doğrulamak veya geri yüklemek için gerekir.",
+        "Written": "Yazıldı",
+        "Yes": "Evet"
     },
     "nplurals=2; plural=(n != 1);"
 )

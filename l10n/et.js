@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Aegub {days} päeva pärast",
         "Reminders {days} days before": "Meeldetuletused {days} päeva enne",
         "Could not save the expiry rule.": "Aegumisreeglit ei õnnestunud salvestada.",
-        "Could not delete the expiry rule.": "Aegumisreeglit ei õnnestunud kustutada."
+        "Could not delete the expiry rule.": "Aegumisreeglit ei õnnestunud kustutada.",
+        "Archives to keep": "Säilitatavad arhiivid",
+        "Back up every vault automatically": "Varunda iga hoidla automaatselt",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Varundage iga hoidla ajakava järgi. Arhiivid sisaldavad ainult krüpteeritud teksti ja taastatakse occ-ga.",
+        "Back up now": "Varunda kohe",
+        "Backup public key (PEM, optional)": "Varunduse avalik võti (PEM, valikuline)",
+        "Backup requested for the next cron run": "Varundus taotletud järgmiseks croni käivituseks",
+        "Encrypted": "Krüpteeritud",
+        "Every (hours)": "Iga (tunni järel)",
+        "Last backup {when} failed: {error}": "Viimane varundus {when} ebaõnnestus: {error}",
+        "Last backup {when} succeeded.": "Viimane varundus {when} õnnestus.",
+        "No": "Ei",
+        "No archives yet.": "Arhiive veel pole.",
+        "Size": "Suurus",
+        "Vault backups": "Hoidla varundused",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Võtmega krüpteeritakse iga arhiiv selle jaoks. Hoidke privaatvõtit sellest serverist väljas: seda on vaja kontrollimiseks või taastamiseks.",
+        "Written": "Kirjutatud",
+        "Yes": "Jah"
     },
     "nplurals=2; plural=(n != 1);"
 )

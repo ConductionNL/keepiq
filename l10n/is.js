@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Rennur út eftir {days} daga",
         "Reminders {days} days before": "Áminningar {days} dögum áður",
         "Could not save the expiry rule.": "Ekki tókst að vista regluna um gildistíma.",
-        "Could not delete the expiry rule.": "Ekki tókst að eyða reglunni um gildistíma."
+        "Could not delete the expiry rule.": "Ekki tókst að eyða reglunni um gildistíma.",
+        "Archives to keep": "Skjalasöfn sem á að geyma",
+        "Back up every vault automatically": "Taka öryggisafrit af hverju hólfi sjálfkrafa",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Taktu öryggisafrit af hverju hólfi samkvæmt áætlun. Söfnin innihalda aðeins dulkóðaðan texta og eru endurheimt með occ.",
+        "Back up now": "Taka öryggisafrit núna",
+        "Backup public key (PEM, optional)": "Opinber lykill öryggisafrits (PEM, valfrjálst)",
+        "Backup requested for the next cron run": "Öryggisafrit pantað fyrir næstu cron-keyrslu",
+        "Encrypted": "Dulkóðað",
+        "Every (hours)": "Á (klukkustunda) fresti",
+        "Last backup {when} failed: {error}": "Síðasta öryggisafrit {when} mistókst: {error}",
+        "Last backup {when} succeeded.": "Síðasta öryggisafrit {when} tókst.",
+        "No": "Nei",
+        "No archives yet.": "Engin skjalasöfn enn.",
+        "Size": "Stærð",
+        "Vault backups": "Öryggisafrit hólfs",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Með lykli er hvert safn dulkóðað fyrir hann. Geymdu einkalykilinn utan þessa þjóns: þú þarft hann til að staðfesta eða endurheimta.",
+        "Written": "Skrifað",
+        "Yes": "Já"
     },
     "nplurals=2; plural=(n != 1);"
 )

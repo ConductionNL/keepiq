@@ -1344,7 +1344,24 @@
         "Expires after {days} days": "Vyprší po {days} dnech",
         "Reminders {days} days before": "Připomenutí {days} dní předem",
         "Could not save the expiry rule.": "Pravidlo vypršení platnosti se nepodařilo uložit.",
-        "Could not delete the expiry rule.": "Pravidlo vypršení platnosti se nepodařilo smazat."
+        "Could not delete the expiry rule.": "Pravidlo vypršení platnosti se nepodařilo smazat.",
+        "Archives to keep": "Archivy k uchování",
+        "Back up every vault automatically": "Automaticky zálohovat každý trezor",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Zálohujte každý trezor podle plánu. Archivy obsahují jen šifrovaný text a obnovují se přes occ.",
+        "Back up now": "Zálohovat nyní",
+        "Backup public key (PEM, optional)": "Veřejný klíč zálohy (PEM, volitelný)",
+        "Backup requested for the next cron run": "Záloha vyžádána pro příští běh cronu",
+        "Encrypted": "Šifrováno",
+        "Every (hours)": "Každých (hodin)",
+        "Last backup {when} failed: {error}": "Poslední záloha {when} selhala: {error}",
+        "Last backup {when} succeeded.": "Poslední záloha {when} proběhla.",
+        "No": "Ne",
+        "No archives yet.": "Zatím žádné archivy.",
+        "Size": "Velikost",
+        "Vault backups": "Zálohy trezoru",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "S klíčem se každý archiv šifruje pro něj. Soukromý klíč uchovávejte mimo tento server: potřebujete ho k ověření nebo obnovení.",
+        "Written": "Zapsáno",
+        "Yes": "Ano"
     },
     "plurals": null
 }

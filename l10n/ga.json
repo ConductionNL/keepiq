@@ -1344,7 +1344,24 @@
         "Expires after {days} days": "Rachaidh in éag tar éis {days} lá",
         "Reminders {days} days before": "Meabhrúcháin {days} lá roimh ré",
         "Could not save the expiry rule.": "Níorbh fhéidir an riail éaga a shábháil.",
-        "Could not delete the expiry rule.": "Níorbh fhéidir an riail éaga a scriosadh."
+        "Could not delete the expiry rule.": "Níorbh fhéidir an riail éaga a scriosadh.",
+        "Archives to keep": "Cartlanna le coinneáil",
+        "Back up every vault automatically": "Déan cúltaca de gach cruinneachán go huathoibríoch",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Déan cúltaca de gach cruinneachán de réir sceidil. Níl ach téacs criptithe sna cartlanna agus athchóirítear iad le occ.",
+        "Back up now": "Déan cúltaca anois",
+        "Backup public key (PEM, optional)": "Eochair phoiblí chúltaca (PEM, roghnach)",
+        "Backup requested for the next cron run": "Cúltaca iarrtha don chéad rith cron eile",
+        "Encrypted": "Criptithe",
+        "Every (hours)": "Gach (uair)",
+        "Last backup {when} failed: {error}": "Theip ar an gcúltaca deireanach {when}: {error}",
+        "Last backup {when} succeeded.": "D'éirigh leis an gcúltaca deireanach {when}.",
+        "No": "Níl",
+        "No archives yet.": "Níl aon chartlann fós.",
+        "Size": "Méid",
+        "Vault backups": "Cúltacaí an chruinneacháin",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Le heochair, criptítear gach cartlann di. Coinnigh an eochair phríobháideach lasmuigh den fhreastalaí seo: teastaíonn sí chun fíorú nó athchóiriú.",
+        "Written": "Scríofa",
+        "Yes": "Tá"
     },
     "plurals": null
 }

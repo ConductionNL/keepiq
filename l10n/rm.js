@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Scada suenter {days} dis",
         "Reminders {days} days before": "Regurdientschas {days} dis ordavant",
         "Could not save the expiry rule.": "Betg reussì da memorisar la regla da scadenza.",
-        "Could not delete the expiry rule.": "Betg reussì da stizzar la regla da scadenza."
+        "Could not delete the expiry rule.": "Betg reussì da stizzar la regla da scadenza.",
+        "Archives to keep": "Archivs da tegnair",
+        "Back up every vault automatically": "Far copias da segirezza da mintga chascha forta automaticamain",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Faschai copias da segirezza da mintga chascha forta tenor plan. Ils archivs cuntegnan mo text criptà e vegnan restaurads cun occ.",
+        "Back up now": "Far ussa ina copia",
+        "Backup public key (PEM, optional)": "Clav publica da la copia (PEM, facultativ)",
+        "Backup requested for the next cron run": "Copia dumandada per la proxima execuziun da cron",
+        "Encrypted": "Criptà",
+        "Every (hours)": "Mintga (uras)",
+        "Last backup {when} failed: {error}": "L'ultima copia {when} n'è betg reussida: {error}",
+        "Last backup {when} succeeded.": "L'ultima copia {when} è reussida.",
+        "No": "Na",
+        "No archives yet.": "Anc nagins archivs.",
+        "Size": "Grondezza",
+        "Vault backups": "Copias da segirezza da la chascha forta",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Cun ina clav vegn mintga archiv criptà per ella. Tegnai la clav privata ordaifer quest server: Vus duvrais ella per verifitgar u restaurar.",
+        "Written": "Scrit",
+        "Yes": "Gea"
     },
     "nplurals=2; plural=(n != 1);"
 )

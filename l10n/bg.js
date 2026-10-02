@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Изтича след {days} дни",
         "Reminders {days} days before": "Напомняния {days} дни преди това",
         "Could not save the expiry rule.": "Правилото за изтичане не можа да бъде запазено.",
-        "Could not delete the expiry rule.": "Правилото за изтичане не можа да бъде изтрито."
+        "Could not delete the expiry rule.": "Правилото за изтичане не можа да бъде изтрито.",
+        "Archives to keep": "Архиви за пазене",
+        "Back up every vault automatically": "Автоматично архивиране на всеки трезор",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Архивирайте всеки трезор по график. Архивите съдържат само шифрован текст и се възстановяват с occ.",
+        "Back up now": "Архивирай сега",
+        "Backup public key (PEM, optional)": "Публичен ключ за архива (PEM, по избор)",
+        "Backup requested for the next cron run": "Архивиране е заявено за следващото изпълнение на cron",
+        "Encrypted": "Шифрован",
+        "Every (hours)": "На всеки (часа)",
+        "Last backup {when} failed: {error}": "Последното архивиране {when} се провали: {error}",
+        "Last backup {when} succeeded.": "Последното архивиране {when} е успешно.",
+        "No": "Не",
+        "No archives yet.": "Все още няма архиви.",
+        "Size": "Размер",
+        "Vault backups": "Архиви на трезора",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "С ключ всяка архива се шифрова за него. Пазете частния ключ извън този сървър: трябва ви за проверка или възстановяване.",
+        "Written": "Записан",
+        "Yes": "Да"
     },
     "nplurals=2; plural=(n != 1);"
 )

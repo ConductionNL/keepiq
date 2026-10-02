@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Истекува по {days} дена",
         "Reminders {days} days before": "Потсетници {days} дена пред",
         "Could not save the expiry rule.": "Правилото за истекување не може да се зачува.",
-        "Could not delete the expiry rule.": "Правилото за истекување не може да се избрише."
+        "Could not delete the expiry rule.": "Правилото за истекување не може да се избрише.",
+        "Archives to keep": "Архиви за чување",
+        "Back up every vault automatically": "Автоматски направи резервна копија на секој сеф",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Правете резервна копија на секој сеф според распоред. Архивите содржат само шифриран текст и се враќаат со occ.",
+        "Back up now": "Направи копија сега",
+        "Backup public key (PEM, optional)": "Јавен клуч за резервна копија (PEM, опционално)",
+        "Backup requested for the next cron run": "Копија побарана за следното извршување на cron",
+        "Encrypted": "Шифрирано",
+        "Every (hours)": "На секои (часа)",
+        "Last backup {when} failed: {error}": "Последната копија {when} не успеа: {error}",
+        "Last backup {when} succeeded.": "Последната копија {when} успеа.",
+        "No": "Не",
+        "No archives yet.": "Сè уште нема архиви.",
+        "Size": "Големина",
+        "Vault backups": "Резервни копии на сефот",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Со клуч секоја архива се шифрира за него. Чувајте го приватниот клуч надвор од овој сервер: ви треба за проверка или враќање.",
+        "Written": "Запишано",
+        "Yes": "Да"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Scade dopo {days} giorni",
         "Reminders {days} days before": "Promemoria {days} giorni prima",
         "Could not save the expiry rule.": "Impossibile salvare la regola di scadenza.",
-        "Could not delete the expiry rule.": "Impossibile eliminare la regola di scadenza."
+        "Could not delete the expiry rule.": "Impossibile eliminare la regola di scadenza.",
+        "Archives to keep": "Archivi da conservare",
+        "Back up every vault automatically": "Esegui il backup di ogni cassaforte automaticamente",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Esegui il backup di ogni cassaforte secondo una pianificazione. Gli archivi contengono solo testo cifrato e si ripristinano con occ.",
+        "Back up now": "Esegui il backup ora",
+        "Backup public key (PEM, optional)": "Chiave pubblica di backup (PEM, facoltativa)",
+        "Backup requested for the next cron run": "Backup richiesto per la prossima esecuzione di cron",
+        "Encrypted": "Cifrato",
+        "Every (hours)": "Ogni (ore)",
+        "Last backup {when} failed: {error}": "Ultimo backup {when} non riuscito: {error}",
+        "Last backup {when} succeeded.": "Ultimo backup {when} riuscito.",
+        "No": "No",
+        "No archives yet.": "Ancora nessun archivio.",
+        "Size": "Dimensione",
+        "Vault backups": "Backup della cassaforte",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Con una chiave, ogni archivio viene cifrato per essa. Tieni la chiave privata fuori da questo server: serve per verificare o ripristinare.",
+        "Written": "Scritto",
+        "Yes": "Sì"
     },
     "nplurals=2; plural=(n != 1);"
 )

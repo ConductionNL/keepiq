@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Λήγει μετά από {days} ημέρες",
         "Reminders {days} days before": "Υπενθυμίσεις {days} ημέρες πριν",
         "Could not save the expiry rule.": "Δεν ήταν δυνατή η αποθήκευση του κανόνα λήξης.",
-        "Could not delete the expiry rule.": "Δεν ήταν δυνατή η διαγραφή του κανόνα λήξης."
+        "Could not delete the expiry rule.": "Δεν ήταν δυνατή η διαγραφή του κανόνα λήξης.",
+        "Archives to keep": "Αρχεία προς διατήρηση",
+        "Back up every vault automatically": "Αυτόματο αντίγραφο κάθε θησαυροφυλακίου",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Δημιουργήστε αντίγραφο κάθε θησαυροφυλακίου βάσει προγράμματος. Τα αρχεία περιέχουν μόνο κρυπτοκείμενο και επαναφέρονται με occ.",
+        "Back up now": "Αντίγραφο τώρα",
+        "Backup public key (PEM, optional)": "Δημόσιο κλειδί αντιγράφου (PEM, προαιρετικό)",
+        "Backup requested for the next cron run": "Ζητήθηκε αντίγραφο για την επόμενη εκτέλεση cron",
+        "Encrypted": "Κρυπτογραφημένο",
+        "Every (hours)": "Κάθε (ώρες)",
+        "Last backup {when} failed: {error}": "Το τελευταίο αντίγραφο {when} απέτυχε: {error}",
+        "Last backup {when} succeeded.": "Το τελευταίο αντίγραφο {when} ολοκληρώθηκε.",
+        "No": "Όχι",
+        "No archives yet.": "Δεν υπάρχουν ακόμη αρχεία.",
+        "Size": "Μέγεθος",
+        "Vault backups": "Αντίγραφα θησαυροφυλακίου",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Με κλειδί, κάθε αρχείο κρυπτογραφείται για αυτό. Κρατήστε το ιδιωτικό κλειδί εκτός αυτού του διακομιστή: το χρειάζεστε για έλεγχο ή επαναφορά.",
+        "Written": "Γράφτηκε",
+        "Yes": "Ναι"
     },
     "nplurals=2; plural=(n != 1);"
 )

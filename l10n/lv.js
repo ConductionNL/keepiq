@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Beidzas pēc {days} dienām",
         "Reminders {days} days before": "Atgādinājumi {days} dienas iepriekš",
         "Could not save the expiry rule.": "Neizdevās saglabāt derīguma noteikumu.",
-        "Could not delete the expiry rule.": "Neizdevās dzēst derīguma noteikumu."
+        "Could not delete the expiry rule.": "Neizdevās dzēst derīguma noteikumu.",
+        "Archives to keep": "Glabājamie arhīvi",
+        "Back up every vault automatically": "Automātiski dublēt katru glabātavu",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Dublējiet katru glabātavu pēc grafika. Arhīvos ir tikai šifrēts teksts, un tos atjauno ar occ.",
+        "Back up now": "Dublēt tagad",
+        "Backup public key (PEM, optional)": "Dublējuma publiskā atslēga (PEM, neobligāta)",
+        "Backup requested for the next cron run": "Dublējums pieprasīts nākamajai cron palaišanai",
+        "Encrypted": "Šifrēts",
+        "Every (hours)": "Ik pēc (stundām)",
+        "Last backup {when} failed: {error}": "Pēdējais dublējums {when} neizdevās: {error}",
+        "Last backup {when} succeeded.": "Pēdējais dublējums {when} izdevās.",
+        "No": "Nē",
+        "No archives yet.": "Vēl nav arhīvu.",
+        "Size": "Izmērs",
+        "Vault backups": "Glabātavas dublējumi",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Ar atslēgu katrs arhīvs tiek šifrēts tai. Glabājiet privāto atslēgu ārpus šī servera: tā vajadzīga pārbaudei vai atjaunošanai.",
+        "Written": "Rakstīts",
+        "Yes": "Jā"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1344,7 +1344,24 @@
         "Expires after {days} days": "Expiră după {days} zile",
         "Reminders {days} days before": "Memento-uri cu {days} zile înainte",
         "Could not save the expiry rule.": "Regula de expirare nu a putut fi salvată.",
-        "Could not delete the expiry rule.": "Regula de expirare nu a putut fi ștearsă."
+        "Could not delete the expiry rule.": "Regula de expirare nu a putut fi ștearsă.",
+        "Archives to keep": "Arhive de păstrat",
+        "Back up every vault automatically": "Fă automat copie fiecărui seif",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Faceți copie fiecărui seif după un program. Arhivele conțin doar text cifrat și se restaurează cu occ.",
+        "Back up now": "Fă copie acum",
+        "Backup public key (PEM, optional)": "Cheie publică de copie (PEM, opțională)",
+        "Backup requested for the next cron run": "Copie cerută pentru următoarea rulare cron",
+        "Encrypted": "Criptată",
+        "Every (hours)": "La fiecare (ore)",
+        "Last backup {when} failed: {error}": "Ultima copie {when} a eșuat: {error}",
+        "Last backup {when} succeeded.": "Ultima copie {when} a reușit.",
+        "No": "Nu",
+        "No archives yet.": "Încă nu există arhive.",
+        "Size": "Mărime",
+        "Vault backups": "Copiile seifului",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Cu o cheie, fiecare arhivă este criptată pentru ea. Păstrați cheia privată în afara acestui server: aveți nevoie de ea pentru verificare sau restaurare.",
+        "Written": "Scrisă",
+        "Yes": "Da"
     },
     "plurals": null
 }

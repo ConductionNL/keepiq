@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Utløper etter {days} dager",
         "Reminders {days} days before": "Påminnelser {days} dager før",
         "Could not save the expiry rule.": "Kunne ikke lagre utløpsregelen.",
-        "Could not delete the expiry rule.": "Kunne ikke slette utløpsregelen."
+        "Could not delete the expiry rule.": "Kunne ikke slette utløpsregelen.",
+        "Archives to keep": "Arkiver som skal beholdes",
+        "Back up every vault automatically": "Sikkerhetskopier hvert hvelv automatisk",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Sikkerhetskopier hvert hvelv etter en plan. Arkivene inneholder bare kryptert tekst og gjenopprettes med occ.",
+        "Back up now": "Sikkerhetskopier nå",
+        "Backup public key (PEM, optional)": "Offentlig sikkerhetskopinøkkel (PEM, valgfri)",
+        "Backup requested for the next cron run": "Sikkerhetskopi bestilt til neste cron-kjøring",
+        "Encrypted": "Kryptert",
+        "Every (hours)": "Hver (timer)",
+        "Last backup {when} failed: {error}": "Siste sikkerhetskopi {when} mislyktes: {error}",
+        "Last backup {when} succeeded.": "Siste sikkerhetskopi {when} lyktes.",
+        "No": "Nei",
+        "No archives yet.": "Ingen arkiver ennå.",
+        "Size": "Størrelse",
+        "Vault backups": "Hvelvsikkerhetskopier",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Med en nøkkel krypteres hvert arkiv til den. Oppbevar den private nøkkelen utenfor denne serveren: du trenger den for å kontrollere eller gjenopprette.",
+        "Written": "Skrevet",
+        "Yes": "Ja"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Vyprší po {days} dňoch",
         "Reminders {days} days before": "Pripomienky {days} dní vopred",
         "Could not save the expiry rule.": "Pravidlo vypršania platnosti sa nepodarilo uložiť.",
-        "Could not delete the expiry rule.": "Pravidlo vypršania platnosti sa nepodarilo odstrániť."
+        "Could not delete the expiry rule.": "Pravidlo vypršania platnosti sa nepodarilo odstrániť.",
+        "Archives to keep": "Archívy na uchovanie",
+        "Back up every vault automatically": "Automaticky zálohovať každý trezor",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Zálohujte každý trezor podľa plánu. Archívy obsahujú len šifrovaný text a obnovujú sa cez occ.",
+        "Back up now": "Zálohovať teraz",
+        "Backup public key (PEM, optional)": "Verejný kľúč zálohy (PEM, voliteľný)",
+        "Backup requested for the next cron run": "Záloha vyžiadaná na ďalší beh cronu",
+        "Encrypted": "Šifrované",
+        "Every (hours)": "Každých (hodín)",
+        "Last backup {when} failed: {error}": "Posledná záloha {when} zlyhala: {error}",
+        "Last backup {when} succeeded.": "Posledná záloha {when} prebehla.",
+        "No": "Nie",
+        "No archives yet.": "Zatiaľ žiadne archívy.",
+        "Size": "Veľkosť",
+        "Vault backups": "Zálohy trezoru",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "S kľúčom sa každý archív šifruje preň. Súkromný kľúč uchovávajte mimo tohto servera: potrebujete ho na overenie alebo obnovenie.",
+        "Written": "Zapísané",
+        "Yes": "Áno"
     },
     "nplurals=2; plural=(n != 1);"
 )

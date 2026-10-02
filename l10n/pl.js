@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Wygasa po {days} dniach",
         "Reminders {days} days before": "Przypomnienia {days} dni wcześniej",
         "Could not save the expiry rule.": "Nie można zapisać reguły wygasania.",
-        "Could not delete the expiry rule.": "Nie można usunąć reguły wygasania."
+        "Could not delete the expiry rule.": "Nie można usunąć reguły wygasania.",
+        "Archives to keep": "Archiwa do zachowania",
+        "Back up every vault automatically": "Automatycznie twórz kopię każdego sejfu",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Twórz kopię każdego sejfu według harmonogramu. Archiwa zawierają tylko szyfrogram i przywraca się je przez occ.",
+        "Back up now": "Utwórz kopię teraz",
+        "Backup public key (PEM, optional)": "Klucz publiczny kopii (PEM, opcjonalny)",
+        "Backup requested for the next cron run": "Kopia zamówiona na następne uruchomienie crona",
+        "Encrypted": "Zaszyfrowane",
+        "Every (hours)": "Co (godzin)",
+        "Last backup {when} failed: {error}": "Ostatnia kopia {when} nieudana: {error}",
+        "Last backup {when} succeeded.": "Ostatnia kopia {when} udana.",
+        "No": "Nie",
+        "No archives yet.": "Brak archiwów.",
+        "Size": "Rozmiar",
+        "Vault backups": "Kopie sejfu",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Z kluczem każde archiwum jest dla niego szyfrowane. Trzymaj klucz prywatny poza tym serwerem: jest potrzebny do weryfikacji lub przywrócenia.",
+        "Written": "Zapisano",
+        "Yes": "Tak"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1344,7 +1344,24 @@
         "Expires after {days} days": "Upphör efter {days} dagar",
         "Reminders {days} days before": "Påminnelser {days} dagar innan",
         "Could not save the expiry rule.": "Utgångsregeln kunde inte sparas.",
-        "Could not delete the expiry rule.": "Utgångsregeln kunde inte tas bort."
+        "Could not delete the expiry rule.": "Utgångsregeln kunde inte tas bort.",
+        "Archives to keep": "Arkiv att behålla",
+        "Back up every vault automatically": "Säkerhetskopiera varje valv automatiskt",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Säkerhetskopiera varje valv enligt schema. Arkiven innehåller bara krypterad text och återställs med occ.",
+        "Back up now": "Säkerhetskopiera nu",
+        "Backup public key (PEM, optional)": "Offentlig säkerhetskopieringsnyckel (PEM, valfri)",
+        "Backup requested for the next cron run": "Säkerhetskopia begärd till nästa cron-körning",
+        "Encrypted": "Krypterad",
+        "Every (hours)": "Var (timme)",
+        "Last backup {when} failed: {error}": "Senaste säkerhetskopian {when} misslyckades: {error}",
+        "Last backup {when} succeeded.": "Senaste säkerhetskopian {when} lyckades.",
+        "No": "Nej",
+        "No archives yet.": "Inga arkiv ännu.",
+        "Size": "Storlek",
+        "Vault backups": "Valvsäkerhetskopior",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Med en nyckel krypteras varje arkiv till den. Förvara den privata nyckeln utanför den här servern: du behöver den för att verifiera eller återställa.",
+        "Written": "Skriven",
+        "Yes": "Ja"
     },
     "plurals": null
 }

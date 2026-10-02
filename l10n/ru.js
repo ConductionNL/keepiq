@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Истекает через {days} дн.",
         "Reminders {days} days before": "Напоминания за {days} дн.",
         "Could not save the expiry rule.": "Не удалось сохранить правило срока действия.",
-        "Could not delete the expiry rule.": "Не удалось удалить правило срока действия."
+        "Could not delete the expiry rule.": "Не удалось удалить правило срока действия.",
+        "Archives to keep": "Сколько архивов хранить",
+        "Back up every vault automatically": "Автоматически создавать копию каждого хранилища",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Создавайте копию каждого хранилища по расписанию. Архивы содержат только шифротекст и восстанавливаются через occ.",
+        "Back up now": "Создать копию сейчас",
+        "Backup public key (PEM, optional)": "Открытый ключ резервной копии (PEM, необязательно)",
+        "Backup requested for the next cron run": "Копия запрошена на следующий запуск cron",
+        "Encrypted": "Зашифрован",
+        "Every (hours)": "Каждые (часов)",
+        "Last backup {when} failed: {error}": "Последняя копия {when} не удалась: {error}",
+        "Last backup {when} succeeded.": "Последняя копия {when} создана.",
+        "No": "Нет",
+        "No archives yet.": "Архивов пока нет.",
+        "Size": "Размер",
+        "Vault backups": "Резервные копии хранилища",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "С ключом каждый архив шифруется для него. Храните закрытый ключ вне этого сервера: он нужен для проверки или восстановления.",
+        "Written": "Записан",
+        "Yes": "Да"
     },
     "nplurals=2; plural=(n != 1);"
 )

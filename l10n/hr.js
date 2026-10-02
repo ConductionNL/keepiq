@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Istječe nakon {days} dana",
         "Reminders {days} days before": "Podsjetnici {days} dana prije",
         "Could not save the expiry rule.": "Pravilo isteka nije moguće spremiti.",
-        "Could not delete the expiry rule.": "Pravilo isteka nije moguće izbrisati."
+        "Could not delete the expiry rule.": "Pravilo isteka nije moguće izbrisati.",
+        "Archives to keep": "Arhive za čuvanje",
+        "Back up every vault automatically": "Automatski sigurnosno kopiraj svaki trezor",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Sigurnosno kopirajte svaki trezor prema rasporedu. Arhive sadrže samo šifrirani tekst i vraćaju se s occ.",
+        "Back up now": "Kopiraj sada",
+        "Backup public key (PEM, optional)": "Javni ključ sigurnosne kopije (PEM, neobavezno)",
+        "Backup requested for the next cron run": "Kopija zatražena za sljedeće pokretanje crona",
+        "Encrypted": "Šifrirano",
+        "Every (hours)": "Svakih (sati)",
+        "Last backup {when} failed: {error}": "Zadnja kopija {when} nije uspjela: {error}",
+        "Last backup {when} succeeded.": "Zadnja kopija {when} je uspjela.",
+        "No": "Ne",
+        "No archives yet.": "Još nema arhiva.",
+        "Size": "Veličina",
+        "Vault backups": "Sigurnosne kopije trezora",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "S ključem se svaka arhiva šifrira za njega. Privatni ključ čuvajte izvan ovog poslužitelja: trebate ga za provjeru ili vraćanje.",
+        "Written": "Zapisano",
+        "Yes": "Da"
     },
     "nplurals=2; plural=(n != 1);"
 )

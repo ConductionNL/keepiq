@@ -1344,7 +1344,24 @@
         "Expires after {days} days": "Expira após {days} dias",
         "Reminders {days} days before": "Lembretes {days} dias antes",
         "Could not save the expiry rule.": "Não foi possível guardar a regra de expiração.",
-        "Could not delete the expiry rule.": "Não foi possível eliminar a regra de expiração."
+        "Could not delete the expiry rule.": "Não foi possível eliminar a regra de expiração.",
+        "Archives to keep": "Arquivos a manter",
+        "Back up every vault automatically": "Fazer cópia de cada cofre automaticamente",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Faça cópia de cada cofre de acordo com um horário. Os arquivos só contêm texto cifrado e são restaurados com occ.",
+        "Back up now": "Fazer cópia agora",
+        "Backup public key (PEM, optional)": "Chave pública de cópia (PEM, opcional)",
+        "Backup requested for the next cron run": "Cópia pedida para a próxima execução do cron",
+        "Encrypted": "Cifrado",
+        "Every (hours)": "A cada (horas)",
+        "Last backup {when} failed: {error}": "Última cópia {when} falhou: {error}",
+        "Last backup {when} succeeded.": "Última cópia {when} concluída.",
+        "No": "Não",
+        "No archives yet.": "Ainda não há arquivos.",
+        "Size": "Tamanho",
+        "Vault backups": "Cópias do cofre",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Com uma chave, cada arquivo é cifrado para ela. Guarde a chave privada fora deste servidor: precisa dela para verificar ou restaurar.",
+        "Written": "Escrito",
+        "Yes": "Sim"
     },
     "plurals": null
 }

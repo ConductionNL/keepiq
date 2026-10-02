@@ -1345,7 +1345,24 @@ OC.L10N.register(
         "Expires after {days} days": "Leeft no {days} Deeg of",
         "Reminders {days} days before": "Erënnerungen {days} Deeg virdrun",
         "Could not save the expiry rule.": "D'Oflafregel konnt net gespäichert ginn.",
-        "Could not delete the expiry rule.": "D'Oflafregel konnt net geläscht ginn."
+        "Could not delete the expiry rule.": "D'Oflafregel konnt net geläscht ginn.",
+        "Archives to keep": "Archiven fir ze halen",
+        "Back up every vault automatically": "All Tresor automatesch sécheren",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Séchert all Tresor no engem Plang. D'Archiven enthalen nëmme verschlësselten Text a ginn mat occ restauréiert.",
+        "Back up now": "Elo sécheren",
+        "Backup public key (PEM, optional)": "Ëffentleche Sécherungsschlëssel (PEM, fakultativ)",
+        "Backup requested for the next cron run": "Sécherung fir den nächste Cron-Laf ugefrot",
+        "Encrypted": "Verschlësselt",
+        "Every (hours)": "All (Stonnen)",
+        "Last backup {when} failed: {error}": "Lescht Sécherung {when} ass feelgeschloen: {error}",
+        "Last backup {when} succeeded.": "Lescht Sécherung {when} ass gelongen.",
+        "No": "Nee",
+        "No archives yet.": "Nach keng Archiven.",
+        "Size": "Gréisst",
+        "Vault backups": "Tresorsécherungen",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Mat engem Schlëssel gëtt all Archiv fir hie verschlësselt. Hält de private Schlëssel ausserhalb vun dësem Server: Dir braucht en fir ze kontrolléieren oder ze restauréieren.",
+        "Written": "Geschriwwen",
+        "Yes": "Jo"
     },
     "nplurals=2; plural=(n != 1);"
 )

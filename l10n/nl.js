@@ -1350,7 +1350,24 @@ OC.L10N.register(
         "Expires after {days} days": "Verloopt na {days} dagen",
         "Reminders {days} days before": "Herinneringen {days} dagen van tevoren",
         "Could not save the expiry rule.": "Kan de verloopregel niet opslaan.",
-        "Could not delete the expiry rule.": "Kan de verloopregel niet verwijderen."
+        "Could not delete the expiry rule.": "Kan de verloopregel niet verwijderen.",
+        "Archives to keep": "Te bewaren archieven",
+        "Back up every vault automatically": "Elke kluis automatisch back-uppen",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Maak volgens schema een back-up van elke kluis. Archieven bevatten alleen versleutelde gegevens en worden met occ teruggezet.",
+        "Back up now": "Nu back-uppen",
+        "Backup public key (PEM, optional)": "Openbare back-upsleutel (PEM, optioneel)",
+        "Backup requested for the next cron run": "Back-up aangevraagd voor de volgende cronrun",
+        "Encrypted": "Versleuteld",
+        "Every (hours)": "Elke (uren)",
+        "Last backup {when} failed: {error}": "Laatste back-up {when} mislukt: {error}",
+        "Last backup {when} succeeded.": "Laatste back-up {when} gelukt.",
+        "No": "Nee",
+        "No archives yet.": "Nog geen archieven.",
+        "Size": "Grootte",
+        "Vault backups": "Kluisback-ups",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Met een sleutel wordt elk archief daarmee versleuteld. Bewaar de privésleutel buiten deze server: je hebt hem nodig om te controleren of terug te zetten.",
+        "Written": "Geschreven",
+        "Yes": "Ja"
     },
     "nplurals=2; plural=(n != 1);"
 )
