@@ -303,6 +303,9 @@
 					<DeviceApprovalRequest
 						v-if="deviceApprovalOffered"
 						@unlocked="onApprovedUnlock" />
+					<ForgotPasswordRecovery
+						v-if="offlineStore.online"
+						@recovered="onRecovered" />
 				</template>
 			</template>
 		</div>
@@ -316,7 +319,9 @@ import KeyIcon from 'vue-material-design-icons/Key.vue'
 import LockIcon from 'vue-material-design-icons/Lock.vue'
 import LockOpenVariantIcon from 'vue-material-design-icons/LockOpenVariant.vue'
 import DeviceApprovalRequest from '../components/DeviceApprovalRequest.vue'
+import ForgotPasswordRecovery from '../components/ForgotPasswordRecovery.vue'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
+import { useAccountRecoveryStore } from '../store/modules/accountRecovery.js'
 import { useDeviceApprovalStore } from '../store/modules/deviceApproval.js'
 import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
 import { useOfflineStore } from '../store/modules/offline.js'
@@ -388,6 +393,7 @@ export default {
 		KeyIcon,
 		PasswordStrengthMeter,
 		DeviceApprovalRequest,
+		ForgotPasswordRecovery,
 	},
 
 	data() {
@@ -726,6 +732,57 @@ export default {
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
 		 */
+		/**
+		 * Enrol in account recovery while the master password is in hand,
+		 * when the policy requires it or an enrolment fell behind a key or
+		 * suite rotation, and say so (crypto-organisation-account-recovery D5).
+		 *
+		 * @param {string} masterPassword The password just used to unlock.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+		 */
+		async enrolForRecovery(masterPassword) {
+			const store = useAccountRecoveryStore()
+			if ((await store.enrolAtUnlock(masterPassword)) !== 'enrolled') {
+				return
+			}
+			const { showSuccess } = await import('@nextcloud/dialogs')
+			showSuccess(
+				t(
+					'keepiq',
+					'You are enrolled in account recovery. Recovery key fingerprint: {fingerprint}',
+					{
+						fingerprint: store.status?.key?.fingerprint ?? '',
+					},
+				),
+			)
+		},
+
+		/**
+		 * Recovery is done and the vault is unlocked under the new master
+		 * password: say who handled it and offer a key rotation (D4).
+		 *
+		 * @param {string} handledBy The officer who handed the key over.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-user-is-told-what-happened-and-offered-a-rotation
+		 */
+		async onRecovered(handledBy) {
+			// Tell the user who handled it and offer a key rotation (D4).
+			const { showSuccess } = await import('@nextcloud/dialogs')
+			showSuccess(
+				t(
+					'keepiq',
+					'Recovered with help from {officer}. Rotate your vault key now in Settings, Security: "My master password was compromised".',
+					{ officer: handledBy || t('keepiq', 'a recovery officer') },
+				),
+				{ timeout: -1 },
+			)
+			await this.onApprovedUnlock()
+		},
+
+		/**
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+		 */
 		async onApprovedUnlock() {
 			const returnUrl = this.$route.query.returnUrl || '/'
 			await this.playUnlockAnimation()
@@ -777,6 +834,7 @@ export default {
 			try {
 				if (this.offlineStore.online) {
 					await this.sessionStore.unlock(this.masterPassword)
+					await this.enrolForRecovery(this.masterPassword)
 				} else {
 					// Offline unlock from the cached snapshot — no server request;
 					// the master password never leaves the browser (offline §4.1).

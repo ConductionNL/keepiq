@@ -38,6 +38,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedBy(string $createdBy)
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
+ * @method bool|null getUseOnly()
+ * @method void setUseOnly(bool $useOnly)
+ * @method DateTime|null getExpiresAt()
+ * @method void setExpiresAt(?DateTime $expiresAt)
  */
 class GroupShare extends Entity implements JsonSerializable {
 
@@ -68,6 +72,21 @@ class GroupShare extends Entity implements JsonSerializable {
 	 * @var DateTime|null
 	 */
 	protected ?DateTime $createdAt = null;
+
+	/**
+	 * Whether the recipient may only use the value, not view or copy it
+	 * (sharing-use-only-and-expiring-shares D1).
+	 *
+	 * @var boolean|null
+	 */
+	protected ?bool $useOnly = false;
+
+	/**
+	 * When the access this grant gives ends (nullable = no end).
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $expiresAt = null;
 
 	/**
 	 * The UUID primary key.
@@ -107,6 +126,8 @@ class GroupShare extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'groupId', type: 'string');
 		$this->addType(fieldName: 'createdBy', type: 'string');
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
+		$this->addType(fieldName: 'useOnly', type: 'boolean');
+		$this->addType(fieldName: 'expiresAt', type: 'datetime');
 	}//end __construct()
 
 	/**
@@ -121,6 +142,8 @@ class GroupShare extends Entity implements JsonSerializable {
 			'groupId' => $this->groupId,
 			'createdBy' => $this->createdBy,
 			'createdAt' => $this->createdAt?->format('c'),
+			'useOnly' => ($this->useOnly === true),
+			'expiresAt' => $this->expiresAt?->format('c'),
 		];
 	}//end jsonSerialize()
 }//end class

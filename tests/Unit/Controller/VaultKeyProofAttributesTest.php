@@ -37,6 +37,7 @@ use OCA\Keepiq\Controller\EmergencyAccessController;
 use OCA\Keepiq\Controller\EncryptionSuiteController;
 use OCA\Keepiq\Controller\GdprController;
 use OCA\Keepiq\Controller\MigrationController;
+use OCA\Keepiq\Controller\RecoveryOfficerController;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
@@ -130,6 +131,13 @@ class VaultKeyProofAttributesTest extends TestCase {
 				['id', 'sealedUnlockKey'],
 				'active',
 				VaultKeyProofService::PURPOSE_APPROVE_DEVICE,
+			],
+			'approve an account recovery' => [
+				RecoveryOfficerController::class,
+				'approve',
+				['id'],
+				'active',
+				VaultKeyProofService::PURPOSE_APPROVE_ACCOUNT_RECOVERY,
 			],
 		];
 	}//end guardedMethodsProvider()
