@@ -10,7 +10,9 @@
 
 ## 2. Item detail and editing
 
-- [ ] 2.1 Detail sections and editing completeness.
+- [x] 2.1 Item form rules (kinds, parts, sparse changes, limits, messages). Verify: `tests/extension/itemForm.spec.js`.
+- [x] 2.2 Worker: fresh item fetch with additional fields and metadata, blocked items, sparse save, move. Verify: `tests/extension/vaultSendGenerator.spec.js`.
+- [x] 2.3 Popup: detail sections, the form per kind with additional fields, clone, move, unsaved-changes guard. Verify: `tests/extension/popupItemDetail.spec.js`, live in Chromium.
 
 ## 3. Folder manager
 

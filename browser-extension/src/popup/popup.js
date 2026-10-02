@@ -315,7 +315,12 @@ function wireTabs() {
 		sendItem: (item) => selectTab('send', item),
 	})
 	for (const tab of TABS) {
-		$('tab-' + tab).addEventListener('click', () => selectTab(tab))
+		$('tab-' + tab).addEventListener('click', () => {
+			// Leaving an item form with changes asks first.
+			const onVault = $('tab-vault').getAttribute('aria-selected') === 'true'
+			if (onVault && tab !== 'vault' && !vaultView.canLeave()) return
+			selectTab(tab)
+		})
 	}
 	$('locked-generate').addEventListener('click', openLockedGenerator)
 	$('locked-generator-back').addEventListener('click', closeLockedGenerator)

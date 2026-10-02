@@ -97,6 +97,7 @@ export function buildVaultHandlers({
 			await touchActivity(account.id)
 			return {
 				accountId: account.id,
+				webAppUrl: api.publicBase(account).replace(/\/public$/, '/'),
 				items: buildIndex(rows, types, folders),
 				folders: folders.map((f) => ({
 					id: f.id,
