@@ -28,6 +28,7 @@ namespace OCA\Keepiq\Db;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 
 /**
@@ -168,4 +169,43 @@ class EmergencyContactMapper extends QBMapper {
 
 		return $this->findEntities(query: $qb);
 	}//end findByGranteeSuite()
+
+	/**
+	 * The users among the given ones who have set up an emergency contact
+	 * that is in force (granted, accepted or active), in one query.
+	 *
+	 * @param string[] $userIds The user IDs to check
+	 *
+	 * @return string[] The grantor user IDs that have a contact in force
+	 *
+	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.1
+	 */
+	public function grantorsWithContact(array $userIds): array {
+		if ($userIds === []) {
+			return [];
+		}
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->selectDistinct('grantor_user_id')
+			->from($this->getTableName())
+			->where(
+				$qb->expr()->in('grantor_user_id', $qb->createNamedParameter($userIds, IQueryBuilder::PARAM_STR_ARRAY))
+			)
+			->andWhere(
+				$qb->expr()->in(
+					'state',
+					$qb->createNamedParameter(['granted', 'accepted', 'active'], IQueryBuilder::PARAM_STR_ARRAY)
+				)
+			);
+
+		$grantors = [];
+		$result = $qb->executeQuery();
+		while (($row = $result->fetch()) !== false) {
+			$grantors[] = (string)$row['grantor_user_id'];
+		}
+
+		$result->closeCursor();
+
+		return $grantors;
+	}//end grantorsWithContact()
 }//end class
