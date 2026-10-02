@@ -173,16 +173,15 @@ class ShareTargetMapper extends QBMapper {
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-encryptionsuite-compromise-shared-copy-migration-and-owner-notification
 	 */
 	public function deleteByTargetUserAndSuite(string $targetUserId, string $suiteId): void {
-		$sub = $this->db->getQueryBuilder();
-		$sub->select('s.id')
-			->from('keepiq_secrets', 's')
-			->where($sub->expr()->eq('s.encryption_suite_id', $sub->createParameter('suiteId')));
-
 		$qb = $this->db->getQueryBuilder();
+		$sub = $this->db->getQueryBuilder();
+		$sub->select('id')
+			->from('keepiq_secrets')
+			->where($sub->expr()->eq('encryption_suite_id', $qb->createNamedParameter($suiteId)));
+
 		$qb->delete($this->getTableName())
 			->where($qb->expr()->eq('target_user_id', $qb->createNamedParameter($targetUserId)))
-			->andWhere($qb->expr()->in('secret_id', $qb->createFunction($sub->getSQL())))
-			->setParameter('suiteId', $suiteId);
+			->andWhere($qb->expr()->in('secret_id', $qb->createFunction($sub->getSQL())));
 
 		$qb->executeStatement();
 	}//end deleteByTargetUserAndSuite()
