@@ -121,9 +121,44 @@ class EncryptionSuiteControllerTest extends TestCase {
 			userSession: $this->userSession,
 			proofService: $this->proofService,
 			emergencyService: $this->emergencyService,
+			twoFactor: $this->twoFactorGate(),
 			containment: $this->containment,
 		);
 	}//end setUp()
+
+	/**
+	 * Policy switch for the two-factor tests; off unless a test turns it on.
+	 *
+	 * @var bool
+	 */
+	private bool $twoFactorPolicy = false;
+
+	/**
+	 * The user's enabled two-factor providers.
+	 *
+	 * @var array<string,bool>
+	 */
+	private array $providers = [];
+
+	/**
+	 * A REAL TwoFactorGate over a mocked policy and registry.
+	 *
+	 * @return \OCA\Keepiq\Service\TwoFactorGate
+	 */
+	private function twoFactorGate(): \OCA\Keepiq\Service\TwoFactorGate {
+		$policies = $this->createMock(\OCA\Keepiq\Service\VaultPolicyService::class);
+		$policies->method('appliesTo')->willReturnCallback(fn (): bool => $this->twoFactorPolicy);
+		$registry = $this->createMock(\OCP\Authentication\TwoFactorAuth\IRegistry::class);
+		$registry->method('getProviderStates')->willReturnCallback(fn (): array => $this->providers);
+		$userManager = $this->createMock(\OCP\IUserManager::class);
+		$userManager->method('get')->willReturn($this->createMock(IUser::class));
+
+		return new \OCA\Keepiq\Service\TwoFactorGate(
+			policies: $policies,
+			registry: $registry,
+			userManager: $userManager,
+		);
+	}//end twoFactorGate()
 
 	/**
 	 * Test index returns the current user's suites.
@@ -1243,6 +1278,85 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$this->assertSame(['revoke:suite-1'], $log);
 		$this->assertArrayNotHasKey('terminatedMigration', $response->getData());
 	}//end testCompromiseForceRevokeWithoutAMigrationRevokesOneSuite()
+
+	/**
+	 * A suite with a wrapped private key, owned by the session user.
+	 *
+	 * @return EncryptionSuite
+	 */
+	private function keyedSuite(): EncryptionSuite {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setOwnerType('user');
+		$suite->setOwnerId('testuser');
+		$suite->setStatus('active');
+		$suite->setCertificate('CERT');
+		$suite->setPrivateKey('WRAPPED-KEY');
+		return $suite;
+	}//end keyedSuite()
+
+	/**
+	 * admin-vault-policies §3.1: with the policy on and only backup codes
+	 * enabled, the list and the single suite carry no private key and say why.
+	 *
+	 * @return void
+	 */
+	public function testTwoFactorPolicyWithholdsThePrivateKey(): void {
+		$this->twoFactorPolicy = true;
+		$this->providers = ['backup_codes' => true, 'totp' => false];
+		$this->suiteService->method('getSuitesByOwner')->willReturn([$this->keyedSuite()]);
+		$this->suiteService->method('getSuite')->willReturn($this->keyedSuite());
+
+		foreach ([$this->controller->index()->getData()[0], $this->controller->show('suite-1')->getData()] as $data) {
+			$this->assertArrayNotHasKey('privateKey', $data);
+			$this->assertSame('two_factor_required', $data['unlockBlocked']);
+			$this->assertSame('CERT', $data['certificate']);
+		}
+	}//end testTwoFactorPolicyWithholdsThePrivateKey()
+
+	/**
+	 * Scenario "Enabling two-factor login restores access": an enabled TOTP
+	 * provider gives the key back, with no administrator action.
+	 *
+	 * @return void
+	 */
+	public function testAnEnabledProviderRestoresThePrivateKey(): void {
+		$this->twoFactorPolicy = true;
+		$this->providers = ['backup_codes' => true, 'totp' => true];
+		$this->suiteService->method('getSuitesByOwner')->willReturn([$this->keyedSuite()]);
+
+		$data = $this->controller->index()->getData()[0];
+
+		$this->assertSame('WRAPPED-KEY', $data['privateKey']);
+		$this->assertArrayNotHasKey('unlockBlocked', $data);
+	}//end testAnEnabledProviderRestoresThePrivateKey()
+
+	/**
+	 * Without the policy nothing changes, even with no provider at all.
+	 *
+	 * @return void
+	 */
+	public function testPolicyOffKeepsThePrivateKey(): void {
+		$this->suiteService->method('getSuitesByOwner')->willReturn([$this->keyedSuite()]);
+
+		$this->assertSame('WRAPPED-KEY', $this->controller->index()->getData()[0]['privateKey']);
+	}//end testPolicyOffKeepsThePrivateKey()
+
+	/**
+	 * §3.2: no first suite while the policy blocks the user.
+	 *
+	 * @return void
+	 */
+	public function testTwoFactorPolicyRefusesAFirstSuite(): void {
+		$this->twoFactorPolicy = true;
+		$this->suiteService->expects($this->never())->method('createSuite');
+
+		$response = $this->controller->create(publicKey: 'PEM', encryptedPrivateKey: 'ENVELOPE');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame('two_factor_required', $response->getData()['code']);
+	}//end testTwoFactorPolicyRefusesAFirstSuite()
+
 	/**
 	 * The blast radius of BOTH ends is collected before either end is revoked:
 	 * each revoke's cascade deletes the ShareTargets the lookup reads, so a
@@ -1386,9 +1500,11 @@ class EncryptionSuiteControllerTest extends TestCase {
 			userSession: $this->userSession,
 			proofService: $this->proofService,
 			emergencyService: $this->emergencyService,
+			twoFactor: $this->twoFactorGate(),
 			containment: $containment,
 		);
 	}//end controllerWith()
+
 	/**
 	 * A user whose suite was revoked and who has no active suite cannot enrol a
 	 * new one with only a session: a stolen session would otherwise replace the

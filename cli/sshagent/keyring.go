@@ -11,7 +11,7 @@ import (
 
 	"golang.org/x/crypto/ssh"
 
-	"github.com/ConductionNL/keepiq/cli/internal/client"
+	"github.com/ConductionNL/keepiq/sdk/go/client"
 )
 
 // Identity is one usable vault key: the secret's name, its signer and the

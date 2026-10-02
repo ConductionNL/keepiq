@@ -44,6 +44,13 @@ use Throwable;
 
 /**
  * Reads and validates the instance-wide Keepiq configuration.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) 51 against a threshold of
+ *   50, reached when the browser extension's maximum idle period joined the
+ *   admin settings (clients-extension-unlock-lock-and-accounts). The service
+ *   is being split per admin area by admin-scoped-roles (keepiq#774), which
+ *   removes this; a separate service now would add a dependency to a class
+ *   that sits at its coupling limit.
  */
 class AdminSettingsService {
 	/**
@@ -75,6 +82,22 @@ class AdminSettingsService {
 	 * @var int
 	 */
 	public const AUDIT_RETENTION_MIN = 30;
+
+	/**
+	 * The idle lock delays the browser extension offers, in minutes
+	 * (browser-extension-autofill, user-chosen idle lock period). The
+	 * administrator maximum is one of these.
+	 *
+	 * @var int[]
+	 */
+	public const EXTENSION_IDLE_CHOICES = [1, 5, 15, 30, 60, 240];
+
+	/**
+	 * The extension idle maximum when the administrator set none.
+	 *
+	 * @var int
+	 */
+	public const EXTENSION_MAX_IDLE_DEFAULT = 240;
 
 	/**
 	 * The org password policy.
@@ -189,7 +212,7 @@ class AdminSettingsService {
 			],
 			// Org password policy (org-password-policies §1.1) — one reader,
 			// shared with the user-visible getPolicy() floor.
-			$this->policyService->readPolicyKeys(),
+			$this->policyService->readAdminPolicyKeys(),
 			[
 				// Machine leases (machine-secret-leases §2.4).
 				'lease_default_ttl_seconds' => $this->appConfig->getValueInt(
@@ -208,6 +231,8 @@ class AdminSettingsService {
 					'lease_revocation_blocks_refetch',
 					false
 				),
+				// The longest idle lock delay a user may pick in the browser extension.
+				'extension_max_idle_minutes' => $this->extensionMaxIdleMinutes(),
 				// Offline read-only cache (offline-readonly-cache §1.1) — default on.
 				'offline_cache_enabled' => $this->appConfig->getValueBool(
 					$appId,
@@ -241,6 +266,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 *
 	 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.4
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
 	 */
 	public function updateAdminSettings(array $data): array {
 		// Each group validates and persists one family of keys. Every guard
@@ -253,6 +279,7 @@ class AdminSettingsService {
 		$this->updateLeaseSettings(data: $data);
 		$this->updateRetentionSettings(data: $data);
 		$this->updateTrashSettings(data: $data);
+		$this->updateExtensionSettings(data: $data);
 
 		return $this->getAdminSettings();
 	}//end updateAdminSettings()
@@ -261,12 +288,15 @@ class AdminSettingsService {
 	 * The user-visible policy floor for the write dialogs
 	 * (org-password-policies §1.3).
 	 *
+	 * @param string|null $userId The session user, for the effective vault policies
+	 *
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
 	 */
-	public function getPolicy(): array {
-		return $this->policyService->getPolicy();
+	public function getPolicy(?string $userId = null): array {
+		return $this->policyService->getPolicy(userId: $userId);
 	}//end getPolicy()
 
 	/**
@@ -522,4 +552,50 @@ class AdminSettingsService {
 
 		$this->appConfig->setValueInt(Application::APP_ID, 'trash_retention_days', $days);
 	}//end updateTrashSettings()
+
+	/**
+	 * The administrator maximum for the extension idle lock delay, in
+	 * minutes. A stored value outside the offered delays falls back to the
+	 * default, so a hand-edited config never switches the idle lock off.
+	 *
+	 * @return int
+	 *
+	 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-user-chosen-idle-lock-period-with-an-administrator-maximum
+	 */
+	public function extensionMaxIdleMinutes(): int {
+		$minutes = $this->appConfig->getValueInt(
+			Application::APP_ID,
+			'extension_max_idle_minutes',
+			self::EXTENSION_MAX_IDLE_DEFAULT
+		);
+		if (in_array($minutes, self::EXTENSION_IDLE_CHOICES, true) === false) {
+			return self::EXTENSION_MAX_IDLE_DEFAULT;
+		}
+
+		return $minutes;
+	}//end extensionMaxIdleMinutes()
+
+	/**
+	 * Persist the extension idle maximum: one of the offered delays.
+	 *
+	 * @param array<string,mixed> $data The input data
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the value is not an offered delay.
+	 *
+	 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-user-chosen-idle-lock-period-with-an-administrator-maximum
+	 */
+	private function updateExtensionSettings(array $data): void {
+		if (isset($data['extension_max_idle_minutes']) === false) {
+			return;
+		}
+
+		$minutes = (int)$data['extension_max_idle_minutes'];
+		if (in_array($minutes, self::EXTENSION_IDLE_CHOICES, true) === false) {
+			throw new InvalidArgumentException('extension_max_idle_minutes must be one of 1, 5, 15, 30, 60 or 240');
+		}
+
+		$this->appConfig->setValueInt(Application::APP_ID, 'extension_max_idle_minutes', $minutes);
+	}//end updateExtensionSettings()
 }//end class

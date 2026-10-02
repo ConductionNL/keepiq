@@ -1,0 +1,13 @@
+# Secret scanning configuration (gitleaks v8).
+#
+# sdk/testdata/ holds a throwaway RSA key and values encrypted to it. They are
+# conformance vectors that every client library and the server decrypt in
+# tests; the key protects nothing and is labelled TEST ONLY in each file.
+title = "keepiq"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test-only conformance vectors for the client libraries"
+paths = ['''^sdk/testdata/''']

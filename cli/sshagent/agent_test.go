@@ -20,7 +20,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 
-	"github.com/ConductionNL/keepiq/cli/internal/client"
+	"github.com/ConductionNL/keepiq/sdk/go/client"
 )
 
 const sshType = "t-ssh"

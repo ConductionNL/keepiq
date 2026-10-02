@@ -19,7 +19,7 @@ import (
 
 	"golang.org/x/crypto/ssh"
 
-	"github.com/ConductionNL/keepiq/cli/internal/client"
+	"github.com/ConductionNL/keepiq/sdk/go/client"
 )
 
 // TestRealSSHThroughTheAgent starts a throwaway sshd on localhost that trusts

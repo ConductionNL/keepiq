@@ -21,8 +21,8 @@ import (
 
 	"golang.org/x/crypto/ssh"
 
-	"github.com/ConductionNL/keepiq/cli/internal/client"
-	dcrypto "github.com/ConductionNL/keepiq/cli/internal/crypto"
+	"github.com/ConductionNL/keepiq/sdk/go/client"
+	dcrypto "github.com/ConductionNL/keepiq/sdk/go/crypto"
 )
 
 func TestParseAgentFlags(t *testing.T) {
