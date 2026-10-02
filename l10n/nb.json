@@ -1271,7 +1271,7 @@
         "Removed the user from {count} team folders.": "Fjernet brukeren fra {count} teammapper.",
         "Approve a share": "Godkjenn en deling",
         "This approval link is incomplete. Open it again from the notification.": "Denne godkjenningslenken er ufullstendig. Åpne den igjen fra varselet.",
-        "Deny": "Avvis",
+        "Deny": "Avslå",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} ble med i en gruppe du deler en hemmelighet med. Vil du dele hemmeligheten med dem også?",
         "{requester} asks you to share a secret with {user}.": "{requester} ber deg dele en hemmelighet med {user}.",
         "Shared. The recipient can now open the secret.": "Delt. Mottakeren kan nå åpne hemmeligheten.",
@@ -1639,7 +1639,14 @@
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Kontogjenopprettingen din er klar. Åpne Keepiq i nettleseren du spurte fra.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} ber om å låse opp en ny enhet én gang. Hovedpassordet forblir det samme.",
         "Ask your organisation instead": "Spør organisasjonen din i stedet",
-        "The request ended. Ask again or use your master password.": "Forespørselen er avsluttet. Spør igjen eller bruk hovedpassordet ditt."
+        "The request ended. Ask again or use your master password.": "Forespørselen er avsluttet. Spør igjen eller bruk hovedpassordet ditt.",
+        "Added by {user}": "Lagt til av {user}",
+        "Editor": "Redaktør",
+        "Manager": "Administrator",
+        "Role of {member}": "Rollen til {member}",
+        "Team folders you manage": "Teammapper du administrerer",
+        "Viewer": "Leser",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Du har ingen kopi av disse hemmelighetene, så de nye medlemmene har ikke fått dem ennå. Eieren kan dele dem: {names}"
     },
     "plurals": null
 }

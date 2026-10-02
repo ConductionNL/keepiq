@@ -1271,7 +1271,7 @@
         "Removed the user from {count} team folders.": "Ο χρήστης αφαιρέθηκε από {count} φακέλους ομάδας.",
         "Approve a share": "Έγκριση κοινής χρήσης",
         "This approval link is incomplete. Open it again from the notification.": "Αυτός ο σύνδεσμος έγκρισης είναι ελλιπής. Ανοίξτε τον ξανά από την ειδοποίηση.",
-        "Deny": "Απόρριψη",
+        "Deny": "Άρνηση",
         "{user} joined a group you share a secret with. Share the secret with them too?": "Ο χρήστης {user} εντάχθηκε σε μια ομάδα με την οποία μοιράζεστε ένα μυστικό. Να μοιραστεί το μυστικό και μαζί του;",
         "{requester} asks you to share a secret with {user}.": "Ο χρήστης {requester} σας ζητά να μοιραστείτε ένα μυστικό με τον χρήστη {user}.",
         "Shared. The recipient can now open the secret.": "Κοινοποιήθηκε. Ο παραλήπτης μπορεί πλέον να ανοίξει το μυστικό.",
@@ -1639,7 +1639,14 @@
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Η ανάκτηση του λογαριασμού σας είναι έτοιμη. Ανοίξτε το Keepiq στο πρόγραμμα περιήγησης από το οποίο την ζητήσατε.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} ζητά εφάπαξ ξεκλείδωμα μιας νέας συσκευής. Ο κύριος κωδικός πρόσβασης παραμένει ίδιος.",
         "Ask your organisation instead": "Ρωτήστε καλύτερα τον οργανισμό σας",
-        "The request ended. Ask again or use your master password.": "Το αίτημα έληξε. Ζητήστε ξανά ή χρησιμοποιήστε τον κύριο κωδικό πρόσβασης."
+        "The request ended. Ask again or use your master password.": "Το αίτημα έληξε. Ζητήστε ξανά ή χρησιμοποιήστε τον κύριο κωδικό πρόσβασης.",
+        "Added by {user}": "Προστέθηκε από {user}",
+        "Editor": "Συντάκτης",
+        "Manager": "Διαχειριστής",
+        "Role of {member}": "Ρόλος του {member}",
+        "Team folders you manage": "Ομαδικοί φάκελοι που διαχειρίζεστε",
+        "Viewer": "Θεατής",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Δεν έχετε αντίγραφο αυτών των μυστικών, οπότε τα νέα μέλη δεν τα έχουν λάβει ακόμα. Ο κάτοχος μπορεί να τα κοινοποιήσει: {names}"
     },
     "plurals": null
 }

@@ -1568,7 +1568,14 @@ OC.L10N.register(
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Аднаўленне ўліковага запісу гатова. Адкрыйце Keepiq у браўзеры, з якога вы прасілі.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} просіць адзін раз разблакаваць новую прыладу. Галоўны пароль застаецца ранейшым.",
         "Ask your organisation instead": "Лепш папрасіць сваю арганізацыю",
-        "The request ended. Ask again or use your master password.": "Запыт завершаны. Папрасіце яшчэ раз або ўвядзіце галоўны пароль."
+        "The request ended. Ask again or use your master password.": "Запыт завершаны. Папрасіце яшчэ раз або ўвядзіце галоўны пароль.",
+        "Added by {user}": "Дададзена карыстальнікам {user}",
+        "Editor": "Рэдактар",
+        "Manager": "Кіраўнік",
+        "Role of {member}": "Роля {member}",
+        "Team folders you manage": "Камандныя папкі, якімі вы кіруеце",
+        "Viewer": "Глядач",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "У вас няма копіі гэтых сакрэтаў, таму новыя ўдзельнікі іх яшчэ не атрымалі. Уладальнік можа падзяліцца імі: {names}"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

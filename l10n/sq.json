@@ -1639,7 +1639,14 @@
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Rikuperimi i llogarisë suaj është gati. Hapni Keepiq në shfletuesin nga i cili e kërkuat.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} kërkon që një pajisje e re të shkyçet një herë. Fjalëkalimi kryesor mbetet i njëjtë.",
         "Ask your organisation instead": "Pyet më mirë organizatën tënde",
-        "The request ended. Ask again or use your master password.": "Kërkesa përfundoi. Kërko përsëri ose përdor fjalëkalimin kryesor."
+        "The request ended. Ask again or use your master password.": "Kërkesa përfundoi. Kërko përsëri ose përdor fjalëkalimin kryesor.",
+        "Added by {user}": "Shtuar nga {user}",
+        "Editor": "Redaktor",
+        "Manager": "Menaxher",
+        "Role of {member}": "Roli i {member}",
+        "Team folders you manage": "Dosjet e ekipit që menaxhoni",
+        "Viewer": "Shikues",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nuk keni kopje të këtyre sekreteve, prandaj anëtarët e rinj nuk i kanë marrë ende. Pronari mund t'i ndajë: {names}"
     },
     "plurals": null
 }

@@ -1568,7 +1568,14 @@ OC.L10N.register(
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Din kontogendannelse er klar. Åbn Keepiq i den browser, du spurgte fra.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} beder om at låse en ny enhed op én gang. Hovedadgangskoden forbliver den samme.",
         "Ask your organisation instead": "Spørg din organisation i stedet",
-        "The request ended. Ask again or use your master password.": "Anmodningen er afsluttet. Spørg igen, eller brug din hovedadgangskode."
+        "The request ended. Ask again or use your master password.": "Anmodningen er afsluttet. Spørg igen, eller brug din hovedadgangskode.",
+        "Added by {user}": "Tilføjet af {user}",
+        "Editor": "Redaktør",
+        "Manager": "Administrator",
+        "Role of {member}": "Rolle for {member}",
+        "Team folders you manage": "Teammapper, du administrerer",
+        "Viewer": "Læser",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Du har ingen kopi af disse hemmeligheder, så de nye medlemmer har ikke fået dem endnu. Ejeren kan dele dem: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

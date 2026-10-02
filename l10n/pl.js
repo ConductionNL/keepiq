@@ -1272,7 +1272,7 @@ OC.L10N.register(
         "Removed the user from {count} team folders.": "Usunięto użytkownika z {count} folderów zespołu.",
         "Approve a share": "Zatwierdź udostępnienie",
         "This approval link is incomplete. Open it again from the notification.": "Ten link zatwierdzający jest niekompletny. Otwórz go ponownie z powiadomienia.",
-        "Deny": "Odrzuć",
+        "Deny": "Odmów",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} dołączył(a) do grupy, z którą udostępniasz sekret. Udostępnić sekret także tej osobie?",
         "{requester} asks you to share a secret with {user}.": "{requester} prosi o udostępnienie sekretu użytkownikowi {user}.",
         "Shared. The recipient can now open the secret.": "Udostępniono. Odbiorca może teraz otworzyć sekret.",
@@ -1568,7 +1568,14 @@ OC.L10N.register(
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Odzyskiwanie konta jest gotowe. Otwórz Keepiq w przeglądarce, z której o nie prosiłeś.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} prosi o jednorazowe odblokowanie nowego urządzenia. Hasło główne pozostaje bez zmian.",
         "Ask your organisation instead": "Zamiast tego poproś swoją organizację",
-        "The request ended. Ask again or use your master password.": "Prośba została zakończona. Poproś ponownie lub użyj hasła głównego."
+        "The request ended. Ask again or use your master password.": "Prośba została zakończona. Poproś ponownie lub użyj hasła głównego.",
+        "Added by {user}": "Dodane przez {user}",
+        "Editor": "Edytor",
+        "Manager": "Menedżer",
+        "Role of {member}": "Rola użytkownika {member}",
+        "Team folders you manage": "Foldery zespołowe, którymi zarządzasz",
+        "Viewer": "Czytelnik",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nie masz kopii tych sekretów, więc nowi członkowie jeszcze ich nie otrzymali. Właściciel może je udostępnić: {names}"
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

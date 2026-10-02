@@ -1568,7 +1568,14 @@ OC.L10N.register(
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Obnova účtu je připravena. Otevřete Keepiq v prohlížeči, ze kterého jste žádali.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} žádá o jednorázové odemčení nového zařízení. Hlavní heslo zůstává stejné.",
         "Ask your organisation instead": "Raději požádat svou organizaci",
-        "The request ended. Ask again or use your master password.": "Žádost skončila. Požádejte znovu nebo použijte hlavní heslo."
+        "The request ended. Ask again or use your master password.": "Žádost skončila. Požádejte znovu nebo použijte hlavní heslo.",
+        "Added by {user}": "Přidal(a) {user}",
+        "Editor": "Editor",
+        "Manager": "Správce",
+        "Role of {member}": "Role uživatele {member}",
+        "Team folders you manage": "Týmové složky, které spravujete",
+        "Viewer": "Čtenář",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nemáte kopii těchto tajemství, takže je noví členové zatím nedostali. Vlastník je může sdílet: {names}"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

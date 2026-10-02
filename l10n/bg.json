@@ -1271,7 +1271,7 @@
         "Removed the user from {count} team folders.": "Потребителят е премахнат от {count} екипни папки.",
         "Approve a share": "Одобряване на споделяне",
         "This approval link is incomplete. Open it again from the notification.": "Тази връзка за одобрение е непълна. Отворете я отново от известието.",
-        "Deny": "Отказ",
+        "Deny": "Откажи",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} се присъедини към група, с която споделяте тайна. Да споделите ли тайната и с него?",
         "{requester} asks you to share a secret with {user}.": "{requester} ви моли да споделите тайна с {user}.",
         "Shared. The recipient can now open the secret.": "Споделено. Получателят вече може да отвори тайната.",
@@ -1639,7 +1639,14 @@
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Възстановяването на акаунта ви е готово. Отворете Keepiq в браузъра, от който поискахте.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} иска еднократно отключване на ново устройство. Главната парола остава същата.",
         "Ask your organisation instead": "Вместо това попитайте организацията си",
-        "The request ended. Ask again or use your master password.": "Заявката приключи. Поискайте отново или използвайте главната си парола."
+        "The request ended. Ask again or use your master password.": "Заявката приключи. Поискайте отново или използвайте главната си парола.",
+        "Added by {user}": "Добавено от {user}",
+        "Editor": "Редактор",
+        "Manager": "Мениджър",
+        "Role of {member}": "Роля на {member}",
+        "Team folders you manage": "Екипни папки, които управлявате",
+        "Viewer": "Зрител",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Нямате копие на тези тайни, затова новите членове още не са ги получили. Собственикът може да ги сподели: {names}"
     },
     "plurals": null
 }

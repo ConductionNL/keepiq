@@ -1272,7 +1272,7 @@ OC.L10N.register(
         "Removed the user from {count} team folders.": "Kasutaja eemaldati {count} meeskonnakaustast.",
         "Approve a share": "Kinnita jagamine",
         "This approval link is incomplete. Open it again from the notification.": "See kinnituslink on puudulik. Ava see uuesti teavitusest.",
-        "Deny": "Keela",
+        "Deny": "Keeldu",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} liitus grupiga, kellega sa jagad saladust. Kas jagada saladust ka temaga?",
         "{requester} asks you to share a secret with {user}.": "{requester} palub sul jagada saladust kasutajaga {user}.",
         "Shared. The recipient can now open the secret.": "Jagatud. Saaja saab nüüd saladuse avada.",
@@ -1568,7 +1568,14 @@ OC.L10N.register(
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Teie konto taastamine on valmis. Avage Keepiq brauseris, kust selle küsisite.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} palub uue seadme ühekordset avamist. Ülemparool jääb samaks.",
         "Ask your organisation instead": "Küsi hoopis oma organisatsioonilt",
-        "The request ended. Ask again or use your master password.": "Taotlus lõppes. Küsi uuesti või kasuta oma ülemparooli."
+        "The request ended. Ask again or use your master password.": "Taotlus lõppes. Küsi uuesti või kasuta oma ülemparooli.",
+        "Added by {user}": "Lisas {user}",
+        "Editor": "Muutja",
+        "Manager": "Haldur",
+        "Role of {member}": "Kasutaja {member} roll",
+        "Team folders you manage": "Meeskonnakaustad, mida haldad",
+        "Viewer": "Vaataja",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Sul pole nende saladuste koopiat, seega uued liikmed pole neid veel saanud. Omanik saab neid jagada: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

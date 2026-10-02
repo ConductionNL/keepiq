@@ -1568,7 +1568,14 @@ OC.L10N.register(
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "A fiók-helyreállítás kész. Nyissa meg a Keepiq alkalmazást abban a böngészőben, amelyből kérte.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} egy új eszköz egyszeri feloldását kéri. A mesterjelszó változatlan marad.",
         "Ask your organisation instead": "Kérje inkább a szervezetétől",
-        "The request ended. Ask again or use your master password.": "A kérés lezárult. Kérje újra, vagy használja a mesterjelszavát."
+        "The request ended. Ask again or use your master password.": "A kérés lezárult. Kérje újra, vagy használja a mesterjelszavát.",
+        "Added by {user}": "Hozzáadta: {user}",
+        "Editor": "Szerkesztő",
+        "Manager": "Kezelő",
+        "Role of {member}": "{member} szerepköre",
+        "Team folders you manage": "Az Ön által kezelt csapatmappák",
+        "Viewer": "Megtekintő",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Önnek nincs másolata ezekről a titkokról, ezért az új tagok még nem kapták meg őket. A tulajdonos megoszthatja őket: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

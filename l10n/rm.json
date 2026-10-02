@@ -1543,7 +1543,14 @@
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Il recupero da Voss conto è pront. Avri Keepiq en il navigatur nua che Vus avais dumandà.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} dumonda da debloccar ina giada in nov apparat. Il pled-clav principal resta il medem.",
         "Ask your organisation instead": "Dumonda empè tia organisaziun",
-        "The request ended. Ask again or use your master password.": "La dumonda è terminada. Dumonda anc ina giada u utilisescha tes pled-clav principal."
+        "The request ended. Ask again or use your master password.": "La dumonda è terminada. Dumonda anc ina giada u utilisescha tes pled-clav principal.",
+        "Added by {user}": "Agiuntà da {user}",
+        "Editor": "Editur",
+        "Manager": "Administratur",
+        "Role of {member}": "Rolla da {member}",
+        "Team folders you manage": "Ordinaturs da team che Vus administrais",
+        "Viewer": "Lectur",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Vus n'avais nagina copia da quests secrets, perquai n'han ils novs commembers anc betg survegnì els. Il proprietari als po parter: {names}"
     },
     "plurals": null
 }

@@ -1568,7 +1568,14 @@ OC.L10N.register(
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "La récupération de votre compte est prête. Ouvrez Keepiq dans le navigateur depuis lequel vous l'avez demandée.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} demande à déverrouiller un nouvel appareil une seule fois. Son mot de passe maître reste inchangé.",
         "Ask your organisation instead": "Demander plutôt à votre organisation",
-        "The request ended. Ask again or use your master password.": "La demande est terminée. Redemandez ou utilisez votre mot de passe maître."
+        "The request ended. Ask again or use your master password.": "La demande est terminée. Redemandez ou utilisez votre mot de passe maître.",
+        "Added by {user}": "Ajouté par {user}",
+        "Editor": "Éditeur",
+        "Manager": "Gestionnaire",
+        "Role of {member}": "Rôle de {member}",
+        "Team folders you manage": "Dossiers d'équipe que vous gérez",
+        "Viewer": "Lecteur",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Vous n'avez aucune copie de ces secrets, les nouveaux membres ne les ont donc pas encore reçus. Le propriétaire peut les partager : {names}"
     },
     "nplurals=2; plural=(n > 1);"
 )
