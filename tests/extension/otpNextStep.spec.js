@@ -1,5 +1,5 @@
 /**
- * @spec openspec/specs/extension-totp-autofill/spec.md#requirement-one-time-code-fill-on-the-step-after-the-login
+ * @spec openspec/changes/clients-extension-store-release/specs/extension-totp-autofill/spec.md#requirement-one-time-code-fill-on-the-step-after-the-login
  *
  * The one-time code fills on the step after the login (keepiq#783): a login
  * fill leaves a one-shot intent in session storage, holding no seed and no
