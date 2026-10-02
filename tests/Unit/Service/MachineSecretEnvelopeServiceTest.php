@@ -152,6 +152,30 @@ class MachineSecretEnvelopeServiceTest extends TestCase {
 	}//end testNullableKeyUpdatedAt()
 
 	/**
+	 * The envelope carries the secret's expiry date, or null without one,
+	 * right after keyUpdatedAt and without changing any other field.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/apps-secret-sync-and-rotation-runner/specs/secret-store-api/spec.md
+	 */
+	public function testEnvelopeCarriesExpiresAt(): void {
+		$this->suiteMapper->method('findById')
+			->willThrowException(new DoesNotExistException('none'));
+
+		$secret = $this->makeSecret();
+		$this->assertNull($this->service->serialize($secret)['secret']['expiresAt']);
+
+		$secret->setExpiresAt(new \DateTime('2026-12-01T00:00:00+00:00'));
+		$env = $this->service->serialize($secret);
+		$this->assertSame('2026-12-01T00:00:00+00:00', $env['secret']['expiresAt']);
+		$this->assertSame(
+			['id', 'name', 'url', 'folderPath', 'type', 'createdAt', 'updatedAt', 'keyUpdatedAt', 'expiresAt'],
+			array_keys($env['secret'])
+		);
+	}//end testEnvelopeCarriesExpiresAt()
+
+	/**
 	 * A root-level secret (no folder) yields an empty folder path and never
 	 * calls the folder mapper.
 	 *

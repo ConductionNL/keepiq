@@ -336,6 +336,105 @@ class ApplicationSecretsControllerTest extends TestCase {
 	}//end testUpdateCrossVaultReturns404()
 
 	/**
+	 * PUT with the current ETag in If-Match writes and returns the envelope.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/apps-secret-sync-and-rotation-runner/specs/secret-store-api/spec.md
+	 */
+	public function testUpdateWithMatchingIfMatchWrites(): void {
+		$current = $this->secret('s1', 'pg-app-password');
+		$this->secretMapper->method('findById')->willReturn($current);
+		$this->headers['If-Match'] = $this->envelopeService->etag($current);
+		$this->params['key'] = 'NEW-CIPHER';
+
+		$updated = $this->secret('s1', 'pg-app-password');
+		$updated->setKey('NEW-CIPHER');
+		$updated->setUpdatedAt(new DateTime('2026-01-03T00:00:00+00:00'));
+		$this->secretService->expects($this->once())->method('updateByApplication')->willReturn($updated);
+
+		$response = $this->controller->update('s1');
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame('NEW-CIPHER', $response->getData()['ciphertext']['key']);
+	}//end testUpdateWithMatchingIfMatchWrites()
+
+	/**
+	 * PUT with a stale ETag answers 412 and writes nothing.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/apps-secret-sync-and-rotation-runner/specs/secret-store-api/spec.md
+	 */
+	public function testUpdateWithStaleIfMatchReturns412(): void {
+		$read = $this->secret('s1', 'pg-app-password');
+		$staleEtag = $this->envelopeService->etag($read);
+		$current = $this->secret('s1', 'pg-app-password');
+		$current->setKey('CIPHER-B');
+		$current->setUpdatedAt(new DateTime('2026-01-05T00:00:00+00:00'));
+		$this->secretMapper->method('findById')->willReturn($current);
+		$this->headers['If-Match'] = $staleEtag;
+		$this->params['key'] = 'NEW-CIPHER';
+
+		$this->secretService->expects($this->never())->method('updateByApplication');
+
+		$response = $this->controller->update('s1');
+		$this->assertSame(Http::STATUS_PRECONDITION_FAILED, $response->getStatus());
+		// Response::getHeaders() merges CSP defaults that need a booted server,
+		// so read the headers this response set directly.
+		$headers = (new \ReflectionProperty(\OCP\AppFramework\Http\Response::class, 'headers'))->getValue($response);
+		$this->assertSame($this->envelopeService->etag($current), $headers['ETag']);
+	}//end testUpdateWithStaleIfMatchReturns412()
+
+	/**
+	 * PUT without If-Match behaves as before: no precondition, the write runs.
+	 *
+	 * @return void
+	 */
+	public function testUpdateWithoutIfMatchWritesAsBefore(): void {
+		$this->secretMapper->expects($this->never())->method('findById');
+		$this->secretService->expects($this->once())->method('updateByApplication')
+			->willReturn($this->secret('s1', 'pg-app-password'));
+
+		$response = $this->controller->update('s1');
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+	}//end testUpdateWithoutIfMatchWritesAsBefore()
+
+	/**
+	 * If-Match on a secret of another vault is the same 404 as without it:
+	 * the precondition is no existence oracle.
+	 *
+	 * @return void
+	 */
+	public function testUpdateIfMatchOnAnotherVaultReturns404(): void {
+		$this->secretMapper->method('findById')->willReturn($this->secret('s1', 'x', 'app-other'));
+		$this->headers['If-Match'] = '"whatever"';
+		$this->secretService->expects($this->never())->method('updateByApplication');
+
+		$response = $this->controller->update('s1');
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	}//end testUpdateIfMatchOnAnotherVaultReturns404()
+
+	/**
+	 * If-Match takes a list and "*"; a weak tag never matches (strong
+	 * comparison, RFC 9110 13.1.1).
+	 *
+	 * @return void
+	 */
+	public function testIfMatchListStarAndWeakTags(): void {
+		$current = $this->secret('s1', 'pg-app-password');
+		$this->secretMapper->method('findById')->willReturn($current);
+		$etag = $this->envelopeService->etag($current);
+		$this->secretService->method('updateByApplication')->willReturn($current);
+
+		$this->headers['If-Match'] = '"other", ' . $etag;
+		$this->assertSame(Http::STATUS_OK, $this->controller->update('s1')->getStatus());
+		$this->headers['If-Match'] = '*';
+		$this->assertSame(Http::STATUS_OK, $this->controller->update('s1')->getStatus());
+		$this->headers['If-Match'] = 'W/' . $etag;
+		$this->assertSame(Http::STATUS_PRECONDITION_FAILED, $this->controller->update('s1')->getStatus());
+	}//end testIfMatchListStarAndWeakTags()
+
+	/**
 	 * The machine surface exposes no delete handler — the controller class
 	 * has no destroy()/delete() method.
 	 *

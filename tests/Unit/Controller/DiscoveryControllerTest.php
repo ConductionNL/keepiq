@@ -90,6 +90,20 @@ class DiscoveryControllerTest extends TestCase {
 	}//end testDocumentShape()
 
 	/**
+	 * The document advertises conditional write-back and the expiry date in
+	 * the envelope, so a consumer can rely on both.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/apps-secret-sync-and-rotation-runner/specs/secret-store-api/spec.md
+	 */
+	public function testDocumentAdvertisesConditionalWriteAndExpiresAt(): void {
+		$data = $this->controller->document()->getData();
+		$this->assertTrue($data['conditionalWrite']);
+		$this->assertTrue($data['expiresAt']);
+	}//end testDocumentAdvertisesConditionalWriteAndExpiresAt()
+
+	/**
 	 * The document contains no instance-private data (no keys, certs,
 	 * user ids, or secret values).
 	 *

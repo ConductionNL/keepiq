@@ -64,7 +64,8 @@ use OCP\IRequest;
  * - `GET    /api/v1/app/secrets/{id}`          — fetch by id (envelope, ETag/304).
  * - `GET    /api/v1/app/secrets/by-name/{name}`— fetch by name (404 / envelope / 409).
  * - `POST   /api/v1/app/secrets`               — create (client-encrypted).
- * - `PUT    /api/v1/app/secrets/{id}`          — replace ciphertext (client-encrypted).
+ * - `PUT    /api/v1/app/secrets/{id}`          — replace ciphertext (client-encrypted;
+ *                                                 If-Match → 412 on a stale ETag).
  *
  * Responses contain ciphertext only — the calling application decrypts
  * with its private key.
@@ -332,6 +333,11 @@ class ApplicationSecretsController extends ApplicationApiController {
 			return $this->unauthorized();
 		}
 
+		$precondition = $this->checkIfMatch(id: $id, applicationId: $application->getId());
+		if ($precondition !== null) {
+			return $precondition;
+		}
+
 		try {
 			$secret = $this->secretService->updateByApplication(
 				id: $id,
@@ -349,6 +355,50 @@ class ApplicationSecretsController extends ApplicationApiController {
 
 		return $this->responseService->envelope(secret: $secret, applicationId: $application->getId());
 	}//end update()
+
+	/**
+	 * Enforce an If-Match precondition on a write-back.
+	 *
+	 * Without the header nothing is checked, as before. With it, the write
+	 * goes ahead only when the header names the secret's current strong ETag
+	 * (or is `*`); otherwise the answer is 412 with the current ETag, and
+	 * nothing is written. A secret of another vault is the usual 404, so the
+	 * precondition is no existence oracle.
+	 *
+	 * @param string $id The secret ID
+	 * @param string $applicationId The calling application id
+	 *
+	 * @return JSONResponse|null The refusal, or null when the write may go ahead
+	 *
+	 * @spec openspec/changes/apps-secret-sync-and-rotation-runner/specs/secret-store-api/spec.md
+	 */
+	private function checkIfMatch(string $id, string $applicationId): ?JSONResponse {
+		$header = trim($this->request->getHeader('If-Match'));
+		if ($header === '') {
+			return null;
+		}
+
+		$secret = $this->loadOwnedOrNull(id: $id, applicationId: $applicationId);
+		if ($secret === null) {
+			return $this->notFound();
+		}
+
+		$current = $this->envelopeService->etag($secret);
+		foreach (explode(',', $header) as $candidate) {
+			$candidate = trim($candidate);
+			// Strong comparison (RFC 9110 13.1.1): a weak tag never matches.
+			if ($candidate === '*' || $candidate === $current) {
+				return null;
+			}
+		}
+
+		$response = new JSONResponse(
+			data: ['message' => 'The secret changed since it was read; read it again before writing'],
+			statusCode: Http::STATUS_PRECONDITION_FAILED
+		);
+		$response->addHeader('ETag', $current);
+		return $response;
+	}//end checkIfMatch()
 
 	/**
 	 * Load a secret only when it is owned by the given application, else

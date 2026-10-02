@@ -115,7 +115,7 @@ class MachineSecretEnvelopeService {
 	 * Serialize a secret into the `doriath-machine-secret-v1` envelope.
 	 *
 	 * Returns plaintext-safe metadata (id, name, url, derived folder path,
-	 * type, timestamps), an `encryption` block (suite id, sha256
+	 * type, timestamps, expiry date), an `encryption` block (suite id, sha256
 	 * certificate fingerprint, scheme identifier), and the base64
 	 * ciphertext fields. No decrypted value can ever be produced here —
 	 * the server holds only ciphertext.
@@ -138,6 +138,9 @@ class MachineSecretEnvelopeService {
 				'createdAt' => $secret->getCreatedAt()?->format('c'),
 				'updatedAt' => $secret->getUpdatedAt()?->format('c'),
 				'keyUpdatedAt' => $secret->getKeyUpdatedAt()?->format('c'),
+				// Additive (apps-secret-sync-and-rotation-runner): lets a
+				// rotation runner rotate ahead of the expiry date.
+				'expiresAt' => $secret->getExpiresAt()?->format('c'),
 			],
 			'encryption' => [
 				'suiteId' => $secret->getEncryptionSuiteId(),
