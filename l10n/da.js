@@ -1390,7 +1390,13 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Bekræft med din masteradgangskode",
+        "Confirm": "Bekræft",
+        "That master password is not right.": "Den masteradgangskode er ikke korrekt.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Du deler med en ny person. Indtast din masteradgangskode for at bekræfte.",
+        "Enter your master password to confirm this share.": "Indtast din masteradgangskode for at bekræfte denne deling.",
+        "Enter your master password to confirm this delegation.": "Indtast din masteradgangskode for at bekræfte denne delegering."
     },
     "nplurals=2; plural=(n != 1);"
 )

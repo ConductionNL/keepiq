@@ -1390,7 +1390,13 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Ikkonferma bil-password master tiegħek",
+        "Confirm": "Ikkonferma",
+        "That master password is not right.": "Dik il-password master mhix korretta.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Qed taqsam ma' persuna ġdida. Daħħal il-password master tiegħek biex tikkonferma.",
+        "Enter your master password to confirm this share.": "Daħħal il-password master tiegħek biex tikkonferma dan il-qsim.",
+        "Enter your master password to confirm this delegation.": "Daħħal il-password master tiegħek biex tikkonferma din id-delega."
     },
     "nplurals=2; plural=(n != 1);"
 )

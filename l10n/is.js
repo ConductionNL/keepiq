@@ -1390,7 +1390,13 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Staðfestu með aðallykilorðinu þínu",
+        "Confirm": "Staðfesta",
+        "That master password is not right.": "Þetta aðallykilorð er ekki rétt.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Þú ert að deila með nýjum aðila. Sláðu inn aðallykilorðið til að staðfesta.",
+        "Enter your master password to confirm this share.": "Sláðu inn aðallykilorðið til að staðfesta þessa deilingu.",
+        "Enter your master password to confirm this delegation.": "Sláðu inn aðallykilorðið til að staðfesta þessa úthlutun."
     },
     "nplurals=2; plural=(n != 1);"
 )

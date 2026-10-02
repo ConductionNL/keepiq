@@ -12,6 +12,21 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useDelegationStore } from '../../src/store/modules/delegation.js'
 
+// Sharing needs a vault-key proof (keepiq#818). The proof itself is built by
+// sessionKeyProofHeaders; here it returns a fixed header and echoes the
+// password, so the tests can see that each request carried a proof.
+vi.mock('../../src/crypto/keyProof.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	sessionKeyProofHeaders: vi.fn(
+		async ({ purpose, boundValues, masterPassword }) => ({
+			headers: {
+				'X-Keepiq-Key-Proof': `proof(${purpose}|${(boundValues ?? []).join(',')})`,
+			},
+			masterPassword: masterPassword || 'from-prompt',
+		}),
+	),
+}))
+
 describe('useDelegationStore', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
@@ -54,6 +69,11 @@ describe('useDelegationStore', () => {
 			const store = useDelegationStore()
 			const row = await store.createDelegation('sec-1', 'bob')
 
+			// keepiq#818: every delegation carries a proof bound to the
+			// secret and the delegate.
+			expect(axios.post.mock.calls[0][2].headers).toEqual({
+				'X-Keepiq-Key-Proof': 'proof(delegation-create|sec-1,bob)',
+			})
 			expect(row.id).toBe('d1')
 			expect(store.count).toBe(1)
 			expect(store.delegations[0].delegatedTo).toBe('bob')

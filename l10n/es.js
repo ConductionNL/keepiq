@@ -1390,7 +1390,13 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Confirme con su contraseña maestra",
+        "Confirm": "Confirmar",
+        "That master password is not right.": "Esa contraseña maestra no es correcta.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Está compartiendo con alguien nuevo. Introduzca su contraseña maestra para confirmar.",
+        "Enter your master password to confirm this share.": "Introduzca su contraseña maestra para confirmar este uso compartido.",
+        "Enter your master password to confirm this delegation.": "Introduzca su contraseña maestra para confirmar esta delegación."
     },
     "nplurals=2; plural=(n != 1);"
 )

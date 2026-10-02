@@ -1389,7 +1389,13 @@
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Подтвердите мастер-паролем",
+        "Confirm": "Подтвердить",
+        "That master password is not right.": "Этот мастер-пароль неверен.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Вы делитесь с новым человеком. Введите мастер-пароль для подтверждения.",
+        "Enter your master password to confirm this share.": "Введите мастер-пароль, чтобы подтвердить этот общий доступ.",
+        "Enter your master password to confirm this delegation.": "Введите мастер-пароль, чтобы подтвердить это делегирование."
     },
     "plurals": null
 }

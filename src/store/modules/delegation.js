@@ -13,8 +13,10 @@
  */
 
 import axios from '@nextcloud/axios'
+import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
+import { PROOF_PURPOSE, sessionKeyProofHeaders } from '../../crypto/keyProof.js'
 
 export const useDelegationStore = defineStore('delegation', {
 	state: () => ({
@@ -106,11 +108,21 @@ export const useDelegationStore = defineStore('delegation', {
 			this.loading = true
 			this.error = null
 			try {
+				// Every delegation needs a vault-key proof (keepiq#818).
+				const { headers } = await sessionKeyProofHeaders({
+					purpose: PROOF_PURPOSE.DELEGATION_CREATE,
+					reason: t(
+						'keepiq',
+						'Enter your master password to confirm this delegation.',
+					),
+					boundValues: [secretId, delegatedTo],
+				})
 				const response = await axios.post(
 					generateUrl(
 						`/apps/keepiq/api/v1/secrets/${secretId}/delegations`,
 					),
 					{ delegatedTo },
+					{ headers },
 				)
 				this.delegations.push(response.data)
 				return response.data
@@ -164,10 +176,22 @@ export const useDelegationStore = defineStore('delegation', {
 			this.loading = true
 			this.error = null
 			try {
+				// A handover creates a delegation too, so it needs a vault-key
+				// proof (keepiq#818).
+				const { headers } = await sessionKeyProofHeaders({
+					purpose: PROOF_PURPOSE.DELEGATION_HANDOVER,
+					reason: t(
+						'keepiq',
+						'Enter your master password to confirm this delegation.',
+					),
+					boundValues: [secretId],
+				})
 				const response = await axios.post(
 					generateUrl(
 						`/apps/keepiq/api/v1/secrets/${secretId}/delegations/handover`,
 					),
+					{},
+					{ headers },
 				)
 				this.delegations.push(response.data)
 				return response.data

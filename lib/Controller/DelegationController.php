@@ -27,7 +27,9 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Service\DelegationService;
+use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -102,8 +104,10 @@ class DelegationController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#9.4
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
 	 */
 	#[NoAdminRequired]
+	#[VaultKeyProofRequired(binds: ['secretId', 'delegatedTo'], purpose: VaultKeyProofService::PURPOSE_DELEGATION_CREATE)]
 	public function create(string $secretId, string $delegatedTo): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
@@ -156,8 +160,10 @@ class DelegationController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
 	 */
 	#[NoAdminRequired]
+	#[VaultKeyProofRequired(binds: ['secretId'], purpose: VaultKeyProofService::PURPOSE_DELEGATION_HANDOVER)]
 	public function handover(string $secretId): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {

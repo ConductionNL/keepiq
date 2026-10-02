@@ -1390,7 +1390,13 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Deimhnigh le do phríomhphasfhocal",
+        "Confirm": "Deimhnigh",
+        "That master password is not right.": "Níl an príomhphasfhocal sin ceart.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Tá tú ag comhroinnt le duine nua. Cuir isteach do phríomhphasfhocal le deimhniú.",
+        "Enter your master password to confirm this share.": "Cuir isteach do phríomhphasfhocal chun an chomhroinnt seo a dheimhniú.",
+        "Enter your master password to confirm this delegation.": "Cuir isteach do phríomhphasfhocal chun an tarmligean seo a dheimhniú."
     },
     "nplurals=2; plural=(n != 1);"
 )

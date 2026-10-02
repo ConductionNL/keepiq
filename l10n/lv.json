@@ -1389,7 +1389,13 @@
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Apstipriniet ar galveno paroli",
+        "Confirm": "Apstiprināt",
+        "That master password is not right.": "Šī galvenā parole nav pareiza.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Jūs kopīgojat ar jaunu personu. Lai apstiprinātu, ievadiet galveno paroli.",
+        "Enter your master password to confirm this share.": "Lai apstiprinātu šo kopīgošanu, ievadiet galveno paroli.",
+        "Enter your master password to confirm this delegation.": "Lai apstiprinātu šo deleģēšanu, ievadiet galveno paroli."
     },
     "plurals": null
 }

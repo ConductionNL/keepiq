@@ -1394,7 +1394,13 @@
         "Number of words": "Aantal woorden",
         "Passphrase": "Wachtzin",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Stel een minimale kwaliteit in voor geheime waarden. De browser controleert die vóór het versleutelen, zodat de server nooit een waarde ziet.",
-        "Separator": "Scheidingsteken"
+        "Separator": "Scheidingsteken",
+        "Confirm with your master password": "Bevestig met je masterwachtwoord",
+        "Confirm": "Bevestigen",
+        "That master password is not right.": "Dat masterwachtwoord klopt niet.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Je deelt met iemand nieuw. Voer je masterwachtwoord in om te bevestigen.",
+        "Enter your master password to confirm this share.": "Voer je masterwachtwoord in om deze deling te bevestigen.",
+        "Enter your master password to confirm this delegation.": "Voer je masterwachtwoord in om deze delegatie te bevestigen."
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"

@@ -1390,7 +1390,13 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Patvirtinkite pagrindiniu slaptažodžiu",
+        "Confirm": "Patvirtinti",
+        "That master password is not right.": "Šis pagrindinis slaptažodis neteisingas.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Bendrinate su nauju asmeniu. Patvirtinkite įvesdami pagrindinį slaptažodį.",
+        "Enter your master password to confirm this share.": "Įveskite pagrindinį slaptažodį, kad patvirtintumėte šį bendrinimą.",
+        "Enter your master password to confirm this delegation.": "Įveskite pagrindinį slaptažodį, kad patvirtintumėte šį delegavimą."
     },
     "nplurals=2; plural=(n != 1);"
 )

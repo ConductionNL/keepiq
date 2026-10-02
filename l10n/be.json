@@ -1389,7 +1389,13 @@
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Пацвердзіце асноўным паролем",
+        "Confirm": "Пацвердзіць",
+        "That master password is not right.": "Гэты асноўны пароль няправільны.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Вы дзеліцеся з новым чалавекам. Увядзіце асноўны пароль для пацвярджэння.",
+        "Enter your master password to confirm this share.": "Увядзіце асноўны пароль, каб пацвердзіць гэты доступ.",
+        "Enter your master password to confirm this delegation.": "Увядзіце асноўны пароль, каб пацвердзіць гэта дэлегаванне."
     },
     "plurals": null
 }

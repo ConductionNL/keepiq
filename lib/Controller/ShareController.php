@@ -25,7 +25,10 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Attribute\VaultKeyProofRequired;
+use OCA\Keepiq\Service\KnownShareRecipientExemption;
 use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -115,8 +118,14 @@ class ShareController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-9.1
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
 	 */
 	#[NoAdminRequired]
+	#[VaultKeyProofRequired(
+		binds: ['secretId', 'targetUserId'],
+		purpose: VaultKeyProofService::PURPOSE_SHARE_NEW_RECIPIENT,
+		exemption: KnownShareRecipientExemption::class
+	)]
 	public function create(
 		string $secretId,
 		string $targetUserId,
@@ -273,8 +282,10 @@ class ShareController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/bulk-actions/specs/bulk-actions/spec.md#requirement-bulk-share
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
 	 */
 	#[NoAdminRequired]
+	#[VaultKeyProofRequired(purpose: VaultKeyProofService::PURPOSE_SHARE_REGISTER_BATCH)]
 	public function registerBatch(array $shares = []): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {

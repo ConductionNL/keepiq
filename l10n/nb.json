@@ -1389,7 +1389,13 @@
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Bekreft med hovedpassordet ditt",
+        "Confirm": "Bekreft",
+        "That master password is not right.": "Det hovedpassordet er ikke riktig.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Du deler med en ny person. Skriv inn hovedpassordet ditt for å bekrefte.",
+        "Enter your master password to confirm this share.": "Skriv inn hovedpassordet ditt for å bekrefte denne delingen.",
+        "Enter your master password to confirm this delegation.": "Skriv inn hovedpassordet ditt for å bekrefte denne delegeringen."
     },
     "plurals": null
 }

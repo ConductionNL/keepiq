@@ -1390,7 +1390,13 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Konfirmoni me fjalëkalimin kryesor",
+        "Confirm": "Konfirmo",
+        "That master password is not right.": "Ky fjalëkalim kryesor nuk është i saktë.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Po ndani me dikë të ri. Shkruani fjalëkalimin kryesor për ta konfirmuar.",
+        "Enter your master password to confirm this share.": "Shkruani fjalëkalimin kryesor për të konfirmuar këtë ndarje.",
+        "Enter your master password to confirm this delegation.": "Shkruani fjalëkalimin kryesor për të konfirmuar këtë delegim."
     },
     "nplurals=2; plural=(n != 1);"
 )

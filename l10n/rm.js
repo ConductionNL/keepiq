@@ -1390,7 +1390,13 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Confermai cun Voss pled-clav principal",
+        "Confirm": "Confermar",
+        "That master password is not right.": "Quest pled-clav principal n'è betg correct.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Vus partis cun ina persuna nova. Endatai Voss pled-clav principal per confermar.",
+        "Enter your master password to confirm this share.": "Endatai Voss pled-clav principal per confermar questa partiziun.",
+        "Enter your master password to confirm this delegation.": "Endatai Voss pled-clav principal per confermar questa delegaziun."
     },
     "nplurals=2; plural=(n != 1);"
 )

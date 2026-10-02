@@ -1390,7 +1390,13 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Megerősítés a főjelszóval",
+        "Confirm": "Megerősítés",
+        "That master password is not right.": "Ez a főjelszó nem helyes.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Új személlyel oszt meg. A megerősítéshez adja meg a főjelszavát.",
+        "Enter your master password to confirm this share.": "A megosztás megerősítéséhez adja meg a főjelszavát.",
+        "Enter your master password to confirm this delegation.": "A delegálás megerősítéséhez adja meg a főjelszavát."
     },
     "nplurals=2; plural=(n != 1);"
 )

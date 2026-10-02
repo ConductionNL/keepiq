@@ -1390,7 +1390,13 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Vahvista pääsalasanalla",
+        "Confirm": "Vahvista",
+        "That master password is not right.": "Pääsalasana ei ole oikein.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Jaat uudelle henkilölle. Vahvista syöttämällä pääsalasanasi.",
+        "Enter your master password to confirm this share.": "Vahvista tämä jako syöttämällä pääsalasanasi.",
+        "Enter your master password to confirm this delegation.": "Vahvista tämä delegointi syöttämällä pääsalasanasi."
     },
     "nplurals=2; plural=(n != 1);"
 )

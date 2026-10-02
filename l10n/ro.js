@@ -1390,7 +1390,13 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Confirmați cu parola principală",
+        "Confirm": "Confirmare",
+        "That master password is not right.": "Această parolă principală nu este corectă.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Partajați cu o persoană nouă. Introduceți parola principală pentru confirmare.",
+        "Enter your master password to confirm this share.": "Introduceți parola principală pentru a confirma această partajare.",
+        "Enter your master password to confirm this delegation.": "Introduceți parola principală pentru a confirma această delegare."
     },
     "nplurals=2; plural=(n != 1);"
 )

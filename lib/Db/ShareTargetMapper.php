@@ -136,6 +136,37 @@ class ShareTargetMapper extends QBMapper {
 	}//end findBySourceSecretAndTargetUser()
 
 	/**
+	 * Whether $createdBy already holds a DIRECT share (no group share, no team
+	 * folder) of any secret with $targetUserId. Drives the keepiq#818 proof
+	 * exemption: a share to a recipient the caller already shares with directly
+	 * needs no vault-key proof, a share to anyone else does. Group and team
+	 * folder rows do not count, because those are created without a proof.
+	 *
+	 * @param string $createdBy    The sharing user
+	 * @param string $targetUserId The recipient
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
+	 */
+	public function hasDirectShareBetween(string $createdBy, string $targetUserId): bool {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('id')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('created_by', $qb->createNamedParameter($createdBy)))
+			->andWhere($qb->expr()->eq('target_user_id', $qb->createNamedParameter($targetUserId)))
+			->andWhere($qb->expr()->isNull('group_share_id'))
+			->andWhere($qb->expr()->isNull('team_folder_id'))
+			->setMaxResults(1);
+
+		$result = $qb->executeQuery();
+		$row = $result->fetch();
+		$result->closeCursor();
+
+		return $row !== false;
+	}//end hasDirectShareBetween()
+
+	/**
 	 * Delete every share target where the recipient is the given user.
 	 *
 	 * Invoked from the EncryptionSuite-revocation listener and the

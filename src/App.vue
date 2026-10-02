@@ -89,6 +89,10 @@
 		     progress. -->
 		<MigrationResumeBanner />
 
+		<!-- The master password prompt for vault-key proofs on sharing and
+		     delegation (keepiq#818). One instance; stores await it. -->
+		<KeyProofPromptDialog />
+
 		<CnAppRoot
 			:aiCompanion="true"
 			:supportDialog="showSupportDialog"
@@ -417,6 +421,7 @@ import PasskeyManager from './components/PasskeyManager.vue'
 import SecretDetailSidebar from './components/SecretDetailSidebar.vue'
 import DefaultsSection from './components/settings/DefaultsSection.vue'
 import ExpiryPoliciesSection from './components/settings/ExpiryPoliciesSection.vue'
+import KeyProofPromptDialog from './dialogs/KeyProofPromptDialog.vue'
 import {
 	handleLockTransition,
 	isPublicRoute,
@@ -465,6 +470,7 @@ export default {
 		CompromiseRecoveryForm,
 		KeepiqAppNav,
 		MigrationResumeBanner,
+		KeyProofPromptDialog,
 		SecretDetailSidebar,
 	},
 

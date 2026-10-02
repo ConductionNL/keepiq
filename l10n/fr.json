@@ -1389,7 +1389,13 @@
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Confirmez avec votre mot de passe maître",
+        "Confirm": "Confirmer",
+        "That master password is not right.": "Ce mot de passe maître n'est pas correct.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Vous partagez avec une nouvelle personne. Saisissez votre mot de passe maître pour confirmer.",
+        "Enter your master password to confirm this share.": "Saisissez votre mot de passe maître pour confirmer ce partage.",
+        "Enter your master password to confirm this delegation.": "Saisissez votre mot de passe maître pour confirmer cette délégation."
     },
     "plurals": null
 }

@@ -1389,7 +1389,13 @@
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Confirm with your master password": "Επιβεβαίωση με τον κύριο κωδικό πρόσβασης",
+        "Confirm": "Επιβεβαίωση",
+        "That master password is not right.": "Αυτός ο κύριος κωδικός πρόσβασης δεν είναι σωστός.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Μοιράζεστε με κάποιο νέο άτομο. Εισαγάγετε τον κύριο κωδικό πρόσβασης για επιβεβαίωση.",
+        "Enter your master password to confirm this share.": "Εισαγάγετε τον κύριο κωδικό πρόσβασης για να επιβεβαιώσετε αυτή την κοινή χρήση.",
+        "Enter your master password to confirm this delegation.": "Εισαγάγετε τον κύριο κωδικό πρόσβασης για να επιβεβαιώσετε αυτή την ανάθεση."
     },
     "plurals": null
 }
