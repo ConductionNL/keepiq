@@ -331,6 +331,22 @@ export function markUsed(config, id) {
 }
 
 /**
+ * Record a fill of a use-only copy for its owner's activity
+ * (sharing-use-only-and-expiring-shares §3.3). Sends only the id.
+ *
+ * @param {object} config The paired config.
+ * @param {string} id The copy that was filled.
+ * @return {Promise<object>}
+ */
+export function reportUseOnlyFill(config, id) {
+	return request(
+		config,
+		'POST',
+		'/api/v1/secrets/' + encodeURIComponent(id) + '/used',
+	)
+}
+
+/**
  * Create a secret from an already-encrypted body (blobs only).
  * @param config
  * @param body

@@ -130,6 +130,8 @@ $extra = [
     // Favourites, tags and last used (vault-favourites-tags-and-last-used), the caller's own rows only.
     ['name' => 'secretOrganisation#favourite', 'url' => '/api/v1/secrets/{id}/favourite', 'verb' => 'PUT'],
     ['name' => 'secretOrganisation#tags',      'url' => '/api/v1/secrets/{id}/tags',      'verb' => 'PUT'],
+    // A fill of a use-only copy, reported by the extension (sharing-use-only-and-expiring-shares §3.3).
+    ['name' => 'useOnly#used',                 'url' => '/api/v1/secrets/{id}/used',      'verb' => 'POST'],
     ['name' => 'secretOrganisation#tagIndex',  'url' => '/api/v1/tags',                   'verb' => 'GET'],
 
     // Link sharing — authenticated CRUD (secret owner).
@@ -163,6 +165,8 @@ $extra = [
     ['name' => 'share#recipientCertificates', 'url' => '/api/v1/shares/recipient-certificates', 'verb' => 'POST'],
     ['name' => 'share#sync',        'url' => '/api/v1/secrets/{secretId}/sync',         'verb' => 'PUT'],
     ['name' => 'share#destroy',     'url' => '/api/v1/shares/{id}',                     'verb' => 'DELETE'],
+    // Use-only flag and end date of a direct share (sharing-use-only-and-expiring-shares §2.1).
+    ['name' => 'share#update',      'url' => '/api/v1/shares/{id}',                     'verb' => 'PATCH'],
 
     // Group sharing — implement-user-sharing §9.2.
     ['name' => 'groupShare#index',            'url' => '/api/v1/secrets/{secretId}/group-shares',           'verb' => 'GET'],

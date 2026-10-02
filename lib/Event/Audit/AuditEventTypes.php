@@ -41,6 +41,8 @@ final class AuditEventTypes {
 	public const SECRET_PURGED = 'secret.purged';
 	public const SECRET_ARCHIVED = 'secret.archived';
 	public const SECRET_UNARCHIVED = 'secret.unarchived';
+	// The holder of a use-only copy filled it (sharing-use-only-and-expiring-shares §3.3).
+	public const SECRET_USED = 'secret.used';
 
 	// Folder.
 	public const FOLDER_DELETED_CASCADE = 'folder.deleted_cascade';
@@ -238,6 +240,7 @@ final class AuditEventTypes {
 		self::SECRET_PURGED => ['reason'],
 		self::SECRET_ARCHIVED => [],
 		self::SECRET_UNARCHIVED => [],
+		self::SECRET_USED => ['copyId'],
 		self::FOLDER_DELETED_CASCADE => ['secretCount', 'subfolderCount'],
 		self::SHARE_GRANTED => ['recipientType', 'recipientId'],
 		self::SHARE_REVOKED => ['recipientType', 'recipientId'],
