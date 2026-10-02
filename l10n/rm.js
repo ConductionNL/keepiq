@@ -1476,5 +1476,5 @@ OC.L10N.register(
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Quantas versiuns d'in secret vegnan tegnidas, quant ditg, e quant ditg ch'ils secrets stizzads restan en il chanaster.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limitas per agiuntas criptadas, applitgadas sin il server en bytes criptads memorisads."
     },
-    "nplurals=2; plural=(n != 1);"
+    "nplurals=1; plural=0;"
 )

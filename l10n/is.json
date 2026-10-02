@@ -1458,6 +1458,102 @@
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Þú eyddir þessu leyndarmáli án nettengingar, en því hefur síðan verið breytt á þjóninum. Veldu hvaða útgáfu á að halda.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Lyklunum þínum var breytt á öðru tæki. Sláðu inn fyrra aðallykilorðið til að samstilla breytingarnar án nettengingar, eða hentu þeim.",
         "Your offline change": "Breytingin þín án nettengingar",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n neyðartengiliður var með opna aðgangsbeiðni þegar lyklaskiptin fjarlægðu hann. Athugaðu hver bað um aðgang áður en þú bætir einhverjum við aftur.",
+            "%n neyðartengiliðir voru með opna aðgangsbeiðni þegar lyklaskiptin fjarlægðu þá. Athugaðu hver bað um aðgang áður en þú bætir einhverjum við aftur."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "Ekki er unnt að setja %n atriði fram í CXF og því verður sleppt.",
+            "Ekki er unnt að setja %n atriði fram í CXF og þeim verður sleppt."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n eldri útgáfu var sleppt því aðeins nýlega sögu er unnt að flytja með.",
+            "%n eldri útgáfum var sleppt því aðeins nýlega sögu er unnt að flytja með."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "Enn þarf að dulkóða og deila %n afriti leyndarmáls.",
+            "Enn þarf að dulkóða og deila %n afritum leyndarmála."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "Ekki tókst að afkóða %n leyndarmál og það er ekki í þessum útflutningi.",
+            "Ekki tókst að afkóða %n leyndarmál og þau eru ekki í þessum útflutningi."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "Ekki var unnt að afkóða %n leyndarmál með gamla lyklinum þínum, svo það fluttist ekki.",
+            "Ekki var unnt að afkóða %n leyndarmál með gamla lyklinum þínum, svo þau fluttust ekki."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n leyndarmál fluttist ekki.",
+            "%n leyndarmál fluttust ekki."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n leyndarmál er enn kóðað með fyrri lyklinum þínum.",
+            "%n leyndarmál eru enn kóðuð með fyrri lyklinum þínum."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n leyndarmáli var sleppt því arftakinn hefur ekki afrit enn — bættu arftakanum í möppuna og keyrðu aftur.",
+            "%n leyndarmálum var sleppt því arftakinn hefur ekki afrit enn — bættu arftakanum í möppuna og keyrðu aftur."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n leyndarmál",
+            "%n leyndarmál"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n notandi innan umfangs er ekki enn með tveggja þátta innskráningu og getur ekki opnað hólfið á meðan þetta er virkt.",
+            "%n notendur innan umfangs eru ekki enn með tveggja þátta innskráningu og geta ekki opnað hólfið á meðan þetta er virkt."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Ljúka samt og missa aðgang að %n leyndarmáli",
+            "Ljúka samt og missa aðgang að %n leyndarmálum"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n nýr meðlimur fékk aðgang að teymismöppu.",
+            "%n nýir meðlimir fengu aðgang að teymismöppu."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Lyklasnúningi lokið. %n leyndarmál var endurkóðað með nýja lyklinum þínum.",
+            "Lyklasnúningi lokið. %n leyndarmál voru endurkóðuð með nýja lyklinum þínum."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Afturköllun seinni svítunnar eyddi %n neyðaraðgangstengilið.",
+            "Afturköllun seinni svítunnar eyddi %n neyðaraðgangstengiliðum."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Afturköllun þessa setts eyddi %n neyðaraðgangstengilið.",
+            "Afturköllun þessa setts eyddi %n neyðaraðgangstengiliðum."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "sást %n sinni í lekum",
+            "sást %n sinnum í lekum"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "deilt með %n leyndarmáli",
+            "deilt með %n leyndarmálum"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Þessi mappa inniheldur %n leyndarmál beint.",
+            "Þessi mappa inniheldur %n leyndarmál beint."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Lyklasnúningurinn fjarlægði %n neyðartengilið. Skoðaðu Neyðaraðgang og bættu honum aftur við ef þú vilt hann enn.",
+            "Lyklasnúningurinn fjarlægði %n neyðartengiliði. Skoðaðu Neyðaraðgang og bættu þeim aftur við ef þú vilt þá enn."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n breyting bíður samstillingar",
+            "%n breytingar bíða samstillingar"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Notandinn er enn í hópnum {groups}, sem er meðlimur teymismöppu. Fjarlægðu hann úr hópnum eða gerðu aðganginn óvirkan.",
+            "Notandinn er enn í hópunum {groups}, sem eru meðlimir teymismappa. Fjarlægðu hann úr hópunum eða gerðu aðganginn óvirkan."
+        ],
         "Admin areas": "Stjórnunarsvið",
         "Give a group only the parts of Keepiq administration it needs.": "Gefðu hópi aðeins þá hluta Keepiq-stjórnunar sem hann þarf.",
         "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Gamli hópurinn vault_admin hefur {count} meðlimi. Hann telst enn sem sviðið Fólk og starfslok, þar til síðari útgáfa fjarlægir hann. Úthlutaðu frekar því sviði til hóps.",

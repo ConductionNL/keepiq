@@ -1458,6 +1458,126 @@
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Ištrynėte šią paslaptį neprisijungę, bet nuo to laiko ji buvo pakeista serveryje. Pasirinkite, kurią versiją palikti.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Jūsų raktai buvo pakeisti kitame įrenginyje. Įveskite ankstesnį pagrindinį slaptažodį, kad sinchronizuotumėte pakeitimus neprisijungus, arba juos atmeskite.",
         "Your offline change": "Jūsų pakeitimas neprisijungus",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n skubios pagalbos kontaktas turėjo laukiančią prieigos užklausą, kai rakto keitimas jį pašalino. Patikrinkite, kas prašė, prieš vėl ką nors pridėdami.",
+            "%n skubios pagalbos kontaktai turėjo laukiančią prieigos užklausą, kai rakto keitimas juos pašalino. Patikrinkite, kas prašė, prieš vėl ką nors pridėdami.",
+            "%n skubios pagalbos kontaktai turėjo laukiančią prieigos užklausą, kai rakto keitimas juos pašalino. Patikrinkite, kas prašė, prieš vėl ką nors pridėdami."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n elemento negalima pateikti CXF formatu, jis bus praleistas.",
+            "%n elementų negalima pateikti CXF formatu, jie bus praleisti.",
+            "%n elementų negalima pateikti CXF formatu, jie bus praleisti."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n senesnė versija buvo atmesta, nes galima perkelti tik naujausią istoriją.",
+            "%n senesnės versijos buvo atmestos, nes galima perkelti tik naujausią istoriją.",
+            "%n senesnės versijos buvo atmestos, nes galima perkelti tik naujausią istoriją."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "Dar reikia užšifruoti ir bendrinti %n paslapties kopiją.",
+            "Dar reikia užšifruoti ir bendrinti %n paslapčių kopijas.",
+            "Dar reikia užšifruoti ir bendrinti %n paslapčių kopijas."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n paslapties nepavyko iššifruoti, ir jos nėra šiame eksporte.",
+            "%n paslapčių nepavyko iššifruoti, ir jų nėra šiame eksporte.",
+            "%n paslapčių nepavyko iššifruoti, ir jų nėra šiame eksporte."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n paslapties nepavyko iššifruoti jūsų senuoju raktu, todėl ji nebuvo perkelta.",
+            "%n paslapčių nepavyko iššifruoti jūsų senuoju raktu, todėl jos nebuvo perkeltos.",
+            "%n paslapčių nepavyko iššifruoti jūsų senuoju raktu, todėl jos nebuvo perkeltos."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n paslaptis nebuvo perkelta.",
+            "%n paslapčių nebuvo perkelta.",
+            "%n paslapčių nebuvo perkelta."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n paslaptis vis dar užšifruota jūsų ankstesniuoju raktu.",
+            "%n paslapčių vis dar užšifruota jūsų ankstesniuoju raktu.",
+            "%n paslapčių vis dar užšifruota jūsų ankstesniuoju raktu."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n paslaptis praleista, nes perėmėjas dar neturi kopijos — įtraukite perėmėją į aplanką ir vykdykite pakartotinai.",
+            "%n paslapčių praleista, nes perėmėjas dar neturi kopijos — įtraukite perėmėją į aplanką ir vykdykite pakartotinai.",
+            "%n paslapčių praleista, nes perėmėjas dar neturi kopijos — įtraukite perėmėją į aplanką ir vykdykite pakartotinai."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n paslaptis",
+            "%n paslaptys",
+            "%n paslaptys"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n naudotojas taikymo srityje dar neturi dviejų veiksnių prisijungimo ir negali atidaryti saugyklos, kol tai įjungta.",
+            "Naudotojai taikymo srityje (%n) dar neturi dviejų veiksnių prisijungimo ir negali atidaryti saugyklos, kol tai įjungta.",
+            "Naudotojai taikymo srityje (%n) dar neturi dviejų veiksnių prisijungimo ir negali atidaryti saugyklos, kol tai įjungta."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Vis tiek užbaigti, prarandant prieigą prie %n paslapties",
+            "Vis tiek užbaigti, prarandant prieigą prie %n paslapčių",
+            "Vis tiek užbaigti, prarandant prieigą prie %n paslapčių"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n naujas narys gavo prieigą prie komandos aplanko.",
+            "Nauji nariai (%n) gavo prieigą prie komandos aplanko.",
+            "Nauji nariai (%n) gavo prieigą prie komandos aplanko."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Rakto rotacija užbaigta. %n paslaptis buvo iš naujo užšifruota jūsų naujuoju raktu.",
+            "Rakto rotacija užbaigta. %n paslapčių buvo iš naujo užšifruota jūsų naujuoju raktu.",
+            "Rakto rotacija užbaigta. %n paslapčių buvo iš naujo užšifruota jūsų naujuoju raktu."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Antrojo rinkinio atšaukimas ištrynė %n avarinės prieigos kontaktą.",
+            "Antrojo rinkinio atšaukimas ištrynė %n avarinės prieigos kontaktų.",
+            "Antrojo rinkinio atšaukimas ištrynė %n avarinės prieigos kontaktų."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Šio rinkinio atšaukimas pašalino %n avarinės prieigos kontaktą.",
+            "Šio rinkinio atšaukimas pašalino %n avarinės prieigos kontaktų.",
+            "Šio rinkinio atšaukimas pašalino %n avarinės prieigos kontaktų."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "pastebėta nuotėkiuose %n kartą",
+            "pastebėta nuotėkiuose %n kartus",
+            "pastebėta nuotėkiuose %n kartus"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "bendrinama su %n paslaptimi",
+            "bendrinama su %n paslaptimis",
+            "bendrinama su %n paslaptimis"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Šiame aplanke tiesiogiai yra %n paslaptis.",
+            "Šiame aplanke tiesiogiai yra %n paslapčių.",
+            "Šiame aplanke tiesiogiai yra %n paslapčių."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Rakto rotacija pašalino %n skubios prieigos kontaktą. Patikrinkite „Prieiga nenumatytais atvejais“ ir vėl jį pridėkite, jei jo vis dar norite.",
+            "Rakto rotacija pašalino %n skubios prieigos kontaktus. Patikrinkite „Prieiga nenumatytais atvejais“ ir vėl juos pridėkite, jei jų vis dar norite.",
+            "Rakto rotacija pašalino %n skubios prieigos kontaktus. Patikrinkite „Prieiga nenumatytais atvejais“ ir vėl juos pridėkite, jei jų vis dar norite."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n pakeitimas laukia sinchronizavimo",
+            "%n pakeitimai laukia sinchronizavimo",
+            "%n pakeitimai laukia sinchronizavimo"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Naudotojas vis dar yra grupėje {groups}, kuri yra komandos aplanko narė. Pašalinkite jį iš grupės arba išjunkite paskyrą.",
+            "Naudotojas vis dar yra grupėse {groups}, kurios yra komandos aplankų narės. Pašalinkite jį iš grupių arba išjunkite paskyrą.",
+            "Naudotojas vis dar yra grupėse {groups}, kurios yra komandos aplankų narės. Pašalinkite jį iš grupių arba išjunkite paskyrą."
+        ],
         "Admin areas": "Administravimo sritys",
         "Give a group only the parts of Keepiq administration it needs.": "Suteikite grupei tik tas Keepiq administravimo dalis, kurių jai reikia.",
         "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Senoje grupėje vault_admin yra narių: {count}. Ji vis dar laikoma sritimi Žmonės ir išėjimas, kol vėlesnė versija ją pašalins. Vietoj to deleguokite šią sritį grupei.",

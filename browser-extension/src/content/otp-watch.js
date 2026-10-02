@@ -23,6 +23,11 @@ export function watchForOtpField({ doc, find, report, throttleMs = 250 }) {
 
 	function check() {
 		timer = null
+		// A throttled check can fire after the page is gone (navigation, or a
+		// test environment torn down); a detached document has nothing to watch.
+		if (!doc.defaultView || typeof document === 'undefined') {
+			return
+		}
 		const field = find()
 		if (field && !reported.has(field)) {
 			reported.add(field)

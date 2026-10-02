@@ -1458,6 +1458,102 @@
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Διαγράψατε αυτό το μυστικό εκτός σύνδεσης, αλλά στο μεταξύ άλλαξε στον διακομιστή. Επιλέξτε ποια έκδοση θα κρατήσετε.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Τα κλειδιά σας άλλαξαν σε άλλη συσκευή. Εισαγάγετε τον προηγούμενο κύριο κωδικό για να συγχρονίσετε τις αλλαγές εκτός σύνδεσης, ή απορρίψτε τις.",
         "Your offline change": "Η αλλαγή σας εκτός σύνδεσης",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n επαφή έκτακτης ανάγκης είχε εκκρεμές αίτημα πρόσβασης όταν η εναλλαγή κλειδιού την αφαίρεσε. Ελέγξτε ποιος το ζήτησε πριν προσθέσετε ξανά κάποιον.",
+            "%n επαφές έκτακτης ανάγκης είχαν εκκρεμές αίτημα πρόσβασης όταν η εναλλαγή κλειδιού τις αφαίρεσε. Ελέγξτε ποιος το ζήτησε πριν προσθέσετε ξανά κάποιον."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n στοιχείο δεν μπορεί να αναπαρασταθεί σε CXF και θα παραλειφθεί.",
+            "%n στοιχεία δεν μπορούν να αναπαρασταθούν σε CXF και θα παραλειφθούν."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n παλαιότερη έκδοση απορρίφθηκε, επειδή μόνο το πρόσφατο ιστορικό μπορεί να μεταφερθεί.",
+            "%n παλαιότερες εκδόσεις απορρίφθηκαν, επειδή μόνο το πρόσφατο ιστορικό μπορεί να μεταφερθεί."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n αντίγραφο μυστικού πρέπει ακόμη να κρυπτογραφηθεί και να κοινοποιηθεί.",
+            "%n αντίγραφα μυστικών πρέπει ακόμη να κρυπτογραφηθούν και να κοινοποιηθούν."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n μυστικό δεν ήταν δυνατό να αποκρυπτογραφηθεί και δεν περιλαμβάνεται σε αυτή την εξαγωγή.",
+            "%n μυστικά δεν ήταν δυνατό να αποκρυπτογραφηθούν και δεν περιλαμβάνονται σε αυτή την εξαγωγή."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n μυστικό δεν μπόρεσε να αποκρυπτογραφηθεί με το παλιό σας κλειδί, γι' αυτό δεν μεταφέρθηκε.",
+            "%n μυστικά δεν μπόρεσαν να αποκρυπτογραφηθούν με το παλιό σας κλειδί, γι' αυτό δεν μεταφέρθηκαν."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n μυστικό δεν μεταφέρθηκε.",
+            "%n μυστικά δεν μεταφέρθηκαν."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n μυστικό είναι ακόμη κρυπτογραφημένο με το προηγούμενο κλειδί σας.",
+            "%n μυστικά είναι ακόμη κρυπτογραφημένα με το προηγούμενο κλειδί σας."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n μυστικό παραλείφθηκε επειδή ο διάδοχος δεν έχει ακόμη αντίγραφο — προσθέστε τον διάδοχο στον φάκελο και εκτελέστε ξανά.",
+            "%n μυστικά παραλείφθηκαν επειδή ο διάδοχος δεν έχει ακόμη αντίγραφο — προσθέστε τον διάδοχο στον φάκελο και εκτελέστε ξανά."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n μυστικό",
+            "%n μυστικά"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n χρήστης στο πεδίο εφαρμογής δεν έχει ακόμη σύνδεση δύο παραγόντων και δεν μπορεί να ανοίξει το θησαυροφυλάκιο όσο αυτό είναι ενεργό.",
+            "%n χρήστες στο πεδίο εφαρμογής δεν έχουν ακόμη σύνδεση δύο παραγόντων και δεν μπορούν να ανοίξουν το θησαυροφυλάκιο όσο αυτό είναι ενεργό."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Ολοκλήρωση παρ' όλα αυτά, με απώλεια πρόσβασης σε %n μυστικό",
+            "Ολοκλήρωση παρ' όλα αυτά, με απώλεια πρόσβασης σε %n μυστικά"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n νέο μέλος πήρε πρόσβαση σε φάκελο ομάδας.",
+            "%n νέα μέλη πήραν πρόσβαση σε φάκελο ομάδας."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Η εναλλαγή κλειδιού ολοκληρώθηκε. %n μυστικό επανακρυπτογραφήθηκε με το νέο σας κλειδί.",
+            "Η εναλλαγή κλειδιού ολοκληρώθηκε. %n μυστικά επανακρυπτογραφήθηκαν με το νέο σας κλειδί."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Η ανάκληση της δεύτερης σουίτας διέγραψε %n επαφή πρόσβασης έκτακτης ανάγκης.",
+            "Η ανάκληση της δεύτερης σουίτας διέγραψε %n επαφές πρόσβασης έκτακτης ανάγκης."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Η ανάκληση αυτής της σουίτας διέγραψε %n επαφή πρόσβασης έκτακτης ανάγκης.",
+            "Η ανάκληση αυτής της σουίτας διέγραψε %n επαφές πρόσβασης έκτακτης ανάγκης."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "εμφανίστηκε %n φορά σε παραβιάσεις",
+            "εμφανίστηκε %n φορές σε παραβιάσεις"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "κοινοποιημένο σε %n μυστικό",
+            "κοινοποιημένο σε %n μυστικά"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Αυτός ο φάκελος περιέχει %n μυστικό άμεσα.",
+            "Αυτός ο φάκελος περιέχει %n μυστικά άμεσα."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Η εναλλαγή κλειδιού αφαίρεσε %n επαφή έκτακτης ανάγκης. Ελέγξτε την Πρόσβαση έκτακτης ανάγκης και προσθέστε την ξανά, αν τη θέλετε ακόμα.",
+            "Η εναλλαγή κλειδιού αφαίρεσε %n επαφές έκτακτης ανάγκης. Ελέγξτε την Πρόσβαση έκτακτης ανάγκης και προσθέστε τις ξανά, αν τις θέλετε ακόμα."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n αλλαγή περιμένει συγχρονισμό",
+            "%n αλλαγές περιμένουν συγχρονισμό"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Ο χρήστης είναι ακόμη στην ομάδα {groups}, που είναι μέλος φακέλου ομάδας. Αφαιρέστε τον από την ομάδα ή απενεργοποιήστε τον λογαριασμό.",
+            "Ο χρήστης είναι ακόμη στις ομάδες {groups}, που είναι μέλη φακέλων ομάδας. Αφαιρέστε τον από τις ομάδες ή απενεργοποιήστε τον λογαριασμό."
+        ],
         "Admin areas": "Περιοχές διαχείρισης",
         "Give a group only the parts of Keepiq administration it needs.": "Δώστε σε μια ομάδα μόνο τα μέρη της διαχείρισης του Keepiq που χρειάζεται.",
         "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Η παλιά ομάδα vault_admin έχει {count} μέλη. Μετράει ακόμη ως η περιοχή Άτομα και αποχωρήσεις, μέχρι να την αφαιρέσει μια μεταγενέστερη έκδοση. Αναθέστε αντί γι' αυτό την περιοχή σε μια ομάδα.",

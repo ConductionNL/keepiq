@@ -1458,6 +1458,102 @@
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Du slettede denne hemmelighed offline, men den er siden blevet ændret på serveren. Vælg, hvilken version du vil beholde.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Dine nøgler blev ændret på en anden enhed. Indtast din tidligere hovedadgangskode for at synkronisere dine offlineændringer, eller kassér dem.",
         "Your offline change": "Din offlineændring",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n nødkontakt havde en ventende adgangsanmodning, da din nøglerotation fjernede den. Tjek, hvem der spurgte, før du tilføjer nogen igen.",
+            "%n nødkontakter havde en ventende adgangsanmodning, da din nøglerotation fjernede dem. Tjek, hvem der spurgte, før du tilføjer nogen igen."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n element kan ikke gengives i CXF og springes over.",
+            "%n elementer kan ikke gengives i CXF og springes over."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n ældre version blev fjernet, fordi kun den nyeste historik kan overføres.",
+            "%n ældre versioner blev fjernet, fordi kun den nyeste historik kan overføres."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n kopi af en hemmelighed skal stadig krypteres og deles.",
+            "%n kopier af hemmeligheder skal stadig krypteres og deles."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n hemmelighed kunne ikke dekrypteres og er ikke med i denne eksport.",
+            "%n hemmeligheder kunne ikke dekrypteres og er ikke med i denne eksport."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n hemmelighed kunne ikke dekrypteres med din gamle nøgle, så den blev ikke migreret.",
+            "%n hemmeligheder kunne ikke dekrypteres med din gamle nøgle, så de blev ikke migreret."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n hemmelighed blev ikke migreret.",
+            "%n hemmeligheder blev ikke migreret."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n hemmelighed er stadig krypteret med din tidligere nøgle.",
+            "%n hemmeligheder er stadig krypteret med din tidligere nøgle."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n hemmelighed blev sprunget over, fordi efterfølgeren endnu ikke har en kopi — tilføj efterfølgeren til mappen, og kør igen.",
+            "%n hemmeligheder blev sprunget over, fordi efterfølgeren endnu ikke har en kopi — tilføj efterfølgeren til mappen, og kør igen."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n hemmelighed",
+            "%n hemmeligheder"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n bruger i omfanget har endnu ikke totrinslogin og kan ikke åbne boksen, mens dette er slået til.",
+            "%n brugere i omfanget har endnu ikke totrinslogin og kan ikke åbne boksen, mens dette er slået til."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Afslut alligevel og mist adgangen til %n hemmelighed",
+            "Afslut alligevel og mist adgangen til %n hemmeligheder"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n nyt medlem fik adgang til en teammappe.",
+            "%n nye medlemmer fik adgang til en teammappe."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Nøglerotation færdig. %n hemmelighed blev krypteret igen med din nye nøgle.",
+            "Nøglerotation færdig. %n hemmeligheder blev krypteret igen med din nye nøgle."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Tilbagekaldelse af den anden suite slettede %n nødadgangskontakt.",
+            "Tilbagekaldelse af den anden suite slettede %n nødadgangskontakter."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Tilbagekaldelsen af denne suite fjernede %n nødadgangskontakt.",
+            "Tilbagekaldelsen af denne suite fjernede %n nødadgangskontakter."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "set %n gang i lækager",
+            "set %n gange i lækager"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "delt med %n hemmelighed",
+            "delt med %n hemmeligheder"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Denne mappe indeholder %n hemmelighed direkte.",
+            "Denne mappe indeholder %n hemmeligheder direkte."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Din nøglerotation fjernede %n nødkontakt. Tjek Nødadgang, og tilføj den igen, hvis du stadig ønsker den.",
+            "Din nøglerotation fjernede %n nødkontakter. Tjek Nødadgang, og tilføj dem igen, hvis du stadig ønsker dem."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n ændring venter på synkronisering",
+            "%n ændringer venter på synkronisering"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Brugeren er stadig i gruppen {groups}, som er medlem af en teammappe. Fjern brugeren fra gruppen eller deaktiver kontoen.",
+            "Brugeren er stadig i grupperne {groups}, som er medlemmer af teammapper. Fjern brugeren fra grupperne eller deaktiver kontoen."
+        ],
         "Admin areas": "Administrationsområder",
         "Give a group only the parts of Keepiq administration it needs.": "Giv en gruppe kun de dele af Keepiq-administrationen, den har brug for.",
         "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Den gamle gruppe vault_admin har {count} medlemmer. Den tæller stadig som området Personer og fratrædelse, indtil en senere version fjerner den. Uddeleger hellere det område til en gruppe.",
