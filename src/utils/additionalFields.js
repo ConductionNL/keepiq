@@ -38,12 +38,15 @@ export const RESERVED_MEMBER_NAMES = ['key', 'login', 'url']
  *
  * @param {string} name The name the user typed.
  * @param {Array<string>} taken Names already present, whatever their source.
+ * @param {Array<string>} reserved Extra names a form handles in a field of its
+ *   own, such as the Authenticator key a login keeps under `totp`.
  *
  * @return {string} A translated reason, or '' when the name is acceptable.
  *
  * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+ * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
  */
-export function memberNameError(name, taken = []) {
+export function memberNameError(name, taken = [], reserved = []) {
 	const trimmed = (name || '').trim()
 
 	if (trimmed === '') {
@@ -52,7 +55,8 @@ export function memberNameError(name, taken = []) {
 
 	// Case-insensitive: `Key` reaches the same column as `key`, so accepting it
 	// would produce exactly the misrouting this rule exists to prevent.
-	if (RESERVED_MEMBER_NAMES.includes(trimmed.toLowerCase()) === true) {
+	const builtIn = [...RESERVED_MEMBER_NAMES, ...reserved.map((r) => r.toLowerCase())]
+	if (builtIn.includes(trimmed.toLowerCase()) === true) {
 		// Context-neutral wording on purpose. This message is now shared with the
 		// REQUEST dialog, where the reserved fields are tickboxes rather than fields
 		// above the input — telling that user to "use the field above" would send

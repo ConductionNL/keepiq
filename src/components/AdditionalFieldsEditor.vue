@@ -121,6 +121,15 @@ export default {
 			default: () => [],
 		},
 
+		/**
+		 * Names the surrounding form keeps in a field of its own (a login's
+		 * Authenticator key under `totp`), refused here as built-in.
+		 */
+		reservedNames: {
+			type: Array,
+			default: () => [],
+		},
+
 		/** Whether editing is blocked (a locked vault, or a save in flight). */
 		disabled: {
 			type: Boolean,
@@ -166,6 +175,7 @@ export default {
 			const error = memberNameError(
 				name,
 				this.members.map((member) => member.name),
+				this.reservedNames,
 			)
 
 			if (error !== '') {
@@ -196,7 +206,7 @@ export default {
 				.filter((_, position) => position !== index)
 				.map((member) => member.name)
 
-			this.nameError = memberNameError(name, others)
+			this.nameError = memberNameError(name, others, this.reservedNames)
 
 			const next = this.members.map((member, position) =>
 				position === index ? { ...member, name } : member,

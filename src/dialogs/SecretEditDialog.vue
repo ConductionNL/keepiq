@@ -130,8 +130,14 @@
 				:disabled="saving || loading"
 				@update:values="onTypedValues" />
 
+			<SecretTotpSeedField
+				v-if="isLogin"
+				v-model="totpSeed"
+				:disabled="saving || loading" />
+
 			<AdditionalFieldsEditor
 				:members="additionalFields"
+				:reservedNames="seedExtracted ? seedFieldNames : []"
 				:disabled="saving || loading"
 				@update:members="additionalFields = $event" />
 
@@ -175,6 +181,8 @@ import {
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
+import SecretTotpSeedField from '../components/SecretTotpSeedField.vue'
+import { SEED_FIELD_NAMES, seedFromAdditionalFields, withSeed } from '../totp/seedField.js'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
@@ -210,6 +218,7 @@ export default {
 
 	components: {
 		AdditionalFieldsEditor,
+		SecretTotpSeedField,
 		SecretTagsField,
 		TypedFieldsForm,
 		ContentSave,
@@ -252,6 +261,11 @@ export default {
 			url: '',
 			login: '',
 			additionalFields: [],
+			// The login's Authenticator key, kept out of the free list
+			// (vault-login-totp-codes D2).
+			totpSeed: '',
+			seedExtracted: false,
+			seedFieldNames: SEED_FIELD_NAMES,
 			tags: [],
 			typedValues: {},
 			typedMissing: [],
@@ -322,6 +336,11 @@ export default {
 			return this.selectedTypeName === IDENTITY_TYPE_NAME
 		},
 
+		/** A login keeps its own Authenticator key (vault-login-totp-codes). */
+		isLogin() {
+			return this.selectedTypeName === 'login'
+		},
+
 		/** The value serialized for the encrypted key field. */
 		effectiveValue() {
 			if (this.isCard) {
@@ -373,6 +392,19 @@ export default {
 		t,
 
 		/**
+		 * Put the login's seed back under `totp` when this login's seed was
+		 * taken out of the free list on load; otherwise leave the blob as is.
+		 *
+		 * @param {object} fields The additional fields.
+		 * @param {string} seed The seed.
+		 * @return {object} The blob to compare and save.
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
+		 */
+		withLoginSeed(fields, seed) {
+			return this.seedExtracted ? withSeed(fields, seed) : fields
+		},
+
+		/**
 		 * Take the typed values and clear the marks of fields now filled.
 		 *
 		 * @param {object} values The values by field key.
@@ -421,7 +453,14 @@ export default {
 					this.typedFields,
 				)
 				this.typedValues = split.values
-				this.additionalFields = objectToMembers(split.rest)
+				// A login's seed gets its own field, never a free member
+				// (vault-login-totp-codes D2).
+				this.seedExtracted = this.isLogin
+				const seedSplit = this.seedExtracted
+					? seedFromAdditionalFields(split.rest)
+					: { seed: '', rest: split.rest }
+				this.totpSeed = seedSplit.seed
+				this.additionalFields = objectToMembers(seedSplit.rest)
 
 				// Seed the per-type composite fields from the decrypted
 				// payload (card-identity-items §3.1); a legacy plain value
@@ -544,10 +583,13 @@ export default {
 				// rather than null when the last member is removed: null would mean
 				// "not provided", which the store reads as "leave the stored blob
 				// alone" — the opposite of what removing the last field means.
-				const nextMembers = mergeTypedValues(
-					membersToObject(this.additionalFields),
-					this.typedFields,
-					this.typedValues,
+				const nextMembers = this.withLoginSeed(
+					mergeTypedValues(
+						membersToObject(this.additionalFields),
+						this.typedFields,
+						this.typedValues,
+					),
+					this.totpSeed,
 				)
 				// The prior blob in the same shape (free members, then typed values),
 				// so a blob whose typed members only moved is not read as changed.
@@ -555,10 +597,13 @@ export default {
 					o.additionalFields,
 					this.typedFields,
 				)
-				const priorMembers = mergeTypedValues(
-					membersToObject(objectToMembers(priorSplit.rest)),
-					this.typedFields,
-					priorSplit.values,
+				const priorMembers = this.withLoginSeed(
+					mergeTypedValues(
+						membersToObject(objectToMembers(priorSplit.rest)),
+						this.typedFields,
+						priorSplit.values,
+					),
+					seedFromAdditionalFields(priorSplit.rest).seed,
 				)
 				if (JSON.stringify(nextMembers) !== JSON.stringify(priorMembers)) {
 					diff.additionalFields = nextMembers

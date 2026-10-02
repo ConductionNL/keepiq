@@ -249,7 +249,7 @@
 				</div>
 
 				<div
-					v-if="isTotp"
+					v-if="isTotp || loginSeed !== ''"
 					class="secret-detail__row secret-detail__row--block">
 					<span class="secret-detail__row-icon">
 						<ClockOutline :size="20" />
@@ -260,7 +260,7 @@
 						}}</span>
 						<div class="secret-detail__row-value">
 							<TotpDisplay
-								:seed="secret.key || ''"
+								:seed="isTotp ? secret.key || '' : loginSeed"
 								data-testid="secret-detail-totp" />
 						</div>
 					</div>
@@ -605,7 +605,7 @@
 						}}</span>
 						<dl class="secret-detail__extra">
 							<template
-								v-for="(value, key) in secret.additionalFields"
+								v-for="(value, key) in shownAdditionalFields"
 								:key="key">
 								<dt>
 									{{ key }}
@@ -920,6 +920,7 @@ import GroupShareList from './share/GroupShareList.vue'
 import ShareList from './share/ShareList.vue'
 import ShareRequestForm from './share/ShareRequestForm.vue'
 import TotpDisplay from './TotpDisplay.vue'
+import { seedFromAdditionalFields } from '../totp/seedField.js'
 import VaultIndicator from './VaultIndicator.vue'
 import VersionHistoryPanel from './VersionHistoryPanel.vue'
 import { cardLast4, parsePayload } from '../cardIdentity/cardIdentity.js'
@@ -1175,7 +1176,7 @@ export default {
 		 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
 		 */
 		hasAdditionalFields() {
-			const blob = this.secret?.additionalFields
+			const blob = this.shownAdditionalFields
 
 			return (
 				blob !== null
@@ -1183,6 +1184,47 @@ export default {
 				&& typeof blob === 'object'
 				&& Object.keys(blob).length > 0
 			)
+		},
+
+		/**
+		 * The additional fields to list: a login's seed is shown as a live
+		 * code, never as text (vault-login-totp-codes).
+		 *
+		 * @return {object|null} The members to list.
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-the-login-shows-a-live-code
+		 */
+		shownAdditionalFields() {
+			const blob = this.secret?.additionalFields
+			if (!this.isLoginType || blob === null || typeof blob !== 'object') {
+				return blob ?? null
+			}
+			return seedFromAdditionalFields(blob).rest
+		},
+
+		/**
+		 * The seed a login keeps in its additional fields, or ''.
+		 *
+		 * @return {string} The seed.
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-the-login-shows-a-live-code
+		 */
+		loginSeed() {
+			if (!this.isLoginType) {
+				return ''
+			}
+			return seedFromAdditionalFields(this.secret?.additionalFields).seed
+		},
+
+		/**
+		 * Whether this secret is the `login` system type.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-the-login-shows-a-live-code
+		 */
+		isLoginType() {
+			if (!this.secret) {
+				return false
+			}
+			return useSecretTypeStore().typesById[this.secret.typeId]?.name === 'login'
 		},
 
 		/**

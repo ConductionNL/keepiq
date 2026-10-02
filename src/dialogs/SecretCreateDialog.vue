@@ -127,8 +127,14 @@
 				:disabled="saving"
 				@update:values="onTypedValues" />
 
+			<SecretTotpSeedField
+				v-if="isLogin"
+				v-model="totpSeed"
+				:disabled="saving" />
+
 			<AdditionalFieldsEditor
 				:members="additionalFields"
+				:reservedNames="isLogin ? seedFieldNames : []"
 				:disabled="saving"
 				@update:members="additionalFields = $event" />
 
@@ -182,6 +188,8 @@ import {
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
+import SecretTotpSeedField from '../components/SecretTotpSeedField.vue'
+import { SEED_FIELD_NAMES, withSeed } from '../totp/seedField.js'
 import DestinationSelect from '../components/DestinationSelect.vue'
 import SecretTagsField from '../components/SecretTagsField.vue'
 import TypedFieldsForm from '../components/TypedFieldsForm.vue'
@@ -220,6 +228,7 @@ export default {
 
 	components: {
 		AdditionalFieldsEditor,
+		SecretTotpSeedField,
 		TypedFieldsForm,
 		DestinationSelect,
 		SecretTagsField,
@@ -258,6 +267,9 @@ export default {
 			url: '',
 			login: '',
 			additionalFields: [],
+			// The login's Authenticator key (vault-login-totp-codes).
+			totpSeed: '',
+			seedFieldNames: SEED_FIELD_NAMES,
 			tags: [],
 			typedValues: {},
 			typedMissing: [],
@@ -334,6 +346,11 @@ export default {
 
 		isIdentity() {
 			return this.selectedTypeName === IDENTITY_TYPE_NAME
+		},
+
+		/** A login keeps its own Authenticator key (vault-login-totp-codes). */
+		isLogin() {
+			return this.selectedTypeName === 'login'
 		},
 
 		/** Best-effort Luhn hint — never blocks saving (§3.2). */
@@ -438,17 +455,19 @@ export default {
 
 		/**
 		 * The additional-fields object to encrypt: the free members plus the
-		 * typed values.
+		 * typed values, and a login's Authenticator key under `totp`.
 		 *
 		 * @return {object} The blob.
 		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-typed-fields-storage
+		 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 		 */
 		additionalBlob() {
-			return mergeTypedValues(
+			const blob = mergeTypedValues(
 				membersToObject(this.additionalFields),
 				this.typedFields,
 				this.typedValues,
 			)
+			return this.isLogin ? withSeed(blob, this.totpSeed) : blob
 		},
 
 		/**
