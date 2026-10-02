@@ -27,7 +27,7 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Service\MemberOverviewService;
-use OCA\Keepiq\Settings\AdminSettings;
+use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -63,13 +63,13 @@ class MemberOverviewController extends Controller {
 	 * @param int $limit Page size (default 50, at most 200)
 	 * @param int $offset Rows to skip
 	 *
-	 * @AuthorizedAdminSetting(AdminSettings::class)
+	 * @AuthorizedAdminSetting(PeopleAdminSettings::class)
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.2
 	 */
-	#[AuthorizedAdminSetting(AdminSettings::class)]
+	#[AuthorizedAdminSetting(PeopleAdminSettings::class)]
 	public function index(
 		string $status = '',
 		string $search = '',

@@ -32,6 +32,7 @@
 					type="text"
 					data-testid="bulk-share-recipient" />
 			</label>
+			<ShareRestrictionFields v-if="!finished" v-model="restriction" />
 			<p v-if="error" class="bulk-share__error" data-testid="bulk-share-error">
 				{{ error }}
 			</p>
@@ -64,9 +65,11 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcDialog } from '@nextcloud/vue'
 import BulkRunPanel from '../components/BulkRunPanel.vue'
+import ShareRestrictionFields from '../components/share/ShareRestrictionFields.vue'
 import { useBulkStore } from '../store/modules/bulk.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useShareStore } from '../store/modules/share.js'
+import { isUseOnly, restrictionPayload } from '../utils/shareRestriction.js'
 
 export default {
 	name: 'BulkShareDialog',
@@ -74,6 +77,7 @@ export default {
 		NcButton,
 		NcDialog,
 		BulkRunPanel,
+		ShareRestrictionFields,
 	},
 
 	props: {
@@ -88,6 +92,8 @@ export default {
 		return {
 			targetUserId: '',
 			certificate: '',
+			/** Use-only and end date for every share of this run. */
+			restriction: { useOnly: false, endDate: '' },
 			error: null,
 			/** Whether a run was started FROM THIS DIALOG (the store's report outlives it). */
 			ran: false,
@@ -150,6 +156,11 @@ export default {
 			// fetchSecret decrypts with the session CryptoKey and returns
 			// the PLAINTEXT secret — plaintext stays in this browser tab.
 			const plain = await secretStore.fetchSecret(secretId)
+			if (isUseOnly(plain) || plain?.accessExpiresAt) {
+				// A use-only or time-limited copy is never shared onward; the
+				// server refuses it too (sharing-use-only-and-expiring-shares D4).
+				return { status: 'skipped', reason: 'restricted' }
+			}
 			const snapshot = {
 				key: plain.key ?? '',
 				login: plain.login ?? '',
@@ -174,6 +185,7 @@ export default {
 							encryptedKey: blob.key ?? '',
 							encryptedLogin: blob.login ?? null,
 							encryptedAdditionalFields: blob.additionalFields ?? null,
+							...restrictionPayload(this.restriction),
 						},
 					],
 				},

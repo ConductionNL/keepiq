@@ -62,21 +62,59 @@
 						<span class="team-folder-dialog__member-name">{{
 							member.memberId
 						}}</span>
-						<!-- Permission grade (folder-permission-grades §4.1):
-						     owner-only; a write member may edit folder secrets
-						     and fan the change out to the whole team. -->
+						<span
+							v-if="member.useOnly"
+							class="team-folder-dialog__badge"
+							:data-testid="`team-folder-use-only-${member.memberId}`">
+							{{ t('keepiq', 'Use only') }}
+						</span>
+						<span
+							v-if="member.expiresAt"
+							class="team-folder-dialog__badge"
+							:data-testid="`team-folder-ends-${member.memberId}`">
+							{{
+								t('keepiq', 'Until {date}', {
+									date: formatEndDate(member.expiresAt),
+								})
+							}}
+						</span>
+						<span
+							v-if="member.addedBy"
+							class="team-folder-dialog__added-by"
+							:data-testid="`team-folder-added-by-${member.memberId}`">
+							{{
+								t('keepiq', 'Added by {user}', {
+									user: member.addedBy,
+								})
+							}}
+						</span>
+						<!-- Permission grade (folder-permission-grades;
+						     sharing-team-folder-manager-role D5): Viewer, Editor,
+						     Manager. Only the owner makes or changes a manager;
+						     a manager sees a manager's row read-only. -->
 						<select
 							class="team-folder-dialog__grade"
 							:value="member.grade || 'read'"
-							:disabled="busy"
+							:disabled="busy || !canChangeMember(member)"
+							:aria-label="
+								t('keepiq', 'Role of {member}', {
+									member: member.memberId,
+								})
+							"
 							:data-testid="`team-folder-grade-${member.memberId}`"
 							@change="onGradeChange(member, $event.target.value)">
-							<option value="read">{{ t('keepiq', 'Read') }}</option>
+							<option value="read">{{ t('keepiq', 'Viewer') }}</option>
 							<option value="write">
-								{{ t('keepiq', 'Write') }}
+								{{ t('keepiq', 'Editor') }}
+							</option>
+							<option
+								v-if="isOwner || member.grade === 'manage'"
+								value="manage">
+								{{ t('keepiq', 'Manager') }}
 							</option>
 						</select>
 						<NcButton
+							v-if="canRemoveMember(member)"
 							variant="tertiary"
 							:aria-label="t('keepiq', 'Remove member')"
 							:disabled="busy"
@@ -158,6 +196,22 @@
 						{{ t('keepiq', 'Add member') }}
 					</NcButton>
 				</div>
+				<ShareRestrictionFields
+					v-model="newRestriction"
+					data-testid="team-folder-new-restriction" />
+
+				<NcNoteCard
+					v-if="skippedSecrets.length > 0"
+					type="warning"
+					data-testid="team-folder-skipped">
+					{{
+						t(
+							'keepiq',
+							'You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}',
+							{ names: skippedSecrets.join(', ') },
+						)
+					}}
+				</NcNoteCard>
 
 				<!-- Fan-out progress (§5.1): chunked, cancellable, resumable. -->
 				<div
@@ -211,7 +265,7 @@
 					</div>
 				</div>
 
-				<div class="team-folder-dialog__danger">
+				<div v-if="isOwner" class="team-folder-dialog__danger">
 					<NcButton
 						variant="error"
 						:disabled="busy"
@@ -226,6 +280,7 @@
 </template>
 
 <script>
+import { getCurrentUser } from '@nextcloud/auth'
 import {
 	NcButton,
 	NcDialog,
@@ -236,10 +291,12 @@ import {
 import Account from 'vue-material-design-icons/Account.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import Close from 'vue-material-design-icons/Close.vue'
+import ShareRestrictionFields from '../components/share/ShareRestrictionFields.vue'
 import { fetchPolicy } from '../policy/policy.js'
 import { useGroupStore } from '../store/modules/group.js'
 import { useShareStore } from '../store/modules/share.js'
 import { useTeamFolderStore } from '../store/modules/teamFolder.js'
+import { restrictionPayload } from '../utils/shareRestriction.js'
 
 /**
  * How long a candidate search waits after the last keystroke.
@@ -264,6 +321,7 @@ export default {
 		Account,
 		AccountGroup,
 		Close,
+		ShareRestrictionFields,
 	},
 
 	props: {
@@ -290,6 +348,10 @@ export default {
 			error: null,
 			newMemberType: 'user',
 			newMemberId: '',
+			/** Use-only and end date for the member being added. */
+			newRestriction: { useOnly: false, endDate: '' },
+			/** Folder secrets the last fan-out skipped: this user holds no copy. */
+			skippedSecrets: [],
 			pendingCount: 0,
 			/** Member user id to the colleague who confirmed them (admin-auto-confirm-members §3.3). */
 			confirmedBy: {},
@@ -325,6 +387,19 @@ export default {
 		 */
 		teamFolder() {
 			return this.folderId ? this.store.byFolderId(this.folderId) : null
+		},
+
+		/**
+		 * Whether the current user owns this team folder.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 */
+		isOwner() {
+			const uid = getCurrentUser()?.uid ?? null
+			return (
+				this.teamFolder !== null && (this.teamFolder.ownerId ?? uid) === uid
+			)
 		},
 
 		/**
@@ -601,6 +676,11 @@ export default {
 		},
 
 		/**
+		 * Add a member with its use-only flag and end date, then run the
+		 * fan-out for the new member.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
 		async onAddMember() {
@@ -611,8 +691,10 @@ export default {
 					this.teamFolder.id,
 					this.newMemberType,
 					this.newMemberId,
+					restrictionPayload(this.newRestriction),
 				)
 				this.newMemberId = ''
+				this.newRestriction = { useOnly: false, endDate: '' }
 				await this.refresh()
 				// New members mean new missing pairs — run the fan-out now.
 				await this.onRunFanOut()
@@ -621,6 +703,48 @@ export default {
 			} finally {
 				this.busy = false
 			}
+		},
+
+		/**
+		 * A member's end date as a local date.
+		 *
+		 * @param {string} iso The end date (ISO 8601).
+		 * @return {string}
+		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.3
+		 */
+		formatEndDate(iso) {
+			const date = new Date(iso)
+			return Number.isNaN(date.getTime()) ? iso : date.toLocaleDateString()
+		},
+
+		/**
+		 * Whether the current user may change this member's role: the owner
+		 * any member, a manager anyone below manager.
+		 *
+		 * @param {object} member The membership row.
+		 * @return {boolean}
+		 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 */
+		canChangeMember(member) {
+			return this.isOwner || member.grade !== 'manage'
+		},
+
+		/**
+		 * Whether the current user may remove this member: the owner any
+		 * member, a manager anyone below manager and themselves (leaving).
+		 *
+		 * @param {object} member The membership row.
+		 * @return {boolean}
+		 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 */
+		canRemoveMember(member) {
+			if (this.canChangeMember(member)) {
+				return true
+			}
+			return (
+				member.memberType === 'user'
+				&& member.memberId === (getCurrentUser()?.uid ?? null)
+			)
 		},
 
 		/**
@@ -673,8 +797,10 @@ export default {
 		 */
 		async onRunFanOut() {
 			this.error = null
+			this.skippedSecrets = []
 			try {
-				await this.store.runFanOut(this.teamFolder.id)
+				const result = await this.store.runFanOut(this.teamFolder.id)
+				this.skippedSecrets = result?.skipped ?? []
 				await this.refresh()
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
@@ -727,6 +853,19 @@ export default {
 
 .team-folder-dialog__member-name {
 	flex: 1;
+}
+
+.team-folder-dialog__added-by {
+	color: var(--color-text-maxcontrast);
+	font-size: 12px;
+}
+
+.team-folder-dialog__badge {
+	padding: 0 8px;
+	border-radius: var(--border-radius-pill, 12px);
+	background: var(--color-background-dark);
+	color: var(--color-text-maxcontrast);
+	font-size: 12px;
 }
 
 /*

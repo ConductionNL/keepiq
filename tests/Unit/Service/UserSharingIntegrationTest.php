@@ -38,6 +38,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use OCA\Keepiq\Tests\Support\AdminAreaFixture;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuite;
@@ -85,6 +86,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/implement-user-sharing/tasks.md#task-15.9
  */
 class UserSharingIntegrationTest extends TestCase {
+	use AdminAreaFixture;
+
 	/**
 	 * Build a Secret with the given owner.
 	 *
@@ -340,7 +343,7 @@ class UserSharingIntegrationTest extends TestCase {
 			authorizer: new DelegationAuthorizer(
 				secretMapper: $secretMapper,
 				shareTargetMapper: $shareTargetMapper,
-				groupManager: $groupManager,
+				areas: $this->areaAuthorizer(groupManager: $groupManager),
 			),
 		);
 

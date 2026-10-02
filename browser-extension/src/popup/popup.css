@@ -300,3 +300,55 @@ h2 {
 button.danger {
 	color: var(--error);
 }
+
+/* Generator sub-tabs and colour-coded output (clients-extension-complete) */
+.subtabs {
+	display: flex;
+	gap: 4px;
+	margin-bottom: 8px;
+}
+
+.subtabs button {
+	flex: 1;
+	padding: 4px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	background: none;
+	color: var(--fg);
+	cursor: pointer;
+}
+
+.subtabs button[aria-selected='true'] {
+	border-color: var(--cobalt);
+	color: var(--cobalt);
+	font-weight: 600;
+}
+
+.gen-digit {
+	color: #0b6e4f;
+}
+
+.gen-special {
+	color: #b54708;
+}
+
+.gen-output.small {
+	min-height: 0;
+	flex: 1;
+	font-size: 12px;
+}
+
+input[type='range'] {
+	padding: 0;
+	border: 0;
+}
+
+@media (prefers-color-scheme: dark) {
+	.gen-digit {
+		color: #6ee7b7;
+	}
+
+	.gen-special {
+		color: #fdba74;
+	}
+}

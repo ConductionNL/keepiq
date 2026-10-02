@@ -32,6 +32,8 @@ use OCP\IDBConnection;
  * @extends QBMapper<GroupShare>
  */
 class GroupShareMapper extends QBMapper {
+	use ExpiringGrantQueries;
+
 	/**
 	 * Constructor for GroupShareMapper.
 	 *
