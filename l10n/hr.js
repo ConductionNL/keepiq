@@ -1295,7 +1295,15 @@ OC.L10N.register(
         "Not allowed": "Nije dopušteno",
         "Save lease policy": "Spremi pravila zakupa",
         "Only an administrator can change this policy.": "Samo administrator može promijeniti ova pravila.",
-        "Could not save the lease policy.": "Pravila zakupa nije moguće spremiti."
+        "Could not save the lease policy.": "Pravila zakupa nije moguće spremiti.",
+        "{member} got access from {confirmer}.": "{member} je dobio pristup od {confirmer}.",
+        "Automatically confirm new team folder members": "Automatski potvrdi nove članove timskih mapa",
+        "Gave %n new member access to a team folder.": "%n novi član dobio je pristup timskoj mapi.",
+        "Gave %n new members access to a team folder.": "Novi članovi (%n) dobili su pristup timskoj mapi.",
+        "Give new team folder members access without waiting for the folder owner.": "Dajte novim članovima pristup bez čekanja vlasnika mape.",
+        "New team folder members": "Novi članovi timskih mapa",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Vlasnik ili član s pravom pisanja potvrđuje ih iz otvorenog trezora. Keepiq nikad ne dešifrira na poslužitelju.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Čeka se da član s pravom pisanja otvori Keepiq. Možete i odmah dijeliti."
     },
     "nplurals=2; plural=(n != 1);"
 )

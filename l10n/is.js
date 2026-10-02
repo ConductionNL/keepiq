@@ -1295,7 +1295,15 @@ OC.L10N.register(
         "Not allowed": "Ekki leyft",
         "Save lease policy": "Vista leigustefnu",
         "Only an administrator can change this policy.": "Aðeins stjórnandi getur breytt þessari stefnu.",
-        "Could not save the lease policy.": "Ekki tókst að vista leigustefnuna."
+        "Could not save the lease policy.": "Ekki tókst að vista leigustefnuna.",
+        "{member} got access from {confirmer}.": "{member} fékk aðgang frá {confirmer}.",
+        "Automatically confirm new team folder members": "Staðfesta nýja meðlimi teymismappa sjálfkrafa",
+        "Gave %n new member access to a team folder.": "%n nýr meðlimur fékk aðgang að teymismöppu.",
+        "Gave %n new members access to a team folder.": "%n nýir meðlimir fengu aðgang að teymismöppu.",
+        "Give new team folder members access without waiting for the folder owner.": "Gefðu nýjum meðlimum aðgang án þess að bíða eftir eiganda möppunnar.",
+        "New team folder members": "Nýir meðlimir teymismappa",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Eigandinn eða meðlimur með skrifaðgang staðfestir þá úr opnu hólfi sínu. Keepiq afkóðar aldrei á þjóninum.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Beðið eftir að meðlimur með skrifaðgang opni Keepiq. Þú getur líka deilt núna."
     },
     "nplurals=2; plural=(n != 1);"
 )

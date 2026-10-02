@@ -1295,7 +1295,15 @@ OC.L10N.register(
         "Not allowed": "Nuk lejohet",
         "Save lease policy": "Ruaj politikën e qirasë",
         "Only an administrator can change this policy.": "Vetëm një administrator mund ta ndryshojë këtë politikë.",
-        "Could not save the lease policy.": "Politika e qirasë nuk mund të ruhej."
+        "Could not save the lease policy.": "Politika e qirasë nuk mund të ruhej.",
+        "{member} got access from {confirmer}.": "{member} mori qasje nga {confirmer}.",
+        "Automatically confirm new team folder members": "Konfirmo automatikisht anëtarët e rinj të dosjeve të ekipit",
+        "Gave %n new member access to a team folder.": "%n anëtar i ri mori qasje në një dosje ekipi.",
+        "Gave %n new members access to a team folder.": "%n anëtarë të rinj morën qasje në një dosje ekipi.",
+        "Give new team folder members access without waiting for the folder owner.": "Jepuni qasje anëtarëve të rinj pa pritur pronarin e dosjes.",
+        "New team folder members": "Anëtarë të rinj të dosjeve të ekipit",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Pronari ose një anëtar me të drejtë shkrimi i konfirmon nga kasaforta e hapur. Keepiq nuk deshifron kurrë në server.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Në pritje që një anëtar me të drejtë shkrimi të hapë Keepiq. Mund të ndani edhe tani."
     },
     "nplurals=2; plural=(n != 1);"
 )

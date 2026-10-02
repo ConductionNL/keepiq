@@ -1295,7 +1295,15 @@ OC.L10N.register(
         "Not allowed": "İzin verilmedi",
         "Save lease policy": "Kiralama ilkesini kaydet",
         "Only an administrator can change this policy.": "Bu ilkeyi yalnızca bir yönetici değiştirebilir.",
-        "Could not save the lease policy.": "Kiralama ilkesi kaydedilemedi."
+        "Could not save the lease policy.": "Kiralama ilkesi kaydedilemedi.",
+        "{member} got access from {confirmer}.": "{member}, {confirmer} tarafından erişim aldı.",
+        "Automatically confirm new team folder members": "Yeni ekip klasörü üyelerini otomatik onayla",
+        "Gave %n new member access to a team folder.": "%n yeni üye bir ekip klasörüne erişim aldı.",
+        "Gave %n new members access to a team folder.": "%n yeni üye bir ekip klasörüne erişim aldı.",
+        "Give new team folder members access without waiting for the folder owner.": "Yeni ekip klasörü üyelerine klasör sahibini beklemeden erişim verin.",
+        "New team folder members": "Yeni ekip klasörü üyeleri",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Sahip veya yazma izni olan bir üye onları açık kasasından onaylar. Keepiq sunucuda asla şifre çözmez.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Yazma izni olan bir üyenin Keepiq'i açması bekleniyor. Şimdi de paylaşabilirsiniz."
     },
     "nplurals=2; plural=(n != 1);"
 )

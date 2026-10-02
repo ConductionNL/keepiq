@@ -1294,7 +1294,15 @@
         "Not allowed": "Inte tillåtet",
         "Save lease policy": "Spara leasepolicy",
         "Only an administrator can change this policy.": "Bara en administratör kan ändra den här policyn.",
-        "Could not save the lease policy.": "Leasepolicyn kunde inte sparas."
+        "Could not save the lease policy.": "Leasepolicyn kunde inte sparas.",
+        "{member} got access from {confirmer}.": "{member} fick åtkomst av {confirmer}.",
+        "Automatically confirm new team folder members": "Bekräfta nya teammappsmedlemmar automatiskt",
+        "Gave %n new member access to a team folder.": "%n ny medlem fick åtkomst till en teammapp.",
+        "Gave %n new members access to a team folder.": "%n nya medlemmar fick åtkomst till en teammapp.",
+        "Give new team folder members access without waiting for the folder owner.": "Ge nya teammappsmedlemmar åtkomst utan att vänta på mappens ägare.",
+        "New team folder members": "Nya teammappsmedlemmar",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Ägaren eller en medlem med skrivrätt bekräftar dem från sitt öppna valv. Keepiq dekrypterar aldrig på servern.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Väntar på att en medlem med skrivrätt öppnar Keepiq. Du kan också dela nu."
     },
     "plurals": null
 }

@@ -1295,7 +1295,15 @@ OC.L10N.register(
         "Not allowed": "Не дозволено",
         "Save lease policy": "Зберегти політику оренди",
         "Only an administrator can change this policy.": "Змінити цю політику може лише адміністратор.",
-        "Could not save the lease policy.": "Не вдалося зберегти політику оренди."
+        "Could not save the lease policy.": "Не вдалося зберегти політику оренди.",
+        "{member} got access from {confirmer}.": "{member} отримав доступ від {confirmer}.",
+        "Automatically confirm new team folder members": "Автоматично підтверджувати нових учасників командних тек",
+        "Gave %n new member access to a team folder.": "%n новий учасник отримав доступ до командної теки.",
+        "Gave %n new members access to a team folder.": "Нові учасники (%n) отримали доступ до командної теки.",
+        "Give new team folder members access without waiting for the folder owner.": "Надавайте доступ новим учасникам, не чекаючи на власника теки.",
+        "New team folder members": "Нові учасники командних тек",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Власник або учасник із правом запису підтверджує їх із відкритого сховища. Keepiq ніколи не розшифровує на сервері.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Очікування, поки учасник із правом запису відкриє Keepiq. Можна поділитися й зараз."
     },
     "nplurals=2; plural=(n != 1);"
 )

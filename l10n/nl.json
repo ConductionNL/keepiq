@@ -1299,7 +1299,15 @@
         "Not allowed": "Niet toegestaan",
         "Save lease policy": "Leasebeleid opslaan",
         "Only an administrator can change this policy.": "Alleen een beheerder kan dit beleid wijzigen.",
-        "Could not save the lease policy.": "Het leasebeleid kon niet worden opgeslagen."
+        "Could not save the lease policy.": "Het leasebeleid kon niet worden opgeslagen.",
+        "{member} got access from {confirmer}.": "{member} kreeg toegang van {confirmer}.",
+        "Automatically confirm new team folder members": "Nieuwe teammapleden automatisch bevestigen",
+        "Gave %n new member access to a team folder.": "%n nieuw lid heeft toegang gekregen tot een teammap.",
+        "Gave %n new members access to a team folder.": "%n nieuwe leden hebben toegang gekregen tot een teammap.",
+        "Give new team folder members access without waiting for the folder owner.": "Geef nieuwe teammapleden toegang zonder te wachten op de eigenaar van de map.",
+        "New team folder members": "Nieuwe teammapleden",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "De eigenaar of een lid met schrijfrechten bevestigt hen vanuit de geopende kluis. Keepiq ontsleutelt nooit op de server.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Wacht op een lid met schrijfrechten dat Keepiq opent. Je kunt ook nu delen."
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"

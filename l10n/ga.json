@@ -1294,7 +1294,15 @@
         "Not allowed": "Gan cead",
         "Save lease policy": "Sábháil polasaí léasa",
         "Only an administrator can change this policy.": "Ní féidir ach le riarthóir an polasaí seo a athrú.",
-        "Could not save the lease policy.": "Níorbh fhéidir an polasaí léasa a shábháil."
+        "Could not save the lease policy.": "Níorbh fhéidir an polasaí léasa a shábháil.",
+        "{member} got access from {confirmer}.": "Fuair {member} rochtain ó {confirmer}.",
+        "Automatically confirm new team folder members": "Deimhnigh baill nua fillteán foirne go huathoibríoch",
+        "Gave %n new member access to a team folder.": "Fuair %n bhall nua rochtain ar fhillteán foirne.",
+        "Gave %n new members access to a team folder.": "Fuair %n bhall nua rochtain ar fhillteán foirne.",
+        "Give new team folder members access without waiting for the folder owner.": "Tabhair rochtain do bhaill nua gan fanacht le húinéir an fhillteáin.",
+        "New team folder members": "Baill nua fillteán foirne",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Deimhníonn an t-úinéir nó ball le cead scríbhneoireachta iad óna chruinneachán oscailte. Ní dhíchriptíonn Keepiq riamh ar an bhfreastalaí.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Ag fanacht le ball le cead scríbhneoireachta Keepiq a oscailt. Is féidir leat comhroinnt anois freisin."
     },
     "plurals": null
 }

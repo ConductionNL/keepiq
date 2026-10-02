@@ -1295,7 +1295,15 @@ OC.L10N.register(
         "Not allowed": "Net erlaabt",
         "Save lease policy": "Lease-Richtlinn späicheren",
         "Only an administrator can change this policy.": "Nëmmen en Administrateur kann dës Richtlinn änneren.",
-        "Could not save the lease policy.": "D'Lease-Richtlinn konnt net gespäichert ginn."
+        "Could not save the lease policy.": "D'Lease-Richtlinn konnt net gespäichert ginn.",
+        "{member} got access from {confirmer}.": "{member} krut Zougang vun {confirmer}.",
+        "Automatically confirm new team folder members": "Nei Memberen vun Teamdossieren automatesch bestätegen",
+        "Gave %n new member access to a team folder.": "%n neie Member krut Zougang zu engem Teamdossier.",
+        "Gave %n new members access to a team folder.": "%n nei Memberen kruten Zougang zu engem Teamdossier.",
+        "Give new team folder members access without waiting for the folder owner.": "Gitt neie Memberen Zougang ouni op de Besëtzer vum Dossier ze waarden.",
+        "New team folder members": "Nei Memberen vun Teamdossieren",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "De Besëtzer oder e Member mat Schreifrecht bestätegt se aus sengem oppenen Tresor. Keepiq entschlësselt ni um Server.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Et gëtt gewaart, bis e Member mat Schreifrecht Keepiq opmécht. Dir kënnt och elo deelen."
     },
     "nplurals=2; plural=(n != 1);"
 )

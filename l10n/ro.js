@@ -1295,7 +1295,15 @@ OC.L10N.register(
         "Not allowed": "Nepermis",
         "Save lease policy": "Salvează politica de închiriere",
         "Only an administrator can change this policy.": "Doar un administrator poate modifica această politică.",
-        "Could not save the lease policy.": "Politica de închiriere nu a putut fi salvată."
+        "Could not save the lease policy.": "Politica de închiriere nu a putut fi salvată.",
+        "{member} got access from {confirmer}.": "{member} a primit acces de la {confirmer}.",
+        "Automatically confirm new team folder members": "Confirmă automat membrii noi ai dosarelor de echipă",
+        "Gave %n new member access to a team folder.": "%n membru nou a primit acces la un dosar de echipă.",
+        "Gave %n new members access to a team folder.": "%n membri noi au primit acces la un dosar de echipă.",
+        "Give new team folder members access without waiting for the folder owner.": "Oferiți acces membrilor noi fără a aștepta proprietarul dosarului.",
+        "New team folder members": "Membri noi ai dosarelor de echipă",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Proprietarul sau un membru cu drept de scriere îi confirmă din seiful deschis. Keepiq nu decriptează niciodată pe server.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Se așteaptă ca un membru cu drept de scriere să deschidă Keepiq. Puteți partaja și acum."
     },
     "nplurals=2; plural=(n != 1);"
 )

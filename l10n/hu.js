@@ -1295,7 +1295,15 @@ OC.L10N.register(
         "Not allowed": "Nem engedélyezett",
         "Save lease policy": "Bérleti szabályzat mentése",
         "Only an administrator can change this policy.": "Ezt a szabályzatot csak rendszergazda módosíthatja.",
-        "Could not save the lease policy.": "A bérleti szabályzat nem menthető."
+        "Could not save the lease policy.": "A bérleti szabályzat nem menthető.",
+        "{member} got access from {confirmer}.": "{member} hozzáférést kapott tőle: {confirmer}.",
+        "Automatically confirm new team folder members": "Új csapatmappa-tagok automatikus megerősítése",
+        "Gave %n new member access to a team folder.": "%n új tag hozzáférést kapott egy csapatmappához.",
+        "Gave %n new members access to a team folder.": "%n új tag hozzáférést kapott egy csapatmappához.",
+        "Give new team folder members access without waiting for the folder owner.": "Adjon hozzáférést az új tagoknak a mappa tulajdonosára várás nélkül.",
+        "New team folder members": "Új csapatmappa-tagok",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "A tulajdonos vagy egy írási joggal rendelkező tag erősíti meg őket a megnyitott széfből. A Keepiq soha nem fejt vissza a szerveren.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Várakozás egy írási joggal rendelkező tagra, hogy megnyissa a Keepiqet. Most is megoszthatja."
     },
     "nplurals=2; plural=(n != 1);"
 )

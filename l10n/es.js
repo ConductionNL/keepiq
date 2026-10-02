@@ -1295,7 +1295,15 @@ OC.L10N.register(
         "Not allowed": "No permitido",
         "Save lease policy": "Guardar política de concesión",
         "Only an administrator can change this policy.": "Solo un administrador puede cambiar esta política.",
-        "Could not save the lease policy.": "No se pudo guardar la política de concesión."
+        "Could not save the lease policy.": "No se pudo guardar la política de concesión.",
+        "{member} got access from {confirmer}.": "{member} recibió acceso de {confirmer}.",
+        "Automatically confirm new team folder members": "Confirmar automáticamente los nuevos miembros de carpetas de equipo",
+        "Gave %n new member access to a team folder.": "%n nuevo miembro recibió acceso a una carpeta de equipo.",
+        "Gave %n new members access to a team folder.": "%n nuevos miembros recibieron acceso a una carpeta de equipo.",
+        "Give new team folder members access without waiting for the folder owner.": "Dé acceso a los nuevos miembros sin esperar al propietario de la carpeta.",
+        "New team folder members": "Nuevos miembros de carpetas de equipo",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "El propietario o un miembro con permiso de escritura los confirma desde su bóveda abierta. Keepiq nunca descifra en el servidor.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Esperando a que un miembro con permiso de escritura abra Keepiq. También puede compartir ahora."
     },
     "nplurals=2; plural=(n != 1);"
 )

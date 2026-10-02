@@ -1295,7 +1295,15 @@ OC.L10N.register(
         "Not allowed": "Nepovoleno",
         "Save lease policy": "Uložit zásady zápůjček",
         "Only an administrator can change this policy.": "Tyto zásady může změnit pouze správce.",
-        "Could not save the lease policy.": "Zásady zápůjček se nepodařilo uložit."
+        "Could not save the lease policy.": "Zásady zápůjček se nepodařilo uložit.",
+        "{member} got access from {confirmer}.": "{member} získal přístup od {confirmer}.",
+        "Automatically confirm new team folder members": "Automaticky potvrzovat nové členy týmových složek",
+        "Gave %n new member access to a team folder.": "%n nový člen získal přístup k týmové složce.",
+        "Gave %n new members access to a team folder.": "Noví členové (%n) získali přístup k týmové složce.",
+        "Give new team folder members access without waiting for the folder owner.": "Dejte novým členům přístup bez čekání na vlastníka složky.",
+        "New team folder members": "Noví členové týmových složek",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Vlastník nebo člen s právem zápisu je potvrdí ze svého otevřeného trezoru. Keepiq nikdy nedešifruje na serveru.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Čeká se, až člen s právem zápisu otevře Keepiq. Můžete také sdílet hned."
     },
     "nplurals=2; plural=(n != 1);"
 )

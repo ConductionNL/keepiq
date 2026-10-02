@@ -1294,7 +1294,15 @@
         "Not allowed": "No permès",
         "Save lease policy": "Desa la política de cessió",
         "Only an administrator can change this policy.": "Només un administrador pot canviar aquesta política.",
-        "Could not save the lease policy.": "No s'ha pogut desar la política de cessió."
+        "Could not save the lease policy.": "No s'ha pogut desar la política de cessió.",
+        "{member} got access from {confirmer}.": "{member} ha rebut accés de {confirmer}.",
+        "Automatically confirm new team folder members": "Confirma automàticament els membres nous de les carpetes d'equip",
+        "Gave %n new member access to a team folder.": "%n membre nou ha rebut accés a una carpeta d'equip.",
+        "Gave %n new members access to a team folder.": "%n membres nous han rebut accés a una carpeta d'equip.",
+        "Give new team folder members access without waiting for the folder owner.": "Doneu accés als membres nous sense esperar el propietari de la carpeta.",
+        "New team folder members": "Membres nous de les carpetes d'equip",
+        "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "El propietari o un membre amb permís d'escriptura els confirma des de la seva caixa forta oberta. Keepiq mai desxifra al servidor.",
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "S'espera que un membre amb permís d'escriptura obri Keepiq. També podeu compartir ara."
     },
     "plurals": null
 }
