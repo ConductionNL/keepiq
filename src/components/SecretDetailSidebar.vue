@@ -46,18 +46,34 @@
 				v-if="secret && !error && offlineReadOnly"
 				class="secret-detail__offline-note"
 				data-testid="secret-detail-offline-note">
-				{{
-					t(
-						'keepiq',
-						'Read-only while offline — reconnect to edit, move, share, or delete.',
-					)
-				}}
+				<template v-if="offlineEditable">
+					{{
+						t(
+							'keepiq',
+							'Offline. Edits, moves and deletes stay on this device and sync when you are back online. Sharing and attachments need a connection.',
+						)
+					}}
+				</template>
+				<template v-else>
+					{{
+						t(
+							'keepiq',
+							'Read-only while offline — reconnect to edit, move, share, or delete.',
+						)
+					}}
+				</template>
 			</div>
+			<p
+				v-if="secret && !error && secret.pendingSync"
+				class="secret-detail__pending"
+				data-testid="secret-detail-pending">
+				{{ t('keepiq', 'Not synced yet') }}
+			</p>
 			<!-- Rendered offline too (write actions hidden then): with the
 			     native X hidden, the "…" menu is the pointer path to Close. -->
 			<div v-if="secret && !error" class="secret-detail__actions">
 				<NcButton
-					v-if="!offlineReadOnly"
+					v-if="!offlineReadOnly || offlineEditable"
 					variant="primary"
 					data-testid="secret-detail-edit"
 					@click="openEdit">
@@ -89,10 +105,14 @@
 					</template>
 				</NcButton>
 				<NcButton
-					v-if="!offlineReadOnly"
 					variant="secondary"
+					:disabled="offlineReadOnly"
 					:ariaLabel="t('keepiq', 'Share')"
-					:title="t('keepiq', 'Share')"
+					:title="
+						offlineReadOnly
+							? t('keepiq', 'Sharing needs a connection')
+							: t('keepiq', 'Share')
+					"
 					data-testid="secret-detail-share"
 					@click="openShare">
 					<template #icon>
@@ -103,7 +123,7 @@
 					:ariaLabel="t('keepiq', 'Secret actions')"
 					:forceMenu="true"
 					data-testid="secret-detail-more">
-					<template v-if="!offlineReadOnly">
+					<template v-if="!offlineReadOnly || offlineEditable">
 						<NcActionButton
 							:closeAfterClick="true"
 							data-testid="secret-detail-move"
@@ -114,6 +134,7 @@
 							{{ t('keepiq', 'Move') }}
 						</NcActionButton>
 						<NcActionButton
+							v-if="!offlineReadOnly"
 							:closeAfterClick="true"
 							data-testid="secret-detail-archive"
 							@click="toggleArchive">
@@ -635,7 +656,7 @@
 						<div class="secret-detail__row-value">
 							<AttachmentPanel
 								:secretId="secretId"
-								:canManage="isOwner" />
+								:canManage="isOwner && !offlineReadOnly" />
 						</div>
 					</div>
 				</div>
@@ -1399,10 +1420,21 @@ export default {
 		 * all write actions on the detail are hidden (offline-readonly-cache §4.2).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-offline-mode-is-strictly-read-only
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-sharing-and-membership-actions-stay-online-only
 		 */
 		offlineReadOnly() {
 			return useOfflineStore().readOnly
+		},
+
+		/**
+		 * Offline with offline edits allowed: edit, move and delete go into
+		 * the sync queue; sharing stays online-only.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-sharing-and-membership-actions-stay-online-only
+		 */
+		offlineEditable() {
+			return useOfflineStore().editsQueued
 		},
 
 		/**
