@@ -23,8 +23,15 @@ import { buildPasskeyOrchestrator } from '../passkey/orchestrator.js'
 import { senderOrigin } from '../passkey/rp.js'
 import { computeTotp } from '../lib/totp-service.js'
 import { reportFill } from '../lib/usage.js'
+import {
+	allowedOnHost,
+	blocksSavePrompt,
+	filterForHost,
+	isUseOnly,
+} from '../lib/useOnly.js'
 import { isServerSupported } from '../lib/version.js'
 import { buildVaultHandlers } from './vault-handlers.js'
+import { areaOrMemory, buildGeneratorHandlers } from './generator-handlers.js'
 
 /**
  * The messages a content script (a tab) may send. Everything else needs an
@@ -53,6 +60,43 @@ const OTP_INTENTS_KEY = 'keepiq.otpIntents'
 function sessionStore() {
 	return chrome.storage && chrome.storage.session ? chrome.storage.session : null
 }
+
+// The Generator tab's state (clients-extension-complete), built on first use
+// so it binds to the storage areas the browser provides at that time.
+let generatorState = null
+
+function generatorModule() {
+	if (!generatorState) {
+		generatorState = buildGeneratorHandlers({
+			api,
+			activeAccount,
+			activeHost: async () => {
+				const [tab] = await chrome.tabs.query({
+					active: true,
+					currentWindow: true,
+				})
+				try {
+					const url = new URL(tab?.url || '')
+					return url.protocol === 'http:' || url.protocol === 'https:'
+						? url.hostname
+						: ''
+				} catch {
+					return ''
+				}
+			},
+			local: chrome.storage.local,
+			session: areaOrMemory(sessionStore()),
+		})
+	}
+	return generatorState
+}
+
+// Generator history goes whenever an account locks, for any reason.
+vault.onLock((accountId) => {
+	generatorModule()
+		.clearHistory(accountId)
+		.catch(() => {})
+})
 
 async function readIntents() {
 	const store = sessionStore()
@@ -271,6 +315,9 @@ async function doUnpair(payload) {
 	}
 	lockAccount(id)
 	maxIdleByAccount.delete(id)
+	await generatorModule()
+		.forget(id)
+		.catch(() => {})
 	await api.removeAccount(id)
 	return { ok: true, revoked }
 }
@@ -354,7 +401,8 @@ async function doMatch(payload) {
 	}
 	const host = hostOf(payload.host)
 	const rows = await api.match(account, payload.host)
-	const ranked = matchSecrets(rows, payload.host)
+	// A use-only copy is only ever offered on its own site (no "fill anyway").
+	const ranked = filterForHost(matchSecrets(rows, payload.host), payload.host)
 	// Return only index fields; the blobs stay in this account's cache.
 	matchCache.set(account.id, {
 		host,
@@ -365,6 +413,7 @@ async function doMatch(payload) {
 		name: r.name,
 		url: r.url,
 		typeId: r.typeId,
+		useOnly: isUseOnly(r),
 		accountId: account.id,
 	}))
 }
@@ -389,18 +438,26 @@ async function doFill(payload) {
 	if (hostOf(tab.url) !== cache.host) {
 		throw new Error('The page changed. Open Keepiq again to fill.')
 	}
+	const useOnly = isUseOnly(row)
+	if (useOnly && !allowedOnHost(row, cache.host)) {
+		// Never fill a use-only copy on another site.
+		return { filled: false }
+	}
 	const { login, secret } = await vault.decryptSecret(account.id, row)
 	await touchActivity(account.id)
 	const results = await chrome.tabs
 		.sendMessage(tab.id, {
 			type: 'fill-credential',
 			// Every frame gets the message; only frames on this host fill (#740).
-			payload: { login, secret, host: cache.host },
+			payload: { login, secret, host: cache.host, useOnly },
 		})
 		.catch(() => ({ filled: false }))
 	// A fill counts as a use for the vault's Last used sort; a failed report
-	// never fails the fill (vault-favourites-tags-and-last-used).
-	await reportFill(results, payload.id, async (id) => api.markUsed(account, id))
+	// never fails the fill (vault-favourites-tags-and-last-used). A use-only
+	// fill is also recorded for its owner (sharing-use-only-and-expiring-shares).
+	await reportFill(results, payload.id, async (id) =>
+		useOnly ? api.reportUseOnlyFill(account, id) : api.markUsed(account, id),
+	)
 	// Auto-copy a matched TOTP code so it is one paste away on the 2FA prompt
 	// (extension-totp-autofill §3). The popup performs the clipboard write +
 	// scheduled clear (a service worker has no clipboard access).
@@ -612,6 +669,12 @@ export async function doCapture(capture) {
 	let offer
 	try {
 		const rows = await api.match(config, capture.host)
+		// A login that belongs to a use-only copy is never offered for save
+		// or update (sharing-use-only-and-expiring-shares D3).
+		if (blocksSavePrompt(rows, capture.host)) {
+			pendingCapture = null
+			return { action: 'none' }
+		}
 		offer = await classifyCapture(capture, rows, (row) =>
 			vault.decryptSecret(config.id, row),
 		)
@@ -748,6 +811,14 @@ const handlers = {
 	'biometric-options': doBiometricOptions,
 	'biometric-used': doBiometricUsed,
 	'otp-field-detected': doOtpFieldDetected,
+	// Generator tab context, options and history (clients-extension-complete).
+	'generator-context': (p) => generatorModule().handlers['generator-context'](p),
+	'generator-options-save': (p) =>
+		generatorModule().handlers['generator-options-save'](p),
+	'generator-history-add': (p) =>
+		generatorModule().handlers['generator-history-add'](p),
+	'generator-history-clear': (p) =>
+		generatorModule().handlers['generator-history-clear'](p),
 	// Vault, Generator and Send tabs (clients-extension-generator-vault-send).
 	...buildVaultHandlers({
 		api,

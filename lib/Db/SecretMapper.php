@@ -136,6 +136,64 @@ class SecretMapper extends QBMapper {
 	}//end resolveSortColumn()
 
 	/**
+	 * Leave out every recipient copy whose access has ended
+	 * (sharing-use-only-and-expiring-shares D5): the copy stops being
+	 * served at its end date, not at the next run of the expiry job.
+	 *
+	 * @param IQueryBuilder $qb The query to narrow
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-the-server-stops-serving-an-expired-copy-at-its-end-date
+	 */
+	private function excludeAccessExpired(IQueryBuilder $qb): void {
+		$qb->andWhere(
+			$qb->expr()->orX(
+				$qb->expr()->isNull('access_expires_at'),
+				$qb->expr()->gt(
+					'access_expires_at',
+					$qb->createNamedParameter(new DateTime(), IQueryBuilder::PARAM_DATETIME_MUTABLE)
+				)
+			)
+		);
+	}//end excludeAccessExpired()
+
+	/**
+	 * The recipient copies whose access ends in (from, to]. A null `from`
+	 * lists every copy whose access ended at or before `to`: the expiry
+	 * job's clean-up set. A window a day ahead gives the copies to warn.
+	 *
+	 * @param DateTime|null $from Exclusive lower bound (null = none)
+	 * @param DateTime      $to   Inclusive upper bound
+	 *
+	 * @return Secret[]
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
+	 */
+	public function findAccessEndingBetween(?DateTime $from, DateTime $to): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->isNotNull('access_expires_at'))
+			->andWhere(
+				$qb->expr()->lte(
+					'access_expires_at',
+					$qb->createNamedParameter($to, IQueryBuilder::PARAM_DATETIME_MUTABLE)
+				)
+			);
+		if ($from !== null) {
+			$qb->andWhere(
+				$qb->expr()->gt(
+					'access_expires_at',
+					$qb->createNamedParameter($from, IQueryBuilder::PARAM_DATETIME_MUTABLE)
+				)
+			);
+		}
+
+		return $this->findEntities(query: $qb);
+	}//end findAccessEndingBetween()
+
+	/**
 	 * Find secrets owned by an owner, with optional folder filter, sort, and
 	 * pagination.
 	 *
@@ -189,6 +247,7 @@ class SecretMapper extends QBMapper {
 		}
 
 		(new SecretStateFilter())->apply(qb: $qb, state: $state);
+		$this->excludeAccessExpired(qb: $qb);
 		$organisation = new SecretListOrganisation();
 		$organisation->apply(qb: $qb, ownerId: $ownerId, favourite: $favourite, tag: $tag);
 
@@ -344,6 +403,7 @@ class SecretMapper extends QBMapper {
 		}
 
 		(new SecretStateFilter())->apply(qb: $qb, state: $state);
+		$this->excludeAccessExpired(qb: $qb);
 		(new SecretListOrganisation())->apply(qb: $qb, ownerId: $ownerId, favourite: $favourite, tag: $tag);
 
 		$result = $qb->executeQuery();
@@ -478,6 +538,7 @@ class SecretMapper extends QBMapper {
 			->andWhere($qb->expr()->isNull('trashed_at'))
 			->andWhere($qb->expr()->isNull('archived_at'))
 			->setMaxResults(max(1, $limit));
+		$this->excludeAccessExpired(qb: $qb);
 
 		return $this->findEntities(query: $qb);
 	}//end searchByNameOrUrl()
@@ -510,6 +571,7 @@ class SecretMapper extends QBMapper {
 			->andWhere($qb->expr()->isNull('archived_at'))
 			->orderBy('name', 'ASC')
 			->setMaxResults($limit);
+		$this->excludeAccessExpired(qb: $qb);
 
 		return $this->findEntities(query: $qb);
 	}//end findForUnifiedSearch()

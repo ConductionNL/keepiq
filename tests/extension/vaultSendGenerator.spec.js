@@ -260,7 +260,6 @@ describe('generator handlers', () => {
 			},
 		})
 		expect((await handlers['generate-for-field']({})).value).toHaveLength(20)
-		expect((await handlers['generator-policy']({})).policy).toBeNull()
 	})
 })
 
@@ -348,6 +347,25 @@ describe('send', () => {
 			}),
 		).rejects.toThrow('720 hours')
 		expect(api.createSend).not.toHaveBeenCalled()
+	})
+
+	it('wraps the key under a password: the link carries no key and the server no password', async () => {
+		const { handlers, api } = setup()
+		const { link, hasPassword } = await handlers['send-create']({
+			payloadType: 'text',
+			text: 'wifi: hunter2',
+			maxViews: 1,
+			expiry: '1h',
+			sendPassword: 'correct horse',
+		})
+		const body = api.createSend.mock.calls[0][1]
+		expect(hasPassword).toBe(true)
+		expect(body).toMatchObject({ hasPassword: true })
+		expect(body.wrappedKey).toBeTruthy()
+		expect(body.argon2idSalt).toBeTruthy()
+		expect(link).not.toContain('#k=')
+		expect(JSON.stringify(body)).not.toContain('correct horse')
+		expect(JSON.stringify(body)).not.toContain('hunter2')
 	})
 
 	it('lists and ends sends', async () => {

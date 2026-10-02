@@ -10,7 +10,7 @@
  */
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
 	installChrome,
 	installServer,
@@ -42,6 +42,8 @@ async function openPopup() {
 		if (pending) pending.then(cb)
 	}
 	window.confirm = () => true
+	// A fresh popup module per open, as a real popup page is.
+	vi.resetModules()
 	await import('../../browser-extension/src/popup/popup.js')
 	await vi.waitFor(() =>
 		expect(document.getElementById('view-unlocked').hidden).toBe(false),
@@ -86,23 +88,98 @@ beforeEach(async () => {
 	)
 })
 
+// A popup page from one test must not finish its work in the next one: it
+// looks elements up by id, so a late answer would land in the new page.
+afterEach(async () => {
+	await new Promise((resolve) => setTimeout(resolve, 400))
+	document.body.innerHTML = ''
+})
+
 describe('Generator tab', () => {
-	it('makes a password and a passphrase in the popup', async () => {
+	it('makes passwords, passphrases and usernames, and keeps a history', async () => {
 		await openPopup()
 		$('tab-generator').click()
-		await vi.waitFor(() => expect($('gen-output').textContent).toHaveLength(20))
-		expect($('panel-generator').hidden).toBe(false)
-
-		const passphrase = document.querySelector(
-			'input[name="gen-mode"][value="passphrase"]',
+		// Bitwarden's defaults: 14 characters, no ambiguous characters.
+		await vi.waitFor(() =>
+			expect($('gen-output').dataset.value).toHaveLength(14),
 		)
-		passphrase.checked = true
-		passphrase.dispatchEvent(new Event('change'))
+		expect($('gen-output').dataset.value).not.toMatch(/[IOl01]/)
+
+		$('gen-tab-passphrase').click()
 		// Five words joined by hyphens; four list words carry a hyphen
 		// themselves, so the shape is checked instead of a split count.
-		expect($('gen-output').textContent).toMatch(/^[a-z]+(-[a-z]+){4,}$/)
+		await vi.waitFor(() =>
+			expect($('gen-output').dataset.value).toMatch(/^[a-z]+(-[a-z]+){4,}$/),
+		)
+
+		$('gen-tab-username').click()
+		await vi.waitFor(() =>
+			expect($('gen-output').dataset.value).toMatch(/^[A-Z][a-z-]*\d{4}$/),
+		)
+
+		$('gen-history-open').click()
+		await vi.waitFor(() => expect($('gen-history').hidden).toBe(false))
+		expect($('gen-history-list').children.length).toBeGreaterThanOrEqual(3)
+
+		$('gen-history-clear').click()
+		await vi.waitFor(() => expect($('gen-history-empty').hidden).toBe(false))
 
 		expect(server.calls.some((c) => c.url.includes('generate-key'))).toBe(false)
+	})
+
+	it('remembers the options and the sub-tab for the account', async () => {
+		await openPopup()
+		$('tab-generator').click()
+		await vi.waitFor(() =>
+			expect($('gen-output').dataset.value).toHaveLength(14),
+		)
+		$('gen-length').value = '24'
+		$('gen-length').dispatchEvent(new Event('change'))
+		$('gen-tab-passphrase').click()
+		await vi.waitFor(async () => {
+			const stored = await globalThis.chrome.storage.local.get(null)
+			const options = Object.entries(stored).find(([k]) =>
+				k.startsWith('generator-options:'),
+			)?.[1]
+			expect(options).toMatchObject({
+				tab: 'passphrase',
+				password: { length: 24 },
+			})
+		})
+
+		await openPopup()
+		$('tab-generator').click()
+		await vi.waitFor(() =>
+			expect($('gen-tab-passphrase').getAttribute('aria-selected')).toBe(
+				'true',
+			),
+		)
+		expect($('gen-length').value).toBe('24')
+	})
+
+	it('generates while the vault is locked', async () => {
+		await router.handleMessage({ type: 'lock', payload: {} }, POPUP)
+		const html = readFileSync(
+			resolve(__dirname, '../../browser-extension/src/popup/popup.html'),
+			'utf8',
+		)
+		document.body.innerHTML = html
+			.replace(/^[\s\S]*<body>/, '')
+			.replace(/<\/body>[\s\S]*$/, '')
+		globalThis.chrome.runtime.sendMessage = (msg, cb) => {
+			const pending = router.handleMessage(msg, POPUP)
+			if (pending) pending.then(cb)
+		}
+		await import('../../browser-extension/src/popup/popup.js')
+		await vi.waitFor(() => expect($('view-locked').hidden).toBe(false))
+
+		$('locked-generate').click()
+		await vi.waitFor(() => expect($('view-locked-generator').hidden).toBe(false))
+		await vi.waitFor(() =>
+			expect($('gen-output').dataset.value).toHaveLength(14),
+		)
+		$('locked-generator-back').click()
+		await vi.waitFor(() => expect($('view-locked').hidden).toBe(false))
 	})
 })
 
@@ -149,9 +226,21 @@ describe('Vault tab', () => {
 		$('edit-name').value = 'New site'
 		$('edit-login').value = 'bob'
 		$('edit-folder').value = 'f1'
+		// Pick mode: the Generator opens, and "Use this value" brings the
+		// value back to the form with the rest of the input intact.
 		$('edit-generate').click()
+		await vi.waitFor(() => expect($('panel-generator').hidden).toBe(false))
+		// The button shows once the generator context has loaded.
+		await vi.waitFor(() => expect($('gen-use').hidden).toBe(false))
+		await vi.waitFor(() =>
+			expect($('gen-output').dataset.value).toHaveLength(14),
+		)
+		$('gen-use').click()
+		await vi.waitFor(() => expect($('panel-vault').hidden).toBe(false))
 		const generated = $('edit-secret').value
-		expect(generated).toHaveLength(20)
+		expect(generated).toHaveLength(14)
+		expect($('edit-name').value).toBe('New site')
+		expect($('edit-login').value).toBe('bob')
 		$('vault-edit').dispatchEvent(new Event('submit', { cancelable: true }))
 		await vi.waitFor(() =>
 			expect(

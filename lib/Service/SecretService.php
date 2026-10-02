@@ -897,6 +897,7 @@ class SecretService {
 	 *   independent partial-update guards, not nested logic.
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) One partial-update guard per
 	 *   field, in the order the fields are applied; the vault policy check is one
 	 *   line. Splitting the field guards apart would scatter one update over
@@ -905,7 +906,7 @@ class SecretService {
 	public function update(string $id, array $data, string $userId): Secret {
 		$this->assertNotWriteLocked(userId: $userId);
 
-		$secret = $this->loadOwned(id: $id, userId: $userId);
+		$secret = $this->loadOwned(id: $id, userId: $userId)->assertEditableByHolder();
 
 		$data = $this->editGuard->checkedUpdate(secret: $secret, data: $data);
 
@@ -1421,6 +1422,13 @@ class SecretService {
 
 		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
 			throw new ForbiddenException(message: 'Secret belongs to another user');
+		}
+
+		// A copy whose access ended answers as an unknown secret
+		// (sharing-use-only-and-expiring-shares D5).
+		$accessEnds = $secret->getAccessExpiresAt();
+		if ($accessEnds !== null && $accessEnds <= new DateTime()) {
+			throw new NotFoundException(message: 'Secret not found');
 		}
 
 		return $secret;

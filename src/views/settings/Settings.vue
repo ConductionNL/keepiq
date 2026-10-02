@@ -31,6 +31,8 @@
 		<SiemSection />
 		<HoneySection />
 		<OfflineCacheSection />
+		<DeviceApprovalSection />
+		<AccountRecoverySection />
 		<ExtensionSection />
 		<ItemTypesSection />
 		<MemberOverviewSection />
@@ -42,6 +44,7 @@
 </template>
 
 <script>
+import AccountRecoverySection from '../../components/settings/AccountRecoverySection.vue'
 import AdminAuditSection from '../../components/settings/AdminAuditSection.vue'
 import AdminSuiteSection from '../../components/settings/AdminSuiteSection.vue'
 import ApplicationQueueSection from '../../components/settings/ApplicationQueueSection.vue'
@@ -49,6 +52,7 @@ import AttachmentLimitsSection from '../../components/settings/AttachmentLimitsS
 import BreachCheckSection from '../../components/settings/BreachCheckSection.vue'
 import CaHealthSection from '../../components/settings/CaHealthSection.vue'
 import ComplianceSection from '../../components/settings/ComplianceSection.vue'
+import DeviceApprovalSection from '../../components/settings/DeviceApprovalSection.vue'
 import ExtensionSection from '../../components/settings/ExtensionSection.vue'
 import HoneySection from '../../components/settings/HoneySection.vue'
 import ItemTypesSection from '../../components/settings/ItemTypesSection.vue'
@@ -81,6 +85,8 @@ export default {
 		HoneySection,
 		ItemTypesSection,
 		OfflineCacheSection,
+		DeviceApprovalSection,
+		AccountRecoverySection,
 		ExtensionSection,
 		MemberOverviewSection,
 		OffboardingSection,
