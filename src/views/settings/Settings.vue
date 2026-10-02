@@ -10,12 +10,15 @@
 
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.4
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.5
+  @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+  @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
   @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.2
 -->
 <template>
 	<div class="keepiq-settings">
 		<PasswordPolicySection />
 		<OrgPasswordPolicySection />
+		<VaultPolicySection />
 		<TeamFolderAutoConfirmSection />
 		<BreachCheckSection />
 		<CaHealthSection />
@@ -27,10 +30,12 @@
 		<SiemSection />
 		<HoneySection />
 		<OfflineCacheSection />
+		<ExtensionSection />
 		<ItemTypesSection />
 		<OffboardingSection />
 		<AdminSuiteSection />
 		<AdminAuditSection />
+		<VaultBackupSection />
 	</div>
 </template>
 
@@ -42,6 +47,7 @@ import AttachmentLimitsSection from '../../components/settings/AttachmentLimitsS
 import BreachCheckSection from '../../components/settings/BreachCheckSection.vue'
 import CaHealthSection from '../../components/settings/CaHealthSection.vue'
 import ComplianceSection from '../../components/settings/ComplianceSection.vue'
+import ExtensionSection from '../../components/settings/ExtensionSection.vue'
 import HoneySection from '../../components/settings/HoneySection.vue'
 import ItemTypesSection from '../../components/settings/ItemTypesSection.vue'
 import MachineLeaseSection from '../../components/settings/MachineLeaseSection.vue'
@@ -52,6 +58,8 @@ import PasswordPolicySection from '../../components/settings/PasswordPolicySecti
 import RotationPolicySection from '../../components/settings/RotationPolicySection.vue'
 import SiemSection from '../../components/settings/SiemSection.vue'
 import TeamFolderAutoConfirmSection from '../../components/settings/TeamFolderAutoConfirmSection.vue'
+import VaultBackupSection from '../../components/settings/VaultBackupSection.vue'
+import VaultPolicySection from '../../components/settings/VaultPolicySection.vue'
 
 export default {
 	name: 'Settings',
@@ -70,9 +78,12 @@ export default {
 		HoneySection,
 		ItemTypesSection,
 		OfflineCacheSection,
+		ExtensionSection,
 		OffboardingSection,
 		AdminSuiteSection,
 		AdminAuditSection,
+		VaultPolicySection,
+		VaultBackupSection,
 	},
 }
 </script>

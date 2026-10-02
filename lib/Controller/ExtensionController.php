@@ -29,6 +29,7 @@ namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Service\AdminSettingsService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -75,6 +76,7 @@ class ExtensionController extends Controller {
 	 * @param IRequest $request The request
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param IUserSession $userSession The user session
+	 * @param AdminSettingsService $adminSettings The admin settings (extension idle maximum)
 	 *
 	 * @return void
 	 */
@@ -82,6 +84,7 @@ class ExtensionController extends Controller {
 		IRequest $request,
 		private SecretMapper $secretMapper,
 		private IUserSession $userSession,
+		private AdminSettingsService $adminSettings,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -128,9 +131,9 @@ class ExtensionController extends Controller {
 	}//end pair()
 
 	/**
-	 * Unpair: pairing is the NC app-password, so unpairing is revoking it in
-	 * Nextcloud security settings. This endpoint is a no-op acknowledgement the
-	 * extension calls to clear its own local state.
+	 * Unpair: pairing is the NC app-password. The extension deletes it itself
+	 * through Nextcloud's DELETE /ocs/v2.php/core/apppassword right after this
+	 * call, which needs no Keepiq code. This endpoint is the acknowledgement.
 	 *
 	 * @return JSONResponse
 	 *
@@ -145,6 +148,25 @@ class ExtensionController extends Controller {
 
 		return new JSONResponse(data: ['ok' => true, 'note' => 'Revoke the app-password in Nextcloud security settings to fully unpair.']);
 	}//end unpair()
+
+	/**
+	 * The organisation's extension policy: the longest idle lock delay a user
+	 * may pick. The extension reads it on every unlock and uses the lower of
+	 * the user's choice and this maximum.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-user-chosen-idle-lock-period-with-an-administrator-maximum
+	 */
+	#[NoAdminRequired]
+	#[NoCSRFRequired]
+	public function policy(): JSONResponse {
+		if ($this->uid() === null) {
+			return new JSONResponse(data: ['error' => 'unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		return new JSONResponse(data: ['maxIdleMinutes' => $this->adminSettings->extensionMaxIdleMinutes()]);
+	}//end policy()
 
 	/**
 	 * Coarse registrable domain (eTLD+1 approximation) of a host, used as the

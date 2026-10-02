@@ -64,7 +64,14 @@ type Suite struct {
 	Certificate string `json:"certificate"`
 	PrivateKey  string `json:"privateKey"`
 	Status      string `json:"status"`
+	// UnlockBlocked names a vault policy that withholds PrivateKey, such as
+	// two_factor_required (admin-vault-policies D3).
+	UnlockBlocked string `json:"unlockBlocked"`
 }
+
+// ErrTwoFactorRequired is returned when the organisation requires Nextcloud
+// two-factor login before the vault unlocks and the account has none.
+var ErrTwoFactorRequired = errors.New("two_factor_required: your organisation requires two-factor login in Nextcloud before you can open your vault")
 
 // Secret is one vault secret (ciphertext fields until decrypted locally).
 type Secret struct {
@@ -86,6 +93,12 @@ func (c *Client) ActiveSuite() (*Suite, error) {
 	}
 	for i := range suites {
 		if suites[i].Status == "active" {
+			if suites[i].UnlockBlocked == "two_factor_required" {
+				return nil, ErrTwoFactorRequired
+			}
+			if suites[i].UnlockBlocked != "" {
+				return nil, fmt.Errorf("vault unlock blocked: %s", suites[i].UnlockBlocked)
+			}
 			return &suites[i], nil
 		}
 	}
@@ -133,10 +146,27 @@ type Discovery struct {
 	} `json:"lease"`
 }
 
+// Discovery paths. The keepiq path is canonical; the doriath path is the
+// pre-rename alias, tried only when a server answers 404 on the canonical one.
+const (
+	discoveryPath       = "/apps/keepiq/api/v1/app/.well-known/keepiq"
+	legacyDiscoveryPath = "/apps/keepiq/api/v1/app/.well-known/doriath"
+)
+
+// DefaultAudience is the JWT audience used when discovery names none. It
+// matches the server's AudiencePolicy::CANONICAL_AUDIENCE.
+const DefaultAudience = "keepiq"
+
 // Discover fetches and returns the machine-store discovery document.
 func (c *Client) Discover() (*Discovery, error) {
 	var d Discovery
-	if err := c.getJSON("/apps/keepiq/api/v1/app/.well-known/doriath", &d); err != nil {
+	err := c.getJSON(discoveryPath, &d)
+	var se *statusError
+	if errors.As(err, &se) && se.code == http.StatusNotFound {
+		d = Discovery{}
+		err = c.getJSON(legacyDiscoveryPath, &d)
+	}
+	if err != nil {
 		return nil, err
 	}
 	return &d, nil
@@ -151,7 +181,7 @@ func (d *Discovery) LeaseSupported() bool { return d.Lease.Supported }
 func (c *Client) MachineToken(applicationID string, key *rsa.PrivateKey, disc *Discovery, now int64) (string, error) {
 	aud := disc.Assertion.Audience
 	if aud == "" {
-		aud = "doriath" // EXPECTED_AUDIENCE fallback
+		aud = DefaultAudience
 	}
 	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256","typ":"JWT"}`))
 	claims := map[string]any{
@@ -277,9 +307,20 @@ func (c *Client) getJSON(path string, out any) error {
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("GET %s failed (%d): %s", path, resp.StatusCode, strings.TrimSpace(string(body)))
+		return &statusError{path: path, code: resp.StatusCode, body: strings.TrimSpace(string(body))}
 	}
 	return json.Unmarshal(bytes.TrimSpace(body), out)
+}
+
+// statusError is a GET answered with a status other than 200.
+type statusError struct {
+	path string
+	code int
+	body string
+}
+
+func (e *statusError) Error() string {
+	return fmt.Sprintf("GET %s failed (%d): %s", e.path, e.code, e.body)
 }
 
 func (c *Client) authenticate(req *http.Request) {

@@ -21,6 +21,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use OCA\Keepiq\Controller\ExportController;
 use OCA\Keepiq\Event\SecretExportedEvent;
+use OCA\Keepiq\Service\VaultPolicyService;
 use OCP\AppFramework\Http;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IRequest;
@@ -39,7 +40,7 @@ class ExportControllerTest extends TestCase {
 	 *
 	 * @return array{0:ExportController,1:IRequest,2:IEventDispatcher}
 	 */
-	private function build(?string $userId = 'alice'): array {
+	private function build(?string $userId = 'alice', bool $banned = false): array {
 		$request = $this->createMock(IRequest::class);
 		$session = $this->createMock(IUserSession::class);
 		$dispatcher = $this->createMock(IEventDispatcher::class);
@@ -52,7 +53,12 @@ class ExportControllerTest extends TestCase {
 			$session->method('getUser')->willReturn(null);
 		}
 
-		return [new ExportController($request, $session, $dispatcher), $request, $dispatcher];
+		$policies = $this->createMock(VaultPolicyService::class);
+		$policies->method('appliesTo')->willReturnCallback(
+			static fn (string $policy, string $userId): bool => $banned && $policy === VaultPolicyService::EXPORT_DISABLED
+		);
+
+		return [new ExportController($request, $session, $dispatcher, $policies), $request, $dispatcher];
 	}//end build()
 
 	/**
@@ -167,4 +173,24 @@ class ExportControllerTest extends TestCase {
 		$response = $controller->events();
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
 	}//end testUnauthorized()
+
+	/**
+	 * admin-vault-policies §2.1: with the export ban on, every one of the
+	 * four modes is refused with 403 export_disabled_by_policy and no export
+	 * event is recorded, so the browser offers no file.
+	 *
+	 * @return void
+	 */
+	public function testExportBanRefusesEveryMode(): void {
+		foreach (['encrypted-backup', 'plaintext-csv', 'cxf', 'cxp'] as $mode) {
+			[$controller, $request, $dispatcher] = $this->build(userId: 'erin', banned: true);
+			$this->params($request, $mode, 'all', 3);
+			$dispatcher->expects($this->never())->method('dispatchTyped');
+
+			$response = $controller->events();
+
+			$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus(), $mode);
+			$this->assertSame('export_disabled_by_policy', $response->getData()['code'], $mode);
+		}
+	}//end testExportBanRefusesEveryMode()
 }//end class

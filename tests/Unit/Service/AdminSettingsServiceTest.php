@@ -114,4 +114,22 @@ class AdminSettingsServiceTest extends TestCase {
 		$this->assertSame(['team_folder_auto_confirm' => false], $metadata['before']);
 		$this->assertSame(['team_folder_auto_confirm' => true], $metadata['after']);
 	}//end testSwitchingOnIsStoredExposedAndAudited()
+	/**
+	 * Passphrases are allowed by default, in both the admin payload and the
+	 * user policy, and switching them off is stored, exposed and audited.
+	 *
+	 * @return void
+	 */
+	public function testPassphraseSwitchDefaultsOnAndIsAudited(): void {
+		$this->assertTrue($this->service->getAdminSettings()['generator_allow_passphrase']);
+		$this->assertTrue($this->service->getPolicy()['generator_allow_passphrase']);
+
+		$this->service->updateAdminSettings(['generator_allow_passphrase' => false]);
+
+		$this->assertFalse($this->service->getPolicy()['generator_allow_passphrase']);
+		$this->assertCount(1, $this->events);
+		$metadata = $this->events[0]->getMetadata();
+		$this->assertSame(['generator_allow_passphrase' => true], $metadata['before']);
+		$this->assertSame(['generator_allow_passphrase' => false], $metadata['after']);
+	}//end testPassphraseSwitchDefaultsOnAndIsAudited()
 }//end class
