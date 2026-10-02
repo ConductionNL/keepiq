@@ -44,6 +44,13 @@ use Throwable;
 
 /**
  * Reads and validates the instance-wide Keepiq configuration.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) 51 against a threshold of
+ *   50, reached when the browser extension's maximum idle period joined the
+ *   admin settings (clients-extension-unlock-lock-and-accounts). The service
+ *   is being split per admin area by admin-scoped-roles (keepiq#774), which
+ *   removes this; a separate service now would add a dependency to a class
+ *   that sits at its coupling limit.
  */
 class AdminSettingsService {
 	/**

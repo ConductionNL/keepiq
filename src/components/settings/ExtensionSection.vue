@@ -59,6 +59,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-user-chosen-idle-lock-period-with-an-administrator-maximum
+		 */
 		choices() {
 			return [
 				{ value: 1, label: this.t('keepiq', '1 minute') },
