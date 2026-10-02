@@ -119,13 +119,7 @@ class MemberOverviewService {
 			throw new InvalidArgumentException(message: 'offset must be 0 or more');
 		}
 
-		if ($status === '') {
-			// One extra user tells whether another page exists.
-			$rows = $this->resolve(users: $this->userManager->searchDisplayName($search, $limit + 1, $offset));
-		} else {
-			$rows = $this->scanForStatus(status: $status, search: $search, wanted: $offset + $limit + 1);
-			$rows = array_slice($rows, $offset);
-		}
+		$rows = $this->pageRows(status: $status, search: $search, limit: $limit, offset: $offset);
 
 		return [
 			'results' => array_slice($rows, 0, $limit),
@@ -134,6 +128,27 @@ class MemberOverviewService {
 			'hasMore' => count($rows) > $limit,
 		];
 	}//end list()
+
+	/**
+	 * The rows for one page plus one extra, which tells whether another page exists.
+	 *
+	 * @param string $status The vault status filter, or '' for every user
+	 * @param string $search The user search
+	 * @param int $limit The page size
+	 * @param int $offset The page start
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.1
+	 */
+	private function pageRows(string $status, string $search, int $limit, int $offset): array {
+		if ($status === '') {
+			return $this->resolve(users: $this->userManager->searchDisplayName($search, $limit + 1, $offset));
+		}
+
+		$rows = $this->scanForStatus(status: $status, search: $search, wanted: $offset + $limit + 1);
+		return array_slice($rows, $offset);
+	}//end pageRows()
 
 	/**
 	 * Read users in batches and keep the rows with the wanted status.
@@ -157,8 +172,10 @@ class MemberOverviewService {
 				}
 			}
 
-			$cursor += count($batch);
-		} while (count($batch) === self::SCAN_BATCH && count($matched) < $wanted);
+			$batchSize = count($batch);
+			$cursor += $batchSize;
+			$enough = count($matched) >= $wanted;
+		} while ($batchSize === self::SCAN_BATCH && $enough === false);
 
 		return $matched;
 	}//end scanForStatus()

@@ -31,6 +31,13 @@ use OCP\IDBConnection;
  * Mapper for EncryptionSuite entities.
  *
  * @extends QBMapper<EncryptionSuite>
+ *
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) 11 against a threshold of 10.
+ *   A mapper's public surface IS its query set. The eleventh,
+ *   latestInactiveStatusByOwners(), answers the member overview's batch
+ *   question (admin-member-overview-and-offboarding) in one query instead
+ *   of one per user; splitting suite queries across two mappers over one
+ *   table would only move them.
  */
 class EncryptionSuiteMapper extends QBMapper {
 	/**
