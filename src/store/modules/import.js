@@ -372,7 +372,7 @@ export const useImportStore = defineStore('import', {
 		 * @param {Array<object>} rows The rows about to be committed (mutated).
 		 * @param {Array<object>} types The vault's secret types ({ id, name }).
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 		 */
 		async dropPolicyRejected(rows, types) {
 			const policy = await fetchPolicy()
