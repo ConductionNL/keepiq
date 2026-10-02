@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Lisää tunniste",
         "Could not change the tags. Try again.": "Tunnisteita ei voitu muuttaa. Yritä uudelleen.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF-vienti on SALAAMATON. Jokainen salasana ja käyttäjätunnus on luettavissa selkokielisenä ladatussa tiedostossa. Säilytä se turvallisesti ja poista se heti käytön jälkeen.",
+        "Root certificate expiring soon": "Juurivarmenne vanhenee pian",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Holvin juurivarmenne vanhenee %1$d päivän kuluttua. Uusi se ennen sitä. Uusiminen allekirjoittaa jokaisen salauspaketin uudelleen.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Osa vaarantumisvasteesta epäonnistui ({failed} vaihe(tta)). Tarkista palvelimen loki ja peru sitten sarja uudelleen viimeistelläksesi sen.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Tämä perui myös sarjan {suite} ja päätti avainten siirron {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Toisen sarjan peruminen poisti %n hätäkäyttöyhteystiedon.",

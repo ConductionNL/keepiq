@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Pridať štítok",
         "Could not change the tags. Try again.": "Štítky nemožno zmeniť. Skúste to znova.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Export do CXF NIE JE ZAŠIFROVANÝ. Každé heslo a prihlasovacie meno bude v stiahnutom súbore čitateľné ako otvorený text. Uložte ho bezpečne a hneď po použití odstráňte.",
+        "Root certificate expiring soon": "Koreňový certifikát čoskoro vyprší",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Koreňový certifikát trezoru vyprší o %1$d dní. Obnovte ho predtým. Obnovenie znova podpíše každú šifrovaciu sadu.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Časť reakcie na kompromitáciu zlyhala ({failed} krok(ov)). Skontrolujte protokol servera a potom sadu znova odvolajte, aby ste ju dokončili.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Tým sa odvolala aj sada {suite} a ukončila migrácia kľúčov {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Odvolanie druhej sady odstránilo %n kontakt núdzového prístupu.",

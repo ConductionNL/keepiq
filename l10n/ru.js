@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Добавить метку",
         "Could not change the tags. Try again.": "Не удалось изменить метки. Попробуйте ещё раз.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Экспорт в CXF НЕ ЗАШИФРОВАН. Каждый пароль и логин будут читаемы как обычный текст в скачанном файле. Храните файл в надёжном месте и удалите сразу после использования.",
+        "Root certificate expiring soon": "Срок действия корневого сертификата скоро истечёт",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Срок действия корневого сертификата хранилища истекает через %1$d дн. Обновите его до этого. При обновлении каждый набор шифрования подписывается заново.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Часть реакции на компрометацию не выполнена ({failed} шаг(ов)). Проверьте журнал сервера, затем снова отзовите набор, чтобы завершить её.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Это также отозвало набор {suite} и завершило миграцию ключей {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Отзыв второго набора удалил %n контакт аварийного доступа.",

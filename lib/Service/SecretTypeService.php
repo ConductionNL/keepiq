@@ -108,6 +108,8 @@ class SecretTypeService {
 	 * @return string The resolved, validated type ID
 	 *
 	 * @throws InvalidArgumentException When the type does not exist or is not available
+	 *
+	 * @spec openspec/specs/secrets/spec.md#requirement-secret-types
 	 */
 	public function resolveTypeForSecret(?string $typeId, string $userId): string {
 		if ($typeId === null || $typeId === '') {

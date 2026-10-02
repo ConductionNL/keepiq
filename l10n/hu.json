@@ -1267,6 +1267,8 @@
         "Add tag": "Címke hozzáadása",
         "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "A CXF-exportálás TITKOSÍTATLAN. A letöltött fájlban minden jelszó és bejelentkezési név olvasható lesz egyszerű szövegként. Tárolja biztonságosan, és használat után azonnal törölje.",
+        "Root certificate expiring soon": "A gyökértanúsítvány hamarosan lejár",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "A széf gyökértanúsítványa %1$d nap múlva lejár. Újítsa meg előtte. A megújítás minden titkosítási csomagot újra aláír.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "A kompromittálásra adott válasz egy része sikertelen volt ({failed} lépés). Ellenőrizze a kiszolgáló naplóját, majd vonja vissza újra a csomagot a befejezéshez.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Ez a(z) {suite} csomagot is visszavonta, és befejezte a(z) {migration} kulcsmigrációt.",
         "Revoking the second suite deleted %n emergency-access contact.": "A második csomag visszavonása %n vészhelyzeti hozzáférési kapcsolatot törölt.",

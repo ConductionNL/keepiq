@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Afegeix una etiqueta",
         "Could not change the tags. Try again.": "No s'han pogut canviar les etiquetes. Torneu-ho a provar.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Una exportació CXF NO ESTÀ XIFRADA. Totes les contrasenyes i inicis de sessió es podran llegir com a text pla al fitxer baixat. Deseu-lo de manera segura i suprimiu-lo immediatament després d'usar-lo.",
+        "Root certificate expiring soon": "El certificat arrel caduca aviat",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "El certificat arrel de la caixa forta caduca d'aquí a %1$d dia(es). Renoveu-lo abans. En renovar-lo es torna a signar cada suite de xifratge.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Part de la resposta al compromís ha fallat ({failed} pas(sos)). Consulteu el registre del servidor i torneu a revocar la suite per acabar-la.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Això també ha revocat la suite {suite} i ha finalitzat la migració de claus {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Revocar la segona suite ha suprimit %n contacte d'accés d'emergència.",

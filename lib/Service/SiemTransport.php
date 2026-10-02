@@ -30,10 +30,11 @@ namespace OCA\Keepiq\Service;
 
 use DateTime;
 use OCA\Keepiq\Db\SiemSink;
+use OCA\Keepiq\Exception\SiemDeliveryException;
 use OCA\Keepiq\Support\SuppressesDiagnostics;
 use OCP\Http\Client\IClientService;
 use OCP\Security\ICrypto;
-use RuntimeException;
+use Throwable;
 
 /**
  * Sends one SIEM payload over a sink's configured transport.
@@ -74,7 +75,7 @@ class SiemTransport {
 	 *
 	 * @return void
 	 *
-	 * @throws \RuntimeException On transport failure
+	 * @throws SiemDeliveryException On transport failure
 	 *
 	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-reliable-background-delivery
 	 */
@@ -88,6 +89,21 @@ class SiemTransport {
 	}//end deliver()
 
 	/**
+	 * Describe a failed delivery to this sink without its message: class,
+	 * HTTP status and host only (keepiq#728).
+	 *
+	 * @param Throwable $exception The failure
+	 * @param SiemSink $sink The sink
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-reliable-background-delivery
+	 */
+	public function describeFailure(Throwable $exception, SiemSink $sink): string {
+		return (new SiemFailureOutcome())->describe(exception: $exception, sink: $sink);
+	}//end describeFailure()
+
+	/**
 	 * RFC 5424 syslog delivery over TCP (TLS when configured, §3.1).
 	 *
 	 * @param SiemSink $sink The sink (endpoint host:port)
@@ -95,7 +111,7 @@ class SiemTransport {
 	 *
 	 * @return void
 	 *
-	 * @throws \RuntimeException On transport failure
+	 * @throws SiemDeliveryException On transport failure
 	 */
 	private function deliverSyslog(SiemSink $sink, string $payloadJson): void {
 		$endpoint = $sink->getEndpoint();
@@ -105,8 +121,8 @@ class SiemTransport {
 		}
 
 		// The stream_socket_client() call warns on an unreachable endpoint and
-		// returns false; the detail is already captured in $errstr/$errno,
-		// which the exception below re-reports.
+		// returns false. Its detail is not re-reported: a failure is described
+		// by class, status and host only (keepiq#728).
 		$errno = 0;
 		$errstr = '';
 		$socket = $this->withoutDiagnostics(
@@ -120,7 +136,7 @@ class SiemTransport {
 			}
 		);
 		if ($socket === false) {
-			throw new RuntimeException('syslog connect failed: ' . $errstr . ' (' . $errno . ')');
+			throw new SiemDeliveryException(message: 'syslog connect failed');
 		}
 
 		try {
@@ -131,7 +147,7 @@ class SiemTransport {
 			$frame = strlen($message) . ' ' . $message;
 			$written = fwrite($socket, $frame);
 			if ($written === false || $written < strlen($frame)) {
-				throw new RuntimeException('syslog write failed');
+				throw new SiemDeliveryException(message: 'syslog write failed');
 			}
 		} finally {
 			fclose($socket);
@@ -147,7 +163,7 @@ class SiemTransport {
 	 *
 	 * @return void
 	 *
-	 * @throws \RuntimeException On transport failure / non-2xx
+	 * @throws SiemDeliveryException On transport failure / non-2xx
 	 */
 	private function deliverWebhook(SiemSink $sink, string $payloadJson): void {
 		$headers = ['Content-Type' => 'application/json'];
@@ -168,7 +184,7 @@ class SiemTransport {
 		);
 		$status = $response->getStatusCode();
 		if ($status < 200 || $status > 299) {
-			throw new RuntimeException('webhook responded ' . $status);
+			throw new SiemDeliveryException(message: 'webhook did not accept the payload', httpStatus: $status);
 		}
 	}//end deliverWebhook()
 }//end class

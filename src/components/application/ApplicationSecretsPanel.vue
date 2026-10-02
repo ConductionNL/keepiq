@@ -101,6 +101,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns the Pinia application store with no domain logic.
+		 */
 		store() {
 			return useApplicationStore()
 		},
@@ -109,6 +112,9 @@ export default {
 	watch: {
 		applicationId: {
 			immediate: true,
+			/**
+			 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+			 */
 			handler() {
 				this.refresh()
 			},
@@ -144,6 +150,11 @@ export default {
 			}
 		},
 
+		/**
+		 * @param {string} iso ISO 8601 timestamp.
+		 *
+		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as a locale date string.
+		 */
 		formatDate(iso) {
 			if (!iso) {
 				return ''

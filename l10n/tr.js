@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Etiket ekle",
         "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF dışa aktarımı ŞİFRELENMEMİŞTİR. İndirilen dosyada her parola ve kullanıcı adı düz metin olarak okunabilir olacak. Dosyayı güvenli biçimde saklayın ve kullandıktan hemen sonra silin.",
+        "Root certificate expiring soon": "Kök sertifikanın süresi yakında doluyor",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Kasanın kök sertifikasının süresi %1$d gün içinde doluyor. Bundan önce yenileyin. Yenileme her şifreleme paketini yeniden imzalar.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Güvenlik ihlali yanıtının bir kısmı başarısız oldu ({failed} adım). Sunucu günlüğünü kontrol edin, ardından tamamlamak için paketi yeniden iptal edin.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Bu işlem {suite} paketini de iptal etti ve {migration} anahtar taşımasını sonlandırdı.",
         "Revoking the second suite deleted %n emergency-access contact.": "İkinci paketin iptali %n acil erişim kişisini sildi.",

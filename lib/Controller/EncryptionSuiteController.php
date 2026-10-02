@@ -336,6 +336,12 @@ class EncryptionSuiteController extends OCSController {
 		}//end try
 	}//end enrol()
 
+	#[NoAdminRequired]
+	#[VaultKeyProofRequired(
+		binds: ['encryptedPrivateKey'],
+		subject: 'routeParam:id',
+		purpose: VaultKeyProofService::PURPOSE_UPDATE_PRIVATE_KEY
+	)]
 	/**
 	 * Update the encrypted private key (routine password change).
 	 *
@@ -347,13 +353,8 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-master-password-change-routine
 	 */
-	#[NoAdminRequired]
-	#[VaultKeyProofRequired(
-		binds: ['encryptedPrivateKey'],
-		subject: 'routeParam:id',
-		purpose: VaultKeyProofService::PURPOSE_UPDATE_PRIVATE_KEY
-	)]
 	public function updatePrivateKey(string $id, string $encryptedPrivateKey): JSONResponse {
 		try {
 			$suite = $this->suiteService->getSuite($id);
@@ -731,6 +732,12 @@ class EncryptionSuiteController extends OCSController {
 
 	}//end endMigrationForCompromise()
 
+	#[NoAdminRequired]
+	#[VaultKeyProofRequired(
+		binds: ['publicKey', 'encryptedPrivateKey'],
+		subject: 'active',
+		purpose: VaultKeyProofService::PURPOSE_COMPROMISE_RECOVERY
+	)]
 	/**
 	 * Initiate compromise recovery: create new suite and migration record.
 	 *
@@ -743,13 +750,8 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
 	 * @spec openspec/changes/implement-link-sharing/tasks.md#5.2
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-master-password-change-compromise-recovery
 	 */
-	#[NoAdminRequired]
-	#[VaultKeyProofRequired(
-		binds: ['publicKey', 'encryptedPrivateKey'],
-		subject: 'active',
-		purpose: VaultKeyProofService::PURPOSE_COMPROMISE_RECOVERY
-	)]
 	public function compromiseRecovery(
 		string $publicKey,
 		string $encryptedPrivateKey,

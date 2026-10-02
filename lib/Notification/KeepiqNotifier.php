@@ -281,6 +281,17 @@ class KeepiqNotifier implements INotifier {
 				);
 				$this->withAdminSectionLink(notification: $notification);
 				return true;
+			case 'ca_root_expiring':
+				$rootDaysLeft = (int)($params['days_left'] ?? 0);
+				$notification->setParsedSubject((string)$l->t('Root certificate expiring soon'));
+				$notification->setParsedMessage(
+					(string)$l->t(
+						'The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.',
+						[$rootDaysLeft]
+					)
+				);
+				$this->withAdminSectionLink(notification: $notification);
+				return true;
 		}//end switch
 
 		return false;

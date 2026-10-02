@@ -144,6 +144,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
+		 */
 		vaultLocked() {
 			return useSessionStore().isLocked
 		},
@@ -155,6 +158,8 @@ export default {
 
 	/**
 	 * Load enrolled passkeys when WebAuthn is available.
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkeys-are-manageable-revocable-and-owner-scoped
 	 */
 	created() {
 		if (this.store.supported) {
@@ -184,6 +189,8 @@ export default {
 
 		/**
 		 * Close the enroll form and clear the captured master password.
+		 *
+		 * @spec exclude Form-state reset: closes the enroll form and clears its transient inputs.
 		 */
 		cancel() {
 			this.enrollOpen = false
@@ -196,6 +203,8 @@ export default {
 		 *
 		 * @param {string} iso The ISO timestamp.
 		 * @return {string}
+		 *
+		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as a locale date string.
 		 */
 		formatDate(iso) {
 			return new Date(iso).toLocaleDateString()

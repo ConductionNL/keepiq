@@ -113,7 +113,7 @@ class DeletionReport implements JsonSerializable {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function jsonSerialize(): array {
 		return [

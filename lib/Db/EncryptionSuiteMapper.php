@@ -279,7 +279,7 @@ class EncryptionSuiteMapper extends QBMapper {
 	 *
 	 * @return int The number of rows deleted
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function deleteByOwnerUser(string $ownerId): int {
 		$qb = $this->db->getQueryBuilder();

@@ -92,7 +92,7 @@ class EmergencyContactMapper extends QBMapper {
 	 *
 	 * @return int The number of rows deleted
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function deleteByUser(string $userId): int {
 		$qb = $this->db->getQueryBuilder();

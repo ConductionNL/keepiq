@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Lisa silt",
         "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF-eksport on KRÜPTIMATA. Iga parool ja kasutajanimi on allalaaditud failis loetavad lihttekstina. Hoia seda turvaliselt ja kustuta kohe pärast kasutamist.",
+        "Root certificate expiring soon": "Juursertifikaat aegub peagi",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Hoidla juursertifikaat aegub %1$d päeva pärast. Uuenda see enne seda. Uuendamine allkirjastab iga krüpteerimiskomplekti uuesti.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Osa ohustumisele reageerimisest ebaõnnestus ({failed} samm(u)). Kontrollige serveri logi ja tühistage seejärel komplekt uuesti, et see lõpetada.",
         "This also revoked suite {suite} and ended key migration {migration}.": "See tühistas ka komplekti {suite} ja lõpetas võtmete migratsiooni {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Teise komplekti tühistamine kustutas %n hädaabijuurdepääsu kontakti.",

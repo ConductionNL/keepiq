@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Додај ознака",
         "Could not change the tags. Try again.": "Ознаките не можеа да се променат. Обидете се повторно.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Извозот во CXF НЕ Е ШИФРИРАН. Секоја лозинка и најава ќе биде читлива како отворен текст во преземената датотека. Чувајте ја безбедно и избришете ја веднаш по употребата.",
+        "Root certificate expiring soon": "Коренскиот сертификат наскоро истекува",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Коренскиот сертификат на сефот истекува за %1$d ден(а). Обновете го пред тоа. Обновувањето повторно го потпишува секој пакет за шифрирање.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Дел од одговорот на компромитирање не успеа ({failed} чекор(и)). Проверете го дневникот на серверот, а потоа повторно отповикајте го пакетот за да го завршите.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Со ова е отповикан и пакетот {suite} и завршена миграцијата на клучеви {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Отповикувањето на вториот пакет избриша %n контакт за итен пристап.",

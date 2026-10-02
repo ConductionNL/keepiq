@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Προσθήκη ετικέτας",
         "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Μια εξαγωγή CXF ΔΕΝ ΕΙΝΑΙ ΚΡΥΠΤΟΓΡΑΦΗΜΕΝΗ. Κάθε κωδικός πρόσβασης και σύνδεση θα είναι αναγνώσιμα ως απλό κείμενο στο αρχείο που κατεβάζετε. Αποθηκεύστε το με ασφάλεια και διαγράψτε το αμέσως μετά τη χρήση.",
+        "Root certificate expiring soon": "Το πιστοποιητικό ρίζας λήγει σύντομα",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Το πιστοποιητικό ρίζας του θησαυροφυλακίου λήγει σε %1$d ημέρα(ες). Ανανεώστε το πριν από τότε. Η ανανέωση υπογράφει ξανά κάθε σουίτα κρυπτογράφησης.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Μέρος της απόκρισης στην παραβίαση απέτυχε ({failed} βήμα(τα)). Ελέγξτε το αρχείο καταγραφής του διακομιστή και ανακαλέστε ξανά τη σουίτα για να ολοκληρωθεί.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Αυτό ανακάλεσε επίσης τη σουίτα {suite} και τερμάτισε τη μετάβαση κλειδιών {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Η ανάκληση της δεύτερης σουίτας διέγραψε %n επαφή πρόσβασης έκτακτης ανάγκης.",

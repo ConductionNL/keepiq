@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Agiuntar ina etichetta",
         "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "In export CXF N'È BETG CRIPTÀ. Mintga pled-clav e mintga login vegn a pudair vegnir legì sco text cler en la datoteca telechargiada. Conservai la a moda segira e stizzai la immediatamain suenter l'utilisaziun.",
+        "Root certificate expiring soon": "Il certificat da ragisch scada prest",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Il certificat da ragisch da la cassaforta scada en %1$d di(s). Renovai el avant. La renovaziun suttascriva danovamain mintga suite da criptaziun.",
         "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Ina part da la reacziun a la cumpromissiun n’è betg reussida ({failed} pass). Controllai il protocol dal server e revocai lura danovamain la suite per la terminar.",
         "This also revoked suite {suite} and ended key migration {migration}.": "Quai ha er revocà la suite {suite} e terminà la migraziun da clavs {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "La revocaziun da la segunda suite ha stizzà %n contact d’access d’urgenza.",

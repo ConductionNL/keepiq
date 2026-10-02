@@ -149,10 +149,16 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Presentation state: reads the flagged boolean off the already-loaded honey status.
+		 */
 		flagged() {
 			return this.store.status?.flagged === true
 		},
 
+		/**
+		 * @spec openspec/specs/honey-credentials/spec.md#requirement-any-access-to-a-honey-secret-raises-a-high-severity-alert
+		 */
 		secretAlerts() {
 			return this.store.alerts.filter((a) => a.secretId === this.secretId)
 		},
@@ -160,6 +166,8 @@ export default {
 
 	/**
 	 * Load the flag state + alerts for this secret.
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 	 */
 	async created() {
 		const status = await this.store.fetchStatus(this.secretId)
@@ -175,6 +183,8 @@ export default {
 		 *
 		 * @param {boolean} checked The new switch state.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 		 */
 		async onToggle(checked) {
 			if (checked) {
@@ -189,6 +199,8 @@ export default {
 		 * Persist the placement note (re-flag upserts it).
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 		 */
 		async saveNote() {
 			if (this.flagged) {
@@ -201,6 +213,8 @@ export default {
 		 *
 		 * @param {object} alert The alert row.
 		 * @return {boolean}
+		 *
+		 * @spec openspec/specs/honey-credentials/spec.md#requirement-alert-storms-are-rate-limited-and-per-accessor-snoozable
 		 */
 		isSnoozed(alert) {
 			return (
@@ -214,6 +228,8 @@ export default {
 		 *
 		 * @param {string|null} iso The ISO timestamp.
 		 * @return {string}
+		 *
+		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as a locale string.
 		 */
 		formatDate(iso) {
 			if (!iso) {

@@ -290,6 +290,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
+		 */
 		formValid() {
 			if (this.form.endpoint === '') {
 				return false
@@ -323,6 +326,8 @@ export default {
 	methods: {
 		/**
 		 * Open the empty create form.
+		 *
+		 * @spec exclude Form-state reset: opens an empty sink create form with default values.
 		 */
 		startCreate() {
 			this.editingId = null
@@ -337,6 +342,8 @@ export default {
 		 * it is write-only).
 		 *
 		 * @param {object} sink The sink row.
+		 *
+		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 		 */
 		startEdit(sink) {
 			this.editingId = sink.id
@@ -480,6 +487,8 @@ export default {
 		 *
 		 * @param {object} sink The sink row.
 		 * @return {string}
+		 *
+		 * @spec exclude Presentation-only: maps a sink delivery status to a CSS class.
 		 */
 		statusClass(sink) {
 			if (sink.lastDeliveryStatus === 'ok') {
@@ -499,6 +508,8 @@ export default {
 		 *
 		 * @param {string|null} iso The ISO timestamp.
 		 * @return {string}
+		 *
+		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as a locale string.
 		 */
 		formatDate(iso) {
 			if (!iso) {

@@ -128,6 +128,8 @@ class X509CertificateAssembler {
 	 * @param string $oldCert The current PEM certificate to re-sign
 	 * @param string $intermediateCert The signing intermediate certificate (PEM)
 	 * @param string $intermediateKeyPem The decrypted intermediate private key (PEM)
+	 * @param string|null $fallbackCn CommonName to add when the old subject has none;
+	 *                                an existing commonName is always kept
 	 *
 	 * @return string|null The new PEM certificate, or null when signing failed.
 	 *
@@ -137,6 +139,7 @@ class X509CertificateAssembler {
 		string $oldCert,
 		string $intermediateCert,
 		string $intermediateKeyPem,
+		?string $fallbackCn = null,
 	): ?string {
 		try {
 			$old = new X509();
@@ -151,6 +154,11 @@ class X509CertificateAssembler {
 			$subject = new X509();
 			$subject->setPublicKey($old->getPublicKey());
 			$subject->setDN($old->getDN());
+			// The getDNProp() helper answers [] (or false) when the subject has no CN.
+			$existingCn = $old->getDNProp('id-at-commonName');
+			if ($fallbackCn !== null && $fallbackCn !== '' && in_array($existingCn, [false, []], true) === true) {
+				$subject->setDNProp('id-at-commonName', $fallbackCn);
+			}
 
 			$signer = new X509();
 			$signer->setStartDate('-1 day');

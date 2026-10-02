@@ -106,6 +106,8 @@ class SiemService {
 	 * @param AuditEvent $event The dispatched audit event
 	 *
 	 * @return array<string,mixed>|null
+	 *
+	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-forwarded-payload-carries-no-secret-material
 	 */
 	public function buildPayload(AuditEvent $event): ?array {
 		$eventType = $event->getEventType();
@@ -148,6 +150,8 @@ class SiemService {
 	 * @param array<string,mixed> $payload The forwarding payload
 	 *
 	 * @return int Rows enqueued
+	 *
+	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-backpressure-and-observability
 	 */
 	public function enqueue(array $payload): int {
 		$enqueued = 0;
@@ -250,8 +254,11 @@ class SiemService {
 
 			return true;
 		} catch (Throwable $exception) {
+			// Never the message: an HTTP client names the full sink URL in it,
+			// token and all. Class, status and host only (keepiq#728).
+			$failure = $this->transport->describeFailure(exception: $exception, sink: $sink);
 			$item->setAttempts($item->getAttempts() + 1);
-			$item->setLastError(substr($exception->getMessage(), 0, 500));
+			$item->setLastError($failure);
 			if ($item->getAttempts() >= self::MAX_ATTEMPTS) {
 				$item->setStatus('dead');
 			}
@@ -268,7 +275,7 @@ class SiemService {
 				$sink->setLastDeliveryStatus('dead');
 			}
 
-			$sink->setLastError(substr($exception->getMessage(), 0, 500));
+			$sink->setLastError($failure);
 			$sink->setConsecutiveFailures($sink->getConsecutiveFailures() + 1);
 			$this->sinkMapper->update($sink);
 
@@ -381,7 +388,7 @@ class SiemService {
 				);
 			} catch (Throwable $exception) {
 				$this->logger->warning(
-					'Keepiq: SIEM dead-letter notification failed: ' . $exception->getMessage(),
+					'Keepiq: SIEM dead-letter notification failed: '.(new SiemFailureOutcome())->classOf(exception: $exception),
 					['app' => 'keepiq']
 				);
 			}

@@ -60,7 +60,7 @@ class UserDeletedListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function handle(Event $event): void {
 		if (($event instanceof UserDeletedEvent) === false) {
