@@ -62,6 +62,21 @@ function sessionStore() {
 	return chrome.storage && chrome.storage.session ? chrome.storage.session : null
 }
 
+/**
+ * The page tab the popup acts on: the one a popped-out popup was opened over
+ * (by id), else the active tab of the current window.
+ *
+ * @param {number|undefined} tabId The pinned tab id, if any.
+ * @return {Promise<object|null>}
+ */
+async function targetTab(tabId) {
+	if (Number.isInteger(tabId)) {
+		return chrome.tabs.get(tabId).catch(() => null)
+	}
+	const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+	return tab || null
+}
+
 // The Generator tab's state (clients-extension-complete), built on first use
 // so it binds to the storage areas the browser provides at that time.
 let generatorState = null
@@ -71,11 +86,8 @@ function generatorModule() {
 		generatorState = buildGeneratorHandlers({
 			api,
 			activeAccount,
-			activeHost: async () => {
-				const [tab] = await chrome.tabs.query({
-					active: true,
-					currentWindow: true,
-				})
+			activeHost: async (payload) => {
+				const tab = await targetTab(payload?.tabId)
 				try {
 					const url = new URL(tab?.url || '')
 					return url.protocol === 'http:' || url.protocol === 'https:'
@@ -142,9 +154,13 @@ export async function onAlarm(alarm) {
 	}
 }
 
-// No sync runs while locked: the alarm goes with the key.
+// No sync runs while locked: the alarm goes with the key. The popup's last
+// tab is forgotten too, so a locked popup reopens on its first tab.
 vault.onLock((accountId) => {
 	chrome.alarms?.clear(SYNC_ALARM(accountId))
+	sessionStore()
+		?.remove('popup:lastTab')
+		.catch(() => {})
 })
 
 // Generator history goes whenever an account locks, for any reason.
@@ -506,7 +522,9 @@ async function doFill(payload) {
 	const cache = matchCache.get(account.id)
 	const row = cache ? cache.rows.get(payload.id) : undefined
 	if (!row) throw new Error('This login was not offered for this site')
-	const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+	// A popped-out popup names the tab it was opened over; its own window
+	// has no page to fill. The host check below applies either way.
+	const tab = await targetTab(payload.tabId)
 	if (!tab) return { filled: false }
 	if (hostOf(tab.url) !== cache.host) {
 		throw new Error('The page changed. Open Keepiq again to fill.')

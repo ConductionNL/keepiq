@@ -92,6 +92,8 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 		setTab: (url, id = 1) => {
 			tab = { id, url }
 		},
+		// Other tabs the popup can name by id (a popped-out popup).
+		otherTabs: new Map(),
 		runtime: {
 			id: EXTENSION_ID,
 			getURL: (path) => EXTENSION_BASE + path,
@@ -99,6 +101,11 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 		},
 		tabs: {
 			query: vi.fn(async () => [tab]),
+			get: vi.fn(async (id) => {
+				const found = id === tab.id ? tab : fake.otherTabs.get(id)
+				if (!found) throw new Error('No tab with id: ' + id)
+				return found
+			}),
 			sendMessage: vi.fn(async (tabId, msg, options) => {
 				filled.push(options ? { ...msg, tabId, options } : msg)
 				if (msg.type === 'fill-otp') return { filled: fake.otpFieldOnPage }

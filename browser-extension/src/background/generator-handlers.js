@@ -44,7 +44,7 @@ export function areaOrMemory(area) {
  * @param {object} deps The collaborators.
  * @param {object} deps.api The API client (fetchPolicy, fetchAccountEmail).
  * @param {() => Promise<object>} deps.activeAccount The active, paired account.
- * @param {() => Promise<string>} deps.activeHost The active tab's host name, or ''.
+ * @param {(payload?: {tabId?: number}) => Promise<string>} deps.activeHost The target tab's host name, or ''.
  * @param {object} deps.local The persistent storage area.
  * @param {object} deps.session The session storage area.
  * @return {{handlers: Record<string, Function>, forget: (accountId: string) => Promise<void>, clearHistory: (accountId: string) => Promise<void>}}
@@ -122,7 +122,7 @@ export function buildGeneratorHandlers({
 			 *
 			 * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-works-while-locked-and-offline
 			 */
-			'generator-context': async () => {
+			'generator-context': async (payload = {}) => {
 				const account = await activeAccount()
 				const policy = await policyFor(account)
 				const stored = (await local.get(OPTIONS_KEY(account.id)))[
@@ -136,7 +136,7 @@ export function buildGeneratorHandlers({
 					policy,
 					options,
 					history: await historyOf(account.id),
-					website: await activeHost().catch(() => ''),
+					website: await activeHost(payload).catch(() => ''),
 				}
 			},
 
