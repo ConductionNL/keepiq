@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Migration;
 
-use OCA\Keepiq\Migration\Version001004Date20261002161000;
+use OCA\Keepiq\Migration\Version001008Date20261002181000;
 use OCP\DB\ISchemaWrapper;
 use OCP\DB\Schema\IColumn;
 use OCP\Migration\IOutput;
@@ -80,7 +80,7 @@ class UseOnlyExpiringSharesMigrationTest extends TestCase {
 			}
 		);
 
-		return (new Version001004Date20261002161000())
+		return (new Version001008Date20261002181000())
 			->changeSchema($this->createMock(IOutput::class), static fn () => $schema, []);
 	}
 
