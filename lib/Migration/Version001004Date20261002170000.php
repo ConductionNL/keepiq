@@ -47,6 +47,8 @@ class Version001004Date20261002170000 extends SimpleMigrationStep {
 	 * @return ISchemaWrapper|null
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Interface-mandated signature.
+	 *
+	 * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#1.1
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		$schema = $schemaClosure();

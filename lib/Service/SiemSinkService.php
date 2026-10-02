@@ -43,6 +43,24 @@ use Throwable;
  * CRUD and test-fire for SIEM sinks.
  */
 class SiemSinkService {
+	/**
+	 * Sink types: the generic syslog and webhook transports and the named
+	 * Splunk HEC and Microsoft Sentinel connectors.
+	 *
+	 * @var string[]
+	 */
+	public const TYPES = ['syslog', 'webhook', 'splunk_hec', 'sentinel'];
+
+	/**
+	 * The non-secret options each connector accepts.
+	 *
+	 * @var array<string,string[]>
+	 */
+	public const CONNECTOR_OPTIONS = [
+		'splunk_hec' => ['index', 'sourcetype'],
+		'sentinel' => ['tenantId', 'clientId', 'dataCollectionEndpoint', 'dcrImmutableId', 'streamName', 'authorityHost'],
+	];
+
 
 	/**
 	 * The sink audit trail.
@@ -90,8 +108,8 @@ class SiemSinkService {
 	 */
 	public function createSink(string $adminUid, array $params): SiemSink {
 		$type = (string)($params['type'] ?? '');
-		if (in_array($type, ['syslog', 'webhook'], true) === false) {
-			throw new InvalidArgumentException('type must be syslog or webhook');
+		if (in_array($type, self::TYPES, true) === false) {
+			throw new InvalidArgumentException('type must be one of: ' . implode(', ', self::TYPES));
 		}
 
 		$endpoint = (string)($params['endpoint'] ?? '');
@@ -99,8 +117,12 @@ class SiemSinkService {
 			throw new InvalidArgumentException('endpoint is required');
 		}
 
-		if ($type === 'webhook' && str_starts_with($endpoint, 'https://') === false) {
-			throw new InvalidArgumentException('webhook endpoints must be https://');
+		$this->assertEndpoint(type: $type, endpoint: $endpoint);
+		$format = $this->checkedFormat(type: $type, format: (string)($params['format'] ?? 'json'));
+		$options = $this->checkedOptions(type: $type, options: $params['connectorOptions'] ?? []);
+		$credential = $params['credential'] ?? '';
+		if (in_array($type, ['splunk_hec', 'sentinel'], true) === true && (is_string($credential) === false || $credential === '')) {
+			throw new InvalidArgumentException($type . ' needs a credential (the HEC token or the client secret)');
 		}
 
 		$sink = new SiemSink();
@@ -111,6 +133,8 @@ class SiemSinkService {
 		$sink->setEndpoint($endpoint);
 		$sink->setTls((bool)($params['tls'] ?? true));
 		$sink->setQueueCap(max(10, (int)($params['queueCap'] ?? 1000)));
+		$sink->setFormat($format);
+		$sink->setConnectorOptions($this->encodeOptions(options: $options));
 		$sink->setCreatedBy($adminUid);
 		$sink->setCreatedAt(new DateTime());
 		$this->applySecretAndFilter(sink: $sink, params: $params);
@@ -146,7 +170,17 @@ class SiemSinkService {
 		}
 
 		if (isset($params['endpoint']) === true && (string)$params['endpoint'] !== '') {
+			$this->assertEndpoint(type: $sink->getType(), endpoint: (string)$params['endpoint']);
 			$sink->setEndpoint((string)$params['endpoint']);
+		}
+
+		if (isset($params['format']) === true && (string)$params['format'] !== '') {
+			$sink->setFormat($this->checkedFormat(type: $sink->getType(), format: (string)$params['format']));
+		}
+
+		if (array_key_exists('connectorOptions', $params) === true && $params['connectorOptions'] !== null) {
+			$options = $this->checkedOptions(type: $sink->getType(), options: $params['connectorOptions']);
+			$sink->setConnectorOptions($this->encodeOptions(options: $options));
 		}
 
 		if (isset($params['tls']) === true) {
@@ -161,7 +195,7 @@ class SiemSinkService {
 		$sink->setUpdatedAt(new DateTime());
 		$sink = $this->sinkMapper->update($sink);
 
-		$this->auditTrail->recordSinkUpdated(actorId: $adminUid, sinkId: $sinkId);
+		$this->auditTrail->recordSinkUpdated(actorId: $adminUid, sinkId: $sinkId, type: $sink->getType());
 		$this->reportSinksChanged();
 
 		return $sink;
@@ -260,6 +294,13 @@ class SiemSinkService {
 			$sink->setHmacSecretEnc($this->crypto->encrypt($secret));
 		}
 
+		// The connector credential follows the HMAC secret's rule: write-only,
+		// encrypted at rest, and blank keeps the stored one.
+		$credential = $params['credential'] ?? null;
+		if (is_string($credential) === true && $credential !== '') {
+			$sink->setCredentialEnc($this->crypto->encrypt($credential));
+		}
+
 		if (array_key_exists('categoryFilter', $params) === true) {
 			$filter = $params['categoryFilter'];
 			$encoded = null;
@@ -270,6 +311,114 @@ class SiemSinkService {
 			$sink->setCategoryFilter($encoded);
 		}
 	}//end applySecretAndFilter()
+
+	/**
+	 * Refuse an endpoint the sink type cannot use: every HTTP transport
+	 * (webhook, Splunk HEC, Sentinel) must be https://.
+	 *
+	 * @param string $type The sink type
+	 * @param string $endpoint The endpoint
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException On a non-https HTTP endpoint
+	 */
+	private function assertEndpoint(string $type, string $endpoint): void {
+		if ($type !== 'syslog' && str_starts_with($endpoint, 'https://') === false) {
+			throw new InvalidArgumentException($type . ' endpoints must be https://');
+		}
+	}//end assertEndpoint()
+
+	/**
+	 * The format a sink may use: json everywhere, cef on syslog only.
+	 *
+	 * @param string $type The sink type
+	 * @param string $format The requested format
+	 *
+	 * @return string
+	 *
+	 * @throws InvalidArgumentException On an unknown format or cef off syslog
+	 *
+	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md
+	 */
+	private function checkedFormat(string $type, string $format): string {
+		if (in_array($format, ['json', 'cef'], true) === false) {
+			throw new InvalidArgumentException('format must be json or cef');
+		}
+
+		if ($format === 'cef' && $type !== 'syslog') {
+			throw new InvalidArgumentException('format cef is only for syslog sinks');
+		}
+
+		return $format;
+	}//end checkedFormat()
+
+	/**
+	 * Validate connector options against the sink type: only the keys the
+	 * connector knows, the required Sentinel settings present, https for the
+	 * Sentinel authority host, and the defaults filled in.
+	 *
+	 * @param string $type The sink type
+	 * @param mixed $options The requested options
+	 *
+	 * @return array<string,string>
+	 *
+	 * @throws InvalidArgumentException On unknown, missing or invalid options
+	 *
+	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md
+	 */
+	private function checkedOptions(string $type, mixed $options): array {
+		if (is_array($options) === false) {
+			throw new InvalidArgumentException('connectorOptions must be an object');
+		}
+
+		$allowed = self::CONNECTOR_OPTIONS[$type] ?? [];
+		$clean = [];
+		foreach ($options as $key => $value) {
+			if (in_array((string)$key, $allowed, true) === false) {
+				throw new InvalidArgumentException('connectorOptions.' . $key . ' is not an option of ' . $type);
+			}
+
+			if ((string)$value !== '') {
+				$clean[(string)$key] = (string)$value;
+			}
+		}
+
+		if ($type !== 'sentinel') {
+			return $clean;
+		}
+
+		foreach (['tenantId', 'clientId', 'dataCollectionEndpoint', 'dcrImmutableId'] as $required) {
+			if (isset($clean[$required]) === false) {
+				throw new InvalidArgumentException('sentinel needs connectorOptions.' . $required);
+			}
+		}
+
+		$clean['streamName'] = ($clean['streamName'] ?? 'Custom-KeepiqAudit');
+		$clean['authorityHost'] = ($clean['authorityHost'] ?? 'https://login.microsoftonline.com');
+		foreach (['dataCollectionEndpoint', 'authorityHost'] as $url) {
+			if (str_starts_with($clean[$url], 'https://') === false) {
+				throw new InvalidArgumentException('connectorOptions.' . $url . ' must be https://');
+			}
+		}
+
+		return $clean;
+	}//end checkedOptions()
+
+	/**
+	 * Encode options for storage, or null when there are none.
+	 *
+	 * @param array<string,string> $options The options
+	 *
+	 * @return string|null
+	 */
+	private function encodeOptions(array $options): ?string {
+		if ($options === []) {
+			return null;
+		}
+
+		return (string)json_encode($options);
+	}//end encodeOptions()
 
 	/**
 	 * Ask integriq to resolve SIEM export again after a sink change.

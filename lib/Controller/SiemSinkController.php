@@ -114,13 +114,16 @@ class SiemSinkController extends OCSController {
 	 * Create a sink.
 	 *
 	 * @param string $name Display name
-	 * @param string $type 'syslog' or 'webhook'
-	 * @param string $endpoint host:port (syslog) or https URL (webhook)
+	 * @param string $type 'syslog', 'webhook', 'splunk_hec' or 'sentinel'
+	 * @param string $endpoint host:port (syslog) or https URL (the others)
 	 * @param bool $tls TLS transport for syslog
 	 * @param string $hmacSecret Optional write-only webhook HMAC secret
 	 * @param array $categoryFilter Optional category slugs; empty = all
 	 * @param int $queueCap Per-sink pending-queue cap
 	 * @param bool $enabled Whether delivery is active
+	 * @param string $format Message format: json, or cef on syslog
+	 * @param string $credential Write-only connector credential (HEC token, client secret)
+	 * @param array $connectorOptions Non-secret connector settings
 	 *
 	 * @NoAdminRequired
 	 *
@@ -144,6 +147,9 @@ class SiemSinkController extends OCSController {
 		array $categoryFilter = [],
 		int $queueCap = 1000,
 		bool $enabled = true,
+		string $format = 'json',
+		string $credential = '',
+		array $connectorOptions = [],
 	): JSONResponse {
 		$adminUid = $this->adminUid();
 		if ($adminUid === null) {
@@ -162,6 +168,9 @@ class SiemSinkController extends OCSController {
 					'categoryFilter' => $categoryFilter,
 					'queueCap' => $queueCap,
 					'enabled' => $enabled,
+					'format' => $format,
+					'credential' => $credential,
+					'connectorOptions' => $connectorOptions,
 				],
 			);
 		} catch (InvalidArgumentException $exception) {
@@ -182,6 +191,9 @@ class SiemSinkController extends OCSController {
 	 * @param array|null $categoryFilter Category slugs, null preserves
 	 * @param int|null $queueCap Queue cap, null preserves
 	 * @param bool|null $enabled Active flag, null preserves
+	 * @param string $format Message format json|cef (blank preserves)
+	 * @param string $credential Write-only connector credential (blank preserves)
+	 * @param array|null $connectorOptions Connector settings, null preserves
 	 *
 	 * @NoAdminRequired
 	 *
@@ -199,6 +211,9 @@ class SiemSinkController extends OCSController {
 		?array $categoryFilter = null,
 		?int $queueCap = null,
 		?bool $enabled = null,
+		string $format = '',
+		string $credential = '',
+		?array $connectorOptions = null,
 	): JSONResponse {
 		$adminUid = $this->adminUid();
 		if ($adminUid === null) {
@@ -215,10 +230,23 @@ class SiemSinkController extends OCSController {
 			enabled: $enabled
 		);
 
+		// Connector fields: blank format and a null options object mean
+		// "unchanged"; the credential is always forwarded, '' keeps it.
+		$params['credential'] = $credential;
+		if ($format !== '') {
+			$params['format'] = $format;
+		}
+
+		if ($connectorOptions !== null) {
+			$params['connectorOptions'] = $connectorOptions;
+		}
+
 		try {
 			$sink = $this->service->updateSink(adminUid: $adminUid, sinkId: $id, params: $params);
 		} catch (DoesNotExistException) {
 			return new JSONResponse(data: ['message' => 'Sink not found'], statusCode: Http::STATUS_NOT_FOUND);
+		} catch (InvalidArgumentException $exception) {
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
 		}
 
 		return new JSONResponse(data: $sink->jsonSerialize());
