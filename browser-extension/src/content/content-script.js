@@ -14,6 +14,7 @@
  * No secret is ever stored here; the worker owns all key material.
  */
 
+import { watchForOtpField } from './otp-watch.js'
 import { showSavePrompt } from './save-prompt.js'
 
 const USERNAME_SELECTORS = [
@@ -219,6 +220,18 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 })
 
 attachSubmitCapture()
+
+// A code field on the step after the login: tell the worker, which fills it
+// only when a login fill on this site in this tab asked for it.
+watchForOtpField({
+	doc: document,
+	find: () => firstVisible(OTP_SELECTORS),
+	report: () => {
+		chrome.runtime
+			.sendMessage({ type: 'otp-field-detected', payload: {} })
+			.catch(() => {})
+	},
+})
 
 // --- WebAuthn relay (extension-passkey-provider, page-context shim path) ---
 
