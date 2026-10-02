@@ -60,7 +60,7 @@ class CompromiseContainmentService {
 	 *
 	 * @param SecretMapper           $secretMapper           Blast-radius lookup and stamp
 	 * @param ShareTargetMapper      $shareTargetMapper      Resolves shared sources and outbound copies
-	 * @param EmergencyContactMapper $emergencyContactMapper Finds grantors exposed through the revoked key
+	 * @param EmergencyContactMapper $contactMapper Finds grantors exposed through the revoked key
 	 * @param NotificationService    $notificationService    Warns the affected users
 	 * @param MigrationService       $migrationService       Revokes the owner's link shares and passkeys
 	 * @param IProvider              $tokenProvider          Ends the owner's sessions and app passwords
@@ -72,7 +72,7 @@ class CompromiseContainmentService {
 	public function __construct(
 		private SecretMapper $secretMapper,
 		private ShareTargetMapper $shareTargetMapper,
-		private EmergencyContactMapper $emergencyContactMapper,
+		private EmergencyContactMapper $contactMapper,
 		private NotificationService $notificationService,
 		private MigrationService $migrationService,
 		private IProvider $tokenProvider,
@@ -251,7 +251,7 @@ class CompromiseContainmentService {
 	 */
 	private function collectGrantors(CompromiseBlastRadius $radius, string $suiteId): void {
 		try {
-			foreach ($this->emergencyContactMapper->findByGranteeSuite($suiteId) as $contact) {
+			foreach ($this->contactMapper->findByGranteeSuite($suiteId) as $contact) {
 				if ($contact->getState() !== EmergencyContact::STATE_APPROVED) {
 					continue;
 				}

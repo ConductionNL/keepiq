@@ -61,6 +61,12 @@ use RuntimeException;
  *   a suite that is part of an in-progress migration (keepiq#803). Splitting
  *   the two revoke endpoints off would duplicate validateOwnership() and the
  *   emergency-access safeguard, not remove any branch.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) 11 against a threshold of 10.
+ *   The eleventh is reenrol(): the same enrolment as create(), but it carries
+ *   #[PasswordConfirmationRequired] for a user whose suites were all revoked
+ *   (keepiq#860). Nextcloud reads that attribute per action, so the stricter
+ *   path needs its own method; a separate controller would have to duplicate
+ *   the private enrol() body it shares with create().
  */
 class EncryptionSuiteController extends OCSController {
 	/**

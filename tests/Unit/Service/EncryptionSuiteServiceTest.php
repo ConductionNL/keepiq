@@ -98,7 +98,7 @@ class EncryptionSuiteServiceTest extends TestCase {
 				logger: $logger,
 			),
 			logger: $logger,
-			auditEntries: $auditEntries,
+			reinstateGuard: new \OCA\Keepiq\Service\SuiteReinstateGuard(mapper: $this->mapper, auditEntries: $auditEntries),
 		);
 	}//end setUp()
 
@@ -360,7 +360,7 @@ class EncryptionSuiteServiceTest extends TestCase {
 			mapper: $this->mapper,
 			provisioning: $this->createMock(EncryptionSuiteProvisioningService::class),
 			logger: $this->createMock(LoggerInterface::class),
-			auditEntries: $audit,
+			reinstateGuard: new \OCA\Keepiq\Service\SuiteReinstateGuard(mapper: $this->mapper, auditEntries: $audit),
 		);
 	}//end serviceWithRevocation()
 

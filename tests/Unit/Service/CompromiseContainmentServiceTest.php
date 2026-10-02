@@ -139,7 +139,7 @@ class CompromiseContainmentServiceTest extends TestCase {
 		$this->service = new CompromiseContainmentService(
 			secretMapper: $this->secretMapper,
 			shareTargetMapper: $this->shareTargetMapper,
-			emergencyContactMapper: $this->emergencyContactMapper,
+			contactMapper: $this->emergencyContactMapper,
 			notificationService: $this->notificationService,
 			migrationService: $this->migrationService,
 			tokenProvider: $this->tokenProvider,
@@ -230,7 +230,7 @@ class CompromiseContainmentServiceTest extends TestCase {
 		$service = new CompromiseContainmentService(
 			secretMapper: $this->secretMapper,
 			shareTargetMapper: $this->shareTargetMapper,
-			emergencyContactMapper: $this->emergencyContactMapper,
+			contactMapper: $this->emergencyContactMapper,
 			notificationService: $notificationService,
 			migrationService: $this->migrationService,
 			tokenProvider: $this->tokenProvider,
@@ -368,7 +368,7 @@ class CompromiseContainmentServiceTest extends TestCase {
 		$service = new CompromiseContainmentService(
 			secretMapper: $this->secretMapper,
 			shareTargetMapper: $this->shareTargetMapper,
-			emergencyContactMapper: $emergencyContactMapper,
+			contactMapper: $emergencyContactMapper,
 			notificationService: $this->notificationService,
 			migrationService: $this->migrationService,
 			tokenProvider: $this->tokenProvider,
