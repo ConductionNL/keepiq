@@ -1269,7 +1269,24 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Oznak ni bilo mogoče spremeniti. Poskusite znova.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Izvoz v CXF NI ŠIFRIRAN. Vsako geslo in prijava bosta v preneseni datoteki berljiva kot navadno besedilo. Datoteko varno shranite in jo takoj po uporabi izbrišite.",
         "Root certificate expiring soon": "Korensko potrdilo kmalu poteče",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Korensko potrdilo trezorja poteče čez %1$d dni. Obnovite ga pred tem. Obnova znova podpiše vsak šifrirni paket."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Korensko potrdilo trezorja poteče čez %1$d dni. Obnovite ga pred tem. Obnova znova podpiše vsak šifrirni paket.",
+        "Archives to keep": "Arhivi za hrambo",
+        "Back up every vault automatically": "Samodejno varnostno kopiraj vsak trezor",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Varnostno kopirajte vsak trezor po urniku. Arhivi vsebujejo le šifrirano besedilo in se obnovijo z occ.",
+        "Back up now": "Kopiraj zdaj",
+        "Backup public key (PEM, optional)": "Javni ključ varnostne kopije (PEM, neobvezno)",
+        "Backup requested for the next cron run": "Kopija zahtevana za naslednji zagon crona",
+        "Encrypted": "Šifrirano",
+        "Every (hours)": "Vsakih (ur)",
+        "Last backup {when} failed: {error}": "Zadnja kopija {when} ni uspela: {error}",
+        "Last backup {when} succeeded.": "Zadnja kopija {when} je uspela.",
+        "No": "Ne",
+        "No archives yet.": "Še ni arhivov.",
+        "Size": "Velikost",
+        "Vault backups": "Varnostne kopije trezorja",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "S ključem se vsak arhiv šifrira zanj. Zasebni ključ hranite zunaj tega strežnika: potrebujete ga za preverjanje ali obnovo.",
+        "Written": "Zapisano",
+        "Yes": "Da"
     },
     "nplurals=2; plural=(n != 1);"
 )

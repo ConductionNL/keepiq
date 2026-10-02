@@ -1268,7 +1268,24 @@
         "Could not change the tags. Try again.": "Nie udało się zmienić tagów. Spróbuj ponownie.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Eksport CXF jest NIEZASZYFROWANY. Każde hasło i każdy login będą czytelne jako zwykły tekst w pobranym pliku. Przechowuj go bezpiecznie i usuń natychmiast po użyciu.",
         "Root certificate expiring soon": "Certyfikat główny wkrótce wygaśnie",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certyfikat główny sejfu wygaśnie za %1$d dni. Odnów go wcześniej. Odnowienie ponownie podpisuje każdy zestaw szyfrowania."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certyfikat główny sejfu wygaśnie za %1$d dni. Odnów go wcześniej. Odnowienie ponownie podpisuje każdy zestaw szyfrowania.",
+        "Archives to keep": "Archiwa do zachowania",
+        "Back up every vault automatically": "Automatycznie twórz kopię każdego sejfu",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Twórz kopię każdego sejfu według harmonogramu. Archiwa zawierają tylko szyfrogram i przywraca się je przez occ.",
+        "Back up now": "Utwórz kopię teraz",
+        "Backup public key (PEM, optional)": "Klucz publiczny kopii (PEM, opcjonalny)",
+        "Backup requested for the next cron run": "Kopia zamówiona na następne uruchomienie crona",
+        "Encrypted": "Zaszyfrowane",
+        "Every (hours)": "Co (godzin)",
+        "Last backup {when} failed: {error}": "Ostatnia kopia {when} nieudana: {error}",
+        "Last backup {when} succeeded.": "Ostatnia kopia {when} udana.",
+        "No": "Nie",
+        "No archives yet.": "Brak archiwów.",
+        "Size": "Rozmiar",
+        "Vault backups": "Kopie sejfu",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Z kluczem każde archiwum jest dla niego szyfrowane. Trzymaj klucz prywatny poza tym serwerem: jest potrzebny do weryfikacji lub przywrócenia.",
+        "Written": "Zapisano",
+        "Yes": "Tak"
     },
     "plurals": null
 }

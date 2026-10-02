@@ -1268,7 +1268,24 @@
         "Could not change the tags. Try again.": "No s'han pogut canviar les etiquetes. Torneu-ho a provar.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Una exportació CXF NO ESTÀ XIFRADA. Totes les contrasenyes i inicis de sessió es podran llegir com a text pla al fitxer baixat. Deseu-lo de manera segura i suprimiu-lo immediatament després d'usar-lo.",
         "Root certificate expiring soon": "El certificat arrel caduca aviat",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "El certificat arrel de la caixa forta caduca d'aquí a %1$d dia(es). Renoveu-lo abans. En renovar-lo es torna a signar cada suite de xifratge."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "El certificat arrel de la caixa forta caduca d'aquí a %1$d dia(es). Renoveu-lo abans. En renovar-lo es torna a signar cada suite de xifratge.",
+        "Archives to keep": "Arxius que cal conservar",
+        "Back up every vault automatically": "Fes còpia de cada caixa forta automàticament",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Feu còpia de cada caixa forta segons una planificació. Els arxius només contenen text xifrat i es restauren amb occ.",
+        "Back up now": "Fes còpia ara",
+        "Backup public key (PEM, optional)": "Clau pública de còpia (PEM, opcional)",
+        "Backup requested for the next cron run": "Còpia sol·licitada per a la propera execució de cron",
+        "Encrypted": "Xifrat",
+        "Every (hours)": "Cada (hores)",
+        "Last backup {when} failed: {error}": "La darrera còpia {when} ha fallat: {error}",
+        "Last backup {when} succeeded.": "La darrera còpia {when} ha funcionat.",
+        "No": "No",
+        "No archives yet.": "Encara no hi ha arxius.",
+        "Size": "Mida",
+        "Vault backups": "Còpies de la caixa forta",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Amb una clau, cada arxiu es xifra per a ella. Guardeu la clau privada fora d'aquest servidor: la necessiteu per verificar o restaurar.",
+        "Written": "Escrit",
+        "Yes": "Sí"
     },
     "plurals": null
 }

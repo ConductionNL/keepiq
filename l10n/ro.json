@@ -1268,7 +1268,24 @@
         "Could not change the tags. Try again.": "Etichetele nu au putut fi schimbate. Încercați din nou.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Un export CXF NU ESTE CRIPTAT. Fiecare parolă și nume de utilizator vor fi lizibile ca text simplu în fișierul descărcat. Păstrați-l în siguranță și ștergeți-l imediat după utilizare.",
         "Root certificate expiring soon": "Certificatul rădăcină expiră în curând",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certificatul rădăcină al seifului expiră în %1$d zi(le). Reînnoiți-l înainte. Reînnoirea semnează din nou fiecare suită de criptare."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certificatul rădăcină al seifului expiră în %1$d zi(le). Reînnoiți-l înainte. Reînnoirea semnează din nou fiecare suită de criptare.",
+        "Archives to keep": "Arhive de păstrat",
+        "Back up every vault automatically": "Fă automat copie fiecărui seif",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Faceți copie fiecărui seif după un program. Arhivele conțin doar text cifrat și se restaurează cu occ.",
+        "Back up now": "Fă copie acum",
+        "Backup public key (PEM, optional)": "Cheie publică de copie (PEM, opțională)",
+        "Backup requested for the next cron run": "Copie cerută pentru următoarea rulare cron",
+        "Encrypted": "Criptată",
+        "Every (hours)": "La fiecare (ore)",
+        "Last backup {when} failed: {error}": "Ultima copie {when} a eșuat: {error}",
+        "Last backup {when} succeeded.": "Ultima copie {when} a reușit.",
+        "No": "Nu",
+        "No archives yet.": "Încă nu există arhive.",
+        "Size": "Mărime",
+        "Vault backups": "Copiile seifului",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Cu o cheie, fiecare arhivă este criptată pentru ea. Păstrați cheia privată în afara acestui server: aveți nevoie de ea pentru verificare sau restaurare.",
+        "Written": "Scrisă",
+        "Yes": "Da"
     },
     "plurals": null
 }

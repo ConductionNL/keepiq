@@ -1268,7 +1268,24 @@
         "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF-eksport on KRÜPTIMATA. Iga parool ja kasutajanimi on allalaaditud failis loetavad lihttekstina. Hoia seda turvaliselt ja kustuta kohe pärast kasutamist.",
         "Root certificate expiring soon": "Juursertifikaat aegub peagi",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Hoidla juursertifikaat aegub %1$d päeva pärast. Uuenda see enne seda. Uuendamine allkirjastab iga krüpteerimiskomplekti uuesti."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Hoidla juursertifikaat aegub %1$d päeva pärast. Uuenda see enne seda. Uuendamine allkirjastab iga krüpteerimiskomplekti uuesti.",
+        "Archives to keep": "Säilitatavad arhiivid",
+        "Back up every vault automatically": "Varunda iga hoidla automaatselt",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Varundage iga hoidla ajakava järgi. Arhiivid sisaldavad ainult krüpteeritud teksti ja taastatakse occ-ga.",
+        "Back up now": "Varunda kohe",
+        "Backup public key (PEM, optional)": "Varunduse avalik võti (PEM, valikuline)",
+        "Backup requested for the next cron run": "Varundus taotletud järgmiseks croni käivituseks",
+        "Encrypted": "Krüpteeritud",
+        "Every (hours)": "Iga (tunni järel)",
+        "Last backup {when} failed: {error}": "Viimane varundus {when} ebaõnnestus: {error}",
+        "Last backup {when} succeeded.": "Viimane varundus {when} õnnestus.",
+        "No": "Ei",
+        "No archives yet.": "Arhiive veel pole.",
+        "Size": "Suurus",
+        "Vault backups": "Hoidla varundused",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Võtmega krüpteeritakse iga arhiiv selle jaoks. Hoidke privaatvõtit sellest serverist väljas: seda on vaja kontrollimiseks või taastamiseks.",
+        "Written": "Kirjutatud",
+        "Yes": "Jah"
     },
     "plurals": null
 }

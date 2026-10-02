@@ -1268,7 +1268,24 @@
         "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF-útflutningur er ÓDULKÓÐAÐUR. Hvert lykilorð og innskráningarnafn verður læsilegt sem ódulkóðaður texti í skránni sem er hlaðið niður. Varðveittu hana á öruggum stað og eyddu henni strax eftir notkun.",
         "Root certificate expiring soon": "Rótarvottorð rennur brátt út",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Rótarvottorð hólfsins rennur út eftir %1$d dag/daga. Endurnýjaðu það fyrir þann tíma. Endurnýjun undirritar hverja dulkóðunarsvítu upp á nýtt."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Rótarvottorð hólfsins rennur út eftir %1$d dag/daga. Endurnýjaðu það fyrir þann tíma. Endurnýjun undirritar hverja dulkóðunarsvítu upp á nýtt.",
+        "Archives to keep": "Skjalasöfn sem á að geyma",
+        "Back up every vault automatically": "Taka öryggisafrit af hverju hólfi sjálfkrafa",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Taktu öryggisafrit af hverju hólfi samkvæmt áætlun. Söfnin innihalda aðeins dulkóðaðan texta og eru endurheimt með occ.",
+        "Back up now": "Taka öryggisafrit núna",
+        "Backup public key (PEM, optional)": "Opinber lykill öryggisafrits (PEM, valfrjálst)",
+        "Backup requested for the next cron run": "Öryggisafrit pantað fyrir næstu cron-keyrslu",
+        "Encrypted": "Dulkóðað",
+        "Every (hours)": "Á (klukkustunda) fresti",
+        "Last backup {when} failed: {error}": "Síðasta öryggisafrit {when} mistókst: {error}",
+        "Last backup {when} succeeded.": "Síðasta öryggisafrit {when} tókst.",
+        "No": "Nei",
+        "No archives yet.": "Engin skjalasöfn enn.",
+        "Size": "Stærð",
+        "Vault backups": "Öryggisafrit hólfs",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Með lykli er hvert safn dulkóðað fyrir hann. Geymdu einkalykilinn utan þessa þjóns: þú þarft hann til að staðfesta eða endurheimta.",
+        "Written": "Skrifað",
+        "Yes": "Já"
     },
     "plurals": null
 }

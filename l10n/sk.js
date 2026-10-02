@@ -1269,7 +1269,24 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Štítky nemožno zmeniť. Skúste to znova.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Export do CXF NIE JE ZAŠIFROVANÝ. Každé heslo a prihlasovacie meno bude v stiahnutom súbore čitateľné ako otvorený text. Uložte ho bezpečne a hneď po použití odstráňte.",
         "Root certificate expiring soon": "Koreňový certifikát čoskoro vyprší",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Koreňový certifikát trezoru vyprší o %1$d dní. Obnovte ho predtým. Obnovenie znova podpíše každú šifrovaciu sadu."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Koreňový certifikát trezoru vyprší o %1$d dní. Obnovte ho predtým. Obnovenie znova podpíše každú šifrovaciu sadu.",
+        "Archives to keep": "Archívy na uchovanie",
+        "Back up every vault automatically": "Automaticky zálohovať každý trezor",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Zálohujte každý trezor podľa plánu. Archívy obsahujú len šifrovaný text a obnovujú sa cez occ.",
+        "Back up now": "Zálohovať teraz",
+        "Backup public key (PEM, optional)": "Verejný kľúč zálohy (PEM, voliteľný)",
+        "Backup requested for the next cron run": "Záloha vyžiadaná na ďalší beh cronu",
+        "Encrypted": "Šifrované",
+        "Every (hours)": "Každých (hodín)",
+        "Last backup {when} failed: {error}": "Posledná záloha {when} zlyhala: {error}",
+        "Last backup {when} succeeded.": "Posledná záloha {when} prebehla.",
+        "No": "Nie",
+        "No archives yet.": "Zatiaľ žiadne archívy.",
+        "Size": "Veľkosť",
+        "Vault backups": "Zálohy trezoru",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "S kľúčom sa každý archív šifruje preň. Súkromný kľúč uchovávajte mimo tohto servera: potrebujete ho na overenie alebo obnovenie.",
+        "Written": "Zapísané",
+        "Yes": "Áno"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1268,7 +1268,24 @@
         "Could not change the tags. Try again.": "Не вдалося змінити мітки. Спробуйте ще раз.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Експорт до CXF НЕ ЗАШИФРОВАНИЙ. Кожен пароль і логін будуть читабельними як звичайний текст у завантаженому файлі. Зберігайте файл у надійному місці та вилучіть його одразу після використання.",
         "Root certificate expiring soon": "Термін дії кореневого сертифіката скоро спливе",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Термін дії кореневого сертифіката сховища спливає через %1$d дн. Оновіть його до цього. Оновлення заново підписує кожен набір шифрування."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Термін дії кореневого сертифіката сховища спливає через %1$d дн. Оновіть його до цього. Оновлення заново підписує кожен набір шифрування.",
+        "Archives to keep": "Скільки архівів зберігати",
+        "Back up every vault automatically": "Автоматично створювати копію кожного сховища",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Створюйте копію кожного сховища за розкладом. Архіви містять лише шифротекст і відновлюються через occ.",
+        "Back up now": "Створити копію зараз",
+        "Backup public key (PEM, optional)": "Відкритий ключ резервної копії (PEM, необов'язково)",
+        "Backup requested for the next cron run": "Копію замовлено на наступний запуск cron",
+        "Encrypted": "Зашифровано",
+        "Every (hours)": "Кожні (годин)",
+        "Last backup {when} failed: {error}": "Остання копія {when} не вдалася: {error}",
+        "Last backup {when} succeeded.": "Остання копія {when} створена.",
+        "No": "Ні",
+        "No archives yet.": "Архівів ще немає.",
+        "Size": "Розмір",
+        "Vault backups": "Резервні копії сховища",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "З ключем кожен архів шифрується для нього. Зберігайте закритий ключ поза цим сервером: він потрібен для перевірки чи відновлення.",
+        "Written": "Записано",
+        "Yes": "Так"
     },
     "plurals": null
 }

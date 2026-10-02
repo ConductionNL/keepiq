@@ -1274,7 +1274,24 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Kon de labels niet wijzigen. Probeer het opnieuw.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Een CXF-export is ONVERSLEUTELD. Elk wachtwoord en elke login is leesbaar als platte tekst in het gedownloade bestand. Bewaar het veilig en verwijder het direct na gebruik.",
         "Root certificate expiring soon": "Rootcertificaat verloopt binnenkort",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Het rootcertificaat van de kluis verloopt over %1$d dag(en). Vernieuw het vóór die tijd. Vernieuwen ondertekent elke versleutelingssuite opnieuw."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Het rootcertificaat van de kluis verloopt over %1$d dag(en). Vernieuw het vóór die tijd. Vernieuwen ondertekent elke versleutelingssuite opnieuw.",
+        "Archives to keep": "Te bewaren archieven",
+        "Back up every vault automatically": "Elke kluis automatisch back-uppen",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Maak volgens schema een back-up van elke kluis. Archieven bevatten alleen versleutelde gegevens en worden met occ teruggezet.",
+        "Back up now": "Nu back-uppen",
+        "Backup public key (PEM, optional)": "Openbare back-upsleutel (PEM, optioneel)",
+        "Backup requested for the next cron run": "Back-up aangevraagd voor de volgende cronrun",
+        "Encrypted": "Versleuteld",
+        "Every (hours)": "Elke (uren)",
+        "Last backup {when} failed: {error}": "Laatste back-up {when} mislukt: {error}",
+        "Last backup {when} succeeded.": "Laatste back-up {when} gelukt.",
+        "No": "Nee",
+        "No archives yet.": "Nog geen archieven.",
+        "Size": "Grootte",
+        "Vault backups": "Kluisback-ups",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Met een sleutel wordt elk archief daarmee versleuteld. Bewaar de privésleutel buiten deze server: je hebt hem nodig om te controleren of terug te zetten.",
+        "Written": "Geschreven",
+        "Yes": "Ja"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1269,7 +1269,24 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Kunne ikke endre etikettene. Prøv igjen.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "En CXF-eksport er UKRYPTERT. Alle passord og innlogginger vil være lesbare som klartekst i den nedlastede filen. Oppbevar den trygt, og slett den umiddelbart etter bruk.",
         "Root certificate expiring soon": "Rotsertifikatet utløper snart",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Hvelvets rotsertifikat utløper om %1$d dag(er). Forny det før den tid. Fornyelsen signerer hver krypteringssuite på nytt."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Hvelvets rotsertifikat utløper om %1$d dag(er). Forny det før den tid. Fornyelsen signerer hver krypteringssuite på nytt.",
+        "Archives to keep": "Arkiver som skal beholdes",
+        "Back up every vault automatically": "Sikkerhetskopier hvert hvelv automatisk",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Sikkerhetskopier hvert hvelv etter en plan. Arkivene inneholder bare kryptert tekst og gjenopprettes med occ.",
+        "Back up now": "Sikkerhetskopier nå",
+        "Backup public key (PEM, optional)": "Offentlig sikkerhetskopinøkkel (PEM, valgfri)",
+        "Backup requested for the next cron run": "Sikkerhetskopi bestilt til neste cron-kjøring",
+        "Encrypted": "Kryptert",
+        "Every (hours)": "Hver (timer)",
+        "Last backup {when} failed: {error}": "Siste sikkerhetskopi {when} mislyktes: {error}",
+        "Last backup {when} succeeded.": "Siste sikkerhetskopi {when} lyktes.",
+        "No": "Nei",
+        "No archives yet.": "Ingen arkiver ennå.",
+        "Size": "Størrelse",
+        "Vault backups": "Hvelvsikkerhetskopier",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Med en nøkkel krypteres hvert arkiv til den. Oppbevar den private nøkkelen utenfor denne serveren: du trenger den for å kontrollere eller gjenopprette.",
+        "Written": "Skrevet",
+        "Yes": "Ja"
     },
     "nplurals=2; plural=(n != 1);"
 )

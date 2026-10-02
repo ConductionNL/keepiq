@@ -1268,7 +1268,24 @@
         "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Износът в CXF НЕ Е ШИФРИРАН. Всяка парола и потребителско име ще бъдат четими като обикновен текст в изтегления файл. Пазете го на сигурно място и го изтрийте веднага след употреба.",
         "Root certificate expiring soon": "Основният сертификат изтича скоро",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Основният сертификат на трезора изтича след %1$d ден(а). Подновете го преди това. Подновяването подписва отново всеки пакет за шифроване."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Основният сертификат на трезора изтича след %1$d ден(а). Подновете го преди това. Подновяването подписва отново всеки пакет за шифроване.",
+        "Archives to keep": "Архиви за пазене",
+        "Back up every vault automatically": "Автоматично архивиране на всеки трезор",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Архивирайте всеки трезор по график. Архивите съдържат само шифрован текст и се възстановяват с occ.",
+        "Back up now": "Архивирай сега",
+        "Backup public key (PEM, optional)": "Публичен ключ за архива (PEM, по избор)",
+        "Backup requested for the next cron run": "Архивиране е заявено за следващото изпълнение на cron",
+        "Encrypted": "Шифрован",
+        "Every (hours)": "На всеки (часа)",
+        "Last backup {when} failed: {error}": "Последното архивиране {when} се провали: {error}",
+        "Last backup {when} succeeded.": "Последното архивиране {when} е успешно.",
+        "No": "Не",
+        "No archives yet.": "Все още няма архиви.",
+        "Size": "Размер",
+        "Vault backups": "Архиви на трезора",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "С ключ всяка архива се шифрова за него. Пазете частния ключ извън този сървър: трябва ви за проверка или възстановяване.",
+        "Written": "Записан",
+        "Yes": "Да"
     },
     "plurals": null
 }

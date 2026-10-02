@@ -1269,7 +1269,24 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Ознаките не можеа да се променат. Обидете се повторно.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Извозот во CXF НЕ Е ШИФРИРАН. Секоја лозинка и најава ќе биде читлива како отворен текст во преземената датотека. Чувајте ја безбедно и избришете ја веднаш по употребата.",
         "Root certificate expiring soon": "Коренскиот сертификат наскоро истекува",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Коренскиот сертификат на сефот истекува за %1$d ден(а). Обновете го пред тоа. Обновувањето повторно го потпишува секој пакет за шифрирање."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Коренскиот сертификат на сефот истекува за %1$d ден(а). Обновете го пред тоа. Обновувањето повторно го потпишува секој пакет за шифрирање.",
+        "Archives to keep": "Архиви за чување",
+        "Back up every vault automatically": "Автоматски направи резервна копија на секој сеф",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Правете резервна копија на секој сеф според распоред. Архивите содржат само шифриран текст и се враќаат со occ.",
+        "Back up now": "Направи копија сега",
+        "Backup public key (PEM, optional)": "Јавен клуч за резервна копија (PEM, опционално)",
+        "Backup requested for the next cron run": "Копија побарана за следното извршување на cron",
+        "Encrypted": "Шифрирано",
+        "Every (hours)": "На секои (часа)",
+        "Last backup {when} failed: {error}": "Последната копија {when} не успеа: {error}",
+        "Last backup {when} succeeded.": "Последната копија {when} успеа.",
+        "No": "Не",
+        "No archives yet.": "Сè уште нема архиви.",
+        "Size": "Големина",
+        "Vault backups": "Резервни копии на сефот",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Со клуч секоја архива се шифрира за него. Чувајте го приватниот клуч надвор од овој сервер: ви треба за проверка или враќање.",
+        "Written": "Запишано",
+        "Yes": "Да"
     },
     "nplurals=2; plural=(n != 1);"
 )

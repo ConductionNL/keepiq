@@ -32,14 +32,10 @@ namespace OCA\Keepiq\Backup;
 
 use DateTime;
 use InvalidArgumentException;
-use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Service\AuditService;
-use OCP\Files\AppData\IAppDataFactory;
-use OCP\Files\NotFoundException;
 use OCP\IConfig;
-use OCP\ITempManager;
 use OCP\IUserManager;
 use OCP\Security\ICrypto;
 use Throwable;
@@ -58,13 +54,11 @@ class RestoreService {
 	 * @param ArchiveCipher $cipher Decrypts an encrypted archive
 	 * @param TableStore $tables Counts and replaces table rows
 	 * @param SchemaFingerprint $fingerprint The installed schema
-	 * @param IAppDataFactory $appDataFactory Attachment blob storage
+	 * @param ArchiveStore $store Blob storage and scratch files
 	 * @param IConfig $config Maintenance mode
-	 * @param ITempManager $tempManager Scratch files
 	 * @param IUserManager $userManager Owners that no longer exist
 	 * @param ICrypto $crypto The instance secret probe
 	 * @param AuditService $audit The audit trail
-	 * @param AuditEventFactory $auditEvents The audit event factory
 	 *
 	 * @return void
 	 *
@@ -75,13 +69,11 @@ class RestoreService {
 		private ArchiveCipher $cipher,
 		private TableStore $tables,
 		private SchemaFingerprint $fingerprint,
-		private IAppDataFactory $appDataFactory,
+		private ArchiveStore $store,
 		private IConfig $config,
-		private ITempManager $tempManager,
 		private IUserManager $userManager,
 		private ICrypto $crypto,
 		private AuditService $audit,
-		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 	) {
 	}//end __construct()
 
@@ -104,13 +96,12 @@ class RestoreService {
 				throw new InvalidArgumentException('The archive is encrypted. Pass the private key with --key-file.');
 			}
 
-			$pem = @file_get_contents($keyFile);
-			if ($pem === false) {
+			if (is_readable($keyFile) === false) {
 				throw new InvalidArgumentException('Cannot read the key file ' . $keyFile);
 			}
 
-			$zip = (string)$this->tempManager->getTemporaryFile('.zip');
-			$this->cipher->decryptFile(encPath: $localPath, outPath: $zip, privatePem: $pem);
+			$zip = $this->store->tempFile(suffix: '.zip');
+			$this->cipher->decryptFile(encPath: $localPath, outPath: $zip, privatePem: (string)file_get_contents($keyFile));
 		}
 
 		return ['zip' => $zip, 'manifest' => $this->reader->verify(zipPath: $zip)];
@@ -214,7 +205,7 @@ class RestoreService {
 			rowsFor: fn (string $table): iterable => $this->reader->rows(zipPath: $zip, table: $table)
 		);
 
-		$folder = $this->blobFolder();
+		$folder = $this->store->blobs();
 		foreach ($folder->getDirectoryListing() as $file) {
 			$file->delete();
 		}
@@ -227,7 +218,7 @@ class RestoreService {
 
 		$rows = array_sum($written);
 		$this->audit->record(
-			$this->auditEvents->forSystem(
+			(new AuditEventFactory())->forSystem(
 				eventType: AuditEventTypes::BACKUP_RESTORED,
 				objectType: 'backup',
 				objectId: $archiveName,
@@ -298,18 +289,4 @@ class RestoreService {
 
 		return $missing;
 	}//end missingOwners()
-
-	/**
-	 * The attachment blob folder, created when absent.
-	 *
-	 * @return \OCP\Files\SimpleFS\ISimpleFolder
-	 */
-	private function blobFolder(): \OCP\Files\SimpleFS\ISimpleFolder {
-		$appData = $this->appDataFactory->get(Application::APP_ID);
-		try {
-			return $appData->getFolder(ArchiveWriter::BLOB_FOLDER);
-		} catch (NotFoundException) {
-			return $appData->newFolder(ArchiveWriter::BLOB_FOLDER);
-		}
-	}//end blobFolder()
 }//end class

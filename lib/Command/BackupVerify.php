@@ -59,10 +59,10 @@ class BackupVerify extends Command {
 	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.2
 	 */
 	protected function configure(): void {
-		$this->setName('keepiq:backup:verify')
-			->setDescription('Check a Keepiq vault backup: format and every checksum')
-			->addArgument('file', InputArgument::REQUIRED, 'An archive name from keepiq:backup:list, or a file path')
-			->addOption('key-file', null, InputOption::VALUE_REQUIRED, 'The private key for an encrypted archive');
+		$this->setName(name: 'keepiq:backup:verify')
+			->setDescription(description: 'Check a Keepiq vault backup: format and every checksum')
+			->addArgument(name: 'file', mode: InputArgument::REQUIRED, description: 'An archive name from keepiq:backup:list, or a file path')
+			->addOption(name: 'key-file', mode: InputOption::VALUE_REQUIRED, description: 'The private key for an encrypted archive');
 	}//end configure()
 
 	/**
@@ -79,7 +79,7 @@ class BackupVerify extends Command {
 		try {
 			$opened = $this->restore->open(
 				localPath: $this->backups->localCopy(nameOrPath: (string)$input->getArgument('file')),
-				keyFile: ($input->getOption('key-file') === null ? null : (string)$input->getOption('key-file'))
+				keyFile: self::keyFile(input: $input)
 			);
 		} catch (InvalidArgumentException $exception) {
 			$output->writeln('<error>' . $exception->getMessage() . '</error>');
@@ -93,4 +93,20 @@ class BackupVerify extends Command {
 
 		return 0;
 	}//end execute()
+
+	/**
+	 * The --key-file option, or null when not given.
+	 *
+	 * @param InputInterface $input The input
+	 *
+	 * @return string|null
+	 */
+	private static function keyFile(InputInterface $input): ?string {
+		$keyFile = $input->getOption('key-file');
+		if ($keyFile === null) {
+			return null;
+		}
+
+		return (string)$keyFile;
+	}//end keyFile()
 }//end class

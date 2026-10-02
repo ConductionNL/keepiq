@@ -1269,7 +1269,24 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Mærkerne kunne ikke ændres. Prøv igen.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "En CXF-eksport er UKRYPTERET. Alle adgangskoder og logins vil kunne læses som klartekst i den hentede fil. Opbevar den sikkert, og slet den umiddelbart efter brug.",
         "Root certificate expiring soon": "Rodcertifikatet udløber snart",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Boksens rodcertifikat udløber om %1$d dag(e). Forny det inden da. Fornyelse signerer hver krypteringssuite igen."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Boksens rodcertifikat udløber om %1$d dag(e). Forny det inden da. Fornyelse signerer hver krypteringssuite igen.",
+        "Archives to keep": "Arkiver der skal gemmes",
+        "Back up every vault automatically": "Sikkerhedskopiér hver boks automatisk",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Sikkerhedskopiér hver boks efter en plan. Arkiver indeholder kun krypteret tekst og gendannes med occ.",
+        "Back up now": "Sikkerhedskopiér nu",
+        "Backup public key (PEM, optional)": "Offentlig backupnøgle (PEM, valgfri)",
+        "Backup requested for the next cron run": "Backup anmodet til næste cron-kørsel",
+        "Encrypted": "Krypteret",
+        "Every (hours)": "Hver (timer)",
+        "Last backup {when} failed: {error}": "Seneste backup {when} mislykkedes: {error}",
+        "Last backup {when} succeeded.": "Seneste backup {when} lykkedes.",
+        "No": "Nej",
+        "No archives yet.": "Ingen arkiver endnu.",
+        "Size": "Størrelse",
+        "Vault backups": "Boksbackups",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Med en nøgle krypteres hvert arkiv til den. Opbevar den private nøgle uden for denne server: du skal bruge den til at kontrollere eller gendanne.",
+        "Written": "Skrevet",
+        "Yes": "Ja"
     },
     "nplurals=2; plural=(n != 1);"
 )

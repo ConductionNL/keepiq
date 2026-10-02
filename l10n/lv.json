@@ -1268,7 +1268,24 @@
         "Could not change the tags. Try again.": "Neizdevās mainīt birkas. Mēģiniet vēlreiz.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF eksports NAV ŠIFRĒTS. Katra parole un lietotājvārds lejupielādētajā datnē būs lasāmi kā vienkāršs teksts. Glabājiet to drošā vietā un izdzēsiet tūlīt pēc lietošanas.",
         "Root certificate expiring soon": "Saknes sertifikāta derīgums drīz beigsies",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Glabātuves saknes sertifikāta derīgums beigsies pēc %1$d dienas(-ām). Atjaunojiet to pirms tam. Atjaunošana no jauna paraksta katru šifrēšanas komplektu."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Glabātuves saknes sertifikāta derīgums beigsies pēc %1$d dienas(-ām). Atjaunojiet to pirms tam. Atjaunošana no jauna paraksta katru šifrēšanas komplektu.",
+        "Archives to keep": "Glabājamie arhīvi",
+        "Back up every vault automatically": "Automātiski dublēt katru glabātavu",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Dublējiet katru glabātavu pēc grafika. Arhīvos ir tikai šifrēts teksts, un tos atjauno ar occ.",
+        "Back up now": "Dublēt tagad",
+        "Backup public key (PEM, optional)": "Dublējuma publiskā atslēga (PEM, neobligāta)",
+        "Backup requested for the next cron run": "Dublējums pieprasīts nākamajai cron palaišanai",
+        "Encrypted": "Šifrēts",
+        "Every (hours)": "Ik pēc (stundām)",
+        "Last backup {when} failed: {error}": "Pēdējais dublējums {when} neizdevās: {error}",
+        "Last backup {when} succeeded.": "Pēdējais dublējums {when} izdevās.",
+        "No": "Nē",
+        "No archives yet.": "Vēl nav arhīvu.",
+        "Size": "Izmērs",
+        "Vault backups": "Glabātavas dublējumi",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Ar atslēgu katrs arhīvs tiek šifrēts tai. Glabājiet privāto atslēgu ārpus šī servera: tā vajadzīga pārbaudei vai atjaunošanai.",
+        "Written": "Rakstīts",
+        "Yes": "Jā"
     },
     "plurals": null
 }

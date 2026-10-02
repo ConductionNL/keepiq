@@ -3,7 +3,9 @@
 /**
  * Keepiq occ command: keepiq:backup:restore
  *
- * Restores a vault backup in maintenance mode, after verification, schema and age checks and a confirmation that names what a restore means (admin-scheduled-vault-backups D4 and D5).
+ * Restores a vault backup in maintenance mode, after verification, schema
+ * and age checks and a confirmation that names what a restore means
+ * (admin-scheduled-vault-backups D4 and D5).
  *
  * @category Command
  * @package  OCA\Keepiq\Command
@@ -62,12 +64,12 @@ class BackupRestore extends Command {
 	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
 	 */
 	protected function configure(): void {
-		$this->setName('keepiq:backup:restore')
-			->setDescription('Restore every Keepiq vault from a backup (maintenance mode only)')
-			->addArgument('file', InputArgument::REQUIRED, 'An archive name from keepiq:backup:list, or a file path')
-			->addOption('key-file', null, InputOption::VALUE_REQUIRED, 'The private key for an encrypted archive')
-			->addOption('dry-run', null, InputOption::VALUE_NONE, 'Show current and archive row counts and change nothing')
-			->addOption('force', null, InputOption::VALUE_NONE, 'Restore an archive older than the newest audit entry');
+		$this->setName(name: 'keepiq:backup:restore')
+			->setDescription(description: 'Restore every Keepiq vault from a backup (maintenance mode only)')
+			->addArgument(name: 'file', mode: InputArgument::REQUIRED, description: 'An archive name from keepiq:backup:list, or a file path')
+			->addOption(name: 'key-file', mode: InputOption::VALUE_REQUIRED, description: 'The private key for an encrypted archive')
+			->addOption(name: 'dry-run', mode: InputOption::VALUE_NONE, description: 'Show current and archive row counts and change nothing')
+			->addOption(name: 'force', mode: InputOption::VALUE_NONE, description: 'Restore an archive older than the newest audit entry');
 	}//end configure()
 
 	/**
@@ -86,7 +88,7 @@ class BackupRestore extends Command {
 		try {
 			$opened = $this->restore->open(
 				localPath: $this->backups->localCopy(nameOrPath: $file),
-				keyFile: ($input->getOption('key-file') === null ? null : (string)$input->getOption('key-file'))
+				keyFile: self::keyFile(input: $input)
 			);
 		} catch (InvalidArgumentException $exception) {
 			$output->writeln('<error>' . $exception->getMessage() . '</error>');
@@ -117,7 +119,7 @@ class BackupRestore extends Command {
 			$output->writeln('<comment>' . $warning . '</comment>');
 		}
 
-		$helper = $this->getHelper('question');
+		$helper = $this->getHelper(name: 'question');
 		if (($helper instanceof QuestionHelper) === false
 			|| $helper->ask($input, $output, new ConfirmationQuestion('Replace every Keepiq vault with this backup? [y/N] ', false)) !== true
 		) {
@@ -130,4 +132,20 @@ class BackupRestore extends Command {
 
 		return 0;
 	}//end execute()
+
+	/**
+	 * The --key-file option, or null when not given.
+	 *
+	 * @param InputInterface $input The input
+	 *
+	 * @return string|null
+	 */
+	private static function keyFile(InputInterface $input): ?string {
+		$keyFile = $input->getOption('key-file');
+		if ($keyFile === null) {
+			return null;
+		}
+
+		return (string)$keyFile;
+	}//end keyFile()
 }//end class

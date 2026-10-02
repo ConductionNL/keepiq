@@ -1269,7 +1269,24 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Níorbh fhéidir na clibeanna a athrú. Bain triail eile as.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Níl easpórtáil CXF CRIPTITHE. Beidh gach pasfhocal agus logáil isteach inléite mar ghnáth-théacs sa chomhad íoslódáilte. Stóráil go sábháilte é agus scrios láithreach é tar éis a úsáide.",
         "Root certificate expiring soon": "Rachaidh an fréamhdheimhniú as feidhm go luath",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Rachaidh fréamhdheimhniú an tsábháilteáin as feidhm i gceann %1$d lá. Athnuaigh é roimhe sin. Síníonn athnuachan gach sraith criptiúcháin arís."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Rachaidh fréamhdheimhniú an tsábháilteáin as feidhm i gceann %1$d lá. Athnuaigh é roimhe sin. Síníonn athnuachan gach sraith criptiúcháin arís.",
+        "Archives to keep": "Cartlanna le coinneáil",
+        "Back up every vault automatically": "Déan cúltaca de gach cruinneachán go huathoibríoch",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Déan cúltaca de gach cruinneachán de réir sceidil. Níl ach téacs criptithe sna cartlanna agus athchóirítear iad le occ.",
+        "Back up now": "Déan cúltaca anois",
+        "Backup public key (PEM, optional)": "Eochair phoiblí chúltaca (PEM, roghnach)",
+        "Backup requested for the next cron run": "Cúltaca iarrtha don chéad rith cron eile",
+        "Encrypted": "Criptithe",
+        "Every (hours)": "Gach (uair)",
+        "Last backup {when} failed: {error}": "Theip ar an gcúltaca deireanach {when}: {error}",
+        "Last backup {when} succeeded.": "D'éirigh leis an gcúltaca deireanach {when}.",
+        "No": "Níl",
+        "No archives yet.": "Níl aon chartlann fós.",
+        "Size": "Méid",
+        "Vault backups": "Cúltacaí an chruinneacháin",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Le heochair, criptítear gach cartlann di. Coinnigh an eochair phríobháideach lasmuigh den fhreastalaí seo: teastaíonn sí chun fíorú nó athchóiriú.",
+        "Written": "Scríofa",
+        "Yes": "Tá"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1269,7 +1269,24 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Could not change the tags. Try again.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.",
         "Root certificate expiring soon": "Root certificate expiring soon",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.",
+        "Archives to keep": "Archives to keep",
+        "Back up every vault automatically": "Back up every vault automatically",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.",
+        "Back up now": "Back up now",
+        "Backup public key (PEM, optional)": "Backup public key (PEM, optional)",
+        "Backup requested for the next cron run": "Backup requested for the next cron run",
+        "Encrypted": "Encrypted",
+        "Every (hours)": "Every (hours)",
+        "Last backup {when} failed: {error}": "Last backup {when} failed: {error}",
+        "Last backup {when} succeeded.": "Last backup {when} succeeded.",
+        "No": "No",
+        "No archives yet.": "No archives yet.",
+        "Size": "Size",
+        "Vault backups": "Vault backups",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.",
+        "Written": "Written",
+        "Yes": "Yes"
     },
     "nplurals=2; plural=(n != 1);"
 )

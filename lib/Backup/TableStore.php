@@ -93,7 +93,11 @@ class TableStore {
 		$value = $result->fetchOne();
 		$result->closeCursor();
 
-		return ($value === false || $value === null) ? null : (string)$value;
+		if ($value === false || $value === null) {
+			return null;
+		}
+
+		return (string)$value;
 	}//end newestAuditEntry()
 
 	/**

@@ -1269,7 +1269,24 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Etiketat nuk u ndryshuan dot. Provoni sërish.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Një eksport CXF është I PAKRIPTUAR. Çdo fjalëkalim dhe kredencial hyrjeje do të lexohet si tekst i thjeshtë në skedarin e shkarkuar. Ruajeni në mënyrë të sigurt dhe fshijeni menjëherë pas përdorimit.",
         "Root certificate expiring soon": "Certifikata rrënjë skadon së shpejti",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certifikata rrënjë e kasafortës skadon pas %1$d dite(ve). Rinovojeni para kësaj. Rinovimi nënshkruan sërish çdo paketë enkriptimi."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certifikata rrënjë e kasafortës skadon pas %1$d dite(ve). Rinovojeni para kësaj. Rinovimi nënshkruan sërish çdo paketë enkriptimi.",
+        "Archives to keep": "Arkiva për t'u mbajtur",
+        "Back up every vault automatically": "Bëj kopje rezervë të çdo kasaforte automatikisht",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Bëni kopje rezervë të çdo kasaforte sipas orarit. Arkivat përmbajnë vetëm tekst të shifruar dhe rikthehen me occ.",
+        "Back up now": "Bëj kopje tani",
+        "Backup public key (PEM, optional)": "Çelësi publik i kopjes (PEM, opsional)",
+        "Backup requested for the next cron run": "Kopja u kërkua për ekzekutimin e ardhshëm të cron",
+        "Encrypted": "I shifruar",
+        "Every (hours)": "Çdo (orë)",
+        "Last backup {when} failed: {error}": "Kopja e fundit {when} dështoi: {error}",
+        "Last backup {when} succeeded.": "Kopja e fundit {when} u krye.",
+        "No": "Jo",
+        "No archives yet.": "Ende pa arkiva.",
+        "Size": "Madhësia",
+        "Vault backups": "Kopjet e kasafortës",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Me një çelës, çdo arkiv shifrohet për të. Mbajeni çelësin privat jashtë këtij serveri: ju duhet për verifikim ose rikthim.",
+        "Written": "Shkruar",
+        "Yes": "Po"
     },
     "nplurals=2; plural=(n != 1);"
 )

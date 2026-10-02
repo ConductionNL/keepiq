@@ -1268,7 +1268,24 @@
         "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "En CXF-export är OKRYPTERAD. Varje lösenord och inloggning blir läsbar som klartext i den hämtade filen. Förvara den säkert och ta bort den omedelbart efter användning.",
         "Root certificate expiring soon": "Rotcertifikatet går snart ut",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Valvets rotcertifikat går ut om %1$d dag(ar). Förnya det innan dess. Förnyelsen signerar om varje krypteringssvit."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Valvets rotcertifikat går ut om %1$d dag(ar). Förnya det innan dess. Förnyelsen signerar om varje krypteringssvit.",
+        "Archives to keep": "Arkiv att behålla",
+        "Back up every vault automatically": "Säkerhetskopiera varje valv automatiskt",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Säkerhetskopiera varje valv enligt schema. Arkiven innehåller bara krypterad text och återställs med occ.",
+        "Back up now": "Säkerhetskopiera nu",
+        "Backup public key (PEM, optional)": "Offentlig säkerhetskopieringsnyckel (PEM, valfri)",
+        "Backup requested for the next cron run": "Säkerhetskopia begärd till nästa cron-körning",
+        "Encrypted": "Krypterad",
+        "Every (hours)": "Var (timme)",
+        "Last backup {when} failed: {error}": "Senaste säkerhetskopian {when} misslyckades: {error}",
+        "Last backup {when} succeeded.": "Senaste säkerhetskopian {when} lyckades.",
+        "No": "Nej",
+        "No archives yet.": "Inga arkiv ännu.",
+        "Size": "Storlek",
+        "Vault backups": "Valvsäkerhetskopior",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Med en nyckel krypteras varje arkiv till den. Förvara den privata nyckeln utanför den här servern: du behöver den för att verifiera eller återställa.",
+        "Written": "Skriven",
+        "Yes": "Ja"
     },
     "plurals": null
 }

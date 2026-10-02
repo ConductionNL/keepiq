@@ -1268,7 +1268,24 @@
         "Could not change the tags. Try again.": "Impossibile modificare le etichette. Riprova.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Un'esportazione CXF NON È CIFRATA. Ogni password e ogni nome utente sarà leggibile in chiaro nel file scaricato. Conservalo in modo sicuro ed eliminalo subito dopo l'uso.",
         "Root certificate expiring soon": "Il certificato radice scade a breve",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Il certificato radice della cassaforte scade tra %1$d giorno/i. Rinnovalo prima di allora. Il rinnovo firma di nuovo ogni suite di cifratura."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Il certificato radice della cassaforte scade tra %1$d giorno/i. Rinnovalo prima di allora. Il rinnovo firma di nuovo ogni suite di cifratura.",
+        "Archives to keep": "Archivi da conservare",
+        "Back up every vault automatically": "Esegui il backup di ogni cassaforte automaticamente",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Esegui il backup di ogni cassaforte secondo una pianificazione. Gli archivi contengono solo testo cifrato e si ripristinano con occ.",
+        "Back up now": "Esegui il backup ora",
+        "Backup public key (PEM, optional)": "Chiave pubblica di backup (PEM, facoltativa)",
+        "Backup requested for the next cron run": "Backup richiesto per la prossima esecuzione di cron",
+        "Encrypted": "Cifrato",
+        "Every (hours)": "Ogni (ore)",
+        "Last backup {when} failed: {error}": "Ultimo backup {when} non riuscito: {error}",
+        "Last backup {when} succeeded.": "Ultimo backup {when} riuscito.",
+        "No": "No",
+        "No archives yet.": "Ancora nessun archivio.",
+        "Size": "Dimensione",
+        "Vault backups": "Backup della cassaforte",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Con una chiave, ogni archivio viene cifrato per essa. Tieni la chiave privata fuori da questo server: serve per verificare o ripristinare.",
+        "Written": "Scritto",
+        "Yes": "Sì"
     },
     "plurals": null
 }

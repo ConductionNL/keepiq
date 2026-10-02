@@ -1269,7 +1269,24 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Un export CXF n'est PAS CHIFFRÉ. Chaque mot de passe et chaque identifiant sera lisible en clair dans le fichier téléchargé. Conservez-le en sécurité et supprimez-le immédiatement après usage.",
         "Root certificate expiring soon": "Le certificat racine expire bientôt",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Le certificat racine du coffre expire dans %1$d jour(s). Renouvelez-le avant cette date. Le renouvellement signe à nouveau chaque suite de chiffrement."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Le certificat racine du coffre expire dans %1$d jour(s). Renouvelez-le avant cette date. Le renouvellement signe à nouveau chaque suite de chiffrement.",
+        "Archives to keep": "Archives à conserver",
+        "Back up every vault automatically": "Sauvegarder chaque coffre automatiquement",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Sauvegardez chaque coffre selon un calendrier. Les archives ne contiennent que du texte chiffré et se restaurent avec occ.",
+        "Back up now": "Sauvegarder maintenant",
+        "Backup public key (PEM, optional)": "Clé publique de sauvegarde (PEM, facultative)",
+        "Backup requested for the next cron run": "Sauvegarde demandée pour la prochaine exécution cron",
+        "Encrypted": "Chiffrée",
+        "Every (hours)": "Toutes les (heures)",
+        "Last backup {when} failed: {error}": "Dernière sauvegarde {when} échouée : {error}",
+        "Last backup {when} succeeded.": "Dernière sauvegarde {when} réussie.",
+        "No": "Non",
+        "No archives yet.": "Aucune archive pour l'instant.",
+        "Size": "Taille",
+        "Vault backups": "Sauvegardes du coffre",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Avec une clé, chaque archive est chiffrée pour elle. Gardez la clé privée hors de ce serveur : elle sert à vérifier ou restaurer.",
+        "Written": "Écrite",
+        "Yes": "Oui"
     },
     "nplurals=2; plural=(n != 1);"
 )

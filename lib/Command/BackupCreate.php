@@ -54,8 +54,8 @@ class BackupCreate extends Command {
 	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.1
 	 */
 	protected function configure(): void {
-		$this->setName('keepiq:backup:create')
-			->setDescription('Write a backup of every Keepiq vault now');
+		$this->setName(name: 'keepiq:backup:create')
+			->setDescription(description: 'Write a backup of every Keepiq vault now');
 	}//end configure()
 
 	/**
@@ -78,9 +78,12 @@ class BackupCreate extends Command {
 			return 1;
 		}
 
-		$output->writeln(
-			sprintf('Wrote %s (%d bytes, %s)', $result['name'], $result['size'], ($result['encrypted'] === true ? 'encrypted' : 'not encrypted'))
-		);
+		$encryption = 'not encrypted';
+		if ($result['encrypted'] === true) {
+			$encryption = 'encrypted';
+		}
+
+		$output->writeln(sprintf('Wrote %s (%d bytes, %s)', $result['name'], $result['size'], $encryption));
 
 		return 0;
 	}//end execute()

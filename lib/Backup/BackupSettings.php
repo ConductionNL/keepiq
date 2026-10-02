@@ -93,33 +93,19 @@ class BackupSettings {
 		$writes = [];
 
 		if (array_key_exists(self::ENABLED, $data) === true) {
-			$enabled = filter_var($data[self::ENABLED], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-			if ($enabled === null) {
-				throw new InvalidArgumentException(self::ENABLED . ' must be true or false');
-			}
-
+			$enabled = $this->validBool(key: self::ENABLED, value: $data[self::ENABLED]);
 			$writes[] = fn () => $this->appConfig->setValueBool($appId, self::ENABLED, $enabled);
 		}
 
 		foreach ([self::INTERVAL => self::INTERVAL_MAX, self::RETENTION => self::RETENTION_MAX] as $key => $max) {
-			if (array_key_exists($key, $data) === false) {
-				continue;
+			if (array_key_exists($key, $data) === true) {
+				$value = $this->validCount(key: $key, value: $data[$key], max: $max);
+				$writes[] = fn () => $this->appConfig->setValueInt($appId, $key, $value);
 			}
-
-			$value = filter_var($data[$key], FILTER_VALIDATE_INT);
-			if ($value === false || $value < 1 || $value > $max) {
-				throw new InvalidArgumentException($key . ' must be between 1 and ' . $max);
-			}
-
-			$writes[] = fn () => $this->appConfig->setValueInt($appId, $key, $value);
 		}
 
 		if (array_key_exists(self::PUBLIC_KEY, $data) === true) {
-			$pem = trim((string)$data[self::PUBLIC_KEY]);
-			if ($pem !== '' && $this->cipher->isValidPublicKey(pem: $pem) === false) {
-				throw new InvalidArgumentException(self::PUBLIC_KEY . ' must be an RSA public key or certificate in PEM form');
-			}
-
+			$pem = $this->validKey(value: $data[self::PUBLIC_KEY]);
 			$writes[] = fn () => $this->appConfig->setValueString($appId, self::PUBLIC_KEY, $pem);
 		}
 
@@ -127,4 +113,61 @@ class BackupSettings {
 			$write();
 		}
 	}//end update()
+
+	/**
+	 * A boolean setting.
+	 *
+	 * @param string $key The key
+	 * @param mixed $value The submitted value
+	 *
+	 * @return bool
+	 *
+	 * @throws InvalidArgumentException When it is not a boolean
+	 */
+	private function validBool(string $key, mixed $value): bool {
+		$bool = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+		if ($bool === null) {
+			throw new InvalidArgumentException($key . ' must be true or false');
+		}
+
+		return $bool;
+	}//end validBool()
+
+	/**
+	 * A whole number from 1 to a maximum.
+	 *
+	 * @param string $key The key
+	 * @param mixed $value The submitted value
+	 * @param int $max The maximum
+	 *
+	 * @return int
+	 *
+	 * @throws InvalidArgumentException When out of range
+	 */
+	private function validCount(string $key, mixed $value, int $max): int {
+		$count = filter_var($value, FILTER_VALIDATE_INT);
+		if ($count === false || $count < 1 || $count > $max) {
+			throw new InvalidArgumentException($key . ' must be between 1 and ' . $max);
+		}
+
+		return $count;
+	}//end validCount()
+
+	/**
+	 * An RSA public key or certificate in PEM form, or '' to clear it.
+	 *
+	 * @param mixed $value The submitted value
+	 *
+	 * @return string
+	 *
+	 * @throws InvalidArgumentException When it is not a usable key
+	 */
+	private function validKey(mixed $value): string {
+		$pem = trim((string)$value);
+		if ($pem !== '' && $this->cipher->isValidPublicKey(pem: $pem) === false) {
+			throw new InvalidArgumentException(self::PUBLIC_KEY . ' must be an RSA public key or certificate in PEM form');
+		}
+
+		return $pem;
+	}//end validKey()
 }//end class

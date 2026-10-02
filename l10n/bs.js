@@ -1269,7 +1269,24 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Oznake nije moguće promijeniti. Pokušajte ponovo.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Izvoz u CXF NIJE ŠIFRIRAN. Svaka lozinka i prijava bit će čitljiva kao otvoreni tekst u preuzetoj datoteci. Čuvajte je na sigurnom i izbrišite je odmah nakon upotrebe.",
         "Root certificate expiring soon": "Korijenski certifikat uskoro ističe",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Korijenski certifikat trezora ističe za %1$d dan(a). Obnovite ga prije toga. Obnova ponovo potpisuje svaki paket šifrovanja."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Korijenski certifikat trezora ističe za %1$d dan(a). Obnovite ga prije toga. Obnova ponovo potpisuje svaki paket šifrovanja.",
+        "Archives to keep": "Arhive za čuvanje",
+        "Back up every vault automatically": "Automatski napravi kopiju svakog trezora",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Pravite kopiju svakog trezora prema rasporedu. Arhive sadrže samo šifrovani tekst i vraćaju se s occ.",
+        "Back up now": "Napravi kopiju sada",
+        "Backup public key (PEM, optional)": "Javni ključ kopije (PEM, neobavezno)",
+        "Backup requested for the next cron run": "Kopija zatražena za sljedeće pokretanje crona",
+        "Encrypted": "Šifrovano",
+        "Every (hours)": "Svakih (sati)",
+        "Last backup {when} failed: {error}": "Zadnja kopija {when} nije uspjela: {error}",
+        "Last backup {when} succeeded.": "Zadnja kopija {when} je uspjela.",
+        "No": "Ne",
+        "No archives yet.": "Još nema arhiva.",
+        "Size": "Veličina",
+        "Vault backups": "Kopije trezora",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "S ključem se svaka arhiva šifruje za njega. Privatni ključ čuvajte izvan ovog servera: trebate ga za provjeru ili vraćanje.",
+        "Written": "Zapisano",
+        "Yes": "Da"
     },
     "nplurals=2; plural=(n != 1);"
 )

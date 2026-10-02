@@ -1269,7 +1269,24 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Не удалось изменить метки. Попробуйте ещё раз.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Экспорт в CXF НЕ ЗАШИФРОВАН. Каждый пароль и логин будут читаемы как обычный текст в скачанном файле. Храните файл в надёжном месте и удалите сразу после использования.",
         "Root certificate expiring soon": "Срок действия корневого сертификата скоро истечёт",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Срок действия корневого сертификата хранилища истекает через %1$d дн. Обновите его до этого. При обновлении каждый набор шифрования подписывается заново."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Срок действия корневого сертификата хранилища истекает через %1$d дн. Обновите его до этого. При обновлении каждый набор шифрования подписывается заново.",
+        "Archives to keep": "Сколько архивов хранить",
+        "Back up every vault automatically": "Автоматически создавать копию каждого хранилища",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Создавайте копию каждого хранилища по расписанию. Архивы содержат только шифротекст и восстанавливаются через occ.",
+        "Back up now": "Создать копию сейчас",
+        "Backup public key (PEM, optional)": "Открытый ключ резервной копии (PEM, необязательно)",
+        "Backup requested for the next cron run": "Копия запрошена на следующий запуск cron",
+        "Encrypted": "Зашифрован",
+        "Every (hours)": "Каждые (часов)",
+        "Last backup {when} failed: {error}": "Последняя копия {when} не удалась: {error}",
+        "Last backup {when} succeeded.": "Последняя копия {when} создана.",
+        "No": "Нет",
+        "No archives yet.": "Архивов пока нет.",
+        "Size": "Размер",
+        "Vault backups": "Резервные копии хранилища",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "С ключом каждый архив шифруется для него. Храните закрытый ключ вне этого сервера: он нужен для проверки или восстановления.",
+        "Written": "Записан",
+        "Yes": "Да"
     },
     "nplurals=2; plural=(n != 1);"
 )

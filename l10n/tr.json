@@ -1268,7 +1268,24 @@
         "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF dışa aktarımı ŞİFRELENMEMİŞTİR. İndirilen dosyada her parola ve kullanıcı adı düz metin olarak okunabilir olacak. Dosyayı güvenli biçimde saklayın ve kullandıktan hemen sonra silin.",
         "Root certificate expiring soon": "Kök sertifikanın süresi yakında doluyor",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Kasanın kök sertifikasının süresi %1$d gün içinde doluyor. Bundan önce yenileyin. Yenileme her şifreleme paketini yeniden imzalar."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Kasanın kök sertifikasının süresi %1$d gün içinde doluyor. Bundan önce yenileyin. Yenileme her şifreleme paketini yeniden imzalar.",
+        "Archives to keep": "Saklanacak arşivler",
+        "Back up every vault automatically": "Her kasayı otomatik yedekle",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Her kasayı bir zamanlamayla yedekleyin. Arşivler yalnızca şifreli metin içerir ve occ ile geri yüklenir.",
+        "Back up now": "Şimdi yedekle",
+        "Backup public key (PEM, optional)": "Yedek ortak anahtarı (PEM, isteğe bağlı)",
+        "Backup requested for the next cron run": "Yedek bir sonraki cron çalışması için istendi",
+        "Encrypted": "Şifreli",
+        "Every (hours)": "Her (saat)",
+        "Last backup {when} failed: {error}": "Son yedek {when} başarısız: {error}",
+        "Last backup {when} succeeded.": "Son yedek {when} başarılı.",
+        "No": "Hayır",
+        "No archives yet.": "Henüz arşiv yok.",
+        "Size": "Boyut",
+        "Vault backups": "Kasa yedekleri",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Bir anahtarla her arşiv ona göre şifrelenir. Özel anahtarı bu sunucunun dışında tutun: doğrulamak veya geri yüklemek için gerekir.",
+        "Written": "Yazıldı",
+        "Yes": "Evet"
     },
     "plurals": null
 }

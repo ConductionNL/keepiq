@@ -1269,7 +1269,24 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "No se pudieron cambiar las etiquetas. Inténtelo de nuevo.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Una exportación CXF NO ESTÁ CIFRADA. Todas las contraseñas e inicios de sesión serán legibles como texto plano en el archivo descargado. Guárdelo de forma segura y elimínelo inmediatamente después de usarlo.",
         "Root certificate expiring soon": "El certificado raíz caduca pronto",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "El certificado raíz de la bóveda caduca en %1$d día(s). Renuévelo antes. Al renovarlo se vuelve a firmar cada suite de cifrado."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "El certificado raíz de la bóveda caduca en %1$d día(s). Renuévelo antes. Al renovarlo se vuelve a firmar cada suite de cifrado.",
+        "Archives to keep": "Archivos a conservar",
+        "Back up every vault automatically": "Hacer copia de cada bóveda automáticamente",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Haga copia de cada bóveda según un calendario. Los archivos solo contienen texto cifrado y se restauran con occ.",
+        "Back up now": "Hacer copia ahora",
+        "Backup public key (PEM, optional)": "Clave pública de copia (PEM, opcional)",
+        "Backup requested for the next cron run": "Copia solicitada para la próxima ejecución de cron",
+        "Encrypted": "Cifrado",
+        "Every (hours)": "Cada (horas)",
+        "Last backup {when} failed: {error}": "Última copia {when} fallida: {error}",
+        "Last backup {when} succeeded.": "Última copia {when} correcta.",
+        "No": "No",
+        "No archives yet.": "Aún no hay archivos.",
+        "Size": "Tamaño",
+        "Vault backups": "Copias de la bóveda",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Con una clave, cada archivo se cifra para ella. Guarde la clave privada fuera de este servidor: la necesita para verificar o restaurar.",
+        "Written": "Escrito",
+        "Yes": "Sí"
     },
     "nplurals=2; plural=(n != 1);"
 )

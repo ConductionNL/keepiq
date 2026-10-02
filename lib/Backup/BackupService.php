@@ -28,18 +28,12 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Backup;
 
-use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Service\AuditService;
 use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\Files\AppData\IAppDataFactory;
-use OCP\Files\NotFoundException;
-use OCP\Files\SimpleFS\ISimpleFolder;
 use OCP\IAppConfig;
-use OCP\IConfig;
-use OCP\ITempManager;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -54,7 +48,7 @@ class BackupService {
 	/**
 	 * The app data folder holding the archives.
 	 */
-	public const FOLDER = 'backups';
+	public const FOLDER = ArchiveStore::FOLDER;
 
 	public const LAST_RUN = 'backup_last_run_at';
 	public const LAST_STATUS = 'backup_last_status';
@@ -67,14 +61,11 @@ class BackupService {
 	 * @param ArchiveWriter $writer Writes the archive
 	 * @param ArchiveCipher $cipher Encrypts it to the recipient key
 	 * @param BackupSettings $settings The schedule, retention and key
-	 * @param IAppDataFactory $appDataFactory Archive storage
+	 * @param ArchiveStore $store Archive storage and scratch files
 	 * @param IAppConfig $appConfig Last-run status
-	 * @param IConfig $config Data directory and instance id, for the disk path
-	 * @param ITempManager $tempManager Scratch files
 	 * @param ITimeFactory $time The clock
 	 * @param AuditService $audit The audit trail
 	 * @param LoggerInterface $logger The logger
-	 * @param AuditEventFactory $auditEvents The audit event factory
 	 *
 	 * @return void
 	 *
@@ -84,14 +75,11 @@ class BackupService {
 		private ArchiveWriter $writer,
 		private ArchiveCipher $cipher,
 		private BackupSettings $settings,
-		private IAppDataFactory $appDataFactory,
+		private ArchiveStore $store,
 		private IAppConfig $appConfig,
-		private IConfig $config,
-		private ITempManager $tempManager,
 		private ITimeFactory $time,
 		private AuditService $audit,
 		private LoggerInterface $logger,
-		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 	) {
 	}//end __construct()
 
@@ -172,13 +160,13 @@ class BackupService {
 	 */
 	public function listArchives(): array {
 		$archives = [];
-		foreach ($this->folder()->getDirectoryListing() as $file) {
+		foreach ($this->store->archives()->getDirectoryListing() as $file) {
 			$archives[] = [
 				'name' => $file->getName(),
 				'size' => $file->getSize(),
 				'createdAt' => $file->getMTime(),
 				'encrypted' => str_ends_with($file->getName(), '.enc'),
-				'path' => $this->diskPath(name: $file->getName()),
+				'path' => $this->store->diskPath(name: $file->getName()),
 			];
 		}
 
@@ -217,20 +205,7 @@ class BackupService {
 	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.2
 	 */
 	public function localCopy(string $nameOrPath): string {
-		if (is_file($nameOrPath) === true) {
-			return $nameOrPath;
-		}
-
-		try {
-			$file = $this->folder()->getFile(basename($nameOrPath));
-		} catch (NotFoundException) {
-			throw new InvalidArgumentException('No such backup: ' . $nameOrPath);
-		}
-
-		$local = (string)$this->tempManager->getTemporaryFile('.keepiq-backup');
-		file_put_contents($local, $file->getContent());
-
-		return $local;
+		return $this->store->localCopy(nameOrPath: $nameOrPath);
 	}//end localCopy()
 
 	/**
@@ -243,7 +218,7 @@ class BackupService {
 	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.2
 	 */
 	public function prune(int $keep): int {
-		$files = $this->folder()->getDirectoryListing();
+		$files = $this->store->archives()->getDirectoryListing();
 		usort($files, static fn ($a, $b): int => strcmp($b->getName(), $a->getName()));
 		$removed = 0;
 		foreach (array_slice($files, max(1, $keep)) as $file) {
@@ -260,57 +235,33 @@ class BackupService {
 	 * @return array{name:string,encrypted:bool,size:int}
 	 */
 	private function writeArchive(): array {
-		$workDir = (string)$this->tempManager->getTemporaryFolder('keepiq-backup');
-		$zipPath = (string)$this->tempManager->getTemporaryFile('.zip');
+		$workDir = $this->store->tempFolder();
+		$zipPath = $this->store->tempFile(suffix: '.zip');
 		$this->writer->write(zipPath: $zipPath, workDir: $workDir);
 
 		$publicKey = $this->settings->read()[BackupSettings::PUBLIC_KEY];
 		$encrypted = ($publicKey !== '');
 		$finalPath = $zipPath;
 		if ($encrypted === true) {
-			$finalPath = (string)$this->tempManager->getTemporaryFile('.enc');
+			$finalPath = $this->store->tempFile(suffix: '.enc');
 			$this->cipher->encryptFile(plainPath: $zipPath, outPath: $finalPath, publicPem: $publicKey);
 		}
 
-		$name = 'keepiq-backup-' . date('Ymd-His', $this->time->getTime()) . ($encrypted === true ? '.zip.enc' : '.zip');
+		$name = 'keepiq-backup-' . date('Ymd-His', $this->time->getTime()) . '.zip';
+		if ($encrypted === true) {
+			$name .= '.enc';
+		}
+
 		$handle = fopen($finalPath, 'rb');
 		if ($handle === false) {
 			throw new RuntimeException('Cannot read the written archive');
 		}
 
-		$this->folder()->newFile($name)->putContent($handle);
+		$this->store->archives()->newFile($name)->putContent($handle);
 		$size = (int)filesize($finalPath);
 
 		return ['name' => $name, 'encrypted' => $encrypted, 'size' => $size];
 	}//end writeArchive()
-
-	/**
-	 * The archive folder, created on first use.
-	 *
-	 * @return ISimpleFolder
-	 */
-	private function folder(): ISimpleFolder {
-		$appData = $this->appDataFactory->get(Application::APP_ID);
-		try {
-			return $appData->getFolder(self::FOLDER);
-		} catch (NotFoundException) {
-			return $appData->newFolder(self::FOLDER);
-		}
-	}//end folder()
-
-	/**
-	 * Where Nextcloud keeps an archive on disk, for copying off-site.
-	 *
-	 * @param string $name The archive name
-	 *
-	 * @return string
-	 */
-	private function diskPath(string $name): string {
-		$dataDir = rtrim((string)$this->config->getSystemValue('datadirectory', ''), '/');
-		$instanceId = (string)$this->config->getSystemValue('instanceid', '');
-
-		return $dataDir . '/appdata_' . $instanceId . '/' . Application::APP_ID . '/' . self::FOLDER . '/' . $name;
-	}//end diskPath()
 
 	/**
 	 * Record a backup audit event as the system.
@@ -324,7 +275,7 @@ class BackupService {
 	private function record(string $eventType, string $name, array $metadata): void {
 		try {
 			$this->audit->record(
-				$this->auditEvents->forSystem(
+				(new AuditEventFactory())->forSystem(
 					eventType: $eventType,
 					objectType: 'backup',
 					objectId: $name,

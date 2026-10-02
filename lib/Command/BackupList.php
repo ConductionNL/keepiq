@@ -54,8 +54,8 @@ class BackupList extends Command {
 	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.1
 	 */
 	protected function configure(): void {
-		$this->setName('keepiq:backup:list')
-			->setDescription('List the stored Keepiq vault backups');
+		$this->setName(name: 'keepiq:backup:list')
+			->setDescription(description: 'List the stored Keepiq vault backups');
 	}//end configure()
 
 	/**
@@ -73,11 +73,16 @@ class BackupList extends Command {
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$rows = [];
 		foreach ($this->backups->listArchives() as $archive) {
+			$encrypted = 'no';
+			if ($archive['encrypted'] === true) {
+				$encrypted = 'yes';
+			}
+
 			$rows[] = [
 				$archive['name'],
 				(string)$archive['size'],
 				date('Y-m-d H:i:s', $archive['createdAt']),
-				($archive['encrypted'] === true ? 'yes' : 'no'),
+				$encrypted,
 				$archive['path'],
 			];
 		}

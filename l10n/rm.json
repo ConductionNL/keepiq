@@ -1268,7 +1268,24 @@
         "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "In export CXF N'È BETG CRIPTÀ. Mintga pled-clav e mintga login vegn a pudair vegnir legì sco text cler en la datoteca telechargiada. Conservai la a moda segira e stizzai la immediatamain suenter l'utilisaziun.",
         "Root certificate expiring soon": "Il certificat da ragisch scada prest",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Il certificat da ragisch da la cassaforta scada en %1$d di(s). Renovai el avant. La renovaziun suttascriva danovamain mintga suite da criptaziun."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Il certificat da ragisch da la cassaforta scada en %1$d di(s). Renovai el avant. La renovaziun suttascriva danovamain mintga suite da criptaziun.",
+        "Archives to keep": "Archivs da tegnair",
+        "Back up every vault automatically": "Far copias da segirezza da mintga chascha forta automaticamain",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Faschai copias da segirezza da mintga chascha forta tenor plan. Ils archivs cuntegnan mo text criptà e vegnan restaurads cun occ.",
+        "Back up now": "Far ussa ina copia",
+        "Backup public key (PEM, optional)": "Clav publica da la copia (PEM, facultativ)",
+        "Backup requested for the next cron run": "Copia dumandada per la proxima execuziun da cron",
+        "Encrypted": "Criptà",
+        "Every (hours)": "Mintga (uras)",
+        "Last backup {when} failed: {error}": "L'ultima copia {when} n'è betg reussida: {error}",
+        "Last backup {when} succeeded.": "L'ultima copia {when} è reussida.",
+        "No": "Na",
+        "No archives yet.": "Anc nagins archivs.",
+        "Size": "Grondezza",
+        "Vault backups": "Copias da segirezza da la chascha forta",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Cun ina clav vegn mintga archiv criptà per ella. Tegnai la clav privata ordaifer quest server: Vus duvrais ella per verifitgar u restaurar.",
+        "Written": "Scrit",
+        "Yes": "Gea"
     },
     "plurals": null
 }

@@ -1269,7 +1269,24 @@ OC.L10N.register(
         "Could not change the tags. Try again.": "Не ўдалося змяніць меткі. Паспрабуйце яшчэ раз.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Экспарт у CXF НЕ ЗАШЫФРАВАНЫ. Кожны пароль і лагін будуць чытэльнымі як звычайны тэкст у спампаваным файле. Зберагайце файл у надзейным месцы і выдаліце яго адразу пасля выкарыстання.",
         "Root certificate expiring soon": "Тэрмін дзеяння каранёвага сертыфіката хутка скончыцца",
-        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Тэрмін дзеяння каранёвага сертыфіката сховішча сканчаецца праз %1$d дз. Абнавіце яго да гэтага. Абнаўленне наноў падпісвае кожны набор шыфравання."
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Тэрмін дзеяння каранёвага сертыфіката сховішча сканчаецца праз %1$d дз. Абнавіце яго да гэтага. Абнаўленне наноў падпісвае кожны набор шыфравання.",
+        "Archives to keep": "Колькі архіваў захоўваць",
+        "Back up every vault automatically": "Аўтаматычна ствараць копію кожнага сховішча",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Стварайце копію кожнага сховішча па раскладзе. Архівы ўтрымліваюць толькі шыфратэкст і аднаўляюцца праз occ.",
+        "Back up now": "Стварыць копію зараз",
+        "Backup public key (PEM, optional)": "Адкрыты ключ рэзервовай копіі (PEM, неабавязкова)",
+        "Backup requested for the next cron run": "Копію запытана на наступны запуск cron",
+        "Encrypted": "Зашыфравана",
+        "Every (hours)": "Кожныя (гадзін)",
+        "Last backup {when} failed: {error}": "Апошняя копія {when} не ўдалася: {error}",
+        "Last backup {when} succeeded.": "Апошняя копія {when} створана.",
+        "No": "Не",
+        "No archives yet.": "Архіваў пакуль няма.",
+        "Size": "Памер",
+        "Vault backups": "Рэзервовыя копіі сховішча",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "З ключом кожны архіў шыфруецца для яго. Захоўвайце закрыты ключ па-за гэтым серверам: ён патрэбны для праверкі ці аднаўлення.",
+        "Written": "Запісана",
+        "Yes": "Так"
     },
     "nplurals=2; plural=(n != 1);"
 )

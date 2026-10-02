@@ -120,14 +120,14 @@ class ArchiveCipher {
 			]
 		);
 
-		$in = $this->open(path: $plainPath, mode: 'rb');
-		$out = $this->open(path: $outPath, mode: 'wb');
-		fwrite($out, self::MAGIC . pack('N', strlen($header)) . $header);
+		$source = $this->open(path: $plainPath, mode: 'rb');
+		$sink = $this->open(path: $outPath, mode: 'wb');
+		fwrite($sink, self::MAGIC . pack('N', strlen($header)) . $header);
 
 		$index = 0;
-		$chunk = (string)fread($in, self::SEGMENT);
+		$chunk = (string)fread($source, self::SEGMENT);
 		do {
-			$next = (string)fread($in, self::SEGMENT);
+			$next = (string)fread($source, self::SEGMENT);
 			$final = ($next === '');
 			$nonce = random_bytes(12);
 			$tag = '';
@@ -144,13 +144,13 @@ class ArchiveCipher {
 				throw new RuntimeException('Archive encryption failed');
 			}
 
-			fwrite($out, pack('N', strlen($cipher)) . $nonce . $cipher . $tag);
+			fwrite($sink, pack('N', strlen($cipher)) . $nonce . $cipher . $tag);
 			$chunk = $next;
 			$index++;
 		} while ($final === false);
 
-		fclose($in);
-		fclose($out);
+		fclose($source);
+		fclose($sink);
 	}//end encryptFile()
 
 	/**
@@ -167,58 +167,94 @@ class ArchiveCipher {
 	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#1.3
 	 */
 	public function decryptFile(string $encPath, string $outPath, string $privatePem): void {
-		$in = $this->open(path: $encPath, mode: 'rb');
-		if ((string)fread($in, strlen(self::MAGIC)) !== self::MAGIC) {
-			fclose($in);
-			throw new InvalidArgumentException('Not an encrypted Keepiq backup');
-		}
-
-		$header = json_decode((string)fread($in, (int)(unpack('N', (string)fread($in, 4))[1] ?? 0)), true);
+		$source = $this->open(path: $encPath, mode: 'rb');
 		try {
-			$private = PublicKeyLoader::load($privatePem);
-			if (($private instanceof RSA\PrivateKey) === false) {
-				throw new InvalidArgumentException('Not an RSA private key');
+			if ((string)fread($source, strlen(self::MAGIC)) !== self::MAGIC) {
+				throw new InvalidArgumentException('Not an encrypted Keepiq backup');
 			}
 
-			$contentKey = $private->withPadding(RSA::ENCRYPTION_OAEP)->withHash('sha256')->withMGFHash('sha256')
-				->decrypt(base64_decode((string)($header['wrappedKey'] ?? ''), true) ?: '');
+			$header = json_decode((string)fread($source, (int)(unpack('N', (string)fread($source, 4))[1] ?? 0)), true);
+			$contentKey = $this->unwrapKey(header: (array)$header, privatePem: $privatePem);
+			$this->decryptSegments(source: $source, outPath: $outPath, contentKey: $contentKey);
+		} finally {
+			fclose($source);
+		}
+	}//end decryptFile()
+
+	/**
+	 * Unwrap the content key with the administrator's private key.
+	 *
+	 * @param array<string,mixed> $header The archive header
+	 * @param string $privatePem The private key
+	 *
+	 * @return string The 32-byte content key
+	 *
+	 * @throws InvalidArgumentException When the key does not open the archive
+	 */
+	private function unwrapKey(array $header, string $privatePem): string {
+		try {
+			$private = PublicKeyLoader::load($privatePem);
+			$wrapped = base64_decode((string)($header['wrappedKey'] ?? ''), true);
+			$contentKey = null;
+			if ($private instanceof RSA\PrivateKey && $wrapped !== false) {
+				$contentKey = $private->withPadding(RSA::ENCRYPTION_OAEP)->withHash('sha256')->withMGFHash('sha256')
+					->decrypt($wrapped);
+			}
 		} catch (Throwable) {
-			fclose($in);
-			throw new InvalidArgumentException('The key does not open this backup');
+			$contentKey = null;
 		}
 
 		if (is_string($contentKey) === false || strlen($contentKey) !== 32) {
-			fclose($in);
 			throw new InvalidArgumentException('The key does not open this backup');
 		}
 
-		$out = $this->open(path: $outPath, mode: 'wb');
+		return $contentKey;
+	}//end unwrapKey()
+
+	/**
+	 * Decrypt every segment into the output file, refusing any change,
+	 * reorder or cut.
+	 *
+	 * @param resource $source The archive, positioned after the header
+	 * @param string $outPath Where to write the plaintext
+	 * @param string $contentKey The content key
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When a segment fails or the last one is missing
+	 */
+	private function decryptSegments($source, string $outPath, string $contentKey): void {
+		$sink = $this->open(path: $outPath, mode: 'wb');
 		$index = 0;
 		$sawFinal = false;
-		while (($lengthBytes = (string)fread($in, 4)) !== '') {
-			$length = (int)(unpack('N', $lengthBytes)[1] ?? 0);
-			$nonce = (string)fread($in, 12);
-			$cipher = ($length > 0 ? (string)fread($in, $length) : '');
-			$tag = (string)fread($in, 16);
-			$final = (feof($in) === true || $this->atEnd(handle: $in) === true);
-			$plain = openssl_decrypt($cipher, 'aes-256-gcm', $contentKey, OPENSSL_RAW_DATA, $nonce, $tag, $this->aad(index: $index, final: $final));
-			if ($plain === false) {
-				fclose($in);
-				fclose($out);
-				throw new InvalidArgumentException('The backup was changed or cut off');
-			}
+		try {
+			while (($lengthBytes = (string)fread($source, 4)) !== '') {
+				$length = (int)(unpack('N', $lengthBytes)[1] ?? 0);
+				$nonce = (string)fread($source, 12);
+				$cipher = '';
+				if ($length > 0) {
+					$cipher = (string)fread($source, $length);
+				}
 
-			fwrite($out, $plain);
-			$sawFinal = $final;
-			$index++;
+				$tag = (string)fread($source, 16);
+				$final = $this->atEnd(handle: $source);
+				$plain = openssl_decrypt($cipher, 'aes-256-gcm', $contentKey, OPENSSL_RAW_DATA, $nonce, $tag, $this->aad(index: $index, final: $final));
+				if ($plain === false) {
+					throw new InvalidArgumentException('The backup was changed or cut off');
+				}
+
+				fwrite($sink, $plain);
+				$sawFinal = $final;
+				$index++;
+			}
+		} finally {
+			fclose($sink);
 		}
 
-		fclose($in);
-		fclose($out);
 		if ($sawFinal === false) {
 			throw new InvalidArgumentException('The backup was changed or cut off');
 		}
-	}//end decryptFile()
+	}//end decryptSegments()
 
 	/**
 	 * The additional data that binds a segment to its place.
@@ -229,7 +265,12 @@ class ArchiveCipher {
 	 * @return string
 	 */
 	private function aad(int $index, bool $final): string {
-		return pack('J', $index) . ($final === true ? "\x01" : "\x00");
+		$flag = "\x00";
+		if ($final === true) {
+			$flag = "\x01";
+		}
+
+		return pack('J', $index) . $flag;
 	}//end aad()
 
 	/**
