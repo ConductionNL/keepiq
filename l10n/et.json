@@ -1265,7 +1265,21 @@
         "Tag": "Silt",
         "Remove tag": "Eemalda silt",
         "Add tag": "Lisa silt",
-        "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti."
+        "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti.",
+        "Access ends on (optional)": "Juurdepääs lõpeb (valikuline)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Keepiqi rakendused ei näita ega kopeeri parooli. Tehniliste oskustega inimene saab selle siiski oma seadmest välja lugeda. Vaheta see, kui juurdepääs lõpeb.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Seda saladust saab ainult kasutada. Logi sisse Keepiqi brauserilaienduse kaudu.",
+        "Until {date}": "Kuni {date}",
+        "Use only": "Ainult kasutamiseks",
+        "Use only (can sign in, cannot view or copy)": "Ainult kasutamiseks (saab sisse logida, ei saa vaadata ega kopeerida)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Saad selle kontoga sisse logida Keepiqi brauserilaienduse kaudu. Omanik otsustas, et sa ei saa seda vaadata ega kopeerida.",
+        "Your access ends on {date}": "Sinu juurdepääs lõpeb {date}",
+        "Your access to this secret has ended": "Sinu juurdepääs sellele saladusele on lõppenud",
+        "Your access to \"%s\" ends tomorrow": "Sinu juurdepääs üksusele „%s“ lõpeb homme",
+        "Your access to \"%s\" has ended": "Sinu juurdepääs üksusele „%s“ on lõppenud",
+        "%1$s no longer has access to \"%2$s\"": "Kasutajal %1$s pole enam juurdepääsu üksusele „%2$s“",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s nägi seda parooli. Vaheta see, kui %1$s ei tohiks seda enam teada.",
+        "%s could not view this password in Keepiq.": "%s ei saanud seda parooli Keepiqis vaadata."
     },
     "plurals": null
 }

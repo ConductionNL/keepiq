@@ -1265,7 +1265,21 @@
         "Tag": "Мітка",
         "Remove tag": "Прибрати мітку",
         "Add tag": "Додати мітку",
-        "Could not change the tags. Try again.": "Не вдалося змінити мітки. Спробуйте ще раз."
+        "Could not change the tags. Try again.": "Не вдалося змінити мітки. Спробуйте ще раз.",
+        "Access ends on (optional)": "Доступ закінчується (необов'язково)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Застосунки Keepiq не показуватимуть і не копіюватимуть пароль. Людина з технічними навичками все одно може прочитати його на своєму пристрої. Змініть його, коли доступ закінчиться.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Цей секрет лише для використання. Увійдіть через розширення браузера Keepiq.",
+        "Until {date}": "До {date}",
+        "Use only": "Лише використання",
+        "Use only (can sign in, cannot view or copy)": "Лише використання (може увійти, не може переглянути чи скопіювати)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Ви можете увійти з цими обліковими даними через розширення браузера Keepiq. Власник вирішив не дозволяти вам переглядати чи копіювати їх.",
+        "Your access ends on {date}": "Ваш доступ закінчується {date}",
+        "Your access to this secret has ended": "Ваш доступ до цього секрету закінчився",
+        "Your access to \"%s\" ends tomorrow": "Ваш доступ до «%s» закінчується завтра",
+        "Your access to \"%s\" has ended": "Ваш доступ до «%s» закінчився",
+        "%1$s no longer has access to \"%2$s\"": "%1$s більше не має доступу до «%2$s»",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s міг(ла) бачити цей пароль. Змініть його, якщо %1$s більше не має його знати.",
+        "%s could not view this password in Keepiq.": "%s не зміг(ла) переглянути цей пароль у Keepiq."
     },
     "plurals": null
 }

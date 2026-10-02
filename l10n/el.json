@@ -1265,7 +1265,21 @@
         "Tag": "Ετικέτα",
         "Remove tag": "Αφαίρεση ετικέτας",
         "Add tag": "Προσθήκη ετικέτας",
-        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά."
+        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά.",
+        "Access ends on (optional)": "Η πρόσβαση λήγει στις (προαιρετικό)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Οι εφαρμογές του Keepiq δεν θα εμφανίσουν ούτε θα αντιγράψουν τον κωδικό πρόσβασης. Κάποιος με τεχνικές γνώσεις μπορεί ακόμη να τον διαβάσει από τη δική του συσκευή. Αλλάξτε τον όταν λήξει η πρόσβασή του.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Αυτό το μυστικό είναι μόνο για χρήση. Συνδεθείτε μέσω της επέκτασης προγράμματος περιήγησης του Keepiq.",
+        "Until {date}": "Έως {date}",
+        "Use only": "Μόνο χρήση",
+        "Use only (can sign in, cannot view or copy)": "Μόνο χρήση (μπορεί να συνδεθεί, δεν μπορεί να δει ή να αντιγράψει)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Μπορείτε να συνδεθείτε με αυτά τα στοιχεία μέσω της επέκτασης προγράμματος περιήγησης του Keepiq. Ο κάτοχος επέλεξε να μην σας επιτρέπει να τα δείτε ή να τα αντιγράψετε.",
+        "Your access ends on {date}": "Η πρόσβασή σας λήγει στις {date}",
+        "Your access to this secret has ended": "Η πρόσβασή σας σε αυτό το μυστικό έληξε",
+        "Your access to \"%s\" ends tomorrow": "Η πρόσβασή σας στο «%s» λήγει αύριο",
+        "Your access to \"%s\" has ended": "Η πρόσβασή σας στο «%s» έληξε",
+        "%1$s no longer has access to \"%2$s\"": "Ο χρήστης %1$s δεν έχει πλέον πρόσβαση στο «%2$s»",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "Ο χρήστης %1$s μπορούσε να δει αυτόν τον κωδικό. Αλλάξτε τον αν ο χρήστης %1$s δεν πρέπει πλέον να τον γνωρίζει.",
+        "%s could not view this password in Keepiq.": "Ο χρήστης %s δεν μπορούσε να δει αυτόν τον κωδικό στο Keepiq."
     },
     "plurals": null
 }

@@ -1265,7 +1265,21 @@
         "Tag": "Oznaka",
         "Remove tag": "Ukloni oznaku",
         "Add tag": "Dodaj oznaku",
-        "Could not change the tags. Try again.": "Oznake nije moguće promijeniti. Pokušajte ponovo."
+        "Could not change the tags. Try again.": "Oznake nije moguće promijeniti. Pokušajte ponovo.",
+        "Access ends on (optional)": "Pristup ističe (opcionalno)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Aplikacije Keepiq neće prikazati niti kopirati lozinku. Neko s tehničkim znanjem je i dalje može pročitati na svom uređaju. Promijenite je kada pristup istekne.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Ova tajna je samo za korištenje. Prijavite se putem proširenja preglednika Keepiq.",
+        "Until {date}": "Do {date}",
+        "Use only": "Samo korištenje",
+        "Use only (can sign in, cannot view or copy)": "Samo korištenje (može se prijaviti, ne može vidjeti niti kopirati)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Ovom prijavom se možete prijaviti putem proširenja preglednika Keepiq. Vlasnik je odlučio da je ne možete vidjeti niti kopirati.",
+        "Your access ends on {date}": "Vaš pristup ističe {date}",
+        "Your access to this secret has ended": "Vaš pristup ovoj tajni je istekao",
+        "Your access to \"%s\" ends tomorrow": "Vaš pristup stavci \"%s\" ističe sutra",
+        "Your access to \"%s\" has ended": "Vaš pristup stavci \"%s\" je istekao",
+        "%1$s no longer has access to \"%2$s\"": "%1$s više nema pristup stavci \"%2$s\"",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s je mogao/la vidjeti ovu lozinku. Promijenite je ako %1$s više ne treba da je zna.",
+        "%s could not view this password in Keepiq.": "%s nije mogao/la vidjeti ovu lozinku u Keepiq."
     },
     "plurals": null
 }

@@ -1266,7 +1266,21 @@ OC.L10N.register(
         "Tag": "Tikketta",
         "Remove tag": "Neħħi t-tikketta",
         "Add tag": "Żid tikketta",
-        "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova."
+        "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova.",
+        "Access ends on (optional)": "L-aċċess jintemm fi (mhux obbligatorju)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "L-apps ta' Keepiq mhux se juru jew jikkupjaw il-password. Xi ħadd b'ħiliet tekniċi xorta jista' jaqraha mill-apparat tiegħu. Biddilha meta l-aċċess tiegħu jintemm.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Dan is-sigriet huwa għall-użu biss. Idħol permezz tal-estensjoni tal-browser ta' Keepiq.",
+        "Until {date}": "Sa {date}",
+        "Use only": "Użu biss",
+        "Use only (can sign in, cannot view or copy)": "Użu biss (jista' jidħol, ma jistax jara jew jikkopja)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Tista' tidħol b'dan il-login permezz tal-estensjoni tal-browser ta' Keepiq. Is-sid għażel li ma jħallikx tarah jew tikkopjah.",
+        "Your access ends on {date}": "L-aċċess tiegħek jintemm fi {date}",
+        "Your access to this secret has ended": "L-aċċess tiegħek għal dan is-sigriet intemm",
+        "Your access to \"%s\" ends tomorrow": "L-aċċess tiegħek għal \"%s\" jintemm għada",
+        "Your access to \"%s\" has ended": "L-aċċess tiegħek għal \"%s\" intemm",
+        "%1$s no longer has access to \"%2$s\"": "%1$s m'għadx għandu aċċess għal \"%2$s\"",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s seta' jara din il-password. Biddilha jekk %1$s m'għandux ikun jafha aktar.",
+        "%s could not view this password in Keepiq.": "%s ma setax jara din il-password f'Keepiq."
     },
     "nplurals=2; plural=(n != 1);"
 )
