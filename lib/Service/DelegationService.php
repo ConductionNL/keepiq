@@ -42,7 +42,7 @@ use Ramsey\Uuid\Uuid;
 /**
  * Business logic for the SecretDelegation lifecycle (scaffold).
  *
- * The authorization decisions — Secret existence, vault_admin membership
+ * The authorization decisions — Secret existence, the People admin area
  * and the pre-existing-share precondition — live in DelegationAuthorizer;
  * this class owns the delegation ROWS and their audit trail.
  */
@@ -139,7 +139,7 @@ class DelegationService {
 	 * Create a temporary delegation by ADMIN POWER GRAB
 	 * (FEATURES.md V1 §17.1, ownership-delegation spec.md).
 	 *
-	 * `initiatedBy` MUST be in the vault_admin Nextcloud group AND already
+	 * `initiatedBy` MUST hold the People admin area AND already
 	 * hold a share of the Secret. The delegation is created with
 	 * `delegated_to = initiatedBy` so the admin's own copy is promoted.
 	 * Owner consent is NOT required, but the admin must already be a
@@ -168,7 +168,7 @@ class DelegationService {
 	): SecretDelegation {
 		$secret = $this->authorizer->requireDelegableSecret(secretId: $secretId, delegatedTo: $delegatedTo);
 
-		$this->authorizer->requireVaultAdmin(userId: $initiatedBy);
+		$this->authorizer->requireHandoverAdmin(userId: $initiatedBy);
 
 		if ($delegatedTo !== $initiatedBy) {
 			throw new InvalidArgumentException(
@@ -209,6 +209,9 @@ class DelegationService {
 		string $delegatedTo,
 		string $initiatedBy,
 	): SecretDelegation {
+		// A use-only or expiring copy is never handed on (D4).
+		$secret->assertOnwardShareable();
+
 		$entity = new SecretDelegation();
 		$entity->setId(Uuid::uuid4()->toString());
 		$entity->setSecretId($secretId);
@@ -241,18 +244,18 @@ class DelegationService {
 	 * Whether $userId may use the admin handover path at all.
 	 *
 	 * Exposed here so the UI can decide whether to OFFER the takeover; the
-	 * membership rule itself has a single home in DelegationAuthorizer, so
-	 * the button and the enforcement can never drift apart.
+	 * rule itself has a single home in DelegationAuthorizer, so the button
+	 * and the enforcement can never drift apart.
 	 *
 	 * @param string $userId The candidate admin user ID
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.4
 	 */
-	public function isVaultAdmin(string $userId): bool {
-		return $this->authorizer->isVaultAdmin(userId: $userId);
-	}//end isVaultAdmin()
+	public function canHandover(string $userId): bool {
+		return $this->authorizer->canHandover(userId: $userId);
+	}//end canHandover()
 
 	/**
 	 * Reclaim — the original owner revokes all TEMPORARY delegations they

@@ -19,6 +19,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use OCA\Keepiq\Tests\Support\AdminAreaFixture;
+use OCA\Keepiq\Settings\AuditAdminSettings;
+use OCA\Keepiq\Settings\AdminSettings;
 use OCA\Keepiq\Controller\SecretTypeController;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTypeMapper;
@@ -38,6 +41,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
  */
 class SecretTypeControllerTest extends TestCase {
+	use AdminAreaFixture;
+
 
 	/**
 	 * Build the controller for a user who is or is not an administrator.
@@ -66,7 +71,7 @@ class SecretTypeControllerTest extends TestCase {
 			request: $this->createMock(IRequest::class),
 			typeService: $service,
 			userSession: $session,
-			groupManager: $groups,
+			areas: $this->areaAuthorizer(groupManager: $groups),
 		);
 	}//end controllerFor()
 
@@ -124,4 +129,46 @@ class SecretTypeControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 	}//end testInvalidFieldListIsBadRequest()
+
+	/**
+	 * A holder of the General area who is no instance admin may create a
+	 * global type (admin-scoped-roles §2.3).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.3
+	 */
+	public function testAGeneralAreaHolderCreatesAGlobalType(): void {
+		$this->delegatedAreas = [AdminSettings::class];
+
+		$response = $this->controllerFor(isAdmin: false)->create(
+			name: 'server-access',
+			label: 'Server access',
+			scope: 'global',
+			fields: [['key' => 'host', 'label' => 'Host', 'kind' => 'url']],
+		);
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+	}//end testAGeneralAreaHolderCreatesAGlobalType()
+
+	/**
+	 * A holder of only the Audit area gets 403 for a global type
+	 * (admin-scoped-roles §2.3).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.3
+	 */
+	public function testAnAuditAreaHolderGetsForbiddenForAGlobalType(): void {
+		$this->delegatedAreas = [AuditAdminSettings::class];
+
+		$response = $this->controllerFor(isAdmin: false)->create(
+			name: 'server-access',
+			label: 'Server access',
+			scope: 'global',
+			fields: [['key' => 'host', 'label' => 'Host', 'kind' => 'url']],
+		);
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+	}//end testAnAuditAreaHolderGetsForbiddenForAGlobalType()
 }//end class

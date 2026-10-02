@@ -50,7 +50,7 @@ function fillSelect(select, options, doc) {
  * @param {(id: string) => HTMLElement} ctx.$ Element by id.
  * @param {(type: string, payload?: object) => Promise<object>} ctx.send Message the worker.
  * @param {(id: string, message: string) => void} ctx.showError Show or clear an error.
- * @param {() => string|null} ctx.generatePassword A strong password for the edit form.
+ * @param {(kind: string, onPick: (value: string) => void) => Promise<void>} ctx.pickGenerated Open the Generator to pick a value for the form.
  * @param {(item: object) => void} ctx.sendItem Open the Send tab for an item.
  * @param {Document} [ctx.doc] The popup document.
  * @return {{open: () => Promise<void>}}
@@ -59,7 +59,7 @@ export function initVault({
 	$,
 	send,
 	showError,
-	generatePassword,
+	pickGenerated,
 	sendItem,
 	doc = document,
 }) {
@@ -218,13 +218,17 @@ export function initVault({
 		showView('vault-browse')
 		await load()
 	})
-	$('edit-generate').addEventListener('click', () => {
-		const value = generatePassword()
-		if (value) {
+	$('edit-generate').addEventListener('click', () =>
+		pickGenerated('password', (value) => {
 			$('edit-secret').value = value
 			$('edit-secret').type = 'text'
-		}
-	})
+		}),
+	)
+	$('edit-generate-username').addEventListener('click', () =>
+		pickGenerated('username', (value) => {
+			$('edit-login').value = value
+		}),
+	)
 	$('edit-cancel').addEventListener('click', () => {
 		showView(current ? 'vault-detail' : 'vault-browse')
 	})

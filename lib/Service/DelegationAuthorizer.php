@@ -6,7 +6,7 @@
  * The authorization surface of the SecretDelegation lifecycle
  * (ownership-delegation spec.md, FEATURES.md V1 §17.1). One place answers
  * "may this delegation happen at all": the Secret must exist, the delegate
- * must be named, the admin path needs vault_admin membership, and either
+ * must be named, the admin path needs the People admin area, and either
  * path needs the recipient to already hold a share — a delegation promotes
  * an *existing* recipient copy, it never creates access.
  *
@@ -30,30 +30,29 @@ use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
-use OCP\IGroupManager;
 
 /**
  * Authorization decisions for the SecretDelegation lifecycle.
  */
 class DelegationAuthorizer {
 	/**
-	 * The Nextcloud group whose members can initiate admin-handover
-	 * delegations (override the owner-consent requirement). Members of
-	 * this group still MUST already hold a share of the target Secret —
-	 * the admin path widens *who* can create the delegation, not what
-	 * can be delegated without a pre-existing share.
+	 * The legacy group that still counts as holding the People area until
+	 * the alias is removed (admin-scoped-roles D4). Kept as a constant so
+	 * existing references keep compiling; the rule itself lives in
+	 * AdminAreaAuthorizer.
 	 *
 	 * @var string
 	 */
-	public const VAULT_ADMIN_GROUP = 'vault_admin';
+	public const VAULT_ADMIN_GROUP = AdminAreaAuthorizer::LEGACY_PEOPLE_GROUP;
 
 	/**
 	 * Constructor for DelegationAuthorizer.
 	 *
 	 * @param SecretMapper $secretMapper The Secret mapper (owner lookup)
 	 * @param ShareTargetMapper|null $shareTargetMapper Pre-existing-share lookup (admin path)
-	 * @param IGroupManager|null $groupManager Group membership check (admin path)
+	 * @param AdminAreaAuthorizer|null $areas The People area check (admin path)
 	 *
 	 * @return void
 	 *
@@ -62,7 +61,7 @@ class DelegationAuthorizer {
 	public function __construct(
 		private SecretMapper $secretMapper,
 		private ?ShareTargetMapper $shareTargetMapper = null,
-		private ?IGroupManager $groupManager = null,
+		private ?AdminAreaAuthorizer $areas = null,
 	) {
 	}//end __construct()
 
@@ -110,39 +109,40 @@ class DelegationAuthorizer {
 	}//end requireDelegableSecret()
 
 	/**
-	 * Assert that $userId is a member of the vault_admin group.
+	 * Assert that $userId may use the admin handover path: an instance admin
+	 * or a holder of the People and offboarding area (admin-scoped-roles D5).
 	 *
 	 * @param string $userId The candidate admin user ID
 	 *
 	 * @return void
 	 *
-	 * @throws InvalidArgumentException When the group manager is wired
-	 *                                  but the user is not a vault admin.
+	 * @throws InvalidArgumentException When the area check is wired but the
+	 *                                  user does not hold the People area.
 	 *
-	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-17.1
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.4
 	 */
-	public function requireVaultAdmin(string $userId): void {
-		if ($this->groupManager === null) {
-			// No group manager wired — admin path cannot be authorized.
+	public function requireHandoverAdmin(string $userId): void {
+		if ($this->areas === null) {
+			// No area check wired: the admin path cannot be authorized.
 			throw new InvalidArgumentException(
 				message: 'Admin handover is not available in this context'
 			);
 		}
 
-		if ($this->isVaultAdmin(userId: $userId) === false) {
+		if ($this->canHandover(userId: $userId) === false) {
 			throw new InvalidArgumentException(
-				message: 'Admin handover requires membership in the vault_admin group'
+				message: 'Admin handover requires the People and offboarding admin area'
 			);
 		}
-	}//end requireVaultAdmin()
+	}//end requireHandoverAdmin()
 
 	/**
 	 * Whether $userId may use the admin handover path at all.
 	 *
 	 * Exists so the UI can decide whether to OFFER the takeover without
-	 * duplicating the membership rule: `requireVaultAdmin()` above is written
-	 * in terms of this predicate, so the button and the enforcement can never
-	 * drift apart. It answers only the group question — the per-secret
+	 * duplicating the rule: `requireHandoverAdmin()` above is written in
+	 * terms of this predicate, so the button and the enforcement can never
+	 * drift apart. It answers only the area question; the per-secret
 	 * preconditions (not already the owner, already holds a share) stay with
 	 * the delegation entry points, because they need the Secret.
 	 *
@@ -150,15 +150,15 @@ class DelegationAuthorizer {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.4
 	 */
-	public function isVaultAdmin(string $userId): bool {
-		if ($this->groupManager === null) {
+	public function canHandover(string $userId): bool {
+		if ($this->areas === null) {
 			return false;
 		}
 
-		return $this->groupManager->isInGroup($userId, self::VAULT_ADMIN_GROUP);
-	}//end isVaultAdmin()
+		return $this->areas->holds(userId: $userId, areaClass: PeopleAdminSettings::class);
+	}//end canHandover()
 
 	/**
 	 * Assert that $userId already holds a share of $secretId. No-op when

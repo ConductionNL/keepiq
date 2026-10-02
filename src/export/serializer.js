@@ -15,6 +15,8 @@
  * chosen export mode — it only filters which already-decrypted rows are written.
  */
 
+import { isUseOnly } from '../utils/shareRestriction.js'
+
 /** The serialized payload format identifier. */
 export const PAYLOAD_FORMAT = 'keepiq-vault'
 
@@ -108,6 +110,11 @@ export function serializeVault(secrets, folders, scope = { mode: 'vault' }) {
 
 	const includedSecrets = []
 	for (const secret of secrets) {
+		// A use-only copy never leaves Keepiq in any export
+		// (sharing-use-only-and-expiring-shares D3).
+		if (isUseOnly(secret)) {
+			continue
+		}
 		if (includedFolderIds !== null) {
 			// Only secrets whose folder is within a selected subtree.
 			if (secret.folderId == null || !includedFolderIds.has(secret.folderId)) {
