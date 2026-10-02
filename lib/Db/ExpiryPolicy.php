@@ -173,8 +173,10 @@ class ExpiryPolicy extends Entity implements JsonSerializable {
 	 * The reminder thresholds as a decoded array (null when unset).
 	 *
 	 * @return int[]|null
+	 *
+	 * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md
 	 */
-	private function decodedReminderDays(): ?array {
+	public function decodedReminderDays(): ?array {
 		if ($this->reminderDays === null) {
 			return null;
 		}

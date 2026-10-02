@@ -21,7 +21,6 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\BackgroundJob;
 
-use DateTime;
 use Exception;
 use OCA\Keepiq\Db\CACertificateMapper;
 use OCA\Keepiq\Service\CertificateAuthorityService;
@@ -78,7 +77,12 @@ class RenewIntermediateCertificate extends TimedJob {
 			return;
 		}
 
-		$daysUntilExpiry = (int)$expiresAt->diff(new DateTime())->format('%r%a');
+		// Days from NOW until expiry: positive while the certificate is still
+		// valid. The former expiry->diff(now) ran backwards and read negative
+		// for every valid certificate, so this job renewed every night and
+		// re-signed every suite each time (keepiq#741).
+		$now = $this->time->getDateTime();
+		$daysUntilExpiry = (int)floor(($expiresAt->getTimestamp() - $now->getTimestamp()) / 86400);
 		if ($daysUntilExpiry > 30) {
 			return;
 		}

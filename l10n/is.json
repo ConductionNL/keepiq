@@ -1266,7 +1266,9 @@
         "Remove tag": "Fjarlægja merki",
         "Add tag": "Bæta við merki",
         "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur.",
-        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF-útflutningur er ÓDULKÓÐAÐUR. Hvert lykilorð og innskráningarnafn verður læsilegt sem ódulkóðaður texti í skránni sem er hlaðið niður. Varðveittu hana á öruggum stað og eyddu henni strax eftir notkun."
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF-útflutningur er ÓDULKÓÐAÐUR. Hvert lykilorð og innskráningarnafn verður læsilegt sem ódulkóðaður texti í skránni sem er hlaðið niður. Varðveittu hana á öruggum stað og eyddu henni strax eftir notkun.",
+        "Root certificate expiring soon": "Rótarvottorð rennur brátt út",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Rótarvottorð hólfsins rennur út eftir %1$d dag/daga. Endurnýjaðu það fyrir þann tíma. Endurnýjun undirritar hverja dulkóðunarsvítu upp á nýtt."
     },
     "plurals": null
 }
