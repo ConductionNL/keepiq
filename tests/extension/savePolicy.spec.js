@@ -165,3 +165,25 @@ describe('the in-page refusal', () => {
 		expect(buttons[0].textContent).toBe('Close')
 	})
 })
+
+describe('the extension breach lookup', () => {
+	it('posts the prefix in the body, never in the URL (keepiq#866)', async () => {
+		const { breachRange } = await vi.importActual('../../browser-extension/src/lib/api.js')
+		const fetchMock = vi.fn(async () => ({
+			ok: true,
+			status: 200,
+			json: async () => ({ suffixes: 'ABC:1' }),
+		}))
+		vi.stubGlobal('fetch', fetchMock)
+
+		const body = await breachRange({ url: 'https://cloud.test/', user: 'ann', appPassword: 'x' }, '5BAA6')
+
+		expect(body).toBe('ABC:1')
+		const [url, init] = fetchMock.mock.calls[0]
+		expect(url).toBe('https://cloud.test/index.php/apps/keepiq/api/v1/breach-check/range')
+		expect(url).not.toContain('5BAA6')
+		expect(init.method).toBe('POST')
+		expect(JSON.parse(init.body)).toEqual({ prefix: '5BAA6' })
+		vi.unstubAllGlobals()
+	})
+})

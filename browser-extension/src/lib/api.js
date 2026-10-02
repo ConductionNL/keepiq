@@ -161,16 +161,15 @@ export async function fetchPolicy(config) {
 
 /**
  * Fetch the breach suffix list for a 5-character SHA-1 prefix through the
- * Keepiq proxy. Only the prefix leaves the browser.
+ * Keepiq proxy. Only the prefix leaves the browser, and it goes in the body,
+ * never in the URL, which the server logs next to the user (keepiq#866).
  * @param config
  * @param prefix
  */
 export async function breachRange(config, prefix) {
-	const data = await request(
-		config,
-		'GET',
-		'/api/v1/breach-check/range/' + encodeURIComponent(prefix),
-	)
+	const data = await request(config, 'POST', '/api/v1/breach-check/range', {
+		prefix,
+	})
 	return data?.suffixes ?? ''
 }
 
