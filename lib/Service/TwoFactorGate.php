@@ -101,20 +101,7 @@ class TwoFactorGate {
 	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
 	 */
 	public function gapReport(array $groupIds): array {
-		$users = [];
-		if ($groupIds === []) {
-			$this->userManager->callForSeenUsers(
-				static function (IUser $user) use (&$users): void {
-					$users[$user->getUID()] = $user;
-				}
-			);
-		} else {
-			foreach ($groupIds as $groupId) {
-				foreach ($this->groupManager?->get($groupId)?->getUsers() ?? [] as $user) {
-					$users[$user->getUID()] = $user;
-				}
-			}
-		}
+		$users = $this->usersInScope(groupIds: $groupIds);
 
 		$without = 0;
 		foreach ($users as $user) {
@@ -125,6 +112,36 @@ class TwoFactorGate {
 
 		return ['inScope' => count($users), 'withoutTwoFactor' => $without];
 	}//end gapReport()
+
+	/**
+	 * The users a scope covers, keyed by user id: the groups' members, or
+	 * every user who has logged in when no group is named.
+	 *
+	 * @param string[] $groupIds The scope
+	 *
+	 * @return array<string,IUser>
+	 */
+	private function usersInScope(array $groupIds): array {
+		$users = [];
+		if ($groupIds === []) {
+			$this->userManager->callForSeenUsers(
+				static function (IUser $user) use (&$users): bool {
+					$users[$user->getUID()] = $user;
+					return true;
+				}
+			);
+
+			return $users;
+		}
+
+		foreach ($groupIds as $groupId) {
+			foreach ($this->groupManager?->get($groupId)?->getUsers() ?? [] as $user) {
+				$users[$user->getUID()] = $user;
+			}
+		}
+
+		return $users;
+	}//end usersInScope()
 
 	/**
 	 * Whether a user has an enabled provider other than backup codes.

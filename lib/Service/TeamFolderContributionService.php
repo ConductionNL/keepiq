@@ -67,7 +67,6 @@ class TeamFolderContributionService {
 	 * @param EncryptionSuiteMapper $suiteMapper The owner's active suite
 	 * @param SecretTypeService $typeService Resolves the type for the owner
 	 * @param IEventDispatcher|null $eventDispatcher The audit dispatcher
-	 * @param AuditEventFactory $auditEvents The audit event factory
 	 *
 	 * @return void
 	 *
@@ -83,7 +82,6 @@ class TeamFolderContributionService {
 		private EncryptionSuiteMapper $suiteMapper,
 		private SecretTypeService $typeService,
 		private ?IEventDispatcher $eventDispatcher = null,
-		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 	) {
 	}//end __construct()
 
@@ -160,7 +158,7 @@ class TeamFolderContributionService {
 		}
 
 		$this->eventDispatcher?->dispatchTyped(
-			$this->auditEvents->forUser(
+			(new AuditEventFactory())->forUser(
 				actorId: $userId,
 				eventType: AuditEventTypes::SECRET_CREATED,
 				objectType: 'secret',

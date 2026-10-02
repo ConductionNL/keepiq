@@ -44,4 +44,15 @@ class PolicyViolationException extends ForbiddenException {
 	) {
 		parent::__construct(message: $message);
 	}//end __construct()
+
+	/**
+	 * The policy code, for example org_ownership_required.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.1
+	 */
+	public function policyCode(): ?string {
+		return $this->policyCode;
+	}//end policyCode()
 }//end class

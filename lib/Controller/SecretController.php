@@ -26,7 +26,6 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
-use OCA\Keepiq\Exception\PolicyViolationException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
@@ -228,15 +227,10 @@ class SecretController extends OCSController {
 		} catch (NotFoundException $e) {
 			// The folder named in the request does not exist (keepiq#795).
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
-		} catch (PolicyViolationException $e) {
-			// A vault policy refused the write (admin-vault-policies D4).
-			return new JSONResponse(
-				data: ['message' => $e->getMessage(), 'code' => $e->policyCode],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
 		} catch (ForbiddenException|SuiteBlockedException $e) {
-			// ForbiddenException: the folder belongs to another user (keepiq#795).
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+			// ForbiddenException: the folder belongs to another user (keepiq#795),
+			// or a vault policy refused the write (admin-vault-policies D4).
+			return $this->forbidden(exception: $e);
 		} catch (WriteLockedException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: self::STATUS_LOCKED);
 		} catch (InvalidArgumentException $e) {
@@ -358,13 +352,8 @@ class SecretController extends OCSController {
 			$secret = $this->secretService->update($id, $data, $userId);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
-		} catch (PolicyViolationException $e) {
-			return new JSONResponse(
-				data: ['message' => $e->getMessage(), 'code' => $e->policyCode],
-				statusCode: Http::STATUS_FORBIDDEN
-			);
 		} catch (ForbiddenException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+			return $this->forbidden(exception: $e);
 		} catch (WriteLockedException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: self::STATUS_LOCKED);
 		} catch (InvalidArgumentException $e) {
@@ -373,4 +362,23 @@ class SecretController extends OCSController {
 
 		return new JSONResponse(data: $secret->jsonSerialize());
 	}//end update()
+
+	/**
+	 * A 403 for a refused write, with the policy code when a vault policy
+	 * refused it (admin-vault-policies D4).
+	 *
+	 * @param \RuntimeException $exception The refusal
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.1
+	 */
+	private function forbidden(\RuntimeException $exception): JSONResponse {
+		$data = ['message' => $exception->getMessage()];
+		if ($exception instanceof ForbiddenException && $exception->policyCode() !== null) {
+			$data['code'] = $exception->policyCode();
+		}
+
+		return new JSONResponse(data: $data, statusCode: Http::STATUS_FORBIDDEN);
+	}//end forbidden()
 }//end class

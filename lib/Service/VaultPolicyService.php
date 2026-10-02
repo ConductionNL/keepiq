@@ -240,7 +240,7 @@ class VaultPolicyService {
 	}//end ownershipTypes()
 
 	/**
-	 * Validate one touched key.
+	 * Validate one touched key: a policy switch, the type list, or a group list.
 	 *
 	 * @param string $key The key
 	 * @param mixed $value The submitted value
@@ -251,14 +251,51 @@ class VaultPolicyService {
 	 */
 	private function validate(string $key, mixed $value): bool|array {
 		if (in_array($key, self::POLICIES, true) === true) {
-			$bool = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-			if ($bool === null) {
-				throw new InvalidArgumentException($key . ' must be true or false');
-			}
-
-			return $bool;
+			return $this->validSwitch(key: $key, value: $value);
 		}
 
+		$names = $this->validNames(key: $key, value: $value);
+		if ($key === self::ORG_OWNERSHIP_TYPES) {
+			if ($names === []) {
+				throw new InvalidArgumentException($key . ' must name at least one type');
+			}
+
+			return $names;
+		}
+
+		return $this->existingGroups(key: $key, groupIds: $names);
+	}//end validate()
+
+	/**
+	 * A policy switch.
+	 *
+	 * @param string $key The key
+	 * @param mixed $value The submitted value
+	 *
+	 * @return bool
+	 *
+	 * @throws InvalidArgumentException When it is not a boolean
+	 */
+	private function validSwitch(string $key, mixed $value): bool {
+		$bool = filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+		if ($bool === null) {
+			throw new InvalidArgumentException($key . ' must be true or false');
+		}
+
+		return $bool;
+	}//end validSwitch()
+
+	/**
+	 * A list of distinct, well-formed names.
+	 *
+	 * @param string $key The key
+	 * @param mixed $value The submitted value
+	 *
+	 * @return string[]
+	 *
+	 * @throws InvalidArgumentException When it is not a list of valid names
+	 */
+	private function validNames(string $key, mixed $value): array {
 		if (is_array($value) === false) {
 			throw new InvalidArgumentException($key . ' must be a list');
 		}
@@ -272,23 +309,28 @@ class VaultPolicyService {
 			$names[$name] = true;
 		}
 
-		$names = array_keys($names);
-		if ($key === self::ORG_OWNERSHIP_TYPES) {
-			if ($names === []) {
-				throw new InvalidArgumentException($key . ' must name at least one type');
-			}
+		return array_keys($names);
+	}//end validNames()
 
-			return $names;
-		}
-
-		foreach ($names as $groupId) {
+	/**
+	 * Group ids that exist in Nextcloud.
+	 *
+	 * @param string $key The key
+	 * @param string[] $groupIds The group ids
+	 *
+	 * @return string[]
+	 *
+	 * @throws InvalidArgumentException When a group does not exist
+	 */
+	private function existingGroups(string $key, array $groupIds): array {
+		foreach ($groupIds as $groupId) {
 			if ($this->groupManager->groupExists($groupId) === false) {
 				throw new InvalidArgumentException($key . ' names an unknown group: ' . $groupId);
 			}
 		}
 
-		return $names;
-	}//end validate()
+		return $groupIds;
+	}//end existingGroups()
 
 	/**
 	 * Read a JSON list key.
