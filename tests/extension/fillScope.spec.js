@@ -28,7 +28,11 @@ describe('content script fill handler', () => {
 	beforeAll(async () => {
 		globalThis.chrome = {
 			runtime: {
-				onMessage: { addListener: (fn) => { listener = fn } },
+				onMessage: {
+					addListener: (fn) => {
+						listener = fn
+					},
+				},
 				sendMessage: vi.fn().mockResolvedValue(null),
 				getURL: (p) => p,
 			},
@@ -37,7 +41,8 @@ describe('content script fill handler', () => {
 	})
 
 	beforeEach(() => {
-		document.body.innerHTML = '<form><input type="text" name="username"><input type="password" name="password"></form>'
+		document.body.innerHTML =
+			'<form><input type="text" name="username"><input type="password" name="password"></form>'
 		// jsdom lays nothing out; give the fields a size so they count as visible.
 		for (const input of document.querySelectorAll('input')) {
 			input.getBoundingClientRect = () => ({ width: 100, height: 20 })
@@ -52,7 +57,9 @@ describe('content script fill handler', () => {
 	 */
 	function send(msg) {
 		let response
-		const handled = listener(msg, {}, (r) => { response = r })
+		const handled = listener(msg, {}, (r) => {
+			response = r
+		})
 		return { handled, response }
 	}
 
@@ -68,7 +75,10 @@ describe('content script fill handler', () => {
 	})
 
 	it('refuses a fill that names no host', () => {
-		const { handled } = send({ type: 'fill-credential', payload: { login: 'ann', secret: 'pw' } })
+		const { handled } = send({
+			type: 'fill-credential',
+			payload: { login: 'ann', secret: 'pw' },
+		})
 
 		expect(handled).toBe(false)
 		expect(document.querySelector('input[type="password"]').value).toBe('')

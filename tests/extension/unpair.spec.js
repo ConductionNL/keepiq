@@ -41,14 +41,27 @@ describe('the worker unpair handler', () => {
 
 	beforeAll(async () => {
 		globalThis.chrome = {
-			runtime: { onMessage: { addListener: (fn) => { listener = fn } }, getURL: (p) => p },
+			runtime: {
+				onMessage: {
+					addListener: (fn) => {
+						listener = fn
+					},
+				},
+				getURL: (p) => p,
+			},
 			storage: {
 				local: {
 					get: async (key) => ({ [key]: store[key] }),
 					set: async (obj) => Object.assign(store, obj),
-					remove: async (key) => { delete store[key] },
+					remove: async (key) => {
+						delete store[key]
+					},
 				},
-				session: { get: async () => ({}), set: async () => {}, remove: async () => {} },
+				session: {
+					get: async () => ({}),
+					set: async () => {},
+					remove: async () => {},
+				},
 			},
 		}
 		await import('../../browser-extension/src/background/service-worker.js')
@@ -56,16 +69,18 @@ describe('the worker unpair handler', () => {
 
 	it('deletes the app password and clears the pairing', async () => {
 		store['keepiq.config'] = CONFIG
-		const fetch = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({}) })
+		const fetch = vi
+			.fn()
+			.mockResolvedValue({ ok: true, status: 200, json: async () => ({}) })
 		vi.stubGlobal('fetch', fetch)
 
 		const result = await new Promise((resolve) => {
 			listener({ type: 'unpair' }, {}, resolve)
 		})
 
-		expect(fetch.mock.calls.map(([url, init]) => `${init.method} ${url}`)).toContain(
-			'DELETE https://cloud.example/ocs/v2.php/core/apppassword',
-		)
+		expect(
+			fetch.mock.calls.map(([url, init]) => `${init.method} ${url}`),
+		).toContain('DELETE https://cloud.example/ocs/v2.php/core/apppassword')
 		expect(result).toEqual({ ok: true, revoked: true })
 		expect(store['keepiq.config']).toBeUndefined()
 		vi.unstubAllGlobals()

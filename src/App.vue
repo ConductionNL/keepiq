@@ -152,7 +152,9 @@
 					<DefaultsSection />
 				</NcAppSettingsSection>
 
-				<NcAppSettingsSection id="expiry-rules" :name="t('keepiq', 'Expiry rules')">
+				<NcAppSettingsSection
+					id="expiry-rules"
+					:name="t('keepiq', 'Expiry rules')">
 					<ExpiryPoliciesSection />
 				</NcAppSettingsSection>
 

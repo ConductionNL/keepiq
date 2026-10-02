@@ -14,7 +14,12 @@
 <template>
 	<div class="expiry-policies" data-testid="expiry-policies-section">
 		<p class="expiry-policies__hint">
-			{{ t('keepiq', 'Set how long passwords of one item type or in one folder may live, and when to be reminded. When several dates apply, the earliest one counts.') }}
+			{{
+				t(
+					'keepiq',
+					'Set how long passwords of one item type or in one folder may live, and when to be reminded. When several dates apply, the earliest one counts.',
+				)
+			}}
 		</p>
 
 		<ul v-if="rules.length > 0" class="expiry-policies__list">
@@ -33,7 +38,9 @@
 					@click="onDelete(rule)">
 					{{ t('keepiq', 'Delete') }}
 				</NcButton>
-				<span v-else class="expiry-policies__admin">{{ t('keepiq', 'Set by your administrator') }}</span>
+				<span v-else class="expiry-policies__admin">{{
+					t('keepiq', 'Set by your administrator')
+				}}</span>
 			</li>
 		</ul>
 		<p v-else class="expiry-policies__empty" data-testid="expiry-policies-empty">
@@ -52,7 +59,11 @@
 			<NcSelect
 				v-model="draft.scopeId"
 				:options="targetOptions"
-				:inputLabel="draft.scope === 'folder' ? t('keepiq', 'Folder') : t('keepiq', 'Item type')"
+				:inputLabel="
+					draft.scope === 'folder'
+						? t('keepiq', 'Folder')
+						: t('keepiq', 'Item type')
+				"
 				label="label"
 				:reduce="(opt) => opt.value"
 				data-testid="expiry-policy-target" />
@@ -60,11 +71,15 @@
 				v-model="draft.maxAgeDays"
 				type="number"
 				min="1"
-				:label="t('keepiq', 'Maximum age in days (empty for reminders only)')"
+				:label="
+					t('keepiq', 'Maximum age in days (empty for reminders only)')
+				"
 				data-testid="expiry-policy-max-age" />
 			<NcTextField
 				v-model="draft.reminderDays"
-				:label="t('keepiq', 'Remind me this many days before, comma separated')"
+				:label="
+					t('keepiq', 'Remind me this many days before, comma separated')
+				"
 				data-testid="expiry-policy-reminders" />
 			<NcButton
 				variant="primary"
@@ -124,7 +139,12 @@ export default {
 	data() {
 		return {
 			saving: false,
-			draft: { scope: 'type', scopeId: null, maxAgeDays: '', reminderDays: '' },
+			draft: {
+				scope: 'type',
+				scopeId: null,
+				maxAgeDays: '',
+				reminderDays: '',
+			},
 		}
 	},
 
@@ -146,7 +166,9 @@ export default {
 		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 		 */
 		rules() {
-			return Array.isArray(this.rotation.policies) ? this.rotation.policies : []
+			return Array.isArray(this.rotation.policies)
+				? this.rotation.policies
+				: []
 		},
 
 		/**
@@ -170,9 +192,15 @@ export default {
 		 */
 		targetOptions() {
 			if (this.draft.scope === 'folder') {
-				return useFolderStore().folders.map((folder) => ({ value: folder.id, label: folder.name }))
+				return useFolderStore().folders.map((folder) => ({
+					value: folder.id,
+					label: folder.name,
+				}))
 			}
-			return useSecretTypeStore().types.map((type) => ({ value: type.id, label: secretTypeLabel(type) }))
+			return useSecretTypeStore().types.map((type) => ({
+				value: type.id,
+				label: secretTypeLabel(type),
+			}))
 		},
 
 		/**
@@ -187,12 +215,15 @@ export default {
 			if (!this.draft.scopeId || Number.isNaN(maxAge)) {
 				return false
 			}
-			return maxAge !== null || parseReminderDays(this.draft.reminderDays).length > 0
+			return (
+				maxAge !== null
+				|| parseReminderDays(this.draft.reminderDays).length > 0
+			)
 		},
 	},
 
 	watch: {
-		'draft.scope': function() {
+		'draft.scope': function () {
 			this.draft.scopeId = null
 		},
 	},
@@ -235,10 +266,19 @@ export default {
 		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 		 */
 		scopeLabel(rule) {
-			const target = rule.scope === 'folder'
-				? useFolderStore().folders.find((folder) => folder.id === rule.scopeId)
-				: useSecretTypeStore().types.find((type) => type.id === rule.scopeId)
-			const name = target ? (rule.scope === 'folder' ? target.name : secretTypeLabel(target)) : rule.scopeId
+			const target =
+				rule.scope === 'folder'
+					? useFolderStore().folders.find(
+							(folder) => folder.id === rule.scopeId,
+						)
+					: useSecretTypeStore().types.find(
+							(type) => type.id === rule.scopeId,
+						)
+			const name = target
+				? rule.scope === 'folder'
+					? target.name
+					: secretTypeLabel(target)
+				: rule.scopeId
 			return rule.scope === 'folder'
 				? t('keepiq', 'Folder {name}', { name })
 				: t('keepiq', 'Type {name}', { name })
@@ -254,10 +294,18 @@ export default {
 		ruleDetail(rule) {
 			const parts = []
 			if (rule.maxAgeDays) {
-				parts.push(t('keepiq', 'Expires after {days} days', { days: rule.maxAgeDays }))
+				parts.push(
+					t('keepiq', 'Expires after {days} days', {
+						days: rule.maxAgeDays,
+					}),
+				)
 			}
 			if (Array.isArray(rule.reminderDays) && rule.reminderDays.length > 0) {
-				parts.push(t('keepiq', 'Reminders {days} days before', { days: rule.reminderDays.join(', ') }))
+				parts.push(
+					t('keepiq', 'Reminders {days} days before', {
+						days: rule.reminderDays.join(', '),
+					}),
+				)
 			}
 			return parts.join('. ')
 		},
@@ -277,7 +325,12 @@ export default {
 					maxAgeDays: parseMaxAge(this.draft.maxAgeDays),
 					reminderDays: parseReminderDays(this.draft.reminderDays),
 				})
-				this.draft = { scope: this.draft.scope, scopeId: null, maxAgeDays: '', reminderDays: '' }
+				this.draft = {
+					scope: this.draft.scope,
+					scopeId: null,
+					maxAgeDays: '',
+					reminderDays: '',
+				}
 			} catch {
 				showError(t('keepiq', 'Could not save the expiry rule.'))
 			} finally {

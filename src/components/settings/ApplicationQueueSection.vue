@@ -97,10 +97,17 @@ export default {
 			// an unhandled rejection the admin never sees (#755).
 			try {
 				await axios.post(
-					generateUrl(`/apps/keepiq/api/v1/applications/${app.id}/approve`),
+					generateUrl(
+						`/apps/keepiq/api/v1/applications/${app.id}/approve`,
+					),
 				)
 			} catch {
-				showError(t('keepiq', 'Could not approve the application. It is still in the queue.'))
+				showError(
+					t(
+						'keepiq',
+						'Could not approve the application. It is still in the queue.',
+					),
+				)
 				return
 			}
 			await this.refresh()
@@ -121,7 +128,12 @@ export default {
 					generateUrl(`/apps/keepiq/api/v1/applications/${app.id}/reject`),
 				)
 			} catch {
-				showError(t('keepiq', 'Could not reject the application. It is still in the queue.'))
+				showError(
+					t(
+						'keepiq',
+						'Could not reject the application. It is still in the queue.',
+					),
+				)
 				return
 			}
 			await this.refresh()

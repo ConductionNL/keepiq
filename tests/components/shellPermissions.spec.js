@@ -26,17 +26,33 @@ vi.mock('@nextcloud/auth', () => ({
 
 const { default: App } = await import('../../src/App.vue')
 const ROOT = path.resolve(__dirname, '../..')
-const fragment = JSON.parse(fs.readFileSync(path.join(ROOT, 'src', 'manifest.d', '80-connection-registry.json'), 'utf8'))
+const fragment = JSON.parse(
+	fs.readFileSync(
+		path.join(ROOT, 'src', 'manifest.d', '80-connection-registry.json'),
+		'utf8',
+	),
+)
 const integrationsPage = fragment.pages.find((p) => p.permission === 'admin')
 
 // The library's page guard, taken from its installed source rather than
 // copied, so a change in the library's rule shows up here. Importing the
 // component itself drags in CSS and charting bundles jsdom cannot load.
 const rendererSource = fs.readFileSync(
-	path.join(ROOT, 'node_modules', '@conduction', 'nextcloud-vue', 'src', 'components', 'CnPageRenderer', 'CnPageRenderer.vue'),
+	path.join(
+		ROOT,
+		'node_modules',
+		'@conduction',
+		'nextcloud-vue',
+		'src',
+		'components',
+		'CnPageRenderer',
+		'CnPageRenderer.vue',
+	),
 	'utf8',
 )
-const guardBody = rendererSource.match(/forbiddenPagePermission\(\) \{\n([\s\S]*?)\n\t\t\},/)
+const guardBody = rendererSource.match(
+	/forbiddenPagePermission\(\) \{\n([\s\S]*?)\n\t\t\},/,
+)
 const forbiddenPagePermission = guardBody ? new Function(guardBody[1]) : null
 
 /**
@@ -66,7 +82,12 @@ describe('App.vue page permissions (#878)', () => {
 
 	it('the library guard serves every page on an empty list', () => {
 		// The hole this fix closes, measured on the library itself.
-		expect(forbiddenPagePermission.call({ currentPage: integrationsPage, cnPermissions: [] })).toBeNull()
+		expect(
+			forbiddenPagePermission.call({
+				currentPage: integrationsPage,
+				cnPermissions: [],
+			}),
+		).toBeNull()
 	})
 
 	it('refuses the Integrations page to a non-admin', () => {

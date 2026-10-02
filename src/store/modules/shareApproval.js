@@ -40,8 +40,9 @@ export const useShareApprovalStore = defineStore('shareApproval', {
 				generateUrl('/apps/keepiq/api/v1/shares/recipient-certificates'),
 				{ userIds: [userId] },
 			)
-			const recipient = (lookup.data?.recipients ?? [])
-				.find((row) => row?.userId === userId)
+			const recipient = (lookup.data?.recipients ?? []).find(
+				(row) => row?.userId === userId,
+			)
 			if (recipient?.shareable !== true || !recipient.certificate) {
 				return 'no_suite'
 			}

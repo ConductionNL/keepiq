@@ -104,7 +104,11 @@
 							})
 						}}
 						<template v-if="share.expiresAt">
-							{{ t('keepiq', 'Expires {date}', { date: formatDate(share.expiresAt) }) }}
+							{{
+								t('keepiq', 'Expires {date}', {
+									date: formatDate(share.expiresAt),
+								})
+							}}
 						</template>
 					</span>
 					<NcButton
@@ -352,7 +356,9 @@ export default {
 		 */
 		formatDate(iso) {
 			const date = new Date(iso)
-			return Number.isNaN(date.getTime()) ? String(iso) : date.toLocaleDateString()
+			return Number.isNaN(date.getTime())
+				? String(iso)
+				: date.toLocaleDateString()
 		},
 
 		/**

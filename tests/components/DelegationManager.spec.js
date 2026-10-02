@@ -94,7 +94,9 @@ describe('DelegationManager', () => {
 	it('hands the secret to a current recipient (#754)', async () => {
 		vi.spyOn(axios, 'get').mockImplementation(async (url) => {
 			if (url.endsWith('/delegations')) {
-				return { data: [{ id: 'd1', delegatedTo: 'carol', isPermanent: false }] }
+				return {
+					data: [{ id: 'd1', delegatedTo: 'carol', isPermanent: false }],
+				}
 			}
 			return { data: [{ targetUserId: 'bob' }, { targetUserId: 'carol' }] }
 		})
@@ -107,16 +109,24 @@ describe('DelegationManager', () => {
 		await flush()
 
 		// carol is already a delegate, so only bob is offered.
-		const options = wrapper.findAll('[data-testid="delegation-manager-delegate"] option')
+		const options = wrapper
+			.findAll('[data-testid="delegation-manager-delegate"] option')
 			.map((o) => o.element.value)
 			.filter((v) => v !== '')
 		expect(options).toEqual(['bob'])
 
-		await wrapper.find('[data-testid="delegation-manager-delegate"]').setValue('bob')
-		await wrapper.find('[data-testid="delegation-manager-delegate-submit"]').trigger('click')
+		await wrapper
+			.find('[data-testid="delegation-manager-delegate"]')
+			.setValue('bob')
+		await wrapper
+			.find('[data-testid="delegation-manager-delegate-submit"]')
+			.trigger('click')
 		await flush()
 
-		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/secrets/sec-1/delegations', { delegatedTo: 'bob' })
+		expect(post).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/secrets/sec-1/delegations',
+			{ delegatedTo: 'bob' },
+		)
 		expect(wrapper.emitted('delegated')).toBeTruthy()
 	})
 
@@ -126,6 +136,8 @@ describe('DelegationManager', () => {
 			propsData: { secretId: 'sec-1', canReclaim: false },
 		})
 		await flush()
-		expect(wrapper.find('[data-testid="delegation-manager-create"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="delegation-manager-create"]').exists(),
+		).toBe(false)
 	})
 })

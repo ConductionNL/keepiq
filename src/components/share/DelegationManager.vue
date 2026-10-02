@@ -69,7 +69,9 @@
 			data-testid="delegation-manager-create">
 			<label class="keepiq-delegation-manager__label">
 				<span>{{ t('keepiq', 'Hand over to') }}</span>
-				<select v-model="delegateTo" data-testid="delegation-manager-delegate">
+				<select
+					v-model="delegateTo"
+					data-testid="delegation-manager-delegate">
 					<option value="" disabled>
 						{{ t('keepiq', 'Choose a recipient') }}
 					</option>
@@ -149,14 +151,22 @@ export default {
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
 		 */
 		candidates() {
-			const delegated = new Set(this.store.delegations.map((row) => row.delegatedTo))
+			const delegated = new Set(
+				this.store.delegations.map((row) => row.delegatedTo),
+			)
 			const ids = (this.shareStore.shares || [])
 				.map((share) => share?.targetUserId)
-				.filter((uid) => typeof uid === 'string' && uid !== '' && !delegated.has(uid))
+				.filter(
+					(uid) =>
+						typeof uid === 'string' && uid !== '' && !delegated.has(uid),
+				)
 			return [...new Set(ids)]
 		},
 	},
 
+	/**
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+	 */
 	async mounted() {
 		await this.store.fetchDelegations(this.secretId)
 		if (this.canReclaim) {
@@ -181,7 +191,10 @@ export default {
 		 */
 		async onDelegate() {
 			try {
-				const created = await this.store.createDelegation(this.secretId, this.delegateTo)
+				const created = await this.store.createDelegation(
+					this.secretId,
+					this.delegateTo,
+				)
 				this.delegateTo = ''
 				this.$emit('delegated', created)
 			} catch {

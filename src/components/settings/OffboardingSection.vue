@@ -122,11 +122,13 @@ export default {
 				},
 			)
 			if (this.summary.removedMemberships > 0) {
-				base += ' ' + this.t(
-					'keepiq',
-					'Removed the user from {count} team folders.',
-					{ count: this.summary.removedMemberships },
-				)
+				base +=
+					' '
+					+ this.t(
+						'keepiq',
+						'Removed the user from {count} team folders.',
+						{ count: this.summary.removedMemberships },
+					)
 			}
 			if (this.summary.skipped.length === 0) {
 				return base

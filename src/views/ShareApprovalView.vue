@@ -1,3 +1,4 @@
+<!-- @visual exclude Reached only from a notification for one pending request, with ids in the query; it needs two vault users and a pending share request, which no e2e fixture has yet. Behaviour is covered by tests/views/ShareApprovalView.spec.js and KeepiqNotifierTest; the live check is listed in the PR. -->
 <!--
   SPDX-License-Identifier: EUPL-1.2
   SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
@@ -18,12 +19,22 @@
 			{{ t('keepiq', 'Approve a share') }}
 		</h2>
 
-		<NcNoteCard v-if="!request" type="error" data-testid="share-approval-invalid">
-			{{ t('keepiq', 'This approval link is incomplete. Open it again from the notification.') }}
+		<NcNoteCard
+			v-if="!request"
+			type="error"
+			data-testid="share-approval-invalid">
+			{{
+				t(
+					'keepiq',
+					'This approval link is incomplete. Open it again from the notification.',
+				)
+			}}
 		</NcNoteCard>
 
 		<template v-else>
-			<p class="share-approval__question" data-testid="share-approval-question">
+			<p
+				class="share-approval__question"
+				data-testid="share-approval-question">
 				{{ question }}
 			</p>
 
@@ -100,7 +111,9 @@ export default {
 					requesterId: queryString(query, 'requesterId'),
 					targetUserId: queryString(query, 'targetUserId'),
 				}
-				return Object.values(request).includes('') ? null : { kind, ...request }
+				return Object.values(request).includes('')
+					? null
+					: { kind, ...request }
 			}
 			if (kind === 'group-member') {
 				const request = {
@@ -108,7 +121,9 @@ export default {
 					newMemberId: queryString(query, 'newMemberId'),
 					secretId: queryString(query, 'secretId'),
 				}
-				return Object.values(request).includes('') ? null : { kind, ...request }
+				return Object.values(request).includes('')
+					? null
+					: { kind, ...request }
 			}
 			return null
 		},
@@ -130,7 +145,10 @@ export default {
 			return this.t(
 				'keepiq',
 				'{requester} asks you to share a secret with {user}.',
-				{ requester: this.request?.requesterId ?? '', user: this.request?.targetUserId ?? '' },
+				{
+					requester: this.request?.requesterId ?? '',
+					user: this.request?.targetUserId ?? '',
+				},
 			)
 		},
 	},
@@ -148,19 +166,41 @@ export default {
 			this.busy = true
 			this.outcome = null
 			try {
-				const status = kind === 'group-member'
-					? await store.approveGroupMember(request)
-					: await store.approveShareRequest(request)
+				const status =
+					kind === 'group-member'
+						? await store.approveGroupMember(request)
+						: await store.approveShareRequest(request)
 				if (SHARED.includes(status)) {
 					this.done = true
-					this.outcome = { type: 'success', text: this.t('keepiq', 'Shared. The recipient can now open the secret.') }
+					this.outcome = {
+						type: 'success',
+						text: this.t(
+							'keepiq',
+							'Shared. The recipient can now open the secret.',
+						),
+					}
 				} else if (status === 'no_suite') {
-					this.outcome = { type: 'warning', text: this.t('keepiq', 'The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.') }
+					this.outcome = {
+						type: 'warning',
+						text: this.t(
+							'keepiq',
+							'The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.',
+						),
+					}
 				} else {
-					this.outcome = { type: 'error', text: this.t('keepiq', 'Could not share the secret. Only its owner can approve this.') }
+					this.outcome = {
+						type: 'error',
+						text: this.t(
+							'keepiq',
+							'Could not share the secret. Only its owner can approve this.',
+						),
+					}
 				}
 			} catch {
-				this.outcome = { type: 'error', text: this.t('keepiq', 'Could not share the secret. Try again.') }
+				this.outcome = {
+					type: 'error',
+					text: this.t('keepiq', 'Could not share the secret. Try again.'),
+				}
 			} finally {
 				this.busy = false
 			}
@@ -184,9 +224,15 @@ export default {
 					await store.denyShareRequest(request)
 				}
 				this.done = true
-				this.outcome = { type: 'info', text: this.t('keepiq', 'Denied. Nothing was shared.') }
+				this.outcome = {
+					type: 'info',
+					text: this.t('keepiq', 'Denied. Nothing was shared.'),
+				}
 			} catch {
-				this.outcome = { type: 'error', text: this.t('keepiq', 'Could not deny the request. Try again.') }
+				this.outcome = {
+					type: 'error',
+					text: this.t('keepiq', 'Could not deny the request. Try again.'),
+				}
 			} finally {
 				this.busy = false
 			}

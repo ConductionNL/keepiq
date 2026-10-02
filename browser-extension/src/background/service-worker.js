@@ -156,7 +156,10 @@ async function doFill(payload) {
 		// Best-effort: fill a detected OTP field on the page; the popup also
 		// copies the code as the fallback (extension-totp-autofill §4.1).
 		chrome.tabs
-			.sendMessage(tab.id, { type: 'fill-otp', payload: { code: totpCode, host } })
+			.sendMessage(tab.id, {
+				type: 'fill-otp',
+				payload: { code: totpCode, host },
+			})
 			.catch(() => {})
 	}
 	return { filled: !!results?.filled, totpCode }

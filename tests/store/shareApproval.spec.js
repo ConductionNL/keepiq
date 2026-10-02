@@ -28,12 +28,27 @@ const REQUEST = { sourceSecretId: 's-1', requesterId: 'bob', targetUserId: 'caro
  * @return {object} The axios.post spy.
  */
 function stubServer({ shareable = true, status = 'created' } = {}) {
-	useSecretStore().fetchSecret = vi.fn().mockResolvedValue({ key: 'hunter2', login: 'alice', additionalFields: {} })
-	vi.spyOn(useShareStore(), 'encryptForRecipient')
-		.mockImplementation(async (snapshot, cert) => ({ key: `enc(${snapshot.key},${cert})` }))
+	useSecretStore().fetchSecret = vi
+		.fn()
+		.mockResolvedValue({ key: 'hunter2', login: 'alice', additionalFields: {} })
+	vi.spyOn(useShareStore(), 'encryptForRecipient').mockImplementation(
+		async (snapshot, cert) => ({ key: `enc(${snapshot.key},${cert})` }),
+	)
 	return vi.spyOn(axios, 'post').mockImplementation(async (url, body) => {
 		if (url.endsWith('/shares/recipient-certificates')) {
-			return { data: { recipients: [shareable ? { userId: body.userIds[0], shareable: true, certificate: 'PEM' } : { userId: body.userIds[0], shareable: false }] } }
+			return {
+				data: {
+					recipients: [
+						shareable
+							? {
+									userId: body.userIds[0],
+									shareable: true,
+									certificate: 'PEM',
+								}
+							: { userId: body.userIds[0], shareable: false },
+					],
+				},
+			}
 		}
 		if (url.endsWith('/shares/register-batch')) {
 			return { data: { items: [{ status }] } }
@@ -75,7 +90,9 @@ describe('useShareApprovalStore', () => {
 		const status = await useShareApprovalStore().approveShareRequest(REQUEST)
 
 		expect(status).toBe('not_owned')
-		expect(post.mock.calls.map(([url]) => url)).not.toContain('/apps/keepiq/api/v1/share-requests/approve')
+		expect(post.mock.calls.map(([url]) => url)).not.toContain(
+			'/apps/keepiq/api/v1/share-requests/approve',
+		)
 	})
 
 	it('shares nothing with a recipient who has no suite', async () => {
@@ -92,23 +109,39 @@ describe('useShareApprovalStore', () => {
 
 		await useShareApprovalStore().denyShareRequest(REQUEST)
 
-		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/share-requests/deny', REQUEST)
+		expect(post).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/share-requests/deny',
+			REQUEST,
+		)
 	})
 
 	it('approves a new group member with a copy linked to the group share', async () => {
 		const post = stubServer()
 
-		const status = await useShareApprovalStore().approveGroupMember({ groupShareId: 'gs-1', newMemberId: 'dave', secretId: 's-1' })
+		const status = await useShareApprovalStore().approveGroupMember({
+			groupShareId: 'gs-1',
+			newMemberId: 'dave',
+			secretId: 's-1',
+		})
 
 		expect(status).toBe('created')
-		expect(post.mock.calls[1][1].shares[0]).toMatchObject({ targetUserId: 'dave', groupShareId: 'gs-1' })
+		expect(post.mock.calls[1][1].shares[0]).toMatchObject({
+			targetUserId: 'dave',
+			groupShareId: 'gs-1',
+		})
 	})
 
 	it('denies a new group member', async () => {
 		const post = stubServer()
 
-		await useShareApprovalStore().denyGroupMember({ groupShareId: 'gs-1', newMemberId: 'dave' })
+		await useShareApprovalStore().denyGroupMember({
+			groupShareId: 'gs-1',
+			newMemberId: 'dave',
+		})
 
-		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/group-shares/gs-1/deny-new-member', { newMemberId: 'dave' })
+		expect(post).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/group-shares/gs-1/deny-new-member',
+			{ newMemberId: 'dave' },
+		)
 	})
 })

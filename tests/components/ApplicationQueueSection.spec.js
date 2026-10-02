@@ -20,7 +20,14 @@ vi.mock('@nextcloud/dialogs', () => ({
 	showError: vi.fn(),
 }))
 
-const PENDING = [{ id: 7, name: 'Billing', description: 'Invoices', created_at: '2026-10-01T10:00:00Z' }]
+const PENDING = [
+	{
+		id: 7,
+		name: 'Billing',
+		description: 'Invoices',
+		created_at: '2026-10-01T10:00:00Z',
+	},
+]
 
 /**
  * Mount with one pending application loaded.
@@ -40,12 +47,17 @@ describe('ApplicationQueueSection', () => {
 		showError.mockClear()
 	})
 
-	for (const [verb, index] of [['approve', 0], ['reject', 1]]) {
+	for (const [verb, index] of [
+		['approve', 0],
+		['reject', 1],
+	]) {
 		it(`shows an error and keeps the row when ${verb} fails`, async () => {
 			const wrapper = await mountQueue()
 			vi.spyOn(axios, 'post').mockRejectedValue(new Error('500'))
 
-			await wrapper.findAll('.application-queue__actions button')[index].trigger('click')
+			await wrapper
+				.findAll('.application-queue__actions button')
+				[index].trigger('click')
 			await flushPromises()
 
 			expect(showError).toHaveBeenCalledTimes(1)
@@ -57,10 +69,14 @@ describe('ApplicationQueueSection', () => {
 			vi.spyOn(axios, 'post').mockResolvedValue({ data: {} })
 			axios.get.mockResolvedValue({ data: [] })
 
-			await wrapper.findAll('.application-queue__actions button')[index].trigger('click')
+			await wrapper
+				.findAll('.application-queue__actions button')
+				[index].trigger('click')
 			await flushPromises()
 
-			expect(axios.post).toHaveBeenCalledWith(expect.stringContaining(`/applications/7/${verb}`))
+			expect(axios.post).toHaveBeenCalledWith(
+				expect.stringContaining(`/applications/7/${verb}`),
+			)
 			expect(showError).not.toHaveBeenCalled()
 			expect(wrapper.findAll('.application-queue__row')).toHaveLength(0)
 		})

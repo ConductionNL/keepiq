@@ -11,7 +11,10 @@ import axios from '@nextcloud/axios'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import ExpiryPoliciesSection, { parseMaxAge, parseReminderDays } from '../../src/components/settings/ExpiryPoliciesSection.vue'
+import ExpiryPoliciesSection, {
+	parseMaxAge,
+	parseReminderDays,
+} from '../../src/components/settings/ExpiryPoliciesSection.vue'
 import { useFolderStore } from '../../src/store/modules/folder.js'
 import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
 
@@ -22,14 +25,37 @@ vi.mock('@nextcloud/auth', () => ({
 }))
 
 const stubs = {
-	NcSelect: { props: ['options', 'inputLabel'], template: '<div class="nc-select" :data-label="inputLabel" />' },
-	NcTextField: { props: ['label'], template: '<input class="nc-text" :data-label="label" />' },
-	NcButton: { template: '<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>' },
+	NcSelect: {
+		props: ['options', 'inputLabel'],
+		template: '<div class="nc-select" :data-label="inputLabel" />',
+	},
+	NcTextField: {
+		props: ['label'],
+		template: '<input class="nc-text" :data-label="label" />',
+	},
+	NcButton: {
+		template:
+			'<button v-bind="$attrs" @click="$emit(\'click\')"><slot /></button>',
+	},
 }
 
 const POLICIES = [
-	{ id: 'p1', ownerId: 'ann', scope: 'type', scopeId: 'type-login', maxAgeDays: 90, reminderDays: [14, 3] },
-	{ id: 'p2', ownerId: null, scope: 'folder', scopeId: 'f-ops', maxAgeDays: 30, reminderDays: null },
+	{
+		id: 'p1',
+		ownerId: 'ann',
+		scope: 'type',
+		scopeId: 'type-login',
+		maxAgeDays: 90,
+		reminderDays: [14, 3],
+	},
+	{
+		id: 'p2',
+		ownerId: null,
+		scope: 'folder',
+		scopeId: 'f-ops',
+		maxAgeDays: 30,
+		reminderDays: null,
+	},
 ]
 
 /**
@@ -56,15 +82,19 @@ describe('ExpiryPoliciesSection', () => {
 		folders.fetchFolders = vi.fn().mockResolvedValue()
 	})
 
-	it('lists the rules, with delete only on the user\'s own', async () => {
+	it("lists the rules, with delete only on the user's own", async () => {
 		const wrapper = await mountSection()
 
 		const rows = wrapper.findAll('[data-testid="expiry-policy-row"]')
 		expect(rows).toHaveLength(2)
 		expect(rows[0].text()).toContain('Login')
-		expect(rows[0].find('[data-testid="expiry-policy-delete"]').exists()).toBe(true)
+		expect(rows[0].find('[data-testid="expiry-policy-delete"]').exists()).toBe(
+			true,
+		)
 		expect(rows[1].text()).toContain('Ops')
-		expect(rows[1].find('[data-testid="expiry-policy-delete"]').exists()).toBe(false)
+		expect(rows[1].find('[data-testid="expiry-policy-delete"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('saves a folder rule through the API', async () => {
@@ -88,7 +118,7 @@ describe('ExpiryPoliciesSection', () => {
 		})
 	})
 
-	it('deletes the user\'s own rule', async () => {
+	it("deletes the user's own rule", async () => {
 		const wrapper = await mountSection()
 		const del = vi.spyOn(axios, 'delete').mockResolvedValue({ data: {} })
 
