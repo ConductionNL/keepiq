@@ -1387,8 +1387,13 @@ class SecretService {
 	 *
 	 * @return Secret
 	 *
-	 * @throws NotFoundException When the secret does not exist
-	 * @throws ForbiddenException When the secret belongs to another user
+	 * A secret of another user or of an application answers exactly like a
+	 * missing one, so no caller can learn that an id exists (the password,
+	 * and a TOTP seed kept on a login, share this rule).
+	 *
+	 * @throws NotFoundException When the secret does not exist or is not the user's
+	 *
+	 * @spec openspec/changes/vault-login-totp-codes/specs/login-one-time-codes/spec.md#requirement-a-login-can-carry-its-own-totp-seed
 	 */
 	private function loadOwned(string $id, string $userId): Secret {
 		try {
@@ -1398,7 +1403,7 @@ class SecretService {
 		}
 
 		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
-			throw new ForbiddenException(message: 'Secret belongs to another user');
+			throw new NotFoundException(message: 'Secret not found');
 		}
 
 		return $secret;
