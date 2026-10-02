@@ -73,6 +73,7 @@ class VaultKeyProofService {
 	public const PURPOSE_EMERGENCY_RE_ENVELOPE = 'emergency-access-re-envelope';
 	public const PURPOSE_DELETE_ACCOUNT_DATA = 'delete-account-data';
 	public const PURPOSE_ABORT_MIGRATION = 'abort-migration';
+	public const PURPOSE_APPROVE_DEVICE = 'approve-device';
 
 	/**
 	 * The purposes a challenge may be issued for.
@@ -87,6 +88,7 @@ class VaultKeyProofService {
 		self::PURPOSE_EMERGENCY_RE_ENVELOPE,
 		self::PURPOSE_DELETE_ACCOUNT_DATA,
 		self::PURPOSE_ABORT_MIGRATION,
+		self::PURPOSE_APPROVE_DEVICE,
 	];
 
 	/**

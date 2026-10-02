@@ -106,28 +106,21 @@ class KeepiqNotifier implements INotifier {
 
 		// Each renderer owns one family of subjects and reports whether it
 		// recognised this one. The first renderer that claims the subject wins.
-		$handled = $this->renderSharingSubject(notification: $notification, subject: $subj, params: $params, l: $l);
-		if ($handled === false) {
-			$handled = $this->renderSecretLifecycleSubject(notification: $notification, subject: $subj, params: $params, l: $l);
+		$renderers = [
+			fn (): bool => $this->renderSharingSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderSecretLifecycleSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderAdminSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderVaultAccessSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderEmergencySubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderDeviceApprovalSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+		];
+		foreach ($renderers as $render) {
+			if ($render() === true) {
+				return $notification;
+			}
 		}
 
-		if ($handled === false) {
-			$handled = $this->renderAdminSubject(notification: $notification, subject: $subj, params: $params, l: $l);
-		}
-
-		if ($handled === false) {
-			$handled = $this->renderVaultAccessSubject(notification: $notification, subject: $subj, params: $params, l: $l);
-		}
-
-		if ($handled === false) {
-			$handled = $this->renderEmergencySubject(notification: $notification, subject: $subj, params: $params, l: $l);
-		}
-
-		if ($handled === false) {
-			throw new UnknownNotificationException();
-		}
-
-		return $notification;
+		throw new UnknownNotificationException();
 	}//end prepare()
 
 	/**
@@ -195,6 +188,45 @@ class KeepiqNotifier implements INotifier {
 
 		return false;
 	}//end renderSharingSubject()
+
+	/**
+	 * Render a new device's request to open the vault
+	 * (crypto-new-device-approval D5). Links to the app, where the unlocked
+	 * vault shows the approval dialog.
+	 *
+	 * @param INotification $notification The notification to mutate
+	 * @param string $subject The notification subject identifier
+	 * @param array<string,mixed> $params The subject parameters
+	 * @param IL10N $l The localisation helper
+	 *
+	 * @return bool True when this renderer recognised the subject.
+	 *
+	 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+	 */
+	private function renderDeviceApprovalSubject(INotification $notification, string $subject, array $params, IL10N $l): bool {
+		if ($subject !== 'device_approval_requested') {
+			return false;
+		}
+
+		$label = (string)($params['device_label'] ?? '');
+		if ($label === '') {
+			$label = (string)$l->t('A device');
+		}
+
+		$notification->setParsedSubject((string)$l->t('A new device asks to open your vault'));
+		$notification->setParsedMessage(
+			(string)$l->t('%s asks to be approved. Only approve a device you are using right now.', [$label])
+		);
+		try {
+			$notification->setLink(
+				$this->url->getAbsoluteURL($this->url->linkToRoute(Application::APP_ID . '.dashboard.page'))
+			);
+		} catch (InvalidArgumentException) {
+			// The link is optional; the notification still says what happened.
+		}
+
+		return true;
+	}//end renderDeviceApprovalSubject()
 
 	/**
 	 * Render the secret-lifecycle subjects. All of them deep-link to a secret.

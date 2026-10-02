@@ -39,6 +39,7 @@ export const ADMIN_AREAS = [
 			'RotationPolicySection',
 			'RetentionPolicySection',
 			'ExtensionSection',
+			'DeviceApprovalSection',
 		],
 	},
 	{

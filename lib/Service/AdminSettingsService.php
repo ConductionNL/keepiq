@@ -285,6 +285,8 @@ class AdminSettingsService {
 				),
 				// The longest idle lock delay a user may pick in the browser extension.
 				'extension_max_idle_minutes' => $this->extensionMaxIdleMinutes(),
+				// New device approval (crypto-new-device-approval D5), default on.
+				'device_approval_enabled' => $this->appConfig->getValueBool($appId, 'device_approval_enabled', true),
 			],
 			$this->offlineSettings()
 		);
@@ -560,6 +562,10 @@ class AdminSettingsService {
 
 		if (isset($data['offline_cache_enabled']) === true) {
 			$this->appConfig->setValueBool($appId, 'offline_cache_enabled', (bool)$data['offline_cache_enabled']);
+		}
+
+		if (isset($data['device_approval_enabled']) === true) {
+			$this->appConfig->setValueBool($appId, 'device_approval_enabled', (bool)$data['device_approval_enabled']);
 		}
 
 		if (isset($data['offline_edits_enabled']) === true) {
