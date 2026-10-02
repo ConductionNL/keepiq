@@ -36,7 +36,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.3.4-unstable.20261002130000</version>
+    <version>0.3.4-unstable.20261002163000</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Keepiq</namespace>
@@ -114,6 +114,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Keepiq\BackgroundJob\CheckRootCertificateExpiry</job>
         <job>OCA\Keepiq\BackgroundJob\PurgeAuditLogJob</job>
         <job>OCA\Keepiq\BackgroundJob\ExpireSecretRequestsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ExpireDeviceApprovalsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ApproveElapsedEmergencyRequests</job>
         <job>OCA\Keepiq\BackgroundJob\PruneSecretVersionsJob</job>
         <job>OCA\Keepiq\BackgroundJob\PurgeTrashedSecretsJob</job>

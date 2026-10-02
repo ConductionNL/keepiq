@@ -76,6 +76,9 @@ class NotificationService {
 		// Honey credentials (honey-credentials §D3): a muted tripwire
 		// is worthless — always pages, like app_pending.
 		'honey_access' => null,
+		// New device approval (crypto-new-device-approval D5): someone
+		// signed in as this user asks to open the vault. Always shown.
+		'device_approval_requested' => null,
 	];
 
 	/**

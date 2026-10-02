@@ -299,6 +299,31 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 			],
 			'uniqueIndexes' => [],
 		],
+		// New device approval (crypto-new-device-approval); also added to
+		// existing installs by Version001005Date20261002163000.
+		'device_approvals' => [
+			'columns' => [
+				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['user_id', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['client_kind', Types::STRING, ['notnull' => true, 'length' => 16]],
+				['device_label', Types::STRING, ['notnull' => true, 'length' => 255]],
+				['requester_ip', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['requester_agent', Types::STRING, ['notnull' => true, 'length' => 512]],
+				['request_public_key', Types::TEXT, ['notnull' => true]],
+				['request_secret_hash', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['status', Types::STRING, ['notnull' => true, 'length' => 16]],
+				['created_at', Types::DATETIME, ['notnull' => true]],
+				['expires_at', Types::DATETIME, ['notnull' => true]],
+				['decided_at', Types::DATETIME, ['notnull' => false]],
+				['sealed_unlock_key', Types::TEXT, ['notnull' => false]],
+			],
+			'primary' => ['id'],
+			'indexes' => [
+				['keepiq_dev_appr_user_idx', ['user_id', 'status']],
+				['keepiq_dev_appr_exp_idx', ['status', 'expires_at']],
+			],
+			'uniqueIndexes' => [],
+		],
 		'ephemeral_sends' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
