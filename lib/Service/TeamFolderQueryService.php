@@ -174,8 +174,12 @@ class TeamFolderQueryService {
 			}
 
 			// Recipients see the folder identity, never the member list
-			// (share-visibility rule, user-sharing spec).
-			$memberOf[] = $this->describe(teamFolder: $teamFolder, includeMembers: false);
+			// (share-visibility rule, user-sharing spec); a manager sees the
+			// list it manages (sharing-team-folder-manager-role D5).
+			$grade = $this->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId);
+			$entry = $this->describe(teamFolder: $teamFolder, includeMembers: $grade === 'manage');
+			$entry['grade'] = $grade;
+			$memberOf[] = $entry;
 		}
 
 		return [
@@ -201,7 +205,9 @@ class TeamFolderQueryService {
 			return [];
 		}
 
-		if ($teamFolder->getOwnerId() !== $userId) {
+		if ($teamFolder->getOwnerId() !== $userId
+			&& $this->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId) !== 'manage'
+		) {
 			return [];
 		}
 
@@ -270,11 +276,11 @@ class TeamFolderQueryService {
 						continue;
 					}
 
-					if ($membership->effectiveGrade() === 'write') {
-						return 'write';
+					$best = $this->higherGrade(current: $best, candidate: $membership->effectiveGrade());
+					if ($best === 'manage') {
+						// Nothing ranks higher.
+						return $best;
 					}
-
-					$best = 'read';
 				}
 			} catch (DoesNotExistException) {
 				// Not a team folder — keep climbing.
@@ -289,6 +295,77 @@ class TeamFolderQueryService {
 
 		return $best;
 	}//end resolveGrade()
+
+	/**
+	 * The higher of two grades (`read` < `write` < `manage`).
+	 *
+	 * @param string|null $current   The best grade so far
+	 * @param string      $candidate Another grade
+	 *
+	 * @return string
+	 */
+	private function higherGrade(?string $current, string $candidate): string {
+		$ranks = array_flip(TeamFolderMember::GRADES);
+		if ($current === null || ($ranks[$candidate] ?? -1) > ($ranks[$current] ?? -1)) {
+			return $candidate;
+		}
+
+		return $current;
+	}//end higherGrade()
+
+	/**
+	 * The caller's effective grade on a team folder itself: the highest
+	 * grade any membership of it or of an ancestor team folder gives them.
+	 * Null when nothing covers them.
+	 *
+	 * @param TeamFolder $teamFolder The team folder
+	 * @param string     $userId     The caller
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-effective-grade-is-the-highest-grade-along-the-ancestor-folder-chain
+	 */
+	public function gradeOnTeamFolder(TeamFolder $teamFolder, string $userId): ?string {
+		$best = null;
+		foreach ($this->ancestorTeamFolders(folderId: $teamFolder->getFolderId()) as $ancestor) {
+			foreach ($this->memberMapper->findByTeamFolder(teamFolderId: $ancestor->getId()) as $membership) {
+				if ($this->membershipCovers(membership: $membership, userId: $userId) === true) {
+					$best = $this->higherGrade(current: $best, candidate: $membership->effectiveGrade());
+				}
+			}
+		}
+
+		return $best;
+	}//end gradeOnTeamFolder()
+
+	/**
+	 * Load a team folder the caller may manage: its owner, or a member whose
+	 * effective grade on it is `manage` (sharing-team-folder-manager-role D2).
+	 *
+	 * @param string $teamFolderId The TeamFolder UUID
+	 * @param string $userId       The caller
+	 *
+	 * @return TeamFolder
+	 *
+	 * @throws InvalidArgumentException When missing or the caller may not manage it
+	 *
+	 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
+	 */
+	public function loadManageableTeamFolder(string $teamFolderId, string $userId): TeamFolder {
+		try {
+			$teamFolder = $this->mapper->findById(id: $teamFolderId);
+		} catch (DoesNotExistException) {
+			throw new InvalidArgumentException(message: 'Team folder not found');
+		}
+
+		if ($teamFolder->getOwnerId() !== $userId
+			&& $this->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId) !== 'manage'
+		) {
+			throw new InvalidArgumentException(message: 'Not authorized to manage this team folder');
+		}
+
+		return $teamFolder;
+	}//end loadManageableTeamFolder()
 
 	/**
 	 * Every team-folder membership along a secret's folder ancestor chain
