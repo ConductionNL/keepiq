@@ -115,7 +115,7 @@ class MachineSecretEnvelopeService {
 	 * Serialize a secret into the `doriath-machine-secret-v1` envelope.
 	 *
 	 * Returns plaintext-safe metadata (id, name, url, derived folder path,
-	 * type, timestamps), an `encryption` block (suite id, sha256
+	 * type, timestamps, expiry date), an `encryption` block (suite id, sha256
 	 * certificate fingerprint, scheme identifier), and the base64
 	 * ciphertext fields. No decrypted value can ever be produced here —
 	 * the server holds only ciphertext.
@@ -138,6 +138,9 @@ class MachineSecretEnvelopeService {
 				'createdAt' => $secret->getCreatedAt()?->format('c'),
 				'updatedAt' => $secret->getUpdatedAt()?->format('c'),
 				'keyUpdatedAt' => $secret->getKeyUpdatedAt()?->format('c'),
+				// Additive (apps-secret-sync-and-rotation-runner): lets a
+				// rotation runner rotate ahead of the expiry date.
+				'expiresAt' => $secret->getExpiresAt()?->format('c'),
 			],
 			'encryption' => [
 				'suiteId' => $secret->getEncryptionSuiteId(),
@@ -202,6 +205,32 @@ class MachineSecretEnvelopeService {
 
 		return '"' . hash('sha256', $material) . '"';
 	}//end etag()
+
+	/**
+	 * Whether an If-Match header allows a write to this secret.
+	 *
+	 * The header is a comma-separated list of quoted ETags, or `*`. A write is
+	 * allowed when any listed tag is `*` or equals the secret's current ETag.
+	 *
+	 * @param Secret $secret The secret about to be written
+	 * @param string $header The raw If-Match header value (not empty)
+	 *
+	 * @return bool True when the precondition holds
+	 *
+	 * @spec openspec/specs/secret-store-api/spec.md
+	 */
+	public function ifMatchHolds(Secret $secret, string $header): bool {
+		$current = $this->etag(secret: $secret);
+		foreach (explode(separator: ',', string: $header) as $candidate) {
+			$candidate = trim($candidate);
+			// Strong comparison (RFC 9110 13.1.1): a weak tag never matches.
+			if ($candidate === '*' || $candidate === $current) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end ifMatchHolds()
 
 	/**
 	 * Compute the sha256 fingerprint of the DER form of a suite's
