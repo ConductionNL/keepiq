@@ -115,6 +115,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns the Pinia attachment store with no domain logic.
+		 */
 		store() {
 			return useAttachmentStore()
 		},
@@ -141,6 +144,9 @@ export default {
 		},
 	},
 
+	/**
+	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-client-side-encrypted-attachment-upload
+	 */
 	async mounted() {
 		try {
 			await this.store.fetchAttachments(this.secretId)
@@ -159,6 +165,8 @@ export default {
 		 *
 		 * @param {Event} event The change event.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-client-side-encrypted-attachment-upload
 		 */
 		async onFilePicked(event) {
 			const file = event.target.files && event.target.files[0]
@@ -177,6 +185,8 @@ export default {
 		 *
 		 * @param {number} bytes The ciphertext byte count.
 		 * @return {string} e.g. "1.2 MB".
+		 *
+		 * @spec exclude Presentation-only formatter: renders a byte count as a human-readable size.
 		 */
 		humanSize(bytes) {
 			if (bytes == null) {

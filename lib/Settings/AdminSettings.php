@@ -33,7 +33,7 @@ use OCA\OpenRegister\AppHost\Settings\GenericAdminSettings;
 /**
  * Keepiq admin-settings panel — engine-backed stub (AppHost, ADR-040).
  *
- * @psalm-suppress UnusedClass
+ * @psalm-suppress UnusedClass Loaded by Nextcloud from appinfo/info.xml <settings>.
  */
 class AdminSettings extends GenericAdminSettings {
 }//end class

@@ -141,6 +141,8 @@ class LeaseAdminController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
 	 */
 	#[NoAdminRequired]
 	public function setPolicy(string $id, ?int $defaultTtl = null, ?int $maxTtl = null, ?bool $renewable = null): JSONResponse {

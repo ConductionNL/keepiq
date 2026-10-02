@@ -12,7 +12,7 @@
  * Uses the real WebCrypto AES path (native in Node 22) to build a private-key
  * blob with encryptPrivateKey, then verifies via verifyMasterPassword.
  *
- * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+ * @spec openspec/specs/secret-export/spec.md
  */
 
 import { describe, expect, it } from 'vitest'

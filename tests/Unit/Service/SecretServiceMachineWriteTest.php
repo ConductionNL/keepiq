@@ -25,12 +25,17 @@ use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretVersion;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
+use OCA\Keepiq\Service\SecretVersionService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCP\AppFramework\Db\DoesNotExistException;
+use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -269,4 +274,222 @@ class SecretServiceMachineWriteTest extends TestCase {
 			applicationId: 'app-1'
 		);
 	}//end testUpdateByApplicationEmptyKeyRejected()
+
+	/**
+	 * Build a service that records audit events and version snapshots, for
+	 * the updateByApplication() branch tests (#152: NPath 12960, written
+	 * before any simplification so a refactor has something to fail).
+	 *
+	 * @param array<int,AuditEvent> $audits Receives every recorded audit event
+	 * @param array<int,Secret> $snapshots Receives every snapshotted pre-update row
+	 *
+	 * @return SecretService
+	 */
+	private function recordingService(array &$audits, array &$snapshots): SecretService {
+		$auditService = $this->createMock(AuditService::class);
+		$auditService->method('record')->willReturnCallback(
+			function (AuditEvent $event) use (&$audits) {
+				$audits[] = $event;
+				return new \OCA\Keepiq\Db\AuditEntry();
+			}
+		);
+		$versionService = $this->createMock(SecretVersionService::class);
+		$versionService->method('snapshot')->willReturnCallback(
+			function (Secret $preUpdate) use (&$snapshots) {
+				$snapshots[] = $preUpdate;
+				return new SecretVersion();
+			}
+		);
+
+		return new SecretService(
+			mapper: $this->mapper,
+			typeService: $this->typeService,
+			suiteMapper: $this->suiteMapper,
+			migrationService: $this->createMock(MigrationService::class),
+			linkShareService: $this->createMock(LinkShareService::class),
+			logger: $this->createMock(LoggerInterface::class),
+			auditService: $auditService,
+			versionService: $versionService,
+		);
+	}//end recordingService()
+
+	/**
+	 * A user-owned row whose owner id equals the application id is still
+	 * another vault: the owner TYPE is checked, not only the id.
+	 *
+	 * @return void
+	 */
+	public function testUpdateByApplicationRefusesAUserRowWithTheSameOwnerId(): void {
+		$secret = $this->appSecret('s1', 'app-1');
+		$secret->setOwnerType('user');
+		$this->mapper->method('findById')->willReturn($secret);
+		$this->mapper->expects($this->never())->method('update');
+
+		$this->expectException(NotFoundException::class);
+		$this->service->updateByApplication(id: 's1', data: ['name' => 'x'], applicationId: 'app-1');
+	}//end testUpdateByApplicationRefusesAUserRowWithTheSameOwnerId()
+
+	/**
+	 * An ambiguous id is reported as not found, like a missing one.
+	 *
+	 * @return void
+	 */
+	public function testUpdateByApplicationAmbiguousIdNotFound(): void {
+		$this->mapper->method('findById')
+			->willThrowException(new MultipleObjectsReturnedException('two'));
+
+		$this->expectException(NotFoundException::class);
+		$this->service->updateByApplication(id: 'x', data: [], applicationId: 'app-1');
+	}//end testUpdateByApplicationAmbiguousIdNotFound()
+
+	/**
+	 * A blank name is refused; a padded one is trimmed.
+	 *
+	 * @return void
+	 */
+	public function testUpdateByApplicationNameIsTrimmedAndMustNotBeBlank(): void {
+		$secret = $this->appSecret('s1', 'app-1');
+		$this->mapper->method('findById')->willReturn($secret);
+
+		$result = $this->service->updateByApplication(id: 's1', data: ['name' => '  renamed  '], applicationId: 'app-1');
+		$this->assertSame('renamed', $result->getName());
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Secret name cannot be empty');
+		$this->service->updateByApplication(id: 's1', data: ['name' => '   '], applicationId: 'app-1');
+	}//end testUpdateByApplicationNameIsTrimmedAndMustNotBeBlank()
+
+	/**
+	 * Only the submitted metadata fields change; an empty string clears to
+	 * null, and an absent field is left alone.
+	 *
+	 * @return void
+	 */
+	public function testUpdateByApplicationWritesOnlyTheSubmittedMetadata(): void {
+		$secret = $this->appSecret('s1', 'app-1');
+		$secret->setUrl('https://old.example');
+		$secret->setLogin('old-login');
+		$secret->setAdditionalFields('OLD-FIELDS');
+		$this->mapper->method('findById')->willReturn($secret);
+
+		$result = $this->service->updateByApplication(
+			id: 's1',
+			data: ['url' => 'https://new.example', 'login' => '', 'folderId' => null],
+			applicationId: 'app-1'
+		);
+
+		$this->assertSame('https://new.example', $result->getUrl());
+		$this->assertNull($result->getLogin(), 'an empty login clears to null');
+		$this->assertNull($result->getFolderId(), 'clearing the folder stays allowed');
+		$this->assertSame('OLD-FIELDS', $result->getAdditionalFields(), 'an absent field is untouched');
+		$this->assertSame('OLD-CIPHER', $result->getKey(), 'an absent key is untouched');
+
+		$result = $this->service->updateByApplication(
+			id: 's1',
+			data: ['additionalFields' => 'NEW-FIELDS'],
+			applicationId: 'app-1'
+		);
+		$this->assertSame('NEW-FIELDS', $result->getAdditionalFields());
+	}//end testUpdateByApplicationWritesOnlyTheSubmittedMetadata()
+
+	/**
+	 * Re-sending the same key ciphertext is not a rotation: keyUpdatedAt and
+	 * an open possibly-compromised warning both stand, and the audit names
+	 * the submitted fields.
+	 *
+	 * @return void
+	 */
+	public function testUpdateByApplicationUnchangedKeyIsNotARotation(): void {
+		$audits = [];
+		$snapshots = [];
+		$service = $this->recordingService($audits, $snapshots);
+
+		$secret = $this->appSecret('s1', 'app-1');
+		$flaggedAt = new DateTime('2026-02-01T00:00:00+00:00');
+		$secret->setPossiblyCompromisedAt($flaggedAt);
+		$keyUpdatedAt = $secret->getKeyUpdatedAt();
+		$this->mapper->method('findById')->willReturn($secret);
+
+		$result = $service->updateByApplication(
+			id: 's1',
+			data: ['key' => 'OLD-CIPHER', 'login' => 'bot'],
+			applicationId: 'app-1'
+		);
+
+		$this->assertSame($keyUpdatedAt, $result->getKeyUpdatedAt());
+		$this->assertSame($flaggedAt, $result->getPossiblyCompromisedAt());
+		$this->assertCount(1, $audits);
+		$this->assertSame(['key', 'login'], $audits[0]->getMetadata()['changedFields']);
+		$this->assertSame('application', $audits[0]->getActorType());
+		$this->assertCount(1, $snapshots, 'the login change is a content change and is versioned');
+	}//end testUpdateByApplicationUnchangedKeyIsNotARotation()
+
+	/**
+	 * A new key ciphertext rotates: keyUpdatedAt advances, the
+	 * possibly-compromised warning clears, the audit reports only `key`, and
+	 * the snapshot is the PRE-update row.
+	 *
+	 * @return void
+	 */
+	public function testUpdateByApplicationChangedKeyRotatesAndClearsTheWarning(): void {
+		$audits = [];
+		$snapshots = [];
+		$service = $this->recordingService($audits, $snapshots);
+
+		$secret = $this->appSecret('s1', 'app-1');
+		$secret->setPossiblyCompromisedAt(new DateTime('2026-02-01T00:00:00+00:00'));
+		$this->mapper->method('findById')->willReturn($secret);
+
+		$result = $service->updateByApplication(
+			id: 's1',
+			data: ['key' => 'NEW-CIPHER', 'name' => 'token'],
+			applicationId: 'app-1'
+		);
+
+		$this->assertNull($result->getPossiblyCompromisedAt());
+		$this->assertGreaterThan(new DateTime('2026-01-02T00:00:00+00:00'), $result->getKeyUpdatedAt());
+		$this->assertSame(['key'], $audits[0]->getMetadata()['changedFields']);
+		$this->assertCount(1, $snapshots);
+		$this->assertSame('OLD-CIPHER', $snapshots[0]->getKey());
+	}//end testUpdateByApplicationChangedKeyRotatesAndClearsTheWarning()
+
+	/**
+	 * A write that changes nothing is not versioned, but is still persisted
+	 * (updatedAt) and audited.
+	 *
+	 * @return void
+	 */
+	public function testUpdateByApplicationNoContentChangeIsNotVersioned(): void {
+		$audits = [];
+		$snapshots = [];
+		$service = $this->recordingService($audits, $snapshots);
+
+		$secret = $this->appSecret('s1', 'app-1');
+		$this->mapper->method('findById')->willReturn($secret);
+		$this->mapper->expects($this->once())->method('update');
+
+		$service->updateByApplication(id: 's1', data: ['name' => 'token'], applicationId: 'app-1');
+
+		$this->assertSame([], $snapshots);
+		$this->assertCount(1, $audits);
+		$this->assertSame(['name'], $audits[0]->getMetadata()['changedFields']);
+	}//end testUpdateByApplicationNoContentChangeIsNotVersioned()
+
+	/**
+	 * A refused field leaves the row unwritten: validation happens before
+	 * the update, so a half-applied write cannot reach the database.
+	 *
+	 * @return void
+	 */
+	public function testUpdateByApplicationRefusedFieldWritesNothing(): void {
+		$this->mapper->method('findById')->willReturn($this->appSecret('s1', 'app-1'));
+		$this->mapper->expects($this->never())->method('update');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->updateByApplication(
+			id: 's1',
+			data: ['url' => 'https://x.example', 'folderId' => 'folder-1'],
+			applicationId: 'app-1'
+		);
+	}//end testUpdateByApplicationRefusedFieldWritesNothing()
 }//end class

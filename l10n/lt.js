@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Pridėti žymę",
         "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF eksportas NĖRA ŠIFRUOTAS. Kiekvienas slaptažodis ir prisijungimo vardas atsisiųstame faile bus perskaitomi kaip paprastas tekstas. Saugokite jį saugiai ir iškart po naudojimo ištrinkite.",
+        "Root certificate expiring soon": "Šakninio sertifikato galiojimas netrukus baigsis",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Saugyklos šakninio sertifikato galiojimas baigsis po %1$d d. Atnaujinkite jį iki tol. Atnaujinant iš naujo pasirašomas kiekvienas šifravimo rinkinys.",
         "Compromise recovery aborted": "Atkūrimas po kompromitavimo nutrauktas",
         "Key rotation ended by a compromise revoke": "Rakto keitimą užbaigė atšaukimas dėl kompromitavimo",
         "Encryption suite revoke refused": "Šifravimo rinkinio atšaukimas atmestas",

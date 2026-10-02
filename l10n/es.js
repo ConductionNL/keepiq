@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Añadir etiqueta",
         "Could not change the tags. Try again.": "No se pudieron cambiar las etiquetas. Inténtelo de nuevo.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Una exportación CXF NO ESTÁ CIFRADA. Todas las contraseñas e inicios de sesión serán legibles como texto plano en el archivo descargado. Guárdelo de forma segura y elimínelo inmediatamente después de usarlo.",
+        "Root certificate expiring soon": "El certificado raíz caduca pronto",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "El certificado raíz de la bóveda caduca en %1$d día(s). Renuévelo antes. Al renovarlo se vuelve a firmar cada suite de cifrado.",
         "Compromise recovery aborted": "Recuperación tras compromiso cancelada",
         "Key rotation ended by a compromise revoke": "Rotación de clave finalizada por una revocación por compromiso",
         "Encryption suite revoke refused": "Revocación de la suite de cifrado rechazada",

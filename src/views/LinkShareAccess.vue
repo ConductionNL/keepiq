@@ -324,6 +324,9 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-access-via-link
+		 */
 		tokenFromUrl() {
 			const m = String(window?.location?.pathname ?? '').match(
 				/share\/link\/([^/?#]+)/,

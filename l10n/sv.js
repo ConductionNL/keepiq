@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Lägg till tagg",
         "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "En CXF-export är OKRYPTERAD. Varje lösenord och inloggning blir läsbar som klartext i den hämtade filen. Förvara den säkert och ta bort den omedelbart efter användning.",
+        "Root certificate expiring soon": "Rotcertifikatet går snart ut",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Valvets rotcertifikat går ut om %1$d dag(ar). Förnya det innan dess. Förnyelsen signerar om varje krypteringssvit.",
         "Compromise recovery aborted": "Återställning efter intrång avbruten",
         "Key rotation ended by a compromise revoke": "Nyckelrotation avslutad av en återkallelse på grund av intrång",
         "Encryption suite revoke refused": "Återkallelse av krypteringssvit nekad",

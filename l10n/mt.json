@@ -1267,6 +1267,8 @@
         "Add tag": "Żid tikketta",
         "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Esportazzjoni CXF MHIJIEX ENKRIPTATA. Kull password u login se jkunu jinqraw bħala test sempliċi fil-fajl imniżżel. Aħżnu b'mod sigur u ħassru minnufih wara li tużah.",
+        "Root certificate expiring soon": "Iċ-ċertifikat għerq jiskadi dalwaqt",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Iċ-ċertifikat għerq tal-kaxxaforti jiskadi fi żmien %1$d jum/ijiem. Ġeddu qabel dak iż-żmien. It-tiġdid jerġa' jiffirma kull suite tal-encryption.",
         "Compromise recovery aborted": "L-irkupru wara kompromess twaqqaf",
         "Key rotation ended by a compromise revoke": "Ir-rotazzjoni taċ-ċavetta ntemmet b'revoka minħabba kompromess",
         "Encryption suite revoke refused": "Ir-revoka tas-suite tal-encryption ġiet miċħuda",

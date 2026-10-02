@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Dodaj oznaku",
         "Could not change the tags. Try again.": "Oznake nije moguće promijeniti. Pokušajte ponovo.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Izvoz u CXF NIJE ŠIFRIRAN. Svaka lozinka i prijava bit će čitljiva kao otvoreni tekst u preuzetoj datoteci. Čuvajte je na sigurnom i izbrišite je odmah nakon upotrebe.",
+        "Root certificate expiring soon": "Korijenski certifikat uskoro ističe",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Korijenski certifikat trezora ističe za %1$d dan(a). Obnovite ga prije toga. Obnova ponovo potpisuje svaki paket šifrovanja.",
         "Compromise recovery aborted": "Oporavak nakon kompromitacije prekinut",
         "Key rotation ended by a compromise revoke": "Rotacija ključa završena opozivom zbog kompromitacije",
         "Encryption suite revoke refused": "Opoziv paketa šifriranja odbijen",

@@ -240,6 +240,12 @@ class EncryptionSuiteController extends OCSController {
 		}//end try
 	}//end create()
 
+	#[NoAdminRequired]
+	#[VaultKeyProofRequired(
+		binds: ['encryptedPrivateKey'],
+		subject: 'routeParam:id',
+		purpose: VaultKeyProofService::PURPOSE_UPDATE_PRIVATE_KEY
+	)]
 	/**
 	 * Update the encrypted private key (routine password change).
 	 *
@@ -252,13 +258,8 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
 	 * @spec openspec/changes/harden-vault-key-material-guards/specs/encryption-suites/spec.md#requirement-master-password-change-routine
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-master-password-change-routine
 	 */
-	#[NoAdminRequired]
-	#[VaultKeyProofRequired(
-		binds: ['encryptedPrivateKey'],
-		subject: 'routeParam:id',
-		purpose: VaultKeyProofService::PURPOSE_UPDATE_PRIVATE_KEY
-	)]
 	public function updatePrivateKey(string $id, string $encryptedPrivateKey): JSONResponse {
 		try {
 			$suite = $this->suiteService->getSuite($id);
@@ -484,6 +485,7 @@ class EncryptionSuiteController extends OCSController {
 		$adminUid = $admin->getUID();
 
 		if (trim($reason) === '') {
+			$this->suiteService->recordRevokeRefused(suiteId: $id, actorId: $adminUid, reasonCode: 'empty_reason', markCompromised: $markCompromised);
 			return new JSONResponse(
 				data: ['message' => 'A non-empty reason is required'],
 				statusCode: Http::STATUS_BAD_REQUEST
@@ -524,16 +526,19 @@ class EncryptionSuiteController extends OCSController {
 
 			return new JSONResponse(data: $data);
 		} catch (SuiteMigrationInProgressException $e) {
+			$this->suiteService->recordRevokeRefused(suiteId: $id, actorId: $adminUid, reasonCode: 'migration_in_progress', markCompromised: $markCompromised);
 			return new JSONResponse(
 				data: ['error' => 'migration_in_progress', 'message' => $e->getMessage()],
 				statusCode: Http::STATUS_CONFLICT
 			);
 		} catch (RuntimeException $e) {
+			$this->suiteService->recordRevokeRefused(suiteId: $id, actorId: $adminUid, reasonCode: 'forbidden', markCompromised: $markCompromised);
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
 				statusCode: Http::STATUS_FORBIDDEN
 			);
 		} catch (InvalidArgumentException $e) {
+			$this->suiteService->recordRevokeRefused(suiteId: $id, actorId: $adminUid, reasonCode: 'invalid_argument', markCompromised: $markCompromised);
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
 				statusCode: Http::STATUS_BAD_REQUEST
@@ -577,12 +582,18 @@ class EncryptionSuiteController extends OCSController {
 			emergencyContactsDestroyed: $this->emergencyService->countUsableForGrantorSuite($otherId),
 		);
 
-		$this->migrationService->terminateForCompromise(migration: $migration);
+		$this->migrationService->terminateForCompromise(migration: $migration, actorId: $adminUid);
 
 		return ['terminatedMigration' => $migration->getId(), 'alsoRevokedSuite' => $otherId];
 
 	}//end endMigrationForCompromise()
 
+	#[NoAdminRequired]
+	#[VaultKeyProofRequired(
+		binds: ['publicKey', 'encryptedPrivateKey'],
+		subject: 'active',
+		purpose: VaultKeyProofService::PURPOSE_COMPROMISE_RECOVERY
+	)]
 	/**
 	 * Initiate compromise recovery: create new suite and migration record.
 	 *
@@ -595,13 +606,8 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
 	 * @spec openspec/changes/implement-link-sharing/tasks.md#5.2
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-master-password-change-compromise-recovery
 	 */
-	#[NoAdminRequired]
-	#[VaultKeyProofRequired(
-		binds: ['publicKey', 'encryptedPrivateKey'],
-		subject: 'active',
-		purpose: VaultKeyProofService::PURPOSE_COMPROMISE_RECOVERY
-	)]
 	public function compromiseRecovery(
 		string $publicKey,
 		string $encryptedPrivateKey,

@@ -284,6 +284,8 @@ class JwtAuthService {
 	 * @return Application|null The bound application, or null when the
 	 *                          token is unknown, expired, or the
 	 *                          application is no longer active.
+	 *
+	 * @spec openspec/specs/secret-store-api/spec.md#requirement-strict-own-vault-scoping
 	 */
 	public function validateAccessToken(string $accessToken): ?Application {
 		if ($accessToken === '') {

@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Címke hozzáadása",
         "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "A CXF-exportálás TITKOSÍTATLAN. A letöltött fájlban minden jelszó és bejelentkezési név olvasható lesz egyszerű szövegként. Tárolja biztonságosan, és használat után azonnal törölje.",
+        "Root certificate expiring soon": "A gyökértanúsítvány hamarosan lejár",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "A széf gyökértanúsítványa %1$d nap múlva lejár. Újítsa meg előtte. A megújítás minden titkosítási csomagot újra aláír.",
         "Compromise recovery aborted": "A kompromittálás utáni helyreállítás megszakítva",
         "Key rotation ended by a compromise revoke": "A kulcscserét egy kompromittálás miatti visszavonás fejezte be",
         "Encryption suite revoke refused": "A titkosítási csomag visszavonása elutasítva",

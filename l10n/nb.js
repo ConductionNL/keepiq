@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Legg til etikett",
         "Could not change the tags. Try again.": "Kunne ikke endre etikettene. Prøv igjen.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "En CXF-eksport er UKRYPTERT. Alle passord og innlogginger vil være lesbare som klartekst i den nedlastede filen. Oppbevar den trygt, og slett den umiddelbart etter bruk.",
+        "Root certificate expiring soon": "Rotsertifikatet utløper snart",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Hvelvets rotsertifikat utløper om %1$d dag(er). Forny det før den tid. Fornyelsen signerer hver krypteringssuite på nytt.",
         "Compromise recovery aborted": "Gjenoppretting etter kompromittering avbrutt",
         "Key rotation ended by a compromise revoke": "Nøkkelrotasjon avsluttet av en tilbakekalling på grunn av kompromittering",
         "Encryption suite revoke refused": "Tilbakekalling av krypteringssuite avvist",

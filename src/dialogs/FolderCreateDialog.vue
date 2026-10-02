@@ -171,11 +171,17 @@ export default {
 			}))
 		},
 
+		/**
+		 * @spec openspec/specs/secrets-write-ui/spec.md#scenario-create-a-folder
+		 */
 		canSubmit() {
 			return !this.saving && this.name.trim() !== ''
 		},
 	},
 
+	/**
+	 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-folder-and-move-a-secret
+	 */
 	async mounted() {
 		const folderStore = useFolderStore()
 		if (folderStore.folders.length === 0) {
@@ -203,6 +209,8 @@ export default {
 		 *
 		 * @param {boolean} value The new open state.
 		 * @return {void}
+		 *
+		 * @spec exclude Event re-emitter: syncs the open flag and emits close to the parent.
 		 */
 		onUpdateOpen(value) {
 			this.open = value

@@ -328,7 +328,7 @@ class SecretRequestMapper extends QBMapper {
 	 *
 	 * @return int The number of rows deleted
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function deleteByCreatedBy(string $userId): int {
 		$qb = $this->db->getQueryBuilder();

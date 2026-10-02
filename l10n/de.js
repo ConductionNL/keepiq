@@ -1268,6 +1268,8 @@ OC.L10N.register(
         "Add tag": "Schlagwort hinzufügen",
         "Could not change the tags. Try again.": "Schlagwörter konnten nicht geändert werden. Bitte erneut versuchen.",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Ein CXF-Export ist UNVERSCHLÜSSELT. Jedes Passwort und jeder Login ist in der heruntergeladenen Datei als Klartext lesbar. Bewahren Sie sie sicher auf und löschen Sie sie unmittelbar nach der Verwendung.",
+        "Root certificate expiring soon": "Stammzertifikat läuft bald ab",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Das Stammzertifikat des Tresors läuft in %1$d Tag(en) ab. Erneuern Sie es vorher. Beim Erneuern wird jede Verschlüsselungssuite neu signiert.",
         "Compromise recovery aborted": "Kompromittierungs-Wiederherstellung abgebrochen",
         "Key rotation ended by a compromise revoke": "Schlüsselrotation durch einen Kompromittierungs-Widerruf beendet",
         "Encryption suite revoke refused": "Widerruf der Verschlüsselungssuite abgelehnt",

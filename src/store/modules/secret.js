@@ -338,6 +338,8 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {Error} e The caught error.
 		 * @return {boolean}
+		 *
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#scenario-offline-unlock-opens-the-vault-for-reading
 		 */
 		isNetworkError(e) {
 			return (
@@ -398,6 +400,7 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {object} secret The secret with ciphertext blobs.
 		 * @return {Promise<object>} A copy of the secret with plaintext fields.
+		 *
 		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 		 */
@@ -471,6 +474,8 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {string|null} typeId The secret type id.
 		 * @return {boolean}
+		 *
+		 * @spec openspec/specs/passkey-item-type/spec.md#scenario-credential-stored-ciphertext-rp-id-in-url
 		 */
 		isPasskeyTypeId(typeId) {
 			if (!typeId) {
@@ -825,6 +830,8 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {string} term The search term.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-search
 		 */
 		async searchSecrets(term) {
 			this.filters.search = term
