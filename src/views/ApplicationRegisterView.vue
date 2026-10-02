@@ -8,7 +8,7 @@
   returns a private key (parity row pki-09, decided no), so there is no key
   download step.
 
-  Admins should use `AdminApplicationsView` for the approval queue;
+  Admins approve the queue in the admin settings (ApplicationQueueSection);
   this view is intentionally non-admin scoped.
 
   @spec openspec/changes/implement-application-mgmt/tasks.md#task-10.1

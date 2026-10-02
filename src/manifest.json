@@ -604,7 +604,7 @@
 			"type": "custom",
 			"title": "Applications",
 			"component": "ApplicationRegisterView",
-			"_note": "Developer-facing app registration page. Owner sees their own apps + can register new ones; admin queue lives on AdminApplicationsView under settings."
+			"_note": "Developer-facing app registration page. Owner sees their own apps + can register new ones; the admin approval queue is ApplicationQueueSection in the Keepiq admin settings."
 		},
 		{
 			"id": "ApplicationDetail",
