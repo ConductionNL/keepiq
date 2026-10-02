@@ -141,6 +141,7 @@ class SecretService {
 	 * @param SecretTagMapper|null $tagMapper The holder's tags (vault-favourites-tags-and-last-used):
 	 *                                        list rows carry them, a delete removes them
 	 * @param OrgOwnershipGuard|null $orgOwnership The team folder ownership policy (admin-vault-policies)
+	 * @param OfflineEditGuard $editGuard Refuses an offline edit made on an older version
 	 *
 	 * @return void
 	 */
@@ -164,6 +165,7 @@ class SecretService {
 		private ?FolderOwnershipGuard $folderOwnership = null,
 		private ?SecretTagMapper $tagMapper = null,
 		private ?OrgOwnershipGuard $orgOwnership = null,
+		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
 	) {
 	}//end __construct()
 
@@ -887,6 +889,7 @@ class SecretService {
 	 * @throws ForbiddenException When the secret belongs to another user
 	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 * @throws InvalidArgumentException When a provided field is invalid
+	 * @throws \OCA\Keepiq\Exception\StaleWriteException When `baseUpdatedAt` names an older version
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
 	 *   independent, flat partial-update branch.
@@ -903,6 +906,8 @@ class SecretService {
 		$this->assertNotWriteLocked(userId: $userId);
 
 		$secret = $this->loadOwned(id: $id, userId: $userId);
+
+		$data = $this->editGuard->checkedUpdate(secret: $secret, data: $data);
 
 		// Pre-update snapshot source (secret-version-history §2.2): captured
 		// BEFORE any mutation; persisted below only when a field actually
@@ -951,15 +956,11 @@ class SecretService {
 				$secret->setKey($key);
 				$secret->setKeyUpdatedAt(new DateTime());
 
-				// The possibly-compromised warning says "this value was exposed,
-				// replace it at its source". Replacing the value is exactly what
-				// just happened, so the warning has been answered and is cleared.
-				// It is cleared HERE and nowhere else in this method on purpose:
-				// a rename, a folder move, a type change or a metadata edit
-				// leaves the exposed value in place and must leave the warning
-				// standing. The same-ciphertext guard above means a client that
-				// resends the unchanged key alongside a rename does not clear it
-				// either.
+				// The possibly-compromised warning says "replace this exposed value
+				// at its source"; a new value answers it, so it is cleared HERE and
+				// nowhere else: a rename, folder move, type change or metadata edit
+				// leaves the exposed value, and the warning, in place. A resent
+				// unchanged key does not clear it either (same-ciphertext guard).
 				$secret->setPossiblyCompromisedAt(null);
 			}
 		}//end if
@@ -1501,16 +1502,23 @@ class SecretService {
 	 *
 	 * @param string $id The secret UUID
 	 * @param string $userId The caller (must own the secret)
+	 * @param string|null $baseUpdatedAt The version an offline change was made from; a
+	 *                                   secret changed since is refused (offline-edit-queue)
 	 *
 	 * @return Secret
 	 *
 	 * @throws NotFoundException When the secret does not exist
 	 * @throws ForbiddenException When the secret belongs to another user
+	 * @throws \OCA\Keepiq\Exception\StaleWriteException When it changed since `baseUpdatedAt`
 	 *
 	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
-	public function findOwned(string $id, string $userId): Secret {
-		return $this->loadOwned(id: $id, userId: $userId);
+	public function findOwned(string $id, string $userId, ?string $baseUpdatedAt=null): Secret {
+		$secret = $this->loadOwned(id: $id, userId: $userId);
+		$this->editGuard->assertUnchangedSince(secret: $secret, baseUpdatedAt: $baseUpdatedAt);
+
+		return $secret;
 	}//end findOwned()
 
 	/**

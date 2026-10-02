@@ -103,7 +103,9 @@ class ExtensionControllerUnpairTest extends TestCase {
 		return new ExtensionController(
 			$this->createMock(IRequest::class),
 			$this->secretMapper,
-			$this->userSession
+			$this->userSession,
+			$this->createMock(\OCA\Keepiq\Service\AdminSettingsService::class),
+			$this->createMock(\OCP\App\IAppManager::class)
 		);
 	}//end controller()
 

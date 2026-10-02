@@ -556,6 +556,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {object} data Plaintext fields (name, url, key, login, additionalFields, ...).
 		 * @return {Promise<object>} The created secret (server response).
 		 * @spec openspec/specs/secrets/spec.md#requirement-create-secret
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 		 */
 		async createSecret(data) {
 			const session = useSessionStore()
@@ -594,6 +595,15 @@ export const useSecretStore = defineStore('secret', {
 				payload.additionalFields = await rsaEncrypt(json, publicKey)
 			}
 
+			// Offline: the same payload goes into the sealed queue and is
+			// replayed later (offline-edit-queue).
+			const offline = useOfflineStore()
+			if (offline.servedFromCache) {
+				const secretId = crypto.randomUUID()
+				await offline.enqueue({ op: 'create', secretId, body: payload })
+				return { id: secretId, ...payload, pendingSync: true }
+			}
+
 			const response = await axios.post(
 				generateUrl('/apps/keepiq/api/v1/secrets'),
 				payload,
@@ -608,6 +618,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {object} data The fields to change.
 		 * @return {Promise<object>} The updated secret (server response).
 		 * @spec openspec/specs/secrets/spec.md#requirement-update-secret
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 		 */
 		async updateSecret(id, data) {
 			const session = useSessionStore()
@@ -666,6 +677,20 @@ export const useSecretStore = defineStore('secret', {
 						payload.mergedPending = merged
 					}
 				}
+			}
+
+			// Offline: queue the change on the cached version; the recipient
+			// fan-out runs at replay time, never from here (offline-edit-queue).
+			const offline = useOfflineStore()
+			if (offline.servedFromCache) {
+				const cached = offline.vault?.secrets?.find((x) => x.id === id)
+				await offline.enqueue({
+					op: 'update',
+					secretId: id,
+					baseUpdatedAt: cached?.updatedAt ?? null,
+					body: payload,
+				})
+				return { ...(cached || { id }), ...payload, pendingSync: true }
 			}
 
 			const response = await axios.put(
@@ -744,8 +769,20 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {string} id The secret ID.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secrets/spec.md#requirement-delete-secret
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 		 */
 		async deleteSecret(id) {
+			const offline = useOfflineStore()
+			if (offline.servedFromCache) {
+				const cached = offline.vault?.secrets?.find((x) => x.id === id)
+				await offline.enqueue({
+					op: 'delete',
+					secretId: id,
+					baseUpdatedAt: cached?.updatedAt ?? null,
+				})
+				this.secrets = this.secrets.filter((s) => s.id !== id)
+				return
+			}
 			await axios.delete(generateUrl(`/apps/keepiq/api/v1/secrets/${id}`))
 			this.secrets = this.secrets.filter((s) => s.id !== id)
 		},

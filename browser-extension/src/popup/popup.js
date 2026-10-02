@@ -1,8 +1,17 @@
 /**
  * Popup UI — an untrusted view over the background worker. It never holds key
  * material; it renders state and relays user intent (pair / unlock / fill /
- * save / lock) as messages. All decryption happens in the worker.
+ * save / lock / switch account / settings) as messages. All decryption happens
+ * in the worker.
  */
+
+import { platformAuthenticatorAvailable } from '../unlock/ceremony.js'
+import { canAddAccount, renderAccountSwitcher, renderIdleChoices } from './views.js'
+
+// The last state the worker reported (accounts, active account, settings).
+let state = {}
+// The pairing form is open to add another account.
+let adding = false
 
 function send(type, payload) {
 	return new Promise((resolve) => {
@@ -15,7 +24,13 @@ function $(id) {
 }
 
 function show(view) {
-	for (const id of ['view-pair', 'view-locked', 'view-unlocked']) {
+	for (const id of [
+		'view-pair',
+		'view-locked',
+		'view-unlocked',
+		'view-settings',
+		'view-update',
+	]) {
 		$(id).hidden = id !== view
 	}
 }
@@ -56,7 +71,7 @@ async function renderUnlocked() {
 			btn.className = 'candidate-fill'
 			btn.textContent = c.name + (c.url ? ' — ' + c.url : '')
 			btn.addEventListener('click', async () => {
-				const res = await send('fill', { id: c.id })
+				const res = await send('fill', { id: c.id, accountId: c.accountId })
 				if (res.error) {
 					showError('unlock-error', res.error)
 					return
@@ -79,7 +94,9 @@ async function renderUnlocked() {
 	const { capture } = await send('pending-capture')
 	if (capture) {
 		$('save-prompt').hidden = false
-		$('save-text').textContent = `Save login for ${capture.host}?`
+		$('save-text').textContent = capture.account
+			? `Save login for ${capture.host} to ${capture.account}?`
+			: `Save login for ${capture.host}?`
 		$('save-yes').onclick = async () => {
 			const res = await send('save-capture', capture)
 			if (res.error) showError('unlock-error', res.error)
@@ -155,12 +172,69 @@ async function copyWithAutoClear(code) {
 	}
 }
 
+/**
+ * Open the unlock window for the active account (the OS prompt would close
+ * the popup), in unlock or enrol mode.
+ *
+ * @param {string} mode unlock or enrol.
+ * @return {void}
+ */
+function openUnlockWindow(mode) {
+	const url = chrome.runtime.getURL(
+		'unlock.html?mode='
+			+ mode
+			+ '&account='
+			+ encodeURIComponent(state.activeAccountId || ''),
+	)
+	chrome.windows.create({ url, type: 'popup', width: 380, height: 360 })
+	window.close()
+}
+
+/**
+ * Show the fingerprint or face unlock button when this browser has a platform
+ * authenticator and the account has an extension passkey enrolled.
+ *
+ * @return {Promise<void>}
+ */
+async function renderBiometricUnlock() {
+	$('unlock-biometric').hidden = true
+	if (!(await platformAuthenticatorAvailable(window))) return
+	const options = await send('biometric-options', {
+		accountId: state.activeAccountId,
+	})
+	$('unlock-biometric').hidden = !(options.credentials || []).length
+}
+
+async function renderSettings() {
+	show('view-settings')
+	showError('settings-error', '')
+	renderIdleChoices($('idle-choices'), state, async (minutes) => {
+		const res = await send('set-idle', {
+			accountId: state.activeAccountId,
+			idleMinutes: minutes,
+		})
+		if (res.error) showError('settings-error', res.error)
+	})
+	$('biometric-enrol').hidden = !(await platformAuthenticatorAvailable(window))
+}
+
 async function refresh() {
-	const state = await send('get-state')
-	if (!state.paired) {
+	state = await send('get-state')
+	const paired = !!state.paired
+	$('account-bar').hidden = !paired || adding
+	if (paired) {
+		renderAccountSwitcher($('account-select'), state)
+		$('account-add').hidden = !canAddAccount(state)
+	}
+	$('pair-cancel').hidden = !paired
+	if (!paired || adding) {
 		show('view-pair')
+	} else if (state.serverOutdated) {
+		// Nothing else works against an older server: say so, ask nothing.
+		show('view-update')
 	} else if (!state.unlocked) {
 		show('view-locked')
+		await renderBiometricUnlock()
 	} else {
 		show('view-unlocked')
 		await renderUnlocked()
@@ -175,8 +249,40 @@ function wire() {
 			user: $('pair-user').value.trim(),
 			appPassword: $('pair-app-password').value,
 		})
-		if (res.error) showError('pair-error', res.error)
-		else await refresh()
+		if (res.error) {
+			showError('pair-error', res.error)
+			return
+		}
+		adding = false
+		for (const id of ['pair-url', 'pair-user', 'pair-app-password']) {
+			$(id).value = ''
+		}
+		await refresh()
+	})
+
+	$('pair-cancel').addEventListener('click', async () => {
+		adding = false
+		showError('pair-error', '')
+		await refresh()
+	})
+
+	$('account-add').addEventListener('click', async () => {
+		adding = true
+		await refresh()
+	})
+
+	$('account-select').addEventListener('change', async (event) => {
+		await send('switch-account', { accountId: event.target.value })
+		await refresh()
+	})
+
+	$('unlock-biometric').addEventListener('click', () => openUnlockWindow('unlock'))
+	$('biometric-enrol').addEventListener('click', () => openUnlockWindow('enrol'))
+	$('settings-btn').addEventListener('click', () => renderSettings())
+	$('settings-back').addEventListener('click', () => refresh())
+	$('settings-unpair').addEventListener('click', async () => {
+		await send('unpair', { accountId: state.activeAccountId })
+		await refresh()
 	})
 
 	$('unlock-submit').addEventListener('click', async () => {
@@ -190,7 +296,7 @@ function wire() {
 	})
 
 	$('unlock-unpair').addEventListener('click', async () => {
-		await send('unpair')
+		await send('unpair', { accountId: state.activeAccountId })
 		await refresh()
 	})
 
