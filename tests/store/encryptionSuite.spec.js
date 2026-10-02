@@ -55,6 +55,7 @@ vi.mock('../../src/crypto/keyProof.js', () => ({
 		COMPLETE_MIGRATION: 'complete-migration',
 		EMERGENCY_DESTROY: 'emergency-access-destroy',
 		REVOKE_SUITE: 'revoke-suite',
+		ABORT_MIGRATION: 'abort-migration',
 	},
 	buildKeyProofHeaders: vi.fn(async () => ({
 		'X-Keepiq-Key-Proof-Nonce': 'test-nonce',
@@ -240,15 +241,25 @@ describe('useEncryptionSuiteStore — abort migration', () => {
 		vi.restoreAllMocks()
 	})
 
-	it('POSTs the abort to the in-progress migration and clears state on success', async () => {
+	it('POSTs the abort with a proof over the NEW key and clears state on success', async () => {
 		// status GET first resolves in-progress, then 'none' after the abort.
 		const statuses = [
-			{ data: { status: 'in_progress', id: 'migr-1', oldSuiteId: 'old' } },
+			{
+				data: {
+					status: 'in_progress',
+					id: 'migr-1',
+					oldSuiteId: 'old',
+					newSuiteId: 'new',
+				},
+			},
 			{ data: { status: 'none' } },
 		]
 		vi.spyOn(axios, 'get').mockImplementation(async (url) => {
 			if (url.endsWith('/migrations/status')) {
 				return statuses.shift() ?? { data: { status: 'none' } }
+			}
+			if (url.endsWith('/suites/new')) {
+				return { data: { id: 'new', privateKey: 'NEW-ENC-PK' } }
 			}
 			// fetchMigrationRemaining hits /work
 			return { data: { totalRemaining: 0 } }
@@ -258,10 +269,26 @@ describe('useEncryptionSuiteStore — abort migration', () => {
 		})
 
 		const store = useEncryptionSuiteStore()
-		const result = await store.abortMigration()
+		const result = await store.abortMigration('current-pw')
 
+		// keepiq#859: abort is proof-gated over the key the rotation moves TO,
+		// bound to the migration id, so a session alone cannot call it.
+		expect(buildKeyProofHeaders).toHaveBeenCalledWith({
+			suiteId: 'new',
+			purpose: 'abort-migration',
+			encryptedPrivateKey: 'NEW-ENC-PK',
+			masterPassword: 'current-pw',
+			boundValues: ['migr-1'],
+		})
 		expect(post).toHaveBeenCalledWith(
 			expect.stringContaining('/migrations/migr-1/abort'),
+			{},
+			{
+				headers: {
+					'X-Keepiq-Key-Proof-Nonce': 'test-nonce',
+					'X-Keepiq-Key-Proof': 'test-sig',
+				},
+			},
 		)
 		expect(result.aborted).toBe(true)
 		// State re-read afterwards and the banner cleared.
@@ -272,8 +299,16 @@ describe('useEncryptionSuiteStore — abort migration', () => {
 		vi.spyOn(axios, 'get').mockImplementation(async (url) => {
 			if (url.endsWith('/migrations/status')) {
 				return {
-					data: { status: 'in_progress', id: 'migr-1', oldSuiteId: 'old' },
+					data: {
+						status: 'in_progress',
+						id: 'migr-1',
+						oldSuiteId: 'old',
+						newSuiteId: 'new',
+					},
 				}
+			}
+			if (url.endsWith('/suites/new')) {
+				return { data: { id: 'new', privateKey: 'NEW-ENC-PK' } }
 			}
 			return { data: { totalRemaining: 4 } }
 		})
@@ -285,7 +320,7 @@ describe('useEncryptionSuiteStore — abort migration', () => {
 		})
 
 		const store = useEncryptionSuiteStore()
-		await expect(store.abortMigration()).rejects.toMatchObject({
+		await expect(store.abortMigration('current-pw')).rejects.toMatchObject({
 			response: { data: { committed: 2 } },
 		})
 		// The migration is still there — abort did not clear it.
@@ -297,7 +332,9 @@ describe('useEncryptionSuiteStore — abort migration', () => {
 		const post = vi.spyOn(axios, 'post')
 
 		const store = useEncryptionSuiteStore()
-		await expect(store.abortMigration()).rejects.toThrow(/no migration to abort/)
+		await expect(store.abortMigration('current-pw')).rejects.toThrow(
+			/no migration to abort/,
+		)
 		expect(post).not.toHaveBeenCalled()
 	})
 })

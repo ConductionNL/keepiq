@@ -103,6 +103,11 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * @param {boolean} val Whether the dialog is open.
+		 *
+		 * @spec exclude Form-state reset: clears the recipient, error and busy flags when the dialog closes.
+		 */
 		open(val) {
 			if (val === false) {
 				this.targetUserId = ''

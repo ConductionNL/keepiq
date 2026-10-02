@@ -77,6 +77,18 @@ final class AuditEventTypes {
 	public const SUITE_REINSTATED = 'suite.reinstated';
 	public const SUITE_RECOVERY_STARTED = 'suite.recovery_started';
 	public const SUITE_RECOVERY_COMPLETED = 'suite.recovery_completed';
+	// The owner aborted their own recovery before any record moved (keepiq#859).
+	public const SUITE_RECOVERY_ABORTED = 'suite.recovery_aborted';
+	// A compromise force-revoke ended an open migration (keepiq#870).
+	public const SUITE_MIGRATION_TERMINATED = 'suite.migration_terminated';
+	// An administrator force-revoke was refused (keepiq#870): an attack on the
+	// containment path shows up as refusals, not as successes.
+	public const SUITE_REVOKE_REFUSED = 'suite.revoke_refused';
+
+	// Vault-key proof (keepiq#870). A refused proof is exactly what a
+	// session-only attacker probing a guarded route produces. The proof,
+	// the nonce and the signature are never recorded.
+	public const KEY_PROOF_REFUSED = 'key_proof.refused';
 
 	// Application.
 	public const APPLICATION_REGISTERED = 'application.registered';
@@ -154,6 +166,8 @@ final class AuditEventTypes {
 	public const TEAM_FOLDER_MEMBER_ADDED = 'team_folder.member_added';
 	public const TEAM_FOLDER_MEMBER_REMOVED = 'team_folder.member_removed';
 	public const TEAM_FOLDER_OFFBOARDED = 'team_folder.offboarded';
+	// Automatic member confirmation (admin-auto-confirm-members D6).
+	public const TEAM_FOLDER_MEMBERS_CONFIRMED = 'team_folder.members_confirmed';
 	// Folder permission grades (folder-permission-grades §3.3).
 	public const TEAM_FOLDER_GRADE_CHANGED = 'team_folder.grade_changed';
 
@@ -238,8 +252,14 @@ final class AuditEventTypes {
 		self::REQUEST_EXPIRED => [],
 		self::SUITE_REVOKED => ['reason', 'markCompromised', 'emergencyContactsDestroyed'],
 		self::SUITE_REINSTATED => [],
-		self::SUITE_RECOVERY_STARTED => [],
+		self::SUITE_RECOVERY_STARTED => ['migrationId', 'newSuiteId'],
 		self::SUITE_RECOVERY_COMPLETED => ['reSuitedCount'],
+		self::SUITE_RECOVERY_ABORTED => ['migrationId', 'newSuiteId'],
+		self::SUITE_MIGRATION_TERMINATED => ['migrationId', 'oldSuiteId', 'newSuiteId'],
+		self::SUITE_REVOKE_REFUSED => ['reasonCode', 'markCompromised'],
+		// The guarded route, its purpose and why the proof was refused; never
+		// the proof, the nonce or the signature.
+		self::KEY_PROOF_REFUSED => ['route', 'purpose', 'reason'],
 		self::APPLICATION_REGISTERED => [],
 		self::APPLICATION_APPROVED => [],
 		self::APPLICATION_REJECTED => ['reason'],
@@ -289,6 +309,8 @@ final class AuditEventTypes {
 		self::TEAM_FOLDER_OFFBOARDED => ['leavingUserId', 'successorUserId', 'revokedCount', 'transferredCount'],
 		// Grade changes — identifiers + the new grade only (§3.3).
 		self::TEAM_FOLDER_GRADE_CHANGED => ['memberType', 'memberId', 'grade'],
+		// Automatic confirmation: counts only, the actor is the confirmer.
+		self::TEAM_FOLDER_MEMBERS_CONFIRMED => ['confirmedCount', 'memberCount'],
 		// SIEM sinks — sink id/type/outcome only (§5.1).
 		self::SIEM_SINK_CREATED => ['sinkId', 'type'],
 		self::SIEM_SINK_UPDATED => ['sinkId'],

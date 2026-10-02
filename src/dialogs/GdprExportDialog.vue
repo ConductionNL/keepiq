@@ -11,7 +11,7 @@
     that the end-to-end encrypted vault was not unlocked (the honest Art. 15
     answer under ADR-003). The user may choose to unlock first.
 
-  @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+  @spec openspec/specs/gdpr-compliance/spec.md
 -->
 <template>
 	<NcDialog
@@ -149,7 +149,7 @@ export default {
 	 * Provide the export + session Pinia stores to the component.
 	 *
 	 * @return {object}
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	setup() {
 		return {
@@ -171,7 +171,7 @@ export default {
 		 * Whether an export is in flight (from the store).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
 		loading() {
 			return this.exportStore.loading
@@ -181,7 +181,7 @@ export default {
 		 * Whether the vault is locked (drives the metadata-only vs full variant).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
 		locked() {
 			return this.sessionStore.isLocked
@@ -208,7 +208,7 @@ export default {
 		 * unlocked.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
 		async onDownload() {
 			if (!this.canDownload) {
@@ -232,7 +232,7 @@ export default {
 		 *
 		 * @param {boolean} value The new open state.
 		 * @return {void}
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
 		onUpdateOpen(value) {
 			if (!value) {

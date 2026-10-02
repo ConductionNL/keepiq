@@ -232,10 +232,34 @@ class KeepiqNotifier implements INotifier {
 		switch ($subject) {
 			case 'secret_compromised':
 				$secretName = (string)($params['secret_name'] ?? $l->t('a secret'));
+				$otherCount = (int)($params['other_count'] ?? 0);
 				$notification->setParsedSubject((string)$l->t('Secret may be compromised'));
-				$notification->setParsedMessage(
-					(string)$l->t('Your secret "%s" may be compromised and requires migration.', [$secretName])
-				);
+				// One notice per owner, so it says how many secrets it covers:
+				// a single name read as "only this one" (keepiq#875).
+				$message = $l->t('Your secret "%s" may be compromised and requires migration.', [$secretName]);
+				if ($otherCount > 0) {
+					$message = $l->t(
+						'Your secret "%1$s" and %2$d other secret(s) may be compromised and require migration.',
+						[$secretName, $otherCount]
+					);
+				}
+
+				$notification->setParsedMessage((string)$message);
+				$this->withSecretLink(notification: $notification, params: $params);
+				return true;
+			case 'shared_secret_compromised':
+				$secretName = (string)($params['secret_name'] ?? $l->t('a secret'));
+				$otherCount = (int)($params['other_count'] ?? 0);
+				$notification->setParsedSubject((string)$l->t('Shared secret may be compromised'));
+				$message = $l->t('The secret "%s" shared with you may be compromised. Change it where it is used.', [$secretName]);
+				if ($otherCount > 0) {
+					$message = $l->t(
+						'The secret "%1$s" and %2$d other secret(s) shared with you may be compromised. Change them where they are used.',
+						[$secretName, $otherCount]
+					);
+				}
+
+				$notification->setParsedMessage((string)$message);
 				$this->withSecretLink(notification: $notification, params: $params);
 				return true;
 			case 'request_fulfilled':
@@ -300,6 +324,17 @@ class KeepiqNotifier implements INotifier {
 				);
 				$this->withAdminSectionLink(notification: $notification);
 				return true;
+			case 'ca_root_expiring':
+				$rootDaysLeft = (int)($params['days_left'] ?? 0);
+				$notification->setParsedSubject((string)$l->t('Root certificate expiring soon'));
+				$notification->setParsedMessage(
+					(string)$l->t(
+						'The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.',
+						[$rootDaysLeft]
+					)
+				);
+				$this->withAdminSectionLink(notification: $notification);
+				return true;
 		}//end switch
 
 		return false;
@@ -323,6 +358,14 @@ class KeepiqNotifier implements INotifier {
 				$notification->setParsedSubject((string)$l->t('Team folder shared with you'));
 				$notification->setParsedMessage(
 					(string)$l->t('%s shared a team folder with you. Its secrets are now in your vault.', [$sharedBy])
+				);
+				return true;
+			case 'team_folder_member_confirmed':
+				$confirmedBy = (string)($params['confirmedBy'] ?? $l->t('a member'));
+				$confirmedMembers = implode(', ', array_map('strval', (array)($params['memberIds'] ?? [])));
+				$notification->setParsedSubject((string)$l->t('New team folder members confirmed'));
+				$notification->setParsedMessage(
+					(string)$l->t('%1$s gave %2$s access to your team folder.', [$confirmedBy, $confirmedMembers])
 				);
 				return true;
 			case 'team_folder_join_request':
@@ -362,6 +405,26 @@ class KeepiqNotifier implements INotifier {
 					(string)$l->t(
 						'%1$s requested emergency access to your vault. It will be granted in %2$d day(s) unless you decline.',
 						[$granteeName, $waitDays]
+					)
+				);
+				return true;
+			case 'emergency_grantee_compromised':
+				$granteeName = (string)($params['grantee_name'] ?? $params['granteeUserId'] ?? $l->t('a trusted contact'));
+				$notification->setParsedSubject((string)$l->t('Emergency contact compromised'));
+				$notification->setParsedMessage(
+					(string)$l->t(
+						'%s had approved emergency access to your vault. Their encryption key was revoked as compromised, so start a key rotation.',
+						[$granteeName]
+					)
+				);
+				return true;
+			case 'emergency_access_cleared':
+				$clearedCount = (int)($params['count'] ?? 0);
+				$notification->setParsedSubject((string)$l->t('Emergency access removed'));
+				$notification->setParsedMessage(
+					(string)$l->t(
+						'An administrator revoked your vault key and deleted %d emergency contact(s). Add them again once your vault is set up.',
+						[$clearedCount]
 					)
 				);
 				return true;

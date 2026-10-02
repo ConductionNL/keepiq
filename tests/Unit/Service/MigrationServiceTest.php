@@ -8,6 +8,8 @@ use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\SuiteMigration;
 use OCA\Keepiq\Db\SuiteMigrationMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Event\SuiteMigrationAbortedEvent;
 use OCA\Keepiq\Event\SuiteMigrationCompletedEvent;
 use OCA\Keepiq\Exception\MigrationAbortRefusedException;
@@ -762,11 +764,150 @@ class MigrationServiceTest extends TestCase {
 		$open->setStatus('in_progress');
 		$this->migrationMapper->expects($this->once())->method('update')
 			->with($this->callback(static fn (SuiteMigration $m): bool => $m->getStatus() === 'terminated'));
-		$dispatcher->expects($this->once())->method('dispatchTyped')
-			->with($this->isInstanceOf(SuiteMigrationAbortedEvent::class));
+		$dispatched = [];
+		$dispatcher->method('dispatchTyped')->willReturnCallback(
+			static function (object $event) use (&$dispatched): void {
+				$dispatched[] = $event;
+			}
+		);
+
+		$service->terminateForCompromise(migration: $open, actorId: 'admin');
+
+		$this->assertSame('terminated', $open->getStatus());
+		$this->assertInstanceOf(SuiteMigrationAbortedEvent::class, $dispatched[0]);
+
+		// keepiq#870: the termination reaches the audit trail, actored by the admin.
+		$audits = $this->auditEventsIn($dispatched);
+		$this->assertCount(1, $audits);
+		$this->assertSame(AuditEventTypes::SUITE_MIGRATION_TERMINATED, $audits[0]->getEventType());
+		$this->assertSame(AuditEvent::ACTOR_USER, $audits[0]->getActorType());
+		$this->assertSame('admin', $audits[0]->getActorId());
+		$this->assertSame('suite-1', $audits[0]->getObjectId());
+		$this->assertSame('migration-1', $audits[0]->getMetadata()['migrationId']);
+	}//end testTerminateForCompromiseEndsTheMigration()
+
+	/**
+	 * Without an actor (a caller that has not passed one yet) the termination
+	 * is still audited, as a system event, rather than dropped.
+	 *
+	 * @return void
+	 */
+	public function testTerminateForCompromiseWithoutAnActorIsAuditedAsSystem(): void {
+		[$service, $dispatched] = $this->serviceWithCollector();
+		$open = new SuiteMigration();
+		$open->setId('migration-1');
+		$open->setOldSuiteId('suite-1');
+		$open->setNewSuiteId('suite-2');
+		$open->setStatus('in_progress');
 
 		$service->terminateForCompromise(migration: $open);
 
-		$this->assertSame('terminated', $open->getStatus());
-	}//end testTerminateForCompromiseEndsTheMigration()
+		$audits = $this->auditEventsIn($dispatched->getArrayCopy());
+		$this->assertCount(1, $audits);
+		$this->assertSame(AuditEventTypes::SUITE_MIGRATION_TERMINATED, $audits[0]->getEventType());
+		$this->assertSame(AuditEvent::ACTOR_SYSTEM, $audits[0]->getActorType());
+	}//end testTerminateForCompromiseWithoutAnActorIsAuditedAsSystem()
+
+	/**
+	 * An abort reaches the audit trail as suite.recovery_aborted, actored by
+	 * whoever aborted, on the old suite (keepiq#859, keepiq#870).
+	 *
+	 * @return void
+	 */
+	public function testAbortRecordsARecoveryAbortedAuditEvent(): void {
+		[$service, $dispatched] = $this->serviceWithCollector();
+		$this->arrangeAbortableMigration(committed: 0);
+
+		$service->abortMigration(migrationId: 'migration-1', actorId: 'alice');
+
+		$audits = $this->auditEventsIn($dispatched->getArrayCopy());
+		$this->assertCount(1, $audits);
+		$this->assertSame(AuditEventTypes::SUITE_RECOVERY_ABORTED, $audits[0]->getEventType());
+		$this->assertSame('alice', $audits[0]->getActorId());
+		$this->assertSame('suite', $audits[0]->getObjectType());
+		$this->assertSame('old-suite', $audits[0]->getObjectId());
+		$this->assertSame('new-suite', $audits[0]->getMetadata()['newSuiteId']);
+	}//end testAbortRecordsARecoveryAbortedAuditEvent()
+
+	/**
+	 * A refused abort and a no-op abort leave no aborted record: nothing was
+	 * aborted.
+	 *
+	 * @return void
+	 */
+	public function testARefusedAbortRecordsNoAbortedAuditEvent(): void {
+		[$service, $dispatched] = $this->serviceWithCollector();
+		$this->arrangeAbortableMigration(committed: 2);
+
+		try {
+			$service->abortMigration(migrationId: 'migration-1', actorId: 'alice');
+			$this->fail('Expected MigrationAbortRefusedException');
+		} catch (MigrationAbortRefusedException) {
+			// Expected.
+		}
+
+		$this->assertSame([], $this->auditEventsIn($dispatched->getArrayCopy()));
+	}//end testARefusedAbortRecordsNoAbortedAuditEvent()
+
+	/**
+	 * Starting a recovery is audited when it starts, actored by the owner of
+	 * the old suite (keepiq#870).
+	 *
+	 * @return void
+	 */
+	public function testInitiateRecordsRecoveryStarted(): void {
+		[$service, $dispatched] = $this->serviceWithCollector();
+		$old = new EncryptionSuite();
+		$old->setId('old-suite');
+		$old->setOwnerType('user');
+		$old->setOwnerId('alice');
+		$this->suiteMapper->method('findById')->willReturn($old);
+
+		$service->initiateCompromiseRecovery('old-suite', 'new-suite');
+
+		$audits = $this->auditEventsIn($dispatched->getArrayCopy());
+		$this->assertCount(1, $audits);
+		$this->assertSame(AuditEventTypes::SUITE_RECOVERY_STARTED, $audits[0]->getEventType());
+		$this->assertSame('alice', $audits[0]->getActorId());
+		$this->assertSame('old-suite', $audits[0]->getObjectId());
+	}//end testInitiateRecordsRecoveryStarted()
+
+	/**
+	 * The service with a dispatcher that collects every event.
+	 *
+	 * @return array{0:MigrationService,1:\ArrayObject<int,object>}
+	 */
+	private function serviceWithCollector(): array {
+		$dispatched = new \ArrayObject();
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(
+			static function (object $event) use ($dispatched): void {
+				$dispatched->append($event);
+			}
+		);
+
+		$service = new MigrationService(
+			mapper: $this->migrationMapper,
+			suiteMapper: $this->suiteMapper,
+			suiteService: $this->suiteService,
+			linkShareService: $this->linkShareService,
+			workService: $this->workService,
+			writeLockService: $this->writeLockService,
+			logger: $this->createMock(LoggerInterface::class),
+			eventDispatcher: $dispatcher,
+		);
+
+		return [$service, $dispatched];
+	}//end serviceWithCollector()
+
+	/**
+	 * The audit events among the dispatched events.
+	 *
+	 * @param array<int,object> $dispatched The dispatched events
+	 *
+	 * @return list<AuditEvent>
+	 */
+	private function auditEventsIn(array $dispatched): array {
+		return array_values(array_filter($dispatched, static fn (object $event): bool => $event instanceof AuditEvent));
+	}//end auditEventsIn()
 }//end class

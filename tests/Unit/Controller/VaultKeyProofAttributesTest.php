@@ -106,6 +106,16 @@ class VaultKeyProofAttributesTest extends TestCase {
 				'migrationNewSuite',
 				VaultKeyProofService::PURPOSE_EMERGENCY_RE_ENVELOPE,
 			],
+			// keepiq#859: a session alone could abort the owner's compromise
+			// recovery every time it started. The NEW key: only the party
+			// holding the key the rotation is moving to can call it off.
+			'abort migration' => [
+				MigrationController::class,
+				'abort',
+				['id'],
+				'migrationNewSuite',
+				VaultKeyProofService::PURPOSE_ABORT_MIGRATION,
+			],
 			// Wipes every secret, suite and migration the user has.
 			'delete account data' => [
 				GdprController::class,
@@ -180,12 +190,6 @@ class VaultKeyProofAttributesTest extends TestCase {
 				EncryptionSuiteController::class,
 				'proofChallenge',
 				'Issuing a challenge grants nothing on its own; guarding it would be circular.',
-			],
-			'abort migration' => [
-				MigrationController::class,
-				'abort',
-				'Abort is restorative — it returns the vault to the still-active old suite. '
-				. 'Requiring a proof would leave a vault wedged by an unauthorised rotation wedged.',
 			],
 			'admin force-revoke' => [
 				EncryptionSuiteController::class,

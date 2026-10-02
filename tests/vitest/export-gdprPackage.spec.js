@@ -9,7 +9,7 @@
  *  - The metadata-only variant (locked vault) carries the explicit
  *    "vault not unlocked" limitation section and includesVault=false.
  *
- * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+ * @spec openspec/specs/gdpr-compliance/spec.md
  */
 
 import { describe, expect, it } from 'vitest'

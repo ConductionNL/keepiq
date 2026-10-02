@@ -108,6 +108,8 @@ export const useLinkShareStore = defineStore('linkShare', {
 
 		/**
 		 * Clear the transient one-time password and link URL (on dialog close).
+		 *
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-create-link-share
 		 */
 		clearCreatedPassword() {
 			this.createdPassword = null
