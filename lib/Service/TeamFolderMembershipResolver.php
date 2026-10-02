@@ -229,6 +229,7 @@ class TeamFolderMembershipResolver {
 	 * @return array<int,array{id:string,name:string}>
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.3
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function subtreeSecretRefs(TeamFolder $teamFolder): array {
 		$refs = [];
@@ -239,6 +240,11 @@ class TeamFolderMembershipResolver {
 				ownerId: $teamFolder->getOwnerId(),
 				folderId: (string)$folderId
 			) as $secret) {
+				// A use-only or expiring copy is never fanned out (D4).
+				if (OnwardShareGuard::isShareable(source: $secret) === false) {
+					continue;
+				}
+
 				$refs[] = [
 					'id' => $secret->getId(),
 					'name' => $secret->getName(),

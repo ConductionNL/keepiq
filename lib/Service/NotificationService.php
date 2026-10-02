@@ -76,6 +76,11 @@ class NotificationService {
 		// Honey credentials (honey-credentials §D3): a muted tripwire
 		// is worthless — always pages, like app_pending.
 		'honey_access' => null,
+		// Shares that end by themselves (sharing-use-only-and-expiring-shares
+		// D6): the holder a day ahead and when it ended; the owner when it ended.
+		'share_access_ending' => 'notify_shares',
+		'share_access_ended' => 'notify_shares',
+		'share_access_ended_owner' => 'notify_shares',
 	];
 
 	/**

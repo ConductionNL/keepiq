@@ -31,6 +31,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
+use DateTimeZone;
+use InvalidArgumentException;
 use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
@@ -59,6 +61,7 @@ class DirectShareRegistrar {
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
 	 * @param GroupShareMapper|null $groupShareMapper The group-share mapper (rows linked to a group share)
+	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
 	 *
 	 * @return void
 	 *
@@ -71,6 +74,7 @@ class DirectShareRegistrar {
 		private NotificationService $notificationService,
 		?ShareAuditTrail $auditTrail = null,
 		private ?GroupShareMapper $groupShareMapper = null,
+		private ?ShareRestrictionResolver $restrictions = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -83,12 +87,13 @@ class DirectShareRegistrar {
 	 *
 	 * @param string $userId The sharing owner
 	 * @param array<int,array<string,mixed>> $shares Rows {sourceSecretId, targetUserId, encryptedKey,
-	 *   encryptedLogin?, encryptedAdditionalFields?, groupShareId?}
+	 *   encryptedLogin?, encryptedAdditionalFields?, groupShareId?, useOnly?, expiresAt?}
 	 *
 	 * @return array<int,array{sourceSecretId:string,targetUserId:string,status:string,recipientSecretId?:string}>
 	 *
 	 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
 	 */
 	public function registerDirectShares(string $userId, array $shares): array {
 		$report = [];
@@ -223,6 +228,29 @@ class DirectShareRegistrar {
 			];
 		}
 
+		// A use-only or expiring copy is never a share source (D4).
+		if (OnwardShareGuard::isShareable(source: $source) === false) {
+			return [
+				'sourceSecretId' => $sourceSecretId,
+				'targetUserId' => $targetUserId,
+				'status' => 'restricted',
+			];
+		}
+
+		try {
+			$restriction = ShareRestriction::fromRequest(
+				useOnly: ($row['useOnly'] ?? false),
+				expiresAt: ($row['expiresAt'] ?? null),
+				now: new DateTime('now', new DateTimeZone('UTC'))
+			);
+		} catch (InvalidArgumentException) {
+			return [
+				'sourceSecretId' => $sourceSecretId,
+				'targetUserId' => $targetUserId,
+				'status' => 'invalid',
+			];
+		}
+
 		// Idempotency: an existing share (any provenance) is `exists`.
 		try {
 			$this->mapper->findBySourceSecretAndTargetUser(
@@ -261,7 +289,14 @@ class DirectShareRegistrar {
 		$entity->setGroupShareId($this->optionalString(value: ($row['groupShareId'] ?? null)));
 		$entity->setCreatedBy($userId);
 		$entity->setCreatedAt(new DateTime());
-		$this->mapper->insert($entity);
+		if ($entity->getGroupShareId() === null) {
+			// A group-linked row takes its restriction from the group share.
+			$entity->setUseOnly($restriction->useOnly);
+			$entity->setExpiresAt($restriction->expiresAt);
+		}
+
+		$persisted = $this->mapper->insert($entity);
+		$this->restrictions?->resolveTarget(target: $persisted);
 
 		$this->auditTrail->recordBulkShareGranted(
 			userId: $userId,

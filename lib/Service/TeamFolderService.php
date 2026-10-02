@@ -41,6 +41,7 @@ namespace OCA\Keepiq\Service;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
+use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolder;
 use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
@@ -73,6 +74,8 @@ class TeamFolderService {
 	 * @param TeamFolderAuditor $audit The team-folder auditor
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param IDBConnection $db The database connection
+	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
+	 * @param ShareTargetMapper|null $shareTargets The share-target mapper (copies to recompute)
 	 *
 	 * @return void
 	 *
@@ -88,6 +91,8 @@ class TeamFolderService {
 		private TeamFolderAuditor $audit,
 		private NotificationService $notificationService,
 		private IDBConnection $db,
+		private ?ShareRestrictionResolver $restrictions = null,
+		private ?ShareTargetMapper $shareTargets = null,
 	) {
 	}//end __construct()
 
@@ -211,14 +216,22 @@ class TeamFolderService {
 	 * @param string $memberType The member type (`user`|`group`)
 	 * @param string $memberId The Nextcloud user or group ID
 	 * @param string $userId The caller (must be the owner)
+	 * @param ShareRestriction|null $restriction Use-only (read grade only) and end date of the membership
 	 *
 	 * @return array{member:TeamFolderMember,recipients:array<int,array{userId:string,certificate:string}>,secrets:array<int,array{id:string,name:string}>}
 	 *
 	 * @throws InvalidArgumentException On invalid input / not authorized
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 */
-	public function addMember(string $teamFolderId, string $memberType, string $memberId, string $userId): array {
+	public function addMember(
+		string $teamFolderId,
+		string $memberType,
+		string $memberId,
+		string $userId,
+		?ShareRestriction $restriction = null,
+	): array {
 		$teamFolder = $this->queries->loadOwnedTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
 		$this->memberships->assertMemberAddable(
 			teamFolder: $teamFolder,
@@ -233,6 +246,9 @@ class TeamFolderService {
 			memberId: $memberId,
 			userId: $userId
 		);
+		if ($restriction !== null) {
+			$membership = $this->applyRestriction(membership: $membership, restriction: $restriction);
+		}
 
 		$newUsers = array_values(
 			array_diff(
@@ -341,6 +357,10 @@ class TeamFolderService {
 				targetUserId: $droppedUserId
 			);
 		}
+
+		// Users still covered by another grant may have lost the one that
+		// lifted use-only or extended their access.
+		$this->resolveCopiesOf(membership: $membership);
 
 		$this->audit->memberRemoved(
 			actorId: $userId,
@@ -566,6 +586,7 @@ class TeamFolderService {
 	 * @param string $memberId The membership row UUID
 	 * @param string $grade The grade (`read`|`write`)
 	 * @param string $ownerId The calling user (must own the folder)
+	 * @param ShareRestriction|null $restriction New use-only flag and end date (null = leave them)
 	 *
 	 * @return TeamFolderMember
 	 *
@@ -573,8 +594,15 @@ class TeamFolderService {
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-or-write-grade
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 */
-	public function setMemberGrade(string $teamFolderId, string $memberId, string $grade, string $ownerId): TeamFolderMember {
+	public function setMemberGrade(
+		string $teamFolderId,
+		string $memberId,
+		string $grade,
+		string $ownerId,
+		?ShareRestriction $restriction = null,
+	): TeamFolderMember {
 		if (in_array($grade, ['read', 'write'], true) === false) {
 			throw new InvalidArgumentException(message: 'grade must be read or write');
 		}
@@ -592,7 +620,19 @@ class TeamFolderService {
 		}
 
 		$member->setGrade($grade);
+		if ($restriction === null && $grade !== 'read') {
+			// Use-only is a read-grade option; an editor sees the value.
+			$restriction = new ShareRestriction(useOnly: false, expiresAt: $member->getExpiresAt());
+		}
+
+		if ($restriction !== null) {
+			$this->assertRestrictionFitsGrade(grade: $member->effectiveGrade(), restriction: $restriction);
+			$member->setUseOnly($restriction->useOnly);
+			$member->setExpiresAt($restriction->expiresAt);
+		}
+
 		$member = $this->memberMapper->update($member);
+		$this->resolveCopiesOf(membership: $member);
 
 		$this->audit->gradeChanged(
 			actorId: $ownerId,
@@ -604,6 +644,71 @@ class TeamFolderService {
 
 		return $member;
 	}//end setMemberGrade()
+
+	/**
+	 * Set a membership's use-only flag and end date, refusing use-only on a
+	 * grade other than `read`, and recompute the covered copies.
+	 *
+	 * @param TeamFolderMember $membership The membership row
+	 * @param ShareRestriction $restriction The new flag and end date
+	 *
+	 * @return TeamFolderMember
+	 *
+	 * @throws InvalidArgumentException When use-only is asked for a write grade
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 */
+	private function applyRestriction(TeamFolderMember $membership, ShareRestriction $restriction): TeamFolderMember {
+		$this->assertRestrictionFitsGrade(grade: $membership->effectiveGrade(), restriction: $restriction);
+		$membership->setUseOnly($restriction->useOnly);
+		$membership->setExpiresAt($restriction->expiresAt);
+		$membership = $this->memberMapper->update($membership);
+		$this->resolveCopiesOf(membership: $membership);
+
+		return $membership;
+	}//end applyRestriction()
+
+	/**
+	 * Refuse use-only on any grade but `read` (D2: editing a value you
+	 * cannot see is not offered).
+	 *
+	 * @param string $grade The membership's effective grade
+	 * @param ShareRestriction $restriction The requested flag and end date
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When use-only is asked for a write grade
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-owners-can-share-a-secret-as-use-only
+	 */
+	private function assertRestrictionFitsGrade(string $grade, ShareRestriction $restriction): void {
+		if ($restriction->useOnly === true && $grade !== 'read') {
+			throw new InvalidArgumentException(message: 'Use only is available for the read grade only');
+		}
+	}//end assertRestrictionFitsGrade()
+
+	/**
+	 * Recompute the recipient copies of every user a membership covers.
+	 *
+	 * @param TeamFolderMember $membership The membership row
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-1.2
+	 */
+	private function resolveCopiesOf(TeamFolderMember $membership): void {
+		if ($this->restrictions === null || $this->shareTargets === null) {
+			return;
+		}
+
+		$users = $this->memberships->expandMember(
+			memberType: $membership->getMemberType(),
+			memberId: $membership->getMemberId()
+		);
+		foreach ($users as $coveredUserId) {
+			$this->restrictions->resolveTargets(targets: $this->shareTargets->findByTargetUser($coveredUserId));
+		}
+	}//end resolveCopiesOf()
 
 	/**
 	 * The MAX grade any team-folder membership along a secret's folder

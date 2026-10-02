@@ -70,6 +70,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setIsFavourite(bool $isFavourite)
  * @method DateTime|null getLastUsedAt()
  * @method void setLastUsedAt(?DateTime $lastUsedAt)
+ * @method bool|null getUseOnly()
+ * @method void setUseOnly(bool $useOnly)
+ * @method DateTime|null getAccessExpiresAt()
+ * @method void setAccessExpiresAt(?DateTime $accessExpiresAt)
  * @method void setTombstoneReason(?string $tombstoneReason)
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
@@ -233,6 +237,23 @@ class Secret extends Entity implements JsonSerializable {
 	protected ?DateTime $lastUsedAt = null;
 
 	/**
+	 * Whether this recipient copy is use-only: Keepiq's clients fill it but
+	 * never show or copy its value (sharing-use-only-and-expiring-shares D1).
+	 * Materialised from the grants by ShareRestrictionResolver.
+	 *
+	 * @var boolean|null
+	 */
+	protected ?bool $useOnly = false;
+
+	/**
+	 * When the holder's access to this recipient copy ends (nullable = no
+	 * end). Not to be confused with expiresAt, which is credential expiry.
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $accessExpiresAt = null;
+
+	/**
 	 * The non-personal reason a copy was tombstoned (nullable).
 	 *
 	 * A short enum-ish token (e.g. 'owner-account-deleted'). MUST NOT contain
@@ -310,6 +331,8 @@ class Secret extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'archivedAt', type: 'datetime');
 		$this->addType(fieldName: 'isFavourite', type: 'boolean');
 		$this->addType(fieldName: 'lastUsedAt', type: 'datetime');
+		$this->addType(fieldName: 'useOnly', type: 'boolean');
+		$this->addType(fieldName: 'accessExpiresAt', type: 'datetime');
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
 		$this->addType(fieldName: 'updatedAt', type: 'datetime');
 	}//end __construct()
@@ -370,6 +393,8 @@ class Secret extends Entity implements JsonSerializable {
 			'archivedAt' => $this->archivedAt?->format('c'),
 			'favourite' => ($this->isFavourite === true),
 			'lastUsedAt' => $this->lastUsedAt?->format('c'),
+			'useOnly' => ($this->useOnly === true),
+			'accessExpiresAt' => $this->accessExpiresAt?->format('c'),
 		];
 	}//end jsonSerialize()
 
@@ -407,6 +432,8 @@ class Secret extends Entity implements JsonSerializable {
 			'archivedAt' => $this->archivedAt?->format('c'),
 			'favourite' => ($this->isFavourite === true),
 			'lastUsedAt' => $this->lastUsedAt?->format('c'),
+			'useOnly' => ($this->useOnly === true),
+			'accessExpiresAt' => $this->accessExpiresAt?->format('c'),
 			'createdAt' => $this->createdAt?->format('c'),
 			'updatedAt' => $this->updatedAt?->format('c'),
 		];

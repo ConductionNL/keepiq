@@ -881,11 +881,17 @@ class SecretService {
 	 *   independent partial-update guards, not nested logic.
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function update(string $id, array $data, string $userId): Secret {
 		$this->assertNotWriteLocked(userId: $userId);
 
 		$secret = $this->loadOwned(id: $id, userId: $userId);
+		if ($secret->getUseOnly() === true) {
+			// A use-only copy is never edited by its holder
+			// (sharing-use-only-and-expiring-shares D4).
+			throw new ForbiddenException(message: 'A use-only copy cannot be changed');
+		}
 
 		// Pre-update snapshot source (secret-version-history §2.2): captured
 		// BEFORE any mutation; persisted below only when a field actually
@@ -1399,6 +1405,13 @@ class SecretService {
 
 		if ($secret->getOwnerType() !== 'user' || $secret->getOwnerId() !== $userId) {
 			throw new ForbiddenException(message: 'Secret belongs to another user');
+		}
+
+		// A copy whose access ended answers as an unknown secret
+		// (sharing-use-only-and-expiring-shares D5).
+		$accessEnds = $secret->getAccessExpiresAt();
+		if ($accessEnds !== null && $accessEnds <= new DateTime()) {
+			throw new NotFoundException(message: 'Secret not found');
 		}
 
 		return $secret;

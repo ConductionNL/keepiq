@@ -51,6 +51,7 @@ class TeamFolderShareService {
 	 * @param RecipientSecretCopyService $copies The recipient-copy service
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param IDBConnection $db The database connection
+	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
 	 *
 	 * @return void
 	 *
@@ -62,6 +63,7 @@ class TeamFolderShareService {
 		private RecipientSecretCopyService $copies,
 		private NotificationService $notificationService,
 		private IDBConnection $db,
+		private ?ShareRestrictionResolver $restrictions = null,
 	) {
 	}//end __construct()
 
@@ -312,7 +314,8 @@ class TeamFolderShareService {
 		$entity->setTeamFolderId($teamFolder->getId());
 		$entity->setCreatedBy($userId);
 		$entity->setCreatedAt(new DateTime());
-		$this->shareTargetMapper->insert($entity);
+		$persisted = $this->shareTargetMapper->insert($entity);
+		$this->restrictions?->resolveTarget(target: $persisted);
 
 		return [
 			'sourceSecretId' => $sourceSecretId,

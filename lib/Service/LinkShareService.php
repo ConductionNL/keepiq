@@ -27,6 +27,7 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\LinkShare;
 use OCA\Keepiq\Db\LinkShareMapper;
+use OCA\Keepiq\Db\SecretMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use Psr\Log\LoggerInterface;
@@ -73,6 +74,7 @@ class LinkShareService {
 	 * @param LoggerInterface $logger The logger interface
 	 * @param WriteLockService $writeLockService The compromise-recovery write lock
 	 * @param LinkShareAuditTrail|null $auditTrail The link-share audit trail
+	 * @param SecretMapper|null $secretMapper The secret mapper (refuses a use-only or expiring copy)
 	 *
 	 * @return void
 	 */
@@ -81,6 +83,7 @@ class LinkShareService {
 		private LoggerInterface $logger,
 		private WriteLockService $writeLockService,
 		?LinkShareAuditTrail $auditTrail = null,
+		private ?SecretMapper $secretMapper = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new LinkShareAuditTrail());
 	}//end __construct()
@@ -133,6 +136,8 @@ class LinkShareService {
 			);
 		}
 
+		$this->assertLinkableSource(secretId: $secretId);
+
 		$linkShare = new LinkShare();
 		$linkShare->setId(Uuid::uuid4()->toString());
 		$linkShare->setSecretId($secretId);
@@ -167,6 +172,32 @@ class LinkShareService {
 
 		return $linkShare;
 	}//end create()
+
+	/**
+	 * Refuse a use-only or expiring recipient copy as the source of a link
+	 * (sharing-use-only-and-expiring-shares D4).
+	 *
+	 * @param string $secretId The secret the link is made from
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the secret is a restricted copy
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 */
+	private function assertLinkableSource(string $secretId): void {
+		if ($this->secretMapper === null) {
+			return;
+		}
+
+		try {
+			$source = $this->secretMapper->findById($secretId);
+		} catch (DoesNotExistException) {
+			return;
+		}
+
+		OnwardShareGuard::assertShareable(source: $source);
+	}//end assertLinkableSource()
 
 	/**
 	 * Fetch a valid link share by token for public access (Phase 1).

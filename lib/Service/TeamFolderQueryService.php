@@ -287,6 +287,36 @@ class TeamFolderQueryService {
 	}//end resolveGrade()
 
 	/**
+	 * Every team-folder membership along a secret's folder ancestor chain
+	 * that covers a user, directly or through a group. These are the
+	 * team-folder grants ShareRestrictionResolver combines.
+	 *
+	 * @param Secret $secret The SOURCE secret
+	 * @param string $userId The candidate user
+	 *
+	 * @return array<int,TeamFolderMember>
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-owners-can-share-a-secret-as-use-only
+	 */
+	public function coveringMemberships(Secret $secret, string $userId): array {
+		$folderId = $secret->getFolderId();
+		if ($folderId === null || $folderId === '') {
+			return [];
+		}
+
+		$covering = [];
+		foreach ($this->ancestorTeamFolders(folderId: $folderId) as $teamFolder) {
+			foreach ($this->memberMapper->findByTeamFolder(teamFolderId: $teamFolder->getId()) as $membership) {
+				if ($this->membershipCovers(membership: $membership, userId: $userId) === true) {
+					$covering[] = $membership;
+				}
+			}
+		}
+
+		return $covering;
+	}//end coveringMemberships()
+
+	/**
 	 * Describe a team folder for the API (folder name resolved; members
 	 * included for the owner view only).
 	 *

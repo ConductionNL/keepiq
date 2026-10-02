@@ -79,6 +79,7 @@ class ShareService {
 	 * @param ShareSyncService $syncService The multi-recipient sync service
 	 * @param ShareRevocationService $revocationService The revocation + cascade service
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
+	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
 	 *
 	 * @return void
 	 */
@@ -91,6 +92,7 @@ class ShareService {
 		private ShareSyncService $syncService,
 		private ShareRevocationService $revocationService,
 		?ShareAuditTrail $auditTrail = null,
+		private ?ShareRestrictionResolver $restrictions = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -137,12 +139,14 @@ class ShareService {
 	 * @param string $recipientSecretId The recipient's encrypted Secret copy ID
 	 * @param string|null $groupShareId Optional group-share linkage
 	 * @param string $userId The Nextcloud user ID creating the share
+	 * @param ShareRestriction|null $restriction Use-only and end date of a direct share
 	 *
 	 * @return ShareTarget
 	 *
 	 * @throws InvalidArgumentException When validation fails
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#3.2
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
 	 */
 	public function createShare(
 		string $sourceSecretId,
@@ -150,6 +154,7 @@ class ShareService {
 		string $recipientSecretId,
 		?string $groupShareId,
 		string $userId,
+		?ShareRestriction $restriction = null,
 	): ShareTarget {
 		if ($sourceSecretId === '') {
 			throw new InvalidArgumentException(message: 'sourceSecretId is required');
@@ -174,6 +179,7 @@ class ShareService {
 		}
 
 		$this->auth->assertOwnerOrDelegate(secret: $source, userId: $userId);
+		OnwardShareGuard::assertShareable(source: $source);
 		$this->auth->assertRecipientHasActiveSuite(targetUserId: $targetUserId);
 
 		// Enforce one-share-per-(source,recipient) invariant.
@@ -195,8 +201,13 @@ class ShareService {
 		$entity->setGroupShareId($groupShareId);
 		$entity->setCreatedBy($userId);
 		$entity->setCreatedAt(new DateTime());
+		if ($restriction !== null && $groupShareId === null) {
+			$entity->setUseOnly($restriction->useOnly);
+			$entity->setExpiresAt($restriction->expiresAt);
+		}
 
 		$persisted = $this->mapper->insert($entity);
+		$this->restrictions?->resolveTarget(target: $persisted);
 
 		// Fire-and-forget notification to the recipient. The user
 		// preference + opt-out check happens inside NotificationService.
@@ -277,6 +288,42 @@ class ShareService {
 
 		return $created;
 	}//end createBatchShares()
+
+	/**
+	 * Change the use-only flag and end date of a direct share (owner or
+	 * delegate only), then recompute the recipient's copy. A share that
+	 * came from a group share or a team folder is changed there instead.
+	 *
+	 * @param string $shareId The share-target row ID
+	 * @param ShareRestriction $restriction The new use-only flag and end date
+	 * @param string $userId The requesting user
+	 *
+	 * @return ShareTarget
+	 *
+	 * @throws InvalidArgumentException When not found, not authorized or not a direct share
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 */
+	public function updateRestriction(string $shareId, ShareRestriction $restriction, string $userId): ShareTarget {
+		try {
+			$entity = $this->mapper->findById($shareId);
+		} catch (DoesNotExistException) {
+			throw new InvalidArgumentException(message: 'Share not found');
+		}
+
+		$source = $this->auth->loadSecret(secretId: $entity->getSourceSecretId());
+		$this->auth->assertOwnerOrDelegate(secret: $source, userId: $userId);
+		if ($entity->getGroupShareId() !== null || $entity->getTeamFolderId() !== null) {
+			throw new InvalidArgumentException(message: 'Change this share on its group share or team folder');
+		}
+
+		$entity->setUseOnly($restriction->useOnly);
+		$entity->setExpiresAt($restriction->expiresAt);
+		$updated = $this->mapper->update($entity);
+		$this->restrictions?->resolveTarget(target: $updated);
+
+		return $updated;
+	}//end updateRestriction()
 
 	/**
 	 * List all share targets for a given source secret.
