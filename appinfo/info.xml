@@ -114,6 +114,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Keepiq\BackgroundJob\CheckRootCertificateExpiry</job>
         <job>OCA\Keepiq\BackgroundJob\PurgeAuditLogJob</job>
         <job>OCA\Keepiq\BackgroundJob\ExpireSecretRequestsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ExpireDeviceApprovalsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ApproveElapsedEmergencyRequests</job>
         <job>OCA\Keepiq\BackgroundJob\PruneSecretVersionsJob</job>
         <job>OCA\Keepiq\BackgroundJob\PurgeTrashedSecretsJob</job>

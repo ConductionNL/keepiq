@@ -47,6 +47,7 @@ final class BackupTableRegistry {
 		'certificate_metadata',
 		'compliance_reports',
 		'dashboard_settings',
+		'device_approvals',
 		'emergency_contacts',
 		'enc_suites',
 		'ephemeral_sends',

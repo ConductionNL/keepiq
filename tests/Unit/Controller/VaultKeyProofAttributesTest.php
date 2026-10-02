@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
+use OCA\Keepiq\Controller\DeviceApprovalController;
 use OCA\Keepiq\Controller\EmergencyAccessController;
 use OCA\Keepiq\Controller\EncryptionSuiteController;
 use OCA\Keepiq\Controller\GdprController;
@@ -122,6 +123,13 @@ class VaultKeyProofAttributesTest extends TestCase {
 				['confirmation'],
 				'active',
 				VaultKeyProofService::PURPOSE_DELETE_ACCOUNT_DATA,
+			],
+			'approve a new device' => [
+				DeviceApprovalController::class,
+				'approve',
+				['id', 'sealedUnlockKey'],
+				'active',
+				VaultKeyProofService::PURPOSE_APPROVE_DEVICE,
 			],
 		];
 	}//end guardedMethodsProvider()
