@@ -5,7 +5,7 @@
 **Standards**: Service Worker API, IndexedDB, WebCrypto (PBKDF2, AES-256-GCM, RSA-OAEP)
 **Feature tier**: V1
 
-**OpenSpec changes:** [offline-readonly-cache](../../changes/archive/2026-07-20-offline-readonly-cache/)
+**OpenSpec changes:** [offline-readonly-cache](../../changes/archive/2026-07-20-offline-readonly-cache/), [clients-offline-edits](../../changes/archive/2026-10-02-clients-offline-edits/) (removed "Offline mode is strictly read-only", superseded by [offline-edit-queue](../offline-edit-queue/spec.md))
 
 ## Purpose
 
@@ -60,16 +60,6 @@ service worker MUST NOT cache any decrypted secret material.
 - WHEN the user opens Keepiq
 - THEN the shell MUST load from the service worker cache and no decrypted secret
   material MUST be present in that cache
-
-### Requirement: Offline mode is strictly read-only
-The system MUST disable all create, update, share, and delete actions while
-offline and explain why, rather than queuing writes.
-
-#### Scenario: Write actions are disabled offline
-- GIVEN a user viewing their vault offline
-- WHEN they attempt to create, edit, share, or delete a secret
-- THEN the action MUST be prevented with an explanation that Keepiq is read-only
-  offline
 
 ### Requirement: A stale-data banner shows the last sync time
 The system MUST show a stale-data banner with the last successful sync time

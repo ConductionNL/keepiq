@@ -7898,7 +7898,7 @@
       "id": "clients-19",
       "area": "clients",
       "name": "Edit items while offline and have the changes sync when you are back online.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "no",
       "onepassword": "yes",
       "passbolt": "no",
@@ -7906,12 +7906,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/clients-offline-edits on 2026-09-27. Before: offline cache is read-only by design (clients-09; src/App.vue:73 stale-data banner, src/offline)",
+        "state": "built",
+        "evidence": "src/store/modules/secret.js createSecret/updateSecret/deleteSecret (servedFromCache) -> src/store/modules/offline.js enqueue -> src/offline/queue.js sealEntry/coalesce -> src/offline/cache.js putQueueEntry (IndexedDB queue store); replay: offline.js replayQueue/replayOne/fanOut -> POST/PUT/DELETE /api/v1/secrets with baseUpdatedAt -> lib/Service/SecretService.php assertUnchangedSince (409) -> share.js syncUpdate/syncAsTeamWriter; UI src/components/OfflineSyncPanel.vue, src/dialogs/OfflineConflictDialog.vue; admin src/components/settings/OfflineCacheSection.vue offline_edits_enabled",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing",
-        "note": "Offline mode reads only; edits need the server.",
-        "change": "openspec/changes/clients-offline-edits"
+        "reachedOn": "Offline vault (/secrets served from cache) -> secret sidebar Edit, Move, Delete and New secret; sync panel under the offline banner",
+        "note": "Off by default (admin switch). Changes are sealed to the owner's certificate at rest and replayed with a fresh recipient fan-out; a server change since the snapshot answers 409 and the user chooses. Sharing, folders and attachments stay online-only. Playwright flows (shared edit, conflict) are owed.",
+        "change": "openspec/changes/archive/2026-10-02-clients-offline-edits"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",

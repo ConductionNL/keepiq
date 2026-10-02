@@ -38,6 +38,8 @@ export async function encryptSnapshot(aesKey, manifest) {
 			additionalFields: s.additionalFields,
 			encryptionSuiteId: s.encryptionSuiteId,
 			expiresAt: s.expiresAt,
+			// The version an offline edit is based on (offline-edit-queue).
+			updatedAt: s.updatedAt ?? null,
 			// Plaintext metadata encrypted at rest (never stored in the clear).
 			meta: await encryptMetadata(aesKey, { name: s.name, url: s.url }),
 		})),
@@ -63,6 +65,8 @@ export async function encryptSnapshot(aesKey, manifest) {
 		// Secret type definitions are shared, non-secret metadata (labels the
 		// list schema needs) — stored as-is, not encrypted.
 		types: manifest.types || [],
+		// Whether the administrator allows offline edits (offline-edit-queue).
+		offlineEditsEnabled: manifest.offlineEditsEnabled === true,
 		syncedAt: manifest.syncedAt,
 	}
 }
@@ -91,6 +95,7 @@ export async function decryptSnapshot(aesKey, snapshot) {
 				additionalFields: s.additionalFields,
 				encryptionSuiteId: s.encryptionSuiteId,
 				expiresAt: s.expiresAt,
+				updatedAt: s.updatedAt ?? null,
 			}
 		}),
 	)
@@ -107,6 +112,7 @@ export async function decryptSnapshot(aesKey, snapshot) {
 		secrets,
 		folders,
 		types: snapshot.types || [],
+		offlineEditsEnabled: snapshot.offlineEditsEnabled === true,
 		syncedAt: snapshot.syncedAt,
 	}
 }
