@@ -3,7 +3,7 @@
 /**
  * Keepiq Public Key Loader Adapter
  *
- * A thin injectable seam over phpseclib3's PublicKeyLoader, whose key-parsing
+ * A thin injectable seam over phpseclib4's PublicKeyLoader, whose key-parsing
  * entry points are static factory methods with no instance API
  * (vendor/phpseclib/phpseclib/phpseclib/Crypt/PublicKeyLoader.php declares
  * `public static function load()` and `loadPrivateKey()` and the class has no
@@ -29,15 +29,15 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Support;
 
-use phpseclib3\Crypt\Common\AsymmetricKey;
-use phpseclib3\Crypt\Common\PrivateKey;
-use phpseclib3\Crypt\PublicKeyLoader;
+use phpseclib4\Crypt\Common\AsymmetricKey;
+use phpseclib4\Crypt\Common\PrivateKey;
+use phpseclib4\Crypt\PublicKeyLoader;
 
 /**
- * Loads phpseclib3 keys through instance methods.
+ * Loads phpseclib4 keys through instance methods.
  *
  * @SuppressWarnings(PHPMD.StaticAccess) The two delegations below are the ONE
- * place in the app that reaches phpseclib3\Crypt\PublicKeyLoader. The library
+ * place in the app that reaches phpseclib4\Crypt\PublicKeyLoader. The library
  * exposes key parsing exclusively as static factory methods — there is no
  * instance API to call and nothing to construct — so the static access cannot
  * be removed, only confined to a documented, injectable adapter.
