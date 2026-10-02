@@ -24,8 +24,9 @@ browser-extension/
       match.js               registrable-domain / origin matching over unencrypted url/name
       vault.js               in-worker unlock/lock state + decrypt-on-demand
     background/
-      service-worker.js      holds the CryptoKey; unlock, lock timer, blob fetch, decrypt,
-                             WebAuthn ceremony (passkey), TOTP compute
+      service-worker.js      entry: wires runtime messages and the OS lock to router.js
+      router.js              holds the per-account keys; unlock, lock timers, blob fetch,
+                             decrypt, fill, save, WebAuthn ceremony (passkey), TOTP compute
     popup/
       popup.html / popup.js  unlock, matched-credential list, save/update, TOTP code, lock
     content/
@@ -33,6 +34,7 @@ browser-extension/
                              WebAuthn relay
       inpage-shim.js         page-context navigator.credentials shim (Firefox path)
     passkey/webauthn.js      create()/get() ceremony (client-side signing)
+    unlock/                  the unlock window: fingerprint or face unlock with a PRF passkey
     totp/                    RFC 6238 (re-exported from ../../src/totp)
   tests/                     vitest unit + integration
 ```
@@ -46,7 +48,31 @@ browser-extension/
 - Autofill, WebAuthn signing, and TOTP computation all happen in the extension;
   the server sees only ciphertext.
 - The extension auto-locks on idle timeout, browser/OS lock, worker termination,
-  and manual lock — clearing the key and all derived state.
+  and manual lock, clearing the key and all derived state.
+- Only the four messages a content script needs (`capture-credential`,
+  `capture-decision`, `webauthn-create`, `webauthn-get`) are accepted from a
+  web page. Everything that unlocks, lists, fills, saves or changes settings
+  needs one of the extension's own pages as sender.
+
+## Accounts, lock delay and fingerprint unlock
+
+- Up to five accounts, on one or more servers. Each has its own key, lock
+  state, idle timer and settings. Matching, filling and saving use the active
+  account, picked in the popup header. A fill is refused unless the login came
+  from the active account's own match for the page that is open.
+- Each account picks its idle lock delay (1, 5, 15, 30, 60 or 240 minutes,
+  15 by default). The administrator sets the longest one in the Keepiq admin
+  settings; the extension reads it at every unlock and uses the shorter of the
+  two. When it cannot be read, the extension caps the delay at 15 minutes.
+- Fingerprint or face unlock enrols a platform passkey with the WebAuthn PRF
+  extension, with the extension's own origin as relying party. The server
+  stores only the PRF-wrapped unlock key, next to the web app's passkeys,
+  where the owner sees it as "Browser extension" and can revoke it. The option
+  shows only where the browser exposes a user-verifying platform authenticator.
+
+Which browsers pass that check has not been tried by hand yet. Open item:
+try Chrome, Edge and Firefox (current versions) on a machine with a
+fingerprint reader or Windows Hello, and record the result here.
 
 ## Build
 

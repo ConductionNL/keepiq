@@ -60,6 +60,11 @@ function entriesFor(browser) {
 			out: 'consent',
 			format: 'esm',
 		},
+		{
+			in: resolve(root, 'src/unlock/unlock.js'),
+			out: 'unlock',
+			format: 'esm',
+		},
 	]
 }
 
@@ -90,6 +95,7 @@ async function buildBrowser(browser, base) {
 		resolve(root, 'src/passkey/consent.html'),
 		resolve(outdir, 'consent.html'),
 	)
+	await cp(resolve(root, 'src/unlock/unlock.html'), resolve(outdir, 'unlock.html'))
 }
 
 async function run() {

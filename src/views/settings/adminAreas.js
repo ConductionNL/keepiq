@@ -38,6 +38,7 @@ export const ADMIN_AREAS = [
 			'TeamFolderAutoConfirmSection',
 			'RotationPolicySection',
 			'RetentionPolicySection',
+			'ExtensionSection',
 		],
 	},
 	{
