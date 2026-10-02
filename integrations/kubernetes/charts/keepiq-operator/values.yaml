@@ -1,0 +1,41 @@
+image:
+  repository: ghcr.io/conductionnl/keepiq-operator
+  # Defaults to the chart's appVersion.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+# By default the operator watches only the namespace it is installed in, with a
+# Role there. Set clusterWide to true to watch every namespace, with a
+# ClusterRole. Recommended layout: one Keepiq application per namespace or team.
+clusterWide: false
+
+serviceAccount:
+  create: true
+  name: ""
+
+resources:
+  requests:
+    cpu: 20m
+    memory: 64Mi
+  limits:
+    memory: 256Mi
+
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: [ALL]
+
+# Extra arguments, for example --zap-log-level=debug.
+extraArgs: []
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
