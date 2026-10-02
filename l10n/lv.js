@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Šajā mapē tieši ir %n noslēpums.","Šajā mapē tieši ir %n noslēpumi.","Šajā mapē tieši ir %n noslēpumi."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Atslēgas rotācija noņēma %n ārkārtas kontaktpersonu. Pārbaudiet Ārkārtas piekļuvi un pievienojiet to atkārtoti, ja joprojām to vēlaties.","Atslēgas rotācija noņēma %n ārkārtas kontaktpersonas. Pārbaudiet Ārkārtas piekļuvi un pievienojiet tās atkārtoti, ja joprojām tās vēlaties.","Atslēgas rotācija noņēma %n ārkārtas kontaktpersonas. Pārbaudiet Ārkārtas piekļuvi un pievienojiet tās atkārtoti, ja joprojām tās vēlaties."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n izmaiņa gaida sinhronizāciju","%n izmaiņas gaida sinhronizāciju","%n izmaiņas gaida sinhronizāciju"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Lietotājs joprojām ir grupā {groups}, kas ir komandas mapes dalībniece. Noņemiet viņu no grupas vai atspējojiet kontu.","Lietotājs joprojām ir grupās {groups}, kas ir komandas mapju dalībnieces. Noņemiet viņu no grupām vai atspējojiet kontu.","Lietotājs joprojām ir grupās {groups}, kas ir komandas mapju dalībnieces. Noņemiet viņu no grupām vai atspējojiet kontu."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Lietotājs joprojām ir grupā {groups}, kas ir komandas mapes dalībniece. Noņemiet viņu no grupas vai atspējojiet kontu.","Lietotājs joprojām ir grupās {groups}, kas ir komandas mapju dalībnieces. Noņemiet viņu no grupām vai atspējojiet kontu.","Lietotājs joprojām ir grupās {groups}, kas ir komandas mapju dalībnieces. Noņemiet viņu no grupām vai atspējojiet kontu."],
+        "Partner organisations": "Partneru organizācijas",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Apmainieties ar noslēpumiem ar citu Keepiq. Abi administratori pievieno viens otru un pirms saglabāšanas salīdzina saknes pirkstu nospiedumus pa tālruni vai klātienē.",
+        "Federation needs Nextcloud 33 or later.": "Federācijai nepieciešams Nextcloud 33 vai jaunāks.",
+        "Your root fingerprint": "Jūsu saknes pirkstu nospiedums",
+        "No partners yet.": "Vēl nav partneru.",
+        "Users here may share to this partner": "Šejienes lietotāji drīkst kopīgot ar šo partneri",
+        "This partner may share to users here": "Šis partneris drīkst kopīgot ar šejienes lietotājiem",
+        "Partner address": "Partnera adrese",
+        "Check partner": "Pārbaudīt partneri",
+        "Partner root fingerprint": "Partnera saknes pirkstu nospiedums",
+        "I compared this fingerprint with the partner's administrator": "Es salīdzināju šo pirkstu nospiedumu ar partnera administratoru",
+        "Add partner": "Pievienot partneri"
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

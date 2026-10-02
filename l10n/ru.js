@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Эта папка содержит %n секрет напрямую.","Эта папка содержит %n секретов напрямую.","Эта папка содержит %n секретов напрямую."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Ротация ключа удалила %n экстренный контакт. Проверьте «Экстренный доступ» и добавьте его снова, если он вам ещё нужен.","Ротация ключа удалила %n экстренных контактов. Проверьте «Экстренный доступ» и добавьте их снова, если они вам ещё нужны.","Ротация ключа удалила %n экстренных контактов. Проверьте «Экстренный доступ» и добавьте их снова, если они вам ещё нужны."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n изменение ожидает синхронизации","%n изменений ожидают синхронизации","%n изменений ожидают синхронизации"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Пользователь всё ещё в группе {groups}, которая входит в командную папку. Удалите его из группы или отключите учётную запись.","Пользователь всё ещё в группах {groups}, которые входят в командные папки. Удалите его из групп или отключите учётную запись.","Пользователь всё ещё в группах {groups}, которые входят в командные папки. Удалите его из групп или отключите учётную запись."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Пользователь всё ещё в группе {groups}, которая входит в командную папку. Удалите его из группы или отключите учётную запись.","Пользователь всё ещё в группах {groups}, которые входят в командные папки. Удалите его из групп или отключите учётную запись.","Пользователь всё ещё в группах {groups}, которые входят в командные папки. Удалите его из групп или отключите учётную запись."],
+        "Partner organisations": "Партнёрские организации",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Обменивайтесь секретами с другим Keepiq. Оба администратора добавляют друг друга и перед сохранением сверяют корневые отпечатки по телефону или лично.",
+        "Federation needs Nextcloud 33 or later.": "Для федерации нужен Nextcloud 33 или новее.",
+        "Your root fingerprint": "Ваш корневой отпечаток",
+        "No partners yet.": "Партнёров пока нет.",
+        "Users here may share to this partner": "Пользователи здесь могут делиться с этим партнёром",
+        "This partner may share to users here": "Этот партнёр может делиться с пользователями здесь",
+        "Partner address": "Адрес партнёра",
+        "Check partner": "Проверить партнёра",
+        "Partner root fingerprint": "Корневой отпечаток партнёра",
+        "I compared this fingerprint with the partner's administrator": "Я сверил этот отпечаток с администратором партнёра",
+        "Add partner": "Добавить партнёра"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

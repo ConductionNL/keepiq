@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Тази папка съдържа %n тайна директно.","Тази папка съдържа %n тайни директно."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Ротацията на ключа премахна %n контакт за спешен достъп. Проверете „Достъп при спешност“ и го добавете отново, ако все още го искате.","Ротацията на ключа премахна %n контакта за спешен достъп. Проверете „Достъп при спешност“ и ги добавете отново, ако все още ги искате."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n промяна чака синхронизиране","%n промени чакат синхронизиране"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Потребителят все още е в група {groups}, която е член на екипна папка. Премахнете го от групата или деактивирайте акаунта.","Потребителят все още е в групи {groups}, които са членове на екипни папки. Премахнете го от групите или деактивирайте акаунта."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Потребителят все още е в група {groups}, която е член на екипна папка. Премахнете го от групата или деактивирайте акаунта.","Потребителят все още е в групи {groups}, които са членове на екипни папки. Премахнете го от групите или деактивирайте акаунта."],
+        "Partner organisations": "Партньорски организации",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Обменяйте тайни с друг Keepiq. Двамата администратори се добавят взаимно и сравняват коренните отпечатъци по телефона или лично, преди да запазят.",
+        "Federation needs Nextcloud 33 or later.": "Федерацията изисква Nextcloud 33 или по-нов.",
+        "Your root fingerprint": "Вашият коренен отпечатък",
+        "No partners yet.": "Все още няма партньори.",
+        "Users here may share to this partner": "Потребителите тук могат да споделят с този партньор",
+        "This partner may share to users here": "Този партньор може да споделя с потребителите тук",
+        "Partner address": "Адрес на партньора",
+        "Check partner": "Провери партньора",
+        "Partner root fingerprint": "Коренен отпечатък на партньора",
+        "I compared this fingerprint with the partner's administrator": "Сравних този отпечатък с администратора на партньора",
+        "Add partner": "Добави партньор"
     },
     "nplurals=2; plural=(n != 1);"
 )

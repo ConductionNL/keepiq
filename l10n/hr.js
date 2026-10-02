@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Ova mapa izravno sadrži %n tajnu.","Ova mapa izravno sadrži %n tajne.","Ova mapa izravno sadrži %n tajne."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Rotacija ključa uklonila je %n kontakt za pristup u nuždi. Provjerite Pristup u nuždi i dodajte ga ponovno ako ga još želite.","Rotacija ključa uklonila je %n kontakta za pristup u nuždi. Provjerite Pristup u nuždi i dodajte ih ponovno ako ih još želite.","Rotacija ključa uklonila je %n kontakta za pristup u nuždi. Provjerite Pristup u nuždi i dodajte ih ponovno ako ih još želite."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n promjena čeka sinkronizaciju","%n promjena čeka sinkronizaciju","%n promjena čeka sinkronizaciju"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Korisnik je još u grupi {groups}, koja je članica timske mape. Uklonite ga iz grupe ili onemogućite račun.","Korisnik je još u grupama {groups}, koje su članice timskih mapa. Uklonite ga iz grupa ili onemogućite račun.","Korisnik je još u grupama {groups}, koje su članice timskih mapa. Uklonite ga iz grupa ili onemogućite račun."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Korisnik je još u grupi {groups}, koja je članica timske mape. Uklonite ga iz grupe ili onemogućite račun.","Korisnik je još u grupama {groups}, koje su članice timskih mapa. Uklonite ga iz grupa ili onemogućite račun.","Korisnik je još u grupama {groups}, koje su članice timskih mapa. Uklonite ga iz grupa ili onemogućite račun."],
+        "Partner organisations": "Partnerske organizacije",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Razmjenjujte tajne s drugim Keepiqom. Oba administratora dodaju jedan drugoga i prije spremanja usporede korijenske otiske telefonom ili osobno.",
+        "Federation needs Nextcloud 33 or later.": "Federacija zahtijeva Nextcloud 33 ili noviji.",
+        "Your root fingerprint": "Vaš korijenski otisak",
+        "No partners yet.": "Još nema partnera.",
+        "Users here may share to this partner": "Korisnici ovdje smiju dijeliti s ovim partnerom",
+        "This partner may share to users here": "Ovaj partner smije dijeliti s korisnicima ovdje",
+        "Partner address": "Adresa partnera",
+        "Check partner": "Provjeri partnera",
+        "Partner root fingerprint": "Korijenski otisak partnera",
+        "I compared this fingerprint with the partner's administrator": "Usporedio sam ovaj otisak s administratorom partnera",
+        "Add partner": "Dodaj partnera"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

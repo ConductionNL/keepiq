@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Aquesta carpeta conté %n secret directament.","Aquesta carpeta conté %n secrets directament."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["La rotació de claus ha retirat %n contacte d'emergència. Revisa Accés d'emergència i torna'l a afegir si encara el vols.","La rotació de claus ha retirat %n contactes d'emergència. Revisa Accés d'emergència i torna'ls a afegir si encara els vols."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n canvi pendent de sincronitzar","%n canvis pendents de sincronitzar"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["L'usuari encara és al grup {groups}, que és membre d'una carpeta d'equip. Traieu-lo del grup o desactiveu el compte.","L'usuari encara és als grups {groups}, que són membres de carpetes d'equip. Traieu-lo dels grups o desactiveu el compte."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["L'usuari encara és al grup {groups}, que és membre d'una carpeta d'equip. Traieu-lo del grup o desactiveu el compte.","L'usuari encara és als grups {groups}, que són membres de carpetes d'equip. Traieu-lo dels grups o desactiveu el compte."],
+        "Partner organisations": "Organitzacions sòcies",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Intercanvia secrets amb un altre Keepiq. Tots dos administradors s’afegeixen mútuament i comparen les empremtes arrel per telèfon o en persona abans de desar.",
+        "Federation needs Nextcloud 33 or later.": "La federació requereix Nextcloud 33 o posterior.",
+        "Your root fingerprint": "La teva empremta arrel",
+        "No partners yet.": "Encara no hi ha cap soci.",
+        "Users here may share to this partner": "Els usuaris d’aquí poden compartir amb aquest soci",
+        "This partner may share to users here": "Aquest soci pot compartir amb els usuaris d’aquí",
+        "Partner address": "Adreça del soci",
+        "Check partner": "Comprova el soci",
+        "Partner root fingerprint": "Empremta arrel del soci",
+        "I compared this fingerprint with the partner's administrator": "He comparat aquesta empremta amb l’administrador del soci",
+        "Add partner": "Afegeix el soci"
     },
     "nplurals=2; plural=(n != 1);"
 )

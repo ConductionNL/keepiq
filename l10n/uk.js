@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Ця тека містить %n секрет безпосередньо.","Ця тека містить %n секретів безпосередньо.","Ця тека містить %n секретів безпосередньо."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Ротація ключа видалила %n екстрений контакт. Перевірте «Надзвичайний доступ» і додайте його знову, якщо він вам ще потрібен.","Ротація ключа видалила %n екстрених контактів. Перевірте «Надзвичайний доступ» і додайте їх знову, якщо вони вам ще потрібні.","Ротація ключа видалила %n екстрених контактів. Перевірте «Надзвичайний доступ» і додайте їх знову, якщо вони вам ще потрібні."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n зміна очікує синхронізації","%n змін очікують синхронізації","%n змін очікують синхронізації"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Користувач досі в групі {groups}, яка є учасником командної теки. Вилучіть його з групи або вимкніть обліковий запис.","Користувач досі в групах {groups}, які є учасниками командних тек. Вилучіть його з груп або вимкніть обліковий запис.","Користувач досі в групах {groups}, які є учасниками командних тек. Вилучіть його з груп або вимкніть обліковий запис."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Користувач досі в групі {groups}, яка є учасником командної теки. Вилучіть його з групи або вимкніть обліковий запис.","Користувач досі в групах {groups}, які є учасниками командних тек. Вилучіть його з груп або вимкніть обліковий запис.","Користувач досі в групах {groups}, які є учасниками командних тек. Вилучіть його з груп або вимкніть обліковий запис."],
+        "Partner organisations": "Партнерські організації",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Обмінюйтеся секретами з іншим Keepiq. Обидва адміністратори додають одне одного й перед збереженням звіряють кореневі відбитки телефоном або особисто.",
+        "Federation needs Nextcloud 33 or later.": "Для федерації потрібен Nextcloud 33 або новіший.",
+        "Your root fingerprint": "Ваш кореневий відбиток",
+        "No partners yet.": "Партнерів ще немає.",
+        "Users here may share to this partner": "Користувачі тут можуть ділитися з цим партнером",
+        "This partner may share to users here": "Цей партнер може ділитися з користувачами тут",
+        "Partner address": "Адреса партнера",
+        "Check partner": "Перевірити партнера",
+        "Partner root fingerprint": "Кореневий відбиток партнера",
+        "I compared this fingerprint with the partner's administrator": "Я звірив цей відбиток з адміністратором партнера",
+        "Add partner": "Додати партнера"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

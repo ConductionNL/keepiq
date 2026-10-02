@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Šiame aplanke tiesiogiai yra %n paslaptis.","Šiame aplanke tiesiogiai yra %n paslapčių.","Šiame aplanke tiesiogiai yra %n paslapčių."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Rakto rotacija pašalino %n skubios prieigos kontaktą. Patikrinkite „Prieiga nenumatytais atvejais“ ir vėl jį pridėkite, jei jo vis dar norite.","Rakto rotacija pašalino %n skubios prieigos kontaktus. Patikrinkite „Prieiga nenumatytais atvejais“ ir vėl juos pridėkite, jei jų vis dar norite.","Rakto rotacija pašalino %n skubios prieigos kontaktus. Patikrinkite „Prieiga nenumatytais atvejais“ ir vėl juos pridėkite, jei jų vis dar norite."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n pakeitimas laukia sinchronizavimo","%n pakeitimai laukia sinchronizavimo","%n pakeitimai laukia sinchronizavimo"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Naudotojas vis dar yra grupėje {groups}, kuri yra komandos aplanko narė. Pašalinkite jį iš grupės arba išjunkite paskyrą.","Naudotojas vis dar yra grupėse {groups}, kurios yra komandos aplankų narės. Pašalinkite jį iš grupių arba išjunkite paskyrą.","Naudotojas vis dar yra grupėse {groups}, kurios yra komandos aplankų narės. Pašalinkite jį iš grupių arba išjunkite paskyrą."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Naudotojas vis dar yra grupėje {groups}, kuri yra komandos aplanko narė. Pašalinkite jį iš grupės arba išjunkite paskyrą.","Naudotojas vis dar yra grupėse {groups}, kurios yra komandos aplankų narės. Pašalinkite jį iš grupių arba išjunkite paskyrą.","Naudotojas vis dar yra grupėse {groups}, kurios yra komandos aplankų narės. Pašalinkite jį iš grupių arba išjunkite paskyrą."],
+        "Partner organisations": "Partnerių organizacijos",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Keiskitės paslaptimis su kitu Keepiq. Abu administratoriai prideda vienas kitą ir prieš įrašydami palygina šakninius piršto atspaudus telefonu arba asmeniškai.",
+        "Federation needs Nextcloud 33 or later.": "Federacijai reikia Nextcloud 33 arba naujesnės.",
+        "Your root fingerprint": "Jūsų šakninis piršto atspaudas",
+        "No partners yet.": "Partnerių dar nėra.",
+        "Users here may share to this partner": "Čia esantys vartotojai gali bendrinti su šiuo partneriu",
+        "This partner may share to users here": "Šis partneris gali bendrinti su čia esančiais vartotojais",
+        "Partner address": "Partnerio adresas",
+        "Check partner": "Patikrinti partnerį",
+        "Partner root fingerprint": "Partnerio šakninis piršto atspaudas",
+        "I compared this fingerprint with the partner's administrator": "Palyginau šį piršto atspaudą su partnerio administratoriumi",
+        "Add partner": "Pridėti partnerį"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

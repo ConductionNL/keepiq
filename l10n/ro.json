@@ -1577,7 +1577,19 @@
             "Utilizatorul este încă în grupul {groups}, care este membru al unui dosar de echipă. Scoateți-l din grup sau dezactivați contul.",
             "Utilizatorul este încă în grupurile {groups}, care sunt membre ale unor dosare de echipă. Scoateți-l din grupuri sau dezactivați contul.",
             "Utilizatorul este încă în grupurile {groups}, care sunt membre ale unor dosare de echipă. Scoateți-l din grupuri sau dezactivați contul."
-        ]
+        ],
+        "Partner organisations": "Organizații partenere",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Schimbați secrete cu un alt Keepiq. Ambii administratori se adaugă reciproc și compară amprentele rădăcină la telefon sau în persoană înainte de salvare.",
+        "Federation needs Nextcloud 33 or later.": "Federarea necesită Nextcloud 33 sau mai nou.",
+        "Your root fingerprint": "Amprenta dvs. rădăcină",
+        "No partners yet.": "Încă nu există parteneri.",
+        "Users here may share to this partner": "Utilizatorii de aici pot partaja cu acest partener",
+        "This partner may share to users here": "Acest partener poate partaja cu utilizatorii de aici",
+        "Partner address": "Adresa partenerului",
+        "Check partner": "Verificați partenerul",
+        "Partner root fingerprint": "Amprenta rădăcină a partenerului",
+        "I compared this fingerprint with the partner's administrator": "Am comparat această amprentă cu administratorul partenerului",
+        "Add partner": "Adăugați partenerul"
     },
     "plurals": null
 }

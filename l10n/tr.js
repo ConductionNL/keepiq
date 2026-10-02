@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Bu klasör doğrudan %n gizli içeriyor."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Anahtar döndürmeniz %n acil durum kişisini kaldırdı. Acil durum erişimini kontrol edin ve hâlâ istiyorsanız yeniden ekleyin."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n değişiklik eşitlenmeyi bekliyor"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Kullanıcı hâlâ bir ekip klasörünün üyesi olan {groups} grubunda. Kullanıcıyı gruptan çıkarın veya hesabı devre dışı bırakın."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Kullanıcı hâlâ bir ekip klasörünün üyesi olan {groups} grubunda. Kullanıcıyı gruptan çıkarın veya hesabı devre dışı bırakın."],
+        "Partner organisations": "Ortak kuruluşlar",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Başka bir Keepiq ile sır paylaşın. İki yönetici de birbirini ekler ve kaydetmeden önce kök parmak izlerini telefonda veya yüz yüze karşılaştırır.",
+        "Federation needs Nextcloud 33 or later.": "Federasyon için Nextcloud 33 veya üstü gerekir.",
+        "Your root fingerprint": "Kök parmak iziniz",
+        "No partners yet.": "Henüz ortak yok.",
+        "Users here may share to this partner": "Buradaki kullanıcılar bu ortakla paylaşabilir",
+        "This partner may share to users here": "Bu ortak buradaki kullanıcılarla paylaşabilir",
+        "Partner address": "Ortağın adresi",
+        "Check partner": "Ortağı denetle",
+        "Partner root fingerprint": "Ortağın kök parmak izi",
+        "I compared this fingerprint with the partner's administrator": "Bu parmak izini ortağın yöneticisiyle karşılaştırdım",
+        "Add partner": "Ortak ekle"
     },
     "nplurals=1; plural=0;"
 )

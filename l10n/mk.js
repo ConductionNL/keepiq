@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Оваа папка содржи директно %n тајна.","Оваа папка содржи директно %n тајни."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Ротацијата на клучот отстрани %n контакт за итни случаи. Проверете „Пристап во итни случаи“ и додајте го повторно ако сè уште го сакате.","Ротацијата на клучот отстрани %n контакти за итни случаи. Проверете „Пристап во итни случаи“ и додајте ги повторно ако сè уште ги сакате."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n промена чека синхронизација","%n промени чекаат синхронизација"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Корисникот е сè уште во групата {groups}, која е членка на тимска папка. Отстранете го од групата или оневозможете ја сметката.","Корисникот е сè уште во групите {groups}, кои се членки на тимски папки. Отстранете го од групите или оневозможете ја сметката."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Корисникот е сè уште во групата {groups}, која е членка на тимска папка. Отстранете го од групата или оневозможете ја сметката.","Корисникот е сè уште во групите {groups}, кои се членки на тимски папки. Отстранете го од групите или оневозможете ја сметката."],
+        "Partner organisations": "Партнерски организации",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Разменувајте тајни со друг Keepiq. Двајцата администратори се додаваат меѓусебно и пред зачувување ги споредуваат корените отпечатоци по телефон или лично.",
+        "Federation needs Nextcloud 33 or later.": "Федерацијата бара Nextcloud 33 или понов.",
+        "Your root fingerprint": "Вашиот корен отпечаток",
+        "No partners yet.": "Сè уште нема партнери.",
+        "Users here may share to this partner": "Корисниците тука смеат да споделуваат со овој партнер",
+        "This partner may share to users here": "Овој партнер смее да споделува со корисниците тука",
+        "Partner address": "Адреса на партнерот",
+        "Check partner": "Провери партнер",
+        "Partner root fingerprint": "Корен отпечаток на партнерот",
+        "I compared this fingerprint with the partner's administrator": "Го споредив овој отпечаток со администраторот на партнерот",
+        "Add partner": "Додај партнер"
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

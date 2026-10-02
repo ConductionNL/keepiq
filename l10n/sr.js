@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Ова фасцикла директно садржи %n тајну.","Ова фасцикла директно садржи %n тајни.","Ова фасцикла директно садржи %n тајни."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Ротација кључа је уклонила %n контакт за хитне случајеве. Проверите Приступ у хитним случајевима и додајте га поново ако га још желите.","Ротација кључа је уклонила %n контакта за хитне случајеве. Проверите Приступ у хитним случајевима и додајте их поново ако их још желите.","Ротација кључа је уклонила %n контакта за хитне случајеве. Проверите Приступ у хитним случајевима и додајте их поново ако их још желите."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n измена чека синхронизацију","%n измена чека синхронизацију","%n измена чека синхронизацију"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Корисник је још у групи {groups}, која је чланица тимске фасцикле. Уклоните га из групе или онемогућите налог.","Корисник је још у групама {groups}, које су чланице тимских фасцикли. Уклоните га из група или онемогућите налог.","Корисник је још у групама {groups}, које су чланице тимских фасцикли. Уклоните га из група или онемогућите налог."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Корисник је још у групи {groups}, која је чланица тимске фасцикле. Уклоните га из групе или онемогућите налог.","Корисник је још у групама {groups}, које су чланице тимских фасцикли. Уклоните га из група или онемогућите налог.","Корисник је још у групама {groups}, које су чланице тимских фасцикли. Уклоните га из група или онемогућите налог."],
+        "Partner organisations": "Партнерске организације",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Размењујте тајне са другим Keepiq-ом. Оба администратора додају један другог и пре чувања упореде коренске отиске телефоном или лично.",
+        "Federation needs Nextcloud 33 or later.": "Федерација захтева Nextcloud 33 или новији.",
+        "Your root fingerprint": "Ваш коренски отисак",
+        "No partners yet.": "Још нема партнера.",
+        "Users here may share to this partner": "Корисници овде смеју да деле са овим партнером",
+        "This partner may share to users here": "Овај партнер сме да дели са корисницима овде",
+        "Partner address": "Адреса партнера",
+        "Check partner": "Провери партнера",
+        "Partner root fingerprint": "Коренски отисак партнера",
+        "I compared this fingerprint with the partner's administrator": "Упоредио сам овај отисак са администратором партнера",
+        "Add partner": "Додај партнера"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

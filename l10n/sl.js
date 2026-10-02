@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Ta mapa neposredno vsebuje %n skrivnost.","Ta mapa neposredno vsebuje %n skrivnosti.","Ta mapa neposredno vsebuje %n skrivnosti.","Ta mapa neposredno vsebuje %n skrivnosti."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Rotacija ključa je odstranila %n stik za nujne primere. Preverite Dostop v nujnih primerih in ga znova dodajte, če ga še želite.","Rotacija ključa je odstranila %n stikov za nujne primere. Preverite Dostop v nujnih primerih in jih znova dodajte, če jih še želite.","Rotacija ključa je odstranila %n stikov za nujne primere. Preverite Dostop v nujnih primerih in jih znova dodajte, če jih še želite.","Rotacija ključa je odstranila %n stikov za nujne primere. Preverite Dostop v nujnih primerih in jih znova dodajte, če jih še želite."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n sprememba čaka na sinhronizacijo","%n sprememb čaka na sinhronizacijo","%n sprememb čaka na sinhronizacijo","%n sprememb čaka na sinhronizacijo"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Uporabnik je še vedno v skupini {groups}, ki je članica ekipne mape. Odstranite ga iz skupine ali onemogočite račun.","Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun.","Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun.","Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Uporabnik je še vedno v skupini {groups}, ki je članica ekipne mape. Odstranite ga iz skupine ali onemogočite račun.","Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun.","Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun.","Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun."],
+        "Partner organisations": "Partnerske organizacije",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Izmenjujte skrivnosti z drugim Keepiq. Oba skrbnika se dodata drug drugemu in pred shranjevanjem primerjata korenska prstna odtisa po telefonu ali osebno.",
+        "Federation needs Nextcloud 33 or later.": "Federacija zahteva Nextcloud 33 ali novejši.",
+        "Your root fingerprint": "Vaš korenski prstni odtis",
+        "No partners yet.": "Partnerjev še ni.",
+        "Users here may share to this partner": "Uporabniki tukaj lahko delijo s tem partnerjem",
+        "This partner may share to users here": "Ta partner lahko deli z uporabniki tukaj",
+        "Partner address": "Naslov partnerja",
+        "Check partner": "Preveri partnerja",
+        "Partner root fingerprint": "Korenski prstni odtis partnerja",
+        "I compared this fingerprint with the partner's administrator": "Ta prstni odtis sem primerjal s skrbnikom partnerja",
+        "Add partner": "Dodaj partnerja"
     },
     "nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);"
 )

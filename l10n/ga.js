@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Tá %n rún sa fillteán seo go díreach.","Tá %n rún sa fillteán seo go díreach.","Tá %n rún sa fillteán seo go díreach."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Bhain do rothlú eochrach %n teagmhálaí éigeandála. Seiceáil Rochtain éigeandála agus cuir leis arís é más mian leat é fós.","Bhain do rothlú eochrach %n teagmhálaí éigeandála. Seiceáil Rochtain éigeandála agus cuir leis arís iad más mian leat iad fós.","Bhain do rothlú eochrach %n teagmhálaí éigeandála. Seiceáil Rochtain éigeandála agus cuir leis arís iad más mian leat iad fós."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n athrú ag fanacht le sioncrónú","%n athrú ag fanacht le sioncrónú","%n athrú ag fanacht le sioncrónú"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Tá an t-úsáideoir fós sa ghrúpa {groups}, atá ina bhall d'fhillteán foirne. Bain é den ghrúpa nó díchumasaigh an cuntas.","Tá an t-úsáideoir fós sna grúpaí {groups}, atá ina mbaill d'fhillteáin foirne. Bain é de na grúpaí nó díchumasaigh an cuntas.","Tá an t-úsáideoir fós sna grúpaí {groups}, atá ina mbaill d'fhillteáin foirne. Bain é de na grúpaí nó díchumasaigh an cuntas."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Tá an t-úsáideoir fós sa ghrúpa {groups}, atá ina bhall d'fhillteán foirne. Bain é den ghrúpa nó díchumasaigh an cuntas.","Tá an t-úsáideoir fós sna grúpaí {groups}, atá ina mbaill d'fhillteáin foirne. Bain é de na grúpaí nó díchumasaigh an cuntas.","Tá an t-úsáideoir fós sna grúpaí {groups}, atá ina mbaill d'fhillteáin foirne. Bain é de na grúpaí nó díchumasaigh an cuntas."],
+        "Partner organisations": "Eagraíochtaí comhpháirtíochta",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Malartaigh rúin le Keepiq eile. Cuireann an dá riarthóir a chéile leis agus déanann siad comparáid idir na méarloirg fréimhe ar an bhfón nó go pearsanta sula sábhálann siad.",
+        "Federation needs Nextcloud 33 or later.": "Teastaíonn Nextcloud 33 nó níos nuaí don chónaidhm.",
+        "Your root fingerprint": "Do mhéarlorg fréimhe",
+        "No partners yet.": "Níl aon chomhpháirtithe fós.",
+        "Users here may share to this partner": "Is féidir le húsáideoirí anseo comhroinnt leis an gcomhpháirtí seo",
+        "This partner may share to users here": "Is féidir leis an gcomhpháirtí seo comhroinnt le húsáideoirí anseo",
+        "Partner address": "Seoladh an chomhpháirtí",
+        "Check partner": "Seiceáil an comhpháirtí",
+        "Partner root fingerprint": "Méarlorg fréimhe an chomhpháirtí",
+        "I compared this fingerprint with the partner's administrator": "Rinne mé comparáid idir an méarlorg seo agus riarthóir an chomhpháirtí",
+        "Add partner": "Cuir comhpháirtí leis"
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

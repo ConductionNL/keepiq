@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["This folder contains %n secret directly.","This folder contains %n secrets directly."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.","Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n change waiting to sync","%n changes waiting to sync"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.","The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.","The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account."],
+        "Partner organisations": "Partner organisations",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.",
+        "Federation needs Nextcloud 33 or later.": "Federation needs Nextcloud 33 or later.",
+        "Your root fingerprint": "Your root fingerprint",
+        "No partners yet.": "No partners yet.",
+        "Users here may share to this partner": "Users here may share to this partner",
+        "This partner may share to users here": "This partner may share to users here",
+        "Partner address": "Partner address",
+        "Check partner": "Check partner",
+        "Partner root fingerprint": "Partner root fingerprint",
+        "I compared this fingerprint with the partner's administrator": "I compared this fingerprint with the partner's administrator",
+        "Add partner": "Add partner"
     },
     "nplurals=2; plural=(n != 1);"
 )

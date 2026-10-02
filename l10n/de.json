@@ -1553,7 +1553,19 @@
         "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
             "Der Benutzer ist noch in der Gruppe {groups}, die Mitglied eines Teamordners ist. Entfernen Sie ihn aus der Gruppe oder deaktivieren Sie das Konto.",
             "Der Benutzer ist noch in den Gruppen {groups}, die Mitglieder von Teamordnern sind. Entfernen Sie ihn aus den Gruppen oder deaktivieren Sie das Konto."
-        ]
+        ],
+        "Partner organisations": "Partnerorganisationen",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Tauschen Sie Geheimnisse mit einem anderen Keepiq aus. Beide Administratoren fügen sich gegenseitig hinzu und vergleichen die Root-Fingerabdrücke telefonisch oder persönlich, bevor sie speichern.",
+        "Federation needs Nextcloud 33 or later.": "Föderation erfordert Nextcloud 33 oder neuer.",
+        "Your root fingerprint": "Ihr Root-Fingerabdruck",
+        "No partners yet.": "Noch keine Partner.",
+        "Users here may share to this partner": "Benutzer hier dürfen mit diesem Partner teilen",
+        "This partner may share to users here": "Dieser Partner darf mit Benutzern hier teilen",
+        "Partner address": "Adresse des Partners",
+        "Check partner": "Partner prüfen",
+        "Partner root fingerprint": "Root-Fingerabdruck des Partners",
+        "I compared this fingerprint with the partner's administrator": "Ich habe diesen Fingerabdruck mit dem Administrator des Partners verglichen",
+        "Add partner": "Partner hinzufügen"
     },
     "plurals": null
 }

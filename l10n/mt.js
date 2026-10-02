@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Dan il-folder fih %n sigriet direttament.","Dan il-folder fih %n sigriet direttament.","Dan il-folder fih %n sigriet direttament.","Dan il-folder fih %n sigriet direttament."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Ir-rotazzjoni taċ-ċavetta tiegħek neħħiet %n kuntatt ta' emerġenza. Iċċekkja Aċċess ta' emerġenza u erġa' żidu jekk għadek tridu.","Ir-rotazzjoni taċ-ċavetta tiegħek neħħiet %n kuntatti ta' emerġenza. Iċċekkja Aċċess ta' emerġenza u erġa' żidhom jekk għadek tridhom.","Ir-rotazzjoni taċ-ċavetta tiegħek neħħiet %n kuntatti ta' emerġenza. Iċċekkja Aċċess ta' emerġenza u erġa' żidhom jekk għadek tridhom.","Ir-rotazzjoni taċ-ċavetta tiegħek neħħiet %n kuntatti ta' emerġenza. Iċċekkja Aċċess ta' emerġenza u erġa' żidhom jekk għadek tridhom."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n bidla qed tistenna s-sinkronizzazzjoni","%n bidliet qed jistennew is-sinkronizzazzjoni","%n bidliet qed jistennew is-sinkronizzazzjoni","%n bidliet qed jistennew is-sinkronizzazzjoni"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["L-utent għadu fil-grupp {groups}, li huwa membru ta' folder tat-tim. Neħħih mill-grupp jew iddiżattiva l-kont.","L-utent għadu fil-gruppi {groups}, li huma membri ta' folders tat-tim. Neħħih mill-gruppi jew iddiżattiva l-kont.","L-utent għadu fil-gruppi {groups}, li huma membri ta' folders tat-tim. Neħħih mill-gruppi jew iddiżattiva l-kont.","L-utent għadu fil-gruppi {groups}, li huma membri ta' folders tat-tim. Neħħih mill-gruppi jew iddiżattiva l-kont."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["L-utent għadu fil-grupp {groups}, li huwa membru ta' folder tat-tim. Neħħih mill-grupp jew iddiżattiva l-kont.","L-utent għadu fil-gruppi {groups}, li huma membri ta' folders tat-tim. Neħħih mill-gruppi jew iddiżattiva l-kont.","L-utent għadu fil-gruppi {groups}, li huma membri ta' folders tat-tim. Neħħih mill-gruppi jew iddiżattiva l-kont.","L-utent għadu fil-gruppi {groups}, li huma membri ta' folders tat-tim. Neħħih mill-gruppi jew iddiżattiva l-kont."],
+        "Partner organisations": "Organizzazzjonijiet sħab",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Skambja sigrieti ma’ Keepiq ieħor. Iż-żewġ amministraturi jżidu lil xulxin u jqabblu l-marki tas-swaba’ ewlenin bit-telefon jew personalment qabel ma jissejvjaw.",
+        "Federation needs Nextcloud 33 or later.": "Il-federazzjoni teħtieġ Nextcloud 33 jew aktar ġdid.",
+        "Your root fingerprint": "Il-marka ewlenija tiegħek",
+        "No partners yet.": "Għad m’hemmx sħab.",
+        "Users here may share to this partner": "L-utenti hawn jistgħu jaqsmu ma’ dan is-sieħeb",
+        "This partner may share to users here": "Dan is-sieħeb jista’ jaqsam mal-utenti hawn",
+        "Partner address": "L-indirizz tas-sieħeb",
+        "Check partner": "Iċċekkja s-sieħeb",
+        "Partner root fingerprint": "Il-marka ewlenija tas-sieħeb",
+        "I compared this fingerprint with the partner's administrator": "Qabbilt din il-marka mal-amministratur tas-sieħeb",
+        "Add partner": "Żid sieħeb"
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

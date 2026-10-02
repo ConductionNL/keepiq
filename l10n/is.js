@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Þessi mappa inniheldur %n leyndarmál beint.","Þessi mappa inniheldur %n leyndarmál beint."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Lyklasnúningurinn fjarlægði %n neyðartengilið. Skoðaðu Neyðaraðgang og bættu honum aftur við ef þú vilt hann enn.","Lyklasnúningurinn fjarlægði %n neyðartengiliði. Skoðaðu Neyðaraðgang og bættu þeim aftur við ef þú vilt þá enn."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n breyting bíður samstillingar","%n breytingar bíða samstillingar"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Notandinn er enn í hópnum {groups}, sem er meðlimur teymismöppu. Fjarlægðu hann úr hópnum eða gerðu aðganginn óvirkan.","Notandinn er enn í hópunum {groups}, sem eru meðlimir teymismappa. Fjarlægðu hann úr hópunum eða gerðu aðganginn óvirkan."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Notandinn er enn í hópnum {groups}, sem er meðlimur teymismöppu. Fjarlægðu hann úr hópnum eða gerðu aðganginn óvirkan.","Notandinn er enn í hópunum {groups}, sem eru meðlimir teymismappa. Fjarlægðu hann úr hópunum eða gerðu aðganginn óvirkan."],
+        "Partner organisations": "Samstarfsfyrirtæki",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Skiptist á leyndarmálum við annað Keepiq. Báðir stjórnendur bæta hvor öðrum við og bera saman rótarfingraför í síma eða í eigin persónu áður en vistað er.",
+        "Federation needs Nextcloud 33 or later.": "Samtenging krefst Nextcloud 33 eða nýrra.",
+        "Your root fingerprint": "Rótarfingrafarið þitt",
+        "No partners yet.": "Engir samstarfsaðilar enn.",
+        "Users here may share to this partner": "Notendur hér mega deila með þessum samstarfsaðila",
+        "This partner may share to users here": "Þessi samstarfsaðili má deila með notendum hér",
+        "Partner address": "Vistfang samstarfsaðila",
+        "Check partner": "Athuga samstarfsaðila",
+        "Partner root fingerprint": "Rótarfingrafar samstarfsaðila",
+        "I compared this fingerprint with the partner's administrator": "Ég bar þetta fingrafar saman við stjórnanda samstarfsaðilans",
+        "Add partner": "Bæta við samstarfsaðila"
     },
     "nplurals=2; plural=(n != 1);"
 )

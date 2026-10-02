@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Ten folder zawiera bezpośrednio %n sekret.","Ten folder zawiera bezpośrednio %n sekretów.","Ten folder zawiera bezpośrednio %n sekretów."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Rotacja klucza usunęła %n kontakt awaryjny. Sprawdź Dostęp awaryjny i dodaj go ponownie, jeśli nadal go chcesz.","Rotacja klucza usunęła %n kontaktów awaryjnych. Sprawdź Dostęp awaryjny i dodaj je ponownie, jeśli nadal ich chcesz.","Rotacja klucza usunęła %n kontaktów awaryjnych. Sprawdź Dostęp awaryjny i dodaj je ponownie, jeśli nadal ich chcesz."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n zmiana czeka na synchronizację","%n zmian czeka na synchronizację","%n zmian czeka na synchronizację"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Użytkownik nadal jest w grupie {groups}, która jest członkiem folderu zespołu. Usuń go z grupy lub wyłącz konto.","Użytkownik nadal jest w grupach {groups}, które są członkami folderów zespołu. Usuń go z grup lub wyłącz konto.","Użytkownik nadal jest w grupach {groups}, które są członkami folderów zespołu. Usuń go z grup lub wyłącz konto."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Użytkownik nadal jest w grupie {groups}, która jest członkiem folderu zespołu. Usuń go z grupy lub wyłącz konto.","Użytkownik nadal jest w grupach {groups}, które są członkami folderów zespołu. Usuń go z grup lub wyłącz konto.","Użytkownik nadal jest w grupach {groups}, które są członkami folderów zespołu. Usuń go z grup lub wyłącz konto."],
+        "Partner organisations": "Organizacje partnerskie",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Wymieniaj sekrety z innym Keepiq. Obaj administratorzy dodają się nawzajem i przed zapisaniem porównują odciski główne telefonicznie lub osobiście.",
+        "Federation needs Nextcloud 33 or later.": "Federacja wymaga Nextcloud 33 lub nowszego.",
+        "Your root fingerprint": "Twój odcisk główny",
+        "No partners yet.": "Brak partnerów.",
+        "Users here may share to this partner": "Użytkownicy tutaj mogą udostępniać temu partnerowi",
+        "This partner may share to users here": "Ten partner może udostępniać użytkownikom tutaj",
+        "Partner address": "Adres partnera",
+        "Check partner": "Sprawdź partnera",
+        "Partner root fingerprint": "Odcisk główny partnera",
+        "I compared this fingerprint with the partner's administrator": "Porównałem ten odcisk z administratorem partnera",
+        "Add partner": "Dodaj partnera"
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

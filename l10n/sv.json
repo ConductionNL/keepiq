@@ -1553,7 +1553,19 @@
         "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
             "Användaren finns fortfarande i gruppen {groups}, som är medlem i en teammapp. Ta bort användaren från gruppen eller inaktivera kontot.",
             "Användaren finns fortfarande i grupperna {groups}, som är medlemmar i teammappar. Ta bort användaren från grupperna eller inaktivera kontot."
-        ]
+        ],
+        "Partner organisations": "Partnerorganisationer",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Utbyt hemligheter med en annan Keepiq. Båda administratörerna lägger till varandra och jämför rotfingeravtrycken per telefon eller personligen innan de sparar.",
+        "Federation needs Nextcloud 33 or later.": "Federation kräver Nextcloud 33 eller senare.",
+        "Your root fingerprint": "Ditt rotfingeravtryck",
+        "No partners yet.": "Inga partner än.",
+        "Users here may share to this partner": "Användare här får dela med den här partnern",
+        "This partner may share to users here": "Den här partnern får dela med användare här",
+        "Partner address": "Partnerns adress",
+        "Check partner": "Kontrollera partner",
+        "Partner root fingerprint": "Partnerns rotfingeravtryck",
+        "I compared this fingerprint with the partner's administrator": "Jag har jämfört det här fingeravtrycket med partnerns administratör",
+        "Add partner": "Lägg till partner"
     },
     "plurals": null
 }

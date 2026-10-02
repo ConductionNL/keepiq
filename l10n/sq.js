@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Kjo dosje përmban drejtpërdrejt %n sekret.","Kjo dosje përmban drejtpërdrejt %n sekrete."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Rrotullimi i kyçit hoqi %n kontakt emergjence. Kontrolloni Aksesin e emergjencës dhe shtojeni përsëri nëse e doni ende.","Rrotullimi i kyçit hoqi %n kontakte emergjence. Kontrolloni Aksesin e emergjencës dhe shtojini përsëri nëse i doni ende."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n ndryshim pret sinkronizimin","%n ndryshime presin sinkronizimin"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Përdoruesi është ende në grupin {groups}, që është anëtar i një dosjeje ekipi. Hiqeni nga grupi ose çaktivizoni llogarinë.","Përdoruesi është ende në grupet {groups}, që janë anëtare të dosjeve të ekipit. Hiqeni nga grupet ose çaktivizoni llogarinë."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Përdoruesi është ende në grupin {groups}, që është anëtar i një dosjeje ekipi. Hiqeni nga grupi ose çaktivizoni llogarinë.","Përdoruesi është ende në grupet {groups}, që janë anëtare të dosjeve të ekipit. Hiqeni nga grupet ose çaktivizoni llogarinë."],
+        "Partner organisations": "Organizata partnere",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Shkëmbeni sekrete me një Keepiq tjetër. Të dy administratorët shtojnë njëri-tjetrin dhe krahasojnë gjurmët rrënjë në telefon ose personalisht para ruajtjes.",
+        "Federation needs Nextcloud 33 or later.": "Federimi kërkon Nextcloud 33 ose më të ri.",
+        "Your root fingerprint": "Gjurma juaj rrënjë",
+        "No partners yet.": "Ende pa partnerë.",
+        "Users here may share to this partner": "Përdoruesit këtu mund të ndajnë me këtë partner",
+        "This partner may share to users here": "Ky partner mund të ndajë me përdoruesit këtu",
+        "Partner address": "Adresa e partnerit",
+        "Check partner": "Kontrollo partnerin",
+        "Partner root fingerprint": "Gjurma rrënjë e partnerit",
+        "I compared this fingerprint with the partner's administrator": "E krahasova këtë gjurmë me administratorin e partnerit",
+        "Add partner": "Shto partnerin"
     },
     "nplurals=2; plural=(n != 1);"
 )

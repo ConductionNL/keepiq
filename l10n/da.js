@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Denne mappe indeholder %n hemmelighed direkte.","Denne mappe indeholder %n hemmeligheder direkte."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Din nøglerotation fjernede %n nødkontakt. Tjek Nødadgang, og tilføj den igen, hvis du stadig ønsker den.","Din nøglerotation fjernede %n nødkontakter. Tjek Nødadgang, og tilføj dem igen, hvis du stadig ønsker dem."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n ændring venter på synkronisering","%n ændringer venter på synkronisering"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Brugeren er stadig i gruppen {groups}, som er medlem af en teammappe. Fjern brugeren fra gruppen eller deaktiver kontoen.","Brugeren er stadig i grupperne {groups}, som er medlemmer af teammapper. Fjern brugeren fra grupperne eller deaktiver kontoen."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Brugeren er stadig i gruppen {groups}, som er medlem af en teammappe. Fjern brugeren fra gruppen eller deaktiver kontoen.","Brugeren er stadig i grupperne {groups}, som er medlemmer af teammapper. Fjern brugeren fra grupperne eller deaktiver kontoen."],
+        "Partner organisations": "Partnerorganisationer",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Udveksl hemmeligheder med en anden Keepiq. Begge administratorer tilføjer hinanden og sammenligner rodfingeraftrykkene i telefonen eller ansigt til ansigt, før de gemmer.",
+        "Federation needs Nextcloud 33 or later.": "Føderation kræver Nextcloud 33 eller nyere.",
+        "Your root fingerprint": "Dit rodfingeraftryk",
+        "No partners yet.": "Ingen partnere endnu.",
+        "Users here may share to this partner": "Brugere her må dele med denne partner",
+        "This partner may share to users here": "Denne partner må dele med brugere her",
+        "Partner address": "Partnerens adresse",
+        "Check partner": "Tjek partner",
+        "Partner root fingerprint": "Partnerens rodfingeraftryk",
+        "I compared this fingerprint with the partner's administrator": "Jeg har sammenlignet dette fingeraftryk med partnerens administrator",
+        "Add partner": "Tilføj partner"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Tento priečinok obsahuje priamo %n tajomstvo.","Tento priečinok obsahuje priamo %n tajomstiev.","Tento priečinok obsahuje priamo %n tajomstiev."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Rotácia kľúča odstránila %n núdzový kontakt. Skontrolujte Prístup pre naliehavé prípady a pridajte ho znova, ak ho stále chcete.","Rotácia kľúča odstránila %n núdzových kontaktov. Skontrolujte Prístup pre naliehavé prípady a pridajte ich znova, ak ich stále chcete.","Rotácia kľúča odstránila %n núdzových kontaktov. Skontrolujte Prístup pre naliehavé prípady a pridajte ich znova, ak ich stále chcete."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n zmena čaká na synchronizáciu","%n zmien čaká na synchronizáciu","%n zmien čaká na synchronizáciu"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Používateľ je stále v skupine {groups}, ktorá je členom tímového priečinka. Odstráňte ho zo skupiny alebo zakážte účet.","Používateľ je stále v skupinách {groups}, ktoré sú členmi tímových priečinkov. Odstráňte ho zo skupín alebo zakážte účet.","Používateľ je stále v skupinách {groups}, ktoré sú členmi tímových priečinkov. Odstráňte ho zo skupín alebo zakážte účet."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Používateľ je stále v skupine {groups}, ktorá je členom tímového priečinka. Odstráňte ho zo skupiny alebo zakážte účet.","Používateľ je stále v skupinách {groups}, ktoré sú členmi tímových priečinkov. Odstráňte ho zo skupín alebo zakážte účet.","Používateľ je stále v skupinách {groups}, ktoré sú členmi tímových priečinkov. Odstráňte ho zo skupín alebo zakážte účet."],
+        "Partner organisations": "Partnerské organizácie",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Vymieňajte si tajomstvá s iným Keepiq. Obaja správcovia sa navzájom pridajú a pred uložením porovnajú koreňové odtlačky telefonicky alebo osobne.",
+        "Federation needs Nextcloud 33 or later.": "Federácia vyžaduje Nextcloud 33 alebo novší.",
+        "Your root fingerprint": "Váš koreňový odtlačok",
+        "No partners yet.": "Zatiaľ žiadni partneri.",
+        "Users here may share to this partner": "Používatelia tu môžu zdieľať s týmto partnerom",
+        "This partner may share to users here": "Tento partner môže zdieľať s používateľmi tu",
+        "Partner address": "Adresa partnera",
+        "Check partner": "Overiť partnera",
+        "Partner root fingerprint": "Koreňový odtlačok partnera",
+        "I compared this fingerprint with the partner's administrator": "Porovnal som tento odtlačok so správcom partnera",
+        "Add partner": "Pridať partnera"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

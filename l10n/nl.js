@@ -1487,7 +1487,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Deze map bevat direct %n geheim.","Deze map bevat direct %n geheimen."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Je sleutelrotatie heeft %n noodcontact verwijderd. Kijk bij Noodtoegang en voeg het opnieuw toe als je het nog wilt.","Je sleutelrotatie heeft %n noodcontacten verwijderd. Kijk bij Noodtoegang en voeg ze opnieuw toe als je ze nog wilt."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n wijziging wacht op synchronisatie","%n wijzigingen wachten op synchronisatie"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["De gebruiker zit nog in groep {groups}, die lid is van een teammap. Haal de gebruiker uit de groep of schakel het account uit.","De gebruiker zit nog in groepen {groups}, die lid zijn van teammappen. Haal de gebruiker uit de groepen of schakel het account uit."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["De gebruiker zit nog in groep {groups}, die lid is van een teammap. Haal de gebruiker uit de groep of schakel het account uit.","De gebruiker zit nog in groepen {groups}, die lid zijn van teammappen. Haal de gebruiker uit de groepen of schakel het account uit."],
+        "Partner organisations": "Partnerorganisaties",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Wissel geheimen uit met een andere Keepiq. Beide beheerders voegen elkaar toe en vergelijken de rootvingerafdrukken telefonisch of persoonlijk voordat ze opslaan.",
+        "Federation needs Nextcloud 33 or later.": "Federatie vraagt Nextcloud 33 of nieuwer.",
+        "Your root fingerprint": "Jouw rootvingerafdruk",
+        "No partners yet.": "Nog geen partners.",
+        "Users here may share to this partner": "Gebruikers hier mogen delen met deze partner",
+        "This partner may share to users here": "Deze partner mag delen met gebruikers hier",
+        "Partner address": "Adres van de partner",
+        "Check partner": "Partner controleren",
+        "Partner root fingerprint": "Rootvingerafdruk van de partner",
+        "I compared this fingerprint with the partner's administrator": "Ik heb deze vingerafdruk vergeleken met de beheerder van de partner",
+        "Add partner": "Partner toevoegen"
     },
     "nplurals=2; plural=(n != 1);"
 )

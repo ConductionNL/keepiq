@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Dësen Dossier enthält direkt %n Geheimnis.","Dësen Dossier enthält direkt %n Geheimnisser."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Är Schlësselrotatioun huet %n Noutfallkontakt ewechgeholl. Kuckt den Noutfallzougrëff a setzt en nees bäi, wann Dir en nach wëllt.","Är Schlësselrotatioun huet %n Noutfallkontakter ewechgeholl. Kuckt den Noutfallzougrëff a setzt se nees bäi, wann Dir se nach wëllt."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n Ännerung waart op d'Synchronisatioun","%n Ännerunge waarden op d'Synchronisatioun"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["De Benotzer ass nach am Grupp {groups}, deen Member vun engem Teamdossier ass. Huelt hien aus dem Grupp eraus oder desaktivéiert de Kont.","De Benotzer ass nach an de Gruppen {groups}, déi Member vun Teamdossiere sinn. Huelt hien aus de Gruppen eraus oder desaktivéiert de Kont."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["De Benotzer ass nach am Grupp {groups}, deen Member vun engem Teamdossier ass. Huelt hien aus dem Grupp eraus oder desaktivéiert de Kont.","De Benotzer ass nach an de Gruppen {groups}, déi Member vun Teamdossiere sinn. Huelt hien aus de Gruppen eraus oder desaktivéiert de Kont."],
+        "Partner organisations": "Partnerorganisatiounen",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Tauscht Geheimnisser mat engem anere Keepiq aus. Béid Administrateure fügen sech géigesäiteg derbäi a vergläichen d’Root-Fangerofdréck um Telefon oder perséinlech, ier se späicheren.",
+        "Federation needs Nextcloud 33 or later.": "Föderatioun brauch Nextcloud 33 oder méi nei.",
+        "Your root fingerprint": "Ären Root-Fangerofdrock",
+        "No partners yet.": "Nach keng Partner.",
+        "Users here may share to this partner": "Benotzer hei däerfe mat dësem Partner deelen",
+        "This partner may share to users here": "Dëse Partner däerf mat Benotzer hei deelen",
+        "Partner address": "Adress vum Partner",
+        "Check partner": "Partner iwwerpréiwen",
+        "Partner root fingerprint": "Root-Fangerofdrock vum Partner",
+        "I compared this fingerprint with the partner's administrator": "Ech hunn dëse Fangerofdrock mam Administrateur vum Partner verglach",
+        "Add partner": "Partner derbäisetzen"
     },
     "nplurals=2; plural=(n != 1);"
 )

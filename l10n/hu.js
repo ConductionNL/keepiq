@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Ez a mappa közvetlenül %n titkot tartalmaz.","Ez a mappa közvetlenül %n titkot tartalmaz."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["A kulcsrotáció eltávolított %n vészhelyzeti kapcsolattartót. Nézze meg a Vészhelyzeti hozzáférést, és adja hozzá újra, ha továbbra is szeretné.","A kulcsrotáció eltávolított %n vészhelyzeti kapcsolattartót. Nézze meg a Vészhelyzeti hozzáférést, és adja hozzá újra őket, ha továbbra is szeretné őket."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n módosítás várakozik szinkronizálásra","%n módosítás várakozik szinkronizálásra"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["A felhasználó még a(z) {groups} csoportban van, amely egy csapatmappa tagja. Távolítsa el a csoportból, vagy tiltsa le a fiókot.","A felhasználó még a(z) {groups} csoportokban van, amelyek csapatmappák tagjai. Távolítsa el a csoportokból, vagy tiltsa le a fiókot."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["A felhasználó még a(z) {groups} csoportban van, amely egy csapatmappa tagja. Távolítsa el a csoportból, vagy tiltsa le a fiókot.","A felhasználó még a(z) {groups} csoportokban van, amelyek csapatmappák tagjai. Távolítsa el a csoportokból, vagy tiltsa le a fiókot."],
+        "Partner organisations": "Partnerszervezetek",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Cseréljen titkokat egy másik Keepiqkel. Mindkét rendszergazda hozzáadja a másikat, és mentés előtt telefonon vagy személyesen összeveti a gyökér-ujjlenyomatokat.",
+        "Federation needs Nextcloud 33 or later.": "A föderációhoz Nextcloud 33 vagy újabb szükséges.",
+        "Your root fingerprint": "Az Ön gyökér-ujjlenyomata",
+        "No partners yet.": "Még nincs partner.",
+        "Users here may share to this partner": "Az itteni felhasználók megoszthatnak ezzel a partnerrel",
+        "This partner may share to users here": "Ez a partner megoszthat az itteni felhasználókkal",
+        "Partner address": "A partner címe",
+        "Check partner": "Partner ellenőrzése",
+        "Partner root fingerprint": "A partner gyökér-ujjlenyomata",
+        "I compared this fingerprint with the partner's administrator": "Összevetettem ezt az ujjlenyomatot a partner rendszergazdájával",
+        "Add partner": "Partner hozzáadása"
     },
     "nplurals=2; plural=(n != 1);"
 )

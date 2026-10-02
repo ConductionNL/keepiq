@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Esta pasta contém %n segredo diretamente.","Esta pasta contém %n segredos diretamente."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["A rotação da chave removeu %n contacto de emergência. Verifique Acesso de emergência e adicione-o novamente se ainda o quiser.","A rotação da chave removeu %n contactos de emergência. Verifique Acesso de emergência e adicione-os novamente se ainda os quiser."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n alteração a aguardar sincronização","%n alterações a aguardar sincronização"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["O utilizador ainda está no grupo {groups}, que é membro de uma pasta de equipa. Remova-o do grupo ou desative a conta.","O utilizador ainda está nos grupos {groups}, que são membros de pastas de equipa. Remova-o dos grupos ou desative a conta."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["O utilizador ainda está no grupo {groups}, que é membro de uma pasta de equipa. Remova-o do grupo ou desative a conta.","O utilizador ainda está nos grupos {groups}, que são membros de pastas de equipa. Remova-o dos grupos ou desative a conta."],
+        "Partner organisations": "Organizações parceiras",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Troque segredos com outro Keepiq. Ambos os administradores adicionam-se mutuamente e comparam as impressões digitais raiz por telefone ou pessoalmente antes de guardar.",
+        "Federation needs Nextcloud 33 or later.": "A federação requer Nextcloud 33 ou posterior.",
+        "Your root fingerprint": "A sua impressão digital raiz",
+        "No partners yet.": "Ainda sem parceiros.",
+        "Users here may share to this partner": "Os utilizadores daqui podem partilhar com este parceiro",
+        "This partner may share to users here": "Este parceiro pode partilhar com os utilizadores daqui",
+        "Partner address": "Endereço do parceiro",
+        "Check partner": "Verificar parceiro",
+        "Partner root fingerprint": "Impressão digital raiz do parceiro",
+        "I compared this fingerprint with the partner's administrator": "Comparei esta impressão digital com o administrador do parceiro",
+        "Add partner": "Adicionar parceiro"
     },
     "nplurals=2; plural=(n != 1);"
 )

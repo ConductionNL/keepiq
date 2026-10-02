@@ -32,6 +32,7 @@
 		<HoneySection />
 		<OfflineCacheSection />
 		<ExtensionSection />
+		<FederationPartnersSection />
 		<ItemTypesSection />
 		<MemberOverviewSection />
 		<OffboardingSection />
@@ -50,6 +51,7 @@ import BreachCheckSection from '../../components/settings/BreachCheckSection.vue
 import CaHealthSection from '../../components/settings/CaHealthSection.vue'
 import ComplianceSection from '../../components/settings/ComplianceSection.vue'
 import ExtensionSection from '../../components/settings/ExtensionSection.vue'
+import FederationPartnersSection from '../../components/settings/FederationPartnersSection.vue'
 import HoneySection from '../../components/settings/HoneySection.vue'
 import ItemTypesSection from '../../components/settings/ItemTypesSection.vue'
 import MachineLeaseSection from '../../components/settings/MachineLeaseSection.vue'
@@ -82,6 +84,7 @@ export default {
 		ItemTypesSection,
 		OfflineCacheSection,
 		ExtensionSection,
+		FederationPartnersSection,
 		MemberOverviewSection,
 		OffboardingSection,
 		AdminSuiteSection,

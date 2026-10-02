@@ -1482,7 +1482,19 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Tämä kansio sisältää suoraan %n salaisuuden.","Tämä kansio sisältää suoraan %n salaisuutta."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Avaimen kierto poisti %n hätäyhteyshenkilön. Tarkista Hätäkäyttöoikeus ja lisää hänet uudelleen, jos haluat hänet yhä.","Avaimen kierto poisti %n hätäyhteyshenkilöä. Tarkista Hätäkäyttöoikeus ja lisää heidät uudelleen, jos haluat heidät yhä."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n muutos odottaa synkronointia","%n muutosta odottaa synkronointia"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Käyttäjä on yhä ryhmässä {groups}, joka on tiimikansion jäsen. Poista käyttäjä ryhmästä tai poista tili käytöstä.","Käyttäjä on yhä ryhmissä {groups}, jotka ovat tiimikansioiden jäseniä. Poista käyttäjä ryhmistä tai poista tili käytöstä."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Käyttäjä on yhä ryhmässä {groups}, joka on tiimikansion jäsen. Poista käyttäjä ryhmästä tai poista tili käytöstä.","Käyttäjä on yhä ryhmissä {groups}, jotka ovat tiimikansioiden jäseniä. Poista käyttäjä ryhmistä tai poista tili käytöstä."],
+        "Partner organisations": "Kumppaniorganisaatiot",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Vaihda salaisuuksia toisen Keepiqin kanssa. Molemmat ylläpitäjät lisäävät toisensa ja vertaavat juurisormenjälkiä puhelimessa tai kasvokkain ennen tallentamista.",
+        "Federation needs Nextcloud 33 or later.": "Federointi vaatii Nextcloud 33:n tai uudemman.",
+        "Your root fingerprint": "Oma juurisormenjälkesi",
+        "No partners yet.": "Ei vielä kumppaneita.",
+        "Users here may share to this partner": "Täkäläiset käyttäjät voivat jakaa tälle kumppanille",
+        "This partner may share to users here": "Tämä kumppani voi jakaa täkäläisille käyttäjille",
+        "Partner address": "Kumppanin osoite",
+        "Check partner": "Tarkista kumppani",
+        "Partner root fingerprint": "Kumppanin juurisormenjälki",
+        "I compared this fingerprint with the partner's administrator": "Vertasin tätä sormenjälkeä kumppanin ylläpitäjän kanssa",
+        "Add partner": "Lisää kumppani"
     },
     "nplurals=2; plural=(n != 1);"
 )
