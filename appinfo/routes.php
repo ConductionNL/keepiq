@@ -259,6 +259,14 @@ $extra = [
     // Offline cache (offline-readonly-cache §1.4) — owner-scoped
     // consolidated snapshot; 403 when the admin off switch is set.
     ['name' => 'offline#manifest', 'url' => '/api/v1/offline/manifest', 'verb' => 'GET'],
+    // New device approval (crypto-new-device-approval). The fixed paths come
+    // before the {id} ones.
+    ['name' => 'deviceApproval#status',  'url' => '/api/v1/device-approvals/status',       'verb' => 'GET'],
+    ['name' => 'deviceApproval#pending', 'url' => '/api/v1/device-approvals/pending',      'verb' => 'GET'],
+    ['name' => 'deviceApproval#create',  'url' => '/api/v1/device-approvals',              'verb' => 'POST'],
+    ['name' => 'deviceApproval#show',    'url' => '/api/v1/device-approvals/{id}',         'verb' => 'GET'],
+    ['name' => 'deviceApproval#approve', 'url' => '/api/v1/device-approvals/{id}/approve', 'verb' => 'POST'],
+    ['name' => 'deviceApproval#deny',    'url' => '/api/v1/device-approvals/{id}/deny',    'verb' => 'POST'],
 
     // Offline service worker (offline-readonly-cache §3) — served from the
     // app root with the correct JS MIME + app-root default scope.

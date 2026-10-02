@@ -145,6 +145,10 @@ type Secret struct {
 	Login            string
 	AdditionalFields string
 
+	// CertificateFingerprint is the sha256 fingerprint of the certificate
+	// the values are encrypted to, as the envelope states it.
+	CertificateFingerprint string
+
 	// ETag of this version; the next read of the same address sends it.
 	ETag string
 	// Lease is set when the server returned Doriath-Lease-* headers.
@@ -531,7 +535,8 @@ func (c *Client) open(env *envelope) (*Secret, error) {
 		ID: env.Secret.ID, Name: env.Secret.Name, URL: env.Secret.URL,
 		FolderPath: env.Secret.FolderPath, Type: env.Secret.Type,
 		CreatedAt: env.Secret.CreatedAt, UpdatedAt: env.Secret.UpdatedAt, KeyUpdatedAt: env.Secret.KeyUpdatedAt,
-		ExpiresAt: env.Secret.ExpiresAt,
+		ExpiresAt:              env.Secret.ExpiresAt,
+		CertificateFingerprint: env.Encryption.CertificateFingerprint,
 	}
 	for _, f := range []struct {
 		ct  *string

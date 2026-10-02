@@ -1458,6 +1458,150 @@
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Usunąłeś ten sekret offline, ale od tego czasu zmieniono go na serwerze. Wybierz, którą wersję zachować.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Twoje klucze zostały zmienione na innym urządzeniu. Wpisz poprzednie hasło główne, aby zsynchronizować zmiany offline, lub je odrzuć.",
         "Your offline change": "Twoja zmiana offline",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n kontakt awaryjny miał oczekujący wniosek o dostęp, gdy rotacja klucza go usunęła. Sprawdź, kto prosił, zanim dodasz kogokolwiek ponownie.",
+            "Kontakty awaryjne (%n) miały oczekujący wniosek o dostęp, gdy rotacja klucza je usunęła. Sprawdź, kto prosił, zanim dodasz kogokolwiek ponownie.",
+            "Kontakty awaryjne (%n) miały oczekujący wniosek o dostęp, gdy rotacja klucza je usunęła. Sprawdź, kto prosił, zanim dodasz kogokolwiek ponownie."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n element nie może zostać przedstawiony w CXF i zostanie pominięty.",
+            "%n elementów nie może zostać przedstawionych w CXF i zostanie pominiętych.",
+            "%n elementów nie może zostać przedstawionych w CXF i zostanie pominiętych."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n starsza wersja została odrzucona, ponieważ przenieść można tylko niedawną historię.",
+            "%n starszych wersji zostało odrzuconych, ponieważ przenieść można tylko niedawną historię.",
+            "%n starszych wersji zostało odrzuconych, ponieważ przenieść można tylko niedawną historię."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n kopia sekretu wciąż wymaga zaszyfrowania i udostępnienia.",
+            "%n kopii sekretu wciąż wymaga zaszyfrowania i udostępnienia.",
+            "%n kopii sekretu wciąż wymaga zaszyfrowania i udostępnienia."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "Nie udało się odszyfrować %n sekretu i nie ma go w tym eksporcie.",
+            "Nie udało się odszyfrować %n sekretów i nie ma ich w tym eksporcie.",
+            "Nie udało się odszyfrować %n sekretów i nie ma ich w tym eksporcie."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n sekretu nie udało się odszyfrować starym kluczem, dlatego nie został przeniesiony.",
+            "%n sekretów nie udało się odszyfrować starym kluczem, dlatego nie zostały przeniesione.",
+            "%n sekretów nie udało się odszyfrować starym kluczem, dlatego nie zostały przeniesione."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n sekret nie został przeniesiony.",
+            "%n sekretów nie zostało przeniesionych.",
+            "%n sekretów nie zostało przeniesionych."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n sekret jest nadal zaszyfrowany twoim poprzednim kluczem.",
+            "%n sekretów jest nadal zaszyfrowanych twoim poprzednim kluczem.",
+            "%n sekretów jest nadal zaszyfrowanych twoim poprzednim kluczem."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "Pominięto %n sekret, ponieważ następca nie ma jeszcze kopii — dodaj następcę do folderu i uruchom ponownie.",
+            "Pominięto %n sekretów, ponieważ następca nie ma jeszcze kopii — dodaj następcę do folderu i uruchom ponownie.",
+            "Pominięto %n sekretów, ponieważ następca nie ma jeszcze kopii — dodaj następcę do folderu i uruchom ponownie."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n sekret",
+            "%n sekretów",
+            "%n sekretów"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n użytkownik w zakresie nie ma jeszcze logowania dwuetapowego i nie może otworzyć sejfu, dopóki to jest włączone.",
+            "Użytkownicy w zakresie (%n) nie mają jeszcze logowania dwuetapowego i nie mogą otworzyć sejfu, dopóki to jest włączone.",
+            "Użytkownicy w zakresie (%n) nie mają jeszcze logowania dwuetapowego i nie mogą otworzyć sejfu, dopóki to jest włączone."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Zakończ i tak, tracąc dostęp do %n sekretu",
+            "Zakończ i tak, tracąc dostęp do %n sekretów",
+            "Zakończ i tak, tracąc dostęp do %n sekretów"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n nowy członek otrzymał dostęp do folderu zespołu.",
+            "Nowi członkowie (%n) otrzymali dostęp do folderu zespołu.",
+            "Nowi członkowie (%n) otrzymali dostęp do folderu zespołu."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Rotacja klucza zakończona. %n sekret został ponownie zaszyfrowany nowym kluczem.",
+            "Rotacja klucza zakończona. %n sekretów zostało ponownie zaszyfrowanych nowym kluczem.",
+            "Rotacja klucza zakończona. %n sekretów zostało ponownie zaszyfrowanych nowym kluczem."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Unieważnienie drugiego zestawu usunęło %n kontakt dostępu awaryjnego.",
+            "Unieważnienie drugiego zestawu usunęło %n kontaktów dostępu awaryjnego.",
+            "Unieważnienie drugiego zestawu usunęło %n kontaktów dostępu awaryjnego."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Unieważnienie tego zestawu usunęło %n kontakt dostępu awaryjnego.",
+            "Unieważnienie tego zestawu usunęło %n kontaktów dostępu awaryjnego.",
+            "Unieważnienie tego zestawu usunęło %n kontaktów dostępu awaryjnego."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "widziane %n raz w wyciekach",
+            "widziane %n razy w wyciekach",
+            "widziane %n razy w wyciekach"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "udostępniony %n sekretowi",
+            "udostępniony %n sekretom",
+            "udostępniony %n sekretom"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Ten folder zawiera bezpośrednio %n sekret.",
+            "Ten folder zawiera bezpośrednio %n sekretów.",
+            "Ten folder zawiera bezpośrednio %n sekretów."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Rotacja klucza usunęła %n kontakt awaryjny. Sprawdź Dostęp awaryjny i dodaj go ponownie, jeśli nadal go chcesz.",
+            "Rotacja klucza usunęła %n kontaktów awaryjnych. Sprawdź Dostęp awaryjny i dodaj je ponownie, jeśli nadal ich chcesz.",
+            "Rotacja klucza usunęła %n kontaktów awaryjnych. Sprawdź Dostęp awaryjny i dodaj je ponownie, jeśli nadal ich chcesz."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n zmiana czeka na synchronizację",
+            "%n zmian czeka na synchronizację",
+            "%n zmian czeka na synchronizację"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Użytkownik nadal jest w grupie {groups}, która jest członkiem folderu zespołu. Usuń go z grupy lub wyłącz konto.",
+            "Użytkownik nadal jest w grupach {groups}, które są członkami folderów zespołu. Usuń go z grup lub wyłącz konto.",
+            "Użytkownik nadal jest w grupach {groups}, które są członkami folderów zespołu. Usuń go z grup lub wyłącz konto."
+        ],
+        "Allow approval from another device": "Zezwalaj na zatwierdzanie z innego urządzenia",
+        "App": "Aplikacja",
+        "Approve a new device": "Zatwierdź nowe urządzenie",
+        "Approve from another device": "Zatwierdź z innego urządzenia",
+        "Asked at": "Poproszono o",
+        "Check that the new device shows these words:": "Sprawdź, czy nowe urządzenie wyświetla te słowa:",
+        "Denied. If you did not ask, end your other sessions:": "Odrzucono. Jeśli to nie Ty prosiłeś, zakończ inne sesje:",
+        "Device": "Urządzenie",
+        "IP address": "Adres IP",
+        "Let users unlock a new browser by approving it from a device where Keepiq is already unlocked.": "Pozwól użytkownikom odblokować nową przeglądarkę, zatwierdzając ją z urządzenia, na którym Keepiq jest już odblokowany.",
+        "New device approval": "Zatwierdzanie nowych urządzeń",
+        "Nextcloud security settings": "Ustawienia bezpieczeństwa Nextcloud",
+        "Only approve a device you are using right now.": "Zatwierdzaj tylko urządzenie, którego właśnie używasz.",
+        "Open Keepiq on a device where it is unlocked and approve this one. Check that it shows the same words:": "Otwórz Keepiq na urządzeniu, na którym jest odblokowany, i zatwierdź to urządzenie. Sprawdź, czy wyświetla te same słowa:",
+        "The approving device seals the unlock key to the new device. The server only passes it on and cannot open it.": "Urządzenie zatwierdzające pieczętuje klucz odblokowania dla nowego urządzenia. Serwer tylko go przekazuje i nie może go otworzyć.",
+        "The master password is not right, or the request has ended.": "Hasło główne jest nieprawidłowe lub żądanie zostało zakończone.",
+        "The request expired. Ask again or use your master password.": "Żądanie wygasło. Poproś ponownie lub użyj hasła głównego.",
+        "The request was denied.": "Żądanie zostało odrzucone.",
+        "Too many requests. Try again in an hour or use your master password.": "Zbyt wiele żądań. Spróbuj ponownie za godzinę lub użyj hasła głównego.",
+        "Unknown device": "Nieznane urządzenie",
+        "Web app": "Aplikacja internetowa",
+        "A device": "Urządzenie",
+        "A new device asks to open your vault": "Nowe urządzenie prosi o otwarcie Twojego sejfu",
+        "%s asks to be approved. Only approve a device you are using right now.": "%s prosi o zatwierdzenie. Zatwierdzaj tylko urządzenie, którego właśnie używasz.",
         "Access ends on (optional)": "Dostęp wygasa (opcjonalnie)",
         "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Aplikacje Keepiq nie pokażą ani nie skopiują hasła. Osoba z wiedzą techniczną nadal może odczytać je na własnym urządzeniu. Zmień je, gdy jej dostęp wygaśnie.",
         "This secret is use-only. Sign in through the Keepiq browser extension.": "Ten sekret jest tylko do użycia. Zaloguj się przez rozszerzenie przeglądarki Keepiq.",

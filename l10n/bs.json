@@ -1458,6 +1458,150 @@
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Ovu ste tajnu izbrisali van mreže, ali je u međuvremenu promijenjena na serveru. Odaberite koju verziju zadržati.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Vaši ključevi su promijenjeni na drugom uređaju. Unesite prethodnu glavnu lozinku za sinhronizaciju vanmrežnih promjena ili ih odbacite.",
         "Your offline change": "Vaša vanmrežna promjena",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n kontakt za hitne slučajeve imao je zahtjev za pristup na čekanju kada ga je rotacija ključa uklonila. Provjerite ko je tražio prije nego što ikoga ponovo dodate.",
+            "Kontakti za hitne slučajeve (%n) imali su zahtjev za pristup na čekanju kada ih je rotacija ključa uklonila. Provjerite ko je tražio prije nego što ikoga ponovo dodate.",
+            "Kontakti za hitne slučajeve (%n) imali su zahtjev za pristup na čekanju kada ih je rotacija ključa uklonila. Provjerite ko je tražio prije nego što ikoga ponovo dodate."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n stavku nije moguće prikazati u CXF-u i bit će preskočena.",
+            "%n stavki nije moguće prikazati u CXF-u i bit će preskočene.",
+            "%n stavki nije moguće prikazati u CXF-u i bit će preskočene."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n starija verzija je uklonjena jer se može prenijeti samo nedavna historija.",
+            "%n starijih verzija je uklonjeno jer se može prenijeti samo nedavna historija.",
+            "%n starijih verzija je uklonjeno jer se može prenijeti samo nedavna historija."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n kopiju tajne još treba šifrirati i podijeliti.",
+            "%n kopija tajni još treba šifrirati i podijeliti.",
+            "%n kopija tajni još treba šifrirati i podijeliti."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n tajna nije mogla biti dešifrovana i nije u ovom izvozu.",
+            "%n tajni nije moglo biti dešifrovano i nisu u ovom izvozu.",
+            "%n tajni nije moglo biti dešifrovano i nisu u ovom izvozu."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n tajna se nije mogla dešifrovati vašim starim ključem, pa nije prenesena.",
+            "%n tajni se nije moglo dešifrovati vašim starim ključem, pa nisu prenesene.",
+            "%n tajni se nije moglo dešifrovati vašim starim ključem, pa nisu prenesene."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n tajna nije prenesena.",
+            "%n tajni nije preneseno.",
+            "%n tajni nije preneseno."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n tajna je još uvijek šifrovana vašim prethodnim ključem.",
+            "%n tajni je još uvijek šifrovano vašim prethodnim ključem.",
+            "%n tajni je još uvijek šifrovano vašim prethodnim ključem."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n tajna je preskočena jer nasljednik još nema kopiju — dodajte nasljednika u mapu i pokrenite ponovno.",
+            "%n tajni je preskočeno jer nasljednik još nema kopiju — dodajte nasljednika u mapu i pokrenite ponovno.",
+            "%n tajni je preskočeno jer nasljednik još nema kopiju — dodajte nasljednika u mapu i pokrenite ponovno."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n tajna",
+            "%n tajne",
+            "%n tajne"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n korisnik u opsegu još nema prijavu u dva koraka i ne može otvoriti trezor dok je ovo uključeno.",
+            "Korisnici u opsegu (%n) još nemaju prijavu u dva koraka i ne mogu otvoriti trezor dok je ovo uključeno.",
+            "Korisnici u opsegu (%n) još nemaju prijavu u dva koraka i ne mogu otvoriti trezor dok je ovo uključeno."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Ipak završi, uz gubitak pristupa %n tajni",
+            "Ipak završi, uz gubitak pristupa %n tajni",
+            "Ipak završi, uz gubitak pristupa %n tajni"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n novi član dobio je pristup timskom folderu.",
+            "Novi članovi (%n) dobili su pristup timskom folderu.",
+            "Novi članovi (%n) dobili su pristup timskom folderu."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Rotacija ključa je završena. %n tajna je ponovno šifrovana vašim novim ključem.",
+            "Rotacija ključa je završena. %n tajni je ponovno šifrovano vašim novim ključem.",
+            "Rotacija ključa je završena. %n tajni je ponovno šifrovano vašim novim ključem."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Opoziv drugog paketa izbrisao je %n kontakt za hitni pristup.",
+            "Opoziv drugog paketa izbrisao je %n kontakata za hitni pristup.",
+            "Opoziv drugog paketa izbrisao je %n kontakata za hitni pristup."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Opozivanje ovog kompleta izbrisalo je %n kontakt hitnog pristupa.",
+            "Opozivanje ovog kompleta izbrisalo je %n kontakata hitnog pristupa.",
+            "Opozivanje ovog kompleta izbrisalo je %n kontakata hitnog pristupa."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "zabilježeno %n put u procurjelim podacima",
+            "zabilježeno %n puta u procurjelim podacima",
+            "zabilježeno %n puta u procurjelim podacima"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "podijeljeno s %n tajnom",
+            "podijeljeno s %n tajni",
+            "podijeljeno s %n tajni"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Ova mapa izravno sadrži %n tajnu.",
+            "Ova mapa izravno sadrži %n tajne.",
+            "Ova mapa izravno sadrži %n tajne."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Rotacija ključa je uklonila %n kontakt za pristup u nuždi. Provjerite Pristup u nuždi i dodajte ga ponovo ako ga još želite.",
+            "Rotacija ključa je uklonila %n kontakta za pristup u nuždi. Provjerite Pristup u nuždi i dodajte ih ponovo ako ih još želite.",
+            "Rotacija ključa je uklonila %n kontakta za pristup u nuždi. Provjerite Pristup u nuždi i dodajte ih ponovo ako ih još želite."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n promjena čeka sinhronizaciju",
+            "%n promjena čeka sinhronizaciju",
+            "%n promjena čeka sinhronizaciju"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Korisnik je još u grupi {groups}, koja je članica timskog foldera. Uklonite ga iz grupe ili onemogućite račun.",
+            "Korisnik je još u grupama {groups}, koje su članice timskih foldera. Uklonite ga iz grupa ili onemogućite račun.",
+            "Korisnik je još u grupama {groups}, koje su članice timskih foldera. Uklonite ga iz grupa ili onemogućite račun."
+        ],
+        "Allow approval from another device": "Dozvoli odobrenje s drugog uređaja",
+        "App": "Aplikacija",
+        "Approve a new device": "Odobri novi uređaj",
+        "Approve from another device": "Odobri s drugog uređaja",
+        "Asked at": "Zatraženo u",
+        "Check that the new device shows these words:": "Provjerite da li novi uređaj prikazuje ove riječi:",
+        "Denied. If you did not ask, end your other sessions:": "Odbijeno. Ako to niste zatražili, završite ostale sesije:",
+        "Device": "Uređaj",
+        "IP address": "IP adresa",
+        "Let users unlock a new browser by approving it from a device where Keepiq is already unlocked.": "Omogući korisnicima da otključaju novi preglednik odobravanjem s uređaja na kojem je Keepiq već otključan.",
+        "New device approval": "Odobravanje novih uređaja",
+        "Nextcloud security settings": "Sigurnosne postavke Nextclouda",
+        "Only approve a device you are using right now.": "Odobrite samo uređaj koji upravo koristite.",
+        "Open Keepiq on a device where it is unlocked and approve this one. Check that it shows the same words:": "Otvorite Keepiq na uređaju na kojem je otključan i odobrite ovaj uređaj. Provjerite da li prikazuje iste riječi:",
+        "The approving device seals the unlock key to the new device. The server only passes it on and cannot open it.": "Uređaj koji odobrava zapečati ključ za otključavanje za novi uređaj. Server ga samo prosljeđuje i ne može ga otvoriti.",
+        "The master password is not right, or the request has ended.": "Glavna lozinka nije tačna ili je zahtjev završen.",
+        "The request expired. Ask again or use your master password.": "Zahtjev je istekao. Zatražite ponovo ili koristite glavnu lozinku.",
+        "The request was denied.": "Zahtjev je odbijen.",
+        "Too many requests. Try again in an hour or use your master password.": "Previše zahtjeva. Pokušajte ponovo za sat vremena ili koristite glavnu lozinku.",
+        "Unknown device": "Nepoznat uređaj",
+        "Web app": "Web aplikacija",
+        "A device": "Uređaj",
+        "A new device asks to open your vault": "Novi uređaj traži da otvori vaš trezor",
+        "%s asks to be approved. Only approve a device you are using right now.": "%s traži odobrenje. Odobrite samo uređaj koji upravo koristite.",
         "Access ends on (optional)": "Pristup ističe (opcionalno)",
         "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Aplikacije Keepiq neće prikazati niti kopirati lozinku. Neko s tehničkim znanjem je i dalje može pročitati na svom uređaju. Promijenite je kada pristup istekne.",
         "This secret is use-only. Sign in through the Keepiq browser extension.": "Ova tajna je samo za korištenje. Prijavite se putem proširenja preglednika Keepiq.",

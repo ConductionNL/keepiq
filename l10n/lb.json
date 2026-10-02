@@ -1458,6 +1458,126 @@
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Dir hutt dëst Geheimnis offline geläscht, mee et gouf zënterhier um Server geännert. Wielt, wéi eng Versioun Dir behaalt.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Är Schlëssele goufen op engem aneren Apparat geännert. Gitt Äert viregt Master-Passwuert an, fir Är Offline-Ännerungen ze synchroniséieren, oder verwerft se.",
         "Your offline change": "Är Offline-Ännerung",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n Noutkontakt hat eng oppen Zougrëffsufro, wéi Är Schlësselrotatioun en ewechgeholl huet. Kuckt, wien gefrot huet, ier Dir iergendeen nees derbäisetzt.",
+            "%n Noutkontakter haten eng oppen Zougrëffsufro, wéi Är Schlësselrotatioun se ewechgeholl huet. Kuckt, wien gefrot huet, ier Dir iergendeen nees derbäisetzt."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n Element kann net an CXF duergestallt ginn a gëtt iwwersprongen.",
+            "%n Elementer kënnen net an CXF duergestallt ginn a gi iwwersprongen."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n eeler Versioun gouf verworf, well nëmmen déi rezent Historie mat iwwerdroe ka ginn.",
+            "%n eeler Versioune goufe verworf, well nëmmen déi rezent Historie mat iwwerdroe ka ginn."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n Geheimniskopie muss nach verschlësselt a gedeelt ginn.",
+            "%n Geheimniskopie mussen nach verschlësselt a gedeelt ginn."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n secret could not be decrypted and is not in this export.",
+            "%n secrets could not be decrypted and are not in this export."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n Geheimnis konnt net mat Ärem alen Schlëssel entschlësselt ginn, dofir gouf et net migréiert.",
+            "%n Geheimnisse konnten net mat Ärem alen Schlëssel entschlësselt ginn, dofir goufe si net migréiert."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n Geheimnis gouf net migréiert.",
+            "%n Geheimnisse goufen net migréiert."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n Geheimnis ass nach mat Ärem viregen Schlëssel verschlësselt.",
+            "%n Geheimnisser sinn nach mat Ärem viregen Schlëssel verschlësselt."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n Geheimnis gouf iwwersprongen, well den Nofolger nach keng Kopie huet — setzt den Nofolger an den Dossier a féiert et nach eemol aus.",
+            "%n Geheimnisser goufen iwwersprongen, well den Nofolger nach keng Kopie huet — setzt den Nofolger an den Dossier a féiert et nach eemol aus."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n Geheimnis",
+            "%n Geheimnisser"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n Benotzer am Beräich huet nach keng Zwee-Faktor-Umeldung a kann den Tresor net opmaachen, soulaang dëst un ass.",
+            "%n Benotzer am Beräich hunn nach keng Zwee-Faktor-Umeldung a kënnen den Tresor net opmaachen, soulaang dëst un ass."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Trotzdem ofschléissen an den Zougang zu %n Geheimnis verléieren",
+            "Trotzdem ofschléissen an den Zougang zu %n Geheimnisser verléieren"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n neie Member krut Zougang zu engem Teamdossier.",
+            "%n nei Memberen kruten Zougang zu engem Teamdossier."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Schlësselrotatioun ofgeschloss. %n Geheimnis gouf mat Ärem neien Schlëssel nei verschlësselt.",
+            "Schlësselrotatioun ofgeschloss. %n Geheimnisser goufe mat Ärem neien Schlëssel nei verschlësselt."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "De Widderruff vun der zweeter Suite huet %n Noutzougangskontakt geläscht.",
+            "De Widderruff vun der zweeter Suite huet %n Noutzougangskontakter geläscht."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Revoking this suite deleted %n emergency-access contact.",
+            "Revoking this suite deleted %n emergency-access contacts."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "%n Mol a Lecke gesinn",
+            "%n Mol a Lecke gesinn"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "mat %n Geheimnis gedeelt",
+            "mat %n Geheimnisser gedeelt"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Dësen Dossier enthält direkt %n Geheimnis.",
+            "Dësen Dossier enthält direkt %n Geheimnisser."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Är Schlësselrotatioun huet %n Noutfallkontakt ewechgeholl. Kuckt den Noutfallzougrëff a setzt en nees bäi, wann Dir en nach wëllt.",
+            "Är Schlësselrotatioun huet %n Noutfallkontakter ewechgeholl. Kuckt den Noutfallzougrëff a setzt se nees bäi, wann Dir se nach wëllt."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n Ännerung waart op d'Synchronisatioun",
+            "%n Ännerunge waarden op d'Synchronisatioun"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "De Benotzer ass nach am Grupp {groups}, deen Member vun engem Teamdossier ass. Huelt hien aus dem Grupp eraus oder desaktivéiert de Kont.",
+            "De Benotzer ass nach an de Gruppen {groups}, déi Member vun Teamdossiere sinn. Huelt hien aus de Gruppen eraus oder desaktivéiert de Kont."
+        ],
+        "Allow approval from another device": "Fräigab vun engem aneren Apparat erlaben",
+        "App": "App",
+        "Approve a new device": "En neien Apparat fräiginn",
+        "Approve from another device": "Vun engem aneren Apparat fräiginn",
+        "Asked at": "Ugefrot um",
+        "Check that the new device shows these words:": "Kuckt no, ob den neien Apparat dës Wierder weist:",
+        "Denied. If you did not ask, end your other sessions:": "Refuséiert. Wann Dir dat net ugefrot hutt, beent Är aner Sessiounen:",
+        "Device": "Apparat",
+        "IP address": "IP-Adress",
+        "Let users unlock a new browser by approving it from a device where Keepiq is already unlocked.": "Benotzer kënnen en neie Browser entspären, andeems se en op engem Apparat fräiginn, op deem Keepiq schonn entspaart ass.",
+        "New device approval": "Fräigab vun neien Apparater",
+        "Nextcloud security settings": "Nextcloud-Sécherheetsastellungen",
+        "Only approve a device you are using right now.": "Gitt nëmmen en Apparat fräi, deen Dir grad elo benotzt.",
+        "Open Keepiq on a device where it is unlocked and approve this one. Check that it shows the same words:": "Maacht Keepiq op engem Apparat op, op deem et entspaart ass, a gitt dësen Apparat fräi. Kuckt no, ob et déiselwecht Wierder weist:",
+        "The approving device seals the unlock key to the new device. The server only passes it on and cannot open it.": "Den Apparat, deen fräigëtt, versigelt den Entspärschlëssel fir den neien Apparat. De Server gëtt en nëmme weider a kann en net opmaachen.",
+        "The master password is not right, or the request has ended.": "D'Master-Passwuert ass net richteg, oder d'Ufro ass eriwwer.",
+        "The request expired. Ask again or use your master password.": "D'Ufro ass ofgelaf. Frot nach eng Kéier oder benotzt Äert Master-Passwuert.",
+        "The request was denied.": "D'Ufro gouf refuséiert.",
+        "Too many requests. Try again in an hour or use your master password.": "Ze vill Ufroen. Probéiert et an enger Stonn nach eng Kéier oder benotzt Äert Master-Passwuert.",
+        "Unknown device": "Onbekannten Apparat",
+        "Web app": "Web-App",
+        "A device": "En Apparat",
+        "A new device asks to open your vault": "En neien Apparat freet, Äre Coffre opzemaachen",
+        "%s asks to be approved. Only approve a device you are using right now.": "%s freet ëm Fräigab. Gitt nëmmen en Apparat fräi, deen Dir grad elo benotzt.",
         "Access ends on (optional)": "Den Zougang endet den (optional)",
         "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "D'Apps vu Keepiq weisen a kopéieren d'Passwuert net. Een mat technesche Kenntnisser kann et awer ëmmer nach op sengem eegenen Apparat liesen. Ännert et, wann den Zougang ofleeft.",
         "This secret is use-only. Sign in through the Keepiq browser extension.": "Dëst Geheimnis ass nëmme fir ze benotzen. Mellt Iech iwwer d'Keepiq-Browserextensioun un.",
