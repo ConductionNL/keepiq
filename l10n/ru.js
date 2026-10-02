@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Метка",
         "Remove tag": "Убрать метку",
         "Add tag": "Добавить метку",
-        "Could not change the tags. Try again.": "Не удалось изменить метки. Попробуйте ещё раз."
+        "Could not change the tags. Try again.": "Не удалось изменить метки. Попробуйте ещё раз.",
+        "Authenticator key (optional)": "Ключ аутентификатора (необязательно)",
+        "Read QR image": "Прочитать QR-изображение",
+        "QR image": "QR-изображение",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Вставьте ссылку otpauth или ключ, который сайт показывает при включении двухэтапного входа. Если хранить его здесь, оба фактора окажутся в одном элементе.",
+        "No QR code was found in that image.": "На этом изображении не найден QR-код."
     },
     "nplurals=2; plural=(n != 1);"
 )

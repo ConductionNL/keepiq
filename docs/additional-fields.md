@@ -60,6 +60,31 @@ request](./secret-request-expiry.md) can ask another person to fill in one or mo
 named fields, and you never see what they submit — that is write-without-read. This
 page is about the case where you *do* know the value and simply want to store it.
 
+## One-time codes on a login
+
+A login can keep its own authenticator key. Open the login in **Edit** and paste
+the key into **Authenticator key**. That is the `otpauth://` link or the code a
+site shows when you turn on two-step sign-in. No link at hand? Click **Read QR
+image** and pick a screenshot of the QR code. Your browser reads the image. It is
+never uploaded.
+
+Keepiq stores the key as the additional field `totp`, inside the same encrypted
+blob. The server sees ciphertext only, as with the login's password. Older items
+with a field called `otp` or `otpauth` work as well. The next save moves that
+value to `totp`.
+
+The login's detail panel then shows the current six-digit code and a countdown.
+The key itself is not listed among the additional fields. The browser extension
+fills and copies the code of the login it just filled. Two logins for one site
+each get their own code.
+
+**Keeping both factors in one item is a trade-off.** Anyone who unlocks your
+vault then has the password and the code. If you want the second factor apart,
+keep it in a separate Authenticator item instead. The extension uses that item
+when a login has no key of its own.
+
+To start, open a login you protect with an authenticator app and add its key.
+
 ## Reference
 
 - [Architecture & data model](./ARCHITECTURE.md) — where `additional_fields` sits on the Secret.

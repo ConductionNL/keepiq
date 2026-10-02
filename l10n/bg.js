@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Етикет",
         "Remove tag": "Премахване на етикет",
         "Add tag": "Добавяне на етикет",
-        "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново."
+        "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново.",
+        "Authenticator key (optional)": "Ключ за удостоверяване (по избор)",
+        "Read QR image": "Прочитане на QR изображение",
+        "QR image": "QR изображение",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Поставете otpauth връзката или ключа, който сайтът показва, когато включите влизане в две стъпки. Съхраняването му тук слага двата фактора в един елемент.",
+        "No QR code was found in that image.": "В това изображение не е намерен QR код."
     },
     "nplurals=2; plural=(n != 1);"
 )

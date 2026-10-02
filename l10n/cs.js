@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Štítek",
         "Remove tag": "Odebrat štítek",
         "Add tag": "Přidat štítek",
-        "Could not change the tags. Try again.": "Štítky nelze změnit. Zkuste to znovu."
+        "Could not change the tags. Try again.": "Štítky nelze změnit. Zkuste to znovu.",
+        "Authenticator key (optional)": "Klíč autentizátoru (volitelné)",
+        "Read QR image": "Načíst obrázek QR",
+        "QR image": "Obrázek QR",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Vložte odkaz otpauth nebo klíč, který web zobrazí při zapnutí dvoufázového přihlášení. Uložením sem budou oba faktory v jedné položce.",
+        "No QR code was found in that image.": "V tomto obrázku nebyl nalezen žádný QR kód."
     },
     "nplurals=2; plural=(n != 1);"
 )

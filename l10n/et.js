@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Silt",
         "Remove tag": "Eemalda silt",
         "Add tag": "Lisa silt",
-        "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti."
+        "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti.",
+        "Authenticator key (optional)": "Autentimisvõti (valikuline)",
+        "Read QR image": "Loe QR-pilti",
+        "QR image": "QR-pilt",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Kleebi otpauth-link või võti, mida sait kaheastmelise sisselogimise sisselülitamisel näitab. Siin hoides on mõlemad tegurid ühes kirjes.",
+        "No QR code was found in that image.": "Sellelt pildilt ei leitud QR-koodi."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Tagg",
         "Remove tag": "Ta bort tagg",
         "Add tag": "Lägg till tagg",
-        "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen."
+        "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen.",
+        "Authenticator key (optional)": "Autentiseringsnyckel (valfri)",
+        "Read QR image": "Läs QR-bild",
+        "QR image": "QR-bild",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Klistra in otpauth-länken eller nyckeln som webbplatsen visar när du slår på tvåstegsinloggning. Att spara den här lägger båda faktorerna i ett objekt.",
+        "No QR code was found in that image.": "Ingen QR-kod hittades i bilden."
     },
     "nplurals=2; plural=(n != 1);"
 )

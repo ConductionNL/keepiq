@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Merki",
         "Remove tag": "Fjarlægja merki",
         "Add tag": "Bæta við merki",
-        "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur."
+        "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur.",
+        "Authenticator key (optional)": "Auðkenningarlykill (valfrjálst)",
+        "Read QR image": "Lesa QR-mynd",
+        "QR image": "QR-mynd",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Límdu inn otpauth-tengilinn eða lykilinn sem vefurinn sýnir þegar þú kveikir á tveggja þrepa innskráningu. Að geyma hann hér setur báða þættina í eitt atriði.",
+        "No QR code was found in that image.": "Enginn QR-kóði fannst í myndinni."
     },
     "nplurals=2; plural=(n != 1);"
 )

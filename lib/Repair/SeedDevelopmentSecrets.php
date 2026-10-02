@@ -192,6 +192,19 @@ class SeedDevelopmentSecrets implements IRepairStep {
 				'login' => null,
 				'folder' => $personalId,
 			],
+			[
+				// A login with its own authenticator key (vault-login-totp-codes):
+				// the RFC 6238 test seed, not a real account.
+				'name' => 'Example (with one-time code)',
+				'url' => 'https://example.com',
+				'type' => 'login',
+				'key' => 'example-dev-password',
+				'login' => 'dev-user',
+				'folder' => $personalId,
+				'additional' => [
+					'totp' => 'otpauth://totp/Example:dev-user?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Example',
+				],
+			],
 		];
 
 		$count = 0;
@@ -268,6 +281,12 @@ class SeedDevelopmentSecrets implements IRepairStep {
 		}
 
 		$secret->setAdditionalFields(null);
+		if (($spec['additional'] ?? []) !== []) {
+			$secret->setAdditionalFields(
+				$this->encryptService->rsaEncrypt((string)json_encode($spec['additional']), $certificate)
+			);
+		}
+
 		$secret->setEncryptionSuiteId($suiteId);
 		$secret->setOwnerType('user');
 		$secret->setOwnerId(self::DEV_USER_ID);

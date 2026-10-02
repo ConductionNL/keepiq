@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Ετικέτα",
         "Remove tag": "Αφαίρεση ετικέτας",
         "Add tag": "Προσθήκη ετικέτας",
-        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά."
+        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά.",
+        "Authenticator key (optional)": "Κλειδί επαλήθευσης (προαιρετικό)",
+        "Read QR image": "Ανάγνωση εικόνας QR",
+        "QR image": "Εικόνα QR",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Επικολλήστε τον σύνδεσμο otpauth ή το κλειδί που δείχνει ο ιστότοπος όταν ενεργοποιείτε τη σύνδεση σε δύο βήματα. Η φύλαξή του εδώ βάζει και τους δύο παράγοντες σε ένα στοιχείο.",
+        "No QR code was found in that image.": "Δεν βρέθηκε κωδικός QR σε αυτή την εικόνα."
     },
     "nplurals=2; plural=(n != 1);"
 )

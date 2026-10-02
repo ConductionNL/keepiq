@@ -1265,7 +1265,12 @@
         "Tag": "Címke",
         "Remove tag": "Címke eltávolítása",
         "Add tag": "Címke hozzáadása",
-        "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra."
+        "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra.",
+        "Authenticator key (optional)": "Hitelesítő kulcs (nem kötelező)",
+        "Read QR image": "QR-kép beolvasása",
+        "QR image": "QR-kép",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Illessze be az otpauth hivatkozást vagy a kulcsot, amelyet a webhely a kétlépcsős bejelentkezés bekapcsolásakor mutat. Ha itt tárolja, mindkét tényező egy elemben lesz.",
+        "No QR code was found in that image.": "Ezen a képen nem található QR-kód."
     },
     "plurals": null
 }

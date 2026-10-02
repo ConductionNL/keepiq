@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Žymė",
         "Remove tag": "Pašalinti žymę",
         "Add tag": "Pridėti žymę",
-        "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą."
+        "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą.",
+        "Authenticator key (optional)": "Autentifikatoriaus raktas (neprivaloma)",
+        "Read QR image": "Nuskaityti QR vaizdą",
+        "QR image": "QR vaizdas",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Įklijuokite otpauth nuorodą arba raktą, kurį svetainė rodo įjungiant dviejų veiksmų prisijungimą. Laikant jį čia abu veiksniai yra viename įraše.",
+        "No QR code was found in that image.": "Tame vaizde QR kodas nerastas."
     },
     "nplurals=2; plural=(n != 1);"
 )

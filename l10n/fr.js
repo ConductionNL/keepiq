@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Étiquette",
         "Remove tag": "Retirer l'étiquette",
         "Add tag": "Ajouter une étiquette",
-        "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez."
+        "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez.",
+        "Authenticator key (optional)": "Clé d'authentification (facultatif)",
+        "Read QR image": "Lire une image QR",
+        "QR image": "Image QR",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Collez le lien otpauth ou la clé que le site affiche lorsque vous activez la connexion en deux étapes. La garder ici met les deux facteurs dans un seul élément.",
+        "No QR code was found in that image.": "Aucun code QR n'a été trouvé dans cette image."
     },
     "nplurals=2; plural=(n != 1);"
 )

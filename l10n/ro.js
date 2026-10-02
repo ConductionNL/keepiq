@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Etichetă",
         "Remove tag": "Elimină eticheta",
         "Add tag": "Adaugă etichetă",
-        "Could not change the tags. Try again.": "Etichetele nu au putut fi schimbate. Încercați din nou."
+        "Could not change the tags. Try again.": "Etichetele nu au putut fi schimbate. Încercați din nou.",
+        "Authenticator key (optional)": "Cheie de autentificare (opțional)",
+        "Read QR image": "Citește imaginea QR",
+        "QR image": "Imagine QR",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Lipiți linkul otpauth sau cheia afișată de site când activați autentificarea în doi pași. Păstrarea ei aici pune ambii factori într-un singur element.",
+        "No QR code was found in that image.": "Nu a fost găsit niciun cod QR în acea imagine."
     },
     "nplurals=2; plural=(n != 1);"
 )

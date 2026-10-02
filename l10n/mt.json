@@ -1265,7 +1265,12 @@
         "Tag": "Tikketta",
         "Remove tag": "Neħħi t-tikketta",
         "Add tag": "Żid tikketta",
-        "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova."
+        "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova.",
+        "Authenticator key (optional)": "Ċavetta tal-awtentikatur (mhux obbligatorja)",
+        "Read QR image": "Aqra immaġni QR",
+        "QR image": "Immaġni QR",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Waħħal il-link otpauth jew iċ-ċavetta li juri s-sit meta tixgħel id-dħul f'żewġ passi. Iżżommha hawn tqiegħed iż-żewġ fatturi f'oġġett wieħed.",
+        "No QR code was found in that image.": "Ma nstab l-ebda kodiċi QR f'dik l-immaġni."
     },
     "plurals": null
 }

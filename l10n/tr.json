@@ -1265,7 +1265,12 @@
         "Tag": "Etiket",
         "Remove tag": "Etiketi kaldır",
         "Add tag": "Etiket ekle",
-        "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin."
+        "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin.",
+        "Authenticator key (optional)": "Kimlik doğrulayıcı anahtarı (isteğe bağlı)",
+        "Read QR image": "QR görselini oku",
+        "QR image": "QR görseli",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Sitenin iki adımlı oturum açmayı açtığınızda gösterdiği otpauth bağlantısını veya anahtarı yapıştırın. Burada saklamak iki faktörü tek öğede tutar.",
+        "No QR code was found in that image.": "Bu görselde QR kodu bulunamadı."
     },
     "plurals": null
 }

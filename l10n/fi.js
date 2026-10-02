@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Tunniste",
         "Remove tag": "Poista tunniste",
         "Add tag": "Lisää tunniste",
-        "Could not change the tags. Try again.": "Tunnisteita ei voitu muuttaa. Yritä uudelleen."
+        "Could not change the tags. Try again.": "Tunnisteita ei voitu muuttaa. Yritä uudelleen.",
+        "Authenticator key (optional)": "Todennusavain (valinnainen)",
+        "Read QR image": "Lue QR-kuva",
+        "QR image": "QR-kuva",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Liitä otpauth-linkki tai avain, jonka sivusto näyttää, kun otat kaksivaiheisen kirjautumisen käyttöön. Tänne tallennettuna molemmat tekijät ovat samassa kohteessa.",
+        "No QR code was found in that image.": "Kuvasta ei löytynyt QR-koodia."
     },
     "nplurals=2; plural=(n != 1);"
 )

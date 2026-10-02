@@ -1265,7 +1265,12 @@
         "Tag": "Tag",
         "Remove tag": "Tag ewechhuelen",
         "Add tag": "Tag derbäisetzen",
-        "Could not change the tags. Try again.": "D'Tags konnten net geännert ginn. Probéiert nach eng Kéier."
+        "Could not change the tags. Try again.": "D'Tags konnten net geännert ginn. Probéiert nach eng Kéier.",
+        "Authenticator key (optional)": "Authenticator-Schlëssel (optional)",
+        "Read QR image": "QR-Bild liesen",
+        "QR image": "QR-Bild",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Fügt den otpauth-Link oder de Schlëssel an, deen de Site weist, wann Dir d'Umeldung an zwee Schrëtt aschalt. Hei gespäichert leien déi zwee Facteuren an engem Element.",
+        "No QR code was found in that image.": "An deem Bild gouf kee QR-Code fonnt."
     },
     "plurals": null
 }

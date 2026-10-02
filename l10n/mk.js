@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Ознака",
         "Remove tag": "Отстрани ознака",
         "Add tag": "Додај ознака",
-        "Could not change the tags. Try again.": "Ознаките не можеа да се променат. Обидете се повторно."
+        "Could not change the tags. Try again.": "Ознаките не можеа да се променат. Обидете се повторно.",
+        "Authenticator key (optional)": "Клуч за автентикатор (опционално)",
+        "Read QR image": "Прочитај QR слика",
+        "QR image": "QR слика",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Залепете ја otpauth врската или клучот што страницата го прикажува кога ќе вклучите најава во два чекора. Чувањето тука ги става двата фактори во една ставка.",
+        "No QR code was found in that image.": "Во таа слика не е пронајден QR код."
     },
     "nplurals=2; plural=(n != 1);"
 )

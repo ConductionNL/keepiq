@@ -1265,7 +1265,12 @@
         "Tag": "Clib",
         "Remove tag": "Bain an chlib",
         "Add tag": "Cuir clib leis",
-        "Could not change the tags. Try again.": "Níorbh fhéidir na clibeanna a athrú. Bain triail eile as."
+        "Could not change the tags. Try again.": "Níorbh fhéidir na clibeanna a athrú. Bain triail eile as.",
+        "Authenticator key (optional)": "Eochair fíordheimhnitheora (roghnach)",
+        "Read QR image": "Léigh íomhá QR",
+        "QR image": "Íomhá QR",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Greamaigh an nasc otpauth nó an eochair a thaispeánann an suíomh nuair a chasann tú síniú isteach dhá chéim air. Má choinnítear anseo í, bíonn an dá fhachtóir in aon mhír amháin.",
+        "No QR code was found in that image.": "Níor aimsíodh cód QR san íomhá sin."
     },
     "plurals": null
 }

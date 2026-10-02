@@ -1265,7 +1265,12 @@
         "Tag": "Tag",
         "Remove tag": "Remove tag",
         "Add tag": "Add tag",
-        "Could not change the tags. Try again.": "Could not change the tags. Try again."
+        "Could not change the tags. Try again.": "Could not change the tags. Try again.",
+        "Authenticator key (optional)": "Authenticator key (optional)",
+        "Read QR image": "Read QR image",
+        "QR image": "QR image",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.",
+        "No QR code was found in that image.": "No QR code was found in that image."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Mærke",
         "Remove tag": "Fjern mærke",
         "Add tag": "Tilføj mærke",
-        "Could not change the tags. Try again.": "Mærkerne kunne ikke ændres. Prøv igen."
+        "Could not change the tags. Try again.": "Mærkerne kunne ikke ændres. Prøv igen.",
+        "Authenticator key (optional)": "Godkendelsesnøgle (valgfri)",
+        "Read QR image": "Læs QR-billede",
+        "QR image": "QR-billede",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Indsæt otpauth-linket eller nøglen, som siden viser, når du slår totrinslogin til. At gemme den her lægger begge faktorer i ét element.",
+        "No QR code was found in that image.": "Der blev ikke fundet nogen QR-kode i billedet."
     },
     "nplurals=2; plural=(n != 1);"
 )

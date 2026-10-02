@@ -1270,7 +1270,12 @@
         "Tag": "Label",
         "Remove tag": "Label verwijderen",
         "Add tag": "Label toevoegen",
-        "Could not change the tags. Try again.": "Kon de labels niet wijzigen. Probeer het opnieuw."
+        "Could not change the tags. Try again.": "Kon de labels niet wijzigen. Probeer het opnieuw.",
+        "Authenticator key (optional)": "Authenticatorsleutel (optioneel)",
+        "Read QR image": "QR-afbeelding lezen",
+        "QR image": "QR-afbeelding",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Plak de otpauth-link of de sleutel die de site toont als je verificatie in twee stappen aanzet. Hier bewaren zet beide factoren in één item.",
+        "No QR code was found in that image.": "Er is geen QR-code gevonden in die afbeelding."
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"

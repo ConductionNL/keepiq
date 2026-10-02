@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Etikett",
         "Remove tag": "Fjern etikett",
         "Add tag": "Legg til etikett",
-        "Could not change the tags. Try again.": "Kunne ikke endre etikettene. Prøv igjen."
+        "Could not change the tags. Try again.": "Kunne ikke endre etikettene. Prøv igjen.",
+        "Authenticator key (optional)": "Autentiseringsnøkkel (valgfri)",
+        "Read QR image": "Les QR-bilde",
+        "QR image": "QR-bilde",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Lim inn otpauth-lenken eller nøkkelen nettstedet viser når du slår på totrinnspålogging. Å lagre den her legger begge faktorene i ett element.",
+        "No QR code was found in that image.": "Fant ingen QR-kode i bildet."
     },
     "nplurals=2; plural=(n != 1);"
 )

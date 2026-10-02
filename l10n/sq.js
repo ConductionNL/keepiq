@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Etiketë",
         "Remove tag": "Hiq etiketën",
         "Add tag": "Shto etiketë",
-        "Could not change the tags. Try again.": "Etiketat nuk u ndryshuan dot. Provoni sërish."
+        "Could not change the tags. Try again.": "Etiketat nuk u ndryshuan dot. Provoni sërish.",
+        "Authenticator key (optional)": "Çelësi i vërtetuesit (opsional)",
+        "Read QR image": "Lexo imazhin QR",
+        "QR image": "Imazh QR",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Ngjitni lidhjen otpauth ose çelësin që shfaq faqja kur aktivizoni hyrjen me dy hapa. Ruajtja këtu i vendos të dy faktorët në një element.",
+        "No QR code was found in that image.": "Në atë imazh nuk u gjet asnjë kod QR."
     },
     "nplurals=2; plural=(n != 1);"
 )

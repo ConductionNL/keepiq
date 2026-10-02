@@ -1266,7 +1266,12 @@ OC.L10N.register(
         "Tag": "Etichetta",
         "Remove tag": "Allontanar l'etichetta",
         "Add tag": "Agiuntar ina etichetta",
-        "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada."
+        "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada.",
+        "Authenticator key (optional)": "Clav d'autentificaziun (facultativ)",
+        "Read QR image": "Leger in maletg QR",
+        "QR image": "Maletg QR",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Encollai la colliaziun otpauth u la clav che la pagina mussa cura che Vus activais l'annunzia en dus pass. Tegnair ella qua metta omadus facturs en in element.",
+        "No QR code was found in that image.": "Nagin code QR chattà en quest maletg."
     },
     "nplurals=2; plural=(n != 1);"
 )

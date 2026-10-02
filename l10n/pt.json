@@ -1265,7 +1265,12 @@
         "Tag": "Etiqueta",
         "Remove tag": "Remover etiqueta",
         "Add tag": "Adicionar etiqueta",
-        "Could not change the tags. Try again.": "Não foi possível alterar as etiquetas. Tente novamente."
+        "Could not change the tags. Try again.": "Não foi possível alterar as etiquetas. Tente novamente.",
+        "Authenticator key (optional)": "Chave do autenticador (opcional)",
+        "Read QR image": "Ler imagem QR",
+        "QR image": "Imagem QR",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Cole a ligação otpauth ou a chave que o site mostra quando ativa o início de sessão em dois passos. Guardá-la aqui coloca ambos os fatores num só item.",
+        "No QR code was found in that image.": "Não foi encontrado nenhum código QR nessa imagem."
     },
     "plurals": null
 }

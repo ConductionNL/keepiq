@@ -1265,7 +1265,12 @@
         "Tag": "Birka",
         "Remove tag": "Noņemt birku",
         "Add tag": "Pievienot birku",
-        "Could not change the tags. Try again.": "Neizdevās mainīt birkas. Mēģiniet vēlreiz."
+        "Could not change the tags. Try again.": "Neizdevās mainīt birkas. Mēģiniet vēlreiz.",
+        "Authenticator key (optional)": "Autentifikatora atslēga (neobligāti)",
+        "Read QR image": "Nolasīt QR attēlu",
+        "QR image": "QR attēls",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Ielīmējiet otpauth saiti vai atslēgu, ko vietne parāda, ieslēdzot divpakāpju pieteikšanos. Glabājot to šeit, abi faktori ir vienā vienumā.",
+        "No QR code was found in that image.": "Attēlā netika atrasts QR kods."
     },
     "plurals": null
 }

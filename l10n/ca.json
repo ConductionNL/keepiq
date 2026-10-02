@@ -1265,7 +1265,12 @@
         "Tag": "Etiqueta",
         "Remove tag": "Treu l'etiqueta",
         "Add tag": "Afegeix una etiqueta",
-        "Could not change the tags. Try again.": "No s'han pogut canviar les etiquetes. Torneu-ho a provar."
+        "Could not change the tags. Try again.": "No s'han pogut canviar les etiquetes. Torneu-ho a provar.",
+        "Authenticator key (optional)": "Clau de l'autenticador (opcional)",
+        "Read QR image": "Llegeix una imatge QR",
+        "QR image": "Imatge QR",
+        "Paste the otpauth link or the key the site shows when you turn on two-step sign-in. Keeping it here puts both factors in one item.": "Enganxeu l'enllaç otpauth o la clau que mostra el lloc en activar l'inici de sessió en dos passos. Desar-la aquí posa els dos factors en un sol element.",
+        "No QR code was found in that image.": "No s'ha trobat cap codi QR en aquesta imatge."
     },
     "plurals": null
 }
