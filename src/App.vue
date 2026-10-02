@@ -152,6 +152,10 @@
 					<DefaultsSection />
 				</NcAppSettingsSection>
 
+				<NcAppSettingsSection id="expiry-rules" :name="t('keepiq', 'Expiry rules')">
+					<ExpiryPoliciesSection />
+				</NcAppSettingsSection>
+
 				<NcAppSettingsSection id="security" :name="t('keepiq', 'Security')">
 					<template #icon>
 						<ShieldIcon :size="20" />
@@ -410,6 +414,7 @@ import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
 import SecretDetailSidebar from './components/SecretDetailSidebar.vue'
 import DefaultsSection from './components/settings/DefaultsSection.vue'
+import ExpiryPoliciesSection from './components/settings/ExpiryPoliciesSection.vue'
 import {
 	handleLockTransition,
 	isPublicRoute,
@@ -449,6 +454,7 @@ export default {
 		TimerIcon,
 		TuneVariantIcon,
 		DefaultsSection,
+		ExpiryPoliciesSection,
 		ShieldIcon,
 		KeyIcon,
 		// PuzzleIcon, // browser-extension section, hidden until it ships
