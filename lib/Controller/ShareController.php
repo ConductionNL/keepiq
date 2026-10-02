@@ -23,8 +23,12 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
+use DateTime;
+use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\ShareRestriction;
+use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCA\Keepiq\Service\ShareService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -35,6 +39,9 @@ use OCP\IUserSession;
 
 /**
  * Authenticated API controller for ShareTarget CRUD.
+ *
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) One public method per share
+ *   operation; the use-only change added the restriction update.
  */
 class ShareController extends OCSController {
 	/**
@@ -109,12 +116,18 @@ class ShareController extends OCSController {
 	 * @param string $targetUserId The recipient Nextcloud user ID
 	 * @param string $recipientSecretId The recipient's encrypted Secret copy ID
 	 * @param string|null $groupShareId Optional group-share linkage
+	 * @param bool $useOnly Whether the recipient may only use the value (direct shares)
+	 * @param string|null $expiresAt When the recipient's access ends (ISO 8601, direct shares)
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-9.1
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
+	 *   field the server stores, not a mode switch.
 	 */
 	#[NoAdminRequired]
 	public function create(
@@ -122,6 +135,8 @@ class ShareController extends OCSController {
 		string $targetUserId,
 		string $recipientSecretId,
 		?string $groupShareId = null,
+		bool $useOnly = false,
+		?string $expiresAt = null,
 	): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
@@ -134,7 +149,12 @@ class ShareController extends OCSController {
 				targetUserId: $targetUserId,
 				recipientSecretId: $recipientSecretId,
 				groupShareId: $groupShareId,
-				userId: $user->getUID()
+				userId: $user->getUID(),
+				restriction: (new ShareRestrictionRules())->fromRequest(
+					useOnly: $useOnly,
+					expiresAt: $expiresAt,
+					now: new DateTime('now', new DateTimeZone('UTC'))
+				)
 			);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(
@@ -145,6 +165,54 @@ class ShareController extends OCSController {
 
 		return new JSONResponse(data: $share->jsonSerialize(), statusCode: Http::STATUS_CREATED);
 	}//end create()
+
+	/**
+	 * Change the use-only flag and end date of a direct share. Owner or
+	 * delegate only; the recipient is refused, because the source is not
+	 * theirs.
+	 *
+	 * @param string $id The share-target row ID
+	 * @param bool $useOnly Whether the recipient may only use the value
+	 * @param string|null $expiresAt When the recipient's access ends (ISO 8601, null clears it)
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
+	 *   field the server stores, not a mode switch.
+	 */
+	#[NoAdminRequired]
+	public function update(string $id, bool $useOnly = false, ?string $expiresAt = null): JSONResponse {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$restriction = (new ShareRestrictionRules())->fromRequest(
+				useOnly: $useOnly,
+				expiresAt: $expiresAt,
+				now: new DateTime('now', new DateTimeZone('UTC'))
+			);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$share = $this->shareService->updateRestriction(
+				shareId: $id,
+				restriction: $restriction,
+				userId: $user->getUID()
+			);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+		}
+
+		return new JSONResponse(data: $share->jsonSerialize());
+	}//end update()
 
 	/**
 	 * Revoke a share target.

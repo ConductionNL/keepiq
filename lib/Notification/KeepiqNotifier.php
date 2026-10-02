@@ -114,6 +114,7 @@ class KeepiqNotifier implements INotifier {
 			fn (): bool => $this->renderEmergencySubject(notification: $notification, subject: $subj, params: $params, l: $l),
 			fn (): bool => $this->renderDeviceApprovalSubject(notification: $notification, subject: $subj, params: $params, l: $l),
 			fn (): bool => $this->renderRecoverySubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderAccessEndSubject(notification: $notification, subject: $subj, params: $params, l: $l),
 		];
 		foreach ($renderers as $render) {
 			if ($render() === true) {
@@ -267,6 +268,47 @@ class KeepiqNotifier implements INotifier {
 
 		return true;
 	}//end renderDeviceApprovalSubject()
+
+	/**
+	 * Render the end-of-access subjects of shares that end by themselves
+	 * (sharing-use-only-and-expiring-shares D6).
+	 *
+	 * @param INotification $notification The notification to mutate
+	 * @param string $subject The notification subject identifier
+	 * @param array<string,mixed> $params The subject parameters
+	 * @param IL10N $l The localisation helper
+	 *
+	 * @return bool True when this renderer recognised the subject.
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-people-are-told-before-and-when-access-ends
+	 */
+	private function renderAccessEndSubject(INotification $notification, string $subject, array $params, IL10N $l): bool {
+		$secretName = (string)($params['secret_name'] ?? $l->t('a secret'));
+		switch ($subject) {
+			case 'share_access_ending':
+				$notification->setParsedSubject((string)$l->t('Your access to "%s" ends tomorrow', [$secretName]));
+				$this->withSecretLink(notification: $notification, params: $params);
+				return true;
+			case 'share_access_ended':
+				$notification->setParsedSubject((string)$l->t('Your access to "%s" has ended', [$secretName]));
+				return true;
+			case 'share_access_ended_owner':
+				$recipient = (string)($params['recipient'] ?? $l->t('a user'));
+				$notification->setParsedSubject(
+					(string)$l->t('%1$s no longer has access to "%2$s"', [$recipient, $secretName])
+				);
+				$message = (string)$l->t('%1$s could see this password. Rotate it if %1$s should no longer know it.', [$recipient]);
+				if (($params['use_only'] ?? false) === true) {
+					$message = (string)$l->t('%s could not view this password in Keepiq.', [$recipient]);
+				}
+
+				$notification->setParsedMessage($message);
+				$this->withSecretLink(notification: $notification, params: $params);
+				return true;
+		}//end switch
+
+		return false;
+	}//end renderAccessEndSubject()
 
 	/**
 	 * Render the secret-lifecycle subjects. All of them deep-link to a secret.
