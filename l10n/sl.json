@@ -1601,7 +1601,31 @@
             "Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun.",
             "Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun.",
             "Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun."
-        ]
+        ],
+        "Allow approval from another device": "Dovoli odobritev z druge naprave",
+        "App": "Aplikacija",
+        "Approve a new device": "Odobri novo napravo",
+        "Approve from another device": "Odobri z druge naprave",
+        "Asked at": "Zahtevano ob",
+        "Check that the new device shows these words:": "Preverite, ali nova naprava prikazuje te besede:",
+        "Denied. If you did not ask, end your other sessions:": "Zavrnjeno. Če tega niste zahtevali, končajte druge seje:",
+        "Device": "Naprava",
+        "IP address": "IP-naslov",
+        "Let users unlock a new browser by approving it from a device where Keepiq is already unlocked.": "Uporabnikom omogoči odklepanje novega brskalnika z odobritvijo z naprave, na kateri je Keepiq že odklenjen.",
+        "New device approval": "Odobritev novih naprav",
+        "Nextcloud security settings": "Varnostne nastavitve Nextcloud",
+        "Only approve a device you are using right now.": "Odobrite samo napravo, ki jo uporabljate prav zdaj.",
+        "Open Keepiq on a device where it is unlocked and approve this one. Check that it shows the same words:": "Odprite Keepiq na napravi, na kateri je odklenjen, in odobrite to napravo. Preverite, ali prikazuje enake besede:",
+        "The approving device seals the unlock key to the new device. The server only passes it on and cannot open it.": "Naprava, ki odobri, zapečati ključ za odklepanje za novo napravo. Strežnik ga le posreduje in ga ne more odpreti.",
+        "The master password is not right, or the request has ended.": "Glavno geslo ni pravilno ali pa se je zahteva končala.",
+        "The request expired. Ask again or use your master password.": "Zahteva je potekla. Zahtevajte znova ali uporabite glavno geslo.",
+        "The request was denied.": "Zahteva je bila zavrnjena.",
+        "Too many requests. Try again in an hour or use your master password.": "Preveč zahtev. Poskusite znova čez eno uro ali uporabite glavno geslo.",
+        "Unknown device": "Neznana naprava",
+        "Web app": "Spletna aplikacija",
+        "A device": "Naprava",
+        "A new device asks to open your vault": "Nova naprava želi odpreti vaš trezor",
+        "%s asks to be approved. Only approve a device you are using right now.": "%s prosi za odobritev. Odobrite samo napravo, ki jo uporabljate prav zdaj."
     },
     "plurals": null
 }
