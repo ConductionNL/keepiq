@@ -38,6 +38,13 @@ use OCP\Notification\UnknownNotificationException;
  * The subject IDs here must match NotificationService::SUBJECT_SETTING_MAP.
  * Each branch builds a short subject line, a longer message line and a
  * deep-link the user clicks to land on the affected secret / queue.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) 50 against a threshold of
+ *   50. Nextcloud registers one INotifier per app, so every Keepiq subject
+ *   renders here; the complexity is the sum of about twenty small branches,
+ *   already split per subject group. The share-request and group-member
+ *   approval actions (keepiq#747) pushed it to the threshold. Splitting the
+ *   class would only move branches into a second class this one calls.
  */
 class KeepiqNotifier implements INotifier {
 	/**
