@@ -3976,7 +3976,7 @@
       "id": "apps-17",
       "area": "apps",
       "name": "Inject secrets into a Kubernetes cluster.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -3984,11 +3984,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/apps-kubernetes-injection on 2026-09-27. Before: grep -rli 'kubernetes|k8s|helm' lib src cli browser-extension: no hits",
-        "note": "No Kubernetes secret injection (operator, CSI driver, sidecar) exists; keepiq's machine surface is a plain HTTP+JWT API a cluster could call itself, but nothing ships to do that integration.",
+        "state": "built",
+        "evidence": "integrations/kubernetes: controller-runtime operator (KeepiqConnection, KeepiqSecret CRDs), Helm chart with namespaced RBAC, no-Secret recipe via keepiq install + keepiq ci run; envtest suite (CRD validation, sync, rotation restart, 404/409/token/fingerprint reasons, leases) green; helm lint and template snapshots green",
         "owner": "ConductionNL/keepiq",
-        "change": "openspec/changes/apps-kubernetes-injection"
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/apps-kubernetes-injection (stacked on #914). Owed: kind test and release workflow in CI, the first k8s-v* release, and the live sync against the dev instance.",
+        "change": "openspec/changes/archive/2026-10-02-apps-kubernetes-injection"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
