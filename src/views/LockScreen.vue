@@ -283,6 +283,9 @@
 								: t('keepiq', 'Unlock')
 						}}
 					</NcButton>
+					<DeviceApprovalRequest
+						v-if="deviceApprovalOffered"
+						@unlocked="onApprovedUnlock" />
 				</template>
 			</template>
 		</div>
@@ -294,7 +297,9 @@ import { NcButton, NcLoadingIcon, NcNoteCard, NcPasswordField } from '@nextcloud
 import KeyIcon from 'vue-material-design-icons/Key.vue'
 import LockIcon from 'vue-material-design-icons/Lock.vue'
 import LockOpenVariantIcon from 'vue-material-design-icons/LockOpenVariant.vue'
+import DeviceApprovalRequest from '../components/DeviceApprovalRequest.vue'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
+import { useDeviceApprovalStore } from '../store/modules/deviceApproval.js'
 import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { usePasskeyStore } from '../store/modules/passkey.js'
@@ -364,6 +369,7 @@ export default {
 		LockOpenVariantIcon,
 		KeyIcon,
 		PasswordStrengthMeter,
+		DeviceApprovalRequest,
 	},
 
 	data() {
@@ -374,6 +380,8 @@ export default {
 			error: null,
 			strengthValid: false,
 			passkeyOffered: false,
+			/** Whether "Approve from another device" is offered (admin switch, online). */
+			deviceApprovalOffered: false,
 			/**
 			 * Suite-check state machine: 'pending' (spinner, no form),
 			 * 'resolved' (server answered — setup or unlock is now KNOWN),
@@ -658,10 +666,25 @@ export default {
 				// never assumed).
 				if (this.offlineStore.online) {
 					this.passkeyOffered = await usePasskeyStore().isUnlockOffered()
+					this.deviceApprovalOffered =
+						await useDeviceApprovalStore().fetchStatus()
 				}
 			} catch {
 				// Best-effort extras — the unlock/setup form still renders.
 			}
+		},
+
+		/**
+		 * Another device approved this one and the session is unlocked
+		 * (crypto-new-device-approval D4): continue as after any unlock.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+		 */
+		async onApprovedUnlock() {
+			const returnUrl = this.$route.query.returnUrl || '/'
+			await this.playUnlockAnimation()
+			this.$router.push(returnUrl)
 		},
 
 		/**
