@@ -1397,7 +1397,25 @@ OC.L10N.register(
         "5 minutes": "5 minūtes",
         "15 minutes": "15 minūtes",
         "1 hour": "1 stunda",
-        "4 hours": "4 stundas"
+        "4 hours": "4 stundas",
+        "Connector": "Savienotājs",
+        "Directory (tenant) ID": "Direktorija (nomnieka) ID",
+        "Application (client) ID": "Lietotnes (klienta) ID",
+        "Data collection rule immutable ID": "Datu vākšanas kārtulas nemainīgais ID",
+        "Stream name": "Straumes nosaukums",
+        "Splunk index (optional)": "Splunk indekss (neobligāts)",
+        "Sourcetype (optional)": "Sourcetype (neobligāts)",
+        "Leave blank to keep the current one": "Atstājiet tukšu, lai saglabātu pašreizējo",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF caur syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Datu vākšanas galapunkts (https URL)",
+        "HTTP Event Collector URL (https)": "HTTP Event Collector URL (https)",
+        "Client secret (write-only)": "Klienta noslēpums (tikai rakstīšanai)",
+        "HEC token (write-only)": "HEC marķieris (tikai rakstīšanai)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Pārsūtiet atļautos audita notikumus uz Splunk, Microsoft Sentinel, syslog uztvērēju vai tīmekļa aizķeri. Ziņojumos ir tikai attīrīti metadati: neviena slepena vērtība, vārds, pieteikšanās vai šifrēts teksts nekad neatstāj serveri."
     },
     "nplurals=2; plural=(n != 1);"
 )

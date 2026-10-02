@@ -1397,7 +1397,25 @@ OC.L10N.register(
         "5 minutes": "5 минут",
         "15 minutes": "15 минут",
         "1 hour": "1 час",
-        "4 hours": "4 часа"
+        "4 hours": "4 часа",
+        "Connector": "Коннектор",
+        "Directory (tenant) ID": "ИД каталога (клиента)",
+        "Application (client) ID": "ИД приложения (клиента)",
+        "Data collection rule immutable ID": "Неизменяемый ИД правила сбора данных",
+        "Stream name": "Имя потока",
+        "Splunk index (optional)": "Индекс Splunk (необязательно)",
+        "Sourcetype (optional)": "Sourcetype (необязательно)",
+        "Leave blank to keep the current one": "Оставьте пустым, чтобы сохранить текущее значение",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF через syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Конечная точка сбора данных (https URL)",
+        "HTTP Event Collector URL (https)": "URL HTTP Event Collector (https)",
+        "Client secret (write-only)": "Секрет клиента (только запись)",
+        "HEC token (write-only)": "Токен HEC (только запись)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Пересылайте разрешённые события аудита в Splunk, Microsoft Sentinel, приёмник syslog или веб-хук. Сообщения содержат только очищенные метаданные: никакое секретное значение, имя, логин или шифротекст никогда не покидает сервер."
     },
     "nplurals=2; plural=(n != 1);"
 )
