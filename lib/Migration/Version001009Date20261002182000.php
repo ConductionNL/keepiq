@@ -33,7 +33,7 @@ use OCP\Migration\SimpleMigrationStep;
  *
  * @spec openspec/changes/crypto-new-device-approval/tasks.md#task-1.1
  */
-class Version001005Date20261002163000 extends SimpleMigrationStep {
+class Version001009Date20261002182000 extends SimpleMigrationStep {
 
 	/**
 	 * Create the table when it is missing.
