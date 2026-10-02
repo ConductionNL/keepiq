@@ -110,7 +110,13 @@ class SecretUpdateController extends OCSController {
 		} catch (NotFoundException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (ForbiddenException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+			// A vault policy refusal carries its code (admin-vault-policies D4).
+			$body = ['message' => $e->getMessage()];
+			if ($e->policyCode() !== null) {
+				$body['code'] = $e->policyCode();
+			}
+
+			return new JSONResponse(data: $body, statusCode: Http::STATUS_FORBIDDEN);
 		} catch (WriteLockedException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: self::STATUS_LOCKED);
 		} catch (InvalidArgumentException $e) {

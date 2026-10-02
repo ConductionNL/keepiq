@@ -55,6 +55,13 @@ class OfflineControllerTest extends TestCase {
 	private IUserSession&MockObject $userSession;
 
 	/**
+	 * Whether the two-factor gate blocks alice (no provider, policy on).
+	 *
+	 * @var bool
+	 */
+	private bool $twoFactorBlocks = false;
+
+	/**
 	 * Build the controller over mocked mappers.
 	 *
 	 * The snapshot assembler is the REAL OfflineManifestService wrapped around
@@ -84,6 +91,7 @@ class OfflineControllerTest extends TestCase {
 				secretMapper: $this->secretMapper,
 				folderMapper: $this->folderMapper,
 				typeMapper: $this->typeMapper,
+				twoFactor: $this->twoFactorGate(),
 			),
 			appConfig: $this->appConfig,
 			userSession: $this->userSession,
@@ -179,6 +187,7 @@ class OfflineControllerTest extends TestCase {
 					secretMapper: $this->secretMapper,
 					folderMapper: $this->folderMapper,
 					typeMapper: $this->typeMapper,
+					twoFactor: $this->twoFactorGate(),
 				),
 				appConfig: $appConfig,
 				userSession: $this->userSession,
@@ -187,4 +196,45 @@ class OfflineControllerTest extends TestCase {
 			$this->assertSame($expected, $controller->manifest()->getData()['offlineEditsEnabled']);
 		}
 	}//end testManifestCarriesTheOfflineEditsRule()
+
+	/**
+	 * A REAL TwoFactorGate whose policy applies when $twoFactorBlocks is
+	 * set; alice has no provider enabled.
+	 *
+	 * @return \OCA\Keepiq\Service\TwoFactorGate
+	 */
+	private function twoFactorGate(): \OCA\Keepiq\Service\TwoFactorGate {
+		$policies = $this->createMock(\OCA\Keepiq\Service\VaultPolicyService::class);
+		$policies->method('appliesTo')->willReturnCallback(fn (): bool => $this->twoFactorBlocks);
+		$registry = $this->createMock(\OCP\Authentication\TwoFactorAuth\IRegistry::class);
+		$registry->method('getProviderStates')->willReturn(['backup_codes' => true]);
+		$userManager = $this->createMock(\OCP\IUserManager::class);
+		$userManager->method('get')->willReturn($this->createMock(IUser::class));
+
+		return new \OCA\Keepiq\Service\TwoFactorGate(policies: $policies, registry: $registry, userManager: $userManager);
+	}//end twoFactorGate()
+
+	/**
+	 * admin-vault-policies §3.2: the manifest leaves the suite out and says
+	 * why, so no offline unlock is possible either.
+	 *
+	 * @return void
+	 */
+	public function testTwoFactorPolicyLeavesTheSuiteOut(): void {
+		$this->twoFactorBlocks = true;
+		$this->appConfig->method('getValueBool')->willReturn(true);
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setPrivateKey('ENVELOPE-BLOB');
+		$this->suiteMapper->method('findActiveByOwner')->willReturn($suite);
+		$this->secretMapper->method('findByOwner')->willReturn([]);
+		$this->folderMapper->method('findByOwner')->willReturn([]);
+		$this->typeMapper->method('findAvailableForUser')->willReturn([]);
+
+		$data = $this->controller->manifest()->getData();
+
+		$this->assertNull($data['suite']);
+		$this->assertSame('two_factor_required', $data['unlockBlocked']);
+		$this->assertStringNotContainsString('ENVELOPE-BLOB', (string)json_encode($data));
+	}//end testTwoFactorPolicyLeavesTheSuiteOut()
 }//end class

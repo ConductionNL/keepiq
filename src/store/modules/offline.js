@@ -173,6 +173,7 @@ export const useOfflineStore = defineStore('offline', {
 		 *
 		 * @return {Promise<boolean>} Whether a snapshot was written.
 		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
+		 * @spec openspec/changes/admin-vault-policies/tasks.md#3.3
 		 */
 		async syncNow() {
 			this.ensureLockHook()
@@ -190,6 +191,12 @@ export const useOfflineStore = defineStore('offline', {
 				const response = await axios.get(
 					generateUrl('/apps/keepiq/api/v1/offline/manifest'),
 				)
+				// The two-factor vault policy leaves the suite out: drop any
+				// stored snapshot so it cannot open offline either.
+				if (response.data?.unlockBlocked) {
+					await purge().catch(() => {})
+					return false
+				}
 				const snapshot = await encryptSnapshot(session.aesKey, response.data)
 				const written = await writeSnapshot(snapshot)
 				if (written) {

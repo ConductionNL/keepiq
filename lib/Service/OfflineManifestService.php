@@ -55,6 +55,7 @@ class OfflineManifestService {
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param FolderMapper $folderMapper The folder mapper
 	 * @param SecretTypeMapper $typeMapper The secret type mapper
+	 * @param TwoFactorGate $twoFactor The two-factor vault policy
 	 *
 	 * @return void
 	 */
@@ -63,6 +64,7 @@ class OfflineManifestService {
 		private SecretMapper $secretMapper,
 		private FolderMapper $folderMapper,
 		private SecretTypeMapper $typeMapper,
+		private TwoFactorGate $twoFactor,
 	) {
 	}//end __construct()
 
@@ -84,9 +86,19 @@ class OfflineManifestService {
 	 *                               than no snapshot at all.
 	 *
 	 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#3.2
 	 */
 	public function buildForUser(string $userId): array {
 		$suite = $this->suiteMapper->findActiveByOwner('user', $userId)->jsonSerialize();
+
+		// The two-factor policy leaves the suite out, so an offline unlock
+		// is impossible too; the browser drops its snapshot on the signal
+		// (admin-vault-policies D3).
+		$unlockBlocked = null;
+		if ($this->twoFactor->blocks(userId: $userId) === true) {
+			$suite = null;
+			$unlockBlocked = TwoFactorGate::CODE;
+		}
 
 		$secrets = array_map(
 			static fn (Secret $secret) => $secret->jsonSerialize(),
@@ -110,6 +122,7 @@ class OfflineManifestService {
 			'folders' => $folders,
 			'types' => $types,
 			'syncedAt' => (new DateTime())->format('c'),
+			'unlockBlocked' => $unlockBlocked,
 		];
 
 	}//end buildForUser()

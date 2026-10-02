@@ -130,6 +130,8 @@ class PasskeyController extends OCSController {
 	 * @param string $label User nickname
 	 * @param string $transports Comma-joined transports
 	 * @param string $aaguid Authenticator model id
+	 * @param string $clientKind web (default) or extension
+	 * @param string $rpId The relying party id (required for an extension credential)
 	 *
 	 * @NoAdminRequired
 	 *
@@ -146,6 +148,8 @@ class PasskeyController extends OCSController {
 		string $label = '',
 		string $transports = '',
 		string $aaguid = '',
+		string $clientKind = 'web',
+		string $rpId = '',
 	): JSONResponse {
 		$uid = $this->uid();
 		if ($uid === null) {
@@ -163,6 +167,8 @@ class PasskeyController extends OCSController {
 					'label' => $label,
 					'transports' => $transports,
 					'aaguid' => $aaguid,
+					'clientKind' => $clientKind,
+					'rpId' => $rpId,
 				],
 			);
 		} catch (InvalidArgumentException $exception) {
@@ -174,7 +180,10 @@ class PasskeyController extends OCSController {
 
 	/**
 	 * The unlock options for the lock screen (active envelopes + salts +
-	 * a fresh challenge; stale/revoked refused).
+	 * a fresh challenge; stale/revoked refused), scoped to the asking client.
+	 *
+	 * @param string $client web (default) or extension
+	 * @param string $rpId The extension's relying party id
 	 *
 	 * @NoAdminRequired
 	 *
@@ -183,13 +192,13 @@ class PasskeyController extends OCSController {
 	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
 	 */
 	#[NoAdminRequired]
-	public function loginOptions(): JSONResponse {
+	public function loginOptions(string $client='web', string $rpId=''): JSONResponse {
 		$uid = $this->uid();
 		if ($uid === null) {
 			return $this->unauth();
 		}
 
-		return new JSONResponse(data: $this->service->loginOptions($uid));
+		return new JSONResponse(data: $this->service->loginOptions(uid: $uid, client: $client, rpId: $rpId));
 	}//end loginOptions()
 
 	/**
