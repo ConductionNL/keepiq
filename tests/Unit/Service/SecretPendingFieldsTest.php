@@ -20,7 +20,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
-use OCA\Keepiq\Controller\SecretController;
+use OCA\Keepiq\Controller\SecretUpdateController;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
@@ -65,9 +65,9 @@ class SecretPendingFieldsTest extends TestCase {
 	/**
 	 * The controller under test, over the real service.
 	 *
-	 * @var SecretController
+	 * @var SecretUpdateController
 	 */
-	private SecretController $controller;
+	private SecretUpdateController $controller;
 
 	/**
 	 * Wire the controller over the real SecretService.
@@ -117,7 +117,7 @@ class SecretPendingFieldsTest extends TestCase {
 		$session->method('getUser')->willReturn($user);
 		$this->request = $this->createMock(IRequest::class);
 
-		$this->controller = new SecretController(
+		$this->controller = new SecretUpdateController(
 			request: $this->request,
 			secretService: $service,
 			userSession: $session,
@@ -132,10 +132,14 @@ class SecretPendingFieldsTest extends TestCase {
 	 */
 	public function testTheOwnersMergedWriteDropsOnlyWhatItMerged(): void {
 		$this->request->method('getParam')->willReturnCallback(
-			static fn (string $name, $default = null) => ($name === 'additionalFields' ? 'MERGED_BLOB' : $default)
+			static fn (string $name, $default = null) => match ($name) {
+				'additionalFields' => 'MERGED_BLOB',
+				'mergedPending' => 1,
+				default => $default,
+			}
 		);
 
-		$response = $this->controller->update(id: 's-1', additionalFields: 'MERGED_BLOB', mergedPending: 1);
+		$response = $this->controller->update(id: 's-1');
 
 		$this->assertSame(200, $response->getStatus());
 		$this->assertSame('MERGED_BLOB', $this->secret->getAdditionalFields());
@@ -152,7 +156,7 @@ class SecretPendingFieldsTest extends TestCase {
 			static fn (string $name, $default = null) => ($name === 'additionalFields' ? 'EDITED_BLOB' : $default)
 		);
 
-		$this->controller->update(id: 's-1', additionalFields: 'EDITED_BLOB');
+		$this->controller->update(id: 's-1');
 
 		$this->assertSame(['FILL_1', 'FILL_2'], $this->secret->pendingAdditionalFieldList());
 	}//end testAnEditWithoutAMergeKeepsThePendingFills()
@@ -164,10 +168,14 @@ class SecretPendingFieldsTest extends TestCase {
 	 */
 	public function testMergingEveryFillClearsTheColumn(): void {
 		$this->request->method('getParam')->willReturnCallback(
-			static fn (string $name, $default = null) => ($name === 'additionalFields' ? 'MERGED_BLOB' : $default)
+			static fn (string $name, $default = null) => match ($name) {
+				'additionalFields' => 'MERGED_BLOB',
+				'mergedPending' => 2,
+				default => $default,
+			}
 		);
 
-		$this->controller->update(id: 's-1', additionalFields: 'MERGED_BLOB', mergedPending: 2);
+		$this->controller->update(id: 's-1');
 
 		$this->assertNull($this->secret->getPendingAdditionalFields());
 		$this->assertSame([], $this->secret->jsonSerialize()['pendingAdditionalFields']);

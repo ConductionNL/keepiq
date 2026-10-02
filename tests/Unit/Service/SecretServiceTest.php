@@ -945,4 +945,59 @@ class SecretServiceTest extends TestCase {
 			writingUserId: 'alice',
 		);
 	}//end testCreateForApplicationRejectsMissingSuite()
+
+	/**
+	 * An update based on an older version changes nothing and reports the
+	 * current row; a matching base or no base updates as before
+	 * (offline-edit-queue).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testUpdateWithAStaleBaseChangesNothing(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stored = $this->makeSecret();
+		$stored->setName('Router');
+		$stored->setUpdatedAt(new \DateTime('2026-10-02T10:00:00+00:00'));
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->expects($this->never())->method('update');
+
+		try {
+			$this->service->update(
+				id: 's-1',
+				data: ['name' => 'Offline name', 'baseUpdatedAt' => '2026-10-01T09:00:00+00:00'],
+				userId: 'alice',
+			);
+			$this->fail('A stale base must be refused');
+		} catch (\OCA\Keepiq\Exception\StaleWriteException $e) {
+			$this->assertSame($stored, $e->getCurrent());
+		}
+
+		$this->assertSame('Router', $stored->getName());
+	}//end testUpdateWithAStaleBaseChangesNothing()
+
+	/**
+	 * A matching base (in any time zone) and an absent base both update.
+	 *
+	 * @return void
+	 */
+	public function testUpdateWithAMatchingOrAbsentBaseUpdates(): void {
+		$this->migrationService->method('isWriteLocked')->willReturn(false);
+		$stored = $this->makeSecret();
+		$stored->setName('Router');
+		$stored->setUpdatedAt(new \DateTime('2026-10-02T10:00:00+00:00'));
+		$this->mapper->method('findById')->willReturn($stored);
+		$this->mapper->expects($this->exactly(2))->method('update')->willReturnArgument(0);
+
+		$this->service->update(
+			id: 's-1',
+			data: ['name' => 'Same base', 'baseUpdatedAt' => '2026-10-02T12:00:00+02:00'],
+			userId: 'alice',
+		);
+		$this->assertSame('Same base', $stored->getName());
+
+		$this->service->update(id: 's-1', data: ['name' => 'No base'], userId: 'alice');
+		$this->assertSame('No base', $stored->getName());
+	}//end testUpdateWithAMatchingOrAbsentBaseUpdates()
 }//end class

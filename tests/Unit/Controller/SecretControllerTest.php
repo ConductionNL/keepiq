@@ -54,7 +54,14 @@ class SecretControllerTest extends TestCase {
 	private IRequest&MockObject $request;
 
 	/**
-	 * Set up fixtures.
+	 * The signed-in session (alice).
+	 *
+	 * @var IUserSession&\PHPUnit\Framework\MockObject\MockObject
+	 */
+	private IUserSession $userSession;
+
+	/**
+	 * Build the controller.
 	 *
 	 * @return void
 	 */
@@ -65,6 +72,7 @@ class SecretControllerTest extends TestCase {
 		$this->secretService = $this->createMock(SecretService::class);
 
 		$userSession = $this->createMock(IUserSession::class);
+		$this->userSession = $userSession;
 		$user = $this->createMock(IUser::class);
 		$user->method('getUID')->willReturn('alice');
 		$userSession->method('getUser')->willReturn($user);
@@ -210,7 +218,13 @@ class SecretControllerTest extends TestCase {
 		$this->request->method('getParam')->willReturnArgument(0);
 
 		$created = $this->controller->create(name: 'Bank', key: 'CIPHERTEXT-BLOB-0001', folderId: 'private');
-		$updated = $this->controller->update(id: 's-1', folderId: 'private');
+		// The update route lives in its own controller (offline-edit-queue).
+		$updater = new \OCA\Keepiq\Controller\SecretUpdateController(
+			request: $this->request,
+			secretService: $this->secretService,
+			userSession: $this->userSession,
+		);
+		$updated = $updater->update(id: 's-1');
 
 		foreach ([$created, $updated] as $response) {
 			$this->assertSame(403, $response->getStatus());

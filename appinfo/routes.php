@@ -120,7 +120,7 @@ $extra = [
     // catch-all wildcard.
     ['name' => 'import#batchCreate', 'url' => '/api/v1/secrets/import-batch', 'verb' => 'POST'],
     ['name' => 'secret#show',    'url' => '/api/v1/secrets/{id}', 'verb' => 'GET'],
-    ['name' => 'secret#update',  'url' => '/api/v1/secrets/{id}', 'verb' => 'PUT'],
+    ['name' => 'secretUpdate#update', 'url' => '/api/v1/secrets/{id}', 'verb' => 'PUT'],
     // Trash and archive (vault-trash-and-archive): DELETE /{id} moves a secret to the trash.
     ['name' => 'secretTrash#trash',     'url' => '/api/v1/secrets/{id}',           'verb' => 'DELETE'],
     ['name' => 'secretTrash#restore',   'url' => '/api/v1/secrets/{id}/restore',   'verb' => 'POST'],
