@@ -275,6 +275,8 @@ export default {
 		},
 
 		/**
+		 * @param {object} field The field descriptor.
+		 *
 		 * @spec exclude Presentation-only: masks inputs whose field name looks secret.
 		 */
 		inputType(field) {

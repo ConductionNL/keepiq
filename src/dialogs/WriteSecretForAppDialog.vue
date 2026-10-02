@@ -178,6 +178,8 @@ export default {
 
 	methods: {
 		/**
+		 * @param {boolean} value Whether the dialog is open.
+		 *
 		 * @spec exclude Event re-emitter: resets the form and emits close when the dialog closes.
 		 */
 		onUpdateOpen(value) {

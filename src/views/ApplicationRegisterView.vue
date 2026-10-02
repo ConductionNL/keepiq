@@ -163,6 +163,8 @@ export default {
 		t,
 
 		/**
+		 * @param {string} value The search term.
+		 *
 		 * @spec exclude Local view state: stores the search term typed in the list filter.
 		 */
 		onSearch(value) {
@@ -170,6 +172,8 @@ export default {
 		},
 
 		/**
+		 * @param {object} object The application object.
+		 *
 		 * @spec exclude Navigation plumbing: routes to the clicked application detail.
 		 */
 		openApplication(object) {
@@ -197,6 +201,8 @@ export default {
 		},
 
 		/**
+		 * @param {string} status The status value.
+		 *
 		 * @spec exclude Presentation-only: maps the status value to a badge colour variant.
 		 */
 		statusVariant(status) {

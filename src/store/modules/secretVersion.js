@@ -144,6 +144,8 @@ export const useSecretVersionStore = defineStore('secretVersion', {
 		 * Reset the store (secret detail unmount).
 		 *
 		 * @return {void}
+		 *
+		 * @spec exclude Store lifecycle: clears the version list and error on detail unmount.
 		 */
 		reset() {
 			this.versions = []

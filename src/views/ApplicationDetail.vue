@@ -297,6 +297,8 @@ export default {
 		routeId: {
 			immediate: true,
 			/**
+			 * @param {string} value The application id from the route.
+			 *
 			 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
 			 */
 			handler(value) {
@@ -333,6 +335,8 @@ export default {
 		},
 
 		/**
+		 * @param {string} id The item id.
+		 *
 		 * @spec openspec/specs/application-mgmt/spec.md#requirement-encryptionsuite-via-csr
 		 */
 		async loadCertificate(id) {
@@ -350,6 +354,8 @@ export default {
 		},
 
 		/**
+		 * @param {string} iso ISO 8601 timestamp.
+		 *
 		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as locale text.
 		 */
 		formatDate(iso) {

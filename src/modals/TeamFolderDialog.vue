@@ -416,6 +416,8 @@ export default {
 
 	watch: {
 		/**
+		 * @param {boolean} isOpen Whether the dialog is open.
+		 *
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 */
 		open(isOpen) {
@@ -573,6 +575,8 @@ export default {
 		},
 
 		/**
+		 * @param {object} member The member row.
+		 *
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
 		async onRemoveMember(member) {

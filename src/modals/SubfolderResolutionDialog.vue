@@ -158,6 +158,8 @@ export default {
 		children: {
 			immediate: true,
 			/**
+			 * @param {object} value The children prop: the folder's subfolders.
+			 *
 			 * @spec openspec/specs/secrets/spec.md#scenario-delete-folder-with-subfolders-user-directed-resolution
 			 */
 			handler(value) {
