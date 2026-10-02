@@ -25,6 +25,11 @@ import { useSessionStore } from './session.js'
  * Error thrown to the caller when the user closes the prompt.
  */
 export class KeyProofPromptCancelled extends Error {
+	/**
+	 * A cancelled prompt, with a stable code callers can test for.
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
+	 */
 	constructor() {
 		super('Master password prompt cancelled')
 		this.name = 'KeyProofPromptCancelled'
