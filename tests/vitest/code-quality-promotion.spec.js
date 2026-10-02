@@ -28,7 +28,9 @@ function qualityIf() {
 	const block = job.split(/^ {2}quality:\s*$/m)[1]
 	const match = block.match(/^ {4}if:\s*(.+)$/m)
 	if (match === null) {
-		throw new Error('the quality job declares no if:, so this test has nothing to evaluate')
+		throw new Error(
+			'the quality job declares no if:, so this test has nothing to evaluate',
+		)
 	}
 	return match[1].trim()
 }
@@ -42,7 +44,9 @@ function qualityIf() {
  * @return {boolean} whether the job runs
  */
 function evaluate(expr, github) {
-	const js = expr.replace(/github\.(event_name|head_ref|base_ref)/g, (_, key) => JSON.stringify(github[key] ?? ''))
+	const js = expr.replace(/github\.(event_name|head_ref|base_ref)/g, (_, key) =>
+		JSON.stringify(github[key] ?? ''),
+	)
 	if (/[^\s()'"|=!&\w.-]/.test(js.replace(/"[^"]*"|'[^']*'/g, ''))) {
 		throw new Error(`unexpected token in ${expr}`)
 	}
@@ -53,22 +57,61 @@ describe('code-quality.yml job condition (keepiq#882)', () => {
 	const expr = qualityIf()
 
 	it('runs the development to beta promotion PR (red on the old condition)', () => {
-		expect(evaluate(expr, { event_name: 'pull_request', head_ref: 'development', base_ref: 'beta' })).toBe(true)
+		expect(
+			evaluate(expr, {
+				event_name: 'pull_request',
+				head_ref: 'development',
+				base_ref: 'beta',
+			}),
+		).toBe(true)
 	})
 
 	it('still skips a development-headed PR into any other branch', () => {
-		expect(evaluate(expr, { event_name: 'pull_request', head_ref: 'development', base_ref: 'main' })).toBe(false)
+		expect(
+			evaluate(expr, {
+				event_name: 'pull_request',
+				head_ref: 'development',
+				base_ref: 'main',
+			}),
+		).toBe(false)
 	})
 
 	it('runs feature PRs, pushes and dispatches as before', () => {
-		expect(evaluate(expr, { event_name: 'pull_request', head_ref: 'fix/x', base_ref: 'development' })).toBe(true)
-		expect(evaluate(expr, { event_name: 'pull_request', head_ref: 'beta', base_ref: 'main' })).toBe(true)
-		expect(evaluate(expr, { event_name: 'push', head_ref: '', base_ref: '' })).toBe(true)
-		expect(evaluate(expr, { event_name: 'workflow_dispatch', head_ref: '', base_ref: '' })).toBe(true)
+		expect(
+			evaluate(expr, {
+				event_name: 'pull_request',
+				head_ref: 'fix/x',
+				base_ref: 'development',
+			}),
+		).toBe(true)
+		expect(
+			evaluate(expr, {
+				event_name: 'pull_request',
+				head_ref: 'beta',
+				base_ref: 'main',
+			}),
+		).toBe(true)
+		expect(
+			evaluate(expr, { event_name: 'push', head_ref: '', base_ref: '' }),
+		).toBe(true)
+		expect(
+			evaluate(expr, {
+				event_name: 'workflow_dispatch',
+				head_ref: '',
+				base_ref: '',
+			}),
+		).toBe(true)
 	})
 
 	it('control: the pre-#882 condition skipped the promotion PR', () => {
-		const old = "(github.event_name != 'pull_request' || github.head_ref != 'development')"
-		expect(evaluate(old, { event_name: 'pull_request', head_ref: 'development', base_ref: 'beta' })).toBe(false)
+		const old =
+			"(github.event_name != 'pull_request' || github.head_ref != 'development')"
+		expect(
+			evaluate(old, {
+				event_name: 'pull_request',
+				head_ref: 'development',
+				base_ref: 'beta',
+			}),
+		).toBe(false)
 	})
 })
