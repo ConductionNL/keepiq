@@ -1389,7 +1389,14 @@
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Kasutajad valivad, kui kaua laiendus jõudeolekus lukustamata jääb. Teie määrate pikima aja, mida nad valida saavad.",
+        "Longest idle time before the extension locks": "Pikim jõudeaeg enne laienduse lukustumist",
+        "1 minute": "1 minut",
+        "5 minutes": "5 minutit",
+        "15 minutes": "15 minutit",
+        "1 hour": "1 tund",
+        "4 hours": "4 tundi"
     },
     "plurals": null
 }

@@ -1390,7 +1390,14 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Používatelia volia, ako dlho zostane rozšírenie pri nečinnosti odomknuté. Vy nastavujete najdlhší čas, ktorý môžu zvoliť.",
+        "Longest idle time before the extension locks": "Najdlhší čas nečinnosti pred uzamknutím rozšírenia",
+        "1 minute": "1 minúta",
+        "5 minutes": "5 minút",
+        "15 minutes": "15 minút",
+        "1 hour": "1 hodina",
+        "4 hours": "4 hodiny"
     },
     "nplurals=2; plural=(n != 1);"
 )

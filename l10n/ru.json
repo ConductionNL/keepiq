@@ -1389,7 +1389,14 @@
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Пользователи выбирают, как долго расширение остаётся разблокированным при бездействии. Вы задаёте наибольшее время, которое можно выбрать.",
+        "Longest idle time before the extension locks": "Наибольшее время бездействия до блокировки расширения",
+        "1 minute": "1 минута",
+        "5 minutes": "5 минут",
+        "15 minutes": "15 минут",
+        "1 hour": "1 час",
+        "4 hours": "4 часа"
     },
     "plurals": null
 }
