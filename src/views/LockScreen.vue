@@ -866,6 +866,8 @@ export default {
 		 *
 		 * @param {Error} e The unlock error.
 		 * @return {boolean}
+		 *
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-offline-unlock-re-derives-the-master-key-locally
 		 */
 		isNetworkError(e) {
 			return (

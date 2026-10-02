@@ -90,6 +90,7 @@ import {
 	NcTextArea,
 	NcTextField,
 } from '@nextcloud/vue'
+import { evaluateHibp, evaluateScore, fetchPolicy } from '../policy/policy.js'
 import { useApplicationStore } from '../store/modules/application.js'
 
 export default {
@@ -151,6 +152,9 @@ export default {
 				: this.t('keepiq', 'Write secret')
 		},
 
+		/**
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
 		canSubmit() {
 			return (
 				this.applicationId !== ''
@@ -174,6 +178,11 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * @param {boolean} value Whether the dialog is open.
+		 *
+		 * @spec exclude Event re-emitter: resets the form and emits close when the dialog closes.
+		 */
 		onUpdateOpen(value) {
 			if (!value) {
 				this.reset()
@@ -181,6 +190,9 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec exclude Transient UI reset: clears the form fields, error and success flags.
+		 */
 		reset() {
 			this.name = ''
 			this.url = ''
@@ -207,6 +219,13 @@ export default {
 			this.success = false
 
 			try {
+				// The organisation password policy, as the create and edit
+				// dialogs apply it, before the value is encrypted (keepiq#746).
+				const policyReason = await this.policyReason()
+				if (policyReason !== null) {
+					this.error = policyReason
+					return
+				}
 				const store = useApplicationStore()
 				const result = await store.writeSecretForApplication(
 					this.applicationId,
@@ -236,6 +255,25 @@ export default {
 			}
 		},
 
+		/**
+		 * Why the value breaks the organisation password policy (strength
+		 * floor, then a breach hit when the policy blocks those), or null.
+		 *
+		 * @return {Promise<string|null>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
+		async policyReason() {
+			const policy = await fetchPolicy()
+			const verdict = evaluateScore(policy, 'login', this.value)
+			if (!verdict.compliant) {
+				return verdict.reason
+			}
+			return evaluateHibp(policy, 'login', this.value)
+		},
+
+		/**
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
 		parseAdditional() {
 			const raw = this.additionalFields.trim()
 			if (raw === '') {

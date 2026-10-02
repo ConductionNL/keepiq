@@ -36,6 +36,8 @@ export const useRotationStore = defineStore('rotation', {
 		 *
 		 * @param {object} state The store state.
 		 * @return {object} Map of secretId -> flag.
+		 *
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotation-surfaced-on-dashboard-and-health-report
 		 */
 		flagsBySecretId(state) {
 			const map = {}

@@ -269,22 +269,37 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
+		 */
 		store() {
 			return useTeamFolderStore()
 		},
 
+		/**
+		 * @spec exclude Trivial lookup: resolves the folder id to its team-folder record in the store.
+		 */
 		teamFolder() {
 			return this.folderId ? this.store.byFolderId(this.folderId) : null
 		},
 
+		/**
+		 * @spec exclude Presentation getter: reads the member list off the team folder for rendering.
+		 */
 		members() {
 			return this.teamFolder?.members ?? []
 		},
 
+		/**
+		 * @spec exclude Store-state passthrough: exposes the fan-out progress object for display.
+		 */
 		fanOut() {
 			return this.store.fanOut
 		},
 
+		/**
+		 * @spec exclude Presentation-only: turns fan-out done/total into a progress-bar percentage.
+		 */
 		progressPercent() {
 			if (this.fanOut.total === 0) {
 				return 0
@@ -400,6 +415,11 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * @param {boolean} isOpen Whether the dialog is open.
+		 *
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
+		 */
 		open(isOpen) {
 			if (isOpen) {
 				this.error = null
@@ -531,6 +551,9 @@ export default {
 			}, CANDIDATE_SEARCH_DEBOUNCE_MS)
 		},
 
+		/**
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
+		 */
 		async onAddMember() {
 			this.busy = true
 			this.error = null
@@ -551,6 +574,11 @@ export default {
 			}
 		},
 
+		/**
+		 * @param {object} member The member row.
+		 *
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
+		 */
 		async onRemoveMember(member) {
 			this.busy = true
 			this.error = null

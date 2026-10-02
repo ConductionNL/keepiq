@@ -167,6 +167,8 @@ export default {
 		 * Encrypt + create, then show the link once.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-create-a-standalone-ephemeral-send
 		 */
 		async onCreate() {
 			this.busy = true
@@ -196,6 +198,8 @@ export default {
 		 * Copy the one-time link to the clipboard.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-create-a-standalone-ephemeral-send
 		 */
 		async copyLink() {
 			try {

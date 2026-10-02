@@ -26,6 +26,38 @@ import { checkValue } from '../../health/hibp.js'
 import { useSecretTypeStore } from './secretType.js'
 import { onVaultLock, useSessionStore } from './session.js'
 
+/** The server's per-page cap on the secrets list. */
+const HEALTH_PAGE_SIZE = 100
+
+/**
+ * Fetch every secret the user can read, page by page. The server caps a page
+ * at 100, and one page left every secret past the first 100 out of the
+ * report (keepiq#745). Stops on a short page, or when the total is reached.
+ *
+ * @return {Promise<Array<object>>}
+ * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-client-side-health-analysis
+ */
+async function fetchEverySecret() {
+	const all = []
+	// Defensive bound; 100 * 100000 covers any realistic vault.
+	for (let page = 1; page <= 100000; page++) {
+		const response = await axios.get(
+			generateUrl('/apps/keepiq/api/v1/secrets'),
+			{ params: { page, limit: HEALTH_PAGE_SIZE } },
+		)
+		const batch = response?.data?.items ?? []
+		all.push(...batch)
+		const total = response?.data?.total
+		if (
+			batch.length < HEALTH_PAGE_SIZE
+			|| (typeof total === 'number' && all.length >= total)
+		) {
+			break
+		}
+	}
+	return all
+}
+
 export const useHealthStore = defineStore('health', {
 	state: () => ({
 		/** @type {Array<object>} Per-secret findings (memory only). */
@@ -181,11 +213,7 @@ export const useHealthStore = defineStore('health', {
 					.map((type) => type.id),
 			)
 
-			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/v1/secrets'),
-				{ params: { limit: 100 } },
-			)
-			const items = response?.data?.items ?? []
+			const items = await fetchEverySecret()
 			const rows = []
 			for (const secret of items) {
 				if (secret.blocked || !secret.key) {

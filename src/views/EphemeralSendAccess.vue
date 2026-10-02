@@ -108,6 +108,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
+		 */
 		token() {
 			return this.$route.params.token || ''
 		},
@@ -200,6 +203,8 @@ export default {
 		 * Copy the revealed payload.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
 		 */
 		async copyPayload() {
 			try {

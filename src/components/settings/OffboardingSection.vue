@@ -140,6 +140,8 @@ export default {
 	methods: {
 		/**
 		 * Run the offboarding action after the typed confirmation dialog.
+		 *
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-admin-offboarding
 		 */
 		async run() {
 			this.confirmOpen = false

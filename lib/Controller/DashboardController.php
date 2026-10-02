@@ -145,7 +145,7 @@ class DashboardController extends Controller {
 	 * @return TemplateResponse
 	 *
 	 * @spec exclude Vue history-mode fallback — delegates to page(); pure framework plumbing, no domain logic.
-	 * @contract exclude renders the SPA TemplateResponse, not an API response; the catch-all excludes api/ paths. Route presence without OpenRegister is pinned by RoutesWithoutOpenRegisterTest.
+	 * @contract exclude renders the SPA page, not an API response; pinned by RoutesWithoutOpenRegisterTest.
 	 */
 	public function catchAll(): TemplateResponse {
 		return $this->page();

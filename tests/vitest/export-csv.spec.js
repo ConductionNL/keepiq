@@ -9,7 +9,7 @@
  *  - generateCsv -> parseCsv round-trips cleanly (the layout the
  *    secret-import generic CSV auto-detection consumes).
  *
- * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+ * @spec openspec/specs/secret-export/spec.md
  */
 
 import { describe, expect, it } from 'vitest'

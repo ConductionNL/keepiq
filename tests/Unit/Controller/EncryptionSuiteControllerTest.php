@@ -613,6 +613,57 @@ class EncryptionSuiteControllerTest extends TestCase {
 	}//end testUpdatePrivateKeyRefusesAnApplicationSuite()
 
 	/**
+	 * updatePrivateKey refuses a suite that is either end of an open migration
+	 * (keepiq#869).
+	 *
+	 * Whoever holds a leaked old password can sign the proof with the old key, so
+	 * without this a re-wrap of the old suite's envelope under a password only
+	 * they know strands every record the owner has not migrated yet.
+	 *
+	 * @return void
+	 */
+	public function testUpdatePrivateKeyRefusesASuiteMidMigration(): void {
+		$owned = new EncryptionSuite();
+		$owned->setId('suite-1');
+		$owned->setOwnerType('user');
+		$owned->setOwnerId('testuser');
+		$owned->setStatus('active');
+		$this->suiteService->method('getSuite')->with('suite-1')->willReturn($owned);
+		$this->migrationService->expects($this->once())
+			->method('assertNoMigrationInProgress')
+			->with('suite-1')
+			->willThrowException(new SuiteMigrationInProgressException('mid-migration'));
+		$this->suiteService->expects($this->never())->method('updateSuite');
+
+		$response = $this->controller->updatePrivateKey('suite-1', 'attacker-envelope');
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+		$this->assertSame(expected: 'migration_in_progress', actual: $response->getData()['error']);
+	}//end testUpdatePrivateKeyRefusesASuiteMidMigration()
+
+	/**
+	 * updatePrivateKey refuses a suite that is not active (keepiq#869): a
+	 * re-wrap of a revoked suite, followed by an admin reinstate, would hand the
+	 * suite back under a password the owner does not know.
+	 *
+	 * @return void
+	 */
+	public function testUpdatePrivateKeyRefusesARevokedSuite(): void {
+		$revoked = new EncryptionSuite();
+		$revoked->setId('suite-1');
+		$revoked->setOwnerType('user');
+		$revoked->setOwnerId('testuser');
+		$revoked->setStatus('revoked');
+		$this->suiteService->method('getSuite')->with('suite-1')->willReturn($revoked);
+		$this->suiteService->expects($this->never())->method('updateSuite');
+
+		$response = $this->controller->updatePrivateKey('suite-1', 'attacker-envelope');
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+		$this->assertSame(expected: 'suite_not_active', actual: $response->getData()['error']);
+	}//end testUpdatePrivateKeyRefusesARevokedSuite()
+
+	/**
 	 * Test reinstate returns reinstated suite.
 	 *
 	 * @return void
@@ -920,6 +971,38 @@ class EncryptionSuiteControllerTest extends TestCase {
 
 		$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
 	}//end testForceRevokeRejectsAnEmptyReason()
+
+	/**
+	 * A refused force-revoke reaches the audit trail with a fixed reason code,
+	 * so an attack on the containment path is visible (keepiq#870).
+	 *
+	 * @return void
+	 */
+	public function testForceRevokeRecordsAnEmptyReasonRefusal(): void {
+		$this->suiteService->expects($this->once())
+			->method('recordRevokeRefused')
+			->with('suite-1', 'testuser', 'empty_reason', true);
+
+		$this->controller->forceRevoke('suite-1', '   ', markCompromised: true);
+	}//end testForceRevokeRecordsAnEmptyReasonRefusal()
+
+	/**
+	 * A force-revoke refused because the suite is in a migration is audited as
+	 * migration_in_progress, never with the exception message (keepiq#870).
+	 *
+	 * @return void
+	 */
+	public function testForceRevokeRecordsAMigrationInProgressRefusal(): void {
+		$this->migrationService->method('assertNoMigrationInProgress')
+			->willThrowException(new \OCA\Keepiq\Exception\SuiteMigrationInProgressException('suite-1 is migrating'));
+		$this->suiteService->expects($this->once())
+			->method('recordRevokeRefused')
+			->with('suite-1', 'testuser', 'migration_in_progress', false);
+
+		$response = $this->controller->forceRevoke('suite-1', 'routine');
+
+		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
+	}//end testForceRevokeRecordsAMigrationInProgressRefusal()
 
 	/**
 	 * An application-owned suite is force-revoked by the same endpoint, with the

@@ -89,7 +89,7 @@ class ExportController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+	 * @spec openspec/specs/secret-export/spec.md
 	 * @spec openspec/changes/admin-vault-policies/tasks.md#2.1
 	 *
 	 * @no-admin-idor-exempt no object is addressed. The three parameters are an

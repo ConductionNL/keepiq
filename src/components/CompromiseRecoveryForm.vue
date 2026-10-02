@@ -286,7 +286,9 @@
 			<!-- #804 review, round 4: a resumed rotation carries no contact, so
 			     it names the ones the completion sweep removed. Neutral, with no
 			     re-establish prompt: the owner's ticks from the start of the
-			     rotation are not known here. -->
+			     rotation are not known here. The wording does not say the
+			     rotation was resumed: an initiate run whose contacts could not be
+			     listed lands here too (keepiq#880). -->
 			<div
 				v-if="removedContacts.length > 0"
 				data-testid="compromise-recovery-removed">
@@ -294,7 +296,7 @@
 					{{
 						t(
 							'keepiq',
-							'Your key rotation was resumed, so these emergency contacts could not be carried across and their emergency access was removed. Add them again from Emergency Access if you still want them.',
+							'These emergency contacts were not carried to your new key. Their emergency access was removed. Add them again from Emergency Access if you still want them.',
 						)
 					}}
 				</NcNoteCard>
@@ -607,7 +609,9 @@ export default {
 		 * in flight, because a request made while a loss was pending is what a
 		 * planted contact looks like. With no initiate list, the read-back is
 		 * used as is, naming the removed contacts neutrally (#804 review,
-		 * round 5).
+		 * round 5). An empty list does not mean the run was resumed: an
+		 * initiate run whose contacts could not be listed has one too, so the
+		 * neutral note claims nothing about how the run started (keepiq#880).
 		 *
 		 * @param {Array<{granteeUserId: string, reason: string}>|undefined} readBack
 		 *   The contacts read back after completion.

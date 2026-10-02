@@ -230,6 +230,8 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * idempotent server upsert makes the next reconcile resume safely).
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
 		cancelFanOut() {
 			this.fanOutCancelled = true
@@ -244,6 +246,8 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {Array<object>} rows The created fan-out descriptors.
 		 * @param {object} certByUser userId → PEM certificate map.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/encrypted-attachments/spec.md#scenario-sharing-re-wraps-the-key-not-the-blob
 		 */
 		async regrantAttachments(rows, certByUser) {
 			const attachmentStore = useAttachmentStore()

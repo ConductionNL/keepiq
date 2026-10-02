@@ -66,6 +66,8 @@ export const useOfflineStore = defineStore('offline', {
 		 * rotation / compromise recovery, and admin-disable (see `evict()`).
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-the-cache-is-evicted-on-lock-logout-and-suite-rotation
 		 */
 		ensureLockHook() {
 			if (lockHookRegistered) {
@@ -82,6 +84,8 @@ export const useOfflineStore = defineStore('offline', {
 
 		/**
 		 * Track online/offline transitions.
+		 *
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-offline-mode-is-strictly-read-only
 		 */
 		bindConnectivity() {
 			if (typeof window === 'undefined') {
@@ -143,6 +147,8 @@ export const useOfflineStore = defineStore('offline', {
 		 *
 		 * @param {string} masterPassword The master password (never leaves the browser).
 		 * @return {Promise<boolean>} Whether the offline vault opened.
+		 *
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-offline-unlock-re-derives-the-master-key-locally
 		 */
 		async unlockOffline(masterPassword) {
 			this.ensureLockHook()
@@ -167,6 +173,8 @@ export const useOfflineStore = defineStore('offline', {
 		 * Purge the snapshot on logout / suite rotation / compromise recovery.
 		 *
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-the-cache-is-evicted-on-lock-logout-and-suite-rotation
 		 */
 		async evict() {
 			this.servedFromCache = false

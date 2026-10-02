@@ -101,8 +101,10 @@ class ScanCertificateExpiryJob extends TimedJob {
 				try {
 					$this->scanOne(suite: $suite, now: $now);
 				} catch (Throwable $exception) {
+					// The class, not the message: a message is unbounded and can
+					// carry whatever the failing call put in it (keepiq#728).
 					$this->logger->warning(
-						'Keepiq: certificate expiry scan failed for suite ' . $suite->getId() . ': ' . $exception->getMessage(),
+						'Keepiq: certificate expiry scan failed for suite '.$suite->getId().': '.$exception::class,
 						['app' => Application::APP_ID]
 					);
 				}

@@ -176,6 +176,7 @@ import OwnershipFindings from '../components/OwnershipFindings.vue'
 import { useHealthStore } from '../store/modules/health.js'
 import { useRotationStore } from '../store/modules/rotation.js'
 import { useSessionStore } from '../store/modules/session.js'
+import { secretDetailLocation } from '../utils/detailRoute.js'
 
 export default {
 	name: 'HealthReportView',
@@ -372,9 +373,9 @@ export default {
 		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-vault-health-report
 		 */
 		openSecret(secretId) {
-			this.$router
-				.push({ name: 'SecretDetail', params: { id: secretId } })
-				.catch(() => {})
+			// The detail lives on the vault list (/secrets/:id); there is no
+			// SecretDetail route, and the empty catch hid that (keepiq#745).
+			this.$router.push(secretDetailLocation(null, secretId))
 		},
 	},
 }
