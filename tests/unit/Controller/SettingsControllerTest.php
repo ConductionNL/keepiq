@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use OCA\Keepiq\Controller\AdminAreaSettingsController;
 use OCA\Keepiq\Controller\SettingsController;
 use OCA\Keepiq\Service\SettingsService;
 use OCP\AppFramework\Http\JSONResponse;
@@ -104,7 +105,8 @@ class SettingsControllerTest extends TestCase {
 		$result = $this->controller->index();
 
 		self::assertInstanceOf(JSONResponse::class, $result);
-		self::assertSame($settings, $result->getData());
+		// Without an area check wired the user holds no admin area.
+		self::assertSame($settings + ['adminAreas' => []], $result->getData());
 
 	}//end testIndexReturnsJsonResponseWithSettings()
 
@@ -176,7 +178,7 @@ class SettingsControllerTest extends TestCase {
 			->with('general')
 			->willReturn($expected);
 
-		$result = $this->controller->getGeneralSettings();
+		$result = $this->areaController()->getGeneralSettings();
 
 		self::assertInstanceOf(JSONResponse::class, $result);
 		self::assertSame($expected, $result->getData());
@@ -198,7 +200,7 @@ class SettingsControllerTest extends TestCase {
 			->with('policies', ['min_password_length' => 5])
 			->willThrowException(new \InvalidArgumentException('min_password_length must be between 12 and 20'));
 
-		$result = $this->controller->updatePolicySettings();
+		$result = $this->areaController()->updatePolicySettings();
 
 		self::assertInstanceOf(JSONResponse::class, $result);
 		self::assertSame(400, $result->getStatus());
@@ -248,4 +250,16 @@ class SettingsControllerTest extends TestCase {
 		self::assertSame($updated, $result->getData());
 
 	}//end testUpdateUserSettingsForwardsToService()
+
+	/**
+	 * The per-area admin settings controller over the same doubles.
+	 *
+	 * @return AdminAreaSettingsController
+	 */
+	private function areaController(): AdminAreaSettingsController {
+		return new AdminAreaSettingsController(
+			request: $this->request,
+			settingsService: $this->settingsService,
+		);
+	}//end areaController()
 }//end class

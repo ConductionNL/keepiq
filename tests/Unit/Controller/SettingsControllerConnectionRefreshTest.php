@@ -30,6 +30,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\DomainOverrideRegistrar;
+use OCA\Keepiq\Controller\AdminAreaSettingsController;
 use OCA\Keepiq\Controller\SettingsController;
 use OCA\Keepiq\Service\Connection\ConnectionReporter;
 use OCA\Keepiq\Service\SettingsService;
@@ -87,13 +88,12 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 	 *
 	 * @param ConnectionReporter|null $reporter The reporter, or null for an instance without one.
 	 *
-	 * @return SettingsController
+	 * @return AdminAreaSettingsController
 	 */
-	private function controller(?ConnectionReporter $reporter): SettingsController {
-		return new SettingsController(
+	private function controller(?ConnectionReporter $reporter): AdminAreaSettingsController {
+		return new AdminAreaSettingsController(
 			request: $this->request,
 			settingsService: $this->settingsService,
-			userSession: $this->createMock(originalClassName: IUserSession::class),
 			connectionReporter: $reporter,
 		);
 	}//end controller()
@@ -157,14 +157,16 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 	}//end testWithoutTheReporterTheSaveStillAnswers()
 
 	/**
-	 * The hand-built container factory passes the reporter to the controller.
-	 *
-	 * The controller's own default is null, so a factory that forgets the
-	 * argument still builds, and the refresh never goes out.
+	 * The hand-built container factory passes the admin area check to the
+	 * settings controller, so `/api/settings` reports the areas the user
+	 * holds (admin-scoped-roles §2.5). The controller's own default is null,
+	 * so a factory that forgets the argument still builds and reports none.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.5
 	 */
-	public function testTheContainerFactoryPassesTheReporter(): void {
+	public function testTheContainerFactoryPassesTheAreaCheck(): void {
 		$factories = [];
 		$context   = $this->createMock(originalClassName: IRegistrationContext::class);
 		$context->method('registerService')->willReturnCallback(
@@ -176,11 +178,17 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 		(new DomainOverrideRegistrar())->register(context: $context);
 		$this->assertArrayHasKey(key: SettingsController::class, array: $factories);
 
+		$user = $this->createMock(originalClassName: \OCP\IUser::class);
+		$user->method('getUID')->willReturn('helpdesk');
+		$session = $this->createMock(originalClassName: IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+		$areas = $this->createMock(originalClassName: \OCA\Keepiq\Service\AdminAreaAuthorizer::class);
+		$areas->method('areasOf')->with('helpdesk')->willReturn(['people']);
 		$services = [
 			IRequest::class           => $this->request,
 			SettingsService::class    => $this->settingsService,
-			IUserSession::class       => $this->createMock(originalClassName: IUserSession::class),
-			ConnectionReporter::class => $this->reporter,
+			IUserSession::class       => $session,
+			\OCA\Keepiq\Service\AdminAreaAuthorizer::class => $areas,
 			\OCA\Keepiq\Service\TwoFactorGate::class => $this->createMock(originalClassName: \OCA\Keepiq\Service\TwoFactorGate::class),
 		];
 		$container = $this->createMock(originalClassName: ContainerInterface::class);
@@ -188,12 +196,9 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 			static fn (string $id): object => $services[$id]
 		);
 
-		$this->request->method('getParams')->willReturn(['breach_check_enabled' => true]);
-		$this->settingsService->method('updateAreaSettings')->willReturn([]);
-		$this->reporter->expects($this->once())->method('breachCheckSaved')->willReturn(true);
+		$this->settingsService->method('getSettings')->willReturn(['isAdmin' => false]);
 
 		$controller = $factories[SettingsController::class]($container);
-		$this->assertInstanceOf(expected: SettingsController::class, actual: $controller);
-		$controller->updateGeneralSettings();
-	}//end testTheContainerFactoryPassesTheReporter()
+		$this->assertSame(['isAdmin' => false, 'adminAreas' => ['people']], $controller->index()->getData());
+	}//end testTheContainerFactoryPassesTheAreaCheck()
 }//end class

@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use OCA\Keepiq\Controller\AdminAreaSettingsController;
 use OCA\Keepiq\Controller\AuditController;
 use OCA\Keepiq\Controller\CACertificateController;
 use OCA\Keepiq\Controller\EncryptionSuiteController;
@@ -90,33 +91,33 @@ class AdminAreaGuardTest extends TestCase {
 
 		return [
 			// Scenario "Auditor cannot change policies".
-			'auditor cannot PUT policies' => [$audit, SettingsController::class, 'updatePolicySettings', false],
-			'auditor cannot read policies' => [$audit, SettingsController::class, 'getPolicySettings', false],
-			'auditor cannot PUT general' => [$audit, SettingsController::class, 'updateGeneralSettings', false],
-			'auditor cannot PUT leases' => [$audit, SettingsController::class, 'updateApplicationSettings', false],
+			'auditor cannot PUT policies' => [$audit, AdminAreaSettingsController::class, 'updatePolicySettings', false],
+			'auditor cannot read policies' => [$audit, AdminAreaSettingsController::class, 'getPolicySettings', false],
+			'auditor cannot PUT general' => [$audit, AdminAreaSettingsController::class, 'updateGeneralSettings', false],
+			'auditor cannot PUT leases' => [$audit, AdminAreaSettingsController::class, 'updateApplicationSettings', false],
 			'auditor cannot lower the master password floor' => [$audit, SettingsController::class, 'update', false],
 			'auditor cannot force-revoke' => [$audit, EncryptionSuiteController::class, 'forceRevoke', false],
 			'auditor cannot renew the CA' => [$audit, CACertificateController::class, 'renewRoot', false],
-			'auditor sets audit retention' => [$audit, SettingsController::class, 'updateAuditSettings', true],
+			'auditor sets audit retention' => [$audit, AdminAreaSettingsController::class, 'updateAuditSettings', true],
 			'auditor reads the audit log' => [$audit, AuditController::class, 'index', true],
 			// People holder.
 			'people force-revokes' => [$people, EncryptionSuiteController::class, 'forceRevoke', true],
 			'people reinstates' => [$people, EncryptionSuiteController::class, 'reinstate', true],
-			'people cannot PUT policies' => [$people, SettingsController::class, 'updatePolicySettings', false],
+			'people cannot PUT policies' => [$people, AdminAreaSettingsController::class, 'updatePolicySettings', false],
 			'people cannot read the audit log' => [$people, AuditController::class, 'index', false],
 			// General holder (also the old whole-section delegation).
 			'general renews the CA' => [$general, CACertificateController::class, 'renewRoot', true],
 			'general re-imports' => [$general, SettingsController::class, 'load', true],
 			'general cannot force-revoke' => [$general, EncryptionSuiteController::class, 'forceRevoke', false],
-			'general cannot PUT policies' => [$general, SettingsController::class, 'updatePolicySettings', false],
+			'general cannot PUT policies' => [$general, AdminAreaSettingsController::class, 'updatePolicySettings', false],
 			'general cannot lower the master password floor' => [$general, SettingsController::class, 'update', false],
 			// Applications and Policies holders.
-			'applications PUT leases' => [$apps, SettingsController::class, 'updateApplicationSettings', true],
-			'applications cannot PUT audit' => [$apps, SettingsController::class, 'updateAuditSettings', false],
-			'policies PUT policies' => [$policies, SettingsController::class, 'updatePolicySettings', true],
+			'applications PUT leases' => [$apps, AdminAreaSettingsController::class, 'updateApplicationSettings', true],
+			'applications cannot PUT audit' => [$apps, AdminAreaSettingsController::class, 'updateAuditSettings', false],
+			'policies PUT policies' => [$policies, AdminAreaSettingsController::class, 'updatePolicySettings', true],
 			'policies set the master password floor' => [$policies, SettingsController::class, 'update', true],
 			'policies read two-factor gaps' => [$policies, SettingsController::class, 'twoFactorGaps', true],
-			'policies cannot PUT general' => [$policies, SettingsController::class, 'updateGeneralSettings', false],
+			'policies cannot PUT general' => [$policies, AdminAreaSettingsController::class, 'updateGeneralSettings', false],
 		];
 	}//end cases()
 
@@ -202,11 +203,11 @@ class AdminAreaGuardTest extends TestCase {
 				$name = $byUrl[$verb . ' /api/settings/admin/' . $area] ?? null;
 				$this->assertNotNull($name, $verb . ' /api/settings/admin/' . $area);
 				[$controller, $method] = explode('#', $name);
-				$this->assertSame('settings', $controller);
-				$this->assertTrue($this->admits(class: SettingsController::class, method: $method, delegated: [$areaClass]));
+				$this->assertSame('adminAreaSettings', $controller);
+				$this->assertTrue($this->admits(class: AdminAreaSettingsController::class, method: $method, delegated: [$areaClass]));
 				foreach ($expected as $other) {
 					if ($other !== $areaClass) {
-						$this->assertFalse($this->admits(class: SettingsController::class, method: $method, delegated: [$other]));
+						$this->assertFalse($this->admits(class: AdminAreaSettingsController::class, method: $method, delegated: [$other]));
 					}
 				}
 			}

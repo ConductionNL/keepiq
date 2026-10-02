@@ -32,7 +32,6 @@ use OCA\Keepiq\Db\MachineLease;
 use OCA\Keepiq\Db\MachineLeaseMapper;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\LeaseService;
-use OCA\Keepiq\Settings\ApplicationAdminSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -169,7 +168,7 @@ class LeaseAdminController extends OCSController {
 		return new JSONResponse(
 			data: array_merge(
 				$this->leaseService->policyView(applicationId: $id),
-				['canEdit' => $this->areas->holds(userId: $userId, areaClass: ApplicationAdminSettings::class)]
+				['canEdit' => $this->areas->holds(userId: $userId, areaClass: AdminAreaAuthorizer::APPLICATIONS)]
 			)
 		);
 	}//end getPolicy()
@@ -195,7 +194,7 @@ class LeaseAdminController extends OCSController {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		if ($this->areas->holds(userId: $userId, areaClass: ApplicationAdminSettings::class) === false) {
+		if ($this->areas->holds(userId: $userId, areaClass: AdminAreaAuthorizer::APPLICATIONS) === false) {
 			return $this->notFound();
 		}
 
@@ -229,7 +228,7 @@ class LeaseAdminController extends OCSController {
 	 * @return bool
 	 */
 	private function mayManageApplication(string $applicationId, string $userId): bool {
-		if ($this->areas->holds(userId: $userId, areaClass: ApplicationAdminSettings::class) === true) {
+		if ($this->areas->holds(userId: $userId, areaClass: AdminAreaAuthorizer::APPLICATIONS) === true) {
 			return true;
 		}
 

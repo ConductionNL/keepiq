@@ -24,7 +24,6 @@ namespace OCA\Keepiq\Controller;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\DashboardSummaryService;
-use OCA\Keepiq\Settings\ApplicationAdminSettings;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -82,7 +81,7 @@ class DashboardController extends Controller {
 		}
 
 		$userId = $user->getUID();
-		$isAdmin = $this->areas->holds(userId: $userId, areaClass: ApplicationAdminSettings::class);
+		$isAdmin = $this->areas->holds(userId: $userId, areaClass: AdminAreaAuthorizer::APPLICATIONS);
 
 		return new JSONResponse(data: $this->summaryService->fetchSummary(userId: $userId, isAdmin: $isAdmin));
 	}//end summary()

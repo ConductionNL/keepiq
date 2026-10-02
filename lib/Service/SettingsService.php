@@ -163,7 +163,6 @@ class SettingsService {
 	 * @param LoggerInterface $logger The logger
 	 * @param IEventDispatcher|null $eventDispatcher The audit dispatcher (policy changes)
 	 * @param AdminSettingsService|null $adminSettings The admin configuration surface
-	 * @param AdminAreaAuthorizer|null $areas The admin areas the session user holds (admin-scoped-roles)
 	 *
 	 * @return void
 	 */
@@ -177,7 +176,6 @@ class SettingsService {
 		LoggerInterface $logger,
 		?IEventDispatcher $eventDispatcher = null,
 		?AdminSettingsService $adminSettings = null,
-		private ?AdminAreaAuthorizer $areas = null,
 	) {
 		$this->adminSettings = ($adminSettings ?? new AdminSettingsService(
 			appConfig: $appConfig,
@@ -378,22 +376,11 @@ class SettingsService {
 		$user = $this->userSession->getUser();
 		$isAdmin = ($user !== null && $this->groupManager->isAdmin($user->getUID()));
 
-		// The admin areas the user holds (admin-scoped-roles §2.5), so the UI
-		// offers an admin panel only to someone its endpoint will let through.
-		// Display only: every endpoint checks its own area.
-		$adminAreas = [];
-		if ($user !== null && $this->areas !== null) {
-			$adminAreas = $this->areas->areasOf(userId: $user->getUID());
-		} else if ($isAdmin === true) {
-			$adminAreas = array_keys(AdminAreaAuthorizer::AREAS);
-		}
-
 		return array_merge(
 			$settings,
 			[
 				'openregisters' => $this->isOpenRegisterAvailable(),
 				'isAdmin' => $isAdmin,
-				'adminAreas' => $adminAreas,
 			]
 		);
 	}//end getSettings()

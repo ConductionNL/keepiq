@@ -42,6 +42,18 @@ use Throwable;
  */
 class AdminAreaAuthorizer {
 	/**
+	 * The area classes by name, so a caller can name an area without
+	 * depending on its settings class.
+	 *
+	 * @var string
+	 */
+	public const GENERAL = AdminSettings::class;
+	public const POLICIES = PolicyAdminSettings::class;
+	public const APPLICATIONS = ApplicationAdminSettings::class;
+	public const PEOPLE = PeopleAdminSettings::class;
+	public const AUDIT = AuditAdminSettings::class;
+
+	/**
 	 * The five area classes, keyed by area key.
 	 *
 	 * @var array<string,class-string<AdminAreaSettings>>

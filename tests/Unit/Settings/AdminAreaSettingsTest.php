@@ -19,7 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Settings;
 
-use OCA\Keepiq\AppInfo\DomainOverrideRegistrar;
+use OCA\Keepiq\AppInfo\AdminAreaRegistrar;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Settings\AdminAreaSettings;
 use OCA\Keepiq\Settings\AdminSettings;
@@ -177,7 +177,7 @@ class AdminAreaSettingsTest extends TestCase {
 				$factories[$name] = $factory;
 			}
 		);
-		(new DomainOverrideRegistrar())->register(context: $context);
+		(new AdminAreaRegistrar())->register(context: $context);
 
 		$l10n = $this->createStub(IL10N::class);
 		$services = [
