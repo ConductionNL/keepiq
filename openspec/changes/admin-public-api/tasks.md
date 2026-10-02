@@ -1,7 +1,7 @@
 ## 1. Endpoints
 
 - [x] 1.1 Add `lib/Controller/AdminIndexController.php` with `GET /api/v1/admin` returning `apiVersion`, the served versions and every path. Verify with a PHPUnit test for the payload and the route-reachability hydra gate.
-- [ ] 1.2 (offboarding and suite list done in `AdminPeopleController`; reinstate left out, it needs a fresh password since keepiq#865; members waits on PR #895) Add the People endpoints: members, offboarding, suite list and reinstate, each guarded by the People area. Verify with PHPUnit tests for success and for a refused Audit-only user.
+- [x] 1.2 (offboarding and suite list in `AdminPeopleController`; members is `MemberOverviewController::index()` from #965, People-guarded, documented and in the index; reinstate left out, it needs a fresh password since keepiq#865) Add the People endpoints: members, offboarding, suite list and reinstate, each guarded by the People area. Verify with PHPUnit tests for success and for a refused Audit-only user.
 - [x] 1.3 Add the Policies endpoints (`GET`, `PUT /api/v1/admin/policies`) on `AdminSettingsService`. Verify with PHPUnit tests that validation errors match the admin screen's errors.
 - [x] 1.4 Add the Applications endpoints (list, approve, reject, delete). Verify with PHPUnit tests for each status change and the no-admin-idor hydra gate.
 - [x] 1.5 Add the Audit endpoints (audit events, compliance reports, SIEM sinks). Verify with PHPUnit tests, including that no response carries a SIEM sink secret in plain form.

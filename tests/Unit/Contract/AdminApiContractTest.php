@@ -22,7 +22,9 @@ namespace OCA\Keepiq\Tests\Unit\Contract;
 
 use OCA\Keepiq\Controller\AdminIndexController;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
+use OCA\Keepiq\Service\MemberOverviewService;
 use OCA\Keepiq\Settings\AuditAdminSettings;
+use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\PasswordConfirmationRequired;
@@ -184,4 +186,51 @@ class AdminApiContractTest extends TestCase {
 			$this->assertMatchesRegularExpression('~^[A-Z]+ /api/v1/admin/(audit|compliance|siem)~', $key);
 		}
 	}//end testAnAuditOnlyAccountReachesOnlyTheAuditRoutes()
+
+	/**
+	 * `GET /api/v1/admin/members` (task 1.2): People-guarded in the
+	 * middleware, refused to an Audit-only account, documented with the
+	 * controller's own query parameters and the member row fields.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-public-api/tasks.md#1.2
+	 */
+	public function testTheMembersOperation(): void {
+		$key = 'GET ' . self::PREFIX . '/members';
+		$routes = $this->routes();
+		$this->assertArrayHasKey($key, $routes);
+
+		$method = $this->method(route: $routes[$key]);
+		$guards = $method->getAttributes(AuthorizedAdminSetting::class);
+		$this->assertCount(1, $guards);
+		$this->assertSame(PeopleAdminSettings::class, $guards[0]->newInstance()->getSettings());
+		$this->assertNotSame(AuditAdminSettings::class, $guards[0]->newInstance()->getSettings());
+
+		$document = json_decode((string)file_get_contents(__DIR__ . '/../../../docs/api/admin-v1.openapi.json'), true);
+		$operation = $document['paths'][self::PREFIX . '/members']['get'];
+		$this->assertSame('people', $operation['x-keepiq-area']);
+
+		$documented = [];
+		foreach ($operation['parameters'] as $parameter) {
+			if (isset($parameter['in']) === true && $parameter['in'] === 'query') {
+				$documented[] = $parameter['name'];
+			}
+		}
+
+		$this->assertSame(array_map(static fn (\ReflectionParameter $p): string => $p->getName(), $method->getParameters()), $documented);
+
+		$row = array_keys($operation['responses']['200']['content']['application/json']['schema']['properties']['results']['items']['properties']);
+		$this->assertSame(
+			['userId', 'displayName', 'enabled', 'vaultStatus', 'activeSuiteId', 'suiteCreatedAt', 'secretCount', 'teamFolderMemberships', 'hasEmergencyContact'],
+			$row
+		);
+		// The row the service builds carries exactly these keys.
+		$source = (string)file_get_contents(__DIR__ . '/../../../lib/Service/MemberOverviewService.php');
+		foreach ($row as $field) {
+			$this->assertStringContainsString("'" . $field . "' =>", $source, $field . ' is documented but not built');
+		}
+
+		$this->assertSame(MemberOverviewService::STATUSES, array_values(array_filter($operation['parameters'][1]['schema']['enum'])));
+	}//end testTheMembersOperation()
 }//end class

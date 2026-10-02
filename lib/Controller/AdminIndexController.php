@@ -55,6 +55,7 @@ class AdminIndexController extends Controller {
 		['method' => 'GET', 'path' => '/api/v1/admin', 'area' => 'any'],
 		['method' => 'GET', 'path' => '/api/v1/admin/policies', 'area' => 'policies'],
 		['method' => 'PUT', 'path' => '/api/v1/admin/policies', 'area' => 'policies'],
+		['method' => 'GET', 'path' => '/api/v1/admin/members', 'area' => 'people'],
 		['method' => 'GET', 'path' => '/api/v1/admin/suites', 'area' => 'people'],
 		['method' => 'POST', 'path' => '/api/v1/admin/offboarding', 'area' => 'people'],
 		['method' => 'GET', 'path' => '/api/v1/admin/applications', 'area' => 'applications'],

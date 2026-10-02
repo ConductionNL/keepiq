@@ -35,7 +35,7 @@ v1 endpoints:
 | Method and path | Area | Service |
 |---|---|---|
 | `GET /api/v1/admin` | any area | index: `apiVersion`, versions, the caller's areas, paths |
-| `GET /api/v1/admin/members` | People | member overview (change `admin-member-overview-and-offboarding`, PR #895); added once that lands |
+| `GET /api/v1/admin/members` | People | `MemberOverviewController::index()` (change `admin-member-overview-and-offboarding`, #965): paged users with vault status, metadata only |
 | `POST /api/v1/admin/offboarding` | People | `TeamFolderService::offboard()` |
 | `GET /api/v1/admin/suites` | People | `EncryptionSuiteMapper::findAllActiveWithLimit()`, metadata only |
 | `GET`, `PUT /api/v1/admin/policies` | Policies | the Policies area settings (`AdminAreaSettingsController`) |

@@ -56,7 +56,7 @@ curl -u svc-keepiq-audit:APP_PASSWORD -H 'OCS-APIRequest: true' \
 |---|---|
 | Any area | `GET /api/v1/admin` |
 | Policies | `GET`, `PUT /policies` |
-| People and offboarding | `GET /suites`, `POST /offboarding` |
+| People and offboarding | `GET /members`, `GET /suites`, `POST /offboarding` |
 | Applications and machine access | `GET`, `POST /applications`; `GET`, `DELETE /applications/{id}`; `POST /applications/{id}/approve` and `/reject`; `GET`, `PUT /applications/{id}/lease-policy` |
 | Audit and compliance | `GET /audit`; `GET`, `POST /compliance/reports`; `GET /compliance/reports/{id}`; `GET`, `POST /siem/sinks`; `PUT`, `DELETE /siem/sinks/{id}` |
 

@@ -181,6 +181,146 @@
         }
       }
     },
+    "/api/v1/admin/members": {
+      "get": {
+        "operationId": "memberOverviewIndex",
+        "summary": "List members and their vault status",
+        "description": "One page of Nextcloud users with their vault status, secret count, team folder memberships and whether they have an emergency contact. Metadata only. Admin area: People and offboarding.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "",
+                "none",
+                "active",
+                "revoked",
+                "compromised"
+              ],
+              "default": ""
+            },
+            "description": "Vault status filter; empty for every status."
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "default": ""
+            },
+            "description": "Search on user id or display name."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "results",
+                    "limit",
+                    "offset",
+                    "hasMore"
+                  ],
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "userId": {
+                            "type": "string"
+                          },
+                          "displayName": {
+                            "type": "string"
+                          },
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "vaultStatus": {
+                            "type": "string",
+                            "enum": [
+                              "none",
+                              "active",
+                              "revoked",
+                              "compromised"
+                            ]
+                          },
+                          "activeSuiteId": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "suiteCreatedAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          },
+                          "secretCount": {
+                            "type": "integer"
+                          },
+                          "teamFolderMemberships": {
+                            "type": "integer"
+                          },
+                          "hasEmergencyContact": {
+                            "type": "boolean"
+                          }
+                        }
+                      }
+                    },
+                    "limit": {
+                      "type": "integer"
+                    },
+                    "offset": {
+                      "type": "integer"
+                    },
+                    "hasMore": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "people"
+      }
+    },
     "/api/v1/admin/suites": {
       "get": {
         "operationId": "peopleSuites",
