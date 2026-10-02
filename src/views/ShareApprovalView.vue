@@ -63,6 +63,7 @@ import { SHARED, useShareApprovalStore } from '../store/modules/shareApproval.js
  * @param {object} query The route query.
  * @param {string} key The parameter name.
  * @return {string} The value, or '' when absent or not a string.
+ * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
  */
 function queryString(query, key) {
 	const value = query?.[key]
@@ -88,6 +89,7 @@ export default {
 		 * when the link does not name one completely.
 		 *
 		 * @return {object|null}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
 		 */
 		request() {
 			const kind = this.$route?.params?.kind
@@ -115,6 +117,7 @@ export default {
 		 * The question the owner answers.
 		 *
 		 * @return {string}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
 		 */
 		question() {
 			if (this.request?.kind === 'group-member') {
@@ -137,6 +140,7 @@ export default {
 		 * Share the secret with the new recipient.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
 		 */
 		async approve() {
 			const store = useShareApprovalStore()
@@ -166,6 +170,7 @@ export default {
 		 * Decline. Nothing is shared.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
 		 */
 		async deny() {
 			const store = useShareApprovalStore()

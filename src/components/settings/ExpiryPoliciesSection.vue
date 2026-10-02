@@ -92,6 +92,7 @@ import { secretTypeLabel } from '../../utils/secretTypes.js'
  *
  * @param {string} text The typed thresholds.
  * @return {Array<number>} The thresholds.
+ * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
  */
 export function parseReminderDays(text) {
 	const days = String(text ?? '')
@@ -106,6 +107,7 @@ export function parseReminderDays(text) {
  *
  * @param {string|number} value The typed value.
  * @return {number|null} The days, or null.
+ * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
  */
 export function parseMaxAge(value) {
 	if (value === '' || value === null || value === undefined) {
@@ -127,6 +129,12 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The rotation store.
+		 *
+		 * @return {object}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
+		 */
 		rotation() {
 			return useRotationStore()
 		},
@@ -135,11 +143,18 @@ export default {
 		 * The rules that apply to the user: their own and the administrator's.
 		 *
 		 * @return {Array<object>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 		 */
 		rules() {
 			return Array.isArray(this.rotation.policies) ? this.rotation.policies : []
 		},
 
+		/**
+		 * What a rule can apply to.
+		 *
+		 * @return {Array<{value: string, label: string}>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
+		 */
 		scopeOptions() {
 			return [
 				{ value: 'type', label: t('keepiq', 'An item type') },
@@ -151,6 +166,7 @@ export default {
 		 * The item types or folders a rule can apply to.
 		 *
 		 * @return {Array<{value: string, label: string}>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 		 */
 		targetOptions() {
 			if (this.draft.scope === 'folder') {
@@ -164,6 +180,7 @@ export default {
 		 * of the two limits, or it would do nothing.
 		 *
 		 * @return {boolean}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 		 */
 		canSave() {
 			const maxAge = parseMaxAge(this.draft.maxAgeDays)
@@ -180,6 +197,12 @@ export default {
 		},
 	},
 
+	/**
+	 * Load the rules, the item types and the folders.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
+	 */
 	async mounted() {
 		const types = useSecretTypeStore()
 		const folders = useFolderStore()
@@ -198,6 +221,7 @@ export default {
 		 *
 		 * @param {object} rule The policy.
 		 * @return {boolean}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 		 */
 		isOwn(rule) {
 			return rule.ownerId === getCurrentUser()?.uid
@@ -208,6 +232,7 @@ export default {
 		 *
 		 * @param {object} rule The policy.
 		 * @return {string}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 		 */
 		scopeLabel(rule) {
 			const target = rule.scope === 'folder'
@@ -224,6 +249,7 @@ export default {
 		 *
 		 * @param {object} rule The policy.
 		 * @return {string}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 		 */
 		ruleDetail(rule) {
 			const parts = []
@@ -236,6 +262,12 @@ export default {
 			return parts.join('. ')
 		},
 
+		/**
+		 * Create or update the drafted rule.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
+		 */
 		async onSave() {
 			this.saving = true
 			try {
@@ -253,6 +285,13 @@ export default {
 			}
 		},
 
+		/**
+		 * Delete one of the user's own rules.
+		 *
+		 * @param {object} rule The policy.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
+		 */
 		async onDelete(rule) {
 			try {
 				await this.rotation.deletePolicy(rule.id)

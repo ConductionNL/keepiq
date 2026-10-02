@@ -87,6 +87,7 @@ export function unpair(config) {
  *
  * @param {object} config The paired config.
  * @return {Promise<boolean>} True when Nextcloud deleted the app password.
+ * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-pairing-against-the-nextcloud-session
  */
 export async function revokeAppPassword(config) {
 	const res = await fetch(base(config) + '/ocs/v2.php/core/apppassword', {

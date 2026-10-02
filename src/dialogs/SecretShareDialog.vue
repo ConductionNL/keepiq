@@ -231,6 +231,7 @@ export default {
 		 * born expired.
 		 *
 		 * @return {string} YYYY-MM-DD in local time.
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-create-link-share
 		 */
 		minExpiryDate() {
 			const tomorrow = new Date()
@@ -339,6 +340,7 @@ export default {
 		 *
 		 * @param {string} iso The ISO-8601 timestamp.
 		 * @return {string}
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-create-link-share
 		 */
 		formatDate(iso) {
 			const date = new Date(iso)
