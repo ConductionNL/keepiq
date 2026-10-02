@@ -15,8 +15,10 @@
 
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
-import zxcvbn from 'zxcvbn'
 import { checkValue } from '../health/hibp.js'
+import { hibpBlockApplies, isExemptType, scoreShortfall } from './rules.js'
+
+export { isExemptType }
 
 let cachedPolicy = null
 
@@ -50,20 +52,6 @@ export function resetPolicyCache() {
 }
 
 /**
- * Whether a secret type is exempt from the policy.
- *
- * @param {object|null} policy The fetched policy.
- * @param {string} typeName The secret's system type name.
- * @return {boolean}
- */
-export function isExemptType(policy, typeName) {
-	const exempt = Array.isArray(policy?.policy_exempt_types)
-		? policy.policy_exempt_types
-		: []
-	return exempt.includes(typeName)
-}
-
-/**
  * Synchronous policy evaluation of a manual value: zxcvbn score floor.
  *
  * @param {object|null} policy The fetched policy.
@@ -72,32 +60,18 @@ export function isExemptType(policy, typeName) {
  * @return {{compliant: boolean, reason: string|null}}
  */
 export function evaluateScore(policy, typeName, value) {
-	if (
-		!policy
-		|| policy.policy_enabled !== true
-		|| isExemptType(policy, typeName)
-	) {
+	const shortfall = scoreShortfall(policy, typeName, value)
+	if (shortfall === null) {
 		return { compliant: true, reason: null }
 	}
-	if (typeof value !== 'string' || value === '') {
-		return { compliant: true, reason: null }
+	return {
+		compliant: false,
+		reason: t(
+			'keepiq',
+			'Value strength {score} is below the org minimum of {floor}',
+			shortfall,
+		),
 	}
-	const floor = Number.parseInt(policy.min_zxcvbn_score, 10) || 0
-	if (floor <= 0) {
-		return { compliant: true, reason: null }
-	}
-	const score = zxcvbn(value).score
-	if (score < floor) {
-		return {
-			compliant: false,
-			reason: t(
-				'keepiq',
-				'Value strength {score} is below the org minimum of {floor}',
-				{ score, floor },
-			),
-		}
-	}
-	return { compliant: true, reason: null }
 }
 
 /**
@@ -111,14 +85,7 @@ export function evaluateScore(policy, typeName, value) {
  * @return {Promise<string|null>} The blocking reason, or null.
  */
 export async function evaluateHibp(policy, typeName, value) {
-	if (
-		!policy
-		|| policy.policy_enabled !== true
-		|| policy.block_on_hibp_hit !== true
-		|| isExemptType(policy, typeName)
-		|| typeof value !== 'string'
-		|| value === ''
-	) {
+	if (!hibpBlockApplies(policy, typeName, value)) {
 		return null
 	}
 	const result = await checkValue(value)

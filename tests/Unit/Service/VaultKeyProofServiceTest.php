@@ -24,13 +24,12 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use OCA\Keepiq\Db\UsedProofNonceMapper;
 use OCA\Keepiq\Exception\KeyProofRequiredException;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\ICache;
-use OCP\ICacheFactory;
+use OCP\DB\Exception as DbException;
 use OCP\IConfig;
-use OCP\IMemcache;
 use OCP\Security\ISecureRandom;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -45,11 +44,11 @@ class VaultKeyProofServiceTest extends TestCase {
 	private string $publicKeyPem = '';
 	private string $otherPublicKeyPem = '';
 
-	/** @var array<string,mixed> The used-nonce store behind the cache double. */
+	/** @var array<string,int> The used-nonce rows behind the store double, hash => expiresAt. */
 	private array $store = [];
 
-	/** @var array<int,int> TTLs the cache was asked to keep entries for. */
-	private array $ttls = [];
+	/** @var array<int,int> The times the store was asked to sweep expired claims at. */
+	private array $sweeps = [];
 
 	private const PURPOSE = 'compromise-recovery';
 
@@ -72,7 +71,7 @@ class VaultKeyProofServiceTest extends TestCase {
 			config: $config,
 			secureRandom: $random,
 			timeFactory: $time,
-			cacheFactory: $this->cacheFactory(cache: $this->memcache()),
+			usedNonces: $this->usedNonces(),
 			logger: $this->createMock(LoggerInterface::class),
 		);
 
@@ -191,54 +190,60 @@ class VaultKeyProofServiceTest extends TestCase {
 	}//end testAProofCanBeUsedOnlyOnce()
 
 	/**
-	 * The used nonce is remembered for exactly the rest of its lifetime, not
-	 * longer: after expiry the challenge is refused on its own anyway.
+	 * The used nonce is kept until its challenge expires, and expired claims
+	 * are swept on the way in: an expired challenge is refused on its own.
 	 *
 	 * @return void
 	 */
-	public function testAUsedNonceIsRememberedForItsRemainingLifetime(): void {
+	public function testAUsedNonceIsKeptUntilItsChallengeExpires(): void {
 		[$nonce, $sig] = $this->prove(boundValues: []);
 		$this->now += 100;
 		$this->service->verify($nonce, $sig, $this->publicKeyPem, 'alice', self::PURPOSE, []);
 
-		$this->assertSame([200], $this->ttls, 'a 300 s challenge used after 100 s is kept for the remaining 200 s');
-	}//end testAUsedNonceIsRememberedForItsRemainingLifetime()
+		$this->assertSame([1300], array_values($this->store), 'a challenge issued at 1000 expires at 1300');
+		$this->assertSame([1100], $this->sweeps, 'expired claims are swept at the time of use');
+	}//end testAUsedNonceIsKeptUntilItsChallengeExpires()
 
 	/**
-	 * A cache without atomic add() still refuses a reuse (hasKey, then set),
-	 * the same pattern JwtAuthService uses for jti replay protection.
+	 * keepiq#868: single use does not depend on a memcache. The service no
+	 * longer takes a cache at all, so an install with no memcache (Nextcloud's
+	 * NullCache) or with APCu alone refuses a replay exactly like a cluster
+	 * with Redis: the second verify() of the same proof throws "Proof already
+	 * used".
 	 *
 	 * @return void
 	 */
-	public function testAPlainCacheStillRefusesReuse(): void {
-		$config = $this->createMock(IConfig::class);
-		$config->method('getSystemValueString')->willReturn('the-instance-secret');
-		$random = $this->createMock(ISecureRandom::class);
-		$random->method('generate')->willReturn('deterministic-random');
-		$time = $this->createMock(ITimeFactory::class);
-		$time->method('getTime')->willReturnCallback(fn () => $this->now);
-
-		$cache = $this->createMock(ICache::class);
-		$cache->method('hasKey')->willReturnCallback(fn (string $key): bool => array_key_exists($key, $this->store));
-		$cache->method('set')->willReturnCallback(function (string $key, mixed $value): bool {
-			$this->store[$key] = $value;
-			return true;
-		});
-
-		$service = new VaultKeyProofService(
-			config: $config,
-			secureRandom: $random,
-			timeFactory: $time,
-			cacheFactory: $this->cacheFactory(cache: $cache),
-			logger: $this->createMock(LoggerInterface::class),
-		);
+	public function testAReplayIsRefusedWithoutAnyMemcache(): void {
+		$parameters = (new \ReflectionMethod(VaultKeyProofService::class, '__construct'))->getParameters();
+		$types = array_map(static fn (\ReflectionParameter $p): string => (string)$p->getType(), $parameters);
+		$this->assertNotContains('OCP\\ICacheFactory', $types, 'single use must not hang on a cache');
 
 		[$nonce, $sig] = $this->prove(boundValues: []);
-		$service->verify($nonce, $sig, $this->publicKeyPem, 'alice', self::PURPOSE, []);
+		$this->service->verify($nonce, $sig, $this->publicKeyPem, 'alice', self::PURPOSE, []);
+
+		$this->expectException(KeyProofRequiredException::class);
+		$this->expectExceptionMessage('Proof already used');
+		$this->service->verify($nonce, $sig, $this->publicKeyPem, 'alice', self::PURPOSE, []);
+	}//end testAReplayIsRefusedWithoutAnyMemcache()
+
+	/**
+	 * Fails closed: when the claim cannot be recorded, the proof is refused
+	 * rather than let through unrecorded.
+	 *
+	 * @return void
+	 */
+	public function testAStoreFailureRefusesTheProof(): void {
+		$store = $this->createMock(UsedProofNonceMapper::class);
+		$store->method('claim')->willThrowException(new DbException('connection lost'));
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())->method('error');
+
+		$service = $this->serviceWith(usedNonces: $store, logger: $logger);
+		[$nonce, $sig] = $this->prove(boundValues: []);
 
 		$this->expectException(KeyProofRequiredException::class);
 		$service->verify($nonce, $sig, $this->publicKeyPem, 'alice', self::PURPOSE, []);
-	}//end testAPlainCacheStillRefusesReuse()
+	}//end testAStoreFailureRefusesTheProof()
 
 	/**
 	 * Only a fully verified proof consumes its nonce: a bad signature first
@@ -262,54 +267,15 @@ class VaultKeyProofServiceTest extends TestCase {
 	}//end testAFailedProofDoesNotConsumeItsNonce()
 
 	/**
-	 * Without a memcache, Nextcloud hands out a NullCache whose add() always
-	 * succeeds, so a reuse is not detected. That limit is in the spec; the
-	 * install must at least say so in the log, once (#804 review).
-	 *
-	 * @return void
-	 */
-	public function testANoMemcacheInstallLogsThatReuseIsUndetected(): void {
-		// NullCache: an IMemcache whose add() always returns true.
-		$nullCache = $this->createMock(IMemcache::class);
-		$nullCache->method('add')->willReturn(true);
-		$factory = $this->cacheFactory(cache: $nullCache, available: false);
-
-		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects($this->once())
-			->method('warning')
-			->with($this->stringContains('memcache'));
-
-		$service = $this->serviceWith(cacheFactory: $factory, logger: $logger);
-		[$nonce, $sig] = $this->prove(boundValues: []);
-		$service->verify($nonce, $sig, $this->publicKeyPem, 'alice', self::PURPOSE, []);
-		// The documented limit: the reuse goes through, and is not logged twice.
-		$service->verify($nonce, $sig, $this->publicKeyPem, 'alice', self::PURPOSE, []);
-	}//end testANoMemcacheInstallLogsThatReuseIsUndetected()
-
-	/**
-	 * An install with a memcache logs nothing.
-	 *
-	 * @return void
-	 */
-	public function testAMemcacheInstallDoesNotWarn(): void {
-		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects($this->never())->method('warning');
-
-		$service = $this->serviceWith(cacheFactory: $this->cacheFactory(cache: $this->memcache()), logger: $logger);
-		[$nonce, $sig] = $this->prove(boundValues: []);
-		$service->verify($nonce, $sig, $this->publicKeyPem, 'alice', self::PURPOSE, []);
-	}//end testAMemcacheInstallDoesNotWarn()
-
-	/**
-	 * A service over the given cache factory and logger, sharing setUp's
+	 * A service over the given used-nonce store and logger, sharing setUp's
 	 * secret, randomness and clock (so prove() proofs verify against it).
 	 *
-	 * @param ICacheFactory $cacheFactory The cache factory
+	 * @param UsedProofNonceMapper $usedNonces The used-nonce store
 	 * @param LoggerInterface $logger The logger
 	 *
 	 * @return VaultKeyProofService
 	 */
-	private function serviceWith(ICacheFactory $cacheFactory, LoggerInterface $logger): VaultKeyProofService {
+	private function serviceWith(UsedProofNonceMapper $usedNonces, LoggerInterface $logger): VaultKeyProofService {
 		$config = $this->createMock(IConfig::class);
 		$config->method('getSystemValueString')->willReturn('the-instance-secret');
 		$random = $this->createMock(ISecureRandom::class);
@@ -321,7 +287,7 @@ class VaultKeyProofServiceTest extends TestCase {
 			config: $config,
 			secureRandom: $random,
 			timeFactory: $time,
-			cacheFactory: $cacheFactory,
+			usedNonces: $usedNonces,
 			logger: $logger,
 		);
 	}//end serviceWith()
@@ -340,38 +306,26 @@ class VaultKeyProofServiceTest extends TestCase {
 	}//end prove()
 
 	/**
-	 * A memcache double whose add() is atomic over an in-test array.
+	 * A used-nonce store double that behaves like the unique index: the
+	 * first claim of a hash wins, every later one returns false.
 	 *
-	 * @return IMemcache
+	 * @return UsedProofNonceMapper
 	 */
-	private function memcache(): IMemcache {
-		$cache = $this->createMock(IMemcache::class);
-		$cache->method('add')->willReturnCallback(function (string $key, mixed $value, int $ttl = 0): bool {
-			if (array_key_exists($key, $this->store) === true) {
+	private function usedNonces(): UsedProofNonceMapper {
+		$store = $this->createMock(UsedProofNonceMapper::class);
+		$store->method('claim')->willReturnCallback(function (string $nonceHash, int $expiresAt): bool {
+			if (array_key_exists($nonceHash, $this->store) === true) {
 				return false;
 			}
 
-			$this->store[$key] = $value;
-			$this->ttls[] = $ttl;
+			$this->store[$nonceHash] = $expiresAt;
 			return true;
 		});
+		$store->method('deleteExpired')->willReturnCallback(function (int $now): int {
+			$this->sweeps[] = $now;
+			return 0;
+		});
 
-		return $cache;
-	}//end memcache()
-
-	/**
-	 * A cache factory handing out the given cache.
-	 *
-	 * @param ICache $cache The cache to hand out
-	 * @param bool $available Whether a memcache is configured
-	 *
-	 * @return ICacheFactory
-	 */
-	private function cacheFactory(ICache $cache, bool $available = true): ICacheFactory {
-		$factory = $this->createMock(ICacheFactory::class);
-		$factory->method('createDistributed')->willReturn($cache);
-		$factory->method('isAvailable')->willReturn($available);
-
-		return $factory;
-	}//end cacheFactory()
+		return $store;
+	}//end usedNonces()
 }//end class
