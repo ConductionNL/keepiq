@@ -147,6 +147,7 @@ export const usePasskeyStore = defineStore('passkey', {
 				if (e?.name === 'InvalidStateError') {
 					throw new Error(
 						'This authenticator already unlocks your vault. Revoke its passkey first to enroll it again.',
+						{ cause: e },
 					)
 				}
 				throw e
