@@ -111,6 +111,7 @@ export default {
 		 * decrypt). No-op when a direct `value` is supplied.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
 		 */
 		async prewarm() {
 			if (this.useOnly) {
@@ -130,6 +131,7 @@ export default {
 		 * the clipboard auto-clear.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
 		 */
 		async onCopy() {
 			if (this.useOnly) {

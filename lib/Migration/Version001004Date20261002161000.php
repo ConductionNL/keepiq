@@ -36,7 +36,7 @@ use OCP\Migration\SimpleMigrationStep;
  *
  * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-1.1
  */
-class Version001004Date20261002150000 extends SimpleMigrationStep {
+class Version001004Date20261002161000 extends SimpleMigrationStep {
 
 	/**
 	 * The grant tables that carry the two flags as the sharer set them.
