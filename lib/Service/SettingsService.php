@@ -184,6 +184,10 @@ class SettingsService {
 			userSession: $userSession,
 			logger: $logger,
 			eventDispatcher: $eventDispatcher,
+			backupSettings: new \OCA\Keepiq\Backup\BackupSettings(
+				appConfig: $appConfig,
+				cipher: new \OCA\Keepiq\Backup\ArchiveCipher(),
+			),
 		));
 	}//end __construct()
 
