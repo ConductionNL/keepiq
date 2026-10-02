@@ -1287,7 +1287,14 @@ OC.L10N.register(
         "Not allowed": "No permitido",
         "Save lease policy": "Guardar política de concesión",
         "Only an administrator can change this policy.": "Solo un administrador puede cambiar esta política.",
-        "Could not save the lease policy.": "No se pudo guardar la política de concesión."
+        "Could not save the lease policy.": "No se pudo guardar la política de concesión.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Los usuarios eligen cuánto tiempo permanece desbloqueada la extensión sin actividad. Usted fija el máximo que pueden elegir.",
+        "Longest idle time before the extension locks": "Tiempo de inactividad máximo antes de que la extensión se bloquee",
+        "1 minute": "1 minuto",
+        "5 minutes": "5 minutos",
+        "15 minutes": "15 minutos",
+        "1 hour": "1 hora",
+        "4 hours": "4 horas"
     },
     "nplurals=2; plural=(n != 1);"
 )

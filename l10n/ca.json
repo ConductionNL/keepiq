@@ -1286,7 +1286,14 @@
         "Not allowed": "No permès",
         "Save lease policy": "Desa la política de cessió",
         "Only an administrator can change this policy.": "Només un administrador pot canviar aquesta política.",
-        "Could not save the lease policy.": "No s'ha pogut desar la política de cessió."
+        "Could not save the lease policy.": "No s'ha pogut desar la política de cessió.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Els usuaris trien quant de temps l'extensió roman desbloquejada sense activitat. Vostè fixa el màxim que poden triar.",
+        "Longest idle time before the extension locks": "Temps màxim d'inactivitat abans que l'extensió es bloquegi",
+        "1 minute": "1 minut",
+        "5 minutes": "5 minuts",
+        "15 minutes": "15 minuts",
+        "1 hour": "1 hora",
+        "4 hours": "4 hores"
     },
     "plurals": null
 }

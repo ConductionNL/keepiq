@@ -119,7 +119,9 @@ export async function addAccount(config) {
 	const accounts = await loadAccounts()
 	if (accounts.length >= MAX_ACCOUNTS) {
 		throw new Error(
-			'You can connect up to ' + MAX_ACCOUNTS + ' accounts. Disconnect one first.',
+			'You can connect up to '
+				+ MAX_ACCOUNTS
+				+ ' accounts. Disconnect one first.',
 		)
 	}
 	const sameServer = (a) =>

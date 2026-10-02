@@ -1287,7 +1287,14 @@ OC.L10N.register(
         "Not allowed": "Mhux permess",
         "Save lease policy": "Issalva l-politika tal-kiri",
         "Only an administrator can change this policy.": "Amministratur biss jista' jibdel din il-politika.",
-        "Could not save the lease policy.": "Il-politika tal-kiri ma setgħetx tiġi salvata."
+        "Could not save the lease policy.": "Il-politika tal-kiri ma setgħetx tiġi salvata.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "L-utenti jagħżlu kemm iddum l-estensjoni miftuħa meta ma tintużax. Int tissettja l-itwal żmien li jistgħu jagħżlu.",
+        "Longest idle time before the extension locks": "L-itwal żmien mingħajr attività qabel ma l-estensjoni tissakkar",
+        "1 minute": "1 minuta",
+        "5 minutes": "5 minuti",
+        "15 minutes": "15-il minuta",
+        "1 hour": "siegħa",
+        "4 hours": "4 sigħat"
     },
     "nplurals=2; plural=(n != 1);"
 )

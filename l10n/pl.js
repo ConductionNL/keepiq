@@ -1287,7 +1287,14 @@ OC.L10N.register(
         "Not allowed": "Niedozwolone",
         "Save lease policy": "Zapisz zasady dzierżawy",
         "Only an administrator can change this policy.": "Tylko administrator może zmienić te zasady.",
-        "Could not save the lease policy.": "Nie udało się zapisać zasad dzierżawy."
+        "Could not save the lease policy.": "Nie udało się zapisać zasad dzierżawy.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Użytkownicy wybierają, jak długo rozszerzenie pozostaje odblokowane podczas bezczynności. Ty ustalasz najdłuższy czas, jaki mogą wybrać.",
+        "Longest idle time before the extension locks": "Najdłuższy czas bezczynności przed zablokowaniem rozszerzenia",
+        "1 minute": "1 minuta",
+        "5 minutes": "5 minut",
+        "15 minutes": "15 minut",
+        "1 hour": "1 godzina",
+        "4 hours": "4 godziny"
     },
     "nplurals=2; plural=(n != 1);"
 )

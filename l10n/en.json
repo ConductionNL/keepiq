@@ -1286,7 +1286,14 @@
         "Not allowed": "Not allowed",
         "Save lease policy": "Save lease policy",
         "Only an administrator can change this policy.": "Only an administrator can change this policy.",
-        "Could not save the lease policy.": "Could not save the lease policy."
+        "Could not save the lease policy.": "Could not save the lease policy.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.",
+        "Longest idle time before the extension locks": "Longest idle time before the extension locks",
+        "1 minute": "1 minute",
+        "5 minutes": "5 minutes",
+        "15 minutes": "15 minutes",
+        "1 hour": "1 hour",
+        "4 hours": "4 hours"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

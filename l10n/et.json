@@ -1286,7 +1286,14 @@
         "Not allowed": "Pole lubatud",
         "Save lease policy": "Salvesta rendipoliitika",
         "Only an administrator can change this policy.": "Seda poliitikat saab muuta ainult administraator.",
-        "Could not save the lease policy.": "Rendipoliitikat ei õnnestunud salvestada."
+        "Could not save the lease policy.": "Rendipoliitikat ei õnnestunud salvestada.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Kasutajad valivad, kui kaua laiendus jõudeolekus lukustamata jääb. Teie määrate pikima aja, mida nad valida saavad.",
+        "Longest idle time before the extension locks": "Pikim jõudeaeg enne laienduse lukustumist",
+        "1 minute": "1 minut",
+        "5 minutes": "5 minutit",
+        "15 minutes": "15 minutit",
+        "1 hour": "1 tund",
+        "4 hours": "4 tundi"
     },
     "plurals": null
 }

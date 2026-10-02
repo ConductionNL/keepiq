@@ -1287,7 +1287,14 @@ OC.L10N.register(
         "Not allowed": "Nepovolené",
         "Save lease policy": "Uložiť zásady prenájmu",
         "Only an administrator can change this policy.": "Tieto zásady môže zmeniť iba správca.",
-        "Could not save the lease policy.": "Zásady prenájmu sa nepodarilo uložiť."
+        "Could not save the lease policy.": "Zásady prenájmu sa nepodarilo uložiť.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Používatelia volia, ako dlho zostane rozšírenie pri nečinnosti odomknuté. Vy nastavujete najdlhší čas, ktorý môžu zvoliť.",
+        "Longest idle time before the extension locks": "Najdlhší čas nečinnosti pred uzamknutím rozšírenia",
+        "1 minute": "1 minúta",
+        "5 minutes": "5 minút",
+        "15 minutes": "15 minút",
+        "1 hour": "1 hodina",
+        "4 hours": "4 hodiny"
     },
     "nplurals=2; plural=(n != 1);"
 )

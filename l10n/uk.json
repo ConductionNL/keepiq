@@ -1286,7 +1286,14 @@
         "Not allowed": "Не дозволено",
         "Save lease policy": "Зберегти політику оренди",
         "Only an administrator can change this policy.": "Змінити цю політику може лише адміністратор.",
-        "Could not save the lease policy.": "Не вдалося зберегти політику оренди."
+        "Could not save the lease policy.": "Не вдалося зберегти політику оренди.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Користувачі обирають, як довго розширення залишається розблокованим під час бездіяльності. Ви встановлюєте найбільший час, який можна обрати.",
+        "Longest idle time before the extension locks": "Найбільший час бездіяльності до блокування розширення",
+        "1 minute": "1 хвилина",
+        "5 minutes": "5 хвилин",
+        "15 minutes": "15 хвилин",
+        "1 hour": "1 година",
+        "4 hours": "4 години"
     },
     "plurals": null
 }

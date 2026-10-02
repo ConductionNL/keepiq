@@ -95,7 +95,10 @@ describe('account storage', () => {
 	it('refuses a sixth pairing', async () => {
 		server = installServer(
 			Object.fromEntries(
-				[1, 2, 3, 4, 5, 6].map((i) => ['https://cloud' + i + '.example', vaults[WORK]]),
+				[1, 2, 3, 4, 5, 6].map((i) => [
+					'https://cloud' + i + '.example',
+					vaults[WORK],
+				]),
 			),
 		)
 		for (let i = 1; i <= 5; i++) {
@@ -137,9 +140,13 @@ describe('per-account lock state and idle timers', () => {
 	it('locks only the account whose timer expired; an OS lock locks both', async () => {
 		const { work, home } = await pairBoth()
 		await send('switch-account', { accountId: work.id })
-		expect((await send('unlock', { masterPassword: 'work-master' })).ok).toBe(true)
+		expect((await send('unlock', { masterPassword: 'work-master' })).ok).toBe(
+			true,
+		)
 		await send('switch-account', { accountId: home.id })
-		expect((await send('unlock', { masterPassword: 'home-master' })).ok).toBe(true)
+		expect((await send('unlock', { masterPassword: 'home-master' })).ok).toBe(
+			true,
+		)
 
 		vi.useFakeTimers()
 		await send('set-idle', { accountId: work.id, idleMinutes: 5 })
@@ -160,7 +167,10 @@ describe('per-account lock state and idle timers', () => {
 		const { activeAccountId } = await send('get-state')
 
 		vi.useFakeTimers()
-		const res = await send('set-idle', { accountId: activeAccountId, idleMinutes: 240 })
+		const res = await send('set-idle', {
+			accountId: activeAccountId,
+			idleMinutes: 240,
+		})
 		expect(res.effectiveIdleMinutes).toBe(30)
 		const stored = await api.loadAccount(activeAccountId)
 		expect(stored.idleMinutes).toBe(240)
@@ -231,9 +241,14 @@ describe('matching and filling use the active account only', () => {
 	it('refuses a fill for an id that no match offered, without fetching it', async () => {
 		const { home } = await bothUnlocked()
 		await send('match', { host: 'example.com' })
-		const res = await send('fill', { id: 'some-other-secret', accountId: home.id })
+		const res = await send('fill', {
+			id: 'some-other-secret',
+			accountId: home.id,
+		})
 		expect(res.error).toContain('not offered')
-		expect(server.calls.some((c) => c.url.includes('/api/v1/secrets/'))).toBe(false)
+		expect(server.calls.some((c) => c.url.includes('/api/v1/secrets/'))).toBe(
+			false,
+		)
 		expect(browser.filled).toEqual([])
 	})
 
@@ -259,7 +274,11 @@ describe('matching and filling use the active account only', () => {
 		expect(pending.capture.account).toBe('alice@cloud.home.example')
 		expect(pending.capture.accountId).toBe(home.id)
 
-		await send('capture-decision', { choice: 'save' }, pageSender('https://new.example/'))
+		await send(
+			'capture-decision',
+			{ choice: 'save' },
+			pageSender('https://new.example/'),
+		)
 		const posts = server.calls.filter(
 			(c) => c.method === 'POST' && c.url.endsWith('/api/v1/secrets'),
 		)

@@ -8,10 +8,19 @@
  * never encrypted or posted.
  */
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { promptCopy, showSavePrompt } from '../../browser-extension/src/content/save-prompt.js'
+import {
+	promptCopy,
+	showSavePrompt,
+} from '../../browser-extension/src/content/save-prompt.js'
 import { sha1Hex } from '../../src/health/hibpMatch.js'
 
-const ACCOUNT = { id: 'acc-1', url: 'https://cloud.test', user: 'ann', appPassword: 'x', idleMinutes: 15 }
+const ACCOUNT = {
+	id: 'acc-1',
+	url: 'https://cloud.test',
+	user: 'ann',
+	appPassword: 'x',
+	idleMinutes: 15,
+}
 
 vi.mock('../../browser-extension/src/lib/vault.js', () => ({
 	isUnlocked: vi.fn(() => true),
@@ -50,7 +59,11 @@ beforeAll(async () => {
 		runtime: {
 			id: 'ext',
 			getURL: (path) => 'chrome-extension://ext/' + path,
-			onMessage: { addListener: (fn) => { listener = fn } },
+			onMessage: {
+				addListener: (fn) => {
+					listener = fn
+				},
+			},
 		},
 	}
 	await import('../../browser-extension/src/background/service-worker.js')
@@ -66,7 +79,11 @@ beforeAll(async () => {
 function send(type, payload) {
 	return new Promise((resolve) => {
 		// The popup is the sender: save-capture is an extension-page message.
-		listener({ type, payload }, { id: 'ext', url: 'chrome-extension://ext/popup.html' }, resolve)
+		listener(
+			{ type, payload },
+			{ id: 'ext', url: 'chrome-extension://ext/popup.html' },
+			resolve,
+		)
 	})
 }
 
@@ -88,7 +105,11 @@ describe('extension save path applies the org password policy', () => {
 	it('refuses a password below the strength floor and saves nothing', async () => {
 		api.fetchPolicy.mockResolvedValue(FLOOR_THREE)
 
-		const res = await send('save-capture', { host: 'example.org', login: 'ann', secret: WEAK })
+		const res = await send('save-capture', {
+			host: 'example.org',
+			login: 'ann',
+			secret: WEAK,
+		})
 
 		expect(res.error).toContain("below your organisation's minimum of 3")
 		expect(vault.encryptField).not.toHaveBeenCalled()
@@ -98,7 +119,12 @@ describe('extension save path applies the org password policy', () => {
 	it('refuses an update the same way', async () => {
 		api.fetchPolicy.mockResolvedValue(FLOOR_THREE)
 
-		const res = await send('save-capture', { id: 's1', host: 'example.org', login: 'ann', secret: WEAK })
+		const res = await send('save-capture', {
+			id: 's1',
+			host: 'example.org',
+			login: 'ann',
+			secret: WEAK,
+		})
 
 		expect(res.error).toBeTruthy()
 		expect(api.updateSecret).not.toHaveBeenCalled()
@@ -107,7 +133,11 @@ describe('extension save path applies the org password policy', () => {
 	it('saves a password that meets the floor', async () => {
 		api.fetchPolicy.mockResolvedValue(FLOOR_THREE)
 
-		const res = await send('save-capture', { host: 'example.org', login: 'ann', secret: STRONG })
+		const res = await send('save-capture', {
+			host: 'example.org',
+			login: 'ann',
+			secret: STRONG,
+		})
 
 		expect(res).toEqual({ ok: true })
 		expect(api.createSecret).toHaveBeenCalledTimes(1)
@@ -116,18 +146,30 @@ describe('extension save path applies the org password policy', () => {
 	it('saves when the policy cannot be read, as the web app does', async () => {
 		api.fetchPolicy.mockResolvedValue(null)
 
-		const res = await send('save-capture', { host: 'example.org', login: 'ann', secret: WEAK })
+		const res = await send('save-capture', {
+			host: 'example.org',
+			login: 'ann',
+			secret: WEAK,
+		})
 
 		expect(res).toEqual({ ok: true })
 		expect(api.createSecret).toHaveBeenCalledTimes(1)
 	})
 
 	it('refuses a breached password when the policy blocks those, sending only the prefix', async () => {
-		api.fetchPolicy.mockResolvedValue({ ...FLOOR_THREE, min_zxcvbn_score: 0, block_on_hibp_hit: true })
+		api.fetchPolicy.mockResolvedValue({
+			...FLOOR_THREE,
+			min_zxcvbn_score: 0,
+			block_on_hibp_hit: true,
+		})
 		const hash = await sha1Hex(STRONG)
 		api.breachRange.mockResolvedValue(`${hash.slice(5)}:42\r\nABC:1`)
 
-		const res = await send('save-capture', { host: 'example.org', login: 'ann', secret: STRONG })
+		const res = await send('save-capture', {
+			host: 'example.org',
+			login: 'ann',
+			secret: STRONG,
+		})
 
 		expect(res.error).toContain('known breaches 42 times')
 		expect(api.breachRange).toHaveBeenCalledTimes(1)
@@ -136,10 +178,18 @@ describe('extension save path applies the org password policy', () => {
 	})
 
 	it('a breach service that does not answer never blocks', async () => {
-		api.fetchPolicy.mockResolvedValue({ ...FLOOR_THREE, min_zxcvbn_score: 0, block_on_hibp_hit: true })
+		api.fetchPolicy.mockResolvedValue({
+			...FLOOR_THREE,
+			min_zxcvbn_score: 0,
+			block_on_hibp_hit: true,
+		})
 		api.breachRange.mockRejectedValue(new Error('503'))
 
-		const res = await send('save-capture', { host: 'example.org', login: 'ann', secret: STRONG })
+		const res = await send('save-capture', {
+			host: 'example.org',
+			login: 'ann',
+			secret: STRONG,
+		})
 
 		expect(res).toEqual({ ok: true })
 	})
@@ -147,7 +197,11 @@ describe('extension save path applies the org password policy', () => {
 	it('answers a submitted weak password with a refusal instead of a save offer', async () => {
 		api.fetchPolicy.mockResolvedValue(FLOOR_THREE)
 
-		const offer = await send('capture-credential', { host: 'example.org', login: 'ann', secret: WEAK })
+		const offer = await send('capture-credential', {
+			host: 'example.org',
+			login: 'ann',
+			secret: WEAK,
+		})
 
 		expect(offer.action).toBe('refused')
 		expect(offer.reason).toContain('minimum of 3')
@@ -162,7 +216,10 @@ describe('the in-page refusal', () => {
 	})
 
 	it('explains the refusal and offers no save button', () => {
-		const copy = promptCopy({ action: 'refused', reason: 'Too weak.' }, 'example.org')
+		const copy = promptCopy(
+			{ action: 'refused', reason: 'Too weak.' },
+			'example.org',
+		)
 
 		expect(copy.primary).toBeNull()
 		expect(copy.text).toContain('did not save')
@@ -170,9 +227,14 @@ describe('the in-page refusal', () => {
 	})
 
 	it('renders only a close button', () => {
-		showSavePrompt({ action: 'refused', reason: 'Too weak.' }, 'example.org', document, {
-			mode: 'open',
-		})
+		showSavePrompt(
+			{ action: 'refused', reason: 'Too weak.' },
+			'example.org',
+			document,
+			{
+				mode: 'open',
+			},
+		)
 		const root = document.getElementById('keepiq-save-prompt').shadowRoot
 		const buttons = root.querySelectorAll('button')
 
@@ -183,7 +245,9 @@ describe('the in-page refusal', () => {
 
 describe('the extension breach lookup', () => {
 	it('posts the prefix in the body, never in the URL (keepiq#866)', async () => {
-		const { breachRange } = await vi.importActual('../../browser-extension/src/lib/api.js')
+		const { breachRange } = await vi.importActual(
+			'../../browser-extension/src/lib/api.js',
+		)
 		const fetchMock = vi.fn(async () => ({
 			ok: true,
 			status: 200,
@@ -191,11 +255,16 @@ describe('the extension breach lookup', () => {
 		}))
 		vi.stubGlobal('fetch', fetchMock)
 
-		const body = await breachRange({ url: 'https://cloud.test/', user: 'ann', appPassword: 'x' }, '5BAA6')
+		const body = await breachRange(
+			{ url: 'https://cloud.test/', user: 'ann', appPassword: 'x' },
+			'5BAA6',
+		)
 
 		expect(body).toBe('ABC:1')
 		const [url, init] = fetchMock.mock.calls[0]
-		expect(url).toBe('https://cloud.test/index.php/apps/keepiq/api/v1/breach-check/range')
+		expect(url).toBe(
+			'https://cloud.test/index.php/apps/keepiq/api/v1/breach-check/range',
+		)
 		expect(url).not.toContain('5BAA6')
 		expect(init.method).toBe('POST')
 		expect(JSON.parse(init.body)).toEqual({ prefix: '5BAA6' })

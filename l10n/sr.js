@@ -1287,7 +1287,14 @@ OC.L10N.register(
         "Not allowed": "Није дозвољено",
         "Save lease policy": "Сачувај политику закупа",
         "Only an administrator can change this policy.": "Само администратор може да промени ову политику.",
-        "Could not save the lease policy.": "Политику закупа није могуће сачувати."
+        "Could not save the lease policy.": "Политику закупа није могуће сачувати.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Корисници бирају колико дуго проширење остаје откључано током неактивности. Ви постављате најдуже време које смеју да изаберу.",
+        "Longest idle time before the extension locks": "Најдуже време неактивности пре закључавања проширења",
+        "1 minute": "1 минут",
+        "5 minutes": "5 минута",
+        "15 minutes": "15 минута",
+        "1 hour": "1 сат",
+        "4 hours": "4 сата"
     },
     "nplurals=2; plural=(n != 1);"
 )

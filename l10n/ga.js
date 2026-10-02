@@ -1287,7 +1287,14 @@ OC.L10N.register(
         "Not allowed": "Gan cead",
         "Save lease policy": "Sábháil polasaí léasa",
         "Only an administrator can change this policy.": "Ní féidir ach le riarthóir an polasaí seo a athrú.",
-        "Could not save the lease policy.": "Níorbh fhéidir an polasaí léasa a shábháil."
+        "Could not save the lease policy.": "Níorbh fhéidir an polasaí léasa a shábháil.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Roghnaíonn úsáideoirí cé chomh fada a fhanann an síneadh díghlasáilte agus é díomhaoin. Socraíonn tusa an t-am is faide is féidir leo a roghnú.",
+        "Longest idle time before the extension locks": "An t-am díomhaoin is faide sula gcuirtear an síneadh faoi ghlas",
+        "1 minute": "1 nóiméad",
+        "5 minutes": "5 nóiméad",
+        "15 minutes": "15 nóiméad",
+        "1 hour": "1 uair an chloig",
+        "4 hours": "4 uair an chloig"
     },
     "nplurals=2; plural=(n != 1);"
 )

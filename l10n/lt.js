@@ -1287,7 +1287,14 @@ OC.L10N.register(
         "Not allowed": "Neleidžiama",
         "Save lease policy": "Išsaugoti nuomos politiką",
         "Only an administrator can change this policy.": "Šią politiką gali pakeisti tik administratorius.",
-        "Could not save the lease policy.": "Nepavyko išsaugoti nuomos politikos."
+        "Could not save the lease policy.": "Nepavyko išsaugoti nuomos politikos.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Naudotojai pasirenka, kiek laiko plėtinys lieka atrakintas neveikimo metu. Jūs nustatote ilgiausią laiką, kurį jie gali pasirinkti.",
+        "Longest idle time before the extension locks": "Ilgiausias neveikimo laikas, kol plėtinys užrakinamas",
+        "1 minute": "1 minutė",
+        "5 minutes": "5 minutės",
+        "15 minutes": "15 minučių",
+        "1 hour": "1 valanda",
+        "4 hours": "4 valandos"
     },
     "nplurals=2; plural=(n != 1);"
 )

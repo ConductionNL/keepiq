@@ -1287,7 +1287,14 @@ OC.L10N.register(
         "Not allowed": "Ei sallittu",
         "Save lease policy": "Tallenna vuokrauskäytäntö",
         "Only an administrator can change this policy.": "Vain ylläpitäjä voi muuttaa tätä käytäntöä.",
-        "Could not save the lease policy.": "Vuokrauskäytäntöä ei voitu tallentaa."
+        "Could not save the lease policy.": "Vuokrauskäytäntöä ei voitu tallentaa.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Käyttäjät valitsevat, kuinka kauan laajennus pysyy avattuna käyttämättömänä. Sinä asetat pisimmän valittavan ajan.",
+        "Longest idle time before the extension locks": "Pisin käyttämätön aika ennen laajennuksen lukitsemista",
+        "1 minute": "1 minuutti",
+        "5 minutes": "5 minuuttia",
+        "15 minutes": "15 minuuttia",
+        "1 hour": "1 tunti",
+        "4 hours": "4 tuntia"
     },
     "nplurals=2; plural=(n != 1);"
 )

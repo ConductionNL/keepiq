@@ -1286,7 +1286,14 @@
         "Not allowed": "Não permitido",
         "Save lease policy": "Guardar política de concessão",
         "Only an administrator can change this policy.": "Só um administrador pode alterar esta política.",
-        "Could not save the lease policy.": "Não foi possível guardar a política de concessão."
+        "Could not save the lease policy.": "Não foi possível guardar a política de concessão.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Os utilizadores escolhem quanto tempo a extensão fica desbloqueada sem atividade. Você define o máximo que podem escolher.",
+        "Longest idle time before the extension locks": "Tempo máximo de inatividade antes de a extensão bloquear",
+        "1 minute": "1 minuto",
+        "5 minutes": "5 minutos",
+        "15 minutes": "15 minutos",
+        "1 hour": "1 hora",
+        "4 hours": "4 horas"
     },
     "plurals": null
 }

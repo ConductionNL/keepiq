@@ -4,7 +4,11 @@
  * answers the API paths the worker calls, per server URL.
  */
 import { vi } from 'vitest'
-import { encryptPrivateKey, importPublicKey, rsaEncrypt } from '../../../browser-extension/src/crypto/index.js'
+import {
+	encryptPrivateKey,
+	importPublicKey,
+	rsaEncrypt,
+} from '../../../browser-extension/src/crypto/index.js'
 import {
 	RSA4096_PRIVATE_KEY_PKCS8_PEM,
 	RSA4096_PUBLIC_KEY_SPKI_PEM,
@@ -27,7 +31,12 @@ export const POPUP = Object.freeze({
  * @return {object} The sender.
  */
 export function pageSender(url = 'https://evil.example/') {
-	return { id: EXTENSION_ID, url, origin: new URL(url).origin, tab: { id: 9, url } }
+	return {
+		id: EXTENSION_ID,
+		url,
+		origin: new URL(url).origin,
+		tab: { id: 9, url },
+	}
 }
 
 /**
@@ -67,14 +76,17 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 				get: async (keys) => {
 					const list = Array.isArray(keys) ? keys : [keys]
 					const out = {}
-					for (const k of list) if (storage.has(k)) out[k] = structuredClone(storage.get(k))
+					for (const k of list)
+						if (storage.has(k)) out[k] = structuredClone(storage.get(k))
 					return out
 				},
 				set: async (items) => {
-					for (const [k, v] of Object.entries(items)) storage.set(k, structuredClone(v))
+					for (const [k, v] of Object.entries(items))
+						storage.set(k, structuredClone(v))
 				},
 				remove: async (keys) => {
-					for (const k of Array.isArray(keys) ? keys : [keys]) storage.delete(k)
+					for (const k of Array.isArray(keys) ? keys : [keys])
+						storage.delete(k)
 				},
 			},
 		},
@@ -97,7 +109,10 @@ export async function makeVault(masterPassword, prefix) {
 		suite: {
 			id: prefix + '-suite',
 			status: 'active',
-			privateKey: await encryptPrivateKey(RSA4096_PRIVATE_KEY_PKCS8_PEM, masterPassword),
+			privateKey: await encryptPrivateKey(
+				RSA4096_PRIVATE_KEY_PKCS8_PEM,
+				masterPassword,
+			),
 			certificate: RSA4096_PUBLIC_KEY_SPKI_PEM,
 		},
 		rows: [
@@ -140,18 +155,29 @@ export function installServer(servers) {
 		if (path === '/api/v1/extension/policy') {
 			return respond(200, { maxIdleMinutes: s.maxIdleMinutes ?? 240 })
 		}
-		if (path.startsWith('/api/v1/extension/match')) return respond(200, { items: s.rows })
-		if (path.startsWith('/api/v1/extension/used/')) return respond(200, { recorded: true })
+		if (path.startsWith('/api/v1/extension/match'))
+			return respond(200, { items: s.rows })
+		if (path.startsWith('/api/v1/extension/used/'))
+			return respond(200, { recorded: true })
 		if (path === '/api/v1/secret-types') return respond(200, [])
 		if (path === '/api/settings/policy') return respond(200, null)
-		if (path === '/api/v1/secrets' && method === 'POST') return respond(201, { id: 'new' })
+		if (path === '/api/v1/secrets' && method === 'POST')
+			return respond(201, { id: 'new' })
 		if (path.startsWith('/api/v1/secrets/')) return respond(200, s.rows[0])
-		if (path === '/api/v1/passkeys/challenge') return respond(200, { challenge: 'Y2hhbGxlbmdlY2hhbGxlbmdlY2hhbGxlbmdlMTIz' })
+		if (path === '/api/v1/passkeys/challenge')
+			return respond(200, {
+				challenge: 'Y2hhbGxlbmdlY2hhbGxlbmdlY2hhbGxlbmdlMTIz',
+			})
 		if (path.startsWith('/api/v1/passkeys/login-options')) {
-			return respond(200, s.passkeyOptions ?? { credentials: [], challenge: 'Y2hhbGxlbmdl' })
+			return respond(
+				200,
+				s.passkeyOptions ?? { credentials: [], challenge: 'Y2hhbGxlbmdl' },
+			)
 		}
-		if (path === '/api/v1/passkeys' && method === 'POST') return respond(201, { id: 'pk1', ...body })
-		if (path.startsWith('/api/v1/passkeys/')) return respond(200, { recorded: true })
+		if (path === '/api/v1/passkeys' && method === 'POST')
+			return respond(201, { id: 'pk1', ...body })
+		if (path.startsWith('/api/v1/passkeys/'))
+			return respond(200, { recorded: true })
 		return respond(404, {})
 	})
 	return { calls }

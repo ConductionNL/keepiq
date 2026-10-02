@@ -1287,7 +1287,14 @@ OC.L10N.register(
         "Not allowed": "Betg permess",
         "Save lease policy": "Memorisar la directiva da lease",
         "Only an administrator can change this policy.": "Mo in administratur po midar questa directiva.",
-        "Could not save the lease policy.": "Impussibel da memorisar la directiva da lease."
+        "Could not save the lease policy.": "Impussibel da memorisar la directiva da lease.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Ils utilisaders tschernan quant ditg che l'extensiun resta deblocada en cas d'inactivitad. Vus fixais il temp il pli lung ch'els pon tscherner.",
+        "Longest idle time before the extension locks": "Il temp d'inactivitad il pli lung avant che l'extensiun vegn bloccada",
+        "1 minute": "1 minuta",
+        "5 minutes": "5 minutas",
+        "15 minutes": "15 minutas",
+        "1 hour": "1 ura",
+        "4 hours": "4 uras"
     },
     "nplurals=2; plural=(n != 1);"
 )

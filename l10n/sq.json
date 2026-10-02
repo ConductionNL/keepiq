@@ -1286,7 +1286,14 @@
         "Not allowed": "Nuk lejohet",
         "Save lease policy": "Ruaj politikën e qirasë",
         "Only an administrator can change this policy.": "Vetëm një administrator mund ta ndryshojë këtë politikë.",
-        "Could not save the lease policy.": "Politika e qirasë nuk mund të ruhej."
+        "Could not save the lease policy.": "Politika e qirasë nuk mund të ruhej.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Përdoruesit zgjedhin sa kohë zgjatja mbetet e shkyçur kur nuk përdoret. Ju caktoni kohën më të gjatë që mund të zgjedhin.",
+        "Longest idle time before the extension locks": "Koha më e gjatë pa aktivitet para se zgjatja të kyçet",
+        "1 minute": "1 minutë",
+        "5 minutes": "5 minuta",
+        "15 minutes": "15 minuta",
+        "1 hour": "1 orë",
+        "4 hours": "4 orë"
     },
     "plurals": null
 }

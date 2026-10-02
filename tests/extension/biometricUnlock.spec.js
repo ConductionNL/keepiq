@@ -63,7 +63,9 @@ function send(type, payload = {}) {
  * @return {object} A navigator.credentials stand-in that records its calls.
  */
 function fakeAuthenticator({ prf = true } = {}) {
-	const rawId = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]).buffer
+	const rawId = new Uint8Array([
+		1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+	]).buffer
 	const deviceSecret = new TextEncoder().encode('device-secret')
 	const prfOf = async (salt) => {
 		const input = new Uint8Array(deviceSecret.length + salt.length)
@@ -85,7 +87,9 @@ function fakeAuthenticator({ prf = true } = {}) {
 		get: vi.fn(async (options) => {
 			calls.get.push(options)
 			const p = options.publicKey.extensions.prf
-			const salt = p.eval ? p.eval.first : Object.values(p.evalByCredential)[0].first
+			const salt = p.eval
+				? p.eval.first
+				: Object.values(p.evalByCredential)[0].first
 			const output = await prfOf(salt)
 			return {
 				rawId,
@@ -128,11 +132,21 @@ describe('enrolment', () => {
 			userVerification: 'required',
 		})
 
-		const posts = server.calls.filter((c) => c.method === 'POST' && c.url.endsWith('/api/v1/passkeys'))
+		const posts = server.calls.filter(
+			(c) => c.method === 'POST' && c.url.endsWith('/api/v1/passkeys'),
+		)
 		expect(posts).toHaveLength(1)
 		const body = posts[0].body
 		expect(Object.keys(body).sort()).toEqual(
-			['clientKind', 'credentialId', 'label', 'prfSalt', 'rpId', 'transports', 'wrappedUnlockKey'].sort(),
+			[
+				'clientKind',
+				'credentialId',
+				'label',
+				'prfSalt',
+				'rpId',
+				'transports',
+				'wrappedUnlockKey',
+			].sort(),
 		)
 		expect(body.clientKind).toBe('extension')
 		expect(body.rpId).toBe(EXTENSION_ID)
@@ -152,7 +166,13 @@ describe('enrolment', () => {
 		await send('unlock', { masterPassword: 'work-master' })
 		const authenticator = fakeAuthenticator()
 		await expect(
-			enrolBiometric({ credentials: authenticator, send, accountId, masterPassword: 'nope', label: '' }),
+			enrolBiometric({
+				credentials: authenticator,
+				send,
+				accountId,
+				masterPassword: 'nope',
+				label: '',
+			}),
 		).rejects.toThrow('not correct')
 		expect(authenticator.create).not.toHaveBeenCalled()
 	})
@@ -168,7 +188,11 @@ describe('enrolment', () => {
 				label: '',
 			}),
 		).rejects.toBeInstanceOf(BiometricUnavailable)
-		expect(server.calls.some((c) => c.method === 'POST' && c.url.endsWith('/api/v1/passkeys'))).toBe(false)
+		expect(
+			server.calls.some(
+				(c) => c.method === 'POST' && c.url.endsWith('/api/v1/passkeys'),
+			),
+		).toBe(false)
 	})
 
 	it('needs the account unlocked', async () => {
@@ -181,11 +205,26 @@ describe('unlock', () => {
 	async function enrolled() {
 		await send('unlock', { masterPassword: 'work-master' })
 		const authenticator = fakeAuthenticator()
-		await enrolBiometric({ credentials: authenticator, send, accountId, masterPassword: 'work-master', label: 'Laptop' })
-		const body = server.calls.find((c) => c.method === 'POST' && c.url.endsWith('/api/v1/passkeys')).body
+		await enrolBiometric({
+			credentials: authenticator,
+			send,
+			accountId,
+			masterPassword: 'work-master',
+			label: 'Laptop',
+		})
+		const body = server.calls.find(
+			(c) => c.method === 'POST' && c.url.endsWith('/api/v1/passkeys'),
+		).body
 		serverState.passkeyOptions = {
 			challenge: 'Y2hhbGxlbmdl',
-			credentials: [{ id: 'pk1', credentialId: body.credentialId, prfSalt: body.prfSalt, wrappedUnlockKey: body.wrappedUnlockKey }],
+			credentials: [
+				{
+					id: 'pk1',
+					credentialId: body.credentialId,
+					prfSalt: body.prfSalt,
+					wrappedUnlockKey: body.wrappedUnlockKey,
+				},
+			],
 		}
 		await send('lock')
 		return authenticator
@@ -198,10 +237,14 @@ describe('unlock', () => {
 		await unlockWithBiometric({ credentials: authenticator, send, accountId })
 
 		expect(vault.isUnlocked(accountId)).toBe(true)
-		const optionsCall = server.calls.find((c) => c.url.includes('/api/v1/passkeys/login-options'))
+		const optionsCall = server.calls.find((c) =>
+			c.url.includes('/api/v1/passkeys/login-options'),
+		)
 		expect(optionsCall.url).toContain('client=extension')
 		expect(optionsCall.url).toContain('rpId=' + EXTENSION_ID)
-		expect(authenticator.calls.get.at(-1).publicKey.userVerification).toBe('required')
+		expect(authenticator.calls.get.at(-1).publicKey.userVerification).toBe(
+			'required',
+		)
 
 		const candidates = await router.handleMessage(
 			{ type: 'match', payload: { host: 'example.com' } },
@@ -223,7 +266,11 @@ describe('unlock', () => {
 
 	it('offers no unlock when no extension passkey is enrolled', async () => {
 		await expect(
-			unlockWithBiometric({ credentials: fakeAuthenticator(), send, accountId }),
+			unlockWithBiometric({
+				credentials: fakeAuthenticator(),
+				send,
+				accountId,
+			}),
 		).rejects.toBeInstanceOf(BiometricUnavailable)
 	})
 })
@@ -236,14 +283,22 @@ describe('the raw-key unlock message', () => {
 		const kek = await deriveKekFromPrf(prf.buffer, 'cred-1')
 		const unwrapped = await unwrapUnlockKey(kek, await wrapUnlockKey(kek, raw))
 
-		const res = await send('unlock-raw', { accountId, rawKey: Array.from(unwrapped) })
+		const res = await send('unlock-raw', {
+			accountId,
+			rawKey: Array.from(unwrapped),
+		})
 
 		expect(res).toEqual({ ok: true })
-		expect(await vault.decryptField(accountId, fixture.rows[0].key)).toBe('work-password')
+		expect(await vault.decryptField(accountId, fixture.rows[0].key)).toBe(
+			'work-password',
+		)
 	})
 
 	it('refuses a wrong key and stays locked', async () => {
-		const res = await send('unlock-raw', { accountId, rawKey: Array.from(new Uint8Array(32)) })
+		const res = await send('unlock-raw', {
+			accountId,
+			rawKey: Array.from(new Uint8Array(32)),
+		})
 		expect(res.error).toBeTruthy()
 		expect(vault.isUnlocked(accountId)).toBe(false)
 	})
@@ -265,7 +320,9 @@ describe('feature detection', () => {
 		expect(await platformAuthenticatorAvailable({})).toBe(false)
 		expect(
 			await platformAuthenticatorAvailable({
-				PublicKeyCredential: { isUserVerifyingPlatformAuthenticatorAvailable: async () => false },
+				PublicKeyCredential: {
+					isUserVerifyingPlatformAuthenticatorAvailable: async () => false,
+				},
 			}),
 		).toBe(false)
 		expect(
@@ -279,7 +336,9 @@ describe('feature detection', () => {
 		).toBe(false)
 		expect(
 			await platformAuthenticatorAvailable({
-				PublicKeyCredential: { isUserVerifyingPlatformAuthenticatorAvailable: async () => true },
+				PublicKeyCredential: {
+					isUserVerifyingPlatformAuthenticatorAvailable: async () => true,
+				},
 			}),
 		).toBe(true)
 	})

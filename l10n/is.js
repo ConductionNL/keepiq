@@ -1287,7 +1287,14 @@ OC.L10N.register(
         "Not allowed": "Ekki leyft",
         "Save lease policy": "Vista leigustefnu",
         "Only an administrator can change this policy.": "Aðeins stjórnandi getur breytt þessari stefnu.",
-        "Could not save the lease policy.": "Ekki tókst að vista leigustefnuna."
+        "Could not save the lease policy.": "Ekki tókst að vista leigustefnuna.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Notendur velja hversu lengi viðbótin er ólæst í aðgerðaleysi. Þú stillir lengsta tímann sem þeir mega velja.",
+        "Longest idle time before the extension locks": "Lengsti aðgerðaleysistími áður en viðbótin læsist",
+        "1 minute": "1 mínúta",
+        "5 minutes": "5 mínútur",
+        "15 minutes": "15 mínútur",
+        "1 hour": "1 klukkustund",
+        "4 hours": "4 klukkustundir"
     },
     "nplurals=2; plural=(n != 1);"
 )

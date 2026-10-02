@@ -378,7 +378,9 @@ async function policyRefusalFor(config, value) {
  */
 async function doSaveCapture(payload) {
 	const accountId =
-		pendingCapture?.accountId || payload.accountId || (await api.activeAccountId())
+		pendingCapture?.accountId
+		|| payload.accountId
+		|| (await api.activeAccountId())
 	const config = await api.loadAccount(accountId)
 	if (!config) throw new Error('not paired')
 	if (!vault.isUnlocked(accountId)) throw new Error('vault is locked')

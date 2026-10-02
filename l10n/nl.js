@@ -1292,7 +1292,14 @@ OC.L10N.register(
         "Not allowed": "Niet toegestaan",
         "Save lease policy": "Leasebeleid opslaan",
         "Only an administrator can change this policy.": "Alleen een beheerder kan dit beleid wijzigen.",
-        "Could not save the lease policy.": "Het leasebeleid kon niet worden opgeslagen."
+        "Could not save the lease policy.": "Het leasebeleid kon niet worden opgeslagen.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Gebruikers kiezen hoe lang de extensie ontgrendeld blijft als ze niets doen. U stelt de langste tijd in die ze mogen kiezen.",
+        "Longest idle time before the extension locks": "Langste inactieve tijd voordat de extensie vergrendelt",
+        "1 minute": "1 minuut",
+        "5 minutes": "5 minuten",
+        "15 minutes": "15 minuten",
+        "1 hour": "1 uur",
+        "4 hours": "4 uur"
     },
     "nplurals=2; plural=(n != 1);"
 )

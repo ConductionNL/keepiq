@@ -1287,7 +1287,14 @@ OC.L10N.register(
         "Not allowed": "Ikke tillatt",
         "Save lease policy": "Lagre leiepolicy",
         "Only an administrator can change this policy.": "Bare en administrator kan endre denne policyen.",
-        "Could not save the lease policy.": "Kunne ikke lagre leiepolicyen."
+        "Could not save the lease policy.": "Kunne ikke lagre leiepolicyen.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Brukerne velger hvor lenge utvidelsen forblir låst opp ved inaktivitet. Du angir det lengste de kan velge.",
+        "Longest idle time before the extension locks": "Lengste inaktive tid før utvidelsen låses",
+        "1 minute": "1 minutt",
+        "5 minutes": "5 minutter",
+        "15 minutes": "15 minutter",
+        "1 hour": "1 time",
+        "4 hours": "4 timer"
     },
     "nplurals=2; plural=(n != 1);"
 )

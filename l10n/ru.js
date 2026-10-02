@@ -1287,7 +1287,14 @@ OC.L10N.register(
         "Not allowed": "Не разрешено",
         "Save lease policy": "Сохранить политику аренды",
         "Only an administrator can change this policy.": "Изменить эту политику может только администратор.",
-        "Could not save the lease policy.": "Не удалось сохранить политику аренды."
+        "Could not save the lease policy.": "Не удалось сохранить политику аренды.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Пользователи выбирают, как долго расширение остаётся разблокированным при бездействии. Вы задаёте наибольшее время, которое можно выбрать.",
+        "Longest idle time before the extension locks": "Наибольшее время бездействия до блокировки расширения",
+        "1 minute": "1 минута",
+        "5 minutes": "5 минут",
+        "15 minutes": "15 минут",
+        "1 hour": "1 час",
+        "4 hours": "4 часа"
     },
     "nplurals=2; plural=(n != 1);"
 )

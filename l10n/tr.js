@@ -1287,7 +1287,14 @@ OC.L10N.register(
         "Not allowed": "İzin verilmedi",
         "Save lease policy": "Kiralama ilkesini kaydet",
         "Only an administrator can change this policy.": "Bu ilkeyi yalnızca bir yönetici değiştirebilir.",
-        "Could not save the lease policy.": "Kiralama ilkesi kaydedilemedi."
+        "Could not save the lease policy.": "Kiralama ilkesi kaydedilemedi.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Kullanıcılar, uzantının boşta kaldığında ne kadar süre kilidi açık kalacağını seçer. Seçebilecekleri en uzun süreyi siz belirlersiniz.",
+        "Longest idle time before the extension locks": "Uzantı kilitlenmeden önceki en uzun boşta kalma süresi",
+        "1 minute": "1 dakika",
+        "5 minutes": "5 dakika",
+        "15 minutes": "15 dakika",
+        "1 hour": "1 saat",
+        "4 hours": "4 saat"
     },
     "nplurals=2; plural=(n != 1);"
 )

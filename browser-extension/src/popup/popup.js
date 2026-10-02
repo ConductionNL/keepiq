@@ -24,7 +24,12 @@ function $(id) {
 }
 
 function show(view) {
-	for (const id of ['view-pair', 'view-locked', 'view-unlocked', 'view-settings']) {
+	for (const id of [
+		'view-pair',
+		'view-locked',
+		'view-unlocked',
+		'view-settings',
+	]) {
 		$(id).hidden = id !== view
 	}
 }

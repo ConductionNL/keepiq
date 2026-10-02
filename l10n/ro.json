@@ -1286,7 +1286,14 @@
         "Not allowed": "Nepermis",
         "Save lease policy": "Salvează politica de închiriere",
         "Only an administrator can change this policy.": "Doar un administrator poate modifica această politică.",
-        "Could not save the lease policy.": "Politica de închiriere nu a putut fi salvată."
+        "Could not save the lease policy.": "Politica de închiriere nu a putut fi salvată.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Utilizatorii aleg cât timp extensia rămâne deblocată în lipsa activității. Dumneavoastră stabiliți durata maximă pe care o pot alege.",
+        "Longest idle time before the extension locks": "Durata maximă de inactivitate înainte ca extensia să se blocheze",
+        "1 minute": "1 minut",
+        "5 minutes": "5 minute",
+        "15 minutes": "15 minute",
+        "1 hour": "1 oră",
+        "4 hours": "4 ore"
     },
     "plurals": null
 }

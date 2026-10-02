@@ -39,7 +39,10 @@ export class BiometricUnavailable extends Error {}
  */
 export async function platformAuthenticatorAvailable(win = globalThis) {
 	const pkc = win.PublicKeyCredential
-	if (!pkc || typeof pkc.isUserVerifyingPlatformAuthenticatorAvailable !== 'function') {
+	if (
+		!pkc
+		|| typeof pkc.isUserVerifyingPlatformAuthenticatorAvailable !== 'function'
+	) {
 		return false
 	}
 	try {
@@ -81,7 +84,13 @@ function unwrap(res) {
  * @param {string} deps.label A name for the passkey.
  * @return {Promise<object>} The stored credential.
  */
-export async function enrolBiometric({ credentials, send, accountId, masterPassword, label }) {
+export async function enrolBiometric({
+	credentials,
+	send,
+	accountId,
+	masterPassword,
+	label,
+}) {
 	const ctx = unwrap(await send('biometric-enrol-context', { accountId }))
 
 	// The raw unlock key, checked against the envelope before any prompt.
@@ -133,7 +142,8 @@ export async function enrolBiometric({ credentials, send, accountId, masterPassw
 				extensions: { prf: { eval: { first: prfSalt } } },
 			},
 		})
-		const prfOutput = assertion?.getClientExtensionResults?.()?.prf?.results?.first
+		const prfOutput =
+			assertion?.getClientExtensionResults?.()?.prf?.results?.first
 		if (!prfOutput) {
 			throw new BiometricUnavailable(
 				'This device cannot unlock Keepiq with a fingerprint or face.',
@@ -151,7 +161,9 @@ export async function enrolBiometric({ credentials, send, accountId, masterPassw
 					wrappedUnlockKey,
 					prfSalt: toBase64(prfSalt),
 					label: label || 'Browser extension',
-					transports: (created.response?.getTransports?.() || []).join(','),
+					transports: (created.response?.getTransports?.() || []).join(
+						',',
+					),
 				},
 			}),
 		)
@@ -204,7 +216,10 @@ export async function unlockWithBiometric({ credentials, send, accountId }) {
 	const rawUnlockKey = await unwrapUnlockKey(kek, cred.wrappedUnlockKey)
 	try {
 		unwrap(
-			await send('unlock-raw', { accountId, rawKey: Array.from(rawUnlockKey) }),
+			await send('unlock-raw', {
+				accountId,
+				rawKey: Array.from(rawUnlockKey),
+			}),
 		)
 	} finally {
 		rawUnlockKey.fill(0)

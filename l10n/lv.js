@@ -1287,7 +1287,14 @@ OC.L10N.register(
         "Not allowed": "Nav atļauts",
         "Save lease policy": "Saglabāt nomas politiku",
         "Only an administrator can change this policy.": "Šo politiku var mainīt tikai administrators.",
-        "Could not save the lease policy.": "Neizdevās saglabāt nomas politiku."
+        "Could not save the lease policy.": "Neizdevās saglabāt nomas politiku.",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Lietotāji izvēlas, cik ilgi paplašinājums paliek atbloķēts bezdarbības laikā. Jūs nosakāt garāko laiku, ko viņi drīkst izvēlēties.",
+        "Longest idle time before the extension locks": "Garākais bezdarbības laiks, pirms paplašinājums tiek bloķēts",
+        "1 minute": "1 minūte",
+        "5 minutes": "5 minūtes",
+        "15 minutes": "15 minūtes",
+        "1 hour": "1 stunda",
+        "4 hours": "4 stundas"
     },
     "nplurals=2; plural=(n != 1);"
 )
