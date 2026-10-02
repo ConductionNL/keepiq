@@ -3,9 +3,9 @@
   SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 
   Admin section for the org password policy (org-password-policies §5.1):
-  the honest-client save-flow floor (zxcvbn score, HIBP block) and the
-  server-authoritative generator floor (length + required classes), with
-  the exempt-type picker.
+  the honest-client save-flow floor (zxcvbn score, HIBP block), the
+  generator floor (length + required classes) that the browser generator
+  applies, whether passphrases may be generated, and the exempt-type picker.
 
   @spec openspec/specs/org-password-policies/spec.md#requirement-configurable-org-password-policy
 -->
@@ -15,7 +15,7 @@
 		:description="
 			t(
 				'keepiq',
-				'Quality floor for secret values: the generator floor is enforced server-side; save-flow checks run in the browser before encryption (the server never sees a value).',
+				'Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.',
 			)
 		">
 		<div class="org-policy" data-testid="org-policy-section">
@@ -55,6 +55,14 @@
 					<span>{{ cls.label }}</span>
 				</label>
 			</div>
+			<label class="org-policy__check">
+				<input
+					v-model="policy.generator_allow_passphrase"
+					type="checkbox"
+					data-testid="generator-allow-passphrase"
+					@change="save" />
+				<span>{{ t('keepiq', 'Allow passphrases made of words') }}</span>
+			</label>
 			<label class="org-policy__field">
 				<span>{{
 					t('keepiq', 'Minimum strength score for manual values (0–4)')
@@ -111,6 +119,7 @@ export default {
 				generator_require_lower: false,
 				generator_require_digit: false,
 				generator_require_symbol: false,
+				generator_allow_passphrase: true,
 				min_zxcvbn_score: 0,
 				block_on_hibp_hit: false,
 			},
