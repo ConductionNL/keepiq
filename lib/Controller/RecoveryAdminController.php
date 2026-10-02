@@ -146,16 +146,17 @@ class RecoveryAdminController extends Controller {
 	}//end retireKey()
 
 	/**
-	 * Whether a user is enrolled, for the warning before a force-revocation.
+	 * Whether a suite's owner is enrolled through that suite, for the warning
+	 * before a force-revocation.
 	 *
-	 * @param string $userId The suite owner
+	 * @param string $suiteId The suite
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-force-revocation-warns-about-enrolled-users
 	 */
 	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
-	public function enrolled(string $userId): JSONResponse {
-		return new JSONResponse(data: ['enrolled' => ($this->enrolments->current(userId: $userId) !== null)]);
+	public function enrolled(string $suiteId = ''): JSONResponse {
+		return new JSONResponse(data: ['enrolled' => $this->enrolments->isSuiteEnrolled(suiteId: $suiteId)]);
 	}//end enrolled()
 }//end class

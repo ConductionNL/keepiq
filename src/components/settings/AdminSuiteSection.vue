@@ -51,6 +51,17 @@
 					}}
 				</NcCheckboxRadioSwitch>
 
+				<NcNoteCard
+					v-if="enrolledInRecovery"
+					type="warning"
+					data-testid="admin-suite-recovery-warning">
+					{{
+						t(
+							'keepiq',
+							'This user is enrolled in account recovery. Recovering keeps their secrets; revoking deletes their enrolment.',
+						)
+					}}
+				</NcNoteCard>
 				<NcButton
 					variant="error"
 					:disabled="!suiteId || !reason || busy"
@@ -124,6 +135,8 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -158,7 +171,37 @@ export default {
 			result: null,
 			emergencyContactsDestroyed: 0,
 			warning: null,
+			/** Whether the suite's owner is enrolled in account recovery. */
+			enrolledInRecovery: false,
 		}
+	},
+
+	watch: {
+		/**
+		 * Look up the account recovery enrolment of the entered suite, so the
+		 * warning shows before the force-revoke action
+		 * (crypto-organisation-account-recovery D8).
+		 *
+		 * @param {string} id The suite id typed so far.
+		 */
+		async suiteId(id) {
+			this.enrolledInRecovery = false
+			const trimmed = (id ?? '').trim()
+			if (trimmed.length < 8) {
+				return
+			}
+			try {
+				const response = await axios.get(
+					generateUrl('/apps/keepiq/api/v1/recovery/admin/enrolled'),
+					{ params: { suiteId: trimmed } },
+				)
+				if (this.suiteId.trim() === trimmed) {
+					this.enrolledInRecovery = response.data?.enrolled === true
+				}
+			} catch {
+				this.enrolledInRecovery = false
+			}
+		},
 	},
 
 	methods: {

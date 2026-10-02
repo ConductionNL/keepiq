@@ -175,6 +175,19 @@ class RecoveryEnrolmentService {
 	}//end withdraw()
 
 	/**
+	 * Whether a suite has an enrolment (the admin's revocation warning).
+	 *
+	 * @param string $suiteId The suite
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-force-revocation-warns-about-enrolled-users
+	 */
+	public function isSuiteEnrolled(string $suiteId): bool {
+		return $suiteId !== '' && $this->mapper->findBySuite($suiteId) !== [];
+	}//end isSuiteEnrolled()
+
+	/**
 	 * Delete the enrolments of a suite (rotation done or suite revoked, D7).
 	 *
 	 * @param string $suiteId The suite

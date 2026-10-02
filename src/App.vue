@@ -163,6 +163,12 @@
 						<PasskeyManager />
 					</div>
 					<div class="user-settings__field">
+						<AccountRecoveryEnrolment />
+					</div>
+					<div class="user-settings__field">
+						<RecoveryOfficerPanel />
+					</div>
+					<div class="user-settings__field">
 						<NcButton
 							variant="error"
 							@click="showRecovery = !showRecovery">
@@ -405,11 +411,13 @@ import KeyIcon from 'vue-material-design-icons/Key.vue'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import TimerIcon from 'vue-material-design-icons/Timer.vue'
 import TuneVariantIcon from 'vue-material-design-icons/TuneVariant.vue'
+import AccountRecoveryEnrolment from './components/AccountRecoveryEnrolment.vue'
 import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
 import KeepiqAppNav from './components/KeepiqAppNav/KeepiqAppNav.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
+import RecoveryOfficerPanel from './components/RecoveryOfficerPanel.vue'
 import SecretDetailSidebar from './components/SecretDetailSidebar.vue'
 import DefaultsSection from './components/settings/DefaultsSection.vue'
 import DeviceApprovalDialog from './dialogs/DeviceApprovalDialog.vue'
@@ -442,6 +450,8 @@ export default {
 	components: {
 		CnAppRoot,
 		DeviceApprovalDialog,
+		AccountRecoveryEnrolment,
+		RecoveryOfficerPanel,
 		NcAppSettingsSection,
 		NcButton,
 		NcEmptyContent,
