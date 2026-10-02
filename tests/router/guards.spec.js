@@ -76,6 +76,8 @@ const PROTECTED_ROUTES = [
 	'Reports',
 	'Certificates',
 	'EmergencyAccess',
+	// Approving a share encrypts the owner's copy in the tab (#747).
+	'ShareApproval',
 	// SecretList/'SecretListFolder' also carry the optional `:id?` detail
 	// segment — the old SecretDetail page id is gone, but
 	// /secrets/<id> deep links still resolve to SecretList and stay gated.

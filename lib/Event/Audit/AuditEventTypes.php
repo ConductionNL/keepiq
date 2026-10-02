@@ -144,6 +144,10 @@ final class AuditEventTypes {
 	public const PASSWORD_POLICY_UPDATED = 'password_policy.updated';
 	// Vault policies (admin-vault-policies §1.1): before and after snapshot.
 	public const VAULT_POLICY_UPDATED = 'vault_policy.updated';
+	// Scheduled vault backups (admin-scheduled-vault-backups §2.3).
+	public const BACKUP_CREATED = 'backup.created';
+	public const BACKUP_FAILED = 'backup.failed';
+	public const BACKUP_RESTORED = 'backup.restored';
 
 	// Compliance reporting (compliance-reporting §5.1) — identifiers +
 	// export format only, never an aggregate body.
@@ -285,6 +289,10 @@ final class AuditEventTypes {
 		// Org password policy — before/after config values (§3.1).
 		self::PASSWORD_POLICY_UPDATED => ['before', 'after'],
 		self::VAULT_POLICY_UPDATED => ['before', 'after'],
+		// Backups: archive name, flags, sizes and counts only (§2.3).
+		self::BACKUP_CREATED => ['archive', 'encrypted', 'bytes'],
+		self::BACKUP_FAILED => ['error'],
+		self::BACKUP_RESTORED => ['archive', 'createdAt', 'tables', 'rows', 'blobs'],
 		// Compliance reporting — identifiers + format only (§5.1).
 		self::COMPLIANCE_REPORT_GENERATED => ['reportId'],
 		self::COMPLIANCE_REPORT_EXPORTED => ['reportId', 'format'],

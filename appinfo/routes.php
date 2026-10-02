@@ -37,6 +37,11 @@ $extra = [
     ['name' => 'settings#updateAdminSettings', 'url' => '/api/settings/admin', 'verb' => 'PUT'],
     // Two-factor gap count for the vault policy section (admin-vault-policies §1.3).
     ['name' => 'settings#twoFactorGaps',       'url' => '/api/settings/admin/two-factor-gaps', 'verb' => 'GET'],
+    // Vault backups (admin-scheduled-vault-backups §4.1): status, list and a
+    // run request. No route serves archive content (design D6).
+    ['name' => 'backupAdmin#index', 'url' => '/api/settings/admin/backups',     'verb' => 'GET'],
+    ['name' => 'backupAdmin#update', 'url' => '/api/settings/admin/backups',    'verb' => 'PUT'],
+    ['name' => 'backupAdmin#run',   'url' => '/api/settings/admin/backups/run', 'verb' => 'POST'],
     ['name' => 'settings#getUserSettings',     'url' => '/api/settings/user',  'verb' => 'GET'],
     // Read-only org password policy for write dialogs (org-password-policies §1.3).
     ['name' => 'settings#getPolicy',           'url' => '/api/settings/policy', 'verb' => 'GET'],
