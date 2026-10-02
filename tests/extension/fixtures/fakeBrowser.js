@@ -48,7 +48,13 @@ export function pageSender(url = 'https://evil.example/') {
 function area(map) {
 	return {
 		get: async (keys) => {
-			const list = Array.isArray(keys) ? keys : [keys]
+			// null reads everything, as chrome.storage does.
+			const list =
+				keys === null || keys === undefined
+					? [...map.keys()]
+					: Array.isArray(keys)
+						? keys
+						: [keys]
 			const out = {}
 			for (const k of list) {
 				if (map.has(k)) out[k] = structuredClone(map.get(k))
@@ -185,6 +191,31 @@ export function installServer(servers) {
 		if (path === '/api/settings/policy') return respond(200, null)
 		if (path === '/api/v1/secrets' && method === 'POST')
 			return respond(201, { id: 'new' })
+		// The vault list, folders, updates, trash and sends
+		// (clients-extension-generator-vault-send).
+		if (path.startsWith('/api/v1/secrets?') && method === 'GET') {
+			return respond(200, { items: s.rows, total: s.rows.length, page: 1 })
+		}
+		if (path === '/api/v1/folders') return respond(200, s.folders ?? [])
+		if (path.startsWith('/api/v1/secrets/') && method === 'PUT')
+			return respond(200, {
+				id: decodeURIComponent(path.slice('/api/v1/secrets/'.length)),
+			})
+		if (path.startsWith('/api/v1/secrets/') && method === 'DELETE')
+			return respond(200, { trashed: true })
+		if (path === '/api/v1/sends' && method === 'POST') {
+			return respond(201, {
+				id: 'send-1',
+				token: 'tok-1',
+				createdAt: '2026-10-02T10:00:00+00:00',
+				maxViews: body.maxViews,
+				viewCount: 0,
+				payloadType: body.payloadType,
+			})
+		}
+		if (path === '/api/v1/sends') return respond(200, s.sends ?? [])
+		if (path.startsWith('/api/v1/sends/') && method === 'DELETE')
+			return respond(200, { revoked: true })
 		if (path.startsWith('/api/v1/secrets/')) {
 			const id = decodeURIComponent(path.slice('/api/v1/secrets/'.length))
 			const row = s.rows.find((r) => r.id === id)

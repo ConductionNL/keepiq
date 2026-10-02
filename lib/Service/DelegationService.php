@@ -209,6 +209,9 @@ class DelegationService {
 		string $delegatedTo,
 		string $initiatedBy,
 	): SecretDelegation {
+		// A use-only or expiring copy is never handed on (D4).
+		$secret->assertOnwardShareable();
+
 		$entity = new SecretDelegation();
 		$entity->setId(Uuid::uuid4()->toString());
 		$entity->setSecretId($secretId);
@@ -344,4 +347,41 @@ class DelegationService {
 	public function makePermanent(string $originalOwnerId): int {
 		return $this->mapper->makePermanentByOriginalOwner($originalOwnerId);
 	}//end makePermanent()
+
+	/**
+	 * Revoke all TEMPORARY delegations the given original owner created.
+	 * Permanent delegations are immutable and are NOT touched.
+	 *
+	 * Called by the EncryptionSuiteRevoked listener when an administrator
+	 * force-revokes the owner's suite as COMPROMISED (keepiq#817, ADR-005):
+	 * a temporary delegation is the cheapest foothold to create from a
+	 * stolen session, so a compromise cuts it instead of promoting it.
+	 * Each removed row is audited as a reclaim by the revoking actor.
+	 *
+	 * @param string $originalOwnerId The original owner user ID
+	 * @param string $revokedBy       The actor who revoked the suite
+	 *
+	 * @return int The number of delegations removed.
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-permanent-transfer-on-suite-revocation
+	 */
+	public function revokeTemporary(string $originalOwnerId, string $revokedBy): int {
+		$removed = 0;
+		foreach ($this->mapper->findTemporaryByOriginalOwner($originalOwnerId) as $entity) {
+			$this->mapper->delete($entity);
+			++$removed;
+
+			$this->dispatchAudit(
+				event: $this->auditEvents->forUser(
+					actorId: $revokedBy,
+					eventType: AuditEventTypes::SHARE_DELEGATION_RECLAIMED,
+					objectType: 'share',
+					objectId: $entity->getSecretId(),
+					metadata: ['delegatedTo' => $entity->getDelegatedTo()],
+				)
+			);
+		}
+
+		return $removed;
+	}//end revokeTemporary()
 }//end class

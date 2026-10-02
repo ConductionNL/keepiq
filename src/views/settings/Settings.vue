@@ -21,6 +21,7 @@
 </template>
 
 <script>
+import AccountRecoverySection from '../../components/settings/AccountRecoverySection.vue'
 import AdminAreasSection from '../../components/settings/AdminAreasSection.vue'
 import AdminAuditSection from '../../components/settings/AdminAuditSection.vue'
 import AdminSuiteSection from '../../components/settings/AdminSuiteSection.vue'
@@ -29,10 +30,12 @@ import AttachmentLimitsSection from '../../components/settings/AttachmentLimitsS
 import BreachCheckSection from '../../components/settings/BreachCheckSection.vue'
 import CaHealthSection from '../../components/settings/CaHealthSection.vue'
 import ComplianceSection from '../../components/settings/ComplianceSection.vue'
+import DeviceApprovalSection from '../../components/settings/DeviceApprovalSection.vue'
 import ExtensionSection from '../../components/settings/ExtensionSection.vue'
 import HoneySection from '../../components/settings/HoneySection.vue'
 import ItemTypesSection from '../../components/settings/ItemTypesSection.vue'
 import MachineLeaseSection from '../../components/settings/MachineLeaseSection.vue'
+import MemberOverviewSection from '../../components/settings/MemberOverviewSection.vue'
 import OffboardingSection from '../../components/settings/OffboardingSection.vue'
 import OfflineCacheSection from '../../components/settings/OfflineCacheSection.vue'
 import OrgPasswordPolicySection from '../../components/settings/OrgPasswordPolicySection.vue'
@@ -64,7 +67,10 @@ export default {
 		HoneySection,
 		ItemTypesSection,
 		OfflineCacheSection,
+		DeviceApprovalSection,
+		AccountRecoverySection,
 		ExtensionSection,
+		MemberOverviewSection,
 		OffboardingSection,
 		AdminSuiteSection,
 		AdminAuditSection,

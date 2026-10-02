@@ -157,6 +157,8 @@ $extra = [
     // Favourites, tags and last used (vault-favourites-tags-and-last-used), the caller's own rows only.
     ['name' => 'secretOrganisation#favourite', 'url' => '/api/v1/secrets/{id}/favourite', 'verb' => 'PUT'],
     ['name' => 'secretOrganisation#tags',      'url' => '/api/v1/secrets/{id}/tags',      'verb' => 'PUT'],
+    // A fill of a use-only copy, reported by the extension (sharing-use-only-and-expiring-shares §3.3).
+    ['name' => 'useOnly#used',                 'url' => '/api/v1/secrets/{id}/used',      'verb' => 'POST'],
     ['name' => 'secretOrganisation#tagIndex',  'url' => '/api/v1/tags',                   'verb' => 'GET'],
 
     // Link sharing — authenticated CRUD (secret owner).
@@ -190,6 +192,8 @@ $extra = [
     ['name' => 'share#recipientCertificates', 'url' => '/api/v1/shares/recipient-certificates', 'verb' => 'POST'],
     ['name' => 'share#sync',        'url' => '/api/v1/secrets/{secretId}/sync',         'verb' => 'PUT'],
     ['name' => 'share#destroy',     'url' => '/api/v1/shares/{id}',                     'verb' => 'DELETE'],
+    // Use-only flag and end date of a direct share (sharing-use-only-and-expiring-shares §2.1).
+    ['name' => 'share#update',      'url' => '/api/v1/shares/{id}',                     'verb' => 'PATCH'],
 
     // Group sharing — implement-user-sharing §9.2.
     ['name' => 'groupShare#index',            'url' => '/api/v1/secrets/{secretId}/group-shares',           'verb' => 'GET'],
@@ -289,6 +293,33 @@ $extra = [
     // Offline cache (offline-readonly-cache §1.4) — owner-scoped
     // consolidated snapshot; 403 when the admin off switch is set.
     ['name' => 'offline#manifest', 'url' => '/api/v1/offline/manifest', 'verb' => 'GET'],
+    // Organisation account recovery (crypto-organisation-account-recovery).
+    ['name' => 'recoveryAdmin#show',          'url' => '/api/v1/recovery/admin',                      'verb' => 'GET'],
+    ['name' => 'recoveryAdmin#update',        'url' => '/api/v1/recovery/admin',                      'verb' => 'PUT'],
+    ['name' => 'recoveryAdmin#retireKey',     'url' => '/api/v1/recovery/admin/keys/{id}/retire',     'verb' => 'POST'],
+    ['name' => 'recoveryAdmin#enrolled',      'url' => '/api/v1/recovery/admin/enrolled',             'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#overview',    'url' => '/api/v1/recovery/officer',                    'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#createKey',   'url' => '/api/v1/recovery/officer/keys',               'verb' => 'POST'],
+    ['name' => 'recoveryOfficer#ownCopy',     'url' => '/api/v1/recovery/officer/copy',               'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#replaceOwnCopy', 'url' => '/api/v1/recovery/officer/keys/{keyId}/copy', 'verb' => 'PUT'],
+    ['name' => 'recoveryOfficer#approve',     'url' => '/api/v1/recovery/requests/{id}/approve',      'verb' => 'POST'],
+    ['name' => 'recoveryOfficer#decline',     'url' => '/api/v1/recovery/requests/{id}/decline',      'verb' => 'POST'],
+    ['name' => 'recoveryOfficer#handoff',     'url' => '/api/v1/recovery/requests/{id}/handoff',      'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#postSealed',  'url' => '/api/v1/recovery/requests/{id}/sealed',       'verb' => 'POST'],
+    ['name' => 'recoveryUser#enrolment',      'url' => '/api/v1/recovery/enrolment',                  'verb' => 'GET'],
+    ['name' => 'recoveryUser#enrol',          'url' => '/api/v1/recovery/enrolment',                  'verb' => 'PUT'],
+    ['name' => 'recoveryUser#withdraw',       'url' => '/api/v1/recovery/enrolment',                  'verb' => 'DELETE'],
+    ['name' => 'recoveryUser#myRequest',      'url' => '/api/v1/recovery/requests/mine',              'verb' => 'GET'],
+    ['name' => 'recoveryUser#createRequest',  'url' => '/api/v1/recovery/requests',                   'verb' => 'POST'],
+    ['name' => 'recoveryUser#complete',       'url' => '/api/v1/recovery/requests/{id}/complete',     'verb' => 'POST'],
+    // New device approval (crypto-new-device-approval). The fixed paths come
+    // before the {id} ones.
+    ['name' => 'deviceApproval#status',  'url' => '/api/v1/device-approvals/status',       'verb' => 'GET'],
+    ['name' => 'deviceApproval#pending', 'url' => '/api/v1/device-approvals/pending',      'verb' => 'GET'],
+    ['name' => 'deviceApproval#create',  'url' => '/api/v1/device-approvals',              'verb' => 'POST'],
+    ['name' => 'deviceApproval#show',    'url' => '/api/v1/device-approvals/{id}',         'verb' => 'GET'],
+    ['name' => 'deviceApproval#approve', 'url' => '/api/v1/device-approvals/{id}/approve', 'verb' => 'POST'],
+    ['name' => 'deviceApproval#deny',    'url' => '/api/v1/device-approvals/{id}/deny',    'verb' => 'POST'],
 
     // Offline service worker (offline-readonly-cache §3) — served from the
     // app root with the correct JS MIME + app-root default scope.
@@ -442,6 +473,11 @@ $extra = [
     ['name' => 'teamFolderContribution#contributionContext',  'url' => '/api/v1/team-folders/{id}/contribution-context', 'verb' => 'GET'],
     ['name' => 'teamFolderMember#approveJoin',    'url' => '/api/v1/team-folders/{id}/approve-join',       'verb' => 'POST'],
     ['name' => 'teamFolder#destroy',              'url' => '/api/v1/team-folders/{id}',                    'verb' => 'DELETE'],
+
+    // Admin member overview (admin-member-overview-and-offboarding D4): admin
+    // only, metadata only. Under /api/v1/admin/ so admin-public-api can
+    // document it without a rename.
+    ['name' => 'memberOverview#index', 'url' => '/api/v1/admin/members', 'verb' => 'GET'],
 
     // Audit trail (add-secret-audit-trail §4.1). Specific /secret/{id} and
     // /me routes come before the admin instance-wide /audit collection.

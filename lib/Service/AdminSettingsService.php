@@ -84,8 +84,9 @@ class AdminSettingsService {
 	public const AUDIT_RETENTION_MIN = 30;
 
 	/**
-	 * The keys each settings-bearing admin area owns, except Policies, which
-	 * owns every other admin key (admin-scoped-roles, decision of 2 Oct:
+	 * The keys each settings-bearing admin area owns, except Policies, whose
+	 * keys are POLICY_AREA_OWN_KEYS plus the password and vault policy keys
+	 * (admin-scoped-roles, decision of 2 Oct:
 	 * version and trash retention are vault rules, so they are Policies).
 	 * The People area owns no settings keys, so it has no settings route.
 	 *
@@ -97,6 +98,7 @@ class AdminSettingsService {
 			'breach_check_enabled',
 			'offline_cache_enabled',
 			'offline_edits_enabled',
+			'device_approval_enabled',
 			'attachment_max_bytes',
 			'attachment_user_quota_bytes',
 		],
@@ -285,6 +287,8 @@ class AdminSettingsService {
 				),
 				// The longest idle lock delay a user may pick in the browser extension.
 				'extension_max_idle_minutes' => $this->extensionMaxIdleMinutes(),
+				// New device approval (crypto-new-device-approval D5), default on.
+				'device_approval_enabled' => $this->appConfig->getValueBool($appId, 'device_approval_enabled', true),
 			],
 			$this->offlineSettings()
 		);
@@ -560,6 +564,10 @@ class AdminSettingsService {
 
 		if (isset($data['offline_cache_enabled']) === true) {
 			$this->appConfig->setValueBool($appId, 'offline_cache_enabled', (bool)$data['offline_cache_enabled']);
+		}
+
+		if (isset($data['device_approval_enabled']) === true) {
+			$this->appConfig->setValueBool($appId, 'device_approval_enabled', (bool)$data['device_approval_enabled']);
 		}
 
 		if (isset($data['offline_edits_enabled']) === true) {

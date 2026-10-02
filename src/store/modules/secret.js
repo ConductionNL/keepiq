@@ -3,6 +3,7 @@ import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { importPublicKey, rsaDecrypt, rsaEncrypt } from '../../crypto/index.js'
 import { PASSKEY_TYPE_NAME, passkeyRpId } from '../../passkey/passkey.js'
+import { isAccessExpired } from '../../utils/shareRestriction.js'
 import { useOfflineStore } from './offline.js'
 import { useSecretTypeStore } from './secretType.js'
 import { useSessionStore } from './session.js'
@@ -401,7 +402,7 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {object} secret The secret with ciphertext blobs.
 		 * @return {Promise<object>} A copy of the secret with plaintext fields.
-		 *
+		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-offline-copies-respect-the-end-date
 		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 		 */
@@ -409,6 +410,13 @@ export const useSecretStore = defineStore('secret', {
 			const session = useSessionStore()
 			if (!session.cryptoKey) {
 				throw new Error('Vault is locked')
+			}
+
+			// A copy whose access ended is never opened, also not from an
+			// offline snapshot taken before the end
+			// (sharing-use-only-and-expiring-shares D5).
+			if (isAccessExpired(secret)) {
+				throw new Error(t('keepiq', 'Your access to this secret has ended'))
 			}
 
 			const decrypted = { ...secret }

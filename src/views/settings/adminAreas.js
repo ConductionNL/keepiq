@@ -25,6 +25,7 @@ export const ADMIN_AREAS = [
 			'AttachmentLimitsSection',
 			'OfflineCacheSection',
 			'BreachCheckSection',
+			'DeviceApprovalSection',
 			'ItemTypesSection',
 			'VaultBackupSection',
 		],
@@ -47,7 +48,12 @@ export const ADMIN_AREAS = [
 	},
 	{
 		key: 'people',
-		sections: ['OffboardingSection', 'AdminSuiteSection'],
+		sections: [
+			'MemberOverviewSection',
+			'OffboardingSection',
+			'AdminSuiteSection',
+			'AccountRecoverySection',
+		],
 	},
 	{
 		key: 'audit',

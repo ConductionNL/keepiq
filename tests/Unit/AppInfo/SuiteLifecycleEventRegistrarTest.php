@@ -24,6 +24,7 @@ use OCA\Keepiq\AppInfo\SuiteLifecycleEventRegistrar;
 use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
 use OCA\Keepiq\Listener\EmergencyAccessSuiteRevocationListener;
 use OCA\Keepiq\Listener\EncryptionSuiteRevokedListener;
+use OCA\Keepiq\Listener\RecoverySuiteListener;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use PHPUnit\Framework\TestCase;
 
@@ -40,7 +41,8 @@ use PHPUnit\Framework\TestCase;
 class SuiteLifecycleEventRegistrarTest extends TestCase {
 
 	/**
-	 * Only the sweep and the emergency-access cleanup listen to a revoke.
+	 * Only the sweep, the emergency-access cleanup and the recovery cleanup
+	 * listen to a revoke.
 	 *
 	 * @return void
 	 */
@@ -67,8 +69,14 @@ class SuiteLifecycleEventRegistrarTest extends TestCase {
 		sort($onRevoke);
 
 		$this->assertSame(
-			[EmergencyAccessSuiteRevocationListener::class, EncryptionSuiteRevokedListener::class],
-			$onRevoke
+			expected: [
+				EmergencyAccessSuiteRevocationListener::class,
+				EncryptionSuiteRevokedListener::class,
+				// Deletes the revoked suite's recovery enrolments and ends its
+				// open recovery requests (crypto-organisation-account-recovery D7).
+				RecoverySuiteListener::class,
+			],
+			actual: $onRevoke
 		);
 
 	}//end testTheRevokeEventHasOnlyTheCleanupListeners()
