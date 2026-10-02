@@ -32,6 +32,7 @@ namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Event\SecretExportedEvent;
+use OCA\Keepiq\Service\VaultPolicyService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -64,6 +65,7 @@ class ExportController extends Controller {
 	 * @param IRequest $request The request
 	 * @param IUserSession $userSession The user session
 	 * @param IEventDispatcher $dispatcher The event dispatcher
+	 * @param VaultPolicyService $vaultPolicies The vault policies (export ban)
 	 *
 	 * @return void
 	 */
@@ -71,6 +73,7 @@ class ExportController extends Controller {
 		IRequest $request,
 		private IUserSession $userSession,
 		private IEventDispatcher $dispatcher,
+		private VaultPolicyService $vaultPolicies,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -87,6 +90,7 @@ class ExportController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#2.1
 	 *
 	 * @no-admin-idor-exempt no object is addressed. The three parameters are an
 	 * export mode, a scope and a count, each validated against a fixed
@@ -99,6 +103,20 @@ class ExportController extends Controller {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		// The export ban (admin-vault-policies D2). Every export mode reports
+		// here BEFORE the browser offers the file, so refusing the report
+		// aborts the download. The GDPR access package never reports a mode
+		// and stays available.
+		if ($this->vaultPolicies->appliesTo(policy: VaultPolicyService::EXPORT_DISABLED, userId: $user->getUID()) === true) {
+			return new JSONResponse(
+				data: [
+					'message' => 'Your organisation does not allow exporting your personal vault',
+					'code' => 'export_disabled_by_policy',
+				],
+				statusCode: Http::STATUS_FORBIDDEN
+			);
 		}
 
 		$mode = (string)$this->request->getParam('mode', '');

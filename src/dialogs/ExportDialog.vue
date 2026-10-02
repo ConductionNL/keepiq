@@ -59,6 +59,16 @@
 				</NcCheckboxRadioSwitch>
 			</div>
 
+			<!-- The export ban (admin-vault-policies §2.2): every file mode is
+			     hidden; the personal data package stays available. -->
+			<NcNoteCard
+				v-if="exportBlocked"
+				type="info"
+				data-testid="export-blocked-by-policy">
+				{{ t('keepiq', 'Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.') }}
+			</NcNoteCard>
+
+			<template v-if="!exportBlocked">
 			<fieldset class="export-dialog__modes">
 				<legend>{{ t('keepiq', 'Export format') }}</legend>
 				<NcCheckboxRadioSwitch
@@ -160,6 +170,7 @@
 					v-model="masterPassword"
 					:label="t('keepiq', 'Re-enter your master password')" />
 			</div>
+			</template>
 		</div>
 
 		<template #actions>
@@ -187,6 +198,7 @@ import {
 } from '@nextcloud/vue'
 import zxcvbn from 'zxcvbn'
 import { verifyMasterPassword } from '../crypto/reauth.js'
+import { fetchPolicy } from '../policy/policy.js'
 import { useExportStore } from '../store/modules/export.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
@@ -258,6 +270,8 @@ export default {
 			error: null,
 			/** CXF pre-download unmapped-item report (null = not built yet). */
 			cxfReport: null,
+			/** Whether the export ban applies to this user (admin-vault-policies). */
+			exportBlocked: false,
 		}
 	},
 
@@ -322,6 +336,9 @@ export default {
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		canSubmit() {
+			if (this.exportBlocked) {
+				return false
+			}
 			if (this.skipped > 0 && !this.skippedAcknowledged) {
 				return false
 			}
@@ -341,6 +358,17 @@ export default {
 			// A mode switch invalidates the CXF pre-download report.
 			this.cxfReport = null
 		},
+	},
+
+	/**
+	 * Read whether the export ban applies, so the blocked modes are hidden
+	 * before anything is decrypted.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#2.2
+	 */
+	async created() {
+		this.exportBlocked = (await fetchPolicy())?.vault_export_disabled === true
 	},
 
 	methods: {
@@ -436,6 +464,12 @@ export default {
 				this.reset()
 				this.$emit('update:open', false)
 			} catch (e) {
+				// The server refuses the report under the export ban, which
+				// aborts the download; show the policy instead of a raw error.
+				if (e?.response?.data?.code === 'export_disabled_by_policy') {
+					this.exportBlocked = true
+					return
+				}
 				this.error =
 					this.exportStore.error
 					|| (e && e.message)
