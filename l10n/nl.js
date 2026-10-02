@@ -1279,7 +1279,20 @@ OC.L10N.register(
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Dit maakt een nieuw root- en tussencertificaat. Elke actieve versleutelingssuite wordt opnieuw ondertekend. Je kunt dit niet ongedaan maken.",
         "Renew root": "Root vernieuwen",
         "Root renewed. {n} encryption suites signed again.": "Root vernieuwd. {n} versleutelingssuites opnieuw ondertekend.",
-        "Could not renew the root certificate.": "Het rootcertificaat kon niet worden vernieuwd."
+        "Could not renew the root certificate.": "Het rootcertificaat kon niet worden vernieuwd.",
+        "Lease policy for this application": "Leasebeleid voor deze applicatie",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Nu van kracht: standaard {default} seconden, hoogstens {max} seconden.",
+        "Leases are not renewable": "Leases zijn niet te verlengen",
+        "Lease policy saved.": "Leasebeleid opgeslagen.",
+        "Leave a field empty to use the instance value.": "Laat een veld leeg om de waarde van de instantie te gebruiken.",
+        "Instance value: {value}": "Waarde van de instantie: {value}",
+        "Renewal": "Verlenging",
+        "Use the instance value ({value})": "Waarde van de instantie gebruiken ({value})",
+        "Allowed": "Toegestaan",
+        "Not allowed": "Niet toegestaan",
+        "Save lease policy": "Leasebeleid opslaan",
+        "Only an administrator can change this policy.": "Alleen een beheerder kan dit beleid wijzigen.",
+        "Could not save the lease policy.": "Het leasebeleid kon niet worden opgeslagen."
     },
     "nplurals=2; plural=(n != 1);"
 )

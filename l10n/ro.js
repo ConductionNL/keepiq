@@ -1274,7 +1274,20 @@ OC.L10N.register(
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Se creează un nou certificat rădăcină și unul intermediar. Fiecare suită de criptare activă este semnată din nou. Acțiunea nu poate fi anulată.",
         "Renew root": "Reînnoiește rădăcina",
         "Root renewed. {n} encryption suites signed again.": "Rădăcină reînnoită. Suite de criptare semnate din nou: {n}.",
-        "Could not renew the root certificate.": "Certificatul rădăcină nu a putut fi reînnoit."
+        "Could not renew the root certificate.": "Certificatul rădăcină nu a putut fi reînnoit.",
+        "Lease policy for this application": "Politica de închiriere pentru această aplicație",
+        "In force now: {default} seconds by default, {max} seconds at most.": "În vigoare acum: implicit {default} secunde, cel mult {max} secunde.",
+        "Leases are not renewable": "Închirierile nu pot fi reînnoite",
+        "Lease policy saved.": "Politica de închiriere a fost salvată.",
+        "Leave a field empty to use the instance value.": "Lasă un câmp gol pentru a folosi valoarea instanței.",
+        "Instance value: {value}": "Valoarea instanței: {value}",
+        "Renewal": "Reînnoire",
+        "Use the instance value ({value})": "Folosește valoarea instanței ({value})",
+        "Allowed": "Permis",
+        "Not allowed": "Nepermis",
+        "Save lease policy": "Salvează politica de închiriere",
+        "Only an administrator can change this policy.": "Doar un administrator poate modifica această politică.",
+        "Could not save the lease policy.": "Politica de închiriere nu a putut fi salvată."
     },
     "nplurals=2; plural=(n != 1);"
 )

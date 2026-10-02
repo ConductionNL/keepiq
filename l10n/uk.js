@@ -1274,7 +1274,20 @@ OC.L10N.register(
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Буде створено нові кореневий і проміжний сертифікати. Кожен активний набір шифрування буде підписано заново. Цю дію не можна скасувати.",
         "Renew root": "Оновити корінь",
         "Root renewed. {n} encryption suites signed again.": "Корінь оновлено. Заново підписано наборів шифрування: {n}.",
-        "Could not renew the root certificate.": "Не вдалося оновити кореневий сертифікат."
+        "Could not renew the root certificate.": "Не вдалося оновити кореневий сертифікат.",
+        "Lease policy for this application": "Політика оренди для цього застосунку",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Зараз діє: типово {default} секунд, не більше {max} секунд.",
+        "Leases are not renewable": "Оренду не можна продовжувати",
+        "Lease policy saved.": "Політику оренди збережено.",
+        "Leave a field empty to use the instance value.": "Залиште поле порожнім, щоб використати значення екземпляра.",
+        "Instance value: {value}": "Значення екземпляра: {value}",
+        "Renewal": "Продовження",
+        "Use the instance value ({value})": "Використати значення екземпляра ({value})",
+        "Allowed": "Дозволено",
+        "Not allowed": "Не дозволено",
+        "Save lease policy": "Зберегти політику оренди",
+        "Only an administrator can change this policy.": "Змінити цю політику може лише адміністратор.",
+        "Could not save the lease policy.": "Не вдалося зберегти політику оренди."
     },
     "nplurals=2; plural=(n != 1);"
 )

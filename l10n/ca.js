@@ -1274,7 +1274,20 @@ OC.L10N.register(
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Això crea un certificat arrel i un d'intermedi nous. Cada conjunt de xifratge actiu es torna a signar. No es pot desfer.",
         "Renew root": "Renova l'arrel",
         "Root renewed. {n} encryption suites signed again.": "Arrel renovada. Conjunts de xifratge signats de nou: {n}.",
-        "Could not renew the root certificate.": "No s'ha pogut renovar el certificat arrel."
+        "Could not renew the root certificate.": "No s'ha pogut renovar el certificat arrel.",
+        "Lease policy for this application": "Política de cessió per a aquesta aplicació",
+        "In force now: {default} seconds by default, {max} seconds at most.": "En vigor ara: {default} segons per defecte, {max} segons com a màxim.",
+        "Leases are not renewable": "Les cessions no es poden renovar",
+        "Lease policy saved.": "S'ha desat la política de cessió.",
+        "Leave a field empty to use the instance value.": "Deixeu un camp buit per usar el valor de la instància.",
+        "Instance value: {value}": "Valor de la instància: {value}",
+        "Renewal": "Renovació",
+        "Use the instance value ({value})": "Usa el valor de la instància ({value})",
+        "Allowed": "Permès",
+        "Not allowed": "No permès",
+        "Save lease policy": "Desa la política de cessió",
+        "Only an administrator can change this policy.": "Només un administrador pot canviar aquesta política.",
+        "Could not save the lease policy.": "No s'ha pogut desar la política de cessió."
     },
     "nplurals=2; plural=(n != 1);"
 )

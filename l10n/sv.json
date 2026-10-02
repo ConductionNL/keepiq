@@ -1273,7 +1273,20 @@
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Detta skapar ett nytt rot- och mellanliggande certifikat. Varje aktiv krypteringssvit signeras igen. Det går inte att ångra.",
         "Renew root": "Förnya rot",
         "Root renewed. {n} encryption suites signed again.": "Rot förnyad. {n} krypteringssviter signerade igen.",
-        "Could not renew the root certificate.": "Rotcertifikatet kunde inte förnyas."
+        "Could not renew the root certificate.": "Rotcertifikatet kunde inte förnyas.",
+        "Lease policy for this application": "Leasepolicy för det här programmet",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Gäller nu: {default} sekunder som standard, högst {max} sekunder.",
+        "Leases are not renewable": "Leasingavtal kan inte förnyas",
+        "Lease policy saved.": "Leasepolicy sparad.",
+        "Leave a field empty to use the instance value.": "Lämna ett fält tomt för att använda instansens värde.",
+        "Instance value: {value}": "Instansens värde: {value}",
+        "Renewal": "Förnyelse",
+        "Use the instance value ({value})": "Använd instansens värde ({value})",
+        "Allowed": "Tillåtet",
+        "Not allowed": "Inte tillåtet",
+        "Save lease policy": "Spara leasepolicy",
+        "Only an administrator can change this policy.": "Bara en administratör kan ändra den här policyn.",
+        "Could not save the lease policy.": "Leasepolicyn kunde inte sparas."
     },
     "plurals": null
 }

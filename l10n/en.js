@@ -1274,7 +1274,20 @@ OC.L10N.register(
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.",
         "Renew root": "Renew root",
         "Root renewed. {n} encryption suites signed again.": "Root renewed. {n} encryption suites signed again.",
-        "Could not renew the root certificate.": "Could not renew the root certificate."
+        "Could not renew the root certificate.": "Could not renew the root certificate.",
+        "Lease policy for this application": "Lease policy for this application",
+        "In force now: {default} seconds by default, {max} seconds at most.": "In force now: {default} seconds by default, {max} seconds at most.",
+        "Leases are not renewable": "Leases are not renewable",
+        "Lease policy saved.": "Lease policy saved.",
+        "Leave a field empty to use the instance value.": "Leave a field empty to use the instance value.",
+        "Instance value: {value}": "Instance value: {value}",
+        "Renewal": "Renewal",
+        "Use the instance value ({value})": "Use the instance value ({value})",
+        "Allowed": "Allowed",
+        "Not allowed": "Not allowed",
+        "Save lease policy": "Save lease policy",
+        "Only an administrator can change this policy.": "Only an administrator can change this policy.",
+        "Could not save the lease policy.": "Could not save the lease policy."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1274,7 +1274,20 @@ OC.L10N.register(
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Quai crea in nov certificat radical ed intermediar. Mintga suite da criptaziun activa vegn suttascritta danovamain. Quai na po betg vegnir revocà.",
         "Renew root": "Renovar la ragisch",
         "Root renewed. {n} encryption suites signed again.": "Ragisch renovada. Suites da criptaziun suttascrittas danovamain: {n}.",
-        "Could not renew the root certificate.": "Impussibel da renovar il certificat radical."
+        "Could not renew the root certificate.": "Impussibel da renovar il certificat radical.",
+        "Lease policy for this application": "Directiva da lease per questa applicaziun",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Ussa en vigur: {default} secundas sco standard, maximalmain {max} secundas.",
+        "Leases are not renewable": "Leases na pon betg vegnir prolungads",
+        "Lease policy saved.": "Directiva da lease memorisada.",
+        "Leave a field empty to use the instance value.": "Lascha in champ vid per utilisar la valur da l'instanza.",
+        "Instance value: {value}": "Valur da l'instanza: {value}",
+        "Renewal": "Prolungaziun",
+        "Use the instance value ({value})": "Utilisar la valur da l'instanza ({value})",
+        "Allowed": "Permess",
+        "Not allowed": "Betg permess",
+        "Save lease policy": "Memorisar la directiva da lease",
+        "Only an administrator can change this policy.": "Mo in administratur po midar questa directiva.",
+        "Could not save the lease policy.": "Impussibel da memorisar la directiva da lease."
     },
     "nplurals=2; plural=(n != 1);"
 )

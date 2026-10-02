@@ -1274,7 +1274,20 @@ OC.L10N.register(
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Ustvari se novo korensko in vmesno potrdilo. Vsak aktiven šifrirni paket se ponovno podpiše. Tega ni mogoče razveljaviti.",
         "Renew root": "Obnovi koren",
         "Root renewed. {n} encryption suites signed again.": "Koren obnovljen. Ponovno podpisanih šifrirnih paketov: {n}.",
-        "Could not renew the root certificate.": "Korenskega potrdila ni bilo mogoče obnoviti."
+        "Could not renew the root certificate.": "Korenskega potrdila ni bilo mogoče obnoviti.",
+        "Lease policy for this application": "Pravilnik zakupa za ta program",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Zdaj velja: privzeto {default} sekund, največ {max} sekund.",
+        "Leases are not renewable": "Zakupov ni mogoče podaljšati",
+        "Lease policy saved.": "Pravilnik zakupa je shranjen.",
+        "Leave a field empty to use the instance value.": "Pustite polje prazno, da uporabite vrednost primerka.",
+        "Instance value: {value}": "Vrednost primerka: {value}",
+        "Renewal": "Podaljšanje",
+        "Use the instance value ({value})": "Uporabi vrednost primerka ({value})",
+        "Allowed": "Dovoljeno",
+        "Not allowed": "Ni dovoljeno",
+        "Save lease policy": "Shrani pravilnik zakupa",
+        "Only an administrator can change this policy.": "Ta pravilnik lahko spremeni samo skrbnik.",
+        "Could not save the lease policy.": "Pravilnika zakupa ni bilo mogoče shraniti."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1273,7 +1273,20 @@
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Vytvorí sa nový koreňový a sprostredkujúci certifikát. Každá aktívna šifrovacia sada sa znova podpíše. Túto akciu nemožno vrátiť.",
         "Renew root": "Obnoviť koreň",
         "Root renewed. {n} encryption suites signed again.": "Koreň obnovený. Znova podpísaných šifrovacích sád: {n}.",
-        "Could not renew the root certificate.": "Koreňový certifikát sa nepodarilo obnoviť."
+        "Could not renew the root certificate.": "Koreňový certifikát sa nepodarilo obnoviť.",
+        "Lease policy for this application": "Zásady prenájmu pre túto aplikáciu",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Teraz platí: predvolene {default} sekúnd, najviac {max} sekúnd.",
+        "Leases are not renewable": "Prenájmy nemožno obnovovať",
+        "Lease policy saved.": "Zásady prenájmu uložené.",
+        "Leave a field empty to use the instance value.": "Ponechajte pole prázdne, ak chcete použiť hodnotu inštancie.",
+        "Instance value: {value}": "Hodnota inštancie: {value}",
+        "Renewal": "Obnovenie",
+        "Use the instance value ({value})": "Použiť hodnotu inštancie ({value})",
+        "Allowed": "Povolené",
+        "Not allowed": "Nepovolené",
+        "Save lease policy": "Uložiť zásady prenájmu",
+        "Only an administrator can change this policy.": "Tieto zásady môže zmeniť iba správca.",
+        "Could not save the lease policy.": "Zásady prenájmu sa nepodarilo uložiť."
     },
     "plurals": null
 }

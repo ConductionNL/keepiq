@@ -1273,7 +1273,20 @@
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Þetta býr til nýtt rótar- og millistigsskilríki. Hver virk dulkóðunarsvíta er undirrituð aftur. Ekki er hægt að afturkalla þetta.",
         "Renew root": "Endurnýja rót",
         "Root renewed. {n} encryption suites signed again.": "Rót endurnýjuð. Dulkóðunarsvítur undirritaðar aftur: {n}.",
-        "Could not renew the root certificate.": "Ekki tókst að endurnýja rótarskilríkið."
+        "Could not renew the root certificate.": "Ekki tókst að endurnýja rótarskilríkið.",
+        "Lease policy for this application": "Leigustefna fyrir þetta forrit",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Í gildi núna: sjálfgefið {default} sekúndur, mest {max} sekúndur.",
+        "Leases are not renewable": "Ekki er hægt að endurnýja leigur",
+        "Lease policy saved.": "Leigustefna vistuð.",
+        "Leave a field empty to use the instance value.": "Skildu reit eftir tóman til að nota gildi tilviksins.",
+        "Instance value: {value}": "Gildi tilviks: {value}",
+        "Renewal": "Endurnýjun",
+        "Use the instance value ({value})": "Nota gildi tilviksins ({value})",
+        "Allowed": "Leyft",
+        "Not allowed": "Ekki leyft",
+        "Save lease policy": "Vista leigustefnu",
+        "Only an administrator can change this policy.": "Aðeins stjórnandi getur breytt þessari stefnu.",
+        "Could not save the lease policy.": "Ekki tókst að vista leigustefnuna."
     },
     "plurals": null
 }

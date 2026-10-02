@@ -1273,7 +1273,20 @@
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Bu, yeni bir kök ve ara sertifika oluşturur. Her etkin şifreleme paketi yeniden imzalanır. Bu işlem geri alınamaz.",
         "Renew root": "Kökü yenile",
         "Root renewed. {n} encryption suites signed again.": "Kök yenilendi. Yeniden imzalanan şifreleme paketi: {n}.",
-        "Could not renew the root certificate.": "Kök sertifika yenilenemedi."
+        "Could not renew the root certificate.": "Kök sertifika yenilenemedi.",
+        "Lease policy for this application": "Bu uygulama için kiralama ilkesi",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Şu an geçerli: varsayılan {default} saniye, en fazla {max} saniye.",
+        "Leases are not renewable": "Kiralamalar yenilenemez",
+        "Lease policy saved.": "Kiralama ilkesi kaydedildi.",
+        "Leave a field empty to use the instance value.": "Örnek değerini kullanmak için bir alanı boş bırakın.",
+        "Instance value: {value}": "Örnek değeri: {value}",
+        "Renewal": "Yenileme",
+        "Use the instance value ({value})": "Örnek değerini kullan ({value})",
+        "Allowed": "İzin verildi",
+        "Not allowed": "İzin verilmedi",
+        "Save lease policy": "Kiralama ilkesini kaydet",
+        "Only an administrator can change this policy.": "Bu ilkeyi yalnızca bir yönetici değiştirebilir.",
+        "Could not save the lease policy.": "Kiralama ilkesi kaydedilemedi."
     },
     "plurals": null
 }

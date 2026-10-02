@@ -1274,7 +1274,20 @@ OC.L10N.register(
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Dette opretter et nyt rod- og mellemcertifikat. Hver aktiv krypteringspakke signeres igen. Det kan ikke fortrydes.",
         "Renew root": "Forny rod",
         "Root renewed. {n} encryption suites signed again.": "Rod fornyet. {n} krypteringspakker signeret igen.",
-        "Could not renew the root certificate.": "Rodcertifikatet kunne ikke fornyes."
+        "Could not renew the root certificate.": "Rodcertifikatet kunne ikke fornyes.",
+        "Lease policy for this application": "Lejepolitik for denne applikation",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Gælder nu: {default} sekunder som standard, højst {max} sekunder.",
+        "Leases are not renewable": "Lejemål kan ikke fornyes",
+        "Lease policy saved.": "Lejepolitik gemt.",
+        "Leave a field empty to use the instance value.": "Lad et felt stå tomt for at bruge instansens værdi.",
+        "Instance value: {value}": "Instansens værdi: {value}",
+        "Renewal": "Fornyelse",
+        "Use the instance value ({value})": "Brug instansens værdi ({value})",
+        "Allowed": "Tilladt",
+        "Not allowed": "Ikke tilladt",
+        "Save lease policy": "Gem lejepolitik",
+        "Only an administrator can change this policy.": "Kun en administrator kan ændre denne politik.",
+        "Could not save the lease policy.": "Lejepolitikken kunne ikke gemmes."
     },
     "nplurals=2; plural=(n != 1);"
 )

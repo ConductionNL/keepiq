@@ -1274,7 +1274,20 @@ OC.L10N.register(
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Tiek izveidots jauns saknes un starpsertifikāts. Katrs aktīvais šifrēšanas komplekts tiek parakstīts vēlreiz. To nevar atsaukt.",
         "Renew root": "Atjaunot sakni",
         "Root renewed. {n} encryption suites signed again.": "Sakne atjaunota. Vēlreiz parakstīti šifrēšanas komplekti: {n}.",
-        "Could not renew the root certificate.": "Neizdevās atjaunot saknes sertifikātu."
+        "Could not renew the root certificate.": "Neizdevās atjaunot saknes sertifikātu.",
+        "Lease policy for this application": "Šīs lietotnes nomas politika",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Pašlaik spēkā: pēc noklusējuma {default} sekundes, ne vairāk kā {max} sekundes.",
+        "Leases are not renewable": "Nomas nevar atjaunot",
+        "Lease policy saved.": "Nomas politika saglabāta.",
+        "Leave a field empty to use the instance value.": "Atstājiet lauku tukšu, lai izmantotu instances vērtību.",
+        "Instance value: {value}": "Instances vērtība: {value}",
+        "Renewal": "Atjaunošana",
+        "Use the instance value ({value})": "Izmantot instances vērtību ({value})",
+        "Allowed": "Atļauts",
+        "Not allowed": "Nav atļauts",
+        "Save lease policy": "Saglabāt nomas politiku",
+        "Only an administrator can change this policy.": "Šo politiku var mainīt tikai administrators.",
+        "Could not save the lease policy.": "Neizdevās saglabāt nomas politiku."
     },
     "nplurals=2; plural=(n != 1);"
 )

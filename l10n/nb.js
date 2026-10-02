@@ -1274,7 +1274,20 @@ OC.L10N.register(
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Dette oppretter et nytt rot- og mellomsertifikat. Hver aktiv krypteringspakke signeres på nytt. Dette kan ikke angres.",
         "Renew root": "Forny rot",
         "Root renewed. {n} encryption suites signed again.": "Rot fornyet. {n} krypteringspakker signert på nytt.",
-        "Could not renew the root certificate.": "Kunne ikke fornye rotsertifikatet."
+        "Could not renew the root certificate.": "Kunne ikke fornye rotsertifikatet.",
+        "Lease policy for this application": "Leiepolicy for denne applikasjonen",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Gjelder nå: {default} sekunder som standard, høyst {max} sekunder.",
+        "Leases are not renewable": "Leieavtaler kan ikke fornyes",
+        "Lease policy saved.": "Leiepolicy lagret.",
+        "Leave a field empty to use the instance value.": "La et felt stå tomt for å bruke instansens verdi.",
+        "Instance value: {value}": "Instansens verdi: {value}",
+        "Renewal": "Fornyelse",
+        "Use the instance value ({value})": "Bruk instansens verdi ({value})",
+        "Allowed": "Tillatt",
+        "Not allowed": "Ikke tillatt",
+        "Save lease policy": "Lagre leiepolicy",
+        "Only an administrator can change this policy.": "Bare en administrator kan endre denne policyen.",
+        "Could not save the lease policy.": "Kunne ikke lagre leiepolicyen."
     },
     "nplurals=2; plural=(n != 1);"
 )

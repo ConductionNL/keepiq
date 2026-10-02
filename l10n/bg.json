@@ -1273,7 +1273,20 @@
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Създават се нов основен и междинен сертификат. Всеки активен набор за шифроване се подписва отново. Това не може да бъде отменено.",
         "Renew root": "Подновяване на основния",
         "Root renewed. {n} encryption suites signed again.": "Основният сертификат е подновен. Наново подписани набори за шифроване: {n}.",
-        "Could not renew the root certificate.": "Основният сертификат не можа да бъде подновен."
+        "Could not renew the root certificate.": "Основният сертификат не можа да бъде подновен.",
+        "Lease policy for this application": "Политика за наем за това приложение",
+        "In force now: {default} seconds by default, {max} seconds at most.": "В сила сега: {default} секунди по подразбиране, най-много {max} секунди.",
+        "Leases are not renewable": "Наемите не могат да се подновяват",
+        "Lease policy saved.": "Политиката за наем е запазена.",
+        "Leave a field empty to use the instance value.": "Оставете поле празно, за да използвате стойността на инстанцията.",
+        "Instance value: {value}": "Стойност на инстанцията: {value}",
+        "Renewal": "Подновяване",
+        "Use the instance value ({value})": "Използване на стойността на инстанцията ({value})",
+        "Allowed": "Разрешено",
+        "Not allowed": "Не е разрешено",
+        "Save lease policy": "Запазване на политиката за наем",
+        "Only an administrator can change this policy.": "Само администратор може да промени тази политика.",
+        "Could not save the lease policy.": "Политиката за наем не можа да бъде запазена."
     },
     "plurals": null
 }

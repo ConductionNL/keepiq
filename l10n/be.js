@@ -1274,7 +1274,20 @@ OC.L10N.register(
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Будуць створаны новы каранёвы і прамежкавы сертыфікаты. Кожны актыўны набор шыфравання будзе падпісаны зноў. Гэта нельга адмяніць.",
         "Renew root": "Абнавіць корань",
         "Root renewed. {n} encryption suites signed again.": "Корань абноўлены. Зноў падпісана набораў шыфравання: {n}.",
-        "Could not renew the root certificate.": "Не ўдалося абнавіць каранёвы сертыфікат."
+        "Could not renew the root certificate.": "Не ўдалося абнавіць каранёвы сертыфікат.",
+        "Lease policy for this application": "Палітыка арэнды для гэтай праграмы",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Зараз дзейнічае: {default} секунд па змаўчанні, не больш за {max} секунд.",
+        "Leases are not renewable": "Арэнду нельга падаўжаць",
+        "Lease policy saved.": "Палітыка арэнды захавана.",
+        "Leave a field empty to use the instance value.": "Пакіньце поле пустым, каб выкарыстаць значэнне экзэмпляра.",
+        "Instance value: {value}": "Значэнне экзэмпляра: {value}",
+        "Renewal": "Падаўжэнне",
+        "Use the instance value ({value})": "Выкарыстаць значэнне экзэмпляра ({value})",
+        "Allowed": "Дазволена",
+        "Not allowed": "Не дазволена",
+        "Save lease policy": "Захаваць палітыку арэнды",
+        "Only an administrator can change this policy.": "Змяніць гэтую палітыку можа толькі адміністратар.",
+        "Could not save the lease policy.": "Не ўдалося захаваць палітыку арэнды."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1274,7 +1274,20 @@ OC.L10N.register(
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Sukuriamas naujas šakninis ir tarpinis sertifikatas. Kiekvienas aktyvus šifravimo rinkinys pasirašomas iš naujo. To negalima atšaukti.",
         "Renew root": "Atnaujinti šaknį",
         "Root renewed. {n} encryption suites signed again.": "Šaknis atnaujinta. Iš naujo pasirašytų šifravimo rinkinių: {n}.",
-        "Could not renew the root certificate.": "Nepavyko atnaujinti šakninio sertifikato."
+        "Could not renew the root certificate.": "Nepavyko atnaujinti šakninio sertifikato.",
+        "Lease policy for this application": "Šios programos nuomos politika",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Dabar galioja: numatytai {default} sekundžių, daugiausia {max} sekundžių.",
+        "Leases are not renewable": "Nuomos negalima pratęsti",
+        "Lease policy saved.": "Nuomos politika išsaugota.",
+        "Leave a field empty to use the instance value.": "Palikite lauką tuščią, kad būtų naudojama egzemplioriaus reikšmė.",
+        "Instance value: {value}": "Egzemplioriaus reikšmė: {value}",
+        "Renewal": "Pratęsimas",
+        "Use the instance value ({value})": "Naudoti egzemplioriaus reikšmę ({value})",
+        "Allowed": "Leidžiama",
+        "Not allowed": "Neleidžiama",
+        "Save lease policy": "Išsaugoti nuomos politiką",
+        "Only an administrator can change this policy.": "Šią politiką gali pakeisti tik administratorius.",
+        "Could not save the lease policy.": "Nepavyko išsaugoti nuomos politikos."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1274,7 +1274,20 @@ OC.L10N.register(
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Dëst erstellt en neit Root- an Zwëschenzertifikat. All aktiv Verschlësselungssuite gëtt nei ënnerschriwwen. Dat kann net réckgängeg gemaach ginn.",
         "Renew root": "Root erneieren",
         "Root renewed. {n} encryption suites signed again.": "Root erneiert. {n} Verschlësselungssuitten nei ënnerschriwwen.",
-        "Could not renew the root certificate.": "D'Root-Zertifikat konnt net erneiert ginn."
+        "Could not renew the root certificate.": "D'Root-Zertifikat konnt net erneiert ginn.",
+        "Lease policy for this application": "Lease-Richtlinn fir dës Applikatioun",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Elo gëlteg: standardméisseg {default} Sekonnen, héchstens {max} Sekonnen.",
+        "Leases are not renewable": "Leases kënnen net verlängert ginn",
+        "Lease policy saved.": "Lease-Richtlinn gespäichert.",
+        "Leave a field empty to use the instance value.": "Loss e Feld eidel, fir de Wäert vun der Instanz ze benotzen.",
+        "Instance value: {value}": "Wäert vun der Instanz: {value}",
+        "Renewal": "Verlängerung",
+        "Use the instance value ({value})": "Wäert vun der Instanz benotzen ({value})",
+        "Allowed": "Erlaabt",
+        "Not allowed": "Net erlaabt",
+        "Save lease policy": "Lease-Richtlinn späicheren",
+        "Only an administrator can change this policy.": "Nëmmen en Administrateur kann dës Richtlinn änneren.",
+        "Could not save the lease policy.": "D'Lease-Richtlinn konnt net gespäichert ginn."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1274,7 +1274,20 @@ OC.L10N.register(
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Tämä luo uuden juuri- ja välivarmenteen. Jokainen aktiivinen salauspaketti allekirjoitetaan uudelleen. Tätä ei voi perua.",
         "Renew root": "Uusi juuri",
         "Root renewed. {n} encryption suites signed again.": "Juuri uusittu. Uudelleen allekirjoitettuja salauspaketteja: {n}.",
-        "Could not renew the root certificate.": "Juurivarmennetta ei voitu uusia."
+        "Could not renew the root certificate.": "Juurivarmennetta ei voitu uusia.",
+        "Lease policy for this application": "Tämän sovelluksen vuokrauskäytäntö",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Voimassa nyt: oletuksena {default} sekuntia, enintään {max} sekuntia.",
+        "Leases are not renewable": "Vuokria ei voi uusia",
+        "Lease policy saved.": "Vuokrauskäytäntö tallennettu.",
+        "Leave a field empty to use the instance value.": "Jätä kenttä tyhjäksi käyttääksesi instanssin arvoa.",
+        "Instance value: {value}": "Instanssin arvo: {value}",
+        "Renewal": "Uusiminen",
+        "Use the instance value ({value})": "Käytä instanssin arvoa ({value})",
+        "Allowed": "Sallittu",
+        "Not allowed": "Ei sallittu",
+        "Save lease policy": "Tallenna vuokrauskäytäntö",
+        "Only an administrator can change this policy.": "Vain ylläpitäjä voi muuttaa tätä käytäntöä.",
+        "Could not save the lease policy.": "Vuokrauskäytäntöä ei voitu tallentaa."
     },
     "nplurals=2; plural=(n != 1);"
 )

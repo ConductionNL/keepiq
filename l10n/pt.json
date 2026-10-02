@@ -1273,7 +1273,20 @@
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Isto cria um novo certificado raiz e um intermédio. Cada conjunto de cifragem ativo é assinado de novo. Não é possível anular.",
         "Renew root": "Renovar raiz",
         "Root renewed. {n} encryption suites signed again.": "Raiz renovada. Conjuntos de cifragem assinados de novo: {n}.",
-        "Could not renew the root certificate.": "Não foi possível renovar o certificado raiz."
+        "Could not renew the root certificate.": "Não foi possível renovar o certificado raiz.",
+        "Lease policy for this application": "Política de concessão para esta aplicação",
+        "In force now: {default} seconds by default, {max} seconds at most.": "Em vigor agora: {default} segundos por omissão, no máximo {max} segundos.",
+        "Leases are not renewable": "As concessões não são renováveis",
+        "Lease policy saved.": "Política de concessão guardada.",
+        "Leave a field empty to use the instance value.": "Deixe um campo vazio para usar o valor da instância.",
+        "Instance value: {value}": "Valor da instância: {value}",
+        "Renewal": "Renovação",
+        "Use the instance value ({value})": "Usar o valor da instância ({value})",
+        "Allowed": "Permitido",
+        "Not allowed": "Não permitido",
+        "Save lease policy": "Guardar política de concessão",
+        "Only an administrator can change this policy.": "Só um administrador pode alterar esta política.",
+        "Could not save the lease policy.": "Não foi possível guardar a política de concessão."
     },
     "plurals": null
 }

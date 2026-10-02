@@ -1273,7 +1273,20 @@
         "This creates a new root and intermediate certificate. Every active encryption suite is signed again. You cannot undo this.": "Cruthaíonn sé seo fréamhtheastas agus teastas idirmheánach nua. Sínítear gach sraith criptiúcháin ghníomhach arís. Ní féidir é seo a chealú.",
         "Renew root": "Athnuaigh an fhréamh",
         "Root renewed. {n} encryption suites signed again.": "Fréamh athnuaite. Sraitheanna criptiúcháin sínithe arís: {n}.",
-        "Could not renew the root certificate.": "Níorbh fhéidir an fréamhtheastas a athnuachan."
+        "Could not renew the root certificate.": "Níorbh fhéidir an fréamhtheastas a athnuachan.",
+        "Lease policy for this application": "Polasaí léasa don fheidhmchlár seo",
+        "In force now: {default} seconds by default, {max} seconds at most.": "I bhfeidhm anois: {default} soicind de réir réamhshocraithe, {max} soicind ar a mhéad.",
+        "Leases are not renewable": "Ní féidir léasanna a athnuachan",
+        "Lease policy saved.": "Polasaí léasa sábháilte.",
+        "Leave a field empty to use the instance value.": "Fág réimse folamh chun luach an chásanna a úsáid.",
+        "Instance value: {value}": "Luach an chásanna: {value}",
+        "Renewal": "Athnuachan",
+        "Use the instance value ({value})": "Úsáid luach an chásanna ({value})",
+        "Allowed": "Ceadaithe",
+        "Not allowed": "Gan cead",
+        "Save lease policy": "Sábháil polasaí léasa",
+        "Only an administrator can change this policy.": "Ní féidir ach le riarthóir an polasaí seo a athrú.",
+        "Could not save the lease policy.": "Níorbh fhéidir an polasaí léasa a shábháil."
     },
     "plurals": null
 }

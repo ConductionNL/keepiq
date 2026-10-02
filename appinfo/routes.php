@@ -341,6 +341,7 @@ $extra = [
     ['name' => 'machineLease#revoke', 'url' => '/api/v1/app/leases/{id}/revoke',  'verb' => 'POST'],
     // Session-authenticated admin/owner lease management.
     ['name' => 'leaseAdmin#index',     'url' => '/api/v1/applications/{id}/leases',       'verb' => 'GET'],
+    ['name' => 'leaseAdmin#getPolicy', 'url' => '/api/v1/applications/{id}/lease-policy', 'verb' => 'GET'],
     ['name' => 'leaseAdmin#setPolicy', 'url' => '/api/v1/applications/{id}/lease-policy', 'verb' => 'PUT'],
     ['name' => 'leaseAdmin#revoke',    'url' => '/api/v1/leases/{leaseId}',               'verb' => 'DELETE'],
 
