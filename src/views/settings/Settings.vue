@@ -67,6 +67,7 @@ export default {
 		ItemTypesSection,
 		OfflineCacheSection,
 		DeviceApprovalSection,
+		AccountRecoverySection,
 		ExtensionSection,
 		MemberOverviewSection,
 		OffboardingSection,

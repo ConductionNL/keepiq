@@ -52,6 +52,7 @@ export const ADMIN_AREAS = [
 			'MemberOverviewSection',
 			'OffboardingSection',
 			'AdminSuiteSection',
+			'AccountRecoverySection',
 		],
 	},
 	{

@@ -266,6 +266,25 @@ $extra = [
     // Offline cache (offline-readonly-cache §1.4) — owner-scoped
     // consolidated snapshot; 403 when the admin off switch is set.
     ['name' => 'offline#manifest', 'url' => '/api/v1/offline/manifest', 'verb' => 'GET'],
+    // Organisation account recovery (crypto-organisation-account-recovery).
+    ['name' => 'recoveryAdmin#show',          'url' => '/api/v1/recovery/admin',                      'verb' => 'GET'],
+    ['name' => 'recoveryAdmin#update',        'url' => '/api/v1/recovery/admin',                      'verb' => 'PUT'],
+    ['name' => 'recoveryAdmin#retireKey',     'url' => '/api/v1/recovery/admin/keys/{id}/retire',     'verb' => 'POST'],
+    ['name' => 'recoveryAdmin#enrolled',      'url' => '/api/v1/recovery/admin/enrolled',             'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#overview',    'url' => '/api/v1/recovery/officer',                    'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#createKey',   'url' => '/api/v1/recovery/officer/keys',               'verb' => 'POST'],
+    ['name' => 'recoveryOfficer#ownCopy',     'url' => '/api/v1/recovery/officer/copy',               'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#replaceOwnCopy', 'url' => '/api/v1/recovery/officer/keys/{keyId}/copy', 'verb' => 'PUT'],
+    ['name' => 'recoveryOfficer#approve',     'url' => '/api/v1/recovery/requests/{id}/approve',      'verb' => 'POST'],
+    ['name' => 'recoveryOfficer#decline',     'url' => '/api/v1/recovery/requests/{id}/decline',      'verb' => 'POST'],
+    ['name' => 'recoveryOfficer#handoff',     'url' => '/api/v1/recovery/requests/{id}/handoff',      'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#postSealed',  'url' => '/api/v1/recovery/requests/{id}/sealed',       'verb' => 'POST'],
+    ['name' => 'recoveryUser#enrolment',      'url' => '/api/v1/recovery/enrolment',                  'verb' => 'GET'],
+    ['name' => 'recoveryUser#enrol',          'url' => '/api/v1/recovery/enrolment',                  'verb' => 'PUT'],
+    ['name' => 'recoveryUser#withdraw',       'url' => '/api/v1/recovery/enrolment',                  'verb' => 'DELETE'],
+    ['name' => 'recoveryUser#myRequest',      'url' => '/api/v1/recovery/requests/mine',              'verb' => 'GET'],
+    ['name' => 'recoveryUser#createRequest',  'url' => '/api/v1/recovery/requests',                   'verb' => 'POST'],
+    ['name' => 'recoveryUser#complete',       'url' => '/api/v1/recovery/requests/{id}/complete',     'verb' => 'POST'],
     // New device approval (crypto-new-device-approval). The fixed paths come
     // before the {id} ones.
     ['name' => 'deviceApproval#status',  'url' => '/api/v1/device-approvals/status',       'verb' => 'GET'],
