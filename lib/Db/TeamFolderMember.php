@@ -166,6 +166,14 @@ class TeamFolderMember extends Entity implements JsonSerializable {
 	public const GRADES = ['read', 'write', 'manage'];
 
 	/**
+	 * The grades that may update values for the whole team: `write` and
+	 * everything above it.
+	 *
+	 * @var string[]
+	 */
+	public const WRITE_GRADES = ['write', 'manage'];
+
+	/**
 	 * The effective grade — an unset/legacy/unknown row reads as `read`.
 	 *
 	 * @return string
@@ -179,38 +187,6 @@ class TeamFolderMember extends Entity implements JsonSerializable {
 
 		return 'read';
 	}//end effectiveGrade()
-
-	/**
-	 * The rank of a grade: `read` < `write` < `manage`; anything else is -1.
-	 *
-	 * @param string|null $grade The grade
-	 *
-	 * @return int
-	 *
-	 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-effective-grade-is-the-highest-grade-along-the-ancestor-folder-chain
-	 */
-	public static function rank(?string $grade): int {
-		$rank = array_search($grade, self::GRADES, true);
-		if ($rank === false) {
-			return -1;
-		}
-
-		return $rank;
-	}//end rank()
-
-	/**
-	 * Whether a grade may update values for the whole team: `write` and
-	 * everything above it.
-	 *
-	 * @param string|null $grade The grade
-	 *
-	 * @return bool
-	 *
-	 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
-	 */
-	public static function allowsWrite(?string $grade): bool {
-		return self::rank(grade: $grade) >= self::rank(grade: 'write');
-	}//end allowsWrite()
 
 	/**
 	 * Serialize the entity to an array for the API.

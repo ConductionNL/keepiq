@@ -60,6 +60,9 @@ use Throwable;
  *   one place.
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)   One public method per
  *   API operation of the team-folder lifecycle.
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The lifecycle carries the
+ *   owner and manager rules (sharing-team-folder-manager-role) and the
+ *   membership restrictions (sharing-use-only-and-expiring-shares) in one place.
  */
 class TeamFolderService {
 	/**

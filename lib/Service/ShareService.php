@@ -360,7 +360,7 @@ class ShareService {
 			// A write-grade team member needs the recipient list (+
 			// certificates) to run the re-encrypt fan-out
 			// (folder-permission-grades §2.3); read grades see nothing.
-			if (TeamFolderMember::allowsWrite(grade: $this->auth->resolveGrade(secret: $source, userId: $userId)) === false) {
+			if (in_array($this->auth->resolveGrade(secret: $source, userId: $userId), TeamFolderMember::WRITE_GRADES, true) === false) {
 				return [];
 			}
 		}

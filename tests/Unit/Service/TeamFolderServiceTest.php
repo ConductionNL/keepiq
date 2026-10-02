@@ -861,10 +861,8 @@ class TeamFolderServiceTest extends TestCase {
 		$this->assertSame('manage', $member->effectiveGrade());
 		$member->setGrade('admin');
 		$this->assertSame('read', $member->effectiveGrade());
-		$this->assertTrue(TeamFolderMember::allowsWrite('manage'));
-		$this->assertTrue(TeamFolderMember::allowsWrite('write'));
-		$this->assertFalse(TeamFolderMember::allowsWrite('read'));
-		$this->assertFalse(TeamFolderMember::allowsWrite(null));
+		$this->assertSame(['read', 'write', 'manage'], TeamFolderMember::GRADES);
+		$this->assertSame(['write', 'manage'], TeamFolderMember::WRITE_GRADES);
 
 		$this->managedFolder();
 		$secret = new Secret();

@@ -305,7 +305,8 @@ class TeamFolderQueryService {
 	 * @return string
 	 */
 	private function higherGrade(?string $current, string $candidate): string {
-		if ($current === null || TeamFolderMember::rank(grade: $candidate) > TeamFolderMember::rank(grade: $current)) {
+		$ranks = array_flip(TeamFolderMember::GRADES);
+		if ($current === null || ($ranks[$candidate] ?? -1) > ($ranks[$current] ?? -1)) {
 			return $candidate;
 		}
 

@@ -178,7 +178,7 @@ class ShareSyncService {
 		}
 
 		$ownerCertificate = null;
-		if ($grade === 'owner' || TeamFolderMember::allowsWrite(grade: $grade) === true) {
+		if ($grade === 'owner' || in_array($grade, TeamFolderMember::WRITE_GRADES, true) === true) {
 			try {
 				$ownerCertificate = $this->suiteMapper
 					->findActiveByOwner(ownerType: $source->getOwnerType(), ownerId: $source->getOwnerId())
@@ -215,7 +215,7 @@ class ShareSyncService {
 		}
 
 		$grade = $this->auth->resolveGrade(secret: $source, userId: $userId);
-		if (TeamFolderMember::allowsWrite(grade: $grade) === false) {
+		if (in_array($grade, TeamFolderMember::WRITE_GRADES, true) === false) {
 			$this->auth->assertOwnerOrDelegate(secret: $source, userId: $userId);
 		}
 
