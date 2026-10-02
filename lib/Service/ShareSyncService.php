@@ -35,6 +35,7 @@ use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\TeamFolderMember;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use Throwable;
@@ -177,7 +178,7 @@ class ShareSyncService {
 		}
 
 		$ownerCertificate = null;
-		if ($grade === 'write' || $grade === 'owner') {
+		if ($grade === 'owner' || TeamFolderMember::allowsWrite(grade: $grade) === true) {
 			try {
 				$ownerCertificate = $this->suiteMapper
 					->findActiveByOwner(ownerType: $source->getOwnerType(), ownerId: $source->getOwnerId())
@@ -214,7 +215,7 @@ class ShareSyncService {
 		}
 
 		$grade = $this->auth->resolveGrade(secret: $source, userId: $userId);
-		if ($grade !== 'write') {
+		if (TeamFolderMember::allowsWrite(grade: $grade) === false) {
 			$this->auth->assertOwnerOrDelegate(secret: $source, userId: $userId);
 		}
 

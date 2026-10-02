@@ -34,6 +34,7 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\TeamFolderMember;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use Ramsey\Uuid\Uuid;
@@ -356,7 +357,7 @@ class ShareService {
 			// A write-grade team member needs the recipient list (+
 			// certificates) to run the re-encrypt fan-out
 			// (folder-permission-grades §2.3); read grades see nothing.
-			if ($this->auth->resolveGrade(secret: $source, userId: $userId) !== 'write') {
+			if (TeamFolderMember::allowsWrite(grade: $this->auth->resolveGrade(secret: $source, userId: $userId)) === false) {
 				return [];
 			}
 		}
