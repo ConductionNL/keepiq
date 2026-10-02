@@ -309,6 +309,7 @@ class SiemService {
 	 * @return SiemSink
 	 *
 	 * @throws \OCP\AppFramework\Db\DoesNotExistException When the sink is missing
+	 * @throws \InvalidArgumentException On an invalid format, endpoint or connector option
 	 *
 	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 	 */
