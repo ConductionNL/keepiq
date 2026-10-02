@@ -80,6 +80,14 @@ class EncryptionSuiteServiceTest extends TestCase {
 		$userManager = $this->createMock(originalClassName: \OCP\IUserManager::class);
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 
+		// The last revocation of every suite here was an ordinary one, so a
+		// reinstate is not refused for being a compromise revoke (keepiq#865).
+		$ordinaryRevoke = new \OCA\Keepiq\Db\AuditEntry();
+		$ordinaryRevoke->setEventType(\OCA\Keepiq\Event\Audit\AuditEventTypes::SUITE_REVOKED);
+		$ordinaryRevoke->setMetadata('{"reason":"test","markCompromised":false}');
+		$auditEntries = $this->createMock(originalClassName: \OCA\Keepiq\Db\AuditEntryMapper::class);
+		$auditEntries->method('findByObject')->willReturn([$ordinaryRevoke]);
+
 		$this->service = new EncryptionSuiteService(
 			mapper: $this->mapper,
 			provisioning: new EncryptionSuiteProvisioningService(
@@ -90,6 +98,7 @@ class EncryptionSuiteServiceTest extends TestCase {
 				logger: $logger,
 			),
 			logger: $logger,
+			reinstateGuard: new \OCA\Keepiq\Service\SuiteReinstateGuard(mapper: $this->mapper, auditEntries: $auditEntries),
 		);
 	}//end setUp()
 
@@ -317,6 +326,92 @@ class EncryptionSuiteServiceTest extends TestCase {
 		// Revocation audit fields should be preserved.
 		$this->assertNotNull(actual: $result->getRevokedAt());
 	}//end testReinstateSuiteSuccess()
+
+	/**
+	 * A revoked suite with an audit trail and the reinstate it guards.
+	 *
+	 * @param string|null $metadata The last SUITE_REVOKED metadata, or null for no entry
+	 *
+	 * @return EncryptionSuiteService
+	 */
+	private function serviceWithRevocation(?string $metadata): EncryptionSuiteService {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-1');
+		$suite->setOwnerType('user');
+		$suite->setOwnerId('alice');
+		$suite->setStatus('revoked');
+		$this->mapper->method('findById')->willReturn($suite);
+
+		$entries = [];
+		$reinstated = new \OCA\Keepiq\Db\AuditEntry();
+		$reinstated->setEventType(\OCA\Keepiq\Event\Audit\AuditEventTypes::SUITE_REINSTATED);
+		$entries[] = $reinstated;
+		if ($metadata !== null) {
+			$revoked = new \OCA\Keepiq\Db\AuditEntry();
+			$revoked->setEventType(\OCA\Keepiq\Event\Audit\AuditEventTypes::SUITE_REVOKED);
+			$revoked->setMetadata($metadata);
+			$entries[] = $revoked;
+		}
+
+		$audit = $this->createMock(\OCA\Keepiq\Db\AuditEntryMapper::class);
+		$audit->method('findByObject')->with('suite', 'suite-1')->willReturn($entries);
+
+		return new EncryptionSuiteService(
+			mapper: $this->mapper,
+			provisioning: $this->createMock(EncryptionSuiteProvisioningService::class),
+			logger: $this->createMock(LoggerInterface::class),
+			reinstateGuard: new \OCA\Keepiq\Service\SuiteReinstateGuard(mapper: $this->mapper, auditEntries: $audit),
+		);
+	}//end serviceWithRevocation()
+
+	/**
+	 * A suite force-revoked as compromised cannot be reinstated: that would
+	 * re-open every secret under a key declared to be in an attacker's hands
+	 * (keepiq#865).
+	 *
+	 * @return void
+	 */
+	public function testReinstateRefusesASuiteRevokedAsCompromised(): void {
+		$service = $this->serviceWithRevocation('{"reason":"taken over","markCompromised":true}');
+		$this->mapper->expects($this->never())->method('update');
+
+		try {
+			$service->reinstateSuite('suite-1', 'admin');
+			$this->fail('a compromise revocation must not be reinstated');
+		} catch (\OCA\Keepiq\Exception\ReinstateRefusedException $e) {
+			$this->assertSame('revoked_as_compromised', $e->getError());
+		}
+	}//end testReinstateRefusesASuiteRevokedAsCompromised()
+
+	/**
+	 * Without a revocation entry nothing shows the revoke was harmless, so the
+	 * reinstate is refused rather than assumed safe.
+	 *
+	 * @return void
+	 */
+	public function testReinstateRefusesWhenTheRevocationCannotBeConfirmed(): void {
+		$service = $this->serviceWithRevocation(null);
+
+		$this->expectException(\OCA\Keepiq\Exception\ReinstateRefusedException::class);
+		$service->reinstateSuite('suite-1', 'admin');
+	}//end testReinstateRefusesWhenTheRevocationCannotBeConfirmed()
+
+	/**
+	 * A reinstate that would give the owner a second active suite is refused.
+	 *
+	 * @return void
+	 */
+	public function testReinstateRefusesWhenTheOwnerHasAnotherActiveSuite(): void {
+		$service = $this->serviceWithRevocation('{"reason":"left","markCompromised":false}');
+		$this->mapper->method('countActiveByOwner')->with('user', 'alice')->willReturn(1);
+
+		try {
+			$service->reinstateSuite('suite-1', 'admin');
+			$this->fail('a second active suite must not be created');
+		} catch (\OCA\Keepiq\Exception\ReinstateRefusedException $e) {
+			$this->assertSame('owner_has_active_suite', $e->getError());
+		}
+	}//end testReinstateRefusesWhenTheOwnerHasAnotherActiveSuite()
 
 	/**
 	 * Test that reinstating a compromised suite throws.
@@ -593,4 +688,88 @@ class EncryptionSuiteServiceTest extends TestCase {
 		$this->assertCount(expectedCount: 1, haystack: $revokedEvents);
 		$this->assertFalse($revokedEvents[0]->getCompromised());
 	}//end testOwnerRevokeLeavesCompromiseFlagFalse()
+
+	/**
+	 * Build the service with a dispatcher that collects every event.
+	 *
+	 * @param array<int,object> $dispatched Receives the dispatched events
+	 *
+	 * @return EncryptionSuiteService
+	 */
+	private function serviceCollecting(array &$dispatched): EncryptionSuiteService {
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')
+			->willReturnCallback(
+				function (object $event) use (&$dispatched): void {
+					$dispatched[] = $event;
+				}
+			);
+
+		return new EncryptionSuiteService(
+			mapper: $this->mapper,
+			provisioning: new EncryptionSuiteProvisioningService(
+				mapper: $this->mapper,
+				caService: $this->caService,
+				appConfig: $this->appConfig,
+				userManager: $this->createMock(originalClassName: \OCP\IUserManager::class),
+				logger: $this->createMock(originalClassName: LoggerInterface::class),
+			),
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
+			eventDispatcher: $dispatcher,
+		);
+	}//end serviceCollecting()
+
+	/**
+	 * markCompromised runs only when a recovery completes, so it records
+	 * recovery_completed. It recorded recovery_started, which put a start in
+	 * the trail at every completion and no completion at all (keepiq#870).
+	 *
+	 * @return void
+	 */
+	public function testMarkCompromisedRecordsRecoveryCompleted(): void {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-old');
+		$suite->setOwnerType('user');
+		$suite->setOwnerId('alice');
+		$suite->setStatus('active');
+		$this->mapper->method('findById')->willReturn($suite);
+
+		$dispatched = [];
+		$this->serviceCollecting($dispatched)->markCompromised(id: 'suite-old', compromisedBy: 'alice');
+
+		$types = array_map(
+			static fn (AuditEvent $event): string => $event->getEventType(),
+			array_values(array_filter($dispatched, static fn ($event) => $event instanceof AuditEvent))
+		);
+		$this->assertSame([AuditEventTypes::SUITE_RECOVERY_COMPLETED], $types);
+	}//end testMarkCompromisedRecordsRecoveryCompleted()
+
+	/**
+	 * A refused revoke reaches the audit trail with its reason code and
+	 * nothing else from the request (keepiq#870).
+	 *
+	 * @return void
+	 */
+	public function testRecordRevokeRefusedDispatchesAnAuditEvent(): void {
+		$dispatched = [];
+		$this->serviceCollecting($dispatched)->recordRevokeRefused(
+			suiteId: 'suite-1',
+			actorId: 'admin',
+			reasonCode: 'migration_in_progress',
+			markCompromised: true,
+		);
+
+		$this->assertCount(1, $dispatched);
+		$event = $dispatched[0];
+		$this->assertInstanceOf(AuditEvent::class, $event);
+		$this->assertSame(AuditEventTypes::SUITE_REVOKE_REFUSED, $event->getEventType());
+		$this->assertSame('admin', $event->getActorId());
+		$this->assertSame('suite', $event->getObjectType());
+		$this->assertSame('suite-1', $event->getObjectId());
+		$this->assertSame(['reasonCode' => 'migration_in_progress', 'markCompromised' => true], $event->getMetadata());
+		$this->assertSame(
+			['reasonCode', 'markCompromised'],
+			AuditEventTypes::WHITELIST[AuditEventTypes::SUITE_REVOKE_REFUSED]
+		);
+	}//end testRecordRevokeRefusedDispatchesAnAuditEvent()
 }//end class

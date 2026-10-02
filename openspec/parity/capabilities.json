@@ -1703,7 +1703,7 @@
       "id": "crypto-09",
       "area": "crypto",
       "name": "Unlock with a fingerprint or face scan on your device.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -1711,12 +1711,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/clients-extension-unlock-lock-and-accounts on 2026-09-27 for the missing half: fingerprint or face unlock in the browser extension; the web app unlock with a platform passkey is built. Before: src/components/PasskeyManager.vue:25 offers Touch ID, Windows Hello or a security key; src/store/modules/passkey.js:221 userVerification 'preferred' with the PRF extension; browser-extension/src/popup/popup.js unlocks with the master password only (grep -rni 'biometric\\|webauthn' browser-extension/src/popup: no hits)",
+        "state": "built",
+        "evidence": "browser-extension/src/unlock/ceremony.js enrolBiometric/unlockWithBiometric -> router.js biometric-enrol / biometric-options / unlock-raw -> browser-extension/src/lib/vault.js unlockWithRawKey; server lib/Service/PasskeyService.php enroll(clientKind, rpId) and loginOptions(client, rpId), migration Version001007Date20261002180000; web list src/components/PasskeyManager.vue labels extension credentials",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Lock page (/lock) -> Unlock with passkey, using a platform authenticator",
-        "note": "Fingerprint or face unlock works in the web app only by enrolling a platform passkey (Touch ID, Windows Hello) whose browser supports PRF. The browser extension and CLI have no biometric unlock.",
-        "change": "openspec/changes/clients-extension-unlock-lock-and-accounts"
+        "reachedOn": "Extension popup -> Settings -> Set up fingerprint or face unlock; locked popup -> Unlock with fingerprint or face",
+        "note": "PRF passkey owned by the extension (its own origin as relying party, user verification required); the server stores only the wrapped unlock key. Vitest with a fake PRF authenticator; the Playwright virtual-authenticator run and the per-browser check are owed.",
+        "change": "openspec/changes/archive/2026-10-02-clients-extension-unlock-lock-and-accounts"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -3976,7 +3976,7 @@
       "id": "apps-17",
       "area": "apps",
       "name": "Inject secrets into a Kubernetes cluster.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -3984,11 +3984,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/apps-kubernetes-injection on 2026-09-27. Before: grep -rli 'kubernetes|k8s|helm' lib src cli browser-extension: no hits",
-        "note": "No Kubernetes secret injection (operator, CSI driver, sidecar) exists; keepiq's machine surface is a plain HTTP+JWT API a cluster could call itself, but nothing ships to do that integration.",
+        "state": "built",
+        "evidence": "integrations/kubernetes: controller-runtime operator (KeepiqConnection, KeepiqSecret CRDs), Helm chart with namespaced RBAC, no-Secret recipe via keepiq install + keepiq ci run; envtest suite (CRD validation, sync, rotation restart, 404/409/token/fingerprint reasons, leases) green; helm lint and template snapshots green",
         "owner": "ConductionNL/keepiq",
-        "change": "openspec/changes/apps-kubernetes-injection"
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/apps-kubernetes-injection (stacked on #914). Owed: kind test and release workflow in CI, the first k8s-v* release, and the live sync against the dev instance.",
+        "change": "openspec/changes/archive/2026-10-02-apps-kubernetes-injection"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -4839,7 +4840,7 @@
       "id": "health-08",
       "area": "health",
       "name": "Generate a memorable passphrase made of words.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -4847,11 +4848,10 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/health-passphrase-generator on 2026-09-27. Before: grep -rli 'passphrase|diceware|wordlist' src lib browser-extension/src cli: hits are only export-backup passphrases and import parsers; KeyGeneratorService has no word mode",
+        "state": "built",
+        "evidence": "src/generator/generator.js generatePassphrase (EFF large word list src/generator/eff-large-wordlist.js, crypto.getRandomValues) <- src/dialogs/KeyGeneratorModal.vue Password/Passphrase switch; policy fit + generator_allow_passphrase (lib/Service/PasswordPolicyService.php). Tests: tests/vitest/generator.spec.js, tests/dialogs/KeyGeneratorModal.spec.js, tests/e2e/workflows/key-generator.spec.ts. Change: openspec/changes/client-side-key-generator (supersedes health-passphrase-generator).",
         "owner": "ConductionNL/keepiq",
-        "note": "The generator only produces character strings (or regex-shaped ones); there is no word-based passphrase mode.",
-        "change": "openspec/changes/health-passphrase-generator"
+        "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Generate a strong key -> Passphrase"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5267,7 +5267,7 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
-        "evidence": "compromise: lib/Listener/SuiteCompromiseOnRevokeListener.php:102 stamps possibly_compromised_at and :108 flag(suite_compromise), registered lib/AppInfo/SuiteLifecycleEventRegistrar.php:109; breach: src/views/HealthReportView.vue:120 Flag all breached -> rotation.js:170 POST /api/v1/rotation-flags -> RotationFlagService.php:136 flagBatch",
+        "evidence": "compromise: lib/Service/CompromiseContainmentService.php stampSealed() stamps possibly_compromised_at and flags suite_compromise (via lib/Listener/MarksCompromisedSecrets.php), called by EncryptionSuiteController::forceRevokeAsCompromise(); breach: src/views/HealthReportView.vue:120 Flag all breached -> rotation.js:170 POST /api/v1/rotation-flags -> RotationFlagService.php:136 flagBatch",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Automatic on a compromise revocation; Password health page button for breached passwords",
         "note": "Compromise flagging is automatic. Breach flagging is a one-click user action because breach verdicts never leave the browser."
@@ -6710,7 +6710,7 @@
       "id": "audit-14",
       "area": "audit",
       "name": "Use ready-made connectors for Splunk, Microsoft Sentinel or similar tools.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -6718,12 +6718,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/audit-siem-vendor-connectors on 2026-09-27 for the missing half: named Splunk, Microsoft Sentinel and CEF presets on the SIEM export; the generic syslog and webhook stream is built. Before: lib/Service/SiemTransport.php:100 generic RFC 5424 syslog and :152 generic HTTPS JSON webhook; grep -i 'splunk|sentinel|datadog|CEF|LEEF' lib src/components/settings/SiemSection.vue: no hits",
+        "state": "built",
+        "evidence": "SiemTransport splunk_hec and sentinel transports and CEF syslog format (lib/Service/Siem/*Formatter.php), write-only ICrypto credential, connector picker in SiemSection.vue, integrations/siem/sentinel/keepiq-dcr.json and integrations/siem/splunk/props.conf; PHPUnit SiemFormattersTest, SiemConnectorTransportTest, SiemSinkServiceConnectorTest, SentinelTemplateTest; vitest SiemSection.spec.js",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Nextcloud admin settings > Keepiq > SIEM section",
-        "note": "No named connectors or vendor formats; Splunk, Sentinel and similar tools can ingest the generic syslog or webhook stream, but the admin has to configure the receiving side.",
-        "change": "openspec/changes/audit-siem-vendor-connectors"
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/audit-siem-vendor-connectors. Owed: the Playwright flow in the E2E job, an az what-if of the template and a Splunk container test-fire.",
+        "change": "openspec/changes/archive/2026-10-02-audit-siem-vendor-connectors"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -7436,7 +7436,7 @@
       "id": "clients-06",
       "area": "clients",
       "name": "The extension locks itself automatically.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -7444,20 +7444,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/clients-extension-unlock-lock-and-accounts on 2026-09-27 for the missing half: a user-chosen idle period; the fixed 15 minute idle lock is built. Before: browser-extension/src/background/service-worker.js:37 touchActivity -> browser-extension/src/lib/vault.js:114 armIdleLock (default 15 minutes, service-worker.js:26) ; service-worker.js:254 chrome.idle locked -> vault.lock ; popup.js:197 manual Lock ; worker termination drops the in-memory key",
+        "state": "built",
+        "evidence": "browser-extension/src/popup/popup.js renderSettings -> set-idle -> browser-extension/src/background/router.js doSetIdle/effectiveIdleMinutes -> browser-extension/src/lib/vault.js armIdleLock (per account); router.js refreshPolicy -> GET /api/v1/extension/policy -> lib/Controller/ExtensionController.php policy() -> AdminSettingsService::extensionMaxIdleMinutes; admin field src/components/settings/ExtensionSection.vue",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "browser-extension popup (browser-extension/src/popup/popup.js) (automatic, plus the Lock button)",
-        "note": "The extension locks after 15 idle minutes, on OS or browser lock, on worker termination and on demand. The idle period cannot be changed because nothing ever writes config.idleMinutes, and the extension is not distributed.",
-        "defects": [
-          {
-            "at": "browser-extension/build.mjs:1",
-            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
-        "change": "openspec/changes/clients-extension-unlock-lock-and-accounts"
+        "reachedOn": "Extension popup -> Settings -> Lock after being idle for; Keepiq admin settings -> Browser extension",
+        "note": "User-chosen idle delay per account (1 to 240 minutes, 15 default), capped by the administrator maximum read at every unlock; OS lock, worker termination and the Lock button still lock every account. Distribution is the change clients-extension-store-release.",
+        "change": "openspec/changes/archive/2026-10-02-clients-extension-unlock-lock-and-accounts"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7908,7 +7900,7 @@
       "id": "clients-19",
       "area": "clients",
       "name": "Edit items while offline and have the changes sync when you are back online.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "no",
       "onepassword": "yes",
       "passbolt": "no",
@@ -7916,12 +7908,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/clients-offline-edits on 2026-09-27. Before: offline cache is read-only by design (clients-09; src/App.vue:73 stale-data banner, src/offline)",
+        "state": "built",
+        "evidence": "src/store/modules/secret.js createSecret/updateSecret/deleteSecret (servedFromCache) -> src/store/modules/offline.js enqueue -> src/offline/queue.js sealEntry/coalesce -> src/offline/cache.js putQueueEntry (IndexedDB queue store); replay: offline.js replayQueue/replayOne/fanOut -> POST/PUT/DELETE /api/v1/secrets with baseUpdatedAt -> lib/Service/SecretService.php assertUnchangedSince (409) -> share.js syncUpdate/syncAsTeamWriter; UI src/components/OfflineSyncPanel.vue, src/dialogs/OfflineConflictDialog.vue; admin src/components/settings/OfflineCacheSection.vue offline_edits_enabled",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing",
-        "note": "Offline mode reads only; edits need the server.",
-        "change": "openspec/changes/clients-offline-edits"
+        "reachedOn": "Offline vault (/secrets served from cache) -> secret sidebar Edit, Move, Delete and New secret; sync panel under the offline banner",
+        "note": "Off by default (admin switch). Changes are sealed to the owner's certificate at rest and replayed with a fresh recipient fan-out; a server change since the snapshot answers 409 and the user chooses. Sharing, folders and attachments stay online-only. Playwright flows (shared edit, conflict) are owed.",
+        "change": "openspec/changes/archive/2026-10-02-clients-offline-edits"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -7973,7 +7965,7 @@
       "id": "clients-21",
       "area": "clients",
       "name": "Switch between several accounts or servers in the same app or extension.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -7981,12 +7973,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/clients-extension-unlock-lock-and-accounts on 2026-09-27. Before: browser-extension/src/lib/api.js:15-31 stores one paired config under CONFIG_KEY; no account list",
+        "state": "built",
+        "evidence": "browser-extension/src/lib/api.js addAccount/loadAccounts/setActiveAccount (keepiq.accounts, MAX_ACCOUNTS 5, migrateLegacyConfig) -> browser-extension/src/background/router.js doPair/doSwitchAccount, matchCache per account, doFill refuses another account's ids -> browser-extension/src/popup/views.js renderAccountSwitcher",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing",
-        "note": "The extension pairs with one Nextcloud account at a time; switching means unpairing.",
-        "change": "openspec/changes/clients-extension-unlock-lock-and-accounts"
+        "reachedOn": "Extension popup header -> Account select and Add account",
+        "note": "Up to five accounts on one or more servers, each with its own key, lock state, idle timer and settings; matching, filling and saving use the active account. Tests: tests/extension/accounts.spec.js, tests/extension/popupAccounts.spec.js.",
+        "change": "openspec/changes/archive/2026-10-02-clients-extension-unlock-lock-and-accounts"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",

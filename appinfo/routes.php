@@ -35,6 +35,13 @@ $extra = [
     // Admin + user settings split (implement-dashboard-settings §2.4).
     ['name' => 'settings#getAdminSettings',    'url' => '/api/settings/admin', 'verb' => 'GET'],
     ['name' => 'settings#updateAdminSettings', 'url' => '/api/settings/admin', 'verb' => 'PUT'],
+    // Two-factor gap count for the vault policy section (admin-vault-policies §1.3).
+    ['name' => 'settings#twoFactorGaps',       'url' => '/api/settings/admin/two-factor-gaps', 'verb' => 'GET'],
+    // Vault backups (admin-scheduled-vault-backups §4.1): status, list and a
+    // run request. No route serves archive content (design D6).
+    ['name' => 'backupAdmin#index', 'url' => '/api/settings/admin/backups',     'verb' => 'GET'],
+    ['name' => 'backupAdmin#update', 'url' => '/api/settings/admin/backups',    'verb' => 'PUT'],
+    ['name' => 'backupAdmin#run',   'url' => '/api/settings/admin/backups/run', 'verb' => 'POST'],
     ['name' => 'settings#getUserSettings',     'url' => '/api/settings/user',  'verb' => 'GET'],
     // Read-only org password policy for write dialogs (org-password-policies §1.3).
     ['name' => 'settings#getPolicy',           'url' => '/api/settings/policy', 'verb' => 'GET'],
@@ -44,6 +51,7 @@ $extra = [
     ['name' => 'encryptionSuite#index',             'url' => '/api/v1/suites',                          'verb' => 'GET'],
     ['name' => 'encryptionSuite#show',              'url' => '/api/v1/suites/{id}',                     'verb' => 'GET'],
     ['name' => 'encryptionSuite#create',            'url' => '/api/v1/suites',                          'verb' => 'POST'],
+    ['name' => 'encryptionSuite#reenrol',           'url' => '/api/v1/suites/reenrol',                  'verb' => 'POST'],
     ['name' => 'encryptionSuite#updatePrivateKey',  'url' => '/api/v1/suites/{id}/private-key',         'verb' => 'PUT'],
     ['name' => 'encryptionSuite#revoke',            'url' => '/api/v1/suites/{id}/revoke',              'verb' => 'POST'],
     ['name' => 'encryptionSuite#forceRevoke',       'url' => '/api/v1/suites/{id}/force-revoke',        'verb' => 'POST'],
@@ -105,7 +113,7 @@ $extra = [
     // catch-all wildcard.
     ['name' => 'import#batchCreate', 'url' => '/api/v1/secrets/import-batch', 'verb' => 'POST'],
     ['name' => 'secret#show',    'url' => '/api/v1/secrets/{id}', 'verb' => 'GET'],
-    ['name' => 'secret#update',  'url' => '/api/v1/secrets/{id}', 'verb' => 'PUT'],
+    ['name' => 'secretUpdate#update', 'url' => '/api/v1/secrets/{id}', 'verb' => 'PUT'],
     // Trash and archive (vault-trash-and-archive): DELETE /{id} moves a secret to the trash.
     ['name' => 'secretTrash#trash',     'url' => '/api/v1/secrets/{id}',           'verb' => 'DELETE'],
     ['name' => 'secretTrash#restore',   'url' => '/api/v1/secrets/{id}/restore',   'verb' => 'POST'],
@@ -341,6 +349,7 @@ $extra = [
     ['name' => 'machineLease#revoke', 'url' => '/api/v1/app/leases/{id}/revoke',  'verb' => 'POST'],
     // Session-authenticated admin/owner lease management.
     ['name' => 'leaseAdmin#index',     'url' => '/api/v1/applications/{id}/leases',       'verb' => 'GET'],
+    ['name' => 'leaseAdmin#getPolicy', 'url' => '/api/v1/applications/{id}/lease-policy', 'verb' => 'GET'],
     ['name' => 'leaseAdmin#setPolicy', 'url' => '/api/v1/applications/{id}/lease-policy', 'verb' => 'PUT'],
     ['name' => 'leaseAdmin#revoke',    'url' => '/api/v1/leases/{leaseId}',               'verb' => 'DELETE'],
 
@@ -381,6 +390,11 @@ $extra = [
     ['name' => 'teamFolder#index',                'url' => '/api/v1/team-folders',                         'verb' => 'GET'],
     ['name' => 'teamFolder#create',               'url' => '/api/v1/team-folders',                         'verb' => 'POST'],
     ['name' => 'teamFolder#offboard',             'url' => '/api/v1/team-folders/offboard',                'verb' => 'POST'],
+    // Contributable team folders (admin-vault-policies §4.3): before any /{id} route.
+    ['name' => 'teamFolderContribution#contributable',        'url' => '/api/v1/team-folders/contributable',           'verb' => 'GET'],
+    ['name' => 'teamFolderContribution#ownershipFindings',    'url' => '/api/v1/team-folders/ownership-findings',      'verb' => 'GET'],
+    // admin-auto-confirm-members D4: before any /{id} route.
+    ['name' => 'teamFolder#pendingConfirmations', 'url' => '/api/v1/team-folders/pending-confirmations', 'verb' => 'GET'],
     ['name' => 'teamFolderMember#members',        'url' => '/api/v1/team-folders/{id}/members',            'verb' => 'GET'],
     ['name' => 'teamFolderMember#addMember',      'url' => '/api/v1/team-folders/{id}/members',            'verb' => 'POST'],
     ['name' => 'teamFolderMember#removeMember',   'url' => '/api/v1/team-folders/{id}/members/{memberId}', 'verb' => 'DELETE'],
@@ -389,8 +403,16 @@ $extra = [
     ['name' => 'share#writeContext',              'url' => '/api/v1/secrets/{id}/write-context',           'verb' => 'GET'],
     ['name' => 'teamFolder#reconcile',            'url' => '/api/v1/team-folders/{id}/reconcile',          'verb' => 'GET'],
     ['name' => 'teamFolder#registerShares',       'url' => '/api/v1/team-folders/{id}/shares',             'verb' => 'POST'],
+    // Write-grade member contribution (admin-vault-policies D5).
+    ['name' => 'teamFolderContribution#contribute',           'url' => '/api/v1/team-folders/{id}/secrets',            'verb' => 'POST'],
+    ['name' => 'teamFolderContribution#contributionContext',  'url' => '/api/v1/team-folders/{id}/contribution-context', 'verb' => 'GET'],
     ['name' => 'teamFolderMember#approveJoin',    'url' => '/api/v1/team-folders/{id}/approve-join',       'verb' => 'POST'],
     ['name' => 'teamFolder#destroy',              'url' => '/api/v1/team-folders/{id}',                    'verb' => 'DELETE'],
+
+    // Admin member overview (admin-member-overview-and-offboarding D4): admin
+    // only, metadata only. Under /api/v1/admin/ so admin-public-api can
+    // document it without a rename.
+    ['name' => 'memberOverview#index', 'url' => '/api/v1/admin/members', 'verb' => 'GET'],
 
     // Audit trail (add-secret-audit-trail §4.1). Specific /secret/{id} and
     // /me routes come before the admin instance-wide /audit collection.
@@ -400,7 +422,9 @@ $extra = [
 
     // Password-health breach-check proxy (password-health §1.5). Prefix-only
     // k-anonymity forward to HIBP; double-gated (admin setting + user opt-in).
-    ['name' => 'breachProxy#range', 'url' => '/api/v1/breach-check/range/{prefix}', 'verb' => 'GET'],
+    // POST with the prefix in the body, never in the URI: Nextcloud stamps the
+    // request URI next to the user id on every log line (keepiq#866).
+    ['name' => 'breachProxy#range', 'url' => '/api/v1/breach-check/range', 'verb' => 'POST'],
 
     // GDPR data-subject endpoints (secret-export-gdpr D3/D4). All self-scoped
     // to the session user — no user selector. Master-password re-auth on the
@@ -425,6 +449,8 @@ $extra = [
     ['name' => 'extension#pair', 'url' => '/api/v1/extension/pair', 'verb' => 'POST'],
     ['name' => 'extension#unpair', 'url' => '/api/v1/extension/unpair', 'verb' => 'POST'],
     ['name' => 'extension#match', 'url' => '/api/v1/extension/match', 'verb' => 'GET'],
+    // The idle lock maximum the extension clamps the user's choice to.
+    ['name' => 'extension#policy', 'url' => '/api/v1/extension/policy', 'verb' => 'GET'],
     // A fill from the extension counts as a use (vault-favourites-tags-and-last-used); 404 for a row the caller does not hold.
     ['name' => 'secretOrganisation#used', 'url' => '/api/v1/extension/used/{id}', 'verb' => 'POST'],
 ];

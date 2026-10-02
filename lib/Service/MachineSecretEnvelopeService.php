@@ -207,6 +207,32 @@ class MachineSecretEnvelopeService {
 	}//end etag()
 
 	/**
+	 * Whether an If-Match header allows a write to this secret.
+	 *
+	 * The header is a comma-separated list of quoted ETags, or `*`. A write is
+	 * allowed when any listed tag is `*` or equals the secret's current ETag.
+	 *
+	 * @param Secret $secret The secret about to be written
+	 * @param string $header The raw If-Match header value (not empty)
+	 *
+	 * @return bool True when the precondition holds
+	 *
+	 * @spec openspec/specs/secret-store-api/spec.md
+	 */
+	public function ifMatchHolds(Secret $secret, string $header): bool {
+		$current = $this->etag(secret: $secret);
+		foreach (explode(separator: ',', string: $header) as $candidate) {
+			$candidate = trim($candidate);
+			// Strong comparison (RFC 9110 13.1.1): a weak tag never matches.
+			if ($candidate === '*' || $candidate === $current) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end ifMatchHolds()
+
+	/**
 	 * Compute the sha256 fingerprint of the DER form of a suite's
 	 * certificate, prefixed `sha256:`.
 	 *

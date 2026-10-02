@@ -329,8 +329,9 @@ class TeamFolderQueryService {
 	 * @return array<int,TeamFolder>
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.3
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.1
 	 */
-	private function ancestorTeamFolders(string $folderId): array {
+	public function ancestorTeamFolders(string $folderId): array {
 		$found = [];
 		$current = $folderId;
 		$guard = 0;
