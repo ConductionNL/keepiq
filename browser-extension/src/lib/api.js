@@ -70,11 +70,34 @@ export function pair(config) {
 }
 
 /**
- * Acknowledge unpairing (revocation is the NC app-password).
+ * Acknowledge unpairing to Keepiq.
  * @param config
  */
 export function unpair(config) {
 	return request(config, 'POST', '/api/v1/extension/unpair')
+}
+
+/**
+ * Delete the app password this extension signs in with, through Nextcloud's
+ * own endpoint for it (#748). Clearing local settings alone left the password
+ * valid, so a copy of it kept working after Disconnect.
+ *
+ * Nextcloud refuses (403) when the credential is not an app password, which
+ * leaves nothing to revoke.
+ *
+ * @param {object} config The paired config.
+ * @return {Promise<boolean>} True when Nextcloud deleted the app password.
+ */
+export async function revokeAppPassword(config) {
+	const res = await fetch(base(config) + '/ocs/v2.php/core/apppassword', {
+		method: 'DELETE',
+		headers: {
+			Authorization: authHeader(config),
+			'OCS-APIRequest': 'true',
+			Accept: 'application/json',
+		},
+	})
+	return res.ok
 }
 
 /**

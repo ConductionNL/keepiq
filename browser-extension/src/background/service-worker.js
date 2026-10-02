@@ -64,16 +64,24 @@ async function doPair(payload) {
 
 async function doUnpair() {
 	const config = await api.loadConfig()
+	let revoked = false
 	if (config) {
 		try {
 			await api.unpair(config)
 		} catch {
-			// Best-effort; unpairing is local + NC-side revocation.
+			// Best-effort acknowledgement.
+		}
+		try {
+			// Delete the app password itself, so Disconnect really ends the
+			// pairing (#748). The local state is cleared either way.
+			revoked = await api.revokeAppPassword(config)
+		} catch {
+			revoked = false
 		}
 	}
 	vault.lock()
 	await api.clearConfig()
-	return { ok: true }
+	return { ok: true, revoked }
 }
 
 async function doUnlock(payload) {

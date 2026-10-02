@@ -126,9 +126,9 @@ class ExtensionController extends Controller {
 	}//end pair()
 
 	/**
-	 * Unpair: pairing is the NC app-password, so unpairing is revoking it in
-	 * Nextcloud security settings. This endpoint is a no-op acknowledgement the
-	 * extension calls to clear its own local state.
+	 * Unpair: pairing is the NC app-password. The extension deletes it itself
+	 * through Nextcloud's DELETE /ocs/v2.php/core/apppassword right after this
+	 * call, which needs no Keepiq code. This endpoint is the acknowledgement.
 	 *
 	 * @return JSONResponse
 	 */
