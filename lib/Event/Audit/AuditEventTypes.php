@@ -166,6 +166,8 @@ final class AuditEventTypes {
 	public const TEAM_FOLDER_MEMBER_ADDED = 'team_folder.member_added';
 	public const TEAM_FOLDER_MEMBER_REMOVED = 'team_folder.member_removed';
 	public const TEAM_FOLDER_OFFBOARDED = 'team_folder.offboarded';
+	// Automatic member confirmation (admin-auto-confirm-members D6).
+	public const TEAM_FOLDER_MEMBERS_CONFIRMED = 'team_folder.members_confirmed';
 	// Folder permission grades (folder-permission-grades §3.3).
 	public const TEAM_FOLDER_GRADE_CHANGED = 'team_folder.grade_changed';
 
@@ -300,6 +302,8 @@ final class AuditEventTypes {
 		self::TEAM_FOLDER_OFFBOARDED => ['leavingUserId', 'successorUserId', 'revokedCount', 'transferredCount'],
 		// Grade changes — identifiers + the new grade only (§3.3).
 		self::TEAM_FOLDER_GRADE_CHANGED => ['memberType', 'memberId', 'grade'],
+		// Automatic confirmation: counts only, the actor is the confirmer.
+		self::TEAM_FOLDER_MEMBERS_CONFIRMED => ['confirmedCount', 'memberCount'],
 		// SIEM sinks — sink id/type/outcome only (§5.1).
 		self::SIEM_SINK_CREATED => ['sinkId', 'type'],
 		self::SIEM_SINK_UPDATED => ['sinkId'],

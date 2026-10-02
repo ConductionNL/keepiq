@@ -5265,7 +5265,7 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
-        "evidence": "compromise: lib/Listener/SuiteCompromiseOnRevokeListener.php:102 stamps possibly_compromised_at and :108 flag(suite_compromise), registered lib/AppInfo/SuiteLifecycleEventRegistrar.php:109; breach: src/views/HealthReportView.vue:120 Flag all breached -> rotation.js:170 POST /api/v1/rotation-flags -> RotationFlagService.php:136 flagBatch",
+        "evidence": "compromise: lib/Service/CompromiseContainmentService.php stampSealed() stamps possibly_compromised_at and flags suite_compromise (via lib/Listener/MarksCompromisedSecrets.php), called by EncryptionSuiteController::forceRevokeAsCompromise(); breach: src/views/HealthReportView.vue:120 Flag all breached -> rotation.js:170 POST /api/v1/rotation-flags -> RotationFlagService.php:136 flagBatch",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Automatic on a compromise revocation; Password health page button for breached passwords",
         "note": "Compromise flagging is automatic. Breach flagging is a one-click user action because breach verdicts never leave the browser."

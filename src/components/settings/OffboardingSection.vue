@@ -113,7 +113,7 @@ export default {
 			if (!this.summary) {
 				return ''
 			}
-			const base = this.t(
+			let base = this.t(
 				'keepiq',
 				'Revoked {revoked} shares, transferred {transferred} secrets.',
 				{
@@ -121,6 +121,15 @@ export default {
 					transferred: this.summary.transferred,
 				},
 			)
+			if (this.summary.removedMemberships > 0) {
+				base +=
+					' '
+					+ this.t(
+						'keepiq',
+						'Removed the user from {count} team folders.',
+						{ count: this.summary.removedMemberships },
+					)
+			}
 			if (this.summary.skipped.length === 0) {
 				return base
 			}

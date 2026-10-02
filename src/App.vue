@@ -166,6 +166,12 @@
 					<DefaultsSection />
 				</NcAppSettingsSection>
 
+				<NcAppSettingsSection
+					id="expiry-rules"
+					:name="t('keepiq', 'Expiry rules')">
+					<ExpiryPoliciesSection />
+				</NcAppSettingsSection>
+
 				<NcAppSettingsSection id="security" :name="t('keepiq', 'Security')">
 					<template #icon>
 						<ShieldIcon :size="20" />
@@ -399,6 +405,7 @@
 
 <script>
 import { CnAppRoot } from '@conduction/nextcloud-vue'
+import { getCurrentUser } from '@nextcloud/auth'
 import { loadState } from '@nextcloud/initial-state'
 import { translate as ncT } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
@@ -424,6 +431,7 @@ import OfflineSyncPanel from './components/OfflineSyncPanel.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
 import SecretDetailSidebar from './components/SecretDetailSidebar.vue'
 import DefaultsSection from './components/settings/DefaultsSection.vue'
+import ExpiryPoliciesSection from './components/settings/ExpiryPoliciesSection.vue'
 import {
 	handleLockTransition,
 	isPublicRoute,
@@ -436,6 +444,7 @@ import { useOfflineStore } from './store/modules/offline.js'
 import { useSessionStore } from './store/modules/session.js'
 import { initializeStores } from './store/store.js'
 import { activeDetailSecretId, closeDetailLocation } from './utils/detailRoute.js'
+import { shellPermissions } from './utils/navEntries.js'
 
 /** The document events that count as activity for the inactivity lock (crypto-06). */
 const ACTIVITY_EVENTS = Object.freeze([
@@ -462,6 +471,7 @@ export default {
 		TimerIcon,
 		TuneVariantIcon,
 		DefaultsSection,
+		ExpiryPoliciesSection,
 		ShieldIcon,
 		KeyIcon,
 		// PuzzleIcon, // browser-extension section, hidden until it ships
@@ -634,13 +644,16 @@ export default {
 		},
 
 		/**
-		 * Current Nextcloud user permissions, surfaced to the app shell.
+		 * The permissions the app shell enforces on manifest pages.
 		 *
-		 * @return {Array} Permission list (empty when unauthenticated).
-		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * Never empty: CnPageRenderer serves every page on an empty list, which
+		 * is how the admin-only Integrations page opened for any user (#878).
+		 *
+		 * @return {Array<string>} `user`, plus `admin` for the instance admin.
+		 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
 		 */
 		permissions() {
-			return window.OC?.currentUser?.permissions ?? []
+			return shellPermissions(getCurrentUser()?.isAdmin === true)
 		},
 
 		/**

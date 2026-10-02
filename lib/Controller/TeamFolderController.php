@@ -32,6 +32,7 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\TeamFolderConfirmationService;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -50,6 +51,7 @@ class TeamFolderController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param TeamFolderService $teamFolderService The team-folder service
 	 * @param IUserSession $userSession The user session
+	 * @param TeamFolderConfirmationService $confirmations Automatic member confirmation
 	 *
 	 * @return void
 	 */
@@ -57,6 +59,7 @@ class TeamFolderController extends OCSController {
 		IRequest $request,
 		private TeamFolderService $teamFolderService,
 		private IUserSession $userSession,
+		private TeamFolderConfirmationService $confirmations,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -151,6 +154,33 @@ class TeamFolderController extends OCSController {
 	}//end destroy()
 
 	/**
+	 * The team folders where the session user may confirm waiting members
+	 * (admin-auto-confirm-members D4). Scoped to the session user: owned
+	 * folders, and folders where the user holds `write` on the source and a
+	 * current copy. Empty when the admin switch is off.
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.1
+	 */
+	#[NoAdminRequired]
+	public function pendingConfirmations(): JSONResponse {
+		$userId = $this->sessionUserId();
+		if ($userId === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		return new JSONResponse(
+			data: [
+				'enabled' => $this->confirmations->isEnabled(),
+				'folders' => $this->confirmations->pendingConfirmations(userId: $userId),
+			]
+		);
+	}//end pendingConfirmations()
+
+	/**
 	 * Reconciliation: expected fan-out state + missing (secret ×
 	 * recipient) pairs for the browser to encrypt (self-healing after a
 	 * partial fan-out).
@@ -194,6 +224,7 @@ class TeamFolderController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
+	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.2
 	 */
 	#[NoAdminRequired]
 	public function registerShares(string $id, array $shares): JSONResponse {
@@ -203,9 +234,12 @@ class TeamFolderController extends OCSController {
 		}
 
 		try {
-			$result = $this->teamFolderService->registerFanOutShares(
+			// The owner keeps the plain fan-out path; a write-grade member is
+			// accepted only with the auto-confirm switch on, row by row
+			// (admin-auto-confirm-members §2.2).
+			$result = $this->confirmations->registerShares(
 				teamFolderId: $id,
-				shares: $shares,
+				rows: $shares,
 				userId: $userId
 			);
 		} catch (InvalidArgumentException $exception) {
