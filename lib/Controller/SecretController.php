@@ -26,6 +26,7 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\PolicyViolationException;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
@@ -227,6 +228,12 @@ class SecretController extends OCSController {
 		} catch (NotFoundException $e) {
 			// The folder named in the request does not exist (keepiq#795).
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
+		} catch (PolicyViolationException $e) {
+			// A vault policy refused the write (admin-vault-policies D4).
+			return new JSONResponse(
+				data: ['message' => $e->getMessage(), 'code' => $e->policyCode],
+				statusCode: Http::STATUS_FORBIDDEN
+			);
 		} catch (ForbiddenException|SuiteBlockedException $e) {
 			// ForbiddenException: the folder belongs to another user (keepiq#795).
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
@@ -344,6 +351,11 @@ class SecretController extends OCSController {
 			$secret = $this->secretService->update($id, $data, $userId);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
+		} catch (PolicyViolationException $e) {
+			return new JSONResponse(
+				data: ['message' => $e->getMessage(), 'code' => $e->policyCode],
+				statusCode: Http::STATUS_FORBIDDEN
+			);
 		} catch (ForbiddenException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (WriteLockedException $e) {

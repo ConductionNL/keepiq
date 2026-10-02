@@ -140,6 +140,7 @@ class SecretService {
 	 *                                                   without it every folder is refused
 	 * @param SecretTagMapper|null $tagMapper The holder's tags (vault-favourites-tags-and-last-used):
 	 *                                        list rows carry them, a delete removes them
+	 * @param OrgOwnershipGuard|null $orgOwnership The team folder ownership policy (admin-vault-policies)
 	 *
 	 * @return void
 	 */
@@ -162,6 +163,7 @@ class SecretService {
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 		private ?FolderOwnershipGuard $folderOwnership = null,
 		private ?SecretTagMapper $tagMapper = null,
+		private ?OrgOwnershipGuard $orgOwnership = null,
 	) {
 	}//end __construct()
 
@@ -266,6 +268,10 @@ class SecretService {
 			$data['typeId'] ?? null,
 			$userId
 		);
+
+		// Work logins live in team folders when the policy says so
+		// (admin-vault-policies D4). Import commits through here too.
+		$this->orgOwnership?->assertAllowed(userId: $userId, typeId: $typeId, folderId: $folderId);
 
 		$now = new DateTime();
 		$secret = new Secret();
@@ -916,6 +922,16 @@ class SecretService {
 
 		if (array_key_exists('typeId', $data) === true) {
 			$secret->setTypeId($this->typeService->resolveTypeForSecret($data['typeId'], $userId));
+		}
+
+		// A move or a type change must not take a work login out of a team
+		// folder (admin-vault-policies D4); other edits are not re-checked.
+		if ($secret->getFolderId() !== $preUpdate->getFolderId() || $secret->getTypeId() !== $preUpdate->getTypeId()) {
+			$this->orgOwnership?->assertAllowed(
+				userId: $userId,
+				typeId: (string)$secret->getTypeId(),
+				folderId: $secret->getFolderId()
+			);
 		}
 
 		if (array_key_exists('key', $data) === true) {
