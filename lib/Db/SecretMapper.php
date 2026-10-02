@@ -585,6 +585,25 @@ class SecretMapper extends QBMapper {
 	}//end deleteByOwnerUser()
 
 	/**
+	 * Delete every secret attributed to an application
+	 * (application-mgmt "Delete Application" cascade). Idempotent.
+	 *
+	 * @param string $applicationId The application ID
+	 *
+	 * @return int The number of rows deleted
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-delete-application
+	 */
+	public function deleteByOwnerApplication(string $applicationId): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter('application')))
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($applicationId)));
+
+		return $qb->executeStatement();
+	}//end deleteByOwnerApplication()
+
+	/**
 	 * Mark a recipient copy as a tombstoned, detached share-copy.
 	 *
 	 * Writes only display metadata (timestamp + non-personal reason token). The

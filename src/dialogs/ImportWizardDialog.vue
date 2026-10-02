@@ -388,6 +388,8 @@ export default {
 			passphrase: '',
 			kdbxDetected: false,
 			underOneFolder: false,
+			/** The picked file's name, for the one-folder import (keepiq#749). */
+			sourceName: '',
 			revealed: {},
 		}
 	},
@@ -550,6 +552,7 @@ export default {
 				return
 			}
 			const text = await file.text()
+			this.sourceName = file.name
 			try {
 				await this.store.parseFile(text, this.format, {
 					passphrase: this.passphrase,
@@ -558,6 +561,22 @@ export default {
 			} catch {
 				// store.error is already populated; stay on the pick step.
 			}
+		},
+
+		/**
+		 * The name of the one new folder everything is imported under: the
+		 * source file's name without its extension (or the format, for a
+		 * transfer that had no file), and today's date (keepiq#749).
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 */
+		oneFolderName() {
+			const base =
+				this.sourceName.replace(/\.[^.]+$/, '').trim()
+				|| String(this.store.format || this.format || 'import')
+			const today = new Date().toISOString().slice(0, 10)
+			return `${base} ${today}`
 		},
 
 		/**
@@ -574,7 +593,9 @@ export default {
 				this.store.goToStep('duplicates')
 			} else if (this.store.step === 'duplicates') {
 				try {
-					await this.store.commit()
+					await this.store.commit({
+						rootFolder: this.underOneFolder ? this.oneFolderName() : '',
+					})
 					this.$emit('imported')
 				} catch {
 					// store.error already surfaced.
@@ -628,6 +649,7 @@ export default {
 				this.kdbxDetected = false
 				this.passphrase = ''
 				this.underOneFolder = false
+				this.sourceName = ''
 				this.revealed = {}
 			}
 			this.$emit('update:open', value)
@@ -641,7 +663,11 @@ export default {
 	display: flex;
 	flex-direction: column;
 	gap: 12px;
-	min-width: 480px;
+	max-width: 100%;
+
+	@media (min-width: 600px) {
+		min-width: 480px;
+	}
 
 	&__file input {
 		display: block;

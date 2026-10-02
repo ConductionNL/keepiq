@@ -49,13 +49,47 @@
 					)
 				}}
 			</NcNoteCard>
+
+			<!-- Secrets that could not be decrypted are not in the package:
+			     say how many, and hold the download until the user chooses
+			     to continue without them (keepiq#874). -->
+			<div
+				v-if="!locked && skipped > 0"
+				class="gdpr-dialog__skipped"
+				data-testid="gdpr-skipped-warning">
+				<NcNoteCard type="warning">
+					{{
+						n(
+							'keepiq',
+							'%n secret could not be decrypted and is not in this export.',
+							'%n secrets could not be decrypted and are not in this export.',
+							skipped,
+						)
+					}}
+				</NcNoteCard>
+				<NcCheckboxRadioSwitch
+					:modelValue="skippedAcknowledged"
+					data-testid="gdpr-skipped-ack"
+					@update:modelValue="skippedAcknowledged = $event">
+					{{
+						t(
+							'keepiq',
+							'Continue without the secrets that could not be decrypted',
+						)
+					}}
+				</NcCheckboxRadioSwitch>
+			</div>
 		</div>
 
 		<template #actions>
 			<NcButton @click="onUpdateOpen(false)">
 				{{ t('keepiq', 'Cancel') }}
 			</NcButton>
-			<NcButton variant="primary" :disabled="loading" @click="onDownload">
+			<NcButton
+				variant="primary"
+				:disabled="!canDownload"
+				data-testid="gdpr-download"
+				@click="onDownload">
 				{{
 					locked
 						? t('keepiq', 'Download metadata only')
@@ -67,7 +101,12 @@
 </template>
 
 <script>
-import { NcButton, NcDialog, NcNoteCard } from '@nextcloud/vue'
+import {
+	NcButton,
+	NcCheckboxRadioSwitch,
+	NcDialog,
+	NcNoteCard,
+} from '@nextcloud/vue'
 import { useExportStore } from '../store/modules/export.js'
 import { useSessionStore } from '../store/modules/session.js'
 
@@ -76,6 +115,7 @@ export default {
 	components: {
 		NcDialog,
 		NcButton,
+		NcCheckboxRadioSwitch,
 		NcNoteCard,
 	},
 
@@ -96,6 +136,12 @@ export default {
 			type: Array,
 			default: () => [],
 		},
+
+		/** How many secrets could not be decrypted and are not in `secrets`. */
+		skipped: {
+			type: Number,
+			default: 0,
+		},
 	},
 
 	emits: ['update:open'],
@@ -115,6 +161,8 @@ export default {
 	data() {
 		return {
 			error: null,
+			/** Whether the user chose to download without the skipped secrets. */
+			skippedAcknowledged: false,
 		}
 	},
 
@@ -138,6 +186,20 @@ export default {
 		locked() {
 			return this.sessionStore.isLocked
 		},
+
+		/**
+		 * Whether the download may start: not while one is in flight, and not
+		 * while secrets are left out without the user choosing to continue.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
+		 */
+		canDownload() {
+			if (this.loading) {
+				return false
+			}
+			return this.locked || this.skipped === 0 || this.skippedAcknowledged
+		},
 	},
 
 	methods: {
@@ -149,6 +211,9 @@ export default {
 		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
 		async onDownload() {
+			if (!this.canDownload) {
+				return
+			}
 			this.error = null
 			try {
 				const secrets = this.locked ? null : this.secrets
@@ -172,6 +237,7 @@ export default {
 		onUpdateOpen(value) {
 			if (!value) {
 				this.error = null
+				this.skippedAcknowledged = false
 			}
 			this.$emit('update:open', value)
 		},
@@ -186,5 +252,11 @@ export default {
 	gap: 12px;
 	padding: 8px 4px;
 	min-width: 320px;
+}
+
+.gdpr-dialog__skipped {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
 }
 </style>

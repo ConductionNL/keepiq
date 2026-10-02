@@ -107,6 +107,29 @@ describe('ExportDialog', () => {
 	})
 })
 
+describe('ExportDialog: the plaintext warning names the chosen format (keepiq#749)', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+	})
+
+	it('says CXF for a CXF export and CSV for a CSV export', async () => {
+		const wrapper = mount(ExportDialog, {
+			propsData: { open: true, secrets: [], folders: [] },
+			...mountOpts,
+		})
+		wrapper.vm.mode = 'cxf'
+		await wrapper.vm.$nextTick()
+		const warning = () =>
+			wrapper.find('[data-testid="export-plaintext-warning"]').text()
+		expect(warning()).toContain('A CXF export is UNENCRYPTED.')
+		expect(warning()).not.toContain('CSV')
+
+		wrapper.vm.mode = 'plaintext-csv'
+		await wrapper.vm.$nextTick()
+		expect(warning()).toContain('A CSV export is UNENCRYPTED.')
+	})
+})
+
 describe('AccountDeletionDialog', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())

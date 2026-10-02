@@ -135,14 +135,20 @@
 				</p>
 			</div>
 
-			<!-- Plaintext CSV path: warning -> ack -> re-auth -->
+			<!-- Plaintext CSV or CXF path: warning -> ack -> re-auth. Each
+			     names its own format (keepiq#749). -->
 			<div v-else class="export-dialog__csv">
-				<NcNoteCard type="warning">
+				<NcNoteCard type="warning" data-testid="export-plaintext-warning">
 					{{
-						t(
-							'keepiq',
-							'A CSV export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.',
-						)
+						mode === 'cxf'
+							? t(
+									'keepiq',
+									'A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.',
+								)
+							: t(
+									'keepiq',
+									'A CSV export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.',
+								)
 					}}
 				</NcNoteCard>
 				<NcCheckboxRadioSwitch

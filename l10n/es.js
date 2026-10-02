@@ -1266,7 +1266,8 @@ OC.L10N.register(
         "Tag": "Etiqueta",
         "Remove tag": "Quitar etiqueta",
         "Add tag": "Añadir etiqueta",
-        "Could not change the tags. Try again.": "No se pudieron cambiar las etiquetas. Inténtelo de nuevo."
+        "Could not change the tags. Try again.": "No se pudieron cambiar las etiquetas. Inténtelo de nuevo.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Una exportación CXF NO ESTÁ CIFRADA. Todas las contraseñas e inicios de sesión serán legibles como texto plano en el archivo descargado. Guárdelo de forma segura y elimínelo inmediatamente después de usarlo."
     },
     "nplurals=2; plural=(n != 1);"
 )

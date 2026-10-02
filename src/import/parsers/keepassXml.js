@@ -30,6 +30,14 @@ const STANDARD_KEYS = {
 }
 
 /**
+ * KeePass string keys that hold a one-time-code seed: `otp` (KeePassXC, an
+ * otpauth:// URI) and `TimeOtp-Secret-Base32` (KeePass 2.47+, a base32 seed).
+ * The seed is stashed as `additionalFields.totp`, which the import store turns
+ * into its own authenticator secret (keepiq#749).
+ */
+const TOTP_KEYS = ['otp', 'TimeOtp-Secret-Base32']
+
+/**
  * Read the immediate child elements with a given tag name.
  *
  * @param {Element} parent The parent element.
@@ -76,6 +84,8 @@ function parseEntry(entry, pathSegments, sourceRow) {
 		}
 		if (STANDARD_KEYS[key]) {
 			fields[STANDARD_KEYS[key]] = value
+		} else if (TOTP_KEYS.includes(key)) {
+			additional.totp ??= value
 		} else {
 			additional[key] = value
 		}
