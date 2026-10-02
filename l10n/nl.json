@@ -1463,6 +1463,102 @@
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "U heeft dit geheim offline verwijderd, maar het is sindsdien op de server gewijzigd. Kies welke versie u wilt behouden.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Uw sleutels zijn op een ander apparaat vervangen. Voer uw vorige hoofdwachtwoord in om de offline wijzigingen te synchroniseren, of gooi ze weg.",
         "Your offline change": "Uw offline wijziging",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n noodcontact had een openstaand toegangsverzoek toen je sleutelrotatie het verwijderde. Controleer wie het vroeg voordat je iemand opnieuw toevoegt.",
+            "%n noodcontacten hadden een openstaand toegangsverzoek toen je sleutelrotatie ze verwijderde. Controleer wie het vroeg voordat je iemand opnieuw toevoegt."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n item kan niet in CXF worden weergegeven en wordt overgeslagen.",
+            "%n items kunnen niet in CXF worden weergegeven en worden overgeslagen."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n oudere versie is verwijderd omdat alleen recente geschiedenis kan worden meegenomen.",
+            "%n oudere versies zijn verwijderd omdat alleen recente geschiedenis kan worden meegenomen."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n kopie van een geheim moet nog worden versleuteld en gedeeld.",
+            "%n kopieën van geheimen moeten nog worden versleuteld en gedeeld."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n geheim kon niet worden ontsleuteld en zit niet in deze export.",
+            "%n geheimen konden niet worden ontsleuteld en zitten niet in deze export."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n geheim kon niet worden ontsleuteld met je oude sleutel en is dus niet gemigreerd.",
+            "%n geheimen konden niet worden ontsleuteld met je oude sleutel en zijn dus niet gemigreerd."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n geheim is niet gemigreerd.",
+            "%n geheimen zijn niet gemigreerd."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n geheim is nog versleuteld met je vorige sleutel.",
+            "%n geheimen zijn nog versleuteld met je vorige sleutel."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n geheim is overgeslagen omdat de opvolger nog geen kopie heeft — voeg de opvolger toe aan de map en voer dit opnieuw uit.",
+            "%n geheimen zijn overgeslagen omdat de opvolger nog geen kopie heeft — voeg de opvolger toe aan de map en voer dit opnieuw uit."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n geheim",
+            "%n geheimen"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n gebruiker binnen het bereik heeft nog geen tweestapsaanmelding en kan de kluis niet openen zolang dit aan staat.",
+            "%n gebruikers binnen het bereik hebben nog geen tweestapsaanmelding en kunnen de kluis niet openen zolang dit aan staat."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Toch afronden en de toegang tot %n geheim verliezen",
+            "Toch afronden en de toegang tot %n geheimen verliezen"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n nieuw lid heeft toegang gekregen tot een teammap.",
+            "%n nieuwe leden hebben toegang gekregen tot een teammap."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Sleutelrotatie afgerond. %n geheim is opnieuw versleuteld met je nieuwe sleutel.",
+            "Sleutelrotatie afgerond. %n geheimen zijn opnieuw versleuteld met je nieuwe sleutel."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Het intrekken van de tweede suite verwijderde %n noodtoegangscontact.",
+            "Het intrekken van de tweede suite verwijderde %n noodtoegangscontacten."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Het intrekken van deze suite verwijderde %n noodtoegangscontact.",
+            "Het intrekken van deze suite verwijderde %n noodtoegangscontacten."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "%n keer gezien in datalekken",
+            "%n keer gezien in datalekken"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "gedeeld met %n geheim",
+            "gedeeld met %n geheimen"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Deze map bevat direct %n geheim.",
+            "Deze map bevat direct %n geheimen."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Je sleutelrotatie heeft %n noodcontact verwijderd. Kijk bij Noodtoegang en voeg het opnieuw toe als je het nog wilt.",
+            "Je sleutelrotatie heeft %n noodcontacten verwijderd. Kijk bij Noodtoegang en voeg ze opnieuw toe als je ze nog wilt."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n wijziging wacht op synchronisatie",
+            "%n wijzigingen wachten op synchronisatie"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "De gebruiker zit nog in groep {groups}, die lid is van een teammap. Haal de gebruiker uit de groep of schakel het account uit.",
+            "De gebruiker zit nog in groepen {groups}, die lid zijn van teammappen. Haal de gebruiker uit de groepen of schakel het account uit."
+        ],
         "Allow approval from another device": "Goedkeuring vanaf een ander apparaat toestaan",
         "App": "App",
         "Approve a new device": "Een nieuw apparaat goedkeuren",

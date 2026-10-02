@@ -25,6 +25,7 @@ import { senderOrigin } from '../passkey/rp.js'
 import { computeTotp } from '../lib/totp-service.js'
 import { reportFill } from '../lib/usage.js'
 import { isServerSupported } from '../lib/version.js'
+import { buildVaultHandlers } from './vault-handlers.js'
 
 /**
  * The messages a content script (a tab) may send. Everything else needs an
@@ -37,6 +38,8 @@ export const PAGE_MESSAGES = Object.freeze(
 		'webauthn-create',
 		'webauthn-get',
 		'otp-field-detected',
+		// A random password for a sign-up field; it carries no vault data.
+		'generate-for-field',
 	]),
 )
 
@@ -805,6 +808,24 @@ const handlers = {
 	'biometric-options': doBiometricOptions,
 	'biometric-used': doBiometricUsed,
 	'otp-field-detected': doOtpFieldDetected,
+	// Vault, Generator and Send tabs (clients-extension-generator-vault-send).
+	...buildVaultHandlers({
+		api,
+		vault,
+		activeAccount,
+		policyRefusalFor: (config, value, typeName) =>
+			api
+				.fetchPolicy(config)
+				.then((policy) =>
+					policyRefusal(
+						policy,
+						value,
+						(prefix) => api.breachRange(config, prefix),
+						typeName,
+					),
+				),
+		touchActivity,
+	}),
 	// WebAuthn ceremonies relayed from the page-context shim. The origin is the
 	// sender's, as the browser reports it; the page's own claim in the payload
 	// is ignored (clients-passkey-origin).

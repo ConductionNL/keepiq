@@ -350,6 +350,103 @@ export function updateSecret(config, id, body) {
 	return request(config, 'PUT', '/api/v1/secrets/' + encodeURIComponent(id), body)
 }
 
+/** The largest page the secrets list serves (SecretService::MAX_LIMIT). */
+export const SECRETS_PAGE_SIZE = 100
+
+/**
+ * Every secret the account can open, page by page (index fields and blobs).
+ *
+ * @param {object} config The account.
+ * @return {Promise<Array<object>>}
+ * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
+ */
+export async function listSecrets(config) {
+	const items = []
+	for (let page = 1; page <= 100; page++) {
+		const data = await request(
+			config,
+			'GET',
+			`/api/v1/secrets?page=${page}&limit=${SECRETS_PAGE_SIZE}`,
+		)
+		const batch = data?.items || []
+		items.push(...batch)
+		if (batch.length < SECRETS_PAGE_SIZE || items.length >= (data?.total ?? 0)) {
+			break
+		}
+	}
+	return items
+}
+
+/**
+ * The account's folders (names are plaintext on the server).
+ *
+ * @param {object} config The account.
+ * @return {Promise<Array<object>>}
+ * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
+ */
+export async function listFolders(config) {
+	const data = await request(config, 'GET', '/api/v1/folders')
+	return Array.isArray(data) ? data : data?.items || []
+}
+
+/**
+ * Move a secret to the trash (it can be restored from the web app).
+ *
+ * @param {object} config The account.
+ * @param {string} id The secret id.
+ * @return {Promise<object|null>}
+ * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-add-edit-and-delete-items
+ */
+export function trashSecret(config, id) {
+	return request(config, 'DELETE', '/api/v1/secrets/' + encodeURIComponent(id))
+}
+
+/**
+ * Create an ephemeral send from an already-encrypted body.
+ *
+ * @param {object} config The account.
+ * @param {object} body encryptedPayload, payloadType, maxViews, ttlSeconds, hasPassword.
+ * @return {Promise<object>} The send, with its token.
+ * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-create-a-send-from-the-popup
+ */
+export function createSend(config, body) {
+	return request(config, 'POST', '/api/v1/sends', body)
+}
+
+/**
+ * The account's own sends (metadata only).
+ *
+ * @param {object} config The account.
+ * @return {Promise<Array<object>>}
+ * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-list-and-end-my-sends
+ */
+export async function listSends(config) {
+	const data = await request(config, 'GET', '/api/v1/sends')
+	return Array.isArray(data) ? data : []
+}
+
+/**
+ * End one of the account's sends.
+ *
+ * @param {object} config The account.
+ * @param {string} id The send id.
+ * @return {Promise<object|null>}
+ * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-list-and-end-my-sends
+ */
+export function revokeSend(config, id) {
+	return request(config, 'DELETE', '/api/v1/sends/' + encodeURIComponent(id))
+}
+
+/**
+ * The public base for recipient links on this account's server.
+ *
+ * @param {object} config The account.
+ * @return {string}
+ */
+export function publicBase(config) {
+	return base(config) + '/index.php/apps/keepiq/public'
+}
+
 /**
  * Read the org password policy, the same endpoint the web app reads
  * (keepiq#746). Resolves to null when it cannot be read: an unavailable
@@ -383,6 +480,17 @@ export async function breachRange(config, prefix) {
  * @param config
  * @param name
  */
+/**
+ * The secret types the account's server knows ({id, name}).
+ *
+ * @param {object} config The account.
+ * @return {Promise<Array<object>>}
+ */
+export async function listTypes(config) {
+	const types = await request(config, 'GET', '/api/v1/secret-types')
+	return Array.isArray(types) ? types : types?.items || []
+}
+
 export async function typeIdByName(config, name) {
 	const types = await request(config, 'GET', '/api/v1/secret-types')
 	const list = Array.isArray(types) ? types : types.items || []
