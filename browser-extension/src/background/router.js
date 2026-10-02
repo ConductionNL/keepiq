@@ -23,6 +23,7 @@ import { buildPasskeyOrchestrator } from '../passkey/orchestrator.js'
 import { senderOrigin } from '../passkey/rp.js'
 import { computeTotp } from '../lib/totp-service.js'
 import { reportFill } from '../lib/usage.js'
+import { isServerSupported } from '../lib/version.js'
 
 /**
  * The messages a content script (a tab) may send. Everything else needs an
@@ -134,11 +135,34 @@ function hostLabel(account) {
 	}
 }
 
+/**
+ * Read and store the server version of an account (the pair route reports
+ * it). A server that cannot be reached keeps the last known version.
+ *
+ * @param {object} account The account.
+ * @return {Promise<string|null>} The version now stored.
+ */
+async function refreshServerVersion(account) {
+	try {
+		const res = await api.pair(account)
+		const version = res?.serverVersion ?? null
+		await api.updateAccount(account.id, { serverVersion: version })
+		account.serverVersion = version
+	} catch {
+		// Offline or unreachable: keep what we had.
+	}
+	return account.serverVersion ?? null
+}
+
 /** Current state for the popup to render the right view. */
 async function getState() {
 	const accounts = await api.loadAccounts()
 	const activeId = await api.activeAccountId()
 	const active = accounts.find((a) => a.id === activeId) || null
+	// An account paired before the handshake has no version yet: ask once.
+	if (active && active.serverVersion === undefined) {
+		await refreshServerVersion(active)
+	}
 	return {
 		paired: accounts.length > 0,
 		maxAccounts: api.MAX_ACCOUNTS,
@@ -157,6 +181,8 @@ async function getState() {
 		idleMinutes: active ? active.idleMinutes : null,
 		maxIdleMinutes: active ? (maxIdleByAccount.get(active.id) ?? null) : null,
 		idleChoices: api.IDLE_CHOICES,
+		serverVersion: active ? (active.serverVersion ?? null) : null,
+		serverOutdated: active ? !isServerSupported(active.serverVersion) : false,
 	}
 }
 
@@ -174,8 +200,11 @@ async function doPair(payload) {
 		appPassword: payload.appPassword,
 	}
 	// Verify the credential actually pairs before persisting it.
-	await api.pair(config)
-	const account = await api.addAccount(config)
+	const res = await api.pair(config)
+	const account = await api.addAccount({
+		...config,
+		serverVersion: res?.serverVersion ?? null,
+	})
 	return { ok: true, accountId: account.id }
 }
 
@@ -229,6 +258,7 @@ async function refreshPolicy(account) {
 
 async function doUnlock(payload) {
 	const account = await activeAccount()
+	await refreshServerVersion(account)
 	await vault.unlock(account.id, account, payload.masterPassword)
 	await refreshPolicy(account)
 	await touchActivity(account.id)
@@ -265,6 +295,11 @@ async function doUnlockRaw(payload) {
  */
 async function doMatch(payload) {
 	const account = await activeAccount()
+	if (!isServerSupported(account.serverVersion)) {
+		throw new Error(
+			'Update Keepiq on your server to use this extension version.',
+		)
+	}
 	const host = hostOf(payload.host)
 	const rows = await api.match(account, payload.host)
 	const ranked = matchSecrets(rows, payload.host)
