@@ -1457,7 +1457,79 @@
         "This secret changed while you were offline": "Siz çevrim dışıyken bu sır değişti",
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Bu sırrı çevrim dışıyken sildiniz, ancak o zamandan beri sunucuda değiştirildi. Hangi sürümü koruyacağınızı seçin.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Anahtarlarınız başka bir cihazda değiştirildi. Çevrim dışı değişikliklerinizi eşitlemek için önceki ana parolanızı girin ya da onları atın.",
-        "Your offline change": "Çevrim dışı değişikliğiniz"
+        "Your offline change": "Çevrim dışı değişikliğiniz",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n acil durum kişisinin, anahtar değişimi onu kaldırdığında bekleyen bir erişim isteği vardı. Birini yeniden eklemeden önce kimin istediğini kontrol edin."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n öğe CXF içinde gösterilemiyor ve atlanacak."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "Yalnızca son geçmiş taşınabildiği için %n eski sürüm atıldı."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n gizli kopyasının hâlâ şifrelenip paylaşılması gerekiyor."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n gizli bilginin şifresi çözülemedi ve bu dışa aktarımda yer almıyor."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n sır eski anahtarınızla şifresi çözülemedi, bu yüzden taşınmadı."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n sır taşınmadı."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n sır hâlâ önceki anahtarınızla şifreli."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "Ardıl henüz bir kopyaya sahip olmadığı için %n gizli atlandı — ardılı klasöre ekleyin ve yeniden çalıştırın."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n gizli"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "Kapsamdaki %n kullanıcının henüz iki adımlı girişi yok ve bu açıkken kasayı açamaz."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Yine de bitir, %n sırra erişimi kaybederek"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n yeni üye bir ekip klasörüne erişim aldı."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Anahtar döndürme bitti. %n sır yeni anahtarınızla yeniden şifrelendi."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "İkinci paketin iptali %n acil erişim kişisini sildi."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Bu paketin iptali %n acil durum erişim kişisini sildi."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "sızıntılarda %n kez görüldü"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "%n gizliyle paylaşıldı"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Bu klasör doğrudan %n gizli içeriyor."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Anahtar döndürmeniz %n acil durum kişisini kaldırdı. Acil durum erişimini kontrol edin ve hâlâ istiyorsanız yeniden ekleyin."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n değişiklik eşitlenmeyi bekliyor"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Kullanıcı hâlâ bir ekip klasörünün üyesi olan {groups} grubunda. Kullanıcıyı gruptan çıkarın veya hesabı devre dışı bırakın."
+        ]
     },
     "plurals": null
 }

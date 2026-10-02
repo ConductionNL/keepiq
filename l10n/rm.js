@@ -1460,5 +1460,5 @@ OC.L10N.register(
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Vossas clavs èn vegnidas midadas sin in auter apparat. Endatai Voss pled-clav principal precedent per sincronisar las midadas offline, u bittai davent ellas.",
         "Your offline change": "Vossa midada offline"
     },
-    "nplurals=2; plural=(n != 1);"
+    "nplurals=1; plural=0;"
 )

@@ -1457,7 +1457,103 @@
         "This secret changed while you were offline": "Ky sekret ndryshoi ndërsa ishit jashtë linje",
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "E fshitë këtë sekret jashtë linje, por që atëherë është ndryshuar në server. Zgjidhni cilin version të mbani.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Çelësat tuaj u ndërruan në një pajisje tjetër. Jepni fjalëkalimin kryesor të mëparshëm për të sinkronizuar ndryshimet jashtë linje, ose hidhini.",
-        "Your offline change": "Ndryshimi juaj jashtë linje"
+        "Your offline change": "Ndryshimi juaj jashtë linje",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n kontakt urgjence kishte një kërkesë aksesi në pritje kur rrotullimi i çelësit e hoqi. Kontrollo kush e kërkoi para se të shtosh dikë përsëri.",
+            "%n kontakte urgjence kishin një kërkesë aksesi në pritje kur rrotullimi i çelësit i hoqi. Kontrollo kush e kërkoi para se të shtosh dikë përsëri."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n artikull nuk mund të përfaqësohet në CXF dhe do të anashkalohet.",
+            "%n artikuj nuk mund të përfaqësohen në CXF dhe do të anashkalohen."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n version më i vjetër u hoq, sepse mund të kalohet vetëm historiku i kohëve të fundit.",
+            "%n versione më të vjetër u hoqën, sepse mund të kalohet vetëm historiku i kohëve të fundit."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n kopje sekreti duhet ende kriptuar dhe ndarë.",
+            "%n kopje sekreti duhen ende kriptuar dhe ndarë."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n sekret nuk mund të deshifrohej dhe nuk është në këtë eksport.",
+            "%n sekrete nuk mund të deshifroheshin dhe nuk janë në këtë eksport."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n sekret nuk mundi të deshifrohej me kyçin tuaj të vjetër, kështu që nuk u migrua.",
+            "%n sekrete nuk mundën të deshifroheshin me kyçin tuaj të vjetër, kështu që nuk u migruan."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n sekret nuk u migrua.",
+            "%n sekrete nuk u migruan."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n sekret është ende i kriptuar me kyçin tuaj të mëparshëm.",
+            "%n sekrete janë ende të kriptuara me kyçin tuaj të mëparshëm."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n sekret u anashkalua sepse pasardhësi ende nuk ka asnjë kopje — shtojeni pasardhësin në dosje dhe rinisni veprimin.",
+            "%n sekrete u anashkaluan sepse pasardhësi ende nuk ka asnjë kopje — shtojeni pasardhësin në dosje dhe rinisni veprimin."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n sekret",
+            "%n sekrete"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n përdorues në fushëveprim ende nuk ka hyrje me dy faktorë dhe nuk mund ta hapë kasafortën sa kohë që kjo është aktive.",
+            "%n përdorues në fushëveprim ende nuk kanë hyrje me dy faktorë dhe nuk mund ta hapin kasafortën sa kohë që kjo është aktive."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Përfundo gjithsesi, duke humbur aksesin në %n sekret",
+            "Përfundo gjithsesi, duke humbur aksesin në %n sekrete"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n anëtar i ri mori qasje në një dosje ekipi.",
+            "%n anëtarë të rinj morën qasje në një dosje ekipi."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Rrotullimi i kyçit përfundoi. %n sekret u rikriptua me kyçin tuaj të re.",
+            "Rrotullimi i kyçit përfundoi. %n sekrete u rikriptuan me kyçin tuaj të re."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Revokimi i paketës së dytë fshiu %n kontakt aksesi emergjence.",
+            "Revokimi i paketës së dytë fshiu %n kontakte aksesi emergjence."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Revokimi i kësaj suite fshiu %n kontakt të qasjes së emergjencës.",
+            "Revokimi i kësaj suite fshiu %n kontakte të qasjes së emergjencës."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "parë %n herë në rrjedhje",
+            "parë %n herë në rrjedhje"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "e ndarë me %n sekret",
+            "e ndarë me %n sekrete"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Kjo dosje përmban drejtpërdrejt %n sekret.",
+            "Kjo dosje përmban drejtpërdrejt %n sekrete."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Rrotullimi i kyçit hoqi %n kontakt emergjence. Kontrolloni Aksesin e emergjencës dhe shtojeni përsëri nëse e doni ende.",
+            "Rrotullimi i kyçit hoqi %n kontakte emergjence. Kontrolloni Aksesin e emergjencës dhe shtojini përsëri nëse i doni ende."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n ndryshim pret sinkronizimin",
+            "%n ndryshime presin sinkronizimin"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Përdoruesi është ende në grupin {groups}, që është anëtar i një dosjeje ekipi. Hiqeni nga grupi ose çaktivizoni llogarinë.",
+            "Përdoruesi është ende në grupet {groups}, që janë anëtare të dosjeve të ekipit. Hiqeni nga grupet ose çaktivizoni llogarinë."
+        ]
     },
     "plurals": null
 }

@@ -1457,7 +1457,127 @@
         "This secret changed while you were offline": "Ова тајна се променила док сте били ван мреже",
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Ову тајну сте обрисали ван мреже, али је у међувремену измењена на серверу. Изаберите коју верзију да задржите.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Ваши кључеви су промењени на другом уређају. Унесите претходну главну лозинку да синхронизујете ванмрежне измене или их одбаците.",
-        "Your offline change": "Ваша ванмрежна измена"
+        "Your offline change": "Ваша ванмрежна измена",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n контакт за хитне случајеве имао је захтев за приступ на чекању када га је ротација кључа уклонила. Проверите ко је тражио пре него што поново додате било кога.",
+            "Контакти за хитне случајеве (%n) имали су захтев за приступ на чекању када их је ротација кључа уклонила. Проверите ко је тражио пре него што поново додате било кога.",
+            "Контакти за хитне случајеве (%n) имали су захтев за приступ на чекању када их је ротација кључа уклонила. Проверите ко је тражио пре него што поново додате било кога."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n ставку није могуће приказати у CXF-у и биће прескочена.",
+            "%n ставки није могуће приказати у CXF-у и биће прескочене.",
+            "%n ставки није могуће приказати у CXF-у и биће прескочене."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n старија верзија је одбачена јер се може пренети само недавна историја.",
+            "%n старијих верзија је одбачено јер се може пренети само недавна историја.",
+            "%n старијих верзија је одбачено јер се може пренети само недавна историја."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n копију тајне још треба шифровати и поделити.",
+            "%n копија тајни још треба шифровати и поделити.",
+            "%n копија тајни још треба шифровати и поделити."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n тајна није могла да се дешифрује и није у овом извозу.",
+            "%n тајни није могло да се дешифрује и нису у овом извозу.",
+            "%n тајни није могло да се дешифрује и нису у овом извозу."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n тајна није могла да се дешифрује вашим старим кључем, па није пренета.",
+            "%n тајни није могло да се дешифрује вашим старим кључем, па нису пренете.",
+            "%n тајни није могло да се дешифрује вашим старим кључем, па нису пренете."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n тајна није пренета.",
+            "%n тајни није пренето.",
+            "%n тајни није пренето."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n тајна је још увек шифрована вашим претходним кључем.",
+            "%n тајни је још увек шифровано вашим претходним кључем.",
+            "%n тајни је још увек шифровано вашим претходним кључем."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n тајна је прескочена јер наследник још нема копију — додајте наследника у фасциклу и покрените поново.",
+            "%n тајни је прескочено јер наследник још нема копију — додајте наследника у фасциклу и покрените поново.",
+            "%n тајни је прескочено јер наследник још нема копију — додајте наследника у фасциклу и покрените поново."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n тајна",
+            "%n тајни",
+            "%n тајни"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n корисник у опсегу још нема пријаву у два корака и не може да отвори трезор док је ово укључено.",
+            "Корисници у опсегу (%n) још немају пријаву у два корака и не могу да отворе трезор док је ово укључено.",
+            "Корисници у опсегу (%n) још немају пријаву у два корака и не могу да отворе трезор док је ово укључено."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Ипак заврши, уз губитак приступа %n тајни",
+            "Ипак заврши, уз губитак приступа %n тајни",
+            "Ипак заврши, уз губитак приступа %n тајни"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n нови члан добио је приступ тимској фасцикли.",
+            "Нови чланови (%n) добили су приступ тимској фасцикли.",
+            "Нови чланови (%n) добили су приступ тимској фасцикли."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Ротација кључа је завршена. %n тајна је поново шифрована вашим новим кључем.",
+            "Ротација кључа је завршена. %n тајни је поново шифровано вашим новим кључем.",
+            "Ротација кључа је завршена. %n тајни је поново шифровано вашим новим кључем."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Опозив другог пакета обрисао је %n контакт за хитан приступ.",
+            "Опозив другог пакета обрисао је %n контаката за хитан приступ.",
+            "Опозив другог пакета обрисао је %n контаката за хитан приступ."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Опозивање овог комплета избрисало је %n контакт хитног приступа.",
+            "Опозивање овог комплета избрисало је %n контаката хитног приступа.",
+            "Опозивање овог комплета избрисало је %n контаката хитног приступа."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "забележено %n пут у процурелим подацима",
+            "забележено %n пута у процурелим подацима",
+            "забележено %n пута у процурелим подацима"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "подељено са %n тајном",
+            "подељено са %n тајни",
+            "подељено са %n тајни"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Ова фасцикла директно садржи %n тајну.",
+            "Ова фасцикла директно садржи %n тајни.",
+            "Ова фасцикла директно садржи %n тајни."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Ротација кључа је уклонила %n контакт за хитне случајеве. Проверите Приступ у хитним случајевима и додајте га поново ако га још желите.",
+            "Ротација кључа је уклонила %n контакта за хитне случајеве. Проверите Приступ у хитним случајевима и додајте их поново ако их још желите.",
+            "Ротација кључа је уклонила %n контакта за хитне случајеве. Проверите Приступ у хитним случајевима и додајте их поново ако их још желите."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n измена чека синхронизацију",
+            "%n измена чека синхронизацију",
+            "%n измена чека синхронизацију"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Корисник је још у групи {groups}, која је чланица тимске фасцикле. Уклоните га из групе или онемогућите налог.",
+            "Корисник је још у групама {groups}, које су чланице тимских фасцикли. Уклоните га из група или онемогућите налог.",
+            "Корисник је још у групама {groups}, које су чланице тимских фасцикли. Уклоните га из група или онемогућите налог."
+        ]
     },
     "plurals": null
 }
