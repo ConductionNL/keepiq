@@ -95,6 +95,20 @@ class DeletionReport implements JsonSerializable {
 	public bool $settingsDeleted = false;
 
 	/**
+	 * Emergency-access relationships removed, as grantor or as grantee.
+	 *
+	 * @var int
+	 */
+	public int $emergencyContactsDeleted = 0;
+
+	/**
+	 * Passkey unlock credentials removed.
+	 *
+	 * @var int
+	 */
+	public int $passkeysDeleted = 0;
+
+	/**
 	 * Serialize the report for the API response and the audit event.
 	 *
 	 * @return array<string,mixed>
@@ -112,6 +126,8 @@ class DeletionReport implements JsonSerializable {
 			'requestsDeleted' => $this->requestsDeleted,
 			'suitesDeleted' => $this->suitesDeleted,
 			'settingsDeleted' => $this->settingsDeleted,
+			'emergencyContactsDeleted' => $this->emergencyContactsDeleted,
+			'passkeysDeleted' => $this->passkeysDeleted,
 		];
 	}//end jsonSerialize()
 }//end class
