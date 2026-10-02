@@ -59,6 +59,8 @@ func main() {
 		err = cmdCompletion(args)
 	case "ssh-agent":
 		err = cmdSSHAgent(args)
+	case "install":
+		err = cmdInstall(args)
 	case "help", "--help", "-h":
 		usage()
 	default:
@@ -85,6 +87,8 @@ Human mode (decrypts client-side):
 CI mode (RFC 7523 machine consumer):
   keepiq ci fetch <name> [--output env|json]       fetch+decrypt an application secret
   keepiq ci run <name>[,<name>...] -- <cmd...>      run <cmd> with the secret(s) in its env
+
+  install <path>                                   copy this binary to <path> (init containers)
 
 SSH agent (Linux and macOS):
   keepiq ssh-agent [--socket <path>] [--confirm] [--idle <minutes>] [--folder <name>] [--locked]
