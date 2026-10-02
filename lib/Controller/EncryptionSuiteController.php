@@ -69,6 +69,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @param IUserSession $userSession The user session
 	 * @param VaultKeyProofService $proofService The vault-key-proof service (issues challenges)
 	 * @param EmergencyEnvelopeInvalidationService $emergencyService The emergency-envelope service (revoke safeguard)
+	 * @param \OCA\Keepiq\Service\TwoFactorGate $twoFactor The two-factor vault policy (admin-vault-policies D3)
 	 * @param \OCA\Keepiq\Service\PasskeyService|null $passkeyService The passkey service (passkey vault login; null when unwired)
 	 *
 	 * @return void
@@ -80,6 +81,7 @@ class EncryptionSuiteController extends OCSController {
 		private IUserSession $userSession,
 		private VaultKeyProofService $proofService,
 		private EmergencyEnvelopeInvalidationService $emergencyService,
+		private \OCA\Keepiq\Service\TwoFactorGate $twoFactor,
 		private ?\OCA\Keepiq\Service\PasskeyService $passkeyService = null,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
@@ -93,6 +95,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#3.1
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -104,9 +107,14 @@ class EncryptionSuiteController extends OCSController {
 		$userId = $user->getUID();
 		$suites = $this->suiteService->getSuitesByOwner(ownerType: 'user', ownerId: $userId);
 
+		// The two-factor policy withholds the wrapped private key, and only
+		// that: other screens still read status and certificates here
+		// (admin-vault-policies D3).
+		$blocked = $this->twoFactor->blocks(userId: $userId);
+
 		return new JSONResponse(
 			data: array_map(
-				static fn ($suite) => $suite->jsonSerialize(),
+				static fn ($suite) => self::withholdKey(suite: $suite->jsonSerialize(), blocked: $blocked),
 				$suites
 			)
 		);
@@ -122,6 +130,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#3.1
 	 */
 	#[NoAdminRequired]
 	public function show(string $id): JSONResponse {
@@ -132,7 +141,8 @@ class EncryptionSuiteController extends OCSController {
 		try {
 			$suite = $this->suiteService->getSuite($id);
 			$this->validateOwnership(suite: $suite);
-			return new JSONResponse(data: $suite->jsonSerialize());
+			$blocked = $this->twoFactor->blocks(userId: (string)$this->userSession->getUser()?->getUID());
+			return new JSONResponse(data: self::withholdKey(suite: $suite->jsonSerialize(), blocked: $blocked));
 		} catch (Exception $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
@@ -140,6 +150,28 @@ class EncryptionSuiteController extends OCSController {
 			);
 		}
 	}//end show()
+
+	/**
+	 * Drop the wrapped private key from a serialized suite when the
+	 * two-factor policy blocks the owner, and say why.
+	 *
+	 * @param array<string,mixed> $suite The serialized suite
+	 * @param bool $blocked Whether the policy blocks the owner
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#3.1
+	 */
+	private static function withholdKey(array $suite, bool $blocked): array {
+		if ($blocked === false) {
+			return $suite;
+		}
+
+		unset($suite['privateKey']);
+		$suite['unlockBlocked'] = \OCA\Keepiq\Service\TwoFactorGate::CODE;
+
+		return $suite;
+	}//end withholdKey()
 
 	/**
 	 * Whether both halves of the submitted key material are present.
@@ -178,6 +210,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#3.1
 	 */
 	#[NoAdminRequired]
 	public function create(
@@ -199,6 +232,18 @@ class EncryptionSuiteController extends OCSController {
 		}
 
 		$userId = $user->getUID();
+
+		// No first suite without a second factor when the policy applies
+		// (admin-vault-policies D3).
+		if ($this->twoFactor->blocks(userId: $userId) === true) {
+			return new JSONResponse(
+				data: [
+					'message' => 'Your organisation requires two-factor login before you can open your vault',
+					'code' => \OCA\Keepiq\Service\TwoFactorGate::CODE,
+				],
+				statusCode: Http::STATUS_FORBIDDEN
+			);
+		}
 
 		// Reject suite creation while a key-compromise migration is in progress —
 		// the old suite must finish re-encrypting data before a new one is registered.
