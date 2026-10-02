@@ -21,7 +21,7 @@
 
 ## 4. Officer path
 
-- [ ] 4.1 For users enrolled in organisation account recovery, add "Ask your organisation instead", filing a recovery request with purpose `device` and the device's one-time key, and unlocking the session from the recovered private key without a password reset. Verify: vitest for the purpose flag and the unlock; depends on `crypto-organisation-account-recovery`. **Owed**: depends on `crypto-organisation-account-recovery` (#788), which lane F4 builds next.
+- [x] 4.1 For users enrolled in organisation account recovery, add "Ask your organisation instead", filing a recovery request with purpose `device` and the device's one-time key, and unlocking the session from the recovered private key without a password reset. Verify: vitest for the purpose flag and the unlock; depends on `crypto-organisation-account-recovery`. Done on the #788 branch (it needs the recovery tables): recovery requests carry `purpose` (`password` or `device`), "Ask your organisation instead" in `DeviceApprovalRequest.vue`, `useAccountRecoveryStore().unlockDevice()` and `useSessionStore().unlockWithPrivateKeyPem()`; `tests/store/accountRecovery.spec.js` (purpose flag, unlock without a password reset).
 
 ## 5. End to end
 

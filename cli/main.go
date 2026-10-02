@@ -185,9 +185,38 @@ func cmdList(args []string) error {
 	}
 	fmt.Printf("%-38s  %s\n", "ID", "NAME")
 	for _, s := range secrets {
-		fmt.Printf("%-38s  %s\n", s.ID, s.Name)
+		fmt.Println(listLine(s))
 	}
 	return nil
+}
+
+// useOnlyRefusal is what the CLI says instead of printing or copying the
+// value of a use-only copy (sharing-use-only-and-expiring-shares D3).
+const useOnlyRefusal = "This secret is use-only. Sign in through the Keepiq browser extension."
+
+// visibleFields are the fields of a use-only copy the CLI may still print or
+// copy: its plaintext metadata and login name, never its value.
+var visibleFields = map[string]bool{"id": true, "name": true, "url": true, "login": true}
+
+// listLine is one row of `keepiq list`, with a marker on a use-only copy.
+func listLine(s client.Secret) string {
+	name := s.Name
+	if s.UseOnly {
+		name += " [use only]"
+	}
+	return fmt.Sprintf("%-38s  %s", s.ID, name)
+}
+
+// refuseUseOnly refuses a command that would print or copy a value of a
+// use-only copy. An empty field means the whole secret (`show`).
+func refuseUseOnly(s *client.Secret, field string) error {
+	if s == nil || !s.UseOnly {
+		return nil
+	}
+	if field != "" && visibleFields[field] {
+		return nil
+	}
+	return fmt.Errorf("%s", useOnlyRefusal)
 }
 
 func cmdShow(args []string) error {
@@ -201,6 +230,9 @@ func cmdShow(args []string) error {
 	}
 	s, err := c.GetSecret(args[0])
 	if err != nil {
+		return err
+	}
+	if err := refuseUseOnly(s, ""); err != nil {
 		return err
 	}
 	fields := decryptSecret(s, session)
@@ -223,6 +255,9 @@ func cmdGet(args []string) error {
 	}
 	s, err := c.GetSecret(args[0])
 	if err != nil {
+		return err
+	}
+	if err := refuseUseOnly(s, args[1]); err != nil {
 		return err
 	}
 	fields := decryptSecret(s, session)
