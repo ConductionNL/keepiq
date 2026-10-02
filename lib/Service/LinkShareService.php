@@ -93,7 +93,7 @@ class LinkShareService {
 	 * A public link widens the audience beyond what the owner chose, so only
 	 * the secret's owner, or a recipient whose share permits re-sharing (an
 	 * active delegate, who holds share management rights), may create one
-	 * (keepiq#214). Anyone else gets the same NotFoundException as a missing
+	 * (keepiq#214). Anyone else gets the same DoesNotExistException as a missing
 	 * secret (from ShareAuthorizationService::assertMayReshare()), so the
 	 * check does not reveal which secrets exist. The controller
 	 * resolves the user's active encryption suite ID.
@@ -112,6 +112,7 @@ class LinkShareService {
 	 * @return LinkShare
 	 *
 	 * @throws InvalidArgumentException When validation fails
+	 * @throws DoesNotExistException When the user may not re-share the secret
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share

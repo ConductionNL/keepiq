@@ -30,7 +30,6 @@ use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
-use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\ShareAuthorizationService;
 use OCA\Keepiq\Service\WriteLockService;
@@ -224,7 +223,7 @@ class LinkShareServiceTest extends TestCase {
 		$this->copies['copy-carol'] = 'secret-1';
 		$this->mapper->expects($this->never())->method('insert');
 
-		$this->expectException(NotFoundException::class);
+		$this->expectException(DoesNotExistException::class);
 		$this->createAs(secretId: 'copy-carol', userId: 'carol');
 	}//end testAPlainRecipientIsRefused()
 
@@ -236,7 +235,7 @@ class LinkShareServiceTest extends TestCase {
 	public function testAStrangerIsRefused(): void {
 		$this->mapper->expects($this->never())->method('insert');
 
-		$this->expectException(NotFoundException::class);
+		$this->expectException(DoesNotExistException::class);
 		$this->createAs(secretId: 'secret-1', userId: 'mallory');
 	}//end testAStrangerIsRefused()
 
@@ -261,7 +260,7 @@ class LinkShareServiceTest extends TestCase {
 		);
 		$this->mapper->expects($this->never())->method('insert');
 
-		$this->expectException(NotFoundException::class);
+		$this->expectException(DoesNotExistException::class);
 		$service->create(
 			secretId: 'nope',
 			encryptedSnapshot: 'the-blob',

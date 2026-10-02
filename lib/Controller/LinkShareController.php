@@ -26,7 +26,6 @@ use DateTime;
 use Exception;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -160,7 +159,7 @@ class LinkShareController extends OCSController {
 				expiresAt: $expiry,
 				userId: $userId
 			);
-		} catch (NotFoundException) {
+		} catch (DoesNotExistException) {
 			// Not the owner and not a delegate, or no such secret: the same
 			// answer either way (keepiq#214).
 			return new JSONResponse(data: ['message' => 'Secret not found'], statusCode: Http::STATUS_NOT_FOUND);

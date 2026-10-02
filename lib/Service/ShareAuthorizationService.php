@@ -34,7 +34,6 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
-use OCA\Keepiq\Exception\NotFoundException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 
@@ -134,7 +133,7 @@ class ShareAuthorizationService {
 	 * the people whose share permits re-sharing (keepiq#214, a public link).
 	 * A received copy is owned by its recipient, so a copy is judged by its
 	 * SOURCE secret: a plain recipient fails, a delegate passes. A missing
-	 * secret and a foreign one get the same NotFoundException. Fails closed
+	 * secret and a foreign one get the same DoesNotExistException. Fails closed
 	 * when the share-target mapper is not wired.
 	 *
 	 * @param string $secretId The secret (source or received copy) id
@@ -142,24 +141,24 @@ class ShareAuthorizationService {
 	 *
 	 * @return void
 	 *
-	 * @throws NotFoundException When the user may not re-share the secret
+	 * @throws DoesNotExistException When the user may not re-share the secret
 	 *
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
 	 */
 	public function assertMayReshare(string $secretId, string $userId): void {
 		if ($this->shareTargetMapper === null) {
-			throw new NotFoundException(message: 'Secret not found');
+			throw new DoesNotExistException('Secret not found');
 		}
 
 		try {
 			$secret = $this->loadSecret(secretId: $secretId);
 			$secret = $this->sourceOf(copy: $secret);
 		} catch (InvalidArgumentException) {
-			throw new NotFoundException(message: 'Secret not found');
+			throw new DoesNotExistException('Secret not found');
 		}
 
 		if ($this->isOwnerOrDelegate(secret: $secret, userId: $userId) === false) {
-			throw new NotFoundException(message: 'Secret not found');
+			throw new DoesNotExistException('Secret not found');
 		}
 	}//end assertMayReshare()
 

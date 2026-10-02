@@ -208,7 +208,7 @@ class LinkShareControllerTest extends TestCase {
 	public function testCreateAnswers404WhenTheCallerMayNotReshare(): void {
 		$this->suiteService->method('getActiveSuite')->willReturn($this->makeSuite());
 		$this->linkShareService->method('create')
-			->willThrowException(new \OCA\Keepiq\Exception\NotFoundException('Secret not found'));
+			->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('Secret not found'));
 
 		$response = $this->controller->create(
 			secretId: 'secret-1',
