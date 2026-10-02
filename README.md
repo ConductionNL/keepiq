@@ -23,7 +23,7 @@
 
 Securely store and share secrets (passwords, API keys, certificates) for Nextcloud users and applications, using end-to-end RSA/AES encryption backed by a private Certificate Authority.
 
-> **Thick backend architecture** — Keepiq owns its own encrypted database tables. No OpenRegister dependency. All secrets are encrypted at rest with RSA-4096 public keys; private keys are AES-256 wrapped with a master password derived key.
+> **Thick backend architecture** — Keepiq owns its own encrypted database tables and does not store secrets in OpenRegister. It does need OpenRegister installed and enabled for its app shell (page, settings and health routes). All secrets are encrypted at rest with RSA-4096 public keys; private keys are AES-256 wrapped with a master password derived key.
 
 ## Screenshots
 
@@ -118,6 +118,9 @@ keepiq/
 | Nextcloud | 28 – 33 |
 | PHP | 8.1+ |
 | Node.js | 20+ |
+| OpenRegister | installed and enabled |
+
+Nextcloud cannot enforce one app depending on another, so nothing stops you enabling Keepiq without OpenRegister. Without it Keepiq no longer takes the rest of Nextcloud down, but Keepiq itself is not usable. Install and enable OpenRegister first.
 
 ## Installation
 
