@@ -40,6 +40,15 @@
 				v-for="request in officer.requests"
 				:key="request.id"
 				:data-testid="`recovery-request-${request.id}`">
+				<p v-if="request.purpose === 'device'">
+					{{
+						t(
+							'keepiq',
+							'{user} asks to unlock a new device once. They keep their master password.',
+							{ user: request.userId },
+						)
+					}}
+				</p>
 				<p>
 					<strong>{{ request.userId }}</strong>
 					{{

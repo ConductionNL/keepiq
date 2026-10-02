@@ -637,6 +637,7 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 				['handled_by', Types::STRING, ['notnull' => false, 'length' => 64]],
 				['sealed_result', Types::TEXT, ['notnull' => false]],
 				['fulfilled_at', Types::DATETIME, ['notnull' => false]],
+				['purpose', Types::STRING, ['notnull' => true, 'length' => 16, 'default' => 'password']],
 			],
 			'primary' => ['id'],
 			'indexes' => [

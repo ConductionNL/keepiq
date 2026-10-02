@@ -300,6 +300,7 @@ describe('filing and re-enrolling', () => {
 		expect(saved.value.privateKey.extractable).toBe(false)
 		expect(post.mock.calls[0][1]).toEqual({
 			publicKey: toBase64(saved.value.publicKeyRaw),
+			purpose: 'password',
 		})
 		expect(request.phrase.split(' ')).toHaveLength(5)
 	})
@@ -329,5 +330,68 @@ describe('filing and re-enrolling', () => {
 		store.enrol = vi.fn()
 		expect(await store.enrolAtUnlock('pw')).toBeNull()
 		expect(store.enrol).not.toHaveBeenCalled()
+	})
+})
+
+describe('the officer path for a new device', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+	})
+
+	it('files with purpose device and unlocks once from the recovered key, without a password reset', async () => {
+		const user = await rsaPair()
+		const request = await generateRequestKeyPair()
+		const officer = await rsaPair()
+		const recovery = await rsaPair()
+		const sealed = await sealHandoff(
+			{
+				wrappedRecoveryKey: await buildRecoveryEnvelope(
+					recovery.pem,
+					officer.publicKeyPem,
+				),
+				envelope: await buildRecoveryEnvelope(
+					user.pem,
+					recovery.publicKeyPem,
+				),
+				requestPublicKey: toBase64(request.publicKeyRaw),
+			},
+			officer.decryptKey,
+			'req-d',
+		)
+		vi.spyOn(requestKeyStore, 'get').mockResolvedValue(request)
+		vi.spyOn(requestKeyStore, 'delete').mockResolvedValue()
+		const put = vi.spyOn(axios, 'put')
+		vi.spyOn(axios, 'post').mockResolvedValue({ data: { handledBy: 'olga' } })
+		const session = useSessionStore()
+		session.unlockWithPrivateKeyPem = vi.fn().mockResolvedValue()
+		const store = useAccountRecoveryStore()
+		store.myRequest = {
+			id: 'req-d',
+			purpose: 'device',
+			status: 'approved',
+			sealedResult: sealed,
+		}
+
+		expect(await store.unlockDevice()).toBe('olga')
+		expect(session.unlockWithPrivateKeyPem).toHaveBeenCalledWith(user.pem)
+		expect(put).not.toHaveBeenCalled()
+
+		store.myRequest = {
+			id: 'req-p',
+			purpose: 'password',
+			status: 'approved',
+			sealedResult: sealed,
+		}
+		await expect(store.unlockDevice()).rejects.toThrow()
+	}, 60000)
+
+	it('sends the purpose with the request', async () => {
+		vi.spyOn(requestKeyStore, 'put').mockResolvedValue()
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { id: 'req-d' } })
+		await useAccountRecoveryStore().startRequest('device')
+		expect(post.mock.calls[0][1].purpose).toBe('device')
 	})
 })

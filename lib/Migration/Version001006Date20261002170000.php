@@ -111,6 +111,7 @@ class Version001006Date20261002170000 extends SimpleMigrationStep {
 			$table->addColumn('handled_by', Types::STRING, ['notnull' => false, 'length' => 64]);
 			$table->addColumn('sealed_result', Types::TEXT, ['notnull' => false]);
 			$table->addColumn('fulfilled_at', Types::DATETIME, ['notnull' => false]);
+			$table->addColumn('purpose', Types::STRING, ['notnull' => true, 'length' => 16, 'default' => 'password']);
 			$table->setPrimaryKey(['id']);
 			$table->addIndex(['user_id'], 'keepiq_rr_user_idx');
 			$table->addIndex(['status', 'expires_at'], 'keepiq_rr_status_idx');

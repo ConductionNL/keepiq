@@ -332,13 +332,15 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 * File a request from the lock screen. The one-time private key stays
 		 * in this browser's IndexedDB, bound to the request id.
 		 *
+		 * @param {string} [purpose] `password` (forgot it) or `device` (unlock this device once).
 		 * @return {Promise<object>} The request with its phrase.
 		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 		 */
-		async startRequest() {
+		async startRequest(purpose = 'password') {
 			const pair = await generateRequestKeyPair()
 			const response = await axios.post(generateUrl(`${API}/requests`), {
 				publicKey: toBase64(pair.publicKeyRaw),
+				purpose,
 			})
 			await requestKeyStore.put(response.data.id, pair)
 			this.myRequest = {
@@ -370,6 +372,46 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 					}
 				: null
 			return this.myRequest
+		},
+
+		/**
+		 * Unlock this device once from an officer-approved request with
+		 * purpose `device`: open the sealed key and unlock the session with it,
+		 * without a new master password (crypto-new-device-approval D6).
+		 *
+		 * @return {Promise<string>} The officer who handled it.
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
+		 */
+		async unlockDevice() {
+			const request = this.myRequest
+			const stored = request
+				? await requestKeyStore.get(request.id)
+				: undefined
+			if (!request?.sealedResult || !stored || request.purpose !== 'device') {
+				throw new Error(
+					t(
+						'keepiq',
+						'Finish the recovery in the browser you asked from.',
+					),
+				)
+			}
+			const pem = await openHandoff(
+				request.sealedResult,
+				stored.privateKey,
+				stored.publicKeyRaw,
+				request.id,
+			)
+			await useSessionStore().unlockWithPrivateKeyPem(pem)
+			const done = await axios.post(
+				generateUrl(`${API}/requests/${request.id}/complete`),
+			)
+			await requestKeyStore.delete(request.id)
+			this.myRequest = {
+				...request,
+				status: 'fulfilled',
+				sealedResult: undefined,
+			}
+			return done.data?.handledBy ?? ''
 		},
 
 		/**

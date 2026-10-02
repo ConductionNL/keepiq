@@ -130,7 +130,9 @@ export default {
 		},
 
 		request() {
-			return this.store.myRequest
+			// A device-purpose request belongs to "Ask your organisation instead".
+			const request = this.store.myRequest
+			return request && request.purpose !== 'device' ? request : null
 		},
 	},
 

@@ -112,15 +112,20 @@ class RecoveryUserController extends Controller {
 	 * File a request from the lock screen with the browser's one-time key.
 	 *
 	 * @param string $publicKey The one-time X25519 public key (base64)
+	 * @param string $purpose   `password` (forgot it) or `device` (unlock a new device once)
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
 	#[NoAdminRequired]
-	public function createRequest(string $publicKey = ''): JSONResponse {
+	public function createRequest(string $publicKey = '', string $purpose = 'password'): JSONResponse {
 		return $this->run(
-			action: fn (string $uid): array => $this->requests->create(userId: $uid, publicKey: $publicKey)->jsonSerialize(),
+			action: fn (string $uid): array => $this->requests->create(
+				userId: $uid,
+				publicKey: $publicKey,
+				purpose: $purpose
+			)->jsonSerialize(),
 			created: true
 		);
 	}//end createRequest()

@@ -63,6 +63,14 @@ class RecoveryRequestService {
 	public const OPEN = [self::STATUS_PENDING, self::STATUS_APPROVED];
 
 	/**
+	 * Why a request was filed: a forgotten master password, or a new device
+	 * to unlock once (crypto-new-device-approval D6).
+	 *
+	 * @var string[]
+	 */
+	public const PURPOSES = ['password', 'device'];
+
+	/**
 	 * How long a request stays open (D3): 72 hours.
 	 *
 	 * @var string
@@ -105,6 +113,7 @@ class RecoveryRequestService {
 	 *
 	 * @param string $userId    The user who forgot their master password
 	 * @param string $publicKey The one-time X25519 public key (base64, raw 32 bytes)
+	 * @param string $purpose   `password` or `device`
 	 *
 	 * @return RecoveryRequest
 	 *
@@ -113,7 +122,11 @@ class RecoveryRequestService {
 	 *
 	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
-	public function create(string $userId, string $publicKey): RecoveryRequest {
+	public function create(string $userId, string $publicKey, string $purpose = 'password'): RecoveryRequest {
+		if (in_array($purpose, self::PURPOSES, true) === false) {
+			throw new InvalidArgumentException(message: 'purpose must be password or device');
+		}
+
 		$raw = base64_decode($publicKey, true);
 		if ($raw === false || strlen($raw) !== 32) {
 			throw new InvalidArgumentException(message: 'publicKey must be a raw X25519 public key');
@@ -140,6 +153,7 @@ class RecoveryRequestService {
 		$request->setEnrolmentId($enrolment->getId());
 		$request->setRequestPublicKey($publicKey);
 		$request->setStatus(self::STATUS_PENDING);
+		$request->setPurpose($purpose);
 		$request->setCreatedAt($now);
 		$request->setExpiresAt((clone $now)->add(new DateInterval(self::TTL)));
 		$request = $this->requests->insert($request);
@@ -193,6 +207,7 @@ class RecoveryRequestService {
 				'id' => $request->getId(),
 				'userId' => $request->getUserId(),
 				'status' => $request->getStatus(),
+				'purpose' => $request->getPurpose(),
 				'requestPublicKey' => $request->getRequestPublicKey(),
 				'createdAt' => $request->getCreatedAt()?->format('c'),
 				'expiresAt' => $request->getExpiresAt()?->format('c'),
@@ -369,6 +384,7 @@ class RecoveryRequestService {
 		$view = [
 			'id' => $request->getId(),
 			'status' => $status,
+			'purpose' => $request->getPurpose(),
 			'createdAt' => $request->getCreatedAt()?->format('c'),
 			'expiresAt' => $request->getExpiresAt()?->format('c'),
 			'suiteId' => $request->getSuiteId(),

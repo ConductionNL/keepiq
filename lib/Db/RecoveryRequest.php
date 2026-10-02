@@ -46,6 +46,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setSealedResult(?string $sealedResult)
  * @method DateTime|null getFulfilledAt()
  * @method void setFulfilledAt(?DateTime $fulfilledAt)
+ * @method string getPurpose()
+ * @method void setPurpose(string $purpose)
  *
  * @SuppressWarnings(PHPMD.LongVariable) Property names mirror the columns.
  */
@@ -122,6 +124,14 @@ class RecoveryRequest extends Entity implements JsonSerializable {
 	protected ?DateTime $fulfilledAt = null;
 
 	/**
+	 * `password` (forgot the master password) or `device` (unlock a new
+	 * device once, crypto-new-device-approval D6).
+	 *
+	 * @var string
+	 */
+	protected string $purpose = '';
+
+	/**
 	 * The UUID primary key.
 	 *
 	 * @var string
@@ -165,6 +175,7 @@ class RecoveryRequest extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'handledBy', type: 'string');
 		$this->addType(fieldName: 'sealedResult', type: 'string');
 		$this->addType(fieldName: 'fulfilledAt', type: 'datetime');
+		$this->addType(fieldName: 'purpose', type: 'string');
 	}//end __construct()
 
 	/**
@@ -184,6 +195,7 @@ class RecoveryRequest extends Entity implements JsonSerializable {
 			'expiresAt' => $this->expiresAt?->format('c'),
 			'handledBy' => $this->handledBy,
 			'fulfilledAt' => $this->fulfilledAt?->format('c'),
+			'purpose' => $this->purpose,
 		];
 	}//end jsonSerialize()
 }//end class
