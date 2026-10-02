@@ -268,7 +268,11 @@ export default {
 	},
 
 	computed: {
-		/** typeId → type-name map for the CXF export mapping. */
+		/**
+		 * typeId → type-name map for the CXF export mapping.
+		 *
+		 * @spec openspec/specs/cxf-import-export/spec.md#requirement-cxf-entity-to-keepiq-type-mapping
+		 */
 		typeNamesById() {
 			return Object.fromEntries(
 				useSecretTypeStore().types.map((type) => [type.id, type.name]),
@@ -343,6 +347,9 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * @spec openspec/specs/cxf-import-export/spec.md#requirement-unmapped-item-report
+		 */
 		mode() {
 			// A mode switch invalidates the CXF pre-download report.
 			this.cxfReport = null

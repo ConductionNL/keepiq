@@ -157,6 +157,11 @@ export default {
 	watch: {
 		children: {
 			immediate: true,
+			/**
+			 * @param {object} value The children prop: the folder's subfolders.
+			 *
+			 * @spec openspec/specs/secrets/spec.md#scenario-delete-folder-with-subfolders-user-directed-resolution
+			 */
 			handler(value) {
 				const next = {}
 				;(value.subfolders || []).forEach((sub) => {
@@ -175,6 +180,8 @@ export default {
 		 * Forward the open-state change to the parent.
 		 *
 		 * @param {boolean} value The new open state.
+		 *
+		 * @spec exclude Event re-emitter: forwards the open flag as update:open.
 		 */
 		onUpdateOpen(value) {
 			this.$emit('update:open', value)

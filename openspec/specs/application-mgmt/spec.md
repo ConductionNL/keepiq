@@ -98,7 +98,7 @@ Notification content:
 - Body: "Application *{name}* is awaiting approval."
 - Action link: opens the approval queue in Keepiq
 
-#### Scenario: Non-admin registers application
+#### Scenario: Pending registration notifies vault administrators
 - GIVEN a non-admin submits a registration
 - WHEN the application is created with status `pending`
 - THEN a Nextcloud notification MUST be dispatched to all vault administrators

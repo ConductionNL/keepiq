@@ -37,6 +37,8 @@ export default {
 		/**
 		 * Re-initialise the stores after the shell's Re-import action
 		 * reloads the app configuration.
+		 *
+		 * @spec exclude Event handler: re-runs store initialisation after the shell re-imports configuration.
 		 */
 		onReimported() {
 			initializeStores()

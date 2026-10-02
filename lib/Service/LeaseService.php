@@ -220,6 +220,8 @@ class LeaseService {
 	 * @return MachineLease
 	 *
 	 * @throws DoesNotExistException When missing or foreign
+	 *
+	 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-revocation-by-admin-owner-or-application
 	 */
 	public function loadOwned(string $leaseId, string $applicationId): MachineLease {
 		$lease = $this->leaseMapper->findById($leaseId);
@@ -240,6 +242,8 @@ class LeaseService {
 	 * @param string $secretId The fetched secret
 	 *
 	 * @return bool
+	 *
+	 * @spec openspec/specs/machine-secret-leases/spec.md#scenario-block-on-revoke-refuses-re-fetch-when-enabled
 	 */
 	public function fetchBlocked(string $applicationId, string $secretId): bool {
 		$policy = $this->effectivePolicy(applicationId: $applicationId);
@@ -284,6 +288,8 @@ class LeaseService {
 	 * @param string $applicationId The application id
 	 *
 	 * @return MachineLease[]
+	 *
+	 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-revocation-by-admin-owner-or-application
 	 */
 	public function listForApplication(string $applicationId): array {
 		return $this->leaseMapper->findByApplication(applicationId: $applicationId);
