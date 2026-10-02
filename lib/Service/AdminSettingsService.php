@@ -189,7 +189,7 @@ class AdminSettingsService {
 			],
 			// Org password policy (org-password-policies §1.1) — one reader,
 			// shared with the user-visible getPolicy() floor.
-			$this->policyService->readPolicyKeys(),
+			$this->policyService->readAdminPolicyKeys(),
 			[
 				// Machine leases (machine-secret-leases §2.4).
 				'lease_default_ttl_seconds' => $this->appConfig->getValueInt(
@@ -243,6 +243,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 *
 	 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.4
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
 	 */
 	public function updateAdminSettings(array $data): array {
 		// Each group validates and persists one family of keys. Every guard
@@ -263,12 +264,15 @@ class AdminSettingsService {
 	 * The user-visible policy floor for the write dialogs
 	 * (org-password-policies §1.3).
 	 *
+	 * @param string|null $userId The session user, for the effective vault policies
+	 *
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
 	 */
-	public function getPolicy(): array {
-		return $this->policyService->getPolicy();
+	public function getPolicy(?string $userId = null): array {
+		return $this->policyService->getPolicy(userId: $userId);
 	}//end getPolicy()
 
 	/**

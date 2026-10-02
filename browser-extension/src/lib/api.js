@@ -70,7 +70,7 @@ export function pair(config) {
 }
 
 /**
- * Acknowledge unpairing (revocation is the NC app-password).
+ * Acknowledge unpairing to Keepiq.
  * @param config
  */
 export function unpair(config) {
@@ -78,14 +78,50 @@ export function unpair(config) {
 }
 
 /**
+ * Delete the app password this extension signs in with, through Nextcloud's
+ * own endpoint for it (#748). Clearing local settings alone left the password
+ * valid, so a copy of it kept working after Disconnect.
+ *
+ * Nextcloud refuses (403) when the credential is not an app password, which
+ * leaves nothing to revoke.
+ *
+ * @param {object} config The paired config.
+ * @return {Promise<boolean>} True when Nextcloud deleted the app password.
+ * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-pairing-against-the-nextcloud-session
+ */
+export async function revokeAppPassword(config) {
+	const res = await fetch(base(config) + '/ocs/v2.php/core/apppassword', {
+		method: 'DELETE',
+		headers: {
+			Authorization: authHeader(config),
+			'OCS-APIRequest': 'true',
+			Accept: 'application/json',
+		},
+	})
+	return res.ok
+}
+
+/**
  * Fetch the caller's active EncryptionSuite (private-key envelope + certificate).
  * @param config
+ * @spec openspec/changes/admin-vault-policies/tasks.md#3.4
  */
 export async function fetchActiveSuite(config) {
 	const suites = await request(config, 'GET', '/api/v1/suites')
 	const list = Array.isArray(suites) ? suites : suites.items || []
 	const active = list.find((s) => s.status === 'active')
 	if (!active) throw new Error('no active encryption suite')
+	// The two-factor vault policy withholds the wrapped key
+	// (admin-vault-policies D3): name the reason, never a decryption error.
+	if (active.unlockBlocked) {
+		const err = new Error(
+			active.unlockBlocked === 'two_factor_required'
+				? 'two_factor_required: your organisation requires two-factor login in Nextcloud before you can open your vault'
+				: `vault unlock blocked: ${active.unlockBlocked}`,
+		)
+		err.code = active.unlockBlocked
+		throw err
+	}
 	return active
 }
 

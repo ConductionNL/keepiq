@@ -124,6 +124,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Keepiq\BackgroundJob\RefreshComplianceMetricsJob</job>
         <job>OCA\Keepiq\BackgroundJob\DeliverSiemEventsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ScanCertificateExpiryJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ScheduledVaultBackupJob</job>
     </background-jobs>
 
     <!--
@@ -229,6 +230,14 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Keepiq\Repair\SeedDevelopmentSecretDelegations</step>
         </install>
     </repair-steps>
+
+    <!-- Vault backups (admin-scheduled-vault-backups D4). -->
+    <commands>
+        <command>OCA\Keepiq\Command\BackupCreate</command>
+        <command>OCA\Keepiq\Command\BackupList</command>
+        <command>OCA\Keepiq\Command\BackupVerify</command>
+        <command>OCA\Keepiq\Command\BackupRestore</command>
+    </commands>
 
     <settings>
         <admin>OCA\Keepiq\Settings\AdminSettings</admin>
