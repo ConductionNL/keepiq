@@ -1381,7 +1381,15 @@
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Su organización no permite exportar su bóveda personal. Su paquete de datos personales en la configuración sigue disponible.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Su organización guarda estos secretos en una carpeta de equipo. Mueva cada uno a una carpeta de equipo.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Su organización guarda este tipo de secreto en una carpeta de equipo. Elija una de sus carpetas de equipo, o una en la que pueda escribir.",
-        "Your organisation requires two-factor login before you can open your vault.": "Su organización exige el inicio de sesión en dos pasos antes de que pueda abrir su bóveda."
+        "Your organisation requires two-factor login before you can open your vault.": "Su organización exige el inicio de sesión en dos pasos antes de que pueda abrir su bóveda.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "plurals": null
 }

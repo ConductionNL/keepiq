@@ -1382,7 +1382,15 @@ OC.L10N.register(
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Organisasjonen din tillater ikke eksport av ditt personlige hvelv. Din personlige datapakke i innstillingene er fortsatt tilgjengelig.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Organisasjonen din holder disse hemmelighetene i en teammappe. Flytt hver enkelt til en teammappe.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Organisasjonen din holder denne typen hemmelighet i en teammappe. Velg en av teammappene dine, eller en du kan skrive i.",
-        "Your organisation requires two-factor login before you can open your vault.": "Organisasjonen din krever totrinnspålogging før du kan åpne hvelvet ditt."
+        "Your organisation requires two-factor login before you can open your vault.": "Organisasjonen din krever totrinnspålogging før du kan åpne hvelvet ditt.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "nplurals=2; plural=(n != 1);"
 )

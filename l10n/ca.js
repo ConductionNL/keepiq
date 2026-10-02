@@ -1382,7 +1382,15 @@ OC.L10N.register(
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "La vostra organització no permet exportar la vostra caixa forta personal. El vostre paquet de dades personals a la configuració continua disponible.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "La vostra organització desa aquests secrets en una carpeta d'equip. Moveu-los un a un a una carpeta d'equip.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "La vostra organització desa aquest tipus de secret en una carpeta d'equip. Trieu una de les vostres carpetes d'equip o una on pugueu escriure.",
-        "Your organisation requires two-factor login before you can open your vault.": "La vostra organització exigeix l'inici de sessió en dos passos abans que pugueu obrir la caixa forta."
+        "Your organisation requires two-factor login before you can open your vault.": "La vostra organització exigeix l'inici de sessió en dos passos abans que pugueu obrir la caixa forta.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1382,7 +1382,15 @@ OC.L10N.register(
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Är Organisatioun erlaabt keen Export vun Ärem perséinlechen Tresor. Äre perséinlechen Datepak an den Astellunge bleift disponibel.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Är Organisatioun hält dës Geheimnisser an engem Teamdossier. Réckelt all eenzelt an en Teamdossier.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Är Organisatioun hält dësen Typ vu Geheimnis an engem Teamdossier. Wielt ee vun Ären Teamdossieren oder een, an deen Dir schreiwe kënnt.",
-        "Your organisation requires two-factor login before you can open your vault.": "Är Organisatioun verlaangt eng Zwee-Faktor-Umeldung, ier Dir Ären Tresor opmaache kënnt."
+        "Your organisation requires two-factor login before you can open your vault.": "Är Organisatioun verlaangt eng Zwee-Faktor-Umeldung, ier Dir Ären Tresor opmaache kënnt.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "nplurals=2; plural=(n != 1);"
 )

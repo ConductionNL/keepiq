@@ -1382,7 +1382,15 @@ OC.L10N.register(
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Fyrirtækið þitt leyfir ekki útflutning á persónulega hólfinu þínu. Persónuupplýsingapakkinn þinn í stillingunum er áfram aðgengilegur.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Fyrirtækið þitt geymir þessi leyndarmál í teymismöppu. Færðu hvert og eitt í teymismöppu.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Fyrirtækið þitt geymir þessa tegund leyndarmáls í teymismöppu. Veldu eina af teymismöppunum þínum, eða eina sem þú getur skrifað í.",
-        "Your organisation requires two-factor login before you can open your vault.": "Fyrirtækið þitt krefst tveggja þátta innskráningar áður en þú getur opnað hólfið þitt."
+        "Your organisation requires two-factor login before you can open your vault.": "Fyrirtækið þitt krefst tveggja þátta innskráningar áður en þú getur opnað hólfið þitt.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "nplurals=2; plural=(n != 1);"
 )

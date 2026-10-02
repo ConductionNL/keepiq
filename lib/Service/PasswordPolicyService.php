@@ -40,7 +40,7 @@ use OCP\IUserSession;
  */
 class PasswordPolicyService {
 	/**
-	 * The ten admin-writable policy keys. `updatePolicySettings()` audits a
+	 * The eleven admin-writable policy keys. `updatePolicySettings()` audits a
 	 * write only when the payload touches at least one of them, and the
 	 * before/after snapshot is taken over exactly this list.
 	 *
@@ -53,6 +53,7 @@ class PasswordPolicyService {
 		'generator_require_lower',
 		'generator_require_digit',
 		'generator_require_symbol',
+		'generator_allow_passphrase',
 		'min_zxcvbn_score',
 		'block_on_hibp_hit',
 		'policy_exempt_types',
@@ -71,6 +72,7 @@ class PasswordPolicyService {
 		'generator_require_lower',
 		'generator_require_digit',
 		'generator_require_symbol',
+		'generator_allow_passphrase',
 		'team_folder_auto_confirm',
 	];
 
@@ -194,6 +196,8 @@ class PasswordPolicyService {
 			'generator_require_lower' => $this->appConfig->getValueBool($appId, 'generator_require_lower', false),
 			'generator_require_digit' => $this->appConfig->getValueBool($appId, 'generator_require_digit', false),
 			'generator_require_symbol' => $this->appConfig->getValueBool($appId, 'generator_require_symbol', false),
+			// Passphrases (client-side-key-generator): on unless an administrator switches them off.
+			'generator_allow_passphrase' => $this->appConfig->getValueBool($appId, 'generator_allow_passphrase', true),
 			'min_zxcvbn_score' => $this->appConfig->getValueInt($appId, 'min_zxcvbn_score', 0),
 			'block_on_hibp_hit' => $this->appConfig->getValueBool($appId, 'block_on_hibp_hit', false),
 			'policy_exempt_types' => json_decode(

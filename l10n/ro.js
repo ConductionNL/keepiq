@@ -1382,7 +1382,15 @@ OC.L10N.register(
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Organizația dvs. nu permite exportul seifului personal. Pachetul de date personale din setări rămâne disponibil.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Organizația dvs. păstrează aceste secrete într-un dosar de echipă. Mutați fiecare într-un dosar de echipă.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Organizația dvs. păstrează acest tip de secret într-un dosar de echipă. Alegeți unul dintre dosarele dvs. de echipă sau unul în care puteți scrie.",
-        "Your organisation requires two-factor login before you can open your vault.": "Organizația dvs. cere autentificare în doi pași înainte să vă puteți deschide seiful."
+        "Your organisation requires two-factor login before you can open your vault.": "Organizația dvs. cere autentificare în doi pași înainte să vă puteți deschide seiful.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "nplurals=2; plural=(n != 1);"
 )

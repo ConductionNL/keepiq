@@ -1382,7 +1382,15 @@ OC.L10N.register(
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Teie organisatsioon ei luba teie isikliku hoidla eksporti. Teie isikuandmete pakett seadetes jääb kättesaadavaks.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Teie organisatsioon hoiab neid saladusi meeskonnakaustas. Teisaldage igaüks meeskonnakausta.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Teie organisatsioon hoiab seda tüüpi saladust meeskonnakaustas. Valige üks oma meeskonnakaustadest või selline, kuhu saate kirjutada.",
-        "Your organisation requires two-factor login before you can open your vault.": "Teie organisatsioon nõuab kaheastmelist sisselogimist, enne kui saate oma hoidla avada."
+        "Your organisation requires two-factor login before you can open your vault.": "Teie organisatsioon nõuab kaheastmelist sisselogimist, enne kui saate oma hoidla avada.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1382,7 +1382,15 @@ OC.L10N.register(
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Ваша арганізацыя не дазваляе экспарт асабістага сховішча. Ваш пакет асабістых даных у наладах застаецца даступным.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Ваша арганізацыя захоўвае гэтыя сакрэты ў каманднай папцы. Перамясціце кожны ў камандную папку.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Ваша арганізацыя захоўвае гэты тып сакрэту ў каманднай папцы. Выберыце адну са сваіх камандных папак або тую, у якую вы можаце запісваць.",
-        "Your organisation requires two-factor login before you can open your vault.": "Ваша арганізацыя патрабуе двухфактарны ўваход, перш чым вы зможаце адкрыць сховішча."
+        "Your organisation requires two-factor login before you can open your vault.": "Ваша арганізацыя патрабуе двухфактарны ўваход, перш чым вы зможаце адкрыць сховішча.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "nplurals=2; plural=(n != 1);"
 )

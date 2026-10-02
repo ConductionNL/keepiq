@@ -1382,7 +1382,15 @@ OC.L10N.register(
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Jūsų organizacija neleidžia eksportuoti jūsų asmeninės saugyklos. Jūsų asmens duomenų paketas nustatymuose lieka pasiekiamas.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Jūsų organizacija laiko šias paslaptis komandos aplanke. Perkelkite kiekvieną į komandos aplanką.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Jūsų organizacija laiko šio tipo paslaptį komandos aplanke. Pasirinkite vieną iš savo komandos aplankų arba tokį, į kurį galite rašyti.",
-        "Your organisation requires two-factor login before you can open your vault.": "Jūsų organizacija reikalauja dviejų veiksnių prisijungimo, kad galėtumėte atidaryti saugyklą."
+        "Your organisation requires two-factor login before you can open your vault.": "Jūsų organizacija reikalauja dviejų veiksnių prisijungimo, kad galėtumėte atidaryti saugyklą.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "nplurals=2; plural=(n != 1);"
 )
