@@ -18,6 +18,12 @@ import { buildPasskeyOrchestrator } from '../passkey/orchestrator.js'
 import { senderOrigin } from '../passkey/rp.js'
 import { computeTotp } from '../lib/totp-service.js'
 import { reportFill } from '../lib/usage.js'
+import {
+	allowedOnHost,
+	blocksSavePrompt,
+	filterForHost,
+	isUseOnly,
+} from '../lib/useOnly.js'
 
 // Passkey provider (extension-passkey-provider): bind the ceremony orchestrator
 // to this worker's api + vault. Driven by the page-context shim relay in every
@@ -93,7 +99,8 @@ async function doMatch(payload) {
 	const config = await api.loadConfig()
 	if (!config) throw new Error('not paired')
 	const rows = await api.match(config, payload.host)
-	const ranked = matchSecrets(rows, payload.host)
+	// A use-only copy is only ever offered on its own site (no "fill anyway").
+	const ranked = filterForHost(matchSecrets(rows, payload.host), payload.host)
 	// Return only index fields to the popup; the blobs stay in the worker cache.
 	blobCache = new Map(ranked.map((r) => [r.id, r]))
 	return ranked.map((r) => ({
@@ -101,6 +108,7 @@ async function doMatch(payload) {
 		name: r.name,
 		url: r.url,
 		typeId: r.typeId,
+		useOnly: isUseOnly(r),
 	}))
 }
 
@@ -116,20 +124,28 @@ async function doFill(payload) {
 	const row =
 		blobCache.get(payload.id)
 		|| (await api.getSecret(await api.loadConfig(), payload.id))
-	const { login, secret } = await vault.decryptSecret(row)
-	await touchActivity()
 	const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
 	if (!tab) return { filled: false }
+	const useOnly = isUseOnly(row)
+	if (useOnly && !allowedOnHost(row, tabHost(tab))) {
+		// Never fill a use-only copy on another site.
+		return { filled: false }
+	}
+	const { login, secret } = await vault.decryptSecret(row)
+	await touchActivity()
 	const results = await chrome.tabs
 		.sendMessage(tab.id, {
 			type: 'fill-credential',
-			payload: { login, secret },
+			payload: { login, secret, useOnly },
 		})
 		.catch(() => ({ filled: false }))
 	// A fill counts as a use for the vault's Last used sort; a failed report
-	// never fails the fill (vault-favourites-tags-and-last-used).
+	// never fails the fill (vault-favourites-tags-and-last-used). A use-only
+	// fill is also recorded for its owner (sharing-use-only-and-expiring-shares).
 	await reportFill(results, payload.id, async (id) =>
-		api.markUsed(await api.loadConfig(), id),
+		useOnly
+			? api.reportUseOnlyFill(await api.loadConfig(), id)
+			: api.markUsed(await api.loadConfig(), id),
 	)
 	// Auto-copy a matched TOTP code so it is one paste away on the 2FA prompt
 	// (extension-totp-autofill §3). The popup performs the clipboard write +
@@ -149,6 +165,20 @@ async function doFill(payload) {
 			.catch(() => {})
 	}
 	return { filled: !!results?.filled, totpCode }
+}
+
+/**
+ * The hostname of a tab, or '' when it has none.
+ *
+ * @param {object} tab A chrome tab.
+ * @return {string}
+ */
+function tabHost(tab) {
+	try {
+		return tab?.url ? new URL(tab.url).hostname : ''
+	} catch {
+		return ''
+	}
 }
 
 /**
@@ -237,6 +267,12 @@ async function doCapture(capture) {
 	let offer
 	try {
 		const rows = await api.match(config, capture.host)
+		// A login that belongs to a use-only copy is never offered for save
+		// or update (sharing-use-only-and-expiring-shares D3).
+		if (blocksSavePrompt(rows, capture.host)) {
+			pendingCapture = null
+			return { action: 'none' }
+		}
 		offer = await classifyCapture(capture, rows, (row) =>
 			vault.decryptSecret(row),
 		)

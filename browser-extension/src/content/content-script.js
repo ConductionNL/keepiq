@@ -15,6 +15,7 @@
  */
 
 import { showSavePrompt } from './save-prompt.js'
+import { useOnlyPasswordTarget } from '../lib/useOnly.js'
 
 const USERNAME_SELECTORS = [
 	'input[autocomplete="username"]',
@@ -94,8 +95,16 @@ function setValue(el, value) {
 	el.dispatchEvent(new Event('change', { bubbles: true }))
 }
 
-function fillCredential({ login, secret }) {
-	const { username, password } = detectLoginFields()
+function fillCredential({ login, secret, useOnly }) {
+	const detected = detectLoginFields()
+	const username = detected.username
+	// A use-only value goes only into a real password field.
+	const password = useOnly
+		? useOnlyPasswordTarget(detected.password)
+		: detected.password
+	if (useOnly && !password) {
+		return false
+	}
 	let filled = false
 	if (username && login) {
 		username.focus()
