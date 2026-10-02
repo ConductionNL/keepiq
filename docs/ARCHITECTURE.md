@@ -435,7 +435,7 @@ choice.
 | **EncryptionSuites & CA** | Core security model — no Nextcloud equivalent |
 | **Secret storage (encrypted)** | Field-level encryption with per-user keys — cannot use generic storage |
 | **Master password session** | Custom session management with configurable timeout and tab-close detection |
-| **Key generator** | Server-side cryptographic randomness with configurable rules |
+| **Key generator** | Browser-side randomness (`crypto.getRandomValues`) in `src/generator/generator.js`, shared by the web app and the extension, with configurable rules, passphrases and the org policy clamp; the server never sees a generated value |
 | **Sharing (user/link/request)** | Encryption-aware sharing — each share is a re-encrypted copy |
 | **Suite migration** | Compromise recovery with re-encryption — domain-specific |
 | **Application management** | CSR processing, approval queue — domain-specific PKI |

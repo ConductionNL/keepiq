@@ -35,6 +35,13 @@ $extra = [
     // Admin + user settings split (implement-dashboard-settings §2.4).
     ['name' => 'settings#getAdminSettings',    'url' => '/api/settings/admin', 'verb' => 'GET'],
     ['name' => 'settings#updateAdminSettings', 'url' => '/api/settings/admin', 'verb' => 'PUT'],
+    // Two-factor gap count for the vault policy section (admin-vault-policies §1.3).
+    ['name' => 'settings#twoFactorGaps',       'url' => '/api/settings/admin/two-factor-gaps', 'verb' => 'GET'],
+    // Vault backups (admin-scheduled-vault-backups §4.1): status, list and a
+    // run request. No route serves archive content (design D6).
+    ['name' => 'backupAdmin#index', 'url' => '/api/settings/admin/backups',     'verb' => 'GET'],
+    ['name' => 'backupAdmin#update', 'url' => '/api/settings/admin/backups',    'verb' => 'PUT'],
+    ['name' => 'backupAdmin#run',   'url' => '/api/settings/admin/backups/run', 'verb' => 'POST'],
     ['name' => 'settings#getUserSettings',     'url' => '/api/settings/user',  'verb' => 'GET'],
     // Read-only org password policy for write dialogs (org-password-policies §1.3).
     ['name' => 'settings#getPolicy',           'url' => '/api/settings/policy', 'verb' => 'GET'],
@@ -387,6 +394,9 @@ $extra = [
     ['name' => 'teamFolder#index',                'url' => '/api/v1/team-folders',                         'verb' => 'GET'],
     ['name' => 'teamFolder#create',               'url' => '/api/v1/team-folders',                         'verb' => 'POST'],
     ['name' => 'teamFolder#offboard',             'url' => '/api/v1/team-folders/offboard',                'verb' => 'POST'],
+    // Contributable team folders (admin-vault-policies §4.3): before any /{id} route.
+    ['name' => 'teamFolderContribution#contributable',        'url' => '/api/v1/team-folders/contributable',           'verb' => 'GET'],
+    ['name' => 'teamFolderContribution#ownershipFindings',    'url' => '/api/v1/team-folders/ownership-findings',      'verb' => 'GET'],
     // admin-auto-confirm-members D4: before any /{id} route.
     ['name' => 'teamFolder#pendingConfirmations', 'url' => '/api/v1/team-folders/pending-confirmations', 'verb' => 'GET'],
     ['name' => 'teamFolderMember#members',        'url' => '/api/v1/team-folders/{id}/members',            'verb' => 'GET'],
@@ -397,6 +407,9 @@ $extra = [
     ['name' => 'share#writeContext',              'url' => '/api/v1/secrets/{id}/write-context',           'verb' => 'GET'],
     ['name' => 'teamFolder#reconcile',            'url' => '/api/v1/team-folders/{id}/reconcile',          'verb' => 'GET'],
     ['name' => 'teamFolder#registerShares',       'url' => '/api/v1/team-folders/{id}/shares',             'verb' => 'POST'],
+    // Write-grade member contribution (admin-vault-policies D5).
+    ['name' => 'teamFolderContribution#contribute',           'url' => '/api/v1/team-folders/{id}/secrets',            'verb' => 'POST'],
+    ['name' => 'teamFolderContribution#contributionContext',  'url' => '/api/v1/team-folders/{id}/contribution-context', 'verb' => 'GET'],
     ['name' => 'teamFolderMember#approveJoin',    'url' => '/api/v1/team-folders/{id}/approve-join',       'verb' => 'POST'],
     ['name' => 'teamFolder#destroy',              'url' => '/api/v1/team-folders/{id}',                    'verb' => 'DELETE'],
 

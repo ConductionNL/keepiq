@@ -274,4 +274,10 @@ describe('DestinationSelect', () => {
 			expect(wrapper.find('.stub-select').exists()).toBe(true)
 		})
 	})
+
+	it('offers only the given ids when onlyIds is set (admin-vault-policies §4.3)', () => {
+		const wrapper = mountPicker({ onlyIds: ['v1', 'f3'] })
+
+		expect(options(wrapper).map((option) => option.value)).toEqual(['v1', 'f3'])
+	})
 })
