@@ -12,6 +12,7 @@
 			:type="revealed ? 'text' : 'password'"
 			:readOnly="true" />
 		<NcButton
+			v-if="!useOnly"
 			variant="tertiary"
 			:aria-label="revealed ? t('keepiq', 'Hide') : t('keepiq', 'Show')"
 			:title="revealed ? t('keepiq', 'Hide') : t('keepiq', 'Show')"
@@ -21,7 +22,10 @@
 				<Eye v-else :size="20" />
 			</template>
 		</NcButton>
-		<CopyButton :resolve="resolvePlain" :label="t('keepiq', 'Copy password')" />
+		<CopyButton
+			:resolve="resolvePlain"
+			:useOnly="useOnly"
+			:label="t('keepiq', 'Copy password')" />
 	</div>
 </template>
 
@@ -66,6 +70,15 @@ export default {
 			},
 		},
 
+		/**
+		 * A use-only value stays masked: no reveal toggle, no copy, and the
+		 * resolver is never called (sharing-use-only-and-expiring-shares D3).
+		 */
+		useOnly: {
+			type: Boolean,
+			default: false,
+		},
+
 		/** An async resolver that returns the plaintext value (e.g. decrypt). */
 		resolve: {
 			type: Function,
@@ -96,6 +109,9 @@ export default {
 		 * @return {Promise<void>}
 		 */
 		async toggle() {
+			if (this.useOnly) {
+				return
+			}
 			if (!this.revealed && this.plain === null) {
 				this.plain = await this.resolve()
 			}
@@ -108,6 +124,14 @@ export default {
 		 * @return {Promise<string>}
 		 */
 		async resolvePlain() {
+			if (this.useOnly) {
+				throw new Error(
+					t(
+						'keepiq',
+						'This secret is use-only. Sign in through the Keepiq browser extension.',
+					),
+				)
+			}
 			if (this.plain === null) {
 				this.plain = await this.resolve()
 			}

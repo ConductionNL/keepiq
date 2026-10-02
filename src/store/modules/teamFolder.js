@@ -102,16 +102,17 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {string} teamFolderId The team folder.
 		 * @param {string} memberType   `user` or `group`.
 		 * @param {string} memberId     The Nextcloud user/group id.
+		 * @param {{useOnly: boolean, expiresAt: string|null}} [restriction] Use-only (read grade) and end date.
 		 * @return {Promise<object>}
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-nested-subfolder-inheritance
 		 */
-		async addMember(teamFolderId, memberType, memberId) {
+		async addMember(teamFolderId, memberType, memberId, restriction = {}) {
 			const response = await axios.post(
 				generateUrl(
 					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/members`,
 				),
-				{ memberType, memberId },
+				{ memberType, memberId, ...restriction },
 			)
 			await this.fetchTeamFolders()
 			return response.data

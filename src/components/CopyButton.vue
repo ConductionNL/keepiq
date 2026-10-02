@@ -1,5 +1,6 @@
 <template>
 	<NcButton
+		v-if="!useOnly"
 		:variant="buttonType"
 		:aria-label="label"
 		:title="label"
@@ -68,6 +69,15 @@ export default {
 			default: 'tertiary',
 		},
 
+		/**
+		 * A use-only value is never copied: the button is not rendered and a
+		 * programmatic copy refuses (sharing-use-only-and-expiring-shares D3).
+		 */
+		useOnly: {
+			type: Boolean,
+			default: false,
+		},
+
 		/** Seconds after which the clipboard is cleared (0 disables clearing). */
 		clearAfter: {
 			type: Number,
@@ -103,6 +113,9 @@ export default {
 		 * @return {Promise<void>}
 		 */
 		async prewarm() {
+			if (this.useOnly) {
+				return
+			}
 			if (this.resolve && this.prewarmed === null) {
 				try {
 					this.prewarmed = await this.resolve()
@@ -119,6 +132,9 @@ export default {
 		 * @return {Promise<void>}
 		 */
 		async onCopy() {
+			if (this.useOnly) {
+				return
+			}
 			let text = this.value
 			if (this.resolve) {
 				// Prefer a value already resolved by the pointerdown pre-warm so

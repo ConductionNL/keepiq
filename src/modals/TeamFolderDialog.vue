@@ -62,6 +62,22 @@
 						<span class="team-folder-dialog__member-name">{{
 							member.memberId
 						}}</span>
+						<span
+							v-if="member.useOnly"
+							class="team-folder-dialog__badge"
+							:data-testid="`team-folder-use-only-${member.memberId}`">
+							{{ t('keepiq', 'Use only') }}
+						</span>
+						<span
+							v-if="member.expiresAt"
+							class="team-folder-dialog__badge"
+							:data-testid="`team-folder-ends-${member.memberId}`">
+							{{
+								t('keepiq', 'Until {date}', {
+									date: formatEndDate(member.expiresAt),
+								})
+							}}
+						</span>
 						<!-- Permission grade (folder-permission-grades §4.1):
 						     owner-only; a write member may edit folder secrets
 						     and fan the change out to the whole team. -->
@@ -142,6 +158,9 @@
 						{{ t('keepiq', 'Add member') }}
 					</NcButton>
 				</div>
+				<ShareRestrictionFields
+					v-model="newRestriction"
+					data-testid="team-folder-new-restriction" />
 
 				<!-- Fan-out progress (§5.1): chunked, cancellable, resumable. -->
 				<div
@@ -209,9 +228,11 @@ import {
 import Account from 'vue-material-design-icons/Account.vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import Close from 'vue-material-design-icons/Close.vue'
+import ShareRestrictionFields from '../components/share/ShareRestrictionFields.vue'
 import { useGroupStore } from '../store/modules/group.js'
 import { useShareStore } from '../store/modules/share.js'
 import { useTeamFolderStore } from '../store/modules/teamFolder.js'
+import { restrictionPayload } from '../utils/shareRestriction.js'
 
 /**
  * How long a candidate search waits after the last keystroke.
@@ -236,6 +257,7 @@ export default {
 		Account,
 		AccountGroup,
 		Close,
+		ShareRestrictionFields,
 	},
 
 	props: {
@@ -262,6 +284,8 @@ export default {
 			error: null,
 			newMemberType: 'user',
 			newMemberId: '',
+			/** Use-only and end date for the member being added. */
+			newRestriction: { useOnly: false, endDate: '' },
 			pendingCount: 0,
 			/** Pending candidate search, so keystrokes coalesce into one call. */
 			candidateSearchTimer: null,
@@ -539,8 +563,10 @@ export default {
 					this.teamFolder.id,
 					this.newMemberType,
 					this.newMemberId,
+					restrictionPayload(this.newRestriction),
 				)
 				this.newMemberId = ''
+				this.newRestriction = { useOnly: false, endDate: '' }
 				await this.refresh()
 				// New members mean new missing pairs — run the fan-out now.
 				await this.onRunFanOut()
@@ -549,6 +575,18 @@ export default {
 			} finally {
 				this.busy = false
 			}
+		},
+
+		/**
+		 * A member's end date as a local date.
+		 *
+		 * @param {string} iso The end date (ISO 8601).
+		 * @return {string}
+		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.3
+		 */
+		formatEndDate(iso) {
+			const date = new Date(iso)
+			return Number.isNaN(date.getTime()) ? iso : date.toLocaleDateString()
 		},
 
 		async onRemoveMember(member) {
@@ -650,6 +688,14 @@ export default {
 
 .team-folder-dialog__member-name {
 	flex: 1;
+}
+
+.team-folder-dialog__badge {
+	padding: 0 8px;
+	border-radius: var(--border-radius-pill, 12px);
+	background: var(--color-background-dark);
+	color: var(--color-text-maxcontrast);
+	font-size: 12px;
 }
 
 /*

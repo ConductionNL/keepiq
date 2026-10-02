@@ -124,6 +124,7 @@
 			@keydown.space.stop>
 			<CopyButton
 				:resolve="resolveKey"
+				:useOnly="secret.useOnly === true"
 				:label="t('keepiq', 'Copy password')"
 				@copied="$emit('copied')" />
 		</span>
