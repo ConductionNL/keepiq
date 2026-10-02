@@ -105,10 +105,10 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 	 */
 	public function testSavingTheSwitchAsksForARefresh(): void {
 		$this->request->method('getParams')->willReturn(['breach_check_enabled' => false]);
-		$this->settingsService->method('updateAdminSettings')->willReturn(['breach_check_enabled' => false]);
+		$this->settingsService->method('updateAreaSettings')->willReturn(['breach_check_enabled' => false]);
 		$this->reporter->expects($this->once())->method('breachCheckSaved')->willReturn(true);
 
-		$response = $this->controller(reporter: $this->reporter)->updateAdminSettings();
+		$response = $this->controller(reporter: $this->reporter)->updateGeneralSettings();
 
 		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
 		$this->assertSame(expected: ['breach_check_enabled' => false], actual: $response->getData());
@@ -120,11 +120,11 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 	 * @return void
 	 */
 	public function testASaveWithoutTheSwitchAsksForNothing(): void {
-		$this->request->method('getParams')->willReturn(['vault_lock_timeout' => 15]);
-		$this->settingsService->method('updateAdminSettings')->willReturn([]);
+		$this->request->method('getParams')->willReturn(['offline_cache_enabled' => true]);
+		$this->settingsService->method('updateAreaSettings')->willReturn([]);
 		$this->reporter->expects($this->never())->method('breachCheckSaved');
 
-		$this->controller(reporter: $this->reporter)->updateAdminSettings();
+		$this->controller(reporter: $this->reporter)->updateGeneralSettings();
 	}//end testASaveWithoutTheSwitchAsksForNothing()
 
 	/**
@@ -134,10 +134,10 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 	 */
 	public function testARefusedSaveAsksForNothing(): void {
 		$this->request->method('getParams')->willReturn(['breach_check_enabled' => true]);
-		$this->settingsService->method('updateAdminSettings')->willThrowException(new InvalidArgumentException('bad value'));
+		$this->settingsService->method('updateAreaSettings')->willThrowException(new InvalidArgumentException('bad value'));
 		$this->reporter->expects($this->never())->method('breachCheckSaved');
 
-		$response = $this->controller(reporter: $this->reporter)->updateAdminSettings();
+		$response = $this->controller(reporter: $this->reporter)->updateGeneralSettings();
 
 		$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
 	}//end testARefusedSaveAsksForNothing()
@@ -149,9 +149,9 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 	 */
 	public function testWithoutTheReporterTheSaveStillAnswers(): void {
 		$this->request->method('getParams')->willReturn(['breach_check_enabled' => true]);
-		$this->settingsService->method('updateAdminSettings')->willReturn(['breach_check_enabled' => true]);
+		$this->settingsService->method('updateAreaSettings')->willReturn(['breach_check_enabled' => true]);
 
-		$response = $this->controller(reporter: null)->updateAdminSettings();
+		$response = $this->controller(reporter: null)->updateGeneralSettings();
 
 		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
 	}//end testWithoutTheReporterTheSaveStillAnswers()
@@ -189,11 +189,11 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 		);
 
 		$this->request->method('getParams')->willReturn(['breach_check_enabled' => true]);
-		$this->settingsService->method('updateAdminSettings')->willReturn([]);
+		$this->settingsService->method('updateAreaSettings')->willReturn([]);
 		$this->reporter->expects($this->once())->method('breachCheckSaved')->willReturn(true);
 
 		$controller = $factories[SettingsController::class]($container);
 		$this->assertInstanceOf(expected: SettingsController::class, actual: $controller);
-		$controller->updateAdminSettings();
+		$controller->updateGeneralSettings();
 	}//end testTheContainerFactoryPassesTheReporter()
 }//end class

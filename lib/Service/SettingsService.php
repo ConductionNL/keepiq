@@ -163,6 +163,7 @@ class SettingsService {
 	 * @param LoggerInterface $logger The logger
 	 * @param IEventDispatcher|null $eventDispatcher The audit dispatcher (policy changes)
 	 * @param AdminSettingsService|null $adminSettings The admin configuration surface
+	 * @param AdminAreaAuthorizer|null $areas The admin areas the session user holds (admin-scoped-roles)
 	 *
 	 * @return void
 	 */
@@ -176,6 +177,7 @@ class SettingsService {
 		LoggerInterface $logger,
 		?IEventDispatcher $eventDispatcher = null,
 		?AdminSettingsService $adminSettings = null,
+		private ?AdminAreaAuthorizer $areas = null,
 	) {
 		$this->adminSettings = ($adminSettings ?? new AdminSettingsService(
 			appConfig: $appConfig,
@@ -212,6 +214,37 @@ class SettingsService {
 	public function updateAdminSettings(array $data): array {
 		return $this->adminSettings->updateAdminSettings(data: $data);
 	}//end updateAdminSettings()
+
+	/**
+	 * The settings of one admin area (admin-scoped-roles D2).
+	 *
+	 * @param string $area One of AdminSettingsService::SETTINGS_AREAS
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws InvalidArgumentException On an unknown area.
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 */
+	public function getAreaSettings(string $area): array {
+		return $this->adminSettings->getAreaSettings(area: $area);
+	}//end getAreaSettings()
+
+	/**
+	 * Write one admin area's keys (admin-scoped-roles D2).
+	 *
+	 * @param string $area One of AdminSettingsService::SETTINGS_AREAS
+	 * @param array<string,mixed> $data The input data
+	 *
+	 * @return array<string,mixed> The area's settings after the write
+	 *
+	 * @throws InvalidArgumentException On a key of another area or an out-of-bounds value.
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 */
+	public function updateAreaSettings(string $area, array $data): array {
+		return $this->adminSettings->updateAreaSettings(area: $area, data: $data);
+	}//end updateAreaSettings()
 
 	/**
 	 * The user-visible policy floor for the write dialogs — policy gate,
@@ -345,11 +378,22 @@ class SettingsService {
 		$user = $this->userSession->getUser();
 		$isAdmin = ($user !== null && $this->groupManager->isAdmin($user->getUID()));
 
+		// The admin areas the user holds (admin-scoped-roles §2.5), so the UI
+		// offers an admin panel only to someone its endpoint will let through.
+		// Display only: every endpoint checks its own area.
+		$adminAreas = [];
+		if ($user !== null && $this->areas !== null) {
+			$adminAreas = $this->areas->areasOf(userId: $user->getUID());
+		} else if ($isAdmin === true) {
+			$adminAreas = array_keys(AdminAreaAuthorizer::AREAS);
+		}
+
 		return array_merge(
 			$settings,
 			[
 				'openregisters' => $this->isOpenRegisterAvailable(),
 				'isAdmin' => $isAdmin,
+				'adminAreas' => $adminAreas,
 			]
 		);
 	}//end getSettings()

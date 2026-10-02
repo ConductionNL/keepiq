@@ -26,6 +26,9 @@ use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Service\Connection\ConnectionReporter;
 use OCA\Keepiq\Service\SettingsService;
 use OCA\Keepiq\Settings\AdminSettings;
+use OCA\Keepiq\Settings\ApplicationAdminSettings;
+use OCA\Keepiq\Settings\AuditAdminSettings;
+use OCA\Keepiq\Settings\PolicyAdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -101,12 +104,15 @@ class SettingsController extends Controller {
 	 * the refreshed settings map (stored keys plus the `openregisters` and
 	 * `isAdmin` metadata flags read by the settings UI).
 	 *
+	 * It writes the master password floor, so it is guarded by the Policies
+	 * area (admin-scoped-roles D2).
+	 *
 	 * A rejected value answers 400 rather than the `{success: true}` envelope.
 	 * Before #192 an unwritable value was indistinguishable from a stored one,
 	 * because the write loop simply never matched and the envelope was
 	 * unconditional; a bounded key that fails validation must now say so.
 	 *
-	 * @AuthorizedAdminSetting(AdminSettings::class)
+	 * @AuthorizedAdminSetting(PolicyAdminSettings::class)
 	 *
 	 * @return JSONResponse The refreshed settings, wrapped as `{success, config}`.
 	 *
@@ -114,7 +120,7 @@ class SettingsController extends Controller {
 	 *   Served by AppHost Generics (Scenario: Admin settings page still renders
 	 *   through the generic section)
 	 */
-	#[AuthorizedAdminSetting(AdminSettings::class)]
+	#[AuthorizedAdminSetting(PolicyAdminSettings::class)]
 	public function update(): JSONResponse {
 		$data = $this->request->getParams();
 
@@ -150,7 +156,7 @@ class SettingsController extends Controller {
 	 * DISPATCHED method, so delegating to `update()` does not inherit its
 	 * posture. Both entry points therefore declare the same admin gate.
 	 *
-	 * @AuthorizedAdminSetting(AdminSettings::class)
+	 * @AuthorizedAdminSetting(PolicyAdminSettings::class)
 	 *
 	 * @return JSONResponse The refreshed settings, wrapped as `{success, config}`.
 	 *
@@ -158,7 +164,7 @@ class SettingsController extends Controller {
 	 *   Served by AppHost Generics (Scenario: Admin settings page still renders
 	 *   through the generic section)
 	 */
-	#[AuthorizedAdminSetting(AdminSettings::class)]
+	#[AuthorizedAdminSetting(PolicyAdminSettings::class)]
 	public function create(): JSONResponse {
 		return $this->update();
 	}//end create()
@@ -183,21 +189,21 @@ class SettingsController extends Controller {
 	}//end load()
 
 	/**
-	 * Get admin-scoped settings (implement-dashboard-settings §2.2).
+	 * Read the General area settings (admin-scoped-roles D2).
 	 *
 	 * @AuthorizedAdminSetting(AdminSettings::class)
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-2.2
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
-	public function getAdminSettings(): JSONResponse {
-		return new JSONResponse(data: $this->settingsService->getAdminSettings());
-	}//end getAdminSettings()
+	public function getGeneralSettings(): JSONResponse {
+		return $this->readArea(area: 'general');
+	}//end getGeneralSettings()
 
 	/**
-	 * Update admin-scoped settings (implement-dashboard-settings §2.2).
+	 * Write the General area settings (admin-scoped-roles D2).
 	 *
 	 * A save that wrote `breach_check_enabled` asks integriq to resolve the
 	 * breach check connection again (adopt-connection-registry). That never
@@ -207,15 +213,129 @@ class SettingsController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-2.2
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
 	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
-	public function updateAdminSettings(): JSONResponse {
+	public function updateGeneralSettings(): JSONResponse {
 		$data = $this->request->getParams();
+		$response = $this->writeArea(area: 'general', data: $data);
 
+		// The same test AdminSettingsService uses to decide it wrote the key.
+		if ($response->getStatus() === Http::STATUS_OK && isset($data['breach_check_enabled']) === true) {
+			$this->connectionReporter?->breachCheckSaved();
+		}
+
+		return $response;
+	}//end updateGeneralSettings()
+
+	/**
+	 * Read the Policies area settings (admin-scoped-roles D2).
+	 *
+	 * @AuthorizedAdminSetting(PolicyAdminSettings::class)
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 */
+	#[AuthorizedAdminSetting(PolicyAdminSettings::class)]
+	public function getPolicySettings(): JSONResponse {
+		return $this->readArea(area: 'policies');
+	}//end getPolicySettings()
+
+	/**
+	 * Write the Policies area settings (admin-scoped-roles D2).
+	 *
+	 * @AuthorizedAdminSetting(PolicyAdminSettings::class)
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 */
+	#[AuthorizedAdminSetting(PolicyAdminSettings::class)]
+	public function updatePolicySettings(): JSONResponse {
+		return $this->writeArea(area: 'policies', data: $this->request->getParams());
+	}//end updatePolicySettings()
+
+	/**
+	 * Read the Applications area settings (admin-scoped-roles D2).
+	 *
+	 * @AuthorizedAdminSetting(ApplicationAdminSettings::class)
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 */
+	#[AuthorizedAdminSetting(ApplicationAdminSettings::class)]
+	public function getApplicationSettings(): JSONResponse {
+		return $this->readArea(area: 'applications');
+	}//end getApplicationSettings()
+
+	/**
+	 * Write the Applications area settings (admin-scoped-roles D2).
+	 *
+	 * @AuthorizedAdminSetting(ApplicationAdminSettings::class)
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 */
+	#[AuthorizedAdminSetting(ApplicationAdminSettings::class)]
+	public function updateApplicationSettings(): JSONResponse {
+		return $this->writeArea(area: 'applications', data: $this->request->getParams());
+	}//end updateApplicationSettings()
+
+	/**
+	 * Read the Audit area settings (admin-scoped-roles D2).
+	 *
+	 * @AuthorizedAdminSetting(AuditAdminSettings::class)
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 */
+	#[AuthorizedAdminSetting(AuditAdminSettings::class)]
+	public function getAuditSettings(): JSONResponse {
+		return $this->readArea(area: 'audit');
+	}//end getAuditSettings()
+
+	/**
+	 * Write the Audit area settings (admin-scoped-roles D2).
+	 *
+	 * @AuthorizedAdminSetting(AuditAdminSettings::class)
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 */
+	#[AuthorizedAdminSetting(AuditAdminSettings::class)]
+	public function updateAuditSettings(): JSONResponse {
+		return $this->writeArea(area: 'audit', data: $this->request->getParams());
+	}//end updateAuditSettings()
+
+	/**
+	 * One area's settings as a response.
+	 *
+	 * @param string $area The area key
+	 *
+	 * @return JSONResponse
+	 */
+	private function readArea(string $area): JSONResponse {
+		return new JSONResponse(data: $this->settingsService->getAreaSettings(area: $area));
+	}//end readArea()
+
+	/**
+	 * Write one area's keys; a key of another area or an out-of-bounds value
+	 * answers 400 and writes nothing of the failing group.
+	 *
+	 * @param string $area The area key
+	 * @param array<string,mixed> $data The request parameters
+	 *
+	 * @return JSONResponse
+	 */
+	private function writeArea(string $area, array $data): JSONResponse {
 		try {
-			$result = $this->settingsService->updateAdminSettings($data);
+			$result = $this->settingsService->updateAreaSettings(area: $area, data: $data);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
@@ -223,13 +343,8 @@ class SettingsController extends Controller {
 			);
 		}
 
-		// The same test AdminSettingsService uses to decide it wrote the key.
-		if (isset($data['breach_check_enabled']) === true) {
-			$this->connectionReporter?->breachCheckSaved();
-		}
-
 		return new JSONResponse(data: $result);
-	}//end updateAdminSettings()
+	}//end writeArea()
 
 	/**
 	 * How many users a two-factor vault policy for these groups covers, and
@@ -238,13 +353,13 @@ class SettingsController extends Controller {
 	 *
 	 * @param array<int,string> $groups The group scope; empty means everyone
 	 *
-	 * @AuthorizedAdminSetting(AdminSettings::class)
+	 * @AuthorizedAdminSetting(PolicyAdminSettings::class)
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
 	 */
-	#[AuthorizedAdminSetting(AdminSettings::class)]
+	#[AuthorizedAdminSetting(PolicyAdminSettings::class)]
 	public function twoFactorGaps(array $groups = []): JSONResponse {
 		if ($this->twoFactor === null) {
 			return new JSONResponse(data: ['message' => 'Unavailable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);

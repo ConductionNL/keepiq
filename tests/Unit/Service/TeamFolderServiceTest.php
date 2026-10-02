@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use OCA\Keepiq\Tests\Support\AdminAreaFixture;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\BulkGrantShareTargetMapper;
@@ -64,6 +65,8 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.TooManyPublicMethods)   One test per behaviour.
  */
 class TeamFolderServiceTest extends TestCase {
+	use AdminAreaFixture;
+
 
 	private TeamFolderService $service;
 
@@ -156,7 +159,7 @@ class TeamFolderServiceTest extends TestCase {
 					delegationMapper: $this->delegationMapper,
 					secretMapper: $this->secretMapper,
 				),
-				groupManager: $this->groupManager,
+				areas: $this->areaAuthorizer(groupManager: $this->groupManager),
 				logger: $this->createMock(originalClassName: LoggerInterface::class),
 				audit: new TeamFolderAuditor(eventDispatcher: null),
 				memberMapper: $this->memberMapper,

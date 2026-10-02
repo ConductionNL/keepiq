@@ -77,6 +77,56 @@ class AdminSettingsService {
 	public const AUDIT_RETENTION_MIN = 30;
 
 	/**
+	 * The keys each settings-bearing admin area owns, except Policies, which
+	 * owns every other admin key (admin-scoped-roles, decision of 2 Oct:
+	 * version and trash retention are vault rules, so they are Policies).
+	 * The People area owns no settings keys, so it has no settings route.
+	 *
+	 * @var array<string,string[]>
+	 */
+	public const AREA_KEYS = [
+		'general' => [
+			'ca_auto_renew_enabled',
+			'breach_check_enabled',
+			'offline_cache_enabled',
+			'attachment_max_bytes',
+			'attachment_user_quota_bytes',
+		],
+		'applications' => [
+			'lease_default_ttl_seconds',
+			'lease_max_ttl_seconds',
+			'lease_renewable',
+			'lease_revocation_blocks_refetch',
+		],
+		'audit' => ['audit_retention_days'],
+	];
+
+	/**
+	 * The Policies keys this service writes itself; the org password and
+	 * vault policy keys come from PasswordPolicyService.
+	 *
+	 * @var string[]
+	 */
+	private const POLICY_AREA_OWN_KEYS = [
+		'min_password_length',
+		'min_password_score',
+		'default_session_timeout',
+		'expiry_default_max_age_days',
+		'expiry_reminder_days',
+		'expiry_policy_enforced',
+		'version_retention_count',
+		'version_retention_days',
+		'trash_retention_days',
+	];
+
+	/**
+	 * The settings-bearing areas, in route order.
+	 *
+	 * @var string[]
+	 */
+	public const SETTINGS_AREAS = ['general', 'policies', 'applications', 'audit'];
+
+	/**
 	 * The org password policy.
 	 *
 	 * @var PasswordPolicyService
@@ -247,16 +297,128 @@ class AdminSettingsService {
 		// Each group validates and persists one family of keys. Every guard
 		// is independent — an absent key is left untouched, an out-of-bounds
 		// value throws before anything in its group is written.
-		$this->updateAuthenticationSettings(data: $data);
-		$this->updateInstanceSettings(data: $data);
-		$this->policyService->updatePolicySettings(data: $data);
-		$this->updateExpirySettings(data: $data);
-		$this->updateLeaseSettings(data: $data);
-		$this->updateRetentionSettings(data: $data);
-		$this->updateTrashSettings(data: $data);
+		foreach (self::SETTINGS_AREAS as $area) {
+			$this->writeArea(area: $area, data: $data);
+		}
 
 		return $this->getAdminSettings();
 	}//end updateAdminSettings()
+
+	/**
+	 * The settings of one admin area (admin-scoped-roles D2). General also
+	 * carries the CA status its section shows.
+	 *
+	 * @param string $area One of SETTINGS_AREAS
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws InvalidArgumentException On an unknown area.
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 */
+	public function getAreaSettings(string $area): array {
+		$keys = $this->areaKeys(area: $area);
+		if ($area === 'general') {
+			$keys[] = 'ca_status';
+		}
+
+		return array_intersect_key($this->getAdminSettings(), array_flip($keys));
+	}//end getAreaSettings()
+
+	/**
+	 * Write one admin area's keys and nothing else (admin-scoped-roles D2).
+	 *
+	 * A key that belongs to another area is refused rather than dropped, so
+	 * a caller can never read a partial save as a whole one. Keys no area
+	 * owns are ignored, as the combined write always did.
+	 *
+	 * @param string $area One of SETTINGS_AREAS
+	 * @param array<string,mixed> $data The input data
+	 *
+	 * @return array<string,mixed> The area's settings after the write
+	 *
+	 * @throws InvalidArgumentException On an unknown area, a key of another
+	 *                                  area, or an out-of-bounds value.
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 */
+	public function updateAreaSettings(string $area, array $data): array {
+		$own = $this->areaKeys(area: $area);
+		foreach (self::SETTINGS_AREAS as $other) {
+			if ($other === $area) {
+				continue;
+			}
+
+			$foreign = array_values(array_intersect(array_keys($data), $this->areaKeys(area: $other)));
+			if ($foreign !== []) {
+				throw new InvalidArgumentException(
+					$foreign[0] . ' belongs to the ' . $other . ' area, not to ' . $area
+				);
+			}
+		}
+
+		$this->writeArea(area: $area, data: array_intersect_key($data, array_flip($own)));
+
+		return $this->getAreaSettings(area: $area);
+	}//end updateAreaSettings()
+
+	/**
+	 * The keys one area owns.
+	 *
+	 * @param string $area One of SETTINGS_AREAS
+	 *
+	 * @return string[]
+	 *
+	 * @throws InvalidArgumentException On an unknown area.
+	 */
+	private function areaKeys(string $area): array {
+		if ($area === 'policies') {
+			return array_merge(
+				self::POLICY_AREA_OWN_KEYS,
+				array_keys($this->policyService->readAdminPolicyKeys())
+			);
+		}
+
+		if (isset(self::AREA_KEYS[$area]) === false) {
+			throw new InvalidArgumentException('Unknown admin settings area: ' . $area);
+		}
+
+		return self::AREA_KEYS[$area];
+	}//end areaKeys()
+
+	/**
+	 * Run the validated writers of one area. Each writer ignores absent keys.
+	 *
+	 * @param string $area One of SETTINGS_AREAS
+	 * @param array<string,mixed> $data The input data
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException On out-of-bounds values.
+	 */
+	private function writeArea(string $area, array $data): void {
+		switch ($area) {
+			case 'general':
+				$this->updateInstanceSettings(data: $data);
+				$this->updateAttachmentSettings(data: $data);
+				return;
+			case 'policies':
+				$this->updateAuthenticationSettings(data: $data);
+				$this->policyService->updatePolicySettings(data: $data);
+				$this->updateExpirySettings(data: $data);
+				$this->updateRetentionSettings(data: $data);
+				$this->updateTrashSettings(data: $data);
+				return;
+			case 'applications':
+				$this->updateLeaseSettings(data: $data);
+				return;
+			case 'audit':
+				$this->updateAuditSettings(data: $data);
+				return;
+			default:
+				throw new InvalidArgumentException('Unknown admin settings area: ' . $area);
+		}
+	}//end writeArea()
 
 	/**
 	 * The user-visible policy floor for the write dialogs
@@ -336,8 +498,8 @@ class AdminSettingsService {
 	}//end updateAuthenticationSettings()
 
 	/**
-	 * Instance-wide switches: CA renewal, audit retention, breach checking
-	 * and the offline read-only cache (offline-readonly-cache §1.1).
+	 * Instance-wide switches: CA renewal, breach checking and the offline
+	 * read-only cache (offline-readonly-cache §1.1).
 	 *
 	 * @param array<string,mixed> $data The admin-settings input
 	 *
@@ -352,18 +514,6 @@ class AdminSettingsService {
 			$this->appConfig->setValueBool($appId, 'ca_auto_renew_enabled', (bool)$data['ca_auto_renew_enabled']);
 		}
 
-		if (isset($data['audit_retention_days']) === true) {
-			$days = (int)$data['audit_retention_days'];
-			if ($days < self::AUDIT_RETENTION_MIN) {
-				throw new InvalidArgumentException(
-					'audit_retention_days must be at least ' . self::AUDIT_RETENTION_MIN
-					. ' days — below that the audit trail cannot serve incident investigation'
-				);
-			}
-
-			$this->appConfig->setValueInt($appId, 'audit_retention_days', $days);
-		}
-
 		if (isset($data['breach_check_enabled']) === true) {
 			$this->appConfig->setValueBool($appId, 'breach_check_enabled', (bool)$data['breach_check_enabled']);
 		}
@@ -372,6 +522,31 @@ class AdminSettingsService {
 			$this->appConfig->setValueBool($appId, 'offline_cache_enabled', (bool)$data['offline_cache_enabled']);
 		}
 	}//end updateInstanceSettings()
+
+	/**
+	 * Audit retention (add-secret-audit-trail §4.2), the one Audit area key.
+	 *
+	 * @param array<string,mixed> $data The admin-settings input
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the window is below the minimum.
+	 */
+	private function updateAuditSettings(array $data): void {
+		if (isset($data['audit_retention_days']) === false) {
+			return;
+		}
+
+		$days = (int)$data['audit_retention_days'];
+		if ($days < self::AUDIT_RETENTION_MIN) {
+			throw new InvalidArgumentException(
+				'audit_retention_days must be at least ' . self::AUDIT_RETENTION_MIN
+				. ' days — below that the audit trail cannot serve incident investigation'
+			);
+		}
+
+		$this->appConfig->setValueInt(Application::APP_ID, 'audit_retention_days', $days);
+	}//end updateAuditSettings()
 
 	/**
 	 * Expiry defaults (rotation-expiry-policies §2.2): admin max age ships
@@ -452,10 +627,8 @@ class AdminSettingsService {
 	}//end updateLeaseSettings()
 
 	/**
-	 * Version retention (secret-version-history §4.1) and attachment limits
-	 * (encrypted-attachments §2.5). A floor of 1 kept version preserves
-	 * restorability; days 0 = unlimited age. Attachment limits are expressed
-	 * and enforced in stored CIPHERTEXT bytes — what actually consumes disk.
+	 * Version retention (secret-version-history §4.1). A floor of 1 kept
+	 * version preserves restorability; days 0 = unlimited age.
 	 *
 	 * @param array<string,mixed> $data The admin-settings input
 	 *
@@ -483,6 +656,20 @@ class AdminSettingsService {
 
 			$this->appConfig->setValueInt($appId, 'version_retention_days', $days);
 		}
+	}//end updateRetentionSettings()
+
+	/**
+	 * Attachment limits (encrypted-attachments §2.5), in stored CIPHERTEXT
+	 * bytes, which is what actually consumes disk.
+	 *
+	 * @param array<string,mixed> $data The admin-settings input
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException On a non-positive byte count.
+	 */
+	private function updateAttachmentSettings(array $data): void {
+		$appId = Application::APP_ID;
 
 		if (isset($data['attachment_max_bytes']) === true) {
 			$maxBytes = (int)$data['attachment_max_bytes'];
@@ -501,7 +688,7 @@ class AdminSettingsService {
 
 			$this->appConfig->setValueInt($appId, 'attachment_user_quota_bytes', $quota);
 		}
-	}//end updateRetentionSettings()
+	}//end updateAttachmentSettings()
 
 	/**
 	 * Validate and persist the trash retention (vault-trash-and-archive D4).

@@ -32,9 +32,16 @@ $extra = [
     // Dashboard summary (domain aggregator — DashboardController::summary()).
     ['name' => 'dashboard#summary', 'url' => '/api/dashboard/summary', 'verb' => 'GET'],
 
-    // Admin + user settings split (implement-dashboard-settings §2.4).
-    ['name' => 'settings#getAdminSettings',    'url' => '/api/settings/admin', 'verb' => 'GET'],
-    ['name' => 'settings#updateAdminSettings', 'url' => '/api/settings/admin', 'verb' => 'PUT'],
+    // Admin settings, one route pair per admin area, each guarded by its own
+    // area class (admin-scoped-roles D2). The People area owns no settings keys.
+    ['name' => 'settings#getGeneralSettings',        'url' => '/api/settings/admin/general',      'verb' => 'GET'],
+    ['name' => 'settings#updateGeneralSettings',     'url' => '/api/settings/admin/general',      'verb' => 'PUT'],
+    ['name' => 'settings#getPolicySettings',         'url' => '/api/settings/admin/policies',     'verb' => 'GET'],
+    ['name' => 'settings#updatePolicySettings',      'url' => '/api/settings/admin/policies',     'verb' => 'PUT'],
+    ['name' => 'settings#getApplicationSettings',    'url' => '/api/settings/admin/applications', 'verb' => 'GET'],
+    ['name' => 'settings#updateApplicationSettings', 'url' => '/api/settings/admin/applications', 'verb' => 'PUT'],
+    ['name' => 'settings#getAuditSettings',          'url' => '/api/settings/admin/audit',        'verb' => 'GET'],
+    ['name' => 'settings#updateAuditSettings',       'url' => '/api/settings/admin/audit',        'verb' => 'PUT'],
     // Two-factor gap count for the vault policy section (admin-vault-policies §1.3).
     ['name' => 'settings#twoFactorGaps',       'url' => '/api/settings/admin/two-factor-gaps', 'verb' => 'GET'],
     // Vault backups (admin-scheduled-vault-backups §4.1): status, list and a

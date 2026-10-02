@@ -159,11 +159,11 @@ class SettingsControllerTest extends TestCase {
 	}//end testLoadReturnsConfigurationResult()
 
 	/**
-	 * Test that getAdminSettings() returns the admin settings from the service.
+	 * Test that getGeneralSettings() returns the General area settings from the service.
 	 *
 	 * @return void
 	 */
-	public function testGetAdminSettingsReturnsServiceResponse(): void {
+	public function testGetGeneralSettingsReturnsServiceResponse(): void {
 		$expected = [
 			'min_password_length' => 12,
 			'min_password_score' => 3,
@@ -172,36 +172,38 @@ class SettingsControllerTest extends TestCase {
 		];
 
 		$this->settingsService->expects($this->once())
-			->method('getAdminSettings')
+			->method('getAreaSettings')
+			->with('general')
 			->willReturn($expected);
 
-		$result = $this->controller->getAdminSettings();
+		$result = $this->controller->getGeneralSettings();
 
 		self::assertInstanceOf(JSONResponse::class, $result);
 		self::assertSame($expected, $result->getData());
 
-	}//end testGetAdminSettingsReturnsServiceResponse()
+	}//end testGetGeneralSettingsReturnsServiceResponse()
 
 	/**
-	 * Test that updateAdminSettings() returns 400 on InvalidArgumentException.
+	 * Test that updatePolicySettings() returns 400 on InvalidArgumentException.
 	 *
 	 * @return void
 	 */
-	public function testUpdateAdminSettingsReturns400OnInvalidInput(): void {
+	public function testUpdatePolicySettingsReturns400OnInvalidInput(): void {
 		$this->request->expects($this->once())
 			->method('getParams')
 			->willReturn(['min_password_length' => 5]);
 
 		$this->settingsService->expects($this->once())
-			->method('updateAdminSettings')
+			->method('updateAreaSettings')
+			->with('policies', ['min_password_length' => 5])
 			->willThrowException(new \InvalidArgumentException('min_password_length must be between 12 and 20'));
 
-		$result = $this->controller->updateAdminSettings();
+		$result = $this->controller->updatePolicySettings();
 
 		self::assertInstanceOf(JSONResponse::class, $result);
 		self::assertSame(400, $result->getStatus());
 
-	}//end testUpdateAdminSettingsReturns400OnInvalidInput()
+	}//end testUpdatePolicySettingsReturns400OnInvalidInput()
 
 	/**
 	 * Test that getUserSettings() returns prefs for the authenticated user.

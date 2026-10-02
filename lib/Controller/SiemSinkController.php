@@ -27,13 +27,14 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\SiemSink;
+use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\SiemService;
+use OCA\Keepiq\Settings\AuditAdminSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
-use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -47,7 +48,7 @@ class SiemSinkController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param SiemService $service The SIEM service
 	 * @param IUserSession $userSession The user session
-	 * @param IGroupManager $groupManager The group manager (admin gate)
+	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Audit admin area
 	 *
 	 * @return void
 	 */
@@ -55,7 +56,7 @@ class SiemSinkController extends OCSController {
 		IRequest $request,
 		private SiemService $service,
 		private IUserSession $userSession,
-		private IGroupManager $groupManager,
+		private AdminAreaAuthorizer $areas,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -68,7 +69,7 @@ class SiemSinkController extends OCSController {
 	 */
 	private function adminUid(): ?string {
 		$user = $this->userSession->getUser();
-		if ($user === null || $this->groupManager->isAdmin($user->getUID()) === false) {
+		if ($user === null || $this->areas->holds(userId: $user->getUID(), areaClass: AuditAdminSettings::class) === false) {
 			return null;
 		}
 
