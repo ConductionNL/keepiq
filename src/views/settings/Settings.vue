@@ -21,6 +21,7 @@
 </template>
 
 <script>
+import AccountRecoverySection from '../../components/settings/AccountRecoverySection.vue'
 import AdminAreasSection from '../../components/settings/AdminAreasSection.vue'
 import AdminAuditSection from '../../components/settings/AdminAuditSection.vue'
 import AdminSuiteSection from '../../components/settings/AdminSuiteSection.vue'
