@@ -22,13 +22,13 @@ type Confirmer func(keyName string) bool
 // Errors the agent answers with. The protocol carries only "failure"; these
 // are for logs and tests.
 var (
-	ErrLocked        = errors.New("the agent is locked")
-	ErrVaultOnly     = errors.New("keys come from the Keepiq vault; add or remove them there")
-	ErrUnknownKey    = errors.New("no such key in the agent")
-	ErrSHA1Refused   = errors.New("ssh-rsa (SHA-1) signatures are refused; use rsa-sha2-256 or rsa-sha2-512")
-	ErrNotConfirmed  = errors.New("the signature was not confirmed")
-	ErrNoAskpass     = errors.New("--confirm needs SSH_ASKPASS to point at a confirmation program")
-	errNotSupported  = errors.New("not supported")
+	ErrLocked       = errors.New("the agent is locked")
+	ErrVaultOnly    = errors.New("keys come from the Keepiq vault; add or remove them there")
+	ErrUnknownKey   = errors.New("no such key in the agent")
+	ErrSHA1Refused  = errors.New("ssh-rsa (SHA-1) signatures are refused; use rsa-sha2-256 or rsa-sha2-512")
+	ErrNotConfirmed = errors.New("the signature was not confirmed")
+	ErrNoAskpass    = errors.New("--confirm needs SSH_ASKPASS to point at a confirmation program")
+	errNotSupported = errors.New("not supported")
 )
 
 // Agent serves vault keys. It implements agent.ExtendedAgent.
