@@ -1,0 +1,1024 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Keepiq admin API",
+    "version": "1",
+    "description": "The versioned admin API of Keepiq. Authenticate as a Nextcloud user: a browser session, or an app password over HTTP Basic with the header OCS-APIRequest: true. Each endpoint needs one Keepiq admin area, delegated on Nextcloud's administration privileges page. Version 1 only grows; a breaking change ships as version 2 next to it. Suite force revocation and reinstatement are not offered, because both need a fresh password confirmation.",
+    "license": {
+      "name": "EUPL-1.2",
+      "identifier": "EUPL-1.2"
+    }
+  },
+  "servers": [
+    {
+      "url": "{base}/index.php/apps/keepiq",
+      "variables": {
+        "base": {
+          "default": "https://cloud.example.com"
+        }
+      }
+    }
+  ],
+  "security": [
+    {
+      "basicAuth": []
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "A Nextcloud app password. Send OCS-APIRequest: true with every request."
+      }
+    },
+    "parameters": {
+      "OcsApiRequest": {
+        "name": "OCS-APIRequest",
+        "in": "header",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "const": "true"
+        }
+      },
+      "Id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string"
+        }
+      }
+    },
+    "responses": {
+      "Error": {
+        "description": "Refused or invalid",
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "message": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/admin": {
+      "get": {
+        "operationId": "indexIndex",
+        "summary": "The admin API index",
+        "description": "Returns the API version, the served versions, the areas you hold and every v1 path. Needs at least one Keepiq admin area. Admin area: any Keepiq admin area.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "any"
+      }
+    },
+    "/api/v1/admin/policies": {
+      "get": {
+        "operationId": "getPolicySettings",
+        "summary": "Read the policies",
+        "description": "The settings of the Policies area: master password, organisation password, vault policies, rotation and expiry, session timeout, version and trash retention, extension idle limit. Admin area: Policies.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "policies"
+      },
+      "put": {
+        "operationId": "updatePolicySettings",
+        "summary": "Update the policies",
+        "description": "Writes only Policies keys. A key of another area answers 400 and nothing is written. Admin area: Policies.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "policies",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/suites": {
+      "get": {
+        "operationId": "peopleSuites",
+        "summary": "List active encryption suites",
+        "description": "One page of active suites, metadata only. Never a private key or a certificate. Admin area: People and offboarding.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 500,
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "people"
+      }
+    },
+    "/api/v1/admin/offboarding": {
+      "post": {
+        "operationId": "peopleOffboard",
+        "summary": "Offboard a leaver",
+        "description": "Revokes the leaver's team-folder access, removes their direct memberships and transfers the team secrets they own to the successor. Admin area: People and offboarding.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "people",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "leavingUserId",
+                  "successorUserId"
+                ],
+                "properties": {
+                  "leavingUserId": {
+                    "type": "string"
+                  },
+                  "successorUserId": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/applications": {
+      "get": {
+        "operationId": "applicationIndex",
+        "summary": "List applications",
+        "description": "Every application. Admin area: Applications and machine access.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "applications"
+      },
+      "post": {
+        "operationId": "applicationCreate",
+        "summary": "Register an application",
+        "description": "Registers an application. Your registration is active at once. Admin area: Applications and machine access.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "applications",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "name"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "internal",
+                      "external"
+                    ]
+                  },
+                  "csr": {
+                    "type": "string",
+                    "description": "PKCS#10 CSR in PEM"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/applications/{id}": {
+      "get": {
+        "operationId": "applicationShow",
+        "summary": "Read an application",
+        "description": "Admin area: Applications and machine access.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          },
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "applications"
+      },
+      "delete": {
+        "operationId": "applicationDestroy",
+        "summary": "Delete an application",
+        "description": "Deletes the application and its vault. Admin area: Applications and machine access.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          },
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "applications"
+      }
+    },
+    "/api/v1/admin/applications/{id}/approve": {
+      "post": {
+        "operationId": "applicationApprove",
+        "summary": "Approve a pending application",
+        "description": "You are recorded as approver. Admin area: Applications and machine access.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          },
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "applications"
+      }
+    },
+    "/api/v1/admin/applications/{id}/reject": {
+      "post": {
+        "operationId": "applicationReject",
+        "summary": "Reject a pending application",
+        "description": "Admin area: Applications and machine access.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          },
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "applications"
+      }
+    },
+    "/api/v1/admin/applications/{id}/lease-policy": {
+      "get": {
+        "operationId": "applicationGetLeasePolicy",
+        "summary": "Read the lease policy",
+        "description": "The application's override and the effective values. Admin area: Applications and machine access.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          },
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "applications"
+      },
+      "put": {
+        "operationId": "applicationSetLeasePolicy",
+        "summary": "Set the lease policy",
+        "description": "A null value inherits the instance setting. Admin area: Applications and machine access.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          },
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "applications",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "defaultTtl": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 60
+                  },
+                  "maxTtl": {
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 60
+                  },
+                  "renewable": {
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit": {
+      "get": {
+        "operationId": "auditEvents",
+        "summary": "Read audit events",
+        "description": "Filtered and paged like the admin screen. Admin area: Audit and compliance.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          },
+          {
+            "name": "eventType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "actor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "objectId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "audit"
+      }
+    },
+    "/api/v1/admin/compliance/reports": {
+      "get": {
+        "operationId": "auditReports",
+        "summary": "List compliance reports",
+        "description": "Admin area: Audit and compliance.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "audit"
+      },
+      "post": {
+        "operationId": "auditGenerateReport",
+        "summary": "Generate a compliance report",
+        "description": "Admin area: Audit and compliance.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "audit"
+      }
+    },
+    "/api/v1/admin/compliance/reports/{id}": {
+      "get": {
+        "operationId": "auditShowReport",
+        "summary": "Read a compliance report",
+        "description": "Admin area: Audit and compliance.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          },
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "audit"
+      }
+    },
+    "/api/v1/admin/siem/sinks": {
+      "get": {
+        "operationId": "auditSinks",
+        "summary": "List SIEM sinks",
+        "description": "A sink's HMAC secret and connector credential never appear. Admin area: Audit and compliance.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "audit"
+      },
+      "post": {
+        "operationId": "auditCreateSink",
+        "summary": "Create a SIEM sink",
+        "description": "Admin area: Audit and compliance.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "audit",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/siem/sinks/{id}": {
+      "put": {
+        "operationId": "auditUpdateSink",
+        "summary": "Update a SIEM sink",
+        "description": "Admin area: Audit and compliance.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          },
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "audit",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "auditDestroySink",
+        "summary": "Delete a SIEM sink",
+        "description": "Admin area: Audit and compliance.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/OcsApiRequest"
+          },
+          {
+            "$ref": "#/components/parameters/Id"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": [
+                    "object",
+                    "array"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Error"
+          },
+          "403": {
+            "$ref": "#/components/responses/Error"
+          },
+          "404": {
+            "$ref": "#/components/responses/Error"
+          }
+        },
+        "x-keepiq-area": "audit"
+      }
+    }
+  }
+}

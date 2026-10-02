@@ -34,17 +34,20 @@ v1 endpoints:
 
 | Method and path | Area | Service |
 |---|---|---|
-| `GET /api/v1/admin` | any area | index: `apiVersion`, paths |
-| `GET /api/v1/admin/members` | People | member overview (change `admin-member-overview-and-offboarding`) |
-| `POST /api/v1/admin/offboarding` | People | `TeamFolderOffboardingService::offboard()` |
-| `GET /api/v1/admin/suites`, `POST /api/v1/admin/suites/{id}/reinstate` | People | `EncryptionSuiteService` |
-| `GET`, `PUT /api/v1/admin/policies` | Policies | `AdminSettingsService` |
-| `GET /api/v1/admin/applications`, `POST .../{id}/approve`, `POST .../{id}/reject`, `DELETE .../{id}` | Applications | `ApplicationService` |
-| `GET /api/v1/admin/audit` | Audit | `AuditService` |
+| `GET /api/v1/admin` | any area | index: `apiVersion`, versions, the caller's areas, paths |
+| `GET /api/v1/admin/members` | People | member overview (change `admin-member-overview-and-offboarding`, PR #895); added once that lands |
+| `POST /api/v1/admin/offboarding` | People | `TeamFolderService::offboard()` |
+| `GET /api/v1/admin/suites` | People | `EncryptionSuiteMapper::findAllActiveWithLimit()`, metadata only |
+| `GET`, `PUT /api/v1/admin/policies` | Policies | the Policies area settings (`AdminAreaSettingsController`) |
+| `GET`, `POST /api/v1/admin/applications`, `GET`, `DELETE .../{id}`, `POST .../{id}/approve`, `POST .../{id}/reject` | Applications | `ApplicationService` |
+| `GET`, `PUT /api/v1/admin/applications/{id}/lease-policy` | Applications | `LeaseService` |
+| `GET /api/v1/admin/audit` | Audit | `AuditService::adminQuery()` |
 | `GET`, `POST /api/v1/admin/compliance/reports`, `GET .../{id}` | Audit | `ComplianceReportService` |
-| `GET`, `POST`, `PUT`, `DELETE /api/v1/admin/siem/sinks` | Audit | `SiemSinkService` |
+| `GET`, `POST /api/v1/admin/siem/sinks`, `PUT`, `DELETE .../{id}` | Audit | `SiemService` |
 
-Controllers live in `lib/Controller/Admin/` and hold no logic beyond parameter mapping, so the screen and the API share one code path. Responses use the same shapes and error envelope as the existing endpoints (org ADR-050).
+Registering an application (`POST /applications`), reading one (`GET .../{id}`) and its lease policy were added for the Terraform provider (change `apps-terraform-provider`, D5): an administrator's registration is active at once. Suite reinstatement is out of v1: since keepiq#865 it carries `#[PasswordConfirmationRequired]` like force revocation (see D4).
+
+Controllers (`AdminIndexController`, `AdminPeopleController`, `AdminApplicationController`, `AdminAuditController` in `lib/Controller/`; Nextcloud resolves route names to that namespace only) hold no logic beyond parameter mapping. Every one except the index carries one `#[AuthorizedAdminSetting(<Area>::class)]`, so a caller outside the area is refused in the middleware. The policies pair reuses the area settings methods under a route `postfix`, so the screen and the API share one code path. Responses use the same shapes and error envelope as the existing endpoints (org ADR-050).
 
 Alternative considered: document the existing internal routes as the public API. Rejected: their paths are inconsistent (`/api/settings/admin` next to `/api/v1/...`) and some mix owner and admin behaviour behind one path, so freezing them would freeze that.
 
@@ -62,7 +65,7 @@ Alternative considered: admin tokens as Keepiq applications with admin scopes ov
 
 ### D4: No force revocation over the API
 
-`POST /api/v1/suites/{id}/force-revoke` carries `#[PasswordConfirmationRequired]` (ADR-005): the administrator re-confirms their own password at that moment. A stored app password cannot give that proof, so the API leaves force revocation out and the index says so. Reinstatement has no such guard and is in.
+`POST /api/v1/suites/{id}/force-revoke` carries `#[PasswordConfirmationRequired]` (ADR-005): the administrator re-confirms their own password at that moment. A stored app password cannot give that proof, so the API leaves force revocation out and the index says so. Since keepiq#865 reinstatement carries the same guard, so it is out too (POLICY.md, lane G2).
 
 ### D5: v1 only grows
 
