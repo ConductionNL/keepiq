@@ -246,7 +246,7 @@ export default {
 		 * @param {string} suiteId The suite handed over by the list.
 		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.2
 		 */
-		'memberStore.revokeSuiteId': function(suiteId) {
+		'memberStore.revokeSuiteId': function (suiteId) {
 			if (suiteId) {
 				this.suiteId = suiteId
 			}

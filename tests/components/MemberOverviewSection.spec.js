@@ -20,31 +20,69 @@ import OffboardingSection from '../../src/components/settings/OffboardingSection
 import { useTeamFolderStore } from '../../src/store/modules/teamFolder.js'
 
 const ROWS = [
-	{ userId: 'alice', displayName: 'Alice', enabled: true, vaultStatus: 'active', activeSuiteId: 'suite-alice', secretCount: 3, teamFolderMemberships: 1, hasEmergencyContact: true },
-	{ userId: 'bob', displayName: 'Bob', enabled: true, vaultStatus: 'none', activeSuiteId: null, secretCount: 0, teamFolderMemberships: 0, hasEmergencyContact: false },
+	{
+		userId: 'alice',
+		displayName: 'Alice',
+		enabled: true,
+		vaultStatus: 'active',
+		activeSuiteId: 'suite-alice',
+		secretCount: 3,
+		teamFolderMemberships: 1,
+		hasEmergencyContact: true,
+	},
+	{
+		userId: 'bob',
+		displayName: 'Bob',
+		enabled: true,
+		vaultStatus: 'none',
+		activeSuiteId: null,
+		secretCount: 0,
+		teamFolderMemberships: 0,
+		hasEmergencyContact: false,
+	},
 ]
 
 const stubs = {
-	CnSettingsSection: { props: ['name', 'description'], template: '<section><slot /></section>' },
+	CnSettingsSection: {
+		props: ['name', 'description'],
+		template: '<section><slot /></section>',
+	},
 	CnDataTable: {
 		props: ['rows', 'columns', 'loading', 'rowKey', 'emptyText'],
-		template: '<table><tr v-for="row in rows" :key="row.userId" class="row"><td><slot name="column-vaultStatus" :row="row" /></td><td><slot name="row-actions" :row="row" /></td></tr></table>',
+		template:
+			'<table><tr v-for="row in rows" :key="row.userId" class="row"><td><slot name="column-vaultStatus" :row="row" /></td><td><slot name="row-actions" :row="row" /></td></tr></table>',
 	},
 	NcButton: {
 		props: ['variant', 'disabled'],
 		emits: ['click'],
-		template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcNoteCard: { props: ['type'], template: '<div class="note"><slot /></div>' },
 	NcSelect: {
 		name: 'NcSelect',
-		props: ['modelValue', 'options', 'inputLabel', 'label', 'filterable', 'loading', 'clearable'],
+		props: [
+			'modelValue',
+			'options',
+			'inputLabel',
+			'label',
+			'filterable',
+			'loading',
+			'clearable',
+		],
 		emits: ['update:modelValue', 'search'],
 		template: '<div class="select" :data-input-label="inputLabel" />',
 	},
-	NcTextField: { props: ['modelValue', 'label'], emits: ['update:modelValue'], template: '<input />' },
+	NcTextField: {
+		props: ['modelValue', 'label'],
+		emits: ['update:modelValue'],
+		template: '<input />',
+	},
 	NcCheckboxRadioSwitch: { props: ['modelValue'], template: '<span />' },
-	OffboardingConfirmDialog: { props: ['open', 'leavingUserId', 'successorUserId'], template: '<div />' },
+	OffboardingConfirmDialog: {
+		props: ['open', 'leavingUserId', 'successorUserId'],
+		template: '<div />',
+	},
 }
 
 /**
@@ -60,7 +98,9 @@ function mountWith(component) {
 describe('MemberOverviewSection', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: { results: ROWS, hasMore: true } })
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { results: ROWS, hasMore: true },
+		})
 	})
 
 	afterEach(() => {
@@ -71,12 +111,13 @@ describe('MemberOverviewSection', () => {
 		const wrapper = mountWith(MemberOverviewSection)
 		await flushPromises()
 
-		expect(axios.get).toHaveBeenCalledWith(
-			'/apps/keepiq/api/v1/admin/members',
-			{ params: { status: '', search: '', limit: 50, offset: 0 } },
-		)
+		expect(axios.get).toHaveBeenCalledWith('/apps/keepiq/api/v1/admin/members', {
+			params: { status: '', search: '', limit: 50, offset: 0 },
+		})
 		expect(wrapper.findAll('.row')).toHaveLength(2)
-		expect(wrapper.find('[data-testid="member-status-bob"]').text()).toBe('Not set up')
+		expect(wrapper.find('[data-testid="member-status-bob"]').text()).toBe(
+			'Not set up',
+		)
 	})
 
 	it('filters on a status and pages forward', async () => {
@@ -85,7 +126,10 @@ describe('MemberOverviewSection', () => {
 
 		const select = wrapper.findComponent({ name: 'NcSelect' })
 		expect(select.props('inputLabel')).toBe('Vault status')
-		await select.vm.$emit('update:modelValue', { id: 'none', label: 'Not set up' })
+		await select.vm.$emit('update:modelValue', {
+			id: 'none',
+			label: 'Not set up',
+		})
 		await flushPromises()
 		expect(axios.get).toHaveBeenLastCalledWith(
 			'/apps/keepiq/api/v1/admin/members',
@@ -104,8 +148,12 @@ describe('MemberOverviewSection', () => {
 		const wrapper = mountWith(MemberOverviewSection)
 		await flushPromises()
 
-		expect(wrapper.find('[data-testid="member-revoke-alice"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="member-revoke-bob"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="member-revoke-alice"]').exists()).toBe(
+			true,
+		)
+		expect(wrapper.find('[data-testid="member-revoke-bob"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('hands the row to the offboarding and encryption suite sections', async () => {
@@ -134,18 +182,22 @@ describe('OffboardingSection', () => {
 	})
 
 	it('picks both users from the member endpoint, with labelled pickers', async () => {
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: { results: ROWS, hasMore: false } })
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { results: ROWS, hasMore: false },
+		})
 		const wrapper = mountWith(OffboardingSection)
 
 		const pickers = wrapper.findAllComponents({ name: 'NcSelect' })
-		expect(pickers.map((picker) => picker.props('inputLabel'))).toEqual(['Leaving user', 'Successor'])
+		expect(pickers.map((picker) => picker.props('inputLabel'))).toEqual([
+			'Leaving user',
+			'Successor',
+		])
 
 		await pickers[0].vm.$emit('search', 'bo')
 		await flushPromises()
-		expect(axios.get).toHaveBeenCalledWith(
-			'/apps/keepiq/api/v1/admin/members',
-			{ params: { search: 'bo', limit: 20, offset: 0 } },
-		)
+		expect(axios.get).toHaveBeenCalledWith('/apps/keepiq/api/v1/admin/members', {
+			params: { search: 'bo', limit: 20, offset: 0 },
+		})
 		expect(wrapper.vm.userOptions).toEqual([
 			{ userId: 'alice', displayName: 'Alice' },
 			{ userId: 'bob', displayName: 'Bob' },
@@ -159,7 +211,9 @@ describe('OffboardingSection', () => {
 			transferred: 0,
 			skipped: [],
 			membershipsRemoved: 2,
-			stillCoveredByGroups: [{ teamFolderId: 'tf-finance', groupId: 'finance-team' }],
+			stillCoveredByGroups: [
+				{ teamFolderId: 'tf-finance', groupId: 'finance-team' },
+			],
 		})
 		wrapper.vm.leavingUser = { userId: 'carol', displayName: 'Carol' }
 		wrapper.vm.successorUser = { userId: 'dave', displayName: 'Dave' }
@@ -167,15 +221,25 @@ describe('OffboardingSection', () => {
 		await wrapper.vm.run()
 		await flushPromises()
 
-		expect(wrapper.find('[data-testid="offboarding-summary"]').text()).toContain('Removed the user from {count} team folders.')
-		expect(wrapper.find('[data-testid="offboarding-covering-groups"]').exists()).toBe(true)
-		expect(wrapper.vm.coveringGroups).toEqual([{ teamFolderId: 'tf-finance', groupId: 'finance-team' }])
+		expect(wrapper.find('[data-testid="offboarding-summary"]').text()).toContain(
+			'Removed the user from {count} team folders.',
+		)
+		expect(
+			wrapper.find('[data-testid="offboarding-covering-groups"]').exists(),
+		).toBe(true)
+		expect(wrapper.vm.coveringGroups).toEqual([
+			{ teamFolderId: 'tf-finance', groupId: 'finance-team' },
+		])
 	})
 
 	it('shows no group warning when no group covers the leaver', async () => {
 		const wrapper = mountWith(OffboardingSection)
 		vi.spyOn(useTeamFolderStore(), 'offboard').mockResolvedValue({
-			revoked: 0, transferred: 0, skipped: [], membershipsRemoved: 0, stillCoveredByGroups: [],
+			revoked: 0,
+			transferred: 0,
+			skipped: [],
+			membershipsRemoved: 0,
+			stillCoveredByGroups: [],
 		})
 		wrapper.vm.leavingUser = { userId: 'carol', displayName: 'Carol' }
 		wrapper.vm.successorUser = { userId: 'dave', displayName: 'Dave' }
@@ -183,6 +247,8 @@ describe('OffboardingSection', () => {
 		await wrapper.vm.run()
 		await flushPromises()
 
-		expect(wrapper.find('[data-testid="offboarding-covering-groups"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="offboarding-covering-groups"]').exists(),
+		).toBe(false)
 	})
 })

@@ -315,7 +315,7 @@ final class AuditEventTypes {
 			'successorUserId',
 			'revokedCount',
 			'transferredCount',
-			// admin-member-overview-and-offboarding §1.3: counts and group ids only.
+			// Member offboarding (admin-member-overview-and-offboarding §1.3): counts and group ids only.
 			'membershipsRemovedCount',
 			'coveringGroupIds',
 		],

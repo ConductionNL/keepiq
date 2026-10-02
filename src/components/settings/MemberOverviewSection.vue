@@ -14,7 +14,12 @@
 <template>
 	<CnSettingsSection
 		:name="t('keepiq', 'Members')"
-		:description="t('keepiq', 'See which users have set up a vault. Start offboarding or revoke a suite from a row.')">
+		:description="
+			t(
+				'keepiq',
+				'See which users have set up a vault. Start offboarding or revoke a suite from a row.',
+			)
+		">
 		<div class="member-overview" data-testid="member-overview-section">
 			<div class="member-overview__filters">
 				<NcSelect
@@ -34,7 +39,10 @@
 					@update:modelValue="reload" />
 			</div>
 
-			<NcNoteCard v-if="store.error" type="error" data-testid="member-overview-error">
+			<NcNoteCard
+				v-if="store.error"
+				type="error"
+				data-testid="member-overview-error">
 				{{ t('keepiq', 'Could not load the members.') }}
 			</NcNoteCard>
 
@@ -46,10 +54,16 @@
 				:emptyText="t('keepiq', 'No users match this filter.')"
 				data-testid="member-overview-table">
 				<template #column-vaultStatus="{ row }">
-					<span :data-testid="'member-status-' + row.userId">{{ statusLabel(row.vaultStatus) }}</span>
+					<span :data-testid="'member-status-' + row.userId">{{
+						statusLabel(row.vaultStatus)
+					}}</span>
 				</template>
 				<template #column-hasEmergencyContact="{ row }">
-					{{ row.hasEmergencyContact ? t('keepiq', 'Yes') : t('keepiq', 'No') }}
+					{{
+						row.hasEmergencyContact
+							? t('keepiq', 'Yes')
+							: t('keepiq', 'No')
+					}}
 				</template>
 				<template #row-actions="{ row }">
 					<div class="member-overview__actions">
@@ -91,7 +105,10 @@
 <script>
 import { CnDataTable, CnSettingsSection } from '@conduction/nextcloud-vue'
 import { NcButton, NcNoteCard, NcSelect, NcTextField } from '@nextcloud/vue'
-import { MEMBER_PAGE_SIZE, useMemberOverviewStore } from '../../store/modules/memberOverview.js'
+import {
+	MEMBER_PAGE_SIZE,
+	useMemberOverviewStore,
+} from '../../store/modules/memberOverview.js'
 
 export default {
 	name: 'MemberOverviewSection',
@@ -152,12 +169,21 @@ export default {
 				{ key: 'userId', label: this.t('keepiq', 'User ID') },
 				{ key: 'vaultStatus', label: this.t('keepiq', 'Vault') },
 				{ key: 'secretCount', label: this.t('keepiq', 'Secrets') },
-				{ key: 'teamFolderMemberships', label: this.t('keepiq', 'Team folders') },
-				{ key: 'hasEmergencyContact', label: this.t('keepiq', 'Emergency contact') },
+				{
+					key: 'teamFolderMemberships',
+					label: this.t('keepiq', 'Team folders'),
+				},
+				{
+					key: 'hasEmergencyContact',
+					label: this.t('keepiq', 'Emergency contact'),
+				},
 			]
 		},
 	},
 
+	/**
+	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.1
+	 */
 	created() {
 		this.statusOption = this.statusOptions[0]
 		this.store.fetchMembers({ status: '', search: '', offset: 0 })
@@ -172,12 +198,14 @@ export default {
 		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.1
 		 */
 		statusLabel(status) {
-			return {
-				none: this.t('keepiq', 'Not set up'),
-				active: this.t('keepiq', 'Active'),
-				revoked: this.t('keepiq', 'Revoked'),
-				compromised: this.t('keepiq', 'Compromised'),
-			}[status] ?? status
+			return (
+				{
+					none: this.t('keepiq', 'Not set up'),
+					active: this.t('keepiq', 'Active'),
+					revoked: this.t('keepiq', 'Revoked'),
+					compromised: this.t('keepiq', 'Compromised'),
+				}[status] ?? status
+			)
 		},
 
 		/**
