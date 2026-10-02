@@ -1303,7 +1303,12 @@ OC.L10N.register(
         "Give new team folder members access without waiting for the folder owner.": "Давайте доступ новым участникам, не дожидаясь владельца папки.",
         "New team folder members": "Новые участники командных папок",
         "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Владелец или участник с правом записи подтверждает их из открытого хранилища. Keepiq никогда не расшифровывает на сервере.",
-        "Waiting for a member with write access to open Keepiq. You can also share now.": "Ожидание, пока участник с правом записи откроет Keepiq. Можно поделиться и сейчас."
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Ожидание, пока участник с правом записи откроет Keepiq. Можно поделиться и сейчас.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Часть реакции на компрометацию не выполнена ({failed} шаг(ов)). Проверьте журнал сервера, затем снова отзовите набор, чтобы завершить её.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Это также отозвало набор {suite} и завершило миграцию ключей {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Отзыв второго набора удалил %n контакт аварийного доступа.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Отзыв второго набора удалил %n контактов аварийного доступа.",
+        "A suite revoked as compromised cannot be reinstated.": "Набор, отозванный как скомпрометированный, нельзя восстановить."
     },
     "nplurals=2; plural=(n != 1);"
 )

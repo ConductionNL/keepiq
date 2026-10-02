@@ -1303,7 +1303,12 @@ OC.L10N.register(
         "Give new team folder members access without waiting for the folder owner.": "Dajte novim članovima pristup bez čekanja vlasnika foldera.",
         "New team folder members": "Novi članovi timskih foldera",
         "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Vlasnik ili član s pravom pisanja potvrđuje ih iz otvorenog trezora. Keepiq nikad ne dešifruje na serveru.",
-        "Waiting for a member with write access to open Keepiq. You can also share now.": "Čeka se da član s pravom pisanja otvori Keepiq. Možete i odmah dijeliti."
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Čeka se da član s pravom pisanja otvori Keepiq. Možete i odmah dijeliti.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Dio odgovora na kompromitaciju nije uspio ({failed} korak(a)). Provjerite zapisnik servera, a zatim ponovo opozovite paket da ga završite.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Time je opozvan i paket {suite} i završena migracija ključeva {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Opoziv drugog paketa izbrisao je %n kontakt za hitni pristup.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Opoziv drugog paketa izbrisao je %n kontakata za hitni pristup.",
+        "A suite revoked as compromised cannot be reinstated.": "Paket opozvan kao kompromitovan ne može se vratiti."
     },
     "nplurals=2; plural=(n != 1);"
 )

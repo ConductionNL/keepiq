@@ -1302,7 +1302,12 @@
         "Give new team folder members access without waiting for the folder owner.": "Adjon hozzáférést az új tagoknak a mappa tulajdonosára várás nélkül.",
         "New team folder members": "Új csapatmappa-tagok",
         "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "A tulajdonos vagy egy írási joggal rendelkező tag erősíti meg őket a megnyitott széfből. A Keepiq soha nem fejt vissza a szerveren.",
-        "Waiting for a member with write access to open Keepiq. You can also share now.": "Várakozás egy írási joggal rendelkező tagra, hogy megnyissa a Keepiqet. Most is megoszthatja."
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Várakozás egy írási joggal rendelkező tagra, hogy megnyissa a Keepiqet. Most is megoszthatja.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "A kompromittálásra adott válasz egy része sikertelen volt ({failed} lépés). Ellenőrizze a kiszolgáló naplóját, majd vonja vissza újra a csomagot a befejezéshez.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Ez a(z) {suite} csomagot is visszavonta, és befejezte a(z) {migration} kulcsmigrációt.",
+        "Revoking the second suite deleted %n emergency-access contact.": "A második csomag visszavonása %n vészhelyzeti hozzáférési kapcsolatot törölt.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "A második csomag visszavonása %n vészhelyzeti hozzáférési kapcsolatot törölt.",
+        "A suite revoked as compromised cannot be reinstated.": "A kompromittáltként visszavont csomag nem állítható vissza."
     },
     "plurals": null
 }

@@ -1303,7 +1303,12 @@ OC.L10N.register(
         "Give new team folder members access without waiting for the folder owner.": "Geben Sie neuen Teamordner-Mitgliedern Zugriff, ohne auf den Ordnereigentümer zu warten.",
         "New team folder members": "Neue Teamordner-Mitglieder",
         "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Der Eigentümer oder ein Mitglied mit Schreibrechten bestätigt sie aus dem geöffneten Tresor. Keepiq entschlüsselt nie auf dem Server.",
-        "Waiting for a member with write access to open Keepiq. You can also share now.": "Warten auf ein Mitglied mit Schreibrechten, das Keepiq öffnet. Sie können auch jetzt teilen."
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Warten auf ein Mitglied mit Schreibrechten, das Keepiq öffnet. Sie können auch jetzt teilen.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Ein Teil der Kompromittierungsreaktion ist fehlgeschlagen ({failed} Schritt(e)). Prüfen Sie das Serverprotokoll und widerrufen Sie die Suite dann erneut, um sie abzuschließen.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Dadurch wurde auch die Suite {suite} widerrufen und die Schlüsselmigration {migration} beendet.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Der Widerruf der zweiten Suite hat %n Notfallzugangskontakt gelöscht.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Der Widerruf der zweiten Suite hat %n Notfallzugangskontakte gelöscht.",
+        "A suite revoked as compromised cannot be reinstated.": "Eine als kompromittiert widerrufene Suite kann nicht wiederhergestellt werden."
     },
     "nplurals=2; plural=(n != 1);"
 )

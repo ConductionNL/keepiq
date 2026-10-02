@@ -1303,7 +1303,12 @@ OC.L10N.register(
         "Give new team folder members access without waiting for the folder owner.": "Anna uusille tiimikansion jäsenille pääsy odottamatta kansion omistajaa.",
         "New team folder members": "Uudet tiimikansion jäsenet",
         "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Omistaja tai kirjoitusoikeudellinen jäsen vahvistaa heidät avoimesta holvistaan. Keepiq ei koskaan pura salausta palvelimella.",
-        "Waiting for a member with write access to open Keepiq. You can also share now.": "Odotetaan, että kirjoitusoikeudellinen jäsen avaa Keepiqin. Voit myös jakaa nyt."
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Odotetaan, että kirjoitusoikeudellinen jäsen avaa Keepiqin. Voit myös jakaa nyt.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Osa vaarantumisvasteesta epäonnistui ({failed} vaihe(tta)). Tarkista palvelimen loki ja peru sitten sarja uudelleen viimeistelläksesi sen.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Tämä perui myös sarjan {suite} ja päätti avainten siirron {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Toisen sarjan peruminen poisti %n hätäkäyttöyhteystiedon.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Toisen sarjan peruminen poisti %n hätäkäyttöyhteystietoa.",
+        "A suite revoked as compromised cannot be reinstated.": "Vaarantuneena perutun sarjan palauttaminen ei ole mahdollista."
     },
     "nplurals=2; plural=(n != 1);"
 )

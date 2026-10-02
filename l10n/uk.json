@@ -1302,7 +1302,12 @@
         "Give new team folder members access without waiting for the folder owner.": "Надавайте доступ новим учасникам, не чекаючи на власника теки.",
         "New team folder members": "Нові учасники командних тек",
         "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Власник або учасник із правом запису підтверджує їх із відкритого сховища. Keepiq ніколи не розшифровує на сервері.",
-        "Waiting for a member with write access to open Keepiq. You can also share now.": "Очікування, поки учасник із правом запису відкриє Keepiq. Можна поділитися й зараз."
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Очікування, поки учасник із правом запису відкриє Keepiq. Можна поділитися й зараз.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Частину реакції на компрометацію не виконано ({failed} крок(ів)). Перевірте журнал сервера, а потім знову відкличте набір, щоб завершити її.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Це також відкликало набір {suite} і завершило міграцію ключів {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Відкликання другого набору видалило %n контакт аварійного доступу.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Відкликання другого набору видалило %n контактів аварійного доступу.",
+        "A suite revoked as compromised cannot be reinstated.": "Набір, відкликаний як скомпрометований, не можна відновити."
     },
     "plurals": null
 }

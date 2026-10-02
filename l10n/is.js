@@ -1303,7 +1303,12 @@ OC.L10N.register(
         "Give new team folder members access without waiting for the folder owner.": "Gefðu nýjum meðlimum aðgang án þess að bíða eftir eiganda möppunnar.",
         "New team folder members": "Nýir meðlimir teymismappa",
         "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Eigandinn eða meðlimur með skrifaðgang staðfestir þá úr opnu hólfi sínu. Keepiq afkóðar aldrei á þjóninum.",
-        "Waiting for a member with write access to open Keepiq. You can also share now.": "Beðið eftir að meðlimur með skrifaðgang opni Keepiq. Þú getur líka deilt núna."
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Beðið eftir að meðlimur með skrifaðgang opni Keepiq. Þú getur líka deilt núna.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Hluti af viðbrögðum við öryggisbresti mistókst ({failed} skref). Skoðaðu annál þjónsins og afturkallaðu svítuna aftur til að ljúka því.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Þetta afturkallaði einnig svítu {suite} og lauk lyklaflutningi {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Afturköllun seinni svítunnar eyddi %n neyðaraðgangstengilið.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Afturköllun seinni svítunnar eyddi %n neyðaraðgangstengiliðum.",
+        "A suite revoked as compromised cannot be reinstated.": "Ekki er hægt að endurheimta svítu sem var afturkölluð sem í hættu."
     },
     "nplurals=2; plural=(n != 1);"
 )

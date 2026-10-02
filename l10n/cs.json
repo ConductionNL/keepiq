@@ -1302,7 +1302,12 @@
         "Give new team folder members access without waiting for the folder owner.": "Dejte novým členům přístup bez čekání na vlastníka složky.",
         "New team folder members": "Noví členové týmových složek",
         "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Vlastník nebo člen s právem zápisu je potvrdí ze svého otevřeného trezoru. Keepiq nikdy nedešifruje na serveru.",
-        "Waiting for a member with write access to open Keepiq. You can also share now.": "Čeká se, až člen s právem zápisu otevře Keepiq. Můžete také sdílet hned."
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Čeká se, až člen s právem zápisu otevře Keepiq. Můžete také sdílet hned.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Část reakce na kompromitaci selhala ({failed} krok(ů)). Zkontrolujte protokol serveru a poté sadu znovu odvolejte, abyste ji dokončili.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Tím byla odvolána také sada {suite} a ukončena migrace klíčů {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Odvolání druhé sady smazalo %n kontakt nouzového přístupu.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Odvolání druhé sady smazalo %n kontaktů nouzového přístupu.",
+        "A suite revoked as compromised cannot be reinstated.": "Sadu odvolanou jako kompromitovanou nelze obnovit."
     },
     "plurals": null
 }

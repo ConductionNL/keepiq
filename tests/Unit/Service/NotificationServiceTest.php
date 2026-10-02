@@ -242,6 +242,9 @@ class NotificationServiceTest extends TestCase {
 			'secret_compromised',
 			'request_fulfilled',
 			'app_pending',
+			'shared_secret_compromised',
+			'emergency_grantee_compromised',
+			'emergency_access_cleared',
 		];
 
 		foreach ($expected as $subject) {

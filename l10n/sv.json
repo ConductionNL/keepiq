@@ -1302,7 +1302,12 @@
         "Give new team folder members access without waiting for the folder owner.": "Ge nya teammappsmedlemmar åtkomst utan att vänta på mappens ägare.",
         "New team folder members": "Nya teammappsmedlemmar",
         "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Ägaren eller en medlem med skrivrätt bekräftar dem från sitt öppna valv. Keepiq dekrypterar aldrig på servern.",
-        "Waiting for a member with write access to open Keepiq. You can also share now.": "Väntar på att en medlem med skrivrätt öppnar Keepiq. Du kan också dela nu."
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Väntar på att en medlem med skrivrätt öppnar Keepiq. Du kan också dela nu.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "En del av kompromissvaret misslyckades ({failed} steg). Kontrollera serverloggen och återkalla sedan sviten igen för att slutföra.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Detta återkallade även svit {suite} och avslutade nyckelmigrering {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Återkallandet av den andra sviten tog bort %n nödåtkomstkontakt.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Återkallandet av den andra sviten tog bort %n nödåtkomstkontakter.",
+        "A suite revoked as compromised cannot be reinstated.": "En svit som återkallats som komprometterad kan inte återställas."
     },
     "plurals": null
 }

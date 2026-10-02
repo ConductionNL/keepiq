@@ -1303,7 +1303,12 @@ OC.L10N.register(
         "Give new team folder members access without waiting for the folder owner.": "Andke uutele liikmetele juurdepääs kausta omanikku ootamata.",
         "New team folder members": "Uued meeskonnakaustade liikmed",
         "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Omanik või kirjutusõigusega liige kinnitab nad oma avatud hoidlast. Keepiq ei dekrüpteeri kunagi serveris.",
-        "Waiting for a member with write access to open Keepiq. You can also share now.": "Ootame, et kirjutusõigusega liige avaks Keepiqi. Saate ka kohe jagada."
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Ootame, et kirjutusõigusega liige avaks Keepiqi. Saate ka kohe jagada.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Osa ohustumisele reageerimisest ebaõnnestus ({failed} samm(u)). Kontrollige serveri logi ja tühistage seejärel komplekt uuesti, et see lõpetada.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "See tühistas ka komplekti {suite} ja lõpetas võtmete migratsiooni {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Teise komplekti tühistamine kustutas %n hädaabijuurdepääsu kontakti.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Teise komplekti tühistamine kustutas %n hädaabijuurdepääsu kontakti.",
+        "A suite revoked as compromised cannot be reinstated.": "Ohustatuna tühistatud komplekti ei saa taastada."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1302,7 +1302,12 @@
         "Give new team folder members access without waiting for the folder owner.": "Дајте им пристап на новите членови без да чекате на сопственикот на папката.",
         "New team folder members": "Нови членови на тимски папки",
         "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Сопственикот или член со право на запишување ги потврдува од отворениот сеф. Keepiq никогаш не дешифрира на серверот.",
-        "Waiting for a member with write access to open Keepiq. You can also share now.": "Се чека член со право на запишување да го отвори Keepiq. Може да споделите и сега."
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Се чека член со право на запишување да го отвори Keepiq. Може да споделите и сега.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Дел од одговорот на компромитирање не успеа ({failed} чекор(и)). Проверете го дневникот на серверот, а потоа повторно отповикајте го пакетот за да го завршите.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Со ова е отповикан и пакетот {suite} и завршена миграцијата на клучеви {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Отповикувањето на вториот пакет избриша %n контакт за итен пристап.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Отповикувањето на вториот пакет избриша %n контакти за итен пристап.",
+        "A suite revoked as compromised cannot be reinstated.": "Пакет отповикан како компромитиран не може да се врати."
     },
     "plurals": null
 }

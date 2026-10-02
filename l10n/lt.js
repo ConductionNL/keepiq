@@ -1303,7 +1303,12 @@ OC.L10N.register(
         "Give new team folder members access without waiting for the folder owner.": "Suteikite prieigą naujiems nariams nelaukdami aplanko savininko.",
         "New team folder members": "Nauji komandos aplankų nariai",
         "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Savininkas arba narys su rašymo teise juos patvirtina iš atidarytos saugyklos. Keepiq niekada neiššifruoja serveryje.",
-        "Waiting for a member with write access to open Keepiq. You can also share now.": "Laukiama, kol narys su rašymo teise atidarys Keepiq. Taip pat galite bendrinti dabar."
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Laukiama, kol narys su rašymo teise atidarys Keepiq. Taip pat galite bendrinti dabar.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Dalis reakcijos į kompromitavimą nepavyko ({failed} žingsnis(-iai)). Patikrinkite serverio žurnalą ir vėl atšaukite rinkinį, kad ją užbaigtumėte.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Tai taip pat atšaukė rinkinį {suite} ir užbaigė raktų perkėlimą {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Antrojo rinkinio atšaukimas ištrynė %n avarinės prieigos kontaktą.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Antrojo rinkinio atšaukimas ištrynė %n avarinės prieigos kontaktų.",
+        "A suite revoked as compromised cannot be reinstated.": "Rinkinio, atšaukto kaip kompromituoto, atkurti negalima."
     },
     "nplurals=2; plural=(n != 1);"
 )

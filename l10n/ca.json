@@ -1302,7 +1302,12 @@
         "Give new team folder members access without waiting for the folder owner.": "Doneu accés als membres nous sense esperar el propietari de la carpeta.",
         "New team folder members": "Membres nous de les carpetes d'equip",
         "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "El propietari o un membre amb permís d'escriptura els confirma des de la seva caixa forta oberta. Keepiq mai desxifra al servidor.",
-        "Waiting for a member with write access to open Keepiq. You can also share now.": "S'espera que un membre amb permís d'escriptura obri Keepiq. També podeu compartir ara."
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "S'espera que un membre amb permís d'escriptura obri Keepiq. També podeu compartir ara.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Part de la resposta al compromís ha fallat ({failed} pas(sos)). Consulteu el registre del servidor i torneu a revocar la suite per acabar-la.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Això també ha revocat la suite {suite} i ha finalitzat la migració de claus {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Revocar la segona suite ha suprimit %n contacte d'accés d'emergència.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Revocar la segona suite ha suprimit %n contactes d'accés d'emergència.",
+        "A suite revoked as compromised cannot be reinstated.": "Una suite revocada com a compromesa no es pot restablir."
     },
     "plurals": null
 }

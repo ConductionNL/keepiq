@@ -1303,7 +1303,12 @@ OC.L10N.register(
         "Give new team folder members access without waiting for the folder owner.": "Dajte novým členom prístup bez čakania na vlastníka priečinka.",
         "New team folder members": "Noví členovia tímových priečinkov",
         "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Vlastník alebo člen s právom zápisu ich potvrdí zo svojho otvoreného trezoru. Keepiq nikdy nedešifruje na serveri.",
-        "Waiting for a member with write access to open Keepiq. You can also share now.": "Čaká sa, kým člen s právom zápisu otvorí Keepiq. Môžete aj zdieľať hneď."
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Čaká sa, kým člen s právom zápisu otvorí Keepiq. Môžete aj zdieľať hneď.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Časť reakcie na kompromitáciu zlyhala ({failed} krok(ov)). Skontrolujte protokol servera a potom sadu znova odvolajte, aby ste ju dokončili.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Tým sa odvolala aj sada {suite} a ukončila migrácia kľúčov {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Odvolanie druhej sady odstránilo %n kontakt núdzového prístupu.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Odvolanie druhej sady odstránilo %n kontaktov núdzového prístupu.",
+        "A suite revoked as compromised cannot be reinstated.": "Sadu odvolanú ako kompromitovanú nemožno obnoviť."
     },
     "nplurals=2; plural=(n != 1);"
 )

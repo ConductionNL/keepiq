@@ -1303,7 +1303,12 @@ OC.L10N.register(
         "Give new team folder members access without waiting for the folder owner.": "Dodiet piekļuvi jaunajiem dalībniekiem, negaidot mapes īpašnieku.",
         "New team folder members": "Jauni komandas mapju dalībnieki",
         "The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.": "Īpašnieks vai dalībnieks ar rakstīšanas tiesībām tos apstiprina no atvērtās glabātavas. Keepiq nekad neatšifrē serverī.",
-        "Waiting for a member with write access to open Keepiq. You can also share now.": "Gaida, kamēr dalībnieks ar rakstīšanas tiesībām atvērs Keepiq. Varat kopīgot arī tūlīt."
+        "Waiting for a member with write access to open Keepiq. You can also share now.": "Gaida, kamēr dalībnieks ar rakstīšanas tiesībām atvērs Keepiq. Varat kopīgot arī tūlīt.",
+        "Part of the compromise response failed ({failed} step(s)). Check the server log, then force-revoke the suite again to finish it.": "Daļa no reakcijas uz kompromitēšanu neizdevās ({failed} solis(-ļi)). Pārbaudiet servera žurnālu un pēc tam atsauciet komplektu vēlreiz, lai to pabeigtu.",
+        "This also revoked suite {suite} and ended key migration {migration}.": "Tas atsauca arī komplektu {suite} un pabeidza atslēgu migrāciju {migration}.",
+        "Revoking the second suite deleted %n emergency-access contact.": "Otrā komplekta atsaukšana izdzēsa %n ārkārtas piekļuves kontaktu.",
+        "Revoking the second suite deleted %n emergency-access contacts.": "Otrā komplekta atsaukšana izdzēsa %n ārkārtas piekļuves kontaktus.",
+        "A suite revoked as compromised cannot be reinstated.": "Komplektu, kas atsaukts kā kompromitēts, nevar atjaunot."
     },
     "nplurals=2; plural=(n != 1);"
 )
