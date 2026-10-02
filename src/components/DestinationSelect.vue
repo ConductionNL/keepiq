@@ -131,6 +131,16 @@ export default {
 			default: null,
 		},
 
+		/**
+		 * When set, offer only these folder ids: the team folder ownership
+		 * policy limits a covered type to the user's own team folders
+		 * (admin-vault-policies §4.3). Null offers everything.
+		 */
+		onlyIds: {
+			type: Array,
+			default: null,
+		},
+
 		/** The control's label. */
 		label: {
 			type: String,
@@ -169,8 +179,11 @@ export default {
 		 */
 		options() {
 			const rows = destinationRows(useFolderStore().folders, this.excludeId)
-			const candidates =
+			let candidates =
 				this.mode === 'vaults' ? rows.filter((row) => row.depth === 0) : rows
+			if (Array.isArray(this.onlyIds)) {
+				candidates = candidates.filter((row) => this.onlyIds.includes(row.id))
+			}
 			return candidates.map((row) => ({
 				value: row.id,
 				label: row.name,

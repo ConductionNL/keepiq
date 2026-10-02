@@ -6,6 +6,7 @@ import { PASSKEY_TYPE_NAME, passkeyRpId } from '../../passkey/passkey.js'
 import { useOfflineStore } from './offline.js'
 import { useSecretTypeStore } from './secretType.js'
 import { useSessionStore } from './session.js'
+import { useShareStore } from './share.js'
 
 /**
  * Pinia store for secrets.
@@ -398,6 +399,56 @@ export const useSecretStore = defineStore('secret', {
 			}
 			const type = useSecretTypeStore().typesById[typeId]
 			return Boolean(type) && type.name === PASSKEY_TYPE_NAME
+		},
+
+		/**
+		 * Save a new secret into a team folder the user does not own, as a
+		 * member with write access (admin-vault-policies D5). The value is
+		 * encrypted in this browser for the folder owner (the owner row) and
+		 * for every member, this user included. Only ciphertext is sent.
+		 *
+		 * @param {string} teamFolderId The team folder.
+		 * @param {object} data name, url, typeId, key, login, additionalFields (plaintext).
+		 * @return {Promise<object>} The stored owner row and the copy count.
+		 * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
+		 */
+		async contributeSecret(teamFolderId, data) {
+			const context = (await axios.get(
+				generateUrl(`/apps/keepiq/api/v1/team-folders/${teamFolderId}/contribution-context`),
+			)).data
+			const fields = {
+				key: String(data.key ?? ''),
+				login: data.login ? String(data.login) : '',
+				additionalFields: data.additionalFields
+					? (typeof data.additionalFields === 'string' ? data.additionalFields : JSON.stringify(data.additionalFields))
+					: '',
+			}
+			const shareStore = useShareStore()
+			const owner = await shareStore.encryptForRecipient(fields, context.ownerCertificate)
+			const copies = []
+			for (const recipient of context.recipients ?? []) {
+				const blob = await shareStore.encryptForRecipient(fields, recipient.certificate)
+				copies.push({
+					targetUserId: recipient.userId,
+					encryptedKey: blob.key ?? '',
+					encryptedLogin: blob.login ?? null,
+					encryptedAdditionalFields: blob.additionalFields ?? null,
+				})
+			}
+			const response = await axios.post(
+				generateUrl(`/apps/keepiq/api/v1/team-folders/${teamFolderId}/secrets`),
+				{
+					name: data.name,
+					url: data.url ?? null,
+					typeId: data.typeId ?? null,
+					folderId: data.folderId ?? null,
+					key: owner.key ?? '',
+					login: owner.login ?? null,
+					additionalFields: owner.additionalFields ?? null,
+					copies,
+				},
+			)
+			return response.data
 		},
 
 		/**
