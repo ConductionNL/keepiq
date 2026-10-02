@@ -1482,7 +1482,10 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Dieser Ordner enthält direkt %n Geheimnis.","Dieser Ordner enthält direkt %n Geheimnisse."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Ihre Schlüsselrotation hat %n Notfallkontakt entfernt. Prüfen Sie den Notfallzugriff und fügen Sie ihn erneut hinzu, wenn Sie ihn noch möchten.","Ihre Schlüsselrotation hat %n Notfallkontakte entfernt. Prüfen Sie den Notfallzugriff und fügen Sie sie erneut hinzu, wenn Sie sie noch möchten."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n Änderung wartet auf Synchronisierung","%n Änderungen warten auf Synchronisierung"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Der Benutzer ist noch in der Gruppe {groups}, die Mitglied eines Teamordners ist. Entfernen Sie ihn aus der Gruppe oder deaktivieren Sie das Konto.","Der Benutzer ist noch in den Gruppen {groups}, die Mitglieder von Teamordnern sind. Entfernen Sie ihn aus den Gruppen oder deaktivieren Sie das Konto."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Der Benutzer ist noch in der Gruppe {groups}, die Mitglied eines Teamordners ist. Entfernen Sie ihn aus der Gruppe oder deaktivieren Sie das Konto.","Der Benutzer ist noch in den Gruppen {groups}, die Mitglieder von Teamordnern sind. Entfernen Sie ihn aus den Gruppen oder deaktivieren Sie das Konto."],
+        "Recipient": "Empfänger",
+        "No vault yet": "Noch kein Tresor",
+        "No matching users": "Keine passenden Benutzer"
     },
     "nplurals=2; plural=(n != 1);"
 )

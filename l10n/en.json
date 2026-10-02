@@ -1553,7 +1553,10 @@
         "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
             "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.",
             "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account."
-        ]
+        ],
+        "Recipient": "Recipient",
+        "No vault yet": "No vault yet",
+        "No matching users": "No matching users"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

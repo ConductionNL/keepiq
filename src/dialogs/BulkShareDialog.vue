@@ -25,13 +25,14 @@
 		data-testid="bulk-share-dialog"
 		@update:open="$emit('close')">
 		<div class="bulk-share">
-			<label v-if="!finished" class="bulk-share__field">
-				<span>{{ t('keepiq', 'Recipient user ID') }}</span>
-				<input
+			<div
+				v-if="!finished"
+				class="bulk-share__field"
+				data-testid="bulk-share-recipient">
+				<RecipientPicker
 					v-model="targetUserId"
-					type="text"
-					data-testid="bulk-share-recipient" />
-			</label>
+					:disabled="bulk.progress.running" />
+			</div>
 			<p v-if="error" class="bulk-share__error" data-testid="bulk-share-error">
 				{{ error }}
 			</p>
@@ -64,6 +65,7 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcDialog } from '@nextcloud/vue'
 import BulkRunPanel from '../components/BulkRunPanel.vue'
+import RecipientPicker from '../components/share/RecipientPicker.vue'
 import { useBulkStore } from '../store/modules/bulk.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useShareStore } from '../store/modules/share.js'
@@ -74,6 +76,7 @@ export default {
 		NcButton,
 		NcDialog,
 		BulkRunPanel,
+		RecipientPicker,
 	},
 
 	props: {
@@ -255,12 +258,6 @@ export default {
 	display: flex;
 	flex-direction: column;
 	gap: 4px;
-}
-
-.bulk-share__field input {
-	padding: 8px;
-	border: 1px solid var(--color-border-dark, #999);
-	border-radius: var(--border-radius, 4px);
 }
 
 .bulk-share__error {

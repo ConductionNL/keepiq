@@ -1482,7 +1482,10 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Bu klasör doğrudan %n gizli içeriyor."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Anahtar döndürmeniz %n acil durum kişisini kaldırdı. Acil durum erişimini kontrol edin ve hâlâ istiyorsanız yeniden ekleyin."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n değişiklik eşitlenmeyi bekliyor"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Kullanıcı hâlâ bir ekip klasörünün üyesi olan {groups} grubunda. Kullanıcıyı gruptan çıkarın veya hesabı devre dışı bırakın."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Kullanıcı hâlâ bir ekip klasörünün üyesi olan {groups} grubunda. Kullanıcıyı gruptan çıkarın veya hesabı devre dışı bırakın."],
+        "Recipient": "Alıcı",
+        "No vault yet": "Henüz kasası yok",
+        "No matching users": "Eşleşen kullanıcı yok"
     },
     "nplurals=1; plural=0;"
 )

@@ -1577,7 +1577,10 @@
             "Korisnik je još u grupi {groups}, koja je članica timskog foldera. Uklonite ga iz grupe ili onemogućite račun.",
             "Korisnik je još u grupama {groups}, koje su članice timskih foldera. Uklonite ga iz grupa ili onemogućite račun.",
             "Korisnik je još u grupama {groups}, koje su članice timskih foldera. Uklonite ga iz grupa ili onemogućite račun."
-        ]
+        ],
+        "Recipient": "Primalac",
+        "No vault yet": "Još nema trezora",
+        "No matching users": "Nema odgovarajućih korisnika"
     },
     "plurals": null
 }

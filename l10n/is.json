@@ -1553,7 +1553,10 @@
         "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
             "Notandinn er enn í hópnum {groups}, sem er meðlimur teymismöppu. Fjarlægðu hann úr hópnum eða gerðu aðganginn óvirkan.",
             "Notandinn er enn í hópunum {groups}, sem eru meðlimir teymismappa. Fjarlægðu hann úr hópunum eða gerðu aðganginn óvirkan."
-        ]
+        ],
+        "Recipient": "Viðtakandi",
+        "No vault yet": "Engin hvelfing enn",
+        "No matching users": "Engir notendur passa"
     },
     "plurals": null
 }

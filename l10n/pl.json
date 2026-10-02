@@ -1577,7 +1577,10 @@
             "Użytkownik nadal jest w grupie {groups}, która jest członkiem folderu zespołu. Usuń go z grupy lub wyłącz konto.",
             "Użytkownik nadal jest w grupach {groups}, które są członkami folderów zespołu. Usuń go z grup lub wyłącz konto.",
             "Użytkownik nadal jest w grupach {groups}, które są członkami folderów zespołu. Usuń go z grup lub wyłącz konto."
-        ]
+        ],
+        "Recipient": "Odbiorca",
+        "No vault yet": "Jeszcze bez skarbca",
+        "No matching users": "Brak pasujących użytkowników"
     },
     "plurals": null
 }

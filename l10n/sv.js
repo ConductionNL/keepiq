@@ -1482,7 +1482,10 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Den här mappen innehåller %n hemlighet direkt.","Den här mappen innehåller %n hemligheter direkt."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Din nyckelrotation tog bort %n nödkontakt. Kontrollera Nödåtkomst och lägg till den igen om du fortfarande vill ha den.","Din nyckelrotation tog bort %n nödkontakter. Kontrollera Nödåtkomst och lägg till dem igen om du fortfarande vill ha dem."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n ändring väntar på synkronisering","%n ändringar väntar på synkronisering"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Användaren finns fortfarande i gruppen {groups}, som är medlem i en teammapp. Ta bort användaren från gruppen eller inaktivera kontot.","Användaren finns fortfarande i grupperna {groups}, som är medlemmar i teammappar. Ta bort användaren från grupperna eller inaktivera kontot."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Användaren finns fortfarande i gruppen {groups}, som är medlem i en teammapp. Ta bort användaren från gruppen eller inaktivera kontot.","Användaren finns fortfarande i grupperna {groups}, som är medlemmar i teammappar. Ta bort användaren från grupperna eller inaktivera kontot."],
+        "Recipient": "Mottagare",
+        "No vault yet": "Har inget valv än",
+        "No matching users": "Inga matchande användare"
     },
     "nplurals=2; plural=(n != 1);"
 )

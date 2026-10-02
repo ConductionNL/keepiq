@@ -1558,7 +1558,10 @@
         "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
             "De gebruiker zit nog in groep {groups}, die lid is van een teammap. Haal de gebruiker uit de groep of schakel het account uit.",
             "De gebruiker zit nog in groepen {groups}, die lid zijn van teammappen. Haal de gebruiker uit de groepen of schakel het account uit."
-        ]
+        ],
+        "Recipient": "Ontvanger",
+        "No vault yet": "Nog geen kluis",
+        "No matching users": "Geen gebruikers gevonden"
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"

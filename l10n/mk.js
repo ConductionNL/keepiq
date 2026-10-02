@@ -1482,7 +1482,10 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Оваа папка содржи директно %n тајна.","Оваа папка содржи директно %n тајни."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Ротацијата на клучот отстрани %n контакт за итни случаи. Проверете „Пристап во итни случаи“ и додајте го повторно ако сè уште го сакате.","Ротацијата на клучот отстрани %n контакти за итни случаи. Проверете „Пристап во итни случаи“ и додајте ги повторно ако сè уште ги сакате."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n промена чека синхронизација","%n промени чекаат синхронизација"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Корисникот е сè уште во групата {groups}, која е членка на тимска папка. Отстранете го од групата или оневозможете ја сметката.","Корисникот е сè уште во групите {groups}, кои се членки на тимски папки. Отстранете го од групите или оневозможете ја сметката."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Корисникот е сè уште во групата {groups}, која е членка на тимска папка. Отстранете го од групата или оневозможете ја сметката.","Корисникот е сè уште во групите {groups}, кои се членки на тимски папки. Отстранете го од групите или оневозможете ја сметката."],
+        "Recipient": "Примач",
+        "No vault yet": "Сè уште нема трезор",
+        "No matching users": "Нема соодветни корисници"
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

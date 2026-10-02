@@ -1553,7 +1553,10 @@
         "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
             "L'usuari encara és al grup {groups}, que és membre d'una carpeta d'equip. Traieu-lo del grup o desactiveu el compte.",
             "L'usuari encara és als grups {groups}, que són membres de carpetes d'equip. Traieu-lo dels grups o desactiveu el compte."
-        ]
+        ],
+        "Recipient": "Destinatari",
+        "No vault yet": "Encara no té cap caixa forta",
+        "No matching users": "No hi ha cap usuari coincident"
     },
     "plurals": null
 }

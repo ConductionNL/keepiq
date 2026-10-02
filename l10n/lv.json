@@ -1577,7 +1577,10 @@
             "Lietotājs joprojām ir grupā {groups}, kas ir komandas mapes dalībniece. Noņemiet viņu no grupas vai atspējojiet kontu.",
             "Lietotājs joprojām ir grupās {groups}, kas ir komandas mapju dalībnieces. Noņemiet viņu no grupām vai atspējojiet kontu.",
             "Lietotājs joprojām ir grupās {groups}, kas ir komandas mapju dalībnieces. Noņemiet viņu no grupām vai atspējojiet kontu."
-        ]
+        ],
+        "Recipient": "Saņēmējs",
+        "No vault yet": "Vēl nav glabātuves",
+        "No matching users": "Nav atbilstošu lietotāju"
     },
     "plurals": null
 }

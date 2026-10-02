@@ -1577,7 +1577,10 @@
             "Utilizatorul este încă în grupul {groups}, care este membru al unui dosar de echipă. Scoateți-l din grup sau dezactivați contul.",
             "Utilizatorul este încă în grupurile {groups}, care sunt membre ale unor dosare de echipă. Scoateți-l din grupuri sau dezactivați contul.",
             "Utilizatorul este încă în grupurile {groups}, care sunt membre ale unor dosare de echipă. Scoateți-l din grupuri sau dezactivați contul."
-        ]
+        ],
+        "Recipient": "Destinatar",
+        "No vault yet": "Încă nu are seif",
+        "No matching users": "Niciun utilizator potrivit"
     },
     "plurals": null
 }

@@ -1482,7 +1482,10 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Tämä kansio sisältää suoraan %n salaisuuden.","Tämä kansio sisältää suoraan %n salaisuutta."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Avaimen kierto poisti %n hätäyhteyshenkilön. Tarkista Hätäkäyttöoikeus ja lisää hänet uudelleen, jos haluat hänet yhä.","Avaimen kierto poisti %n hätäyhteyshenkilöä. Tarkista Hätäkäyttöoikeus ja lisää heidät uudelleen, jos haluat heidät yhä."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n muutos odottaa synkronointia","%n muutosta odottaa synkronointia"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Käyttäjä on yhä ryhmässä {groups}, joka on tiimikansion jäsen. Poista käyttäjä ryhmästä tai poista tili käytöstä.","Käyttäjä on yhä ryhmissä {groups}, jotka ovat tiimikansioiden jäseniä. Poista käyttäjä ryhmistä tai poista tili käytöstä."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Käyttäjä on yhä ryhmässä {groups}, joka on tiimikansion jäsen. Poista käyttäjä ryhmästä tai poista tili käytöstä.","Käyttäjä on yhä ryhmissä {groups}, jotka ovat tiimikansioiden jäseniä. Poista käyttäjä ryhmistä tai poista tili käytöstä."],
+        "Recipient": "Vastaanottaja",
+        "No vault yet": "Ei vielä holvia",
+        "No matching users": "Ei vastaavia käyttäjiä"
     },
     "nplurals=2; plural=(n != 1);"
 )

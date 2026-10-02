@@ -1457,7 +1457,10 @@
         "This secret changed while you were offline": "Quest secret è vegnì midà durant che Vus eras offline",
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Vus avais stizzà quest secret offline, ma el è vegnì midà sin il server dapi lura. Tscherni tge versiun mantegnair.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Vossas clavs èn vegnidas midadas sin in auter apparat. Endatai Voss pled-clav principal precedent per sincronisar las midadas offline, u bittai davent ellas.",
-        "Your offline change": "Vossa midada offline"
+        "Your offline change": "Vossa midada offline",
+        "Recipient": "Destinatari",
+        "No vault yet": "Anc nagina cassaforta",
+        "No matching users": "Nagins utilisaders correspundents"
     },
     "plurals": null
 }

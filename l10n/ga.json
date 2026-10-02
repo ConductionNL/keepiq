@@ -1577,7 +1577,10 @@
             "Tá an t-úsáideoir fós sa ghrúpa {groups}, atá ina bhall d'fhillteán foirne. Bain é den ghrúpa nó díchumasaigh an cuntas.",
             "Tá an t-úsáideoir fós sna grúpaí {groups}, atá ina mbaill d'fhillteáin foirne. Bain é de na grúpaí nó díchumasaigh an cuntas.",
             "Tá an t-úsáideoir fós sna grúpaí {groups}, atá ina mbaill d'fhillteáin foirne. Bain é de na grúpaí nó díchumasaigh an cuntas."
-        ]
+        ],
+        "Recipient": "Faighteoir",
+        "No vault yet": "Gan vailt fós",
+        "No matching users": "Níl aon úsáideoirí comhoiriúnacha"
     },
     "plurals": null
 }

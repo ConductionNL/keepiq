@@ -1553,7 +1553,10 @@
         "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
             "El usuario sigue en el grupo {groups}, que es miembro de una carpeta de equipo. Quítelo del grupo o desactive la cuenta.",
             "El usuario sigue en los grupos {groups}, que son miembros de carpetas de equipo. Quítelo de los grupos o desactive la cuenta."
-        ]
+        ],
+        "Recipient": "Destinatario",
+        "No vault yet": "Todavía sin bóveda",
+        "No matching users": "No hay usuarios que coincidan"
     },
     "plurals": null
 }

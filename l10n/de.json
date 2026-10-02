@@ -1553,7 +1553,10 @@
         "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
             "Der Benutzer ist noch in der Gruppe {groups}, die Mitglied eines Teamordners ist. Entfernen Sie ihn aus der Gruppe oder deaktivieren Sie das Konto.",
             "Der Benutzer ist noch in den Gruppen {groups}, die Mitglieder von Teamordnern sind. Entfernen Sie ihn aus den Gruppen oder deaktivieren Sie das Konto."
-        ]
+        ],
+        "Recipient": "Empfänger",
+        "No vault yet": "Noch kein Tresor",
+        "No matching users": "Keine passenden Benutzer"
     },
     "plurals": null
 }

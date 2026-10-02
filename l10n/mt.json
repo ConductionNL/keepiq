@@ -1601,7 +1601,10 @@
             "L-utent għadu fil-gruppi {groups}, li huma membri ta' folders tat-tim. Neħħih mill-gruppi jew iddiżattiva l-kont.",
             "L-utent għadu fil-gruppi {groups}, li huma membri ta' folders tat-tim. Neħħih mill-gruppi jew iddiżattiva l-kont.",
             "L-utent għadu fil-gruppi {groups}, li huma membri ta' folders tat-tim. Neħħih mill-gruppi jew iddiżattiva l-kont."
-        ]
+        ],
+        "Recipient": "Benefiċjarju",
+        "No vault yet": "Għad m’għandux vault",
+        "No matching users": "L-ebda utent ma jaqbel"
     },
     "plurals": null
 }

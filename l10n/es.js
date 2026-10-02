@@ -1482,7 +1482,10 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Esta carpeta contiene directamente %n secreto.","Esta carpeta contiene directamente %n secretos."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Tu rotación de clave retiró %n contacto de emergencia. Revisa Acceso de emergencia y vuelve a añadirlo si aún lo quieres.","Tu rotación de clave retiró %n contactos de emergencia. Revisa Acceso de emergencia y vuelve a añadirlos si aún los quieres."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n cambio pendiente de sincronizar","%n cambios pendientes de sincronizar"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["El usuario sigue en el grupo {groups}, que es miembro de una carpeta de equipo. Quítelo del grupo o desactive la cuenta.","El usuario sigue en los grupos {groups}, que son miembros de carpetas de equipo. Quítelo de los grupos o desactive la cuenta."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["El usuario sigue en el grupo {groups}, que es miembro de una carpeta de equipo. Quítelo del grupo o desactive la cuenta.","El usuario sigue en los grupos {groups}, que son miembros de carpetas de equipo. Quítelo de los grupos o desactive la cuenta."],
+        "Recipient": "Destinatario",
+        "No vault yet": "Todavía sin bóveda",
+        "No matching users": "No hay usuarios que coincidan"
     },
     "nplurals=2; plural=(n != 1);"
 )

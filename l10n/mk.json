@@ -1553,7 +1553,10 @@
         "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
             "Корисникот е сè уште во групата {groups}, која е членка на тимска папка. Отстранете го од групата или оневозможете ја сметката.",
             "Корисникот е сè уште во групите {groups}, кои се членки на тимски папки. Отстранете го од групите или оневозможете ја сметката."
-        ]
+        ],
+        "Recipient": "Примач",
+        "No vault yet": "Сè уште нема трезор",
+        "No matching users": "Нема соодветни корисници"
     },
     "plurals": null
 }

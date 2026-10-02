@@ -1601,7 +1601,10 @@
             "Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun.",
             "Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun.",
             "Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun."
-        ]
+        ],
+        "Recipient": "Prejemnik",
+        "No vault yet": "Še nima trezorja",
+        "No matching users": "Ni ustreznih uporabnikov"
     },
     "plurals": null
 }

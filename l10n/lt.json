@@ -1577,7 +1577,10 @@
             "Naudotojas vis dar yra grupėje {groups}, kuri yra komandos aplanko narė. Pašalinkite jį iš grupės arba išjunkite paskyrą.",
             "Naudotojas vis dar yra grupėse {groups}, kurios yra komandos aplankų narės. Pašalinkite jį iš grupių arba išjunkite paskyrą.",
             "Naudotojas vis dar yra grupėse {groups}, kurios yra komandos aplankų narės. Pašalinkite jį iš grupių arba išjunkite paskyrą."
-        ]
+        ],
+        "Recipient": "Gavėjas",
+        "No vault yet": "Dar neturi saugyklos",
+        "No matching users": "Atitinkančių vartotojų nėra"
     },
     "plurals": null
 }

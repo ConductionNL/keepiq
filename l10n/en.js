@@ -1482,7 +1482,10 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["This folder contains %n secret directly.","This folder contains %n secrets directly."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.","Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n change waiting to sync","%n changes waiting to sync"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.","The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.","The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account."],
+        "Recipient": "Recipient",
+        "No vault yet": "No vault yet",
+        "No matching users": "No matching users"
     },
     "nplurals=2; plural=(n != 1);"
 )

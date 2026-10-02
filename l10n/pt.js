@@ -1482,7 +1482,10 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Esta pasta contém %n segredo diretamente.","Esta pasta contém %n segredos diretamente."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["A rotação da chave removeu %n contacto de emergência. Verifique Acesso de emergência e adicione-o novamente se ainda o quiser.","A rotação da chave removeu %n contactos de emergência. Verifique Acesso de emergência e adicione-os novamente se ainda os quiser."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n alteração a aguardar sincronização","%n alterações a aguardar sincronização"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["O utilizador ainda está no grupo {groups}, que é membro de uma pasta de equipa. Remova-o do grupo ou desative a conta.","O utilizador ainda está nos grupos {groups}, que são membros de pastas de equipa. Remova-o dos grupos ou desative a conta."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["O utilizador ainda está no grupo {groups}, que é membro de uma pasta de equipa. Remova-o do grupo ou desative a conta.","O utilizador ainda está nos grupos {groups}, que são membros de pastas de equipa. Remova-o dos grupos ou desative a conta."],
+        "Recipient": "Destinatário",
+        "No vault yet": "Ainda sem cofre",
+        "No matching users": "Nenhum utilizador correspondente"
     },
     "nplurals=2; plural=(n != 1);"
 )

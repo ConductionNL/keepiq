@@ -1487,7 +1487,10 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Deze map bevat direct %n geheim.","Deze map bevat direct %n geheimen."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Je sleutelrotatie heeft %n noodcontact verwijderd. Kijk bij Noodtoegang en voeg het opnieuw toe als je het nog wilt.","Je sleutelrotatie heeft %n noodcontacten verwijderd. Kijk bij Noodtoegang en voeg ze opnieuw toe als je ze nog wilt."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n wijziging wacht op synchronisatie","%n wijzigingen wachten op synchronisatie"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["De gebruiker zit nog in groep {groups}, die lid is van een teammap. Haal de gebruiker uit de groep of schakel het account uit.","De gebruiker zit nog in groepen {groups}, die lid zijn van teammappen. Haal de gebruiker uit de groepen of schakel het account uit."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["De gebruiker zit nog in groep {groups}, die lid is van een teammap. Haal de gebruiker uit de groep of schakel het account uit.","De gebruiker zit nog in groepen {groups}, die lid zijn van teammappen. Haal de gebruiker uit de groepen of schakel het account uit."],
+        "Recipient": "Ontvanger",
+        "No vault yet": "Nog geen kluis",
+        "No matching users": "Geen gebruikers gevonden"
     },
     "nplurals=2; plural=(n != 1);"
 )

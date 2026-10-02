@@ -1577,7 +1577,10 @@
             "Používateľ je stále v skupine {groups}, ktorá je členom tímového priečinka. Odstráňte ho zo skupiny alebo zakážte účet.",
             "Používateľ je stále v skupinách {groups}, ktoré sú členmi tímových priečinkov. Odstráňte ho zo skupín alebo zakážte účet.",
             "Používateľ je stále v skupinách {groups}, ktoré sú členmi tímových priečinkov. Odstráňte ho zo skupín alebo zakážte účet."
-        ]
+        ],
+        "Recipient": "Príjemca",
+        "No vault yet": "Zatiaľ nemá trezor",
+        "No matching users": "Žiadni zodpovedajúci používatelia"
     },
     "plurals": null
 }

@@ -1482,7 +1482,10 @@ OC.L10N.register(
         "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": ["Αυτός ο φάκελος περιέχει %n μυστικό άμεσα.","Αυτός ο φάκελος περιέχει %n μυστικά άμεσα."],
         "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": ["Η εναλλαγή κλειδιού αφαίρεσε %n επαφή έκτακτης ανάγκης. Ελέγξτε την Πρόσβαση έκτακτης ανάγκης και προσθέστε την ξανά, αν τη θέλετε ακόμα.","Η εναλλαγή κλειδιού αφαίρεσε %n επαφές έκτακτης ανάγκης. Ελέγξτε την Πρόσβαση έκτακτης ανάγκης και προσθέστε τις ξανά, αν τις θέλετε ακόμα."],
         "_%n change waiting to sync_::_%n changes waiting to sync_": ["%n αλλαγή περιμένει συγχρονισμό","%n αλλαγές περιμένουν συγχρονισμό"],
-        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Ο χρήστης είναι ακόμη στην ομάδα {groups}, που είναι μέλος φακέλου ομάδας. Αφαιρέστε τον από την ομάδα ή απενεργοποιήστε τον λογαριασμό.","Ο χρήστης είναι ακόμη στις ομάδες {groups}, που είναι μέλη φακέλων ομάδας. Αφαιρέστε τον από τις ομάδες ή απενεργοποιήστε τον λογαριασμό."]
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": ["Ο χρήστης είναι ακόμη στην ομάδα {groups}, που είναι μέλος φακέλου ομάδας. Αφαιρέστε τον από την ομάδα ή απενεργοποιήστε τον λογαριασμό.","Ο χρήστης είναι ακόμη στις ομάδες {groups}, που είναι μέλη φακέλων ομάδας. Αφαιρέστε τον από τις ομάδες ή απενεργοποιήστε τον λογαριασμό."],
+        "Recipient": "Παραλήπτης",
+        "No vault yet": "Δεν έχει ακόμη θησαυροφυλάκιο",
+        "No matching users": "Δεν βρέθηκαν χρήστες"
     },
     "nplurals=2; plural=(n != 1);"
 )

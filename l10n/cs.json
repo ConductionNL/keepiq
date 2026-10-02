@@ -1577,7 +1577,10 @@
             "Uživatel je stále ve skupině {groups}, která je členem týmové složky. Odeberte ho ze skupiny nebo zakažte účet.",
             "Uživatel je stále ve skupinách {groups}, které jsou členy týmových složek. Odeberte ho ze skupin nebo zakažte účet.",
             "Uživatel je stále ve skupinách {groups}, které jsou členy týmových složek. Odeberte ho ze skupin nebo zakažte účet."
-        ]
+        ],
+        "Recipient": "Příjemce",
+        "No vault yet": "Zatím nemá trezor",
+        "No matching users": "Žádní odpovídající uživatelé"
     },
     "plurals": null
 }
