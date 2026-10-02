@@ -163,11 +163,6 @@ class AdminSettingsService {
 					$this->appConfig->getValueString($appId, 'expiry_reminder_days', '[30,7,1]'),
 					true
 				),
-				'expiry_policy_enforced' => $this->appConfig->getValueBool(
-					$appId,
-					'expiry_policy_enforced',
-					false
-				),
 				'version_retention_count' => $this->appConfig->getValueInt($appId, 'version_retention_count', 20),
 				'version_retention_days' => $this->appConfig->getValueInt($appId, 'version_retention_days', 365),
 				// Trash retention (vault-trash-and-archive D4), 1 to 365 days.
@@ -407,10 +402,6 @@ class AdminSettingsService {
 			}
 
 			$this->appConfig->setValueString($appId, 'expiry_reminder_days', (string)json_encode($thresholds));
-		}
-
-		if (isset($data['expiry_policy_enforced']) === true) {
-			$this->appConfig->setValueBool($appId, 'expiry_policy_enforced', (bool)$data['expiry_policy_enforced']);
 		}
 	}//end updateExpirySettings()
 
