@@ -1484,5 +1484,5 @@ OC.L10N.register(
         "A new device asks to open your vault": "In nov apparat dumonda dad avrir Voss tresor",
         "%s asks to be approved. Only approve a device you are using right now.": "%s dumonda d'esser approvà. Approvai mo in apparat che Vus utilisais gist ussa."
     },
-    "nplurals=2; plural=(n != 1);"
+    "nplurals=1; plural=0;"
 )
