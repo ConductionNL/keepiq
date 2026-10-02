@@ -523,9 +523,11 @@ class SecretService {
 	 * @throws InvalidArgumentException When a submitted field is invalid
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
-	 *   independent, flat partial-update branch.
+	 *   independent, flat partial-update branch; every branch is pinned by
+	 *   tests/Unit/Service/SecretServiceMachineWriteTest.php (#152).
 	 * @SuppressWarnings(PHPMD.NPathComplexity)      Same: the branches are
-	 *   independent partial-update guards, not nested logic.
+	 *   independent partial-update guards, not nested logic. Extracting them
+	 *   into helpers trips TooManyMethods on this class instead (measured).
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
 	 */
