@@ -55,6 +55,7 @@ class SdkEncryptedVectorsTest extends TestCase {
 	public static function libraries(): array {
 		return [
 			'go' => ['go'],
+			'python' => ['python'],
 		];
 	}//end libraries()
 

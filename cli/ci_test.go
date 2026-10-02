@@ -10,8 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ConductionNL/keepiq/sdk/go/client"
-	dcrypto "github.com/ConductionNL/keepiq/sdk/go/crypto"
+	keepiq "github.com/ConductionNL/keepiq/sdk/go"
 )
 
 // machineFixture is sdk/testdata/machine_envelope.json: an envelope written by the
@@ -46,8 +45,8 @@ func loadMachineFixture(t *testing.T) machineFixture {
 func stubKeepiq(t *testing.T, envelope []byte) *httptest.Server {
 	t.Helper()
 	mux := http.NewServeMux()
-	mux.HandleFunc("/apps/keepiq/api/v1/app/.well-known/doriath", func(w http.ResponseWriter, r *http.Request) {
-		_, _ = w.Write([]byte(`{"apiVersion":1,"tokenEndpoint":"/apps/keepiq/api/v1/app/token","assertion":{"alg":"RS256","audience":"doriath"},"lease":{"supported":true}}`))
+	mux.HandleFunc("/apps/keepiq/api/v1/app/.well-known/keepiq", func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"apiVersion":1,"tokenEndpoint":"/apps/keepiq/api/v1/app/token","assertion":{"alg":"RS256","audience":"keepiq"},"lease":{"supported":true}}`))
 	})
 	mux.HandleFunc("/apps/keepiq/api/v1/app/token", func(w http.ResponseWriter, r *http.Request) {
 		_, _ = w.Write([]byte(`{"access_token":"tok","token_type":"Bearer"}`))
@@ -72,21 +71,19 @@ func stubKeepiq(t *testing.T, envelope []byte) *httptest.Server {
 func TestFetchDecryptRealServerEnvelope(t *testing.T) {
 	f := loadMachineFixture(t)
 	srv := stubKeepiq(t, f.Envelope)
-	key, err := dcrypto.ParsePrivateKey(f.PrivateKeyPem)
+	c, err := keepiq.New(srv.URL, "app-cli-fixture", f.PrivateKeyPem)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	c := client.New(srv.URL)
-	got, err := fetchDecrypt(c, key, "ci-fixture-db-password", "tok")
+	got, err := fetchDecrypt(c, "ci-fixture-db-password")
 	if err != nil {
 		t.Fatalf("fetchDecrypt: %v", err)
 	}
-	if got != f.Plaintext["key"] {
-		t.Fatalf("value = %q, want %q", got, f.Plaintext["key"])
+	if got.Key != f.Plaintext["key"] {
+		t.Fatalf("value = %q, want %q", got.Key, f.Plaintext["key"])
 	}
-	if c.LeaseID() != "lease-7" {
-		t.Fatalf("lease id = %q, want lease-7", c.LeaseID())
+	if got.Lease == nil || got.Lease.ID != "lease-7" {
+		t.Fatalf("lease = %+v, want lease-7", got.Lease)
 	}
 }
 
@@ -101,13 +98,12 @@ func TestFetchDecryptRefusesAnUnknownScheme(t *testing.T) {
 	env["encryption"].(map[string]any)["scheme"] = "rsa-oaep-sha1-v0"
 	body, _ := json.Marshal(env)
 	srv := stubKeepiq(t, body)
-	key, err := dcrypto.ParsePrivateKey(f.PrivateKeyPem)
+	c, err := keepiq.New(srv.URL, "app-cli-fixture", f.PrivateKeyPem)
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	_, err = fetchDecrypt(client.New(srv.URL), key, "ci-fixture-db-password", "tok")
-	if err == nil || !strings.Contains(err.Error(), `unexpected envelope scheme "rsa-oaep-sha1-v0"`) {
+	_, err = fetchDecrypt(c, "ci-fixture-db-password")
+	if err == nil || !strings.Contains(err.Error(), `unsupported encryption scheme "rsa-oaep-sha1-v0"`) {
 		t.Fatalf("want an unexpected scheme error, got %v", err)
 	}
 }

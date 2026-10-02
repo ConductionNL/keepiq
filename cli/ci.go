@@ -5,24 +5,21 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"time"
 
-	"crypto/rsa"
-	"github.com/ConductionNL/keepiq/sdk/go/client"
-
-	dcrypto "github.com/ConductionNL/keepiq/sdk/go/crypto"
+	keepiq "github.com/ConductionNL/keepiq/sdk/go"
 )
 
 // ciSetup loads the CI-mode inputs: the instance URL (KEEPIQ_URL), the
 // application id (KEEPIQ_APP_ID), and the application private key — supplied by
 // env (KEEPIQ_APP_KEY, a PEM) or file (KEEPIQ_APP_KEY_FILE), the operator's own
-// credential Keepiq never stores (§4.1). It self-configures from discovery and
-// exchanges an RFC 7523 assertion for a bearer token.
-func ciSetup() (c *client.Client, key *rsa.PrivateKey, disc *client.Discovery, bearer, appID string, err error) {
+// credential Keepiq never stores (§4.1). The returned client is the Go library
+// (sdk/go): it self-configures from discovery and exchanges an RFC 7523
+// assertion for a bearer token on first use.
+func ciSetup() (*keepiq.Client, error) {
 	url := os.Getenv("KEEPIQ_URL")
-	appID = os.Getenv("KEEPIQ_APP_ID")
+	appID := os.Getenv("KEEPIQ_APP_ID")
 	if url == "" || appID == "" {
-		return nil, nil, nil, "", "", fmt.Errorf("set KEEPIQ_URL and KEEPIQ_APP_ID")
+		return nil, fmt.Errorf("set KEEPIQ_URL and KEEPIQ_APP_ID")
 	}
 
 	pemStr := os.Getenv("KEEPIQ_APP_KEY")
@@ -30,43 +27,22 @@ func ciSetup() (c *client.Client, key *rsa.PrivateKey, disc *client.Discovery, b
 		if f := os.Getenv("KEEPIQ_APP_KEY_FILE"); f != "" {
 			data, rerr := os.ReadFile(f)
 			if rerr != nil {
-				return nil, nil, nil, "", "", rerr
+				return nil, rerr
 			}
 			pemStr = string(data)
 		}
 	}
 	if pemStr == "" {
-		return nil, nil, nil, "", "", fmt.Errorf("set KEEPIQ_APP_KEY (PEM) or KEEPIQ_APP_KEY_FILE")
+		return nil, fmt.Errorf("set KEEPIQ_APP_KEY (PEM) or KEEPIQ_APP_KEY_FILE")
 	}
-	pk, perr := dcrypto.ParsePrivateKey(pemStr)
-	if perr != nil {
-		return nil, nil, nil, "", "", perr
-	}
-
-	c = client.New(url)
-	disc, err = c.Discover()
-	if err != nil {
-		return nil, nil, nil, "", "", err
-	}
-	bearer, err = c.MachineToken(appID, pk, disc, time.Now().Unix())
-	if err != nil {
-		return nil, nil, nil, "", "", err
-	}
-	return c, pk, disc, bearer, appID, nil
+	return keepiq.New(url, appID, pemStr)
 }
 
 // fetchDecrypt fetches an application secret by name and decrypts its envelope
-// with the application private key (§4.2). Returns the plaintext value, which
-// the server sends as `ciphertext.key` under the scheme in `encryption.scheme`.
-func fetchDecrypt(c *client.Client, key *rsa.PrivateKey, name, bearer string) (string, error) {
-	env, err := c.FetchByName(name, bearer)
-	if err != nil {
-		return "", err
-	}
-	if env.Encryption.Scheme != "rsa-oaep-sha256-chunked-v1" {
-		return "", fmt.Errorf("unexpected envelope scheme %q", env.Encryption.Scheme)
-	}
-	return dcrypto.DecryptField(env.Ciphertext.Key, key)
+// with the application private key (§4.2), in this process. The library refuses
+// any scheme other than rsa-oaep-sha256-chunked-v1 before decrypting.
+func fetchDecrypt(c *keepiq.Client, name string) (*keepiq.Secret, error) {
+	return c.GetByName(name, "")
 }
 
 func cmdCIFetch(args []string) error {
@@ -74,16 +50,17 @@ func cmdCIFetch(args []string) error {
 	if len(args) < 1 {
 		return fmt.Errorf("usage: keepiq ci fetch <name> [--output env|json]")
 	}
-	c, key, _, bearer, _, err := ciSetup()
+	c, err := ciSetup()
 	if err != nil {
 		return err
 	}
-	value, err := fetchDecrypt(c, key, args[0], bearer)
+	secret, err := fetchDecrypt(c, args[0])
 	if err != nil {
 		return err
 	}
-	if lease := c.LeaseID(); lease != "" {
-		fmt.Fprintf(os.Stderr, "lease %s expires %s\n", lease, c.LeaseExpires())
+	value := secret.Key
+	if secret.Lease != nil {
+		fmt.Fprintf(os.Stderr, "lease %s expires %s\n", secret.Lease.ID, secret.Lease.Expires)
 	}
 	switch output {
 	case "json":
@@ -110,17 +87,17 @@ func cmdCIRun(args []string) error {
 	names := strings.Split(args[0], ",")
 	cmd := args[sep+1:]
 
-	c, key, _, bearer, _, err := ciSetup()
+	c, err := ciSetup()
 	if err != nil {
 		return err
 	}
 	var env []string
 	for _, name := range names {
-		value, ferr := fetchDecrypt(c, key, strings.TrimSpace(name), bearer)
+		secret, ferr := fetchDecrypt(c, strings.TrimSpace(name))
 		if ferr != nil {
 			return ferr
 		}
-		env = append(env, envName(name)+"="+value)
+		env = append(env, envName(name)+"="+secret.Key)
 	}
 	// Inject into the child environment ONLY — no plaintext to disk (§4.3).
 	return runChild(env, cmd)
