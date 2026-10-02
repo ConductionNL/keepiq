@@ -40,7 +40,7 @@ use OCP\IUserSession;
  */
 class PasswordPolicyService {
 	/**
-	 * The nine admin-writable policy keys. `updatePolicySettings()` audits a
+	 * The ten admin-writable policy keys. `updatePolicySettings()` audits a
 	 * write only when the payload touches at least one of them, and the
 	 * before/after snapshot is taken over exactly this list.
 	 *
@@ -56,6 +56,8 @@ class PasswordPolicyService {
 		'min_zxcvbn_score',
 		'block_on_hibp_hit',
 		'policy_exempt_types',
+		// Automatic member confirmation (admin-auto-confirm-members D1): off by default, audited like the rest.
+		'team_folder_auto_confirm',
 	];
 
 	/**
@@ -69,6 +71,7 @@ class PasswordPolicyService {
 		'generator_require_lower',
 		'generator_require_digit',
 		'generator_require_symbol',
+		'team_folder_auto_confirm',
 	];
 
 	/**
@@ -172,13 +175,14 @@ class PasswordPolicyService {
 	}//end getPolicy()
 
 	/**
-	 * The nine policy keys with their stored (or default) values. This is
+	 * The ten policy keys with their stored (or default) values. This is
 	 * the single reader both `getPolicy()` and the admin-settings payload
 	 * use, so the two can never disagree about a default.
 	 *
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
+	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.1
 	 */
 	public function readPolicyKeys(): array {
 		$appId = Application::APP_ID;
@@ -196,6 +200,7 @@ class PasswordPolicyService {
 				$this->appConfig->getValueString($appId, 'policy_exempt_types', self::DEFAULT_EXEMPT_TYPES),
 				true
 			),
+			'team_folder_auto_confirm' => $this->appConfig->getValueBool($appId, 'team_folder_auto_confirm', false),
 		];
 	}//end readPolicyKeys()
 
@@ -224,6 +229,7 @@ class PasswordPolicyService {
 	 * @throws InvalidArgumentException On invalid policy values
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
+	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.1
 	 */
 	public function updatePolicySettings(array $data): void {
 		$this->vaultPolicies?->update(data: $data);

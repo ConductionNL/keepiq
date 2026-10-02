@@ -93,6 +93,47 @@ class LeasePolicyService {
 	}//end effectivePolicy()
 
 	/**
+	 * The instance-wide lease policy, before any per-application override.
+	 *
+	 * @return array{defaultTtl:int, maxTtl:int, renewable:bool}
+	 *
+	 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
+	 */
+	public function instancePolicy(): array {
+		$appId = Application::APP_ID;
+
+		return [
+			'defaultTtl' => max(60, $this->appConfig->getValueInt($appId, 'lease_default_ttl_seconds', 900)),
+			'maxTtl' => max(60, $this->appConfig->getValueInt($appId, 'lease_max_ttl_seconds', 86400)),
+			'renewable' => $this->appConfig->getValueBool($appId, 'lease_renewable', true),
+		];
+	}//end instancePolicy()
+
+	/**
+	 * The stored per-application override, field by field. A null field
+	 * inherits the instance value; no override row reads as all null.
+	 *
+	 * @param string $applicationId The application id
+	 *
+	 * @return array{defaultTtl:int|null, maxTtl:int|null, renewable:bool|null}
+	 *
+	 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
+	 */
+	public function overrideFor(string $applicationId): array {
+		try {
+			$override = $this->policyMapper->findByApplication(applicationId: $applicationId);
+		} catch (DoesNotExistException) {
+			return ['defaultTtl' => null, 'maxTtl' => null, 'renewable' => null];
+		}
+
+		return [
+			'defaultTtl' => $override->getDefaultTtlSeconds(),
+			'maxTtl' => $override->getMaxTtlSeconds(),
+			'renewable' => $override->getRenewable(),
+		];
+	}//end overrideFor()
+
+	/**
 	 * Store a per-application policy override (admin surface).
 	 *
 	 * @param string $applicationId The application id

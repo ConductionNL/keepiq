@@ -11,12 +11,14 @@
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.4
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.5
   @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+  @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.2
 -->
 <template>
 	<div class="keepiq-settings">
 		<PasswordPolicySection />
 		<OrgPasswordPolicySection />
 		<VaultPolicySection />
+		<TeamFolderAutoConfirmSection />
 		<BreachCheckSection />
 		<CaHealthSection />
 		<ApplicationQueueSection />
@@ -51,6 +53,7 @@ import OrgPasswordPolicySection from '../../components/settings/OrgPasswordPolic
 import PasswordPolicySection from '../../components/settings/PasswordPolicySection.vue'
 import RotationPolicySection from '../../components/settings/RotationPolicySection.vue'
 import SiemSection from '../../components/settings/SiemSection.vue'
+import TeamFolderAutoConfirmSection from '../../components/settings/TeamFolderAutoConfirmSection.vue'
 import VaultPolicySection from '../../components/settings/VaultPolicySection.vue'
 
 export default {
@@ -58,6 +61,7 @@ export default {
 	components: {
 		PasswordPolicySection,
 		OrgPasswordPolicySection,
+		TeamFolderAutoConfirmSection,
 		BreachCheckSection,
 		CaHealthSection,
 		ApplicationQueueSection,

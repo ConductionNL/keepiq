@@ -25,6 +25,8 @@ use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\SuiteMigration;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
+use OCA\Keepiq\Service\CompromiseBlastRadius;
+use OCA\Keepiq\Service\CompromiseContainmentService;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
@@ -77,6 +79,13 @@ class EncryptionSuiteControllerTest extends TestCase {
 	private EmergencyEnvelopeInvalidationService&MockObject $emergencyService;
 
 	/**
+	 * The mocked compromise containment.
+	 *
+	 * @var CompromiseContainmentService&MockObject
+	 */
+	private CompromiseContainmentService&MockObject $containment;
+
+	/**
 	 * The mocked user session.
 	 *
 	 * @var IUserSession&MockObject
@@ -97,6 +106,9 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$this->userSession = $this->createMock(originalClassName: IUserSession::class);
 		$this->proofService = $this->createMock(originalClassName: VaultKeyProofService::class);
 		$this->emergencyService = $this->createMock(originalClassName: EmergencyEnvelopeInvalidationService::class);
+		$this->containment = $this->createMock(originalClassName: CompromiseContainmentService::class);
+		$this->containment->method('collect')->willReturn(new CompromiseBlastRadius());
+		$this->containment->method('contain')->willReturn(['stamped' => 0, 'notified' => 0, 'failed' => 0]);
 
 		$user = $this->createMock(originalClassName: IUser::class);
 		$user->method('getUID')->willReturn('testuser');
@@ -110,6 +122,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 			proofService: $this->proofService,
 			emergencyService: $this->emergencyService,
 			twoFactor: $this->twoFactorGate(),
+			containment: $this->containment,
 		);
 	}//end setUp()
 
@@ -1343,4 +1356,249 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
 		$this->assertSame('two_factor_required', $response->getData()['code']);
 	}//end testTwoFactorPolicyRefusesAFirstSuite()
+
+	/**
+	 * The blast radius of BOTH ends is collected before either end is revoked:
+	 * each revoke's cascade deletes the ShareTargets the lookup reads, so a
+	 * lookup after the first revoke missed the source owners of the copies on
+	 * the second suite (keepiq#864).
+	 *
+	 * @return void
+	 */
+	public function testCompromiseCollectsBothEndsBeforeAnyRevoke(): void {
+		$this->migrationService->method('findInProgressForSuite')->willReturn($this->openMigration());
+		$log = [];
+		$this->recordCompromiseCalls($log);
+		$containment = $this->createMock(CompromiseContainmentService::class);
+		$containment->expects($this->once())
+			->method('collect')
+			->with(['suite-1', 'suite-2'])
+			->willReturnCallback(
+				static function () use (&$log): CompromiseBlastRadius {
+					$log[] = 'collect';
+					return new CompromiseBlastRadius();
+				}
+			);
+		$containment->method('contain')->willReturnCallback(
+			static function () use (&$log): array {
+				$log[] = 'contain';
+				return ['stamped' => 0, 'notified' => 0, 'failed' => 0];
+			}
+		);
+
+		$response = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true);
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(['collect', 'revoke:suite-1', 'revoke:suite-2', 'terminate:migration-1', 'contain'], $log);
+	}//end testCompromiseCollectsBothEndsBeforeAnyRevoke()
+
+	/**
+	 * A containment step that failed reaches the administrator in the response,
+	 * not only the server log (keepiq#863).
+	 *
+	 * @return void
+	 */
+	public function testAnIncompleteCascadeReachesTheResponse(): void {
+		$this->migrationService->method('findInProgressForSuite')->willReturn(null);
+		$log = [];
+		$this->recordCompromiseCalls($log);
+		$containment = $this->createMock(CompromiseContainmentService::class);
+		$containment->method('collect')->willReturn(new CompromiseBlastRadius());
+		$containment->method('contain')->willReturn(['stamped' => 4, 'notified' => 1, 'failed' => 2]);
+
+		$response = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true);
+
+		$data = $response->getData();
+		$this->assertTrue($data['cascadeIncomplete']);
+		$this->assertSame(['stamped' => 4, 'notified' => 1, 'failed' => 2], $data['cascade']);
+	}//end testAnIncompleteCascadeReachesTheResponse()
+
+	/**
+	 * A complete cascade says so.
+	 *
+	 * @return void
+	 */
+	public function testACompleteCascadeIsNotFlagged(): void {
+		$this->migrationService->method('findInProgressForSuite')->willReturn(null);
+		$log = [];
+		$this->recordCompromiseCalls($log);
+
+		$response = $this->controller->forceRevoke('suite-1', 'account taken over', true);
+
+		$this->assertFalse($response->getData()['cascadeIncomplete']);
+	}//end testACompleteCascadeIsNotFlagged()
+
+	/**
+	 * The second suite's destroyed emergency contacts are returned too, and the
+	 * owner is told about both ends' contacts in one notice (keepiq#876, #877).
+	 *
+	 * @return void
+	 */
+	public function testTheSecondSuitesEmergencyCountIsReturnedAndTheOwnerTold(): void {
+		$this->migrationService->method('findInProgressForSuite')->willReturn($this->openMigration());
+		$this->emergencyService->method('countUsableForGrantorSuite')->willReturnMap([['suite-1', 2], ['suite-2', 1]]);
+		$this->suiteService->method('revokeSuite')->willReturnCallback(
+			static function (string $id): EncryptionSuite {
+				$suite = new EncryptionSuite();
+				$suite->setId($id);
+				$suite->setOwnerType('user');
+				$suite->setOwnerId('alice');
+				$suite->setStatus('revoked');
+				return $suite;
+			}
+		);
+		$containment = $this->createMock(CompromiseContainmentService::class);
+		$containment->method('collect')->willReturn(new CompromiseBlastRadius());
+		$containment->method('contain')->willReturn(['stamped' => 0, 'notified' => 0, 'failed' => 0]);
+		$containment->expects($this->once())
+			->method('notifyEmergencyAccessCleared')
+			->with($this->callback(static fn (EncryptionSuite $suite): bool => $suite->getId() === 'suite-1'), 3);
+
+		$data = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true)->getData();
+
+		$this->assertSame(2, $data['emergencyContactsDestroyed']);
+		$this->assertSame(1, $data['alsoRevokedEmergencyContactsDestroyed']);
+		$this->assertSame('suite-2', $data['alsoRevokedSuite']);
+	}//end testTheSecondSuitesEmergencyCountIsReturnedAndTheOwnerTold()
+
+	/**
+	 * A plain force-revoke runs no containment but still tells the owner their
+	 * emergency contacts are gone (keepiq#876).
+	 *
+	 * @return void
+	 */
+	public function testAPlainForceRevokeTellsTheOwnerButRunsNoContainment(): void {
+		$revoked = new EncryptionSuite();
+		$revoked->setId('suite-1');
+		$revoked->setOwnerType('user');
+		$revoked->setOwnerId('alice');
+		$revoked->setStatus('revoked');
+		$this->emergencyService->method('countUsableForGrantorSuite')->willReturn(2);
+		$this->suiteService->method('revokeSuite')->willReturn($revoked);
+		$containment = $this->createMock(CompromiseContainmentService::class);
+		$containment->expects($this->never())->method('collect');
+		$containment->expects($this->never())->method('contain');
+		$containment->expects($this->once())->method('notifyEmergencyAccessCleared')->with($revoked, 2);
+
+		$response = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'departed');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+	}//end testAPlainForceRevokeTellsTheOwnerButRunsNoContainment()
+
+	/**
+	 * A controller sharing this test's mocks but with its own containment.
+	 *
+	 * @param CompromiseContainmentService $containment The containment double
+	 *
+	 * @return EncryptionSuiteController
+	 */
+	private function controllerWith(CompromiseContainmentService $containment): EncryptionSuiteController {
+		return new EncryptionSuiteController(
+			request: $this->createMock(originalClassName: IRequest::class),
+			suiteService: $this->suiteService,
+			migrationService: $this->migrationService,
+			userSession: $this->userSession,
+			proofService: $this->proofService,
+			emergencyService: $this->emergencyService,
+			twoFactor: $this->twoFactorGate(),
+			containment: $containment,
+		);
+	}//end controllerWith()
+
+	/**
+	 * A user whose suite was revoked and who has no active suite cannot enrol a
+	 * new one with only a session: a stolen session would otherwise replace the
+	 * victim's identity right after the containment (keepiq#860).
+	 *
+	 * @return void
+	 */
+	public function testCreateIsRefusedAfterARevocationWithoutAFreshConfirmation(): void {
+		$revoked = new EncryptionSuite();
+		$revoked->setId('suite-1');
+		$revoked->setStatus('revoked');
+		$this->suiteService->method('getSuitesByOwner')->willReturn([$revoked]);
+		$this->suiteService->expects($this->never())->method('createSuite');
+
+		$response = $this->controller->create('-----BEGIN PUBLIC KEY-----', 'envelope');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame('reauthentication_required', $response->getData()['error']);
+	}//end testCreateIsRefusedAfterARevocationWithoutAFreshConfirmation()
+
+	/**
+	 * A user with an active suite next to a replaced one is not sent to the
+	 * re-enrol route; createSuite() answers with its own conflict.
+	 *
+	 * @return void
+	 */
+	public function testCreateIsNotGatedWhenAnActiveSuiteExists(): void {
+		$old = new EncryptionSuite();
+		$old->setStatus('compromised');
+		$active = new EncryptionSuite();
+		$active->setStatus('active');
+		$this->suiteService->method('getSuitesByOwner')->willReturn([$old, $active]);
+		$this->suiteService->method('createSuite')->willThrowException(new ConflictException('already'));
+
+		$response = $this->controller->create('-----BEGIN PUBLIC KEY-----', 'envelope');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+	}//end testCreateIsNotGatedWhenAnActiveSuiteExists()
+
+	/**
+	 * reenrol() carries Nextcloud sudo, and enrols the user once it passes.
+	 *
+	 * @return void
+	 */
+	public function testReenrolRequiresSudoAndEnrols(): void {
+		$method = new \ReflectionMethod(EncryptionSuiteController::class, 'reenrol');
+		$this->assertCount(1, $method->getAttributes(\OCP\AppFramework\Http\Attribute\PasswordConfirmationRequired::class));
+		$this->assertCount(1, $method->getAttributes(\OCP\AppFramework\Http\Attribute\NoAdminRequired::class));
+
+		$created = new EncryptionSuite();
+		$created->setId('suite-2');
+		$created->setStatus('active');
+		$this->suiteService->expects($this->never())->method('getSuitesByOwner');
+		$this->suiteService->expects($this->once())
+			->method('createSuite')
+			->with('user', 'testuser', '-----BEGIN PUBLIC KEY-----', 'envelope')
+			->willReturn($created);
+
+		$response = $this->controller->reenrol('-----BEGIN PUBLIC KEY-----', 'envelope');
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+	}//end testReenrolRequiresSudoAndEnrols()
+
+	/**
+	 * reinstate() carries Nextcloud sudo, like force-revoke: it is the
+	 * dangerous direction (keepiq#865).
+	 *
+	 * @return void
+	 */
+	public function testReinstateRequiresSudo(): void {
+		$method = new \ReflectionMethod(EncryptionSuiteController::class, 'reinstate');
+
+		$this->assertCount(1, $method->getAttributes(\OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting::class));
+		$this->assertCount(
+			expectedCount: 1,
+			haystack: $method->getAttributes(\OCP\AppFramework\Http\Attribute\PasswordConfirmationRequired::class),
+			message: 'reinstate must require Nextcloud sudo'
+		);
+	}//end testReinstateRequiresSudo()
+
+	/**
+	 * A refused reinstate reaches the administrator as a 409 with its reason.
+	 *
+	 * @return void
+	 */
+	public function testAReinstateOfACompromiseRevokeIsRefusedWith409(): void {
+		$this->suiteService->method('reinstateSuite')->willThrowException(
+			new \OCA\Keepiq\Exception\ReinstateRefusedException('revoked_as_compromised', 'compromised')
+		);
+
+		$response = $this->controller->reinstate('suite-1');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame('revoked_as_compromised', $response->getData()['error']);
+	}//end testAReinstateOfACompromiseRevokeIsRefusedWith409()
+
 }//end class
