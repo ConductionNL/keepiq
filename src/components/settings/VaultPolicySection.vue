@@ -14,13 +14,21 @@
 <template>
 	<CnSettingsSection
 		:name="t('keepiq', 'Vault policies')"
-		:description="t('keepiq', 'Rules for every vault. Each applies to everyone, or only to the groups you choose.')">
+		:description="
+			t(
+				'keepiq',
+				'Rules for every vault. Each applies to everyone, or only to the groups you choose.',
+			)
+		">
 		<div class="vault-policy" data-testid="vault-policy-section">
 			<NcNoteCard v-if="error" type="error" data-testid="vault-policy-error">
 				{{ error }}
 			</NcNoteCard>
 
-			<div v-for="policy in policies" :key="policy.key" class="vault-policy__item">
+			<div
+				v-for="policy in policies"
+				:key="policy.key"
+				class="vault-policy__item">
 				<label class="vault-policy__check">
 					<input
 						v-model="values[policy.key]"
@@ -35,7 +43,9 @@
 				<NcSelect
 					v-model="values[policy.key + '_groups']"
 					:options="groupOptions"
-					:inputLabel="t('keepiq', 'Only for these groups (empty is everyone)')"
+					:inputLabel="
+						t('keepiq', 'Only for these groups (empty is everyone)')
+					"
 					multiple
 					:data-testid="`vault-policy-${policy.key}-groups`"
 					@update:modelValue="onGroupsChange(policy.key)" />
@@ -43,12 +53,18 @@
 					v-if="policy.key === 'vault_org_ownership'"
 					v-model="values.vault_org_ownership_types"
 					:options="typeOptions"
-					:inputLabel="t('keepiq', 'Secret types that belong in a team folder')"
+					:inputLabel="
+						t('keepiq', 'Secret types that belong in a team folder')
+					"
 					multiple
 					data-testid="vault-policy-ownership-types"
 					@update:modelValue="save" />
 				<NcNoteCard
-					v-if="policy.key === 'vault_require_two_factor' && gaps !== null && gaps.withoutTwoFactor > 0"
+					v-if="
+						policy.key === 'vault_require_two_factor'
+						&& gaps !== null
+						&& gaps.withoutTwoFactor > 0
+					"
 					type="warning"
 					data-testid="vault-policy-two-factor-gaps">
 					{{
@@ -117,17 +133,30 @@ export default {
 				{
 					key: 'vault_export_disabled',
 					label: this.t('keepiq', 'Block personal vault export'),
-					hint: this.t('keepiq', 'Users cannot download a backup, CSV or transfer file. Their personal data package stays available.'),
+					hint: this.t(
+						'keepiq',
+						'Users cannot download a backup, CSV or transfer file. Their personal data package stays available.',
+					),
 				},
 				{
 					key: 'vault_require_two_factor',
-					label: this.t('keepiq', 'Require two-factor login before the vault opens'),
-					hint: this.t('keepiq', 'Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.'),
+					label: this.t(
+						'keepiq',
+						'Require two-factor login before the vault opens',
+					),
+
+					hint: this.t(
+						'keepiq',
+						'Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.',
+					),
 				},
 				{
 					key: 'vault_org_ownership',
 					label: this.t('keepiq', 'Keep work logins in team folders'),
-					hint: this.t('keepiq', 'Users cannot save these secret types in a personal folder.'),
+					hint: this.t(
+						'keepiq',
+						'Users cannot save these secret types in a personal folder.',
+					),
 				},
 			]
 		},
@@ -139,7 +168,9 @@ export default {
 		 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
 		 */
 		groupOptions() {
-			return useGroupStore().groups.map((group) => (typeof group === 'string' ? group : group.id))
+			return useGroupStore().groups.map((group) =>
+				typeof group === 'string' ? group : group.id,
+			)
 		},
 
 		/**
@@ -160,13 +191,17 @@ export default {
 	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
 	 */
 	async created() {
-		useGroupStore().fetchGroups().catch(() => {})
+		useGroupStore()
+			.fetchGroups()
+			.catch(() => {})
 		const typeStore = useSecretTypeStore()
 		if (typeStore.types.length === 0) {
 			typeStore.fetchTypes().catch(() => {})
 		}
 		try {
-			const response = await axios.get(generateUrl('/apps/keepiq/api/settings/admin'))
+			const response = await axios.get(
+				generateUrl('/apps/keepiq/api/settings/admin'),
+			)
 			for (const key of KEYS) {
 				if (response.data?.[key] !== undefined) {
 					this.values[key] = response.data[key]
@@ -189,7 +224,11 @@ export default {
 			try {
 				const response = await axios.get(
 					generateUrl('/apps/keepiq/api/settings/admin/two-factor-gaps'),
-					{ params: { groups: this.values.vault_require_two_factor_groups } },
+					{
+						params: {
+							groups: this.values.vault_require_two_factor_groups,
+						},
+					},
 				)
 				this.gaps = response.data
 			} catch {
@@ -235,7 +274,10 @@ export default {
 				payload[key] = this.values[key]
 			}
 			try {
-				await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), payload)
+				await axios.put(
+					generateUrl('/apps/keepiq/api/settings/admin'),
+					payload,
+				)
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
 			}

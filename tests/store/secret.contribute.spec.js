@@ -30,22 +30,41 @@ describe('secret.contributeSecret', () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({
 			data: {
 				ownerCertificate: 'CERT-IRIS',
-				recipients: [{ userId: 'hank', certificate: 'CERT-HANK' }, { userId: 'jack', certificate: 'CERT-JACK' }],
+				recipients: [
+					{ userId: 'hank', certificate: 'CERT-HANK' },
+					{ userId: 'jack', certificate: 'CERT-JACK' },
+				],
 			},
 		})
-		const post = vi.spyOn(axios, 'post').mockResolvedValue({ data: { secret: { id: 's1' }, copies: 2 } })
-		const encrypt = vi.spyOn(useShareStore(), 'encryptForRecipient').mockImplementation(
-			async (fields, certificate) => ({ key: `RSA(${certificate})`, login: `RSA-LOGIN(${certificate})` }),
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { secret: { id: 's1' }, copies: 2 } })
+		const encrypt = vi
+			.spyOn(useShareStore(), 'encryptForRecipient')
+			.mockImplementation(async (fields, certificate) => ({
+				key: `RSA(${certificate})`,
+				login: `RSA-LOGIN(${certificate})`,
+			}))
+
+		await useSecretStore().contributeSecret('tf-ops', {
+			name: 'db-root',
+			key: PLAINTEXT,
+			login: 'root',
+			typeId: 't',
+		})
+
+		expect(axios.get).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/team-folders/tf-ops/contribution-context',
 		)
-
-		await useSecretStore().contributeSecret('tf-ops', { name: 'db-root', key: PLAINTEXT, login: 'root', typeId: 't' })
-
-		expect(axios.get).toHaveBeenCalledWith('/apps/keepiq/api/v1/team-folders/tf-ops/contribution-context')
 		expect(encrypt).toHaveBeenCalledTimes(3)
 		const body = post.mock.calls[0][1]
-		expect(post.mock.calls[0][0]).toBe('/apps/keepiq/api/v1/team-folders/tf-ops/secrets')
+		expect(post.mock.calls[0][0]).toBe(
+			'/apps/keepiq/api/v1/team-folders/tf-ops/secrets',
+		)
 		expect(body.key).toBe('RSA(CERT-IRIS)')
-		expect(body.copies.map((copy) => [copy.targetUserId, copy.encryptedKey])).toEqual([
+		expect(
+			body.copies.map((copy) => [copy.targetUserId, copy.encryptedKey]),
+		).toEqual([
 			['hank', 'RSA(CERT-HANK)'],
 			['jack', 'RSA(CERT-JACK)'],
 		])

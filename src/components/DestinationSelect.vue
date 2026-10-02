@@ -182,7 +182,9 @@ export default {
 			let candidates =
 				this.mode === 'vaults' ? rows.filter((row) => row.depth === 0) : rows
 			if (Array.isArray(this.onlyIds)) {
-				candidates = candidates.filter((row) => this.onlyIds.includes(row.id))
+				candidates = candidates.filter((row) =>
+					this.onlyIds.includes(row.id),
+				)
 			}
 			return candidates.map((row) => ({
 				value: row.id,

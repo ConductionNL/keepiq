@@ -93,7 +93,9 @@ export const useSessionStore = defineStore('session', {
 			// The two-factor vault policy withholds the wrapped key
 			// (admin-vault-policies D3): say so, never "wrong password".
 			if (activeSuite.unlockBlocked) {
-				throw Object.assign(new Error(activeSuite.unlockBlocked), { code: activeSuite.unlockBlocked })
+				throw Object.assign(new Error(activeSuite.unlockBlocked), {
+					code: activeSuite.unlockBlocked,
+				})
 			}
 
 			await this.unlockFromBlob({

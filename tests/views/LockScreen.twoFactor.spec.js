@@ -35,11 +35,20 @@ async function mountWith(suite) {
 	vi.spyOn(suiteStore, 'fetchMigrationStatus').mockResolvedValue(undefined)
 	vi.spyOn(usePasskeyStore(), 'isUnlockOffered').mockResolvedValue(false)
 	useOfflineStore().online = true
-	window.matchMedia = vi.fn(() => ({ matches: true, addEventListener() {}, removeEventListener() {} }))
-	Object.defineProperty(window, 'isSecureContext', { value: true, configurable: true })
+	window.matchMedia = vi.fn(() => ({
+		matches: true,
+		addEventListener() {},
+		removeEventListener() {},
+	}))
+	Object.defineProperty(window, 'isSecureContext', {
+		value: true,
+		configurable: true,
+	})
 
 	const wrapper = mount(LockScreen, {
-		global: { mocks: { $router: { push: vi.fn() }, $route: { query: {}, hash: '' } } },
+		global: {
+			mocks: { $router: { push: vi.fn() }, $route: { query: {}, hash: '' } },
+		},
 	})
 	await flush()
 	return wrapper
@@ -55,11 +64,17 @@ describe('LockScreen under the two-factor policy', () => {
 	})
 
 	it('shows the notice with a link when the suite came without its key', async () => {
-		const wrapper = await mountWith({ id: 7, status: 'active', unlockBlocked: 'two_factor_required' })
+		const wrapper = await mountWith({
+			id: 7,
+			status: 'active',
+			unlockBlocked: 'two_factor_required',
+		})
 
 		const notice = wrapper.find(NOTICE)
 		expect(notice.exists()).toBe(true)
-		expect(notice.find('a').attributes('href')).toContain('/settings/user/security')
+		expect(notice.find('a').attributes('href')).toContain(
+			'/settings/user/security',
+		)
 	})
 
 	it('shows nothing for an ordinary suite', async () => {
@@ -71,9 +86,13 @@ describe('LockScreen under the two-factor policy', () => {
 	it('a refused unlock is the policy, not a wrong password, and drops the snapshot', async () => {
 		const wrapper = await mountWith({ id: 7, status: 'active' })
 		vi.spyOn(useSessionStore(), 'unlock').mockRejectedValue(
-			Object.assign(new Error('two_factor_required'), { code: 'two_factor_required' }),
+			Object.assign(new Error('two_factor_required'), {
+				code: 'two_factor_required',
+			}),
 		)
-		const evict = vi.spyOn(useOfflineStore(), 'evict').mockResolvedValue(undefined)
+		const evict = vi
+			.spyOn(useOfflineStore(), 'evict')
+			.mockResolvedValue(undefined)
 
 		wrapper.vm.masterPassword = 'correct horse'
 		await wrapper.vm.handleUnlock()
@@ -96,17 +115,28 @@ describe('session.unlock and offline sync under the two-factor policy', () => {
 
 	it('unlock throws the policy code instead of trying to decrypt nothing', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({
-			data: [{ id: 's', status: 'active', certificate: 'C', unlockBlocked: 'two_factor_required' }],
+			data: [
+				{
+					id: 's',
+					status: 'active',
+					certificate: 'C',
+					unlockBlocked: 'two_factor_required',
+				},
+			],
 		})
 		const session = useSessionStore()
 		const fromBlob = vi.spyOn(session, 'unlockFromBlob')
 
-		await expect(session.unlock('pw')).rejects.toMatchObject({ code: 'two_factor_required' })
+		await expect(session.unlock('pw')).rejects.toMatchObject({
+			code: 'two_factor_required',
+		})
 		expect(fromBlob).not.toHaveBeenCalled()
 	})
 
 	it('a blocked manifest is not written to the offline cache', async () => {
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: { suite: null, unlockBlocked: 'two_factor_required' } })
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { suite: null, unlockBlocked: 'two_factor_required' },
+		})
 		const offline = useOfflineStore()
 		offline.available = true
 		useSessionStore().aesKey = {}

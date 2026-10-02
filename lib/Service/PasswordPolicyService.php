@@ -106,7 +106,6 @@ class PasswordPolicyService {
 	 * @param IUserSession $userSession The user session (audit actor)
 	 * @param IEventDispatcher|null $eventDispatcher The audit dispatcher (policy changes)
 	 * @param AuditEventFactory $auditEvents The audit-event factory
-	 *
 	 * @param VaultPolicyService|null $vaultPolicies The vault policies (admin-vault-policies)
 	 *
 	 * @return void

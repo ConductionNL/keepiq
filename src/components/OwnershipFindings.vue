@@ -18,7 +18,12 @@
 		data-testid="ownership-findings">
 		<h3>{{ t('keepiq', 'Not in a team folder') }}</h3>
 		<p class="ownership-findings__hint">
-			{{ t('keepiq', 'Your organisation keeps these secrets in a team folder. Move each one into a team folder.') }}
+			{{
+				t(
+					'keepiq',
+					'Your organisation keeps these secrets in a team folder. Move each one into a team folder.',
+				)
+			}}
 		</p>
 		<NcNoteCard v-if="error" type="error" data-testid="ownership-findings-error">
 			{{ error }}
@@ -110,8 +115,14 @@ export default {
 		}
 		try {
 			const [findings, contributable] = await Promise.all([
-				axios.get(generateUrl('/apps/keepiq/api/v1/team-folders/ownership-findings')),
-				axios.get(generateUrl('/apps/keepiq/api/v1/team-folders/contributable')),
+				axios.get(
+					generateUrl(
+						'/apps/keepiq/api/v1/team-folders/ownership-findings',
+					),
+				),
+				axios.get(
+					generateUrl('/apps/keepiq/api/v1/team-folders/contributable'),
+				),
 			])
 			const teamFolderStore = useTeamFolderStore()
 			await teamFolderStore.fetchTeamFolders()
@@ -142,12 +153,16 @@ export default {
 			try {
 				if (target.kind === 'owner') {
 					// Own team folder: a move, then share with its members.
-					await secretStore.updateSecret(finding.id, { folderId: target.folderId })
+					await secretStore.updateSecret(finding.id, {
+						folderId: target.folderId,
+					})
 					await useTeamFolderStore().runFanOut(target.teamFolderId)
 				} else {
 					// Someone else's team folder: contribute a copy, and only
 					// then remove the personal one.
-					const raw = await axios.get(generateUrl(`/apps/keepiq/api/v1/secrets/${finding.id}`))
+					const raw = await axios.get(
+						generateUrl(`/apps/keepiq/api/v1/secrets/${finding.id}`),
+					)
 					const plain = await secretStore.decryptSecret(raw.data)
 					await secretStore.contributeSecret(target.teamFolderId, {
 						name: plain.name,

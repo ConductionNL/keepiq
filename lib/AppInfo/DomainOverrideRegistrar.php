@@ -69,7 +69,7 @@ final class DomainOverrideRegistrar {
 				eventDispatcher: $c->get(\OCP\EventDispatcher\IEventDispatcher::class),
 				// Container-built, so the password policy service it holds
 				// carries the vault policies (admin-vault-policies D1).
-				adminSettings: $c->get(\OCA\Keepiq\Service\AdminSettingsService::class),
+				adminSettings: $c->get('OCA\Keepiq\Service\AdminSettingsService'),
 			)
 		);
 		// SettingsControllerFactory spells out every argument, the integriq

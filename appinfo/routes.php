@@ -384,8 +384,8 @@ $extra = [
     ['name' => 'teamFolder#create',               'url' => '/api/v1/team-folders',                         'verb' => 'POST'],
     ['name' => 'teamFolder#offboard',             'url' => '/api/v1/team-folders/offboard',                'verb' => 'POST'],
     // Contributable team folders (admin-vault-policies §4.3): before any /{id} route.
-    ['name' => 'teamFolder#contributable',        'url' => '/api/v1/team-folders/contributable',           'verb' => 'GET'],
-    ['name' => 'teamFolder#ownershipFindings',    'url' => '/api/v1/team-folders/ownership-findings',      'verb' => 'GET'],
+    ['name' => 'teamFolderContribution#contributable',        'url' => '/api/v1/team-folders/contributable',           'verb' => 'GET'],
+    ['name' => 'teamFolderContribution#ownershipFindings',    'url' => '/api/v1/team-folders/ownership-findings',      'verb' => 'GET'],
     ['name' => 'teamFolderMember#members',        'url' => '/api/v1/team-folders/{id}/members',            'verb' => 'GET'],
     ['name' => 'teamFolderMember#addMember',      'url' => '/api/v1/team-folders/{id}/members',            'verb' => 'POST'],
     ['name' => 'teamFolderMember#removeMember',   'url' => '/api/v1/team-folders/{id}/members/{memberId}', 'verb' => 'DELETE'],
@@ -395,8 +395,8 @@ $extra = [
     ['name' => 'teamFolder#reconcile',            'url' => '/api/v1/team-folders/{id}/reconcile',          'verb' => 'GET'],
     ['name' => 'teamFolder#registerShares',       'url' => '/api/v1/team-folders/{id}/shares',             'verb' => 'POST'],
     // Write-grade member contribution (admin-vault-policies D5).
-    ['name' => 'teamFolder#contribute',           'url' => '/api/v1/team-folders/{id}/secrets',            'verb' => 'POST'],
-    ['name' => 'teamFolder#contributionContext',  'url' => '/api/v1/team-folders/{id}/contribution-context', 'verb' => 'GET'],
+    ['name' => 'teamFolderContribution#contribute',           'url' => '/api/v1/team-folders/{id}/secrets',            'verb' => 'POST'],
+    ['name' => 'teamFolderContribution#contributionContext',  'url' => '/api/v1/team-folders/{id}/contribution-context', 'verb' => 'GET'],
     ['name' => 'teamFolderMember#approveJoin',    'url' => '/api/v1/team-folders/{id}/approve-join',       'verb' => 'POST'],
     ['name' => 'teamFolder#destroy',              'url' => '/api/v1/team-folders/{id}',                    'verb' => 'DELETE'],
 

@@ -15,7 +15,9 @@ const config = { url: 'https://cloud.example', user: 'frank', appPassword: 'app'
  * @param {Array<object>} suites The suites.
  */
 function serve(suites) {
-	globalThis.fetch = vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => suites })
+	globalThis.fetch = vi
+		.fn()
+		.mockResolvedValue({ ok: true, status: 200, json: async () => suites })
 }
 
 describe('fetchActiveSuite under the two-factor policy', () => {
@@ -24,14 +26,25 @@ describe('fetchActiveSuite under the two-factor policy', () => {
 	})
 
 	it('throws an error carrying two_factor_required', async () => {
-		serve([{ id: 's', status: 'active', certificate: 'C', unlockBlocked: 'two_factor_required' }])
+		serve([
+			{
+				id: 's',
+				status: 'active',
+				certificate: 'C',
+				unlockBlocked: 'two_factor_required',
+			},
+		])
 
-		await expect(fetchActiveSuite(config)).rejects.toMatchObject({ code: 'two_factor_required' })
+		await expect(fetchActiveSuite(config)).rejects.toMatchObject({
+			code: 'two_factor_required',
+		})
 	})
 
 	it('returns an ordinary suite unchanged', async () => {
 		serve([{ id: 's', status: 'active', certificate: 'C', privateKey: 'K' }])
 
-		await expect(fetchActiveSuite(config)).resolves.toMatchObject({ privateKey: 'K' })
+		await expect(fetchActiveSuite(config)).resolves.toMatchObject({
+			privateKey: 'K',
+		})
 	})
 })

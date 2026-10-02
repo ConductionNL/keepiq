@@ -17,13 +17,29 @@ import { resetPolicyCache } from '../../src/policy/policy.js'
 import { useExportStore } from '../../src/store/modules/export.js'
 
 const stubs = {
-	NcDialog: { props: ['name', 'open', 'size'], template: '<div><slot /><slot name="actions" /></div>' },
-	NcButton: { props: ['disabled'], template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>' },
+	NcDialog: {
+		props: ['name', 'open', 'size'],
+		template: '<div><slot /><slot name="actions" /></div>',
+	},
+	NcButton: {
+		props: ['disabled'],
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+	},
 	NcNoteCard: { props: ['type'], template: '<div class="note"><slot /></div>' },
-	NcSelect: { props: ['options', 'reduce', 'inputLabel', 'clearable', 'value'], template: '<div />' },
+	NcSelect: {
+		props: ['options', 'reduce', 'inputLabel', 'clearable', 'value'],
+		template: '<div />',
+	},
 	NcTextField: { props: ['value', 'label'], template: '<input />' },
-	NcPasswordField: { props: ['value', 'label'], template: '<input type="password" />' },
-	NcCheckboxRadioSwitch: { props: ['modelValue', 'value', 'name', 'type'], template: '<label class="mode"><slot /></label>' },
+	NcPasswordField: {
+		props: ['value', 'label'],
+		template: '<input type="password" />',
+	},
+	NcCheckboxRadioSwitch: {
+		props: ['modelValue', 'value', 'name', 'type'],
+		template: '<label class="mode"><slot /></label>',
+	},
 }
 
 /**
@@ -33,7 +49,9 @@ const stubs = {
  * @return {Promise<object>} The wrapper.
  */
 async function mountWith(banned) {
-	vi.spyOn(axios, 'get').mockResolvedValue({ data: { vault_export_disabled: banned } })
+	vi.spyOn(axios, 'get').mockResolvedValue({
+		data: { vault_export_disabled: banned },
+	})
 	const wrapper = mount(ExportDialog, {
 		propsData: { open: true, secrets: [], folders: [] },
 		global: { stubs },
@@ -55,7 +73,9 @@ describe('ExportDialog under the export ban', () => {
 	it('hides every export mode and cannot submit', async () => {
 		const wrapper = await mountWith(true)
 
-		expect(wrapper.find('[data-testid="export-blocked-by-policy"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="export-blocked-by-policy"]').exists(),
+		).toBe(true)
 		expect(wrapper.find('.export-dialog__modes').exists()).toBe(false)
 		expect(wrapper.vm.canSubmit).toBe(false)
 	})
@@ -63,7 +83,9 @@ describe('ExportDialog under the export ban', () => {
 	it('shows the modes when the ban does not apply', async () => {
 		const wrapper = await mountWith(false)
 
-		expect(wrapper.find('[data-testid="export-blocked-by-policy"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="export-blocked-by-policy"]').exists(),
+		).toBe(false)
 		expect(wrapper.find('.export-dialog__modes').exists()).toBe(true)
 	})
 
@@ -82,7 +104,10 @@ describe('ExportDialog under the export ban', () => {
 		await wrapper.vm.onExport()
 		await flushPromises()
 
-		expect(axios.post).toHaveBeenCalledWith('/apps/keepiq/api/v1/export/events', expect.anything())
+		expect(axios.post).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/export/events',
+			expect.anything(),
+		)
 		expect(createUrl).not.toHaveBeenCalled()
 		expect(useExportStore().loading).toBe(false)
 		expect(wrapper.vm.exportBlocked).toBe(true)

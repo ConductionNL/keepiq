@@ -19,9 +19,18 @@ import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useTeamFolderStore } from '../../src/store/modules/teamFolder.js'
 
 const stubs = {
-	NcButton: { props: ['disabled', 'variant'], emits: ['click'], template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>' },
+	NcButton: {
+		props: ['disabled', 'variant'],
+		emits: ['click'],
+		template:
+			'<button :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+	},
 	NcNoteCard: { props: ['type'], template: '<div class="note"><slot /></div>' },
-	NcSelect: { name: 'NcSelect', props: ['modelValue', 'options', 'label', 'inputLabel'], template: '<div />' },
+	NcSelect: {
+		name: 'NcSelect',
+		props: ['modelValue', 'options', 'label', 'inputLabel'],
+		template: '<div />',
+	},
 }
 
 /**
@@ -36,16 +45,35 @@ async function mountWith(applies) {
 			return { data: { vault_org_ownership: applies } }
 		}
 		if (url.includes('ownership-findings')) {
-			return { data: [{ id: 'old-login', name: 'Bank', typeId: 't', folderId: 'private' }] }
+			return {
+				data: [
+					{
+						id: 'old-login',
+						name: 'Bank',
+						typeId: 't',
+						folderId: 'private',
+					},
+				],
+			}
 		}
 		if (url.includes('contributable')) {
-			return { data: [{ teamFolderId: 'tf-ops', folderId: 'folder-ops', folderName: 'Ops' }] }
+			return {
+				data: [
+					{
+						teamFolderId: 'tf-ops',
+						folderId: 'folder-ops',
+						folderName: 'Ops',
+					},
+				],
+			}
 		}
 		return { data: { id: 'old-login', key: 'CIPHER' } }
 	})
 	const teamFolderStore = useTeamFolderStore()
 	teamFolderStore.fetchTeamFolders = vi.fn(async () => {
-		teamFolderStore.owned = [{ id: 'tf-mine', folderId: 'folder-mine', folderName: 'Mine' }]
+		teamFolderStore.owned = [
+			{ id: 'tf-mine', folderId: 'folder-mine', folderName: 'Mine' },
+		]
 	})
 	const wrapper = mount(OwnershipFindings, { global: { stubs } })
 	await flushPromises()
@@ -65,8 +93,12 @@ describe('OwnershipFindings', () => {
 	it('lists the finding with owned and writable team folders', async () => {
 		const wrapper = await mountWith(true)
 
-		expect(wrapper.find('[data-testid="ownership-finding-old-login"]').exists()).toBe(true)
-		expect(wrapper.vm.targetOptions.map((option) => [option.kind, option.label])).toEqual([
+		expect(
+			wrapper.find('[data-testid="ownership-finding-old-login"]').exists(),
+		).toBe(true)
+		expect(
+			wrapper.vm.targetOptions.map((option) => [option.kind, option.label]),
+		).toEqual([
 			['owner', 'Mine'],
 			['contribute', 'Ops'],
 		])
@@ -75,13 +107,19 @@ describe('OwnershipFindings', () => {
 	it('shows nothing when the policy does not apply', async () => {
 		const wrapper = await mountWith(false)
 
-		expect(wrapper.find('[data-testid="ownership-findings"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="ownership-findings"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('an owner move changes the folder and shares it', async () => {
 		const wrapper = await mountWith(true)
-		const update = vi.spyOn(useSecretStore(), 'updateSecret').mockResolvedValue({})
-		const fanOut = vi.spyOn(useTeamFolderStore(), 'runFanOut').mockResolvedValue({ created: 1 })
+		const update = vi
+			.spyOn(useSecretStore(), 'updateSecret')
+			.mockResolvedValue({})
+		const fanOut = vi
+			.spyOn(useTeamFolderStore(), 'runFanOut')
+			.mockResolvedValue({ created: 1 })
 
 		wrapper.vm.targets['old-login'] = wrapper.vm.targetOptions[0]
 		await wrapper.vm.move({ id: 'old-login' })
@@ -95,21 +133,36 @@ describe('OwnershipFindings', () => {
 		const wrapper = await mountWith(true)
 		const order = []
 		const secretStore = useSecretStore()
-		vi.spyOn(secretStore, 'decryptSecret').mockResolvedValue({ name: 'Bank', typeId: 't', key: 'plain' })
-		vi.spyOn(secretStore, 'contributeSecret').mockImplementation(async () => order.push('contribute'))
-		vi.spyOn(secretStore, 'deleteSecret').mockImplementation(async () => order.push('delete'))
+		vi.spyOn(secretStore, 'decryptSecret').mockResolvedValue({
+			name: 'Bank',
+			typeId: 't',
+			key: 'plain',
+		})
+		vi.spyOn(secretStore, 'contributeSecret').mockImplementation(async () =>
+			order.push('contribute'),
+		)
+		vi.spyOn(secretStore, 'deleteSecret').mockImplementation(async () =>
+			order.push('delete'),
+		)
 
 		wrapper.vm.targets['old-login'] = wrapper.vm.targetOptions[1]
 		await wrapper.vm.move({ id: 'old-login' })
 
-		expect(secretStore.contributeSecret).toHaveBeenCalledWith('tf-ops', expect.objectContaining({ name: 'Bank', key: 'plain' }))
+		expect(secretStore.contributeSecret).toHaveBeenCalledWith(
+			'tf-ops',
+			expect.objectContaining({ name: 'Bank', key: 'plain' }),
+		)
 		expect(order).toEqual(['contribute', 'delete'])
 	})
 
 	it('keeps the personal secret when the contribution fails', async () => {
 		const wrapper = await mountWith(true)
 		const secretStore = useSecretStore()
-		vi.spyOn(secretStore, 'decryptSecret').mockResolvedValue({ name: 'Bank', typeId: 't', key: 'plain' })
+		vi.spyOn(secretStore, 'decryptSecret').mockResolvedValue({
+			name: 'Bank',
+			typeId: 't',
+			key: 'plain',
+		})
 		vi.spyOn(secretStore, 'contributeSecret').mockRejectedValue(new Error('403'))
 		const remove = vi.spyOn(secretStore, 'deleteSecret')
 

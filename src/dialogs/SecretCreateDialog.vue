@@ -148,7 +148,12 @@
 				v-if="ownershipApplies"
 				type="info"
 				data-testid="secret-create-ownership">
-				{{ t('keepiq', 'Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.') }}
+				{{
+					t(
+						'keepiq',
+						'Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.',
+					)
+				}}
 			</NcNoteCard>
 			<NcSelect
 				v-if="ownershipApplies && contributable.length > 0"
@@ -391,8 +396,12 @@ export default {
 		 * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
 		 */
 		ownershipApplies() {
-			return this.policy?.vault_org_ownership === true
-				&& (this.policy?.vault_org_ownership_types ?? []).includes(this.selectedTypeName)
+			return (
+				this.policy?.vault_org_ownership === true
+				&& (this.policy?.vault_org_ownership_types ?? []).includes(
+					this.selectedTypeName,
+				)
+			)
 		},
 
 		isCard() {
@@ -513,11 +522,18 @@ export default {
 			try {
 				const teamFolderStore = useTeamFolderStore()
 				await teamFolderStore.fetchTeamFolders()
-				const roots = teamFolderStore.owned.map((teamFolder) => teamFolder.folderId)
+				const roots = teamFolderStore.owned.map(
+					(teamFolder) => teamFolder.folderId,
+				)
 				this.ownTeamFolderIds = subtreeIds(useFolderStore().folders, roots)
-				this.contributable = (await axios.get(
-					generateUrl('/apps/keepiq/api/v1/team-folders/contributable'),
-				)).data ?? []
+				this.contributable =
+					(
+						await axios.get(
+							generateUrl(
+								'/apps/keepiq/api/v1/team-folders/contributable',
+							),
+						)
+					).data ?? []
 			} catch {
 				this.contributable = []
 			}
@@ -632,16 +648,19 @@ export default {
 				if (this.contributeTo) {
 					// A team folder this user can write to but does not own
 					// (admin-vault-policies D5): encrypted for owner and members.
-					const result = await useSecretStore().contributeSecret(this.contributeTo.teamFolderId, {
-						name: this.name.trim(),
-						typeId: this.typeId,
-						url: this.url || null,
-						login: this.login || '',
-						key: this.effectiveValue,
-						...(Object.keys(this.additionalBlob()).length > 0
-							? { additionalFields: this.additionalBlob() }
-							: {}),
-					})
+					const result = await useSecretStore().contributeSecret(
+						this.contributeTo.teamFolderId,
+						{
+							name: this.name.trim(),
+							typeId: this.typeId,
+							url: this.url || null,
+							login: this.login || '',
+							key: this.effectiveValue,
+							...(Object.keys(this.additionalBlob()).length > 0
+								? { additionalFields: this.additionalBlob() }
+								: {}),
+						},
+					)
 					this.$emit('saved', result.secret)
 					this.onUpdateOpen(false)
 					return

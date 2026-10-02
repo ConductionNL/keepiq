@@ -157,8 +157,15 @@
 					v-if="twoFactorRequired"
 					type="warning"
 					data-testid="lock-two-factor-required">
-					{{ t('keepiq', 'Your organisation requires two-factor login before you can open your vault.') }}
-					<a :href="securitySettingsUrl">{{ t('keepiq', 'Set up two-factor login') }}</a>
+					{{
+						t(
+							'keepiq',
+							'Your organisation requires two-factor login before you can open your vault.',
+						)
+					}}
+					<a :href="securitySettingsUrl">{{
+						t('keepiq', 'Set up two-factor login')
+					}}</a>
 				</NcNoteCard>
 
 				<NcNoteCard v-if="hasPausedMigration" type="warning">
@@ -498,8 +505,11 @@ export default {
 		 * @spec openspec/changes/admin-vault-policies/tasks.md#3.3
 		 */
 		twoFactorRequired() {
-			return this.twoFactorRefused
-				|| this.suiteStore.currentSuite?.unlockBlocked === 'two_factor_required'
+			return (
+				this.twoFactorRefused
+				|| this.suiteStore.currentSuite?.unlockBlocked
+					=== 'two_factor_required'
+			)
 		},
 
 		/**

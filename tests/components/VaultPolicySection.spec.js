@@ -18,7 +18,10 @@ import { useGroupStore } from '../../src/store/modules/group.js'
 import { useSecretTypeStore } from '../../src/store/modules/secretType.js'
 
 const stubs = {
-	CnSettingsSection: { props: ['name', 'description'], template: '<section><slot /></section>' },
+	CnSettingsSection: {
+		props: ['name', 'description'],
+		template: '<section><slot /></section>',
+	},
 	NcNoteCard: { props: ['type'], template: '<div class="note"><slot /></div>' },
 	NcSelect: {
 		name: 'NcSelect',
@@ -38,7 +41,9 @@ const stubs = {
 async function mountWith(admin, gaps = { inScope: 0, withoutTwoFactor: 0 }) {
 	vi.spyOn(useGroupStore(), 'fetchGroups').mockResolvedValue()
 	vi.spyOn(useSecretTypeStore(), 'fetchTypes').mockResolvedValue()
-	vi.spyOn(axios, 'get').mockImplementation(async (url) => ({ data: url.includes('two-factor-gaps') ? gaps : admin }))
+	vi.spyOn(axios, 'get').mockImplementation(async (url) => ({
+		data: url.includes('two-factor-gaps') ? gaps : admin,
+	}))
 	const wrapper = mount(VaultPolicySection, { global: { stubs } })
 	await flushPromises()
 	return wrapper
@@ -56,34 +61,50 @@ describe('VaultPolicySection', () => {
 	it('labels every picker', async () => {
 		const wrapper = await mountWith({})
 
-		const labels = wrapper.findAllComponents({ name: 'NcSelect' }).map((select) => select.props('inputLabel'))
+		const labels = wrapper
+			.findAllComponents({ name: 'NcSelect' })
+			.map((select) => select.props('inputLabel'))
 		expect(labels).toHaveLength(4)
-		expect(labels.every((label) => typeof label === 'string' && label.length > 0)).toBe(true)
+		expect(
+			labels.every((label) => typeof label === 'string' && label.length > 0),
+		).toBe(true)
 	})
 
 	it('loads the stored values and saves every policy key with a group scope', async () => {
 		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: {} })
-		const wrapper = await mountWith({ vault_export_disabled: false, vault_export_disabled_groups: [] })
+		const wrapper = await mountWith({
+			vault_export_disabled: false,
+			vault_export_disabled_groups: [],
+		})
 
 		wrapper.vm.values.vault_export_disabled_groups = ['staff']
-		await wrapper.find('[data-testid="vault-policy-vault_export_disabled"]').setValue(true)
+		await wrapper
+			.find('[data-testid="vault-policy-vault_export_disabled"]')
+			.setValue(true)
 		await flushPromises()
 
 		expect(put).toHaveBeenCalledWith(
 			'/apps/keepiq/api/settings/admin',
-			expect.objectContaining({ vault_export_disabled: true, vault_export_disabled_groups: ['staff'] }),
+			expect.objectContaining({
+				vault_export_disabled: true,
+				vault_export_disabled_groups: ['staff'],
+			}),
 		)
 	})
 
 	it('warns how many users in scope have no second factor', async () => {
 		const wrapper = await mountWith({}, { inScope: 5, withoutTwoFactor: 2 })
 
-		expect(wrapper.find('[data-testid="vault-policy-two-factor-gaps"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="vault-policy-two-factor-gaps"]').exists(),
+		).toBe(true)
 	})
 
 	it('says nothing when everyone in scope has a second factor', async () => {
 		const wrapper = await mountWith({}, { inScope: 5, withoutTwoFactor: 0 })
 
-		expect(wrapper.find('[data-testid="vault-policy-two-factor-gaps"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="vault-policy-two-factor-gaps"]').exists(),
+		).toBe(false)
 	})
 })
