@@ -32,6 +32,8 @@ final class JsonFormatter {
 	 * @param array<string,mixed> $payload The buildPayload() array
 	 *
 	 * @return string
+	 *
+	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-named-siem-connectors-on-a-sink
 	 */
 	public function format(array $payload): string {
 		return (string)json_encode((new PayloadView(payload: $payload))->sanitized());

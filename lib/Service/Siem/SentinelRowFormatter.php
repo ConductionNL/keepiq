@@ -41,17 +41,19 @@ final class SentinelRowFormatter {
 	 * @param array<string,mixed> $payload The buildPayload() array
 	 *
 	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-microsoft-sentinel-delivery-through-the-logs-ingestion-api
 	 */
 	public function format(array $payload): array {
 		$view = new PayloadView(payload: $payload);
 		return [
 			'TimeGenerated' => gmdate('Y-m-d\TH:i:s\Z', (int)$view->epoch()),
-			'EventType' => $view->get('eventType'),
-			'Category' => $view->get('category'),
-			'ActorType' => $view->get('actorType'),
-			'ActorId' => $view->get('actorId'),
-			'ObjectType' => $view->get('objectType'),
-			'ObjectId' => $view->get('objectId'),
+			'EventType' => $view->get(field: 'eventType'),
+			'Category' => $view->get(field: 'category'),
+			'ActorType' => $view->get(field: 'actorType'),
+			'ActorId' => $view->get(field: 'actorId'),
+			'ObjectType' => $view->get(field: 'objectType'),
+			'ObjectId' => $view->get(field: 'objectId'),
 			'Metadata' => (object)$view->metadata(),
 		];
 	}//end format()

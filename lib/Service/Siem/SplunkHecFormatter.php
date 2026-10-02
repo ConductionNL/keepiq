@@ -42,6 +42,8 @@ final class SplunkHecFormatter {
 	 * @param array<string,string> $options The sink's connector options (index, sourcetype)
 	 *
 	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-splunk-http-event-collector-delivery
 	 */
 	public function format(array $payload, string $host, array $options = []): array {
 		$view = new PayloadView(payload: $payload);
@@ -49,8 +51,12 @@ final class SplunkHecFormatter {
 			'time' => $view->epoch(),
 			'host' => $host,
 			'source' => 'keepiq',
-			'sourcetype' => ($options['sourcetype'] ?? '') !== '' ? $options['sourcetype'] : self::SOURCETYPE,
+			'sourcetype' => self::SOURCETYPE,
 		];
+		if (($options['sourcetype'] ?? '') !== '') {
+			$envelope['sourcetype'] = $options['sourcetype'];
+		}
+
 		if (($options['index'] ?? '') !== '') {
 			$envelope['index'] = $options['index'];
 		}

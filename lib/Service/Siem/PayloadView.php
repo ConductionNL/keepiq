@@ -38,6 +38,8 @@ final class PayloadView {
 	 * @param array<string,mixed> $payload The buildPayload() array
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
 	 */
 	public function __construct(private array $payload) {
 	}//end __construct()
@@ -48,6 +50,8 @@ final class PayloadView {
 	 * @param string $field One of eventType, category, actorType, actorId, objectType, objectId, occurredAt
 	 *
 	 * @return string
+	 *
+	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
 	 */
 	public function get(string $field): string {
 		$value = $this->payload[$field] ?? '';
@@ -62,6 +66,8 @@ final class PayloadView {
 	 * The whitelisted metadata minus every forbidden key.
 	 *
 	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
 	 */
 	public function metadata(): array {
 		$metadata = $this->payload['metadata'] ?? [];
@@ -80,9 +86,11 @@ final class PayloadView {
 	 * The event time as a Unix timestamp with milliseconds, now when absent.
 	 *
 	 * @return float
+	 *
+	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
 	 */
 	public function epoch(): float {
-		$time = strtotime($this->get('occurredAt'));
+		$time = strtotime($this->get(field: 'occurredAt'));
 		if ($time === false) {
 			return (float)time();
 		}
@@ -94,16 +102,18 @@ final class PayloadView {
 	 * The payload rebuilt from the known fields only.
 	 *
 	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
 	 */
 	public function sanitized(): array {
 		return [
-			'eventType' => $this->get('eventType'),
-			'category' => $this->get('category'),
-			'actorType' => $this->get('actorType'),
-			'actorId' => $this->get('actorId'),
-			'objectType' => $this->get('objectType'),
-			'objectId' => $this->get('objectId'),
-			'occurredAt' => $this->get('occurredAt'),
+			'eventType' => $this->get(field: 'eventType'),
+			'category' => $this->get(field: 'category'),
+			'actorType' => $this->get(field: 'actorType'),
+			'actorId' => $this->get(field: 'actorId'),
+			'objectType' => $this->get(field: 'objectType'),
+			'objectId' => $this->get(field: 'objectId'),
+			'occurredAt' => $this->get(field: 'occurredAt'),
 			'metadata' => $this->metadata(),
 		];
 	}//end sanitized()
