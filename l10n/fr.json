@@ -1265,7 +1265,9 @@
         "Tag": "Étiquette",
         "Remove tag": "Retirer l'étiquette",
         "Add tag": "Ajouter une étiquette",
-        "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez."
+        "Could not change the tags. Try again.": "Impossible de modifier les étiquettes. Réessayez.",
+        "Root certificate expiring soon": "Le certificat racine expire bientôt",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Le certificat racine du coffre expire dans %1$d jour(s). Renouvelez-le avant cette date. Le renouvellement signe à nouveau chaque suite de chiffrement."
     },
     "plurals": null
 }

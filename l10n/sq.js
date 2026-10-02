@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Etiketë",
         "Remove tag": "Hiq etiketën",
         "Add tag": "Shto etiketë",
-        "Could not change the tags. Try again.": "Etiketat nuk u ndryshuan dot. Provoni sërish."
+        "Could not change the tags. Try again.": "Etiketat nuk u ndryshuan dot. Provoni sërish.",
+        "Root certificate expiring soon": "Certifikata rrënjë skadon së shpejti",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certifikata rrënjë e kasafortës skadon pas %1$d dite(ve). Rinovojeni para kësaj. Rinovimi nënshkruan sërish çdo paketë enkriptimi."
     },
     "nplurals=2; plural=(n != 1);"
 )

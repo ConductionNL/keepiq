@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Tag",
         "Remove tag": "Usuń tag",
         "Add tag": "Dodaj tag",
-        "Could not change the tags. Try again.": "Nie udało się zmienić tagów. Spróbuj ponownie."
+        "Could not change the tags. Try again.": "Nie udało się zmienić tagów. Spróbuj ponownie.",
+        "Root certificate expiring soon": "Certyfikat główny wkrótce wygaśnie",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certyfikat główny sejfu wygaśnie za %1$d dni. Odnów go wcześniej. Odnowienie ponownie podpisuje każdy zestaw szyfrowania."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Етикет",
         "Remove tag": "Премахване на етикет",
         "Add tag": "Добавяне на етикет",
-        "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново."
+        "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново.",
+        "Root certificate expiring soon": "Основният сертификат изтича скоро",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Основният сертификат на трезора изтича след %1$d ден(а). Подновете го преди това. Подновяването подписва отново всеки пакет за шифроване."
     },
     "nplurals=2; plural=(n != 1);"
 )

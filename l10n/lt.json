@@ -1265,7 +1265,9 @@
         "Tag": "Žymė",
         "Remove tag": "Pašalinti žymę",
         "Add tag": "Pridėti žymę",
-        "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą."
+        "Could not change the tags. Try again.": "Nepavyko pakeisti žymių. Bandykite dar kartą.",
+        "Root certificate expiring soon": "Šakninio sertifikato galiojimas netrukus baigsis",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Saugyklos šakninio sertifikato galiojimas baigsis po %1$d d. Atnaujinkite jį iki tol. Atnaujinant iš naujo pasirašomas kiekvienas šifravimo rinkinys."
     },
     "plurals": null
 }

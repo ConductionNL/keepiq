@@ -1265,7 +1265,9 @@
         "Tag": "Etiqueta",
         "Remove tag": "Treu l'etiqueta",
         "Add tag": "Afegeix una etiqueta",
-        "Could not change the tags. Try again.": "No s'han pogut canviar les etiquetes. Torneu-ho a provar."
+        "Could not change the tags. Try again.": "No s'han pogut canviar les etiquetes. Torneu-ho a provar.",
+        "Root certificate expiring soon": "El certificat arrel caduca aviat",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "El certificat arrel de la caixa forta caduca d'aquí a %1$d dia(es). Renoveu-lo abans. En renovar-lo es torna a signar cada suite de xifratge."
     },
     "plurals": null
 }

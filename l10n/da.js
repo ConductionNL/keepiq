@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Mærke",
         "Remove tag": "Fjern mærke",
         "Add tag": "Tilføj mærke",
-        "Could not change the tags. Try again.": "Mærkerne kunne ikke ændres. Prøv igen."
+        "Could not change the tags. Try again.": "Mærkerne kunne ikke ændres. Prøv igen.",
+        "Root certificate expiring soon": "Rodcertifikatet udløber snart",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Boksens rodcertifikat udløber om %1$d dag(e). Forny det inden da. Fornyelse signerer hver krypteringssuite igen."
     },
     "nplurals=2; plural=(n != 1);"
 )

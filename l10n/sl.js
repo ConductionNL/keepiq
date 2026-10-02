@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Oznaka",
         "Remove tag": "Odstrani oznako",
         "Add tag": "Dodaj oznako",
-        "Could not change the tags. Try again.": "Oznak ni bilo mogoče spremeniti. Poskusite znova."
+        "Could not change the tags. Try again.": "Oznak ni bilo mogoče spremeniti. Poskusite znova.",
+        "Root certificate expiring soon": "Korensko potrdilo kmalu poteče",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Korensko potrdilo trezorja poteče čez %1$d dni. Obnovite ga pred tem. Obnova znova podpiše vsak šifrirni paket."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Etiket",
         "Remove tag": "Etiketi kaldır",
         "Add tag": "Etiket ekle",
-        "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin."
+        "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin.",
+        "Root certificate expiring soon": "Kök sertifikanın süresi yakında doluyor",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Kasanın kök sertifikasının süresi %1$d gün içinde doluyor. Bundan önce yenileyin. Yenileme her şifreleme paketini yeniden imzalar."
     },
     "nplurals=2; plural=(n != 1);"
 )

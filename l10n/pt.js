@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Etiqueta",
         "Remove tag": "Remover etiqueta",
         "Add tag": "Adicionar etiqueta",
-        "Could not change the tags. Try again.": "Não foi possível alterar as etiquetas. Tente novamente."
+        "Could not change the tags. Try again.": "Não foi possível alterar as etiquetas. Tente novamente.",
+        "Root certificate expiring soon": "O certificado raiz expira em breve",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "O certificado raiz do cofre expira em %1$d dia(s). Renove-o antes disso. A renovação volta a assinar cada suíte de cifragem."
     },
     "nplurals=2; plural=(n != 1);"
 )

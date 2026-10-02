@@ -1265,7 +1265,9 @@
         "Tag": "Tunniste",
         "Remove tag": "Poista tunniste",
         "Add tag": "Lisää tunniste",
-        "Could not change the tags. Try again.": "Tunnisteita ei voitu muuttaa. Yritä uudelleen."
+        "Could not change the tags. Try again.": "Tunnisteita ei voitu muuttaa. Yritä uudelleen.",
+        "Root certificate expiring soon": "Juurivarmenne vanhenee pian",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Holvin juurivarmenne vanhenee %1$d päivän kuluttua. Uusi se ennen sitä. Uusiminen allekirjoittaa jokaisen salauspaketin uudelleen."
     },
     "plurals": null
 }

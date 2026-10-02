@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Merki",
         "Remove tag": "Fjarlægja merki",
         "Add tag": "Bæta við merki",
-        "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur."
+        "Could not change the tags. Try again.": "Ekki tókst að breyta merkjunum. Reyndu aftur.",
+        "Root certificate expiring soon": "Rótarvottorð rennur brátt út",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Rótarvottorð hólfsins rennur út eftir %1$d dag/daga. Endurnýjaðu það fyrir þann tíma. Endurnýjun undirritar hverja dulkóðunarsvítu upp á nýtt."
     },
     "nplurals=2; plural=(n != 1);"
 )

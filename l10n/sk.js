@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Štítok",
         "Remove tag": "Odobrať štítok",
         "Add tag": "Pridať štítok",
-        "Could not change the tags. Try again.": "Štítky nemožno zmeniť. Skúste to znova."
+        "Could not change the tags. Try again.": "Štítky nemožno zmeniť. Skúste to znova.",
+        "Root certificate expiring soon": "Koreňový certifikát čoskoro vyprší",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Koreňový certifikát trezoru vyprší o %1$d dní. Obnovte ho predtým. Obnovenie znova podpíše každú šifrovaciu sadu."
     },
     "nplurals=2; plural=(n != 1);"
 )

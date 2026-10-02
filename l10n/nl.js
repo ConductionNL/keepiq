@@ -1271,7 +1271,9 @@ OC.L10N.register(
         "Tag": "Label",
         "Remove tag": "Label verwijderen",
         "Add tag": "Label toevoegen",
-        "Could not change the tags. Try again.": "Kon de labels niet wijzigen. Probeer het opnieuw."
+        "Could not change the tags. Try again.": "Kon de labels niet wijzigen. Probeer het opnieuw.",
+        "Root certificate expiring soon": "Rootcertificaat verloopt binnenkort",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Het rootcertificaat van de kluis verloopt over %1$d dag(en). Vernieuw het vóór die tijd. Vernieuwen ondertekent elke versleutelingssuite opnieuw."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1265,7 +1265,9 @@
         "Tag": "Tag",
         "Remove tag": "Remove tag",
         "Add tag": "Add tag",
-        "Could not change the tags. Try again.": "Could not change the tags. Try again."
+        "Could not change the tags. Try again.": "Could not change the tags. Try again.",
+        "Root certificate expiring soon": "Root certificate expiring soon",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

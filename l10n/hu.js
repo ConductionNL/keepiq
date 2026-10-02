@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Címke",
         "Remove tag": "Címke eltávolítása",
         "Add tag": "Címke hozzáadása",
-        "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra."
+        "Could not change the tags. Try again.": "Nem sikerült módosítani a címkéket. Próbálja újra.",
+        "Root certificate expiring soon": "A gyökértanúsítvány hamarosan lejár",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "A széf gyökértanúsítványa %1$d nap múlva lejár. Újítsa meg előtte. A megújítás minden titkosítási csomagot újra aláír."
     },
     "nplurals=2; plural=(n != 1);"
 )

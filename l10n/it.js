@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Etichetta",
         "Remove tag": "Rimuovi etichetta",
         "Add tag": "Aggiungi etichetta",
-        "Could not change the tags. Try again.": "Impossibile modificare le etichette. Riprova."
+        "Could not change the tags. Try again.": "Impossibile modificare le etichette. Riprova.",
+        "Root certificate expiring soon": "Il certificato radice scade a breve",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Il certificato radice della cassaforte scade tra %1$d giorno/i. Rinnovalo prima di allora. Il rinnovo firma di nuovo ogni suite di cifratura."
     },
     "nplurals=2; plural=(n != 1);"
 )

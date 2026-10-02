@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Tikketta",
         "Remove tag": "Neħħi t-tikketta",
         "Add tag": "Żid tikketta",
-        "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova."
+        "Could not change the tags. Try again.": "Ma setgħux jinbidlu t-tikketti. Erġa' pprova.",
+        "Root certificate expiring soon": "Iċ-ċertifikat għerq jiskadi dalwaqt",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Iċ-ċertifikat għerq tal-kaxxaforti jiskadi fi żmien %1$d jum/ijiem. Ġeddu qabel dak iż-żmien. It-tiġdid jerġa' jiffirma kull suite tal-encryption."
     },
     "nplurals=2; plural=(n != 1);"
 )

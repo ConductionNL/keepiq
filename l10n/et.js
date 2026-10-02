@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Silt",
         "Remove tag": "Eemalda silt",
         "Add tag": "Lisa silt",
-        "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti."
+        "Could not change the tags. Try again.": "Silte ei õnnestunud muuta. Proovi uuesti.",
+        "Root certificate expiring soon": "Juursertifikaat aegub peagi",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Hoidla juursertifikaat aegub %1$d päeva pärast. Uuenda see enne seda. Uuendamine allkirjastab iga krüpteerimiskomplekti uuesti."
     },
     "nplurals=2; plural=(n != 1);"
 )

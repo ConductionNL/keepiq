@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Etichetta",
         "Remove tag": "Allontanar l'etichetta",
         "Add tag": "Agiuntar ina etichetta",
-        "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada."
+        "Could not change the tags. Try again.": "Impussibel da midar las etichettas. Empruvai anc ina giada.",
+        "Root certificate expiring soon": "Il certificat da ragisch scada prest",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Il certificat da ragisch da la cassaforta scada en %1$d di(s). Renovai el avant. La renovaziun suttascriva danovamain mintga suite da criptaziun."
     },
     "nplurals=2; plural=(n != 1);"
 )

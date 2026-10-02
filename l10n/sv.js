@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Tagg",
         "Remove tag": "Ta bort tagg",
         "Add tag": "Lägg till tagg",
-        "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen."
+        "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen.",
+        "Root certificate expiring soon": "Rotcertifikatet går snart ut",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Valvets rotcertifikat går ut om %1$d dag(ar). Förnya det innan dess. Förnyelsen signerar om varje krypteringssvit."
     },
     "nplurals=2; plural=(n != 1);"
 )

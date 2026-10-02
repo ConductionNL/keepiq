@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Schlagwort",
         "Remove tag": "Schlagwort entfernen",
         "Add tag": "Schlagwort hinzufügen",
-        "Could not change the tags. Try again.": "Schlagwörter konnten nicht geändert werden. Bitte erneut versuchen."
+        "Could not change the tags. Try again.": "Schlagwörter konnten nicht geändert werden. Bitte erneut versuchen.",
+        "Root certificate expiring soon": "Stammzertifikat läuft bald ab",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Das Stammzertifikat des Tresors läuft in %1$d Tag(en) ab. Erneuern Sie es vorher. Beim Erneuern wird jede Verschlüsselungssuite neu signiert."
     },
     "nplurals=2; plural=(n != 1);"
 )

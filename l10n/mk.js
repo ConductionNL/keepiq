@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Ознака",
         "Remove tag": "Отстрани ознака",
         "Add tag": "Додај ознака",
-        "Could not change the tags. Try again.": "Ознаките не можеа да се променат. Обидете се повторно."
+        "Could not change the tags. Try again.": "Ознаките не можеа да се променат. Обидете се повторно.",
+        "Root certificate expiring soon": "Коренскиот сертификат наскоро истекува",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Коренскиот сертификат на сефот истекува за %1$d ден(а). Обновете го пред тоа. Обновувањето повторно го потпишува секој пакет за шифрирање."
     },
     "nplurals=2; plural=(n != 1);"
 )

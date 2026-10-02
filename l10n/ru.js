@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Метка",
         "Remove tag": "Убрать метку",
         "Add tag": "Добавить метку",
-        "Could not change the tags. Try again.": "Не удалось изменить метки. Попробуйте ещё раз."
+        "Could not change the tags. Try again.": "Не удалось изменить метки. Попробуйте ещё раз.",
+        "Root certificate expiring soon": "Срок действия корневого сертификата скоро истечёт",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Срок действия корневого сертификата хранилища истекает через %1$d дн. Обновите его до этого. При обновлении каждый набор шифрования подписывается заново."
     },
     "nplurals=2; plural=(n != 1);"
 )

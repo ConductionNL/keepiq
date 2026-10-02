@@ -1266,7 +1266,9 @@ OC.L10N.register(
         "Tag": "Ετικέτα",
         "Remove tag": "Αφαίρεση ετικέτας",
         "Add tag": "Προσθήκη ετικέτας",
-        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά."
+        "Could not change the tags. Try again.": "Δεν ήταν δυνατή η αλλαγή των ετικετών. Δοκιμάστε ξανά.",
+        "Root certificate expiring soon": "Το πιστοποιητικό ρίζας λήγει σύντομα",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Το πιστοποιητικό ρίζας του θησαυροφυλακίου λήγει σε %1$d ημέρα(ες). Ανανεώστε το πριν από τότε. Η ανανέωση υπογράφει ξανά κάθε σουίτα κρυπτογράφησης."
     },
     "nplurals=2; plural=(n != 1);"
 )
