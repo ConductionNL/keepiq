@@ -12,7 +12,7 @@
  *
  * Runs under jsdom with lightweight @nextcloud/vue stubs.
  *
- * @spec openspec/changes/secret-import/specs/secret-import/spec.md
+ * @spec openspec/specs/secret-import/spec.md
  */
 
 import { mount } from '@vue/test-utils'

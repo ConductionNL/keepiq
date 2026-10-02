@@ -106,6 +106,8 @@ class SiemService {
 	 * @param AuditEvent $event The dispatched audit event
 	 *
 	 * @return array<string,mixed>|null
+	 *
+	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-forwarded-payload-carries-no-secret-material
 	 */
 	public function buildPayload(AuditEvent $event): ?array {
 		$eventType = $event->getEventType();
@@ -148,6 +150,8 @@ class SiemService {
 	 * @param array<string,mixed> $payload The forwarding payload
 	 *
 	 * @return int Rows enqueued
+	 *
+	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-backpressure-and-observability
 	 */
 	public function enqueue(array $payload): int {
 		$enqueued = 0;

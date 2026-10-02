@@ -395,15 +395,12 @@ class CertificateIssuanceService {
 	 * a result whose public key differs is still rejected.
 	 *
 	 * @param string $oldCert The current PEM certificate to re-sign
-	 * @param string $fallbackCn CN to use when the old cert has none
+	 * @param string $fallbackCn CN to add when the old cert has none
 	 * @param string $intermediateCert The signing intermediate certificate (PEM)
 	 * @param string $intermediateKeyPem The decrypted intermediate private key (PEM)
 	 *
 	 * @return string|null The new PEM certificate, or null when the public key
 	 *                     could not be preserved.
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $fallbackCn is kept for
-	 *   signature stability; phpseclib preserves the full original subject DN.
 	 */
 	private function resignPreservingPublicKey(
 		string $oldCert,
@@ -419,7 +416,8 @@ class CertificateIssuanceService {
 		$newCertPem = $this->assembler->resignPreservingSubject(
 			oldCert: $oldCert,
 			intermediateCert: $intermediateCert,
-			intermediateKeyPem: $intermediateKeyPem
+			intermediateKeyPem: $intermediateKeyPem,
+			fallbackCn: $fallbackCn
 		);
 
 		// The saveX509() helper is declared `: string`, so the only failure

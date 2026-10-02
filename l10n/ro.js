@@ -1267,7 +1267,9 @@ OC.L10N.register(
         "Remove tag": "Elimină eticheta",
         "Add tag": "Adaugă etichetă",
         "Could not change the tags. Try again.": "Etichetele nu au putut fi schimbate. Încercați din nou.",
-        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Un export CXF NU ESTE CRIPTAT. Fiecare parolă și nume de utilizator vor fi lizibile ca text simplu în fișierul descărcat. Păstrați-l în siguranță și ștergeți-l imediat după utilizare."
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Un export CXF NU ESTE CRIPTAT. Fiecare parolă și nume de utilizator vor fi lizibile ca text simplu în fișierul descărcat. Păstrați-l în siguranță și ștergeți-l imediat după utilizare.",
+        "Root certificate expiring soon": "Certificatul rădăcină expiră în curând",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certificatul rădăcină al seifului expiră în %1$d zi(le). Reînnoiți-l înainte. Reînnoirea semnează din nou fiecare suită de criptare."
     },
     "nplurals=2; plural=(n != 1);"
 )

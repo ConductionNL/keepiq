@@ -1267,7 +1267,9 @@ OC.L10N.register(
         "Remove tag": "Премахване на етикет",
         "Add tag": "Добавяне на етикет",
         "Could not change the tags. Try again.": "Етикетите не можаха да бъдат променени. Опитайте отново.",
-        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Износът в CXF НЕ Е ШИФРИРАН. Всяка парола и потребителско име ще бъдат четими като обикновен текст в изтегления файл. Пазете го на сигурно място и го изтрийте веднага след употреба."
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Износът в CXF НЕ Е ШИФРИРАН. Всяка парола и потребителско име ще бъдат четими като обикновен текст в изтегления файл. Пазете го на сигурно място и го изтрийте веднага след употреба.",
+        "Root certificate expiring soon": "Основният сертификат изтича скоро",
+        "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Основният сертификат на трезора изтича след %1$d ден(а). Подновете го преди това. Подновяването подписва отново всеки пакет за шифроване."
     },
     "nplurals=2; plural=(n != 1);"
 )
