@@ -956,6 +956,8 @@ class SecretService {
 
 		if (array_key_exists('additionalFields', $data) === true) {
 			$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields']));
+			// Request-filled blobs the client merged into this one (keepiq#750).
+			$secret->dropMergedPending(count: (int)($data['mergedPending'] ?? 0));
 		}
 
 		if ($this->shouldSnapshot(before: $preUpdate, after: $secret) === true) {
