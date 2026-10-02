@@ -1,0 +1,54 @@
+{{- $kind := ternary "ClusterRole" "Role" .Values.clusterWide }}
+{{- $bindingKind := ternary "ClusterRoleBinding" "RoleBinding" .Values.clusterWide }}
+# What the operator may do: read its two resources and the Secret that holds
+# the application key, write the target Secrets it owns, patch the pod template
+# of restart targets, and record events. Namespaced unless clusterWide is set.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: {{ $kind }}
+metadata:
+  name: {{ include "keepiq-operator.fullname" . }}
+  {{- if not .Values.clusterWide }}
+  namespace: {{ .Release.Namespace }}
+  {{- end }}
+  labels:
+    {{- include "keepiq-operator.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [keepiq.conduction.nl]
+    resources: [keepiqsecrets, keepiqconnections]
+    verbs: [get, list, watch]
+  - apiGroups: [keepiq.conduction.nl]
+    resources: [keepiqsecrets/status]
+    verbs: [get, update, patch]
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: [get, list, watch, create, update, patch]
+  - apiGroups: [""]
+    resources: [events]
+    verbs: [create, patch]
+  - apiGroups: [events.k8s.io]
+    resources: [events]
+    verbs: [create, patch]
+  - apiGroups: [apps]
+    resources: [deployments, statefulsets]
+    verbs: [get, patch]
+  - apiGroups: [coordination.k8s.io]
+    resources: [leases]
+    verbs: [get, list, watch, create, update, patch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: {{ $bindingKind }}
+metadata:
+  name: {{ include "keepiq-operator.fullname" . }}
+  {{- if not .Values.clusterWide }}
+  namespace: {{ .Release.Namespace }}
+  {{- end }}
+  labels:
+    {{- include "keepiq-operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: {{ $kind }}
+  name: {{ include "keepiq-operator.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "keepiq-operator.serviceAccount" . }}
+    namespace: {{ .Release.Namespace }}

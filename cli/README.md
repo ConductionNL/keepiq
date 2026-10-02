@@ -86,6 +86,12 @@ keepiq ci run DB_PASSWORD,API_TOKEN -- ./migrate.sh       # injected into the ch
 — nothing is written to disk and the parent environment is untouched. The
 `--output env` form prints an `export` line and warns on stderr that exporting a
 secret into the shell environment exposes it to sibling child processes.
+The wrapped command does not get `KEEPIQ_APP_KEY`: it receives its secrets, not
+the key that reads every secret of the application.
+
+`keepiq install <path>` copies the binary to a path. The container image
+`ghcr.io/conductionnl/keepiq-cli` has no shell, so an init container uses this
+to put `keepiq` into a shared volume (see `integrations/kubernetes/`).
 
 ### Leases
 
@@ -96,7 +102,7 @@ omits lease reporting.
 
 ## Crypto parity
 
-The `internal/crypto` package reimplements the browser recipe **byte-for-byte**:
+The `sdk/go/crypto` package (shared with the client libraries, see `../sdk/`) reimplements the browser recipe **byte-for-byte**:
 
 - **Private-key blob** (human unlock): base64 of `[4B version][16B salt][12B
   IV][ciphertext+16B GCM tag]`. The unlock key is
@@ -107,7 +113,7 @@ The `internal/crypto` package reimplements the browser recipe **byte-for-byte**:
 
 PBKDF2 is implemented in-house over `crypto/hmac` (RFC 8018) so the CLI has zero
 external dependencies. Byte-parity is pinned by the RFC 6070 test vectors in
-`internal/crypto/crypto_test.go`.
+`../sdk/go/crypto/crypto_test.go`.
 
 ```sh
 go test ./...
