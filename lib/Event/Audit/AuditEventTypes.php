@@ -320,7 +320,7 @@ final class AuditEventTypes {
 		self::TEAM_FOLDER_MEMBERS_CONFIRMED => ['confirmedCount', 'memberCount'],
 		// SIEM sinks — sink id/type/outcome only (§5.1).
 		self::SIEM_SINK_CREATED => ['sinkId', 'type'],
-		self::SIEM_SINK_UPDATED => ['sinkId'],
+		self::SIEM_SINK_UPDATED => ['sinkId', 'type'],
 		self::SIEM_SINK_DELETED => ['sinkId'],
 		self::SIEM_SINK_TESTED => ['sinkId', 'outcome'],
 		// Certificate lifecycle — identifiers only, never PEM/key.
