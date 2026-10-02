@@ -40,7 +40,7 @@ use OCP\IUserSession;
  */
 class PasswordPolicyService {
 	/**
-	 * The nine admin-writable policy keys. `updatePolicySettings()` audits a
+	 * The eleven admin-writable policy keys. `updatePolicySettings()` audits a
 	 * write only when the payload touches at least one of them, and the
 	 * before/after snapshot is taken over exactly this list.
 	 *
@@ -53,9 +53,12 @@ class PasswordPolicyService {
 		'generator_require_lower',
 		'generator_require_digit',
 		'generator_require_symbol',
+		'generator_allow_passphrase',
 		'min_zxcvbn_score',
 		'block_on_hibp_hit',
 		'policy_exempt_types',
+		// Automatic member confirmation (admin-auto-confirm-members D1): off by default, audited like the rest.
+		'team_folder_auto_confirm',
 	];
 
 	/**
@@ -69,6 +72,8 @@ class PasswordPolicyService {
 		'generator_require_lower',
 		'generator_require_digit',
 		'generator_require_symbol',
+		'generator_allow_passphrase',
+		'team_folder_auto_confirm',
 	];
 
 	/**
@@ -106,6 +111,7 @@ class PasswordPolicyService {
 	 * @param IUserSession $userSession The user session (audit actor)
 	 * @param IEventDispatcher|null $eventDispatcher The audit dispatcher (policy changes)
 	 * @param AuditEventFactory $auditEvents The audit-event factory
+	 * @param VaultPolicyService|null $vaultPolicies The vault policies (admin-vault-policies)
 	 *
 	 * @return void
 	 *
@@ -116,6 +122,7 @@ class PasswordPolicyService {
 		private IUserSession $userSession,
 		private ?IEventDispatcher $eventDispatcher = null,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
+		private ?VaultPolicyService $vaultPolicies = null,
 	) {
 	}//end __construct()
 
@@ -135,14 +142,16 @@ class PasswordPolicyService {
 	 * `Repair\InitializeSettings` write them; `getValueInt()` on a
 	 * string-typed app-config key raises a type conflict in Nextcloud.
 	 *
+	 * @param string|null $userId The session user, for the effective vault policies
+	 *
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
 	 */
-	public function getPolicy(): array {
+	public function getPolicy(?string $userId = null): array {
 		$appId = Application::APP_ID;
 
-		return array_merge(
+		$policy = array_merge(
 			[
 				'master_password_min_length' => (int)$this->appConfig->getValueString(
 					$appId,
@@ -157,16 +166,25 @@ class PasswordPolicyService {
 			],
 			$this->readPolicyKeys()
 		);
+
+		if ($this->vaultPolicies !== null && $userId !== null) {
+			// Only whether each vault policy applies to THIS user, never the
+			// group lists (admin-vault-policies D1).
+			$policy = array_merge($policy, $this->vaultPolicies->effectiveFor(userId: $userId));
+		}
+
+		return $policy;
 	}//end getPolicy()
 
 	/**
-	 * The nine policy keys with their stored (or default) values. This is
+	 * The ten policy keys with their stored (or default) values. This is
 	 * the single reader both `getPolicy()` and the admin-settings payload
 	 * use, so the two can never disagree about a default.
 	 *
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
+	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.1
 	 */
 	public function readPolicyKeys(): array {
 		$appId = Application::APP_ID;
@@ -178,14 +196,30 @@ class PasswordPolicyService {
 			'generator_require_lower' => $this->appConfig->getValueBool($appId, 'generator_require_lower', false),
 			'generator_require_digit' => $this->appConfig->getValueBool($appId, 'generator_require_digit', false),
 			'generator_require_symbol' => $this->appConfig->getValueBool($appId, 'generator_require_symbol', false),
+			// Passphrases (client-side-key-generator): on unless an administrator switches them off.
+			'generator_allow_passphrase' => $this->appConfig->getValueBool($appId, 'generator_allow_passphrase', true),
 			'min_zxcvbn_score' => $this->appConfig->getValueInt($appId, 'min_zxcvbn_score', 0),
 			'block_on_hibp_hit' => $this->appConfig->getValueBool($appId, 'block_on_hibp_hit', false),
 			'policy_exempt_types' => json_decode(
 				$this->appConfig->getValueString($appId, 'policy_exempt_types', self::DEFAULT_EXEMPT_TYPES),
 				true
 			),
+			'team_folder_auto_confirm' => $this->appConfig->getValueBool($appId, 'team_folder_auto_confirm', false),
 		];
 	}//end readPolicyKeys()
+
+	/**
+	 * The policy keys the admin page shows: the org password policy and,
+	 * when wired, the vault policies with their group scopes. Admin only;
+	 * the user-facing getPolicy() never carries the group lists.
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
+	 */
+	public function readAdminPolicyKeys(): array {
+		return array_merge($this->readPolicyKeys(), $this->vaultPolicies?->read() ?? []);
+	}//end readAdminPolicyKeys()
 
 	/**
 	 * Validate + persist the org password-policy keys and dispatch the
@@ -199,8 +233,11 @@ class PasswordPolicyService {
 	 * @throws InvalidArgumentException On invalid policy values
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
+	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.1
 	 */
 	public function updatePolicySettings(array $data): void {
+		$this->vaultPolicies?->update(data: $data);
+
 		$touched = array_values(array_intersect(self::POLICY_KEYS, array_keys($data)));
 		if ($touched === []) {
 			return;

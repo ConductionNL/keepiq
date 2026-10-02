@@ -181,6 +181,7 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 			SettingsService::class    => $this->settingsService,
 			IUserSession::class       => $this->createMock(originalClassName: IUserSession::class),
 			ConnectionReporter::class => $this->reporter,
+			\OCA\Keepiq\Service\TwoFactorGate::class => $this->createMock(originalClassName: \OCA\Keepiq\Service\TwoFactorGate::class),
 		];
 		$container = $this->createMock(originalClassName: ContainerInterface::class);
 		$container->method('get')->willReturnCallback(

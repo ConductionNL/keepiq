@@ -38,6 +38,13 @@ use OCP\Notification\UnknownNotificationException;
  * The subject IDs here must match NotificationService::SUBJECT_SETTING_MAP.
  * Each branch builds a short subject line, a longer message line and a
  * deep-link the user clicks to land on the affected secret / queue.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) 50 against a threshold of
+ *   50. Nextcloud registers one INotifier per app, so every Keepiq subject
+ *   renders here; the complexity is the sum of about twenty small branches,
+ *   already split per subject group. The share-request and group-member
+ *   approval actions (keepiq#747) pushed it to the threshold. Splitting the
+ *   class would only move branches into a second class this one calls.
  */
 class KeepiqNotifier implements INotifier {
 	/**
@@ -113,6 +120,10 @@ class KeepiqNotifier implements INotifier {
 		}
 
 		if ($handled === false) {
+			$handled = $this->renderEmergencySubject(notification: $notification, subject: $subj, params: $params, l: $l);
+		}
+
+		if ($handled === false) {
 			throw new UnknownNotificationException();
 		}
 
@@ -141,13 +152,20 @@ class KeepiqNotifier implements INotifier {
 				$this->withSecretLink(notification: $notification, params: $params);
 				return true;
 			case 'share_request':
+				// Sent to the owner, so sourceSecretId is the owner's own secret.
+				$params = self::normaliseParams(params: $params, aliases: ['requesterId' => 'requester', 'sourceSecretId' => 'secret_id']);
 				$requester = (string)($params['requester'] ?? $l->t('a user'));
 				$secretName = (string)($params['secret_name'] ?? $l->t('a secret'));
+				$targetUserId = (string)($params['target_user_id'] ?? '');
 				$notification->setParsedSubject((string)$l->t('Share request'));
-				$notification->setParsedMessage(
-					(string)$l->t('%1$s requested access to the secret "%2$s".', [$requester, $secretName])
-				);
+				$message = (string)$l->t('%1$s requested access to the secret "%2$s".', [$requester, $secretName]);
+				if ($targetUserId !== '' && $targetUserId !== $requester) {
+					$message = (string)$l->t('%1$s asks you to share the secret "%2$s" with %3$s.', [$requester, $secretName, $targetUserId]);
+				}
+
+				$notification->setParsedMessage($message);
 				$this->withSecretLink(notification: $notification, params: $params);
+				$this->withShareRequestActions(notification: $notification, params: $params, l: $l);
 				return true;
 			case 'share_request_result':
 				$secretName = (string)($params['secret_name'] ?? $l->t('a secret'));
@@ -162,6 +180,8 @@ class KeepiqNotifier implements INotifier {
 				$this->withSecretLink(notification: $notification, params: $params);
 				return true;
 			case 'group_member_added':
+				// Sent to the owner, so secretId is the owner's own secret.
+				$params = self::normaliseParams(params: $params, aliases: []);
 				$groupId = (string)($params['group_id'] ?? '');
 				$secretName = (string)($params['secret_name'] ?? $l->t('a secret'));
 				$notification->setParsedSubject((string)$l->t('Group member added'));
@@ -169,6 +189,7 @@ class KeepiqNotifier implements INotifier {
 					(string)$l->t('A new member joined the group "%1$s" — approve to share "%2$s".', [$groupId, $secretName])
 				);
 				$this->withSecretLink(notification: $notification, params: $params);
+				$this->withGroupMemberActions(notification: $notification, params: $params, l: $l);
 				return true;
 		}//end switch
 
@@ -189,10 +210,34 @@ class KeepiqNotifier implements INotifier {
 		switch ($subject) {
 			case 'secret_compromised':
 				$secretName = (string)($params['secret_name'] ?? $l->t('a secret'));
+				$otherCount = (int)($params['other_count'] ?? 0);
 				$notification->setParsedSubject((string)$l->t('Secret may be compromised'));
-				$notification->setParsedMessage(
-					(string)$l->t('Your secret "%s" may be compromised and requires migration.', [$secretName])
-				);
+				// One notice per owner, so it says how many secrets it covers:
+				// a single name read as "only this one" (keepiq#875).
+				$message = $l->t('Your secret "%s" may be compromised and requires migration.', [$secretName]);
+				if ($otherCount > 0) {
+					$message = $l->t(
+						'Your secret "%1$s" and %2$d other secret(s) may be compromised and require migration.',
+						[$secretName, $otherCount]
+					);
+				}
+
+				$notification->setParsedMessage((string)$message);
+				$this->withSecretLink(notification: $notification, params: $params);
+				return true;
+			case 'shared_secret_compromised':
+				$secretName = (string)($params['secret_name'] ?? $l->t('a secret'));
+				$otherCount = (int)($params['other_count'] ?? 0);
+				$notification->setParsedSubject((string)$l->t('Shared secret may be compromised'));
+				$message = $l->t('The secret "%s" shared with you may be compromised. Change it where it is used.', [$secretName]);
+				if ($otherCount > 0) {
+					$message = $l->t(
+						'The secret "%1$s" and %2$d other secret(s) shared with you may be compromised. Change them where they are used.',
+						[$secretName, $otherCount]
+					);
+				}
+
+				$notification->setParsedMessage((string)$message);
 				$this->withSecretLink(notification: $notification, params: $params);
 				return true;
 			case 'request_fulfilled':
@@ -293,6 +338,14 @@ class KeepiqNotifier implements INotifier {
 					(string)$l->t('%s shared a team folder with you. Its secrets are now in your vault.', [$sharedBy])
 				);
 				return true;
+			case 'team_folder_member_confirmed':
+				$confirmedBy = (string)($params['confirmedBy'] ?? $l->t('a member'));
+				$confirmedMembers = implode(', ', array_map('strval', (array)($params['memberIds'] ?? [])));
+				$notification->setParsedSubject((string)$l->t('New team folder members confirmed'));
+				$notification->setParsedMessage(
+					(string)$l->t('%1$s gave %2$s access to your team folder.', [$confirmedBy, $confirmedMembers])
+				);
+				return true;
 			case 'team_folder_join_request':
 				$newMemberId = (string)($params['newMemberId'] ?? $l->t('a user'));
 				$joinGroupId = (string)($params['groupId'] ?? '');
@@ -322,6 +375,26 @@ class KeepiqNotifier implements INotifier {
 					)
 				);
 				return true;
+		}//end switch
+
+		return false;
+	}//end renderVaultAccessSubject()
+
+	/**
+	 * Render the emergency-access subjects: requests, grants that were used,
+	 * cleared and compromised contacts. None of them carry a deep-link.
+	 *
+	 * @param INotification $notification The notification to mutate
+	 * @param string $subject The notification subject identifier
+	 * @param array<string,mixed> $params The subject parameters
+	 * @param IL10N $l The localisation helper
+	 *
+	 * @return bool True when this renderer recognised the subject.
+	 *
+	 * @spec openspec/specs/emergency-access/spec.md
+	 */
+	private function renderEmergencySubject(INotification $notification, string $subject, array $params, IL10N $l): bool {
+		switch ($subject) {
 			case 'emergency_access_requested':
 				$granteeName = (string)($params['grantee_name'] ?? $params['granteeUserId'] ?? $l->t('a trusted contact'));
 				$waitDays = (int)($params['waitPeriodDays'] ?? 7);
@@ -330,6 +403,26 @@ class KeepiqNotifier implements INotifier {
 					(string)$l->t(
 						'%1$s requested emergency access to your vault. It will be granted in %2$d day(s) unless you decline.',
 						[$granteeName, $waitDays]
+					)
+				);
+				return true;
+			case 'emergency_grantee_compromised':
+				$granteeName = (string)($params['grantee_name'] ?? $params['granteeUserId'] ?? $l->t('a trusted contact'));
+				$notification->setParsedSubject((string)$l->t('Emergency contact compromised'));
+				$notification->setParsedMessage(
+					(string)$l->t(
+						'%s had approved emergency access to your vault. Their encryption key was revoked as compromised, so start a key rotation.',
+						[$granteeName]
+					)
+				);
+				return true;
+			case 'emergency_access_cleared':
+				$clearedCount = (int)($params['count'] ?? 0);
+				$notification->setParsedSubject((string)$l->t('Emergency access removed'));
+				$notification->setParsedMessage(
+					(string)$l->t(
+						'An administrator revoked your vault key and deleted %d emergency contact(s). Add them again once your vault is set up.',
+						[$clearedCount]
 					)
 				);
 				return true;
@@ -343,7 +436,132 @@ class KeepiqNotifier implements INotifier {
 		}//end switch
 
 		return false;
-	}//end renderVaultAccessSubject()
+	}//end renderEmergencySubject()
+
+	/**
+	 * Accept the parameter names the services actually send.
+	 *
+	 * The share-request and group-member services notify with camelCase keys
+	 * (`secretName`, `requesterId`, `sourceSecretId`, `groupId`), while the
+	 * renderers read snake_case. Both notifications therefore showed "a user"
+	 * and "a secret" and carried no link (#747). Each camelCase key gains its
+	 * snake_case twin, and a key whose meaning differs is mapped by name. A
+	 * key already present is never overwritten. Applied per subject, because
+	 * only where the recipient is the owner does a secret id name a secret
+	 * in the recipient's own vault.
+	 *
+	 * @param array<string,mixed>  $params  The raw subject parameters
+	 * @param array<string,string> $aliases camelCase key => snake_case key, where they differ
+	 *
+	 * @return array<string,mixed> The parameters with both spellings
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
+	 */
+	private static function normaliseParams(array $params, array $aliases): array {
+		foreach ($params as $key => $value) {
+			$snake = $aliases[$key] ?? strtolower((string)preg_replace('/(?<!^)[A-Z]/', '_$0', (string)$key));
+			if ($snake !== $key && array_key_exists($snake, $params) === false) {
+				$params[$snake] = $value;
+			}
+		}
+
+		return $params;
+	}//end normaliseParams()
+
+	/**
+	 * Approve and deny actions on a share request.
+	 *
+	 * Approving needs the owner's unlocked vault, because the browser
+	 * encrypts the copy for the new recipient, so Approve opens the approval
+	 * page in Keepiq. Denying needs no key, so Deny calls the API directly.
+	 *
+	 * @param INotification $notification The notification to mutate
+	 * @param array<string,mixed> $params The normalised subject parameters
+	 * @param IL10N $l The localisation helper
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
+	 */
+	private function withShareRequestActions(INotification $notification, array $params, IL10N $l): void {
+		$query = [
+			'sourceSecretId' => (string)($params['secret_id'] ?? ''),
+			'requesterId' => (string)($params['requester'] ?? ''),
+			'targetUserId' => (string)($params['target_user_id'] ?? ''),
+		];
+		if (in_array('', $query, true) === true) {
+			return;
+		}
+
+		$this->addActions(
+			notification: $notification,
+			l: $l,
+			approvePage: 'approvals/share-request?' . http_build_query($query),
+			denyApi: 'api/v1/share-requests/deny?' . http_build_query($query),
+		);
+	}//end withShareRequestActions()
+
+	/**
+	 * Approve and deny actions on a new group member of a group share.
+	 *
+	 * @param INotification $notification The notification to mutate
+	 * @param array<string,mixed> $params The normalised subject parameters
+	 * @param IL10N $l The localisation helper
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-new-group-member-owner-notification
+	 */
+	private function withGroupMemberActions(INotification $notification, array $params, IL10N $l): void {
+		$groupShareId = (string)($params['group_share_id'] ?? '');
+		$newMemberId = (string)($params['new_member_id'] ?? '');
+		$secretId = (string)($params['secret_id'] ?? '');
+		if ($groupShareId === '' || $newMemberId === '' || $secretId === '') {
+			return;
+		}
+
+		$this->addActions(
+			notification: $notification,
+			l: $l,
+			approvePage: 'approvals/group-member?' . http_build_query(
+				['groupShareId' => $groupShareId, 'newMemberId' => $newMemberId, 'secretId' => $secretId]
+			),
+			denyApi: 'api/v1/group-shares/' . rawurlencode($groupShareId) . '/deny-new-member?'
+				. http_build_query(['newMemberId' => $newMemberId]),
+		);
+	}//end withGroupMemberActions()
+
+	/**
+	 * Add a primary Approve action (a Keepiq page) and a Deny action (a POST).
+	 *
+	 * @param INotification $notification The notification to mutate
+	 * @param IL10N $l The localisation helper
+	 * @param string $approvePage The SPA path and query, relative to the app root
+	 * @param string $denyApi The API path and query, relative to the app root
+	 *
+	 * @return void
+	 */
+	private function addActions(INotification $notification, IL10N $l, string $approvePage, string $denyApi): void {
+		try {
+			$appRoot = $this->url->linkToRoute(Application::APP_ID . '.dashboard.page');
+		} catch (InvalidArgumentException) {
+			return;
+		}
+
+		$approve = $notification->createAction();
+		$approve->setLabel('approve')
+			->setParsedLabel((string)$l->t('Approve'))
+			->setLink($this->url->getAbsoluteURL($appRoot . $approvePage), 'WEB')
+			->setPrimary(true);
+		$notification->addParsedAction($approve);
+
+		$deny = $notification->createAction();
+		$deny->setLabel('deny')
+			->setParsedLabel((string)$l->t('Deny'))
+			->setLink($this->url->getAbsoluteURL($appRoot . $denyApi), 'POST')
+			->setPrimary(false);
+		$notification->addParsedAction($deny);
+	}//end addActions()
 
 	/**
 	 * Attach a deep-link to the affected secret, when the params include one.

@@ -228,8 +228,9 @@ class SecretController extends OCSController {
 			// The folder named in the request does not exist (keepiq#795).
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (ForbiddenException|SuiteBlockedException $e) {
-			// ForbiddenException: the folder belongs to another user (keepiq#795).
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+			// ForbiddenException: the folder belongs to another user (keepiq#795),
+			// or a vault policy refused the write (admin-vault-policies D4).
+			return $this->forbidden(exception: $e);
 		} catch (WriteLockedException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: self::STATUS_LOCKED);
 		} catch (InvalidArgumentException $e) {
@@ -352,7 +353,7 @@ class SecretController extends OCSController {
 		} catch (NotFoundException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (ForbiddenException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+			return $this->forbidden(exception: $e);
 		} catch (WriteLockedException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: self::STATUS_LOCKED);
 		} catch (InvalidArgumentException $e) {
@@ -361,4 +362,23 @@ class SecretController extends OCSController {
 
 		return new JSONResponse(data: $secret->jsonSerialize());
 	}//end update()
+
+	/**
+	 * A 403 for a refused write, with the policy code when a vault policy
+	 * refused it (admin-vault-policies D4).
+	 *
+	 * @param ForbiddenException|SuiteBlockedException $exception The refusal
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.1
+	 */
+	private function forbidden(ForbiddenException|SuiteBlockedException $exception): JSONResponse {
+		$data = ['message' => $exception->getMessage()];
+		if ($exception instanceof ForbiddenException && $exception->policyCode() !== null) {
+			$data['code'] = $exception->policyCode();
+		}
+
+		return new JSONResponse(data: $data, statusCode: Http::STATUS_FORBIDDEN);
+	}//end forbidden()
 }//end class

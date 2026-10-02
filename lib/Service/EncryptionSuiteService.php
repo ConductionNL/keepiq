@@ -28,6 +28,7 @@ use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Event\EncryptionSuiteRevokedEvent;
+use OCA\Keepiq\Exception\ReinstateRefusedException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\EventDispatcher\IEventDispatcher;
 use Psr\Log\LoggerInterface;
@@ -38,6 +39,12 @@ use Psr\Log\LoggerInterface;
  * CA certificate is EncryptionSuiteProvisioningService's job; the two
  * creation entry points stay here as thin forwards so callers keep one
  * suite-shaped service.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) 12 on development, and the
+ *   reinstate guard (keepiq#865: a suite revoked as compromised cannot come
+ *   back) is the 13th. It belongs in reinstateSuite(), the one path every
+ *   reinstate takes; checking it in a caller would leave the service open.
+ *   The guard's own audit-trail reads already live in SuiteReinstateGuard.
  */
 class EncryptionSuiteService {
 	/**
@@ -48,6 +55,7 @@ class EncryptionSuiteService {
 	 * @param LoggerInterface $logger The logger interface
 	 * @param IEventDispatcher|null $eventDispatcher The event dispatcher
 	 * @param AuditEventFactory $auditEvents The audit-event factory
+	 * @param SuiteReinstateGuard|null $reinstateGuard Decides whether a revoked suite may come back
 	 *
 	 * @return void
 	 */
@@ -57,6 +65,7 @@ class EncryptionSuiteService {
 		private LoggerInterface $logger,
 		private ?IEventDispatcher $eventDispatcher = null,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
+		private ?SuiteReinstateGuard $reinstateGuard = null,
 	) {
 	}//end __construct()
 
@@ -166,7 +175,7 @@ class EncryptionSuiteService {
 	 *   the descriptive name is deliberate and matches the surfaced field.
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 */
 	public function revokeSuite(
 		string $id,
@@ -193,9 +202,10 @@ class EncryptionSuiteService {
 		// Implement-user-sharing §10.3 — dispatch a revocation event so
 		// EncryptionSuiteRevokedListener can cascade share-target
 		// cleanup and promote temporary delegations to permanent. The
-		// compromise flag drives SuiteCompromiseOnRevokeListener on the
-		// same event (admin-suite-revocation D2); it stays false on the
-		// owner path, which never passes $markCompromised.
+		// compromise flag is carried on the event for its listeners; the
+		// compromise cascade itself runs from CompromiseContainmentService,
+		// called by the administrator's force-revoke (keepiq#863). It stays
+		// false on the owner path, which never passes $markCompromised.
 		if ($this->eventDispatcher !== null) {
 			$this->eventDispatcher->dispatchTyped(
 				new EncryptionSuiteRevokedEvent(
@@ -226,7 +236,57 @@ class EncryptionSuiteService {
 	}//end revokeSuite()
 
 	/**
+	 * Record a refused revocation in the audit trail (keepiq#870).
+	 *
+	 * Successful revokes were audited and refusals only reached the HTTP
+	 * response, so an attack on the containment path was invisible to the
+	 * SIEM. The reason code is a fixed machine token chosen by the caller
+	 * (`migration_in_progress`, `invalid_argument`, `forbidden`,
+	 * `empty_reason`), never an exception message, so nothing a request
+	 * supplied ends up in the trail.
+	 *
+	 * @param string $suiteId         The suite the revoke targeted
+	 * @param string $actorId         Who asked for the revoke
+	 * @param string $reasonCode      Why it was refused, as a fixed token
+	 * @param bool   $markCompromised Whether a compromise revoke was asked for
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $markCompromised is recorded
+	 *   data about the refused request, not a mode switch for this method.
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 */
+	public function recordRevokeRefused(
+		string $suiteId,
+		string $actorId,
+		string $reasonCode,
+		bool $markCompromised = false,
+	): void {
+		$this->eventDispatcher?->dispatchTyped(
+			$this->auditEvents->forUser(
+				actorId: $actorId,
+				eventType: AuditEventTypes::SUITE_REVOKE_REFUSED,
+				objectType: 'suite',
+				objectId: $suiteId,
+				metadata: [
+					'reasonCode' => $reasonCode,
+					'markCompromised' => $markCompromised,
+				],
+			)
+		);
+	}//end recordRevokeRefused()
+
+	/**
 	 * Reinstate a revoked EncryptionSuite. Re-signs the public key with the active intermediate.
+	 *
+	 * Refused for a suite revoked as compromised: reinstating it re-opens every
+	 * secret under a key the administrator declared to be in an attacker's
+	 * hands. ADR-005 keeps that decision off the suite row, so it is read from
+	 * the suite's last SUITE_REVOKED audit entry; when no such entry can be
+	 * found the reinstate is refused too, because the revocation cannot be
+	 * shown to be a harmless one. Also refused when the owner already has
+	 * another active suite, which would leave them with two (keepiq#865).
 	 *
 	 * @param string $id The suite ID
 	 * @param string $reinstatedBy The user who reinstated the suite
@@ -234,8 +294,10 @@ class EncryptionSuiteService {
 	 * @return EncryptionSuite
 	 *
 	 * @throws DoesNotExistException
+	 * @throws ReinstateRefusedException From SuiteReinstateGuard::assertReinstatable()
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
 	 */
 	public function reinstateSuite(string $id, string $reinstatedBy): EncryptionSuite {
 		$suite = $this->mapper->findById($id);
@@ -245,6 +307,10 @@ class EncryptionSuiteService {
 				'Only revoked suites can be reinstated (current status: ' . $suite->getStatus() . ')'
 			);
 		}
+
+		// Without an injected guard there is no audit trail to read, so the
+		// default guard refuses every reinstate (fail closed).
+		($this->reinstateGuard ?? new SuiteReinstateGuard(mapper: $this->mapper))->assertReinstatable(suite: $suite);
 
 		// Re-sign the existing public key with the active intermediate.
 		$newCertificate = $this->provisioning->reissueCertificateForSuite(suite: $suite);
@@ -295,10 +361,15 @@ class EncryptionSuiteService {
 
 		$this->logger->warning("Keepiq: EncryptionSuite {$id} marked compromised by {$compromisedBy}");
 
+		// COMPLETED, not STARTED: markCompromised runs only when a recovery
+		// finishes (MigrationService::completeMigration). It used to record
+		// recovery_started here, so the trail showed a start at every
+		// completion and never a completion (keepiq#870). The start is now
+		// recorded by MigrationService::initiateCompromiseRecovery.
 		$this->eventDispatcher?->dispatchTyped(
 			$this->auditEvents->forUser(
 				actorId: $compromisedBy,
-				eventType: AuditEventTypes::SUITE_RECOVERY_STARTED,
+				eventType: AuditEventTypes::SUITE_RECOVERY_COMPLETED,
 				objectType: 'suite',
 				objectId: $id,
 			)
