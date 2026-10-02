@@ -115,6 +115,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
+		 */
 		store() {
 			return useDeviceApprovalStore()
 		},
@@ -123,6 +126,7 @@ export default {
 		 * The first open request not dismissed in this session.
 		 *
 		 * @return {object|null}
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
 		 */
 		current() {
 			if (!this.active) {
@@ -134,6 +138,9 @@ export default {
 			)
 		},
 
+		/**
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
+		 */
 		askedAt() {
 			const at = this.current?.createdAt
 				? new Date(this.current.createdAt)
@@ -141,6 +148,9 @@ export default {
 			return at && !Number.isNaN(at.getTime()) ? at.toLocaleString() : ''
 		},
 
+		/**
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
+		 */
 		securityUrl() {
 			return generateUrl('/settings/user/security')
 		},
@@ -149,6 +159,12 @@ export default {
 	watch: {
 		active: {
 			immediate: true,
+			/**
+			 * Poll for open requests while the vault is unlocked.
+			 *
+			 * @param {boolean} on Whether the vault is unlocked.
+			 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
+			 */
 			handler(on) {
 				this.stop()
 				if (on) {
@@ -226,6 +242,7 @@ export default {
 		 * Close without deciding; the request stays open until it expires.
 		 *
 		 * @return {void}
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
 		 */
 		dismiss() {
 			if (this.current) {
@@ -237,6 +254,7 @@ export default {
 
 		/**
 		 * @return {void}
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
 		 */
 		stop() {
 			if (this.timer) {
