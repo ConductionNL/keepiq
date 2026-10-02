@@ -1382,7 +1382,15 @@ OC.L10N.register(
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "L-organizzazzjoni tiegħek ma tippermettix l-esportazzjoni tal-kaxxaforti personali tiegħek. Il-pakkett tad-data personali fis-settings jibqa' disponibbli.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "L-organizzazzjoni tiegħek iżżomm dawn is-sigrieti f'folder tat-tim. Mexxi kull wieħed għal folder tat-tim.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "L-organizzazzjoni tiegħek iżżomm dan it-tip ta' sigriet f'folder tat-tim. Agħżel wieħed mill-folders tat-tim tiegħek, jew wieħed fejn tista' tikteb.",
-        "Your organisation requires two-factor login before you can open your vault.": "L-organizzazzjoni tiegħek titlob dħul b'żewġ fatturi qabel ma tkun tista' tiftaħ il-kaxxaforti tiegħek."
+        "Your organisation requires two-factor login before you can open your vault.": "L-organizzazzjoni tiegħek titlob dħul b'żewġ fatturi qabel ma tkun tista' tiftaħ il-kaxxaforti tiegħek.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "nplurals=2; plural=(n != 1);"
 )

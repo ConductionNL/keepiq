@@ -1381,7 +1381,15 @@
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Ваша організація не дозволяє експорт особистого сховища. Ваш пакет особистих даних у налаштуваннях лишається доступним.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Ваша організація зберігає ці секрети в командній теці. Перемістіть кожен до командної теки.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Ваша організація зберігає цей тип секрету в командній теці. Виберіть одну зі своїх командних тек або ту, до якої ви можете записувати.",
-        "Your organisation requires two-factor login before you can open your vault.": "Ваша організація вимагає двофакторний вхід, перш ніж ви зможете відкрити сховище."
+        "Your organisation requires two-factor login before you can open your vault.": "Ваша організація вимагає двофакторний вхід, перш ніж ви зможете відкрити сховище.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "plurals": null
 }

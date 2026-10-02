@@ -1381,7 +1381,15 @@
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Vossa organisaziun na permetta betg d'exportar Vossa chascha forta persunala. Voss pachet da datas persunalas en las configuraziuns resta disponibel.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Vossa organisaziun tegna quests secrets en in ordinatur da team. Spustai mintgin en in ordinatur da team.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Vossa organisaziun tegna quest tip da secret en in ordinatur da team. Tschernai in da Voss ordinaturs da team u in en il qual Vus pudais scriver.",
-        "Your organisation requires two-factor login before you can open your vault.": "Vossa organisaziun pretenda l'annunzia en dus pass avant che Vus pudais avrir Vossa chascha forta."
+        "Your organisation requires two-factor login before you can open your vault.": "Vossa organisaziun pretenda l'annunzia en dus pass avant che Vus pudais avrir Vossa chascha forta.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "plurals": null
 }

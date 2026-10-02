@@ -1381,7 +1381,15 @@
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Jūsu organizācija neatļauj eksportēt jūsu personisko glabātavu. Jūsu personas datu pakotne iestatījumos paliek pieejama.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Jūsu organizācija glabā šos noslēpumus komandas mapē. Pārvietojiet katru uz komandas mapi.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Jūsu organizācija glabā šāda veida noslēpumu komandas mapē. Izvēlieties vienu no savām komandas mapēm vai tādu, kurā varat rakstīt.",
-        "Your organisation requires two-factor login before you can open your vault.": "Jūsu organizācija pieprasa divpakāpju pieteikšanos, pirms varat atvērt savu glabātavu."
+        "Your organisation requires two-factor login before you can open your vault.": "Jūsu organizācija pieprasa divpakāpju pieteikšanos, pirms varat atvērt savu glabātavu.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "plurals": null
 }

@@ -9,7 +9,52 @@
 				{{ error }}
 			</NcNoteCard>
 
+			<div
+				v-if="passphraseOffered"
+				class="key-generator-modal__mode"
+				role="radiogroup"
+				:aria-label="t('keepiq', 'Kind of key')">
+				<NcCheckboxRadioSwitch
+					v-model="mode"
+					type="radio"
+					value="password"
+					name="key-generator-mode"
+					data-testid="mode-password">
+					{{ t('keepiq', 'Password') }}
+				</NcCheckboxRadioSwitch>
+				<NcCheckboxRadioSwitch
+					v-model="mode"
+					type="radio"
+					value="passphrase"
+					name="key-generator-mode"
+					data-testid="mode-passphrase">
+					{{ t('keepiq', 'Passphrase') }}
+				</NcCheckboxRadioSwitch>
+			</div>
+
 			<fieldset
+				v-if="mode === 'passphrase'"
+				class="key-generator-modal__basic"
+				data-testid="passphrase-options">
+				<NcInputField
+					v-model="wordsInput"
+					type="number"
+					:label="t('keepiq', 'Number of words')"
+					:min="4"
+					:max="12" />
+				<NcInputField
+					v-model="separator"
+					:label="t('keepiq', 'Separator')" />
+				<NcCheckboxRadioSwitch v-model="capitalise" type="switch">
+					{{ t('keepiq', 'Capitalise each word') }}
+				</NcCheckboxRadioSwitch>
+				<NcCheckboxRadioSwitch v-model="includeNumber" type="switch">
+					{{ t('keepiq', 'Include a number') }}
+				</NcCheckboxRadioSwitch>
+			</fieldset>
+
+			<fieldset
+				v-if="mode === 'password'"
 				:disabled="regex.length > 0"
 				class="key-generator-modal__basic">
 				<NcInputField
@@ -48,7 +93,9 @@
 					:label="t('keepiq', 'Exclude characters')" />
 			</fieldset>
 
-			<details class="key-generator-modal__advanced">
+			<details
+				v-if="mode === 'password'"
+				class="key-generator-modal__advanced">
 				<summary>{{ t('keepiq', 'Advanced') }}</summary>
 				<NcInputField
 					v-model="regex"
@@ -106,7 +153,11 @@ import {
 } from '@nextcloud/vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
-import { generateKey } from '../generator/generator.js'
+import {
+	generateKey,
+	generatePassphrase,
+	passphraseAllowed,
+} from '../generator/generator.js'
 import { fetchPolicy } from '../policy/policy.js'
 
 export default {
@@ -147,7 +198,25 @@ export default {
 			policyFloorActive: false,
 			symbolLocked: false,
 			policy: null,
+			mode: 'password',
+			wordsInput: 5,
+			separator: '-',
+			capitalise: false,
+			includeNumber: false,
 		}
+	},
+
+	computed: {
+		/**
+		 * Whether to offer passphrases: on unless the organisation policy
+		 * switched them off.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/client-side-key-generator/specs/passphrase-generator/spec.md#requirement-passphrases-follow-the-organisation-password-policy
+		 */
+		passphraseOffered() {
+			return passphraseAllowed(this.policy)
+		},
 	},
 
 	/**
@@ -208,12 +277,25 @@ export default {
 		 *
 		 * @spec openspec/specs/key-generator/spec.md#requirement-default-generation
 		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
+		 * @spec openspec/changes/client-side-key-generator/specs/passphrase-generator/spec.md#requirement-generate-a-passphrase
 		 */
 		async generate() {
 			this.loading = true
 			this.error = null
 
 			try {
+				if (this.mode === 'passphrase' && this.passphraseOffered) {
+					this.generatedKey = generatePassphrase(
+						{
+							words: Number(this.wordsInput),
+							separator: this.separator,
+							capitalise: this.capitalise,
+							includeNumber: this.includeNumber,
+						},
+						this.policy,
+					)
+					return
+				}
 				const options = this.regex
 					? { regex: this.regex }
 					: {
@@ -273,6 +355,11 @@ export default {
 	border: none;
 	margin: 0;
 	padding: 0;
+}
+
+.key-generator-modal__mode {
+	display: flex;
+	gap: 16px;
 }
 
 .key-generator-modal__advanced summary {

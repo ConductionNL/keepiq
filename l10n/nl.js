@@ -1387,7 +1387,15 @@ OC.L10N.register(
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Je organisatie staat het exporteren van je persoonlijke kluis niet toe. Je persoonlijke gegevenspakket in je instellingen blijft beschikbaar.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Je organisatie bewaart deze geheimen in een teammap. Verplaats ze stuk voor stuk naar een teammap.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Je organisatie bewaart dit type geheim in een teammap. Kies een van je teammappen, of een waarin je kunt schrijven.",
-        "Your organisation requires two-factor login before you can open your vault.": "Je organisatie vereist tweestapsaanmelding voordat je je kluis kunt openen."
+        "Your organisation requires two-factor login before you can open your vault.": "Je organisatie vereist tweestapsaanmelding voordat je je kluis kunt openen.",
+        "Allow passphrases made of words": "Wachtzinnen van woorden toestaan",
+        "Capitalise each word": "Elk woord met een hoofdletter",
+        "Include a number": "Een cijfer toevoegen",
+        "Kind of key": "Soort sleutel",
+        "Number of words": "Aantal woorden",
+        "Passphrase": "Wachtzin",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Stel een minimale kwaliteit in voor geheime waarden. De browser controleert die vóór het versleutelen, zodat de server nooit een waarde ziet.",
+        "Separator": "Scheidingsteken"
     },
     "nplurals=2; plural=(n != 1);"
 )

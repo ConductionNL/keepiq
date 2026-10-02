@@ -5,6 +5,11 @@
  *
  * API controller exposing the stateless key generator.
  *
+ * Deprecated for the app's own use: the web app and the browser extension
+ * generate keys in the browser (`src/generator/generator.js`), so a
+ * generated value is never seen by the server. The endpoint stays for API
+ * clients that still call it, and will be removed in a later release.
+ *
  * @category Controller
  * @package  OCA\Keepiq\Controller
  *
@@ -74,8 +79,11 @@ class KeyGeneratorController extends OCSController {
 	 *   carry a default — which is the only thing this rule fires on. Splitting the
 	 *   method would split the route and change the HTTP contract.
 	 * @SuppressWarnings(PHPMD.LongVariable)        $includeSpecialCharacters is the wire
-	 *   field name posted by src/dialogs/KeyGeneratorModal.vue; because the router
-	 *   binds by name, shortening the parameter would break the frontend contract.
+	 *   field name of this endpoint's request body; because the router binds by
+	 *   name, shortening the parameter would break the API contract.
+	 *
+	 * @deprecated The app generates in the browser (src/generator/generator.js);
+	 *   kept for API clients only.
 	 *
 	 * @spec openspec/specs/key-generator/spec.md#requirement-configuration-fields
 	 */

@@ -1381,7 +1381,15 @@
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Vaša organizacija ne dozvoljava izvoz vašeg ličnog trezora. Vaš paket ličnih podataka u postavkama ostaje dostupan.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Vaša organizacija čuva ove tajne u timskom folderu. Premjestite svaku u timski folder.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Vaša organizacija čuva ovu vrstu tajne u timskom folderu. Odaberite jedan od svojih timskih foldera ili onaj u koji možete pisati.",
-        "Your organisation requires two-factor login before you can open your vault.": "Vaša organizacija zahtijeva prijavu u dva koraka prije nego što možete otvoriti svoj trezor."
+        "Your organisation requires two-factor login before you can open your vault.": "Vaša organizacija zahtijeva prijavu u dva koraka prije nego što možete otvoriti svoj trezor.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "plurals": null
 }

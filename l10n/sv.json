@@ -1381,7 +1381,15 @@
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Din organisation tillåter inte export av ditt personliga valv. Ditt personliga datapaket i inställningarna finns kvar.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Din organisation förvarar dessa hemligheter i en teammapp. Flytta var och en till en teammapp.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Din organisation förvarar den här typen av hemlighet i en teammapp. Välj en av dina teammappar, eller en du kan skriva i.",
-        "Your organisation requires two-factor login before you can open your vault.": "Din organisation kräver tvåstegsinloggning innan du kan öppna ditt valv."
+        "Your organisation requires two-factor login before you can open your vault.": "Din organisation kräver tvåstegsinloggning innan du kan öppna ditt valv.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "plurals": null
 }

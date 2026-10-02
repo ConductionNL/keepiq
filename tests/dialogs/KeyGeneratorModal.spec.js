@@ -13,6 +13,8 @@
  *  - the regex override generates from the pattern alone;
  *  - a refused request surfaces in the NcNoteCard;
  *  - the org policy floor fetched on mount clamps the generated length;
+ *  - passphrase mode makes words, and is not offered when the policy
+ *    switches it off;
  *  - clicking Use emits `generated` with the previewed key and closes the
  *    dialog (`update:open` false).
  *
@@ -135,6 +137,45 @@ describe('KeyGeneratorModal', () => {
 
 		expect(wrapper.vm.generatedKey).toHaveLength(30)
 		expect(wrapper.vm.generatedKey).toMatch(/[0-9]/)
+	})
+
+	it('generate(): passphrase mode makes words from the options, without a request', async () => {
+		const post = vi.spyOn(axios, 'post')
+		const wrapper = mount(KeyGeneratorModal, {
+			propsData: { open: true },
+			global: { stubs: ncStubs },
+		})
+
+		wrapper.vm.mode = 'passphrase'
+		wrapper.vm.wordsInput = 6
+		wrapper.vm.separator = ' '
+		wrapper.vm.capitalise = true
+		await wrapper.vm.generate()
+
+		expect(post).not.toHaveBeenCalled()
+		const words = wrapper.vm.generatedKey.split(' ')
+		expect(words).toHaveLength(6)
+		expect(words.every((w) => /^[A-Z][a-z-]+$/.test(w))).toBe(true)
+	})
+
+	it('offers Password only when the organisation switched passphrases off', async () => {
+		const wrapper = mount(KeyGeneratorModal, {
+			propsData: { open: true },
+			global: { stubs: ncStubs },
+		})
+
+		expect(wrapper.vm.passphraseOffered).toBe(true)
+		wrapper.vm.policy = {
+			policy_enabled: true,
+			generator_allow_passphrase: false,
+		}
+		await wrapper.vm.$nextTick()
+
+		expect(wrapper.vm.passphraseOffered).toBe(false)
+		expect(wrapper.find('[data-testid="mode-passphrase"]').exists()).toBe(false)
+		wrapper.vm.mode = 'passphrase'
+		await wrapper.vm.generate()
+		expect(wrapper.vm.generatedKey).toMatch(/^.{16}$/)
 	})
 
 	it('use(): emits the generated key and closes the dialog', async () => {

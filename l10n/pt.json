@@ -1381,7 +1381,15 @@
         "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "A sua organização não permite exportar o seu cofre pessoal. O seu pacote de dados pessoais nas definições continua disponível.",
         "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "A sua organização guarda estes segredos numa pasta de equipa. Mova cada um para uma pasta de equipa.",
         "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "A sua organização guarda este tipo de segredo numa pasta de equipa. Escolha uma das suas pastas de equipa, ou uma onde pode escrever.",
-        "Your organisation requires two-factor login before you can open your vault.": "A sua organização exige autenticação de dois fatores antes de poder abrir o seu cofre."
+        "Your organisation requires two-factor login before you can open your vault.": "A sua organização exige autenticação de dois fatores antes de poder abrir o seu cofre.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator"
     },
     "plurals": null
 }
