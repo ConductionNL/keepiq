@@ -1506,7 +1506,21 @@ OC.L10N.register(
         "Web app": "Aplicação web",
         "A device": "Um dispositivo",
         "A new device asks to open your vault": "Um novo dispositivo pede para abrir o seu cofre",
-        "%s asks to be approved. Only approve a device you are using right now.": "%s pede para ser aprovado. Aprove apenas um dispositivo que esteja a usar neste momento."
+        "%s asks to be approved. Only approve a device you are using right now.": "%s pede para ser aprovado. Aprove apenas um dispositivo que esteja a usar neste momento.",
+        "Access ends on (optional)": "O acesso termina em (opcional)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "As aplicações do Keepiq não mostram nem copiam a palavra-passe. Alguém com conhecimentos técnicos pode ainda lê-la a partir do próprio dispositivo. Altere-a quando o acesso terminar.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Este segredo é apenas para utilização. Inicie sessão através da extensão de navegador do Keepiq.",
+        "Until {date}": "Até {date}",
+        "Use only": "Apenas utilização",
+        "Use only (can sign in, cannot view or copy)": "Apenas utilização (pode iniciar sessão, não pode ver nem copiar)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Pode iniciar sessão com estas credenciais através da extensão de navegador do Keepiq. O proprietário optou por não lhe permitir vê-las ou copiá-las.",
+        "Your access ends on {date}": "O seu acesso termina em {date}",
+        "Your access to this secret has ended": "O seu acesso a este segredo terminou",
+        "Your access to \"%s\" ends tomorrow": "O seu acesso a \"%s\" termina amanhã",
+        "Your access to \"%s\" has ended": "O seu acesso a \"%s\" terminou",
+        "%1$s no longer has access to \"%2$s\"": "%1$s já não tem acesso a \"%2$s\"",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s podia ver esta palavra-passe. Altere-a se %1$s já não a dever conhecer.",
+        "%s could not view this password in Keepiq.": "%s não conseguiu ver esta palavra-passe no Keepiq."
     },
     "nplurals=2; plural=(n != 1);"
 )

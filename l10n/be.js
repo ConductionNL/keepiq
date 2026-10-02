@@ -1506,7 +1506,21 @@ OC.L10N.register(
         "Web app": "Вэб-праграма",
         "A device": "Прылада",
         "A new device asks to open your vault": "Новая прылада просіць адкрыць ваша сховішча",
-        "%s asks to be approved. Only approve a device you are using right now.": "%s просіць пацвярджэння. Пацвярджайце толькі прыладу, якой карыстаецеся зараз."
+        "%s asks to be approved. Only approve a device you are using right now.": "%s просіць пацвярджэння. Пацвярджайце толькі прыладу, якой карыстаецеся зараз.",
+        "Access ends on (optional)": "Доступ заканчваецца (неабавязкова)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Праграмы Keepiq не будуць паказваць або капіраваць пароль. Чалавек з тэхнічнымі навыкамі ўсё роўна можа прачытаць яго на сваёй прыладзе. Змяніце яго, калі доступ скончыцца.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Гэты сакрэт толькі для выкарыстання. Увайдзіце праз пашырэнне браўзера Keepiq.",
+        "Until {date}": "Да {date}",
+        "Use only": "Толькі выкарыстанне",
+        "Use only (can sign in, cannot view or copy)": "Толькі выкарыстанне (можа ўвайсці, не можа праглядаць або капіраваць)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Вы можаце ўвайсці з гэтымі ўліковымі данымі праз пашырэнне браўзера Keepiq. Уладальнік вырашыў не дазваляць вам праглядаць або капіраваць іх.",
+        "Your access ends on {date}": "Ваш доступ заканчваецца {date}",
+        "Your access to this secret has ended": "Ваш доступ да гэтага сакрэту скончыўся",
+        "Your access to \"%s\" ends tomorrow": "Ваш доступ да «%s» заканчваецца заўтра",
+        "Your access to \"%s\" has ended": "Ваш доступ да «%s» скончыўся",
+        "%1$s no longer has access to \"%2$s\"": "%1$s больш не мае доступу да «%2$s»",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s мог(ла) бачыць гэты пароль. Змяніце яго, калі %1$s больш не павінен(на) яго ведаць.",
+        "%s could not view this password in Keepiq.": "%s не змог(ла) праглядзець гэты пароль у Keepiq."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

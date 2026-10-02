@@ -27,6 +27,8 @@
 				data-testid="group-share-form-group"
 				@search="onSearch" />
 
+			<ShareRestrictionFields v-model="restriction" />
+
 			<p
 				v-if="error"
 				class="keepiq-group-share-form__error"
@@ -59,11 +61,13 @@
 
 <script>
 import { NcButton, NcSelect } from '@nextcloud/vue'
+import ShareRestrictionFields from './ShareRestrictionFields.vue'
 import { useGroupShareStore } from '../../store/modules/groupShare.js'
+import { restrictionPayload } from '../../utils/shareRestriction.js'
 
 export default {
 	name: 'GroupShareForm',
-	components: { NcButton, NcSelect },
+	components: { NcButton, NcSelect, ShareRestrictionFields },
 	props: {
 		secretId: {
 			type: String,
@@ -76,6 +80,7 @@ export default {
 		return {
 			store: useGroupShareStore(),
 			selected: null,
+			restriction: { useOnly: false, endDate: '' },
 			options: [],
 			searching: false,
 			busy: false,
@@ -120,6 +125,7 @@ export default {
 				const result = await this.store.shareWithGroup(
 					this.secretId,
 					this.selected.id,
+					restrictionPayload(this.restriction),
 				)
 				this.$emit('shared', { group: this.selected, ...result })
 			} catch (e) {

@@ -1506,7 +1506,21 @@ OC.L10N.register(
         "Web app": "Web aplikacija",
         "A device": "Uređaj",
         "A new device asks to open your vault": "Novi uređaj traži otvaranje vašeg trezora",
-        "%s asks to be approved. Only approve a device you are using right now.": "%s traži odobrenje. Odobrite samo uređaj koji upravo koristite."
+        "%s asks to be approved. Only approve a device you are using right now.": "%s traži odobrenje. Odobrite samo uređaj koji upravo koristite.",
+        "Access ends on (optional)": "Pristup završava (neobavezno)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Aplikacije Keepiq neće prikazati ni kopirati lozinku. Netko s tehničkim znanjem i dalje je može pročitati na vlastitom uređaju. Promijenite je kada pristup završi.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Ova tajna služi samo za korištenje. Prijavite se putem proširenja preglednika Keepiq.",
+        "Until {date}": "Do {date}",
+        "Use only": "Samo korištenje",
+        "Use only (can sign in, cannot view or copy)": "Samo korištenje (može se prijaviti, ne može vidjeti ni kopirati)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Ovom se prijavom možete prijaviti putem proširenja preglednika Keepiq. Vlasnik je odlučio da je ne možete vidjeti ni kopirati.",
+        "Your access ends on {date}": "Vaš pristup završava {date}",
+        "Your access to this secret has ended": "Vaš pristup ovoj tajni je završio",
+        "Your access to \"%s\" ends tomorrow": "Vaš pristup stavci „%s” završava sutra",
+        "Your access to \"%s\" has ended": "Vaš pristup stavci „%s” je završio",
+        "%1$s no longer has access to \"%2$s\"": "%1$s više nema pristup stavci „%2$s”",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s je mogao/la vidjeti ovu lozinku. Promijenite je ako je %1$s više ne bi trebao/la znati.",
+        "%s could not view this password in Keepiq.": "%s nije mogao/la vidjeti ovu lozinku u Keepiq."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

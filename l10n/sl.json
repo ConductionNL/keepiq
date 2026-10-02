@@ -1625,7 +1625,21 @@
         "Web app": "Spletna aplikacija",
         "A device": "Naprava",
         "A new device asks to open your vault": "Nova naprava želi odpreti vaš trezor",
-        "%s asks to be approved. Only approve a device you are using right now.": "%s prosi za odobritev. Odobrite samo napravo, ki jo uporabljate prav zdaj."
+        "%s asks to be approved. Only approve a device you are using right now.": "%s prosi za odobritev. Odobrite samo napravo, ki jo uporabljate prav zdaj.",
+        "Access ends on (optional)": "Dostop poteče (neobvezno)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Aplikacije Keepiq gesla ne bodo prikazale ali kopirale. Nekdo s tehničnim znanjem ga lahko še vedno prebere na svoji napravi. Ko dostop poteče, geslo zamenjajte.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Ta skrivnost je samo za uporabo. Prijavite se prek razširitve brskalnika Keepiq.",
+        "Until {date}": "Do {date}",
+        "Use only": "Samo uporaba",
+        "Use only (can sign in, cannot view or copy)": "Samo uporaba (lahko se prijavi, ne more videti ali kopirati)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "S to prijavo se lahko prijavite prek razširitve brskalnika Keepiq. Lastnik se je odločil, da je ne morete videti ali kopirati.",
+        "Your access ends on {date}": "Vaš dostop poteče {date}",
+        "Your access to this secret has ended": "Vaš dostop do te skrivnosti je potekel",
+        "Your access to \"%s\" ends tomorrow": "Vaš dostop do »%s« poteče jutri",
+        "Your access to \"%s\" has ended": "Vaš dostop do »%s« je potekel",
+        "%1$s no longer has access to \"%2$s\"": "%1$s nima več dostopa do »%2$s«",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s je lahko videl(a) to geslo. Zamenjajte ga, če ga %1$s ne sme več poznati.",
+        "%s could not view this password in Keepiq.": "%s tega gesla v Keepiq ni mogel(a) videti."
     },
     "plurals": null
 }

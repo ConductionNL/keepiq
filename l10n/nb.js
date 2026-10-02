@@ -1272,7 +1272,7 @@ OC.L10N.register(
         "Removed the user from {count} team folders.": "Fjernet brukeren fra {count} teammapper.",
         "Approve a share": "Godkjenn en deling",
         "This approval link is incomplete. Open it again from the notification.": "Denne godkjenningslenken er ufullstendig. Åpne den igjen fra varselet.",
-        "Deny": "Avvis",
+        "Deny": "Avslå",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} ble med i en gruppe du deler en hemmelighet med. Vil du dele hemmeligheten med dem også?",
         "{requester} asks you to share a secret with {user}.": "{requester} ber deg dele en hemmelighet med {user}.",
         "Shared. The recipient can now open the secret.": "Delt. Mottakeren kan nå åpne hemmeligheten.",
@@ -1506,7 +1506,21 @@ OC.L10N.register(
         "Web app": "Nettapp",
         "A device": "En enhet",
         "A new device asks to open your vault": "En ny enhet ber om å åpne hvelvet ditt",
-        "%s asks to be approved. Only approve a device you are using right now.": "%s ber om godkjenning. Godkjenn bare en enhet du bruker akkurat nå."
+        "%s asks to be approved. Only approve a device you are using right now.": "%s ber om godkjenning. Godkjenn bare en enhet du bruker akkurat nå.",
+        "Access ends on (optional)": "Tilgang slutter den (valgfritt)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Keepiq-appene viser eller kopierer ikke passordet. Noen med teknisk kunnskap kan fortsatt lese det fra sin egen enhet. Bytt det når tilgangen deres slutter.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Denne hemmeligheten er kun til bruk. Logg inn via Keepiq-nettleserutvidelsen.",
+        "Until {date}": "Til {date}",
+        "Use only": "Kun bruk",
+        "Use only (can sign in, cannot view or copy)": "Kun bruk (kan logge inn, kan ikke se eller kopiere)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Du kan logge inn med denne påloggingen via Keepiq-nettleserutvidelsen. Eieren har valgt å ikke la deg se eller kopiere den.",
+        "Your access ends on {date}": "Tilgangen din slutter {date}",
+        "Your access to this secret has ended": "Tilgangen din til denne hemmeligheten er avsluttet",
+        "Your access to \"%s\" ends tomorrow": "Tilgangen din til «%s» slutter i morgen",
+        "Your access to \"%s\" has ended": "Tilgangen din til «%s» er avsluttet",
+        "%1$s no longer has access to \"%2$s\"": "%1$s har ikke lenger tilgang til «%2$s»",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s kunne se dette passordet. Bytt det hvis %1$s ikke lenger skal kjenne det.",
+        "%s could not view this password in Keepiq.": "%s kunne ikke se dette passordet i Keepiq."
     },
     "nplurals=2; plural=(n != 1);"
 )

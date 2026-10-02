@@ -1272,7 +1272,7 @@ OC.L10N.register(
         "Removed the user from {count} team folders.": "Ο χρήστης αφαιρέθηκε από {count} φακέλους ομάδας.",
         "Approve a share": "Έγκριση κοινής χρήσης",
         "This approval link is incomplete. Open it again from the notification.": "Αυτός ο σύνδεσμος έγκρισης είναι ελλιπής. Ανοίξτε τον ξανά από την ειδοποίηση.",
-        "Deny": "Απόρριψη",
+        "Deny": "Άρνηση",
         "{user} joined a group you share a secret with. Share the secret with them too?": "Ο χρήστης {user} εντάχθηκε σε μια ομάδα με την οποία μοιράζεστε ένα μυστικό. Να μοιραστεί το μυστικό και μαζί του;",
         "{requester} asks you to share a secret with {user}.": "Ο χρήστης {requester} σας ζητά να μοιραστείτε ένα μυστικό με τον χρήστη {user}.",
         "Shared. The recipient can now open the secret.": "Κοινοποιήθηκε. Ο παραλήπτης μπορεί πλέον να ανοίξει το μυστικό.",
@@ -1506,7 +1506,21 @@ OC.L10N.register(
         "Web app": "Εφαρμογή ιστού",
         "A device": "Μια συσκευή",
         "A new device asks to open your vault": "Μια νέα συσκευή ζητά να ανοίξει το θησαυροφυλάκιό σας",
-        "%s asks to be approved. Only approve a device you are using right now.": "%s ζητά έγκριση. Εγκρίνετε μόνο μια συσκευή που χρησιμοποιείτε αυτή τη στιγμή."
+        "%s asks to be approved. Only approve a device you are using right now.": "%s ζητά έγκριση. Εγκρίνετε μόνο μια συσκευή που χρησιμοποιείτε αυτή τη στιγμή.",
+        "Access ends on (optional)": "Η πρόσβαση λήγει στις (προαιρετικό)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Οι εφαρμογές του Keepiq δεν θα εμφανίσουν ούτε θα αντιγράψουν τον κωδικό πρόσβασης. Κάποιος με τεχνικές γνώσεις μπορεί ακόμη να τον διαβάσει από τη δική του συσκευή. Αλλάξτε τον όταν λήξει η πρόσβασή του.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Αυτό το μυστικό είναι μόνο για χρήση. Συνδεθείτε μέσω της επέκτασης προγράμματος περιήγησης του Keepiq.",
+        "Until {date}": "Έως {date}",
+        "Use only": "Μόνο χρήση",
+        "Use only (can sign in, cannot view or copy)": "Μόνο χρήση (μπορεί να συνδεθεί, δεν μπορεί να δει ή να αντιγράψει)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Μπορείτε να συνδεθείτε με αυτά τα στοιχεία μέσω της επέκτασης προγράμματος περιήγησης του Keepiq. Ο κάτοχος επέλεξε να μην σας επιτρέπει να τα δείτε ή να τα αντιγράψετε.",
+        "Your access ends on {date}": "Η πρόσβασή σας λήγει στις {date}",
+        "Your access to this secret has ended": "Η πρόσβασή σας σε αυτό το μυστικό έληξε",
+        "Your access to \"%s\" ends tomorrow": "Η πρόσβασή σας στο «%s» λήγει αύριο",
+        "Your access to \"%s\" has ended": "Η πρόσβασή σας στο «%s» έληξε",
+        "%1$s no longer has access to \"%2$s\"": "Ο χρήστης %1$s δεν έχει πλέον πρόσβαση στο «%2$s»",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "Ο χρήστης %1$s μπορούσε να δει αυτόν τον κωδικό. Αλλάξτε τον αν ο χρήστης %1$s δεν πρέπει πλέον να τον γνωρίζει.",
+        "%s could not view this password in Keepiq.": "Ο χρήστης %s δεν μπορούσε να δει αυτόν τον κωδικό στο Keepiq."
     },
     "nplurals=2; plural=(n != 1);"
 )

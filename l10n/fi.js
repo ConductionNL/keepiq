@@ -1506,7 +1506,21 @@ OC.L10N.register(
         "Web app": "Verkkosovellus",
         "A device": "Laite",
         "A new device asks to open your vault": "Uusi laite pyytää avaamaan holvisi",
-        "%s asks to be approved. Only approve a device you are using right now.": "%s pyytää hyväksyntää. Hyväksy vain laite, jota käytät juuri nyt."
+        "%s asks to be approved. Only approve a device you are using right now.": "%s pyytää hyväksyntää. Hyväksy vain laite, jota käytät juuri nyt.",
+        "Access ends on (optional)": "Käyttöoikeus päättyy (valinnainen)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Keepiqin sovellukset eivät näytä tai kopioi salasanaa. Tekninen osaaja voi silti lukea sen omalta laitteeltaan. Vaihda se, kun käyttöoikeus päättyy.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Tämä salaisuus on vain käyttöön. Kirjaudu sisään Keepiq-selainlaajennuksen kautta.",
+        "Until {date}": "{date} asti",
+        "Use only": "Vain käyttö",
+        "Use only (can sign in, cannot view or copy)": "Vain käyttö (voi kirjautua, ei voi nähdä tai kopioida)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Voit kirjautua näillä tunnuksilla Keepiq-selainlaajennuksen kautta. Omistaja on päättänyt, ettet voi nähdä tai kopioida niitä.",
+        "Your access ends on {date}": "Käyttöoikeutesi päättyy {date}",
+        "Your access to this secret has ended": "Käyttöoikeutesi tähän salaisuuteen on päättynyt",
+        "Your access to \"%s\" ends tomorrow": "Käyttöoikeutesi kohteeseen ”%s” päättyy huomenna",
+        "Your access to \"%s\" has ended": "Käyttöoikeutesi kohteeseen ”%s” on päättynyt",
+        "%1$s no longer has access to \"%2$s\"": "Käyttäjällä %1$s ei ole enää käyttöoikeutta kohteeseen ”%2$s”",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s pystyi näkemään tämän salasanan. Vaihda se, jos %1$s ei enää saa tietää sitä.",
+        "%s could not view this password in Keepiq.": "%s ei voinut nähdä tätä salasanaa Keepiqissä."
     },
     "nplurals=2; plural=(n != 1);"
 )

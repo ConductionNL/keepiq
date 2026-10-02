@@ -1577,7 +1577,21 @@
         "Web app": "Aplicació web",
         "A device": "Un dispositiu",
         "A new device asks to open your vault": "Un dispositiu nou demana obrir la vostra caixa forta",
-        "%s asks to be approved. Only approve a device you are using right now.": "%s demana ser aprovat. Aproveu només un dispositiu que estigueu fent servir ara mateix."
+        "%s asks to be approved. Only approve a device you are using right now.": "%s demana ser aprovat. Aproveu només un dispositiu que estigueu fent servir ara mateix.",
+        "Access ends on (optional)": "L'accés acaba el (opcional)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Les aplicacions del Keepiq no mostraran ni copiaran la contrasenya. Algú amb coneixements tècnics encara la pot llegir des del seu dispositiu. Canvieu-la quan s'acabi el seu accés.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Aquest secret és només d'ús. Inicieu la sessió mitjançant l'extensió del navegador del Keepiq.",
+        "Until {date}": "Fins al {date}",
+        "Use only": "Només ús",
+        "Use only (can sign in, cannot view or copy)": "Només ús (pot iniciar la sessió, no pot veure ni copiar)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Podeu iniciar la sessió amb aquestes credencials mitjançant l'extensió del navegador del Keepiq. El propietari ha decidit no permetre-us veure-les ni copiar-les.",
+        "Your access ends on {date}": "El vostre accés acaba el {date}",
+        "Your access to this secret has ended": "El vostre accés a aquest secret ha acabat",
+        "Your access to \"%s\" ends tomorrow": "El vostre accés a «%s» acaba demà",
+        "Your access to \"%s\" has ended": "El vostre accés a «%s» ha acabat",
+        "%1$s no longer has access to \"%2$s\"": "%1$s ja no té accés a «%2$s»",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s podia veure aquesta contrasenya. Canvieu-la si %1$s ja no l'ha de conèixer.",
+        "%s could not view this password in Keepiq.": "%s no ha pogut veure aquesta contrasenya al Keepiq."
     },
     "plurals": null
 }

@@ -1272,7 +1272,7 @@ OC.L10N.register(
         "Removed the user from {count} team folders.": "De Benotzer gouf aus {count} Teamuerdner ewechgeholl.",
         "Approve a share": "Eng Deelung guttheeschen",
         "This approval link is incomplete. Open it again from the notification.": "Dëse Link fir d'Guttheeschen ass net komplett. Maach en nach eng Kéier aus der Notifikatioun op.",
-        "Deny": "Refuséieren",
+        "Deny": "Ofleenen",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} ass enger Grupp bäigetrueden, mat där s du e Geheimnis deels. Dat Geheimnis och mat him deelen?",
         "{requester} asks you to share a secret with {user}.": "{requester} freet dech, e Geheimnis mat {user} ze deelen.",
         "Shared. The recipient can now open the secret.": "Gedeelt. Den Empfänger kann d'Geheimnis elo opmaachen.",
@@ -1506,7 +1506,21 @@ OC.L10N.register(
         "Web app": "Web-App",
         "A device": "En Apparat",
         "A new device asks to open your vault": "En neien Apparat freet, Äre Coffre opzemaachen",
-        "%s asks to be approved. Only approve a device you are using right now.": "%s freet ëm Fräigab. Gitt nëmmen en Apparat fräi, deen Dir grad elo benotzt."
+        "%s asks to be approved. Only approve a device you are using right now.": "%s freet ëm Fräigab. Gitt nëmmen en Apparat fräi, deen Dir grad elo benotzt.",
+        "Access ends on (optional)": "Den Zougang endet den (optional)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "D'Apps vu Keepiq weisen a kopéieren d'Passwuert net. Een mat technesche Kenntnisser kann et awer ëmmer nach op sengem eegenen Apparat liesen. Ännert et, wann den Zougang ofleeft.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Dëst Geheimnis ass nëmme fir ze benotzen. Mellt Iech iwwer d'Keepiq-Browserextensioun un.",
+        "Until {date}": "Bis den {date}",
+        "Use only": "Nëmme benotzen",
+        "Use only (can sign in, cannot view or copy)": "Nëmme benotzen (kann sech umellen, kann et net gesinn oder kopéieren)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Dir kënnt Iech mat dësem Login iwwer d'Keepiq-Browserextensioun umellen. De Besëtzer huet decidéiert, datt Dir en net gesitt oder kopéiere kënnt.",
+        "Your access ends on {date}": "Ären Zougang endet den {date}",
+        "Your access to this secret has ended": "Ären Zougang zu dësem Geheimnis ass ofgelaf",
+        "Your access to \"%s\" ends tomorrow": "Ären Zougang zu „%s“ leeft muer of",
+        "Your access to \"%s\" has ended": "Ären Zougang zu „%s“ ass ofgelaf",
+        "%1$s no longer has access to \"%2$s\"": "%1$s huet keen Zougang méi zu „%2$s“",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s konnt dëst Passwuert gesinn. Ännert et, wann %1$s et net méi kenne soll.",
+        "%s could not view this password in Keepiq.": "%s konnt dëst Passwuert a Keepiq net gesinn."
     },
     "nplurals=2; plural=(n != 1);"
 )

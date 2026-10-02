@@ -209,6 +209,9 @@ class DelegationService {
 		string $delegatedTo,
 		string $initiatedBy,
 	): SecretDelegation {
+		// A use-only or expiring copy is never handed on (D4).
+		$secret->assertOnwardShareable();
+
 		$entity = new SecretDelegation();
 		$entity->setId(Uuid::uuid4()->toString());
 		$entity->setSecretId($secretId);

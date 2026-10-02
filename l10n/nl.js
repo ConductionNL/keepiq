@@ -1511,7 +1511,21 @@ OC.L10N.register(
         "Web app": "Webapp",
         "A device": "Een apparaat",
         "A new device asks to open your vault": "Een nieuw apparaat vraagt om je kluis te openen",
-        "%s asks to be approved. Only approve a device you are using right now.": "%s vraagt om goedkeuring. Keur alleen een apparaat goed dat je nu zelf gebruikt."
+        "%s asks to be approved. Only approve a device you are using right now.": "%s vraagt om goedkeuring. Keur alleen een apparaat goed dat je nu zelf gebruikt.",
+        "Access ends on (optional)": "Toegang eindigt op (optioneel)",
+        "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "De apps van Keepiq tonen of kopiëren het wachtwoord niet. Iemand met technische kennis kan het nog steeds op het eigen apparaat uitlezen. Wijzig het wanneer de toegang eindigt.",
+        "This secret is use-only. Sign in through the Keepiq browser extension.": "Dit geheim is alleen te gebruiken. Log in via de Keepiq-browserextensie.",
+        "Until {date}": "Tot {date}",
+        "Use only": "Alleen gebruiken",
+        "Use only (can sign in, cannot view or copy)": "Alleen gebruiken (kan inloggen, niet bekijken of kopiëren)",
+        "You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.": "Je kunt met deze login inloggen via de Keepiq-browserextensie. De eigenaar heeft ervoor gekozen dat je hem niet kunt bekijken of kopiëren.",
+        "Your access ends on {date}": "Je toegang eindigt op {date}",
+        "Your access to this secret has ended": "Je toegang tot dit geheim is beëindigd",
+        "Your access to \"%s\" ends tomorrow": "Je toegang tot \"%s\" eindigt morgen",
+        "Your access to \"%s\" has ended": "Je toegang tot \"%s\" is beëindigd",
+        "%1$s no longer has access to \"%2$s\"": "%1$s heeft geen toegang meer tot \"%2$s\"",
+        "%1$s could see this password. Rotate it if %1$s should no longer know it.": "%1$s kon dit wachtwoord zien. Wijzig het als %1$s het niet meer mag weten.",
+        "%s could not view this password in Keepiq.": "%s kon dit wachtwoord niet bekijken in Keepiq."
     },
     "nplurals=2; plural=(n != 1);"
 )

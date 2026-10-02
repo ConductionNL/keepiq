@@ -32,6 +32,8 @@ use OCP\IDBConnection;
  * @extends QBMapper<ShareTarget>
  */
 class ShareTargetMapper extends QBMapper {
+	use ExpiringGrantQueries;
+
 	/**
 	 * Constructor for ShareTargetMapper.
 	 *
