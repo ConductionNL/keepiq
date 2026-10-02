@@ -5161,7 +5161,7 @@
           {
             "at": "lib/Service/AdminSettingsService.php:394",
             "what": "expiry_policy_enforced was stored by the admin settings service but read nowhere and had no UI. Removed: earliest expiry wins everywhere, so there is nothing to enforce (keepiq#746).",
-            "issue": 746,
+            "issue": "#746",
             "needsLiveCheck": false
           }
         ]
