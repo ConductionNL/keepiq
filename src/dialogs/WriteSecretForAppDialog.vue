@@ -90,6 +90,7 @@ import {
 	NcTextArea,
 	NcTextField,
 } from '@nextcloud/vue'
+import { evaluateHibp, evaluateScore, fetchPolicy } from '../policy/policy.js'
 import { useApplicationStore } from '../store/modules/application.js'
 
 export default {
@@ -207,6 +208,13 @@ export default {
 			this.success = false
 
 			try {
+				// The organisation password policy, as the create and edit
+				// dialogs apply it, before the value is encrypted (keepiq#746).
+				const policyReason = await this.policyReason()
+				if (policyReason !== null) {
+					this.error = policyReason
+					return
+				}
 				const store = useApplicationStore()
 				const result = await store.writeSecretForApplication(
 					this.applicationId,
@@ -234,6 +242,22 @@ export default {
 			} finally {
 				this.busy = false
 			}
+		},
+
+		/**
+		 * Why the value breaks the organisation password policy (strength
+		 * floor, then a breach hit when the policy blocks those), or null.
+		 *
+		 * @return {Promise<string|null>}
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
+		async policyReason() {
+			const policy = await fetchPolicy()
+			const verdict = evaluateScore(policy, 'login', this.value)
+			if (!verdict.compliant) {
+				return verdict.reason
+			}
+			return evaluateHibp(policy, 'login', this.value)
 		},
 
 		parseAdditional() {

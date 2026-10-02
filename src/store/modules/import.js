@@ -23,6 +23,7 @@ import { defineStore } from 'pinia'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
 import { dedupeKey, folderSegments } from '../../import/model.js'
 import { getParser } from '../../import/parserRegistry.js'
+import { evaluateScore, fetchPolicy } from '../../policy/policy.js'
 import { useSecretStore } from './secret.js'
 import { useSecretTypeStore } from './secretType.js'
 import { useSessionStore } from './session.js'
@@ -362,6 +363,51 @@ export const useImportStore = defineStore('import', {
 		},
 
 		/**
+		 * Hold every row to the organisation password policy, as the create
+		 * and edit dialogs do (keepiq#746). The server cannot check a value it
+		 * only sees encrypted, so the check runs here, before encryption. A
+		 * row below the policy is taken out of `rows` (in place) and listed
+		 * as rejected with the policy's reason.
+		 *
+		 * @param {Array<object>} rows The rows about to be committed (mutated).
+		 * @param {Array<object>} types The vault's secret types ({ id, name }).
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 */
+		async dropPolicyRejected(rows, types) {
+			const policy = await fetchPolicy()
+			if (!policy || policy.policy_enabled !== true) {
+				return
+			}
+			const nameById = new Map(
+				(Array.isArray(types) ? types : []).map((type) => [
+					type.id,
+					type.name,
+				]),
+			)
+			const kept = []
+			for (const row of rows) {
+				const typeName =
+					nameById.get(row.type) || row.type || DEFAULT_TYPE_NAME
+				const verdict = evaluateScore(
+					policy,
+					typeName,
+					String(row.password ?? ''),
+				)
+				if (verdict.compliant) {
+					kept.push(row)
+				} else {
+					this.rejected.push({
+						sourceRow: row.sourceRow,
+						reason: verdict.reason,
+						name: row.name,
+					})
+				}
+			}
+			rows.splice(0, rows.length, ...kept)
+		},
+
+		/**
 		 * Commit the accepted rows: encrypt client-side, POST in chunks of 50 with
 		 * one retry per failed chunk, fold per-index + chunk failures into the
 		 * rejected list, and build the transient summary (design D7/D8).
@@ -407,6 +453,7 @@ export const useImportStore = defineStore('import', {
 				}
 			}
 			const typeIdFor = typeIdResolver(typeStore.types)
+			await this.dropPolicyRejected(rows, typeStore.types)
 
 			// Encrypt every row client-side BEFORE any request leaves the browser.
 			const items = []
