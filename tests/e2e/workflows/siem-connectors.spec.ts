@@ -58,7 +58,7 @@ test('an administrator adds a Splunk HEC sink and test-fires it', async ({ page 
 	const outcome = await (await testResponse).json()
 	expect(outcome.ok).toBe(false)
 	expect(outcome.error).toContain('splunk.invalid')
-	await expect(section.getByText(/"E2E Splunk".*splunk\.invalid/).first()).toBeVisible({ timeout: 30_000 })
+	await expect(section.getByText(/E2E Splunk.*splunk\.invalid/).first()).toBeVisible({ timeout: 30_000 })
 	await expect(section).not.toContainText('e2e-hec-token-not-real')
 
 	await row.locator(`[data-testid="siem-delete-${sink.id}"]`).click()
