@@ -96,8 +96,6 @@
 </template>
 
 <script>
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -108,6 +106,7 @@ import {
 } from '@nextcloud/vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
+import { generateKey } from '../generator/generator.js'
 import { fetchPolicy } from '../policy/policy.js'
 
 export default {
@@ -147,6 +146,7 @@ export default {
 			maxLength: 128,
 			policyFloorActive: false,
 			symbolLocked: false,
+			policy: null,
 		}
 	},
 
@@ -158,6 +158,7 @@ export default {
 	 */
 	async mounted() {
 		const policy = await fetchPolicy()
+		this.policy = policy ?? null
 		if (policy?.policy_enabled === true) {
 			const floor = Number.parseInt(policy.generator_min_length, 10) || 0
 			if (floor > this.minLength) {
@@ -201,7 +202,9 @@ export default {
 		},
 
 		/**
-		 * Call the server-side generator and display the result.
+		 * Generate the key in the browser and display it. The value never
+		 * leaves this page unencrypted: the server only sees the ciphertext
+		 * once the secret is saved.
 		 *
 		 * @spec openspec/specs/key-generator/spec.md#requirement-default-generation
 		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
@@ -211,24 +214,17 @@ export default {
 			this.error = null
 
 			try {
-				const payload = this.regex
+				const options = this.regex
 					? { regex: this.regex }
 					: {
 							length: Number(this.lengthInput),
 							includeSpecialCharacters: this.includeSpecialCharacters,
 							excludedCharacters: this.excludedCharacters,
 						}
-
-				const response = await axios.post(
-					generateUrl('/apps/keepiq/api/v1/generate-key'),
-					payload,
-				)
-				this.generatedKey = response.data.generatedKey
+				this.generatedKey = generateKey(options, this.policy)
 			} catch (e) {
 				this.generatedKey = ''
-				this.error =
-					e?.response?.data?.message
-					|| t('keepiq', 'Failed to generate key')
+				this.error = e?.message || t('keepiq', 'Failed to generate key')
 			} finally {
 				this.loading = false
 			}
