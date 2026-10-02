@@ -111,7 +111,7 @@ class TeamFolderContributionService {
 		// Authorise on the grade of the target folder, before anything is read
 		// or written. The owner uses the ordinary secret create.
 		if ($this->mayContribute(teamFolder: $teamFolder, folderId: $folderId, userId: $userId) === false) {
-			throw new ForbiddenException('Only a member with write access can add a secret to this team folder');
+			throw new ForbiddenException(message: 'Only a member with write access can add a secret to this team folder');
 		}
 
 		$name = trim((string)($data['name'] ?? ''));
@@ -236,7 +236,7 @@ class TeamFolderContributionService {
 	public function context(string $teamFolderId, string $userId): array {
 		$teamFolder = $this->loadTeamFolder(teamFolderId: $teamFolderId);
 		if ($this->mayContribute(teamFolder: $teamFolder, folderId: $teamFolder->getFolderId(), userId: $userId) === false) {
-			throw new ForbiddenException('Only a member with write access can add a secret to this team folder');
+			throw new ForbiddenException(message: 'Only a member with write access can add a secret to this team folder');
 		}
 
 		try {
@@ -244,7 +244,7 @@ class TeamFolderContributionService {
 				->findActiveByOwner(ownerType: 'user', ownerId: $teamFolder->getOwnerId())
 				->getCertificate();
 		} catch (DoesNotExistException) {
-			throw new NotFoundException('The team folder owner has no active vault');
+			throw new NotFoundException(message: 'The team folder owner has no active vault');
 		}
 
 		return [
@@ -344,7 +344,7 @@ class TeamFolderContributionService {
 
 		$subtree = array_map('strval', $this->folderMapper->getSubtreeIds(folderId: $teamFolder->getFolderId()));
 		if (in_array((string)$requested, $subtree, true) === false) {
-			throw new NotFoundException('Folder not found in this team folder');
+			throw new NotFoundException(message: 'Folder not found in this team folder');
 		}
 
 		return (string)$requested;
@@ -363,7 +363,7 @@ class TeamFolderContributionService {
 		try {
 			return $this->teamFolderMapper->findById(id: $teamFolderId);
 		} catch (DoesNotExistException) {
-			throw new NotFoundException('Team folder not found');
+			throw new NotFoundException(message: 'Team folder not found');
 		}
 	}//end loadTeamFolder()
 

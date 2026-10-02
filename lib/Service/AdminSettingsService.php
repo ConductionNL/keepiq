@@ -271,9 +271,9 @@ class AdminSettingsService {
 	 * The user-visible policy floor for the write dialogs
 	 * (org-password-policies §1.3).
 	 *
-	 * @return array<string,mixed>
-	 *
 	 * @param string|null $userId The session user, for the effective vault policies
+	 *
+	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
 	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2

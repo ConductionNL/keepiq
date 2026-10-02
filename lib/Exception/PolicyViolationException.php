@@ -42,6 +42,6 @@ class PolicyViolationException extends ForbiddenException {
 		public readonly string $policyCode,
 		string $message,
 	) {
-		parent::__construct($message);
+		parent::__construct(message: $message);
 	}//end __construct()
 }//end class
