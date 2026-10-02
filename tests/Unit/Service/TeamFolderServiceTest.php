@@ -816,4 +816,259 @@ class TeamFolderServiceTest extends TestCase {
 			restriction: new \OCA\Keepiq\Service\ShareRestriction(useOnly: false, expiresAt: null),
 		);
 	}//end testANonOwnerCannotRestrictAMembership()
+
+	/**
+	 * A team folder `tf-1` on `folder-1` owned by alice, with Olga as
+	 * manager, Ed as editor, Vic as viewer and Mia as a second manager.
+	 *
+	 * @return array<string,TeamFolderMember>
+	 */
+	private function managedFolder(): array {
+		$teamFolder = $this->buildTeamFolder();
+		$this->mapper->method('findById')->willReturn($teamFolder);
+		$this->mapper->method('findByFolder')->willReturn($teamFolder);
+		$this->folderMapper->method('findById')->willReturn($this->buildFolder('folder-1'));
+
+		$members = [];
+		foreach (['olga' => 'manage', 'ed' => 'write', 'vic' => 'read', 'mia' => 'manage'] as $uid => $grade) {
+			$member = new TeamFolderMember();
+			$member->setId('mem-' . $uid);
+			$member->setTeamFolderId('tf-1');
+			$member->setMemberType('user');
+			$member->setMemberId($uid);
+			$member->setGrade($grade);
+			$members[$uid] = $member;
+		}
+
+		$this->memberMapper->method('findByTeamFolder')->willReturn(array_values($members));
+		$this->memberMapper->method('findById')->willReturnCallback(
+			static fn (string $id) => $members[substr($id, 4)] ?? throw new DoesNotExistException('')
+		);
+		$this->memberMapper->method('update')->willReturnCallback(static fn ($row) => $row);
+		return $members;
+	}//end managedFolder()
+
+	/**
+	 * The grade model: manage is a grade, ranked above write above read.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-team-folder-manager-role/tasks.md#task-1.1
+	 */
+	public function testManageRanksAboveWriteAboveRead(): void {
+		$member = new TeamFolderMember();
+		$member->setGrade('manage');
+		$this->assertSame('manage', $member->effectiveGrade());
+		$member->setGrade('admin');
+		$this->assertSame('read', $member->effectiveGrade());
+		$this->assertTrue(TeamFolderMember::allowsWrite('manage'));
+		$this->assertTrue(TeamFolderMember::allowsWrite('write'));
+		$this->assertFalse(TeamFolderMember::allowsWrite('read'));
+		$this->assertFalse(TeamFolderMember::allowsWrite(null));
+
+		$this->managedFolder();
+		$secret = new Secret();
+		$secret->setFolderId('folder-1');
+		$this->assertSame('manage', $this->service->resolveGrade(secret: $secret, userId: 'olga'));
+		$this->assertSame('write', $this->service->resolveGrade(secret: $secret, userId: 'ed'));
+	}//end testManageRanksAboveWriteAboveRead()
+
+	/**
+	 * A manager changes viewers and editors; an editor or viewer cannot;
+	 * only the owner makes or changes a manager.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-team-folder-manager-role/tasks.md#task-2.2
+	 */
+	public function testAManagerChangesGradesBelowManagerOnly(): void {
+		$members = $this->managedFolder();
+
+		$promoted = $this->service->setMemberGrade(teamFolderId: 'tf-1', memberId: 'mem-vic', grade: 'write', ownerId: 'olga');
+		$this->assertSame('write', $promoted->effectiveGrade());
+		$members['vic']->setGrade('read');
+
+		foreach ([['olga', 'mem-vic', 'manage'], ['olga', 'mem-mia', 'read'], ['ed', 'mem-vic', 'write'], ['vic', 'mem-ed', 'read']] as [$caller, $target, $grade]) {
+			try {
+				$this->service->setMemberGrade(teamFolderId: 'tf-1', memberId: $target, grade: $grade, ownerId: $caller);
+				$this->fail($caller . ' must not set ' . $target . ' to ' . $grade);
+			} catch (InvalidArgumentException) {
+				// Refused, as it should be.
+			}
+		}
+
+		$this->assertSame('read', $members['vic']->effectiveGrade());
+		$this->assertSame('manage', $members['mia']->effectiveGrade());
+
+		$made = $this->service->setMemberGrade(teamFolderId: 'tf-1', memberId: 'mem-vic', grade: 'manage', ownerId: 'alice');
+		$this->assertSame('manage', $made->effectiveGrade());
+	}//end testAManagerChangesGradesBelowManagerOnly()
+
+	/**
+	 * A manager removes a viewer and may leave, but cannot remove another
+	 * manager or stop sharing the folder.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-team-folder-manager-role/tasks.md#task-2.2
+	 */
+	public function testAManagerRemovesViewersAndMayLeave(): void {
+		$this->managedFolder();
+		$deleted = [];
+		$this->memberMapper->method('delete')->willReturnCallback(
+			static function ($row) use (&$deleted) {
+				$deleted[] = $row->getMemberId();
+				return $row;
+			}
+		);
+		$this->bulkGrantMapper->method('findByTeamFolderAndTargetUser')->willReturn([]);
+
+		$this->service->removeMember(teamFolderId: 'tf-1', membershipId: 'mem-vic', userId: 'olga');
+		$this->service->removeMember(teamFolderId: 'tf-1', membershipId: 'mem-olga', userId: 'olga');
+		$this->assertSame(['vic', 'olga'], $deleted);
+
+		try {
+			$this->service->removeMember(teamFolderId: 'tf-1', membershipId: 'mem-mia', userId: 'olga');
+			$this->fail('a manager must not remove another manager');
+		} catch (InvalidArgumentException) {
+			// Refused.
+		}
+
+		try {
+			$this->service->removeMember(teamFolderId: 'tf-1', membershipId: 'mem-vic', userId: 'ed');
+			$this->fail('an editor must not remove members');
+		} catch (InvalidArgumentException) {
+			// Refused.
+		}
+
+		try {
+			$this->service->unshareFolder(teamFolderId: 'tf-1', userId: 'olga');
+			$this->fail('a manager must not stop sharing the folder');
+		} catch (InvalidArgumentException) {
+			// Refused.
+		}
+
+		$this->assertSame(['vic', 'olga'], $deleted);
+	}//end testAManagerRemovesViewersAndMayLeave()
+
+	/**
+	 * A manager's reconcile names the manager's own copy of each folder
+	 * secret, or none when the manager holds no copy; an editor gets no
+	 * reconcile at all.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-team-folder-manager-role/tasks.md#task-2.3
+	 */
+	public function testAManagerReconcilesFromItsOwnCopies(): void {
+		$this->managedFolder();
+		$this->folderMapper->method('getSubtreeIds')->willReturn(['folder-1']);
+		$one = new Secret();
+		$one->setId('sec-1');
+		$one->setName('Wiki');
+		$two = new Secret();
+		$two->setId('sec-2');
+		$two->setName('Mail');
+		$this->secretMapper->method('findByOwner')->willReturn([$one, $two]);
+		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')->willReturnCallback(
+			static function (string $sourceSecretId, string $targetUserId) {
+				if ($sourceSecretId === 'sec-1' && $targetUserId === 'olga') {
+					$row = new ShareTarget();
+					$row->setSecretId('olga-copy-1');
+					return $row;
+				}
+
+				throw new DoesNotExistException('');
+			}
+		);
+		$this->userManager->method('userExists')->willReturn(true);
+
+		$secrets = $this->serviceWithShareTargets()->reconcile(teamFolderId: 'tf-1', userId: 'olga')['secrets'];
+		$this->assertSame('olga-copy-1', $secrets[0]['copyId']);
+		$this->assertNull($secrets[1]['copyId'], 'a secret the manager holds no copy of is reported, not faked');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->reconcile(teamFolderId: 'tf-1', userId: 'ed');
+	}//end testAManagerReconcilesFromItsOwnCopies()
+
+	/**
+	 * Member added by a manager is audited with the manager as actor.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-team-folder-manager-role/tasks.md#task-4.1
+	 */
+	public function testAManagersActionsCarryTheManagerAsActor(): void {
+		$this->managedFolder();
+		$events = [];
+		$dispatcher = $this->createMock(\OCP\EventDispatcher\IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(
+			static function ($event) use (&$events): void {
+				$events[] = $event;
+			}
+		);
+		$this->memberMapper->method('findMembership')->willThrowException(new DoesNotExistException(''));
+		$this->memberMapper->method('insert')->willReturnCallback(static fn ($row) => $row);
+		$this->userManager->method('get')->willReturn($this->createMock(IUser::class));
+		$this->folderMapper->method('getSubtreeIds')->willReturn([]);
+
+		$service = $this->serviceWithShareTargets(audit: new TeamFolderAuditor(eventDispatcher: $dispatcher));
+		$service->addMember(teamFolderId: 'tf-1', memberType: 'user', memberId: 'bob', userId: 'olga');
+		$service->setMemberGrade(teamFolderId: 'tf-1', memberId: 'mem-vic', grade: 'write', ownerId: 'olga');
+
+		$this->assertNotEmpty($events);
+		foreach ($events as $event) {
+			$this->assertSame('olga', $event->getActorId());
+		}
+	}//end testAManagersActionsCarryTheManagerAsActor()
+
+	/**
+	 * The service as setUp() builds it, with the share-target mapper and an
+	 * optional auditor wired in.
+	 *
+	 * @param TeamFolderAuditor|null $audit The auditor
+	 *
+	 * @return TeamFolderService
+	 */
+	private function serviceWithShareTargets(?TeamFolderAuditor $audit = null): TeamFolderService {
+		$memberships = new TeamFolderMembershipResolver(
+			memberMapper: $this->memberMapper,
+			folderMapper: $this->folderMapper,
+			secretMapper: $this->secretMapper,
+			suiteMapper: $this->suiteMapper,
+			groupManager: $this->groupManager,
+			userManager: $this->userManager,
+		);
+		$shares = new TeamFolderShareService(
+			shareTargetMapper: $this->shareTargetMapper,
+			bulkGrantMapper: $this->bulkGrantMapper,
+			copies: new RecipientSecretCopyService(
+				secretMapper: $this->secretMapper,
+				suiteMapper: $this->suiteMapper,
+				typeService: $this->typeService,
+			),
+			notificationService: $this->notificationService,
+			db: $this->createMock(originalClassName: IDBConnection::class),
+		);
+
+		return new TeamFolderService(
+			mapper: $this->mapper,
+			memberMapper: $this->memberMapper,
+			queries: new TeamFolderQueryService(
+				mapper: $this->mapper,
+				memberMapper: $this->memberMapper,
+				folderMapper: $this->folderMapper,
+				secretMapper: $this->secretMapper,
+				groupManager: $this->groupManager,
+				memberships: $memberships,
+			),
+			memberships: $memberships,
+			shares: $shares,
+			offboarding: $this->createMock(TeamFolderOffboardingService::class),
+			audit: ($audit ?? new TeamFolderAuditor(eventDispatcher: null)),
+			notificationService: $this->notificationService,
+			db: $this->createMock(originalClassName: IDBConnection::class),
+			shareTargets: $this->shareTargetMapper,
+		);
+	}//end serviceWithShareTargets()
 }//end class
