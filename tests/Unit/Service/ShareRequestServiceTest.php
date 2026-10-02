@@ -204,6 +204,50 @@ class ShareRequestServiceTest extends TestCase {
 	}//end testApproveShareRequestReturnsParameters()
 
 	/**
+	 * Once the copy is registered, approving tells the requester (#747,
+	 * user-sharing "B MUST receive a notification when A approves").
+	 *
+	 * @return void
+	 */
+	public function testApproveShareRequestNotifiesRequesterOnceShared(): void {
+		$this->secretMapper->method('findById')->willReturn($this->makeOwnerSecret('src-1', 'alice'));
+		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')->willReturn(new ShareTarget());
+		$this->notificationService->expects($this->once())
+			->method('notify')
+			->with(
+				'share_request_result',
+				'bob',
+				$this->callback(static fn (array $params): bool => $params['result'] === 'approved'),
+			);
+
+		$result = $this->service->approveShareRequest(
+			params: ['sourceSecretId' => 'src-1', 'requesterId' => 'bob', 'targetUserId' => 'carol'],
+			ownerId: 'alice'
+		);
+
+		$this->assertTrue($result['shared']);
+	}//end testApproveShareRequestNotifiesRequesterOnceShared()
+
+	/**
+	 * Before the copy exists, approving says nothing to the requester.
+	 *
+	 * @return void
+	 */
+	public function testApproveShareRequestStaysQuietUntilShared(): void {
+		$this->secretMapper->method('findById')->willReturn($this->makeOwnerSecret('src-1', 'alice'));
+		$this->shareTargetMapper->method('findBySourceSecretAndTargetUser')
+			->willThrowException(new DoesNotExistException(''));
+		$this->notificationService->expects($this->never())->method('notify');
+
+		$result = $this->service->approveShareRequest(
+			params: ['sourceSecretId' => 'src-1', 'requesterId' => 'bob', 'targetUserId' => 'carol'],
+			ownerId: 'alice'
+		);
+
+		$this->assertFalse($result['shared']);
+	}//end testApproveShareRequestStaysQuietUntilShared()
+
+	/**
 	 * Test approveShareRequest rejects non-owner.
 	 *
 	 * @return void
