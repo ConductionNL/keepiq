@@ -11,6 +11,13 @@ The system MUST let a vault user store a TOTP seed on a login-type secret, as an
 - **THEN** the request body carries only the encrypted additional fields blob
 - **AND** reopening the login shows the Authenticator key as set
 
+#### Scenario: A seed is refused under the password's rules
+
+- **GIVEN** a login that belongs to another user, a secret that belongs to an application, and an id that does not exist
+- **WHEN** a signed-in vault user reads or writes the additional fields of each
+- **THEN** all three answer the same 404 and nothing is written, stamped or logged
+- **AND** a signed-out caller gets 401 and a blocked encryption suite withholds the additional fields wherever it withholds the password
+
 ### Requirement: The login shows a live code
 
 When a login's decrypted additional fields carry a seed, the secret detail sidebar MUST show the current code with its countdown and a copy button, computed in the browser by the existing TOTP generator, and MUST NOT list the raw seed among the additional fields. A seed that cannot be parsed MUST show the invalid-seed state and no code.

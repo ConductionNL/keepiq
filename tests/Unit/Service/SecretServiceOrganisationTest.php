@@ -23,7 +23,7 @@ use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\SecretTagMapper;
-use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\SecretService;
@@ -90,7 +90,7 @@ class SecretServiceOrganisationTest extends TestCase {
 	public function testAnotherUserStampsNothing(): void {
 		$this->mapper->expects($this->never())->method('markUsed');
 
-		$this->expectException(ForbiddenException::class);
+		$this->expectException(NotFoundException::class);
 		$this->service->get('s-1', 'bob');
 	}//end testAnotherUserStampsNothing()
 

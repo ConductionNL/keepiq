@@ -800,8 +800,7 @@ class SecretService {
 	 *
 	 * @return Secret
 	 *
-	 * @throws NotFoundException When the secret does not exist
-	 * @throws ForbiddenException When the secret belongs to another user
+	 * @throws NotFoundException When the secret does not exist or is not the user's
 	 * @throws SuiteBlockedException When the encryption suite is revoked/compromised
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
@@ -870,8 +869,8 @@ class SecretService {
 	 *
 	 * @return Secret
 	 *
-	 * @throws NotFoundException When the secret does not exist
-	 * @throws ForbiddenException When the secret belongs to another user
+	 * @throws NotFoundException When the secret does not exist or is not the user's
+	 * @throws ForbiddenException When the target folder belongs to another user
 	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 * @throws InvalidArgumentException When a provided field is invalid
 	 *
@@ -990,8 +989,7 @@ class SecretService {
 	 *
 	 * @return void
 	 *
-	 * @throws NotFoundException When the secret does not exist
-	 * @throws ForbiddenException When the secret belongs to another user
+	 * @throws NotFoundException When the secret does not exist or is not the user's
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
@@ -1488,8 +1486,7 @@ class SecretService {
 	 *
 	 * @return Secret
 	 *
-	 * @throws NotFoundException When the secret does not exist
-	 * @throws ForbiddenException When the secret belongs to another user
+	 * @throws NotFoundException When the secret does not exist or is not the user's
 	 */
 	public function findOwned(string $id, string $userId): Secret {
 		return $this->loadOwned(id: $id, userId: $userId);
@@ -1505,8 +1502,7 @@ class SecretService {
 	 *
 	 * @return Secret
 	 *
-	 * @throws NotFoundException When the secret does not exist
-	 * @throws ForbiddenException When the secret belongs to another user
+	 * @throws NotFoundException When the secret does not exist or is not the user's
 	 *
 	 * @spec openspec/changes/rotation-expiry-policies/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry
 	 */

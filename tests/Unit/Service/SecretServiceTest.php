@@ -398,7 +398,7 @@ class SecretServiceTest extends TestCase {
 	public function testGetForeignSecretForbidden(): void {
 		$this->mapper->method('findById')->willReturn($this->makeSecret(ownerId: 'bob'));
 
-		$this->expectException(ForbiddenException::class);
+		$this->expectException(NotFoundException::class);
 		$this->service->get(id: 's-1', userId: 'alice');
 	}//end testGetForeignSecretForbidden()
 
