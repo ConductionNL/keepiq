@@ -78,21 +78,43 @@
 								})
 							}}
 						</span>
-						<!-- Permission grade (folder-permission-grades §4.1):
-						     owner-only; a write member may edit folder secrets
-						     and fan the change out to the whole team. -->
+						<span
+							v-if="member.addedBy"
+							class="team-folder-dialog__added-by"
+							:data-testid="`team-folder-added-by-${member.memberId}`">
+							{{
+								t('keepiq', 'Added by {user}', {
+									user: member.addedBy,
+								})
+							}}
+						</span>
+						<!-- Permission grade (folder-permission-grades;
+						     sharing-team-folder-manager-role D5): Viewer, Editor,
+						     Manager. Only the owner makes or changes a manager;
+						     a manager sees a manager's row read-only. -->
 						<select
 							class="team-folder-dialog__grade"
 							:value="member.grade || 'read'"
-							:disabled="busy"
+							:disabled="busy || !canChangeMember(member)"
+							:aria-label="
+								t('keepiq', 'Role of {member}', {
+									member: member.memberId,
+								})
+							"
 							:data-testid="`team-folder-grade-${member.memberId}`"
 							@change="onGradeChange(member, $event.target.value)">
-							<option value="read">{{ t('keepiq', 'Read') }}</option>
+							<option value="read">{{ t('keepiq', 'Viewer') }}</option>
 							<option value="write">
-								{{ t('keepiq', 'Write') }}
+								{{ t('keepiq', 'Editor') }}
+							</option>
+							<option
+								v-if="isOwner || member.grade === 'manage'"
+								value="manage">
+								{{ t('keepiq', 'Manager') }}
 							</option>
 						</select>
 						<NcButton
+							v-if="canRemoveMember(member)"
 							variant="tertiary"
 							:aria-label="t('keepiq', 'Remove member')"
 							:disabled="busy"
@@ -162,6 +184,19 @@
 					v-model="newRestriction"
 					data-testid="team-folder-new-restriction" />
 
+				<NcNoteCard
+					v-if="skippedSecrets.length > 0"
+					type="warning"
+					data-testid="team-folder-skipped">
+					{{
+						t(
+							'keepiq',
+							'You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}',
+							{ names: skippedSecrets.join(', ') },
+						)
+					}}
+				</NcNoteCard>
+
 				<!-- Fan-out progress (§5.1): chunked, cancellable, resumable. -->
 				<div
 					v-if="fanOut.running || pendingCount > 0"
@@ -203,7 +238,7 @@
 					</div>
 				</div>
 
-				<div class="team-folder-dialog__danger">
+				<div v-if="isOwner" class="team-folder-dialog__danger">
 					<NcButton
 						variant="error"
 						:disabled="busy"
@@ -218,6 +253,7 @@
 </template>
 
 <script>
+import { getCurrentUser } from '@nextcloud/auth'
 import {
 	NcButton,
 	NcDialog,
@@ -286,6 +322,8 @@ export default {
 			newMemberId: '',
 			/** Use-only and end date for the member being added. */
 			newRestriction: { useOnly: false, endDate: '' },
+			/** Folder secrets the last fan-out skipped: this user holds no copy. */
+			skippedSecrets: [],
 			pendingCount: 0,
 			/** Pending candidate search, so keystrokes coalesce into one call. */
 			candidateSearchTimer: null,
@@ -299,6 +337,19 @@ export default {
 
 		teamFolder() {
 			return this.folderId ? this.store.byFolderId(this.folderId) : null
+		},
+
+		/**
+		 * Whether the current user owns this team folder.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 */
+		isOwner() {
+			const uid = getCurrentUser()?.uid ?? null
+			return (
+				this.teamFolder !== null && (this.teamFolder.ownerId ?? uid) === uid
+			)
 		},
 
 		members() {
@@ -589,6 +640,36 @@ export default {
 			return Number.isNaN(date.getTime()) ? iso : date.toLocaleDateString()
 		},
 
+		/**
+		 * Whether the current user may change this member's role: the owner
+		 * any member, a manager anyone below manager.
+		 *
+		 * @param {object} member The membership row.
+		 * @return {boolean}
+		 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 */
+		canChangeMember(member) {
+			return this.isOwner || member.grade !== 'manage'
+		},
+
+		/**
+		 * Whether the current user may remove this member: the owner any
+		 * member, a manager anyone below manager and themselves (leaving).
+		 *
+		 * @param {object} member The membership row.
+		 * @return {boolean}
+		 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 */
+		canRemoveMember(member) {
+			if (this.canChangeMember(member)) {
+				return true
+			}
+			return (
+				member.memberType === 'user'
+				&& member.memberId === (getCurrentUser()?.uid ?? null)
+			)
+		},
+
 		async onRemoveMember(member) {
 			this.busy = true
 			this.error = null
@@ -634,8 +715,10 @@ export default {
 		 */
 		async onRunFanOut() {
 			this.error = null
+			this.skippedSecrets = []
 			try {
-				await this.store.runFanOut(this.teamFolder.id)
+				const result = await this.store.runFanOut(this.teamFolder.id)
+				this.skippedSecrets = result?.skipped ?? []
 				await this.refresh()
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
@@ -688,6 +771,11 @@ export default {
 
 .team-folder-dialog__member-name {
 	flex: 1;
+}
+
+.team-folder-dialog__added-by {
+	color: var(--color-text-maxcontrast);
+	font-size: 12px;
 }
 
 .team-folder-dialog__badge {

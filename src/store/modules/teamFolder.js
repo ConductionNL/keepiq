@@ -49,7 +49,20 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @return {function(string): object|null}
 		 */
 		byFolderId: (state) => (folderId) =>
-			state.owned.find((tf) => tf.folderId === folderId) ?? null,
+			state.owned.find((tf) => tf.folderId === folderId)
+			?? state.memberOf.find(
+				(tf) => tf.folderId === folderId && tf.grade === 'manage',
+			)
+			?? null,
+
+		/**
+		 * The team folders the current user manages without owning them
+		 * (sharing-team-folder-manager-role D5).
+		 *
+		 * @param {object} state The store state.
+		 * @return {Array<object>}
+		 */
+		managed: (state) => state.memberOf.filter((tf) => tf.grade === 'manage'),
 	},
 
 	actions: {
@@ -271,8 +284,13 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * missing secret with the in-memory CryptoKey → RSA-encrypt per
 		 * recipient certificate → POST in idempotent chunks.
 		 *
+		 * A manager fans out from its OWN recipient copies: reconcile names
+		 * the caller's copy of each folder secret (`copyId`), and a secret
+		 * the caller holds no copy of is skipped and reported, never faked
+		 * (sharing-team-folder-manager-role D3).
+		 *
 		 * @param {string} teamFolderId The team folder to fan out.
-		 * @return {Promise<{created: number, cancelled: boolean}>}
+		 * @return {Promise<{created: number, cancelled: boolean, skipped: Array<string>}>}
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
@@ -288,8 +306,15 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 				const missing = state.missing ?? []
 				this.fanOut.total = missing.length
 				if (missing.length === 0) {
-					return { created: 0, cancelled: false }
+					return { created: 0, cancelled: false, skipped: [] }
 				}
+
+				// The copy this browser decrypts for each source secret: the
+				// owner's own row, or a manager's recipient copy (or none).
+				const refs = Object.fromEntries(
+					(state.secrets ?? []).map((ref) => [ref.id, ref]),
+				)
+				const skipped = new Set()
 
 				const certByUser = Object.fromEntries(
 					(state.recipients ?? []).map((r) => [r.userId, r.certificate]),
@@ -311,11 +336,20 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 						continue
 					}
 
+					const ref = refs[pair.secretId]
+					const readId =
+						ref && 'copyId' in ref ? ref.copyId : pair.secretId
+					if (!readId) {
+						skipped.add(ref?.name ?? pair.secretId)
+						this.fanOut.done++
+						continue
+					}
+
 					if (!plaintextCache[pair.secretId]) {
 						// fetchSecret decrypts with the session CryptoKey and
 						// returns the PLAINTEXT secret — do not decrypt twice.
 
-						const plain = await secretStore.fetchSecret(pair.secretId)
+						const plain = await secretStore.fetchSecret(readId)
 						plaintextCache[pair.secretId] = {
 							key: plain.key ?? '',
 							login: plain.login ?? '',
@@ -372,7 +406,11 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					this.fanOut.done += chunk.length
 				}
 
-				return { created, cancelled: this.fanOutCancelled }
+				return {
+					created,
+					cancelled: this.fanOutCancelled,
+					skipped: [...skipped],
+				}
 			} catch (e) {
 				this.error =
 					e?.response?.data?.message || e?.message || 'Fan-out failed'

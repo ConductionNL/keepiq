@@ -1546,7 +1546,7 @@ export default {
 						this.secretId,
 					)
 					this.teamWritable =
-						context.effectiveGrade === 'write'
+						['write', 'manage'].includes(context.effectiveGrade)
 						&& context.sourceSecretId !== this.secretId
 				} catch {
 					this.teamWritable = false
