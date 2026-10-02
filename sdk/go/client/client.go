@@ -128,6 +128,63 @@ func (c *Client) GetSecret(id string) (*Secret, error) {
 	return &s, nil
 }
 
+// SecretType is one entry of the secret-type catalogue.
+type SecretType struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Label string `json:"label"`
+	Scope string `json:"scope"`
+}
+
+// SSHKeyTypeName is the seeded type whose secrets hold an OpenSSH private key
+// in the encrypted `key` field (cli-ssh-agent).
+const SSHKeyTypeName = "ssh_key"
+
+// SecretTypes fetches the secret types available to the caller (human mode).
+func (c *Client) SecretTypes() ([]SecretType, error) {
+	var types []SecretType
+	if err := c.getJSON("/apps/keepiq/api/v1/secret-types", &types); err != nil {
+		return nil, err
+	}
+	return types, nil
+}
+
+// SSHKeyTypeID returns the id of the `ssh_key` type, or an error when the
+// catalogue has none.
+func (c *Client) SSHKeyTypeID() (string, error) {
+	types, err := c.SecretTypes()
+	if err != nil {
+		return "", err
+	}
+	for _, t := range types {
+		if t.Name == SSHKeyTypeName {
+			return t.ID, nil
+		}
+	}
+	return "", fmt.Errorf("no %q secret type on this server", SSHKeyTypeName)
+}
+
+// Folder is one of the caller's folders (index fields only).
+type Folder struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	ParentID string `json:"parentId"`
+}
+
+// FolderIDByName returns the id of the caller's folder with this name.
+func (c *Client) FolderIDByName(name string) (string, error) {
+	var folders []Folder
+	if err := c.getJSON("/apps/keepiq/api/v1/folders", &folders); err != nil {
+		return "", err
+	}
+	for _, f := range folders {
+		if f.Name == name {
+			return f.ID, nil
+		}
+	}
+	return "", fmt.Errorf("no folder named %q", name)
+}
+
 // --- CI mode (RFC 7523 machine secret store) ---
 
 // Discovery is the machine-store discovery document (subset used by the CLI).
