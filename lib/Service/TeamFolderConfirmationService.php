@@ -33,9 +33,6 @@ namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Db\Secret;
-use OCA\Keepiq\Db\SecretMapper;
-use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Db\TeamFolder;
 use OCA\Keepiq\Db\TeamFolderMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -59,11 +56,9 @@ class TeamFolderConfirmationService {
 	 * @param IAppConfig $appConfig The app config (policy switch)
 	 * @param TeamFolderMapper $mapper The team folder mapper
 	 * @param TeamFolderService $teamFolders The owner fan-out path
-	 * @param TeamFolderQueryService $queries Effective grades
 	 * @param TeamFolderMembershipResolver $memberships Coverage, recipients, subtree
 	 * @param TeamFolderShareService $shares Missing pairs and row registration
-	 * @param ShareTargetMapper $shareTargetMapper The confirmer's own copies
-	 * @param SecretMapper $secretMapper Source and copy timestamps
+	 * @param ConfirmerCopyResolver $copies The confirmer's own current write copy
 	 * @param NotificationService $notificationService The owner notice
 	 * @param TeamFolderAuditor $audit The confirmation audit event
 	 *
@@ -75,11 +70,9 @@ class TeamFolderConfirmationService {
 		private IAppConfig $appConfig,
 		private TeamFolderMapper $mapper,
 		private TeamFolderService $teamFolders,
-		private TeamFolderQueryService $queries,
 		private TeamFolderMembershipResolver $memberships,
 		private TeamFolderShareService $shares,
-		private ShareTargetMapper $shareTargetMapper,
-		private SecretMapper $secretMapper,
+		private ConfirmerCopyResolver $copies,
 		private NotificationService $notificationService,
 		private TeamFolderAuditor $audit,
 	) {
@@ -244,7 +237,7 @@ class TeamFolderConfirmationService {
 
 			$sourceId = $pair['secretId'];
 			if (array_key_exists($sourceId, $ownCopies) === false) {
-				$ownCopies[$sourceId] = $this->currentWriteCopy(sourceId: $sourceId, confirmerId: $userId);
+				$ownCopies[$sourceId] = $this->copies->currentWriteCopy(sourceId: $sourceId, confirmerId: $userId);
 			}
 
 			if ($ownCopies[$sourceId] !== null) {
@@ -257,79 +250,20 @@ class TeamFolderConfirmationService {
 		}
 
 		$needed = array_flip(array_column($missing, 'userId'));
+		$role = 'member';
+		if ($isOwner === true) {
+			$role = 'owner';
+		}
 
 		return [
 			'teamFolderId' => $teamFolder->getId(),
-			'role' => ($isOwner === true ? 'owner' : 'member'),
+			'role' => $role,
 			'missing' => $missing,
 			'recipients' => array_values(
 				array_filter($recipients, static fn (array $recipient): bool => isset($needed[$recipient['userId']]))
 			),
 		];
 	}//end pendingForFolder()
-
-	/**
-	 * The id of the confirmer's own copy of a source, when they may hand it on.
-	 *
-	 * Null unless the confirmer's effective grade on the source is `write`
-	 * and their copy is not older than the source's last key change
-	 * (design D2 and D3).
-	 *
-	 * @param string $sourceId The source secret
-	 * @param string $confirmerId The confirmer
-	 *
-	 * @return string|null
-	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.2
-	 */
-	private function currentWriteCopy(string $sourceId, string $confirmerId): ?string {
-		try {
-			$source = $this->secretMapper->findById(id: $sourceId);
-		} catch (DoesNotExistException) {
-			return null;
-		}
-
-		if ($this->queries->resolveGrade(secret: $source, userId: $confirmerId) !== 'write') {
-			return null;
-		}
-
-		try {
-			$shareRow = $this->shareTargetMapper->findBySourceSecretAndTargetUser(
-				sourceSecretId: $sourceId,
-				targetUserId: $confirmerId
-			);
-			$copy = $this->secretMapper->findById(id: (string)$shareRow->getSecretId());
-		} catch (DoesNotExistException) {
-			return null;
-		}
-
-		if ($this->copyIsCurrent(source: $source, copy: $copy) === false) {
-			return null;
-		}
-
-		return $copy->getId();
-	}//end currentWriteCopy()
-
-	/**
-	 * Whether a copy is at least as new as the source's last key change.
-	 *
-	 * @param Secret $source The source secret
-	 * @param Secret $copy The confirmer's copy
-	 *
-	 * @return bool
-	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.2
-	 */
-	private function copyIsCurrent(Secret $source, Secret $copy): bool {
-		$keyChangedAt = $source->getKeyUpdatedAt();
-		if ($keyChangedAt === null) {
-			return true;
-		}
-
-		$copyUpdatedAt = $copy->getUpdatedAt();
-
-		return $copyUpdatedAt !== null && $copyUpdatedAt >= $keyChangedAt;
-	}//end copyIsCurrent()
 
 	/**
 	 * Whether one row from a non-owner confirmer may be stored.
@@ -351,7 +285,7 @@ class TeamFolderConfirmationService {
 			return false;
 		}
 
-		return $this->currentWriteCopy(sourceId: $sourceId, confirmerId: $confirmerId) !== null;
+		return $this->copies->currentWriteCopy(sourceId: $sourceId, confirmerId: $confirmerId) !== null;
 	}//end rowIsSafe()
 
 	/**

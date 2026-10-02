@@ -56,7 +56,7 @@ class PasswordPolicyService {
 		'min_zxcvbn_score',
 		'block_on_hibp_hit',
 		'policy_exempt_types',
-		// admin-auto-confirm-members D1: off by default, audited like the rest.
+		// Automatic member confirmation (admin-auto-confirm-members D1): off by default, audited like the rest.
 		'team_folder_auto_confirm',
 	];
 

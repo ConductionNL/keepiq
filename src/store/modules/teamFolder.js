@@ -16,7 +16,6 @@
  */
 
 import axios from '@nextcloud/axios'
-import { showSuccess } from '@nextcloud/dialogs'
 import { translatePlural as n } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
@@ -508,7 +507,10 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 				try {
 					const result = await this.autoConfirm()
 					if (result.members > 0) {
-						// One quiet notice per run, never per secret.
+						// One quiet notice per run, never per secret. Loaded on
+						// demand: @nextcloud/dialogs needs a window at import
+						// time, and node-run specs import this store.
+						const { showSuccess } = await import('@nextcloud/dialogs')
 						showSuccess(n(
 							'keepiq',
 							'Gave %n new member access to a team folder.',
