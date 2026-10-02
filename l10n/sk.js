@@ -1266,7 +1266,8 @@ OC.L10N.register(
         "Tag": "Štítok",
         "Remove tag": "Odobrať štítok",
         "Add tag": "Pridať štítok",
-        "Could not change the tags. Try again.": "Štítky nemožno zmeniť. Skúste to znova."
+        "Could not change the tags. Try again.": "Štítky nemožno zmeniť. Skúste to znova.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Export do CXF NIE JE ZAŠIFROVANÝ. Každé heslo a prihlasovacie meno bude v stiahnutom súbore čitateľné ako otvorený text. Uložte ho bezpečne a hneď po použití odstráňte."
     },
     "nplurals=2; plural=(n != 1);"
 )

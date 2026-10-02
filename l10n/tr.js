@@ -1266,7 +1266,8 @@ OC.L10N.register(
         "Tag": "Etiket",
         "Remove tag": "Etiketi kaldır",
         "Add tag": "Etiket ekle",
-        "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin."
+        "Could not change the tags. Try again.": "Etiketler değiştirilemedi. Yeniden deneyin.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF dışa aktarımı ŞİFRELENMEMİŞTİR. İndirilen dosyada her parola ve kullanıcı adı düz metin olarak okunabilir olacak. Dosyayı güvenli biçimde saklayın ve kullandıktan hemen sonra silin."
     },
     "nplurals=2; plural=(n != 1);"
 )

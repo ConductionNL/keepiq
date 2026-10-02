@@ -21,6 +21,7 @@
 			<GdprExportDialog
 				:open="gdprOpen"
 				:secrets="decryptedSecrets"
+				:skipped="skippedSecrets"
 				:folders="folders"
 				@update:open="gdprOpen = $event" />
 			<AccountDeletionDialog
@@ -1503,6 +1504,14 @@ export default {
 			const secrets = []
 			let skipped = 0
 			for (const secret of store.secrets) {
+				// A row under a revoked or blocked suite is served without its
+				// ciphertext (Secret::jsonSerializeBlocked), so decryptSecret()
+				// would return it as is, with an empty value. Count it instead
+				// of exporting a blank entry (keepiq#862).
+				if (secret.blocked) {
+					skipped += 1
+					continue
+				}
 				try {
 					secrets.push(await store.decryptSecret(secret))
 				} catch {
@@ -1545,14 +1554,17 @@ export default {
 		},
 
 		/**
-		 * Open the GDPR export dialog; decrypt the vault if it is unlocked.
+		 * Open the GDPR export dialog; decrypt the vault if it is unlocked, and
+		 * hand on how many secrets could not be decrypted (keepiq#874).
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async openGdpr() {
-			const { secrets } = await this.decryptAllSecrets()
+			const { secrets, skipped } = await this.decryptAllSecrets()
 			this.decryptedSecrets = secrets
+			this.skippedSecrets = skipped
 			this.gdprOpen = true
 		},
 

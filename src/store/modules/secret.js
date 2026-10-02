@@ -38,6 +38,45 @@ const WHOLE_VAULT = {
 	favourite: false,
 	tag: null,
 }
+/**
+ * Merge request-filled extra-field blobs into the owner's own extra fields
+ * (keepiq#750). Each pending blob is the JSON object of the members one fill
+ * supplied; later fills win for a member they both name. A blob that cannot
+ * be decrypted is skipped and makes the merge incomplete, so it is not
+ * dropped from the server.
+ *
+ * @param {object|string|null|undefined} own The owner's decrypted extra fields.
+ * @param {Array<string>} pending The pending ciphertexts, oldest first.
+ * @param {CryptoKey} cryptoKey The session private key.
+ * @return {Promise<{fields: object|string|null, complete: boolean}>}
+ * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+ */
+async function mergePendingFields(own, pending, cryptoKey) {
+	if (
+		own !== null
+		&& own !== undefined
+		&& (typeof own !== 'object' || Array.isArray(own))
+	) {
+		// Not a member object: there is nothing to merge into safely.
+		return { fields: own, complete: false }
+	}
+	const fields = { ...(own || {}) }
+	let complete = true
+	for (const ciphertext of pending) {
+		try {
+			const members = JSON.parse(await rsaDecrypt(ciphertext, cryptoKey))
+			if (members && typeof members === 'object' && !Array.isArray(members)) {
+				Object.assign(fields, members)
+			} else {
+				complete = false
+			}
+		} catch {
+			complete = false
+		}
+	}
+	return { fields, complete }
+}
+
 export const useSecretStore = defineStore('secret', {
 	state: () => ({
 		/** @type {Array<object>} The current page of secrets (metadata + ciphertext). */
@@ -338,6 +377,7 @@ export const useSecretStore = defineStore('secret', {
 					)
 					const secret = response.data
 					this.currentSecret = await this.decryptSecret(secret)
+					await this.persistMergedPending(id)
 					return this.currentSecret
 				} catch (e) {
 					if (this.isNetworkError(e) && offline.vault) {
@@ -362,6 +402,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @return {Promise<object>} A copy of the secret with plaintext fields.
 		 *
 		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 		 */
 		async decryptSecret(secret) {
 			const session = useSessionStore()
@@ -387,7 +428,45 @@ export const useSecretStore = defineStore('secret', {
 					decrypted.additionalFields = json
 				}
 			}
+			const pending = Array.isArray(secret.pendingAdditionalFields)
+				? secret.pendingAdditionalFields
+				: []
+			if (pending.length > 0) {
+				const merged = await mergePendingFields(
+					decrypted.additionalFields,
+					pending,
+					session.cryptoKey,
+				)
+				decrypted.additionalFields = merged.fields
+				decrypted.mergedPending = merged.complete ? pending.length : 0
+			}
 			return decrypted
+		},
+
+		/**
+		 * Write back an extra-field blob that now holds the request-filled
+		 * pending members (keepiq#750), so the server drops them from the
+		 * pending list. Best effort: a failure leaves them pending, and the
+		 * next open merges them again.
+		 *
+		 * @param {string} id The secret ID.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+		 */
+		async persistMergedPending(id) {
+			const current = this.currentSecret
+			if (!current || current.id !== id || !(current.mergedPending > 0)) {
+				return
+			}
+			try {
+				await this.updateSecret(id, {
+					additionalFields: current.additionalFields,
+					mergedPending: current.mergedPending,
+				})
+				current.mergedPending = 0
+			} catch {
+				// Stays pending; merged again on the next open.
+			}
 		},
 
 		/**
@@ -511,6 +590,16 @@ export const useSecretStore = defineStore('secret', {
 							? data.additionalFields
 							: JSON.stringify(data.additionalFields)
 					payload.additionalFields = await rsaEncrypt(json, publicKey)
+					// The blob now holds the request-filled pending members this
+					// client merged on open: let the server drop them (keepiq#750).
+					const merged =
+						data.mergedPending
+						?? (this.currentSecret?.id === id
+							? this.currentSecret.mergedPending
+							: 0)
+					if (merged > 0) {
+						payload.mergedPending = merged
+					}
 				}
 			}
 
