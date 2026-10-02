@@ -1703,7 +1703,7 @@
       "id": "crypto-09",
       "area": "crypto",
       "name": "Unlock with a fingerprint or face scan on your device.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -1711,12 +1711,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/clients-extension-unlock-lock-and-accounts on 2026-09-27 for the missing half: fingerprint or face unlock in the browser extension; the web app unlock with a platform passkey is built. Before: src/components/PasskeyManager.vue:25 offers Touch ID, Windows Hello or a security key; src/store/modules/passkey.js:221 userVerification 'preferred' with the PRF extension; browser-extension/src/popup/popup.js unlocks with the master password only (grep -rni 'biometric\\|webauthn' browser-extension/src/popup: no hits)",
+        "state": "built",
+        "evidence": "browser-extension/src/unlock/ceremony.js enrolBiometric/unlockWithBiometric -> router.js biometric-enrol / biometric-options / unlock-raw -> browser-extension/src/lib/vault.js unlockWithRawKey; server lib/Service/PasskeyService.php enroll(clientKind, rpId) and loginOptions(client, rpId), migration Version001007Date20261002180000; web list src/components/PasskeyManager.vue labels extension credentials",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Lock page (/lock) -> Unlock with passkey, using a platform authenticator",
-        "note": "Fingerprint or face unlock works in the web app only by enrolling a platform passkey (Touch ID, Windows Hello) whose browser supports PRF. The browser extension and CLI have no biometric unlock.",
-        "change": "openspec/changes/clients-extension-unlock-lock-and-accounts"
+        "reachedOn": "Extension popup -> Settings -> Set up fingerprint or face unlock; locked popup -> Unlock with fingerprint or face",
+        "note": "PRF passkey owned by the extension (its own origin as relying party, user verification required); the server stores only the wrapped unlock key. Vitest with a fake PRF authenticator; the Playwright virtual-authenticator run and the per-browser check are owed.",
+        "change": "openspec/changes/archive/2026-10-02-clients-extension-unlock-lock-and-accounts"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -4006,7 +4006,7 @@
       "id": "apps-18",
       "area": "apps",
       "name": "Use a ready-made GitHub Actions or GitLab CI integration.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "unknown",
@@ -4014,11 +4014,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/apps-client-libraries-and-ci on 2026-09-27. Before: grep -rli 'github.action|gitlab.ci|.gitlab-ci' lib src cli browser-extension: no hits (only this repo's own CI workflows use GitHub Actions, which is unrelated to a keepiq integration product)",
-        "note": "No ready-made GitHub Actions or GitLab CI step exists; a pipeline would have to install and script the keepiq CLI itself.",
+        "state": "built",
+        "evidence": "integrations/github-action/action.yml + keepiq-action.sh (run mode via keepiq ci run, export-env masks every line before GITHUB_ENV, checksum-verified install), integrations/gitlab-ci/keepiq.gitlab-ci.yml (.keepiq hidden job), cli-release.yml SHA256SUMS + ghcr.io/conductionnl/keepiq-cli; integrations/test/run.sh passes 9 checks against sdk/testdata/stub_server.py",
         "owner": "ConductionNL/keepiq",
-        "change": "openspec/changes/apps-client-libraries-and-ci"
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/apps-client-libraries-and-ci. Owed: the first cli-v* release with SHA256SUMS and the ghcr image, and the workflow dry runs in CI.",
+        "change": "openspec/changes/archive/2026-10-02-apps-client-libraries-and-ci"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -4095,7 +4096,7 @@
       "id": "apps-21",
       "area": "apps",
       "name": "Use client libraries for common programming languages.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -4103,12 +4104,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/apps-client-libraries-and-ci on 2026-09-27 for the missing half: client libraries for common languages; the Go command-line client is built. Before: cli/ is a single Go CLI (stdlib only) covering human read-only + CI fetch; no client SDKs for other languages exist (no python/node/java package in the repo)",
-        "reachedOn": "keepiq CLI (Go binary, cross-compiled)",
-        "note": "There is one cross-compiled CLI binary, not per-language client libraries; a Python or Node consumer would call the documented HTTP+JWT API directly with no official SDK.",
+        "state": "built",
+        "evidence": "sdk/go (keepiq.New: GetByName, GetByID, List, Create, Update; go test green), sdk/python (keepiq-sdk, 14 tests green), sdk/js (@conduction/keepiq-sdk, 15 vitest tests green); shared vectors in sdk/testdata decrypted by every library and by DecryptService in tests/Unit/Service/SdkEncryptedVectorsTest.php",
         "owner": "ConductionNL/keepiq",
-        "change": "openspec/changes/apps-client-libraries-and-ci"
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/apps-client-libraries-and-ci. Owed: publishing to PyPI and npm (sdk-py-v*, sdk-js-v* tags) and the first sdk/go/v* tag.",
+        "change": "openspec/changes/archive/2026-10-02-apps-client-libraries-and-ci"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -7433,7 +7434,7 @@
       "id": "clients-06",
       "area": "clients",
       "name": "The extension locks itself automatically.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -7441,20 +7442,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/clients-extension-unlock-lock-and-accounts on 2026-09-27 for the missing half: a user-chosen idle period; the fixed 15 minute idle lock is built. Before: browser-extension/src/background/service-worker.js:37 touchActivity -> browser-extension/src/lib/vault.js:114 armIdleLock (default 15 minutes, service-worker.js:26) ; service-worker.js:254 chrome.idle locked -> vault.lock ; popup.js:197 manual Lock ; worker termination drops the in-memory key",
+        "state": "built",
+        "evidence": "browser-extension/src/popup/popup.js renderSettings -> set-idle -> browser-extension/src/background/router.js doSetIdle/effectiveIdleMinutes -> browser-extension/src/lib/vault.js armIdleLock (per account); router.js refreshPolicy -> GET /api/v1/extension/policy -> lib/Controller/ExtensionController.php policy() -> AdminSettingsService::extensionMaxIdleMinutes; admin field src/components/settings/ExtensionSection.vue",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "browser-extension popup (browser-extension/src/popup/popup.js) (automatic, plus the Lock button)",
-        "note": "The extension locks after 15 idle minutes, on OS or browser lock, on worker termination and on demand. The idle period cannot be changed because nothing ever writes config.idleMinutes, and the extension is not distributed.",
-        "defects": [
-          {
-            "at": "browser-extension/build.mjs:1",
-            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ],
-        "change": "openspec/changes/clients-extension-unlock-lock-and-accounts"
+        "reachedOn": "Extension popup -> Settings -> Lock after being idle for; Keepiq admin settings -> Browser extension",
+        "note": "User-chosen idle delay per account (1 to 240 minutes, 15 default), capped by the administrator maximum read at every unlock; OS lock, worker termination and the Lock button still lock every account. Distribution is the change clients-extension-store-release.",
+        "change": "openspec/changes/archive/2026-10-02-clients-extension-unlock-lock-and-accounts"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7970,7 +7963,7 @@
       "id": "clients-21",
       "area": "clients",
       "name": "Switch between several accounts or servers in the same app or extension.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -7978,12 +7971,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/clients-extension-unlock-lock-and-accounts on 2026-09-27. Before: browser-extension/src/lib/api.js:15-31 stores one paired config under CONFIG_KEY; no account list",
+        "state": "built",
+        "evidence": "browser-extension/src/lib/api.js addAccount/loadAccounts/setActiveAccount (keepiq.accounts, MAX_ACCOUNTS 5, migrateLegacyConfig) -> browser-extension/src/background/router.js doPair/doSwitchAccount, matchCache per account, doFill refuses another account's ids -> browser-extension/src/popup/views.js renderAccountSwitcher",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing",
-        "note": "The extension pairs with one Nextcloud account at a time; switching means unpairing.",
-        "change": "openspec/changes/clients-extension-unlock-lock-and-accounts"
+        "reachedOn": "Extension popup header -> Account select and Add account",
+        "note": "Up to five accounts on one or more servers, each with its own key, lock state, idle timer and settings; matching, filling and saving use the active account. Tests: tests/extension/accounts.spec.js, tests/extension/popupAccounts.spec.js.",
+        "change": "openspec/changes/archive/2026-10-02-clients-extension-unlock-lock-and-accounts"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",

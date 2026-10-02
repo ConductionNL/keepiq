@@ -30,6 +30,7 @@
 		<SiemSection />
 		<HoneySection />
 		<OfflineCacheSection />
+		<ExtensionSection />
 		<ItemTypesSection />
 		<OffboardingSection />
 		<AdminSuiteSection />
@@ -46,6 +47,7 @@ import AttachmentLimitsSection from '../../components/settings/AttachmentLimitsS
 import BreachCheckSection from '../../components/settings/BreachCheckSection.vue'
 import CaHealthSection from '../../components/settings/CaHealthSection.vue'
 import ComplianceSection from '../../components/settings/ComplianceSection.vue'
+import ExtensionSection from '../../components/settings/ExtensionSection.vue'
 import HoneySection from '../../components/settings/HoneySection.vue'
 import ItemTypesSection from '../../components/settings/ItemTypesSection.vue'
 import MachineLeaseSection from '../../components/settings/MachineLeaseSection.vue'
@@ -76,6 +78,7 @@ export default {
 		HoneySection,
 		ItemTypesSection,
 		OfflineCacheSection,
+		ExtensionSection,
 		OffboardingSection,
 		AdminSuiteSection,
 		AdminAuditSection,
