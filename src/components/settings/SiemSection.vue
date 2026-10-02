@@ -346,7 +346,7 @@ export default {
 		/**
 		 * The picker entries, in the order the design names them.
 		 *
-		 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-named-siem-connectors-on-a-sink
+		 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-named-siem-connectors-on-a-sink
 		 */
 		connectorOptions() {
 			return [
@@ -483,7 +483,7 @@ export default {
 		 *
 		 * @param {string} field The field name.
 		 * @return {boolean}
-		 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-named-siem-connectors-on-a-sink
+		 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-named-siem-connectors-on-a-sink
 		 */
 		shows(field) {
 			return fieldsFor(this.form.connector).includes(field)

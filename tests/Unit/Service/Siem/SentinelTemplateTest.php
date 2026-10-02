@@ -25,7 +25,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * integrations/siem/sentinel/keepiq-dcr.json against the formatter.
  *
- * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#5.1
+ * @spec openspec/specs/siem-vendor-connectors/spec.md
  */
 class SentinelTemplateTest extends TestCase {
 

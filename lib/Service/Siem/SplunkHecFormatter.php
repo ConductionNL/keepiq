@@ -23,7 +23,7 @@ namespace OCA\Keepiq\Service\Siem;
  * The Splunk HEC event envelope: time, host, source, sourcetype, an optional
  * index, and the sanitized payload as the event.
  *
- * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-splunk-http-event-collector-delivery
+ * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-splunk-http-event-collector-delivery
  */
 final class SplunkHecFormatter {
 
@@ -43,7 +43,7 @@ final class SplunkHecFormatter {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-splunk-http-event-collector-delivery
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-splunk-http-event-collector-delivery
 	 */
 	public function format(array $payload, string $host, array $options = []): array {
 		$view = new PayloadView(payload: $payload);

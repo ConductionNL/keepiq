@@ -5,7 +5,7 @@
  * The connectors an administrator can pick on the SIEM section, the sink
  * type and format each one stores, and the form fields each one needs.
  *
- * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-named-siem-connectors-on-a-sink
+ * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-named-siem-connectors-on-a-sink
  */
 
 /** Connector key → the sink type and format it stores, and its form fields. */

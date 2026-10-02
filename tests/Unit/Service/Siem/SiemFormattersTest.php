@@ -31,7 +31,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * The formatters.
  *
- * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#2.1
+ * @spec openspec/specs/siem-vendor-connectors/spec.md
  */
 class SiemFormattersTest extends TestCase {
 
@@ -122,7 +122,7 @@ class SiemFormattersTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#2.2
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md
 	 */
 	public function testSplunkEnvelope(): void {
 		$f = new SplunkHecFormatter();
@@ -142,7 +142,7 @@ class SiemFormattersTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#2.2
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md
 	 */
 	public function testSentinelRow(): void {
 		$this->assertSame(
@@ -160,7 +160,7 @@ class SiemFormattersTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#2.3
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md
 	 */
 	public function testNoFormatterCarriesAnythingButThePayload(): void {
 		$metadata = ['suiteId' => 'suite-9'];

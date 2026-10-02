@@ -23,7 +23,7 @@ namespace OCA\Keepiq\Service\Siem;
  * ArcSight Common Event Format, for QRadar, ArcSight and Sentinel's CEF
  * connector, sent as the MSG of the RFC 5424 frame.
  *
- * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-cef-formatting-over-syslog
+ * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-cef-formatting-over-syslog
  */
 final class CefFormatter {
 
@@ -54,7 +54,7 @@ final class CefFormatter {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-cef-formatting-over-syslog
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-cef-formatting-over-syslog
 	 */
 	public function format(array $payload, string $appVersion): string {
 		$view = new PayloadView(payload: $payload);
@@ -104,7 +104,7 @@ final class CefFormatter {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-cef-formatting-over-syslog
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-cef-formatting-over-syslog
 	 */
 	public static function header(string $value): string {
 		return str_replace(['\\', '|', "\r", "\n"], ['\\\\', '\\|', ' ', ' '], $value);
@@ -117,7 +117,7 @@ final class CefFormatter {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-cef-formatting-over-syslog
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-cef-formatting-over-syslog
 	 */
 	public static function extension(string $value): string {
 		return str_replace(['\\', '=', "\r\n", "\n", "\r"], ['\\\\', '\\=', '\\n', '\\n', '\\r'], $value);

@@ -28,7 +28,7 @@ use OCA\Keepiq\Event\Audit\AuditEventTypes;
  * metadata key again, so no formatter can forward secret material even if a
  * payload carried it.
  *
- * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
+ * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
  */
 final class PayloadView {
 
@@ -39,7 +39,7 @@ final class PayloadView {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
 	 */
 	public function __construct(private array $payload) {
 	}//end __construct()
@@ -51,7 +51,7 @@ final class PayloadView {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
 	 */
 	public function get(string $field): string {
 		$value = $this->payload[$field] ?? '';
@@ -67,7 +67,7 @@ final class PayloadView {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
 	 */
 	public function metadata(): array {
 		$metadata = $this->payload['metadata'] ?? [];
@@ -87,7 +87,7 @@ final class PayloadView {
 	 *
 	 * @return float
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
 	 */
 	public function epoch(): float {
 		$time = strtotime($this->get(field: 'occurredAt'));
@@ -103,7 +103,7 @@ final class PayloadView {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-connector-output-carries-no-secret-material
 	 */
 	public function sanitized(): array {
 		return [

@@ -6,7 +6,7 @@
  * request body each one sends, and a credential field that is never
  * prefilled.
  *
- * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#4.1
+ * @spec openspec/specs/siem-vendor-connectors/spec.md
  */
 
 import axios from '@nextcloud/axios'

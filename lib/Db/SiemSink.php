@@ -293,7 +293,7 @@ class SiemSink extends Entity implements JsonSerializable {
 	 *
 	 * @return array<string,string>
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md
 	 */
 	public function connectorOptionsArray(): array {
 		if ($this->connectorOptions === null || $this->connectorOptions === '') {

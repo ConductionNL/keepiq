@@ -33,7 +33,7 @@ use OCP\Migration\SimpleMigrationStep;
  *
  * @psalm-suppress UnusedClass Loaded by the Nextcloud migration framework.
  *
- * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md
+ * @spec openspec/specs/siem-vendor-connectors/spec.md
  */
 class Version001004Date20261002170000 extends SimpleMigrationStep {
 
@@ -48,7 +48,7 @@ class Version001004Date20261002170000 extends SimpleMigrationStep {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Interface-mandated signature.
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#1.1
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		$schema = $schemaClosure();

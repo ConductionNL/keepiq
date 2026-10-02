@@ -339,7 +339,7 @@ class SiemSinkService {
 	 *
 	 * @throws InvalidArgumentException On an unknown format or cef off syslog
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md
 	 */
 	private function checkedFormat(string $type, string $format): string {
 		if (in_array($format, ['json', 'cef'], true) === false) {
@@ -365,7 +365,7 @@ class SiemSinkService {
 	 *
 	 * @throws InvalidArgumentException On unknown, missing or invalid options
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md
 	 */
 	private function checkedOptions(string $type, mixed $options): array {
 		if (is_array($options) === false) {

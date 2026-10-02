@@ -37,7 +37,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * SiemSinkService accepts and rejects connector settings.
  *
- * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#1.3
+ * @spec openspec/specs/siem-vendor-connectors/spec.md
  */
 class SiemSinkServiceConnectorTest extends TestCase {
 	private SiemSinkService $service;

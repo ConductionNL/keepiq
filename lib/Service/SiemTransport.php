@@ -184,7 +184,7 @@ class SiemTransport {
 	 *
 	 * @throws SiemDeliveryException On any other answer
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-splunk-http-event-collector-delivery
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-splunk-http-event-collector-delivery
 	 */
 	private function deliverSplunk(SiemSink $sink, array $payload): void {
 		$host = (string)gethostname();
@@ -225,7 +225,7 @@ class SiemTransport {
 	 *
 	 * @throws SiemDeliveryException On any other answer
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-microsoft-sentinel-delivery-through-the-logs-ingestion-api
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-microsoft-sentinel-delivery-through-the-logs-ingestion-api
 	 */
 	private function deliverSentinel(SiemSink $sink, array $payload): void {
 		$options = $sink->connectorOptionsArray();

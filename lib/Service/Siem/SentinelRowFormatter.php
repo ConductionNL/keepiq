@@ -24,7 +24,7 @@ namespace OCA\Keepiq\Service\Siem;
  * column list is the one the template integrations/siem/sentinel/keepiq-dcr.json
  * declares; a test keeps the two equal.
  *
- * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-microsoft-sentinel-delivery-through-the-logs-ingestion-api
+ * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-microsoft-sentinel-delivery-through-the-logs-ingestion-api
  */
 final class SentinelRowFormatter {
 
@@ -42,7 +42,7 @@ final class SentinelRowFormatter {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-microsoft-sentinel-delivery-through-the-logs-ingestion-api
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md#requirement-microsoft-sentinel-delivery-through-the-logs-ingestion-api
 	 */
 	public function format(array $payload): array {
 		$view = new PayloadView(payload: $payload);

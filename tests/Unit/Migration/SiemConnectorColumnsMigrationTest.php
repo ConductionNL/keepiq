@@ -28,7 +28,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Migration step for format, credential_enc and connector_options.
  *
- * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#1.1
+ * @spec openspec/specs/siem-vendor-connectors/spec.md
  */
 class SiemConnectorColumnsMigrationTest extends TestCase {
 

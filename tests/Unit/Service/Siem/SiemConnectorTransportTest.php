@@ -40,7 +40,7 @@ use Psr\Log\NullLogger;
 /**
  * SiemTransport per connector.
  *
- * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#3.1
+ * @spec openspec/specs/siem-vendor-connectors/spec.md
  */
 class SiemConnectorTransportTest extends TestCase {
 
@@ -158,7 +158,7 @@ class SiemConnectorTransportTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#3.2
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md
 	 */
 	public function testSplunkDelivery(): void {
 		$sink = self::sink('splunk_hec', 'https://splunk.example.org:8088/services/collector/event');
@@ -191,7 +191,7 @@ class SiemConnectorTransportTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#3.2
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md
 	 */
 	public function testSplunkFailureEntersRetry(): void {
 		$sink = self::sink('splunk_hec', 'https://splunk.example.org:8088/services/collector/event');
@@ -239,7 +239,7 @@ class SiemConnectorTransportTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#3.3
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md
 	 */
 	public function testSentinelReusesTheTokenInARun(): void {
 		$this->answers = [[200, '{"access_token":"tok-1","expires_in":3599}'], [204, ''], [204, '']];
@@ -263,7 +263,7 @@ class SiemConnectorTransportTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#3.3
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md
 	 */
 	public function testSentinelRetriesOnceAfter401(): void {
 		$this->answers = [[200, '{"access_token":"tok-1"}'], [401, ''], [200, '{"access_token":"tok-2"}'], [204, '']];
@@ -285,7 +285,7 @@ class SiemConnectorTransportTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#3.4
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md
 	 */
 	public function testTestFirePerConnector(): void {
 		$sinks = ['splunk_hec' => self::sink('splunk_hec', 'https://splunk.example.org:8088/services/collector/event'), 'sentinel' => self::sentinel()];

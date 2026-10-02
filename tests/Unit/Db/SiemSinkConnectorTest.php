@@ -25,7 +25,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * SiemSink serialization of the connector fields.
  *
- * @spec openspec/changes/audit-siem-vendor-connectors/tasks.md#1.2
+ * @spec openspec/specs/siem-vendor-connectors/spec.md
  */
 class SiemSinkConnectorTest extends TestCase {
 

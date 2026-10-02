@@ -11,7 +11,7 @@
  * needed. `.invalid` never resolves (RFC 2606), so the delivery fails without
  * touching any real host.
  *
- * @e2e openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#administrator-creates-a-splunk-connector
+ * @e2e openspec/specs/siem-vendor-connectors/spec.md#administrator-creates-a-splunk-connector
  */
 import { expect, test } from '@playwright/test'
 
