@@ -12,7 +12,9 @@
 // requires re-wrapping the value under every recipient's public key (the share
 // fan-out), which is a separate, larger surface deferred to a follow-up.
 //
-// Single static binary, stdlib only — cross-compile with GOOS/GOARCH.
+// Single static binary, pure Go — cross-compile with GOOS/GOARCH. The only
+// dependencies are the Go project's own golang.org/x/crypto and
+// golang.org/x/sys, for the SSH agent (cli-ssh-agent).
 package main
 
 import (
@@ -23,8 +25,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/ConductionNL/keepiq/cli/internal/client"
-	dcrypto "github.com/ConductionNL/keepiq/cli/internal/crypto"
+	"github.com/ConductionNL/keepiq/sdk/go/client"
+	dcrypto "github.com/ConductionNL/keepiq/sdk/go/crypto"
 )
 
 // version is stamped at build time via -ldflags "-X main.version=…".
@@ -55,6 +57,10 @@ func main() {
 		err = cmdCI(args)
 	case "completion":
 		err = cmdCompletion(args)
+	case "ssh-agent":
+		err = cmdSSHAgent(args)
+	case "install":
+		err = cmdInstall(args)
 	case "help", "--help", "-h":
 		usage()
 	default:
@@ -82,6 +88,13 @@ CI mode (RFC 7523 machine consumer):
   keepiq ci fetch <name> [--output env|json]       fetch+decrypt an application secret
   keepiq ci run <name>[,<name>...] -- <cmd...>      run <cmd> with the secret(s) in its env
 
+  install <path>                                   copy this binary to <path> (init containers)
+
+SSH agent (Linux and macOS):
+  keepiq ssh-agent [--socket <path>] [--confirm] [--idle <minutes>] [--folder <name>] [--locked]
+                                                   serve your vault SSH keys to ssh and git;
+                                                   eval its output to set SSH_AUTH_SOCK
+
   version | completion <bash|zsh|fish> | help
 
 v1 is READ-ONLY: no create/edit/update/delete (share fan-out is a follow-up).
@@ -89,7 +102,7 @@ The master password is prompted per session and never leaves this process.
 `)
 }
 
-// --- flag helpers (stdlib only, minimal) ---
+// --- flag helpers (minimal) ---
 
 func popFlag(args []string, name string) (string, []string) {
 	out := make([]string, 0, len(args))
@@ -267,15 +280,29 @@ func cmdCompletion(args []string) error {
 	// A minimal, valid completion script per shell (§1.3).
 	switch shell {
 	case "bash":
-		fmt.Print("complete -W 'login list show get copy ci version completion help' keepiq\n")
+		fmt.Print("complete -W 'login list show get copy ci ssh-agent version completion help' keepiq\n")
 	case "zsh":
-		fmt.Print("#compdef keepiq\ncompadd login list show get copy ci version completion help\n")
+		fmt.Print("#compdef keepiq\ncompadd login list show get copy ci ssh-agent version completion help\n")
 	case "fish":
-		fmt.Print("complete -c keepiq -a 'login list show get copy ci version completion help'\n")
+		fmt.Print("complete -c keepiq -a 'login list show get copy ci ssh-agent version completion help'\n")
 	default:
 		return fmt.Errorf("unsupported shell %q (bash|zsh|fish)", shell)
 	}
 	return nil
+}
+
+// childEnviron is the parent environment minus the application private key:
+// the wrapped command gets the secrets it asked for, never the key that can
+// read every other secret of the application.
+func childEnviron(parent []string) []string {
+	out := make([]string, 0, len(parent))
+	for _, kv := range parent {
+		if strings.HasPrefix(kv, "KEEPIQ_APP_KEY=") {
+			continue
+		}
+		out = append(out, kv)
+	}
+	return out
 }
 
 func runChild(env []string, cmd []string) error {
@@ -283,7 +310,7 @@ func runChild(env []string, cmd []string) error {
 		return fmt.Errorf("no command after --")
 	}
 	child := exec.Command(cmd[0], cmd[1:]...)
-	child.Env = append(os.Environ(), env...)
+	child.Env = append(childEnviron(os.Environ()), env...)
 	child.Stdin, child.Stdout, child.Stderr = os.Stdin, os.Stdout, os.Stderr
 	return child.Run()
 }

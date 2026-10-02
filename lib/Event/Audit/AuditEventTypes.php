@@ -310,14 +310,22 @@ final class AuditEventTypes {
 		self::TEAM_FOLDER_UNSHARED => ['folderId', 'revokedCount'],
 		self::TEAM_FOLDER_MEMBER_ADDED => ['memberType', 'memberId'],
 		self::TEAM_FOLDER_MEMBER_REMOVED => ['memberType', 'memberId', 'revokedCount'],
-		self::TEAM_FOLDER_OFFBOARDED => ['leavingUserId', 'successorUserId', 'revokedCount', 'transferredCount'],
+		self::TEAM_FOLDER_OFFBOARDED => [
+			'leavingUserId',
+			'successorUserId',
+			'revokedCount',
+			'transferredCount',
+			// Member offboarding (admin-member-overview-and-offboarding §1.3): counts and group ids only.
+			'membershipsRemovedCount',
+			'coveringGroupIds',
+		],
 		// Grade changes — identifiers + the new grade only (§3.3).
 		self::TEAM_FOLDER_GRADE_CHANGED => ['memberType', 'memberId', 'grade'],
 		// Automatic confirmation: counts only, the actor is the confirmer.
 		self::TEAM_FOLDER_MEMBERS_CONFIRMED => ['confirmedCount', 'memberCount'],
 		// SIEM sinks — sink id/type/outcome only (§5.1).
 		self::SIEM_SINK_CREATED => ['sinkId', 'type'],
-		self::SIEM_SINK_UPDATED => ['sinkId'],
+		self::SIEM_SINK_UPDATED => ['sinkId', 'type'],
 		self::SIEM_SINK_DELETED => ['sinkId'],
 		self::SIEM_SINK_TESTED => ['sinkId', 'outcome'],
 		// Certificate lifecycle — identifiers only, never PEM/key.

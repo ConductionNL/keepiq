@@ -113,7 +113,7 @@ $extra = [
     // catch-all wildcard.
     ['name' => 'import#batchCreate', 'url' => '/api/v1/secrets/import-batch', 'verb' => 'POST'],
     ['name' => 'secret#show',    'url' => '/api/v1/secrets/{id}', 'verb' => 'GET'],
-    ['name' => 'secret#update',  'url' => '/api/v1/secrets/{id}', 'verb' => 'PUT'],
+    ['name' => 'secretUpdate#update', 'url' => '/api/v1/secrets/{id}', 'verb' => 'PUT'],
     // Trash and archive (vault-trash-and-archive): DELETE /{id} moves a secret to the trash.
     ['name' => 'secretTrash#trash',     'url' => '/api/v1/secrets/{id}',           'verb' => 'DELETE'],
     ['name' => 'secretTrash#restore',   'url' => '/api/v1/secrets/{id}/restore',   'verb' => 'POST'],
@@ -409,6 +409,11 @@ $extra = [
     ['name' => 'teamFolderMember#approveJoin',    'url' => '/api/v1/team-folders/{id}/approve-join',       'verb' => 'POST'],
     ['name' => 'teamFolder#destroy',              'url' => '/api/v1/team-folders/{id}',                    'verb' => 'DELETE'],
 
+    // Admin member overview (admin-member-overview-and-offboarding D4): admin
+    // only, metadata only. Under /api/v1/admin/ so admin-public-api can
+    // document it without a rename.
+    ['name' => 'memberOverview#index', 'url' => '/api/v1/admin/members', 'verb' => 'GET'],
+
     // Audit trail (add-secret-audit-trail §4.1). Specific /secret/{id} and
     // /me routes come before the admin instance-wide /audit collection.
     ['name' => 'audit#secret', 'url' => '/api/v1/audit/secret/{id}', 'verb' => 'GET'],
@@ -444,6 +449,8 @@ $extra = [
     ['name' => 'extension#pair', 'url' => '/api/v1/extension/pair', 'verb' => 'POST'],
     ['name' => 'extension#unpair', 'url' => '/api/v1/extension/unpair', 'verb' => 'POST'],
     ['name' => 'extension#match', 'url' => '/api/v1/extension/match', 'verb' => 'GET'],
+    // The idle lock maximum the extension clamps the user's choice to.
+    ['name' => 'extension#policy', 'url' => '/api/v1/extension/policy', 'verb' => 'GET'],
     // A fill from the extension counts as a use (vault-favourites-tags-and-last-used); 404 for a row the caller does not hold.
     ['name' => 'secretOrganisation#used', 'url' => '/api/v1/extension/used/{id}', 'verb' => 'POST'],
 ];
