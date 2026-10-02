@@ -207,12 +207,18 @@ export const usePasskeyStore = defineStore('passkey', {
 				type: 'public-key',
 				id: fromBase64Url(c.credentialId),
 			}))
-			// Same PRF salt the envelope was wrapped with (from the first cred
-			// the authenticator satisfies — allowCredentials narrows it).
-			const prfSalt = Uint8Array.from(
-				atob(options.credentials[0].prfSalt),
-				(ch) => ch.charCodeAt(0),
-			)
+			// Every enrolment drew its own PRF salt, and the authenticator
+			// picks which passkey answers. So each credential gets its own salt
+			// through evalByCredential, keyed by its base64url id; a single
+			// `eval` salt only fits the first passkey (keepiq#744).
+			const saltOf = (credential) =>
+				Uint8Array.from(atob(credential.prfSalt), (ch) => ch.charCodeAt(0))
+			const evalByCredential = {}
+			for (const credential of options.credentials) {
+				evalByCredential[
+					toBase64Url(fromBase64Url(credential.credentialId))
+				] = { first: saltOf(credential) }
+			}
 
 			const assertion = await navigator.credentials.get({
 				publicKey: {
@@ -220,13 +226,14 @@ export const usePasskeyStore = defineStore('passkey', {
 					rpId: RP_ID,
 					allowCredentials,
 					userVerification: 'preferred',
-					extensions: { prf: { eval: { first: prfSalt } } },
+					extensions: { prf: { evalByCredential } },
 				},
 			})
 			const usedId = toBase64Url(assertion.rawId)
 			const cred =
-				options.credentials.find((c) => c.credentialId === usedId)
-				|| options.credentials[0]
+				options.credentials.find(
+					(c) => toBase64Url(fromBase64Url(c.credentialId)) === usedId,
+				) || options.credentials[0]
 			const prfOutput =
 				assertion.getClientExtensionResults()?.prf?.results?.first
 			if (!prfOutput) {
