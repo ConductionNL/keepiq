@@ -7,14 +7,11 @@ import (
 	"encoding/json"
 	"encoding/pem"
 	"io"
-	"net/url"
 	"os"
 	"testing"
 
 	kcrypto "github.com/ConductionNL/keepiq/sdk/go/crypto"
 )
-
-func queryUnescape(s string) (string, error) { return url.QueryUnescape(s) }
 
 func randReader() io.Reader { return rand.Reader }
 

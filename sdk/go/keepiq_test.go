@@ -1,23 +1,16 @@
 package keepiq
 
 import (
-	"crypto"
 	"crypto/rsa"
-	"crypto/sha256"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
-	"fmt"
-	"io"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
 	kcrypto "github.com/ConductionNL/keepiq/sdk/go/crypto"
+	"github.com/ConductionNL/keepiq/sdk/go/keepiqtest"
 )
 
 // fixture is sdk/testdata/machine_envelope.json: the envelope the server's
@@ -43,209 +36,19 @@ func loadFixture(t *testing.T) fixture {
 	return f
 }
 
-// stub is a small in-memory Keepiq machine API. It checks the assertion
-// signature against the application's public key, as JwtAuthService does,
-// and records every request body so a test can prove no plaintext was sent.
-type stub struct {
-	t         *testing.T
-	pub       *rsa.PublicKey
-	mu        sync.Mutex
-	envelopes map[string]map[string]any // id -> envelope
-	exchanges int
-	bodies    []string
-	revokeNext bool
-}
-
-func newStub(t *testing.T, f fixture) (*stub, *httptest.Server) {
-	key, err := kcrypto.ParsePrivateKey(f.PrivateKeyPem)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var env map[string]any
-	if err := json.Unmarshal(f.Envelope, &env); err != nil {
-		t.Fatal(err)
-	}
-	s := &stub{t: t, pub: &key.PublicKey, envelopes: map[string]map[string]any{"sec-cli-fixture": env}}
-	srv := httptest.NewServer(s)
-	t.Cleanup(srv.Close)
-	return s, srv
-}
-
-const webroot = "/index.php"
-
-func (s *stub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	body, _ := io.ReadAll(r.Body)
-	if len(body) > 0 {
-		s.bodies = append(s.bodies, string(body))
-	}
-	p := r.URL.Path
-	api := webroot + "/apps/keepiq/api/v1/app/secrets"
-	switch {
-	case p == webroot+DiscoveryPath:
-		s.json(w, 200, map[string]any{
-			"apiVersion":    1,
-			"tokenEndpoint": webroot + "/apps/keepiq/api/v1/app/token",
-			"grantType":     "urn:ietf:params:oauth:grant-type:jwt-bearer",
-			"assertion":     map[string]any{"alg": "RS256", "audience": "keepiq"},
-			"secrets": map[string]any{
-				"list": api, "byId": api + "/{id}", "byName": api + "/by-name/{name}",
-				"create": api, "update": api + "/{id}",
-			},
-		})
-		return
-	case p == webroot+"/apps/keepiq/api/v1/app/token" && r.Method == http.MethodPost:
-		vals, _ := urlValues(string(body))
-		if vals["grant_type"] != "urn:ietf:params:oauth:grant-type:jwt-bearer" || !s.validAssertion(vals["assertion"]) {
-			s.json(w, 401, map[string]any{"error": "invalid_grant"})
-			return
-		}
-		s.exchanges++
-		s.json(w, 200, map[string]any{"access_token": fmt.Sprintf("tok-%d", s.exchanges), "token_type": "Bearer", "expires_in": 300})
-		return
-	}
-	if r.Header.Get("Authorization") != fmt.Sprintf("Bearer tok-%d", s.exchanges) || s.exchanges == 0 || s.revokeNext {
-		s.revokeNext = false
-		s.json(w, 401, map[string]any{"message": "Bearer token required"})
-		return
-	}
-	switch {
-	case p == api && r.Method == http.MethodGet:
-		var items []any
-		since := r.URL.Query().Get("updated_since")
-		for _, e := range s.envelopes {
-			if since == "" || e["secret"].(map[string]any)["updatedAt"].(string) > since {
-				items = append(items, e)
-			}
-		}
-		s.json(w, 200, map[string]any{"format": "doriath-machine-secret-v1", "items": items, "total": len(items)})
-	case strings.HasPrefix(p, api+"/by-name/"):
-		name := strings.TrimPrefix(p, api+"/by-name/")
-		var hits []map[string]any
-		for _, e := range s.envelopes {
-			if e["secret"].(map[string]any)["name"] == name {
-				hits = append(hits, e)
-			}
-		}
-		switch len(hits) {
-		case 0:
-			s.json(w, 404, map[string]any{"message": "Secret not found"})
-		case 1:
-			s.envelope(w, r, hits[0])
-		default:
-			var cands []any
-			for _, h := range hits {
-				m := h["secret"].(map[string]any)
-				cands = append(cands, map[string]any{"id": m["id"], "name": m["name"], "folderPath": m["folderPath"], "updatedAt": m["updatedAt"]})
-			}
-			s.json(w, 409, map[string]any{"message": "Multiple secrets match this name", "candidates": cands})
-		}
-	case p == api && r.Method == http.MethodPost:
-		var in map[string]string
-		_ = json.Unmarshal(body, &in)
-		id := fmt.Sprintf("sec-new-%d", len(s.envelopes))
-		e := s.newEnvelope(id, in)
-		s.envelopes[id] = e
-		s.json(w, 201, e)
-	case strings.HasPrefix(p, api+"/") && r.Method == http.MethodPut:
-		id := strings.TrimPrefix(p, api+"/")
-		e, ok := s.envelopes[id]
-		if !ok {
-			s.json(w, 404, map[string]any{"message": "Secret not found"})
-			return
-		}
-		var in map[string]string
-		_ = json.Unmarshal(body, &in)
-		ct := e["ciphertext"].(map[string]any)
-		for _, f := range []string{"key", "login", "additionalFields"} {
-			if v, ok := in[f]; ok {
-				ct[f] = v
-			}
-		}
-		e["secret"].(map[string]any)["updatedAt"] = "2026-10-02T12:00:00+00:00"
-		s.envelope(w, r, e)
-	case strings.HasPrefix(p, api+"/") && r.Method == http.MethodGet:
-		e, ok := s.envelopes[strings.TrimPrefix(p, api+"/")]
-		if !ok {
-			s.json(w, 404, map[string]any{"message": "Secret not found"})
-			return
-		}
-		s.envelope(w, r, e)
-	default:
-		s.json(w, 404, map[string]any{"message": "no route " + p})
-	}
-}
-
-func (s *stub) newEnvelope(id string, in map[string]string) map[string]any {
-	return map[string]any{
-		"format": "doriath-machine-secret-v1",
-		"secret": map[string]any{"id": id, "name": in["name"], "url": in["url"], "folderPath": "", "type": in["typeId"],
-			"createdAt": "2026-10-02T10:00:00+00:00", "updatedAt": "2026-10-02T10:00:00+00:00", "keyUpdatedAt": "2026-10-02T10:00:00+00:00"},
-		"encryption": map[string]any{"suiteId": "suite-cli-fixture", "certificateFingerprint": "sha256:81394845ca3ff63930b78428f345690b1f96a867bd644e9823e06624992457c5", "scheme": Scheme},
-		"ciphertext": map[string]any{"key": in["key"], "login": in["login"], "additionalFields": in["additionalFields"]},
-	}
-}
-
-func (s *stub) envelope(w http.ResponseWriter, r *http.Request, e map[string]any) {
-	raw, _ := json.Marshal(e)
-	sum := sha256.Sum256(raw)
-	etag := fmt.Sprintf(`"%x"`, sum[:8])
-	w.Header().Set("ETag", etag)
-	w.Header().Set("Doriath-Lease-Id", "lease-7")
-	w.Header().Set("Doriath-Lease-Expires", "2026-10-02T13:00:00+00:00")
-	if r.Header.Get("If-None-Match") == etag {
-		w.WriteHeader(304)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
-	_, _ = w.Write(raw)
-}
-
-func (s *stub) json(w http.ResponseWriter, code int, v any) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-	_ = json.NewEncoder(w).Encode(v)
-}
-
-func (s *stub) validAssertion(a string) bool {
-	parts := strings.Split(a, ".")
-	if len(parts) != 3 {
-		return false
-	}
-	sig, err := base64.RawURLEncoding.DecodeString(parts[2])
-	if err != nil {
-		return false
-	}
-	digest := sha256.Sum256([]byte(parts[0] + "." + parts[1]))
-	if rsa.VerifyPKCS1v15(s.pub, crypto.SHA256, digest[:], sig) != nil {
-		return false
-	}
-	raw, _ := base64.RawURLEncoding.DecodeString(parts[1])
-	var c map[string]any
-	_ = json.Unmarshal(raw, &c)
-	return c["iss"] == "billing" && c["sub"] == "billing" && c["aud"] == "keepiq" && c["jti"] != ""
-}
-
-func urlValues(form string) (map[string]string, error) {
-	out := map[string]string{}
-	for _, kv := range strings.Split(form, "&") {
-		k, v, _ := strings.Cut(kv, "=")
-		k, _ = urlUnescape(k)
-		v, _ = urlUnescape(v)
-		out[k] = v
-	}
-	return out, nil
-}
-
-func urlUnescape(s string) (string, error) {
-	return queryUnescape(s)
-}
-
-func newClient(t *testing.T, srv *httptest.Server, f fixture, opts ...Option) *Client {
+func startStub(t *testing.T) *keepiqtest.Stub {
 	t.Helper()
-	c, err := New(srv.URL+webroot, "billing", f.PrivateKeyPem, opts...)
+	st, err := keepiqtest.Start("billing")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(st.Close)
+	return st
+}
+
+func newClient(t *testing.T, st *keepiqtest.Stub, f fixture, opts ...Option) *Client {
+	t.Helper()
+	c, err := New(st.URL(), "billing", f.PrivateKeyPem, opts...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -256,8 +59,9 @@ func newClient(t *testing.T, srv *httptest.Server, f fixture, opts ...Option) *C
 // the metadata and the lease, and caches the token across calls.
 func TestGetByNameDecryptsTheServerEnvelope(t *testing.T) {
 	f := loadFixture(t)
-	st, srv := newStub(t, f)
-	c := newClient(t, srv, f)
+	st := startStub(t)
+	st.Leases = true
+	c := newClient(t, st, f)
 
 	s, err := c.GetByName("ci-fixture-db-password", "")
 	if err != nil {
@@ -269,22 +73,22 @@ func TestGetByNameDecryptsTheServerEnvelope(t *testing.T) {
 	if s.FolderPath != "ci/database" || s.ID != "sec-cli-fixture" {
 		t.Fatalf("metadata %+v", s)
 	}
-	if s.Lease == nil || s.Lease.ID != "lease-7" || s.Lease.Expires == "" {
+	if s.Lease == nil || !strings.HasPrefix(s.Lease.ID, "lease-") || s.Lease.Expires == "" {
 		t.Fatalf("lease %+v", s.Lease)
 	}
 	if _, err := c.GetByID("sec-cli-fixture"); err != nil {
 		t.Fatal(err)
 	}
-	if st.exchanges != 1 {
-		t.Fatalf("token exchanged %d times, want 1 (cached)", st.exchanges)
+	if st.Exchanges != 1 {
+		t.Fatalf("token exchanged %d times, want 1 (cached)", st.Exchanges)
 	}
 }
 
 // A second read of an unchanged secret sends the ETag and reports not modified.
 func TestUnchangedReadIsNotModified(t *testing.T) {
 	f := loadFixture(t)
-	_, srv := newStub(t, f)
-	c := newClient(t, srv, f)
+	st := startStub(t)
+	c := newClient(t, st, f)
 	first, err := c.GetByID("sec-cli-fixture")
 	if err != nil || first.ETag == "" {
 		t.Fatalf("first read: %v %+v", err, first)
@@ -297,11 +101,11 @@ func TestUnchangedReadIsNotModified(t *testing.T) {
 // Two secrets with one name: the error carries both ids and folder paths.
 func TestAmbiguousNameListsCandidates(t *testing.T) {
 	f := loadFixture(t)
-	st, srv := newStub(t, f)
-	twin := st.newEnvelope("sec-twin", map[string]string{"name": "ci-fixture-db-password"})
-	twin["secret"].(map[string]any)["folderPath"] = "other"
-	st.envelopes["sec-twin"] = twin
-	c := newClient(t, srv, f)
+	st := startStub(t)
+	if _, err := st.Add("sec-twin", "ci-fixture-db-password", "other", map[string]string{"key": "x"}); err != nil {
+		t.Fatal(err)
+	}
+	c := newClient(t, st, f)
 
 	_, err := c.GetByName("ci-fixture-db-password", "")
 	var amb *AmbiguousNameError
@@ -319,8 +123,8 @@ func TestAmbiguousNameListsCandidates(t *testing.T) {
 
 func TestNotFoundIsTyped(t *testing.T) {
 	f := loadFixture(t)
-	_, srv := newStub(t, f)
-	c := newClient(t, srv, f)
+	st := startStub(t)
+	c := newClient(t, st, f)
 	if _, err := c.GetByName("nope", ""); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("want ErrNotFound, got %v", err)
 	}
@@ -328,10 +132,9 @@ func TestNotFoundIsTyped(t *testing.T) {
 
 // A key the server does not know is refused at the token exchange.
 func TestWrongKeyIsUnauthorized(t *testing.T) {
-	f := loadFixture(t)
-	_, srv := newStub(t, f)
+	st := startStub(t)
 	other, _ := rsa.GenerateKey(randReader(), 2048)
-	c, err := New(srv.URL+webroot, "billing", pemPKCS1(other))
+	c, err := New(st.URL(), "billing", pemPKCS1(other))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -343,17 +146,17 @@ func TestWrongKeyIsUnauthorized(t *testing.T) {
 // A token the server stops honouring is replaced once, transparently.
 func TestRevokedTokenIsRenewedOnce(t *testing.T) {
 	f := loadFixture(t)
-	st, srv := newStub(t, f)
-	c := newClient(t, srv, f)
+	st := startStub(t)
+	c := newClient(t, st, f)
 	if _, err := c.GetByID("sec-cli-fixture"); err != nil {
 		t.Fatal(err)
 	}
-	st.revokeNext = true
+	st.RevokeNext = true
 	if _, err := c.List(time.Time{}); err != nil {
 		t.Fatalf("list after revoke: %v", err)
 	}
-	if st.exchanges != 2 {
-		t.Fatalf("exchanges = %d, want 2", st.exchanges)
+	if st.Exchanges != 2 {
+		t.Fatalf("exchanges = %d, want 2", st.Exchanges)
 	}
 }
 
@@ -361,8 +164,8 @@ func TestRevokedTokenIsRenewedOnce(t *testing.T) {
 // read returns the new value: the rotation scenario of the spec.
 func TestWritesSendOnlyCiphertext(t *testing.T) {
 	f := loadFixture(t)
-	st, srv := newStub(t, f)
-	c := newClient(t, srv, f)
+	st := startStub(t)
+	c := newClient(t, st, f)
 
 	created, err := c.Create(map[string]string{"name": "stripe-key", "key": "sk_live_first", "login": "billing-bot"})
 	if err != nil {
@@ -374,7 +177,7 @@ func TestWritesSendOnlyCiphertext(t *testing.T) {
 	if _, err := c.Update(created.ID, map[string]string{"key": "YOUR_TOKEN_HERE"}); err != nil {
 		t.Fatal(err)
 	}
-	for _, b := range st.bodies {
+	for _, b := range st.Bodies {
 		for _, plain := range []string{"sk_live_first", "billing-bot", "YOUR_TOKEN_HERE", "PRIVATE KEY"} {
 			if strings.Contains(b, plain) {
 				t.Fatalf("request body carries %q: %s", plain, b)
@@ -395,9 +198,11 @@ func TestWritesSendOnlyCiphertext(t *testing.T) {
 
 func TestListFiltersOnUpdatedSince(t *testing.T) {
 	f := loadFixture(t)
-	st, srv := newStub(t, f)
-	st.envelopes["sec-new"] = st.newEnvelope("sec-new", map[string]string{"name": "n"})
-	c := newClient(t, srv, f)
+	st := startStub(t)
+	if _, err := st.Add("sec-new", "n", "", map[string]string{"key": "v"}); err != nil {
+		t.Fatal(err)
+	}
+	c := newClient(t, st, f)
 	all, err := c.List(time.Time{})
 	if err != nil || len(all) != 2 {
 		t.Fatalf("all: %v %d", err, len(all))
@@ -412,14 +217,14 @@ func TestListFiltersOnUpdatedSince(t *testing.T) {
 // certificate is refused before any decryption.
 func TestFingerprintMismatchIsRefused(t *testing.T) {
 	f := loadFixture(t)
-	st, srv := newStub(t, f)
-	st.envelopes["sec-cli-fixture"]["encryption"].(map[string]any)["certificateFingerprint"] = "sha256:00"
-	c := newClient(t, srv, f, WithCertificate(f.CertificatePem))
+	st := startStub(t)
+	st.Envelopes["sec-cli-fixture"]["encryption"].(map[string]any)["certificateFingerprint"] = "sha256:00"
+	c := newClient(t, st, f, WithCertificate(f.CertificatePem))
 	if _, err := c.GetByID("sec-cli-fixture"); !errors.Is(err, ErrKeyMismatch) {
 		t.Fatalf("want ErrKeyMismatch, got %v", err)
 	}
 	other, _ := rsa.GenerateKey(randReader(), 2048)
-	if _, err := New(srv.URL, "billing", pemPKCS1(other), WithCertificate(f.CertificatePem)); err == nil {
+	if _, err := New(st.URL(), "billing", pemPKCS1(other), WithCertificate(f.CertificatePem)); err == nil {
 		t.Fatal("a certificate that does not belong to the key must be refused")
 	}
 }
@@ -448,5 +253,50 @@ func TestEveryLibraryVector(t *testing.T) {
 			continue
 		}
 		checkVector(t, path, key)
+	}
+}
+
+// A caller-kept ETag answers not modified; an empty one reads again.
+func TestGetByNameIfNoneMatch(t *testing.T) {
+	f := loadFixture(t)
+	st := startStub(t)
+	c := newClient(t, st, f)
+	first, err := c.GetByNameIfNoneMatch("ci-fixture-db-password", "", "")
+	if err != nil || first.ETag == "" {
+		t.Fatalf("first: %v %+v", err, first)
+	}
+	if _, err := c.GetByNameIfNoneMatch("ci-fixture-db-password", "", first.ETag); !errors.Is(err, ErrNotModified) {
+		t.Fatalf("want ErrNotModified, got %v", err)
+	}
+	if again, err := c.GetByNameIfNoneMatch("ci-fixture-db-password", "", ""); err != nil || again.Key != f.Plaintext["key"] {
+		t.Fatalf("unconditional read: %v", err)
+	}
+}
+
+// Leases: advertised in discovery, attached to reads, renewable; a refused
+// renewal is an *APIError with status 409.
+func TestLeaseRenewal(t *testing.T) {
+	f := loadFixture(t)
+	st := startStub(t)
+	st.Leases = true
+	c := newClient(t, st, f)
+	if ok, err := c.LeaseSupported(); err != nil || !ok {
+		t.Fatalf("LeaseSupported = %v, %v", ok, err)
+	}
+	s, err := c.GetByID("sec-cli-fixture")
+	if err != nil || s.Lease == nil || s.Lease.ExpiresAt().IsZero() {
+		t.Fatalf("lease on read: %v %+v", err, s)
+	}
+	l, err := c.RenewLease(s.Lease.ID)
+	if err != nil || l.ID != s.Lease.ID || l.ExpiresAt().IsZero() || st.Renewals != 1 {
+		t.Fatalf("renew: %v %+v renewals=%d", err, l, st.Renewals)
+	}
+	st.RefuseRenew = true
+	var apiErr *APIError
+	if _, err := c.RenewLease(s.Lease.ID); !errors.As(err, &apiErr) || apiErr.Status != 409 {
+		t.Fatalf("refused renewal: want *APIError 409, got %v", err)
+	}
+	if _, err := c.RenewLease("lease-unknown"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("unknown lease: want ErrNotFound, got %v", err)
 	}
 }

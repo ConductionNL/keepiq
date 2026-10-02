@@ -111,7 +111,16 @@ func (e *APIError) Error() string {
 // runs leases. Empty when it does not.
 type Lease struct {
 	ID      string
-	Expires string
+	Expires string // ISO 8601, as the server sends it
+}
+
+// ExpiresAt parses Expires; the zero time when it is empty or malformed.
+func (l *Lease) ExpiresAt() time.Time {
+	t, err := time.Parse(time.RFC3339, l.Expires)
+	if err != nil {
+		return time.Time{}
+	}
+	return t
 }
 
 // Secret is one decrypted secret with its metadata.
@@ -175,6 +184,9 @@ type discovery struct {
 	Assertion     struct {
 		Audience string `json:"audience"`
 	} `json:"assertion"`
+	Lease struct {
+		Supported bool `json:"supported"`
+	} `json:"lease"`
 	Secrets struct {
 		List   string `json:"list"`
 		ByID   string `json:"byId"`
@@ -233,6 +245,55 @@ func (c *Client) GetByName(name, folder string) (*Secret, error) {
 		addr += "?folder=" + url.QueryEscape(folder)
 	}
 	return c.read(addr, name)
+}
+
+// GetByNameIfNoneMatch reads by name with an ETag the caller kept (for
+// example in a resource status), instead of the one this client remembers.
+// An empty etag reads unconditionally. Returns ErrNotModified on 304.
+func (c *Client) GetByNameIfNoneMatch(name, folder, etag string) (*Secret, error) {
+	d, err := c.discover()
+	if err != nil {
+		return nil, err
+	}
+	addr := c.endpoint(d.Secrets.ByName, "/apps/keepiq/api/v1/app/secrets/by-name/{name}", "{name}", name)
+	if folder != "" {
+		addr += "?folder=" + url.QueryEscape(folder)
+	}
+	return c.readWith(addr, name, etag)
+}
+
+// LeaseSupported reports whether the instance advertises machine leases.
+func (c *Client) LeaseSupported() (bool, error) {
+	d, err := c.discover()
+	if err != nil {
+		return false, err
+	}
+	return d.Lease.Supported, nil
+}
+
+// RenewLease extends a lease the server attached to an earlier read and
+// returns its new expiry. A lease the server will not renew (revoked, at its
+// maximum, or unknown) is an *APIError with status 409 or ErrNotFound.
+func (c *Client) RenewLease(id string) (*Lease, error) {
+	addr := c.endpoint("", "/apps/keepiq/api/v1/app/leases/{id}/renew", "{id}", id)
+	resp, body, err := c.do(http.MethodPost, addr, nil, "")
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, c.statusError(resp.StatusCode, body, id)
+	}
+	var l struct {
+		ID        string `json:"id"`
+		ExpiresAt string `json:"expiresAt"`
+	}
+	if err := json.Unmarshal(body, &l); err != nil {
+		return nil, fmt.Errorf("keepiq: decode lease: %w", err)
+	}
+	if l.ID == "" {
+		l.ID = id
+	}
+	return &Lease{ID: l.ID, Expires: l.ExpiresAt}, nil
 }
 
 // GetByID reads one secret by id.
@@ -360,6 +421,10 @@ func (c *Client) read(addr, label string) (*Secret, error) {
 	c.mu.Lock()
 	etag := c.etags[addr]
 	c.mu.Unlock()
+	return c.readWith(addr, label, etag)
+}
+
+func (c *Client) readWith(addr, label, etag string) (*Secret, error) {
 	resp, body, err := c.do(http.MethodGet, addr, nil, etag)
 	if err != nil {
 		return nil, err
