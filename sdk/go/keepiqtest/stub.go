@@ -78,6 +78,7 @@ type Stub struct {
 	LeaseTTL    time.Duration // lease lifetime when Leases is on
 	RefuseRenew bool          // answer 409 to a renewal
 	Renewals    int
+	PutCount    int // accepted PUT write-backs
 	leases      map[string]time.Time
 	leaseSeq    int
 	updates     int
@@ -131,6 +132,35 @@ func (s *Stub) Add(id, name, folderPath string, fields map[string]string) (strin
 	return id, nil
 }
 
+// SetExpiry sets a secret's expiresAt (ISO 8601; "" for none).
+func (s *Stub) SetExpiry(id, expiresAt string) {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	var v any
+	if expiresAt != "" {
+		v = expiresAt
+	}
+	s.Envelopes[id]["secret"].(map[string]any)["expiresAt"] = v
+}
+
+// Plain decrypts one field of a stored secret, for assertions.
+func (s *Stub) Plain(id, field string) (string, error) {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	ct, _ := s.Envelopes[id]["ciphertext"].(map[string]any)[field].(string)
+	if ct == "" {
+		return "", nil
+	}
+	return kcrypto.DecryptField(ct, s.Key)
+}
+
+// ETagOf is the ETag the stub serves for a secret now.
+func (s *Stub) ETagOf(id string) string {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	return s.etagOf(s.Envelopes[id])
+}
+
 // SetValue rotates one field of a secret to a new plaintext, the way a
 // machine client's PUT would, and moves updatedAt forward.
 func (s *Stub) SetValue(id, field, plaintext string) error {
@@ -169,7 +199,7 @@ func (s *Stub) newEnvelope(id string, meta map[string]any, ct map[string]any) ma
 	return map[string]any{
 		"format": "doriath-machine-secret-v1",
 		"secret": map[string]any{"id": id, "name": meta["name"], "url": meta["url"], "folderPath": "", "type": meta["typeId"],
-			"createdAt": "2026-10-02T10:00:00+00:00", "updatedAt": "2026-10-02T10:00:00+00:00", "keyUpdatedAt": "2026-10-02T10:00:00+00:00"},
+			"createdAt": "2026-10-02T10:00:00+00:00", "updatedAt": "2026-10-02T10:00:00+00:00", "keyUpdatedAt": "2026-10-02T10:00:00+00:00", "expiresAt": nil},
 		"encryption": map[string]any{"suiteId": enc["suiteId"], "certificateFingerprint": enc["certificateFingerprint"], "scheme": "rsa-oaep-sha256-chunked-v1"},
 		"ciphertext": ct,
 	}
@@ -292,6 +322,12 @@ func (s *Stub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, 404, map[string]any{"message": "Secret not found"})
 			return
 		}
+		if im := r.Header.Get("If-Match"); im != "" && im != s.etagOf(e) {
+			w.Header().Set("ETag", s.etagOf(e))
+			writeJSON(w, 412, map[string]any{"message": "The secret changed since it was read"})
+			return
+		}
+		s.PutCount++
 		var in map[string]any
 		_ = json.Unmarshal(body, &in)
 		ct := e["ciphertext"].(map[string]any)
@@ -322,10 +358,15 @@ func (s *Stub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Stub) envelope(w http.ResponseWriter, r *http.Request, e map[string]any) {
+func (s *Stub) etagOf(e map[string]any) string {
 	raw, _ := json.Marshal(e)
 	sum := sha256.Sum256(raw)
-	etag := fmt.Sprintf(`"%x"`, sum[:8])
+	return fmt.Sprintf(`"%x"`, sum[:8])
+}
+
+func (s *Stub) envelope(w http.ResponseWriter, r *http.Request, e map[string]any) {
+	raw, _ := json.Marshal(e)
+	etag := s.etagOf(e)
 	w.Header().Set("ETag", etag)
 	if s.Leases {
 		s.leaseSeq++
