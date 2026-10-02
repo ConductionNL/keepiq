@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Baigia galioti po {days} d.",
         "Reminders {days} days before": "Priminimai likus {days} d.",
         "Could not save the expiry rule.": "Nepavyko įrašyti galiojimo taisyklės.",
-        "Could not delete the expiry rule.": "Nepavyko ištrinti galiojimo taisyklės."
+        "Could not delete the expiry rule.": "Nepavyko ištrinti galiojimo taisyklės.",
+        "All statuses": "Visos būsenos",
+        "Compromised": "Pažeistas",
+        "Could not load the members.": "Nepavyko įkelti narių.",
+        "Emergency contact": "Avarinis kontaktas",
+        "Leaving user": "Išeinantis naudotojas",
+        "No": "Ne",
+        "No users match this filter.": "Joks naudotojas neatitinka šio filtro.",
+        "Not set up": "Nenustatyta",
+        "Revoke suite": "Atšaukti rinkinį",
+        "Revoked": "Atšauktas",
+        "Search users": "Ieškoti naudotojų",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Pažiūrėkite, kurie naudotojai nustatė saugyklą. Pradėkite išėjimą arba atšaukite rinkinį iš eilutės.",
+        "Successor": "Įpėdinis",
+        "Team folders": "Komandos aplankai",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Naudotojas vis dar yra grupėje {groups}, kuri yra komandos aplanko narė. Pašalinkite jį iš grupės arba išjunkite paskyrą.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Naudotojas vis dar yra grupėse {groups}, kurios yra komandos aplankų narės. Pašalinkite jį iš grupių arba išjunkite paskyrą.",
+        "Vault status": "Saugyklos būsena",
+        "Yes": "Taip"
     },
     "nplurals=2; plural=(n != 1);"
 )

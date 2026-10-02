@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Skadon pas {days} ditësh",
         "Reminders {days} days before": "Kujtesa {days} ditë përpara",
         "Could not save the expiry rule.": "Rregulli i skadimit nuk u ruajt dot.",
-        "Could not delete the expiry rule.": "Rregulli i skadimit nuk u fshi dot."
+        "Could not delete the expiry rule.": "Rregulli i skadimit nuk u fshi dot.",
+        "All statuses": "Të gjitha gjendjet",
+        "Compromised": "E komprometuar",
+        "Could not load the members.": "Anëtarët nuk u ngarkuan dot.",
+        "Emergency contact": "Kontakt urgjence",
+        "Leaving user": "Përdorues që largohet",
+        "No": "Jo",
+        "No users match this filter.": "Asnjë përdorues nuk përputhet me këtë filtër.",
+        "Not set up": "Pa u konfiguruar",
+        "Revoke suite": "Revoko paketën",
+        "Revoked": "E revokuar",
+        "Search users": "Kërko përdorues",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Shihni cilët përdorues kanë konfiguruar një kasafortë. Nisni largimin ose revokoni një paketë nga një rresht.",
+        "Successor": "Pasardhës",
+        "Team folders": "Dosje ekipi",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Përdoruesi është ende në grupin {groups}, që është anëtar i një dosjeje ekipi. Hiqeni nga grupi ose çaktivizoni llogarinë.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Përdoruesi është ende në grupet {groups}, që janë anëtare të dosjeve të ekipit. Hiqeni nga grupet ose çaktivizoni llogarinë.",
+        "Vault status": "Gjendja e kasafortës",
+        "Yes": "Po"
     },
     "nplurals=2; plural=(n != 1);"
 )

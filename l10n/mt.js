@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Jiskadi wara {days} jiem",
         "Reminders {days} days before": "Tfakkiriet {days} jiem qabel",
         "Could not save the expiry rule.": "Ir-regola tal-iskadenza ma setgħetx tiġi ssejvjata.",
-        "Could not delete the expiry rule.": "Ir-regola tal-iskadenza ma setgħetx titħassar."
+        "Could not delete the expiry rule.": "Ir-regola tal-iskadenza ma setgħetx titħassar.",
+        "All statuses": "L-istati kollha",
+        "Compromised": "Kompromess",
+        "Could not load the members.": "Ma setgħux jitgħabbew il-membri.",
+        "Emergency contact": "Kuntatt ta' emerġenza",
+        "Leaving user": "Utent li qed jitlaq",
+        "No": "Le",
+        "No users match this filter.": "L-ebda utent ma jaqbel ma' dan il-filtru.",
+        "Not set up": "Mhux issettjat",
+        "Revoke suite": "Irrevoka s-suite",
+        "Revoked": "Irrevokata",
+        "Search users": "Fittex utenti",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Ara liema utenti ssettjaw kaxxaforti. Ibda t-tluq jew irrevoka suite minn ringiela.",
+        "Successor": "Suċċessur",
+        "Team folders": "Folders tat-tim",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "L-utent għadu fil-grupp {groups}, li huwa membru ta' folder tat-tim. Neħħih mill-grupp jew iddiżattiva l-kont.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "L-utent għadu fil-gruppi {groups}, li huma membri ta' folders tat-tim. Neħħih mill-gruppi jew iddiżattiva l-kont.",
+        "Vault status": "Status tal-kaxxaforti",
+        "Yes": "Iva"
     },
     "nplurals=2; plural=(n != 1);"
 )

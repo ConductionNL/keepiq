@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Rachaidh in éag tar éis {days} lá",
         "Reminders {days} days before": "Meabhrúcháin {days} lá roimh ré",
         "Could not save the expiry rule.": "Níorbh fhéidir an riail éaga a shábháil.",
-        "Could not delete the expiry rule.": "Níorbh fhéidir an riail éaga a scriosadh."
+        "Could not delete the expiry rule.": "Níorbh fhéidir an riail éaga a scriosadh.",
+        "All statuses": "Gach stádas",
+        "Compromised": "I mbaol",
+        "Could not load the members.": "Níorbh fhéidir na baill a lódáil.",
+        "Emergency contact": "Teagmhálaí éigeandála",
+        "Leaving user": "Úsáideoir atá ag imeacht",
+        "No": "Níl",
+        "No users match this filter.": "Níl aon úsáideoir ag teacht leis an scagaire seo.",
+        "Not set up": "Gan socrú",
+        "Revoke suite": "Cúlghair an sraith",
+        "Revoked": "Cúlghairthe",
+        "Search users": "Cuardaigh úsáideoirí",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Féach cé na húsáideoirí a shocraigh cruinneachán. Tosaigh an t-imeacht nó cúlghair sraith ó shraith.",
+        "Successor": "Comharba",
+        "Team folders": "Fillteáin foirne",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Tá an t-úsáideoir fós sa ghrúpa {groups}, atá ina bhall d'fhillteán foirne. Bain é den ghrúpa nó díchumasaigh an cuntas.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Tá an t-úsáideoir fós sna grúpaí {groups}, atá ina mbaill d'fhillteáin foirne. Bain é de na grúpaí nó díchumasaigh an cuntas.",
+        "Vault status": "Stádas an chruinneacháin",
+        "Yes": "Tá"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Scada suenter {days} dis",
         "Reminders {days} days before": "Regurdientschas {days} dis ordavant",
         "Could not save the expiry rule.": "Betg reussì da memorisar la regla da scadenza.",
-        "Could not delete the expiry rule.": "Betg reussì da stizzar la regla da scadenza."
+        "Could not delete the expiry rule.": "Betg reussì da stizzar la regla da scadenza.",
+        "All statuses": "Tut ils status",
+        "Compromised": "Cumpromess",
+        "Could not load the members.": "I n'è betg reussì da chargiar ils commembers.",
+        "Emergency contact": "Contact d'urgenza",
+        "Leaving user": "Utilisader che banduna",
+        "No": "Na",
+        "No users match this filter.": "Nagin utilisader na correspunda a quest filter.",
+        "Not set up": "Betg configurà",
+        "Revoke suite": "Revocar la suite",
+        "Revoked": "Revocà",
+        "Search users": "Tschertgar utilisaders",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Guardai tge utilisaders han configurà ina chascha forta. Cumenzai l'offboarding u revocai ina suite d'ina lingia.",
+        "Successor": "Successur",
+        "Team folders": "Ordinaturs da team",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "L'utilisader è anc en la gruppa {groups}, che è commembra d'in ordinatur da team. Allontanai el da la gruppa u deactivai il conto.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "L'utilisader è anc en las gruppas {groups}, che èn commembras d'ordinaturs da team. Allontanai el da las gruppas u deactivai il conto.",
+        "Vault status": "Status da la chascha forta",
+        "Yes": "Gea"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1302,7 +1302,25 @@
         "Expires after {days} days": "Scade dopo {days} giorni",
         "Reminders {days} days before": "Promemoria {days} giorni prima",
         "Could not save the expiry rule.": "Impossibile salvare la regola di scadenza.",
-        "Could not delete the expiry rule.": "Impossibile eliminare la regola di scadenza."
+        "Could not delete the expiry rule.": "Impossibile eliminare la regola di scadenza.",
+        "All statuses": "Tutti gli stati",
+        "Compromised": "Compromessa",
+        "Could not load the members.": "Impossibile caricare i membri.",
+        "Emergency contact": "Contatto di emergenza",
+        "Leaving user": "Utente in uscita",
+        "No": "No",
+        "No users match this filter.": "Nessun utente corrisponde a questo filtro.",
+        "Not set up": "Non configurato",
+        "Revoke suite": "Revoca suite",
+        "Revoked": "Revocata",
+        "Search users": "Cerca utenti",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Vedi quali utenti hanno configurato una cassaforte. Avvia l'offboarding o revoca una suite da una riga.",
+        "Successor": "Successore",
+        "Team folders": "Cartelle del team",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "L'utente è ancora nel gruppo {groups}, membro di una cartella del team. Rimuovilo dal gruppo o disattiva l'account.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "L'utente è ancora nei gruppi {groups}, membri di cartelle del team. Rimuovilo dai gruppi o disattiva l'account.",
+        "Vault status": "Stato della cassaforte",
+        "Yes": "Sì"
     },
     "plurals": null
 }

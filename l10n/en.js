@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Expires after {days} days",
         "Reminders {days} days before": "Reminders {days} days before",
         "Could not save the expiry rule.": "Could not save the expiry rule.",
-        "Could not delete the expiry rule.": "Could not delete the expiry rule."
+        "Could not delete the expiry rule.": "Could not delete the expiry rule.",
+        "All statuses": "All statuses",
+        "Compromised": "Compromised",
+        "Could not load the members.": "Could not load the members.",
+        "Emergency contact": "Emergency contact",
+        "Leaving user": "Leaving user",
+        "No": "No",
+        "No users match this filter.": "No users match this filter.",
+        "Not set up": "Not set up",
+        "Revoke suite": "Revoke suite",
+        "Revoked": "Revoked",
+        "Search users": "Search users",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "See which users have set up a vault. Start offboarding or revoke a suite from a row.",
+        "Successor": "Successor",
+        "Team folders": "Team folders",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.",
+        "Vault status": "Vault status",
+        "Yes": "Yes"
     },
     "nplurals=2; plural=(n != 1);"
 )

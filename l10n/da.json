@@ -1302,7 +1302,25 @@
         "Expires after {days} days": "Udløber efter {days} dage",
         "Reminders {days} days before": "Påmindelser {days} dage før",
         "Could not save the expiry rule.": "Udløbsreglen kunne ikke gemmes.",
-        "Could not delete the expiry rule.": "Udløbsreglen kunne ikke slettes."
+        "Could not delete the expiry rule.": "Udløbsreglen kunne ikke slettes.",
+        "All statuses": "Alle statusser",
+        "Compromised": "Kompromitteret",
+        "Could not load the members.": "Medlemmerne kunne ikke indlæses.",
+        "Emergency contact": "Nødkontakt",
+        "Leaving user": "Fratrædende bruger",
+        "No": "Nej",
+        "No users match this filter.": "Ingen brugere matcher dette filter.",
+        "Not set up": "Ikke oprettet",
+        "Revoke suite": "Tilbagekald suite",
+        "Revoked": "Tilbagekaldt",
+        "Search users": "Søg efter brugere",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Se hvilke brugere der har oprettet en boks. Start offboarding eller tilbagekald en suite fra en række.",
+        "Successor": "Efterfølger",
+        "Team folders": "Teammapper",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Brugeren er stadig i gruppen {groups}, som er medlem af en teammappe. Fjern brugeren fra gruppen eller deaktiver kontoen.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Brugeren er stadig i grupperne {groups}, som er medlemmer af teammapper. Fjern brugeren fra grupperne eller deaktiver kontoen.",
+        "Vault status": "Boksstatus",
+        "Yes": "Ja"
     },
     "plurals": null
 }

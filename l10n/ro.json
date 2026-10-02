@@ -1302,7 +1302,25 @@
         "Expires after {days} days": "Expiră după {days} zile",
         "Reminders {days} days before": "Memento-uri cu {days} zile înainte",
         "Could not save the expiry rule.": "Regula de expirare nu a putut fi salvată.",
-        "Could not delete the expiry rule.": "Regula de expirare nu a putut fi ștearsă."
+        "Could not delete the expiry rule.": "Regula de expirare nu a putut fi ștearsă.",
+        "All statuses": "Toate stările",
+        "Compromised": "Compromisă",
+        "Could not load the members.": "Membrii nu au putut fi încărcați.",
+        "Emergency contact": "Contact de urgență",
+        "Leaving user": "Utilizator care pleacă",
+        "No": "Nu",
+        "No users match this filter.": "Niciun utilizator nu corespunde acestui filtru.",
+        "Not set up": "Neconfigurat",
+        "Revoke suite": "Revocă suita",
+        "Revoked": "Revocată",
+        "Search users": "Caută utilizatori",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Vedeți ce utilizatori și-au configurat un seif. Începeți offboardingul sau revocați o suită dintr-un rând.",
+        "Successor": "Succesor",
+        "Team folders": "Dosare de echipă",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Utilizatorul este încă în grupul {groups}, care este membru al unui dosar de echipă. Scoateți-l din grup sau dezactivați contul.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Utilizatorul este încă în grupurile {groups}, care sunt membre ale unor dosare de echipă. Scoateți-l din grupuri sau dezactivați contul.",
+        "Vault status": "Starea seifului",
+        "Yes": "Da"
     },
     "plurals": null
 }

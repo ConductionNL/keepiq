@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Rennur út eftir {days} daga",
         "Reminders {days} days before": "Áminningar {days} dögum áður",
         "Could not save the expiry rule.": "Ekki tókst að vista regluna um gildistíma.",
-        "Could not delete the expiry rule.": "Ekki tókst að eyða reglunni um gildistíma."
+        "Could not delete the expiry rule.": "Ekki tókst að eyða reglunni um gildistíma.",
+        "All statuses": "Allar stöður",
+        "Compromised": "Í hættu",
+        "Could not load the members.": "Ekki tókst að hlaða inn meðlimum.",
+        "Emergency contact": "Neyðartengiliður",
+        "Leaving user": "Notandi sem hættir",
+        "No": "Nei",
+        "No users match this filter.": "Engir notendur passa við þessa síu.",
+        "Not set up": "Ekki sett upp",
+        "Revoke suite": "Afturkalla svítu",
+        "Revoked": "Afturkölluð",
+        "Search users": "Leita að notendum",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Sjáðu hvaða notendur hafa sett upp hólf. Byrjaðu brottför eða afturkallaðu svítu úr röð.",
+        "Successor": "Arftaki",
+        "Team folders": "Teymismöppur",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Notandinn er enn í hópnum {groups}, sem er meðlimur teymismöppu. Fjarlægðu hann úr hópnum eða gerðu aðganginn óvirkan.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Notandinn er enn í hópunum {groups}, sem eru meðlimir teymismappa. Fjarlægðu hann úr hópunum eða gerðu aðganginn óvirkan.",
+        "Vault status": "Staða hólfs",
+        "Yes": "Já"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1308,7 +1308,25 @@ OC.L10N.register(
         "Expires after {days} days": "Verloopt na {days} dagen",
         "Reminders {days} days before": "Herinneringen {days} dagen van tevoren",
         "Could not save the expiry rule.": "Kan de verloopregel niet opslaan.",
-        "Could not delete the expiry rule.": "Kan de verloopregel niet verwijderen."
+        "Could not delete the expiry rule.": "Kan de verloopregel niet verwijderen.",
+        "All statuses": "Alle statussen",
+        "Compromised": "Gecompromitteerd",
+        "Could not load the members.": "De leden konden niet worden geladen.",
+        "Emergency contact": "Noodcontact",
+        "Leaving user": "Vertrekkende gebruiker",
+        "No": "Nee",
+        "No users match this filter.": "Geen gebruikers voor dit filter.",
+        "Not set up": "Niet ingesteld",
+        "Revoke suite": "Suite intrekken",
+        "Revoked": "Ingetrokken",
+        "Search users": "Gebruikers zoeken",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Zie welke gebruikers een kluis hebben ingesteld. Start offboarding of trek een suite in vanuit een rij.",
+        "Successor": "Opvolger",
+        "Team folders": "Teammappen",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "De gebruiker zit nog in groep {groups}, die lid is van een teammap. Haal de gebruiker uit de groep of schakel het account uit.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "De gebruiker zit nog in groepen {groups}, die lid zijn van teammappen. Haal de gebruiker uit de groepen of schakel het account uit.",
+        "Vault status": "Kluisstatus",
+        "Yes": "Ja"
     },
     "nplurals=2; plural=(n != 1);"
 )

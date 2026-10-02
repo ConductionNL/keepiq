@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Leeft no {days} Deeg of",
         "Reminders {days} days before": "Erënnerungen {days} Deeg virdrun",
         "Could not save the expiry rule.": "D'Oflafregel konnt net gespäichert ginn.",
-        "Could not delete the expiry rule.": "D'Oflafregel konnt net geläscht ginn."
+        "Could not delete the expiry rule.": "D'Oflafregel konnt net geläscht ginn.",
+        "All statuses": "All Statussen",
+        "Compromised": "Kompromittéiert",
+        "Could not load the members.": "D'Memberen konnten net geluede ginn.",
+        "Emergency contact": "Noutkontakt",
+        "Leaving user": "Fortgoende Benotzer",
+        "No": "Nee",
+        "No users match this filter.": "Keng Benotzer passen op dëse Filter.",
+        "Not set up": "Net ageriicht",
+        "Revoke suite": "Suite zréckruffen",
+        "Revoked": "Zréckgeruff",
+        "Search users": "Benotzer sichen",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Kuckt, wéi eng Benotzer en Tresor ageriicht hunn. Start den Offboarding oder rufft eng Suite aus enger Zeil zréck.",
+        "Successor": "Nofolger",
+        "Team folders": "Teamdossieren",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "De Benotzer ass nach am Grupp {groups}, deen Member vun engem Teamdossier ass. Huelt hien aus dem Grupp eraus oder desaktivéiert de Kont.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "De Benotzer ass nach an de Gruppen {groups}, déi Member vun Teamdossiere sinn. Huelt hien aus de Gruppen eraus oder desaktivéiert de Kont.",
+        "Vault status": "Tresorstatus",
+        "Yes": "Jo"
     },
     "nplurals=2; plural=(n != 1);"
 )

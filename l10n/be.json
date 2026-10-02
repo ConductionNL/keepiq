@@ -1302,7 +1302,25 @@
         "Expires after {days} days": "Тэрмін мінае праз {days} дз.",
         "Reminders {days} days before": "Нагадванні за {days} дз.",
         "Could not save the expiry rule.": "Не ўдалося захаваць правіла тэрміну дзеяння.",
-        "Could not delete the expiry rule.": "Не ўдалося выдаліць правіла тэрміну дзеяння."
+        "Could not delete the expiry rule.": "Не ўдалося выдаліць правіла тэрміну дзеяння.",
+        "All statuses": "Усе статусы",
+        "Compromised": "Скампраметаваны",
+        "Could not load the members.": "Не ўдалося загрузіць удзельнікаў.",
+        "Emergency contact": "Экстраны кантакт",
+        "Leaving user": "Карыстальнік, які сыходзіць",
+        "No": "Не",
+        "No users match this filter.": "Ніводзін карыстальнік не адпавядае гэтаму фільтру.",
+        "Not set up": "Не наладжана",
+        "Revoke suite": "Адклікаць набор",
+        "Revoked": "Адкліканы",
+        "Search users": "Шукаць карыстальнікаў",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Паглядзіце, хто з карыстальнікаў наладзіў сховішча. Пачніце звальненне або адклічце набор з радка.",
+        "Successor": "Пераемнік",
+        "Team folders": "Камандныя папкі",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Карыстальнік усё яшчэ ў групе {groups}, якая ўваходзіць у камандную папку. Выдаліце яго з групы або адключыце ўліковы запіс.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Карыстальнік усё яшчэ ў групах {groups}, якія ўваходзяць у камандныя папкі. Выдаліце яго з груп або адключыце ўліковы запіс.",
+        "Vault status": "Статус сховішча",
+        "Yes": "Так"
     },
     "plurals": null
 }

@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Caduca al cap de {days} dies",
         "Reminders {days} days before": "Recordatoris {days} dies abans",
         "Could not save the expiry rule.": "No s'ha pogut desar la regla de caducitat.",
-        "Could not delete the expiry rule.": "No s'ha pogut suprimir la regla de caducitat."
+        "Could not delete the expiry rule.": "No s'ha pogut suprimir la regla de caducitat.",
+        "All statuses": "Tots els estats",
+        "Compromised": "Compromesa",
+        "Could not load the members.": "No s'han pogut carregar els membres.",
+        "Emergency contact": "Contacte d'emergència",
+        "Leaving user": "Usuari que marxa",
+        "No": "No",
+        "No users match this filter.": "Cap usuari coincideix amb aquest filtre.",
+        "Not set up": "Sense configurar",
+        "Revoke suite": "Revoca la suite",
+        "Revoked": "Revocada",
+        "Search users": "Cerca usuaris",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Mireu quins usuaris han configurat una caixa forta. Inicieu la baixa o revoqueu una suite des d'una fila.",
+        "Successor": "Successor",
+        "Team folders": "Carpetes d'equip",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "L'usuari encara és al grup {groups}, que és membre d'una carpeta d'equip. Traieu-lo del grup o desactiveu el compte.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "L'usuari encara és als grups {groups}, que són membres de carpetes d'equip. Traieu-lo dels grups o desactiveu el compte.",
+        "Vault status": "Estat de la caixa forta",
+        "Yes": "Sí"
     },
     "nplurals=2; plural=(n != 1);"
 )

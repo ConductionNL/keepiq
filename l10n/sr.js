@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Истиче након {days} дана",
         "Reminders {days} days before": "Подсетници {days} дана пре",
         "Could not save the expiry rule.": "Није могуће сачувати правило истека.",
-        "Could not delete the expiry rule.": "Није могуће обрисати правило истека."
+        "Could not delete the expiry rule.": "Није могуће обрисати правило истека.",
+        "All statuses": "Сви статуси",
+        "Compromised": "Компромитован",
+        "Could not load the members.": "Није могуће учитати чланове.",
+        "Emergency contact": "Контакт за хитне случајеве",
+        "Leaving user": "Корисник који одлази",
+        "No": "Не",
+        "No users match this filter.": "Ниједан корисник не одговара овом филтеру.",
+        "Not set up": "Није подешено",
+        "Revoke suite": "Опозови пакет",
+        "Revoked": "Опозван",
+        "Search users": "Претражи кориснике",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Погледајте који су корисници подесили трезор. Покрените одјаву или опозовите пакет из реда.",
+        "Successor": "Наследник",
+        "Team folders": "Тимске фасцикле",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Корисник је још у групи {groups}, која је чланица тимске фасцикле. Уклоните га из групе или онемогућите налог.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Корисник је још у групама {groups}, које су чланице тимских фасцикли. Уклоните га из група или онемогућите налог.",
+        "Vault status": "Статус трезора",
+        "Yes": "Да"
     },
     "nplurals=2; plural=(n != 1);"
 )

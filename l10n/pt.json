@@ -1302,7 +1302,25 @@
         "Expires after {days} days": "Expira após {days} dias",
         "Reminders {days} days before": "Lembretes {days} dias antes",
         "Could not save the expiry rule.": "Não foi possível guardar a regra de expiração.",
-        "Could not delete the expiry rule.": "Não foi possível eliminar a regra de expiração."
+        "Could not delete the expiry rule.": "Não foi possível eliminar a regra de expiração.",
+        "All statuses": "Todos os estados",
+        "Compromised": "Comprometida",
+        "Could not load the members.": "Não foi possível carregar os membros.",
+        "Emergency contact": "Contacto de emergência",
+        "Leaving user": "Utilizador de saída",
+        "No": "Não",
+        "No users match this filter.": "Nenhum utilizador corresponde a este filtro.",
+        "Not set up": "Não configurado",
+        "Revoke suite": "Revogar suite",
+        "Revoked": "Revogada",
+        "Search users": "Pesquisar utilizadores",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Veja que utilizadores configuraram um cofre. Inicie a saída ou revogue uma suite a partir de uma linha.",
+        "Successor": "Sucessor",
+        "Team folders": "Pastas de equipa",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "O utilizador ainda está no grupo {groups}, que é membro de uma pasta de equipa. Remova-o do grupo ou desative a conta.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "O utilizador ainda está nos grupos {groups}, que são membros de pastas de equipa. Remova-o dos grupos ou desative a conta.",
+        "Vault status": "Estado do cofre",
+        "Yes": "Sim"
     },
     "plurals": null
 }

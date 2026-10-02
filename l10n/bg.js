@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Изтича след {days} дни",
         "Reminders {days} days before": "Напомняния {days} дни преди това",
         "Could not save the expiry rule.": "Правилото за изтичане не можа да бъде запазено.",
-        "Could not delete the expiry rule.": "Правилото за изтичане не можа да бъде изтрито."
+        "Could not delete the expiry rule.": "Правилото за изтичане не можа да бъде изтрито.",
+        "All statuses": "Всички статуси",
+        "Compromised": "Компрометиран",
+        "Could not load the members.": "Членовете не можаха да се заредят.",
+        "Emergency contact": "Контакт за спешни случаи",
+        "Leaving user": "Напускащ потребител",
+        "No": "Не",
+        "No users match this filter.": "Няма потребители, отговарящи на този филтър.",
+        "Not set up": "Не е настроен",
+        "Revoke suite": "Отмени пакета",
+        "Revoked": "Отменен",
+        "Search users": "Търсене на потребители",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Вижте кои потребители са настроили трезор. Започнете напускане или отменете пакет от ред.",
+        "Successor": "Наследник",
+        "Team folders": "Екипни папки",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Потребителят все още е в група {groups}, която е член на екипна папка. Премахнете го от групата или деактивирайте акаунта.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Потребителят все още е в групи {groups}, които са членове на екипни папки. Премахнете го от групите или деактивирайте акаунта.",
+        "Vault status": "Статус на трезора",
+        "Yes": "Да"
     },
     "nplurals=2; plural=(n != 1);"
 )

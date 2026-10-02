@@ -7,9 +7,13 @@
   access and transfer their owned team secrets via the existing
   permanent-delegation mechanics. The result summary reports revoked,
   transferred, and skipped counts (skipped = successor holds no copy yet;
-  add the successor to the folder and re-run).
+  add the successor to the folder and re-run), the removed direct
+  memberships and the groups that still cover the leaver. Both users are
+  picked from the admin member endpoint, and a Members row can hand over
+  the leaving user (admin-member-overview-and-offboarding §1.5, §3.2, §3.3).
 
   @spec openspec/changes/team-folder-sharing/tasks.md#5.3
+  @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.3
 -->
 <template>
 	<CnSettingsSection
@@ -31,23 +35,34 @@
 				{{ summaryText }}
 			</NcNoteCard>
 
+			<NcNoteCard
+				v-if="summary && coveringGroups.length > 0"
+				type="warning"
+				data-testid="offboarding-covering-groups">
+				{{ coveringGroupsText }}
+			</NcNoteCard>
+
 			<div class="offboarding__fields">
-				<label class="offboarding__field">
-					<span>{{ t('keepiq', 'Leaving user ID') }}</span>
-					<input
-						v-model.trim="leavingUserId"
-						type="text"
-						autocomplete="off"
-						data-testid="offboarding-leaving" />
-				</label>
-				<label class="offboarding__field">
-					<span>{{ t('keepiq', 'Successor user ID') }}</span>
-					<input
-						v-model.trim="successorUserId"
-						type="text"
-						autocomplete="off"
-						data-testid="offboarding-successor" />
-				</label>
+				<NcSelect
+					v-model="leavingUser"
+					class="offboarding__field"
+					:options="userOptions"
+					label="displayName"
+					:filterable="false"
+					:loading="searching"
+					:inputLabel="t('keepiq', 'Leaving user')"
+					data-testid="offboarding-leaving"
+					@search="onSearch" />
+				<NcSelect
+					v-model="successorUser"
+					class="offboarding__field"
+					:options="userOptions"
+					label="displayName"
+					:filterable="false"
+					:loading="searching"
+					:inputLabel="t('keepiq', 'Successor')"
+					data-testid="offboarding-successor"
+					@search="onSearch" />
 			</div>
 
 			<div class="offboarding__actions">
@@ -77,8 +92,9 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import { NcButton, NcNoteCard } from '@nextcloud/vue'
+import { NcButton, NcNoteCard, NcSelect } from '@nextcloud/vue'
 import OffboardingConfirmDialog from '../../dialogs/OffboardingConfirmDialog.vue'
+import { useMemberOverviewStore } from '../../store/modules/memberOverview.js'
 import { useTeamFolderStore } from '../../store/modules/teamFolder.js'
 
 export default {
@@ -87,13 +103,16 @@ export default {
 		CnSettingsSection,
 		NcButton,
 		NcNoteCard,
+		NcSelect,
 		OffboardingConfirmDialog,
 	},
 
 	data() {
 		return {
-			leavingUserId: '',
-			successorUserId: '',
+			leavingUser: null,
+			successorUser: null,
+			userOptions: [],
+			searching: false,
 			busy: false,
 			confirmOpen: false,
 			error: null,
@@ -102,6 +121,64 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The member overview store, which carries the prefill from a row.
+		 *
+		 * @return {object}
+		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.2
+		 */
+		memberStore() {
+			return useMemberOverviewStore()
+		},
+
+		/**
+		 * The leaving user's id, '' until one is picked.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.3
+		 */
+		leavingUserId() {
+			return this.leavingUser?.userId ?? ''
+		},
+
+		/**
+		 * The successor's id, '' until one is picked.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.3
+		 */
+		successorUserId() {
+			return this.successorUser?.userId ?? ''
+		},
+
+		/**
+		 * Group memberships that still cover the leaver after the run.
+		 *
+		 * @return {Array<{teamFolderId: string, groupId: string}>}
+		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.5
+		 */
+		coveringGroups() {
+			return this.summary?.stillCoveredByGroups ?? []
+		},
+
+		/**
+		 * The warning for groups that still cover the leaver: they keep
+		 * team folder access through the group until removed from it.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.5
+		 */
+		coveringGroupsText() {
+			const groups = [...new Set(this.coveringGroups.map((row) => row.groupId))]
+			return this.n(
+				'keepiq',
+				'The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.',
+				'The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.',
+				groups.length,
+				{ groups: groups.join(', ') },
+			)
+		},
+
 		/**
 		 * The post-run summary sentence: revoked/transferred counts plus the
 		 * skipped-secrets caveat the admin has to act on.
@@ -121,11 +198,11 @@ export default {
 					transferred: this.summary.transferred,
 				},
 			)
-			if (this.summary.removedMemberships > 0) {
+			if (this.summary.membershipsRemoved > 0) {
 				base += ' ' + this.t(
 					'keepiq',
 					'Removed the user from {count} team folders.',
-					{ count: this.summary.removedMemberships },
+					{ count: this.summary.membershipsRemoved },
 				)
 			}
 			if (this.summary.skipped.length === 0) {
@@ -144,7 +221,41 @@ export default {
 		},
 	},
 
+	watch: {
+		/**
+		 * A Members row chose "Offboard": put that user in the leaving field.
+		 *
+		 * @param {string} userId The user handed over by the list.
+		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.2
+		 */
+		'memberStore.offboardUserId': function(userId) {
+			if (!userId) {
+				return
+			}
+			const row = this.memberStore.members.find((member) => member.userId === userId)
+			this.leavingUser = { userId, displayName: row?.displayName || userId }
+		},
+	},
+
 	methods: {
+		/**
+		 * Fill the user pickers from the admin member endpoint.
+		 *
+		 * @param {string} query The typed search.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.3
+		 */
+		async onSearch(query) {
+			this.searching = true
+			try {
+				this.userOptions = await this.memberStore.searchUsers(query ?? '')
+			} catch {
+				this.userOptions = []
+			} finally {
+				this.searching = false
+			}
+		},
+
 		/**
 		 * Run the offboarding action after the typed confirmation dialog.
 		 */
@@ -183,15 +294,7 @@ export default {
 }
 
 .offboarding__field {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-}
-
-.offboarding__field input {
-	padding: 8px;
-	border: 1px solid var(--color-border-dark, #999);
-	border-radius: var(--border-radius, 4px);
+	min-width: 220px;
 }
 
 .offboarding__actions {

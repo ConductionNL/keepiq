@@ -1302,7 +1302,25 @@
         "Expires after {days} days": "Λήγει μετά από {days} ημέρες",
         "Reminders {days} days before": "Υπενθυμίσεις {days} ημέρες πριν",
         "Could not save the expiry rule.": "Δεν ήταν δυνατή η αποθήκευση του κανόνα λήξης.",
-        "Could not delete the expiry rule.": "Δεν ήταν δυνατή η διαγραφή του κανόνα λήξης."
+        "Could not delete the expiry rule.": "Δεν ήταν δυνατή η διαγραφή του κανόνα λήξης.",
+        "All statuses": "Όλες οι καταστάσεις",
+        "Compromised": "Παραβιασμένη",
+        "Could not load the members.": "Δεν ήταν δυνατή η φόρτωση των μελών.",
+        "Emergency contact": "Επαφή έκτακτης ανάγκης",
+        "Leaving user": "Αποχωρών χρήστης",
+        "No": "Όχι",
+        "No users match this filter.": "Κανένας χρήστης δεν ταιριάζει σε αυτό το φίλτρο.",
+        "Not set up": "Δεν έχει ρυθμιστεί",
+        "Revoke suite": "Ανάκληση σουίτας",
+        "Revoked": "Ανακλήθηκε",
+        "Search users": "Αναζήτηση χρηστών",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Δείτε ποιοι χρήστες έχουν ρυθμίσει θησαυροφυλάκιο. Ξεκινήστε την αποχώρηση ή ανακαλέστε μια σουίτα από μια γραμμή.",
+        "Successor": "Διάδοχος",
+        "Team folders": "Φάκελοι ομάδας",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Ο χρήστης είναι ακόμη στην ομάδα {groups}, που είναι μέλος φακέλου ομάδας. Αφαιρέστε τον από την ομάδα ή απενεργοποιήστε τον λογαριασμό.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Ο χρήστης είναι ακόμη στις ομάδες {groups}, που είναι μέλη φακέλων ομάδας. Αφαιρέστε τον από τις ομάδες ή απενεργοποιήστε τον λογαριασμό.",
+        "Vault status": "Κατάσταση θησαυροφυλακίου",
+        "Yes": "Ναι"
     },
     "plurals": null
 }

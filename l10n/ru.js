@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Истекает через {days} дн.",
         "Reminders {days} days before": "Напоминания за {days} дн.",
         "Could not save the expiry rule.": "Не удалось сохранить правило срока действия.",
-        "Could not delete the expiry rule.": "Не удалось удалить правило срока действия."
+        "Could not delete the expiry rule.": "Не удалось удалить правило срока действия.",
+        "All statuses": "Все статусы",
+        "Compromised": "Скомпрометирован",
+        "Could not load the members.": "Не удалось загрузить участников.",
+        "Emergency contact": "Экстренный контакт",
+        "Leaving user": "Уходящий пользователь",
+        "No": "Нет",
+        "No users match this filter.": "Нет пользователей по этому фильтру.",
+        "Not set up": "Не настроено",
+        "Revoke suite": "Отозвать набор",
+        "Revoked": "Отозван",
+        "Search users": "Искать пользователей",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Посмотрите, кто из пользователей настроил хранилище. Начните увольнение или отзовите набор из строки.",
+        "Successor": "Преемник",
+        "Team folders": "Командные папки",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Пользователь всё ещё в группе {groups}, которая входит в командную папку. Удалите его из группы или отключите учётную запись.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Пользователь всё ещё в группах {groups}, которые входят в командные папки. Удалите его из групп или отключите учётную запись.",
+        "Vault status": "Статус хранилища",
+        "Yes": "Да"
     },
     "nplurals=2; plural=(n != 1);"
 )

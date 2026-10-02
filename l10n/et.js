@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Aegub {days} päeva pärast",
         "Reminders {days} days before": "Meeldetuletused {days} päeva enne",
         "Could not save the expiry rule.": "Aegumisreeglit ei õnnestunud salvestada.",
-        "Could not delete the expiry rule.": "Aegumisreeglit ei õnnestunud kustutada."
+        "Could not delete the expiry rule.": "Aegumisreeglit ei õnnestunud kustutada.",
+        "All statuses": "Kõik olekud",
+        "Compromised": "Ohustatud",
+        "Could not load the members.": "Liikmete laadimine ebaõnnestus.",
+        "Emergency contact": "Hädaabikontakt",
+        "Leaving user": "Lahkuv kasutaja",
+        "No": "Ei",
+        "No users match this filter.": "Ükski kasutaja ei vasta sellele filtrile.",
+        "Not set up": "Seadistamata",
+        "Revoke suite": "Tühista komplekt",
+        "Revoked": "Tühistatud",
+        "Search users": "Otsi kasutajaid",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Vaadake, millised kasutajad on hoidla seadistanud. Alustage lahkumist või tühistage komplekt realt.",
+        "Successor": "Järglane",
+        "Team folders": "Meeskonnakaustad",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Kasutaja on endiselt grupis {groups}, mis on meeskonnakausta liige. Eemaldage ta grupist või keelake konto.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Kasutaja on endiselt gruppides {groups}, mis on meeskonnakaustade liikmed. Eemaldage ta gruppidest või keelake konto.",
+        "Vault status": "Hoidla olek",
+        "Yes": "Jah"
     },
     "nplurals=2; plural=(n != 1);"
 )

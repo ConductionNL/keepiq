@@ -1302,7 +1302,25 @@
         "Expires after {days} days": "{days} nap után lejár",
         "Reminders {days} days before": "Emlékeztetők {days} nappal előtte",
         "Could not save the expiry rule.": "Nem sikerült menteni a lejárati szabályt.",
-        "Could not delete the expiry rule.": "Nem sikerült törölni a lejárati szabályt."
+        "Could not delete the expiry rule.": "Nem sikerült törölni a lejárati szabályt.",
+        "All statuses": "Minden állapot",
+        "Compromised": "Kompromittált",
+        "Could not load the members.": "A tagok betöltése nem sikerült.",
+        "Emergency contact": "Vészhelyzeti kapcsolat",
+        "Leaving user": "Távozó felhasználó",
+        "No": "Nem",
+        "No users match this filter.": "Egy felhasználó sem felel meg ennek a szűrőnek.",
+        "Not set up": "Nincs beállítva",
+        "Revoke suite": "Csomag visszavonása",
+        "Revoked": "Visszavonva",
+        "Search users": "Felhasználók keresése",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Nézze meg, mely felhasználók állítottak be széfet. Indítsa el a kiléptetést vagy vonjon vissza egy csomagot egy sorból.",
+        "Successor": "Utód",
+        "Team folders": "Csapatmappák",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "A felhasználó még a(z) {groups} csoportban van, amely egy csapatmappa tagja. Távolítsa el a csoportból, vagy tiltsa le a fiókot.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "A felhasználó még a(z) {groups} csoportokban van, amelyek csapatmappák tagjai. Távolítsa el a csoportokból, vagy tiltsa le a fiókot.",
+        "Vault status": "Széf állapota",
+        "Yes": "Igen"
     },
     "plurals": null
 }

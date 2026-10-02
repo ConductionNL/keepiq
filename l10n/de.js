@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Läuft nach {days} Tagen ab",
         "Reminders {days} days before": "Erinnerungen {days} Tage vorher",
         "Could not save the expiry rule.": "Die Ablaufregel konnte nicht gespeichert werden.",
-        "Could not delete the expiry rule.": "Die Ablaufregel konnte nicht gelöscht werden."
+        "Could not delete the expiry rule.": "Die Ablaufregel konnte nicht gelöscht werden.",
+        "All statuses": "Alle Status",
+        "Compromised": "Kompromittiert",
+        "Could not load the members.": "Die Mitglieder konnten nicht geladen werden.",
+        "Emergency contact": "Notfallkontakt",
+        "Leaving user": "Ausscheidender Benutzer",
+        "No": "Nein",
+        "No users match this filter.": "Keine Benutzer für diesen Filter.",
+        "Not set up": "Nicht eingerichtet",
+        "Revoke suite": "Suite widerrufen",
+        "Revoked": "Widerrufen",
+        "Search users": "Benutzer suchen",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Sehen Sie, welche Benutzer einen Tresor eingerichtet haben. Starten Sie das Offboarding oder widerrufen Sie eine Suite aus einer Zeile.",
+        "Successor": "Nachfolger",
+        "Team folders": "Teamordner",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Der Benutzer ist noch in der Gruppe {groups}, die Mitglied eines Teamordners ist. Entfernen Sie ihn aus der Gruppe oder deaktivieren Sie das Konto.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Der Benutzer ist noch in den Gruppen {groups}, die Mitglieder von Teamordnern sind. Entfernen Sie ihn aus den Gruppen oder deaktivieren Sie das Konto.",
+        "Vault status": "Tresorstatus",
+        "Yes": "Ja"
     },
     "nplurals=2; plural=(n != 1);"
 )

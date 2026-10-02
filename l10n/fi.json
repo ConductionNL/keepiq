@@ -1302,7 +1302,25 @@
         "Expires after {days} days": "Vanhenee {days} päivän kuluttua",
         "Reminders {days} days before": "Muistutukset {days} päivää ennen",
         "Could not save the expiry rule.": "Vanhenemissääntöä ei voitu tallentaa.",
-        "Could not delete the expiry rule.": "Vanhenemissääntöä ei voitu poistaa."
+        "Could not delete the expiry rule.": "Vanhenemissääntöä ei voitu poistaa.",
+        "All statuses": "Kaikki tilat",
+        "Compromised": "Vaarantunut",
+        "Could not load the members.": "Jäsenten lataaminen epäonnistui.",
+        "Emergency contact": "Hätäyhteyshenkilö",
+        "Leaving user": "Lähtevä käyttäjä",
+        "No": "Ei",
+        "No users match this filter.": "Yksikään käyttäjä ei vastaa tätä suodatinta.",
+        "Not set up": "Ei määritetty",
+        "Revoke suite": "Peru sarja",
+        "Revoked": "Peruttu",
+        "Search users": "Hae käyttäjiä",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Katso, ketkä käyttäjät ovat ottaneet holvin käyttöön. Aloita poistuminen tai peru sarja riviltä.",
+        "Successor": "Seuraaja",
+        "Team folders": "Tiimikansiot",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Käyttäjä on yhä ryhmässä {groups}, joka on tiimikansion jäsen. Poista käyttäjä ryhmästä tai poista tili käytöstä.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Käyttäjä on yhä ryhmissä {groups}, jotka ovat tiimikansioiden jäseniä. Poista käyttäjä ryhmistä tai poista tili käytöstä.",
+        "Vault status": "Holvin tila",
+        "Yes": "Kyllä"
     },
     "plurals": null
 }

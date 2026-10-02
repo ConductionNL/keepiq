@@ -10,6 +10,7 @@
 
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.4
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.5
+  @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.1
 -->
 <template>
 	<div class="keepiq-settings">
@@ -26,6 +27,7 @@
 		<HoneySection />
 		<OfflineCacheSection />
 		<ItemTypesSection />
+		<MemberOverviewSection />
 		<OffboardingSection />
 		<AdminSuiteSection />
 		<AdminAuditSection />
@@ -43,6 +45,7 @@ import ComplianceSection from '../../components/settings/ComplianceSection.vue'
 import HoneySection from '../../components/settings/HoneySection.vue'
 import ItemTypesSection from '../../components/settings/ItemTypesSection.vue'
 import MachineLeaseSection from '../../components/settings/MachineLeaseSection.vue'
+import MemberOverviewSection from '../../components/settings/MemberOverviewSection.vue'
 import OffboardingSection from '../../components/settings/OffboardingSection.vue'
 import OfflineCacheSection from '../../components/settings/OfflineCacheSection.vue'
 import OrgPasswordPolicySection from '../../components/settings/OrgPasswordPolicySection.vue'
@@ -66,6 +69,7 @@ export default {
 		HoneySection,
 		ItemTypesSection,
 		OfflineCacheSection,
+		MemberOverviewSection,
 		OffboardingSection,
 		AdminSuiteSection,
 		AdminAuditSection,

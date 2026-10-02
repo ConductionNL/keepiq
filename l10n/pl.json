@@ -1302,7 +1302,25 @@
         "Expires after {days} days": "Wygasa po {days} dniach",
         "Reminders {days} days before": "Przypomnienia {days} dni wcześniej",
         "Could not save the expiry rule.": "Nie można zapisać reguły wygasania.",
-        "Could not delete the expiry rule.": "Nie można usunąć reguły wygasania."
+        "Could not delete the expiry rule.": "Nie można usunąć reguły wygasania.",
+        "All statuses": "Wszystkie statusy",
+        "Compromised": "Naruszony",
+        "Could not load the members.": "Nie udało się wczytać członków.",
+        "Emergency contact": "Kontakt awaryjny",
+        "Leaving user": "Odchodzący użytkownik",
+        "No": "Nie",
+        "No users match this filter.": "Żaden użytkownik nie pasuje do tego filtra.",
+        "Not set up": "Nieskonfigurowany",
+        "Revoke suite": "Unieważnij pakiet",
+        "Revoked": "Unieważniony",
+        "Search users": "Szukaj użytkowników",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Zobacz, którzy użytkownicy skonfigurowali sejf. Rozpocznij offboarding lub unieważnij pakiet z wiersza.",
+        "Successor": "Następca",
+        "Team folders": "Foldery zespołu",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Użytkownik nadal jest w grupie {groups}, która jest członkiem folderu zespołu. Usuń go z grupy lub wyłącz konto.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Użytkownik nadal jest w grupach {groups}, które są członkami folderów zespołu. Usuń go z grup lub wyłącz konto.",
+        "Vault status": "Status sejfu",
+        "Yes": "Tak"
     },
     "plurals": null
 }

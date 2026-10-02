@@ -1302,7 +1302,25 @@
         "Expires after {days} days": "Спливає через {days} дн.",
         "Reminders {days} days before": "Нагадування за {days} дн.",
         "Could not save the expiry rule.": "Не вдалося зберегти правило терміну дії.",
-        "Could not delete the expiry rule.": "Не вдалося видалити правило терміну дії."
+        "Could not delete the expiry rule.": "Не вдалося видалити правило терміну дії.",
+        "All statuses": "Усі статуси",
+        "Compromised": "Скомпрометовано",
+        "Could not load the members.": "Не вдалося завантажити учасників.",
+        "Emergency contact": "Екстрений контакт",
+        "Leaving user": "Користувач, що йде",
+        "No": "Ні",
+        "No users match this filter.": "Жоден користувач не відповідає цьому фільтру.",
+        "Not set up": "Не налаштовано",
+        "Revoke suite": "Відкликати набір",
+        "Revoked": "Відкликано",
+        "Search users": "Шукати користувачів",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Перегляньте, хто з користувачів налаштував сховище. Почніть звільнення або відкличте набір із рядка.",
+        "Successor": "Наступник",
+        "Team folders": "Командні теки",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Користувач досі в групі {groups}, яка є учасником командної теки. Вилучіть його з групи або вимкніть обліковий запис.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Користувач досі в групах {groups}, які є учасниками командних тек. Вилучіть його з груп або вимкніть обліковий запис.",
+        "Vault status": "Статус сховища",
+        "Yes": "Так"
     },
     "plurals": null
 }

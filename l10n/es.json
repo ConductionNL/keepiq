@@ -1302,7 +1302,25 @@
         "Expires after {days} days": "Caduca tras {days} días",
         "Reminders {days} days before": "Recordatorios {days} días antes",
         "Could not save the expiry rule.": "No se pudo guardar la regla de caducidad.",
-        "Could not delete the expiry rule.": "No se pudo eliminar la regla de caducidad."
+        "Could not delete the expiry rule.": "No se pudo eliminar la regla de caducidad.",
+        "All statuses": "Todos los estados",
+        "Compromised": "Comprometida",
+        "Could not load the members.": "No se pudieron cargar los miembros.",
+        "Emergency contact": "Contacto de emergencia",
+        "Leaving user": "Usuario saliente",
+        "No": "No",
+        "No users match this filter.": "Ningún usuario coincide con este filtro.",
+        "Not set up": "Sin configurar",
+        "Revoke suite": "Revocar suite",
+        "Revoked": "Revocada",
+        "Search users": "Buscar usuarios",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Vea qué usuarios han configurado una bóveda. Inicie la baja o revoque una suite desde una fila.",
+        "Successor": "Sucesor",
+        "Team folders": "Carpetas de equipo",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "El usuario sigue en el grupo {groups}, que es miembro de una carpeta de equipo. Quítelo del grupo o desactive la cuenta.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "El usuario sigue en los grupos {groups}, que son miembros de carpetas de equipo. Quítelo de los grupos o desactive la cuenta.",
+        "Vault status": "Estado de la bóveda",
+        "Yes": "Sí"
     },
     "plurals": null
 }

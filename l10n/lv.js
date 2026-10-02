@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Beidzas pēc {days} dienām",
         "Reminders {days} days before": "Atgādinājumi {days} dienas iepriekš",
         "Could not save the expiry rule.": "Neizdevās saglabāt derīguma noteikumu.",
-        "Could not delete the expiry rule.": "Neizdevās dzēst derīguma noteikumu."
+        "Could not delete the expiry rule.": "Neizdevās dzēst derīguma noteikumu.",
+        "All statuses": "Visi statusi",
+        "Compromised": "Kompromitēts",
+        "Could not load the members.": "Neizdevās ielādēt dalībniekus.",
+        "Emergency contact": "Ārkārtas kontakts",
+        "Leaving user": "Aizejošais lietotājs",
+        "No": "Nē",
+        "No users match this filter.": "Neviens lietotājs neatbilst šim filtram.",
+        "Not set up": "Nav iestatīts",
+        "Revoke suite": "Atsaukt komplektu",
+        "Revoked": "Atsaukts",
+        "Search users": "Meklēt lietotājus",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Skatiet, kuri lietotāji ir iestatījuši glabātavu. Sāciet aiziešanu vai atsauciet komplektu no rindas.",
+        "Successor": "Pēctecis",
+        "Team folders": "Komandas mapes",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Lietotājs joprojām ir grupā {groups}, kas ir komandas mapes dalībniece. Noņemiet viņu no grupas vai atspējojiet kontu.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Lietotājs joprojām ir grupās {groups}, kas ir komandas mapju dalībnieces. Noņemiet viņu no grupām vai atspējojiet kontu.",
+        "Vault status": "Glabātavas statuss",
+        "Yes": "Jā"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Expire après {days} jours",
         "Reminders {days} days before": "Rappels {days} jours avant",
         "Could not save the expiry rule.": "Impossible d'enregistrer la règle d'expiration.",
-        "Could not delete the expiry rule.": "Impossible de supprimer la règle d'expiration."
+        "Could not delete the expiry rule.": "Impossible de supprimer la règle d'expiration.",
+        "All statuses": "Tous les statuts",
+        "Compromised": "Compromis",
+        "Could not load the members.": "Impossible de charger les membres.",
+        "Emergency contact": "Contact d'urgence",
+        "Leaving user": "Utilisateur sortant",
+        "No": "Non",
+        "No users match this filter.": "Aucun utilisateur ne correspond à ce filtre.",
+        "Not set up": "Non configuré",
+        "Revoke suite": "Révoquer la suite",
+        "Revoked": "Révoquée",
+        "Search users": "Rechercher des utilisateurs",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Voyez quels utilisateurs ont configuré un coffre. Lancez le départ ou révoquez une suite depuis une ligne.",
+        "Successor": "Successeur",
+        "Team folders": "Dossiers d'équipe",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "L'utilisateur est encore dans le groupe {groups}, membre d'un dossier d'équipe. Retirez-le du groupe ou désactivez le compte.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "L'utilisateur est encore dans les groupes {groups}, membres de dossiers d'équipe. Retirez-le des groupes ou désactivez le compte.",
+        "Vault status": "Statut du coffre",
+        "Yes": "Oui"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Ističe nakon {days} dana",
         "Reminders {days} days before": "Podsjetnici {days} dana prije",
         "Could not save the expiry rule.": "Pravilo isteka nije moguće spremiti.",
-        "Could not delete the expiry rule.": "Pravilo isteka nije moguće izbrisati."
+        "Could not delete the expiry rule.": "Pravilo isteka nije moguće izbrisati.",
+        "All statuses": "Svi statusi",
+        "Compromised": "Kompromitovan",
+        "Could not load the members.": "Nije moguće učitati članove.",
+        "Emergency contact": "Kontakt za hitne slučajeve",
+        "Leaving user": "Korisnik koji odlazi",
+        "No": "Ne",
+        "No users match this filter.": "Nijedan korisnik ne odgovara ovom filteru.",
+        "Not set up": "Nije postavljeno",
+        "Revoke suite": "Opozovi paket",
+        "Revoked": "Opozvan",
+        "Search users": "Pretraži korisnike",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Pogledajte koji su korisnici postavili trezor. Pokrenite odjavu ili opozovite paket iz reda.",
+        "Successor": "Nasljednik",
+        "Team folders": "Timski folderi",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Korisnik je još u grupi {groups}, koja je članica timskog foldera. Uklonite ga iz grupe ili onemogućite račun.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Korisnik je još u grupama {groups}, koje su članice timskih foldera. Uklonite ga iz grupa ili onemogućite račun.",
+        "Vault status": "Status trezora",
+        "Yes": "Da"
     },
     "nplurals=2; plural=(n != 1);"
 )

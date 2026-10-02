@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Vyprší po {days} dňoch",
         "Reminders {days} days before": "Pripomienky {days} dní vopred",
         "Could not save the expiry rule.": "Pravidlo vypršania platnosti sa nepodarilo uložiť.",
-        "Could not delete the expiry rule.": "Pravidlo vypršania platnosti sa nepodarilo odstrániť."
+        "Could not delete the expiry rule.": "Pravidlo vypršania platnosti sa nepodarilo odstrániť.",
+        "All statuses": "Všetky stavy",
+        "Compromised": "Kompromitovaná",
+        "Could not load the members.": "Členov sa nepodarilo načítať.",
+        "Emergency contact": "Núdzový kontakt",
+        "Leaving user": "Odchádzajúci používateľ",
+        "No": "Nie",
+        "No users match this filter.": "Tomuto filtru nezodpovedá žiadny používateľ.",
+        "Not set up": "Nenastavené",
+        "Revoke suite": "Odvolať sadu",
+        "Revoked": "Odvolaná",
+        "Search users": "Hľadať používateľov",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Pozrite sa, ktorí používatelia si nastavili trezor. Spustite offboarding alebo odvolajte sadu z riadka.",
+        "Successor": "Nástupca",
+        "Team folders": "Tímové priečinky",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Používateľ je stále v skupine {groups}, ktorá je členom tímového priečinka. Odstráňte ho zo skupiny alebo zakážte účet.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Používateľ je stále v skupinách {groups}, ktoré sú členmi tímových priečinkov. Odstráňte ho zo skupín alebo zakážte účet.",
+        "Vault status": "Stav trezoru",
+        "Yes": "Áno"
     },
     "nplurals=2; plural=(n != 1);"
 )

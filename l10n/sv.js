@@ -1303,7 +1303,25 @@ OC.L10N.register(
         "Expires after {days} days": "Upphör efter {days} dagar",
         "Reminders {days} days before": "Påminnelser {days} dagar innan",
         "Could not save the expiry rule.": "Utgångsregeln kunde inte sparas.",
-        "Could not delete the expiry rule.": "Utgångsregeln kunde inte tas bort."
+        "Could not delete the expiry rule.": "Utgångsregeln kunde inte tas bort.",
+        "All statuses": "Alla statusar",
+        "Compromised": "Komprometterad",
+        "Could not load the members.": "Det gick inte att läsa in medlemmarna.",
+        "Emergency contact": "Nödkontakt",
+        "Leaving user": "Avgående användare",
+        "No": "Nej",
+        "No users match this filter.": "Inga användare matchar det här filtret.",
+        "Not set up": "Inte konfigurerat",
+        "Revoke suite": "Återkalla svit",
+        "Revoked": "Återkallad",
+        "Search users": "Sök användare",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Se vilka användare som har konfigurerat ett valv. Starta offboarding eller återkalla en svit från en rad.",
+        "Successor": "Efterträdare",
+        "Team folders": "Teammappar",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Användaren finns fortfarande i gruppen {groups}, som är medlem i en teammapp. Ta bort användaren från gruppen eller inaktivera kontot.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Användaren finns fortfarande i grupperna {groups}, som är medlemmar i teammappar. Ta bort användaren från grupperna eller inaktivera kontot.",
+        "Vault status": "Valvstatus",
+        "Yes": "Ja"
     },
     "nplurals=2; plural=(n != 1);"
 )

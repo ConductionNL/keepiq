@@ -1302,7 +1302,25 @@
         "Expires after {days} days": "Poteče po {days} dneh",
         "Reminders {days} days before": "Opomniki {days} dni prej",
         "Could not save the expiry rule.": "Pravila poteka ni bilo mogoče shraniti.",
-        "Could not delete the expiry rule.": "Pravila poteka ni bilo mogoče izbrisati."
+        "Could not delete the expiry rule.": "Pravila poteka ni bilo mogoče izbrisati.",
+        "All statuses": "Vsa stanja",
+        "Compromised": "Ogrožena",
+        "Could not load the members.": "Članov ni bilo mogoče naložiti.",
+        "Emergency contact": "Kontakt za nujne primere",
+        "Leaving user": "Odhajajoči uporabnik",
+        "No": "Ne",
+        "No users match this filter.": "Temu filtru ne ustreza noben uporabnik.",
+        "Not set up": "Ni nastavljeno",
+        "Revoke suite": "Prekliči zbirko",
+        "Revoked": "Preklicana",
+        "Search users": "Iskanje uporabnikov",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Oglejte si, kateri uporabniki so nastavili trezor. Začnite odjavo ali prekličite zbirko iz vrstice.",
+        "Successor": "Naslednik",
+        "Team folders": "Ekipne mape",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Uporabnik je še vedno v skupini {groups}, ki je članica ekipne mape. Odstranite ga iz skupine ali onemogočite račun.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Uporabnik je še vedno v skupinah {groups}, ki so članice ekipnih map. Odstranite ga iz skupin ali onemogočite račun.",
+        "Vault status": "Stanje trezorja",
+        "Yes": "Da"
     },
     "plurals": null
 }
