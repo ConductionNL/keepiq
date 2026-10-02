@@ -527,6 +527,14 @@
 			"_note": "The session user's own audit-trail entries (add-secret-audit-trail §5.3). type:\"custom\" — a simple actor-scoped feed view, no built-in page type models it."
 		},
 		{
+			"id": "ShareApproval",
+			"route": "/approvals/:kind",
+			"type": "custom",
+			"title": "Approve a share",
+			"component": "ShareApprovalView",
+			"_note": "The owner's answer to a share request or a new group member (#747). The Approve action on those notifications opens it, with the ids in the query. type:\"custom\" because approving encrypts the owner's copy in the tab, which no built-in page type does. No menu entry: it is reached from a notification only."
+		},
+		{
 			"id": "PasswordHealth",
 			"route": "/password-health",
 			"type": "custom",
