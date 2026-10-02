@@ -70,7 +70,10 @@ class ExtensionControllerTest extends TestCase {
 			logger: $this->createMock(LoggerInterface::class),
 		);
 
-		return [new ExtensionController($request, $mapper, $session, $settings), $mapper];
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('getAppVersion')->with('keepiq')->willReturn('0.3.4-unstable.20261002180000');
+
+		return [new ExtensionController($request, $mapper, $session, $settings, $appManager), $mapper];
 	}//end build()
 
 	/**
@@ -97,6 +100,8 @@ class ExtensionControllerTest extends TestCase {
 		$this->assertTrue($data['ok']);
 		$this->assertSame('alice', $data['user']);
 		$this->assertContains('passkey-provider', $data['capabilities']);
+		// The installed app version, for the extension's version handshake.
+		$this->assertSame('0.3.4-unstable.20261002180000', $data['serverVersion']);
 	}//end testPairSucceeds()
 
 	/**

@@ -74,6 +74,14 @@ Which browsers pass that check has not been tried by hand yet. Open item:
 try Chrome, Edge and Firefox (current versions) on a machine with a
 fingerprint reader or Windows Hello, and record the result here.
 
+## Install
+
+Once the store listings are live, install Keepiq from the Chrome Web Store,
+Firefox Add-ons or Edge Add-ons. Each `extension-v<version>` GitHub release
+also carries the packages. Organisations can force-install it, see
+`docs/browser-extension/rollout.md`. Releasing is described in
+`docs/browser-extension/release.md`.
+
 ## Build
 
 The extension shares the web app's `src/crypto` and `src/totp` modules verbatim
@@ -91,6 +99,10 @@ overlay in `manifests/browsers.mjs`:
   temporary add-on).
 - Safari: made from `dist/chromium` on a Mac, see `safari/README.md`. Not
   yet part of the pipeline.
+
+`--target chrome|firefox` builds one package, `--outdir <dir>` writes it
+elsewhere, and `EXTENSION_VERSION=1.2.0` sets the manifest version, as the
+release workflow does from the tag.
 
 `node browser-extension/load-check/chromium.mjs` and `firefox.mjs` start each
 package headless and check its background answers the popup; the
