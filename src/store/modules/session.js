@@ -191,7 +191,9 @@ export const useSessionStore = defineStore('session', {
 		 */
 		afterUnlock() {
 			try {
-				useTeamFolderStore().startAutoConfirm().catch(() => {})
+				useTeamFolderStore()
+					.startAutoConfirm()
+					.catch(() => {})
 			} catch {
 				// Never let a background job break the unlock.
 			}

@@ -48,7 +48,8 @@ function recipientFields(plain) {
 		key: plain.key ?? '',
 		login: plain.login ?? '',
 		additionalFields:
-			typeof plain.additionalFields === 'object' && plain.additionalFields !== null
+			typeof plain.additionalFields === 'object'
+			&& plain.additionalFields !== null
 				? JSON.stringify(plain.additionalFields)
 				: (plain.additionalFields ?? ''),
 	}
@@ -431,7 +432,9 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 			const secretStore = useSecretStore()
 			const shareStore = useShareStore()
 			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/v1/team-folders/pending-confirmations'),
+				generateUrl(
+					'/apps/keepiq/api/v1/team-folders/pending-confirmations',
+				),
 			)
 			const enabled = response.data?.enabled === true
 			let created = 0
@@ -446,14 +449,19 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 
 				const post = async () => {
 					const result = await axios.post(
-						generateUrl(`/apps/keepiq/api/v1/team-folders/${folder.teamFolderId}/shares`),
+						generateUrl(
+							`/apps/keepiq/api/v1/team-folders/${folder.teamFolderId}/shares`,
+						),
 						{ shares: chunk },
 					)
 					created += result.data?.created ?? 0
 					for (const row of result.data?.rows ?? []) {
 						members.add(row.targetUserId)
 					}
-					await this.regrantAttachments(result.data?.rows ?? [], certByUser)
+					await this.regrantAttachments(
+						result.data?.rows ?? [],
+						certByUser,
+					)
 					chunk = []
 				}
 
@@ -466,11 +474,18 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					// An owner reads the source; a member reads their own copy.
 					const readId = pair.ownCopyId ?? pair.secretId
 					if (!fieldsBySecret[readId]) {
-						const raw = await axios.get(generateUrl(`/apps/keepiq/api/v1/secrets/${readId}`))
-						fieldsBySecret[readId] = recipientFields(await secretStore.decryptSecret(raw.data))
+						const raw = await axios.get(
+							generateUrl(`/apps/keepiq/api/v1/secrets/${readId}`),
+						)
+						fieldsBySecret[readId] = recipientFields(
+							await secretStore.decryptSecret(raw.data),
+						)
 					}
 
-					const blob = await shareStore.encryptForRecipient(fieldsBySecret[readId], certificate)
+					const blob = await shareStore.encryptForRecipient(
+						fieldsBySecret[readId],
+						certificate,
+					)
 					chunk.push({
 						sourceSecretId: pair.secretId,
 						targetUserId: pair.userId,
@@ -511,17 +526,24 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 						// demand: @nextcloud/dialogs needs a window at import
 						// time, and node-run specs import this store.
 						const { showSuccess } = await import('@nextcloud/dialogs')
-						showSuccess(n(
-							'keepiq',
-							'Gave %n new member access to a team folder.',
-							'Gave %n new members access to a team folder.',
-							result.members,
-						))
+						showSuccess(
+							n(
+								'keepiq',
+								'Gave %n new member access to a team folder.',
+								'Gave %n new members access to a team folder.',
+								result.members,
+							),
+						)
 					}
 					return result
 				} catch (e) {
 					// Kept for the dialog; the next run retries.
-					this.lastAutoConfirm = { created: 0, members: 0, at: Date.now(), error: e?.message || 'error' }
+					this.lastAutoConfirm = {
+						created: 0,
+						members: 0,
+						at: Date.now(),
+						error: e?.message || 'error',
+					}
 					return null
 				}
 			}

@@ -16,7 +16,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useSessionStore } from '../../src/store/modules/session.js'
 import { useShareStore } from '../../src/store/modules/share.js'
-import { AUTO_CONFIRM_INTERVAL_MS, useTeamFolderStore } from '../../src/store/modules/teamFolder.js'
+import {
+	AUTO_CONFIRM_INTERVAL_MS,
+	useTeamFolderStore,
+} from '../../src/store/modules/teamFolder.js'
 
 vi.mock('@nextcloud/dialogs', () => ({ showSuccess: vi.fn(), showError: vi.fn() }))
 
@@ -34,12 +37,14 @@ function pending(pair, enabled = true) {
 		data: {
 			enabled,
 			folders: enabled
-				? [{
-					teamFolderId: 'tf-ops',
-					role: pair.ownCopyId ? 'member' : 'owner',
-					missing: [pair],
-					recipients: [{ userId: 'kim', certificate: 'CERT-KIM' }],
-				}]
+				? [
+						{
+							teamFolderId: 'tf-ops',
+							role: pair.ownCopyId ? 'member' : 'owner',
+							missing: [pair],
+							recipients: [{ userId: 'kim', certificate: 'CERT-KIM' }],
+						},
+					]
 				: [],
 		},
 	}
@@ -52,10 +57,15 @@ describe('teamFolder.autoConfirm', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
 		vi.restoreAllMocks()
-		decrypt = vi.spyOn(useSecretStore(), 'decryptSecret').mockResolvedValue({ key: PLAINTEXT, login: 'root' })
-		encrypt = vi.spyOn(useShareStore(), 'encryptForRecipient').mockImplementation(
-			async (fields, certificate) => ({ key: `RSA(${certificate})`, login: `RSA-LOGIN(${certificate})` }),
-		)
+		decrypt = vi
+			.spyOn(useSecretStore(), 'decryptSecret')
+			.mockResolvedValue({ key: PLAINTEXT, login: 'root' })
+		encrypt = vi
+			.spyOn(useShareStore(), 'encryptForRecipient')
+			.mockImplementation(async (fields, certificate) => ({
+				key: `RSA(${certificate})`,
+				login: `RSA-LOGIN(${certificate})`,
+			}))
 		vi.spyOn(useTeamFolderStore(), 'regrantAttachments').mockResolvedValue()
 	})
 
@@ -67,12 +77,25 @@ describe('teamFolder.autoConfirm', () => {
 	it('a member decrypts their OWN copy once and posts only ciphertext', async () => {
 		const get = vi.spyOn(axios, 'get').mockImplementation(async (url) => {
 			if (url.endsWith('/pending-confirmations')) {
-				return pending({ secretId: 'db-root', userId: 'kim', ownCopyId: 'copy-hank' })
+				return pending({
+					secretId: 'db-root',
+					userId: 'kim',
+					ownCopyId: 'copy-hank',
+				})
 			}
 			return { data: { id: url.split('/').pop(), key: 'CIPHER' } }
 		})
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({
-			data: { created: 1, rows: [{ sourceSecretId: 'db-root', targetUserId: 'kim', recipientSecretId: 'c' }] },
+			data: {
+				created: 1,
+				rows: [
+					{
+						sourceSecretId: 'db-root',
+						targetUserId: 'kim',
+						recipientSecretId: 'c',
+					},
+				],
+			},
 		})
 
 		const result = await useTeamFolderStore().autoConfirm()
@@ -80,16 +103,24 @@ describe('teamFolder.autoConfirm', () => {
 		expect(get).toHaveBeenCalledWith('/apps/keepiq/api/v1/secrets/copy-hank')
 		expect(get).not.toHaveBeenCalledWith('/apps/keepiq/api/v1/secrets/db-root')
 		expect(decrypt).toHaveBeenCalledTimes(1)
-		expect(encrypt).toHaveBeenCalledWith(expect.objectContaining({ key: PLAINTEXT }), 'CERT-KIM')
-		expect(post).toHaveBeenCalledWith('/apps/keepiq/api/v1/team-folders/tf-ops/shares', {
-			shares: [{
-				sourceSecretId: 'db-root',
-				targetUserId: 'kim',
-				encryptedKey: 'RSA(CERT-KIM)',
-				encryptedLogin: 'RSA-LOGIN(CERT-KIM)',
-				encryptedAdditionalFields: null,
-			}],
-		})
+		expect(encrypt).toHaveBeenCalledWith(
+			expect.objectContaining({ key: PLAINTEXT }),
+			'CERT-KIM',
+		)
+		expect(post).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/team-folders/tf-ops/shares',
+			{
+				shares: [
+					{
+						sourceSecretId: 'db-root',
+						targetUserId: 'kim',
+						encryptedKey: 'RSA(CERT-KIM)',
+						encryptedLogin: 'RSA-LOGIN(CERT-KIM)',
+						encryptedAdditionalFields: null,
+					},
+				],
+			},
+		)
 		for (const call of [...post.mock.calls, ...get.mock.calls]) {
 			expect(JSON.stringify(call)).not.toContain(PLAINTEXT)
 		}
@@ -97,11 +128,13 @@ describe('teamFolder.autoConfirm', () => {
 	})
 
 	it('the owner decrypts the source itself', async () => {
-		const get = vi.spyOn(axios, 'get').mockImplementation(async (url) => (
-			url.endsWith('/pending-confirmations')
-				? pending({ secretId: 'db-root', userId: 'kim' })
-				: { data: { key: 'CIPHER' } }
-		))
+		const get = vi
+			.spyOn(axios, 'get')
+			.mockImplementation(async (url) =>
+				url.endsWith('/pending-confirmations')
+					? pending({ secretId: 'db-root', userId: 'kim' })
+					: { data: { key: 'CIPHER' } },
+			)
 		vi.spyOn(axios, 'post').mockResolvedValue({ data: { created: 1, rows: [] } })
 
 		await useTeamFolderStore().autoConfirm()
@@ -129,7 +162,9 @@ describe('teamFolder.autoConfirm', () => {
 
 	it('does not repeat while the switch is off', async () => {
 		vi.useFakeTimers()
-		const get = vi.spyOn(axios, 'get').mockResolvedValue({ data: { enabled: false, folders: [] } })
+		const get = vi
+			.spyOn(axios, 'get')
+			.mockResolvedValue({ data: { enabled: false, folders: [] } })
 
 		await useTeamFolderStore().startAutoConfirm()
 		await vi.advanceTimersByTimeAsync(AUTO_CONFIRM_INTERVAL_MS * 2)
@@ -139,11 +174,14 @@ describe('teamFolder.autoConfirm', () => {
 
 	it('a failed run never throws and is retried on the next tick', async () => {
 		vi.useFakeTimers()
-		const get = vi.spyOn(axios, 'get')
+		const get = vi
+			.spyOn(axios, 'get')
 			.mockRejectedValueOnce(new Error('offline'))
 			.mockResolvedValue({ data: { enabled: true, folders: [] } })
 
-		await expect(useTeamFolderStore().startAutoConfirm()).resolves.toBeUndefined()
+		await expect(
+			useTeamFolderStore().startAutoConfirm(),
+		).resolves.toBeUndefined()
 		await vi.advanceTimersByTimeAsync(AUTO_CONFIRM_INTERVAL_MS)
 
 		expect(get).toHaveBeenCalledTimes(2)

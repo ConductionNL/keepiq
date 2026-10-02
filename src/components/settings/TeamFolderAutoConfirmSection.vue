@@ -13,7 +13,12 @@
 <template>
 	<CnSettingsSection
 		:name="t('keepiq', 'New team folder members')"
-		:description="t('keepiq', 'Give new team folder members access without waiting for the folder owner.')">
+		:description="
+			t(
+				'keepiq',
+				'Give new team folder members access without waiting for the folder owner.',
+			)
+		">
 		<div class="auto-confirm" data-testid="auto-confirm-section">
 			<NcNoteCard v-if="error" type="error" data-testid="auto-confirm-error">
 				{{ error }}
@@ -28,7 +33,12 @@
 				{{ t('keepiq', 'Automatically confirm new team folder members') }}
 			</label>
 			<p class="auto-confirm__disclosure">
-				{{ t('keepiq', 'The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.') }}
+				{{
+					t(
+						'keepiq',
+						'The owner or a member with write access confirms them from their open vault. Keepiq never decrypts on the server.',
+					)
+				}}
 			</p>
 		</div>
 	</CnSettingsSection>
@@ -59,7 +69,9 @@ export default {
 	 */
 	async created() {
 		try {
-			const response = await axios.get(generateUrl('/apps/keepiq/api/settings/admin'))
+			const response = await axios.get(
+				generateUrl('/apps/keepiq/api/settings/admin'),
+			)
 			this.enabled = response.data?.team_folder_auto_confirm === true
 		} catch (e) {
 			this.error = e?.response?.data?.message || e?.message

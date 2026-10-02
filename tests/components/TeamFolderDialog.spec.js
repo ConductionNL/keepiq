@@ -425,14 +425,23 @@ describe('TeamFolderDialog automatic confirmation (admin-auto-confirm-members §
 				})
 			}
 			if (url.includes('/settings/policy')) {
-				return Promise.resolve({ data: { team_folder_auto_confirm: autoConfirm } })
+				return Promise.resolve({
+					data: { team_folder_auto_confirm: autoConfirm },
+				})
 			}
 			if (url.includes('cloud/groups') || url.includes('sharees')) {
 				return Promise.reject(new Error('not needed'))
 			}
 			return Promise.resolve({
 				data: {
-					owned: [{ id: 'tf-1', folderId: 'folder-1', folderName: 'Ops', members: [] }],
+					owned: [
+						{
+							id: 'tf-1',
+							folderId: 'folder-1',
+							folderName: 'Ops',
+							members: [],
+						},
+					],
 					memberOf: [],
 				},
 			})
@@ -448,20 +457,30 @@ describe('TeamFolderDialog automatic confirmation (admin-auto-confirm-members §
 	it('shows who confirmed a member', async () => {
 		const wrapper = await openWith(true)
 
-		expect(wrapper.find('[data-testid="team-folder-confirmed"]').exists()).toBe(true)
-		expect(wrapper.vm.confirmations).toEqual([{ memberId: 'kim', confirmerId: 'hank' }])
+		expect(wrapper.find('[data-testid="team-folder-confirmed"]').exists()).toBe(
+			true,
+		)
+		expect(wrapper.vm.confirmations).toEqual([
+			{ memberId: 'kim', confirmerId: 'hank' },
+		])
 	})
 
 	it('says it waits for a write member while the switch is on', async () => {
 		const wrapper = await openWith(true)
 
-		expect(wrapper.find('[data-testid="team-folder-waiting-confirmer"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="team-folder-waiting-confirmer"]').exists(),
+		).toBe(true)
 	})
 
 	it('does not mention waiting while the switch is off', async () => {
 		const wrapper = await openWith(false)
 
-		expect(wrapper.find('[data-testid="team-folder-waiting-confirmer"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="team-folder-needs-reshare"]').exists()).toBe(true)
+		expect(
+			wrapper.find('[data-testid="team-folder-waiting-confirmer"]').exists(),
+		).toBe(false)
+		expect(
+			wrapper.find('[data-testid="team-folder-needs-reshare"]').exists(),
+		).toBe(true)
 	})
 })

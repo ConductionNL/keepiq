@@ -99,7 +99,12 @@
 					class="team-folder-dialog__confirmed"
 					data-testid="team-folder-confirmed">
 					<li v-for="row in confirmations" :key="row.memberId">
-						{{ t('keepiq', '{member} got access from {confirmer}.', { member: row.memberId, confirmer: row.confirmerId }) }}
+						{{
+							t('keepiq', '{member} got access from {confirmer}.', {
+								member: row.memberId,
+								confirmer: row.confirmerId,
+							})
+						}}
 					</li>
 				</ul>
 
@@ -162,7 +167,12 @@
 						v-if="!fanOut.running && pendingCount > 0 && autoConfirm"
 						type="info"
 						data-testid="team-folder-waiting-confirmer">
-						{{ t('keepiq', 'Waiting for a member with write access to open Keepiq. You can also share now.') }}
+						{{
+							t(
+								'keepiq',
+								'Waiting for a member with write access to open Keepiq. You can also share now.',
+							)
+						}}
 					</NcNoteCard>
 					<NcNoteCard
 						v-if="!fanOut.running && pendingCount > 0"
@@ -305,7 +315,9 @@ export default {
 		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.3
 		 */
 		confirmations() {
-			return Object.entries(this.confirmedBy ?? {}).map(([memberId, confirmerId]) => ({ memberId, confirmerId }))
+			return Object.entries(this.confirmedBy ?? {}).map(
+				([memberId, confirmerId]) => ({ memberId, confirmerId }),
+			)
 		},
 
 		/**
@@ -523,7 +535,8 @@ export default {
 					const state = await this.store.reconcile(this.teamFolder.id)
 					this.pendingCount = (state.missing ?? []).length
 					this.confirmedBy = state.confirmedBy ?? {}
-					this.autoConfirm = (await fetchPolicy())?.team_folder_auto_confirm === true
+					this.autoConfirm =
+						(await fetchPolicy())?.team_folder_auto_confirm === true
 				}
 			} catch (e) {
 				this.error =
