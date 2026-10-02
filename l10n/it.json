@@ -1271,7 +1271,7 @@
         "Removed the user from {count} team folders.": "Utente rimosso da {count} cartelle di team.",
         "Approve a share": "Approva una condivisione",
         "This approval link is incomplete. Open it again from the notification.": "Questo link di approvazione è incompleto. Aprilo di nuovo dalla notifica.",
-        "Deny": "Rifiuta",
+        "Deny": "Nega",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} si è unito a un gruppo con cui condividi un segreto. Condividere il segreto anche con questa persona?",
         "{requester} asks you to share a secret with {user}.": "{requester} ti chiede di condividere un segreto con {user}.",
         "Shared. The recipient can now open the secret.": "Condiviso. Il destinatario ora può aprire il segreto.",
@@ -1639,7 +1639,14 @@
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Il recupero del tuo account è pronto. Apri Keepiq nel browser da cui l'hai chiesto.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} chiede di sbloccare un nuovo dispositivo una sola volta. La password principale resta invariata.",
         "Ask your organisation instead": "Chiedi invece alla tua organizzazione",
-        "The request ended. Ask again or use your master password.": "La richiesta è terminata. Chiedi di nuovo o usa la tua password principale."
+        "The request ended. Ask again or use your master password.": "La richiesta è terminata. Chiedi di nuovo o usa la tua password principale.",
+        "Added by {user}": "Aggiunto da {user}",
+        "Editor": "Editor",
+        "Manager": "Gestore",
+        "Role of {member}": "Ruolo di {member}",
+        "Team folders you manage": "Cartelle di team che gestisci",
+        "Viewer": "Lettore",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Non hai una copia di questi segreti, quindi i nuovi membri non li hanno ancora ricevuti. Il proprietario può condividerli: {names}"
     },
     "plurals": null
 }

@@ -1568,7 +1568,14 @@ OC.L10N.register(
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Tilisi palautus on valmis. Avaa Keepiq selaimessa, josta pyysit sitä.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} pyytää uuden laitteen avaamista kerran. Pääsalasana pysyy ennallaan.",
         "Ask your organisation instead": "Pyydä sen sijaan organisaatioltasi",
-        "The request ended. Ask again or use your master password.": "Pyyntö päättyi. Pyydä uudelleen tai käytä pääsalasanaasi."
+        "The request ended. Ask again or use your master password.": "Pyyntö päättyi. Pyydä uudelleen tai käytä pääsalasanaasi.",
+        "Added by {user}": "Lisännyt {user}",
+        "Editor": "Muokkaaja",
+        "Manager": "Ylläpitäjä",
+        "Role of {member}": "Käyttäjän {member} rooli",
+        "Team folders you manage": "Hallitsemasi tiimikansiot",
+        "Viewer": "Katselija",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Sinulla ei ole kopiota näistä salaisuuksista, joten uudet jäsenet eivät ole vielä saaneet niitä. Omistaja voi jakaa ne: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

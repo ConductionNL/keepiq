@@ -1568,7 +1568,14 @@ OC.L10N.register(
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Your account recovery is ready. Open Keepiq in the browser you asked from.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} asks to unlock a new device once. They keep their master password.",
         "Ask your organisation instead": "Ask your organisation instead",
-        "The request ended. Ask again or use your master password.": "The request ended. Ask again or use your master password."
+        "The request ended. Ask again or use your master password.": "The request ended. Ask again or use your master password.",
+        "Added by {user}": "Added by {user}",
+        "Editor": "Editor",
+        "Manager": "Manager",
+        "Role of {member}": "Role of {member}",
+        "Team folders you manage": "Team folders you manage",
+        "Viewer": "Viewer",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}"
     },
     "nplurals=2; plural=(n != 1);"
 )

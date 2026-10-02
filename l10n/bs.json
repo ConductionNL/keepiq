@@ -1663,7 +1663,14 @@
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Oporavak računa je spreman. Otvorite Keepiq u pregledniku iz kojeg ste tražili.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} traži da se novi uređaj jednom otključa. Glavna lozinka ostaje ista.",
         "Ask your organisation instead": "Umjesto toga pitajte svoju organizaciju",
-        "The request ended. Ask again or use your master password.": "Zahtjev je završen. Pitajte ponovo ili koristite glavnu lozinku."
+        "The request ended. Ask again or use your master password.": "Zahtjev je završen. Pitajte ponovo ili koristite glavnu lozinku.",
+        "Added by {user}": "Dodao/la {user}",
+        "Editor": "Urednik",
+        "Manager": "Upravitelj",
+        "Role of {member}": "Uloga korisnika {member}",
+        "Team folders you manage": "Timske mape kojima upravljate",
+        "Viewer": "Preglednik",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nemate kopiju ovih tajni, pa ih novi članovi još nisu dobili. Vlasnik ih može podijeliti: {names}"
     },
     "plurals": null
 }

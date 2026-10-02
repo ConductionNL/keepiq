@@ -1568,7 +1568,14 @@ OC.L10N.register(
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Jūsų paskyros atkūrimas paruoštas. Atidarykite Keepiq naršyklėje, iš kurios jo prašėte.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} prašo vieną kartą atrakinti naują įrenginį. Pagrindinis slaptažodis lieka tas pats.",
         "Ask your organisation instead": "Verčiau kreipkitės į savo organizaciją",
-        "The request ended. Ask again or use your master password.": "Užklausa baigėsi. Paprašykite dar kartą arba naudokite pagrindinį slaptažodį."
+        "The request ended. Ask again or use your master password.": "Užklausa baigėsi. Paprašykite dar kartą arba naudokite pagrindinį slaptažodį.",
+        "Added by {user}": "Pridėjo {user}",
+        "Editor": "Redaktorius",
+        "Manager": "Vadovas",
+        "Role of {member}": "{member} vaidmuo",
+        "Team folders you manage": "Jūsų valdomi komandos aplankai",
+        "Viewer": "Peržiūrėtojas",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Neturite šių paslapčių kopijos, todėl nauji nariai jų dar negavo. Savininkas gali jomis pasidalyti: {names}"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

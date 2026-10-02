@@ -1639,7 +1639,14 @@
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Endurheimt aðgangsins er tilbúin. Opnaðu Keepiq í vafranum sem þú baðst um hana úr.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} biður um að opna nýtt tæki einu sinni. Aðallykilorðið helst óbreytt.",
         "Ask your organisation instead": "Biddu frekar stofnunina þína",
-        "The request ended. Ask again or use your master password.": "Beiðninni er lokið. Biddu aftur eða notaðu aðallykilorðið þitt."
+        "The request ended. Ask again or use your master password.": "Beiðninni er lokið. Biddu aftur eða notaðu aðallykilorðið þitt.",
+        "Added by {user}": "Bætt við af {user}",
+        "Editor": "Ritstjóri",
+        "Manager": "Stjórnandi",
+        "Role of {member}": "Hlutverk {member}",
+        "Team folders you manage": "Teymismöppur sem þú stjórnar",
+        "Viewer": "Lesandi",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Þú átt ekkert afrit af þessum leyndarmálum, svo nýju meðlimirnir hafa ekki fengið þau enn. Eigandinn getur deilt þeim: {names}"
     },
     "plurals": null
 }

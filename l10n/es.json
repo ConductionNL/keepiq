@@ -1639,7 +1639,14 @@
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "La recuperación de su cuenta está lista. Abra Keepiq en el navegador desde el que la pidió.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} pide desbloquear un dispositivo nuevo una sola vez. Conserva su contraseña maestra.",
         "Ask your organisation instead": "Pídeselo a tu organización",
-        "The request ended. Ask again or use your master password.": "La solicitud ha terminado. Vuelve a pedirlo o usa tu contraseña maestra."
+        "The request ended. Ask again or use your master password.": "La solicitud ha terminado. Vuelve a pedirlo o usa tu contraseña maestra.",
+        "Added by {user}": "Añadido por {user}",
+        "Editor": "Editor",
+        "Manager": "Gestor",
+        "Role of {member}": "Rol de {member}",
+        "Team folders you manage": "Carpetas de equipo que gestionas",
+        "Viewer": "Lector",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "No tienes ninguna copia de estos secretos, así que los nuevos miembros aún no los han recibido. El propietario puede compartirlos: {names}"
     },
     "plurals": null
 }

@@ -1568,7 +1568,14 @@ OC.L10N.register(
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Recuperarea contului este gata. Deschideți Keepiq în browserul din care ați cerut-o.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} cere deblocarea unui dispozitiv nou o singură dată. Parola principală rămâne aceeași.",
         "Ask your organisation instead": "Întrebați mai bine organizația",
-        "The request ended. Ask again or use your master password.": "Cererea s-a încheiat. Cereți din nou sau folosiți parola principală."
+        "The request ended. Ask again or use your master password.": "Cererea s-a încheiat. Cereți din nou sau folosiți parola principală.",
+        "Added by {user}": "Adăugat de {user}",
+        "Editor": "Editor",
+        "Manager": "Manager",
+        "Role of {member}": "Rolul lui {member}",
+        "Team folders you manage": "Dosare de echipă pe care le gestionați",
+        "Viewer": "Cititor",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nu dețineți o copie a acestor secrete, deci noii membri nu le-au primit încă. Proprietarul le poate partaja: {names}"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

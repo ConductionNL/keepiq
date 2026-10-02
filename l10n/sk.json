@@ -1663,7 +1663,14 @@
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Obnova účtu je pripravená. Otvorte Keepiq v prehliadači, z ktorého ste žiadali.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} žiada o jednorazové odomknutie nového zariadenia. Hlavné heslo zostáva rovnaké.",
         "Ask your organisation instead": "Radšej požiadať svoju organizáciu",
-        "The request ended. Ask again or use your master password.": "Žiadosť skončila. Požiadajte znova alebo použite hlavné heslo."
+        "The request ended. Ask again or use your master password.": "Žiadosť skončila. Požiadajte znova alebo použite hlavné heslo.",
+        "Added by {user}": "Pridal(a) {user}",
+        "Editor": "Editor",
+        "Manager": "Správca",
+        "Role of {member}": "Rola používateľa {member}",
+        "Team folders you manage": "Tímové priečinky, ktoré spravujete",
+        "Viewer": "Čitateľ",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nemáte kópiu týchto tajomstiev, takže ich noví členovia zatiaľ nedostali. Vlastník ich môže zdieľať: {names}"
     },
     "plurals": null
 }

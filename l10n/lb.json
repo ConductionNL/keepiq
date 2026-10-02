@@ -1271,7 +1271,7 @@
         "Removed the user from {count} team folders.": "De Benotzer gouf aus {count} Teamuerdner ewechgeholl.",
         "Approve a share": "Eng Deelung guttheeschen",
         "This approval link is incomplete. Open it again from the notification.": "Dëse Link fir d'Guttheeschen ass net komplett. Maach en nach eng Kéier aus der Notifikatioun op.",
-        "Deny": "Refuséieren",
+        "Deny": "Ofleenen",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} ass enger Grupp bäigetrueden, mat där s du e Geheimnis deels. Dat Geheimnis och mat him deelen?",
         "{requester} asks you to share a secret with {user}.": "{requester} freet dech, e Geheimnis mat {user} ze deelen.",
         "Shared. The recipient can now open the secret.": "Gedeelt. Den Empfänger kann d'Geheimnis elo opmaachen.",
@@ -1639,7 +1639,14 @@
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Är Kont-Erëmhierstellung ass prett. Maacht Keepiq an dem Browser op, aus deem Dir se ugefrot hutt.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} freet, en neien Apparat eemol z'entspären. D'Master-Passwuert bleift d'selwecht.",
         "Ask your organisation instead": "Frot amplaz Är Organisatioun",
-        "The request ended. Ask again or use your master password.": "D'Ufro ass eriwwer. Frot nach eng Kéier oder benotzt Äert Master-Passwuert."
+        "The request ended. Ask again or use your master password.": "D'Ufro ass eriwwer. Frot nach eng Kéier oder benotzt Äert Master-Passwuert.",
+        "Added by {user}": "Bäigesat vun {user}",
+        "Editor": "Editeur",
+        "Manager": "Manager",
+        "Role of {member}": "Roll vun {member}",
+        "Team folders you manage": "Teamdossieren, déi Dir verwalt",
+        "Viewer": "Lieser",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Dir hutt keng Kopie vun dëse Geheimnisser, dofir hunn déi nei Memberen se nach net kritt. De Besëtzer kann se deelen: {names}"
     },
     "plurals": null
 }

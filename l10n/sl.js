@@ -1568,7 +1568,14 @@ OC.L10N.register(
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Obnovitev računa je pripravljena. Odprite Keepiq v brskalniku, iz katerega ste jo zahtevali.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} prosi za enkratno odklepanje nove naprave. Glavno geslo ostane enako.",
         "Ask your organisation instead": "Raje vprašajte svojo organizacijo",
-        "The request ended. Ask again or use your master password.": "Zahteva se je končala. Vprašajte znova ali uporabite glavno geslo."
+        "The request ended. Ask again or use your master password.": "Zahteva se je končala. Vprašajte znova ali uporabite glavno geslo.",
+        "Added by {user}": "Dodal(a) {user}",
+        "Editor": "Urednik",
+        "Manager": "Upravitelj",
+        "Role of {member}": "Vloga uporabnika {member}",
+        "Team folders you manage": "Skupinske mape, ki jih upravljate",
+        "Viewer": "Bralec",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nimate kopije teh skrivnosti, zato jih novi člani še niso prejeli. Lastnik jih lahko deli: {names}"
     },
     "nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);"
 )

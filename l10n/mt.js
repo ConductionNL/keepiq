@@ -1568,7 +1568,14 @@ OC.L10N.register(
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "L-irkupru tal-kont tiegħek huwa lest. Iftaħ Keepiq fil-browser li minnu tlabt.",
         "{user} asks to unlock a new device once. They keep their master password.": "{user} qed jitlob li jiftaħ apparat ġdid darba waħda. Il-password ewlenija tibqa' l-istess.",
         "Ask your organisation instead": "Minflok, staqsi lill-organizzazzjoni tiegħek",
-        "The request ended. Ask again or use your master password.": "It-talba ntemmet. Erġa' itlob jew uża l-password ewlenija tiegħek."
+        "The request ended. Ask again or use your master password.": "It-talba ntemmet. Erġa' itlob jew uża l-password ewlenija tiegħek.",
+        "Added by {user}": "Miżjud minn {user}",
+        "Editor": "Editur",
+        "Manager": "Maniġer",
+        "Role of {member}": "Ir-rwol ta' {member}",
+        "Team folders you manage": "Folders tat-tim li timmaniġġja",
+        "Viewer": "Qarrej",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "M'għandek l-ebda kopja ta' dawn is-sigrieti, għalhekk il-membri l-ġodda għadhom ma rċevewhomx. Is-sid jista' jaqsamhom: {names}"
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

@@ -1568,7 +1568,14 @@ OC.L10N.register(
         "Your account recovery is ready. Open Keepiq in the browser you asked from.": "Tá d'aisghabháil cuntais réidh. Oscail Keepiq sa bhrabhsálaí ónar iarr tú í.",
         "{user} asks to unlock a new device once. They keep their master password.": "Iarrann {user} gléas nua a dhíghlasáil uair amháin. Coinníonn siad a bpríomhfhocal faire.",
         "Ask your organisation instead": "Iarr ar d'eagraíocht ina ionad sin",
-        "The request ended. Ask again or use your master password.": "Tá an t-iarratas thart. Iarr arís nó úsáid do phríomhfhocal faire."
+        "The request ended. Ask again or use your master password.": "Tá an t-iarratas thart. Iarr arís nó úsáid do phríomhfhocal faire.",
+        "Added by {user}": "Curtha leis ag {user}",
+        "Editor": "Eagarthóir",
+        "Manager": "Bainisteoir",
+        "Role of {member}": "Ról {member}",
+        "Team folders you manage": "Fillteáin foirne a bhainistíonn tú",
+        "Viewer": "Breathnóir",
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Níl cóip de na rúin seo agat, mar sin níor fhaigh na baill nua iad fós. Is féidir leis an úinéir iad a roinnt: {names}"
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )
