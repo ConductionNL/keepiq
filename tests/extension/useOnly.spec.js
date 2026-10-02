@@ -37,17 +37,26 @@ describe('use-only in the extension', () => {
 	it('refuses another site, a look-alike, and a copy without a URL', () => {
 		expect(allowedOnHost(portal, 'attacker.example.net')).toBe(false)
 		expect(allowedOnHost(portal, 'supplier.example.attacker.net')).toBe(false)
-		expect(allowedOnHost({ ...portal, url: '' }, 'portal.supplier.example')).toBe(false)
+		expect(
+			allowedOnHost({ ...portal, url: '' }, 'portal.supplier.example'),
+		).toBe(false)
 	})
 
 	it('leaves normal secrets to the normal rules', () => {
 		const normal = { id: 'n', url: 'https://other.example', useOnly: false }
-		expect(filterForHost([portal, normal], 'attacker.example.net')).toEqual([normal])
+		expect(filterForHost([portal, normal], 'attacker.example.net')).toEqual([
+			normal,
+		])
 	})
 
 	it('offers no save or update for a use-only login', () => {
 		expect(blocksSavePrompt([portal], 'portal.supplier.example')).toBe(true)
-		expect(blocksSavePrompt([{ ...portal, useOnly: false }], 'portal.supplier.example')).toBe(false)
+		expect(
+			blocksSavePrompt(
+				[{ ...portal, useOnly: false }],
+				'portal.supplier.example',
+			),
+		).toBe(false)
 	})
 
 	it('fills only a real password field', () => {
@@ -63,9 +72,14 @@ describe('use-only in the extension', () => {
 			json: async () => ({ status: 'recorded' }),
 		})
 		vi.stubGlobal('fetch', fetchMock)
-		await reportUseOnlyFill({ url: 'https://cloud.example', user: 'bob', appPassword: 'x' }, 'copy')
+		await reportUseOnlyFill(
+			{ url: 'https://cloud.example', user: 'bob', appPassword: 'x' },
+			'copy',
+		)
 		const [url, init] = fetchMock.mock.calls[0]
-		expect(url).toBe('https://cloud.example/index.php/apps/keepiq/api/v1/secrets/copy/used')
+		expect(url).toBe(
+			'https://cloud.example/index.php/apps/keepiq/api/v1/secrets/copy/used',
+		)
 		expect(init.method).toBe('POST')
 		expect(init.body).toBeUndefined()
 	})
