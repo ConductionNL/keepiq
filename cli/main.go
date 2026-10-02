@@ -55,6 +55,8 @@ func main() {
 		err = cmdCI(args)
 	case "completion":
 		err = cmdCompletion(args)
+	case "install":
+		err = cmdInstall(args)
 	case "help", "--help", "-h":
 		usage()
 	default:
@@ -82,6 +84,7 @@ CI mode (RFC 7523 machine consumer):
   keepiq ci fetch <name> [--output env|json]       fetch+decrypt an application secret
   keepiq ci run <name>[,<name>...] -- <cmd...>      run <cmd> with the secret(s) in its env
 
+  install <path>                                   copy this binary to <path> (init containers)
   version | completion <bash|zsh|fish> | help
 
 v1 is READ-ONLY: no create/edit/update/delete (share fan-out is a follow-up).

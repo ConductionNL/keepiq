@@ -21,8 +21,10 @@ const DB_NAME = 'keepiq-offline'
    still be carrying a pre-rename snapshot. */
 const LEGACY_DB_NAME = 'doriath-offline'
 
-const DB_VERSION = 1
+// Version 2 adds the offline edit queue (offline-edit-queue).
+const DB_VERSION = 2
 const STORE = 'snapshot'
+const QUEUE_STORE = 'queue'
 const SNAPSHOT_KEY = 'current'
 
 /**
@@ -46,6 +48,9 @@ function openDb() {
 			const db = request.result
 			if (!db.objectStoreNames.contains(STORE)) {
 				db.createObjectStore(STORE)
+			}
+			if (!db.objectStoreNames.contains(QUEUE_STORE)) {
+				db.createObjectStore(QUEUE_STORE, { keyPath: 'entryId' })
 			}
 		}
 		request.onsuccess = () => resolve(request.result)
@@ -137,4 +142,84 @@ export async function purge() {
 	} finally {
 		db.close()
 	}
+}
+
+/**
+ * Run one transaction on the queue store.
+ *
+ * @param {string} mode readonly or readwrite.
+ * @param {function(IDBObjectStore): (IDBRequest|void)} work The work; a returned request's result resolves.
+ * @return {Promise<*>}
+ */
+async function onQueue(mode, work) {
+	const db = await openDb()
+	try {
+		return await new Promise((resolve, reject) => {
+			const tx = db.transaction(QUEUE_STORE, mode)
+			const request = work(tx.objectStore(QUEUE_STORE))
+			tx.oncomplete = () => resolve(request ? request.result : undefined)
+			tx.onerror = () => reject(tx.error)
+			tx.onabort = () => reject(tx.error)
+		})
+	} finally {
+		db.close()
+	}
+}
+
+/**
+ * Every stored queue entry (sealed), in no particular order.
+ *
+ * @return {Promise<Array<object>>}
+ * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
+ */
+export async function readQueue() {
+	if (!isCacheAvailable()) {
+		return []
+	}
+	return (await onQueue('readonly', (store) => store.getAll())) || []
+}
+
+/**
+ * Store or replace one sealed queue entry.
+ *
+ * @param {object} entry The sealed entry (see src/offline/queue.js).
+ * @return {Promise<void>}
+ * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
+ */
+export async function putQueueEntry(entry) {
+	if (!isCacheAvailable()) {
+		throw new Error('Offline storage is not available in this browser')
+	}
+	await onQueue('readwrite', (store) => {
+		store.put(entry)
+	})
+}
+
+/**
+ * Remove one queue entry.
+ *
+ * @param {string} entryId The entry id.
+ * @return {Promise<void>}
+ */
+export async function deleteQueueEntry(entryId) {
+	if (!isCacheAvailable()) {
+		return
+	}
+	await onQueue('readwrite', (store) => {
+		store.delete(entryId)
+	})
+}
+
+/**
+ * Remove every queue entry (offline caching switched off, after replay).
+ *
+ * @return {Promise<void>}
+ */
+export async function clearQueue() {
+	if (!isCacheAvailable()) {
+		return
+	}
+	await onQueue('readwrite', (store) => {
+		store.clear()
+	})
 }
