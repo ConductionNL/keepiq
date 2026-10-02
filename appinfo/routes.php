@@ -12,14 +12,23 @@ declare(strict_types=1);
  * /api/metrics URLs are unchanged; their controllers are aliased to the
  * AppHost generic controllers by Bootstrap::register() in Application.php.
  *
- * Every Keepiq domain route is appended via $extra below — it is inserted
+ * Every Keepiq domain route is appended via $extra below. It is inserted
  * before the SPA catch-all so it keeps priority over the /{path} fallback.
- * This file references no OCA\OpenRegister symbol other than the pure array
- * builder Routes::standard(), so it is safe to require even when OpenRegister
- * is disabled.
+ *
+ * The AppHost builder is called behind a class_exists() guard. Nextcloud's
+ * router requires this file for every enabled app on every route-cache miss,
+ * so an unguarded call to a class from another app throws when OpenRegister
+ * is not installed, or installed but disabled (the autoloader prelude skips a
+ * disabled OpenRegister since #712). That throw is not confined to Keepiq: it
+ * answers HTTP 500 on every page of the instance, the login page and the apps
+ * page included (#857, #867). Without OpenRegister the fallback below routes
+ * the dashboard and settings controllers Keepiq ships itself, the domain
+ * routes and the SPA catch-all. The AppHost-only routes (preferences, health,
+ * metrics) are left out, because their controllers only exist as aliases to
+ * OpenRegister classes: a 404 there is honest, a 500 is not.
  */
 
-return \OCA\OpenRegister\AppHost\Routes::standard([
+$extra = [
     // Dashboard summary (domain aggregator — DashboardController::summary()).
     ['name' => 'dashboard#summary', 'url' => '/api/dashboard/summary', 'verb' => 'GET'],
 
@@ -420,4 +429,36 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'extension#match', 'url' => '/api/v1/extension/match', 'verb' => 'GET'],
     // A fill from the extension counts as a use (vault-favourites-tags-and-last-used); 404 for a row the caller does not hold.
     ['name' => 'secretOrganisation#used', 'url' => '/api/v1/extension/used/{id}', 'verb' => 'POST'],
-]);
+];
+
+// Preferred path: OpenRegister's AppHost owns the canonical route table.
+// class_exists() autoloads, and answers false rather than throwing when the
+// class cannot be loaded.
+if (class_exists('OCA\OpenRegister\AppHost\Routes') === true) {
+    return \OCA\OpenRegister\AppHost\Routes::standard($extra);
+}
+
+// Fallback: OpenRegister is missing or disabled. Keep the routes whose
+// controllers Keepiq ships itself, so the instance stays up and Keepiq
+// degrades per endpoint instead of taking every app down with it.
+return [
+    'routes' => array_merge(
+        [
+            ['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
+            ['name' => 'settings#index', 'url' => '/api/settings', 'verb' => 'GET'],
+            ['name' => 'settings#create', 'url' => '/api/settings', 'verb' => 'POST'],
+            ['name' => 'settings#update', 'url' => '/api/settings', 'verb' => 'PUT'],
+            ['name' => 'settings#load', 'url' => '/api/settings/load', 'verb' => 'POST'],
+        ],
+        $extra,
+        [
+            [
+                'name'         => 'dashboard#catchAll',
+                'url'          => '/{path}',
+                'verb'         => 'GET',
+                'requirements' => ['path' => '(?!api/).+'],
+                'defaults'     => ['path' => ''],
+            ],
+        ]
+    ),
+];

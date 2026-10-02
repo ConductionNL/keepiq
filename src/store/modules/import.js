@@ -366,11 +366,20 @@ export const useImportStore = defineStore('import', {
 		 * one retry per failed chunk, fold per-index + chunk failures into the
 		 * rejected list, and build the transient summary (design D7/D8).
 		 *
+		 * @param {object} [options] Options.
+		 * @param {string} [options.rootFolder] Import everything beneath one new
+		 *   folder with this name; the source folders keep their hierarchy
+		 *   below it (keepiq#749).
 		 * @return {Promise<void>}
 		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 */
-		async commit() {
+		async commit(options = {}) {
+			// A slash would split the one folder into a path.
+			const rootFolder =
+				typeof options.rootFolder === 'string'
+					? options.rootFolder.replaceAll('/', '-').trim()
+					: ''
 			const session = useSessionStore()
 			if (!session.certificate || session.isLocked) {
 				throw new Error('Vault is locked')
@@ -413,14 +422,16 @@ export const useImportStore = defineStore('import', {
 			const itemRowByIndex = []
 			for (const row of rows) {
 				const asCopy = dupRows.has(row.sourceRow)
-				items.push(
-					await this.encryptRow(
-						row,
-						publicKey,
-						asCopy,
-						typeIdFor(row.type),
-					),
+				const item = await this.encryptRow(
+					row,
+					publicKey,
+					asCopy,
+					typeIdFor(row.type),
 				)
+				if (rootFolder !== '') {
+					item.folderPath = [rootFolder, ...item.folderPath]
+				}
+				items.push(item)
 				itemRowByIndex.push(row)
 			}
 

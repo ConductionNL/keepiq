@@ -1266,7 +1266,8 @@ OC.L10N.register(
         "Tag": "Tagg",
         "Remove tag": "Ta bort tagg",
         "Add tag": "Lägg till tagg",
-        "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen."
+        "Could not change the tags. Try again.": "Det gick inte att ändra taggarna. Försök igen.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "En CXF-export är OKRYPTERAD. Varje lösenord och inloggning blir läsbar som klartext i den hämtade filen. Förvara den säkert och ta bort den omedelbart efter användning."
     },
     "nplurals=2; plural=(n != 1);"
 )

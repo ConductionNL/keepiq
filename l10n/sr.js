@@ -1266,7 +1266,8 @@ OC.L10N.register(
         "Tag": "Ознака",
         "Remove tag": "Уклони ознаку",
         "Add tag": "Додај ознаку",
-        "Could not change the tags. Try again.": "Није могуће променити ознаке. Покушајте поново."
+        "Could not change the tags. Try again.": "Није могуће променити ознаке. Покушајте поново.",
+        "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Извоз у CXF НИЈЕ ШИФРОВАН. Свака лозинка и пријава биће читљива као отворени текст у преузетој датотеци. Чувајте је на безбедном месту и избришите је одмах након употребе."
     },
     "nplurals=2; plural=(n != 1);"
 )
