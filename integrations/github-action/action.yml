@@ -1,0 +1,50 @@
+name: Keepiq secrets
+description: Run a step with Keepiq application secrets in its environment, decrypted on the runner.
+author: Conduction B.V.
+
+inputs:
+  url:
+    description: The Keepiq (Nextcloud) address, for example https://cloud.example.org. Include /index.php when the instance has no pretty URLs.
+    required: true
+  application-id:
+    description: The id of the approved Keepiq application.
+    required: true
+  private-key:
+    description: The application's private key (PEM). Pass it from a GitHub secret, for example secrets.KEEPIQ_APP_KEY. It is never sent anywhere; only a signed assertion is.
+    required: true
+  secrets:
+    description: Secret names, one per line. A value lands in KEEPIQ_<NAME>; write NAME=ENV_VAR to choose the variable name.
+    required: true
+  run:
+    description: Command to run with the secrets in its environment, through keepiq ci run. Nothing is written to disk.
+    required: false
+    default: ""
+  export-env:
+    description: Set to true to export the values to later steps. This writes every value to the runner's environment file ($GITHUB_ENV); each value is masked in the log first.
+    required: false
+    default: "false"
+  version:
+    description: The CLI release to install, for example cli-v0.3.0. Defaults to the tag this action is used at, when that is a cli-v tag.
+    required: false
+    default: ""
+  download-base:
+    description: Where the CLI releases are downloaded from. Change it only for a mirror.
+    required: false
+    default: https://github.com/ConductionNL/keepiq/releases/download
+
+runs:
+  using: composite
+  steps:
+    - name: Run with Keepiq secrets
+      shell: bash
+      env:
+        KEEPIQ_URL: ${{ inputs.url }}
+        KEEPIQ_APP_ID: ${{ inputs.application-id }}
+        KEEPIQ_APP_KEY: ${{ inputs.private-key }}
+        KEEPIQ_SECRETS: ${{ inputs.secrets }}
+        KEEPIQ_RUN: ${{ inputs.run }}
+        KEEPIQ_EXPORT_ENV: ${{ inputs.export-env }}
+        KEEPIQ_VERSION: ${{ inputs.version }}
+        KEEPIQ_ACTION_REF: ${{ github.action_ref }}
+        KEEPIQ_DOWNLOAD_BASE: ${{ inputs.download-base }}
+      run: bash "${{ github.action_path }}/keepiq-action.sh"

@@ -303,7 +303,7 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 			'uniqueIndexes' => [],
 		],
 		// New device approval (crypto-new-device-approval); also added to
-		// existing installs by Version001005Date20261002163000.
+		// existing installs by Version001009Date20261002182000.
 		'device_approvals' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],

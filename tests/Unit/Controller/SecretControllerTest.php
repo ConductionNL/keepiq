@@ -193,4 +193,28 @@ class SecretControllerTest extends TestCase {
 		$response = $this->controller->index();
 		$this->assertSame(0, $response->getData()['total']);
 	}//end testIndexReturnsList()
+
+	/**
+	 * admin-vault-policies §4.1: a policy refusal reaches the client as 403
+	 * with the policy code, on create and on update.
+	 *
+	 * @return void
+	 */
+	public function testPolicyRefusalCarriesTheCode(): void {
+		$refusal = new \OCA\Keepiq\Exception\PolicyViolationException(
+			policyCode: 'org_ownership_required',
+			message: 'kept in a team folder'
+		);
+		$this->secretService->method('create')->willThrowException($refusal);
+		$this->secretService->method('update')->willThrowException($refusal);
+		$this->request->method('getParam')->willReturnArgument(0);
+
+		$created = $this->controller->create(name: 'Bank', key: 'CIPHERTEXT-BLOB-0001', folderId: 'private');
+		$updated = $this->controller->update(id: 's-1', folderId: 'private');
+
+		foreach ([$created, $updated] as $response) {
+			$this->assertSame(403, $response->getStatus());
+			$this->assertSame('org_ownership_required', $response->getData()['code']);
+		}
+	}//end testPolicyRefusalCarriesTheCode()
 }//end class
