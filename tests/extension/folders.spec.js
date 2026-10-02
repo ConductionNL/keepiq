@@ -112,10 +112,11 @@ async function openFolders() {
  * @param {string} name The folder name.
  * @return {HTMLElement}
  */
-const rowOf = (name) =>
-	[...$('folder-tree').children].find(
+function rowOf (name) {
+  return [...$('folder-tree').children].find(
 		(li) => li.querySelector('.folder-name')?.textContent === name,
 	)
+}
 
 beforeEach(async () => {
 	vi.resetModules()
