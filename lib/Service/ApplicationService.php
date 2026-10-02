@@ -261,6 +261,8 @@ class ApplicationService {
 	 * @return Application
 	 *
 	 * @throws InvalidArgumentException
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
 	 */
 	public function get(string $applicationId, string $userId, bool $isAdmin): Application {
 		$entity = $this->findOr400(applicationId: $applicationId);
@@ -283,6 +285,8 @@ class ApplicationService {
 	 * @param bool $isAdmin Whether the caller is an admin
 	 *
 	 * @return Application[]
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
 	 */
 	public function listForUser(string $userId, bool $isAdmin): array {
 		if ($isAdmin === true) {
@@ -314,6 +318,8 @@ class ApplicationService {
 	 * @return Application[]
 	 *
 	 * @throws InvalidArgumentException
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-approval-queue
 	 */
 	public function listPending(bool $isAdmin): array {
 		if ($isAdmin === false) {
@@ -327,6 +333,8 @@ class ApplicationService {
 	 * Count the pending applications — exposed for the dashboard summary.
 	 *
 	 * @return int
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-pending-applications-counter-on-dashboard
 	 */
 	public function countPending(): int {
 		return $this->mapper->countPending();

@@ -1487,6 +1487,8 @@ class SecretService {
 	 *
 	 * @throws NotFoundException When the secret does not exist
 	 * @throws ForbiddenException When the secret belongs to another user
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
 	 */
 	public function findOwned(string $id, string $userId): Secret {
 		return $this->loadOwned(id: $id, userId: $userId);

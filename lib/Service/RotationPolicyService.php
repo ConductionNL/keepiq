@@ -188,6 +188,8 @@ class RotationPolicyService {
 	 * @param string $userId The caller
 	 *
 	 * @return ExpiryPolicy[]
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 	 */
 	public function listPolicies(string $userId): array {
 		return $this->policyMapper->findApplicable(ownerId: $userId);
@@ -325,6 +327,8 @@ class RotationPolicyService {
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException On not found / foreign owner
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 	 */
 	public function deletePolicy(string $policyId, string $userId): void {
 		try {
