@@ -81,3 +81,15 @@ No data migration and no `<version>` bump. `revoked_reason` is reused; `markComp
 ## Open Questions
 
 - **Where the emergency-count read sits relative to the cascade delete.** `countUsableForGrantorSuite` MUST be read before the `EncryptionSuiteRevokedEvent` cascade clears the envelopes (the owner path reads it before `revokeSuite()` for the same reason); apply must order the read before the dispatch so the count is non-zero when contacts existed.
+
+## Follow-up: containment after the #691 review (2 Oct 2026)
+
+The post-merge review of #691 found the compromise branch incomplete. The changes, and how they adjust the decisions above:
+
+- **D2, revised.** The cascade is no longer a listener on `EncryptionSuiteRevokedEvent`. As a listener it could not report back to the administrator (keepiq#863), and it read ShareTargets that the first revoke of a migration had already swept (keepiq#864). `CompromiseContainmentService` now runs it from the force-revoke: `collect()` before any revoke, `contain()` after. The event still carries `compromised` for its listeners.
+- **Containment covers the account.** Link shares and passkeys go through `MigrationService::revokeKeyMaterialOfOwner()`, the same helper the owner's recovery uses (keepiq#858). Every session and app password is ended through `OCP\Authentication\Token\IProvider` (keepiq#860), and `create()` refuses a revoked user without a fresh password confirmation; `reenrol()` carries the sudo guard.
+- **D6, revised.** `reinstate()` now carries `#[PasswordConfirmationRequired]`, and `reinstateSuite()` refuses a compromise revoke (read from the last `SUITE_REVOKED` audit entry, fail closed when there is none) and a reinstate next to another active suite (keepiq#865). D3 still holds: nothing about the compromise is stored on the suite row.
+- **Owner notice.** A force-revoke that deletes usable emergency contacts notifies the owner with the count (keepiq#876).
+
+Still open: what a compromise revoke does to the revoked user's temporary delegations (keepiq#817). Today they are promoted to permanent on every revoke. That is a policy decision and is collected for the product owner; once decided it belongs in ADR-005.
+

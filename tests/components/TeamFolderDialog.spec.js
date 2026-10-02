@@ -12,6 +12,7 @@ import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import TeamFolderDialog from '../../src/modals/TeamFolderDialog.vue'
+import { resetPolicyCache } from '../../src/policy/policy.js'
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
@@ -395,5 +396,91 @@ describe('TeamFolderDialog', () => {
 		expect(wrapper.find('[data-testid="team-folder-run-fanout"]').exists()).toBe(
 			true,
 		)
+	})
+})
+
+describe('TeamFolderDialog automatic confirmation (admin-auto-confirm-members §3.3)', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+		resetPolicyCache()
+	})
+
+	/**
+	 * Open the dialog on a shared folder with one waiting copy.
+	 *
+	 * @param {boolean} autoConfirm The admin switch.
+	 * @return {Promise<object>} The wrapper.
+	 */
+	async function openWith(autoConfirm) {
+		vi.spyOn(axios, 'get').mockImplementation((url) => {
+			if (url.includes('/reconcile')) {
+				return Promise.resolve({
+					data: {
+						secrets: [],
+						recipients: [],
+						missing: [{ secretId: 's1', userId: 'lee' }],
+						confirmedBy: { kim: 'hank' },
+					},
+				})
+			}
+			if (url.includes('/settings/policy')) {
+				return Promise.resolve({
+					data: { team_folder_auto_confirm: autoConfirm },
+				})
+			}
+			if (url.includes('cloud/groups') || url.includes('sharees')) {
+				return Promise.reject(new Error('not needed'))
+			}
+			return Promise.resolve({
+				data: {
+					owned: [
+						{
+							id: 'tf-1',
+							folderId: 'folder-1',
+							folderName: 'Ops',
+							members: [],
+						},
+					],
+					memberOf: [],
+				},
+			})
+		})
+		const wrapper = mount(TeamFolderDialog, {
+			propsData: { open: true, folderId: 'folder-1', folderName: 'Ops' },
+		})
+		await wrapper.vm.refresh()
+		await flush()
+		return wrapper
+	}
+
+	it('shows who confirmed a member', async () => {
+		const wrapper = await openWith(true)
+
+		expect(wrapper.find('[data-testid="team-folder-confirmed"]').exists()).toBe(
+			true,
+		)
+		expect(wrapper.vm.confirmations).toEqual([
+			{ memberId: 'kim', confirmerId: 'hank' },
+		])
+	})
+
+	it('says it waits for a write member while the switch is on', async () => {
+		const wrapper = await openWith(true)
+
+		expect(
+			wrapper.find('[data-testid="team-folder-waiting-confirmer"]').exists(),
+		).toBe(true)
+	})
+
+	it('does not mention waiting while the switch is off', async () => {
+		const wrapper = await openWith(false)
+
+		expect(
+			wrapper.find('[data-testid="team-folder-waiting-confirmer"]').exists(),
+		).toBe(false)
+		expect(
+			wrapper.find('[data-testid="team-folder-needs-reshare"]').exists(),
+		).toBe(true)
 	})
 })

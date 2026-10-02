@@ -83,9 +83,16 @@ class EncryptionSuiteRevokedListener implements IEventListener {
 		$userId = $event->getOwnerId();
 
 		try {
-			// The ex-recipient can no longer decrypt anything; sweep
-			// every ShareTarget where they were the recipient.
-			$this->shareTargetMapper->deleteByTargetUser(targetUserId: $userId);
+			// The ex-recipient can no longer decrypt the copies sealed under
+			// the revoked suite; sweep the ShareTargets for those copies.
+			// Scoped to this suite: a compromise force-revoke during a
+			// migration revokes a second suite right after this one, and an
+			// unscoped sweep here removed the rows the cascade needs to find
+			// the owners of the copies on that second suite (keepiq#864).
+			$this->shareTargetMapper->deleteByTargetUserAndSuite(
+				targetUserId: $userId,
+				suiteId: $event->getSuiteId()
+			);
 		} catch (Throwable $exception) {
 			$this->logger->warning(
 				'Keepiq: EncryptionSuiteRevokedListener share-target sweep failed for '
