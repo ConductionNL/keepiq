@@ -18,6 +18,7 @@ import { buildPasskeyOrchestrator } from '../passkey/orchestrator.js'
 import { senderOrigin } from '../passkey/rp.js'
 import { computeTotp } from '../lib/totp-service.js'
 import { reportFill } from '../lib/usage.js'
+import { loginTotpCode } from '../lib/login-totp.js'
 
 // Passkey provider (extension-passkey-provider): bind the ceremony orchestrator
 // to this worker's api + vault. Driven by the page-context shim relay in every
@@ -140,7 +141,13 @@ async function doFill(payload) {
 	} catch {
 		host = ''
 	}
-	const totpCode = host ? await totpCodeForHost(host) : null
+	// The filled login's own seed wins; only a login without one falls back
+	// to an Authenticator item matched by host (vault-login-totp-codes D3).
+	const totpCode = await loginTotpCode(row, {
+		decryptField: vault.decryptField,
+		compute: computeTotp,
+		fallback: async () => (host ? totpCodeForHost(host) : null),
+	})
 	if (totpCode) {
 		// Best-effort: fill a detected OTP field on the page; the popup also
 		// copies the code as the fallback (extension-totp-autofill §4.1).

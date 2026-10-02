@@ -282,12 +282,44 @@ export function cxfToRows(doc) {
 				)
 				continue
 			}
+			// A TOTP credential beside a login is that login's second factor:
+			// it goes into the login's additional fields under `totp`, not into
+			// a separate row without an address (vault-login-totp-codes 2.2).
+			const loginTypes = ['basic-auth', 'password', 'login']
+			const hasLogin = credentials.some((c) =>
+				loginTypes.includes(String(c?.type ?? '')),
+			)
+			const seedCredential = hasLogin
+				? credentials.find(
+					(c) =>
+						String(c?.type ?? '') === 'totp'
+						&& (fieldValue(c.url) || fieldValue(c.secret)) !== '',
+				)
+				: undefined
+			let seedAttached = false
 			for (const credential of credentials) {
+				if (credential === seedCredential) {
+					continue
+				}
 				sourceRow += 1
 				const row = credentialToRow(credential, item, folder, sourceRow)
-				if (row !== null) {
-					rows.push(row)
+				if (row === null) {
+					continue
 				}
+				if (
+					seedCredential !== undefined
+					&& !seedAttached
+					&& row.type === 'login'
+				) {
+					row.additionalFields = {
+						...(row.additionalFields ?? {}),
+						totp:
+							fieldValue(seedCredential.url)
+							|| fieldValue(seedCredential.secret),
+					}
+					seedAttached = true
+				}
+				rows.push(row)
 			}
 		}
 	}
