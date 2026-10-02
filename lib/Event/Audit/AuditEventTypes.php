@@ -180,6 +180,20 @@ final class AuditEventTypes {
 	public const DEVICE_APPROVAL_EXPIRED = 'device_approval.expired';
 	public const DEVICE_APPROVAL_PICKED_UP = 'device_approval.picked_up';
 
+	// Organisation account recovery (crypto-organisation-account-recovery 5.2),
+	// identifiers only: never an envelope, a wrapped copy or a sealed result.
+	public const RECOVERY_SETTINGS_CHANGED = 'recovery.settings_changed';
+	public const RECOVERY_KEY_CREATED = 'recovery.key_created';
+	public const RECOVERY_KEY_RETIRED = 'recovery.key_retired';
+	public const RECOVERY_ENROLLED = 'recovery.enrolled';
+	public const RECOVERY_WITHDRAWN = 'recovery.withdrawn';
+	public const RECOVERY_REQUESTED = 'recovery.requested';
+	public const RECOVERY_APPROVED = 'recovery.approved';
+	public const RECOVERY_DECLINED = 'recovery.declined';
+	public const RECOVERY_HANDED_OFF = 'recovery.handed_off';
+	public const RECOVERY_COMPLETED = 'recovery.completed';
+	public const RECOVERY_EXPIRED = 'recovery.expired';
+
 	/**
 	 * Metadata keys that MUST NEVER appear in any audit entry, in any position.
 	 * Recording any of these is rejected with an exception — defense in depth so
@@ -304,6 +318,17 @@ final class AuditEventTypes {
 		self::DEVICE_APPROVAL_DENIED => [],
 		self::DEVICE_APPROVAL_EXPIRED => [],
 		self::DEVICE_APPROVAL_PICKED_UP => [],
+		self::RECOVERY_SETTINGS_CHANGED => ['policy', 'threshold', 'officerCount'],
+		self::RECOVERY_KEY_CREATED => [],
+		self::RECOVERY_KEY_RETIRED => [],
+		self::RECOVERY_ENROLLED => ['suiteId'],
+		self::RECOVERY_WITHDRAWN => [],
+		self::RECOVERY_REQUESTED => ['userId'],
+		self::RECOVERY_APPROVED => ['userId', 'approvals', 'threshold'],
+		self::RECOVERY_DECLINED => ['userId'],
+		self::RECOVERY_HANDED_OFF => ['userId'],
+		self::RECOVERY_COMPLETED => ['handledBy'],
+		self::RECOVERY_EXPIRED => ['userId'],
 	];
 
 	/**
