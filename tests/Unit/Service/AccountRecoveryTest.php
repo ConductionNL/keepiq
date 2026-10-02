@@ -365,4 +365,22 @@ class AccountRecoveryTest extends TestCase {
 		$this->assertNull($this->enrolments->current('bob'));
 		$this->assertSame('declined', $this->rows['requests'][$id]->getStatus());
 	}
+
+	public function testARetiredKeyTakesNoNewEnrolments(): void {
+		$this->policy->update('optional', ['olga', 'omar'], 2);
+		$key = $this->keys->createKey('olga', 'PUBLIC', ['olga' => 'A', 'omar' => 'B']);
+		$this->keys->retire($key->getId(), 'admin');
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->enrolments->enrol('bob', $key->getId(), json_encode(['encKey' => 'K', 'ct' => 'C']));
+	}
+
+	public function testANewKeyRetiresTheOldOneAndOldEnrolmentsAreNoLongerCurrent(): void {
+		$this->bobAsks();
+		$this->assertTrue($this->enrolments->status('bob')['current']);
+		$this->keys->createKey('omar', 'PUBLIC-2', ['olga' => 'A2', 'omar' => 'B2']);
+		$status = $this->enrolments->status('bob');
+		$this->assertTrue($status['enrolled']);
+		$this->assertFalse($status['current'], 'bob re-enrols at his next unlock');
+	}
 }

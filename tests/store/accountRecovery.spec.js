@@ -277,3 +277,57 @@ describe('account recovery store', () => {
 		).toBe(true)
 	})
 })
+
+describe('filing and re-enrolling', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+	})
+
+	it('files a request with a one-time key that cannot leave this browser', async () => {
+		let saved = null
+		vi.spyOn(requestKeyStore, 'put').mockImplementation(async (id, value) => {
+			saved = { id, value }
+		})
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { id: 'req-9', status: 'pending' } })
+		const store = useAccountRecoveryStore()
+
+		const request = await store.startRequest()
+
+		expect(saved.id).toBe('req-9')
+		expect(saved.value.privateKey.extractable).toBe(false)
+		expect(post.mock.calls[0][1]).toEqual({
+			publicKey: toBase64(saved.value.publicKeyRaw),
+		})
+		expect(request.phrase.split(' ')).toHaveLength(5)
+	})
+
+	it('re-enrols at unlock when the enrolment fell behind a rotation', async () => {
+		const store = useAccountRecoveryStore()
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: {
+				policy: 'optional',
+				enrolled: true,
+				current: false,
+				key: { id: 'key-2' },
+			},
+		})
+		store.enrol = vi.fn().mockResolvedValue({})
+		expect(await store.enrolAtUnlock('pw')).toBe('enrolled')
+		expect(store.enrol).toHaveBeenCalledWith('pw')
+
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: {
+				policy: 'optional',
+				enrolled: false,
+				current: false,
+				key: { id: 'key-2' },
+			},
+		})
+		store.enrol = vi.fn()
+		expect(await store.enrolAtUnlock('pw')).toBeNull()
+		expect(store.enrol).not.toHaveBeenCalled()
+	})
+})
