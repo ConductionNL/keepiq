@@ -106,6 +106,8 @@ class ExtensionController extends Controller {
 	 * IS the Nextcloud app-password, revocable from NC security settings.
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-pairing-against-the-nextcloud-session
 	 */
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
@@ -131,6 +133,8 @@ class ExtensionController extends Controller {
 	 * extension calls to clear its own local state.
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/browser-extension-autofill/spec.md#scenario-revocation-is-native
 	 */
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
@@ -174,6 +178,8 @@ class ExtensionController extends Controller {
 	 * @param string $host The active tab host or origin
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-url-matched-listing-decrypt-on-demand
 	 */
 	#[NoAdminRequired]
 	#[NoCSRFRequired]

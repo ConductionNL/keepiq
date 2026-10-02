@@ -71,6 +71,8 @@ class CACertificateController extends OCSController {
 	 * @AuthorizedAdminSetting(AdminSettings::class)
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-ca-health-on-the-admin-dashboard
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function health(): JSONResponse {
