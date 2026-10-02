@@ -25,6 +25,7 @@ use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
 use OCA\Keepiq\Service\DelegationAuthorizer;
 use OCA\Keepiq\Service\TeamFolderAuditor;
+use OCA\Keepiq\Service\TeamFolderMembershipResolver;
 use OCA\Keepiq\Service\TeamFolderOffboardingService;
 use OCA\Keepiq\Service\TeamFolderShareService;
 use OCA\Keepiq\Service\TeamSecretTransferService;
@@ -99,6 +100,7 @@ class PeopleAreaAgreementTest extends TestCase {
 			logger: $this->createStub(LoggerInterface::class),
 			audit: $this->createStub(TeamFolderAuditor::class),
 			memberMapper: $this->createStub(TeamFolderMemberMapper::class),
+			memberships: $this->createStub(TeamFolderMembershipResolver::class),
 		);
 		try {
 			// Empty user ids: an authorized caller gets past the guard and is
