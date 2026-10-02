@@ -1,0 +1,69 @@
+# Keepiq for GitLab CI.
+#
+# Include this file by URL at a CLI release tag, and let a job extend `.keepiq`:
+#
+#   include:
+#     - remote: https://raw.githubusercontent.com/ConductionNL/keepiq/cli-v0.3.0/integrations/gitlab-ci/keepiq.gitlab-ci.yml
+#
+#   migrate:
+#     extends: .keepiq
+#     variables:
+#       KEEPIQ_CLI_VERSION: cli-v0.3.0
+#     script:
+#       - keepiq ci run DB_PASSWORD -- ./migrate.sh
+#
+# Set these CI/CD variables in the project (protect and mask them):
+#   KEEPIQ_URL      the Keepiq (Nextcloud) address
+#   KEEPIQ_APP_ID   the approved application's id
+#   KEEPIQ_APP_KEY  the application's private key (PEM); a variable of type
+#                   File works too, then name it KEEPIQ_APP_KEY_FILE
+#
+# `keepiq ci run` puts each value in KEEPIQ_<NAME> of the wrapped command only,
+# so nothing is written to disk and nothing reaches the job log. GitLab cannot
+# mask a value fetched while the job runs, so this template offers only that
+# wrapped form, not an export to later commands.
+#
+# The job image needs a POSIX shell, curl or wget, and sha256sum. When a job
+# needs its own before_script, keep the install with
+# `- !reference [.keepiq, before_script]` as its first line.
+
+variables:
+  KEEPIQ_CLI_VERSION: ""
+  KEEPIQ_DOWNLOAD_BASE: https://github.com/ConductionNL/keepiq/releases/download
+
+.keepiq:
+  before_script:
+    - |
+      set -e
+      if [ -z "${KEEPIQ_CLI_VERSION:-}" ]; then
+        echo "Set KEEPIQ_CLI_VERSION to a CLI release such as cli-v0.3.0." >&2
+        exit 1
+      fi
+      case "$(uname -m)" in
+        x86_64|amd64) keepiq_arch=amd64 ;;
+        aarch64|arm64) keepiq_arch=arm64 ;;
+        *) echo "Unsupported architecture $(uname -m)." >&2; exit 1 ;;
+      esac
+      keepiq_bin="keepiq-linux-${keepiq_arch}"
+      keepiq_dir="${CI_PROJECT_DIR:-$PWD}/.keepiq-cli"
+      mkdir -p "$keepiq_dir"
+      keepiq_base="${KEEPIQ_DOWNLOAD_BASE%/}/${KEEPIQ_CLI_VERSION}"
+      for keepiq_file in "$keepiq_bin" SHA256SUMS; do
+        if command -v curl >/dev/null 2>&1; then
+          curl -fsSL --retry 3 -o "$keepiq_dir/$keepiq_file" "$keepiq_base/$keepiq_file"
+        else
+          wget -q -O "$keepiq_dir/$keepiq_file" "$keepiq_base/$keepiq_file"
+        fi
+      done
+      keepiq_want="$(awk -v f="$keepiq_bin" '{ n = $2; sub(/^\*/, "", n); if (n == f) print $1 }' "$keepiq_dir/SHA256SUMS")"
+      keepiq_got="$(sha256sum "$keepiq_dir/$keepiq_bin" | awk '{ print $1 }')"
+      if [ -z "$keepiq_want" ] || [ "$keepiq_got" != "$keepiq_want" ]; then
+        echo "Checksum mismatch for $keepiq_bin from $KEEPIQ_CLI_VERSION (got $keepiq_got, SHA256SUMS says ${keepiq_want:-nothing}). Refusing to install it." >&2
+        rm -rf "$keepiq_dir"
+        exit 1
+      fi
+      mv "$keepiq_dir/$keepiq_bin" "$keepiq_dir/keepiq"
+      chmod +x "$keepiq_dir/keepiq"
+      rm -f "$keepiq_dir/SHA256SUMS"
+      export PATH="$keepiq_dir:$PATH"
+      echo "Installed keepiq $KEEPIQ_CLI_VERSION, checksum verified."

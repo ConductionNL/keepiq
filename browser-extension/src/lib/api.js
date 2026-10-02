@@ -5,30 +5,194 @@
  * encrypted blob or plaintext index field; the server never returns a decrypted
  * value.
  *
- * Config ({ url, user, appPassword }) lives in `storage.local`; the app-password
- * is a device-scoped, NC-revocable credential. No key material is stored here —
+ * Accounts ({ id, url, user, appPassword, label, idleMinutes }, up to five)
+ * live in `storage.local`; each app-password is a device-scoped, NC-revocable
+ * credential (extension-account-switching). No key material is stored here —
  * the master password and the derived CryptoKey never touch storage.
  */
 
-const CONFIG_KEY = 'keepiq.config'
+// The single pairing before several accounts (read once, then removed).
+const LEGACY_CONFIG_KEY = 'keepiq.config'
+const ACCOUNTS_KEY = 'keepiq.accounts'
+const ACTIVE_KEY = 'keepiq.activeAccountId'
 
-/** Load the paired config from storage.local (or null if unpaired). */
-export async function loadConfig() {
-	const data = await chrome.storage.local.get(CONFIG_KEY)
-	return data[CONFIG_KEY] || null
+/** The most accounts one extension holds (extension-account-switching). */
+export const MAX_ACCOUNTS = 5
+
+/** The idle lock delays a user can pick, in minutes. */
+export const IDLE_CHOICES = Object.freeze([1, 5, 15, 30, 60, 240])
+
+/** The idle lock delay of a new account, in minutes. */
+export const DEFAULT_IDLE_MINUTES = 15
+
+function newAccountId() {
+	return crypto.randomUUID()
 }
 
 /**
- * Persist the paired config (non-sensitive: url, user, app-password).
- * @param config
+ * Move a pairing stored under the old single key into the account list, once.
+ * An extension paired before several accounts keeps its pairing as the first
+ * account and the old key is removed.
+ *
+ * @return {Promise<void>}
  */
-export async function saveConfig(config) {
-	await chrome.storage.local.set({ [CONFIG_KEY]: config })
+export async function migrateLegacyConfig() {
+	const data = await chrome.storage.local.get([LEGACY_CONFIG_KEY, ACCOUNTS_KEY])
+	const legacy = data[LEGACY_CONFIG_KEY]
+	if (!legacy) return
+	const accounts = Array.isArray(data[ACCOUNTS_KEY]) ? data[ACCOUNTS_KEY] : []
+	if (accounts.length === 0) {
+		const account = {
+			id: newAccountId(),
+			url: legacy.url,
+			user: legacy.user,
+			appPassword: legacy.appPassword,
+			label: '',
+			idleMinutes: IDLE_CHOICES.includes(legacy.idleMinutes)
+				? legacy.idleMinutes
+				: DEFAULT_IDLE_MINUTES,
+		}
+		await chrome.storage.local.set({
+			[ACCOUNTS_KEY]: [account],
+			[ACTIVE_KEY]: account.id,
+		})
+	}
+	await chrome.storage.local.remove(LEGACY_CONFIG_KEY)
 }
 
-/** Clear the pairing. */
-export async function clearConfig() {
-	await chrome.storage.local.remove(CONFIG_KEY)
+/**
+ * Every paired account, in pairing order.
+ *
+ * @return {Promise<Array<object>>} The accounts.
+ */
+export async function loadAccounts() {
+	const data = await chrome.storage.local.get(ACCOUNTS_KEY)
+	return Array.isArray(data[ACCOUNTS_KEY]) ? data[ACCOUNTS_KEY] : []
+}
+
+async function saveAccounts(accounts) {
+	await chrome.storage.local.set({ [ACCOUNTS_KEY]: accounts })
+}
+
+/**
+ * The id of the active account (the first one when none is set).
+ *
+ * @return {Promise<string|null>} The id, or null when nothing is paired.
+ */
+export async function activeAccountId() {
+	const accounts = await loadAccounts()
+	const data = await chrome.storage.local.get(ACTIVE_KEY)
+	const id = data[ACTIVE_KEY]
+	if (id && accounts.some((a) => a.id === id)) return id
+	return accounts.length ? accounts[0].id : null
+}
+
+/**
+ * One account by id.
+ *
+ * @param {string} id The account id.
+ * @return {Promise<object|null>} The account, or null.
+ */
+export async function loadAccount(id) {
+	return (await loadAccounts()).find((a) => a.id === id) || null
+}
+
+/**
+ * The active account's config, or null when nothing is paired. Every API call
+ * takes one account's config; matching and filling use the active one.
+ *
+ * @return {Promise<object|null>} The active account.
+ */
+export async function loadConfig() {
+	const id = await activeAccountId()
+	return id ? loadAccount(id) : null
+}
+
+/**
+ * Add a paired account and make it active. Refuses a sixth account, and the
+ * same user on the same server twice.
+ *
+ * @param {{url: string, user: string, appPassword: string, label?: string}} config The pairing.
+ * @return {Promise<object>} The stored account.
+ */
+export async function addAccount(config) {
+	const accounts = await loadAccounts()
+	if (accounts.length >= MAX_ACCOUNTS) {
+		throw new Error(
+			'You can connect up to '
+				+ MAX_ACCOUNTS
+				+ ' accounts. Disconnect one first.',
+		)
+	}
+	const sameServer = (a) =>
+		String(a.url).replace(/\/+$/, '') === String(config.url).replace(/\/+$/, '')
+		&& a.user === config.user
+	if (accounts.some(sameServer)) {
+		throw new Error('This account is already connected.')
+	}
+	const account = {
+		id: newAccountId(),
+		url: config.url,
+		user: config.user,
+		appPassword: config.appPassword,
+		label: config.label || '',
+		idleMinutes: DEFAULT_IDLE_MINUTES,
+	}
+	await saveAccounts([...accounts, account])
+	await setActiveAccount(account.id)
+	return account
+}
+
+/**
+ * Change stored, non-sensitive settings of one account (label, idle delay).
+ *
+ * @param {string} id The account id.
+ * @param {{label?: string, idleMinutes?: number}} patch The changes.
+ * @return {Promise<object>} The updated account.
+ */
+export async function updateAccount(id, patch) {
+	const accounts = await loadAccounts()
+	const account = accounts.find((a) => a.id === id)
+	if (!account) throw new Error('unknown account')
+	if (patch.idleMinutes !== undefined) {
+		if (!IDLE_CHOICES.includes(patch.idleMinutes)) {
+			throw new Error('unsupported idle delay')
+		}
+		account.idleMinutes = patch.idleMinutes
+	}
+	if (patch.label !== undefined) account.label = String(patch.label)
+	await saveAccounts(accounts)
+	return account
+}
+
+/**
+ * Remove one account. The next remaining account becomes active.
+ *
+ * @param {string} id The account id.
+ * @return {Promise<void>}
+ */
+export async function removeAccount(id) {
+	const accounts = (await loadAccounts()).filter((a) => a.id !== id)
+	await saveAccounts(accounts)
+	const data = await chrome.storage.local.get(ACTIVE_KEY)
+	if (data[ACTIVE_KEY] === id) {
+		if (accounts.length) {
+			await chrome.storage.local.set({ [ACTIVE_KEY]: accounts[0].id })
+		} else {
+			await chrome.storage.local.remove(ACTIVE_KEY)
+		}
+	}
+}
+
+/**
+ * Make an account the active one.
+ *
+ * @param {string} id The account id.
+ * @return {Promise<void>}
+ */
+export async function setActiveAccount(id) {
+	if (!(await loadAccount(id))) throw new Error('unknown account')
+	await chrome.storage.local.set({ [ACTIVE_KEY]: id })
 }
 
 function authHeader(config) {
@@ -243,4 +407,62 @@ export async function typeIdByName(config, name) {
  */
 export function passkeyTypeId(config) {
 	return typeIdByName(config, 'passkey')
+}
+
+/**
+ * The organisation's extension policy: `maxIdleMinutes`, the longest idle
+ * lock delay a user may pick.
+ * @param config
+ */
+export function extensionPolicy(config) {
+	return request(config, 'GET', '/api/v1/extension/policy')
+}
+
+/**
+ * The extension's own passkey unlock options (client `extension`, bound to
+ * the extension's relying party id): PRF salts and wrapped unlock keys.
+ * @param config
+ * @param rpId
+ */
+export function passkeyLoginOptions(config, rpId) {
+	return request(
+		config,
+		'GET',
+		'/api/v1/passkeys/login-options?client=extension&rpId='
+			+ encodeURIComponent(rpId),
+	)
+}
+
+/**
+ * A fresh WebAuthn challenge for an enrolment.
+ * @param config
+ */
+export function passkeyChallenge(config) {
+	return request(config, 'GET', '/api/v1/passkeys/challenge')
+}
+
+/**
+ * Store an extension passkey: credential metadata, the PRF salt and the
+ * PRF-wrapped unlock key, never the raw key or the PRF output.
+ * @param config
+ * @param body
+ */
+export function enrolPasskey(config, body) {
+	return request(config, 'POST', '/api/v1/passkeys', {
+		...body,
+		clientKind: 'extension',
+	})
+}
+
+/**
+ * Stamp a passkey as just used.
+ * @param config
+ * @param id
+ */
+export function markPasskeyUsed(config, id) {
+	return request(
+		config,
+		'POST',
+		'/api/v1/passkeys/' + encodeURIComponent(id) + '/used',
+	)
 }

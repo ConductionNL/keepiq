@@ -1,0 +1,107 @@
+name: CI integrations
+
+# Runs the GitHub Action and the GitLab CI template against a stub Keepiq
+# (sdk/testdata/stub_server.py) and a local release directory holding a CLI
+# built from this commit plus its SHA256SUMS. integrations/test/run.sh covers
+# both, including a tampered binary; the `action` job then uses the action the
+# way a workflow does, so the masked export shows in this run's log.
+
+on:
+  push:
+    branches: [main, development]
+    paths: ["integrations/**", "cli/**", "sdk/go/**", "sdk/testdata/**", ".github/workflows/integrations.yml"]
+  pull_request:
+    branches: [main, development, beta]
+    paths: ["integrations/**", "cli/**", "sdk/go/**", "sdk/testdata/**", ".github/workflows/integrations.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scripts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install cryptography pyyaml
+      - name: Build the CLI
+        working-directory: cli
+        run: CGO_ENABLED=0 go build -trimpath -ldflags "-X main.version=cli-vtest" -o "$RUNNER_TEMP/keepiq-linux-amd64" .
+      - run: bash integrations/test/run.sh "$RUNNER_TEMP/keepiq-linux-amd64"
+      - name: Lint the GitLab template
+        run: |
+          python - <<'PY'
+          import yaml
+          doc = yaml.safe_load(open("integrations/gitlab-ci/keepiq.gitlab-ci.yml"))
+          assert ".keepiq" in doc and doc[".keepiq"]["before_script"], "no .keepiq before_script"
+          assert "KEEPIQ_CLI_VERSION" in doc["variables"]
+          PY
+
+  action:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install cryptography
+      - name: Local release and stub Keepiq
+        run: |
+          mkdir -p "$RUNNER_TEMP/release/cli-vtest"
+          (cd cli && CGO_ENABLED=0 go build -trimpath -ldflags "-X main.version=cli-vtest" -o "$RUNNER_TEMP/release/cli-vtest/keepiq-linux-amd64" .)
+          (cd "$RUNNER_TEMP/release/cli-vtest" && sha256sum keepiq-linux-amd64 > SHA256SUMS)
+          nohup python -m http.server 18088 --bind 127.0.0.1 --directory "$RUNNER_TEMP/release" > /dev/null 2>&1 &
+          # The password is random and lives only in the stub's memory and argv,
+          # so the disk check below cannot be fooled by a literal in this repo.
+          db_value="$(openssl rand -hex 24)"
+          nohup python sdk/testdata/stub_server.py --port 18089 --add "DB_PASSWORD=$db_value" --add API_TOKEN=api-token-from-keepiq > /dev/null 2>&1 &
+          echo "STUB_PID=$!" >> "$GITHUB_ENV"
+          echo "DB_HASH=$(printf %s "$db_value" | sha256sum | cut -c1-64)" >> "$GITHUB_ENV"
+          for _ in $(seq 50); do curl -fs http://127.0.0.1:18089/index.php/apps/keepiq/api/v1/app/.well-known/keepiq > /dev/null && break; sleep 0.2; done
+          {
+            echo 'KEEPIQ_TEST_KEY<<KEEPIQ_TEST_EOF'
+            python -c 'import json; print(json.load(open("sdk/testdata/machine_envelope.json"))["privateKeyPem"].strip())'
+            echo 'KEEPIQ_TEST_KEY_EOF'
+          } >> "$GITHUB_ENV"
+      - name: Run mode
+        uses: ./integrations/github-action
+        with:
+          url: http://127.0.0.1:18089/index.php
+          application-id: billing
+          private-key: ${{ env.KEEPIQ_TEST_KEY }}
+          secrets: DB_PASSWORD
+          run: test "$(printf %s "$KEEPIQ_DB_PASSWORD" | sha256sum | cut -c1-64)" = "$DB_HASH" && echo "deploy saw the password"
+          version: cli-vtest
+          download-base: http://127.0.0.1:18088
+      - name: No file on the runner holds the value
+        run: |
+          value="$(tr '\0' '\n' < "/proc/$STUB_PID/cmdline" | sed -n 's/^DB_PASSWORD=//p')"
+          test -n "$value"
+          if grep -rqF "$value" "$RUNNER_TEMP" "$HOME" "$GITHUB_WORKSPACE" 2>/dev/null; then
+            echo "::error::a file holds the secret value"; exit 1
+          fi
+      - name: Export mode
+        uses: ./integrations/github-action
+        with:
+          url: http://127.0.0.1:18089/index.php
+          application-id: billing
+          private-key: ${{ env.KEEPIQ_TEST_KEY }}
+          secrets: API_TOKEN
+          export-env: "true"
+          version: cli-vtest
+          download-base: http://127.0.0.1:18088
+      - name: A later step sees the value, and the log shows it masked
+        run: |
+          test "$KEEPIQ_API_TOKEN" = api-token-from-keepiq
+          echo "value: $KEEPIQ_API_TOKEN"

@@ -73,7 +73,7 @@ function requestConsent(rpId, op) {
  */
 export function buildPasskeyOrchestrator({ api, vault, loadConfig }) {
 	async function handleCreate(options, origin) {
-		if (!vault.isUnlocked()) throw new Error('locked')
+		if (!(await vault.isUnlocked())) throw new Error('locked')
 		const rpId = (options.rp && options.rp.id) || hostnameOf(origin)
 		// The rpId must belong to the requesting origin (clients-passkey-origin).
 		if (!rpIdAllowed(rpId, origin)) throw new Error('rp-origin-mismatch')
@@ -88,13 +88,13 @@ export function buildPasskeyOrchestrator({ api, vault, loadConfig }) {
 			url: rpId,
 			typeId,
 			key: encryptedKey,
-			encryptionSuiteId: vault.activeSuiteId(),
+			encryptionSuiteId: await vault.activeSuiteId(),
 		})
 		return credential
 	}
 
 	async function handleGet(options, origin) {
-		if (!vault.isUnlocked()) throw new Error('locked')
+		if (!(await vault.isUnlocked())) throw new Error('locked')
 		const rpId = options.rpId || hostnameOf(origin)
 		// Checked before any vault read: a foreign rpId learns nothing.
 		if (!rpIdAllowed(rpId, origin)) throw new Error('rp-origin-mismatch')
@@ -138,7 +138,7 @@ export function buildPasskeyOrchestrator({ api, vault, loadConfig }) {
 				url: chosen.row.url,
 				typeId: chosen.row.typeId,
 				key: encryptedKey,
-				encryptionSuiteId: vault.activeSuiteId(),
+				encryptionSuiteId: await vault.activeSuiteId(),
 			})
 		}
 		return assertion
