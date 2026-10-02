@@ -69,6 +69,11 @@ class FederationController extends Controller {
 	 *
 	 * @NoAdminRequired
 	 *
+	 * @no-admin-idor-exempt Reads no object of this instance: the cloud id names a user on
+	 *   another instance, the outbound partner allowlist in FederatedCertificateService::lookup()
+	 *   decides whether any call is made, and the partner answers only through its own inbound
+	 *   and opt-in checks.
+	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
