@@ -14,6 +14,7 @@ import (
 	"encoding/hex"
 	"encoding/pem"
 	"math/big"
+	"strings"
 	"testing"
 	"time"
 )
@@ -164,4 +165,49 @@ func selfSignedCert(t *testing.T, key *rsa.PrivateKey) string {
 		t.Fatal(err)
 	}
 	return string(pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE", Bytes: der}))
+}
+
+// TestEncryptFieldRoundTrip proves EncryptField writes the chunked format
+// DecryptField reads, for a one-chunk value, a value spanning three 446-byte
+// chunks, an empty value and a multi-byte UTF-8 value.
+func TestEncryptFieldRoundTrip(t *testing.T) {
+	key, err := rsa.GenerateKey(rand.Reader, 4096)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, plaintext := range []string{"s3cr3t", strings.Repeat("x", 1000), "", "wachtwoord met é en 🔑"} {
+		ct, err := EncryptField(plaintext, &key.PublicKey)
+		if err != nil {
+			t.Fatalf("encrypt: %v", err)
+		}
+		raw, _ := base64.StdEncoding.DecodeString(ct)
+		wantChunks := (len(plaintext) + 445) / 446
+		if wantChunks == 0 {
+			wantChunks = 1
+		}
+		if got := int(binary.BigEndian.Uint32(raw[0:4])); got != wantChunks || len(raw) != 4+wantChunks*512 {
+			t.Fatalf("len %d: chunk count %d, length %d", len(plaintext), got, len(raw))
+		}
+		got, err := DecryptField(ct, key)
+		if err != nil {
+			t.Fatalf("decrypt: %v", err)
+		}
+		if got != plaintext {
+			t.Fatalf("round trip mismatch for %q", plaintext)
+		}
+	}
+}
+
+// TestParsePrivateKeyAcceptsPKCS1 keeps keys written by `openssl genrsa`
+// (BEGIN RSA PRIVATE KEY) usable as application keys.
+func TestParsePrivateKeyAcceptsPKCS1(t *testing.T) {
+	key, _ := rsa.GenerateKey(rand.Reader, 2048)
+	pkcs1 := string(pem.EncodeToMemory(&pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(key)}))
+	got, err := ParsePrivateKey(pkcs1)
+	if err != nil {
+		t.Fatalf("PKCS#1: %v", err)
+	}
+	if got.N.Cmp(key.N) != 0 {
+		t.Fatal("PKCS#1 key parsed to a different key")
+	}
 }
