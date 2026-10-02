@@ -193,4 +193,27 @@ class SecretControllerTest extends TestCase {
 		$response = $this->controller->index();
 		$this->assertSame(0, $response->getData()['total']);
 	}//end testIndexReturnsList()
+
+	/**
+	 * A stale base answers 409 with the current row; the base reaches the
+	 * service only when given (offline-edit-queue).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testUpdateWithAStaleBaseAnswers409WithTheCurrentRow(): void {
+		$current = $this->makeSecret();
+		$this->request->method('getParam')->willReturnCallback(
+			static fn (string $name, $default = null) => $name === 'name' ? 'Offline name' : $default
+		);
+		$this->secretService->expects($this->once())->method('update')
+			->with('s-1', ['name' => 'Offline name', 'baseUpdatedAt' => '2026-10-01T09:00:00+00:00'], 'alice')
+			->willThrowException(new \OCA\Keepiq\Exception\StaleWriteException($current));
+
+		$response = $this->controller->update(id: 's-1', name: 'Offline name', baseUpdatedAt: '2026-10-01T09:00:00+00:00');
+
+		$this->assertSame(Http::STATUS_CONFLICT, $response->getStatus());
+		$this->assertSame('ENCRYPTED', $response->getData()['current']['key']);
+	}//end testUpdateWithAStaleBaseAnswers409WithTheCurrentRow()
 }//end class

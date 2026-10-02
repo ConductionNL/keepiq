@@ -100,16 +100,24 @@ class SecretTrashService {
 	 *
 	 * @param string $id The secret ID
 	 * @param string $userId The owner
+	 * @param string|null $baseUpdatedAt The version an offline delete was made from
 	 *
 	 * @return Secret
 	 *
+	 * @throws \OCA\Keepiq\Exception\StaleWriteException When the secret changed since that version
+	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-deleting-a-secret-moves-it-to-the-trash
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
-	public function trash(string $id, string $userId): Secret {
+	public function trash(string $id, string $userId, ?string $baseUpdatedAt=null): Secret {
 		$secret = $this->secretService->findOwned($id, $userId);
 		if ($secret->getTrashedAt() !== null) {
 			return $secret;
 		}
+
+		// An offline delete names the version it was made from; a secret
+		// that changed since stays put (offline-edit-queue).
+		SecretService::assertUnchangedSince(secret: $secret, baseUpdatedAt: $baseUpdatedAt);
 
 		$this->sharingRevoker->revokeAll(secretId: $id);
 

@@ -214,6 +214,12 @@ class AdminSettingsService {
 					'offline_cache_enabled',
 					true
 				),
+				// Offline edits (offline-edit-queue): off until an administrator turns them on.
+				'offline_edits_enabled' => $this->appConfig->getValueBool(
+					$appId,
+					'offline_edits_enabled',
+					false
+				),
 			]
 		);
 
@@ -366,6 +372,10 @@ class AdminSettingsService {
 
 		if (isset($data['offline_cache_enabled']) === true) {
 			$this->appConfig->setValueBool($appId, 'offline_cache_enabled', (bool)$data['offline_cache_enabled']);
+		}
+
+		if (isset($data['offline_edits_enabled']) === true) {
+			$this->appConfig->setValueBool($appId, 'offline_edits_enabled', (bool)$data['offline_edits_enabled']);
 		}
 	}//end updateInstanceSettings()
 

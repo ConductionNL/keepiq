@@ -27,6 +27,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCA\Keepiq\Service\SecretService;
@@ -308,12 +309,16 @@ class SecretController extends OCSController {
 	 * @param string|null $additionalFields The new RSA-encrypted additional fields blob
 	 * @param int|null $mergedPending How many pending request-filled blobs the
 	 *                                client merged into $additionalFields (keepiq#750)
+	 * @param string|null $baseUpdatedAt The version the change was made from; when the
+	 *                                   secret changed since, nothing is written and the
+	 *                                   answer is 409 with the current row (offline-edit-queue)
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Each parameter is read indirectly via the
 	 *   variable-variable ${$field} loop that forwards only fields present in the request.
@@ -329,6 +334,7 @@ class SecretController extends OCSController {
 		?string $login = null,
 		?string $additionalFields = null,
 		?int $mergedPending = null,
+		?string $baseUpdatedAt = null,
 	): JSONResponse {
 		$userId = $this->uid();
 		if ($userId === null) {
@@ -347,8 +353,17 @@ class SecretController extends OCSController {
 			$data['mergedPending'] = $mergedPending;
 		}
 
+		if ($baseUpdatedAt !== null) {
+			$data['baseUpdatedAt'] = $baseUpdatedAt;
+		}
+
 		try {
 			$secret = $this->secretService->update($id, $data, $userId);
+		} catch (StaleWriteException $e) {
+			return new JSONResponse(
+				data: ['message' => $e->getMessage(), 'current' => $e->getCurrent()->jsonSerialize()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (NotFoundException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (ForbiddenException $e) {

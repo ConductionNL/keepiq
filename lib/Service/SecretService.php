@@ -42,6 +42,7 @@ use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -894,6 +895,11 @@ class SecretService {
 
 		$secret = $this->loadOwned(id: $id, userId: $userId);
 
+		// An offline edit names the version it was made from; a secret that
+		// changed since is refused untouched (offline-edit-queue).
+		self::assertUnchangedSince(secret: $secret, baseUpdatedAt: $data['baseUpdatedAt'] ?? null);
+		unset($data['baseUpdatedAt']);
+
 		// Pre-update snapshot source (secret-version-history §2.2): captured
 		// BEFORE any mutation; persisted below only when a field actually
 		// changes (a no-op resubmit creates no version).
@@ -1387,6 +1393,37 @@ class SecretService {
 
 		return null;
 	}//end suiteBlockReason()
+
+	/**
+	 * Refuse a write based on an older version of the secret. A null or empty
+	 * base means the caller did not ask for the check, as online clients do.
+	 *
+	 * @param Secret $secret The stored secret
+	 * @param mixed $baseUpdatedAt The `updatedAt` the client's copy was made from
+	 *
+	 * @return void
+	 *
+	 * @throws StaleWriteException When the secret changed since
+	 * @throws InvalidArgumentException When the base is not a date
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public static function assertUnchangedSince(Secret $secret, mixed $baseUpdatedAt): void {
+		if ($baseUpdatedAt === null || $baseUpdatedAt === '') {
+			return;
+		}
+
+		try {
+			$base = new DateTime((string)$baseUpdatedAt);
+		} catch (\Exception) {
+			throw new InvalidArgumentException('baseUpdatedAt must be a date');
+		}
+
+		$stored = $secret->getUpdatedAt();
+		if ($stored === null || $stored->getTimestamp() !== $base->getTimestamp()) {
+			throw new StaleWriteException($secret);
+		}
+	}//end assertUnchangedSince()
 
 	/**
 	 * Load a secret and verify the requester owns it.

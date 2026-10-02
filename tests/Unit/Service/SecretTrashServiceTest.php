@@ -250,4 +250,41 @@ class SecretTrashServiceTest extends TestCase {
 
 		$this->assertSame(['reason'], AuditEventTypes::WHITELIST[AuditEventTypes::SECRET_PURGED]);
 	}//end testEventTypesAreWhitelisted()
+
+	/**
+	 * An offline delete based on an older version leaves the secret and its
+	 * sharing alone (offline-edit-queue).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
+	 */
+	public function testTrashWithAStaleBaseChangesNothing(): void {
+		$secret = $this->secret();
+		$secret->setUpdatedAt(new DateTime('2026-10-02T10:00:00+00:00'));
+		$this->linkShares->expects($this->never())->method('deleteBySecretId');
+		$this->mapper->expects($this->never())->method('update');
+
+		$this->expectException(\OCA\Keepiq\Exception\StaleWriteException::class);
+		try {
+			$this->service->trash('s-1', 'alice', '2026-10-01T10:00:00+00:00');
+		} finally {
+			$this->assertNull($secret->getTrashedAt());
+		}
+	}//end testTrashWithAStaleBaseChangesNothing()
+
+	/**
+	 * A matching base trashes as before.
+	 *
+	 * @return void
+	 */
+	public function testTrashWithAMatchingBaseTrashes(): void {
+		$secret = $this->secret();
+		$secret->setUpdatedAt(new DateTime('2026-10-02T10:00:00+00:00'));
+		$this->mapper->expects($this->once())->method('update');
+
+		$this->service->trash('s-1', 'alice', '2026-10-02T10:00:00+00:00');
+
+		$this->assertNotNull($secret->getTrashedAt());
+	}//end testTrashWithAMatchingBaseTrashes()
 }//end class
