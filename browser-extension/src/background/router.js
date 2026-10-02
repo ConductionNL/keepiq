@@ -186,12 +186,20 @@ async function doUnpair(payload) {
 	try {
 		await api.unpair(account)
 	} catch {
-		// Best-effort; unpairing is local + NC-side revocation.
+		// Best-effort acknowledgement.
+	}
+	let revoked = false
+	try {
+		// Delete the app password itself, so Disconnect really ends the
+		// pairing (#748). The local state is cleared either way.
+		revoked = await api.revokeAppPassword(account)
+	} catch {
+		revoked = false
 	}
 	lockAccount(id)
 	maxIdleByAccount.delete(id)
 	await api.removeAccount(id)
-	return { ok: true }
+	return { ok: true, revoked }
 }
 
 async function doSwitchAccount(payload) {
@@ -307,7 +315,8 @@ async function doFill(payload) {
 	const results = await chrome.tabs
 		.sendMessage(tab.id, {
 			type: 'fill-credential',
-			payload: { login, secret },
+			// Every frame gets the message; only frames on this host fill (#740).
+			payload: { login, secret, host: cache.host },
 		})
 		.catch(() => ({ filled: false }))
 	// A fill counts as a use for the vault's Last used sort; a failed report
@@ -321,7 +330,10 @@ async function doFill(payload) {
 		// Best-effort: fill a detected OTP field on the page; the popup also
 		// copies the code as the fallback (extension-totp-autofill §4.1).
 		chrome.tabs
-			.sendMessage(tab.id, { type: 'fill-otp', payload: { code: totpCode } })
+			.sendMessage(tab.id, {
+				type: 'fill-otp',
+				payload: { code: totpCode, host: cache.host },
+			})
 			.catch(() => {})
 	}
 	return { filled: !!results?.filled, totpCode }
