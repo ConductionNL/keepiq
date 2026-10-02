@@ -192,3 +192,111 @@ button.link {
 	width: auto;
 	margin: 0;
 }
+
+/* Tabs: This site, Vault, Generator, Send (clients-extension-generator-vault-send) */
+.tabs {
+	display: flex;
+	gap: 4px;
+	margin: 8px 0 12px;
+	border-bottom: 1px solid var(--border);
+}
+
+.tabs button {
+	flex: 1;
+	padding: 6px 4px;
+	border: 0;
+	border-bottom: 2px solid transparent;
+	background: none;
+	color: var(--muted);
+	font-size: 13px;
+	cursor: pointer;
+}
+
+.tabs button[aria-selected='true'] {
+	color: var(--cobalt);
+	border-bottom-color: var(--cobalt);
+	font-weight: 600;
+}
+
+.filters {
+	gap: 8px;
+}
+
+.filters label {
+	flex: 1;
+}
+
+select,
+textarea {
+	display: block;
+	width: 100%;
+	margin-top: 4px;
+	padding: 6px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	font: inherit;
+	font-size: 14px;
+}
+
+label.inline {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+label.inline input {
+	display: inline;
+	width: auto;
+	margin: 0;
+}
+
+fieldset.mode {
+	border: 0;
+	padding: 0;
+	margin: 0 0 8px;
+	display: flex;
+	gap: 12px;
+}
+
+h2 {
+	font-size: 15px;
+	margin: 8px 0 4px;
+}
+
+.field-row {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin: 6px 0;
+	font-size: 13px;
+}
+
+.field-label {
+	width: 72px;
+	color: var(--muted);
+}
+
+.field-value {
+	flex: 1;
+	overflow-wrap: anywhere;
+	font-family: ui-monospace, monospace;
+}
+
+.actions {
+	gap: 8px;
+	margin-top: 8px;
+}
+
+.gen-output {
+	display: block;
+	min-height: 40px;
+	padding: 8px;
+	border: 1px solid var(--border);
+	border-radius: 6px;
+	font-family: ui-monospace, monospace;
+	overflow-wrap: anywhere;
+}
+
+button.danger {
+	color: var(--error);
+}

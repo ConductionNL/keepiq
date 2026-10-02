@@ -7,6 +7,9 @@
 
 import { platformAuthenticatorAvailable } from '../unlock/ceremony.js'
 import { canAddAccount, renderAccountSwitcher, renderIdleChoices } from './views.js'
+import { initGenerator } from './generator-view.js'
+import { initSend } from './send-view.js'
+import { initVault } from './vault-view.js'
 
 // The last state the worker reported (accounts, active account, settings).
 let state = {}
@@ -237,11 +240,52 @@ async function refresh() {
 		await renderBiometricUnlock()
 	} else {
 		show('view-unlocked')
-		await renderUnlocked()
+		await selectTab('site')
+	}
+}
+
+// --- tabs: This site, Vault, Generator, Send ---
+
+const TABS = ['site', 'vault', 'generator', 'send']
+let generatorView = null
+let vaultView = null
+let sendView = null
+
+/**
+ * Show one tab and open its view.
+ *
+ * @param {string} name One of TABS.
+ * @param {object} [arg] Passed to the view's open (the Send tab's prefill).
+ * @return {Promise<void>}
+ */
+async function selectTab(name, arg) {
+	for (const tab of TABS) {
+		const selected = tab === name
+		$('tab-' + tab).setAttribute('aria-selected', selected ? 'true' : 'false')
+		$('panel-' + tab).hidden = !selected
+	}
+	if (name === 'site') await renderUnlocked()
+	if (name === 'vault') await vaultView.open()
+	if (name === 'generator') await generatorView.open()
+	if (name === 'send') await sendView.open(arg)
+}
+
+function wireTabs() {
+	const ctx = { $, send, showError }
+	generatorView = initGenerator(ctx)
+	sendView = initSend(ctx)
+	vaultView = initVault({
+		...ctx,
+		generatePassword: () => generatorView.generate(),
+		sendItem: (item) => selectTab('send', item),
+	})
+	for (const tab of TABS) {
+		$('tab-' + tab).addEventListener('click', () => selectTab(tab))
 	}
 }
 
 function wire() {
+	wireTabs()
 	$('pair-submit').addEventListener('click', async () => {
 		showError('pair-error', '')
 		const res = await send('pair', {
