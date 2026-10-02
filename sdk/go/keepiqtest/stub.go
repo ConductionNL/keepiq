@@ -80,6 +80,7 @@ type Stub struct {
 	Renewals    int
 	PutCount    int // accepted PUT write-backs
 	leases      map[string]time.Time
+	tokens      map[string]bool
 	leaseSeq    int
 	updates     int
 	Server      *httptest.Server
@@ -235,11 +236,20 @@ func (s *Stub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.Exchanges++
-		writeJSON(w, 200, map[string]any{"access_token": fmt.Sprintf("tok-%d", s.Exchanges), "token_type": "Bearer", "expires_in": 300})
+		tok := fmt.Sprintf("tok-%d", s.Exchanges)
+		if s.tokens == nil {
+			s.tokens = map[string]bool{}
+		}
+		s.tokens[tok] = true
+		writeJSON(w, 200, map[string]any{"access_token": tok, "token_type": "Bearer", "expires_in": 300})
 		return
 	}
-	if s.Exchanges == 0 || r.Header.Get("Authorization") != fmt.Sprintf("Bearer tok-%d", s.Exchanges) || s.RevokeNext {
+	// Every issued token stays valid until RevokeNext revokes them all, as on
+	// the server, where several clients (or provider processes) hold tokens
+	// at once.
+	if !s.tokens[strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")] || s.RevokeNext {
 		s.RevokeNext = false
+		s.tokens = map[string]bool{}
 		writeJSON(w, 401, map[string]any{"message": "Bearer token required"})
 		return
 	}
