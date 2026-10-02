@@ -36,7 +36,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.3.4-unstable.20261002140000</version>
+    <version>0.3.4-unstable.20261002180000</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Keepiq</namespace>
@@ -123,6 +123,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Keepiq\BackgroundJob\RefreshComplianceMetricsJob</job>
         <job>OCA\Keepiq\BackgroundJob\DeliverSiemEventsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ScanCertificateExpiryJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ScheduledVaultBackupJob</job>
     </background-jobs>
 
     <!--
@@ -228,6 +229,14 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Keepiq\Repair\SeedDevelopmentSecretDelegations</step>
         </install>
     </repair-steps>
+
+    <!-- Vault backups (admin-scheduled-vault-backups D4). -->
+    <commands>
+        <command>OCA\Keepiq\Command\BackupCreate</command>
+        <command>OCA\Keepiq\Command\BackupList</command>
+        <command>OCA\Keepiq\Command\BackupVerify</command>
+        <command>OCA\Keepiq\Command\BackupRestore</command>
+    </commands>
 
     <settings>
         <admin>OCA\Keepiq\Settings\AdminSettings</admin>

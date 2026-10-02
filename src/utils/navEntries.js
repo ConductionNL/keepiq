@@ -68,3 +68,22 @@ export function isMenuEntryVisible(item, { isAdmin, appsWebRoots }) {
 
 	return true
 }
+
+/**
+ * The permission list the app shell hands to CnAppRoot.
+ *
+ * CnPageRenderer refuses a page whose `permission` the list does not hold,
+ * but it treats an EMPTY list as "the app did not say" and serves every
+ * page. Nextcloud provides no permission list (`OC.currentUser` is the uid
+ * string), so the shell used to pass an empty one and the admin-only
+ * Integrations page opened for anyone who typed its URL (#878). The list is
+ * never empty: every signed-in user holds `user`, and the instance admin
+ * also holds `admin`, the same flag the menu filter above uses.
+ *
+ * @param {boolean} isAdmin The instance admin flag.
+ * @return {Array<string>} The permissions the user holds.
+ * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+ */
+export function shellPermissions(isAdmin) {
+	return isAdmin === true ? ['user', 'admin'] : ['user']
+}

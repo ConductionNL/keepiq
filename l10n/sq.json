@@ -1266,6 +1266,61 @@
         "Remove tag": "Hiq etiketën",
         "Add tag": "Shto etiketë",
         "Could not change the tags. Try again.": "Etiketat nuk u ndryshuan dot. Provoni sërish.",
+        "Could not approve the application. It is still in the queue.": "Aplikimi nuk u miratua dot. Është ende në radhë.",
+        "Could not reject the application. It is still in the queue.": "Aplikimi nuk u refuzua dot. Është ende në radhë.",
+        "Removed the user from {count} team folders.": "Përdoruesi u hoq nga {count} dosje ekipi.",
+        "Approve a share": "Mirato një ndarje",
+        "This approval link is incomplete. Open it again from the notification.": "Kjo lidhje miratimi është e paplotë. Hapeni sërish nga njoftimi.",
+        "Deny": "Refuzo",
+        "{user} joined a group you share a secret with. Share the secret with them too?": "{user} u bashkua me një grup me të cilin ndani një sekret. Ta ndani sekretin edhe me të?",
+        "{requester} asks you to share a secret with {user}.": "{requester} ju kërkon të ndani një sekret me {user}.",
+        "Shared. The recipient can now open the secret.": "U nda. Marrësi tani mund ta hapë sekretin.",
+        "The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.": "Marrësi nuk e ka konfiguruar ende Keepiq, ndaj nuk u nda asgjë. Riprovoni pasi ta ketë bërë.",
+        "Could not share the secret. Only its owner can approve this.": "Sekreti nuk u nda dot. Vetëm pronari i tij mund ta miratojë këtë.",
+        "Could not share the secret. Try again.": "Sekreti nuk u nda dot. Riprovoni.",
+        "Denied. Nothing was shared.": "U refuzua. Nuk u nda asgjë.",
+        "Could not deny the request. Try again.": "Kërkesa nuk u refuzua dot. Riprovoni.",
+        "%1$s asks you to share the secret \"%2$s\" with %3$s.": "%1$s ju kërkon të ndani sekretin \"%2$s\" me %3$s.",
+        "Expires on (optional)": "Skadon më (opsionale)",
+        "Hand over to": "Dorëzoja",
+        "Choose a recipient": "Zgjidhni një marrës",
+        "Hand over temporarily": "Dorëzo përkohësisht",
+        "Expiry rules": "Rregulla skadimi",
+        "Set how long passwords of one item type or in one folder may live, and when to be reminded. When several dates apply, the earliest one counts.": "Caktoni sa gjatë mund të jetojnë fjalëkalimet e një lloji objekti ose në një dosje, dhe kur të kujtoheni. Kur vlejnë disa data, llogaritet më e hershmja.",
+        "Delete rule": "Fshi rregullin",
+        "Set by your administrator": "Caktuar nga administratori juaj",
+        "No expiry rules yet.": "Ende nuk ka rregulla skadimi.",
+        "Applies to": "Vlen për",
+        "Item type": "Lloj objekti",
+        "Maximum age in days (empty for reminders only)": "Mosha maksimale në ditë (bosh vetëm për kujtesa)",
+        "Remind me this many days before, comma separated": "Më kujto kaq ditë përpara, të ndara me presje",
+        "Save rule": "Ruaje rregullin",
+        "An item type": "Një lloj objekti",
+        "A folder": "Një dosje",
+        "Folder {name}": "Dosja {name}",
+        "Type {name}": "Lloji {name}",
+        "Expires after {days} days": "Skadon pas {days} ditësh",
+        "Reminders {days} days before": "Kujtesa {days} ditë përpara",
+        "Could not save the expiry rule.": "Rregulli i skadimit nuk u ruajt dot.",
+        "Could not delete the expiry rule.": "Rregulli i skadimit nuk u fshi dot.",
+        "All statuses": "Të gjitha gjendjet",
+        "Compromised": "E komprometuar",
+        "Could not load the members.": "Anëtarët nuk u ngarkuan dot.",
+        "Emergency contact": "Kontakt urgjence",
+        "Leaving user": "Përdorues që largohet",
+        "No": "Jo",
+        "No users match this filter.": "Asnjë përdorues nuk përputhet me këtë filtër.",
+        "Not set up": "Pa u konfiguruar",
+        "Revoke suite": "Revoko paketën",
+        "Revoked": "E revokuar",
+        "Search users": "Kërko përdorues",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Shihni cilët përdorues kanë konfiguruar një kasafortë. Nisni largimin ose revokoni një paketë nga një rresht.",
+        "Successor": "Pasardhës",
+        "Team folders": "Dosje ekipi",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Përdoruesi është ende në grupin {groups}, që është anëtar i një dosjeje ekipi. Hiqeni nga grupi ose çaktivizoni llogarinë.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Përdoruesi është ende në grupet {groups}, që janë anëtare të dosjeve të ekipit. Hiqeni nga grupet ose çaktivizoni llogarinë.",
+        "Vault status": "Gjendja e kasafortës",
+        "Yes": "Po",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Një eksport CXF është I PAKRIPTUAR. Çdo fjalëkalim dhe kredencial hyrjeje do të lexohet si tekst i thjeshtë në skedarin e shkarkuar. Ruajeni në mënyrë të sigurt dhe fshijeni menjëherë pas përdorimit.",
         "Root certificate expiring soon": "Certifikata rrënjë skadon së shpejti",
         "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Certifikata rrënjë e kasafortës skadon pas %1$d dite(ve). Rinovojeni para kësaj. Rinovimi nënshkruan sërish çdo paketë enkriptimi.",
@@ -1307,7 +1362,198 @@
         "This also revoked suite {suite} and ended key migration {migration}.": "Kjo revokoi edhe paketën {suite} dhe përfundoi migrimin e çelësave {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Revokimi i paketës së dytë fshiu %n kontakt aksesi emergjence.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Revokimi i paketës së dytë fshiu %n kontakte aksesi emergjence.",
-        "A suite revoked as compromised cannot be reinstated.": "Një paketë e revokuar si e komprometuar nuk mund të rikthehet."
+        "A suite revoked as compromised cannot be reinstated.": "Një paketë e revokuar si e komprometuar nuk mund të rikthehet.",
+        "Archives to keep": "Arkiva për t'u mbajtur",
+        "Back up every vault automatically": "Bëj kopje rezervë të çdo kasaforte automatikisht",
+        "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Bëni kopje rezervë të çdo kasaforte sipas orarit. Arkivat përmbajnë vetëm tekst të shifruar dhe rikthehen me occ.",
+        "Back up now": "Bëj kopje tani",
+        "Backup public key (PEM, optional)": "Çelësi publik i kopjes (PEM, opsional)",
+        "Backup requested for the next cron run": "Kopja u kërkua për ekzekutimin e ardhshëm të cron",
+        "Encrypted": "I shifruar",
+        "Every (hours)": "Çdo (orë)",
+        "Last backup {when} failed: {error}": "Kopja e fundit {when} dështoi: {error}",
+        "Last backup {when} succeeded.": "Kopja e fundit {when} u krye.",
+        "No archives yet.": "Ende pa arkiva.",
+        "Size": "Madhësia",
+        "Vault backups": "Kopjet e kasafortës",
+        "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Me një çelës, çdo arkiv shifrohet për të. Mbajeni çelësin privat jashtë këtij serveri: ju duhet për verifikim ose rikthim.",
+        "Written": "Shkruar",
+        "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n përdorues në fushëveprim ende nuk ka hyrje me dy faktorë dhe nuk mund ta hapë kasafortën sa kohë që kjo është aktive.",
+        "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n përdorues në fushëveprim ende nuk kanë hyrje me dy faktorë dhe nuk mund ta hapin kasafortën sa kohë që kjo është aktive.",
+        "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Kodet rezervë nuk llogariten. Nëse përdoruesit hyjnë përmes një ofruesi identiteti me faktorin e vet të dytë, lërini jashtë grupet e tyre.",
+        "Block personal vault export": "Blloko eksportin e kasafortës personale",
+        "Keep work logins in team folders": "Mbaj kredencialet e punës në dosje ekipi",
+        "Move to a team folder": "Zhvendose në një dosje ekipi",
+        "Not in a team folder": "Jo në një dosje ekipi",
+        "Only for these groups (empty is everyone)": "Vetëm për këto grupe (bosh do të thotë të gjithë)",
+        "Require two-factor login before the vault opens": "Kërko hyrje me dy faktorë para se të hapet kasaforta",
+        "Rules for every vault. Each applies to everyone, or only to the groups you choose.": "Rregulla për çdo kasafortë. Secili vlen për të gjithë, ose vetëm për grupet që zgjidhni.",
+        "Secret types that belong in a team folder": "Lloje sekretesh që i përkasin një dosjeje ekipi",
+        "Set up two-factor login": "Konfiguro hyrjen me dy faktorë",
+        "Team folder you can write to": "Dosje ekipi ku mund të shkruani",
+        "Users cannot download a backup, CSV or transfer file. Their personal data package stays available.": "Përdoruesit nuk mund të shkarkojnë kopje rezervë, CSV ose skedar transferimi. Paketa e tyre e të dhënave personale mbetet e disponueshme.",
+        "Users cannot save these secret types in a personal folder.": "Përdoruesit nuk mund t'i ruajnë këto lloje sekretesh në një dosje personale.",
+        "Vault policies": "Politikat e kasafortës",
+        "Your organisation does not allow exporting your personal vault. Your personal data package in your settings stays available.": "Organizata juaj nuk lejon eksportin e kasafortës suaj personale. Paketa juaj e të dhënave personale në cilësime mbetet e disponueshme.",
+        "Your organisation keeps these secrets in a team folder. Move each one into a team folder.": "Organizata juaj i mban këto sekrete në një dosje ekipi. Zhvendoseni secilin në një dosje ekipi.",
+        "Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.": "Organizata juaj e mban këtë lloj sekreti në një dosje ekipi. Zgjidhni një nga dosjet tuaja të ekipit, ose një ku mund të shkruani.",
+        "Your organisation requires two-factor login before you can open your vault.": "Organizata juaj kërkon hyrje me dy faktorë para se të mund ta hapni kasafortën tuaj.",
+        "Allow passphrases made of words": "Allow passphrases made of words",
+        "Capitalise each word": "Capitalise each word",
+        "Include a number": "Include a number",
+        "Kind of key": "Kind of key",
+        "Number of words": "Number of words",
+        "Passphrase": "Passphrase",
+        "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
+        "Separator": "Separator",
+        "Users pick how long the extension stays unlocked while idle. You set the longest they may pick.": "Përdoruesit zgjedhin sa kohë zgjatja mbetet e shkyçur kur nuk përdoret. Ju caktoni kohën më të gjatë që mund të zgjedhin.",
+        "Longest idle time before the extension locks": "Koha më e gjatë pa aktivitet para se zgjatja të kyçet",
+        "1 minute": "1 minutë",
+        "5 minutes": "5 minuta",
+        "15 minutes": "15 minuta",
+        "1 hour": "1 orë",
+        "4 hours": "4 orë",
+        "Connector": "Lidhës",
+        "Directory (tenant) ID": "ID e drejtorisë (qiramarrësit)",
+        "Application (client) ID": "ID e aplikacionit (klientit)",
+        "Data collection rule immutable ID": "ID e pandryshueshme e rregullit të mbledhjes së të dhënave",
+        "Stream name": "Emri i rrjedhës",
+        "Splunk index (optional)": "Indeksi Splunk (opsional)",
+        "Sourcetype (optional)": "Sourcetype (opsional)",
+        "Leave blank to keep the current one": "Lëreni bosh për të mbajtur vlerën aktuale",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF përmes syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Pika fundore e mbledhjes së të dhënave (URL https)",
+        "HTTP Event Collector URL (https)": "URL e HTTP Event Collector (https)",
+        "Client secret (write-only)": "Sekreti i klientit (vetëm shkrim)",
+        "HEC token (write-only)": "Token HEC (vetëm shkrim)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Përcillni ngjarjet e lejuara të auditimit te Splunk, Microsoft Sentinel, një marrës syslog ose një webhook. Mesazhet mbajnë vetëm meta të dhëna të pastruara: asnjë vlerë sekrete, emër, hyrje apo tekst i shifruar nuk largohet kurrë nga serveri.",
+        "%n change waiting to sync": "%n ndryshim pret sinkronizimin",
+        "%n changes waiting to sync": "%n ndryshime presin sinkronizimin",
+        "Changes that could not sync": "Ndryshime që nuk u sinkronizuan dot",
+        "Choose a version": "Zgjidhni një version",
+        "Copy value": "Kopjo vlerën",
+        "Deleted": "Fshirë",
+        "Discard": "Hidhe",
+        "Keep my offline change": "Mbaj ndryshimin tim jashtë linje",
+        "Keep the server version": "Mbaj versionin e serverit",
+        "Keepiq is read-only offline. Your administrator has not turned on offline edits.": "Keepiq është vetëm për lexim jashtë linje. Administratori nuk e ka aktivizuar redaktimin jashtë linje.",
+        "Let users edit secrets offline": "Lejo përdoruesit të redaktojnë sekrete jashtë linje",
+        "Not synced yet": "Ende i pasinkronizuar",
+        "Offline changes are kept on the device, encrypted to the user, and sync at the next online unlock. Sharing, folders and attachments still need a connection.": "Ndryshimet jashtë linje mbeten në pajisje, të enkriptuara për përdoruesin, dhe sinkronizohen në shkyçjen e radhës në linjë. Ndarja, dosjet dhe bashkëngjitjet kanë ende nevojë për lidhje.",
+        "Offline. Edits, moves and deletes stay on this device and sync when you are back online. Sharing and attachments need a connection.": "Jashtë linje. Redaktimet, zhvendosjet dhe fshirjet mbeten në këtë pajisje dhe sinkronizohen kur të jeni sërish në linjë. Ndarja dhe bashkëngjitjet kanë nevojë për lidhje.",
+        "Offline. Your changes stay on this device and sync when you are back online. Last synced {when}.": "Jashtë linje. Ndryshimet tuaja mbeten në këtë pajisje dhe sinkronizohen kur të jeni sërish në linjë. Sinkronizimi i fundit {when}.",
+        "Open my changes": "Hap ndryshimet e mia",
+        "Sharing needs a connection": "Ndarja ka nevojë për lidhje",
+        "Someone changed this secret on the server after your offline copy was made. Choose which version to keep.": "Dikush e ndryshoi këtë sekret në server pasi u bë kopja juaj jashtë linje. Zgjidhni cilin version të mbani.",
+        "Sync or discard your offline changes before you rotate your keys.": "Sinkronizoni ose hidhni ndryshimet jashtë linje para se të ndërroni çelësat.",
+        "That password did not open your changes.": "Ky fjalëkalim nuk i hapi ndryshimet tuaja.",
+        "The offline snapshot stores secret ciphertext (openable only with the user's master-password-derived key, exactly as on the server) and encrypts secret names, URLs and folder names at rest. Offline access is read-only unless you allow offline edits below. Disable this for endpoints that must never cache credentials; disabling purges existing caches on next load.": "Fotografia jashtë linje ruan sekrete të enkriptuara (hapen vetëm me çelësin që rrjedh nga fjalëkalimi kryesor i përdoruesit, njësoj si në server) dhe enkripton emrat, URL-të dhe emrat e dosjeve në ruajtje. Qasja jashtë linje është vetëm për lexim, përveç nëse lejoni më poshtë redaktimin jashtë linje. Çaktivizojeni për pajisje që nuk duhet të ruajnë kurrë kredenciale; çaktivizimi pastron memorien ekzistuese në ngarkimin e radhës.",
+        "The previous vault copy is gone, so these changes cannot be opened.": "Kopja e mëparshme e kasafortës nuk është më, ndaj këto ndryshime nuk mund të hapen.",
+        "The server version": "Versioni i serverit",
+        "This secret changed while you were offline": "Ky sekret ndryshoi ndërsa ishit jashtë linje",
+        "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "E fshitë këtë sekret jashtë linje, por që atëherë është ndryshuar në server. Zgjidhni cilin version të mbani.",
+        "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Çelësat tuaj u ndërruan në një pajisje tjetër. Jepni fjalëkalimin kryesor të mëparshëm për të sinkronizuar ndryshimet jashtë linje, ose hidhini.",
+        "Your offline change": "Ndryshimi juaj jashtë linje",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n kontakt urgjence kishte një kërkesë aksesi në pritje kur rrotullimi i çelësit e hoqi. Kontrollo kush e kërkoi para se të shtosh dikë përsëri.",
+            "%n kontakte urgjence kishin një kërkesë aksesi në pritje kur rrotullimi i çelësit i hoqi. Kontrollo kush e kërkoi para se të shtosh dikë përsëri."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n artikull nuk mund të përfaqësohet në CXF dhe do të anashkalohet.",
+            "%n artikuj nuk mund të përfaqësohen në CXF dhe do të anashkalohen."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n version më i vjetër u hoq, sepse mund të kalohet vetëm historiku i kohëve të fundit.",
+            "%n versione më të vjetër u hoqën, sepse mund të kalohet vetëm historiku i kohëve të fundit."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n kopje sekreti duhet ende kriptuar dhe ndarë.",
+            "%n kopje sekreti duhen ende kriptuar dhe ndarë."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n sekret nuk mund të deshifrohej dhe nuk është në këtë eksport.",
+            "%n sekrete nuk mund të deshifroheshin dhe nuk janë në këtë eksport."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n sekret nuk mundi të deshifrohej me kyçin tuaj të vjetër, kështu që nuk u migrua.",
+            "%n sekrete nuk mundën të deshifroheshin me kyçin tuaj të vjetër, kështu që nuk u migruan."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n sekret nuk u migrua.",
+            "%n sekrete nuk u migruan."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n sekret është ende i kriptuar me kyçin tuaj të mëparshëm.",
+            "%n sekrete janë ende të kriptuara me kyçin tuaj të mëparshëm."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n sekret u anashkalua sepse pasardhësi ende nuk ka asnjë kopje — shtojeni pasardhësin në dosje dhe rinisni veprimin.",
+            "%n sekrete u anashkaluan sepse pasardhësi ende nuk ka asnjë kopje — shtojeni pasardhësin në dosje dhe rinisni veprimin."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n sekret",
+            "%n sekrete"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n përdorues në fushëveprim ende nuk ka hyrje me dy faktorë dhe nuk mund ta hapë kasafortën sa kohë që kjo është aktive.",
+            "%n përdorues në fushëveprim ende nuk kanë hyrje me dy faktorë dhe nuk mund ta hapin kasafortën sa kohë që kjo është aktive."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Përfundo gjithsesi, duke humbur aksesin në %n sekret",
+            "Përfundo gjithsesi, duke humbur aksesin në %n sekrete"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n anëtar i ri mori qasje në një dosje ekipi.",
+            "%n anëtarë të rinj morën qasje në një dosje ekipi."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Rrotullimi i kyçit përfundoi. %n sekret u rikriptua me kyçin tuaj të re.",
+            "Rrotullimi i kyçit përfundoi. %n sekrete u rikriptuan me kyçin tuaj të re."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Revokimi i paketës së dytë fshiu %n kontakt aksesi emergjence.",
+            "Revokimi i paketës së dytë fshiu %n kontakte aksesi emergjence."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Revokimi i kësaj suite fshiu %n kontakt të qasjes së emergjencës.",
+            "Revokimi i kësaj suite fshiu %n kontakte të qasjes së emergjencës."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "parë %n herë në rrjedhje",
+            "parë %n herë në rrjedhje"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "e ndarë me %n sekret",
+            "e ndarë me %n sekrete"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Kjo dosje përmban drejtpërdrejt %n sekret.",
+            "Kjo dosje përmban drejtpërdrejt %n sekrete."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Rrotullimi i kyçit hoqi %n kontakt emergjence. Kontrolloni Aksesin e emergjencës dhe shtojeni përsëri nëse e doni ende.",
+            "Rrotullimi i kyçit hoqi %n kontakte emergjence. Kontrolloni Aksesin e emergjencës dhe shtojini përsëri nëse i doni ende."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n ndryshim pret sinkronizimin",
+            "%n ndryshime presin sinkronizimin"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Përdoruesi është ende në grupin {groups}, që është anëtar i një dosjeje ekipi. Hiqeni nga grupi ose çaktivizoni llogarinë.",
+            "Përdoruesi është ende në grupet {groups}, që janë anëtare të dosjeve të ekipit. Hiqeni nga grupet ose çaktivizoni llogarinë."
+        ]
     },
     "plurals": null
 }

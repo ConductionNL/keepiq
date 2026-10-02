@@ -29,12 +29,12 @@
 // unreachable on top of the two this script was first written for.
 //
 // pluralForm: taken from the catalogue when it declares one. When it does not,
-// the fallback is the two-form rule `nplurals=2; plural=(n != 1);` — which is
-// what every generated catalogue in this fleet already carries, including for
-// languages that genuinely have more forms (cs, pl, ru). That is a known
-// simplification, not a verified per-language rule: a catalogue that starts
-// using plural strings in such a language needs its real rule declared in the
-// JSON, which this script will then honour.
+// it is the language's rule from scripts/l10n-plural-rules.js, which mirrors
+// the table @nextcloud/l10n uses in the browser (pl and ru have three forms,
+// sl four, tr one). It used to be the two-form rule for every language, which
+// was only harmless while no catalogue held a plural entry. Plural entries
+// (`"_<singular>_::_<plural>_": [forms]`) are emitted like any other value,
+// so the .js carries the same arrays as the .json.
 //
 // Usage:
 //   node scripts/build-l10n-js.js            (npm run l10n:build)
@@ -48,11 +48,12 @@
 
 const fs = require('fs')
 const path = require('path')
+const { pluralFormFor } = require('./l10n-plural-rules.js')
 
-const REPO_ROOT = path.resolve(__dirname, '..')
-
-/** Fallback when a catalogue declares no pluralForm — see the header note. */
-const DEFAULT_PLURAL_FORM = 'nplurals=2; plural=(n != 1);'
+// L10N_REPO_ROOT lets the test suite run this script against a fixture app.
+const REPO_ROOT = process.env.L10N_REPO_ROOT
+	? path.resolve(process.env.L10N_REPO_ROOT)
+	: path.resolve(__dirname, '..')
 const L10N_DIR = path.join(REPO_ROOT, 'l10n')
 
 /**
@@ -142,7 +143,7 @@ function main() {
 		const rendered = renderJs(
 			id,
 			doc.translations,
-			doc.pluralForm || DEFAULT_PLURAL_FORM,
+			doc.pluralForm || pluralFormFor(locale),
 		)
 		const current = fs.existsSync(jsFile)
 			? fs.readFileSync(jsFile, 'utf8')
