@@ -8,6 +8,7 @@ use DateTime;
 use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\Service\ShareRestriction;
+use OCA\Keepiq\Service\ShareRestrictionRules;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -34,7 +35,7 @@ class ShareRestrictionTest extends TestCase {
 	 */
 	public function testAPastEndDateIsRefused(): void {
 		$this->expectException(InvalidArgumentException::class);
-		ShareRestriction::fromRequest(useOnly: false, expiresAt: '2026-10-01T12:00:00Z', now: $this->now());
+		(new ShareRestrictionRules())->fromRequest(useOnly: false, expiresAt: '2026-10-01T12:00:00Z', now: $this->now());
 	}
 
 	/**
@@ -44,7 +45,7 @@ class ShareRestrictionTest extends TestCase {
 	 */
 	public function testAnEndDateOfNowIsRefused(): void {
 		$this->expectException(InvalidArgumentException::class);
-		ShareRestriction::fromRequest(useOnly: false, expiresAt: '2026-10-02T12:00:00Z', now: $this->now());
+		(new ShareRestrictionRules())->fromRequest(useOnly: false, expiresAt: '2026-10-02T12:00:00Z', now: $this->now());
 	}
 
 	/**
@@ -54,7 +55,7 @@ class ShareRestrictionTest extends TestCase {
 	 */
 	public function testAnUnreadableDateIsRefused(): void {
 		$this->expectException(InvalidArgumentException::class);
-		ShareRestriction::fromRequest(useOnly: false, expiresAt: 'next tuesday-ish!!', now: $this->now());
+		(new ShareRestrictionRules())->fromRequest(useOnly: false, expiresAt: 'next tuesday-ish!!', now: $this->now());
 	}
 
 	/**
@@ -63,11 +64,11 @@ class ShareRestrictionTest extends TestCase {
 	 * @return void
 	 */
 	public function testAFutureDateAndTheFlagAreRead(): void {
-		$restriction = ShareRestriction::fromRequest(useOnly: 'true', expiresAt: '2026-10-09T17:00:00+02:00', now: $this->now());
+		$restriction = (new ShareRestrictionRules())->fromRequest(useOnly: 'true', expiresAt: '2026-10-09T17:00:00+02:00', now: $this->now());
 		$this->assertTrue($restriction->useOnly);
 		$this->assertSame('2026-10-09T15:00:00+00:00', $restriction->expiresAt?->format('c'));
 
-		$open = ShareRestriction::fromRequest(useOnly: null, expiresAt: '', now: $this->now());
+		$open = (new ShareRestrictionRules())->fromRequest(useOnly: null, expiresAt: '', now: $this->now());
 		$this->assertFalse($open->useOnly);
 		$this->assertNull($open->expiresAt);
 		$this->assertFalse($open->isRestricted());
@@ -82,23 +83,23 @@ class ShareRestrictionTest extends TestCase {
 		$early = new DateTime('2026-10-05T00:00:00Z');
 		$late  = new DateTime('2026-10-20T00:00:00Z');
 
-		$both = ShareRestriction::combine(
+		$both = (new ShareRestrictionRules())->combine(
 			[new ShareRestriction(true, $early), new ShareRestriction(true, $late)]
 		);
 		$this->assertTrue($both->useOnly);
 		$this->assertEquals($late, $both->expiresAt);
 
-		$lifted = ShareRestriction::combine(
+		$lifted = (new ShareRestrictionRules())->combine(
 			[new ShareRestriction(true, $early), new ShareRestriction(false, $early)]
 		);
 		$this->assertFalse($lifted->useOnly, 'an unrestricted grant lifts use-only');
 
-		$open = ShareRestriction::combine(
+		$open = (new ShareRestrictionRules())->combine(
 			[new ShareRestriction(true, $early), new ShareRestriction(true, null)]
 		);
 		$this->assertNull($open->expiresAt, 'a grant without an end date wins');
 
-		$none = ShareRestriction::combine([]);
+		$none = (new ShareRestrictionRules())->combine([]);
 		$this->assertFalse($none->isRestricted());
 	}
 }

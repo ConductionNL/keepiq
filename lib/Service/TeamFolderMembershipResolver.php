@@ -241,7 +241,7 @@ class TeamFolderMembershipResolver {
 				folderId: (string)$folderId
 			) as $secret) {
 				// A use-only or expiring copy is never fanned out (D4).
-				if (OnwardShareGuard::isShareable(source: $secret) === false) {
+				if ($secret->isRestrictedCopy() === true) {
 					continue;
 				}
 

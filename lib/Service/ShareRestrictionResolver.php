@@ -35,7 +35,7 @@ use OCP\IGroupManager;
  * The grants reaching one recipient for one source secret are: the direct
  * share row (when the row is direct), every group share of the source to a
  * group the recipient is in, and every team-folder membership along the
- * source's folder chain that covers the recipient. ShareRestriction::combine
+ * source's folder chain that covers the recipient. ShareRestrictionRules::combine()
  * decides: the most generous grant wins.
  */
 class ShareRestrictionResolver {
@@ -72,7 +72,7 @@ class ShareRestrictionResolver {
 	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-1.2
 	 */
 	public function effectiveFor(ShareTarget $target): ShareRestriction {
-		return ShareRestriction::combine(grants: $this->grantsFor(target: $target));
+		return (new ShareRestrictionRules())->combine(grants: $this->grantsFor(target: $target));
 	}//end effectiveFor()
 
 	/**

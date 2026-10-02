@@ -125,7 +125,7 @@ class GroupShareService {
 
 		$secret = $this->loadSecret(secretId: $secretId);
 		$this->assertOwnerOrDelegate(secret: $secret, userId: $userId);
-		OnwardShareGuard::assertShareable(source: $secret);
+		$secret->assertOnwardShareable();
 
 		$group = $this->groupManager->get($groupId);
 		if ($group === null) {

@@ -34,6 +34,7 @@ use DateTime;
 use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\GroupShareMapper;
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
@@ -42,6 +43,10 @@ use Ramsey\Uuid\Uuid;
 
 /**
  * Registers batches of pre-encrypted direct shares.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The registrar validates each
+ *   row (owner, restriction, idempotency) and writes the copy, the share row,
+ *   the restriction and the audit entry; each collaborator is one of those.
  */
 class DirectShareRegistrar {
 
@@ -212,42 +217,18 @@ class DirectShareRegistrar {
 		string $encryptedKey,
 		array $row,
 	): array {
-		// Per-item owner guard — a foreign secret is skipped, never a
-		// whole-batch failure and never an oracle.
-		try {
-			$source = $this->secretMapper->findById($sourceSecretId);
-		} catch (DoesNotExistException) {
-			$source = null;
-		}
-
-		if ($source === null || $source->getOwnerType() !== 'user' || $source->getOwnerId() !== $userId) {
+		// Per-item owner guard: a foreign secret is skipped, never a
+		// whole-batch failure and never an oracle. A use-only or expiring
+		// copy is never a share source (D4), and a malformed restriction is
+		// reported, not guessed.
+		$source = $this->loadOwnedSource(sourceSecretId: $sourceSecretId, userId: $userId);
+		$restriction = $this->parseRestriction(row: $row);
+		$refusal = $this->refusalFor(source: $source, restriction: $restriction);
+		if ($refusal !== null || $source === null || $restriction === null) {
 			return [
 				'sourceSecretId' => $sourceSecretId,
 				'targetUserId' => $targetUserId,
-				'status' => 'not_owned',
-			];
-		}
-
-		// A use-only or expiring copy is never a share source (D4).
-		if (OnwardShareGuard::isShareable(source: $source) === false) {
-			return [
-				'sourceSecretId' => $sourceSecretId,
-				'targetUserId' => $targetUserId,
-				'status' => 'restricted',
-			];
-		}
-
-		try {
-			$restriction = ShareRestriction::fromRequest(
-				useOnly: ($row['useOnly'] ?? false),
-				expiresAt: ($row['expiresAt'] ?? null),
-				now: new DateTime('now', new DateTimeZone('UTC'))
-			);
-		} catch (InvalidArgumentException) {
-			return [
-				'sourceSecretId' => $sourceSecretId,
-				'targetUserId' => $targetUserId,
-				'status' => 'invalid',
+				'status' => ($refusal ?? 'invalid'),
 			];
 		}
 
@@ -312,6 +293,75 @@ class DirectShareRegistrar {
 			'recipientSecretId' => $copy->getId(),
 		];
 	}//end createDirectShare()
+
+	/**
+	 * The caller's own user-owned source secret, or null.
+	 *
+	 * @param string $sourceSecretId The source secret
+	 * @param string $userId The sharing owner
+	 *
+	 * @return Secret|null
+	 */
+	private function loadOwnedSource(string $sourceSecretId, string $userId): ?Secret {
+		try {
+			$source = $this->secretMapper->findById($sourceSecretId);
+		} catch (DoesNotExistException) {
+			return null;
+		}
+
+		if ($source->getOwnerType() !== 'user' || $source->getOwnerId() !== $userId) {
+			return null;
+		}
+
+		return $source;
+	}//end loadOwnedSource()
+
+	/**
+	 * A row's use-only flag and end date, or null when the date is refused.
+	 *
+	 * @param array<string,mixed> $row The row
+	 *
+	 * @return ShareRestriction|null
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 */
+	private function parseRestriction(array $row): ?ShareRestriction {
+		try {
+			return (new ShareRestrictionRules())->fromRequest(
+				useOnly: ($row['useOnly'] ?? false),
+				expiresAt: ($row['expiresAt'] ?? null),
+				now: new DateTime('now', new DateTimeZone('UTC'))
+			);
+		} catch (InvalidArgumentException) {
+			return null;
+		}
+	}//end parseRestriction()
+
+	/**
+	 * The status a row is refused with, or null when it may proceed.
+	 *
+	 * @param Secret|null $source The caller's own source, or null
+	 * @param ShareRestriction|null $restriction The parsed restriction, or null
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 */
+	private function refusalFor(?Secret $source, ?ShareRestriction $restriction): ?string {
+		if ($source === null) {
+			return 'not_owned';
+		}
+
+		if ($source->isRestrictedCopy() === true) {
+			return 'restricted';
+		}
+
+		if ($restriction === null) {
+			return 'invalid';
+		}
+
+		return null;
+	}//end refusalFor()
 
 	/**
 	 * Whether a row's optional groupShareId names a group share of the SAME

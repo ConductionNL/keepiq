@@ -26,7 +26,6 @@ use OCA\Keepiq\Service\GroupShareService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\NotificationService;
-use OCA\Keepiq\Service\OnwardShareGuard;
 use OCA\Keepiq\Service\SecretService;
 use OCA\Keepiq\Service\SecretTypeService;
 use OCA\Keepiq\Service\SecretVersionAccessGuard;
@@ -145,7 +144,7 @@ class UseOnlyServerRefusalTest extends TestCase {
 			secretMapper: $this->secrets,
 		);
 
-		$this->expectExceptionMessage(OnwardShareGuard::REFUSAL);
+		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
 		$service->create('copy', 'BLOB', 'SALT', 'suite-1', 1, null, 'bob');
 	}
 
@@ -172,7 +171,7 @@ class UseOnlyServerRefusalTest extends TestCase {
 			revocationService: $this->createMock(ShareRevocationService::class),
 		);
 
-		$this->expectExceptionMessage(OnwardShareGuard::REFUSAL);
+		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
 		$service->createGroupShare('copy', 'friends', 'bob', new ShareRestriction());
 	}
 
@@ -190,7 +189,7 @@ class UseOnlyServerRefusalTest extends TestCase {
 			authorizer: new DelegationAuthorizer(secretMapper: $this->secrets),
 		);
 
-		$this->expectExceptionMessage(OnwardShareGuard::REFUSAL);
+		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);
 		$service->createDelegation('copy', 'mallory', 'bob');
 	}
 

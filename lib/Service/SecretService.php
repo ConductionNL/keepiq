@@ -887,11 +887,7 @@ class SecretService {
 		$this->assertNotWriteLocked(userId: $userId);
 
 		$secret = $this->loadOwned(id: $id, userId: $userId);
-		if ($secret->getUseOnly() === true) {
-			// A use-only copy is never edited by its holder
-			// (sharing-use-only-and-expiring-shares D4).
-			throw new ForbiddenException(message: 'A use-only copy cannot be changed');
-		}
+		$secret->assertEditableByHolder();
 
 		// Pre-update snapshot source (secret-version-history §2.2): captured
 		// BEFORE any mutation; persisted below only when a field actually

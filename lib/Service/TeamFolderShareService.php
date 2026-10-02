@@ -41,6 +41,9 @@ use Throwable;
 
 /**
  * Registers and revokes the derived shares of a team folder.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The fan-out writes the copy, the
+ *   share row and its restriction; each collaborator is one of those.
  */
 class TeamFolderShareService {
 	/**

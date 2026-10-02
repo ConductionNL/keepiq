@@ -28,6 +28,7 @@ use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Service\ShareRestriction;
+use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCA\Keepiq\Service\ShareService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -38,6 +39,9 @@ use OCP\IUserSession;
 
 /**
  * Authenticated API controller for ShareTarget CRUD.
+ *
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) One public method per share
+ *   operation; the use-only change added the restriction update.
  */
 class ShareController extends OCSController {
 	/**
@@ -121,6 +125,9 @@ class ShareController extends OCSController {
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-9.1
 	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
+	 *   field the server stores, not a mode switch.
 	 */
 	#[NoAdminRequired]
 	public function create(
@@ -143,7 +150,7 @@ class ShareController extends OCSController {
 				recipientSecretId: $recipientSecretId,
 				groupShareId: $groupShareId,
 				userId: $user->getUID(),
-				restriction: ShareRestriction::fromRequest(
+				restriction: (new ShareRestrictionRules())->fromRequest(
 					useOnly: $useOnly,
 					expiresAt: $expiresAt,
 					now: new DateTime('now', new DateTimeZone('UTC'))
@@ -173,6 +180,9 @@ class ShareController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
+	 *   field the server stores, not a mode switch.
 	 */
 	#[NoAdminRequired]
 	public function update(string $id, bool $useOnly = false, ?string $expiresAt = null): JSONResponse {
@@ -182,7 +192,7 @@ class ShareController extends OCSController {
 		}
 
 		try {
-			$restriction = ShareRestriction::fromRequest(
+			$restriction = (new ShareRestrictionRules())->fromRequest(
 				useOnly: $useOnly,
 				expiresAt: $expiresAt,
 				now: new DateTime('now', new DateTimeZone('UTC'))
