@@ -593,4 +593,88 @@ class EncryptionSuiteServiceTest extends TestCase {
 		$this->assertCount(expectedCount: 1, haystack: $revokedEvents);
 		$this->assertFalse($revokedEvents[0]->getCompromised());
 	}//end testOwnerRevokeLeavesCompromiseFlagFalse()
+
+	/**
+	 * Build the service with a dispatcher that collects every event.
+	 *
+	 * @param array<int,object> $dispatched Receives the dispatched events
+	 *
+	 * @return EncryptionSuiteService
+	 */
+	private function serviceCollecting(array &$dispatched): EncryptionSuiteService {
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')
+			->willReturnCallback(
+				function (object $event) use (&$dispatched): void {
+					$dispatched[] = $event;
+				}
+			);
+
+		return new EncryptionSuiteService(
+			mapper: $this->mapper,
+			provisioning: new EncryptionSuiteProvisioningService(
+				mapper: $this->mapper,
+				caService: $this->caService,
+				appConfig: $this->appConfig,
+				userManager: $this->createMock(originalClassName: \OCP\IUserManager::class),
+				logger: $this->createMock(originalClassName: LoggerInterface::class),
+			),
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
+			eventDispatcher: $dispatcher,
+		);
+	}//end serviceCollecting()
+
+	/**
+	 * markCompromised runs only when a recovery completes, so it records
+	 * recovery_completed. It recorded recovery_started, which put a start in
+	 * the trail at every completion and no completion at all (keepiq#870).
+	 *
+	 * @return void
+	 */
+	public function testMarkCompromisedRecordsRecoveryCompleted(): void {
+		$suite = new EncryptionSuite();
+		$suite->setId('suite-old');
+		$suite->setOwnerType('user');
+		$suite->setOwnerId('alice');
+		$suite->setStatus('active');
+		$this->mapper->method('findById')->willReturn($suite);
+
+		$dispatched = [];
+		$this->serviceCollecting($dispatched)->markCompromised(id: 'suite-old', compromisedBy: 'alice');
+
+		$types = array_map(
+			static fn (AuditEvent $event): string => $event->getEventType(),
+			array_values(array_filter($dispatched, static fn ($event) => $event instanceof AuditEvent))
+		);
+		$this->assertSame([AuditEventTypes::SUITE_RECOVERY_COMPLETED], $types);
+	}//end testMarkCompromisedRecordsRecoveryCompleted()
+
+	/**
+	 * A refused revoke reaches the audit trail with its reason code and
+	 * nothing else from the request (keepiq#870).
+	 *
+	 * @return void
+	 */
+	public function testRecordRevokeRefusedDispatchesAnAuditEvent(): void {
+		$dispatched = [];
+		$this->serviceCollecting($dispatched)->recordRevokeRefused(
+			suiteId: 'suite-1',
+			actorId: 'admin',
+			reasonCode: 'migration_in_progress',
+			markCompromised: true,
+		);
+
+		$this->assertCount(1, $dispatched);
+		$event = $dispatched[0];
+		$this->assertInstanceOf(AuditEvent::class, $event);
+		$this->assertSame(AuditEventTypes::SUITE_REVOKE_REFUSED, $event->getEventType());
+		$this->assertSame('admin', $event->getActorId());
+		$this->assertSame('suite', $event->getObjectType());
+		$this->assertSame('suite-1', $event->getObjectId());
+		$this->assertSame(['reasonCode' => 'migration_in_progress', 'markCompromised' => true], $event->getMetadata());
+		$this->assertSame(
+			['reasonCode', 'markCompromised'],
+			AuditEventTypes::WHITELIST[AuditEventTypes::SUITE_REVOKE_REFUSED]
+		);
+	}//end testRecordRevokeRefusedDispatchesAnAuditEvent()
 }//end class
