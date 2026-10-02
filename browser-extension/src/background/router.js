@@ -550,7 +550,9 @@ async function doBiometricEnrol(payload) {
 async function doBiometricOptions(payload) {
 	const account = await api.loadAccount(payload.accountId)
 	if (!account) throw new Error('unknown account')
-	return api.passkeyLoginOptions(account, extensionRpId())
+	const rpId = extensionRpId()
+	const options = await api.passkeyLoginOptions(account, rpId)
+	return { ...options, rpId }
 }
 
 async function doBiometricUsed(payload) {
