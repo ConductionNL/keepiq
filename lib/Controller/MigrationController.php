@@ -118,6 +118,12 @@ class MigrationController extends OCSController {
 		}
 	}//end getStatus()
 
+	#[NoAdminRequired]
+	#[VaultKeyProofRequired(
+		binds: ['id', 'hasErrors', 'acceptUnrecoverable'],
+		subject: 'migrationOldSuite',
+		purpose: VaultKeyProofService::PURPOSE_COMPLETE_MIGRATION
+	)]
 	/**
 	 * Complete a migration.
 	 *
@@ -137,12 +143,6 @@ class MigrationController extends OCSController {
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-4
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-migration-always-has-a-way-to-terminate
 	 */
-	#[NoAdminRequired]
-	#[VaultKeyProofRequired(
-		binds: ['id', 'hasErrors', 'acceptUnrecoverable'],
-		subject: 'migrationOldSuite',
-		purpose: VaultKeyProofService::PURPOSE_COMPLETE_MIGRATION
-	)]
 	public function complete(string $id, bool $hasErrors = false, ?int $acceptUnrecoverable = null): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
