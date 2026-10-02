@@ -1591,7 +1591,9 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "teamfratredelse, krypteringssuiter og overtakelse av administrator",
         "audit log, compliance reports, SIEM export and honey alerts": "revisjonslogg, samsvarsrapporter, SIEM-eksport og lokkevarsler",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Hvor mange versjoner av en hemmelighet som beholdes, hvor lenge, og hvor lenge slettede hemmeligheter blir i papirkurven.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Grenser for krypterte vedlegg, håndhevet på serveren i lagrede krypterte byte."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Grenser for krypterte vedlegg, håndhevet på serveren i lagrede krypterte byte.",
+        "Type the suite ID again to confirm": "Skriv inn pakke-ID-en på nytt for å bekrefte",
+        "This does not match the suite ID.": "Dette samsvarer ikke med pakke-ID-en."
     },
     "nplurals=2; plural=(n != 1);"
 )

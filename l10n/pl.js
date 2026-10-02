@@ -1591,7 +1591,9 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "odejścia z zespołu, zestawy szyfrowania i przejęcie przez administratora",
         "audit log, compliance reports, SIEM export and honey alerts": "dziennik audytu, raporty zgodności, eksport SIEM i alerty przynęt",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Ile wersji sekretu jest przechowywanych, jak długo, i jak długo usunięte sekrety pozostają w koszu.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limity zaszyfrowanych załączników, egzekwowane na serwerze w zapisanych zaszyfrowanych bajtach."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limity zaszyfrowanych załączników, egzekwowane na serwerze w zapisanych zaszyfrowanych bajtach.",
+        "Type the suite ID again to confirm": "Wpisz ponownie ID pakietu, aby potwierdzić",
+        "This does not match the suite ID.": "To nie pasuje do ID pakietu."
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

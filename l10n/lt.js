@@ -1591,7 +1591,9 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "išėjimas iš komandos, šifravimo rinkiniai ir administratoriaus perėmimas",
         "audit log, compliance reports, SIEM export and honey alerts": "audito žurnalas, atitikties ataskaitos, SIEM eksportas ir masalo įspėjimai",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Kiek paslapties versijų saugoma, kiek laiko, ir kiek laiko ištrintos paslaptys lieka šiukšlinėje.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Šifruotų priedų ribos, kurias serveris taiko saugomiems šifruotiems baitams."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Šifruotų priedų ribos, kurias serveris taiko saugomiems šifruotiems baitams.",
+        "Type the suite ID again to confirm": "Patvirtinkite dar kartą įvesdami rinkinio ID",
+        "This does not match the suite ID.": "Tai nesutampa su rinkinio ID."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

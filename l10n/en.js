@@ -1591,7 +1591,9 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "team offboarding, encryption suites and admin handover",
         "audit log, compliance reports, SIEM export and honey alerts": "audit log, compliance reports, SIEM export and honey alerts",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.",
+        "Type the suite ID again to confirm": "Type the suite ID again to confirm",
+        "This does not match the suite ID.": "This does not match the suite ID."
     },
     "nplurals=2; plural=(n != 1);"
 )

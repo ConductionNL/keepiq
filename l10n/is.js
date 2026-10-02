@@ -1591,7 +1591,9 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "starfslok í teymi, dulritunarsvítur og yfirtaka kerfisstjóra",
         "audit log, compliance reports, SIEM export and honey alerts": "endurskoðunarskrá, skýrslur um regluvörslu, SIEM-útflutningur og agnviðvaranir",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Hversu margar útgáfur leyndarmáls eru geymdar, hve lengi, og hve lengi eydd leyndarmál eru í ruslafötunni.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Takmörk fyrir dulrituð viðhengi, framfylgt á þjóninum í vistuðum dulrituðum bætum."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Takmörk fyrir dulrituð viðhengi, framfylgt á þjóninum í vistuðum dulrituðum bætum.",
+        "Type the suite ID again to confirm": "Sláðu inn pakkaauðkennið aftur til að staðfesta",
+        "This does not match the suite ID.": "Þetta passar ekki við pakkaauðkennið."
     },
     "nplurals=2; plural=(n != 1);"
 )

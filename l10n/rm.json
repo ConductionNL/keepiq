@@ -1566,7 +1566,9 @@
         "team offboarding, encryption suites and admin handover": "partenzas dal team, suites da criptaziun e surpigliada da l'administratur",
         "audit log, compliance reports, SIEM export and honey alerts": "protocol da revisiun, rapports da conformitad, export SIEM ed avertiments d'eschca",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Quantas versiuns d'in secret vegnan tegnidas, quant ditg, e quant ditg ch'ils secrets stizzads restan en il chanaster.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limitas per agiuntas criptadas, applitgadas sin il server en bytes criptads memorisads."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limitas per agiuntas criptadas, applitgadas sin il server en bytes criptads memorisads.",
+        "Type the suite ID again to confirm": "Endatai anc ina giada l'ID da la suite per confermar",
+        "This does not match the suite ID.": "Quai na correspunda betg a l'ID da la suite."
     },
     "plurals": null
 }
