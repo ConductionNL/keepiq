@@ -118,3 +118,47 @@ describe('least permissions', () => {
 		expect(manifest.description.length).toBeLessThanOrEqual(132)
 	})
 })
+
+describe('the Firefox Add-ons signed file is attached after review', () => {
+	const workflow = readFileSync(
+		join(ROOT, '.github/workflows/extension-release.yml'),
+		'utf8',
+	)
+	const jobStart = workflow.indexOf('\n  attach-amo-signed:\n')
+	const job = jobStart === -1 ? '' : workflow.slice(jobStart)
+	const buildJob = workflow.slice(
+		workflow.indexOf('\n  build:\n'),
+		workflow.indexOf('\n  publish:\n'),
+	)
+
+	it('has a follow-up job that runs daily and on demand', () => {
+		expect(job, 'no attach-amo-signed job in extension-release.yml').not.toBe('')
+		expect(workflow).toMatch(/\n {2}schedule:\n/)
+		expect(workflow).toMatch(/\n {6}amo_version:\n/)
+		expect(job).toMatch(/github\.event_name == 'schedule'/)
+		expect(buildJob).toMatch(/github\.event_name != 'schedule'/)
+	})
+
+	it('reads only public store data, so it needs no secret and no approval', () => {
+		expect(job).not.toMatch(/secrets\./)
+		expect(job).not.toMatch(/\n {4}environment:/)
+		expect(job).toMatch(
+			/https:\/\/addons\.mozilla\.org\/api\/v5\/addons\/addon\//,
+		)
+	})
+
+	it('asks Firefox Add-ons about the add-on id the Firefox manifest carries', async () => {
+		const { GECKO_ID } =
+			await import('../../browser-extension/manifests/browsers.mjs')
+		expect(job).toContain(`GECKO_ID: ${GECKO_ID}\n`)
+	})
+
+	it('attaches the file only after checking its hash and its contents', () => {
+		expect(job).toMatch(/\.file\.hash/)
+		expect(job).toMatch(/META-INF\/mozilla\.rsa/)
+		expect(job).toMatch(/diff -u built\.sha signed\.sha/)
+		expect(job.indexOf('diff -u built.sha signed.sha')).toBeLessThan(
+			job.indexOf('gh release upload'),
+		)
+	})
+})
