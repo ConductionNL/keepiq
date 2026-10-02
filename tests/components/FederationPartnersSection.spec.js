@@ -82,19 +82,17 @@ describe('FederationPartnersSection', () => {
 		expect(
 			wrapper.find('[data-testid="federation-own-fingerprint"]').text(),
 		).toMatch(/^CD:CD:/)
-		const post = vi
-			.spyOn(axios, 'post')
-			.mockImplementation(async (url) =>
-				url.endsWith('/preview')
-					? {
-							data: {
-								baseUrl: 'https://cloud.partner.example',
-								host: 'cloud.partner.example',
-								rootFingerprint: FP,
-							},
-						}
-					: { data: {} },
-			)
+		const post = vi.spyOn(axios, 'post').mockImplementation(async (url) =>
+			url.endsWith('/preview')
+				? {
+						data: {
+							baseUrl: 'https://cloud.partner.example',
+							host: 'cloud.partner.example',
+							rootFingerprint: FP,
+						},
+					}
+				: { data: {} },
+		)
 
 		await wrapper
 			.find('[data-testid="federation-url"]')

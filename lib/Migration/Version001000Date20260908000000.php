@@ -35,6 +35,10 @@ use OCP\Migration\SimpleMigrationStep;
  *
  * @psalm-suppress UnusedClass Loaded by the Nextcloud migration framework.
  *
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength) The length is the SCHEMA data constant, one
+ *   entry per table. It is the single list ConsolidatedSchemaMigrationTest and the backup
+ *   registry are checked against, so every new table grows it; splitting it would break that.
+ *
  * @psalm-type ColumnSpec = array{0: string, 1: string, 2: array<string, mixed>}
  * @psalm-type IndexSpec = array{0: string, 1: list<string>}
  * @psalm-type TableSpec = array{columns: list<ColumnSpec>, primary: list<string>,
