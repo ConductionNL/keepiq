@@ -612,9 +612,17 @@ class EncryptionSuiteController extends OCSController {
 	 * the owner path's acceptEmergencyLoss). Only the count crosses the wire — the
 	 * contacts' identities stay grantor-private.
 	 *
+	 * The administrator also types the suite id, echoed as `confirmSuiteId`, and
+	 * the request is refused with 400 before anything else when it is missing or
+	 * differs (keepiq#871). Unlike sudo mode, this holds on every user backend:
+	 * Nextcloud skips #[PasswordConfirmationRequired] for SSO logins and accepts
+	 * a confirmation from the last 30 minutes.
+	 *
 	 * @param string $id The suite ID
 	 * @param string $reason The required, free-form revocation reason
 	 * @param bool $markCompromised Treat the suite's secrets as compromised (default false)
+	 * @param string $confirmSuiteId The suite id the administrator typed to confirm;
+	 *                               must equal $id (keepiq#871)
 	 *
 	 * @AuthorizedAdminSetting(AdminSettings::class)
 	 *
@@ -629,13 +637,31 @@ class EncryptionSuiteController extends OCSController {
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	#[PasswordConfirmationRequired]
-	public function forceRevoke(string $id, string $reason, bool $markCompromised = false): JSONResponse {
+	public function forceRevoke(
+		string $id,
+		string $reason,
+		bool $markCompromised = false,
+		string $confirmSuiteId = '',
+	): JSONResponse {
 		$admin = $this->userSession->getUser();
 		if ($admin === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
 		$adminUid = $admin->getUID();
+
+		// The typed suite id is the backend-independent confirmation: sudo mode
+		// is skipped on SSO backends (keepiq#871). Checked before anything else.
+		if ($confirmSuiteId === '' || hash_equals(known_string: $id, user_string: $confirmSuiteId) === false) {
+			$this->suiteService->recordRevokeRefused(suiteId: $id, actorId: $adminUid, reasonCode: 'confirmation_mismatch', markCompromised: $markCompromised);
+			return new JSONResponse(
+				data: [
+					'error'   => 'confirmation_mismatch',
+					'message' => 'Type the suite id to confirm the force-revoke',
+				],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
 
 		if (trim($reason) === '') {
 			$this->suiteService->recordRevokeRefused(suiteId: $id, actorId: $adminUid, reasonCode: 'empty_reason', markCompromised: $markCompromised);

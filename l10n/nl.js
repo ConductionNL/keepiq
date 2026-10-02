@@ -1395,7 +1395,9 @@ OC.L10N.register(
         "Number of words": "Aantal woorden",
         "Passphrase": "Wachtzin",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Stel een minimale kwaliteit in voor geheime waarden. De browser controleert die vóór het versleutelen, zodat de server nooit een waarde ziet.",
-        "Separator": "Scheidingsteken"
+        "Separator": "Scheidingsteken",
+        "Type the suite ID again to confirm": "Typ de suite-ID nogmaals ter bevestiging",
+        "This does not match the suite ID.": "Dit komt niet overeen met de suite-ID."
     },
     "nplurals=2; plural=(n != 1);"
 )

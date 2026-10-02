@@ -1390,7 +1390,9 @@ OC.L10N.register(
         "Number of words": "Number of words",
         "Passphrase": "Passphrase",
         "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.": "Set a minimum quality for secret values. The browser checks it before encryption, so the server never sees a value.",
-        "Separator": "Separator"
+        "Separator": "Separator",
+        "Type the suite ID again to confirm": "Na potvrdenie zadajte ID sady znova",
+        "This does not match the suite ID.": "Nezhoduje sa s ID sady."
     },
     "nplurals=2; plural=(n != 1);"
 )

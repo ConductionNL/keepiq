@@ -6,7 +6,9 @@
   Lets an administrator force-revoke any suite by id — a required reason and a
   markCompromised toggle — and reinstate a revoked one. Force-revoke carries
   #[PasswordConfirmationRequired], so the Nextcloud sudo (password-confirmation)
-  flow runs before the request; reinstate carries the same sudo. Only
+  flow runs before the request; reinstate carries the same sudo. The
+  administrator also types the suite id again, which the server checks on every
+  user backend, SSO included (keepiq#871). Only
   the destroyed-usable emergency-contact count crosses the wire, never contact
   identities.
 
@@ -38,6 +40,21 @@
 					:disabled="busy"
 					data-testid="admin-suite-reason" />
 
+				<!-- Typed confirmation (keepiq#871): sudo mode is skipped on SSO
+				     backends, so the administrator types the suite id again and the
+				     server refuses the request unless it matches. -->
+				<NcTextField
+					v-model="confirmSuiteId"
+					:label="t('keepiq', 'Type the suite ID again to confirm')"
+					:disabled="busy"
+					:error="confirmSuiteId !== '' && !confirmed"
+					:helperText="
+						confirmSuiteId !== '' && !confirmed
+							? t('keepiq', 'This does not match the suite ID.')
+							: ''
+					"
+					data-testid="admin-suite-confirm-id" />
+
 				<NcCheckboxRadioSwitch
 					v-model="markCompromised"
 					type="switch"
@@ -53,7 +70,7 @@
 
 				<NcButton
 					variant="error"
-					:disabled="!suiteId || !reason || busy"
+					:disabled="!suiteId || !reason || !confirmed || busy"
 					data-testid="admin-suite-force-revoke"
 					@click="onForceRevoke">
 					{{
@@ -209,6 +226,7 @@ export default {
 	data() {
 		return {
 			suiteId: '',
+			confirmSuiteId: '',
 			reason: '',
 			markCompromised: false,
 			busy: false,
@@ -223,6 +241,17 @@ export default {
 			cascadeIncomplete: false,
 			cascadeFailed: 0,
 		}
+	},
+
+	computed: {
+		/**
+		 * Whether the typed confirmation matches the suite id (keepiq#871).
+		 *
+		 * @return {boolean}
+		 */
+		confirmed() {
+			return this.suiteId !== '' && this.confirmSuiteId === this.suiteId
+		},
 	},
 
 	methods: {
@@ -244,6 +273,7 @@ export default {
 					id: this.suiteId,
 					reason: this.reason,
 					markCompromised: this.markCompromised,
+					confirmSuiteId: this.confirmSuiteId,
 				})
 				this.result = outcome.suite
 				this.emergencyContactsDestroyed = outcome.emergencyContactsDestroyed

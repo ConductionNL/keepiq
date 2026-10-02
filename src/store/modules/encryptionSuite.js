@@ -1431,13 +1431,20 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * @param {string} params.id The suite id to force-revoke.
 		 * @param {string} params.reason The required, free-form revocation reason.
 		 * @param {boolean} params.markCompromised Treat the suite's secrets as compromised (default false).
+		 * @param {string} params.confirmSuiteId The suite id the administrator typed to
+		 *   confirm; the server refuses the request unless it equals `id` (keepiq#871).
 		 * @return {Promise<object>} The revoked `suite`, `emergencyContactsDestroyed`,
 		 *   `warning` (only when `markCompromised` was false), and for a compromise
 		 *   revoke `alsoRevokedSuite`, `terminatedMigration`,
 		 *   `alsoRevokedEmergencyContactsDestroyed`, `cascadeIncomplete` and `cascadeFailed`.
 		 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 		 */
-		async forceRevokeSuite({ id, reason, markCompromised = false }) {
+		async forceRevokeSuite({
+			id,
+			reason,
+			markCompromised = false,
+			confirmSuiteId = '',
+		}) {
 			if (!id) {
 				throw new Error('No suite id to revoke')
 			}
@@ -1453,7 +1460,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 			const response = await axios.post(
 				generateUrl(`/apps/keepiq/api/v1/suites/${id}/force-revoke`),
-				{ reason, markCompromised },
+				{ reason, markCompromised, confirmSuiteId },
 			)
 
 			return {

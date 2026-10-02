@@ -69,6 +69,18 @@ revokes **any** suite by id (user- or application-owned), guarded by:
   re-confirms their **own** password; there is no vault key to prove. This is
   the app's first use of `PasswordConfirmationRequired`.
 
+**Typed confirmation** (keepiq#871, decided 2 October 2026). Sudo mode is not a
+second factor on every deployment. Nextcloud skips the password confirmation for
+accounts that cannot confirm a password (user_oidc, user_saml, sessions with
+`SCOPE_SKIP_PASSWORD_VALIDATION`), and it accepts any confirmation from the last
+30 minutes. On the single sign-on setups common for government tenants, a
+hijacked admin session would be enough. So the administrator also types the
+suite id, which the request carries as `confirmSuiteId`. The controller refuses
+the request with `400` (`confirmation_mismatch`) before anything else when it is
+missing or differs from the route's id, and audits the refusal. This check does
+not depend on the user backend. `#[PasswordConfirmationRequired]` stays, for the
+backends where it does apply.
+
 It reuses `EncryptionSuiteService::revokeSuite()`, which is owner-agnostic and
 records `revokedBy` (the administrator).
 
@@ -124,6 +136,9 @@ suite through the existing onboarding flow.
   revoke path specifically (it cannot ride the migration-complete tests).
 - Sudo mode adds a re-authentication step administrators must complete; it is
   new to this app and needs a client-side confirmation flow.
+- Sudo mode is skipped on single sign-on backends and lasts 30 minutes, so on
+  its own it is not a second factor there; the typed suite id is the
+  confirmation that holds on every backend (keepiq#871).
 
 ## Alternatives Considered
 
