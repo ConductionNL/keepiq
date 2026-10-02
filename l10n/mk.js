@@ -1308,7 +1308,25 @@ OC.L10N.register(
         "This also revoked suite {suite} and ended key migration {migration}.": "Со ова е отповикан и пакетот {suite} и завршена миграцијата на клучеви {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Отповикувањето на вториот пакет избриша %n контакт за итен пристап.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Отповикувањето на вториот пакет избриша %n контакти за итен пристап.",
-        "A suite revoked as compromised cannot be reinstated.": "Пакет отповикан како компромитиран не може да се врати."
+        "A suite revoked as compromised cannot be reinstated.": "Пакет отповикан како компромитиран не може да се врати.",
+        "Connector": "Конектор",
+        "Directory (tenant) ID": "ИД на директориум (закупец)",
+        "Application (client) ID": "ИД на апликација (клиент)",
+        "Data collection rule immutable ID": "Непроменлив ИД на правилото за собирање податоци",
+        "Stream name": "Име на тек",
+        "Splunk index (optional)": "Splunk индекс (опционално)",
+        "Sourcetype (optional)": "Sourcetype (опционално)",
+        "Leave blank to keep the current one": "Оставете празно за да ја задржите тековната",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF преку syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Крајна точка за собирање податоци (https URL)",
+        "HTTP Event Collector URL (https)": "URL на HTTP Event Collector (https)",
+        "Client secret (write-only)": "Тајна на клиентот (само запишување)",
+        "HEC token (write-only)": "HEC токен (само запишување)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Препраќајте дозволени ревизорски настани до Splunk, Microsoft Sentinel, syslog приемник или webhook. Пораките носат само исчистени метаподатоци: ниедна тајна вредност, име, најава или шифриран текст никогаш не го напушта серверот."
     },
     "nplurals=2; plural=(n != 1);"
 )

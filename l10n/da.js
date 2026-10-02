@@ -1308,7 +1308,25 @@ OC.L10N.register(
         "This also revoked suite {suite} and ended key migration {migration}.": "Dette tilbagekaldte også suite {suite} og afsluttede nøglemigrering {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Tilbagekaldelse af den anden suite slettede %n nødadgangskontakt.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Tilbagekaldelse af den anden suite slettede %n nødadgangskontakter.",
-        "A suite revoked as compromised cannot be reinstated.": "En suite, der er tilbagekaldt som kompromitteret, kan ikke genindsættes."
+        "A suite revoked as compromised cannot be reinstated.": "En suite, der er tilbagekaldt som kompromitteret, kan ikke genindsættes.",
+        "Connector": "Connector",
+        "Directory (tenant) ID": "Mappe-id (tenant)",
+        "Application (client) ID": "Program-id (klient)",
+        "Data collection rule immutable ID": "Uforanderligt id for dataindsamlingsreglen",
+        "Stream name": "Streamnavn",
+        "Splunk index (optional)": "Splunk-indeks (valgfrit)",
+        "Sourcetype (optional)": "Sourcetype (valgfrit)",
+        "Leave blank to keep the current one": "Lad stå tomt for at beholde den nuværende",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF over syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Slutpunkt for dataindsamling (https-URL)",
+        "HTTP Event Collector URL (https)": "HTTP Event Collector-URL (https)",
+        "Client secret (write-only)": "Klienthemmelighed (kun skrivning)",
+        "HEC token (write-only)": "HEC-token (kun skrivning)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Videresend tilladte revisionshændelser til Splunk, Microsoft Sentinel, en syslog-modtager eller en webhook. Beskeder indeholder kun rensede metadata: ingen hemmelig værdi, navn, login eller krypteret tekst forlader nogensinde serveren."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1308,7 +1308,25 @@ OC.L10N.register(
         "This also revoked suite {suite} and ended key migration {migration}.": "Tým sa odvolala aj sada {suite} a ukončila migrácia kľúčov {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Odvolanie druhej sady odstránilo %n kontakt núdzového prístupu.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Odvolanie druhej sady odstránilo %n kontaktov núdzového prístupu.",
-        "A suite revoked as compromised cannot be reinstated.": "Sadu odvolanú ako kompromitovanú nemožno obnoviť."
+        "A suite revoked as compromised cannot be reinstated.": "Sadu odvolanú ako kompromitovanú nemožno obnoviť.",
+        "Connector": "Konektor",
+        "Directory (tenant) ID": "ID adresára (nájomníka)",
+        "Application (client) ID": "ID aplikácie (klienta)",
+        "Data collection rule immutable ID": "Nemenné ID pravidla zberu údajov",
+        "Stream name": "Názov streamu",
+        "Splunk index (optional)": "Index Splunk (voliteľné)",
+        "Sourcetype (optional)": "Sourcetype (voliteľné)",
+        "Leave blank to keep the current one": "Ponechajte prázdne, aby zostala súčasná hodnota",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF cez syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Koncový bod zberu údajov (https URL)",
+        "HTTP Event Collector URL (https)": "URL HTTP Event Collectora (https)",
+        "Client secret (write-only)": "Tajný kľúč klienta (iba zápis)",
+        "HEC token (write-only)": "Token HEC (iba zápis)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Preposielajte povolené auditné udalosti do Splunk, Microsoft Sentinel, prijímača syslog alebo webhooku. Správy obsahujú iba očistené metaúdaje: žiadna tajná hodnota, meno, prihlasovacie meno ani šifrovaný text nikdy neopustí server."
     },
     "nplurals=2; plural=(n != 1);"
 )

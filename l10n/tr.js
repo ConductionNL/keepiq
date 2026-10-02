@@ -1308,7 +1308,25 @@ OC.L10N.register(
         "This also revoked suite {suite} and ended key migration {migration}.": "Bu işlem {suite} paketini de iptal etti ve {migration} anahtar taşımasını sonlandırdı.",
         "Revoking the second suite deleted %n emergency-access contact.": "İkinci paketin iptali %n acil erişim kişisini sildi.",
         "Revoking the second suite deleted %n emergency-access contacts.": "İkinci paketin iptali %n acil erişim kişisini sildi.",
-        "A suite revoked as compromised cannot be reinstated.": "İhlal edilmiş olarak iptal edilen bir paket geri yüklenemez."
+        "A suite revoked as compromised cannot be reinstated.": "İhlal edilmiş olarak iptal edilen bir paket geri yüklenemez.",
+        "Connector": "Bağlayıcı",
+        "Directory (tenant) ID": "Dizin (kiracı) kimliği",
+        "Application (client) ID": "Uygulama (istemci) kimliği",
+        "Data collection rule immutable ID": "Veri toplama kuralının değişmez kimliği",
+        "Stream name": "Akış adı",
+        "Splunk index (optional)": "Splunk dizini (isteğe bağlı)",
+        "Sourcetype (optional)": "Sourcetype (isteğe bağlı)",
+        "Leave blank to keep the current one": "Mevcut olanı korumak için boş bırakın",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "Syslog üzerinden CEF",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Veri toplama uç noktası (https URL)",
+        "HTTP Event Collector URL (https)": "HTTP Event Collector URL'si (https)",
+        "Client secret (write-only)": "İstemci gizli anahtarı (yalnızca yazma)",
+        "HEC token (write-only)": "HEC belirteci (yalnızca yazma)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "İzin verilen denetim olaylarını Splunk'a, Microsoft Sentinel'e, bir syslog alıcısına veya bir webhook'a iletin. İletiler yalnızca temizlenmiş meta veriler taşır: hiçbir gizli değer, ad, oturum açma bilgisi veya şifreli metin sunucudan asla çıkmaz."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1308,7 +1308,25 @@ OC.L10N.register(
         "This also revoked suite {suite} and ended key migration {migration}.": "Isto também revogou a suite {suite} e terminou a migração de chaves {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Revogar a segunda suite eliminou %n contacto de acesso de emergência.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Revogar a segunda suite eliminou %n contactos de acesso de emergência.",
-        "A suite revoked as compromised cannot be reinstated.": "Uma suite revogada como comprometida não pode ser restabelecida."
+        "A suite revoked as compromised cannot be reinstated.": "Uma suite revogada como comprometida não pode ser restabelecida.",
+        "Connector": "Conector",
+        "Directory (tenant) ID": "ID do diretório (inquilino)",
+        "Application (client) ID": "ID da aplicação (cliente)",
+        "Data collection rule immutable ID": "ID imutável da regra de recolha de dados",
+        "Stream name": "Nome do fluxo",
+        "Splunk index (optional)": "Índice Splunk (opcional)",
+        "Sourcetype (optional)": "Sourcetype (opcional)",
+        "Leave blank to keep the current one": "Deixe em branco para manter o atual",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF por syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Ponto final de recolha de dados (URL https)",
+        "HTTP Event Collector URL (https)": "URL do HTTP Event Collector (https)",
+        "Client secret (write-only)": "Segredo do cliente (só escrita)",
+        "HEC token (write-only)": "Token HEC (só escrita)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Reencaminhe os eventos de auditoria permitidos para o Splunk, Microsoft Sentinel, um recetor syslog ou um webhook. As mensagens só levam metadados limpos: nenhum valor secreto, nome, login ou texto cifrado sai alguma vez do servidor."
     },
     "nplurals=2; plural=(n != 1);"
 )

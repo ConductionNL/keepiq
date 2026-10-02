@@ -1308,7 +1308,25 @@ OC.L10N.register(
         "This also revoked suite {suite} and ended key migration {migration}.": "Tämä perui myös sarjan {suite} ja päätti avainten siirron {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Toisen sarjan peruminen poisti %n hätäkäyttöyhteystiedon.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Toisen sarjan peruminen poisti %n hätäkäyttöyhteystietoa.",
-        "A suite revoked as compromised cannot be reinstated.": "Vaarantuneena perutun sarjan palauttaminen ei ole mahdollista."
+        "A suite revoked as compromised cannot be reinstated.": "Vaarantuneena perutun sarjan palauttaminen ei ole mahdollista.",
+        "Connector": "Liitin",
+        "Directory (tenant) ID": "Hakemiston (vuokraajan) tunnus",
+        "Application (client) ID": "Sovelluksen (asiakkaan) tunnus",
+        "Data collection rule immutable ID": "Tiedonkeruusäännön muuttumaton tunnus",
+        "Stream name": "Virran nimi",
+        "Splunk index (optional)": "Splunk-indeksi (valinnainen)",
+        "Sourcetype (optional)": "Sourcetype (valinnainen)",
+        "Leave blank to keep the current one": "Jätä tyhjäksi säilyttääksesi nykyisen",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF syslogin kautta",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Tiedonkeruun päätepiste (https-URL)",
+        "HTTP Event Collector URL (https)": "HTTP Event Collectorin URL (https)",
+        "Client secret (write-only)": "Asiakassalaisuus (vain kirjoitus)",
+        "HEC token (write-only)": "HEC-tunnus (vain kirjoitus)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Välitä sallitut valvontatapahtumat Splunkiin, Microsoft Sentineliin, syslog-vastaanottimeen tai webhookiin. Viestit sisältävät vain puhdistettua metatietoa: mikään salainen arvo, nimi, kirjautumistunnus tai salateksti ei koskaan poistu palvelimelta."
     },
     "nplurals=2; plural=(n != 1);"
 )

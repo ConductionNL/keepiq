@@ -1307,7 +1307,25 @@
         "This also revoked suite {suite} and ended key migration {migration}.": "Ez a(z) {suite} csomagot is visszavonta, és befejezte a(z) {migration} kulcsmigrációt.",
         "Revoking the second suite deleted %n emergency-access contact.": "A második csomag visszavonása %n vészhelyzeti hozzáférési kapcsolatot törölt.",
         "Revoking the second suite deleted %n emergency-access contacts.": "A második csomag visszavonása %n vészhelyzeti hozzáférési kapcsolatot törölt.",
-        "A suite revoked as compromised cannot be reinstated.": "A kompromittáltként visszavont csomag nem állítható vissza."
+        "A suite revoked as compromised cannot be reinstated.": "A kompromittáltként visszavont csomag nem állítható vissza.",
+        "Connector": "Összekötő",
+        "Directory (tenant) ID": "Címtár (bérlő) azonosítója",
+        "Application (client) ID": "Alkalmazás (ügyfél) azonosítója",
+        "Data collection rule immutable ID": "Az adatgyűjtési szabály állandó azonosítója",
+        "Stream name": "Adatfolyam neve",
+        "Splunk index (optional)": "Splunk index (nem kötelező)",
+        "Sourcetype (optional)": "Sourcetype (nem kötelező)",
+        "Leave blank to keep the current one": "Hagyja üresen a jelenlegi megtartásához",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF syslogon keresztül",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Adatgyűjtési végpont (https URL)",
+        "HTTP Event Collector URL (https)": "HTTP Event Collector URL (https)",
+        "Client secret (write-only)": "Ügyfélkulcs (csak írható)",
+        "HEC token (write-only)": "HEC token (csak írható)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Továbbítsa az engedélyezett naplózási eseményeket a Splunkba, a Microsoft Sentinelbe, egy syslog fogadóba vagy egy webhookba. Az üzenetek csak megtisztított metaadatokat tartalmaznak: titkos érték, név, bejelentkezés vagy titkosított szöveg soha nem hagyja el a kiszolgálót."
     },
     "plurals": null
 }

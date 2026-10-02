@@ -1308,7 +1308,25 @@ OC.L10N.register(
         "This also revoked suite {suite} and ended key migration {migration}.": "Þetta afturkallaði einnig svítu {suite} og lauk lyklaflutningi {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Afturköllun seinni svítunnar eyddi %n neyðaraðgangstengilið.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Afturköllun seinni svítunnar eyddi %n neyðaraðgangstengiliðum.",
-        "A suite revoked as compromised cannot be reinstated.": "Ekki er hægt að endurheimta svítu sem var afturkölluð sem í hættu."
+        "A suite revoked as compromised cannot be reinstated.": "Ekki er hægt að endurheimta svítu sem var afturkölluð sem í hættu.",
+        "Connector": "Tengill",
+        "Directory (tenant) ID": "Auðkenni möppu (leigjanda)",
+        "Application (client) ID": "Auðkenni forrits (biðlara)",
+        "Data collection rule immutable ID": "Óbreytanlegt auðkenni gagnasöfnunarreglu",
+        "Stream name": "Heiti straums",
+        "Splunk index (optional)": "Splunk-vísir (valkvætt)",
+        "Sourcetype (optional)": "Sourcetype (valkvætt)",
+        "Leave blank to keep the current one": "Skildu eftir autt til að halda núverandi",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF yfir syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Endapunktur gagnasöfnunar (https-slóð)",
+        "HTTP Event Collector URL (https)": "Slóð HTTP Event Collector (https)",
+        "Client secret (write-only)": "Leyndarmál biðlara (aðeins skrifa)",
+        "HEC token (write-only)": "HEC-tóki (aðeins skrifa)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Áframsendu leyfða endurskoðunaratburði til Splunk, Microsoft Sentinel, syslog-móttakara eða vefkróks. Skilaboð bera aðeins hreinsuð lýsigögn: ekkert leynigildi, nafn, innskráning eða dulkóðaður texti fer nokkurn tíma af þjóninum."
     },
     "nplurals=2; plural=(n != 1);"
 )

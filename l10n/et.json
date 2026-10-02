@@ -1307,7 +1307,25 @@
         "This also revoked suite {suite} and ended key migration {migration}.": "See tühistas ka komplekti {suite} ja lõpetas võtmete migratsiooni {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Teise komplekti tühistamine kustutas %n hädaabijuurdepääsu kontakti.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Teise komplekti tühistamine kustutas %n hädaabijuurdepääsu kontakti.",
-        "A suite revoked as compromised cannot be reinstated.": "Ohustatuna tühistatud komplekti ei saa taastada."
+        "A suite revoked as compromised cannot be reinstated.": "Ohustatuna tühistatud komplekti ei saa taastada.",
+        "Connector": "Konnektor",
+        "Directory (tenant) ID": "Kataloogi (rentniku) ID",
+        "Application (client) ID": "Rakenduse (kliendi) ID",
+        "Data collection rule immutable ID": "Andmekogumisreegli muutumatu ID",
+        "Stream name": "Voo nimi",
+        "Splunk index (optional)": "Splunki indeks (valikuline)",
+        "Sourcetype (optional)": "Sourcetype (valikuline)",
+        "Leave blank to keep the current one": "Jäta tühjaks, et praegune alles jätta",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF syslogi kaudu",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Andmekogumise lõpp-punkt (https-URL)",
+        "HTTP Event Collector URL (https)": "HTTP Event Collectori URL (https)",
+        "Client secret (write-only)": "Kliendi saladus (ainult kirjutamiseks)",
+        "HEC token (write-only)": "HEC-luba (ainult kirjutamiseks)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Edasta lubatud auditisündmused Splunki, Microsoft Sentinelisse, syslogi vastuvõtjale või veebihaagile. Sõnumid sisaldavad ainult puhastatud metaandmeid: ükski salajane väärtus, nimi, kasutajanimi ega krüpteeritud tekst ei lahku kunagi serverist."
     },
     "plurals": null
 }

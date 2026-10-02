@@ -1307,7 +1307,25 @@
         "This also revoked suite {suite} and ended key migration {migration}.": "Cela a aussi révoqué la suite {suite} et mis fin à la migration de clés {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "La révocation de la deuxième suite a supprimé %n contact d'accès d'urgence.",
         "Revoking the second suite deleted %n emergency-access contacts.": "La révocation de la deuxième suite a supprimé %n contacts d'accès d'urgence.",
-        "A suite revoked as compromised cannot be reinstated.": "Une suite révoquée comme compromise ne peut pas être rétablie."
+        "A suite revoked as compromised cannot be reinstated.": "Une suite révoquée comme compromise ne peut pas être rétablie.",
+        "Connector": "Connecteur",
+        "Directory (tenant) ID": "ID de répertoire (locataire)",
+        "Application (client) ID": "ID d'application (client)",
+        "Data collection rule immutable ID": "ID immuable de la règle de collecte de données",
+        "Stream name": "Nom du flux",
+        "Splunk index (optional)": "Index Splunk (facultatif)",
+        "Sourcetype (optional)": "Sourcetype (facultatif)",
+        "Leave blank to keep the current one": "Laisser vide pour conserver la valeur actuelle",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF via syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Point de terminaison de collecte de données (URL https)",
+        "HTTP Event Collector URL (https)": "URL du HTTP Event Collector (https)",
+        "Client secret (write-only)": "Secret client (écriture seule)",
+        "HEC token (write-only)": "Jeton HEC (écriture seule)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Transférer les événements d'audit autorisés vers Splunk, Microsoft Sentinel, un récepteur syslog ou un webhook. Les messages ne contiennent que des métadonnées nettoyées : aucune valeur secrète, aucun nom, identifiant ou texte chiffré ne quitte jamais le serveur."
     },
     "plurals": null
 }

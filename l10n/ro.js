@@ -1308,7 +1308,25 @@ OC.L10N.register(
         "This also revoked suite {suite} and ended key migration {migration}.": "Aceasta a revocat și suita {suite} și a încheiat migrarea cheilor {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Revocarea celei de-a doua suite a șters %n contact de acces de urgență.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Revocarea celei de-a doua suite a șters %n contacte de acces de urgență.",
-        "A suite revoked as compromised cannot be reinstated.": "O suită revocată ca fiind compromisă nu poate fi restabilită."
+        "A suite revoked as compromised cannot be reinstated.": "O suită revocată ca fiind compromisă nu poate fi restabilită.",
+        "Connector": "Conector",
+        "Directory (tenant) ID": "ID director (chiriaș)",
+        "Application (client) ID": "ID aplicație (client)",
+        "Data collection rule immutable ID": "ID imuabil al regulii de colectare a datelor",
+        "Stream name": "Numele fluxului",
+        "Splunk index (optional)": "Index Splunk (opțional)",
+        "Sourcetype (optional)": "Sourcetype (opțional)",
+        "Leave blank to keep the current one": "Lăsați gol pentru a păstra valoarea actuală",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF prin syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Punct final de colectare a datelor (URL https)",
+        "HTTP Event Collector URL (https)": "URL HTTP Event Collector (https)",
+        "Client secret (write-only)": "Secret client (doar scriere)",
+        "HEC token (write-only)": "Token HEC (doar scriere)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Redirecționați evenimentele de audit permise către Splunk, Microsoft Sentinel, un receptor syslog sau un webhook. Mesajele conțin doar metadate curățate: nicio valoare secretă, nume, autentificare sau text criptat nu părăsește vreodată serverul."
     },
     "nplurals=2; plural=(n != 1);"
 )

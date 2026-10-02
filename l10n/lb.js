@@ -1308,7 +1308,25 @@ OC.L10N.register(
         "This also revoked suite {suite} and ended key migration {migration}.": "Domat gouf och d’Suite {suite} widderruff an d’Schlësselmigratioun {migration} ofgeschloss.",
         "Revoking the second suite deleted %n emergency-access contact.": "De Widderruff vun der zweeter Suite huet %n Noutzougangskontakt geläscht.",
         "Revoking the second suite deleted %n emergency-access contacts.": "De Widderruff vun der zweeter Suite huet %n Noutzougangskontakter geläscht.",
-        "A suite revoked as compromised cannot be reinstated.": "Eng Suite, déi als kompromittéiert widderruff gouf, kann net erëm hiergestallt ginn."
+        "A suite revoked as compromised cannot be reinstated.": "Eng Suite, déi als kompromittéiert widderruff gouf, kann net erëm hiergestallt ginn.",
+        "Connector": "Connecteur",
+        "Directory (tenant) ID": "Verzeechnis-ID (Mandant)",
+        "Application (client) ID": "Applikatiouns-ID (Client)",
+        "Data collection rule immutable ID": "Onverännerlech ID vun der Datesammlungsregel",
+        "Stream name": "Stream-Numm",
+        "Splunk index (optional)": "Splunk-Index (fakultativ)",
+        "Sourcetype (optional)": "Sourcetype (fakultativ)",
+        "Leave blank to keep the current one": "Eidel loossen, fir den aktuelle Wäert ze halen",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF iwwer Syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Datesammlungs-Endpunkt (https-URL)",
+        "HTTP Event Collector URL (https)": "HTTP Event Collector-URL (https)",
+        "Client secret (write-only)": "Client-Geheimnis (nëmme schreiwen)",
+        "HEC token (write-only)": "HEC-Token (nëmme schreiwen)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Erlaabten Audit-Evenementer un Splunk, Microsoft Sentinel, en Syslog-Empfänger oder e Webhook weiderginn. Messagen enthalen nëmme gebotzt Metadaten: kee geheime Wäert, Numm, Login oder verschlësselten Text verléisst jee de Server."
     },
     "nplurals=2; plural=(n != 1);"
 )

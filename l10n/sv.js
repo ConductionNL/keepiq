@@ -1308,7 +1308,25 @@ OC.L10N.register(
         "This also revoked suite {suite} and ended key migration {migration}.": "Detta återkallade även svit {suite} och avslutade nyckelmigrering {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Återkallandet av den andra sviten tog bort %n nödåtkomstkontakt.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Återkallandet av den andra sviten tog bort %n nödåtkomstkontakter.",
-        "A suite revoked as compromised cannot be reinstated.": "En svit som återkallats som komprometterad kan inte återställas."
+        "A suite revoked as compromised cannot be reinstated.": "En svit som återkallats som komprometterad kan inte återställas.",
+        "Connector": "Anslutning",
+        "Directory (tenant) ID": "Katalog-ID (klientorganisation)",
+        "Application (client) ID": "Program-ID (klient)",
+        "Data collection rule immutable ID": "Oföränderligt ID för datainsamlingsregeln",
+        "Stream name": "Strömnamn",
+        "Splunk index (optional)": "Splunk-index (valfritt)",
+        "Sourcetype (optional)": "Sourcetype (valfritt)",
+        "Leave blank to keep the current one": "Lämna tomt för att behålla den nuvarande",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF via syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Slutpunkt för datainsamling (https-URL)",
+        "HTTP Event Collector URL (https)": "HTTP Event Collector-URL (https)",
+        "Client secret (write-only)": "Klienthemlighet (endast skrivning)",
+        "HEC token (write-only)": "HEC-token (endast skrivning)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Vidarebefordra tillåtna granskningshändelser till Splunk, Microsoft Sentinel, en syslog-mottagare eller en webhook. Meddelanden innehåller bara rensade metadata: inget hemligt värde, namn, inloggning eller krypterad text lämnar någonsin servern."
     },
     "nplurals=2; plural=(n != 1);"
 )

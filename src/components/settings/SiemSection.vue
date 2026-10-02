@@ -19,7 +19,7 @@
 		:description="
 			t(
 				'keepiq',
-				'Forward whitelisted audit events to syslog or webhook sinks. Payloads carry sanitized metadata only — no secret value, name, login, or ciphertext ever leaves the server.',
+				'Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.',
 			)
 		">
 		<div class="siem" data-testid="siem-section">
@@ -137,33 +137,27 @@
 					data-testid="siem-form-name" />
 				<NcSelect
 					v-if="!editingId"
-					v-model="form.type"
-					:options="['syslog', 'webhook']"
+					v-model="connectorOption"
+					:options="connectorOptions"
+					label="label"
 					:clearable="false"
-					:inputLabel="t('keepiq', 'Type')"
-					data-testid="siem-form-type" />
+					:inputLabel="t('keepiq', 'Connector')"
+					data-testid="siem-form-connector" />
 				<NcTextField
+					v-if="shows('endpoint')"
 					v-model="form.endpoint"
-					:label="
-						form.type === 'syslog'
-							? t('keepiq', 'Endpoint (host:port)')
-							: t('keepiq', 'Endpoint (https URL)')
-					"
-					:placeholder="
-						form.type === 'syslog'
-							? 'siem.example.org:6514'
-							: 'https://siem.example.org/ingest'
-					"
+					:label="endpointLabel"
+					:placeholder="endpointPlaceholder"
 					data-testid="siem-form-endpoint" />
 				<NcCheckboxRadioSwitch
-					v-if="form.type === 'syslog'"
+					v-if="shows('tls')"
 					v-model="form.tls"
 					type="switch"
 					data-testid="siem-form-tls">
 					{{ t('keepiq', 'Use TLS transport') }}
 				</NcCheckboxRadioSwitch>
 				<NcTextField
-					v-if="form.type === 'webhook'"
+					v-if="shows('hmacSecret')"
 					v-model="form.hmacSecret"
 					type="password"
 					:label="t('keepiq', 'HMAC signing secret (write-only)')"
@@ -173,6 +167,49 @@
 							: ''
 					"
 					data-testid="siem-form-secret" />
+				<NcTextField
+					v-if="shows('tenantId')"
+					v-model="form.tenantId"
+					:label="t('keepiq', 'Directory (tenant) ID')"
+					data-testid="siem-form-tenant" />
+				<NcTextField
+					v-if="shows('clientId')"
+					v-model="form.clientId"
+					:label="t('keepiq', 'Application (client) ID')"
+					data-testid="siem-form-client" />
+				<NcTextField
+					v-if="shows('dcrImmutableId')"
+					v-model="form.dcrImmutableId"
+					:label="t('keepiq', 'Data collection rule immutable ID')"
+					data-testid="siem-form-dcr" />
+				<NcTextField
+					v-if="shows('streamName')"
+					v-model="form.streamName"
+					:label="t('keepiq', 'Stream name')"
+					placeholder="Custom-KeepiqAudit"
+					data-testid="siem-form-stream" />
+				<NcTextField
+					v-if="shows('index')"
+					v-model="form.index"
+					:label="t('keepiq', 'Splunk index (optional)')"
+					data-testid="siem-form-index" />
+				<NcTextField
+					v-if="shows('sourcetype')"
+					v-model="form.sourcetype"
+					:label="t('keepiq', 'Sourcetype (optional)')"
+					placeholder="keepiq:audit"
+					data-testid="siem-form-sourcetype" />
+				<NcTextField
+					v-if="shows('credential')"
+					v-model="form.credential"
+					type="password"
+					:label="credentialLabel"
+					:placeholder="
+						editingHasCredential
+							? t('keepiq', 'Leave blank to keep the current one')
+							: ''
+					"
+					data-testid="siem-form-credential" />
 				<NcSelect
 					v-model="form.categoryFilter"
 					:options="categoryOptions"
@@ -224,6 +261,7 @@ import {
 	NcSelect,
 	NcTextField,
 } from '@nextcloud/vue'
+import { connectorOf, fieldsFor, formIsValid, requestBody } from './siemConnectors.js'
 
 /**
  * Audit-event category slugs (prefix before the first dot of an event
@@ -254,10 +292,17 @@ const CATEGORY_OPTIONS = [
 function EMPTY_FORM() {
 	return {
 		name: '',
-		type: 'webhook',
+		connector: 'splunk_hec',
 		endpoint: '',
 		tls: true,
 		hmacSecret: '',
+		credential: '',
+		tenantId: '',
+		clientId: '',
+		dcrImmutableId: '',
+		streamName: '',
+		index: '',
+		sourcetype: '',
 		categoryFilter: [],
 		queueCap: 1000,
 		enabled: true,
@@ -281,6 +326,7 @@ export default {
 			formOpen: false,
 			editingId: null,
 			editingHasSecret: false,
+			editingHasCredential: false,
 			form: EMPTY_FORM(),
 			busy: false,
 			error: null,
@@ -294,16 +340,74 @@ export default {
 		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 		 */
 		formValid() {
-			if (this.form.endpoint === '') {
-				return false
+			return formIsValid(this.form, !this.editingId)
+		},
+
+		/**
+		 * The picker entries, in the order the design names them.
+		 *
+		 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-named-siem-connectors-on-a-sink
+		 */
+		connectorOptions() {
+			return [
+				{ id: 'splunk_hec', label: t('keepiq', 'Splunk HTTP Event Collector') },
+				{ id: 'sentinel', label: t('keepiq', 'Microsoft Sentinel') },
+				{ id: 'syslog_cef', label: t('keepiq', 'CEF over syslog') },
+				{ id: 'syslog_json', label: t('keepiq', 'Syslog JSON') },
+				{ id: 'webhook', label: t('keepiq', 'Webhook JSON') },
+			]
+		},
+
+		/**
+		 * The picker's selected entry, bound to form.connector.
+		 *
+		 * @spec exclude Two-way binding between the picker object and the connector key.
+		 */
+		connectorOption: {
+			get() {
+				return this.connectorOptions.find((o) => o.id === this.form.connector)
+			},
+
+			set(option) {
+				this.form.connector = option?.id ?? 'splunk_hec'
+			},
+		},
+
+		/**
+		 * @spec exclude Presentation-only: endpoint label per connector.
+		 */
+		endpointLabel() {
+			if (this.form.connector === 'sentinel') {
+				return t('keepiq', 'Data collection endpoint (https URL)')
 			}
-			if (
-				this.form.type === 'webhook'
-				&& !this.form.endpoint.startsWith('https://')
-			) {
-				return false
+			if (this.form.connector === 'splunk_hec') {
+				return t('keepiq', 'HTTP Event Collector URL (https)')
 			}
-			return true
+			return this.form.connector.startsWith('syslog')
+				? t('keepiq', 'Endpoint (host:port)')
+				: t('keepiq', 'Endpoint (https URL)')
+		},
+
+		/**
+		 * @spec exclude Presentation-only: endpoint example per connector.
+		 */
+		endpointPlaceholder() {
+			return {
+				splunk_hec: 'https://splunk.example.org:8088/services/collector/event',
+				sentinel: 'https://keepiq-dce.westeurope-1.ingest.monitor.azure.com',
+				syslog_cef: 'siem.example.org:6514',
+				syslog_json: 'siem.example.org:6514',
+				webhook: 'https://siem.example.org/ingest',
+			}[this.form.connector]
+		},
+
+		/**
+		 * @spec exclude Presentation-only: credential label per connector.
+		 */
+		credentialLabel() {
+			return this.form.connector === 'sentinel'
+				? t('keepiq', 'Client secret (write-only)')
+				: t('keepiq', 'HEC token (write-only)')
 		},
 	},
 
@@ -332,6 +436,7 @@ export default {
 		startCreate() {
 			this.editingId = null
 			this.editingHasSecret = false
+			this.editingHasCredential = false
 			this.form = EMPTY_FORM()
 			this.formOpen = true
 			this.notice = null
@@ -346,20 +451,42 @@ export default {
 		 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 		 */
 		startEdit(sink) {
+			const options = sink.connectorOptions ?? {}
 			this.editingId = sink.id
 			this.editingHasSecret = sink.hasHmacSecret
+			this.editingHasCredential = sink.hasCredential === true
 			this.form = {
+				...EMPTY_FORM(),
 				name: sink.name,
-				type: sink.type,
+				connector: connectorOf(sink),
 				endpoint: sink.endpoint,
 				tls: sink.tls,
+				// Write-only: never prefilled, blank keeps the stored value.
 				hmacSecret: '',
+				credential: '',
+				tenantId: options.tenantId ?? '',
+				clientId: options.clientId ?? '',
+				dcrImmutableId: options.dcrImmutableId ?? '',
+				streamName: options.streamName ?? '',
+				index: options.index ?? '',
+				sourcetype: options.sourcetype ?? '',
 				categoryFilter: [...(sink.categoryFilter ?? [])],
 				queueCap: sink.queueCap,
 				enabled: sink.enabled,
 			}
 			this.formOpen = true
 			this.notice = null
+		},
+
+		/**
+		 * Whether the form shows a field for the picked connector.
+		 *
+		 * @param {string} field The field name.
+		 * @return {boolean}
+		 * @spec openspec/changes/audit-siem-vendor-connectors/specs/siem-vendor-connectors/spec.md#requirement-named-siem-connectors-on-a-sink
+		 */
+		shows(field) {
+			return fieldsFor(this.form.connector).includes(field)
 		},
 
 		/**
@@ -372,15 +499,7 @@ export default {
 			this.busy = true
 			this.error = null
 			try {
-				const payload = {
-					name: this.form.name || this.form.type,
-					endpoint: this.form.endpoint,
-					tls: this.form.tls,
-					hmacSecret: this.form.hmacSecret,
-					categoryFilter: this.form.categoryFilter,
-					queueCap: parseInt(this.form.queueCap, 10) || 1000,
-					enabled: this.form.enabled,
-				}
+				const { type, ...payload } = requestBody(this.form)
 				if (this.editingId) {
 					const response = await axios.put(
 						generateUrl(
@@ -396,7 +515,7 @@ export default {
 						generateUrl('/apps/keepiq/api/v1/siem/sinks'),
 						{
 							...payload,
-							type: this.form.type,
+							type,
 						},
 					)
 					this.sinks = [response.data, ...this.sinks]

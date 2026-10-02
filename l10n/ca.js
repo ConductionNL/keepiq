@@ -1308,7 +1308,25 @@ OC.L10N.register(
         "This also revoked suite {suite} and ended key migration {migration}.": "Això també ha revocat la suite {suite} i ha finalitzat la migració de claus {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Revocar la segona suite ha suprimit %n contacte d'accés d'emergència.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Revocar la segona suite ha suprimit %n contactes d'accés d'emergència.",
-        "A suite revoked as compromised cannot be reinstated.": "Una suite revocada com a compromesa no es pot restablir."
+        "A suite revoked as compromised cannot be reinstated.": "Una suite revocada com a compromesa no es pot restablir.",
+        "Connector": "Connector",
+        "Directory (tenant) ID": "ID del directori (inquilí)",
+        "Application (client) ID": "ID de l'aplicació (client)",
+        "Data collection rule immutable ID": "ID immutable de la regla de recollida de dades",
+        "Stream name": "Nom del flux",
+        "Splunk index (optional)": "Índex de Splunk (opcional)",
+        "Sourcetype (optional)": "Sourcetype (opcional)",
+        "Leave blank to keep the current one": "Deixeu-ho en blanc per mantenir l'actual",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF per syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Punt final de recollida de dades (URL https)",
+        "HTTP Event Collector URL (https)": "URL de l'HTTP Event Collector (https)",
+        "Client secret (write-only)": "Secret del client (només escriptura)",
+        "HEC token (write-only)": "Testimoni HEC (només escriptura)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Reenvia els esdeveniments d'auditoria permesos a Splunk, Microsoft Sentinel, un receptor syslog o un webhook. Els missatges només duen metadades netejades: cap valor secret, nom, inici de sessió o text xifrat surt mai del servidor."
     },
     "nplurals=2; plural=(n != 1);"
 )

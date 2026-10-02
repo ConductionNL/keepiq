@@ -1308,7 +1308,25 @@ OC.L10N.register(
         "This also revoked suite {suite} and ended key migration {migration}.": "Гэта таксама адклікала набор {suite} і завяршыла міграцыю ключоў {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Адкліканне другога набору выдаліла %n кантакт аварыйнага доступу.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Адкліканне другога набору выдаліла %n кантактаў аварыйнага доступу.",
-        "A suite revoked as compromised cannot be reinstated.": "Набор, адкліканы як скампраметаваны, нельга аднавіць."
+        "A suite revoked as compromised cannot be reinstated.": "Набор, адкліканы як скампраметаваны, нельга аднавіць.",
+        "Connector": "Канектар",
+        "Directory (tenant) ID": "ІД каталога (арандатара)",
+        "Application (client) ID": "ІД праграмы (кліента)",
+        "Data collection rule immutable ID": "Нязменны ІД правіла збору даных",
+        "Stream name": "Назва патоку",
+        "Splunk index (optional)": "Індэкс Splunk (неабавязкова)",
+        "Sourcetype (optional)": "Sourcetype (неабавязкова)",
+        "Leave blank to keep the current one": "Пакіньце пустым, каб захаваць бягучае значэнне",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF праз syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Канчатковы пункт збору даных (https URL)",
+        "HTTP Event Collector URL (https)": "URL HTTP Event Collector (https)",
+        "Client secret (write-only)": "Сакрэт кліента (толькі запіс)",
+        "HEC token (write-only)": "Токен HEC (толькі запіс)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Перасылайце дазволеныя падзеі аўдыту ў Splunk, Microsoft Sentinel, прымач syslog або вэб-хук. Паведамленні змяшчаюць толькі ачышчаныя метаданыя: ніякае сакрэтнае значэнне, імя, лагін ці шыфратэкст ніколі не пакідае сервер."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1307,7 +1307,25 @@
         "This also revoked suite {suite} and ended key migration {migration}.": "Тиме је опозван и пакет {suite} и завршена миграција кључева {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Опозив другог пакета обрисао је %n контакт за хитан приступ.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Опозив другог пакета обрисао је %n контаката за хитан приступ.",
-        "A suite revoked as compromised cannot be reinstated.": "Пакет опозван као компромитован не може се вратити."
+        "A suite revoked as compromised cannot be reinstated.": "Пакет опозван као компромитован не може се вратити.",
+        "Connector": "Конектор",
+        "Directory (tenant) ID": "ИД директоријума (закупца)",
+        "Application (client) ID": "ИД апликације (клијента)",
+        "Data collection rule immutable ID": "Непроменљиви ИД правила прикупљања података",
+        "Stream name": "Назив тока",
+        "Splunk index (optional)": "Splunk индекс (опционо)",
+        "Sourcetype (optional)": "Sourcetype (опционо)",
+        "Leave blank to keep the current one": "Оставите празно да задржите тренутну вредност",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF преко syslog-а",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Крајња тачка прикупљања података (https URL)",
+        "HTTP Event Collector URL (https)": "URL HTTP Event Collector-а (https)",
+        "Client secret (write-only)": "Тајна клијента (само уписивање)",
+        "HEC token (write-only)": "HEC токен (само уписивање)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Прослеђујте дозвољене ревизијске догађаје у Splunk, Microsoft Sentinel, syslog пријемник или webhook. Поруке садрже само очишћене метаподатке: ниједна тајна вредност, име, пријава или шифровани текст никада не напушта сервер."
     },
     "plurals": null
 }

@@ -1307,7 +1307,25 @@
         "This also revoked suite {suite} and ended key migration {migration}.": "Chúlghair sé seo sraith {suite} freisin agus chuir sé deireadh le haistriú eochrach {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Scrios cúlghairm an dara sraith %n teagmháil rochtana éigeandála.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Scrios cúlghairm an dara sraith %n teagmhálacha rochtana éigeandála.",
-        "A suite revoked as compromised cannot be reinstated.": "Ní féidir sraith a cúlghaireadh mar shraith a sáraíodh a athbhunú."
+        "A suite revoked as compromised cannot be reinstated.": "Ní féidir sraith a cúlghaireadh mar shraith a sáraíodh a athbhunú.",
+        "Connector": "Nascóir",
+        "Directory (tenant) ID": "Aitheantas an eolaire (tionónta)",
+        "Application (client) ID": "Aitheantas an fheidhmchláir (cliant)",
+        "Data collection rule immutable ID": "Aitheantas do-athraithe na rialach bailithe sonraí",
+        "Stream name": "Ainm an tsrutha",
+        "Splunk index (optional)": "Innéacs Splunk (roghnach)",
+        "Sourcetype (optional)": "Sourcetype (roghnach)",
+        "Leave blank to keep the current one": "Fág bán é chun an ceann reatha a choinneáil",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF thar syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Críochphointe bailithe sonraí (URL https)",
+        "HTTP Event Collector URL (https)": "URL an HTTP Event Collector (https)",
+        "Client secret (write-only)": "Rún cliaint (scríobh amháin)",
+        "HEC token (write-only)": "Comhartha HEC (scríobh amháin)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Seol imeachtaí iniúchta ceadaithe ar aghaidh chuig Splunk, Microsoft Sentinel, glacadóir syslog nó crúca gréasáin. Ní iompraíonn teachtaireachtaí ach meiteashonraí glanta: ní fhágann aon luach rúnda, ainm, logáil isteach ná téacs criptithe an freastalaí riamh."
     },
     "plurals": null
 }

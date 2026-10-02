@@ -1308,7 +1308,25 @@ OC.L10N.register(
         "This also revoked suite {suite} and ended key migration {migration}.": "S tem je bila preklicana tudi zbirka {suite} in končana selitev ključev {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Preklic druge zbirke je izbrisal %n stik za nujni dostop.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Preklic druge zbirke je izbrisal %n stikov za nujni dostop.",
-        "A suite revoked as compromised cannot be reinstated.": "Zbirke, preklicane kot ogrožene, ni mogoče obnoviti."
+        "A suite revoked as compromised cannot be reinstated.": "Zbirke, preklicane kot ogrožene, ni mogoče obnoviti.",
+        "Connector": "Povezovalnik",
+        "Directory (tenant) ID": "ID imenika (najemnika)",
+        "Application (client) ID": "ID aplikacije (odjemalca)",
+        "Data collection rule immutable ID": "Nespremenljivi ID pravila zbiranja podatkov",
+        "Stream name": "Ime toka",
+        "Splunk index (optional)": "Indeks Splunk (neobvezno)",
+        "Sourcetype (optional)": "Sourcetype (neobvezno)",
+        "Leave blank to keep the current one": "Pustite prazno, da ostane trenutna vrednost",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF prek sysloga",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Končna točka zbiranja podatkov (URL https)",
+        "HTTP Event Collector URL (https)": "URL HTTP Event Collectorja (https)",
+        "Client secret (write-only)": "Skrivnost odjemalca (samo pisanje)",
+        "HEC token (write-only)": "Žeton HEC (samo pisanje)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Posredujte dovoljene revizijske dogodke v Splunk, Microsoft Sentinel, sprejemnik syslog ali spletni kavelj. Sporočila vsebujejo le očiščene metapodatke: nobena skrivna vrednost, ime, prijava ali šifrirano besedilo nikoli ne zapusti strežnika."
     },
     "nplurals=2; plural=(n != 1);"
 )

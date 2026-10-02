@@ -1307,7 +1307,25 @@
         "This also revoked suite {suite} and ended key migration {migration}.": "Tas atsauca arī komplektu {suite} un pabeidza atslēgu migrāciju {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Otrā komplekta atsaukšana izdzēsa %n ārkārtas piekļuves kontaktu.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Otrā komplekta atsaukšana izdzēsa %n ārkārtas piekļuves kontaktus.",
-        "A suite revoked as compromised cannot be reinstated.": "Komplektu, kas atsaukts kā kompromitēts, nevar atjaunot."
+        "A suite revoked as compromised cannot be reinstated.": "Komplektu, kas atsaukts kā kompromitēts, nevar atjaunot.",
+        "Connector": "Savienotājs",
+        "Directory (tenant) ID": "Direktorija (nomnieka) ID",
+        "Application (client) ID": "Lietotnes (klienta) ID",
+        "Data collection rule immutable ID": "Datu vākšanas kārtulas nemainīgais ID",
+        "Stream name": "Straumes nosaukums",
+        "Splunk index (optional)": "Splunk indekss (neobligāts)",
+        "Sourcetype (optional)": "Sourcetype (neobligāts)",
+        "Leave blank to keep the current one": "Atstājiet tukšu, lai saglabātu pašreizējo",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF caur syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Datu vākšanas galapunkts (https URL)",
+        "HTTP Event Collector URL (https)": "HTTP Event Collector URL (https)",
+        "Client secret (write-only)": "Klienta noslēpums (tikai rakstīšanai)",
+        "HEC token (write-only)": "HEC marķieris (tikai rakstīšanai)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Pārsūtiet atļautos audita notikumus uz Splunk, Microsoft Sentinel, syslog uztvērēju vai tīmekļa aizķeri. Ziņojumos ir tikai attīrīti metadati: neviena slepena vērtība, vārds, pieteikšanās vai šifrēts teksts nekad neatstāj serveri."
     },
     "plurals": null
 }

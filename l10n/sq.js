@@ -1308,7 +1308,25 @@ OC.L10N.register(
         "This also revoked suite {suite} and ended key migration {migration}.": "Kjo revokoi edhe paketën {suite} dhe përfundoi migrimin e çelësave {migration}.",
         "Revoking the second suite deleted %n emergency-access contact.": "Revokimi i paketës së dytë fshiu %n kontakt aksesi emergjence.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Revokimi i paketës së dytë fshiu %n kontakte aksesi emergjence.",
-        "A suite revoked as compromised cannot be reinstated.": "Një paketë e revokuar si e komprometuar nuk mund të rikthehet."
+        "A suite revoked as compromised cannot be reinstated.": "Një paketë e revokuar si e komprometuar nuk mund të rikthehet.",
+        "Connector": "Lidhës",
+        "Directory (tenant) ID": "ID e drejtorisë (qiramarrësit)",
+        "Application (client) ID": "ID e aplikacionit (klientit)",
+        "Data collection rule immutable ID": "ID e pandryshueshme e rregullit të mbledhjes së të dhënave",
+        "Stream name": "Emri i rrjedhës",
+        "Splunk index (optional)": "Indeksi Splunk (opsional)",
+        "Sourcetype (optional)": "Sourcetype (opsional)",
+        "Leave blank to keep the current one": "Lëreni bosh për të mbajtur vlerën aktuale",
+        "Splunk HTTP Event Collector": "Splunk HTTP Event Collector",
+        "Microsoft Sentinel": "Microsoft Sentinel",
+        "CEF over syslog": "CEF përmes syslog",
+        "Syslog JSON": "Syslog JSON",
+        "Webhook JSON": "Webhook JSON",
+        "Data collection endpoint (https URL)": "Pika fundore e mbledhjes së të dhënave (URL https)",
+        "HTTP Event Collector URL (https)": "URL e HTTP Event Collector (https)",
+        "Client secret (write-only)": "Sekreti i klientit (vetëm shkrim)",
+        "HEC token (write-only)": "Token HEC (vetëm shkrim)",
+        "Forward whitelisted audit events to Splunk, Microsoft Sentinel, a syslog listener or a webhook. Payloads carry sanitized metadata only: no secret value, name, login or ciphertext ever leaves the server.": "Përcillni ngjarjet e lejuara të auditimit te Splunk, Microsoft Sentinel, një marrës syslog ose një webhook. Mesazhet mbajnë vetëm meta të dhëna të pastruara: asnjë vlerë sekrete, emër, hyrje apo tekst i shifruar nuk largohet kurrë nga serveri."
     },
     "nplurals=2; plural=(n != 1);"
 )
