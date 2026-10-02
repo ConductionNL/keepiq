@@ -35,6 +35,7 @@ use OCA\Keepiq\Controller\AuditController;
 use OCA\Keepiq\Controller\CACertificateController;
 use OCA\Keepiq\Controller\EncryptionSuiteController;
 use OCA\Keepiq\Controller\MemberOverviewController;
+use OCA\Keepiq\Controller\RecoveryAdminController;
 use OCA\Keepiq\Controller\SettingsController;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Settings\AdminSettings;
@@ -108,6 +109,8 @@ class AdminAreaGuardTest extends TestCase {
 			'people cannot read the audit log' => [$people, AuditController::class, 'index', false],
 			'people lists members' => [$people, MemberOverviewController::class, 'index', true],
 			'auditor cannot list members' => [$audit, MemberOverviewController::class, 'index', false],
+			'people manages account recovery' => [$people, RecoveryAdminController::class, 'update', true],
+			'auditor cannot manage account recovery' => [$audit, RecoveryAdminController::class, 'update', false],
 			// General holder (also the old whole-section delegation).
 			'general renews the CA' => [$general, CACertificateController::class, 'renewRoot', true],
 			'general re-imports' => [$general, SettingsController::class, 'load', true],
