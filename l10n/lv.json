@@ -1266,6 +1266,61 @@
         "Remove tag": "Noņemt birku",
         "Add tag": "Pievienot birku",
         "Could not change the tags. Try again.": "Neizdevās mainīt birkas. Mēģiniet vēlreiz.",
+        "Could not approve the application. It is still in the queue.": "Neizdevās apstiprināt pieteikumu. Tas joprojām ir rindā.",
+        "Could not reject the application. It is still in the queue.": "Neizdevās noraidīt pieteikumu. Tas joprojām ir rindā.",
+        "Removed the user from {count} team folders.": "Lietotājs noņemts no {count} komandas mapēm.",
+        "Approve a share": "Apstiprināt kopīgošanu",
+        "This approval link is incomplete. Open it again from the notification.": "Šī apstiprināšanas saite ir nepilnīga. Atver to vēlreiz no paziņojuma.",
+        "Deny": "Noraidīt",
+        "{user} joined a group you share a secret with. Share the secret with them too?": "{user} pievienojās grupai, ar kuru tu kopīgo noslēpumu. Kopīgot noslēpumu arī ar viņu?",
+        "{requester} asks you to share a secret with {user}.": "{requester} lūdz tevi kopīgot noslēpumu ar {user}.",
+        "Shared. The recipient can now open the secret.": "Kopīgots. Saņēmējs tagad var atvērt noslēpumu.",
+        "The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.": "Saņēmējs vēl nav iestatījis Keepiq, tāpēc nekas netika kopīgots. Mēģini vēlreiz, kad viņš to būs izdarījis.",
+        "Could not share the secret. Only its owner can approve this.": "Neizdevās kopīgot noslēpumu. To var apstiprināt tikai tā īpašnieks.",
+        "Could not share the secret. Try again.": "Neizdevās kopīgot noslēpumu. Mēģini vēlreiz.",
+        "Denied. Nothing was shared.": "Noraidīts. Nekas netika kopīgots.",
+        "Could not deny the request. Try again.": "Neizdevās noraidīt pieprasījumu. Mēģini vēlreiz.",
+        "%1$s asks you to share the secret \"%2$s\" with %3$s.": "%1$s lūdz tevi kopīgot noslēpumu \"%2$s\" ar %3$s.",
+        "Expires on (optional)": "Derīgs līdz (neobligāti)",
+        "Hand over to": "Nodot",
+        "Choose a recipient": "Izvēlies saņēmēju",
+        "Hand over temporarily": "Nodot uz laiku",
+        "Expiry rules": "Derīguma noteikumi",
+        "Set how long passwords of one item type or in one folder may live, and when to be reminded. When several dates apply, the earliest one counts.": "Iestati, cik ilgi viena vienuma veida vai vienas mapes paroles drīkst pastāvēt un kad tev atgādināt. Ja attiecas vairāki datumi, tiek ņemts agrākais.",
+        "Delete rule": "Dzēst noteikumu",
+        "Set by your administrator": "Iestatījis tavs administrators",
+        "No expiry rules yet.": "Vēl nav derīguma noteikumu.",
+        "Applies to": "Attiecas uz",
+        "Item type": "Vienuma veids",
+        "Maximum age in days (empty for reminders only)": "Maksimālais vecums dienās (tukšs tikai atgādinājumiem)",
+        "Remind me this many days before, comma separated": "Atgādināt tik dienas iepriekš, atdalot ar komatiem",
+        "Save rule": "Saglabāt noteikumu",
+        "An item type": "Vienuma veids",
+        "A folder": "Mape",
+        "Folder {name}": "Mape {name}",
+        "Type {name}": "Veids {name}",
+        "Expires after {days} days": "Beidzas pēc {days} dienām",
+        "Reminders {days} days before": "Atgādinājumi {days} dienas iepriekš",
+        "Could not save the expiry rule.": "Neizdevās saglabāt derīguma noteikumu.",
+        "Could not delete the expiry rule.": "Neizdevās dzēst derīguma noteikumu.",
+        "All statuses": "Visi statusi",
+        "Compromised": "Kompromitēts",
+        "Could not load the members.": "Neizdevās ielādēt dalībniekus.",
+        "Emergency contact": "Ārkārtas kontakts",
+        "Leaving user": "Aizejošais lietotājs",
+        "No": "Nē",
+        "No users match this filter.": "Neviens lietotājs neatbilst šim filtram.",
+        "Not set up": "Nav iestatīts",
+        "Revoke suite": "Atsaukt komplektu",
+        "Revoked": "Atsaukts",
+        "Search users": "Meklēt lietotājus",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Skatiet, kuri lietotāji ir iestatījuši glabātavu. Sāciet aiziešanu vai atsauciet komplektu no rindas.",
+        "Successor": "Pēctecis",
+        "Team folders": "Komandas mapes",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Lietotājs joprojām ir grupā {groups}, kas ir komandas mapes dalībniece. Noņemiet viņu no grupas vai atspējojiet kontu.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Lietotājs joprojām ir grupās {groups}, kas ir komandas mapju dalībnieces. Noņemiet viņu no grupām vai atspējojiet kontu.",
+        "Vault status": "Glabātavas statuss",
+        "Yes": "Jā",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF eksports NAV ŠIFRĒTS. Katra parole un lietotājvārds lejupielādētajā datnē būs lasāmi kā vienkāršs teksts. Glabājiet to drošā vietā un izdzēsiet tūlīt pēc lietošanas.",
         "Root certificate expiring soon": "Saknes sertifikāta derīgums drīz beigsies",
         "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Glabātuves saknes sertifikāta derīgums beigsies pēc %1$d dienas(-ām). Atjaunojiet to pirms tam. Atjaunošana no jauna paraksta katru šifrēšanas komplektu.",
@@ -1308,43 +1363,6 @@
         "Revoking the second suite deleted %n emergency-access contact.": "Otrā komplekta atsaukšana izdzēsa %n ārkārtas piekļuves kontaktu.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Otrā komplekta atsaukšana izdzēsa %n ārkārtas piekļuves kontaktus.",
         "A suite revoked as compromised cannot be reinstated.": "Komplektu, kas atsaukts kā kompromitēts, nevar atjaunot.",
-        "Could not approve the application. It is still in the queue.": "Neizdevās apstiprināt pieteikumu. Tas joprojām ir rindā.",
-        "Could not reject the application. It is still in the queue.": "Neizdevās noraidīt pieteikumu. Tas joprojām ir rindā.",
-        "Removed the user from {count} team folders.": "Lietotājs noņemts no {count} komandas mapēm.",
-        "Approve a share": "Apstiprināt kopīgošanu",
-        "This approval link is incomplete. Open it again from the notification.": "Šī apstiprināšanas saite ir nepilnīga. Atver to vēlreiz no paziņojuma.",
-        "Deny": "Noraidīt",
-        "{user} joined a group you share a secret with. Share the secret with them too?": "{user} pievienojās grupai, ar kuru tu kopīgo noslēpumu. Kopīgot noslēpumu arī ar viņu?",
-        "{requester} asks you to share a secret with {user}.": "{requester} lūdz tevi kopīgot noslēpumu ar {user}.",
-        "Shared. The recipient can now open the secret.": "Kopīgots. Saņēmējs tagad var atvērt noslēpumu.",
-        "The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.": "Saņēmējs vēl nav iestatījis Keepiq, tāpēc nekas netika kopīgots. Mēģini vēlreiz, kad viņš to būs izdarījis.",
-        "Could not share the secret. Only its owner can approve this.": "Neizdevās kopīgot noslēpumu. To var apstiprināt tikai tā īpašnieks.",
-        "Could not share the secret. Try again.": "Neizdevās kopīgot noslēpumu. Mēģini vēlreiz.",
-        "Denied. Nothing was shared.": "Noraidīts. Nekas netika kopīgots.",
-        "Could not deny the request. Try again.": "Neizdevās noraidīt pieprasījumu. Mēģini vēlreiz.",
-        "%1$s asks you to share the secret \"%2$s\" with %3$s.": "%1$s lūdz tevi kopīgot noslēpumu \"%2$s\" ar %3$s.",
-        "Expires on (optional)": "Derīgs līdz (neobligāti)",
-        "Hand over to": "Nodot",
-        "Choose a recipient": "Izvēlies saņēmēju",
-        "Hand over temporarily": "Nodot uz laiku",
-        "Expiry rules": "Derīguma noteikumi",
-        "Set how long passwords of one item type or in one folder may live, and when to be reminded. When several dates apply, the earliest one counts.": "Iestati, cik ilgi viena vienuma veida vai vienas mapes paroles drīkst pastāvēt un kad tev atgādināt. Ja attiecas vairāki datumi, tiek ņemts agrākais.",
-        "Delete rule": "Dzēst noteikumu",
-        "Set by your administrator": "Iestatījis tavs administrators",
-        "No expiry rules yet.": "Vēl nav derīguma noteikumu.",
-        "Applies to": "Attiecas uz",
-        "Item type": "Vienuma veids",
-        "Maximum age in days (empty for reminders only)": "Maksimālais vecums dienās (tukšs tikai atgādinājumiem)",
-        "Remind me this many days before, comma separated": "Atgādināt tik dienas iepriekš, atdalot ar komatiem",
-        "Save rule": "Saglabāt noteikumu",
-        "An item type": "Vienuma veids",
-        "A folder": "Mape",
-        "Folder {name}": "Mape {name}",
-        "Type {name}": "Veids {name}",
-        "Expires after {days} days": "Beidzas pēc {days} dienām",
-        "Reminders {days} days before": "Atgādinājumi {days} dienas iepriekš",
-        "Could not save the expiry rule.": "Neizdevās saglabāt derīguma noteikumu.",
-        "Could not delete the expiry rule.": "Neizdevās dzēst derīguma noteikumu.",
         "Archives to keep": "Glabājamie arhīvi",
         "Back up every vault automatically": "Automātiski dublēt katru glabātavu",
         "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Dublējiet katru glabātavu pēc grafika. Arhīvos ir tikai šifrēts teksts, un tos atjauno ar occ.",
@@ -1355,13 +1373,11 @@
         "Every (hours)": "Ik pēc (stundām)",
         "Last backup {when} failed: {error}": "Pēdējais dublējums {when} neizdevās: {error}",
         "Last backup {when} succeeded.": "Pēdējais dublējums {when} izdevās.",
-        "No": "Nē",
         "No archives yet.": "Vēl nav arhīvu.",
         "Size": "Izmērs",
         "Vault backups": "Glabātavas dublējumi",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Ar atslēgu katrs arhīvs tiek šifrēts tai. Glabājiet privāto atslēgu ārpus šī servera: tā vajadzīga pārbaudei vai atjaunošanai.",
         "Written": "Rakstīts",
-        "Yes": "Jā",
         "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n lietotājam darbības jomā vēl nav divpakāpju pieteikšanās, un viņš nevar atvērt glabātavu, kamēr tas ir ieslēgts.",
         "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n lietotājiem darbības jomā vēl nav divpakāpju pieteikšanās, un viņi nevar atvērt glabātavu, kamēr tas ir ieslēgts.",
         "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Rezerves kodi neskaitās. Ja jūsu lietotāji piesakās caur identitātes nodrošinātāju ar savu otro faktoru, izlaidiet viņu grupas.",
@@ -1441,7 +1457,127 @@
         "This secret changed while you were offline": "Šis noslēpums tika mainīts, kamēr bijāt bezsaistē",
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Jūs izdzēsāt šo noslēpumu bezsaistē, bet kopš tā laika tas ir mainīts serverī. Izvēlieties, kuru versiju paturēt.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Jūsu atslēgas tika nomainītas citā ierīcē. Ievadiet iepriekšējo galveno paroli, lai sinhronizētu bezsaistes izmaiņas, vai atmetiet tās.",
-        "Your offline change": "Jūsu bezsaistes izmaiņa"
+        "Your offline change": "Jūsu bezsaistes izmaiņa",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n ārkārtas kontaktpersonai bija neizskatīts piekļuves pieprasījums, kad atslēgas maiņa to noņēma. Pārbaudiet, kas to pieprasīja, pirms kādu pievienojat atkārtoti.",
+            "%n ārkārtas kontaktpersonām bija neizskatīts piekļuves pieprasījums, kad atslēgas maiņa tās noņēma. Pārbaudiet, kas to pieprasīja, pirms kādu pievienojat atkārtoti.",
+            "%n ārkārtas kontaktpersonām bija neizskatīts piekļuves pieprasījums, kad atslēgas maiņa tās noņēma. Pārbaudiet, kas to pieprasīja, pirms kādu pievienojat atkārtoti."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n vienumu nevar attēlot CXF formātā, un tas tiks izlaists.",
+            "%n vienumus nevar attēlot CXF formātā, un tie tiks izlaisti.",
+            "%n vienumus nevar attēlot CXF formātā, un tie tiks izlaisti."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n vecāka versija tika atmesta, jo var pārnest tikai neseno vēsturi.",
+            "%n vecākas versijas tika atmestas, jo var pārnest tikai neseno vēsturi.",
+            "%n vecākas versijas tika atmestas, jo var pārnest tikai neseno vēsturi."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "Vēl jāšifrē un jākopīgo %n noslēpuma kopija.",
+            "Vēl jāšifrē un jākopīgo %n noslēpumu kopijas.",
+            "Vēl jāšifrē un jākopīgo %n noslēpumu kopijas."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n noslēpumu neizdevās atšifrēt, un tas nav šajā eksportā.",
+            "%n noslēpumus neizdevās atšifrēt, un tie nav šajā eksportā.",
+            "%n noslēpumus neizdevās atšifrēt, un tie nav šajā eksportā."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n noslēpumu nevarēja atšifrēt ar jūsu veco atslēgu, tāpēc tas netika migrēts.",
+            "%n noslēpumus nevarēja atšifrēt ar jūsu veco atslēgu, tāpēc tie netika migrēti.",
+            "%n noslēpumus nevarēja atšifrēt ar jūsu veco atslēgu, tāpēc tie netika migrēti."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n noslēpums netika migrēts.",
+            "%n noslēpumi netika migrēti.",
+            "%n noslēpumi netika migrēti."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n noslēpums joprojām ir šifrēts ar jūsu iepriekšējo atslēgu.",
+            "%n noslēpumi joprojām ir šifrēti ar jūsu iepriekšējo atslēgu.",
+            "%n noslēpumi joprojām ir šifrēti ar jūsu iepriekšējo atslēgu."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n noslēpums tika izlaists, jo pēctecim vēl nav kopijas — pievienojiet pēcteci mapei un palaidiet vēlreiz.",
+            "%n noslēpumi tika izlaisti, jo pēctecim vēl nav kopijas — pievienojiet pēcteci mapei un palaidiet vēlreiz.",
+            "%n noslēpumi tika izlaisti, jo pēctecim vēl nav kopijas — pievienojiet pēcteci mapei un palaidiet vēlreiz."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n noslēpums",
+            "%n noslēpumi",
+            "%n noslēpumi"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n lietotājam darbības jomā vēl nav divpakāpju pieteikšanās, un viņš nevar atvērt glabātavu, kamēr tas ir ieslēgts.",
+            "%n lietotājiem darbības jomā vēl nav divpakāpju pieteikšanās, un viņi nevar atvērt glabātavu, kamēr tas ir ieslēgts.",
+            "%n lietotājiem darbības jomā vēl nav divpakāpju pieteikšanās, un viņi nevar atvērt glabātavu, kamēr tas ir ieslēgts."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Tomēr pabeigt, zaudējot piekļuvi %n noslēpumam",
+            "Tomēr pabeigt, zaudējot piekļuvi %n noslēpumiem",
+            "Tomēr pabeigt, zaudējot piekļuvi %n noslēpumiem"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n jauns dalībnieks saņēma piekļuvi komandas mapei.",
+            "%n jauni dalībnieki saņēma piekļuvi komandas mapei.",
+            "%n jauni dalībnieki saņēma piekļuvi komandas mapei."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Atslēgas rotācija pabeigta. %n noslēpums tika atkārtoti šifrēts ar jūsu jauno atslēgu.",
+            "Atslēgas rotācija pabeigta. %n noslēpumi tika atkārtoti šifrēti ar jūsu jauno atslēgu.",
+            "Atslēgas rotācija pabeigta. %n noslēpumi tika atkārtoti šifrēti ar jūsu jauno atslēgu."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Otrā komplekta atsaukšana izdzēsa %n ārkārtas piekļuves kontaktu.",
+            "Otrā komplekta atsaukšana izdzēsa %n ārkārtas piekļuves kontaktus.",
+            "Otrā komplekta atsaukšana izdzēsa %n ārkārtas piekļuves kontaktus."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Šī komplekta atsaukšana dzēsa %n ārkārtas piekļuves kontaktu.",
+            "Šī komplekta atsaukšana dzēsa %n ārkārtas piekļuves kontaktus.",
+            "Šī komplekta atsaukšana dzēsa %n ārkārtas piekļuves kontaktus."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "konstatēts noplūdēs %n reizi",
+            "konstatēts noplūdēs %n reizes",
+            "konstatēts noplūdēs %n reizes"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "kopīgots ar %n noslēpumu",
+            "kopīgots ar %n noslēpumiem",
+            "kopīgots ar %n noslēpumiem"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Šajā mapē tieši ir %n noslēpums.",
+            "Šajā mapē tieši ir %n noslēpumi.",
+            "Šajā mapē tieši ir %n noslēpumi."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Atslēgas rotācija noņēma %n ārkārtas kontaktpersonu. Pārbaudiet Ārkārtas piekļuvi un pievienojiet to atkārtoti, ja joprojām to vēlaties.",
+            "Atslēgas rotācija noņēma %n ārkārtas kontaktpersonas. Pārbaudiet Ārkārtas piekļuvi un pievienojiet tās atkārtoti, ja joprojām tās vēlaties.",
+            "Atslēgas rotācija noņēma %n ārkārtas kontaktpersonas. Pārbaudiet Ārkārtas piekļuvi un pievienojiet tās atkārtoti, ja joprojām tās vēlaties."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n izmaiņa gaida sinhronizāciju",
+            "%n izmaiņas gaida sinhronizāciju",
+            "%n izmaiņas gaida sinhronizāciju"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Lietotājs joprojām ir grupā {groups}, kas ir komandas mapes dalībniece. Noņemiet viņu no grupas vai atspējojiet kontu.",
+            "Lietotājs joprojām ir grupās {groups}, kas ir komandas mapju dalībnieces. Noņemiet viņu no grupām vai atspējojiet kontu.",
+            "Lietotājs joprojām ir grupās {groups}, kas ir komandas mapju dalībnieces. Noņemiet viņu no grupām vai atspējojiet kontu."
+        ]
     },
     "plurals": null
 }

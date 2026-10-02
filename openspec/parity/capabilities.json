@@ -3976,7 +3976,7 @@
       "id": "apps-17",
       "area": "apps",
       "name": "Inject secrets into a Kubernetes cluster.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -3984,11 +3984,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/apps-kubernetes-injection on 2026-09-27. Before: grep -rli 'kubernetes|k8s|helm' lib src cli browser-extension: no hits",
-        "note": "No Kubernetes secret injection (operator, CSI driver, sidecar) exists; keepiq's machine surface is a plain HTTP+JWT API a cluster could call itself, but nothing ships to do that integration.",
+        "state": "built",
+        "evidence": "integrations/kubernetes: controller-runtime operator (KeepiqConnection, KeepiqSecret CRDs), Helm chart with namespaced RBAC, no-Secret recipe via keepiq install + keepiq ci run; envtest suite (CRD validation, sync, rotation restart, 404/409/token/fingerprint reasons, leases) green; helm lint and template snapshots green",
         "owner": "ConductionNL/keepiq",
-        "change": "openspec/changes/apps-kubernetes-injection"
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/apps-kubernetes-injection (stacked on #914). Owed: kind test and release workflow in CI, the first k8s-v* release, and the live sync against the dev instance.",
+        "change": "openspec/changes/archive/2026-10-02-apps-kubernetes-injection"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -4066,7 +4067,7 @@
       "id": "apps-20",
       "area": "apps",
       "name": "Rotate a database or service password automatically.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "partial",
       "onepassword": "partial",
       "passbolt": "no",
@@ -4074,11 +4075,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/apps-secret-sync-and-rotation-runner on 2026-09-27. Before: Matrix corrected 2026-09-27 in the openspec pass: the rating is no and nothing rotates a password at the destination service; the evidence below is the reminder and manual mark-rotated flow only. Before: openspec/specs/rotation-expiry-policies/spec.md:9 describes 'expiry, an admin-default and user-override max-age policy, approaching/overdue reminders ... a proven mark-rotated flow'; this is a reminder + manual mark-rotated flow (lib/Controller/RotationController.php, src/store/modules/rotation.js), not automatic rotation of the underlying credential at the target service",
+        "state": "built",
+        "evidence": "integrations/runner: keepiq-runner rotates postgres/mysql/exec targets prove-then-record (journal encrypted to the app key, If-Match write-back, set-back on failed login or 412, crash recovery); connector tests passed against postgres:16 and mysql:8.4; server: If-Match on PUT /api/v1/app/secrets/{id}, expiresAt in the envelope",
         "owner": "ConductionNL/keepiq",
-        "note": "keepiq flags stale/expiring secrets and lets a user mark one rotated, but it never rotates a password at the destination service itself the way Vault/1Password-style rotation connectors do.",
-        "change": "openspec/changes/apps-secret-sync-and-rotation-runner"
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/apps-secret-sync-and-rotation-runner (stacked on #914). Owed: end-to-end rotation on the dev instance (task 4.3) and the first runner-v* release.",
+        "change": "openspec/changes/archive/2026-10-02-apps-secret-sync-and-rotation-runner"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -4217,7 +4219,7 @@
       "id": "apps-25",
       "area": "apps",
       "name": "Push secrets out to cloud secret stores such as AWS Secrets Manager, Azure Key Vault or GitHub and keep them in sync.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "partial",
       "onepassword": "partial",
       "passbolt": "no",
@@ -4225,12 +4227,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/apps-secret-sync-and-rotation-runner on 2026-09-27. Before: git grep -i 'aws|azure|key vault' lib src: no match; no outbound secret sync",
+        "state": "built",
+        "evidence": "integrations/runner internal/syncer + internal/destinations: updated_since polling, per-entry ETag state with backoff, pushes to AWS Secrets Manager, Azure Key Vault, GitHub Actions secrets (sealed box) and exec; tested against protocol stubs",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing",
-        "note": "No push of secrets to cloud secret stores.",
-        "change": "openspec/changes/apps-secret-sync-and-rotation-runner"
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/apps-secret-sync-and-rotation-runner (stacked on #914). Owed: a LocalStack run and live pushes to real cloud accounts.",
+        "change": "openspec/changes/archive/2026-10-02-apps-secret-sync-and-rotation-runner"
       },
       "rowSource": "competitor",
       "provider": "keepiq",

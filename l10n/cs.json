@@ -1266,6 +1266,61 @@
         "Remove tag": "Odebrat štítek",
         "Add tag": "Přidat štítek",
         "Could not change the tags. Try again.": "Štítky nelze změnit. Zkuste to znovu.",
+        "Could not approve the application. It is still in the queue.": "Žádost se nepodařilo schválit. Stále je ve frontě.",
+        "Could not reject the application. It is still in the queue.": "Žádost se nepodařilo zamítnout. Stále je ve frontě.",
+        "Removed the user from {count} team folders.": "Uživatel byl odebrán z {count} týmových složek.",
+        "Approve a share": "Schválit sdílení",
+        "This approval link is incomplete. Open it again from the notification.": "Tento odkaz pro schválení je neúplný. Otevřete ho znovu z oznámení.",
+        "Deny": "Zamítnout",
+        "{user} joined a group you share a secret with. Share the secret with them too?": "{user} se připojil(a) ke skupině, se kterou sdílíte tajemství. Sdílet tajemství i s touto osobou?",
+        "{requester} asks you to share a secret with {user}.": "{requester} vás žádá o sdílení tajemství s {user}.",
+        "Shared. The recipient can now open the secret.": "Sdíleno. Příjemce nyní může tajemství otevřít.",
+        "The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.": "Příjemce si ještě nenastavil Keepiq, proto nebylo nic sdíleno. Zkuste to znovu, až to udělá.",
+        "Could not share the secret. Only its owner can approve this.": "Tajemství se nepodařilo sdílet. Schválit to může pouze jeho vlastník.",
+        "Could not share the secret. Try again.": "Tajemství se nepodařilo sdílet. Zkuste to znovu.",
+        "Denied. Nothing was shared.": "Zamítnuto. Nic nebylo sdíleno.",
+        "Could not deny the request. Try again.": "Požadavek se nepodařilo zamítnout. Zkuste to znovu.",
+        "%1$s asks you to share the secret \"%2$s\" with %3$s.": "%1$s vás žádá o sdílení tajemství \"%2$s\" s %3$s.",
+        "Expires on (optional)": "Platnost do (volitelné)",
+        "Hand over to": "Předat",
+        "Choose a recipient": "Vyberte příjemce",
+        "Hand over temporarily": "Dočasně předat",
+        "Expiry rules": "Pravidla vypršení platnosti",
+        "Set how long passwords of one item type or in one folder may live, and when to be reminded. When several dates apply, the earliest one counts.": "Nastavte, jak dlouho mohou platit hesla jednoho typu položky nebo v jedné složce a kdy dostanete připomenutí. Pokud platí více dat, rozhoduje nejdřívější.",
+        "Delete rule": "Smazat pravidlo",
+        "Set by your administrator": "Nastaveno vaším správcem",
+        "No expiry rules yet.": "Zatím žádná pravidla vypršení platnosti.",
+        "Applies to": "Platí pro",
+        "Item type": "Typ položky",
+        "Maximum age in days (empty for reminders only)": "Maximální stáří ve dnech (prázdné jen pro připomenutí)",
+        "Remind me this many days before, comma separated": "Připomenout tolik dní předem, oddělte čárkami",
+        "Save rule": "Uložit pravidlo",
+        "An item type": "Typ položky",
+        "A folder": "Složka",
+        "Folder {name}": "Složka {name}",
+        "Type {name}": "Typ {name}",
+        "Expires after {days} days": "Vyprší po {days} dnech",
+        "Reminders {days} days before": "Připomenutí {days} dní předem",
+        "Could not save the expiry rule.": "Pravidlo vypršení platnosti se nepodařilo uložit.",
+        "Could not delete the expiry rule.": "Pravidlo vypršení platnosti se nepodařilo smazat.",
+        "All statuses": "Všechny stavy",
+        "Compromised": "Kompromitovaná",
+        "Could not load the members.": "Členy se nepodařilo načíst.",
+        "Emergency contact": "Nouzový kontakt",
+        "Leaving user": "Odcházející uživatel",
+        "No": "Ne",
+        "No users match this filter.": "Tomuto filtru neodpovídá žádný uživatel.",
+        "Not set up": "Nenastaveno",
+        "Revoke suite": "Odvolat sadu",
+        "Revoked": "Odvolaná",
+        "Search users": "Hledat uživatele",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Podívejte se, kteří uživatelé si nastavili trezor. Spusťte offboarding nebo odvolejte sadu z řádku.",
+        "Successor": "Nástupce",
+        "Team folders": "Týmové složky",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Uživatel je stále ve skupině {groups}, která je členem týmové složky. Odeberte ho ze skupiny nebo zakažte účet.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Uživatel je stále ve skupinách {groups}, které jsou členy týmových složek. Odeberte ho ze skupin nebo zakažte účet.",
+        "Vault status": "Stav trezoru",
+        "Yes": "Ano",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "Export do CXF NENÍ ZAŠIFROVANÝ. Každé heslo a přihlašovací jméno bude ve stažené souboru čitelné jako otevřený text. Uložte jej bezpečně a hned po použití smažte.",
         "Root certificate expiring soon": "Kořenový certifikát brzy vyprší",
         "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Kořenový certifikát trezoru vyprší za %1$d dní. Obnovte ho předtím. Obnovení znovu podepíše každou šifrovací sadu.",
@@ -1308,43 +1363,6 @@
         "Revoking the second suite deleted %n emergency-access contact.": "Odvolání druhé sady smazalo %n kontakt nouzového přístupu.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Odvolání druhé sady smazalo %n kontaktů nouzového přístupu.",
         "A suite revoked as compromised cannot be reinstated.": "Sadu odvolanou jako kompromitovanou nelze obnovit.",
-        "Could not approve the application. It is still in the queue.": "Žádost se nepodařilo schválit. Stále je ve frontě.",
-        "Could not reject the application. It is still in the queue.": "Žádost se nepodařilo zamítnout. Stále je ve frontě.",
-        "Removed the user from {count} team folders.": "Uživatel byl odebrán z {count} týmových složek.",
-        "Approve a share": "Schválit sdílení",
-        "This approval link is incomplete. Open it again from the notification.": "Tento odkaz pro schválení je neúplný. Otevřete ho znovu z oznámení.",
-        "Deny": "Zamítnout",
-        "{user} joined a group you share a secret with. Share the secret with them too?": "{user} se připojil(a) ke skupině, se kterou sdílíte tajemství. Sdílet tajemství i s touto osobou?",
-        "{requester} asks you to share a secret with {user}.": "{requester} vás žádá o sdílení tajemství s {user}.",
-        "Shared. The recipient can now open the secret.": "Sdíleno. Příjemce nyní může tajemství otevřít.",
-        "The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.": "Příjemce si ještě nenastavil Keepiq, proto nebylo nic sdíleno. Zkuste to znovu, až to udělá.",
-        "Could not share the secret. Only its owner can approve this.": "Tajemství se nepodařilo sdílet. Schválit to může pouze jeho vlastník.",
-        "Could not share the secret. Try again.": "Tajemství se nepodařilo sdílet. Zkuste to znovu.",
-        "Denied. Nothing was shared.": "Zamítnuto. Nic nebylo sdíleno.",
-        "Could not deny the request. Try again.": "Požadavek se nepodařilo zamítnout. Zkuste to znovu.",
-        "%1$s asks you to share the secret \"%2$s\" with %3$s.": "%1$s vás žádá o sdílení tajemství \"%2$s\" s %3$s.",
-        "Expires on (optional)": "Platnost do (volitelné)",
-        "Hand over to": "Předat",
-        "Choose a recipient": "Vyberte příjemce",
-        "Hand over temporarily": "Dočasně předat",
-        "Expiry rules": "Pravidla vypršení platnosti",
-        "Set how long passwords of one item type or in one folder may live, and when to be reminded. When several dates apply, the earliest one counts.": "Nastavte, jak dlouho mohou platit hesla jednoho typu položky nebo v jedné složce a kdy dostanete připomenutí. Pokud platí více dat, rozhoduje nejdřívější.",
-        "Delete rule": "Smazat pravidlo",
-        "Set by your administrator": "Nastaveno vaším správcem",
-        "No expiry rules yet.": "Zatím žádná pravidla vypršení platnosti.",
-        "Applies to": "Platí pro",
-        "Item type": "Typ položky",
-        "Maximum age in days (empty for reminders only)": "Maximální stáří ve dnech (prázdné jen pro připomenutí)",
-        "Remind me this many days before, comma separated": "Připomenout tolik dní předem, oddělte čárkami",
-        "Save rule": "Uložit pravidlo",
-        "An item type": "Typ položky",
-        "A folder": "Složka",
-        "Folder {name}": "Složka {name}",
-        "Type {name}": "Typ {name}",
-        "Expires after {days} days": "Vyprší po {days} dnech",
-        "Reminders {days} days before": "Připomenutí {days} dní předem",
-        "Could not save the expiry rule.": "Pravidlo vypršení platnosti se nepodařilo uložit.",
-        "Could not delete the expiry rule.": "Pravidlo vypršení platnosti se nepodařilo smazat.",
         "Archives to keep": "Archivy k uchování",
         "Back up every vault automatically": "Automaticky zálohovat každý trezor",
         "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Zálohujte každý trezor podle plánu. Archivy obsahují jen šifrovaný text a obnovují se přes occ.",
@@ -1355,13 +1373,11 @@
         "Every (hours)": "Každých (hodin)",
         "Last backup {when} failed: {error}": "Poslední záloha {when} selhala: {error}",
         "Last backup {when} succeeded.": "Poslední záloha {when} proběhla.",
-        "No": "Ne",
         "No archives yet.": "Zatím žádné archivy.",
         "Size": "Velikost",
         "Vault backups": "Zálohy trezoru",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "S klíčem se každý archiv šifruje pro něj. Soukromý klíč uchovávejte mimo tento server: potřebujete ho k ověření nebo obnovení.",
         "Written": "Zapsáno",
-        "Yes": "Ano",
         "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n uživatel v rozsahu zatím nemá dvoufázové přihlášení a nemůže otevřít trezor, dokud je toto zapnuté.",
         "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "Uživatelé v rozsahu (%n) zatím nemají dvoufázové přihlášení a nemohou otevřít trezor, dokud je toto zapnuté.",
         "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Záložní kódy se nepočítají. Pokud se vaši uživatelé přihlašují přes poskytovatele identity s vlastním druhým faktorem, jejich skupiny vynechte.",
@@ -1441,7 +1457,127 @@
         "This secret changed while you were offline": "Toto tajemství se změnilo, když jste byli offline",
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Toto tajemství jste offline smazali, ale mezitím bylo na serveru změněno. Zvolte, kterou verzi ponechat.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Vaše klíče byly změněny na jiném zařízení. Zadejte předchozí hlavní heslo pro synchronizaci offline změn, nebo je zahoďte.",
-        "Your offline change": "Vaše offline změna"
+        "Your offline change": "Vaše offline změna",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n nouzový kontakt měl nevyřízenou žádost o přístup, když ho rotace klíče odstranila. Než kohokoli znovu přidáte, ověřte, kdo žádal.",
+            "Nouzové kontakty (%n) měly nevyřízenou žádost o přístup, když je rotace klíče odstranila. Než kohokoli znovu přidáte, ověřte, kdo žádal.",
+            "Nouzové kontakty (%n) měly nevyřízenou žádost o přístup, když je rotace klíče odstranila. Než kohokoli znovu přidáte, ověřte, kdo žádal."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n položku nelze reprezentovat ve formátu CXF a bude přeskočena.",
+            "%n položek nelze reprezentovat ve formátu CXF a budou přeskočeny.",
+            "%n položek nelze reprezentovat ve formátu CXF a budou přeskočeny."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n starší verze byla zahozena, protože přenést lze jen nedávnou historii.",
+            "%n starších verzí bylo zahozeno, protože přenést lze jen nedávnou historii.",
+            "%n starších verzí bylo zahozeno, protože přenést lze jen nedávnou historii."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n kopii tajemství je stále potřeba zašifrovat a nasdílet.",
+            "%n kopií tajemství je stále potřeba zašifrovat a nasdílet.",
+            "%n kopií tajemství je stále potřeba zašifrovat a nasdílet."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n tajemství nebylo možné dešifrovat a není v tomto exportu.",
+            "%n tajemství nebylo možné dešifrovat a nejsou v tomto exportu.",
+            "%n tajemství nebylo možné dešifrovat a nejsou v tomto exportu."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n tajemství se nepodařilo dešifrovat vaším starým klíčem, takže nebylo migrováno.",
+            "%n tajemství se nepodařilo dešifrovat vaším starým klíčem, takže nebyla migrována.",
+            "%n tajemství se nepodařilo dešifrovat vaším starým klíčem, takže nebyla migrována."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n tajemství nebylo migrováno.",
+            "%n tajemství nebylo migrováno.",
+            "%n tajemství nebylo migrováno."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n tajemství je stále zašifrováno vaším předchozím klíčem.",
+            "%n tajemství je stále zašifrováno vaším předchozím klíčem.",
+            "%n tajemství je stále zašifrováno vaším předchozím klíčem."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n tajemství bylo přeskočeno, protože nástupce dosud nemá kopii — přidejte nástupce do složky a spusťte akci znovu.",
+            "%n tajemství bylo přeskočeno, protože nástupce dosud nemá kopii — přidejte nástupce do složky a spusťte akci znovu.",
+            "%n tajemství bylo přeskočeno, protože nástupce dosud nemá kopii — přidejte nástupce do složky a spusťte akci znovu."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n tajemství",
+            "%n tajemství",
+            "%n tajemství"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n uživatel v rozsahu zatím nemá dvoufázové přihlášení a nemůže otevřít trezor, dokud je toto zapnuté.",
+            "Uživatelé v rozsahu (%n) zatím nemají dvoufázové přihlášení a nemohou otevřít trezor, dokud je toto zapnuté.",
+            "Uživatelé v rozsahu (%n) zatím nemají dvoufázové přihlášení a nemohou otevřít trezor, dokud je toto zapnuté."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Přesto dokončit a ztratit přístup k %n tajemství",
+            "Přesto dokončit a ztratit přístup k %n tajemstvím",
+            "Přesto dokončit a ztratit přístup k %n tajemstvím"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n nový člen získal přístup k týmové složce.",
+            "Noví členové (%n) získali přístup k týmové složce.",
+            "Noví členové (%n) získali přístup k týmové složce."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Rotace klíče dokončena. %n tajemství bylo znovu zašifrováno vaším novým klíčem.",
+            "Rotace klíče dokončena. %n tajemství bylo znovu zašifrováno vaším novým klíčem.",
+            "Rotace klíče dokončena. %n tajemství bylo znovu zašifrováno vaším novým klíčem."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Odvolání druhé sady smazalo %n kontakt nouzového přístupu.",
+            "Odvolání druhé sady smazalo %n kontaktů nouzového přístupu.",
+            "Odvolání druhé sady smazalo %n kontaktů nouzového přístupu."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Odvolání této sady odstranilo %n kontakt nouzového přístupu.",
+            "Odvolání této sady odstranilo %n kontaktů nouzového přístupu.",
+            "Odvolání této sady odstranilo %n kontaktů nouzového přístupu."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "nalezeno v únicích %n krát",
+            "nalezeno v únicích %n krát",
+            "nalezeno v únicích %n krát"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "sdíleno s %n tajemstvím",
+            "sdíleno s %n tajemstvími",
+            "sdíleno s %n tajemstvími"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Tato složka obsahuje přímo %n tajemství.",
+            "Tato složka obsahuje přímo %n tajemství.",
+            "Tato složka obsahuje přímo %n tajemství."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Rotace klíče odebrala %n nouzový kontakt. Zkontrolujte Přístup pro naléhavé případy a přidejte jej znovu, pokud jej stále chcete.",
+            "Rotace klíče odebrala %n nouzových kontaktů. Zkontrolujte Přístup pro naléhavé případy a přidejte je znovu, pokud je stále chcete.",
+            "Rotace klíče odebrala %n nouzových kontaktů. Zkontrolujte Přístup pro naléhavé případy a přidejte je znovu, pokud je stále chcete."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n změna čeká na synchronizaci",
+            "%n změn čeká na synchronizaci",
+            "%n změn čeká na synchronizaci"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Uživatel je stále ve skupině {groups}, která je členem týmové složky. Odeberte ho ze skupiny nebo zakažte účet.",
+            "Uživatel je stále ve skupinách {groups}, které jsou členy týmových složek. Odeberte ho ze skupin nebo zakažte účet.",
+            "Uživatel je stále ve skupinách {groups}, které jsou členy týmových složek. Odeberte ho ze skupin nebo zakažte účet."
+        ]
     },
     "plurals": null
 }

@@ -16,13 +16,15 @@
 
 import * as api from '../lib/api.js'
 import * as vault from '../lib/vault.js'
-import { matchSecrets, hostOf } from '../lib/match.js'
+import { matchSecrets, hostOf, registrableDomain } from '../lib/match.js'
 import { classifyCapture } from '../lib/capture.js'
 import { policyRefusal } from '../lib/policy.js'
 import { buildPasskeyOrchestrator } from '../passkey/orchestrator.js'
 import { senderOrigin } from '../passkey/rp.js'
 import { computeTotp } from '../lib/totp-service.js'
 import { reportFill } from '../lib/usage.js'
+import { isServerSupported } from '../lib/version.js'
+import { buildVaultHandlers } from './vault-handlers.js'
 
 /**
  * The messages a content script (a tab) may send. Everything else needs an
@@ -34,8 +36,49 @@ export const PAGE_MESSAGES = Object.freeze(
 		'capture-decision',
 		'webauthn-create',
 		'webauthn-get',
+		'otp-field-detected',
+		// A random password for a sign-up field; it carries no vault data.
+		'generate-for-field',
 	]),
 )
+
+/** How long after a login fill the code may fill on the next step. */
+export const OTP_INTENT_MS = 5 * 60 * 1000
+
+// chrome.storage.session key of the pending code intents, by tab id. Session
+// storage is held in memory by the browser and is not readable by content
+// scripts. An intent holds no seed and no code (extension-totp-autofill).
+const OTP_INTENTS_KEY = 'keepiq.otpIntents'
+
+function sessionStore() {
+	return chrome.storage && chrome.storage.session ? chrome.storage.session : null
+}
+
+async function readIntents() {
+	const store = sessionStore()
+	if (!store) return {}
+	const data = await store.get(OTP_INTENTS_KEY)
+	return data[OTP_INTENTS_KEY] || {}
+}
+
+async function writeIntents(intents) {
+	const store = sessionStore()
+	if (!store) return
+	if (Object.keys(intents).length === 0) {
+		await store.remove(OTP_INTENTS_KEY)
+	} else {
+		await store.set({ [OTP_INTENTS_KEY]: intents })
+	}
+}
+
+/**
+ * Drop every pending code intent (lock, OS lock, unpair).
+ *
+ * @return {Promise<void>}
+ */
+export async function clearOtpIntents() {
+	await writeIntents({})
+}
 
 /**
  * The idle cap used when the organisation's maximum could not be read at
@@ -109,6 +152,7 @@ async function touchActivity(accountId) {
 function lockAccount(accountId) {
 	vault.lock(accountId)
 	matchCache.delete(accountId)
+	clearOtpIntents().catch(() => {})
 	if (pendingCapture && pendingCapture.accountId === accountId) {
 		pendingCapture = null
 	}
@@ -118,6 +162,7 @@ function lockAccount(accountId) {
 export function lockEverything() {
 	vault.lockAll()
 	matchCache.clear()
+	clearOtpIntents().catch(() => {})
 }
 
 async function activeAccount() {
@@ -134,11 +179,34 @@ function hostLabel(account) {
 	}
 }
 
+/**
+ * Read and store the server version of an account (the pair route reports
+ * it). A server that cannot be reached keeps the last known version.
+ *
+ * @param {object} account The account.
+ * @return {Promise<string|null>} The version now stored.
+ */
+async function refreshServerVersion(account) {
+	try {
+		const res = await api.pair(account)
+		const version = res?.serverVersion ?? null
+		await api.updateAccount(account.id, { serverVersion: version })
+		account.serverVersion = version
+	} catch {
+		// Offline or unreachable: keep what we had.
+	}
+	return account.serverVersion ?? null
+}
+
 /** Current state for the popup to render the right view. */
 async function getState() {
 	const accounts = await api.loadAccounts()
 	const activeId = await api.activeAccountId()
 	const active = accounts.find((a) => a.id === activeId) || null
+	// An account paired before the handshake has no version yet: ask once.
+	if (active && active.serverVersion === undefined) {
+		await refreshServerVersion(active)
+	}
 	return {
 		paired: accounts.length > 0,
 		maxAccounts: api.MAX_ACCOUNTS,
@@ -157,6 +225,8 @@ async function getState() {
 		idleMinutes: active ? active.idleMinutes : null,
 		maxIdleMinutes: active ? (maxIdleByAccount.get(active.id) ?? null) : null,
 		idleChoices: api.IDLE_CHOICES,
+		serverVersion: active ? (active.serverVersion ?? null) : null,
+		serverOutdated: active ? !isServerSupported(active.serverVersion) : false,
 	}
 }
 
@@ -174,8 +244,11 @@ async function doPair(payload) {
 		appPassword: payload.appPassword,
 	}
 	// Verify the credential actually pairs before persisting it.
-	await api.pair(config)
-	const account = await api.addAccount(config)
+	const res = await api.pair(config)
+	const account = await api.addAccount({
+		...config,
+		serverVersion: res?.serverVersion ?? null,
+	})
 	return { ok: true, accountId: account.id }
 }
 
@@ -237,6 +310,7 @@ async function refreshPolicy(account) {
 
 async function doUnlock(payload) {
 	const account = await activeAccount()
+	await refreshServerVersion(account)
 	await vault.unlock(account.id, account, payload.masterPassword)
 	await refreshPolicy(account)
 	await touchActivity(account.id)
@@ -273,6 +347,11 @@ async function doUnlockRaw(payload) {
  */
 async function doMatch(payload) {
 	const account = await activeAccount()
+	if (!isServerSupported(account.serverVersion)) {
+		throw new Error(
+			'Update Keepiq on your server to use this extension version.',
+		)
+	}
 	const host = hostOf(payload.host)
 	const rows = await api.match(account, payload.host)
 	const ranked = matchSecrets(rows, payload.host)
@@ -325,16 +404,31 @@ async function doFill(payload) {
 	// Auto-copy a matched TOTP code so it is one paste away on the 2FA prompt
 	// (extension-totp-autofill §3). The popup performs the clipboard write +
 	// scheduled clear (a service worker has no clipboard access).
-	const totpCode = cache.host ? await totpCodeForHost(cache.host) : null
-	if (totpCode) {
+	const totp = cache.host ? await totpForHost(cache.host) : null
+	const totpCode = totp ? totp.code : null
+	if (totp) {
 		// Best-effort: fill a detected OTP field on the page; the popup also
 		// copies the code as the fallback (extension-totp-autofill §4.1).
-		chrome.tabs
+		const otp = await chrome.tabs
 			.sendMessage(tab.id, {
 				type: 'fill-otp',
-				payload: { code: totpCode, host: cache.host },
+				// Every frame gets the message; only frames on this host fill (#740).
+				payload: { code: totp.code, host: cache.host },
 			})
-			.catch(() => {})
+			.catch(() => ({ filled: false }))
+		if (!otp?.filled) {
+			// The code field is on the next step: remember, for this tab, this
+			// site and five minutes, which secret to compute it from. No seed,
+			// no code.
+			const intents = await readIntents()
+			intents[tab.id] = {
+				tabId: tab.id,
+				site: registrableDomain(cache.host),
+				totpSecretId: totp.secretId,
+				expiresAt: Date.now() + OTP_INTENT_MS,
+			}
+			await writeIntents(intents)
+		}
 	}
 	return { filled: !!results?.filled, totpCode }
 }
@@ -348,25 +442,76 @@ async function doFill(payload) {
  * @return {Promise<{ valid: boolean, code?: string, secondsRemaining?: number }>}
  */
 async function doTotpForHost(payload) {
+	const found = await findTotp(payload.host)
+	return found ? found.result : { valid: false, none: true }
+}
+
+/**
+ * The active account's `totp` secret for a host and its current code. The
+ * seed is decrypted only transiently.
+ *
+ * @param {string} host The site.
+ * @return {Promise<{row: object, result: object}|null>}
+ */
+async function findTotp(host) {
 	const account = await activeAccount()
 	if (!vault.isUnlocked(account.id)) throw new Error('vault is locked')
 	const totpTypeId = await api.typeIdByName(account, 'totp')
-	if (!totpTypeId) return { valid: false, none: true }
-	const rows = matchSecrets(await api.match(account, payload.host), payload.host)
+	if (!totpTypeId) return null
+	const rows = matchSecrets(await api.match(account, host), host)
 	const totp = rows.find((r) => r.typeId === totpTypeId)
-	if (!totp) return { valid: false, none: true }
+	if (!totp) return null
 	const seed = await vault.decryptField(account.id, totp.key)
 	await touchActivity(account.id)
-	return computeTotp(seed)
+	return { row: totp, result: await computeTotp(seed) }
 }
 
-async function totpCodeForHost(host) {
+async function totpForHost(host) {
 	try {
-		const result = await doTotpForHost({ host })
-		return result.valid ? result.code : null
+		const found = await findTotp(host)
+		return found && found.result.valid
+			? { code: found.result.code, secretId: found.row.id }
+			: null
 	} catch {
 		return null
 	}
+}
+
+/**
+ * A code field showed up in a tab (extension-totp-autofill, next step). Fill
+ * it only for the tab, the site and the time a login fill named, while the
+ * vault is unlocked, and only once: the intent is deleted before the code is
+ * computed.
+ *
+ * @param {object} payload Ignored: the site comes from the browser's sender record.
+ * @param {object} sender The content script's sender.
+ * @return {Promise<{filled: boolean}>}
+ */
+async function doOtpFieldDetected(payload, sender) {
+	const tabId = sender?.tab?.id
+	if (tabId === undefined) return { filled: false }
+	const intents = await readIntents()
+	const intent = intents[tabId]
+	if (!intent) return { filled: false }
+	const site = registrableDomain(hostOf(senderOrigin(sender)))
+	if (site === '' || site !== intent.site) return { filled: false }
+	delete intents[tabId]
+	await writeIntents(intents)
+	if (Date.now() >= intent.expiresAt) return { filled: false }
+	const account = await api.loadConfig()
+	if (!account || !vault.isUnlocked(account.id)) return { filled: false }
+	const row = await api.getSecret(account, intent.totpSecretId).catch(() => null)
+	if (!row || !row.key) return { filled: false }
+	const result = await computeTotp(await vault.decryptField(account.id, row.key))
+	if (!result.valid) return { filled: false }
+	const res = await chrome.tabs
+		.sendMessage(
+			tabId,
+			{ type: 'fill-otp', payload: { code: result.code } },
+			{ frameId: sender.frameId ?? 0 },
+		)
+		.catch(() => ({ filled: false }))
+	return { filled: !!res?.filled }
 }
 
 /**
@@ -602,6 +747,25 @@ const handlers = {
 	'biometric-enrol': doBiometricEnrol,
 	'biometric-options': doBiometricOptions,
 	'biometric-used': doBiometricUsed,
+	'otp-field-detected': doOtpFieldDetected,
+	// Vault, Generator and Send tabs (clients-extension-generator-vault-send).
+	...buildVaultHandlers({
+		api,
+		vault,
+		activeAccount,
+		policyRefusalFor: (config, value, typeName) =>
+			api
+				.fetchPolicy(config)
+				.then((policy) =>
+					policyRefusal(
+						policy,
+						value,
+						(prefix) => api.breachRange(config, prefix),
+						typeName,
+					),
+				),
+		touchActivity,
+	}),
 	// WebAuthn ceremonies relayed from the page-context shim. The origin is the
 	// sender's, as the browser reports it; the page's own claim in the payload
 	// is ignored (clients-passkey-origin).

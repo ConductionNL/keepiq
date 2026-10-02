@@ -1,0 +1,13 @@
+apiVersion: v2
+name: keepiq-operator
+description: Syncs Keepiq application secrets into Kubernetes Secrets, decrypting only inside the cluster.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/ConductionNL/keepiq/tree/development/integrations/kubernetes
+sources:
+  - https://github.com/ConductionNL/keepiq
+keywords: [keepiq, secrets, operator]
+maintainers:
+  - name: Conduction B.V.
+    email: info@conduction.nl
