@@ -444,6 +444,8 @@ $extra = [
     ['name' => 'extension#pair', 'url' => '/api/v1/extension/pair', 'verb' => 'POST'],
     ['name' => 'extension#unpair', 'url' => '/api/v1/extension/unpair', 'verb' => 'POST'],
     ['name' => 'extension#match', 'url' => '/api/v1/extension/match', 'verb' => 'GET'],
+    // The idle lock maximum the extension clamps the user's choice to.
+    ['name' => 'extension#policy', 'url' => '/api/v1/extension/policy', 'verb' => 'GET'],
     // A fill from the extension counts as a use (vault-favourites-tags-and-last-used); 404 for a row the caller does not hold.
     ['name' => 'secretOrganisation#used', 'url' => '/api/v1/extension/used/{id}', 'verb' => 'POST'],
 ];

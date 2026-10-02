@@ -96,7 +96,7 @@ omits lease reporting.
 
 ## Crypto parity
 
-The `internal/crypto` package reimplements the browser recipe **byte-for-byte**:
+The `sdk/go/crypto` package (shared with the client libraries, see `../sdk/`) reimplements the browser recipe **byte-for-byte**:
 
 - **Private-key blob** (human unlock): base64 of `[4B version][16B salt][12B
   IV][ciphertext+16B GCM tag]`. The unlock key is
@@ -107,7 +107,7 @@ The `internal/crypto` package reimplements the browser recipe **byte-for-byte**:
 
 PBKDF2 is implemented in-house over `crypto/hmac` (RFC 8018) so the CLI has zero
 external dependencies. Byte-parity is pinned by the RFC 6070 test vectors in
-`internal/crypto/crypto_test.go`.
+`../sdk/go/crypto/crypto_test.go`.
 
 ```sh
 go test ./...
