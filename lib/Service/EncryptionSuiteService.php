@@ -226,6 +226,48 @@ class EncryptionSuiteService {
 	}//end revokeSuite()
 
 	/**
+	 * Record a refused revocation in the audit trail (keepiq#870).
+	 *
+	 * Successful revokes were audited and refusals only reached the HTTP
+	 * response, so an attack on the containment path was invisible to the
+	 * SIEM. The reason code is a fixed machine token chosen by the caller
+	 * (`migration_in_progress`, `invalid_argument`, `forbidden`,
+	 * `empty_reason`), never an exception message, so nothing a request
+	 * supplied ends up in the trail.
+	 *
+	 * @param string $suiteId         The suite the revoke targeted
+	 * @param string $actorId         Who asked for the revoke
+	 * @param string $reasonCode      Why it was refused, as a fixed token
+	 * @param bool   $markCompromised Whether a compromise revoke was asked for
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $markCompromised is recorded
+	 *   data about the refused request, not a mode switch for this method.
+	 *
+	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 */
+	public function recordRevokeRefused(
+		string $suiteId,
+		string $actorId,
+		string $reasonCode,
+		bool $markCompromised = false,
+	): void {
+		$this->eventDispatcher?->dispatchTyped(
+			$this->auditEvents->forUser(
+				actorId: $actorId,
+				eventType: AuditEventTypes::SUITE_REVOKE_REFUSED,
+				objectType: 'suite',
+				objectId: $suiteId,
+				metadata: [
+					'reasonCode' => $reasonCode,
+					'markCompromised' => $markCompromised,
+				],
+			)
+		);
+	}//end recordRevokeRefused()
+
+	/**
 	 * Reinstate a revoked EncryptionSuite. Re-signs the public key with the active intermediate.
 	 *
 	 * @param string $id The suite ID
@@ -295,10 +337,15 @@ class EncryptionSuiteService {
 
 		$this->logger->warning("Keepiq: EncryptionSuite {$id} marked compromised by {$compromisedBy}");
 
+		// COMPLETED, not STARTED: markCompromised runs only when a recovery
+		// finishes (MigrationService::completeMigration). It used to record
+		// recovery_started here, so the trail showed a start at every
+		// completion and never a completion (keepiq#870). The start is now
+		// recorded by MigrationService::initiateCompromiseRecovery.
 		$this->eventDispatcher?->dispatchTyped(
 			$this->auditEvents->forUser(
 				actorId: $compromisedBy,
-				eventType: AuditEventTypes::SUITE_RECOVERY_STARTED,
+				eventType: AuditEventTypes::SUITE_RECOVERY_COMPLETED,
 				objectType: 'suite',
 				objectId: $id,
 			)
