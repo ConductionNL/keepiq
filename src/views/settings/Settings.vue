@@ -13,6 +13,7 @@
   @spec openspec/changes/admin-vault-policies/tasks.md#1.3
   @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
   @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.2
+  @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.1
 -->
 <template>
 	<div class="keepiq-settings">
@@ -30,8 +31,10 @@
 		<SiemSection />
 		<HoneySection />
 		<OfflineCacheSection />
+		<DeviceApprovalSection />
 		<ExtensionSection />
 		<ItemTypesSection />
+		<MemberOverviewSection />
 		<OffboardingSection />
 		<AdminSuiteSection />
 		<AdminAuditSection />
@@ -47,10 +50,12 @@ import AttachmentLimitsSection from '../../components/settings/AttachmentLimitsS
 import BreachCheckSection from '../../components/settings/BreachCheckSection.vue'
 import CaHealthSection from '../../components/settings/CaHealthSection.vue'
 import ComplianceSection from '../../components/settings/ComplianceSection.vue'
+import DeviceApprovalSection from '../../components/settings/DeviceApprovalSection.vue'
 import ExtensionSection from '../../components/settings/ExtensionSection.vue'
 import HoneySection from '../../components/settings/HoneySection.vue'
 import ItemTypesSection from '../../components/settings/ItemTypesSection.vue'
 import MachineLeaseSection from '../../components/settings/MachineLeaseSection.vue'
+import MemberOverviewSection from '../../components/settings/MemberOverviewSection.vue'
 import OffboardingSection from '../../components/settings/OffboardingSection.vue'
 import OfflineCacheSection from '../../components/settings/OfflineCacheSection.vue'
 import OrgPasswordPolicySection from '../../components/settings/OrgPasswordPolicySection.vue'
@@ -78,7 +83,9 @@ export default {
 		HoneySection,
 		ItemTypesSection,
 		OfflineCacheSection,
+		DeviceApprovalSection,
 		ExtensionSection,
+		MemberOverviewSection,
 		OffboardingSection,
 		AdminSuiteSection,
 		AdminAuditSection,

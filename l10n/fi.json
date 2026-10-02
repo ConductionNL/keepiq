@@ -1266,6 +1266,61 @@
         "Remove tag": "Poista tunniste",
         "Add tag": "Lisää tunniste",
         "Could not change the tags. Try again.": "Tunnisteita ei voitu muuttaa. Yritä uudelleen.",
+        "Could not approve the application. It is still in the queue.": "Hakemusta ei voitu hyväksyä. Se on yhä jonossa.",
+        "Could not reject the application. It is still in the queue.": "Hakemusta ei voitu hylätä. Se on yhä jonossa.",
+        "Removed the user from {count} team folders.": "Käyttäjä poistettiin {count} tiimikansiosta.",
+        "Approve a share": "Hyväksy jako",
+        "This approval link is incomplete. Open it again from the notification.": "Tämä hyväksyntälinkki on puutteellinen. Avaa se uudelleen ilmoituksesta.",
+        "Deny": "Hylkää",
+        "{user} joined a group you share a secret with. Share the secret with them too?": "{user} liittyi ryhmään, jonka kanssa jaat salaisuuden. Jaetaanko salaisuus myös hänelle?",
+        "{requester} asks you to share a secret with {user}.": "{requester} pyytää sinua jakamaan salaisuuden käyttäjälle {user}.",
+        "Shared. The recipient can now open the secret.": "Jaettu. Vastaanottaja voi nyt avata salaisuuden.",
+        "The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.": "Vastaanottaja ei ole vielä ottanut Keepiqia käyttöön, joten mitään ei jaettu. Yritä uudelleen, kun hän on tehnyt sen.",
+        "Could not share the secret. Only its owner can approve this.": "Salaisuutta ei voitu jakaa. Vain sen omistaja voi hyväksyä tämän.",
+        "Could not share the secret. Try again.": "Salaisuutta ei voitu jakaa. Yritä uudelleen.",
+        "Denied. Nothing was shared.": "Hylätty. Mitään ei jaettu.",
+        "Could not deny the request. Try again.": "Pyyntöä ei voitu hylätä. Yritä uudelleen.",
+        "%1$s asks you to share the secret \"%2$s\" with %3$s.": "%1$s pyytää sinua jakamaan salaisuuden \"%2$s\" käyttäjälle %3$s.",
+        "Expires on (optional)": "Vanhenee (valinnainen)",
+        "Hand over to": "Luovuta käyttäjälle",
+        "Choose a recipient": "Valitse vastaanottaja",
+        "Hand over temporarily": "Luovuta väliaikaisesti",
+        "Expiry rules": "Vanhenemissäännöt",
+        "Set how long passwords of one item type or in one folder may live, and when to be reminded. When several dates apply, the earliest one counts.": "Määritä, kuinka kauan yhden kohdetyypin tai yhden kansion salasanat saavat olla voimassa ja milloin sinua muistutetaan. Kun useita päivämääriä on voimassa, aikaisin ratkaisee.",
+        "Delete rule": "Poista sääntö",
+        "Set by your administrator": "Ylläpitäjäsi asettama",
+        "No expiry rules yet.": "Ei vielä vanhenemissääntöjä.",
+        "Applies to": "Koskee",
+        "Item type": "Kohdetyyppi",
+        "Maximum age in days (empty for reminders only)": "Enimmäisikä päivinä (tyhjä vain muistutuksille)",
+        "Remind me this many days before, comma separated": "Muistuta minua näin monta päivää ennen, pilkuilla eroteltuna",
+        "Save rule": "Tallenna sääntö",
+        "An item type": "Kohdetyyppi",
+        "A folder": "Kansio",
+        "Folder {name}": "Kansio {name}",
+        "Type {name}": "Tyyppi {name}",
+        "Expires after {days} days": "Vanhenee {days} päivän kuluttua",
+        "Reminders {days} days before": "Muistutukset {days} päivää ennen",
+        "Could not save the expiry rule.": "Vanhenemissääntöä ei voitu tallentaa.",
+        "Could not delete the expiry rule.": "Vanhenemissääntöä ei voitu poistaa.",
+        "All statuses": "Kaikki tilat",
+        "Compromised": "Vaarantunut",
+        "Could not load the members.": "Jäsenten lataaminen epäonnistui.",
+        "Emergency contact": "Hätäyhteyshenkilö",
+        "Leaving user": "Lähtevä käyttäjä",
+        "No": "Ei",
+        "No users match this filter.": "Yksikään käyttäjä ei vastaa tätä suodatinta.",
+        "Not set up": "Ei määritetty",
+        "Revoke suite": "Peru sarja",
+        "Revoked": "Peruttu",
+        "Search users": "Hae käyttäjiä",
+        "See which users have set up a vault. Start offboarding or revoke a suite from a row.": "Katso, ketkä käyttäjät ovat ottaneet holvin käyttöön. Aloita poistuminen tai peru sarja riviltä.",
+        "Successor": "Seuraaja",
+        "Team folders": "Tiimikansiot",
+        "The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account.": "Käyttäjä on yhä ryhmässä {groups}, joka on tiimikansion jäsen. Poista käyttäjä ryhmästä tai poista tili käytöstä.",
+        "The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account.": "Käyttäjä on yhä ryhmissä {groups}, jotka ovat tiimikansioiden jäseniä. Poista käyttäjä ryhmistä tai poista tili käytöstä.",
+        "Vault status": "Holvin tila",
+        "Yes": "Kyllä",
         "A CXF export is UNENCRYPTED. Every password and login will be readable as plain text in the downloaded file. Store it securely and delete it immediately after use.": "CXF-vienti on SALAAMATON. Jokainen salasana ja käyttäjätunnus on luettavissa selkokielisenä ladatussa tiedostossa. Säilytä se turvallisesti ja poista se heti käytön jälkeen.",
         "Root certificate expiring soon": "Juurivarmenne vanhenee pian",
         "The vault root certificate expires in %1$d day(s). Renew it before then. Renewing re-signs every encryption suite.": "Holvin juurivarmenne vanhenee %1$d päivän kuluttua. Uusi se ennen sitä. Uusiminen allekirjoittaa jokaisen salauspaketin uudelleen.",
@@ -1308,43 +1363,6 @@
         "Revoking the second suite deleted %n emergency-access contact.": "Toisen sarjan peruminen poisti %n hätäkäyttöyhteystiedon.",
         "Revoking the second suite deleted %n emergency-access contacts.": "Toisen sarjan peruminen poisti %n hätäkäyttöyhteystietoa.",
         "A suite revoked as compromised cannot be reinstated.": "Vaarantuneena perutun sarjan palauttaminen ei ole mahdollista.",
-        "Could not approve the application. It is still in the queue.": "Hakemusta ei voitu hyväksyä. Se on yhä jonossa.",
-        "Could not reject the application. It is still in the queue.": "Hakemusta ei voitu hylätä. Se on yhä jonossa.",
-        "Removed the user from {count} team folders.": "Käyttäjä poistettiin {count} tiimikansiosta.",
-        "Approve a share": "Hyväksy jako",
-        "This approval link is incomplete. Open it again from the notification.": "Tämä hyväksyntälinkki on puutteellinen. Avaa se uudelleen ilmoituksesta.",
-        "Deny": "Hylkää",
-        "{user} joined a group you share a secret with. Share the secret with them too?": "{user} liittyi ryhmään, jonka kanssa jaat salaisuuden. Jaetaanko salaisuus myös hänelle?",
-        "{requester} asks you to share a secret with {user}.": "{requester} pyytää sinua jakamaan salaisuuden käyttäjälle {user}.",
-        "Shared. The recipient can now open the secret.": "Jaettu. Vastaanottaja voi nyt avata salaisuuden.",
-        "The recipient has not set up Keepiq yet, so nothing was shared. Try again once they have.": "Vastaanottaja ei ole vielä ottanut Keepiqia käyttöön, joten mitään ei jaettu. Yritä uudelleen, kun hän on tehnyt sen.",
-        "Could not share the secret. Only its owner can approve this.": "Salaisuutta ei voitu jakaa. Vain sen omistaja voi hyväksyä tämän.",
-        "Could not share the secret. Try again.": "Salaisuutta ei voitu jakaa. Yritä uudelleen.",
-        "Denied. Nothing was shared.": "Hylätty. Mitään ei jaettu.",
-        "Could not deny the request. Try again.": "Pyyntöä ei voitu hylätä. Yritä uudelleen.",
-        "%1$s asks you to share the secret \"%2$s\" with %3$s.": "%1$s pyytää sinua jakamaan salaisuuden \"%2$s\" käyttäjälle %3$s.",
-        "Expires on (optional)": "Vanhenee (valinnainen)",
-        "Hand over to": "Luovuta käyttäjälle",
-        "Choose a recipient": "Valitse vastaanottaja",
-        "Hand over temporarily": "Luovuta väliaikaisesti",
-        "Expiry rules": "Vanhenemissäännöt",
-        "Set how long passwords of one item type or in one folder may live, and when to be reminded. When several dates apply, the earliest one counts.": "Määritä, kuinka kauan yhden kohdetyypin tai yhden kansion salasanat saavat olla voimassa ja milloin sinua muistutetaan. Kun useita päivämääriä on voimassa, aikaisin ratkaisee.",
-        "Delete rule": "Poista sääntö",
-        "Set by your administrator": "Ylläpitäjäsi asettama",
-        "No expiry rules yet.": "Ei vielä vanhenemissääntöjä.",
-        "Applies to": "Koskee",
-        "Item type": "Kohdetyyppi",
-        "Maximum age in days (empty for reminders only)": "Enimmäisikä päivinä (tyhjä vain muistutuksille)",
-        "Remind me this many days before, comma separated": "Muistuta minua näin monta päivää ennen, pilkuilla eroteltuna",
-        "Save rule": "Tallenna sääntö",
-        "An item type": "Kohdetyyppi",
-        "A folder": "Kansio",
-        "Folder {name}": "Kansio {name}",
-        "Type {name}": "Tyyppi {name}",
-        "Expires after {days} days": "Vanhenee {days} päivän kuluttua",
-        "Reminders {days} days before": "Muistutukset {days} päivää ennen",
-        "Could not save the expiry rule.": "Vanhenemissääntöä ei voitu tallentaa.",
-        "Could not delete the expiry rule.": "Vanhenemissääntöä ei voitu poistaa.",
         "Archives to keep": "Säilytettävät arkistot",
         "Back up every vault automatically": "Varmuuskopioi jokainen holvi automaattisesti",
         "Back up every vault on a schedule. Archives hold ciphertext only and are restored with occ.": "Varmuuskopioi jokainen holvi aikataulun mukaan. Arkistot sisältävät vain salattua tekstiä, ja ne palautetaan occ-komennolla.",
@@ -1355,13 +1373,11 @@
         "Every (hours)": "Joka (tuntia)",
         "Last backup {when} failed: {error}": "Viimeisin varmuuskopio {when} epäonnistui: {error}",
         "Last backup {when} succeeded.": "Viimeisin varmuuskopio {when} onnistui.",
-        "No": "Ei",
         "No archives yet.": "Ei vielä arkistoja.",
         "Size": "Koko",
         "Vault backups": "Holvin varmuuskopiot",
         "With a key, every archive is encrypted to it. Keep the private key off this server: you need it to verify or restore.": "Avaimen kanssa jokainen arkisto salataan sille. Säilytä yksityinen avain tämän palvelimen ulkopuolella: tarvitset sitä tarkistamiseen tai palauttamiseen.",
         "Written": "Kirjoitettu",
-        "Yes": "Kyllä",
         "%n user in scope has no two-factor login yet and cannot open the vault while this is on.": "%n käyttäjällä soveltamisalassa ei vielä ole kaksivaiheista kirjautumista, eikä hän voi avata holvia, kun tämä on päällä.",
         "%n users in scope have no two-factor login yet and cannot open the vault while this is on.": "%n käyttäjällä soveltamisalassa ei vielä ole kaksivaiheista kirjautumista, eivätkä he voi avata holvia, kun tämä on päällä.",
         "Backup codes do not count. If your users sign in through an identity provider with its own second factor, leave their groups out.": "Varakoodit eivät kelpaa. Jos käyttäjäsi kirjautuvat identiteetintarjoajan kautta, jolla on oma toinen tekijä, jätä heidän ryhmänsä pois.",
@@ -1442,6 +1458,126 @@
         "You deleted this secret offline, but it was changed on the server since. Choose which version to keep.": "Poistit tämän salaisuuden offline-tilassa, mutta sitä on sittemmin muutettu palvelimella. Valitse säilytettävä versio.",
         "Your keys were changed on another device. Enter your previous master password to sync the changes you made offline, or discard them.": "Avaimesi vaihdettiin toisella laitteella. Anna aiempi pääsalasanasi synkronoidaksesi offline-muutokset, tai hylkää ne.",
         "Your offline change": "Offline-muutoksesi",
+        "_%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back._::_%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back._": [
+            "%n hätäyhteyshenkilöllä oli avoin käyttöoikeuspyyntö, kun avainkierto poisti hänet. Tarkista, kuka pyysi, ennen kuin lisäät ketään uudelleen.",
+            "%n hätäyhteyshenkilöllä oli avoin käyttöoikeuspyyntö, kun avainkierto poisti heidät. Tarkista, kuka pyysi, ennen kuin lisäät ketään uudelleen."
+        ],
+        "_%n item cannot be represented in CXF and will be skipped._::_%n items cannot be represented in CXF and will be skipped._": [
+            "%n kohdetta ei voi esittää CXF-muodossa, ja se ohitetaan.",
+            "%n kohdetta ei voi esittää CXF-muodossa, ja ne ohitetaan."
+        ],
+        "_%n older version was dropped because only recent history can be carried across._::_%n older versions were dropped because only recent history can be carried across._": [
+            "%n vanhempi versio poistettiin, koska vain viimeaikainen historia voidaan siirtää.",
+            "%n vanhempaa versiota poistettiin, koska vain viimeaikainen historia voidaan siirtää."
+        ],
+        "_%n secret copy still needs to be encrypted and shared._::_%n secret copies still need to be encrypted and shared._": [
+            "%n salaisuuden kopio on vielä salattava ja jaettava.",
+            "%n salaisuuden kopiota on vielä salattava ja jaettava."
+        ],
+        "_%n secret could not be decrypted and is not in this export._::_%n secrets could not be decrypted and are not in this export._": [
+            "%n salaisuutta ei voitu purkaa, eikä se ole tässä viennissä.",
+            "%n salaisuutta ei voitu purkaa, eivätkä ne ole tässä viennissä."
+        ],
+        "_%n secret could not be decrypted with your old key, so it did not migrate._::_%n secrets could not be decrypted with your old key, so they did not migrate._": [
+            "%n salaisuutta ei voitu purkaa vanhalla avaimellasi, joten sitä ei siirretty.",
+            "%n salaisuutta ei voitu purkaa vanhalla avaimellasi, joten niitä ei siirretty."
+        ],
+        "_%n secret did not migrate._::_%n secrets did not migrate._": [
+            "%n salaisuutta ei siirretty.",
+            "%n salaisuutta ei siirretty."
+        ],
+        "_%n secret is still encrypted under your previous key._::_%n secrets are still encrypted under your previous key._": [
+            "%n salaisuus on edelleen salattu aiemmalla avaimellasi.",
+            "%n salaisuutta on edelleen salattu aiemmalla avaimellasi."
+        ],
+        "_%n secret was skipped because the successor holds no copy yet — add the successor to the folder and re-run._::_%n secrets were skipped because the successor holds no copy yet — add the successor to the folder and re-run._": [
+            "%n salaisuus ohitettiin, koska seuraajalla ei ole vielä kopiota — lisää seuraaja kansioon ja suorita uudelleen.",
+            "%n salaisuutta ohitettiin, koska seuraajalla ei ole vielä kopiota — lisää seuraaja kansioon ja suorita uudelleen."
+        ],
+        "_%n secret_::_%n secrets_": [
+            "%n salaisuus",
+            "%n salaisuutta"
+        ],
+        "_%n user in scope has no two-factor login yet and cannot open the vault while this is on._::_%n users in scope have no two-factor login yet and cannot open the vault while this is on._": [
+            "%n käyttäjällä soveltamisalassa ei vielä ole kaksivaiheista kirjautumista, eikä hän voi avata holvia, kun tämä on päällä.",
+            "%n käyttäjällä soveltamisalassa ei vielä ole kaksivaiheista kirjautumista, eivätkä he voi avata holvia, kun tämä on päällä."
+        ],
+        "_Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault._::_Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault._": [
+            "Emergency access for %n contact could not be carried across and was removed. Re-establish it so they can still recover your vault.",
+            "Emergency access for %n contacts could not be carried across and was removed. Re-establish them so they can still recover your vault."
+        ],
+        "_Finish anyway, losing access to %n secret_::_Finish anyway, losing access to %n secrets_": [
+            "Viimeistele kuitenkin ja menetä käyttöoikeus %n salaisuuteen",
+            "Viimeistele kuitenkin ja menetä käyttöoikeus %n salaisuuteen"
+        ],
+        "_Gave %n new member access to a team folder._::_Gave %n new members access to a team folder._": [
+            "%n uusi jäsen sai pääsyn tiimikansioon.",
+            "%n uutta jäsentä sai pääsyn tiimikansioon."
+        ],
+        "_Key rotation finished. %n secret was re-encrypted under your new key._::_Key rotation finished. %n secrets were re-encrypted under your new key._": [
+            "Avaimen kierto valmis. %n salaisuus salattiin uudelleen uudella avaimellasi.",
+            "Avaimen kierto valmis. %n salaisuutta salattiin uudelleen uudella avaimellasi."
+        ],
+        "_Revoking the second suite deleted %n emergency-access contact._::_Revoking the second suite deleted %n emergency-access contacts._": [
+            "Toisen sarjan peruminen poisti %n hätäkäyttöyhteystiedon.",
+            "Toisen sarjan peruminen poisti %n hätäkäyttöyhteystietoa."
+        ],
+        "_Revoking this suite deleted %n emergency-access contact._::_Revoking this suite deleted %n emergency-access contacts._": [
+            "Tämän sarjan peruuttaminen poisti %n hätäkäytön yhteyshenkilön.",
+            "Tämän sarjan peruuttaminen poisti %n hätäkäytön yhteyshenkilöä."
+        ],
+        "_seen %n time in breaches_::_seen %n times in breaches_": [
+            "nähty vuodoissa %n kerran",
+            "nähty vuodoissa %n kertaa"
+        ],
+        "_shared with %n secret_::_shared with %n secrets_": [
+            "jaettu %n salaisuudelle",
+            "jaettu %n salaisuudelle"
+        ],
+        "_This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._::_This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active._": [
+            "This also permanently deletes emergency access for %n contact. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active.",
+            "This also permanently deletes emergency access for %n contacts. If an emergency accessor exists, they must retrieve the secrets first, while this suite is still active."
+        ],
+        "_This folder contains %n secret directly._::_This folder contains %n secrets directly._": [
+            "Tämä kansio sisältää suoraan %n salaisuuden.",
+            "Tämä kansio sisältää suoraan %n salaisuutta."
+        ],
+        "_Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it._::_Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them._": [
+            "Avaimen kierto poisti %n hätäyhteyshenkilön. Tarkista Hätäkäyttöoikeus ja lisää hänet uudelleen, jos haluat hänet yhä.",
+            "Avaimen kierto poisti %n hätäyhteyshenkilöä. Tarkista Hätäkäyttöoikeus ja lisää heidät uudelleen, jos haluat heidät yhä."
+        ],
+        "_%n change waiting to sync_::_%n changes waiting to sync_": [
+            "%n muutos odottaa synkronointia",
+            "%n muutosta odottaa synkronointia"
+        ],
+        "_The user is still in group {groups}, which is a member of a team folder. Remove them from the group or disable the account._::_The user is still in groups {groups}, which are members of team folders. Remove them from the groups or disable the account._": [
+            "Käyttäjä on yhä ryhmässä {groups}, joka on tiimikansion jäsen. Poista käyttäjä ryhmästä tai poista tili käytöstä.",
+            "Käyttäjä on yhä ryhmissä {groups}, jotka ovat tiimikansioiden jäseniä. Poista käyttäjä ryhmistä tai poista tili käytöstä."
+        ],
+        "Allow approval from another device": "Salli hyväksyntä toiselta laitteelta",
+        "App": "Sovellus",
+        "Approve a new device": "Hyväksy uusi laite",
+        "Approve from another device": "Hyväksy toiselta laitteelta",
+        "Asked at": "Pyydetty",
+        "Check that the new device shows these words:": "Tarkista, että uusi laite näyttää nämä sanat:",
+        "Denied. If you did not ask, end your other sessions:": "Hylätty. Jos et pyytänyt tätä, lopeta muut istuntosi:",
+        "Device": "Laite",
+        "IP address": "IP-osoite",
+        "Let users unlock a new browser by approving it from a device where Keepiq is already unlocked.": "Anna käyttäjien avata uusi selain hyväksymällä se laitteelta, jolla Keepiq on jo avattu.",
+        "New device approval": "Uuden laitteen hyväksyntä",
+        "Nextcloud security settings": "Nextcloudin tietoturva-asetukset",
+        "Only approve a device you are using right now.": "Hyväksy vain laite, jota käytät juuri nyt.",
+        "Open Keepiq on a device where it is unlocked and approve this one. Check that it shows the same words:": "Avaa Keepiq laitteella, jolla se on avattu, ja hyväksy tämä laite. Tarkista, että se näyttää samat sanat:",
+        "The approving device seals the unlock key to the new device. The server only passes it on and cannot open it.": "Hyväksyvä laite sinetöi avausavaimen uudelle laitteelle. Palvelin vain välittää sen eikä voi avata sitä.",
+        "The master password is not right, or the request has ended.": "Pääsalasana on väärä tai pyyntö on päättynyt.",
+        "The request expired. Ask again or use your master password.": "Pyyntö vanheni. Pyydä uudelleen tai käytä pääsalasanaasi.",
+        "The request was denied.": "Pyyntö hylättiin.",
+        "Too many requests. Try again in an hour or use your master password.": "Liian monta pyyntöä. Yritä uudelleen tunnin kuluttua tai käytä pääsalasanaasi.",
+        "Unknown device": "Tuntematon laite",
+        "Web app": "Verkkosovellus",
+        "A device": "Laite",
+        "A new device asks to open your vault": "Uusi laite pyytää avaamaan holvisi",
+        "%s asks to be approved. Only approve a device you are using right now.": "%s pyytää hyväksyntää. Hyväksy vain laite, jota käytät juuri nyt.",
         "Access ends on (optional)": "Käyttöoikeus päättyy (valinnainen)",
         "Keepiq's apps will not show or copy the password. Someone with technical skill can still read it from their own device. Rotate it when their access ends.": "Keepiqin sovellukset eivät näytä tai kopioi salasanaa. Tekninen osaaja voi silti lukea sen omalta laitteeltaan. Vaihda se, kun käyttöoikeus päättyy.",
         "This secret is use-only. Sign in through the Keepiq browser extension.": "Tämä salaisuus on vain käyttöön. Kirjaudu sisään Keepiq-selainlaajennuksen kautta.",

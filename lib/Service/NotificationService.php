@@ -94,6 +94,9 @@ class NotificationService {
 		'share_access_ending' => 'notify_shares',
 		'share_access_ended' => 'notify_shares',
 		'share_access_ended_owner' => 'notify_shares',
+		// New device approval (crypto-new-device-approval D5): someone
+		// signed in as this user asks to open the vault. Always shown.
+		'device_approval_requested' => null,
 	];
 
 	/**
