@@ -89,10 +89,30 @@ class ExpiryReportTools {
 
 		[$certificates, $certificateIds] = $this->expiringCertificates(userId: $userId, now: $now, until: $until);
 
+		$secrets = $this->expiringSecrets(userId: $userId, now: $now, until: $until, skip: $certificateIds);
+
+		$this->context->audit(userId: $userId, tool: 'expiryReport', resultCount: (count($certificates) + count($secrets)));
+		return ['withinDays' => $withinDays, 'certificates' => $certificates, 'secrets' => $secrets];
+	}//end expiryReport()
+
+	/**
+	 * The user's live secrets that lapse by $until, leaving out the ids in
+	 * $skip (stored certificates, already in the certificate list).
+	 *
+	 * @param string $userId The principal
+	 * @param DateTime $now Now
+	 * @param DateTime $until The end of the window
+	 * @param array<string,true> $skip Ids to leave out
+	 *
+	 * @return list<array<string,scalar|null>>
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-expiry-report-tool
+	 */
+	private function expiringSecrets(string $userId, DateTime $now, DateTime $until, array $skip): array {
 		$secrets = [];
 		foreach ($this->secretMapper->findByOwner(ownerType: 'user', ownerId: $userId, state: SecretMapper::STATE_LIVE) as $secret) {
 			$when = $secret->getExpiresAt();
-			if ($when === null || $when > $until || isset($certificateIds[$secret->getId()]) === true) {
+			if ($when === null || $when > $until || isset($skip[$secret->getId()]) === true) {
 				continue;
 			}
 
@@ -108,9 +128,8 @@ class ExpiryReportTools {
 			);
 		}
 
-		$this->context->audit(userId: $userId, tool: 'expiryReport', resultCount: (count($certificates) + count($secrets)));
-		return ['withinDays' => $withinDays, 'certificates' => $certificates, 'secrets' => $secrets];
-	}//end expiryReport()
+		return $secrets;
+	}//end expiringSecrets()
 
 	/**
 	 * The user's stored certificates that lapse by $until, and the ids of
