@@ -32,10 +32,16 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
+use OCA\Keepiq\Controller\DelegationController;
+use OCA\Keepiq\Controller\DeviceApprovalController;
 use OCA\Keepiq\Controller\EmergencyAccessController;
 use OCA\Keepiq\Controller\EncryptionSuiteController;
 use OCA\Keepiq\Controller\GdprController;
 use OCA\Keepiq\Controller\MigrationController;
+use OCA\Keepiq\Controller\ShareController;
+use OCA\Keepiq\Service\KnownShareRecipientExemption;
+use OCA\Keepiq\Service\VaultKeyProofExemption;
+use OCA\Keepiq\Controller\RecoveryOfficerController;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
@@ -115,6 +121,37 @@ class VaultKeyProofAttributesTest extends TestCase {
 				'migrationNewSuite',
 				VaultKeyProofService::PURPOSE_ABORT_MIGRATION,
 			],
+			// keepiq#818: a session alone must not add a new party who then
+			// receives every later value of a secret. A share to a recipient
+			// the caller already shares with is waived by the exemption.
+			'share to a new recipient' => [
+				ShareController::class,
+				'create',
+				['secretId', 'targetUserId'],
+				'active',
+				VaultKeyProofService::PURPOSE_SHARE_NEW_RECIPIENT,
+			],
+			'register a batch of shares' => [
+				ShareController::class,
+				'registerBatch',
+				[],
+				'active',
+				VaultKeyProofService::PURPOSE_SHARE_REGISTER_BATCH,
+			],
+			'create a delegation' => [
+				DelegationController::class,
+				'create',
+				['secretId', 'delegatedTo'],
+				'active',
+				VaultKeyProofService::PURPOSE_DELEGATION_CREATE,
+			],
+			'admin handover delegation' => [
+				DelegationController::class,
+				'handover',
+				['secretId'],
+				'active',
+				VaultKeyProofService::PURPOSE_DELEGATION_HANDOVER,
+			],
 			// Wipes every secret, suite and migration the user has.
 			'delete account data' => [
 				GdprController::class,
@@ -122,6 +159,20 @@ class VaultKeyProofAttributesTest extends TestCase {
 				['confirmation'],
 				'active',
 				VaultKeyProofService::PURPOSE_DELETE_ACCOUNT_DATA,
+			],
+			'approve a new device' => [
+				DeviceApprovalController::class,
+				'approve',
+				['id', 'sealedUnlockKey'],
+				'active',
+				VaultKeyProofService::PURPOSE_APPROVE_DEVICE,
+			],
+			'approve an account recovery' => [
+				RecoveryOfficerController::class,
+				'approve',
+				['id'],
+				'active',
+				VaultKeyProofService::PURPOSE_APPROVE_ACCOUNT_RECOVERY,
 			],
 		];
 	}//end guardedMethodsProvider()
@@ -170,6 +221,33 @@ class VaultKeyProofAttributesTest extends TestCase {
 			"$class::$method purpose '$purpose' must be in ALLOWED_PURPOSES, or no proof can be issued for it"
 		);
 	}//end testDestructiveMethodCarriesTheGuard()
+
+	/**
+	 * Only the share-to-a-new-recipient guard carries an exemption, and it is
+	 * the known-recipient one (keepiq#818). Every other guard has none: an
+	 * exemption on a destructive route would be a missing guard.
+	 *
+	 * @return void
+	 */
+	public function testOnlyTheShareCreateGuardIsExemptable(): void {
+		foreach (self::guardedMethodsProvider() as $label => [$class, $method]) {
+			$attribute = (new ReflectionMethod($class, $method))
+				->getAttributes(VaultKeyProofRequired::class)[0]
+				->newInstance();
+			$expected = '';
+			if ($class === ShareController::class && $method === 'create') {
+				$expected = KnownShareRecipientExemption::class;
+			}
+
+			$this->assertSame($expected, $attribute->getExemption(), "$label exemption");
+		}
+
+		$this->assertContains(
+			VaultKeyProofExemption::class,
+			class_implements(KnownShareRecipientExemption::class),
+			'the exemption must implement VaultKeyProofExemption, or the middleware ignores it and always asks for a proof'
+		);
+	}//end testOnlyTheShareCreateGuardIsExemptable()
 
 	/**
 	 * Methods deliberately NOT guarded, with the reason each is safe.

@@ -34,7 +34,7 @@ use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\VaultKeyProofService;
-use OCA\Keepiq\Settings\AdminSettings;
+use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -78,6 +78,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @param IUserSession $userSession The user session
 	 * @param VaultKeyProofService $proofService The vault-key-proof service (issues challenges)
 	 * @param EmergencyEnvelopeInvalidationService $emergencyService The emergency-envelope service (revoke safeguard)
+	 * @param \OCA\Keepiq\Service\TwoFactorGate $twoFactor The two-factor vault policy (admin-vault-policies D3)
 	 * @param CompromiseContainmentService $containment The compromise containment (force-revoke cascade)
 	 * @param \OCA\Keepiq\Service\PasskeyService|null $passkeyService The passkey service (passkey vault login; null when unwired)
 	 *
@@ -90,6 +91,7 @@ class EncryptionSuiteController extends OCSController {
 		private IUserSession $userSession,
 		private VaultKeyProofService $proofService,
 		private EmergencyEnvelopeInvalidationService $emergencyService,
+		private \OCA\Keepiq\Service\TwoFactorGate $twoFactor,
 		private CompromiseContainmentService $containment,
 		private ?\OCA\Keepiq\Service\PasskeyService $passkeyService = null,
 	) {
@@ -104,6 +106,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#3.1
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -115,9 +118,14 @@ class EncryptionSuiteController extends OCSController {
 		$userId = $user->getUID();
 		$suites = $this->suiteService->getSuitesByOwner(ownerType: 'user', ownerId: $userId);
 
+		// The two-factor policy withholds the wrapped private key, and only
+		// that: other screens still read status and certificates here
+		// (admin-vault-policies D3).
+		$blocked = $this->twoFactor->blocks(userId: $userId);
+
 		return new JSONResponse(
 			data: array_map(
-				static fn ($suite) => $suite->jsonSerialize(),
+				static fn ($suite) => self::withholdKey(suite: $suite->jsonSerialize(), blocked: $blocked),
 				$suites
 			)
 		);
@@ -133,6 +141,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#3.1
 	 */
 	#[NoAdminRequired]
 	public function show(string $id): JSONResponse {
@@ -143,7 +152,8 @@ class EncryptionSuiteController extends OCSController {
 		try {
 			$suite = $this->suiteService->getSuite($id);
 			$this->validateOwnership(suite: $suite);
-			return new JSONResponse(data: $suite->jsonSerialize());
+			$blocked = $this->twoFactor->blocks(userId: (string)$this->userSession->getUser()?->getUID());
+			return new JSONResponse(data: self::withholdKey(suite: $suite->jsonSerialize(), blocked: $blocked));
 		} catch (Exception $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
@@ -151,6 +161,28 @@ class EncryptionSuiteController extends OCSController {
 			);
 		}
 	}//end show()
+
+	/**
+	 * Drop the wrapped private key from a serialized suite when the
+	 * two-factor policy blocks the owner, and say why.
+	 *
+	 * @param array<string,mixed> $suite The serialized suite
+	 * @param bool $blocked Whether the policy blocks the owner
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#3.1
+	 */
+	private static function withholdKey(array $suite, bool $blocked): array {
+		if ($blocked === false) {
+			return $suite;
+		}
+
+		unset($suite['privateKey']);
+		$suite['unlockBlocked'] = \OCA\Keepiq\Service\TwoFactorGate::CODE;
+
+		return $suite;
+	}//end withholdKey()
 
 	/**
 	 * Whether both halves of the submitted key material are present.
@@ -195,6 +227,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#3.1
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-re-enrolment-after-a-revocation-requires-a-fresh-password-confirmation
 	 */
 	#[NoAdminRequired]
@@ -293,6 +326,18 @@ class EncryptionSuiteController extends OCSController {
 			return new JSONResponse(
 				data: ['message' => 'Missing required parameters: publicKey and encryptedPrivateKey are required'],
 				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		// No first suite without a second factor when the policy applies
+		// (admin-vault-policies D3).
+		if ($this->twoFactor->blocks(userId: $userId) === true) {
+			return new JSONResponse(
+				data: [
+					'message' => 'Your organisation requires two-factor login before you can open your vault',
+					'code' => \OCA\Keepiq\Service\TwoFactorGate::CODE,
+				],
+				statusCode: Http::STATUS_FORBIDDEN
 			);
 		}
 
@@ -519,14 +564,14 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @param string $id The suite ID
 	 *
-	 * @AuthorizedAdminSetting(AdminSettings::class)
+	 * @AuthorizedAdminSetting(PeopleAdminSettings::class)
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
 	 */
-	#[AuthorizedAdminSetting(AdminSettings::class)]
+	#[AuthorizedAdminSetting(PeopleAdminSettings::class)]
 	#[PasswordConfirmationRequired]
 	public function reinstate(string $id): JSONResponse {
 		$userId = $this->userSession->getUser()->getUID();
@@ -567,11 +612,19 @@ class EncryptionSuiteController extends OCSController {
 	 * the owner path's acceptEmergencyLoss). Only the count crosses the wire — the
 	 * contacts' identities stay grantor-private.
 	 *
+	 * The administrator also types the suite id, echoed as `confirmSuiteId`, and
+	 * the request is refused with 400 before anything else when it is missing or
+	 * differs (keepiq#871). Unlike sudo mode, this holds on every user backend:
+	 * Nextcloud skips #[PasswordConfirmationRequired] for SSO logins and accepts
+	 * a confirmation from the last 30 minutes.
+	 *
 	 * @param string $id The suite ID
 	 * @param string $reason The required, free-form revocation reason
 	 * @param bool $markCompromised Treat the suite's secrets as compromised (default false)
+	 * @param string $confirmSuiteId The suite id the administrator typed to confirm;
+	 *                               must equal $id (keepiq#871)
 	 *
-	 * @AuthorizedAdminSetting(AdminSettings::class)
+	 * @AuthorizedAdminSetting(PeopleAdminSettings::class)
 	 *
 	 * @return JSONResponse
 	 *
@@ -582,15 +635,33 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 */
-	#[AuthorizedAdminSetting(AdminSettings::class)]
+	#[AuthorizedAdminSetting(PeopleAdminSettings::class)]
 	#[PasswordConfirmationRequired]
-	public function forceRevoke(string $id, string $reason, bool $markCompromised = false): JSONResponse {
+	public function forceRevoke(
+		string $id,
+		string $reason,
+		bool $markCompromised = false,
+		string $confirmSuiteId = '',
+	): JSONResponse {
 		$admin = $this->userSession->getUser();
 		if ($admin === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
 		$adminUid = $admin->getUID();
+
+		// The typed suite id is the backend-independent confirmation: sudo mode
+		// is skipped on SSO backends (keepiq#871). Checked before anything else.
+		if ($confirmSuiteId === '' || hash_equals(known_string: $id, user_string: $confirmSuiteId) === false) {
+			$this->suiteService->recordRevokeRefused(suiteId: $id, actorId: $adminUid, reasonCode: 'confirmation_mismatch', markCompromised: $markCompromised);
+			return new JSONResponse(
+				data: [
+					'error'   => 'confirmation_mismatch',
+					'message' => 'Type the suite id to confirm the force-revoke',
+				],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
 
 		if (trim($reason) === '') {
 			$this->suiteService->recordRevokeRefused(suiteId: $id, actorId: $adminUid, reasonCode: 'empty_reason', markCompromised: $markCompromised);

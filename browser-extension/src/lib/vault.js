@@ -6,16 +6,20 @@
  *   fetch active suite → decryptPrivateKey(envelope, masterPassword)
  *   → importPrivateKey (NON-EXTRACTABLE) → hold the CryptoKey in memory.
  *
- * The master password, the derived AES key, and the RSA CryptoKey NEVER touch
- * `storage.*` and never leave the worker. Field values are RSA-OAEP decrypted on
- * demand; new/updated secrets are encrypted to the suite certificate.
+ * or, for a passkey unlock, the raw unlock key unwrapped in the unlock window
+ * → decryptPrivateKeyWithRawKey(envelope, rawKey) → the same import.
  *
- * This module holds module-scoped state (the service worker is a singleton). All
- * of it is cleared on lock.
+ * State is kept PER ACCOUNT (extension-account-switching): each paired account
+ * has its own key, suite and idle timer, and locks on its own. An OS lock or a
+ * worker restart clears every account.
+ *
+ * The master password, the raw unlock key, the derived AES key, and the RSA
+ * CryptoKey NEVER touch `storage.*` and never leave the worker.
  */
 
 import {
 	decryptPrivateKey,
+	decryptPrivateKeyWithRawKey,
 	importPrivateKey,
 	importPublicKey,
 	rsaDecrypt,
@@ -23,57 +27,136 @@ import {
 } from '../crypto/index.js'
 import { fetchActiveSuite } from './api.js'
 
-// Locked state: no key material present.
-let cryptoKey = null // non-extractable RSA private key
-let publicKey = null // suite certificate public key (for encrypting saves)
-let suiteId = null
-let idleTimer = null
+// accountId → { cryptoKey, publicKey, suiteId, idleTimer }. An account that is
+// not in the map is locked: no key material is present for it.
+const accounts = new Map()
 
-/** Whether the vault is unlocked (a CryptoKey is held). */
-export function isUnlocked() {
-	return cryptoKey !== null
-}
-
-export function activeSuiteId() {
-	return suiteId
+/**
+ * Whether an account is unlocked (a CryptoKey is held for it).
+ *
+ * @param {string} accountId The account id.
+ * @return {boolean}
+ */
+export function isUnlocked(accountId) {
+	return !!accountId && accounts.has(accountId)
 }
 
 /**
- * Unlock: fetch the active suite, decrypt its private key with the master
- * password, and import a non-extractable CryptoKey. Returns nothing sensitive.
+ * The ids of every unlocked account.
  *
- * @param {object} config The paired API config
+ * @return {string[]}
+ */
+export function unlockedAccounts() {
+	return [...accounts.keys()]
+}
+
+/**
+ * The suite an account's saves are encrypted to.
+ *
+ * @param {string} accountId The account id.
+ * @return {string|null}
+ */
+export function activeSuiteId(accountId) {
+	return accounts.get(accountId)?.suiteId ?? null
+}
+
+async function hold(accountId, suite, pem) {
+	lock(accountId)
+	accounts.set(accountId, {
+		cryptoKey: await importPrivateKey(pem), // extractable: false
+		publicKey: await importPublicKey(suite.certificate),
+		suiteId: suite.id,
+		idleTimer: null,
+	})
+}
+
+/**
+ * Unlock one account: fetch its active suite, decrypt the private key with the
+ * master password, and import a non-extractable CryptoKey. Returns nothing
+ * sensitive.
+ *
+ * @param {string} accountId The account id
+ * @param {object} config The account's API config
  * @param {string} masterPassword The master password (used only here)
  * @return {Promise<void>}
  */
-export async function unlock(config, masterPassword) {
+export async function unlock(accountId, config, masterPassword) {
 	const suite = await fetchActiveSuite(config)
 	const pem = await decryptPrivateKey(suite.privateKey, masterPassword)
-	cryptoKey = await importPrivateKey(pem) // extractable: false
-	publicKey = await importPublicKey(suite.certificate)
-	suiteId = suite.id
-}
-
-/** Lock: clear ALL key material and derived state. */
-export function lock() {
-	cryptoKey = null
-	publicKey = null
-	suiteId = null
-	if (idleTimer) {
-		clearTimeout(idleTimer)
-		idleTimer = null
-	}
+	await hold(accountId, suite, pem)
 }
 
 /**
- * Decrypt one ciphertext field (RSA-OAEP chunked) with the in-memory key.
- * Throws if locked.
+ * Unlock one account with the raw unlock key a passkey unwrapped
+ * (extension-biometric-unlock). The raw key is used here and dropped.
  *
+ * @param {string} accountId The account id
+ * @param {object} config The account's API config
+ * @param {Uint8Array} rawKey The raw 32-byte unlock key
+ * @return {Promise<void>}
+ */
+export async function unlockWithRawKey(accountId, config, rawKey) {
+	const suite = await fetchActiveSuite(config)
+	const pem = await decryptPrivateKeyWithRawKey(suite.privateKey, rawKey)
+	await hold(accountId, suite, pem)
+}
+
+/**
+ * Lock one account: clear its key material and timer.
+ *
+ * @param {string} accountId The account id.
+ * @return {void}
+ */
+// Called with an account id whenever that account locks, for whatever
+// reason (button, idle timer, OS lock, disconnect).
+const lockListeners = new Set()
+
+/**
+ * Be told when an account locks.
+ *
+ * @param {(accountId: string) => void} listener Called with the account id.
+ * @return {() => void} Stops the listener.
+ */
+export function onLock(listener) {
+	lockListeners.add(listener)
+	return () => lockListeners.delete(listener)
+}
+
+export function lock(accountId) {
+	const state = accounts.get(accountId)
+	if (!state) return
+	if (state.idleTimer) clearTimeout(state.idleTimer)
+	accounts.delete(accountId)
+	for (const listener of lockListeners) {
+		try {
+			listener(accountId)
+		} catch {
+			// A listener never stops the lock.
+		}
+	}
+}
+
+/** Lock every account (OS lock, manual lock-all, worker restart). */
+export function lockAll() {
+	for (const id of [...accounts.keys()]) lock(id)
+}
+
+function keyOf(accountId) {
+	const state = accounts.get(accountId)
+	if (!state) throw new Error('vault is locked')
+	return state
+}
+
+/**
+ * Decrypt one ciphertext field (RSA-OAEP chunked) with an account's key.
+ * Throws if that account is locked.
+ *
+ * @param {string} accountId The account id
  * @param {string} ciphertext base64 chunked ciphertext (or '' → '')
  * @return {Promise<string>}
  */
-export async function decryptField(ciphertext) {
-	if (!cryptoKey) throw new Error('vault is locked')
+export async function decryptField(accountId, ciphertext) {
+	const { cryptoKey } = keyOf(accountId)
 	if (!ciphertext) return ''
 	return rsaDecrypt(ciphertext, cryptoKey)
 }
@@ -81,38 +164,62 @@ export async function decryptField(ciphertext) {
 /**
  * Decrypt the autofill-relevant fields of a secret row.
  *
+ * @param {string} accountId The account id
  * @param {object} secret A blob row ({ key, login, ... })
  * @return {Promise<{ login: string, secret: string }>}
  */
-export async function decryptSecret(secret) {
+export async function decryptSecret(accountId, secret) {
 	const [login, value] = await Promise.all([
-		decryptField(secret.login || ''),
-		decryptField(secret.key || ''),
+		decryptField(accountId, secret.login || ''),
+		decryptField(accountId, secret.key || ''),
 	])
 	return { login, secret: value }
 }
 
 /**
- * Encrypt a plaintext value to the suite certificate (for save/update capture).
- * Throws if locked.
+ * Encrypt a plaintext value to an account's suite certificate.
+ * Throws if that account is locked.
  *
+ * @param {string} accountId The account id
  * @param {string} plaintext
  * @return {Promise<string>} base64 chunked ciphertext
  */
-export async function encryptField(plaintext) {
-	if (!publicKey) throw new Error('vault is locked')
+export async function encryptField(accountId, plaintext) {
+	const { publicKey } = keyOf(accountId)
 	if (!plaintext) return ''
 	return rsaEncrypt(plaintext, publicKey)
 }
 
 /**
- * (Re)arm the idle auto-lock timer. Any activity resets it; expiry locks.
+ * (Re)arm one account's idle auto-lock timer. Any activity resets it; expiry
+ * locks that account only.
  *
+ * @param {string} accountId The account id
  * @param {number} idleMs Idle timeout in ms
  * @return {void}
  */
-export function armIdleLock(idleMs) {
-	if (idleTimer) clearTimeout(idleTimer)
+export function armIdleLock(accountId, idleMs) {
+	const state = accounts.get(accountId)
+	if (!state) return
+	if (state.idleTimer) clearTimeout(state.idleTimer)
+	state.idleTimer = null
 	if (!idleMs || idleMs <= 0) return
-	idleTimer = setTimeout(() => lock(), idleMs)
+	state.idleTimer = setTimeout(() => lock(accountId), idleMs)
+}
+
+/**
+ * A view of one account with the single-account interface the passkey
+ * orchestrator was written against (isUnlocked, decryptField, encryptField,
+ * activeSuiteId), bound to whichever account `idOf` names at call time.
+ *
+ * @param {function(): Promise<string|null>} idOf Resolves the account id.
+ * @return {object} The bound vault.
+ */
+export function boundTo(idOf) {
+	return {
+		isUnlocked: async () => isUnlocked(await idOf()),
+		activeSuiteId: async () => activeSuiteId(await idOf()),
+		decryptField: async (ciphertext) => decryptField(await idOf(), ciphertext),
+		encryptField: async (plaintext) => encryptField(await idOf(), plaintext),
+	}
 }

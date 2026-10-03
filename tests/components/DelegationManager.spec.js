@@ -13,6 +13,15 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import DelegationManager from '../../src/components/share/DelegationManager.vue'
 
+// keepiq#818: a delegation carries a vault-key proof; the proof is stubbed.
+vi.mock('../../src/crypto/keyProof.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	sessionKeyProofHeaders: vi.fn(async () => ({
+		headers: { 'X-Keepiq-Key-Proof': 'proof' },
+		masterPassword: 'pw',
+	})),
+}))
+
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 describe('DelegationManager', () => {
@@ -88,6 +97,57 @@ describe('DelegationManager', () => {
 		await flush()
 		expect(
 			wrapper.find('[data-testid="delegation-manager-reclaim"]').exists(),
+		).toBe(false)
+	})
+
+	it('hands the secret to a current recipient (#754)', async () => {
+		vi.spyOn(axios, 'get').mockImplementation(async (url) => {
+			if (url.endsWith('/delegations')) {
+				return {
+					data: [{ id: 'd1', delegatedTo: 'carol', isPermanent: false }],
+				}
+			}
+			return { data: [{ targetUserId: 'bob' }, { targetUserId: 'carol' }] }
+		})
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { id: 'd2', delegatedTo: 'bob', isPermanent: false },
+		})
+		const wrapper = mount(DelegationManager, {
+			propsData: { secretId: 'sec-1', canReclaim: true },
+		})
+		await flush()
+
+		// carol is already a delegate, so only bob is offered.
+		const options = wrapper
+			.findAll('[data-testid="delegation-manager-delegate"] option')
+			.map((o) => o.element.value)
+			.filter((v) => v !== '')
+		expect(options).toEqual(['bob'])
+
+		await wrapper
+			.find('[data-testid="delegation-manager-delegate"]')
+			.setValue('bob')
+		await wrapper
+			.find('[data-testid="delegation-manager-delegate-submit"]')
+			.trigger('click')
+		await flush()
+
+		expect(post).toHaveBeenCalledWith(
+			'/apps/keepiq/api/v1/secrets/sec-1/delegations',
+			{ delegatedTo: 'bob' },
+			{ headers: { 'X-Keepiq-Key-Proof': 'proof' } },
+		)
+		expect(wrapper.emitted('delegated')).toBeTruthy()
+	})
+
+	it('offers no hand-over to someone who cannot reclaim', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
+		const wrapper = mount(DelegationManager, {
+			propsData: { secretId: 'sec-1', canReclaim: false },
+		})
+		await flush()
+		expect(
+			wrapper.find('[data-testid="delegation-manager-create"]').exists(),
 		).toBe(false)
 	})
 })

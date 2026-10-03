@@ -138,54 +138,51 @@ class LeaseServiceTest extends TestCase {
 	}//end testPollReusesLiveLeaseWithoutExtending()
 
 	/**
-	 * 7.2: renewal is refused once `granted_at + max TTL` is reached.
+	 * Fetching again is the one renewal path (keepiq#753): once a lease has
+	 * expired, the next fetch grants a NEW lease with a fresh TTL, so the
+	 * application also re-reads a value a rotation may have replaced.
 	 *
 	 * @return void
 	 */
-	public function testRenewRefusedPastMaxLifetime(): void {
-		// Granted 23h59m ago and already extended to the hard cap
-		// (clone preserves sub-second precision so cap === current).
-		$lease = $this->activeLease(grantedAt: '-86340 seconds', expiresAt: '+60 seconds');
-		$lease->setExpiresAt((clone $lease->getGrantedAt())->modify('+86400 seconds'));
-		$this->leaseMapper->method('findById')->willReturn($lease);
-		$this->leaseMapper->expects($this->never())->method('update');
+	public function testFetchingAgainAfterExpiryGrantsAFreshLease(): void {
+		// The old lease is past its expiry, so it is no longer live.
+		$this->leaseMapper->method('findLive')->willReturn(null);
+		$this->leaseMapper->expects($this->once())->method('insert')->willReturnArgument(0);
 
-		$this->expectException(InvalidArgumentException::class);
-		$this->service->renew(leaseId: 'lease-1', applicationId: 'app-1');
-	}//end testRenewRefusedPastMaxLifetime()
+		$lease = $this->service->grantOrReuse(applicationId: 'app-1', secretId: 'sec-1');
+
+		$this->assertSame('active', $lease->getStatus());
+		$this->assertGreaterThan((new DateTime('+14 minutes'))->getTimestamp(), $lease->getExpiresAt()->getTimestamp());
+	}//end testFetchingAgainAfterExpiryGrantsAFreshLease()
 
 	/**
-	 * 7.2: renewal extends to `min(now+default, granted_at+max)` and
-	 * increments the counter.
+	 * There is no renew operation at all: no service method, no controller
+	 * method and no route (keepiq#753).
 	 *
 	 * @return void
 	 */
-	public function testRenewExtendsAndCounts(): void {
-		$lease = $this->activeLease(grantedAt: '-5 minutes', expiresAt: '+10 minutes');
-		$this->leaseMapper->method('findById')->willReturn($lease);
-		$this->leaseMapper->method('update')->willReturnCallback(static fn (MachineLease $row) => $row);
+	public function testThereIsNoRenewOperation(): void {
+		$this->assertFalse(method_exists(\OCA\Keepiq\Service\LeaseService::class, 'renew'));
+		$this->assertFalse(method_exists(\OCA\Keepiq\Controller\MachineLeaseController::class, 'renew'));
 
-		$renewed = $this->service->renew(leaseId: 'lease-1', applicationId: 'app-1');
-
-		$this->assertSame(1, $renewed->getRenewedCount());
-		$this->assertNotNull($renewed->getLastRenewedAt());
-		// Extended to ~now + 900s (default), beyond the old +10m? No:
-		// 900s = 15m > 10m left, so the expiry advanced.
-		$this->assertGreaterThan((new DateTime('+10 minutes'))->getTimestamp() - 5, $renewed->getExpiresAt()->getTimestamp());
-	}//end testRenewExtendsAndCounts()
+		$routes = require __DIR__ . '/../../../appinfo/routes.php';
+		$names = array_column($routes['routes'] ?? [], 'name');
+		$this->assertNotContains('machineLease#renew', $names);
+		$this->assertContains('machineLease#revoke', $names);
+	}//end testThereIsNoRenewOperation()
 
 	/**
-	 * 7.2: cross-application renew is indistinguishable from a
+	 * Cross-application access to a lease is indistinguishable from a
 	 * nonexistent lease.
 	 *
 	 * @return void
 	 */
-	public function testCrossApplicationRenewIsNotFound(): void {
+	public function testCrossApplicationLoadIsNotFound(): void {
 		$this->leaseMapper->method('findById')->willReturn($this->activeLease(applicationId: 'other-app'));
 
 		$this->expectException(DoesNotExistException::class);
-		$this->service->renew(leaseId: 'lease-1', applicationId: 'app-1');
-	}//end testCrossApplicationRenewIsNotFound()
+		$this->service->loadOwned(leaseId: 'lease-1', applicationId: 'app-1');
+	}//end testCrossApplicationLoadIsNotFound()
 
 	/**
 	 * 7.2: revocation marks the lease revoked with actor + instant;

@@ -244,12 +244,16 @@ export default {
 		 * Read from the settings store, which resolves it from `/api/settings` at
 		 * boot, rather than from the DOM (ADR-004 / gate-10).
 		 *
-		 * @return {boolean} True for an administrator.
+		 * The endpoint is guarded by the Applications admin area
+		 * (admin-scoped-roles §2.2), so the section follows that area.
+		 *
+		 * @return {boolean} True for a holder of the Applications area.
 		 *
 		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.5
 		 */
 		isAdmin() {
-			return useSettingsStore().isAdmin === true
+			return useSettingsStore().holdsArea('applications') === true
 		},
 
 		/**

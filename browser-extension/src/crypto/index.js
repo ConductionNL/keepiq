@@ -25,3 +25,18 @@ export {
 } from '../../../src/crypto/rsa.js'
 
 export { encodeEnvelope, decodeEnvelope } from '../../../src/crypto/envelope.js'
+
+// Passkey (PRF) unlock in the extension (extension-biometric-unlock): the web
+// app's recipe, re-exported, not re-implemented.
+export {
+	deriveUnlockKeyRaw,
+	decryptPrivateKeyWithRawKey,
+} from '../../../src/crypto/aes.js'
+
+export {
+	deriveKekFromPrf,
+	wrapUnlockKey,
+	unwrapUnlockKey,
+	toBase64Url,
+	fromBase64Url,
+} from '../../../src/crypto/passkey.js'

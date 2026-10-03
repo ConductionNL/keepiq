@@ -96,6 +96,25 @@
 					<Plus :size="20" />
 				</template>
 			</NcAppNavigationItem>
+			<!-- Team folders the user manages without owning them
+			     (sharing-team-folder-manager-role D5): the only way in to
+			     their member list, since the folder is in the owner's tree. -->
+			<template v-if="managedTeamFolders.length > 0">
+				<NcAppNavigationCaption
+					:name="t('keepiq', 'Team folders you manage')"
+					data-testid="nav-managed-caption" />
+				<NcAppNavigationItem
+					v-for="teamFolder in managedTeamFolders"
+					:key="teamFolder.id"
+					:name="teamFolder.folderName"
+					:data-testid="`nav-managed-${teamFolder.id}`"
+					@click="
+						shareFolder = {
+							id: teamFolder.folderId,
+							name: teamFolder.folderName,
+						}
+					" />
+			</template>
 			<!-- One dialog for both: FolderCreateDialog switches between the
 			     vault and folder flow on `parentId` alone (no parent = a vault
 			     at the root, which is the only place a vault can be made), so
@@ -231,6 +250,7 @@ import TeamFolderDialog from '../../modals/TeamFolderDialog.vue'
 import NavFolderTree, { NAV_TREE_MAX_DEPTH } from './NavFolderTree.vue'
 import { useFolderStore } from '../../store/modules/folder.js'
 import { useSessionStore } from '../../store/modules/session.js'
+import { useTeamFolderStore } from '../../store/modules/teamFolder.js'
 import { isMenuEntryVisible, menuEntryTo } from '../../utils/navEntries.js'
 
 /**
@@ -305,6 +325,16 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The team folders the user manages without owning them.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
+		 */
+		managedTeamFolders() {
+			return useTeamFolderStore().managed
+		},
+
 		/**
 		 * The folder store backing the rail's vault/folder tree.
 		 *
@@ -604,6 +634,9 @@ export default {
 		 */
 		fetchFoldersSafe() {
 			this.folderStore.fetchFolders().catch(() => {})
+			useTeamFolderStore()
+				.fetchTeamFolders()
+				.catch(() => {})
 		},
 
 		/**

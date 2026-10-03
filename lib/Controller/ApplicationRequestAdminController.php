@@ -44,12 +44,13 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\SecretRequest;
+use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\ApplicationRequestAdminService;
+use OCA\Keepiq\Settings\ApplicationAdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Throwable;
@@ -64,7 +65,7 @@ class ApplicationRequestAdminController extends Controller {
 	 * @param IRequest $request The request
 	 * @param ApplicationRequestAdminService $service The admin-scoped request service
 	 * @param IUserSession $userSession The user session
-	 * @param IGroupManager $groupManager Resolves administrator membership
+	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Applications admin area
 	 *
 	 * @return void
 	 *
@@ -74,7 +75,7 @@ class ApplicationRequestAdminController extends Controller {
 		IRequest $request,
 		private ApplicationRequestAdminService $service,
 		private IUserSession $userSession,
-		private IGroupManager $groupManager,
+		private AdminAreaAuthorizer $areas,
 	) {
 		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
 	}//end __construct()
@@ -105,7 +106,7 @@ class ApplicationRequestAdminController extends Controller {
 	 */
 	private function requireAdminUid(): ?string {
 		$user = $this->userSession->getUser();
-		if ($user === null || $this->groupManager->isAdmin($user->getUID()) === false) {
+		if ($user === null || $this->areas->holds(userId: $user->getUID(), areaClass: ApplicationAdminSettings::class) === false) {
 			return null;
 		}
 

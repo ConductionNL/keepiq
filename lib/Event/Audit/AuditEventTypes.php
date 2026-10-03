@@ -41,6 +41,8 @@ final class AuditEventTypes {
 	public const SECRET_PURGED = 'secret.purged';
 	public const SECRET_ARCHIVED = 'secret.archived';
 	public const SECRET_UNARCHIVED = 'secret.unarchived';
+	// The holder of a use-only copy filled it (sharing-use-only-and-expiring-shares §3.3).
+	public const SECRET_USED = 'secret.used';
 
 	// Folder.
 	public const FOLDER_DELETED_CASCADE = 'folder.deleted_cascade';
@@ -142,6 +144,12 @@ final class AuditEventTypes {
 	// Org password policy (org-password-policies §3.1) — config values
 	// only, never secret data.
 	public const PASSWORD_POLICY_UPDATED = 'password_policy.updated';
+	// Vault policies (admin-vault-policies §1.1): before and after snapshot.
+	public const VAULT_POLICY_UPDATED = 'vault_policy.updated';
+	// Scheduled vault backups (admin-scheduled-vault-backups §2.3).
+	public const BACKUP_CREATED = 'backup.created';
+	public const BACKUP_FAILED = 'backup.failed';
+	public const BACKUP_RESTORED = 'backup.restored';
 
 	// Compliance reporting (compliance-reporting §5.1) — identifiers +
 	// export format only, never an aggregate body.
@@ -191,6 +199,27 @@ final class AuditEventTypes {
 	// high-severity tripwire marker; channel only, never secret data.
 	public const HONEY_ACCESSED = 'honey.accessed';
 
+	// New device approval (crypto-new-device-approval D5), identifiers only.
+	public const DEVICE_APPROVAL_REQUESTED = 'device_approval.requested';
+	public const DEVICE_APPROVAL_APPROVED = 'device_approval.approved';
+	public const DEVICE_APPROVAL_DENIED = 'device_approval.denied';
+	public const DEVICE_APPROVAL_EXPIRED = 'device_approval.expired';
+	public const DEVICE_APPROVAL_PICKED_UP = 'device_approval.picked_up';
+
+	// Organisation account recovery (crypto-organisation-account-recovery 5.2),
+	// identifiers only: never an envelope, a wrapped copy or a sealed result.
+	public const RECOVERY_SETTINGS_CHANGED = 'recovery.settings_changed';
+	public const RECOVERY_KEY_CREATED = 'recovery.key_created';
+	public const RECOVERY_KEY_RETIRED = 'recovery.key_retired';
+	public const RECOVERY_ENROLLED = 'recovery.enrolled';
+	public const RECOVERY_WITHDRAWN = 'recovery.withdrawn';
+	public const RECOVERY_REQUESTED = 'recovery.requested';
+	public const RECOVERY_APPROVED = 'recovery.approved';
+	public const RECOVERY_DECLINED = 'recovery.declined';
+	public const RECOVERY_HANDED_OFF = 'recovery.handed_off';
+	public const RECOVERY_COMPLETED = 'recovery.completed';
+	public const RECOVERY_EXPIRED = 'recovery.expired';
+
 	/**
 	 * Metadata keys that MUST NEVER appear in any audit entry, in any position.
 	 * Recording any of these is rejected with an exception — defense in depth so
@@ -229,6 +258,7 @@ final class AuditEventTypes {
 		self::SECRET_PURGED => ['reason'],
 		self::SECRET_ARCHIVED => [],
 		self::SECRET_UNARCHIVED => [],
+		self::SECRET_USED => ['copyId'],
 		self::FOLDER_DELETED_CASCADE => ['secretCount', 'subfolderCount'],
 		self::SHARE_GRANTED => ['recipientType', 'recipientId'],
 		self::SHARE_REVOKED => ['recipientType', 'recipientId'],
@@ -286,6 +316,11 @@ final class AuditEventTypes {
 		self::POLICY_EXPIRY_CHANGED => ['scope', 'scopeId'],
 		// Org password policy — before/after config values (§3.1).
 		self::PASSWORD_POLICY_UPDATED => ['before', 'after'],
+		self::VAULT_POLICY_UPDATED => ['before', 'after'],
+		// Backups: archive name, flags, sizes and counts only (§2.3).
+		self::BACKUP_CREATED => ['archive', 'encrypted', 'bytes'],
+		self::BACKUP_FAILED => ['error'],
+		self::BACKUP_RESTORED => ['archive', 'createdAt', 'tables', 'rows', 'blobs'],
 		// Compliance reporting — identifiers + format only (§5.1).
 		self::COMPLIANCE_REPORT_GENERATED => ['reportId'],
 		self::COMPLIANCE_REPORT_EXPORTED => ['reportId', 'format'],
@@ -303,14 +338,22 @@ final class AuditEventTypes {
 		self::TEAM_FOLDER_UNSHARED => ['folderId', 'revokedCount'],
 		self::TEAM_FOLDER_MEMBER_ADDED => ['memberType', 'memberId'],
 		self::TEAM_FOLDER_MEMBER_REMOVED => ['memberType', 'memberId', 'revokedCount'],
-		self::TEAM_FOLDER_OFFBOARDED => ['leavingUserId', 'successorUserId', 'revokedCount', 'transferredCount'],
+		self::TEAM_FOLDER_OFFBOARDED => [
+			'leavingUserId',
+			'successorUserId',
+			'revokedCount',
+			'transferredCount',
+			// Member offboarding (admin-member-overview-and-offboarding §1.3): counts and group ids only.
+			'membershipsRemovedCount',
+			'coveringGroupIds',
+		],
 		// Grade changes — identifiers + the new grade only (§3.3).
 		self::TEAM_FOLDER_GRADE_CHANGED => ['memberType', 'memberId', 'grade'],
 		// Automatic confirmation: counts only, the actor is the confirmer.
 		self::TEAM_FOLDER_MEMBERS_CONFIRMED => ['confirmedCount', 'memberCount'],
 		// SIEM sinks — sink id/type/outcome only (§5.1).
 		self::SIEM_SINK_CREATED => ['sinkId', 'type'],
-		self::SIEM_SINK_UPDATED => ['sinkId'],
+		self::SIEM_SINK_UPDATED => ['sinkId', 'type'],
 		self::SIEM_SINK_DELETED => ['sinkId'],
 		self::SIEM_SINK_TESTED => ['sinkId', 'outcome'],
 		self::MCP_TOOL_INVOKED => ['tool', 'resultCount'],
@@ -319,6 +362,22 @@ final class AuditEventTypes {
 		self::CERTIFICATE_RENEWAL_MARKED => [],
 		// Honey tripwire — the access channel only (§D6).
 		self::HONEY_ACCESSED => ['channel'],
+		self::DEVICE_APPROVAL_REQUESTED => ['clientKind'],
+		self::DEVICE_APPROVAL_APPROVED => [],
+		self::DEVICE_APPROVAL_DENIED => [],
+		self::DEVICE_APPROVAL_EXPIRED => [],
+		self::DEVICE_APPROVAL_PICKED_UP => [],
+		self::RECOVERY_SETTINGS_CHANGED => ['policy', 'threshold', 'officerCount'],
+		self::RECOVERY_KEY_CREATED => [],
+		self::RECOVERY_KEY_RETIRED => [],
+		self::RECOVERY_ENROLLED => ['suiteId'],
+		self::RECOVERY_WITHDRAWN => [],
+		self::RECOVERY_REQUESTED => ['userId'],
+		self::RECOVERY_APPROVED => ['userId', 'approvals', 'threshold'],
+		self::RECOVERY_DECLINED => ['userId'],
+		self::RECOVERY_HANDED_OFF => ['userId'],
+		self::RECOVERY_COMPLETED => ['handledBy'],
+		self::RECOVERY_EXPIRED => ['userId'],
 	];
 
 	/**

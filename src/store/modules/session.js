@@ -77,6 +77,7 @@ export const useSessionStore = defineStore('session', {
 		 *
 		 * @param {string} masterPassword
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * @spec openspec/changes/admin-vault-policies/tasks.md#3.3
 		 */
 		async unlock(masterPassword) {
 			// Fetch the user's encryption suite from the API.
@@ -88,6 +89,14 @@ export const useSessionStore = defineStore('session', {
 
 			if (!activeSuite) {
 				throw new Error('No active EncryptionSuite found')
+			}
+
+			// The two-factor vault policy withholds the wrapped key
+			// (admin-vault-policies D3): say so, never "wrong password".
+			if (activeSuite.unlockBlocked) {
+				throw Object.assign(new Error(activeSuite.unlockBlocked), {
+					code: activeSuite.unlockBlocked,
+				})
 			}
 
 			await this.unlockFromBlob({
@@ -197,6 +206,31 @@ export const useSessionStore = defineStore('session', {
 			} catch {
 				// Never let a background job break the unlock.
 			}
+		},
+
+		/**
+		 * Unlock this session from a recovered private key, for one session
+		 * only (crypto-new-device-approval D6, the officer path). There is no
+		 * raw unlock key, so the offline cache stays off for this session.
+		 *
+		 * @param {string} privateKeyPem The recovered private key.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
+		 */
+		async unlockWithPrivateKeyPem(privateKeyPem) {
+			const response = await axios.get(
+				generateUrl('/apps/keepiq/api/v1/suites'),
+			)
+			const activeSuite = response.data.find((s) => s.status === 'active')
+			if (!activeSuite) {
+				throw new Error('No active EncryptionSuite found')
+			}
+			this.cryptoKey = await importPrivateKey(privateKeyPem)
+			this.aesKey = null
+			this.encryptedPrivateKey = activeSuite.privateKey
+			this.certificate = activeSuite.certificate
+			this.suiteId = activeSuite.id
+			this.lastActivity = Date.now()
 		},
 
 		/**

@@ -14,22 +14,35 @@ import {
 } from '../../browser-extension/src/content/save-prompt.js'
 import { sha1Hex } from '../../src/health/hibpMatch.js'
 
+const ACCOUNT = {
+	id: 'acc-1',
+	url: 'https://cloud.test',
+	user: 'ann',
+	appPassword: 'x',
+	idleMinutes: 15,
+}
+
 vi.mock('../../browser-extension/src/lib/vault.js', () => ({
 	isUnlocked: vi.fn(() => true),
-	encryptField: vi.fn(async (v) => 'enc:' + v),
+	encryptField: vi.fn(async (id, v) => 'enc:' + v),
 	activeSuiteId: vi.fn(() => 'suite-1'),
 	decryptSecret: vi.fn(),
 	decryptField: vi.fn(),
 	armIdleLock: vi.fn(),
 	lock: vi.fn(),
+	lockAll: vi.fn(),
+	onLock: vi.fn(),
+	boundTo: vi.fn(() => ({})),
 }))
 
 vi.mock('../../browser-extension/src/lib/api.js', () => ({
-	loadConfig: vi.fn(async () => ({
-		url: 'https://cloud.test',
-		user: 'ann',
-		appPassword: 'x',
-	})),
+	loadConfig: vi.fn(async () => ACCOUNT),
+	loadAccount: vi.fn(async () => ACCOUNT),
+	activeAccountId: vi.fn(async () => ACCOUNT.id),
+	migrateLegacyConfig: vi.fn(async () => {}),
+	IDLE_CHOICES: [1, 5, 15, 30, 60, 240],
+	DEFAULT_IDLE_MINUTES: 15,
+	MAX_ACCOUNTS: 5,
 	fetchPolicy: vi.fn(),
 	breachRange: vi.fn(),
 	createSecret: vi.fn(async () => ({})),
@@ -45,6 +58,8 @@ let listener
 beforeAll(async () => {
 	globalThis.chrome = {
 		runtime: {
+			id: 'ext',
+			getURL: (path) => 'chrome-extension://ext/' + path,
 			onMessage: {
 				addListener: (fn) => {
 					listener = fn
@@ -64,7 +79,12 @@ beforeAll(async () => {
  */
 function send(type, payload) {
 	return new Promise((resolve) => {
-		listener({ type, payload }, {}, resolve)
+		// The popup is the sender: save-capture is an extension-page message.
+		listener(
+			{ type, payload },
+			{ id: 'ext', url: 'chrome-extension://ext/popup.html' },
+			resolve,
+		)
 	})
 }
 
