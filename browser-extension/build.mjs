@@ -41,6 +41,11 @@ const common = {
 	logLevel: 'info',
 	sourcemap: false,
 	legalComments: 'none',
+	// Argon2id's WebAssembly is bundled as bytes (password-protected sends).
+	loader: { '.wasm': 'binary' },
+	// The emscripten glue of argon2-browser has Node-only branches; they never
+	// run in a browser, so their modules stay unresolved.
+	external: ['fs', 'path', 'crypto'],
 }
 
 /**

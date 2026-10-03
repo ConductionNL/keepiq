@@ -19,6 +19,9 @@ parameters:
         # analysis path. Analysis-only — never loaded at runtime (ADR-040).
         - tests/stubs/openregister-apphost.stub.php
         - tests/stubs/openregister-apphost-bootstrap.stub.php
+        # OpenRegister's MCP attribute and scannable-services interface
+        # (hermiq-ai-tooling), resolved at runtime only when OR is installed.
+        - tests/stubs/openregister-mcp.stub.php
         # Integriq's connection-registry events (adopt-connection-registry), named
         # by string behind class_exists in ConnectionReporter (ADR-041).
         - tests/stubs/Integriq/Event/ConnectionStatusReportedEvent.php

@@ -9,7 +9,14 @@ The system MUST publish the browser extension to the Chrome Web Store, Firefox A
 - **GIVEN** a maintainer pushes the tag `extension-v1.2.0`
 - **WHEN** a maintainer approves the `extension-stores` environment for the release job
 - **THEN** the job MUST submit the Chrome package to the Chrome Web Store, the Firefox package to Firefox Add-ons and the Chrome package to Edge Add-ons
-- **AND** the GitHub release `extension-v1.2.0` MUST hold the Chrome zip, the Firefox package and the signed unlisted Firefox package
+- **AND** the GitHub release `extension-v1.2.0` MUST hold the Chrome zip and the Firefox package
+
+#### Scenario: The signed Firefox file follows the review
+
+- **GIVEN** the release `extension-v1.2.0` exists and Firefox Add-ons has approved version 1.2.0
+- **WHEN** the daily follow-up job runs, or a maintainer runs it for version 1.2.0
+- **THEN** the job MUST attach the file Firefox Add-ons signed to the release `extension-v1.2.0`
+- **AND** it MUST refuse to attach a file whose hash differs from the one Firefox Add-ons publishes, or whose files other than the signature differ from the release's Firefox package
 
 #### Scenario: A pull request cannot reach store credentials
 

@@ -24,7 +24,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use OCA\Keepiq\Controller\SettingsController;
 use OCA\Keepiq\Service\SettingsService;
-use OCA\Keepiq\Settings\AdminSettings;
+use OCA\Keepiq\Settings\PolicyAdminSettings;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\IRequest;
 use OCP\IUserSession;
@@ -216,9 +216,9 @@ class SettingsControllerWriteTest extends TestCase {
 			);
 
 			$this->assertSame(
-				[AdminSettings::class],
+				[PolicyAdminSettings::class],
 				$attributes[0]->getArguments(),
-				sprintf('SettingsController::%s() must gate on Keepiq\'s own AdminSettings panel', $method)
+				sprintf('SettingsController::%s() writes the master password floor, so it must gate on the Policies area', $method)
 			);
 		}
 

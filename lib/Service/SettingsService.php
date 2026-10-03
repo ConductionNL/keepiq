@@ -218,6 +218,37 @@ class SettingsService {
 	}//end updateAdminSettings()
 
 	/**
+	 * The settings of one admin area (admin-scoped-roles D2).
+	 *
+	 * @param string $area One of AdminSettingsService::SETTINGS_AREAS
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws InvalidArgumentException On an unknown area.
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 */
+	public function getAreaSettings(string $area): array {
+		return $this->adminSettings->getAreaSettings(area: $area);
+	}//end getAreaSettings()
+
+	/**
+	 * Write one admin area's keys (admin-scoped-roles D2).
+	 *
+	 * @param string $area One of AdminSettingsService::SETTINGS_AREAS
+	 * @param array<string,mixed> $data The input data
+	 *
+	 * @return array<string,mixed> The area's settings after the write
+	 *
+	 * @throws InvalidArgumentException On a key of another area or an out-of-bounds value.
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 */
+	public function updateAreaSettings(string $area, array $data): array {
+		return $this->adminSettings->updateAreaSettings(area: $area, data: $data);
+	}//end updateAreaSettings()
+
+	/**
 	 * The user-visible policy floor for the write dialogs — policy gate,
 	 * generator floor, score floor, HIBP block, and exempt types only
 	 * (org-password-policies §1.3).

@@ -242,7 +242,12 @@ Vrij en open source onder de EUPL-1.2-licentie.
     </commands>
 
     <settings>
+        <!-- Five delegable admin areas (admin-scoped-roles D1). -->
         <admin>OCA\Keepiq\Settings\AdminSettings</admin>
+        <admin>OCA\Keepiq\Settings\PolicyAdminSettings</admin>
+        <admin>OCA\Keepiq\Settings\ApplicationAdminSettings</admin>
+        <admin>OCA\Keepiq\Settings\PeopleAdminSettings</admin>
+        <admin>OCA\Keepiq\Settings\AuditAdminSettings</admin>
         <admin-section>OCA\Keepiq\Sections\SettingsSection</admin-section>
     </settings>
 

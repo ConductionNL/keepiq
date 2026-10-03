@@ -569,10 +569,13 @@ The admin panel MUST display the current CA status at all times.
 
 An administrator MUST be able to revoke any EncryptionSuite by id — user-owned or application-owned — through `POST /api/v1/suites/{id}/force-revoke`, without producing the vault-key proof the owner path requires. The vault is zero-knowledge (see ADR-003): the server never holds a usable private key, so an administrator cannot sign the revoke challenge. Administrator revocation is therefore the *only* revocation path for a locked-out owner (forgotten master password), a de-authorised departure, or a compromise, and the only revocation path of any kind for an application-owned suite, which has no human owner to produce a proof.
 
-The endpoint MUST be guarded by BOTH:
+The endpoint MUST be guarded by ALL THREE:
 
 - `#[AuthorizedAdminSetting(AdminSettings::class)]` — administrator only, mirroring the existing admin-only `reinstate()`; a non-administrator MUST be rejected by Nextcloud middleware before the controller body runs.
 - `#[PasswordConfirmationRequired]` — Nextcloud sudo mode. The administrator re-confirms their **own** account password; there is no vault key to prove. A stale or missing sudo confirmation MUST cause Nextcloud to refuse the request before the controller body runs.
+- A typed confirmation (keepiq#871). The administrator types the suite id in the UI, and the request MUST carry it as `confirmSuiteId`. The controller MUST refuse the request with `400` and `error: confirmation_mismatch` when `confirmSuiteId` is missing or differs from the `{id}` in the route, before any other check or effect, and MUST record the refusal as `SUITE_REVOKE_REFUSED` with reason code `confirmation_mismatch`.
+
+Sudo mode alone is not a second factor everywhere. Nextcloud skips the password confirmation for accounts that cannot confirm a password (single sign-on backends such as user_oidc and user_saml, and sessions that carry `SCOPE_SKIP_PASSWORD_VALIDATION`), and it accepts any confirmation from the last 30 minutes. The typed confirmation does not depend on the user backend, so it is the guard that holds on every deployment.
 
 The endpoint MUST reuse the owner-agnostic `EncryptionSuiteService::revokeSuite()`, which records the acting administrator (resolved via `OCP\IUserSession`) as `revokedBy` and dispatches `EncryptionSuiteRevokedEvent` so the existing destructive cascade (`EncryptionSuiteRevokedListener`) runs: the owner's inbound `ShareTarget`s are deleted, their temporary delegations promoted, and their emergency envelopes cleared.
 
@@ -583,9 +586,10 @@ Whether the revoked suite's secrets are treated as **compromised** MUST be an ex
 The `SUITE_REVOKED` audit event's metadata MUST carry `{ reason, markCompromised, emergencyContactsDestroyed }`; the `AuditEventTypes` metadata whitelist for `SUITE_REVOKED` MUST permit those three keys.
 
 #### Scenario: Administrator force-revokes a locked-out owner's suite (forgotten password)
+@e2e exclude Admin API route behind sudo; covered by PHPUnit on EncryptionSuiteController.
 
 - **GIVEN** a user is locked out of their vault (forgotten master password) and cannot produce a vault-key proof
-- **WHEN** an authenticated administrator, having passed sudo confirmation, calls `POST /api/v1/suites/{id}/force-revoke` with a non-empty `reason` and `markCompromised=false`
+- **WHEN** an authenticated administrator, having passed sudo confirmation, calls `POST /api/v1/suites/{id}/force-revoke` with a non-empty `reason`, `markCompromised=false` and `confirmSuiteId` equal to `{id}`
 - **THEN** the suite MUST be revoked with `revokedBy` set to the administrator and `revoked_reason` set to the supplied reason
 - **AND** no compromise cascade MUST run (secrets MUST NOT be flagged `possibly_compromised_at` and no `suite_compromise` rotation flags MUST be raised)
 - **AND** the user MUST be able to re-onboard with a fresh suite through the existing onboarding flow
@@ -613,12 +617,23 @@ The `SUITE_REVOKED` audit event's metadata MUST carry `{ reason, markCompromised
 - **THEN** Nextcloud's `AuthorizedAdminSetting` guard MUST reject the request before the controller body runs
 - **AND** the suite MUST NOT be revoked
 
-#### Scenario: Sudo confirmation is required
+#### Scenario: Sudo confirmation is required on a password backend
+@e2e exclude Needs an expired sudo window on a password backend; the attribute is pinned by PHPUnit on EncryptionSuiteController.
 
-- **GIVEN** an administrator whose password-confirmation (sudo) window has expired
+- **GIVEN** an administrator on a user backend that can confirm a password, whose password-confirmation (sudo) window has expired
 - **WHEN** they call `POST /api/v1/suites/{id}/force-revoke`
 - **THEN** the `PasswordConfirmationRequired` guard MUST refuse the request until the administrator re-confirms their own account password
 - **AND** the suite MUST NOT be revoked until sudo is satisfied
+- **AND** on a single sign-on backend, where Nextcloud skips this guard, the typed confirmation below is the guard that holds
+
+#### Scenario: A missing or wrong typed confirmation is refused
+@e2e exclude Admin API refusal; covered by PHPUnit on EncryptionSuiteController and vitest on AdminSuiteSection.
+
+- **GIVEN** an administrator who has passed the admin guard (and sudo, where the backend applies it)
+- **WHEN** they call `POST /api/v1/suites/{id}/force-revoke` without `confirmSuiteId`, or with a `confirmSuiteId` that is not exactly `{id}`
+- **THEN** the request MUST be refused with `400` and `error: confirmation_mismatch`
+- **AND** the suite MUST NOT be revoked, no migration check or emergency count MUST run, and the refusal MUST be audited as `confirmation_mismatch`
+- **AND** the admin UI MUST keep the Force-revoke button disabled until the typed suite id matches
 
 #### Scenario: A missing reason is rejected
 

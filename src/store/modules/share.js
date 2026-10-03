@@ -18,9 +18,11 @@
  */
 
 import axios from '@nextcloud/axios'
+import { translate as t } from '@nextcloud/l10n'
 import { generateOcsUrl, generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
+import { PROOF_PURPOSE, sessionKeyProofHeaders } from '../../crypto/keyProof.js'
 
 /**
  * How many candidates one shareability probe may name.
@@ -32,6 +34,12 @@ import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
  * @type {number}
  */
 const MAX_RECIPIENT_PROBE = 100
+
+/**
+ * One page of the recipient picker's search; the recipient-status endpoint
+ * answers at most this many users at once (RecipientStatusService::MAX_USERS).
+ */
+const RECIPIENT_PAGE = 25
 
 export const useShareStore = defineStore('share', {
 	state: () => ({
@@ -183,13 +191,14 @@ export const useShareStore = defineStore('share', {
 		 * about ids and knows nothing of names.
 		 *
 		 * @param {string} search The search term.
+		 * @param {number} [perPage] Page size; the probe's own bound by default.
 		 *
 		 * @return {Promise<Array<{id: string, label: string}>>} Distinct
 		 *   users, capped at the probe's own bound.
 		 *
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-recipient-shareability-lookup
 		 */
-		async searchSharees(search) {
+		async searchSharees(search, perPage = MAX_RECIPIENT_PROBE) {
 			const response = await axios.get(
 				generateOcsUrl('apps/files_sharing/api/v1/sharees'),
 				{
@@ -203,7 +212,7 @@ export const useShareStore = defineStore('share', {
 						// Users only. Groups come from the provisioning API,
 						// which needs no shareability probe.
 						shareType: 0,
-						perPage: MAX_RECIPIENT_PROBE,
+						perPage,
 						// No global address book: a remote lookup answers with
 						// users this server cannot hold a suite for.
 						lookup: false,
@@ -228,7 +237,44 @@ export const useShareStore = defineStore('share', {
 				users.push({ id, label: String(row?.label || id) })
 			}
 
-			return users.slice(0, MAX_RECIPIENT_PROBE)
+			return users.slice(0, perPage)
+		},
+
+		/**
+		 * Users matching a search, each marked with whether they can receive
+		 * a share yet (keepiq#37). One page of Nextcloud's sharee search,
+		 * then one call that answers, for those ids and that term, who holds
+		 * an active vault. The server reruns the same search, so it answers
+		 * only about users this search can return.
+		 *
+		 * A user the server leaves out of its answer is left out here too:
+		 * nothing about them can be shown honestly.
+		 *
+		 * @param {string} [search] The search term.
+		 * @return {Promise<Array<{id: string, label: string, hasSuite: boolean}>>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-recipient-search-marks-who-cannot-receive-a-share
+		 */
+		async searchRecipients(search = '') {
+			const sharees = await this.searchSharees(search, RECIPIENT_PAGE)
+			if (sharees.length === 0) {
+				return []
+			}
+			const response = await axios.post(
+				generateUrl('/apps/keepiq/api/v1/shares/recipient-status'),
+				{ search, userIds: sharees.map((sharee) => sharee.id) },
+			)
+			const answered = new Map(
+				(Array.isArray(response.data?.recipients)
+					? response.data.recipients
+					: []
+				).map((row) => [String(row?.userId ?? ''), row?.hasSuite === true]),
+			)
+			return sharees
+				.filter((sharee) => answered.has(sharee.id))
+				.map((sharee) => ({
+					...sharee,
+					hasSuite: answered.get(sharee.id),
+				}))
 		},
 
 		/**
@@ -307,11 +353,29 @@ export const useShareStore = defineStore('share', {
 		) {
 			this.loading = true
 			this.error = null
+			const url = generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/shares`)
+			const body = { targetUserId, recipientSecretId, groupShareId }
 			try {
-				const response = await axios.post(
-					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/shares`),
-					{ targetUserId, recipientSecretId, groupShareId },
-				)
+				let response
+				try {
+					response = await axios.post(url, body)
+				} catch (refusal) {
+					// A share to someone the user does not share with yet needs a
+					// vault-key proof (keepiq#818); a known recipient does not, so
+					// ask for the password only when the server says so.
+					if (refusal?.response?.data?.error !== 'key_proof_required') {
+						throw refusal
+					}
+					const { headers } = await sessionKeyProofHeaders({
+						purpose: PROOF_PURPOSE.SHARE_NEW_RECIPIENT,
+						reason: t(
+							'keepiq',
+							'You are sharing with someone new. Enter your master password to confirm.',
+						),
+						boundValues: [secretId, targetUserId],
+					})
+					response = await axios.post(url, body, { headers })
+				}
 				this.shares.push(response.data)
 				return response.data
 			} catch (e) {
@@ -444,6 +508,41 @@ export const useShareStore = defineStore('share', {
 				throw e
 			} finally {
 				this.loading = false
+			}
+		},
+
+		/**
+		 * Register direct share rows through `/shares/register-batch`, which
+		 * needs a vault-key proof on every call (keepiq#818). The master
+		 * password is asked through the app-wide prompt unless the caller
+		 * already has it from earlier in the same action; it is returned so a
+		 * bulk run asks once and builds a fresh single-use proof per request.
+		 *
+		 * @param {Array<object>} rows The register-batch rows.
+		 * @param {object} [options] Options.
+		 * @param {string} [options.masterPassword] A password asked for earlier in this action.
+		 * @return {Promise<{items: Array<object>, masterPassword: string}>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
+		 */
+		async registerBatch(rows, { masterPassword = '' } = {}) {
+			const proof = await sessionKeyProofHeaders({
+				purpose: PROOF_PURPOSE.SHARE_REGISTER_BATCH,
+				reason: t(
+					'keepiq',
+					'Enter your master password to confirm this share.',
+				),
+				masterPassword,
+			})
+			const response = await axios.post(
+				generateUrl('/apps/keepiq/api/v1/shares/register-batch'),
+				{ shares: rows },
+				{ headers: proof.headers },
+			)
+			return {
+				items: Array.isArray(response.data?.items)
+					? response.data.items
+					: [],
+				masterPassword: proof.masterPassword,
 			}
 		},
 

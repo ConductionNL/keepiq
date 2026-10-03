@@ -20,7 +20,9 @@ Methods: `getByName(name, folder?)`, `getById(id)`, `list(updatedSince?)`,
 `KeyMismatchError` and `ApiError`.
 
 Pass `{ certificatePem }` as the fourth argument to refuse any envelope
-encrypted to another certificate before decryption.
+encrypted to another certificate before decryption. The application can read
+its own certificate at `GET /api/v1/app/certificate` (with its access token)
+and pass that PEM here.
 
 Tests: `npm install && npm test` in this directory. They run against
 `sdk/testdata/`, shared with the Go and Python libraries.

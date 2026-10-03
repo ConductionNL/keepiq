@@ -4,8 +4,9 @@
  * Keepiq Machine Lease Controller
  *
  * Bearer-authenticated lease surface for a registered application
- * (machine-secret-leases §4.1): list own leases, renew, and self-revoke
- * under `/api/v1/app/leases/*`. JwtAuthMiddleware resolves the calling
+ * (machine-secret-leases §4.1): list own leases and self-revoke under
+ * `/api/v1/app/leases/*`. There is no renew route: fetching the secret again
+ * is the one renewal path (keepiq#753). JwtAuthMiddleware resolves the calling
  * Application before any handler runs; cross-application access returns
  * the SAME 404 as a nonexistent lease (no existence oracle).
  *
@@ -25,7 +26,6 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
-use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\MachineLease;
 use OCA\Keepiq\Service\LeaseService;
@@ -79,38 +79,6 @@ class MachineLeaseController extends ApplicationApiController {
 			)
 		);
 	}//end index()
-
-	/**
-	 * Renew one of the calling application's leases.
-	 *
-	 * @param string $id The lease UUID
-	 *
-	 * @return JSONResponse
-	 *
-	 * @spec openspec/changes/machine-secret-leases/specs/machine-secret-leases/spec.md#requirement-lease-renewal
-	 */
-	#[PublicPage]
-	#[NoCSRFRequired]
-	#[AnonRateLimit(limit: 30, period: 60)]
-	public function renew(string $id): JSONResponse {
-		$application = $this->getApplication();
-		if ($application === null) {
-			return $this->unauthorized();
-		}
-
-		try {
-			$lease = $this->leaseService->renew(leaseId: $id, applicationId: $application->getId());
-		} catch (DoesNotExistException) {
-			return $this->notFound();
-		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_CONFLICT
-			);
-		}
-
-		return new JSONResponse(data: $lease->jsonSerialize());
-	}//end renew()
 
 	/**
 	 * Self-revoke one of the calling application's leases.

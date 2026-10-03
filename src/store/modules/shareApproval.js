@@ -7,6 +7,7 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { useGroupShareStore } from './groupShare.js'
+import { useShareStore } from './share.js'
 
 /** register-batch statuses that mean the recipient now holds a copy. */
 const SHARED = ['created', 'exists']
@@ -52,11 +53,9 @@ export const useShareApprovalStore = defineStore('shareApproval', {
 				groupShareId,
 				[{ userId, certificate: recipient.certificate }],
 			)
-			const response = await axios.post(
-				generateUrl('/apps/keepiq/api/v1/shares/register-batch'),
-				{ shares: rows },
-			)
-			return String(response.data?.items?.[0]?.status ?? 'not_registered')
+			// register-batch needs a vault-key proof (keepiq#818).
+			const { items } = await useShareStore().registerBatch(rows)
+			return String(items[0]?.status ?? 'not_registered')
 		},
 
 		/**
