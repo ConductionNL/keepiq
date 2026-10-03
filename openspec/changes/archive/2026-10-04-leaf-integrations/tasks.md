@@ -6,7 +6,7 @@
 ## 2. Documentation
 
 - [x] 2.1 Add the boundary statement to `docs/FEATURES.md` (security-model section): OR integration leaves are deliberately not adopted; secret material and vault-structure metadata never leave the vault's ACL envelope; expiry/rotation visibility is served by the in-app scan/notification pipeline. Done (row in the Security & Compliance table).
-- [ ] 2.2 (BLOCKED: the repository has no CHANGELOG.md; not created here) One line in `CHANGELOG.md` (documented decision + guard test).
+- [x] 2.2 One line in `CHANGELOG.md` (documented decision + guard test). Done: `CHANGELOG.md`, Unreleased, Security.
 
 ## 3. Verify
 
