@@ -17,6 +17,17 @@ vi.mock('../../src/crypto/index.js', () => ({
 	rsaEncrypt: vi.fn(async (value) => `ENC(${value})`),
 }))
 
+// keepiq#818: a share to a new recipient is retried with a vault-key proof.
+vi.mock('../../src/crypto/keyProof.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	sessionKeyProofHeaders: vi.fn(async ({ purpose, boundValues }) => ({
+		headers: {
+			'X-Keepiq-Key-Proof': `proof(${purpose}|${boundValues.join(',')})`,
+		},
+		masterPassword: 'pw',
+	})),
+}))
+
 describe('useShareStore', () => {
 	beforeEach(() => {
 		setActivePinia(createPinia())
@@ -81,6 +92,35 @@ describe('useShareStore', () => {
 			expect(post).toHaveBeenCalled()
 			expect(row.id).toBe('s-new')
 			expect(store.shares[0].id).toBe('s-new')
+		})
+
+		it('retries with a proof when the server asks for one (keepiq#818)', async () => {
+			const post = vi
+				.spyOn(axios, 'post')
+				.mockRejectedValueOnce({
+					response: { status: 403, data: { error: 'key_proof_required' } },
+				})
+				.mockResolvedValueOnce({ data: { id: 's-new' } })
+			const store = useShareStore()
+			const row = await store.createShare('sec-1', 'mallory', 'r1', null)
+
+			expect(row.id).toBe('s-new')
+			expect(post).toHaveBeenCalledTimes(2)
+			expect(post.mock.calls[0][2]).toBeUndefined()
+			expect(post.mock.calls[1][2].headers).toEqual({
+				'X-Keepiq-Key-Proof': 'proof(share-new-recipient|sec-1,mallory)',
+			})
+		})
+
+		it('does not ask for a proof on any other refusal', async () => {
+			const post = vi.spyOn(axios, 'post').mockRejectedValue({
+				response: { status: 400, data: { message: 'nope' } },
+			})
+			const store = useShareStore()
+			await expect(
+				store.createShare('sec-1', 'mallory', 'r1', null),
+			).rejects.toBeTruthy()
+			expect(post).toHaveBeenCalledTimes(1)
 		})
 	})
 

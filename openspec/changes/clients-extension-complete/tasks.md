@@ -10,16 +10,18 @@
 
 ## 2. Item detail and editing
 
-- [ ] 2.1 Detail sections and editing completeness.
+- [x] 2.1 Item form rules (kinds, parts, sparse changes, limits, messages). Verify: `tests/extension/itemForm.spec.js`.
+- [x] 2.2 Worker: fresh item fetch with additional fields and metadata, blocked items, sparse save, move. Verify: `tests/extension/vaultSendGenerator.spec.js`.
+- [x] 2.3 Popup: detail sections, the form per kind with additional fields, clone, move, unsaved-changes guard. Verify: `tests/extension/popupItemDetail.spec.js`, live in Chromium.
 
 ## 3. Folder manager
 
-- [ ] 3.1 Create, rename, delete.
+- [x] 3.1 Folder manager: tree, add, rename, delete with the server's protocol, the not-encrypted notice, New folder in the picker. Verify: `tests/extension/folders.spec.js`, live in Chromium.
 
 ## 4. Offline vault cache and sync
 
-- [ ] 4.1 Snapshot, triggers, offline reads.
+- [x] 4.1 Snapshot, triggers (unlock, popup open, alarm, writes, Sync now), cheap check, manifest and fallback, suite change, offline reads and autofill, offline write lock. Verify: `tests/extension/vaultSync.spec.js`, live in Chromium.
 
 ## 5. Popup shell
 
-- [ ] 5.1 Tab bar, pop-out, remembered tab, theme.
+- [x] 5.1 Tab bar, pop-out, remembered tab, theme.
