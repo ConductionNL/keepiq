@@ -22,6 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use OCA\Keepiq\Tests\Support\AdminAreaFixture;
+use OCA\Keepiq\Settings\ApplicationAdminSettings;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Controller\DashboardController;
 use OCA\Keepiq\Service\DashboardSummaryService;
@@ -47,6 +49,8 @@ use PHPUnit\Framework\TestCase;
  *
  */
 class DashboardControllerTest extends TestCase {
+	use AdminAreaFixture;
+
 
 	/**
 	 * The mocked summary aggregator.
@@ -121,7 +125,7 @@ class DashboardControllerTest extends TestCase {
 			appManager: $this->appManager,
 			summaryService: $this->summaryService,
 			userSession: $this->userSession,
-			groupManager: $this->groupManager
+			areas: $this->areaAuthorizer(groupManager: $this->groupManager)
 		);
 	}//end controller()
 
@@ -234,4 +238,25 @@ class DashboardControllerTest extends TestCase {
 		$this->assertArrayHasKey('breachCheckEnabled', $provided);
 	}//end testPageProvidesTheAppVersionAsInitialState()
 
+
+	/**
+	 * A holder of the Applications area gets the pending-applications
+	 * counter: the flag follows the area, not instance admin alone
+	 * (admin-scoped-roles §2.2).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.2
+	 */
+	public function testSummaryForwardsTheApplicationsAreaAsTheAdminFlag(): void {
+		$this->delegatedAreas = [ApplicationAdminSettings::class];
+		$this->groupManager->method('isAdmin')->willReturn(false);
+
+		$this->summaryService->expects($this->once())
+			->method('fetchSummary')
+			->with('appadmin', true)
+			->willReturn([]);
+
+		$this->controller(userId: 'appadmin')->summary();
+	}//end testSummaryForwardsTheApplicationsAreaAsTheAdminFlag()
 }//end class

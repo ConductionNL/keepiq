@@ -9,8 +9,8 @@
  * successor holds no recipient copy yet are reported as skipped — the admin
  * re-runs the offboarding after adding the successor to the folder.
  *
- * The action is restricted to Nextcloud instance admins and members of the
- * `vault_admin` group, mirroring DelegationService.
+ * The action is restricted to Nextcloud instance admins and holders of the
+ * People and offboarding admin area, mirroring DelegationService.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -30,7 +30,7 @@ namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
-use OCP\IGroupManager;
+use OCA\Keepiq\Settings\PeopleAdminSettings;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -38,22 +38,15 @@ use Psr\Log\LoggerInterface;
  */
 class TeamFolderOffboardingService {
 	/**
-	 * The Nextcloud group whose members may run the offboarding action
-	 * (in addition to instance admins). Mirrors DelegationService.
-	 *
-	 * @var string
-	 */
-	private const VAULT_ADMIN_GROUP = 'vault_admin';
-
-	/**
 	 * Constructor for TeamFolderOffboardingService.
 	 *
 	 * @param TeamFolderShareService $shares The derived-share service (revocation)
 	 * @param TeamSecretTransferService $transfers The team-secret transfer service
-	 * @param IGroupManager $groupManager The Nextcloud group manager
+	 * @param AdminAreaAuthorizer $areas The People and offboarding area check
 	 * @param LoggerInterface $logger The logger
 	 * @param TeamFolderAuditor $audit The team-folder auditor
 	 * @param TeamFolderMemberMapper $memberMapper The team-folder member rows
+	 * @param TeamFolderMembershipResolver $memberships Resolves the group rows that cover a user
 	 *
 	 * @return void
 	 *
@@ -62,27 +55,30 @@ class TeamFolderOffboardingService {
 	public function __construct(
 		private TeamFolderShareService $shares,
 		private TeamSecretTransferService $transfers,
-		private IGroupManager $groupManager,
+		private AdminAreaAuthorizer $areas,
 		private LoggerInterface $logger,
 		private TeamFolderAuditor $audit,
 		private TeamFolderMemberMapper $memberMapper,
+		private TeamFolderMembershipResolver $memberships,
 	) {
 	}//end __construct()
 
 	/**
 	 * Revoke every team-folder-derived share held by the leaving user,
-	 * remove the leaver's direct team-folder memberships, then transfer each
-	 * team secret the leaver OWNS to the successor.
+	 * transfer each team secret the leaver OWNS to the successor, then
+	 * remove the leaver's direct team-folder memberships and report the
+	 * group memberships that still cover them.
 	 *
 	 * @param string $leavingUserId The user being offboarded
 	 * @param string $successorUserId The user taking over owned team secrets
-	 * @param string $adminId The caller (instance admin or vault_admin)
+	 * @param string $adminId The caller (instance admin or People area holder)
 	 *
-	 * @return array{revoked:int,removedMemberships:int,transferred:int,skipped:array<int,string>}
+	 * @return array{revoked:int,transferred:int,skipped:array<int,string>,membershipsRemoved:int,stillCoveredByGroups:array<int,array{teamFolderId:string,groupId:string}>}
 	 *
 	 * @throws InvalidArgumentException On invalid input / not authorized
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.5
+	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.1
 	 */
 	public function offboard(string $leavingUserId, string $successorUserId, string $adminId): array {
 		$this->assertOffboardingAdmin(userId: $adminId);
@@ -98,12 +94,6 @@ class TeamFolderOffboardingService {
 		// Step 1 — revoke every team-folder-derived share held by the leaver.
 		$revoked = $this->shares->revokeTeamSharesForUser(targetUserId: $leavingUserId);
 
-		// Step 1b — remove the leaver's direct member rows. Revoking the shares
-		// alone left the leaver a member, so the owner's next "Share now" for
-		// pending members handed the secrets straight back (#747). A membership
-		// through a group is the group's business and stays.
-		$removedMemberships = $this->removeDirectMemberships(userId: $leavingUserId);
-
 		// Step 2 — transfer team secrets the leaver owns to the successor.
 		$transfer = $this->transfers->transfer(
 			leavingUserId: $leavingUserId,
@@ -113,10 +103,20 @@ class TeamFolderOffboardingService {
 		$transferred = $transfer['transferred'];
 		$skipped = $transfer['skipped'];
 
+		// Step 3 — remove the leaver's direct member rows. Revoking the shares
+		// alone left the leaver a member, so the owner's next "Share now" for
+		// pending members handed the secrets straight back (#747). It runs
+		// after the transfer, so a failed transfer leaves the rows in place for
+		// a re-run (admin-member-overview-and-offboarding D1). A membership
+		// through a group covers colleagues too: it stays, and is reported.
+		$membershipsRemoved = $this->removeDirectMemberships(userId: $leavingUserId);
+		$stillCoveredByGroups = $this->coveringGroups(userId: $leavingUserId);
+
 		$this->logger->info(
-			'Offboarded ' . $leavingUserId . ': revoked ' . $revoked . ' team shares, removed '
-			. $removedMemberships . ' team-folder memberships, transferred '
-			. $transferred . ' secrets to ' . $successorUserId,
+			'Offboarded ' . $leavingUserId . ': revoked ' . $revoked . ' team shares, transferred '
+			. $transferred . ' secrets to ' . $successorUserId . ', removed '
+			. $membershipsRemoved . ' team-folder memberships, '
+			. count($stillCoveredByGroups) . ' group memberships still cover the user',
 			['app' => 'keepiq']
 		);
 
@@ -126,16 +126,49 @@ class TeamFolderOffboardingService {
 			successorUserId: $successorUserId,
 			revoked: $revoked,
 			transferred: $transferred,
-			removedMemberships: $removedMemberships,
+			membershipsRemoved: $membershipsRemoved,
+			coveringGroupIds: array_values(
+				array_unique(array_column($stillCoveredByGroups, 'groupId'))
+			),
 		);
 
 		return [
 			'revoked' => $revoked,
-			'removedMemberships' => $removedMemberships,
 			'transferred' => $transferred,
 			'skipped' => $skipped,
+			'membershipsRemoved' => $membershipsRemoved,
+			'stillCoveredByGroups' => $stillCoveredByGroups,
 		];
 	}//end offboard()
+
+	/**
+	 * The group membership rows that still cover a user after offboarding.
+	 *
+	 * A group row is never deleted: it covers every member of the group. The
+	 * administrator gets the list instead, to remove the leaver from the
+	 * Nextcloud group or disable the account (design D2).
+	 *
+	 * @param string $userId The user being offboarded
+	 *
+	 * @return array<int,array{teamFolderId:string,groupId:string}>
+	 *
+	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.2
+	 */
+	private function coveringGroups(string $userId): array {
+		$covering = [];
+		foreach ($this->memberships->membershipRowsForUser(userId: $userId) as $row) {
+			if ($row->getMemberType() !== 'group') {
+				continue;
+			}
+
+			$covering[] = [
+				'teamFolderId' => (string)$row->getTeamFolderId(),
+				'groupId' => (string)$row->getMemberId(),
+			];
+		}
+
+		return $covering;
+	}//end coveringGroups()
 
 	/**
 	 * Delete every direct user-type team-folder membership of a user.
@@ -144,7 +177,7 @@ class TeamFolderOffboardingService {
 	 *
 	 * @return int The number of member rows removed
 	 *
-	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-admin-offboarding
+	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.1
 	 */
 	private function removeDirectMemberships(string $userId): int {
 		$removed = 0;
@@ -157,8 +190,8 @@ class TeamFolderOffboardingService {
 	}//end removeDirectMemberships()
 
 	/**
-	 * Assert the caller may run the offboarding action: a Nextcloud
-	 * instance admin or a member of the vault_admin group.
+	 * Assert the caller may run the offboarding action: an instance admin or
+	 * a holder of the People and offboarding area (admin-scoped-roles D5).
 	 *
 	 * @param string $userId The candidate admin
 	 *
@@ -166,19 +199,15 @@ class TeamFolderOffboardingService {
 	 *
 	 * @throws InvalidArgumentException When unauthorized
 	 *
-	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.5
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.4
 	 */
 	private function assertOffboardingAdmin(string $userId): void {
-		if ($this->groupManager->isAdmin($userId) === true) {
-			return;
-		}
-
-		if ($this->groupManager->isInGroup($userId, self::VAULT_ADMIN_GROUP) === true) {
+		if ($this->areas->holds(userId: $userId, areaClass: PeopleAdminSettings::class) === true) {
 			return;
 		}
 
 		throw new InvalidArgumentException(
-			message: 'Offboarding requires instance admin or vault_admin membership'
+			message: 'Offboarding requires the People and offboarding admin area'
 		);
 	}//end assertOffboardingAdmin()
 }//end class

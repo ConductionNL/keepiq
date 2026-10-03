@@ -107,11 +107,33 @@ export async function unlockWithRawKey(accountId, config, rawKey) {
  * @param {string} accountId The account id.
  * @return {void}
  */
+// Called with an account id whenever that account locks, for whatever
+// reason (button, idle timer, OS lock, disconnect).
+const lockListeners = new Set()
+
+/**
+ * Be told when an account locks.
+ *
+ * @param {(accountId: string) => void} listener Called with the account id.
+ * @return {() => void} Stops the listener.
+ */
+export function onLock(listener) {
+	lockListeners.add(listener)
+	return () => lockListeners.delete(listener)
+}
+
 export function lock(accountId) {
 	const state = accounts.get(accountId)
 	if (!state) return
 	if (state.idleTimer) clearTimeout(state.idleTimer)
 	accounts.delete(accountId)
+	for (const listener of lockListeners) {
+		try {
+			listener(accountId)
+		} catch {
+			// A listener never stops the lock.
+		}
+	}
 }
 
 /** Lock every account (OS lock, manual lock-all, worker restart). */

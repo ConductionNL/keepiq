@@ -31,6 +31,7 @@ vi.mock('../../browser-extension/src/lib/vault.js', () => ({
 	armIdleLock: vi.fn(),
 	lock: vi.fn(),
 	lockAll: vi.fn(),
+	onLock: vi.fn(),
 	boundTo: vi.fn(() => ({})),
 }))
 

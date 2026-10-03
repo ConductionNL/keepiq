@@ -273,9 +273,9 @@ func TestGetByNameIfNoneMatch(t *testing.T) {
 	}
 }
 
-// Leases: advertised in discovery, attached to reads, renewable; a refused
-// renewal is an *APIError with status 409.
-func TestLeaseRenewal(t *testing.T) {
+// Leases: advertised in discovery and attached to reads. There is no renew
+// call: fetching again is the one renewal path (keepiq#753).
+func TestLeaseOnRead(t *testing.T) {
 	f := loadFixture(t)
 	st := startStub(t)
 	st.Leases = true
@@ -287,16 +287,26 @@ func TestLeaseRenewal(t *testing.T) {
 	if err != nil || s.Lease == nil || s.Lease.ExpiresAt().IsZero() {
 		t.Fatalf("lease on read: %v %+v", err, s)
 	}
-	l, err := c.RenewLease(s.Lease.ID)
-	if err != nil || l.ID != s.Lease.ID || l.ExpiresAt().IsZero() || st.Renewals != 1 {
-		t.Fatalf("renew: %v %+v renewals=%d", err, l, st.Renewals)
+}
+
+// UpdateIfMatch writes with the current ETag and refuses a stale one with
+// ErrPreconditionFailed, leaving the value; expiresAt is read from the envelope.
+func TestUpdateIfMatchAndExpiresAt(t *testing.T) {
+	f := loadFixture(t)
+	st := startStub(t)
+	c := newClient(t, st, f)
+	st.SetExpiry("sec-cli-fixture", "2026-12-01T00:00:00+00:00")
+	s, err := c.GetByID("sec-cli-fixture")
+	if err != nil || s.ExpiresAt != "2026-12-01T00:00:00+00:00" {
+		t.Fatalf("read: %v %+v", err, s)
 	}
-	st.RefuseRenew = true
-	var apiErr *APIError
-	if _, err := c.RenewLease(s.Lease.ID); !errors.As(err, &apiErr) || apiErr.Status != 409 {
-		t.Fatalf("refused renewal: want *APIError 409, got %v", err)
+	if _, err := c.UpdateIfMatch(s.ID, s.ETag, map[string]string{"key": "first"}); err != nil {
+		t.Fatal(err)
 	}
-	if _, err := c.RenewLease("lease-unknown"); !errors.Is(err, ErrNotFound) {
-		t.Fatalf("unknown lease: want ErrNotFound, got %v", err)
+	if _, err := c.UpdateIfMatch(s.ID, s.ETag, map[string]string{"key": "second"}); !errors.Is(err, ErrPreconditionFailed) {
+		t.Fatalf("stale write: want ErrPreconditionFailed, got %v", err)
+	}
+	if v, _ := st.Plain(s.ID, "key"); v != "first" {
+		t.Fatalf("stored %q after a refused write", v)
 	}
 }

@@ -148,22 +148,23 @@ class DelegationHandoverControllerTest extends TestCase {
 	}//end testAnAnonymousCallerIsRejectedBeforeTheService()
 
 	/**
-	 * The capabilities read reports group membership for the CALLER.
+	 * The capabilities read reports the People area check for the CALLER
+	 * (admin-scoped-roles D5).
 	 *
 	 * @return void
 	 */
-	public function testCapabilitiesReportsVaultAdminMembershipForTheCaller(): void {
+	public function testCapabilitiesReportsCanHandoverForTheCaller(): void {
 		$this->signIn('vaultadmin');
 		$this->service->expects($this->once())
-			->method('isVaultAdmin')
+			->method('canHandover')
 			->with('vaultadmin')
 			->willReturn(true);
 
 		$response = $this->controller()->capabilities();
 
 		$this->assertSame(200, $response->getStatus());
-		$this->assertSame(['isVaultAdmin' => true], $response->getData());
-	}//end testCapabilitiesReportsVaultAdminMembershipForTheCaller()
+		$this->assertSame(['canHandover' => true], $response->getData());
+	}//end testCapabilitiesReportsCanHandoverForTheCaller()
 
 	/**
 	 * A non-admin is told so, rather than being left to guess.
@@ -172,9 +173,9 @@ class DelegationHandoverControllerTest extends TestCase {
 	 */
 	public function testCapabilitiesReportsFalseForANonAdmin(): void {
 		$this->signIn('someuser');
-		$this->service->method('isVaultAdmin')->willReturn(false);
+		$this->service->method('canHandover')->willReturn(false);
 
-		$this->assertSame(['isVaultAdmin' => false], $this->controller()->capabilities()->getData());
+		$this->assertSame(['canHandover' => false], $this->controller()->capabilities()->getData());
 	}//end testCapabilitiesReportsFalseForANonAdmin()
 
 	/**

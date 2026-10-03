@@ -27,10 +27,22 @@ The system MUST let a secret owner set or clear an `expires_at` on a secret with
 ### Requirement: Expiry policies with admin default and user override
 The system MUST support max-age expiry policies scoped to a secret type or folder subtree, an instance-wide admin default (shipped disabled) and reminder cadence, and a per-user override. The effective rotate-by instant MUST be the earliest of the per-secret `expires_at` and each applicable policy's `key_updated_at + max_age_days`, computed from server-visible fields only.
 
-#### Scenario: Most-specific policy wins
+Earliest wins everywhere (keepiq#746, decided 2 October 2026). No value takes precedence by being more specific: a per-secret `expires_at` can bring the rotate-by instant forward, but it can never push it past a policy, the per-user value or the admin default. A user therefore cannot switch expiry off or set a later date than an applicable policy. Because every applicable value already acts as a ceiling, there is no separate "enforce expiry policy" admin switch: the former `expiry_policy_enforced` setting is removed.
+
+#### Scenario: The earliest instant wins
+@e2e exclude Server-side resolution with no UI of its own; covered by PHPUnit RotationPolicyServiceTest::testResolvePicksEarliestInstant.
 - GIVEN an admin default and a stricter folder policy both applying to a secret
 - WHEN the effective rotate-by instant is resolved
-- THEN the earliest applicable instant MUST be used, and a per-secret `expires_at` MUST take precedence over every policy
+- THEN the earliest applicable instant MUST be used
+- AND a per-secret `expires_at` earlier than every policy MUST be used
+- AND a per-secret `expires_at` later than a policy MUST NOT be used; the policy's earlier instant wins
+
+#### Scenario: There is no enforce switch
+@e2e exclude Settings payload; covered by PHPUnit AdminSettingsServiceTest::testTheExpiryEnforceSwitchIsGone.
+- GIVEN an administrator saves admin settings that name `expiry_policy_enforced`
+- WHEN the settings are stored and read back
+- THEN nothing MUST be stored under `expiry_policy_enforced`
+- AND the admin settings payload MUST NOT carry it
 
 #### Scenario: No policy means no expiry
 - GIVEN a secret with no `expires_at` and no applicable policy
