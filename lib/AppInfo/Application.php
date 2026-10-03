@@ -168,6 +168,10 @@ class Application extends App implements IBootstrap {
 		// satisfies the guard that names it (admin-scoped-roles D1).
 		(new AdminAreaRegistrar())->register(context: $context);
 
+		// MCP opt-in (hermiq-ai-tooling): three metadata-only read tools for AI
+		// agents, registered only when OpenRegister is enabled.
+		(new McpRegistrar())->register(context: $context);
+
 		// Domain event wiring, one registrar per trigger family. Each is
 		// independent: a listener graph can be extended without touching the
 		// other two, and none of them can abort the others.
