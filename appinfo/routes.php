@@ -32,9 +32,16 @@ $extra = [
     // Dashboard summary (domain aggregator — DashboardController::summary()).
     ['name' => 'dashboard#summary', 'url' => '/api/dashboard/summary', 'verb' => 'GET'],
 
-    // Admin + user settings split (implement-dashboard-settings §2.4).
-    ['name' => 'settings#getAdminSettings',    'url' => '/api/settings/admin', 'verb' => 'GET'],
-    ['name' => 'settings#updateAdminSettings', 'url' => '/api/settings/admin', 'verb' => 'PUT'],
+    // Admin settings, one route pair per admin area, each guarded by its own
+    // area class (admin-scoped-roles D2). The People area owns no settings keys.
+    ['name' => 'adminAreaSettings#getGeneralSettings',        'url' => '/api/settings/admin/general',      'verb' => 'GET'],
+    ['name' => 'adminAreaSettings#updateGeneralSettings',     'url' => '/api/settings/admin/general',      'verb' => 'PUT'],
+    ['name' => 'adminAreaSettings#getPolicySettings',         'url' => '/api/settings/admin/policies',     'verb' => 'GET'],
+    ['name' => 'adminAreaSettings#updatePolicySettings',      'url' => '/api/settings/admin/policies',     'verb' => 'PUT'],
+    ['name' => 'adminAreaSettings#getApplicationSettings',    'url' => '/api/settings/admin/applications', 'verb' => 'GET'],
+    ['name' => 'adminAreaSettings#updateApplicationSettings', 'url' => '/api/settings/admin/applications', 'verb' => 'PUT'],
+    ['name' => 'adminAreaSettings#getAuditSettings',          'url' => '/api/settings/admin/audit',        'verb' => 'GET'],
+    ['name' => 'adminAreaSettings#updateAuditSettings',       'url' => '/api/settings/admin/audit',        'verb' => 'PUT'],
     // Two-factor gap count for the vault policy section (admin-vault-policies §1.3).
     ['name' => 'settings#twoFactorGaps',       'url' => '/api/settings/admin/two-factor-gaps', 'verb' => 'GET'],
     // Vault backups (admin-scheduled-vault-backups §4.1): status, list and a
@@ -46,6 +53,33 @@ $extra = [
     // Read-only org password policy for write dialogs (org-password-policies §1.3).
     ['name' => 'settings#getPolicy',           'url' => '/api/settings/policy', 'verb' => 'GET'],
     ['name' => 'settings#updateUserSettings',  'url' => '/api/settings/user',  'verb' => 'PUT'],
+
+    // Admin API v1 (admin-public-api): a documented, versioned surface for
+    // scripts, each route guarded by one admin area (admin-scoped-roles).
+    // docs/api/admin-v1.openapi.json describes exactly these routes
+    // (AdminApiContractTest). The policies pair reuses the area settings
+    // methods; `postfix` keeps their route names distinct.
+    ['name' => 'adminIndex#index', 'url' => '/api/v1/admin', 'verb' => 'GET'],
+    ['name' => 'adminAreaSettings#getPolicySettings', 'url' => '/api/v1/admin/policies', 'verb' => 'GET', 'postfix' => 'AdminApi'],
+    ['name' => 'adminAreaSettings#updatePolicySettings', 'url' => '/api/v1/admin/policies', 'verb' => 'PUT', 'postfix' => 'AdminApi'],
+    ['name' => 'adminPeople#suites',    'url' => '/api/v1/admin/suites',      'verb' => 'GET'],
+    ['name' => 'adminPeople#offboard',  'url' => '/api/v1/admin/offboarding', 'verb' => 'POST'],
+    ['name' => 'adminApplication#index',          'url' => '/api/v1/admin/applications',                       'verb' => 'GET'],
+    ['name' => 'adminApplication#create',         'url' => '/api/v1/admin/applications',                       'verb' => 'POST'],
+    ['name' => 'adminApplication#approve',        'url' => '/api/v1/admin/applications/{id}/approve',          'verb' => 'POST'],
+    ['name' => 'adminApplication#reject',         'url' => '/api/v1/admin/applications/{id}/reject',           'verb' => 'POST'],
+    ['name' => 'adminApplication#getLeasePolicy', 'url' => '/api/v1/admin/applications/{id}/lease-policy',     'verb' => 'GET'],
+    ['name' => 'adminApplication#setLeasePolicy', 'url' => '/api/v1/admin/applications/{id}/lease-policy',     'verb' => 'PUT'],
+    ['name' => 'adminApplication#show',           'url' => '/api/v1/admin/applications/{id}',                  'verb' => 'GET'],
+    ['name' => 'adminApplication#destroy',        'url' => '/api/v1/admin/applications/{id}',                  'verb' => 'DELETE'],
+    ['name' => 'adminAudit#events',         'url' => '/api/v1/admin/audit',                    'verb' => 'GET'],
+    ['name' => 'adminAudit#reports',        'url' => '/api/v1/admin/compliance/reports',       'verb' => 'GET'],
+    ['name' => 'adminAudit#generateReport', 'url' => '/api/v1/admin/compliance/reports',       'verb' => 'POST'],
+    ['name' => 'adminAudit#showReport',     'url' => '/api/v1/admin/compliance/reports/{id}',  'verb' => 'GET'],
+    ['name' => 'adminAudit#sinks',          'url' => '/api/v1/admin/siem/sinks',               'verb' => 'GET'],
+    ['name' => 'adminAudit#createSink',     'url' => '/api/v1/admin/siem/sinks',               'verb' => 'POST'],
+    ['name' => 'adminAudit#updateSink',     'url' => '/api/v1/admin/siem/sinks/{id}',          'verb' => 'PUT'],
+    ['name' => 'adminAudit#destroySink',    'url' => '/api/v1/admin/siem/sinks/{id}',          'verb' => 'DELETE'],
 
     // EncryptionSuite CRUD.
     ['name' => 'encryptionSuite#index',             'url' => '/api/v1/suites',                          'verb' => 'GET'],
@@ -123,6 +157,8 @@ $extra = [
     // Favourites, tags and last used (vault-favourites-tags-and-last-used), the caller's own rows only.
     ['name' => 'secretOrganisation#favourite', 'url' => '/api/v1/secrets/{id}/favourite', 'verb' => 'PUT'],
     ['name' => 'secretOrganisation#tags',      'url' => '/api/v1/secrets/{id}/tags',      'verb' => 'PUT'],
+    // A fill of a use-only copy, reported by the extension (sharing-use-only-and-expiring-shares §3.3).
+    ['name' => 'useOnly#used',                 'url' => '/api/v1/secrets/{id}/used',      'verb' => 'POST'],
     ['name' => 'secretOrganisation#tagIndex',  'url' => '/api/v1/tags',                   'verb' => 'GET'],
 
     // Link sharing — authenticated CRUD (secret owner).
@@ -157,6 +193,8 @@ $extra = [
     ['name' => 'share#recipientCertificates', 'url' => '/api/v1/shares/recipient-certificates', 'verb' => 'POST'],
     ['name' => 'share#sync',        'url' => '/api/v1/secrets/{secretId}/sync',         'verb' => 'PUT'],
     ['name' => 'share#destroy',     'url' => '/api/v1/shares/{id}',                     'verb' => 'DELETE'],
+    // Use-only flag and end date of a direct share (sharing-use-only-and-expiring-shares §2.1).
+    ['name' => 'share#update',      'url' => '/api/v1/shares/{id}',                     'verb' => 'PATCH'],
 
     // Group sharing — implement-user-sharing §9.2.
     ['name' => 'groupShare#index',            'url' => '/api/v1/secrets/{secretId}/group-shares',           'verb' => 'GET'],
@@ -256,6 +294,25 @@ $extra = [
     // Offline cache (offline-readonly-cache §1.4) — owner-scoped
     // consolidated snapshot; 403 when the admin off switch is set.
     ['name' => 'offline#manifest', 'url' => '/api/v1/offline/manifest', 'verb' => 'GET'],
+    // Organisation account recovery (crypto-organisation-account-recovery).
+    ['name' => 'recoveryAdmin#show',          'url' => '/api/v1/recovery/admin',                      'verb' => 'GET'],
+    ['name' => 'recoveryAdmin#update',        'url' => '/api/v1/recovery/admin',                      'verb' => 'PUT'],
+    ['name' => 'recoveryAdmin#retireKey',     'url' => '/api/v1/recovery/admin/keys/{id}/retire',     'verb' => 'POST'],
+    ['name' => 'recoveryAdmin#enrolled',      'url' => '/api/v1/recovery/admin/enrolled',             'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#overview',    'url' => '/api/v1/recovery/officer',                    'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#createKey',   'url' => '/api/v1/recovery/officer/keys',               'verb' => 'POST'],
+    ['name' => 'recoveryOfficer#ownCopy',     'url' => '/api/v1/recovery/officer/copy',               'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#replaceOwnCopy', 'url' => '/api/v1/recovery/officer/keys/{keyId}/copy', 'verb' => 'PUT'],
+    ['name' => 'recoveryOfficer#approve',     'url' => '/api/v1/recovery/requests/{id}/approve',      'verb' => 'POST'],
+    ['name' => 'recoveryOfficer#decline',     'url' => '/api/v1/recovery/requests/{id}/decline',      'verb' => 'POST'],
+    ['name' => 'recoveryOfficer#handoff',     'url' => '/api/v1/recovery/requests/{id}/handoff',      'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#postSealed',  'url' => '/api/v1/recovery/requests/{id}/sealed',       'verb' => 'POST'],
+    ['name' => 'recoveryUser#enrolment',      'url' => '/api/v1/recovery/enrolment',                  'verb' => 'GET'],
+    ['name' => 'recoveryUser#enrol',          'url' => '/api/v1/recovery/enrolment',                  'verb' => 'PUT'],
+    ['name' => 'recoveryUser#withdraw',       'url' => '/api/v1/recovery/enrolment',                  'verb' => 'DELETE'],
+    ['name' => 'recoveryUser#myRequest',      'url' => '/api/v1/recovery/requests/mine',              'verb' => 'GET'],
+    ['name' => 'recoveryUser#createRequest',  'url' => '/api/v1/recovery/requests',                   'verb' => 'POST'],
+    ['name' => 'recoveryUser#complete',       'url' => '/api/v1/recovery/requests/{id}/complete',     'verb' => 'POST'],
     // New device approval (crypto-new-device-approval). The fixed paths come
     // before the {id} ones.
     ['name' => 'deviceApproval#status',  'url' => '/api/v1/device-approvals/status',       'verb' => 'GET'],
@@ -338,6 +395,10 @@ $extra = [
     // Bearer-authenticated application secrets API (openconnector-secret-store-api).
     // JwtAuthMiddleware enforces the Authorization header before the controller runs.
     // The by-name route precedes {id} so its extra path segment resolves first.
+    // The calling application's own certificate and fingerprint
+    // (app-own-certificate), so a client can check envelopes without
+    // configuring the certificate.
+    ['name' => 'applicationCertificate#show', 'url' => '/api/v1/app/certificate', 'verb' => 'GET'],
     ['name' => 'applicationSecrets#index',  'url' => '/api/v1/app/secrets',                 'verb' => 'GET'],
     ['name' => 'applicationSecrets#create', 'url' => '/api/v1/app/secrets',                 'verb' => 'POST'],
     ['name' => 'applicationSecrets#byName', 'url' => '/api/v1/app/secrets/by-name/{name}',  'verb' => 'GET',
@@ -354,7 +415,6 @@ $extra = [
     ['name' => 'applicationSecretRequests#create', 'url' => '/api/v1/app/secret-requests', 'verb' => 'POST'],
 
     ['name' => 'machineLease#index',  'url' => '/api/v1/app/leases',              'verb' => 'GET'],
-    ['name' => 'machineLease#renew',  'url' => '/api/v1/app/leases/{id}/renew',   'verb' => 'POST'],
     ['name' => 'machineLease#revoke', 'url' => '/api/v1/app/leases/{id}/revoke',  'verb' => 'POST'],
     // Session-authenticated admin/owner lease management.
     ['name' => 'leaseAdmin#index',     'url' => '/api/v1/applications/{id}/leases',       'verb' => 'GET'],

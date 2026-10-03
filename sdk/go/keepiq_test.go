@@ -273,9 +273,9 @@ func TestGetByNameIfNoneMatch(t *testing.T) {
 	}
 }
 
-// Leases: advertised in discovery, attached to reads, renewable; a refused
-// renewal is an *APIError with status 409.
-func TestLeaseRenewal(t *testing.T) {
+// Leases: advertised in discovery and attached to reads. There is no renew
+// call: fetching again is the one renewal path (keepiq#753).
+func TestLeaseOnRead(t *testing.T) {
 	f := loadFixture(t)
 	st := startStub(t)
 	st.Leases = true
@@ -286,18 +286,6 @@ func TestLeaseRenewal(t *testing.T) {
 	s, err := c.GetByID("sec-cli-fixture")
 	if err != nil || s.Lease == nil || s.Lease.ExpiresAt().IsZero() {
 		t.Fatalf("lease on read: %v %+v", err, s)
-	}
-	l, err := c.RenewLease(s.Lease.ID)
-	if err != nil || l.ID != s.Lease.ID || l.ExpiresAt().IsZero() || st.Renewals != 1 {
-		t.Fatalf("renew: %v %+v renewals=%d", err, l, st.Renewals)
-	}
-	st.RefuseRenew = true
-	var apiErr *APIError
-	if _, err := c.RenewLease(s.Lease.ID); !errors.As(err, &apiErr) || apiErr.Status != 409 {
-		t.Fatalf("refused renewal: want *APIError 409, got %v", err)
-	}
-	if _, err := c.RenewLease("lease-unknown"); !errors.Is(err, ErrNotFound) {
-		t.Fatalf("unknown lease: want ErrNotFound, got %v", err)
 	}
 }
 

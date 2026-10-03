@@ -116,6 +116,11 @@ if ($ncLoaded === false && $autoloader instanceof \Composer\Autoload\ClassLoader
 	$autoloader->addPsr4('NCU\\', __DIR__ . '/../vendor/nextcloud/ocp/NCU/');
 }
 
+// Keepiq's own test helpers (tests/Support), shared across test files.
+if ($autoloader instanceof \Composer\Autoload\ClassLoader) {
+	$autoloader->addPsr4('OCA\\Keepiq\\Tests\\Support\\', __DIR__ . '/Support/');
+}
+
 // Register Test\ namespace for NC test classes.
 $serverTestsLib = __DIR__ . '/../../../tests/lib/';
 if (is_dir($serverTestsLib)) {
@@ -152,4 +157,11 @@ foreach (['ConnectionStatusReportedEvent', 'ConnectionRefreshRequestedEvent'] as
 	if (class_exists('\\OCA\\Integriq\\Event\\' . $integriqStubEvent) === false) {
 		require_once __DIR__ . '/stubs/Integriq/Event/' . $integriqStubEvent . '.php';
 	}
+}
+
+// OpenRegister's MCP contract (hermiq-ai-tooling): KeepiqScannableServices
+// implements IMcpScannableServices and the read facades carry #[McpTool].
+// The stub loads only when OpenRegister's own classes do not resolve.
+if (interface_exists('\\OCA\\OpenRegister\\Mcp\\IMcpScannableServices') === false) {
+	require_once __DIR__ . '/stubs/openregister-mcp.stub.php';
 }

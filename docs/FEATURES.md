@@ -258,6 +258,8 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | GDPR data export (all user secrets + metadata) | **V1** ✅ Built | Right of access (Art. 15) — browser-assembled package = server metadata + client-decrypted vault (see `docs/gdpr.md`) |
 | GDPR data deletion (user + all shares) | **V1** ✅ Built | Right to erasure (Art. 17) — in-app + `UserDeletedEvent` cascade with defined shared-secret semantics (see `docs/gdpr.md`) |
 | Audit trail on all secret operations | **V1** ✅ Built | Accountability |
+| No OpenRegister integration leaves (files, calendar, deck, activity) | **V1** ✅ Decided | Secret material and vault-structure metadata never leave the vault's own access control; expiry and rotation stay in Keepiq's scans, notifications and dashboard (see `openspec/specs/integration-boundary/`) |
+| AI/MCP: metadata-only read tools (`listEntries`, `expiryReport`, `rotationStatus`) | **V1** ✅ Built | An assistant can answer "what expires this month?"; secret values are never agent-reachable and no tool writes (see `openspec/specs/mcp-metadata-surface/`) |
 | Field-level encryption audit (verify encrypted fields) | **Enterprise** | Compliance verification |
 | Data retention policies | **Enterprise** | Automated cleanup |
 

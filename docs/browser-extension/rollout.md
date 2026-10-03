@@ -40,7 +40,7 @@ Firefox installs add-ons by policy from Firefox Add-ons or from a signed package
 }
 ```
 
-To host the package yourself, download the signed Firefox package from the GitHub release `extension-v<version>` and point `install_url` at your copy.
+To host the package yourself, download `keepiq-firefox-<version>-amo-signed.xpi` from the GitHub release `extension-v<version>` and point `install_url` at your copy. It is the file Firefox Add-ons signed after review, so it appears on the release a few hours to days after the version is tagged. Check it against the `.sha256` file next to it.
 
 ## After installing
 

@@ -9,7 +9,7 @@
  */
 
 import { migrateLegacyConfig } from '../lib/api.js'
-import { handleMessage, handles, onIdleState } from './router.js'
+import { handleMessage, handles, onAlarm, onIdleState } from './router.js'
 
 // An extension paired before several accounts keeps its pairing as the first
 // account (extension-account-switching). Messages wait for it.
@@ -24,6 +24,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 })
 
 // Auto-lock every account on OS/browser lock.
+// Scheduled vault syncs while unlocked (clients-extension-complete).
+if (chrome.alarms && chrome.alarms.onAlarm) {
+	chrome.alarms.onAlarm.addListener((alarm) => {
+		onAlarm(alarm).catch(() => {})
+	})
+}
+
 if (chrome.idle && chrome.idle.onStateChanged) {
 	chrome.idle.onStateChanged.addListener(onIdleState)
 }

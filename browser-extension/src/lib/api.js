@@ -257,6 +257,27 @@ export function unpair(config) {
  * @return {Promise<boolean>} True when Nextcloud deleted the app password.
  * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-pairing-against-the-nextcloud-session
  */
+/**
+ * The Nextcloud email address of the account's user, or '' when it has none
+ * or the server does not answer. Seeds the plus-addressed username.
+ *
+ * @param {object} config The account.
+ * @return {Promise<string>}
+ * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-username-generator
+ */
+export async function fetchAccountEmail(config) {
+	const res = await fetch(base(config) + '/ocs/v2.php/cloud/user?format=json', {
+		headers: {
+			Authorization: authHeader(config),
+			'OCS-APIRequest': 'true',
+			Accept: 'application/json',
+		},
+	})
+	if (!res.ok) return ''
+	const data = await res.json().catch(() => null)
+	return typeof data?.ocs?.data?.email === 'string' ? data.ocs.data.email : ''
+}
+
 export async function revokeAppPassword(config) {
 	const res = await fetch(base(config) + '/ocs/v2.php/core/apppassword', {
 		method: 'DELETE',
@@ -331,6 +352,22 @@ export function markUsed(config, id) {
 }
 
 /**
+ * Record a fill of a use-only copy for its owner's activity
+ * (sharing-use-only-and-expiring-shares §3.3). Sends only the id.
+ *
+ * @param {object} config The paired config.
+ * @param {string} id The copy that was filled.
+ * @return {Promise<object>}
+ */
+export function reportUseOnlyFill(config, id) {
+	return request(
+		config,
+		'POST',
+		'/api/v1/secrets/' + encodeURIComponent(id) + '/used',
+	)
+}
+
+/**
  * Create a secret from an already-encrypted body (blobs only).
  * @param config
  * @param body
@@ -347,6 +384,34 @@ export function createSecret(config, body) {
  */
 export function updateSecret(config, id, body) {
 	return request(config, 'PUT', '/api/v1/secrets/' + encodeURIComponent(id), body)
+}
+
+/**
+ * The offline manifest: the active suite, every secret row (ciphertext and
+ * plaintext metadata), the folders and the types, in one response.
+ *
+ * @param {object} config The account.
+ * @return {Promise<object>}
+ * @spec openspec/changes/clients-extension-complete/specs/extension-vault-sync/spec.md#requirement-keep-a-snapshot-of-the-vault
+ */
+export function fetchOfflineManifest(config) {
+	return request(config, 'GET', '/api/v1/offline/manifest')
+}
+
+/**
+ * The most recently updated secret and the total, for the cheap "did
+ * anything change" check.
+ *
+ * @param {object} config The account.
+ * @return {Promise<{items: Array<object>, total: number}>}
+ * @spec openspec/changes/clients-extension-complete/specs/extension-vault-sync/spec.md#requirement-sync-when-it-matters-and-cheaply
+ */
+export function latestSecret(config) {
+	return request(
+		config,
+		'GET',
+		'/api/v1/secrets?sort=updated_at&direction=desc&limit=1',
+	)
 }
 
 /** The largest page the secrets list serves (SecretService::MAX_LIMIT). */
@@ -386,6 +451,69 @@ export async function listSecrets(config) {
 export async function listFolders(config) {
 	const data = await request(config, 'GET', '/api/v1/folders')
 	return Array.isArray(data) ? data : data?.items || []
+}
+
+/**
+ * Create a folder.
+ *
+ * @param {object} config The account.
+ * @param {{name: string, parentId?: string|null}} body The folder.
+ * @return {Promise<object>} The folder.
+ * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+ */
+export function createFolder(config, body) {
+	return request(config, 'POST', '/api/v1/folders', body)
+}
+
+/**
+ * Rename a folder: only its name is sent.
+ *
+ * @param {object} config The account.
+ * @param {string} id The folder id.
+ * @param {string} name The new name.
+ * @return {Promise<object>} The folder.
+ * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+ */
+export function renameFolder(config, id, name) {
+	return request(config, 'PUT', '/api/v1/folders/' + encodeURIComponent(id), {
+		name,
+	})
+}
+
+/**
+ * A folder's direct item count and direct subfolders with their counts.
+ *
+ * @param {object} config The account.
+ * @param {string} id The folder id.
+ * @return {Promise<{directSecretCount: number, subfolders: Array<object>}>}
+ * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+ */
+export function folderChildren(config, id) {
+	return request(
+		config,
+		'GET',
+		'/api/v1/folders/' + encodeURIComponent(id) + '/children',
+	)
+}
+
+/**
+ * Delete a folder: plain when empty, with a cascade for a leaf with items,
+ * with a resolution plan when it has subfolders.
+ *
+ * @param {object} config The account.
+ * @param {string} id The folder id.
+ * @param {{cascade?: string, resolution?: object}} [how] From deleteRequest.
+ * @return {Promise<object>}
+ * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+ */
+export function deleteFolder(config, id, { cascade, resolution } = {}) {
+	const query = cascade ? '?cascade=' + encodeURIComponent(cascade) : ''
+	return request(
+		config,
+		'DELETE',
+		'/api/v1/folders/' + encodeURIComponent(id) + query,
+		resolution,
+	)
 }
 
 /**

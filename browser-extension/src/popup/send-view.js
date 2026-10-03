@@ -40,6 +40,10 @@ export function initSend({ $, send, showError, doc = document }) {
 	}
 	$('send-expiry').value = '1d'
 
+	// Links of sends made while this popup is open, by send id. A link holds
+	// the key, so it lives only here and only until the popup closes.
+	const sessionLinks = new Map()
+
 	/** @return {string} The chosen kind of send. */
 	const kind = () =>
 		doc.querySelector('input[name="send-type"]:checked')?.value || 'text'
@@ -75,7 +79,21 @@ export function initSend({ $, send, showError, doc = document }) {
 				if (res.error) showError('send-error', res.error)
 				await loadSends()
 			})
-			li.append(label, end)
+			li.append(label)
+			if (sessionLinks.has(row.id)) {
+				const copy = doc.createElement('button')
+				copy.className = 'link'
+				copy.textContent = 'Copy link'
+				copy.setAttribute(
+					'aria-label',
+					`Copy the link of ${sendRowLabel(row)}`,
+				)
+				copy.addEventListener('click', () =>
+					copyText(sessionLinks.get(row.id)),
+				)
+				li.append(copy)
+			}
+			li.append(end)
 			list.appendChild(li)
 		}
 	}
@@ -97,6 +115,7 @@ export function initSend({ $, send, showError, doc = document }) {
 			maxViews: $('send-views').value,
 			expiry: $('send-expiry').value,
 			customHours: $('send-custom').value,
+			sendPassword: $('send-protect').value,
 		})
 		if (res.error) {
 			showError('send-error', res.error)
@@ -104,8 +123,14 @@ export function initSend({ $, send, showError, doc = document }) {
 		}
 		// The link exists only here: the key is in its fragment, never stored.
 		$('send-link').value = res.link
+		if (res.id) sessionLinks.set(res.id, res.link)
 		$('send-result').hidden = false
-		for (const id of ['send-text', 'send-username', 'send-password']) {
+		for (const id of [
+			'send-text',
+			'send-username',
+			'send-password',
+			'send-protect',
+		]) {
 			$(id).value = ''
 		}
 		await loadSends()

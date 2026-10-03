@@ -131,6 +131,17 @@ func (f *fixture) reconcile(name string) {
 	}
 }
 
+// reconcileResult runs one loop and returns its result without asserting the
+// requeue, for tests where a lease shortens it.
+func (f *fixture) reconcileResult(name string) ctrl.Result {
+	f.t.Helper()
+	res, err := f.r.Reconcile(f.ctx, ctrl.Request{NamespacedName: types.NamespacedName{Namespace: f.ns, Name: name}})
+	if err != nil {
+		f.t.Fatalf("reconcile: %v", err)
+	}
+	return res
+}
+
 func (f *fixture) status(name string) v1.KeepiqSecret {
 	f.t.Helper()
 	var ks v1.KeepiqSecret
@@ -444,34 +455,37 @@ func TestRefusedTokenIsReported(t *testing.T) {
 	}
 }
 
-// 2.4: with leases advertised, a lease that lapses before the next loop is
-// renewed; a refused renewal makes the operator read again for a new lease.
-func TestLeasesAreRenewedAndRefetchedAfterRefusal(t *testing.T) {
+// 2.4: with leases advertised there is no renewal (keepiq#753). The loop
+// comes back just after the lease lapses, and then reads the whole envelope
+// again for a fresh lease; while the lease is live it is left alone.
+func TestALapsedLeaseIsReadAgain(t *testing.T) {
 	f := setup(t)
+	clock := time.Now()
+	f.r.Now = func() time.Time { return clock }
+	f.stub.Now = func() time.Time { return clock }
 	f.stub.Leases = true
-	f.stub.LeaseTTL = 45 * time.Second // shorter than refresh + margin
+	f.stub.LeaseTTL = 45 * time.Second // shorter than the refresh interval
 	f.keepiqSecret("db", dbItems()[:1])
-	f.reconcile("db")
+	if res := f.reconcileResult("db"); res.RequeueAfter > 46*time.Second || res.RequeueAfter < 45*time.Second {
+		t.Fatalf("requeue after %v, want just after the 45s lease", res.RequeueAfter)
+	}
 	st := f.status("db").Status.Items[0]
 	if st.LeaseID == "" || st.LeaseExpires == nil {
 		t.Fatalf("lease not recorded: %+v", st)
 	}
 
-	f.reconcile("db")
-	if f.stub.Renewals != 1 {
-		t.Fatalf("renewals = %d, want 1", f.stub.Renewals)
-	}
-	renewed := f.status("db").Status.Items[0]
-	if renewed.LeaseID != st.LeaseID || renewed.LeaseExpires == nil {
-		t.Fatalf("after renewal %+v", renewed)
+	clock = clock.Add(10 * time.Second)
+	f.reconcileResult("db")
+	if live := f.status("db").Status.Items[0]; live.LeaseID != st.LeaseID {
+		t.Fatalf("a live lease was replaced: %q -> %q", st.LeaseID, live.LeaseID)
 	}
 
-	f.stub.RefuseRenew = true
+	clock = clock.Add(40 * time.Second)
 	reads := countReads(f.stub)
-	f.reconcile("db")
-	refetched := f.status("db").Status.Items[0]
-	if countReads(f.stub) != reads+1 || refetched.LeaseID == st.LeaseID || refetched.LeaseID == "" {
-		t.Fatalf("after a refused renewal: reads %d -> %d, lease %q -> %q", reads, countReads(f.stub), st.LeaseID, refetched.LeaseID)
+	f.reconcileResult("db")
+	fresh := f.status("db").Status.Items[0]
+	if countReads(f.stub) != reads+1 || fresh.LeaseID == st.LeaseID || fresh.LeaseID == "" {
+		t.Fatalf("after the lease lapsed: reads %d -> %d, lease %q -> %q", reads, countReads(f.stub), st.LeaseID, fresh.LeaseID)
 	}
 	if c := f.ready("db"); c.Status != metav1.ConditionTrue {
 		t.Fatalf("Ready = %+v", c)
@@ -484,8 +498,8 @@ func TestWithoutLeasesNothingIsRenewed(t *testing.T) {
 	f.keepiqSecret("db", dbItems()[:1])
 	f.reconcile("db")
 	f.reconcile("db")
-	if st := f.status("db").Status.Items[0]; st.LeaseID != "" || f.stub.Renewals != 0 {
-		t.Fatalf("lease state without leases: %+v renewals=%d", st, f.stub.Renewals)
+	if st := f.status("db").Status.Items[0]; st.LeaseID != "" || st.LeaseExpires != nil {
+		t.Fatalf("lease state without leases: %+v", st)
 	}
 }
 

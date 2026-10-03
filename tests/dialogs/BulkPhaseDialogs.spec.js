@@ -28,8 +28,25 @@ import BulkMoveDialog from '../../src/dialogs/BulkMoveDialog.vue'
 import BulkShareDialog from '../../src/dialogs/BulkShareDialog.vue'
 import BulkTeamFolderDialog from '../../src/dialogs/BulkTeamFolderDialog.vue'
 import { useBulkStore } from '../../src/store/modules/bulk.js'
+import { useKeyProofPromptStore } from '../../src/store/modules/keyProofPrompt.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
+import { useShareStore } from '../../src/store/modules/share.js'
 import { useTeamFolderStore } from '../../src/store/modules/teamFolder.js'
+
+// Sharing needs a vault-key proof (keepiq#818). The proof itself is built by
+// sessionKeyProofHeaders; here it returns a fixed header and echoes the
+// password, so the tests can see that each request carried a proof.
+vi.mock('../../src/crypto/keyProof.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	sessionKeyProofHeaders: vi.fn(
+		async ({ purpose, boundValues, masterPassword }) => ({
+			headers: {
+				'X-Keepiq-Key-Proof': `proof(${purpose}|${(boundValues ?? []).join(',')})`,
+			},
+			masterPassword: masterPassword || 'from-prompt',
+		}),
+	),
+}))
 
 /** The chunked runner awaits per item, so one tick is not enough. */
 const flushPromises = () => new Promise((resolve) => setTimeout(resolve, 0))
@@ -125,6 +142,8 @@ describe.each(CASES)(
 			vi.spyOn(axios, 'post').mockResolvedValue({
 				data: { items: [{ status: 'created' }] },
 			})
+			// Share asks for the master password once before its run (keepiq#818).
+			vi.spyOn(useKeyProofPromptStore(), 'ask').mockResolvedValue('pw')
 		})
 
 		it('asks before the run: input, run button, selection-counted title', async () => {
@@ -202,5 +221,59 @@ describe('BulkShareDialog: a refused recipient is not a finished run', () => {
 		expect(wrapper.vm.finished).toBe(false)
 		expect(wrapper.find('[data-testid="bulk-share-run"]').exists()).toBe(true)
 		expect(title(wrapper)).toBe('Share {count} secrets')
+	})
+})
+
+// keepiq#818: a bulk share asks for the master password once, sends a proof
+// with every register-batch call, and a cancelled prompt starts nothing.
+describe('BulkShareDialog: the vault-key proof', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+		vi.spyOn(useSecretStore(), 'fetchSecret').mockResolvedValue({ key: 'k' })
+		vi.spyOn(axios, 'get').mockResolvedValue({ data: { certificate: 'cert' } })
+		vi.spyOn(useShareStore(), 'encryptForRecipient').mockResolvedValue({
+			key: 'enc',
+		})
+	})
+
+	it('asks once and sends a proof with every registration', async () => {
+		const ask = vi.spyOn(useKeyProofPromptStore(), 'ask').mockResolvedValue('pw')
+		const post = vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { items: [{ status: 'created' }] },
+		})
+		useBulkStore().setSelection(['a', 'b'])
+		const wrapper = mountDialog(BulkShareDialog)
+		await wrapper.setData({ targetUserId: 'bob' })
+		await wrapper.find('[data-testid="bulk-share-run"]').trigger('click')
+		await flushPromises()
+
+		expect(ask).toHaveBeenCalledTimes(1)
+		const batches = post.mock.calls.filter(([url]) =>
+			url.endsWith('/shares/register-batch'),
+		)
+		expect(batches).toHaveLength(2)
+		for (const [, , config] of batches) {
+			expect(config.headers['X-Keepiq-Key-Proof']).toBe(
+				'proof(share-register-batch|)',
+			)
+		}
+		// The password is not kept after the run.
+		expect(wrapper.vm.runPassword).toBe('')
+	})
+
+	it('starts nothing when the password prompt is cancelled', async () => {
+		vi.spyOn(useKeyProofPromptStore(), 'ask').mockRejectedValue(
+			new Error('cancelled'),
+		)
+		const post = vi.spyOn(axios, 'post')
+		useBulkStore().setSelection(['a'])
+		const wrapper = mountDialog(BulkShareDialog)
+		await wrapper.setData({ targetUserId: 'bob' })
+		await wrapper.find('[data-testid="bulk-share-run"]').trigger('click')
+		await flushPromises()
+
+		expect(post).not.toHaveBeenCalled()
+		expect(wrapper.vm.ran).toBe(false)
 	})
 })

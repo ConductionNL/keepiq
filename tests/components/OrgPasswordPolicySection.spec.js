@@ -70,7 +70,7 @@ describe('OrgPasswordPolicySection: passphrases', () => {
 		await flushPromises()
 
 		expect(put).toHaveBeenCalledWith(
-			'/apps/keepiq/api/settings/admin',
+			'/apps/keepiq/api/settings/admin/policies',
 			expect.objectContaining({
 				policy_enabled: true,
 				generator_allow_passphrase: true,
