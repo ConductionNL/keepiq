@@ -26,7 +26,7 @@ use OCA\Keepiq\Service\RecoveryAudit;
 use OCA\Keepiq\Service\RecoveryEnrolmentService;
 use OCA\Keepiq\Service\RecoveryKeyService;
 use OCA\Keepiq\Service\RecoveryPolicyService;
-use OCA\Keepiq\Settings\AdminSettings;
+use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -74,7 +74,7 @@ class RecoveryAdminController extends Controller {
 	 *
 	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 	 */
-	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[AuthorizedAdminSetting(settings: PeopleAdminSettings::class)]
 	public function show(): JSONResponse {
 		$key    = $this->keys->activeKey();
 		$active = null;
@@ -101,7 +101,7 @@ class RecoveryAdminController extends Controller {
 	 *
 	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 	 */
-	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[AuthorizedAdminSetting(settings: PeopleAdminSettings::class)]
 	#[PasswordConfirmationRequired]
 	public function update(string $policy = 'off', array $officers = [], int $threshold = 1): JSONResponse {
 		try {
@@ -133,7 +133,7 @@ class RecoveryAdminController extends Controller {
 	 *
 	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
 	 */
-	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[AuthorizedAdminSetting(settings: PeopleAdminSettings::class)]
 	#[PasswordConfirmationRequired]
 	public function retireKey(string $id): JSONResponse {
 		try {
@@ -155,7 +155,7 @@ class RecoveryAdminController extends Controller {
 	 *
 	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-force-revocation-warns-about-enrolled-users
 	 */
-	#[AuthorizedAdminSetting(settings: AdminSettings::class)]
+	#[AuthorizedAdminSetting(settings: PeopleAdminSettings::class)]
 	public function enrolled(string $suiteId = ''): JSONResponse {
 		return new JSONResponse(data: ['enrolled' => $this->enrolments->isSuiteEnrolled(suiteId: $suiteId)]);
 	}//end enrolled()

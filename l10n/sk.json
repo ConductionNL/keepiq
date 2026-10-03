@@ -1670,7 +1670,25 @@
         "Role of {member}": "Rola používateľa {member}",
         "Team folders you manage": "Tímové priečinky, ktoré spravujete",
         "Viewer": "Čitateľ",
-        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nemáte kópiu týchto tajomstiev, takže ich noví členovia zatiaľ nedostali. Vlastník ich môže zdieľať: {names}"
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nemáte kópiu týchto tajomstiev, takže ich noví členovia zatiaľ nedostali. Vlastník ich môže zdieľať: {names}",
+        "Admin areas": "Oblasti správy",
+        "Give a group only the parts of Keepiq administration it needs.": "Dajte skupine len tie časti správy Keepiq, ktoré potrebuje.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Stará skupina vault_admin má členov: {count}. Stále sa počíta ako oblasť Ľudia a odchody, kým ju neskoršia verzia neodstráni. Namiesto toho túto oblasť delegujte na skupinu.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegujte jednu alebo viac oblastí na skupinu na stránke oprávnení na správu. Správcovia inštancie majú každú oblasť.",
+        "Open administration privileges": "Otvoriť oprávnenia na správu",
+        "Policies": "Zásady",
+        "Applications and machine access": "Aplikácie a prístup strojov",
+        "People and offboarding": "Ľudia a odchody",
+        "Audit and compliance": "Audit a súlad",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "verzia, certifikačná autorita, prílohy, offline vyrovnávacia pamäť, kontrola únikov, typy tajomstiev a zálohy",
+        "master password, organisation password, vault policies, rotation, version history and trash": "hlavné heslo, heslo organizácie, zásady trezoru, rotácia, história verzií a kôš",
+        "application queue, application requests and machine leases": "front aplikácií, požiadavky aplikácií a prenájmy strojov",
+        "team offboarding, encryption suites and admin handover": "odchody z tímu, šifrovacie sady a prevzatie správcom",
+        "audit log, compliance reports, SIEM export and honey alerts": "auditný denník, správy o súlade, export SIEM a návnadové upozornenia",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Koľko verzií tajomstva sa uchováva, ako dlho a ako dlho zostávajú vymazané tajomstvá v koši.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limity šifrovaných príloh, vynucované na serveri v uložených šifrovaných bajtoch.",
+        "Type the suite ID again to confirm": "Na potvrdenie zadajte ID sady znova",
+        "This does not match the suite ID.": "Nezhoduje sa s ID sady."
     },
     "plurals": null
 }

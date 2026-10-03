@@ -34,7 +34,7 @@ use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\MigrationService;
 use OCA\Keepiq\Service\VaultKeyProofService;
-use OCA\Keepiq\Settings\AdminSettings;
+use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -564,14 +564,14 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @param string $id The suite ID
 	 *
-	 * @AuthorizedAdminSetting(AdminSettings::class)
+	 * @AuthorizedAdminSetting(PeopleAdminSettings::class)
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-revoked-as-compromised-cannot-be-reinstated
 	 */
-	#[AuthorizedAdminSetting(AdminSettings::class)]
+	#[AuthorizedAdminSetting(PeopleAdminSettings::class)]
 	#[PasswordConfirmationRequired]
 	public function reinstate(string $id): JSONResponse {
 		$userId = $this->userSession->getUser()->getUID();
@@ -612,11 +612,19 @@ class EncryptionSuiteController extends OCSController {
 	 * the owner path's acceptEmergencyLoss). Only the count crosses the wire — the
 	 * contacts' identities stay grantor-private.
 	 *
+	 * The administrator also types the suite id, echoed as `confirmSuiteId`, and
+	 * the request is refused with 400 before anything else when it is missing or
+	 * differs (keepiq#871). Unlike sudo mode, this holds on every user backend:
+	 * Nextcloud skips #[PasswordConfirmationRequired] for SSO logins and accepts
+	 * a confirmation from the last 30 minutes.
+	 *
 	 * @param string $id The suite ID
 	 * @param string $reason The required, free-form revocation reason
 	 * @param bool $markCompromised Treat the suite's secrets as compromised (default false)
+	 * @param string $confirmSuiteId The suite id the administrator typed to confirm;
+	 *                               must equal $id (keepiq#871)
 	 *
-	 * @AuthorizedAdminSetting(AdminSettings::class)
+	 * @AuthorizedAdminSetting(PeopleAdminSettings::class)
 	 *
 	 * @return JSONResponse
 	 *
@@ -627,15 +635,33 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 */
-	#[AuthorizedAdminSetting(AdminSettings::class)]
+	#[AuthorizedAdminSetting(PeopleAdminSettings::class)]
 	#[PasswordConfirmationRequired]
-	public function forceRevoke(string $id, string $reason, bool $markCompromised = false): JSONResponse {
+	public function forceRevoke(
+		string $id,
+		string $reason,
+		bool $markCompromised = false,
+		string $confirmSuiteId = '',
+	): JSONResponse {
 		$admin = $this->userSession->getUser();
 		if ($admin === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
 		$adminUid = $admin->getUID();
+
+		// The typed suite id is the backend-independent confirmation: sudo mode
+		// is skipped on SSO backends (keepiq#871). Checked before anything else.
+		if ($confirmSuiteId === '' || hash_equals(known_string: $id, user_string: $confirmSuiteId) === false) {
+			$this->suiteService->recordRevokeRefused(suiteId: $id, actorId: $adminUid, reasonCode: 'confirmation_mismatch', markCompromised: $markCompromised);
+			return new JSONResponse(
+				data: [
+					'error'   => 'confirmation_mismatch',
+					'message' => 'Type the suite id to confirm the force-revoke',
+				],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
 
 		if (trim($reason) === '') {
 			$this->suiteService->recordRevokeRefused(suiteId: $id, actorId: $adminUid, reasonCode: 'empty_reason', markCompromised: $markCompromised);
