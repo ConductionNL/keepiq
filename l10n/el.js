@@ -1272,7 +1272,7 @@ OC.L10N.register(
         "Removed the user from {count} team folders.": "Ο χρήστης αφαιρέθηκε από {count} φακέλους ομάδας.",
         "Approve a share": "Έγκριση κοινής χρήσης",
         "This approval link is incomplete. Open it again from the notification.": "Αυτός ο σύνδεσμος έγκρισης είναι ελλιπής. Ανοίξτε τον ξανά από την ειδοποίηση.",
-        "Deny": "Απόρριψη",
+        "Deny": "Άρνηση",
         "{user} joined a group you share a secret with. Share the secret with them too?": "Ο χρήστης {user} εντάχθηκε σε μια ομάδα με την οποία μοιράζεστε ένα μυστικό. Να μοιραστεί το μυστικό και μαζί του;",
         "{requester} asks you to share a secret with {user}.": "Ο χρήστης {requester} σας ζητά να μοιραστείτε ένα μυστικό με τον χρήστη {user}.",
         "Shared. The recipient can now open the secret.": "Κοινοποιήθηκε. Ο παραλήπτης μπορεί πλέον να ανοίξει το μυστικό.",
@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Αυτός ο κύριος κωδικός πρόσβασης δεν είναι σωστός.",
         "You are sharing with someone new. Enter your master password to confirm.": "Μοιράζεστε με κάποιο νέο άτομο. Εισαγάγετε τον κύριο κωδικό πρόσβασης για επιβεβαίωση.",
         "Enter your master password to confirm this share.": "Εισαγάγετε τον κύριο κωδικό πρόσβασης για να επιβεβαιώσετε αυτή την κοινή χρήση.",
-        "Enter your master password to confirm this delegation.": "Εισαγάγετε τον κύριο κωδικό πρόσβασης για να επιβεβαιώσετε αυτή την ανάθεση."
+        "Enter your master password to confirm this delegation.": "Εισαγάγετε τον κύριο κωδικό πρόσβασης για να επιβεβαιώσετε αυτή την ανάθεση.",
+        "Approve {member}": "Έγκριση {member}"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1272,7 +1272,7 @@ OC.L10N.register(
         "Removed the user from {count} team folders.": "Kasutaja eemaldati {count} meeskonnakaustast.",
         "Approve a share": "Kinnita jagamine",
         "This approval link is incomplete. Open it again from the notification.": "See kinnituslink on puudulik. Ava see uuesti teavitusest.",
-        "Deny": "Keela",
+        "Deny": "Keeldu",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} liitus grupiga, kellega sa jagad saladust. Kas jagada saladust ka temaga?",
         "{requester} asks you to share a secret with {user}.": "{requester} palub sul jagada saladust kasutajaga {user}.",
         "Shared. The recipient can now open the secret.": "Jagatud. Saaja saab nüüd saladuse avada.",
@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "See põhiparool ei ole õige.",
         "You are sharing with someone new. Enter your master password to confirm.": "Jagate uue inimesega. Kinnitamiseks sisestage põhiparool.",
         "Enter your master password to confirm this share.": "Selle jagamise kinnitamiseks sisestage põhiparool.",
-        "Enter your master password to confirm this delegation.": "Selle delegeerimise kinnitamiseks sisestage põhiparool."
+        "Enter your master password to confirm this delegation.": "Selle delegeerimise kinnitamiseks sisestage põhiparool.",
+        "Approve {member}": "Kinnita {member}"
     },
     "nplurals=2; plural=(n != 1);"
 )

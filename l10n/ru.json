@@ -1694,7 +1694,8 @@
         "That master password is not right.": "Этот мастер-пароль неверен.",
         "You are sharing with someone new. Enter your master password to confirm.": "Вы делитесь с новым человеком. Введите мастер-пароль для подтверждения.",
         "Enter your master password to confirm this share.": "Введите мастер-пароль, чтобы подтвердить этот общий доступ.",
-        "Enter your master password to confirm this delegation.": "Введите мастер-пароль, чтобы подтвердить это делегирование."
+        "Enter your master password to confirm this delegation.": "Введите мастер-пароль, чтобы подтвердить это делегирование.",
+        "Approve {member}": "Одобрить {member}"
     },
     "plurals": null
 }

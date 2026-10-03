@@ -1604,7 +1604,8 @@ OC.L10N.register(
         "That master password is not right.": "Dat masterwachtwoord klopt niet.",
         "You are sharing with someone new. Enter your master password to confirm.": "Je deelt met iemand nieuw. Voer je masterwachtwoord in om te bevestigen.",
         "Enter your master password to confirm this share.": "Voer je masterwachtwoord in om deze deling te bevestigen.",
-        "Enter your master password to confirm this delegation.": "Voer je masterwachtwoord in om deze delegatie te bevestigen."
+        "Enter your master password to confirm this delegation.": "Voer je masterwachtwoord in om deze delegatie te bevestigen.",
+        "Approve {member}": "{member} goedkeuren"
     },
     "nplurals=2; plural=(n != 1);"
 )

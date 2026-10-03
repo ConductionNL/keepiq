@@ -1272,7 +1272,7 @@ OC.L10N.register(
         "Removed the user from {count} team folders.": "De Benotzer gouf aus {count} Teamuerdner ewechgeholl.",
         "Approve a share": "Eng Deelung guttheeschen",
         "This approval link is incomplete. Open it again from the notification.": "Dëse Link fir d'Guttheeschen ass net komplett. Maach en nach eng Kéier aus der Notifikatioun op.",
-        "Deny": "Refuséieren",
+        "Deny": "Ofleenen",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} ass enger Grupp bäigetrueden, mat där s du e Geheimnis deels. Dat Geheimnis och mat him deelen?",
         "{requester} asks you to share a secret with {user}.": "{requester} freet dech, e Geheimnis mat {user} ze deelen.",
         "Shared. The recipient can now open the secret.": "Gedeelt. Den Empfänger kann d'Geheimnis elo opmaachen.",
@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Dëst Masterpasswuert ass net richteg.",
         "You are sharing with someone new. Enter your master password to confirm.": "Dir deelt mat enger neier Persoun. Gitt Äert Masterpasswuert an fir ze confirméieren.",
         "Enter your master password to confirm this share.": "Gitt Äert Masterpasswuert an fir dës Deelung ze confirméieren.",
-        "Enter your master password to confirm this delegation.": "Gitt Äert Masterpasswuert an fir dës Delegatioun ze confirméieren."
+        "Enter your master password to confirm this delegation.": "Gitt Äert Masterpasswuert an fir dës Delegatioun ze confirméieren.",
+        "Approve {member}": "{member} guttheeschen"
     },
     "nplurals=2; plural=(n != 1);"
 )

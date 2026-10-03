@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Þetta aðallykilorð er ekki rétt.",
         "You are sharing with someone new. Enter your master password to confirm.": "Þú ert að deila með nýjum aðila. Sláðu inn aðallykilorðið til að staðfesta.",
         "Enter your master password to confirm this share.": "Sláðu inn aðallykilorðið til að staðfesta þessa deilingu.",
-        "Enter your master password to confirm this delegation.": "Sláðu inn aðallykilorðið til að staðfesta þessa úthlutun."
+        "Enter your master password to confirm this delegation.": "Sláðu inn aðallykilorðið til að staðfesta þessa úthlutun.",
+        "Approve {member}": "Samþykkja {member}"
     },
     "nplurals=2; plural=(n != 1);"
 )

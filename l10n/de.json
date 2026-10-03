@@ -1670,7 +1670,8 @@
         "That master password is not right.": "Dieses Masterpasswort ist nicht richtig.",
         "You are sharing with someone new. Enter your master password to confirm.": "Sie teilen mit einer neuen Person. Geben Sie zur Bestätigung Ihr Masterpasswort ein.",
         "Enter your master password to confirm this share.": "Geben Sie Ihr Masterpasswort ein, um diese Freigabe zu bestätigen.",
-        "Enter your master password to confirm this delegation.": "Geben Sie Ihr Masterpasswort ein, um diese Delegierung zu bestätigen."
+        "Enter your master password to confirm this delegation.": "Geben Sie Ihr Masterpasswort ein, um diese Delegierung zu bestätigen.",
+        "Approve {member}": "{member} genehmigen"
     },
     "plurals": null
 }

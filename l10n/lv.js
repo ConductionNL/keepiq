@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Šī galvenā parole nav pareiza.",
         "You are sharing with someone new. Enter your master password to confirm.": "Jūs kopīgojat ar jaunu personu. Lai apstiprinātu, ievadiet galveno paroli.",
         "Enter your master password to confirm this share.": "Lai apstiprinātu šo kopīgošanu, ievadiet galveno paroli.",
-        "Enter your master password to confirm this delegation.": "Lai apstiprinātu šo deleģēšanu, ievadiet galveno paroli."
+        "Enter your master password to confirm this delegation.": "Lai apstiprinātu šo deleģēšanu, ievadiet galveno paroli.",
+        "Approve {member}": "Apstiprināt {member}"
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

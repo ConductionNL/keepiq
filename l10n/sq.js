@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Ky fjalëkalim kryesor nuk është i saktë.",
         "You are sharing with someone new. Enter your master password to confirm.": "Po ndani me dikë të ri. Shkruani fjalëkalimin kryesor për ta konfirmuar.",
         "Enter your master password to confirm this share.": "Shkruani fjalëkalimin kryesor për të konfirmuar këtë ndarje.",
-        "Enter your master password to confirm this delegation.": "Shkruani fjalëkalimin kryesor për të konfirmuar këtë delegim."
+        "Enter your master password to confirm this delegation.": "Shkruani fjalëkalimin kryesor për të konfirmuar këtë delegim.",
+        "Approve {member}": "Mirato {member}"
     },
     "nplurals=2; plural=(n != 1);"
 )
