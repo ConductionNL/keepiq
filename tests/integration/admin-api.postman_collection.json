@@ -1,0 +1,1483 @@
+{
+ "info": {
+  "name": "Keepiq admin API v1 (admin-public-api)",
+  "description": "Contract for the versioned admin API under /api/v1/admin. Seeds an Audit-only service account through Nextcloud's provisioning API and admin delegation, checks it reaches the Audit area and is refused every other area, and checks the admin endpoints carry no key material. Admin requests use {{baseUrl}}; the service account uses {{noAuthBase}}, a different host, so the two never share a session cookie.",
+  "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+ },
+ "auth": {
+  "type": "noauth"
+ },
+ "variable": [
+  {
+   "key": "auditorUser",
+   "value": "keepiq-newman-auditor"
+  },
+  {
+   "key": "auditorPass",
+   "value": "Kq-newman-audit-2026-area"
+  },
+  {
+   "key": "auditorGroup",
+   "value": "keepiq-newman-auditors"
+  }
+ ],
+ "item": [
+  {
+   "name": "0. Seed: an Audit-only service account",
+   "item": [
+    {
+     "name": "Create group keepiq-newman-auditors",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{adminUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{adminPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "POST",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/ocs/v2.php/cloud/groups?format=json",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "ocs",
+        "v2.php",
+        "cloud",
+        "groups"
+       ],
+       "query": [
+        {
+         "key": "format",
+         "value": "json"
+        }
+       ]
+      },
+      "body": {
+       "mode": "urlencoded",
+       "urlencoded": [
+        {
+         "key": "groupid",
+         "value": "{{auditorGroup}}"
+        }
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('status in [200, 400]', () => pm.expect([200, 400]).to.include(pm.response.code));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "Create user keepiq-newman-auditor",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{adminUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{adminPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "POST",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/ocs/v2.php/cloud/users?format=json",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "ocs",
+        "v2.php",
+        "cloud",
+        "users"
+       ],
+       "query": [
+        {
+         "key": "format",
+         "value": "json"
+        }
+       ]
+      },
+      "body": {
+       "mode": "urlencoded",
+       "urlencoded": [
+        {
+         "key": "userid",
+         "value": "{{auditorUser}}"
+        },
+        {
+         "key": "password",
+         "value": "{{auditorPass}}"
+        }
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('status in [200, 400]', () => pm.expect([200, 400]).to.include(pm.response.code));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "Add the user to the group",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{adminUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{adminPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "POST",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/ocs/v2.php/cloud/users/{{auditorUser}}/groups?format=json",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "ocs",
+        "v2.php",
+        "cloud",
+        "users",
+        "{{auditorUser}}",
+        "groups"
+       ],
+       "query": [
+        {
+         "key": "format",
+         "value": "json"
+        }
+       ]
+      },
+      "body": {
+       "mode": "urlencoded",
+       "urlencoded": [
+        {
+         "key": "groupid",
+         "value": "{{auditorGroup}}"
+        }
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('status in [200]', () => pm.expect([200]).to.include(pm.response.code));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "Delegate the Audit and compliance area to the group",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{adminUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{adminPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "POST",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/index.php/settings/authorizedgroups/saveSettings",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "index.php",
+        "settings",
+        "authorizedgroups",
+        "saveSettings"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\"newGroups\": [{\"gid\": \"{{auditorGroup}}\"}], \"class\": \"OCA\\\\Keepiq\\\\Settings\\\\AuditAdminSettings\"}"
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('status in [200]', () => pm.expect([200]).to.include(pm.response.code));"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "1. Index",
+   "item": [
+    {
+     "name": "GET /api/v1/admin as admin (200, apiVersion 1, every area)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{adminUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{adminPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "GET",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/admin",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin"
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('200', () => pm.response.to.have.status(200));",
+         "const d = pm.response.json();",
+         "pm.test('apiVersion 1', () => pm.expect(d.apiVersion).to.eql(1));",
+         "pm.test('serves v1', () => pm.expect(d.versions).to.include('v1'));",
+         "pm.test('an admin holds every area', () => pm.expect(d.areas).to.have.members(['general','policies','applications','people','audit']));",
+         "pm.test('no force revocation or reinstatement path', () => d.paths.forEach(p => { pm.expect(p.path).to.not.include('force-revoke'); pm.expect(p.path).to.not.include('reinstate'); }));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "GET /api/v1/admin as the auditor (200, audit only)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{auditorUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{auditorPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "GET",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/admin",
+       "host": [
+        "{{noAuthBase}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin"
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('200', () => pm.response.to.have.status(200));",
+         "pm.test('holds only audit', () => pm.expect(pm.response.json().areas).to.eql(['audit']));"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "2. Audit area",
+   "item": [
+    {
+     "name": "GET audit events as the auditor (200)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{auditorUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{auditorPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "GET",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/admin/audit?limit=5",
+       "host": [
+        "{{noAuthBase}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin",
+        "audit"
+       ],
+       "query": [
+        {
+         "key": "limit",
+         "value": "5"
+        }
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('200', () => pm.response.to.have.status(200));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "GET compliance reports as the auditor (200)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{auditorUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{auditorPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "GET",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/admin/compliance/reports",
+       "host": [
+        "{{noAuthBase}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin",
+        "compliance",
+        "reports"
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('200', () => pm.response.to.have.status(200));",
+         "pm.test('a list', () => pm.expect(pm.response.json()).to.be.an('array'));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "GET SIEM sinks as the auditor (200, no secrets)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{auditorUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{auditorPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "GET",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/admin/siem/sinks",
+       "host": [
+        "{{noAuthBase}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin",
+        "siem",
+        "sinks"
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('200', () => pm.response.to.have.status(200));",
+         "pm.test('no sink carries a secret', () => pm.response.json().forEach(s => { pm.expect(s).to.not.have.property('hmacSecret'); pm.expect(s).to.not.have.property('credential'); }));"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "3. Refusals for the Audit-only account",
+   "item": [
+    {
+     "name": "PUT policies as the auditor (403)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{auditorUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{auditorPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "PUT",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/admin/policies",
+       "host": [
+        "{{noAuthBase}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin",
+        "policies"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\"min_password_length\": 14}"
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('403', () => pm.response.to.have.status(403));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "GET policies as the auditor (403)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{auditorUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{auditorPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "GET",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/admin/policies",
+       "host": [
+        "{{noAuthBase}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin",
+        "policies"
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('403', () => pm.response.to.have.status(403));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "GET suites as the auditor (403)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{auditorUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{auditorPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "GET",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/admin/suites",
+       "host": [
+        "{{noAuthBase}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin",
+        "suites"
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('403', () => pm.response.to.have.status(403));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "GET applications as the auditor (403)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{auditorUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{auditorPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "GET",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/admin/applications",
+       "host": [
+        "{{noAuthBase}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin",
+        "applications"
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('403', () => pm.response.to.have.status(403));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "POST offboarding as the auditor (403)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{auditorUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{auditorPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "POST",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{noAuthBase}}/index.php/apps/keepiq/api/v1/admin/offboarding",
+       "host": [
+        "{{noAuthBase}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin",
+        "offboarding"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\"leavingUserId\": \"nobody\", \"successorUserId\": \"nobody2\"}"
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('403', () => pm.response.to.have.status(403));"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "4. Other areas as admin",
+   "item": [
+    {
+     "name": "GET policies (200)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{adminUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{adminPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "GET",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/admin/policies",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin",
+        "policies"
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('200', () => pm.response.to.have.status(200));",
+         "pm.test('a policies key', () => pm.expect(pm.response.json()).to.have.property('min_password_length'));",
+         "pm.test('no key of another area', () => pm.expect(pm.response.json()).to.not.have.property('audit_retention_days'));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "PUT policies with a key of another area (400)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{adminUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{adminPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "PUT",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/admin/policies",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin",
+        "policies"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\"audit_retention_days\": 400}"
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('400', () => pm.response.to.have.status(400));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "GET suites (200, no key material)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{adminUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{adminPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "GET",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/admin/suites?limit=10",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin",
+        "suites"
+       ],
+       "query": [
+        {
+         "key": "limit",
+         "value": "10"
+        }
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('200', () => pm.response.to.have.status(200));",
+         "const d = pm.response.json();",
+         "pm.test('paged', () => pm.expect(d.limit).to.eql(10));",
+         "pm.test('no private key or certificate', () => d.results.forEach(s => { pm.expect(s).to.not.have.property('privateKey'); pm.expect(s).to.not.have.property('certificate'); }));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "GET applications (200)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{adminUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{adminPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "GET",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/admin/applications",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin",
+        "applications"
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('200', () => pm.response.to.have.status(200));",
+         "pm.test('a list', () => pm.expect(pm.response.json()).to.be.an('array'));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "GET an unknown application (404)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{adminUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{adminPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "GET",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/admin/applications/00000000-0000-4000-8000-000000000000",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin",
+        "applications",
+        "00000000-0000-4000-8000-000000000000"
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('404', () => pm.response.to.have.status(404));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "GET the lease policy of an unknown application (404)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{adminUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{adminPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "GET",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/admin/applications/00000000-0000-4000-8000-000000000000/lease-policy",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin",
+        "applications",
+        "00000000-0000-4000-8000-000000000000",
+        "lease-policy"
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('404', () => pm.response.to.have.status(404));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "POST offboarding without users (400)",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{adminUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{adminPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "POST",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       },
+       {
+        "key": "Content-Type",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/index.php/apps/keepiq/api/v1/admin/offboarding",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "index.php",
+        "apps",
+        "keepiq",
+        "api",
+        "v1",
+        "admin",
+        "offboarding"
+       ]
+      },
+      "body": {
+       "mode": "raw",
+       "raw": "{\"leavingUserId\": \"\", \"successorUserId\": \"\"}"
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('400', () => pm.response.to.have.status(400));"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "9. Cleanup",
+   "item": [
+    {
+     "name": "Delete the service account",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{adminUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{adminPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "DELETE",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/ocs/v2.php/cloud/users/{{auditorUser}}?format=json",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "ocs",
+        "v2.php",
+        "cloud",
+        "users",
+        "{{auditorUser}}"
+       ],
+       "query": [
+        {
+         "key": "format",
+         "value": "json"
+        }
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('status in [200, 404]', () => pm.expect([200, 404]).to.include(pm.response.code));"
+        ]
+       }
+      }
+     ]
+    },
+    {
+     "name": "Delete the group",
+     "request": {
+      "auth": {
+       "type": "basic",
+       "basic": [
+        {
+         "key": "username",
+         "value": "{{adminUser}}",
+         "type": "string"
+        },
+        {
+         "key": "password",
+         "value": "{{adminPass}}",
+         "type": "string"
+        }
+       ]
+      },
+      "method": "DELETE",
+      "header": [
+       {
+        "key": "OCS-APIRequest",
+        "value": "true"
+       },
+       {
+        "key": "Accept",
+        "value": "application/json"
+       }
+      ],
+      "url": {
+       "raw": "{{baseUrl}}/ocs/v2.php/cloud/groups/{{auditorGroup}}?format=json",
+       "host": [
+        "{{baseUrl}}"
+       ],
+       "path": [
+        "ocs",
+        "v2.php",
+        "cloud",
+        "groups",
+        "{{auditorGroup}}"
+       ],
+       "query": [
+        {
+         "key": "format",
+         "value": "json"
+        }
+       ]
+      }
+     },
+     "event": [
+      {
+       "listen": "test",
+       "script": {
+        "type": "text/javascript",
+        "exec": [
+         "pm.test('status in [200, 404]', () => pm.expect([200, 404]).to.include(pm.response.code));"
+        ]
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}
