@@ -132,4 +132,20 @@ class AdminSettingsServiceTest extends TestCase {
 		$this->assertSame(['generator_allow_passphrase' => true], $metadata['before']);
 		$this->assertSame(['generator_allow_passphrase' => false], $metadata['after']);
 	}//end testPassphraseSwitchDefaultsOnAndIsAudited()
+
+	/**
+	 * The "enforce expiry policy" switch is gone (keepiq#746): the earliest
+	 * expiry always wins, so there is nothing to enforce. The admin payload
+	 * no longer carries it, and an update naming it stores nothing.
+	 *
+	 * @return void
+	 */
+	public function testTheExpiryEnforceSwitchIsGone(): void {
+		$this->assertArrayNotHasKey('expiry_policy_enforced', $this->service->getAdminSettings());
+
+		$this->service->updateAdminSettings(['expiry_policy_enforced' => true]);
+
+		$this->assertArrayNotHasKey('expiry_policy_enforced', $this->bools);
+		$this->assertArrayNotHasKey('expiry_policy_enforced', $this->service->getAdminSettings());
+	}//end testTheExpiryEnforceSwitchIsGone()
 }//end class
