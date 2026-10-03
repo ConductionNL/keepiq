@@ -1271,7 +1271,7 @@
         "Removed the user from {count} team folders.": "Потребителят е премахнат от {count} екипни папки.",
         "Approve a share": "Одобряване на споделяне",
         "This approval link is incomplete. Open it again from the notification.": "Тази връзка за одобрение е непълна. Отворете я отново от известието.",
-        "Deny": "Откажи",
+        "Deny": "Отказ",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} се присъедини към група, с която споделяте тайна. Да споделите ли тайната и с него?",
         "{requester} asks you to share a secret with {user}.": "{requester} ви моли да споделите тайна с {user}.",
         "Shared. The recipient can now open the secret.": "Споделено. Получателят вече може да отвори тайната.",
@@ -1664,7 +1664,13 @@
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Колко версии на дадена тайна се пазят, колко дълго и колко дълго изтритите тайни остават в кошчето.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Ограничения за шифровани прикачени файлове, налагани на сървъра в съхранени шифровани байтове.",
         "Type the suite ID again to confirm": "Въведете отново ID на пакета за потвърждение",
-        "This does not match the suite ID.": "Това не съвпада с ID на пакета."
+        "This does not match the suite ID.": "Това не съвпада с ID на пакета.",
+        "Confirm with your master password": "Потвърдете с главната си парола",
+        "Confirm": "Потвърждаване",
+        "That master password is not right.": "Тази главна парола не е правилна.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Споделяте с нов човек. Въведете главната си парола за потвърждение.",
+        "Enter your master password to confirm this share.": "Въведете главната си парола, за да потвърдите това споделяне.",
+        "Enter your master password to confirm this delegation.": "Въведете главната си парола, за да потвърдите това делегиране."
     },
     "plurals": null
 }

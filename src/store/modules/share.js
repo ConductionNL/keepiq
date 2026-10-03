@@ -18,9 +18,11 @@
  */
 
 import axios from '@nextcloud/axios'
+import { translate as t } from '@nextcloud/l10n'
 import { generateOcsUrl, generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
+import { PROOF_PURPOSE, sessionKeyProofHeaders } from '../../crypto/keyProof.js'
 
 /**
  * How many candidates one shareability probe may name.
@@ -307,11 +309,29 @@ export const useShareStore = defineStore('share', {
 		) {
 			this.loading = true
 			this.error = null
+			const url = generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/shares`)
+			const body = { targetUserId, recipientSecretId, groupShareId }
 			try {
-				const response = await axios.post(
-					generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/shares`),
-					{ targetUserId, recipientSecretId, groupShareId },
-				)
+				let response
+				try {
+					response = await axios.post(url, body)
+				} catch (refusal) {
+					// A share to someone the user does not share with yet needs a
+					// vault-key proof (keepiq#818); a known recipient does not, so
+					// ask for the password only when the server says so.
+					if (refusal?.response?.data?.error !== 'key_proof_required') {
+						throw refusal
+					}
+					const { headers } = await sessionKeyProofHeaders({
+						purpose: PROOF_PURPOSE.SHARE_NEW_RECIPIENT,
+						reason: t(
+							'keepiq',
+							'You are sharing with someone new. Enter your master password to confirm.',
+						),
+						boundValues: [secretId, targetUserId],
+					})
+					response = await axios.post(url, body, { headers })
+				}
 				this.shares.push(response.data)
 				return response.data
 			} catch (e) {
@@ -444,6 +464,41 @@ export const useShareStore = defineStore('share', {
 				throw e
 			} finally {
 				this.loading = false
+			}
+		},
+
+		/**
+		 * Register direct share rows through `/shares/register-batch`, which
+		 * needs a vault-key proof on every call (keepiq#818). The master
+		 * password is asked through the app-wide prompt unless the caller
+		 * already has it from earlier in the same action; it is returned so a
+		 * bulk run asks once and builds a fresh single-use proof per request.
+		 *
+		 * @param {Array<object>} rows The register-batch rows.
+		 * @param {object} [options] Options.
+		 * @param {string} [options.masterPassword] A password asked for earlier in this action.
+		 * @return {Promise<{items: Array<object>, masterPassword: string}>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
+		 */
+		async registerBatch(rows, { masterPassword = '' } = {}) {
+			const proof = await sessionKeyProofHeaders({
+				purpose: PROOF_PURPOSE.SHARE_REGISTER_BATCH,
+				reason: t(
+					'keepiq',
+					'Enter your master password to confirm this share.',
+				),
+				masterPassword,
+			})
+			const response = await axios.post(
+				generateUrl('/apps/keepiq/api/v1/shares/register-batch'),
+				{ shares: rows },
+				{ headers: proof.headers },
+			)
+			return {
+				items: Array.isArray(response.data?.items)
+					? response.data.items
+					: [],
+				masterPassword: proof.masterPassword,
 			}
 		},
 
