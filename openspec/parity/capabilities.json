@@ -5509,7 +5509,7 @@
       "id": "admin-04",
       "area": "admin",
       "name": "Remove a leaving user from every team folder in one step.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -5517,20 +5517,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-member-overview-and-offboarding on 2026-09-27 for the missing half: offboarding also removes the leaver's own team folder member rows; revoking derived shares and handing over owned team secrets is built. Before: src/components/settings/OffboardingSection.vue:150 (after OffboardingConfirmDialog) -> src/store/modules/teamFolder.js:220 POST /api/v1/team-folders/offboard -> lib/Controller/TeamFolderController.php:236 -> lib/Service/TeamFolderOffboardingService.php:83 offboard: revokeTeamSharesForUser (lib/Service/TeamFolderShareService.php:232) then transfer owned team secrets to a successor",
+        "state": "built",
+        "evidence": "lib/Service/TeamFolderOffboardingService.php offboard: revoke derived shares, transfer owned team secrets, then delete every direct user membership row (membershipsRemoved) and report covering group rows (stillCoveredByGroups); src/components/settings/OffboardingSection.vue summary; tests/e2e/workflows/member-overview-offboarding.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Nextcloud admin settings -> Keepiq -> Team offboarding (admin or vault_admin)",
-        "note": "One action revokes every team-folder-derived share and hands owned team secrets to a successor. It does not delete the user's team-folder member rows, so a direct user membership survives.",
-        "defects": [
-          {
-            "at": "lib/Service/TeamFolderOffboardingService.php:95",
-            "what": "Offboarding revokes derived share rows but never removes TeamFolderMember rows for the leaver; a later reconcile or share fan-out by the folder owner could re-share to them.",
-            "issue": null,
-            "needsLiveCheck": true
-          }
-        ],
-        "change": "openspec/changes/admin-member-overview-and-offboarding"
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> People and offboarding: Members row \"Offboard\" or Team offboarding",
+        "note": "Built 2026-10-04 (archived). Direct memberships are removed; group rows that still cover the leaver stay and are named in the result.",
+        "change": "openspec/changes/archive/2026-10-04-admin-member-overview-and-offboarding"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5775,7 +5767,7 @@
       "id": "admin-12",
       "area": "admin",
       "name": "See which users have set up a vault.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -5783,20 +5775,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-member-overview-and-offboarding on 2026-09-27 for the missing half: a list of which users have set up a vault; the count is built. Before: src/components/settings/ComplianceSection.vue:44 shows metrics.adoption.usersWithActiveSuite <- lib/Service/ComplianceReportService.php:107 countDistinct keepiq_enc_suites; no per-user list endpoint (open #37)",
+        "state": "built",
+        "evidence": "GET /api/v1/admin/members (lib/Controller/MemberOverviewController.php, lib/Service/MemberOverviewService.php) with status and search filters; src/components/settings/MemberOverviewSection.vue with Offboard and Revoke suite row actions; tests/e2e/workflows/member-overview-offboarding.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Nextcloud admin settings -> Keepiq -> Compliance section (count only)",
-        "note": "Admins see how many users have an active vault, not which ones. The encryption-suite admin section needs a suite id typed in by hand.",
-        "defects": [
-          {
-            "at": "src/components/settings/AdminSuiteSection.vue:24",
-            "what": "Force-revoke asks for a suite id but no screen lists users or suites to find it.",
-            "issue": "#37",
-            "needsLiveCheck": false
-          }
-        ],
-        "change": "openspec/changes/admin-member-overview-and-offboarding"
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> People and offboarding -> Members",
+        "note": "Built 2026-10-04 (archived). Metadata only: no certificate, key or ciphertext in a row.",
+        "change": "openspec/changes/archive/2026-10-04-admin-member-overview-and-offboarding"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -6199,7 +6183,7 @@
       "id": "admin-25",
       "area": "admin",
       "name": "New members are confirmed automatically, without an administrator handing over access by hand.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "unknown",
       "passbolt": "partial",
@@ -6207,12 +6191,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-auto-confirm-members on 2026-09-27. Before: lib/Service/TeamFolderService.php:496 approveJoin returns a fan-out payload the owner's browser must encrypt; src/modals/TeamFolderDialog.vue:469 shows pendingCount and src/store/modules/teamFolder.js:278 runFanOut shares keys when the owner runs it; approveJoin (teamFolder.js:202) has no caller in src",
+        "state": "built",
+        "evidence": "Policies switch team_folder_auto_confirm; GET /api/v1/team-folders/pending-confirmations and write-grade confirmers in POST /api/v1/team-folders/{id}/shares (lib/Service/TeamFolderConfirmationService.php, ConfirmerCopyResolver.php); src/store/modules/teamFolder.js autoConfirm() after unlock and every 15 minutes; tests/e2e/workflows/team-folder-auto-confirm.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Team folder dialog, pending members count and fan-out run by the owner",
-        "note": "A new team folder member gets access only when the owner's browser runs the key fan-out; there is no automatic confirmation.",
-        "change": "openspec/changes/admin-auto-confirm-members"
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Policies -> New team folder members; then any unlocked owner or write member",
+        "note": "Built 2026-10-04 (archived). The server never sees plaintext: an unlocked owner's or write member's browser encrypts for the newcomer.",
+        "change": "openspec/changes/archive/2026-10-04-admin-auto-confirm-members"
       },
       "rowSource": "competitor",
       "origin": "changelog",

@@ -175,7 +175,7 @@ class TeamFolderMembershipResolver {
 	 * @return array<int,array{userId:string,certificate:string}>
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.4
+	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-the-fan-out-never-re-shares-to-a-disabled-account
 	 */
 	public function eligibleRecipients(array $userIds): array {
 		$recipients = [];
@@ -209,7 +209,7 @@ class TeamFolderMembershipResolver {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.4
+	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-the-fan-out-never-re-shares-to-a-disabled-account
 	 */
 	private function isDisabledAccount(string $userId): bool {
 		$user = $this->userManager->get($userId);

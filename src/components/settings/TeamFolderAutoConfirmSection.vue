@@ -8,7 +8,7 @@
   member their copies without a click. The server never decrypts. The
   change is audited as a policy change.
 
-  @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.2
+  @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-administrator-switches-automatic-member-confirmation-on
 -->
 <template>
 	<CnSettingsSection
@@ -65,7 +65,7 @@ export default {
 	 * Load the current switch.
 	 *
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.2
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-administrator-switches-automatic-member-confirmation-on
 	 */
 	async created() {
 		try {
@@ -83,7 +83,7 @@ export default {
 		 * Save the switch on its own, so the policy audit records only it.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.2
+		 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-administrator-switches-automatic-member-confirmation-on
 		 */
 		async save() {
 			this.error = null

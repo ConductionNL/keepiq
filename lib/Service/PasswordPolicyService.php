@@ -184,7 +184,7 @@ class PasswordPolicyService {
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.1
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-administrator-switches-automatic-member-confirmation-on
 	 */
 	public function readPolicyKeys(): array {
 		$appId = Application::APP_ID;
@@ -233,7 +233,7 @@ class PasswordPolicyService {
 	 * @throws InvalidArgumentException On invalid policy values
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.1
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-administrator-switches-automatic-member-confirmation-on
 	 */
 	public function updatePolicySettings(array $data): void {
 		$this->vaultPolicies?->update(data: $data);

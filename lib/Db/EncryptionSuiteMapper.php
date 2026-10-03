@@ -309,7 +309,7 @@ class EncryptionSuiteMapper extends QBMapper {
 	 *
 	 * @return array<string,string> Newest non-active status, keyed by owner ID
 	 *
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.1
+	 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 	 */
 	public function latestInactiveStatusByOwners(string $ownerType, array $ownerIds): array {
 		if ($ownerIds === []) {

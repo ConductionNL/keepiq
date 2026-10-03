@@ -413,7 +413,7 @@ class TeamFolderService {
 	 * @throws InvalidArgumentException On not found / not authorized
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.3
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
 	 */
 	public function reconcile(string $teamFolderId, string $userId): array {
 		$teamFolder = $this->queries->loadManageableTeamFolder(teamFolderId: $teamFolderId, userId: $userId);
