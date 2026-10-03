@@ -14,17 +14,45 @@
  * vault, a pending approval or a used recovery request from an earlier one.
  * The accounts are deleted again in `deleteUsers()`.
  *
- * Accounts are created through the OCS provisioning API as the admin whose
- * session `global-setup.ts` stored, so the spec needs no extra credentials.
+ * Accounts are created through the OCS provisioning API as the admin, with
+ * the credentials `global-setup.ts` signs in with (see `adminApi()`).
  */
 import type { APIRequestContext, Browser, BrowserContext, Page } from '@playwright/test'
 
-import { expect } from '@playwright/test'
+import { expect, request as playwrightRequest } from '@playwright/test'
 import * as path from 'path'
 import { APP_BASE } from './_workflow-helpers.ts'
 
 /** The admin session `global-setup.ts` stored. */
 export const ADMIN_STATE = path.resolve(__dirname, '..', '.auth', 'admin.json')
+
+/**
+ * An API context that authenticates the admin with basic auth.
+ *
+ * Not the stored session: creating an account, and Keepiq's recovery
+ * settings, ask for a recent password confirmation, which a session loses
+ * after 30 minutes and basic auth carries on every request. The credentials
+ * are the ones `global-setup.ts` signs in with.
+ *
+ * @param baseURL The instance.
+ * @return The context; dispose it when done.
+ */
+export async function adminApi(baseURL: string | undefined): Promise<APIRequestContext> {
+	return playwrightRequest.newContext({
+		baseURL,
+		// No stored session: a session cookie would win over basic auth and
+		// bring back the expired confirmation.
+		storageState: { cookies: [], origins: [] },
+		httpCredentials: {
+			username: process.env.NC_ADMIN_USER ?? 'admin',
+			password: process.env.NC_ADMIN_PASS ?? 'admin',
+			// Without this the header waits for a 401 challenge, and Nextcloud
+			// answers an anonymous OCS call with 403 instead.
+			send: 'always',
+		},
+		extraHTTPHeaders: { 'OCS-APIRequest': 'true' },
+	})
+}
 
 /** A login password long and mixed enough for any password policy. */
 const LOGIN_PASSWORD_SUFFIX = 'Login-pass-2026!'
@@ -70,7 +98,7 @@ export async function createUsers(
 			headers: { 'OCS-APIRequest': 'true' },
 			form: { userid: user.uid, password: user.password, displayName: user.uid },
 		})
-		expect(response.status(), `create ${user.uid}`).toBe(200)
+		expect(response.status(), `create ${user.uid}: ${await response.text()}`).toBe(200)
 	}
 }
 

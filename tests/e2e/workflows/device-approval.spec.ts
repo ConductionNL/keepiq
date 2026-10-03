@@ -16,9 +16,9 @@
  *
  * @spec openspec/specs/new-device-approval/spec.md#requirement-both-devices-show-the-same-verification-phrase
  */
-import { expect, request as playwrightRequest, test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 import {
-	ADMIN_STATE,
+	adminApi,
 	api,
 	createUsers,
 	deleteUsers,
@@ -31,7 +31,7 @@ import { APP_BASE } from './_workflow-helpers.ts'
 test.describe('device approval', () => {
 	test('a second device unlocks after the first approves matching phrases', async ({ browser, baseURL }) => {
 		test.setTimeout(240_000)
-		const admin = await playwrightRequest.newContext({ baseURL, storageState: ADMIN_STATE })
+		const admin = await adminApi(baseURL)
 		const user = newVaultUser('dana')
 		await createUsers(admin, [user])
 
