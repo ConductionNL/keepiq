@@ -202,7 +202,7 @@ class SettingsController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 	 */
 	#[AuthorizedAdminSetting(PolicyAdminSettings::class)]
 	public function twoFactorGaps(array $groups = []): JSONResponse {

@@ -37,7 +37,7 @@ class ForbiddenException extends RuntimeException {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-work-logins-are-kept-in-team-folders
 	 */
 	public function policyCode(): ?string {
 		return null;

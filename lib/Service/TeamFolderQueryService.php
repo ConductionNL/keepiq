@@ -440,7 +440,7 @@ class TeamFolderQueryService {
 	 * @return array<int,TeamFolder>
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.3
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-work-logins-are-kept-in-team-folders
 	 */
 	public function ancestorTeamFolders(string $folderId): array {
 		$found = [];

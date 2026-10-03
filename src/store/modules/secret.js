@@ -503,7 +503,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {string} teamFolderId The team folder.
 		 * @param {object} data name, url, typeId, key, login, additionalFields (plaintext).
 		 * @return {Promise<object>} The stored owner row and the copy count.
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
 		 */
 		async contributeSecret(teamFolderId, data) {
 			const context = (

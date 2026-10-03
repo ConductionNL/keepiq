@@ -252,7 +252,7 @@ class SettingsService {
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 	 */
 	public function getPolicy(): array {
 		return $this->adminSettings->getPolicy(userId: $this->userSession->getUser()?->getUID());
