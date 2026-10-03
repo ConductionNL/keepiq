@@ -19,7 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Mcp;
 
-use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IUserSession;
@@ -39,12 +39,14 @@ class McpToolContext {
 	 *
 	 * @param IUserSession $userSession The session the agent acts in
 	 * @param IEventDispatcher $dispatcher The audit event dispatcher
+	 * @param AuditEventFactory $events Builds the audit event
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private IUserSession $userSession,
 		private IEventDispatcher $dispatcher,
+		private AuditEventFactory $events = new AuditEventFactory(),
 	) {
 	}//end __construct()
 
@@ -79,7 +81,7 @@ class McpToolContext {
 	 */
 	public function audit(string $userId, string $tool, int $resultCount): void {
 		$this->dispatcher->dispatchTyped(
-			AuditEvent::forMcp(
+			$this->events->forMcp(
 				actorId: $userId,
 				eventType: AuditEventTypes::MCP_TOOL_INVOKED,
 				objectType: 'mcp_tool',

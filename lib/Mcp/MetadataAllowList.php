@@ -19,6 +19,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Mcp;
 
+use InvalidArgumentException;
+
 /**
  * The only keys a Keepiq MCP tool result may carry, per result type.
  *
@@ -53,13 +55,13 @@ final class MetadataAllowList {
 	 *
 	 * @return array<string,scalar|null>
 	 *
-	 * @throws \InvalidArgumentException On an unknown result type
+	 * @throws InvalidArgumentException On an unknown result type
 	 *
 	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-no-tool-ever-returns-secret-material
 	 */
-	public static function project(array $row, string $type): array {
+	public function project(array $row, string $type): array {
 		if (isset(self::KEYS[$type]) === false) {
-			throw new \InvalidArgumentException('Unknown MCP result type: ' . $type);
+			throw new InvalidArgumentException('Unknown MCP result type: ' . $type);
 		}
 
 		$out = [];

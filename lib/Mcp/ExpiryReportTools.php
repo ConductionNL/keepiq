@@ -42,6 +42,7 @@ class ExpiryReportTools {
 	 * @param SecretMapper $secretMapper The caller's secrets (expiry dates)
 	 * @param ITimeFactory $time The clock
 	 * @param McpToolContext $context The principal and the audit
+	 * @param MetadataAllowList $allowList The keys a result may carry
 	 *
 	 * @return void
 	 */
@@ -50,6 +51,7 @@ class ExpiryReportTools {
 		private SecretMapper $secretMapper,
 		private ITimeFactory $time,
 		private McpToolContext $context,
+		private MetadataAllowList $allowList = new MetadataAllowList(),
 	) {
 	}//end __construct()
 
@@ -85,32 +87,7 @@ class ExpiryReportTools {
 		$now = $this->time->getDateTime();
 		$until = (clone $now)->modify('+' . $withinDays . ' days');
 
-		$certificates = [];
-		$certificateIds = [];
-		foreach ($this->certificates->inventory(userId: $userId, isAdmin: false)['stored'] as $row) {
-			$metadata = ($row['metadata'] ?? []);
-			$notAfter = ($metadata['notAfter'] ?? null) ?? ($row['expiresAt'] ?? null);
-			$when = $this->parse(value: $notAfter);
-			$certificateIds[(string)$row['id']] = true;
-			if ($when === null || $when > $until) {
-				continue;
-			}
-
-			$certificates[] = MetadataAllowList::project(
-				row: [
-					'id' => $row['id'],
-					'name' => $row['name'],
-					'subject' => ($metadata['subject'] ?? null),
-					'issuer' => ($metadata['issuer'] ?? null),
-					'serial' => ($metadata['serial'] ?? null),
-					'fingerprintSha256' => ($metadata['fingerprintSha256'] ?? null),
-					'notAfter' => $when->format(DateTimeInterface::ATOM),
-					'daysRemaining' => $this->daysBetween(from: $now, to: $when),
-					'expired' => ($when < $now),
-				],
-				type: 'certificate'
-			);
-		}//end foreach
+		[$certificates, $certificateIds] = $this->expiringCertificates(userId: $userId, now: $now, until: $until);
 
 		$secrets = [];
 		foreach ($this->secretMapper->findByOwner(ownerType: 'user', ownerId: $userId, state: SecretMapper::STATE_LIVE) as $secret) {
@@ -119,7 +96,7 @@ class ExpiryReportTools {
 				continue;
 			}
 
-			$secrets[] = MetadataAllowList::project(
+			$secrets[] = $this->allowList->project(
 				row: [
 					'id' => $secret->getId(),
 					'name' => $secret->getName(),
@@ -136,6 +113,49 @@ class ExpiryReportTools {
 	}//end expiryReport()
 
 	/**
+	 * The user's stored certificates that lapse by $until, and the ids of
+	 * every stored certificate (so the secret list does not repeat them).
+	 *
+	 * @param string $userId The principal
+	 * @param DateTime $now Now
+	 * @param DateTime $until The end of the window
+	 *
+	 * @return array{0: list<array<string,scalar|null>>, 1: array<string,true>}
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-expiry-report-tool
+	 */
+	private function expiringCertificates(string $userId, DateTime $now, DateTime $until): array {
+		$certificates = [];
+		$certificateIds = [];
+		foreach ($this->certificates->inventory(userId: $userId, isAdmin: false)['stored'] as $row) {
+			$metadata = ($row['metadata'] ?? []);
+			$notAfter = ($metadata['notAfter'] ?? null) ?? ($row['expiresAt'] ?? null);
+			$when = $this->parse(value: $notAfter);
+			$certificateIds[(string)$row['id']] = true;
+			if ($when === null || $when > $until) {
+				continue;
+			}
+
+			$certificates[] = $this->allowList->project(
+				row: [
+					'id' => $row['id'],
+					'name' => $row['name'],
+					'subject' => ($metadata['subject'] ?? null),
+					'issuer' => ($metadata['issuer'] ?? null),
+					'serial' => ($metadata['serial'] ?? null),
+					'fingerprintSha256' => ($metadata['fingerprintSha256'] ?? null),
+					'notAfter' => $when->format(DateTimeInterface::ATOM),
+					'daysRemaining' => $this->daysBetween(from: $now, to: $when),
+					'expired' => ($when < $now),
+				],
+				type: 'certificate'
+			);
+		}//end foreach
+
+		return [$certificates, $certificateIds];
+	}//end expiringCertificates()
+
+	/**
 	 * Parse an ISO 8601 value.
 	 *
 	 * @param mixed $value The value
@@ -147,7 +167,7 @@ class ExpiryReportTools {
 			return null;
 		}
 
-		$parsed = DateTime::createFromFormat(DateTimeInterface::ATOM, $value);
+		$parsed = date_create_from_format(DateTimeInterface::ATOM, $value);
 		if ($parsed === false) {
 			return null;
 		}

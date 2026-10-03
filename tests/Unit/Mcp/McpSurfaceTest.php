@@ -116,7 +116,7 @@ class McpSurfaceTest extends TestCase {
 			'key' => 'CIPHER-KEY', 'login' => 'CIPHER-LOGIN', 'additionalFields' => 'CIPHER-EXTRA',
 			'encryptionSuiteId' => 'suite-1', 'brandNewColumn' => 'x', 'nested' => ['id' => 1],
 		];
-		$projected = MetadataAllowList::project(row: $row, type: 'entry');
+		$projected = (new MetadataAllowList())->project(row: $row, type: 'entry');
 		$this->assertSame(['id', 'name', 'url', 'typeId', 'folderId'], array_keys($projected));
 		$this->assertTrue(self::onlyAllowed([$projected], MetadataAllowList::KEYS['entry']));
 
@@ -130,7 +130,7 @@ class McpSurfaceTest extends TestCase {
 		}
 
 		$this->expectException(InvalidArgumentException::class);
-		MetadataAllowList::project(row: [], type: 'unknown');
+		(new MetadataAllowList())->project(row: [], type: 'unknown');
 	}//end testAllowListStripsSecretMaterial()
 
 	/**

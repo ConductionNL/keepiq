@@ -44,6 +44,7 @@ class EntryMetadataTools {
 	 * @param SecretService $secretService The vault read path
 	 * @param EncryptionSuiteMapper $suiteMapper To tell a vault without an active suite
 	 * @param McpToolContext $context The principal and the audit
+	 * @param MetadataAllowList $allowList The keys a result may carry
 	 *
 	 * @return void
 	 */
@@ -51,6 +52,7 @@ class EntryMetadataTools {
 		private SecretService $secretService,
 		private EncryptionSuiteMapper $suiteMapper,
 		private McpToolContext $context,
+		private MetadataAllowList $allowList = new MetadataAllowList(),
 	) {
 	}//end __construct()
 
@@ -101,28 +103,36 @@ class EntryMetadataTools {
 	 */
 	private function rows(string $userId, ?string $folderId, ?string $typeId, ?string $query): array {
 		if ($query !== null && trim($query) !== '') {
-			$items = $this->secretService->search(userId: $userId, term: $query, page: 1, limit: self::LIMIT)['items'];
-			$items = array_values(
-				array_filter(
-					$items,
-					static fn (array $row): bool => ($folderId === null || ($row['folderId'] ?? null) === $folderId)
-						&& ($typeId === null || ($row['typeId'] ?? null) === $typeId)
-				)
+			$found = array_filter(
+				$this->secretService->search(userId: $userId, term: $query, page: 1, limit: self::LIMIT)['items'],
+				static fn (array $row): bool => ($folderId === null || ($row['folderId'] ?? null) === $folderId)
+					&& ($typeId === null || ($row['typeId'] ?? null) === $typeId)
 			);
-		} else {
-			$items = $this->secretService->list(
-				userId: $userId,
-				folderId: $folderId,
-				sort: null,
-				direction: 'asc',
-				page: 1,
-				limit: self::LIMIT,
-				typeId: $typeId
-			)['items'];
+			return $this->project(items: $found);
 		}
 
-		return array_values(array_map(static fn (array $row): array => MetadataAllowList::project(row: $row, type: 'entry'), $items));
+		$items = $this->secretService->list(
+			userId: $userId,
+			folderId: $folderId,
+			sort: null,
+			direction: 'asc',
+			page: 1,
+			limit: self::LIMIT,
+			typeId: $typeId
+		)['items'];
+		return $this->project(items: $items);
 	}//end rows()
+
+	/**
+	 * Project each row onto the entry allow-list.
+	 *
+	 * @param array<array-key,array<string,mixed>> $items The rows
+	 *
+	 * @return list<array<string,scalar|null>>
+	 */
+	private function project(array $items): array {
+		return array_values(array_map(fn (array $row): array => $this->allowList->project(row: $row, type: 'entry'), $items));
+	}//end project()
 
 	/**
 	 * Whether the user has an active encryption suite; without one the tool

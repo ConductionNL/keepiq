@@ -40,6 +40,7 @@ class RotationStatusTools {
 	 * @param RotationFlagService $flags The rotation flags
 	 * @param SecretMapper $secretMapper For the entry names
 	 * @param McpToolContext $context The principal and the audit
+	 * @param MetadataAllowList $allowList The keys a result may carry
 	 *
 	 * @return void
 	 */
@@ -47,6 +48,7 @@ class RotationStatusTools {
 		private RotationFlagService $flags,
 		private SecretMapper $secretMapper,
 		private McpToolContext $context,
+		private MetadataAllowList $allowList = new MetadataAllowList(),
 	) {
 	}//end __construct()
 
@@ -86,7 +88,7 @@ class RotationStatusTools {
 				$counts['compromised']++;
 			}
 
-			$rows[] = MetadataAllowList::project(
+			$rows[] = $this->allowList->project(
 				row: [
 					'id' => $flag->getSecretId(),
 					'name' => $this->nameOf(secretId: $flag->getSecretId()),
