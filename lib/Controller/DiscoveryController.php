@@ -127,7 +127,7 @@ class DiscoveryController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
-	 * @spec openspec/changes/app-own-certificate/tasks.md#1.2
+	 * @spec openspec/specs/secret-store-api/spec.md#requirement-an-application-reads-its-own-certificate
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
