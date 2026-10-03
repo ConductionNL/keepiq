@@ -81,32 +81,82 @@
 						<label>Type<select id="vault-type"><option value="">All types</option></select></label>
 					</div>
 					<button id="vault-new" class="primary">New item</button>
+					<button id="vault-folders-open" class="link">Folders</button>
 					<p id="vault-status" class="hint" role="status"></p>
 					<ul id="vault-list" class="candidates"></ul>
+				</div>
+
+				<div id="vault-folders" hidden>
+					<button id="folders-back" class="link">Back to the vault</button>
+					<h2>Folders</h2>
+					<div id="folders-notice" class="hint" hidden>
+						<p>Folder names are not encrypted. Server administrators can read them.</p>
+						<button id="folders-notice-ok" class="link">Got it</button>
+					</div>
+					<form id="folder-add" novalidate>
+						<label>New folder<input id="folder-add-name" type="text" maxlength="255" autocomplete="off"></label>
+						<label>Inside<select id="folder-add-parent"><option value="">No folder</option></select></label>
+						<button id="folder-add-save" type="submit" class="primary">Add folder</button>
+					</form>
+					<ul id="folder-tree" class="candidates"></ul>
+					<div id="folder-delete" hidden>
+						<p id="folder-delete-text"></p>
+						<label id="folder-delete-items-label" hidden>Its items<select id="folder-delete-items">
+							<option value="move">Move to the parent folder</option>
+							<option value="delete">Delete them</option>
+						</select></label>
+						<div id="folder-delete-subfolders"></div>
+						<button id="folder-delete-confirm" class="primary danger">Delete folder</button>
+						<button id="folder-delete-cancel" class="link">Cancel</button>
+					</div>
+					<p id="folders-error" class="error" role="alert" hidden></p>
 				</div>
 
 				<div id="vault-detail" hidden>
 					<button id="detail-back" class="link">Back to the vault</button>
 					<h2 id="detail-name"></h2>
-					<p id="detail-url" class="hint"></p>
-					<div class="field-row"><span class="field-label">Username</span><span id="detail-login" class="field-value"></span><button id="detail-copy-login" class="link">Copy</button></div>
-					<div class="field-row"><span class="field-label">Password</span><span id="detail-secret" class="field-value">••••••••</span><button id="detail-reveal" class="link" aria-pressed="false">Show</button><button id="detail-copy-secret" class="link">Copy</button></div>
+					<p id="detail-meta" class="hint"></p>
+					<div id="detail-blocked" hidden>
+						<p id="detail-blocked-reason" class="error"></p>
+						<p id="detail-migration" class="hint" hidden></p>
+						<button id="detail-open-web" class="link">Open Keepiq in Nextcloud</button>
+					</div>
+					<div id="detail-sections"></div>
 					<div class="row actions">
 						<button id="detail-edit" class="link">Edit</button>
+						<button id="detail-clone" class="link">Clone</button>
+						<button id="detail-move" class="link">Move</button>
 						<button id="detail-send" class="link">Send</button>
 						<button id="detail-delete" class="link danger">Delete</button>
+					</div>
+					<div id="detail-move-picker" hidden>
+						<label>Move to<select id="detail-move-folder"><option value="">No folder</option></select></label>
+						<button id="detail-move-save" class="primary">Move</button>
+						<button id="detail-move-cancel" class="link">Cancel</button>
 					</div>
 					<p id="detail-error" class="error" role="alert" hidden></p>
 				</div>
 
 				<form id="vault-edit" hidden novalidate>
 					<h2 id="edit-title">New item</h2>
-					<label>Name<input id="edit-name" type="text" maxlength="255" autocomplete="off" required></label>
-					<label>Website<input id="edit-url" type="url" autocomplete="off"></label>
-					<label>Username<input id="edit-login" type="text" autocomplete="off"></label>
-					<button id="edit-generate-username" type="button" class="link">Generate a username</button>
-					<label>Password<input id="edit-secret" type="password" autocomplete="new-password"></label>
-					<button id="edit-generate" type="button" class="link">Generate a password</button>
+					<label id="edit-type-label">Type<select id="edit-type"></select></label>
+					<label>Name<input id="edit-name" type="text" maxlength="4096" autocomplete="off" required></label>
+					<label>Website<input id="edit-url" type="url" maxlength="4096" autocomplete="off"></label>
+					<div id="edit-login-block">
+						<label>Username<input id="edit-login" type="text" maxlength="4096" autocomplete="off"></label>
+						<button id="edit-generate-username" type="button" class="link">Generate a username</button>
+					</div>
+					<div id="edit-secret-block">
+						<label id="edit-secret-label">Password<input id="edit-secret" type="password" autocomplete="new-password"></label>
+						<button id="edit-generate" type="button" class="link">Generate a password</button>
+					</div>
+					<div id="edit-composite"></div>
+					<label id="edit-notes-label">Notes<textarea id="edit-notes" rows="3"></textarea></label>
+					<fieldset id="edit-fields-block" class="fields">
+						<legend>Additional fields</legend>
+						<div id="edit-fields"></div>
+						<button id="edit-field-add" type="button" class="link">Add a field</button>
+					</fieldset>
 					<label>Folder<select id="edit-folder"><option value="">No folder</option></select></label>
 					<button id="edit-save" type="submit" class="primary">Save</button>
 					<button id="edit-cancel" type="button" class="link">Cancel</button>

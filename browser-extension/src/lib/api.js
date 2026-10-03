@@ -426,6 +426,69 @@ export async function listFolders(config) {
 }
 
 /**
+ * Create a folder.
+ *
+ * @param {object} config The account.
+ * @param {{name: string, parentId?: string|null}} body The folder.
+ * @return {Promise<object>} The folder.
+ * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+ */
+export function createFolder(config, body) {
+	return request(config, 'POST', '/api/v1/folders', body)
+}
+
+/**
+ * Rename a folder: only its name is sent.
+ *
+ * @param {object} config The account.
+ * @param {string} id The folder id.
+ * @param {string} name The new name.
+ * @return {Promise<object>} The folder.
+ * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+ */
+export function renameFolder(config, id, name) {
+	return request(config, 'PUT', '/api/v1/folders/' + encodeURIComponent(id), {
+		name,
+	})
+}
+
+/**
+ * A folder's direct item count and direct subfolders with their counts.
+ *
+ * @param {object} config The account.
+ * @param {string} id The folder id.
+ * @return {Promise<{directSecretCount: number, subfolders: Array<object>}>}
+ * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+ */
+export function folderChildren(config, id) {
+	return request(
+		config,
+		'GET',
+		'/api/v1/folders/' + encodeURIComponent(id) + '/children',
+	)
+}
+
+/**
+ * Delete a folder: plain when empty, with a cascade for a leaf with items,
+ * with a resolution plan when it has subfolders.
+ *
+ * @param {object} config The account.
+ * @param {string} id The folder id.
+ * @param {{cascade?: string, resolution?: object}} [how] From deleteRequest.
+ * @return {Promise<object>}
+ * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+ */
+export function deleteFolder(config, id, { cascade, resolution } = {}) {
+	const query = cascade ? '?cascade=' + encodeURIComponent(cascade) : ''
+	return request(
+		config,
+		'DELETE',
+		'/api/v1/folders/' + encodeURIComponent(id) + query,
+		resolution,
+	)
+}
+
+/**
  * Move a secret to the trash (it can be restored from the web app).
  *
  * @param {object} config The account.

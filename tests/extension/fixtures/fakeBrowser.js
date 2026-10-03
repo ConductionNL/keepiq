@@ -196,6 +196,37 @@ export function installServer(servers) {
 		if (path.startsWith('/api/v1/secrets?') && method === 'GET') {
 			return respond(200, { items: s.rows, total: s.rows.length, page: 1 })
 		}
+		// Folders, kept in s.folders (clients-extension-complete).
+		if (path === '/api/v1/folders' && method === 'POST') {
+			const folder = {
+				id: 'new-folder-' + ((s.folders ?? []).length + 1),
+				name: body.name,
+				parentId: body.parentId ?? null,
+			}
+			s.folders = [...(s.folders ?? []), folder]
+			return respond(201, folder)
+		}
+		if (/^\/api\/v1\/folders\/[^/]+\/children$/.test(path)) {
+			const id = decodeURIComponent(path.split('/')[4])
+			return respond(
+				200,
+				s.children?.[id] ?? { directSecretCount: 0, subfolders: [] },
+			)
+		}
+		if (path.startsWith('/api/v1/folders/') && method === 'PUT') {
+			const id = decodeURIComponent(path.slice('/api/v1/folders/'.length))
+			s.folders = (s.folders ?? []).map((f) =>
+				f.id === id ? { ...f, ...body } : f,
+			)
+			return respond(200, { id })
+		}
+		if (path.startsWith('/api/v1/folders/') && method === 'DELETE') {
+			const id = decodeURIComponent(
+				path.slice('/api/v1/folders/'.length).split('?')[0],
+			)
+			s.folders = (s.folders ?? []).filter((f) => f.id !== id)
+			return respond(200, { status: 'deleted' })
+		}
 		if (path === '/api/v1/folders') return respond(200, s.folders ?? [])
 		if (path.startsWith('/api/v1/secrets/') && method === 'PUT')
 			return respond(200, {

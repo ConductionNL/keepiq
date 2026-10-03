@@ -1,32 +1,31 @@
 /**
- * The popup's Vault tab: search and browse the vault, open an item to copy
- * or show its values, and add, edit or delete items. The worker decrypts
- * and encrypts; the popup only holds the open item's values, and drops them
- * when the item closes.
+ * The popup's Vault tab: search and browse the vault, open an item, and add,
+ * edit, clone, move or delete items. The worker decrypts and encrypts; this
+ * view holds the open item's values only while it is open.
  *
  * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
+ * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-edit-every-kind-of-item
  */
 
+import {
+	changedParts,
+	COMPOSITE_LABELS,
+	compositeFields,
+	draftFromItem,
+	formKind,
+	MASKED_COMPOSITE,
+	partsFromDraft,
+	validateDraft,
+} from '../lib/item-form.js'
 import { filterIndex, folderChoices, presentTypes } from '../lib/vault-index.js'
+import { initFolders } from './folder-view.js'
+import { clearDetail, renderDetail } from './item-detail.js'
 
-const MASK = '••••••••'
-
-/**
- * Copy text, quietly doing nothing where the clipboard is unavailable.
- *
- * @param {string} text The text.
- * @return {Promise<void>}
- */
-async function copyText(text) {
-	try {
-		await navigator.clipboard.writeText(text)
-	} catch {
-		// No clipboard (no focus, or not allowed): the value stays visible.
-	}
-}
+const UNSAVED = 'You have unsaved changes. Discard them?'
+const NEW_FOLDER = '__new__'
 
 /**
- * Replace a select's options after its first ("all") option.
+ * Replace a select's options after its first option.
  *
  * @param {HTMLSelectElement} select The select.
  * @param {Array<{value: string, label: string}>} options The options.
@@ -34,7 +33,7 @@ async function copyText(text) {
  */
 function fillSelect(select, options, doc) {
 	const keep = select.options[0]
-	select.replaceChildren(keep)
+	select.replaceChildren(...(keep ? [keep] : []))
 	for (const { value, label } of options) {
 		const option = doc.createElement('option')
 		option.value = value
@@ -53,7 +52,7 @@ function fillSelect(select, options, doc) {
  * @param {(kind: string, onPick: (value: string) => void) => Promise<void>} ctx.pickGenerated Open the Generator to pick a value for the form.
  * @param {(item: object) => void} ctx.sendItem Open the Send tab for an item.
  * @param {Document} [ctx.doc] The popup document.
- * @return {{open: () => Promise<void>}}
+ * @return {{open: () => Promise<void>, canLeave: () => boolean}}
  */
 export function initVault({
 	$,
@@ -65,22 +64,37 @@ export function initVault({
 }) {
 	let index = []
 	let folders = []
-	// The open item's decrypted values; dropped on close.
+	let types = []
+	let webAppUrl = ''
+	// The open item, decrypted; dropped when it closes.
 	let current = null
+	// The form: its type and the parts it opened with, to detect changes.
+	let form = null
 
 	/**
-	 * Show one of the three Vault views.
+	 * Show one of the three Vault views; leaving the detail drops its values.
 	 *
 	 * @param {'vault-browse'|'vault-detail'|'vault-edit'} view The view id.
 	 */
 	function showView(view) {
-		for (const id of ['vault-browse', 'vault-detail', 'vault-edit']) {
+		for (const id of [
+			'vault-browse',
+			'vault-detail',
+			'vault-edit',
+			'vault-folders',
+		]) {
 			$(id).hidden = id !== view
 		}
-		if (view !== 'vault-detail' && view !== 'vault-edit') {
+		if (view !== 'vault-edit') form = null
+		if (view === 'vault-browse') {
 			current = null
+			clearDetail({ $ })
 		}
 	}
+
+	/** @return {Array<{value: string, label: string}>} Folder choices. */
+	const folderOptions = () =>
+		folderChoices(folders).map((f) => ({ value: f.id, label: f.label }))
 
 	/** Render the filtered list. */
 	function renderList() {
@@ -99,19 +113,14 @@ export function initVault({
 			const button = doc.createElement('button')
 			button.className = 'candidate-fill'
 			button.textContent = entry.name + (entry.url ? ` (${entry.url})` : '')
-			if (entry.blocked) {
-				button.disabled = true
-				button.title = 'Open this item in Keepiq in Nextcloud'
-			} else {
-				button.addEventListener('click', () => openItem(entry.id))
-			}
+			button.addEventListener('click', () => openItem(entry.id))
 			li.appendChild(button)
 			list.appendChild(li)
 		}
 	}
 
 	/**
-	 * Open an item's detail view.
+	 * Open an item's detail view, fetched fresh.
 	 *
 	 * @param {string} id The item id.
 	 */
@@ -123,36 +132,208 @@ export function initVault({
 			return
 		}
 		current = item
-		$('detail-name').textContent = item.name
-		$('detail-url').textContent = item.url
-		$('detail-login').textContent = item.login || '—'
-		$('detail-secret').textContent = MASK
-		$('detail-reveal').textContent = 'Show'
-		$('detail-reveal').setAttribute('aria-pressed', 'false')
+		$('detail-move-picker').hidden = true
+		renderDetail({ $, doc }, item, folders)
 		showView('vault-detail')
 	}
 
 	/**
-	 * Open the edit form, for a new item or the open one.
+	 * The current draft, read from the form.
 	 *
-	 * @param {object|null} item The item to edit, or null for a new one.
+	 * @return {object}
 	 */
-	function openEdit(item) {
+	function readDraft() {
+		const kind = form.kind
+		const composite = {}
+		for (const field of compositeFields(kind)) {
+			composite[field] = $('edit-composite-' + field).value
+		}
+		const fields = [...$('edit-fields').querySelectorAll('.field-edit')].map(
+			(row) => ({
+				name: row.querySelector('.field-name').value,
+				value: row.querySelector('.field-value').value,
+			}),
+		)
+		return {
+			kind,
+			name: $('edit-name').value,
+			url: $('edit-url').value,
+			folderId: $('edit-folder').value || null,
+			login: $('edit-login').value,
+			secret: $('edit-secret').value,
+			notes: $('edit-notes').value,
+			composite,
+			fields,
+		}
+	}
+
+	/** @return {boolean} Whether the form differs from how it opened. */
+	const dirty = () =>
+		form !== null
+		&& Object.keys(changedParts(form.initialParts, partsFromDraft(readDraft())))
+			.length > 0
+
+	/**
+	 * Whether the user may leave the form: no changes, or they discard them.
+	 *
+	 * @return {boolean}
+	 */
+	function canLeave() {
+		return !dirty() || window.confirm(UNSAVED)
+	}
+
+	/**
+	 * Add one additional-field row.
+	 *
+	 * @param {string} name The field name.
+	 * @param {string} value The field value.
+	 */
+	function addFieldRow(name = '', value = '') {
+		const row = doc.createElement('div')
+		row.className = 'field-edit row'
+		const nameInput = doc.createElement('input')
+		nameInput.className = 'field-name'
+		nameInput.placeholder = 'Field name'
+		nameInput.setAttribute('aria-label', 'Field name')
+		nameInput.maxLength = 4096
+		nameInput.value = name
+		const valueInput = doc.createElement('input')
+		valueInput.className = 'field-value'
+		valueInput.type = 'password'
+		valueInput.setAttribute('aria-label', 'Field value')
+		valueInput.value = value
+		const show = doc.createElement('button')
+		show.type = 'button'
+		show.className = 'link'
+		show.textContent = 'Show'
+		show.setAttribute('aria-pressed', 'false')
+		show.addEventListener('click', () => {
+			const open = valueInput.type === 'text'
+			valueInput.type = open ? 'password' : 'text'
+			show.textContent = open ? 'Show' : 'Hide'
+			show.setAttribute('aria-pressed', open ? 'false' : 'true')
+		})
+		const remove = doc.createElement('button')
+		remove.type = 'button'
+		remove.className = 'link danger'
+		remove.textContent = 'Remove'
+		remove.setAttribute('aria-label', 'Remove this field')
+		remove.addEventListener('click', () => row.remove())
+		row.append(nameInput, valueInput, show, remove)
+		$('edit-fields').appendChild(row)
+	}
+
+	/**
+	 * Show the inputs for a form kind.
+	 *
+	 * @param {string} kind The form kind.
+	 */
+	function layoutFor(kind) {
+		$('edit-login-block').hidden = !(kind === 'login' || kind === 'generic')
+		$('edit-secret-block').hidden = !(
+			kind === 'login'
+			|| kind === 'generic'
+			|| kind === 'totp'
+			|| kind === 'passkey'
+		)
+		$('edit-generate').hidden = kind !== 'login' && kind !== 'generic'
+		$('edit-secret-label').firstChild.textContent =
+			kind === 'totp'
+				? 'Secret key or otpauth:// address'
+				: kind === 'login'
+					? 'Password'
+					: 'Value'
+		const composite = $('edit-composite')
+		composite.replaceChildren()
+		for (const field of compositeFields(kind)) {
+			const label = doc.createElement('label')
+			label.textContent = COMPOSITE_LABELS[field]
+			const input = doc.createElement('input')
+			input.id = 'edit-composite-' + field
+			input.type = MASKED_COMPOSITE.includes(field) ? 'password' : 'text'
+			input.autocomplete = 'off'
+			input.maxLength = 4096
+			label.appendChild(input)
+			composite.appendChild(label)
+		}
+	}
+
+	/**
+	 * Open the form for a new item, an edit or a clone.
+	 *
+	 * @param {object|null} item The decrypted item, or null for a new one.
+	 * @param {{clone?: boolean}} [how] clone: prefill from item, save as new.
+	 */
+	function openEdit(item, { clone = false } = {}) {
 		showError('edit-error', '')
-		$('edit-title').textContent = item ? 'Edit item' : 'New item'
-		$('edit-name').value = item?.name || ''
-		$('edit-url').value = item?.url || ''
-		$('edit-login').value = item?.login || ''
-		$('edit-secret').value = item?.secret || ''
+		const creating = !item || clone
+		const typeId =
+			item?.typeId
+			|| types.find((t) => t.name === 'login')?.id
+			|| types[0]?.id
+			|| ''
+		$('edit-title').textContent = clone
+			? 'Clone item'
+			: item
+				? 'Edit item'
+				: 'New item'
+		$('edit-type-label').hidden = !creating || clone
 		fillSelect(
-			$('edit-folder'),
-			folderChoices(folders).map((f) => ({ value: f.id, label: f.label })),
+			$('edit-type'),
+			types.map((t) => ({ value: t.id, label: t.name })),
 			doc,
 		)
-		$('edit-folder').value = item?.folderId || $('vault-folder').value || ''
-		$('vault-edit').dataset.id = item?.id || ''
+		$('edit-type').value = typeId
+		const typeName =
+			types.find((t) => t.id === typeId)?.name || item?.typeName || 'login'
+		const draft = draftFromItem(item, typeName)
+		if (clone) draft.name += ' - Clone'
+		fillEditFolders()
+		layoutFor(draft.kind)
+		$('edit-name').value = draft.name
+		$('edit-url').value = draft.url
+		$('edit-login').value = draft.login
+		$('edit-secret').value = draft.secret
+		$('edit-secret').type = 'password'
+		$('edit-notes').value = draft.notes
+		$('edit-folder').value =
+			draft.folderId
+			|| (creating && !clone ? $('vault-folder').value : '')
+			|| ''
+		for (const field of compositeFields(draft.kind)) {
+			$('edit-composite-' + field).value = draft.composite[field] || ''
+		}
+		$('edit-fields').replaceChildren()
+		for (const { name, value } of draft.fields) addFieldRow(name, value)
+		form = {
+			kind: draft.kind,
+			typeId,
+			typeName,
+			id: creating ? null : item.id,
+			// A clone or new item has nothing on the server yet: every part is new.
+			initialParts: creating
+				? partsFromDraft(draftFromItem(null, typeName))
+				: partsFromDraft(draftFromItem(item, typeName)),
+		}
 		showView('vault-edit')
 		$('edit-name').focus()
+	}
+
+	/** Fill the form's folder picker, with "New folder…" at the end. */
+	function fillEditFolders() {
+		fillSelect(
+			$('edit-folder'),
+			[...folderOptions(), { value: NEW_FOLDER, label: 'New folder…' }],
+			doc,
+		)
+	}
+
+	/** Reload the folders only, keeping the form as it is. */
+	async function reloadFolders() {
+		const result = await send('vault-list')
+		if (result.error) return
+		folders = result.folders || []
+		fillEditFolders()
 	}
 
 	/** Load the index, folders and types from the worker. */
@@ -165,11 +346,9 @@ export function initVault({
 		}
 		index = result.items || []
 		folders = result.folders || []
-		fillSelect(
-			$('vault-folder'),
-			folderChoices(folders).map((f) => ({ value: f.id, label: f.label })),
-			doc,
-		)
+		types = result.types || []
+		webAppUrl = result.webAppUrl || ''
+		fillSelect($('vault-folder'), folderOptions(), doc)
 		fillSelect(
 			$('vault-type'),
 			presentTypes(index).map((t) => ({ value: t, label: t })),
@@ -181,28 +360,76 @@ export function initVault({
 	for (const id of ['vault-search', 'vault-folder', 'vault-type']) {
 		$(id).addEventListener('input', renderList)
 	}
+	const folderView = initFolders({
+		$,
+		send,
+		showError,
+		getFolders: () => folders,
+		reload: load,
+		doc,
+	})
+	$('vault-folders-open').addEventListener('click', async () => {
+		showView('vault-folders')
+		await folderView.render()
+	})
+	$('folders-back').addEventListener('click', () => showView('vault-browse'))
+	// The form's folder picker can make a folder on the spot.
+	$('edit-folder').addEventListener('change', async () => {
+		if ($('edit-folder').value !== NEW_FOLDER) return
+		const name = window.prompt('Name of the new folder')
+		if (!name) {
+			$('edit-folder').value = ''
+			return
+		}
+		const res = await send('folder-create', { name, parentId: null })
+		if (res.error) {
+			$('edit-folder').value = ''
+			return showError('edit-error', res.error)
+		}
+		const keep = readDraft()
+		await reloadFolders()
+		$('edit-folder').value = res.id || ''
+		$('edit-name').value = keep.name
+	})
 	$('vault-new').addEventListener('click', () => openEdit(null))
 	$('detail-back').addEventListener('click', () => showView('vault-browse'))
-	$('detail-reveal').addEventListener('click', () => {
+	$('detail-open-web').addEventListener('click', () => {
+		if (webAppUrl) chrome.tabs.create({ url: webAppUrl })
+	})
+	$('detail-edit').addEventListener('click', async () => {
 		if (!current) return
-		const shown = $('detail-reveal').getAttribute('aria-pressed') === 'true'
-		$('detail-secret').textContent = shown ? MASK : current.secret
-		$('detail-reveal').textContent = shown ? 'Show' : 'Hide'
-		$('detail-reveal').setAttribute('aria-pressed', shown ? 'false' : 'true')
+		// Edit starts from the server's current value, not the open view.
+		const fresh = await send('vault-item', { id: current.id })
+		if (fresh.error) return showError('detail-error', fresh.error)
+		current = fresh
+		openEdit(fresh)
 	})
-	$('detail-copy-login').addEventListener('click', () => {
-		if (current) copyText(current.login || '')
+	$('detail-clone').addEventListener(
+		'click',
+		() => current && openEdit(current, { clone: true }),
+	)
+	$('detail-send').addEventListener('click', () => current && sendItem(current))
+	$('detail-move').addEventListener('click', () => {
+		fillSelect($('detail-move-folder'), folderOptions(), doc)
+		$('detail-move-folder').value = current?.folderId || ''
+		$('detail-move-picker').hidden = false
 	})
-	$('detail-copy-secret').addEventListener('click', () => {
-		if (current) copyText(current.secret || '')
+	$('detail-move-cancel').addEventListener('click', () => {
+		$('detail-move-picker').hidden = true
 	})
-	$('detail-edit').addEventListener('click', () => openEdit(current))
-	$('detail-send').addEventListener('click', () => {
-		if (current) sendItem(current)
+	$('detail-move-save').addEventListener('click', async () => {
+		const res = await send('vault-move', {
+			id: current.id,
+			folderId: $('detail-move-folder').value || null,
+		})
+		if (res.error) return showError('detail-error', res.error)
+		const id = current.id
+		await load()
+		await openItem(id)
 	})
 	$('detail-delete').addEventListener('click', async () => {
 		if (!current) return
-		// The browser's own confirm: a popup cannot be clicked by a page.
+		// The browser's own confirm: a page cannot click it.
 		if (
 			!window.confirm(
 				`Move "${current.name}" to the trash? You can restore it in Keepiq in Nextcloud.`,
@@ -211,13 +438,20 @@ export function initVault({
 			return
 		}
 		const res = await send('vault-trash', { id: current.id })
-		if (res.error) {
-			showError('detail-error', res.error)
-			return
-		}
+		if (res.error) return showError('detail-error', res.error)
 		showView('vault-browse')
 		await load()
 	})
+	$('edit-type').addEventListener('change', () => {
+		const typeName =
+			types.find((t) => t.id === $('edit-type').value)?.name || 'login'
+		form.kind = formKind(typeName)
+		form.typeId = $('edit-type').value
+		form.typeName = typeName
+		form.initialParts = partsFromDraft(draftFromItem(null, typeName))
+		layoutFor(form.kind)
+	})
+	$('edit-field-add').addEventListener('click', () => addFieldRow())
 	$('edit-generate').addEventListener('click', () =>
 		pickGenerated('password', (value) => {
 			$('edit-secret').value = value
@@ -230,30 +464,44 @@ export function initVault({
 		}),
 	)
 	$('edit-cancel').addEventListener('click', () => {
-		showView(current ? 'vault-detail' : 'vault-browse')
+		if (!canLeave()) return
+		form = null
+		if (current) {
+			renderDetail({ $, doc }, current, folders)
+			showView('vault-detail')
+		} else {
+			showView('vault-browse')
+		}
 	})
 	$('vault-edit').addEventListener('submit', async (event) => {
 		event.preventDefault()
 		showError('edit-error', '')
-		const id = $('vault-edit').dataset.id || undefined
-		const res = await send('vault-save', {
-			id,
-			name: $('edit-name').value,
-			url: $('edit-url').value.trim(),
-			login: $('edit-login').value,
-			secret: $('edit-secret').value,
-			folderId: $('edit-folder').value || null,
-		})
-		// Keep the user's input on an error, so nothing they typed is lost.
-		if (res.error) {
-			showError('edit-error', res.error)
+		const draft = readDraft()
+		const errors = validateDraft(draft)
+		if (Object.keys(errors).length > 0) {
+			showError('edit-error', Object.values(errors)[0])
 			return
 		}
-		$('edit-secret').value = ''
+		const parts = partsFromDraft(draft)
+		const changes = form.id ? changedParts(form.initialParts, parts) : parts
+		if (form.id && Object.keys(changes).length === 0) {
+			form = null
+			renderDetail({ $, doc }, current, folders)
+			return showView('vault-detail')
+		}
+		const res = await send('vault-save', {
+			id: form.id || undefined,
+			typeId: form.typeId,
+			typeName: form.typeName,
+			changes,
+		})
+		// On an error the form keeps everything the user typed.
+		if (res.error) return showError('edit-error', res.error)
 		$('edit-secret').type = 'password'
+		form = null
 		showView('vault-browse')
 		await load()
-		const saved = res.id || id
+		const saved = res.id
 		if (saved) await openItem(saved)
 	})
 
@@ -262,5 +510,6 @@ export function initVault({
 			showView('vault-browse')
 			await load()
 		},
+		canLeave,
 	}
 }

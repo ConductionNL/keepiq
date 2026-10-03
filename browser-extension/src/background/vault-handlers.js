@@ -20,6 +20,8 @@ import {
 import { installArgon2Wasm } from '../lib/argon2-wasm.js'
 import { credentialPayload, expirySeconds, maxViewsFrom } from '../lib/send-form.js'
 import { buildIndex } from '../lib/vault-index.js'
+import { writeErrorMessage } from '../lib/item-form.js'
+import { folderNameProblem } from '../lib/folder-rules.js'
 
 /** Longest secret name the server stores. */
 export const MAX_NAME_LENGTH = 255
@@ -58,16 +60,25 @@ export function buildVaultHandlers({
 		return account
 	}
 
+	// Per account: the secret types, id to name, fetched once.
+	const typeCache = new Map()
+
 	/**
-	 * A row of the active account, from the last list or fetched fresh.
+	 * The name of a secret type, or 'login'.
 	 *
 	 * @param {object} account The account.
-	 * @param {string} id The secret id.
-	 * @return {Promise<object>}
+	 * @param {string|null} typeId The type id.
+	 * @return {Promise<string>}
 	 */
-	async function rowOf(account, id) {
-		const cached = rowCache.get(account.id)?.get(id)
-		return cached || api.getSecret(account, id)
+	async function typeNameOf(account, typeId) {
+		if (!typeCache.has(account.id)) {
+			const types = await api.listTypes(account).catch(() => [])
+			typeCache.set(
+				account.id,
+				new Map(types.map((t) => [t.id, t.name || t.slug])),
+			)
+		}
+		return typeCache.get(account.id).get(typeId) || 'login'
 	}
 
 	return {
@@ -87,6 +98,7 @@ export function buildVaultHandlers({
 			await touchActivity(account.id)
 			return {
 				accountId: account.id,
+				webAppUrl: api.publicBase(account).replace(/\/public$/, '/'),
 				items: buildIndex(rows, types, folders),
 				folders: folders.map((f) => ({
 					id: f.id,
@@ -98,74 +110,244 @@ export function buildVaultHandlers({
 		},
 
 		/**
-		 * One item's decrypted login and value, for the detail view.
+		 * One item, fetched fresh and decrypted, for the detail view and the
+		 * form: a stale list row never seeds an edit. A blocked item is not
+		 * decrypted; its reason is returned instead.
 		 *
 		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-item-detail-with-copy-and-reveal
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-detail-sections-for-every-kind-of-item
 		 */
 		'vault-item': async (payload) => {
 			const account = await unlockedAccount()
-			const row = await rowOf(account, payload.id)
-			if (!row || row.blocked === true) {
-				throw new Error(
-					'This item cannot be opened here. Open it in the web app.',
-				)
+			const row = await api.getSecret(account, payload.id)
+			if (!row) {
+				throw new Error('This item no longer exists')
 			}
-			const { login, secret } = await vault.decryptSecret(account.id, row)
-			await touchActivity(account.id)
-			return {
+			const meta = {
 				id: row.id,
 				name: row.name || '',
 				url: row.url || '',
 				folderId: row.folderId || null,
 				typeId: row.typeId || null,
+				typeName: await typeNameOf(account, row.typeId),
+				createdAt: row.createdAt || null,
+				updatedAt: row.updatedAt || null,
+				expiresAt: row.expiresAt || null,
+			}
+			if (row.blocked === true) {
+				return {
+					...meta,
+					blocked: true,
+					blockedReason:
+						row.blockedReason || 'This item cannot be opened here.',
+					migrationError: row.migrationError || null,
+				}
+			}
+			const { login, secret } = await vault.decryptSecret(account.id, row)
+			let additionalFields = null
+			let additionalFieldsError = false
+			if (row.additionalFields) {
+				const json = await vault.decryptField(
+					account.id,
+					row.additionalFields,
+				)
+				try {
+					const parsed = JSON.parse(json)
+					if (
+						parsed
+						&& typeof parsed === 'object'
+						&& !Array.isArray(parsed)
+					) {
+						additionalFields = parsed
+					} else {
+						additionalFieldsError = true
+					}
+				} catch {
+					additionalFieldsError = true
+				}
+			}
+			await touchActivity(account.id)
+			return {
+				...meta,
+				blocked: false,
 				login,
 				secret,
+				additionalFields,
+				additionalFieldsError,
 			}
 		},
 
 		/**
-		 * Create or update an item: encrypted here, saved as ciphertext.
+		 * Create an item, or update only the parts that changed. Values are
+		 * encrypted here; the popup never sends ciphertext or receives keys.
 		 *
 		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-add-edit-and-delete-items
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-edit-every-kind-of-item
 		 */
 		'vault-save': async (payload) => {
 			const account = await unlockedAccount()
-			const name = String(payload.name || '').trim()
-			if (name === '') {
-				throw new Error('Give the item a name')
+			const changes = payload.changes || {}
+			const creating = !payload.id
+			if (creating || 'name' in changes) {
+				const name = String(changes.name ?? '').trim()
+				if (name === '') {
+					throw new Error('Give the item a name')
+				}
+				if (name.length > MAX_NAME_LENGTH) {
+					throw new Error(
+						`A name has at most ${MAX_NAME_LENGTH} characters`,
+					)
+				}
 			}
-			if (name.length > MAX_NAME_LENGTH) {
-				throw new Error(`A name has at most ${MAX_NAME_LENGTH} characters`)
+			if ('key' in changes) {
+				const refusal = await policyRefusalFor(
+					account,
+					String(changes.key ?? ''),
+					payload.typeName || 'login',
+				)
+				if (refusal !== null) {
+					throw new Error(refusal)
+				}
 			}
-			const secret = String(payload.secret || '')
-			const refusal = await policyRefusalFor(
-				account,
-				secret,
-				payload.typeName || 'login',
-			)
-			if (refusal !== null) {
-				throw new Error(refusal)
+			const body = {}
+			for (const field of ['name', 'url', 'folderId']) {
+				if (field in changes)
+					body[field] =
+						field === 'name'
+							? String(changes.name).trim()
+							: (changes[field] ?? null)
 			}
-			const body = {
-				name,
-				url: String(payload.url || ''),
-				folderId: payload.folderId || null,
-				key: await vault.encryptField(account.id, secret),
-				login: await vault.encryptField(
+			if ('key' in changes || creating)
+				body.key = await vault.encryptField(
 					account.id,
-					String(payload.login || ''),
-				),
-				encryptionSuiteId: vault.activeSuiteId(account.id),
+					String(changes.key ?? ''),
+				)
+			if ('login' in changes || creating)
+				body.login = await vault.encryptField(
+					account.id,
+					String(changes.login ?? ''),
+				)
+			if ('additionalFields' in changes) {
+				body.additionalFields = changes.additionalFields
+					? await vault.encryptField(
+							account.id,
+							JSON.stringify(changes.additionalFields),
+						)
+					: null
 			}
-			const saved = payload.id
-				? await api.updateSecret(account, payload.id, body)
-				: await api.createSecret(account, {
-						...body,
-						...(payload.typeId ? { typeId: payload.typeId } : {}),
-					})
+			if (
+				body.key !== undefined
+				|| body.login !== undefined
+				|| body.additionalFields
+			) {
+				body.encryptionSuiteId = vault.activeSuiteId(account.id)
+			}
+			let saved
+			try {
+				saved = creating
+					? await api.createSecret(account, {
+							...body,
+							...(payload.typeId ? { typeId: payload.typeId } : {}),
+						})
+					: await api.updateSecret(account, payload.id, body)
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
 			rowCache.delete(account.id)
 			await touchActivity(account.id)
 			return { ok: true, id: saved?.id || payload.id || null }
+		},
+
+		/**
+		 * Move an item to another folder: only its folder changes.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-clone-and-move
+		 */
+		'vault-move': async (payload) => {
+			const account = await unlockedAccount()
+			try {
+				await api.updateSecret(account, payload.id, {
+					folderId: payload.folderId || null,
+				})
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
+			rowCache.delete(account.id)
+			return { ok: true }
+		},
+
+		/**
+		 * Create a folder.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 */
+		'folder-create': async (payload) => {
+			const account = await unlockedAccount()
+			const problem = folderNameProblem(payload.name)
+			if (problem) throw new Error(problem)
+			try {
+				const folder = await api.createFolder(account, {
+					name: String(payload.name).trim(),
+					parentId: payload.parentId || null,
+				})
+				return { ok: true, id: folder?.id || null }
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
+		},
+
+		/**
+		 * Rename a folder.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 */
+		'folder-rename': async (payload) => {
+			const account = await unlockedAccount()
+			const problem = folderNameProblem(payload.name)
+			if (problem) throw new Error(problem)
+			try {
+				await api.renameFolder(
+					account,
+					payload.id,
+					String(payload.name).trim(),
+				)
+				return { ok: true }
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
+		},
+
+		/**
+		 * What a folder holds, to choose how to delete it.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 */
+		'folder-children': async (payload) => {
+			const account = await unlockedAccount()
+			try {
+				return await api.folderChildren(account, payload.id)
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
+		},
+
+		/**
+		 * Delete a folder with the user's choice for what it holds.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 */
+		'folder-delete': async (payload) => {
+			const account = await unlockedAccount()
+			try {
+				await api.deleteFolder(account, payload.id, {
+					cascade: payload.cascade,
+					resolution: payload.resolution,
+				})
+				rowCache.delete(account.id)
+				return { ok: true }
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
 		},
 
 		/**
