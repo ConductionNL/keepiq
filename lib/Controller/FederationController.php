@@ -81,12 +81,13 @@ class FederationController extends Controller {
 	#[NoAdminRequired]
 	#[UserRateLimit(limit: 60, period: 60)]
 	public function recipientCertificate(string $cloudId = ''): JSONResponse {
-		if ($this->userSession->getUser() === null) {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
 		try {
-			return new JSONResponse(data: $this->certificates->lookup(cloudId: $cloudId));
+			return new JSONResponse(data: $this->certificates->lookup(cloudId: $cloudId, userId: $user->getUID()));
 		} catch (InvalidArgumentException $exception) {
 			$status = Http::STATUS_NOT_FOUND;
 			if ($exception->getMessage() === 'not_a_partner') {

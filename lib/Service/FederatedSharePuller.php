@@ -71,13 +71,16 @@ class FederatedSharePuller {
 	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function pull(FederatedInbound $row): array {
+		$recipient = $this->cloudIdManager->getCloudId($row->getRecipientUid(), null)->getId();
 		try {
 			$partner = $this->partnerMapper->findById(id: $row->getPartnerId());
 			$response = $this->ocmDiscovery->requestRemoteOcmEndpoint(
 				FederatedCertificateService::OCM_CAPABILITY,
 				$partner->getBaseUrl(),
 				FederatedCertificateService::OCM_CAPABILITY . '/shares/' . rawurlencode($row->getRemoteShareId()),
-				['sharedSecret' => $this->crypto->decrypt($row->getSharedSecretEnc())],
+				// `sender` names the recipient, so the sender's Nextcloud can take
+				// the signer's origin from it to verify an RFC 9421 signature.
+				['sharedSecret' => $this->crypto->decrypt($row->getSharedSecretEnc()), 'sender' => $recipient],
 				'post',
 			);
 			$status = $response->getStatusCode();
@@ -86,7 +89,6 @@ class FederatedSharePuller {
 			throw new RuntimeException('pull_failed');
 		}
 
-		$recipient = $this->cloudIdManager->getCloudId($row->getRecipientUid(), null)->getId();
 		if ($status !== 200 || is_array($body) === false
 			|| is_string($body['key'] ?? null) === false || $body['key'] === ''
 			|| ($body['recipientCloudId'] ?? null) !== $recipient
