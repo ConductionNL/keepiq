@@ -29,7 +29,7 @@ use ReflectionMethod;
  * (crypto-new-device-approval tasks 1.2 to 1.6). Alice owns request `r-1`;
  * Mallory is another signed-in user.
  *
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
  */
 class DeviceApprovalControllerTest extends TestCase {
 

@@ -476,7 +476,7 @@ async function doUnlockRaw(payload) {
  * Whether device approval is on, and the active account's open request.
  *
  * @return {Promise<{enabled: boolean, request: object|null}>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
  */
 async function doDeviceApprovalState() {
 	const account = await activeAccount()
@@ -490,7 +490,7 @@ async function doDeviceApprovalState() {
  * Start "Approve from another device" for the active account.
  *
  * @return {Promise<object>} The request: id, phrase, expiry and status.
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
  */
 async function doDeviceApprovalStart() {
 	const account = await activeAccount()
@@ -503,7 +503,7 @@ async function doDeviceApprovalStart() {
  * through the same raw-key unlock as a passkey.
  *
  * @return {Promise<{status: string}>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
  */
 async function doDeviceApprovalPoll() {
 	const account = await activeAccount()
@@ -519,7 +519,7 @@ async function doDeviceApprovalPoll() {
  * Stop waiting for an approval.
  *
  * @return {Promise<{ok: boolean}>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
  */
 async function doDeviceApprovalCancel() {
 	await deviceApproval.cancel(await activeAccount())

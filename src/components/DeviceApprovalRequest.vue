@@ -7,7 +7,7 @@
   shows the verification phrase, and polls every three seconds until the
   user approves on a device where Keepiq is unlocked. Emits `unlocked`.
 
-  @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+  @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
 -->
 <template>
 	<div class="device-approval-request" data-testid="device-approval-request">
@@ -56,7 +56,7 @@
 			</NcButton>
 		</div>
 
-		<div v-else class="device-approval-request__waiting">
+		<div v-else-if="request" class="device-approval-request__waiting">
 			<p v-if="request.status === 'pending'">
 				{{
 					t(
@@ -131,14 +131,14 @@ export default {
 
 	computed: {
 		/**
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
 		 */
 		store() {
 			return useDeviceApprovalStore()
 		},
 
 		/**
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
 		 */
 		request() {
 			return this.store.request
@@ -149,7 +149,7 @@ export default {
 	 * Offer the administrator path only to an enrolled user (D6).
 	 *
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
+	 * @spec openspec/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
 	 */
 	async created() {
 		try {
@@ -170,7 +170,7 @@ export default {
 		 * Ask for approval and start waiting.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
 		 */
 		async start() {
 			this.starting = true
@@ -195,7 +195,7 @@ export default {
 		 * One poll; stop on any outcome other than pending.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
 		 */
 		async poll() {
 			try {
@@ -217,7 +217,7 @@ export default {
 		 * File a recovery request with purpose `device` (D6).
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
 		 */
 		async askOrganisation() {
 			this.starting = true
@@ -236,7 +236,7 @@ export default {
 		 * Check whether an officer handed the key over, and unlock if so.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
 		 */
 		async checkOrganisation() {
 			this.starting = true
@@ -268,7 +268,7 @@ export default {
 		 * Stop waiting and forget the one-time key.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
 		 */
 		cancel() {
 			this.stopPolling()
@@ -277,7 +277,7 @@ export default {
 
 		/**
 		 * @return {void}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
 		 */
 		stopPolling() {
 			if (this.timer) {

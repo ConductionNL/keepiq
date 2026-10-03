@@ -700,7 +700,7 @@ export const REQUEST_SECRET_HEADER = 'X-Keepiq-Request-Secret'
  *
  * @param {object} config The paired config.
  * @return {Promise<boolean>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
  */
 export async function deviceApprovalEnabled(config) {
 	try {
@@ -717,7 +717,7 @@ export async function deviceApprovalEnabled(config) {
  * @param {object} config The paired config.
  * @param {{publicKey: string, deviceLabel: string}} body The one-time public key (base64) and a label.
  * @return {Promise<{id: string, requestSecret: string, expiresAt: string}>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
  */
 export function createDeviceApproval(config, body) {
 	return request(config, 'POST', '/api/v1/device-approvals', {
@@ -734,7 +734,7 @@ export function createDeviceApproval(config, body) {
  * @param {string} id The request id.
  * @param {string} secret The request secret the create call returned.
  * @return {Promise<{status: string, sealedUnlockKey?: string}>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
  */
 export function pickupDeviceApproval(config, id, secret) {
 	return request(
@@ -752,7 +752,7 @@ export function pickupDeviceApproval(config, id, secret) {
  * @param {object} config The paired config.
  * @param {string} id The request id.
  * @return {Promise<object>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
  */
 export function endDeviceApproval(config, id) {
 	return request(
