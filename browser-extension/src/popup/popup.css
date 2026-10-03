@@ -139,19 +139,18 @@ button.link {
 	background: #f9fafb;
 }
 
+/* Dark surfaces: the system preference unless data-theme says light, or
+   data-theme dark on any system. The tokens are set with the shell below. */
 @media (prefers-color-scheme: dark) {
-	:root {
-		--fg: #e5e7eb;
-		--bg: #1f2937;
-		--border: #374151;
-		--muted: #9ca3af;
-	}
-	.candidate-fill {
+	:root:not([data-theme='light']) .candidate-fill,
+	:root:not([data-theme='light']) .save-prompt {
 		background: #111827;
 	}
-	.save-prompt {
-		background: #111827;
-	}
+}
+
+:root[data-theme='dark'] .candidate-fill,
+:root[data-theme='dark'] .save-prompt {
+	background: #111827;
 }
 
 .account-bar {
@@ -344,13 +343,21 @@ input[type='range'] {
 }
 
 @media (prefers-color-scheme: dark) {
-	.gen-digit {
+	:root:not([data-theme='light']) .gen-digit {
 		color: #6ee7b7;
 	}
 
-	.gen-special {
+	:root:not([data-theme='light']) .gen-special {
 		color: #fdba74;
 	}
+}
+
+:root[data-theme='dark'] .gen-digit {
+	color: #6ee7b7;
+}
+
+:root[data-theme='dark'] .gen-special {
+	color: #fdba74;
 }
 
 /* Item detail sections and the item form (clients-extension-complete) */
@@ -392,4 +399,69 @@ fieldset.fields {
 	border-radius: 6px;
 	padding: 8px;
 	margin: 8px 0;
+}
+
+/* Popup shell (clients-extension-complete): theme tokens, fixed header and
+   tab bar, size. Colours come from the tokens above; dark values follow the
+   system, and data-theme on the root overrides it either way. */
+:root {
+	color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		--cobalt: #8fb0ea;
+		--fg: #e5e7eb;
+		--muted: #9ca3af;
+		--border: #374151;
+		--error: #f87171;
+		--bg: #1f2937;
+	}
+}
+
+:root[data-theme='dark'] {
+	--cobalt: #8fb0ea;
+	--fg: #e5e7eb;
+	--muted: #9ca3af;
+	--border: #374151;
+	--error: #f87171;
+	--bg: #1f2937;
+}
+
+body {
+	width: 380px;
+	max-height: 600px;
+	overflow-y: auto;
+	background: var(--bg);
+}
+
+body.popped-out {
+	width: auto;
+	max-height: none;
+}
+
+input,
+select,
+textarea {
+	background: var(--bg);
+	color: var(--fg);
+}
+
+#view-unlocked > header {
+	position: sticky;
+	top: 0;
+	z-index: 1;
+	background: var(--bg);
+	padding-bottom: 4px;
+}
+
+#view-unlocked > .tabs {
+	position: sticky;
+	bottom: 0;
+	z-index: 1;
+	margin: 12px -16px -16px;
+	padding: 0 8px;
+	border-top: 1px solid var(--border);
+	border-bottom: 0;
+	background: var(--bg);
 }

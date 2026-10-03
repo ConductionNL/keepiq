@@ -24,4 +24,4 @@
 
 ## 5. Popup shell
 
-- [ ] 5.1 Tab bar, pop-out, remembered tab, theme.
+- [x] 5.1 Tab bar, pop-out, remembered tab, theme.

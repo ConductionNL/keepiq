@@ -50,15 +50,10 @@
 		<section id="view-unlocked" hidden>
 			<header class="row">
 				<span id="active-host" class="host"></span>
-				<button id="settings-btn" class="link">Settings</button>
+				<button id="popout-btn" class="link" title="Open Keepiq in its own window">Pop out</button>
+				<button id="settings-btn" class="link" hidden>Settings</button>
 				<button id="lock-btn" class="link">Lock</button>
 			</header>
-			<nav class="tabs" role="tablist" aria-label="Keepiq">
-				<button id="tab-site" role="tab" aria-controls="panel-site" aria-selected="true">This site</button>
-				<button id="tab-vault" role="tab" aria-controls="panel-vault" aria-selected="false">Vault</button>
-				<button id="tab-generator" role="tab" aria-controls="panel-generator" aria-selected="false">Generator</button>
-				<button id="tab-send" role="tab" aria-controls="panel-send" aria-selected="false">Send</button>
-			</nav>
 
 			<div id="panel-site" role="tabpanel" aria-labelledby="tab-site">
 				<ul id="candidates" class="candidates"></ul>
@@ -273,6 +268,13 @@
 				<ul id="send-list" class="candidates"></ul>
 				<p id="send-empty" class="hint" hidden>You have no sends.</p>
 			</div>
+			<nav class="tabs" role="tablist" aria-label="Keepiq">
+				<button id="tab-site" role="tab" aria-controls="panel-site" aria-selected="true">This site</button>
+				<button id="tab-vault" role="tab" aria-controls="panel-vault" aria-selected="false">Vault</button>
+				<button id="tab-generator" role="tab" aria-controls="panel-generator" aria-selected="false">Generator</button>
+				<button id="tab-send" role="tab" aria-controls="panel-send" aria-selected="false">Send</button>
+				<button id="tab-settings" role="tab" aria-selected="false">Settings</button>
+			</nav>
 		</section>
 
 		<!-- The Generator while locked: the generator panel moves in here. -->
