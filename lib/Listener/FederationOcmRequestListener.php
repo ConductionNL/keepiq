@@ -14,6 +14,10 @@
  * unsigned call, a signer that is no inbound partner, a user who does not
  * exist here, has not opted in, or holds no active suite.
  *
+ * POST /ocm/keepiq/shares/{id} answers a federated share's ciphertext to
+ * the recipient's partner presenting the share's shared secret (D4), and
+ * the same unknown answer to anyone else.
+ *
  * @category Listener
  * @package  OCA\Keepiq\Listener
  *
@@ -31,6 +35,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Listener;
 
 use OCA\Keepiq\Service\FederatedCertificateService;
+use OCA\Keepiq\Service\FederatedShareService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\EventDispatcher\Event;
@@ -49,6 +54,7 @@ class FederationOcmRequestListener implements IEventListener {
 	 * Constructor for FederationOcmRequestListener.
 	 *
 	 * @param FederatedCertificateService $certificates The federated certificate lookup
+	 * @param FederatedShareService $shares The outbound federated shares
 	 *
 	 * @return void
 	 *
@@ -56,6 +62,7 @@ class FederationOcmRequestListener implements IEventListener {
 	 */
 	public function __construct(
 		private FederatedCertificateService $certificates,
+		private FederatedShareService $shares,
 	) {
 	}//end __construct()
 
@@ -75,12 +82,10 @@ class FederationOcmRequestListener implements IEventListener {
 			return;
 		}
 
-		if ($event->getPath() === '/recipient-certificate' && strtoupper($event->getUsedMethod()) === 'POST') {
-			$answer = $this->certificates->answer(signer: $event->getRemote(), payload: $event->getPayload());
-			if ($answer !== null) {
-				$event->setResponse(new JSONResponse(data: $answer));
-				return;
-			}
+		$answer = $this->answerFor(event: $event);
+		if ($answer !== null) {
+			$event->setResponse(new JSONResponse(data: $answer));
+			return;
 		}
 
 		// One answer for every refusal and every unknown path, so nothing
@@ -89,4 +94,30 @@ class FederationOcmRequestListener implements IEventListener {
 			new JSONResponse(data: ['message' => 'Unknown recipient'], statusCode: Http::STATUS_NOT_FOUND)
 		);
 	}//end handle()
+
+	/**
+	 * The answer to a Keepiq OCM request, or null for the unknown answer.
+	 *
+	 * @param OCMEndpointRequestEvent $event The request
+	 *
+	 * @return array<string,mixed>|null
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 */
+	private function answerFor(OCMEndpointRequestEvent $event): ?array {
+		if (strtoupper($event->getUsedMethod()) !== 'POST') {
+			return null;
+		}
+
+		$path = $event->getPath();
+		if ($path === '/recipient-certificate') {
+			return $this->certificates->answer(signer: $event->getRemote(), payload: $event->getPayload());
+		}
+
+		if (preg_match('#^/shares/([0-9a-f-]{36})$#', $path, $match) === 1) {
+			return $this->shares->answerPull(signer: $event->getRemote(), shareId: $match[1], payload: $event->getPayload());
+		}
+
+		return null;
+	}//end answerFor()
 }//end class

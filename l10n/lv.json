@@ -1710,7 +1710,24 @@
         "Check partner": "Pārbaudīt partneri",
         "Partner root fingerprint": "Partnera saknes pirkstu nospiedums",
         "I compared this fingerprint with the partner's administrator": "Es salīdzināju šo pirkstu nospiedumu ar partnera administratoru",
-        "Add partner": "Pievienot partneri"
+        "Add partner": "Pievienot partneri",
+        "A secret from another organisation": "Noslēpums no citas organizācijas",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s kopīgoja ar jums \"%2$s\". Pieņemiet to sadaļā Ienākošie no citām organizācijām.",
+        "Incoming from other organisations": "Ienākošie no citām organizācijām",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Partneru organizāciju cilvēki var kopīgot ar jums noslēpumu. Pieņemiet to, lai savā glabātuvē paturētu tikai lasāmu kopiju.",
+        "Nothing shared with you yet": "Ar jums vēl nekas nav kopīgots",
+        "Secrets that people in partner organisations share with you appear here.": "Šeit parādās noslēpumi, ko ar jums kopīgo partneru organizāciju cilvēki.",
+        "From {sender}": "No {sender}",
+        "Accept": "Pieņemt",
+        "Open in vault": "Atvērt glabātuvē",
+        "The other organisation did not hand over the secret. Try again later.": "Otra organizācija nenodeva noslēpumu. Mēģiniet vēlreiz vēlāk.",
+        "Set up your vault before you accept a shared secret.": "Pirms pieņemat kopīgotu noslēpumu, iestatiet savu glabātuvi.",
+        "Something went wrong. Try again.": "Kaut kas nogāja greizi. Mēģiniet vēlreiz.",
+        "Waiting for your answer": "Gaida jūsu atbildi",
+        "In your vault, read-only": "Jūsu glabātuvē, tikai lasāms",
+        "Withdrawn by the sender": "Sūtītājs atsauca",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} kopīgoja šo no citas organizācijas. Jūs to varat lasīt, bet ne mainīt vai kopīgot.",
+        "Someone": "Kāds"
     },
     "plurals": null
 }

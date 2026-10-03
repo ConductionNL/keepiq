@@ -1615,7 +1615,24 @@ OC.L10N.register(
         "Check partner": "Provjeri partnera",
         "Partner root fingerprint": "Korijenski otisak partnera",
         "I compared this fingerprint with the partner's administrator": "Usporedio sam ovaj otisak s administratorom partnera",
-        "Add partner": "Dodaj partnera"
+        "Add partner": "Dodaj partnera",
+        "A secret from another organisation": "Tajna iz druge organizacije",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s dijeli s vama \"%2$s\". Prihvatite je u odjeljku Dolazno iz drugih organizacija.",
+        "Incoming from other organisations": "Dolazno iz drugih organizacija",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Osobe u partnerskim organizacijama mogu s vama dijeliti tajnu. Prihvatite je kako biste zadržali kopiju samo za čitanje u svom trezoru.",
+        "Nothing shared with you yet": "Još ništa nije dijeljeno s vama",
+        "Secrets that people in partner organisations share with you appear here.": "Ovdje se prikazuju tajne koje s vama dijele osobe u partnerskim organizacijama.",
+        "From {sender}": "Od {sender}",
+        "Accept": "Prihvati",
+        "Open in vault": "Otvori u trezoru",
+        "The other organisation did not hand over the secret. Try again later.": "Druga organizacija nije predala tajnu. Pokušajte ponovno kasnije.",
+        "Set up your vault before you accept a shared secret.": "Postavite svoj trezor prije nego što prihvatite dijeljenu tajnu.",
+        "Something went wrong. Try again.": "Nešto je pošlo po zlu. Pokušajte ponovno.",
+        "Waiting for your answer": "Čeka vaš odgovor",
+        "In your vault, read-only": "U vašem trezoru, samo za čitanje",
+        "Withdrawn by the sender": "Pošiljatelj je povukao",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} dijeli ovo iz druge organizacije. Možete to čitati, ali ne i mijenjati ili dijeliti.",
+        "Someone": "Netko"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

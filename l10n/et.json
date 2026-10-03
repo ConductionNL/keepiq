@@ -1686,7 +1686,24 @@
         "Check partner": "Kontrolli partnerit",
         "Partner root fingerprint": "Partneri juursõrmejälg",
         "I compared this fingerprint with the partner's administrator": "Võrdlesin seda sõrmejälge partneri administraatoriga",
-        "Add partner": "Lisa partner"
+        "Add partner": "Lisa partner",
+        "A secret from another organisation": "Saladus teisest organisatsioonist",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s jagas teiega kirjet \"%2$s\". Võtke see vastu lehel Saabunud teistest organisatsioonidest.",
+        "Incoming from other organisations": "Saabunud teistest organisatsioonidest",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Partnerorganisatsioonide inimesed saavad teiega saladust jagada. Võtke see vastu, et hoida oma seifis kirjutuskaitstud koopiat.",
+        "Nothing shared with you yet": "Teiega pole veel midagi jagatud",
+        "Secrets that people in partner organisations share with you appear here.": "Saladused, mida partnerorganisatsioonide inimesed teiega jagavad, kuvatakse siin.",
+        "From {sender}": "Saatja: {sender}",
+        "Accept": "Võta vastu",
+        "Open in vault": "Ava seifis",
+        "The other organisation did not hand over the secret. Try again later.": "Teine organisatsioon ei andnud saladust üle. Proovige hiljem uuesti.",
+        "Set up your vault before you accept a shared secret.": "Seadistage oma seif enne jagatud saladuse vastuvõtmist.",
+        "Something went wrong. Try again.": "Midagi läks valesti. Proovige uuesti.",
+        "Waiting for your answer": "Ootab teie vastust",
+        "In your vault, read-only": "Teie seifis, kirjutuskaitstud",
+        "Withdrawn by the sender": "Saatja võttis tagasi",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} jagas seda teisest organisatsioonist. Saate seda lugeda, kuid mitte muuta ega jagada.",
+        "Someone": "Keegi"
     },
     "plurals": null
 }

@@ -1686,7 +1686,24 @@
         "Check partner": "Comprova el soci",
         "Partner root fingerprint": "Empremta arrel del soci",
         "I compared this fingerprint with the partner's administrator": "He comparat aquesta empremta amb l’administrador del soci",
-        "Add partner": "Afegeix el soci"
+        "Add partner": "Afegeix el soci",
+        "A secret from another organisation": "Un secret d’una altra organització",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s ha compartit \"%2$s\" amb vós. Accepteu-lo a Rebuts d’altres organitzacions.",
+        "Incoming from other organisations": "Rebuts d’altres organitzacions",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Les persones de les organitzacions sòcies poden compartir un secret amb vós. Accepteu-lo per conservar una còpia de només lectura a la vostra caixa forta.",
+        "Nothing shared with you yet": "Encara no s’ha compartit res amb vós",
+        "Secrets that people in partner organisations share with you appear here.": "Els secrets que les persones de les organitzacions sòcies comparteixen amb vós apareixen aquí.",
+        "From {sender}": "De {sender}",
+        "Accept": "Accepta",
+        "Open in vault": "Obre a la caixa forta",
+        "The other organisation did not hand over the secret. Try again later.": "L’altra organització no ha lliurat el secret. Torneu-ho a provar més tard.",
+        "Set up your vault before you accept a shared secret.": "Configureu la vostra caixa forta abans d’acceptar un secret compartit.",
+        "Something went wrong. Try again.": "Alguna cosa ha anat malament. Torneu-ho a provar.",
+        "Waiting for your answer": "Esperant la vostra resposta",
+        "In your vault, read-only": "A la vostra caixa forta, només lectura",
+        "Withdrawn by the sender": "Retirat pel remitent",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} ha compartit això des d’una altra organització. Podeu llegir-ho, però no modificar-ho ni compartir-ho.",
+        "Someone": "Algú"
     },
     "plurals": null
 }

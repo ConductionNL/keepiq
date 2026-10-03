@@ -1686,7 +1686,24 @@
         "Check partner": "Провери партньора",
         "Partner root fingerprint": "Коренен отпечатък на партньора",
         "I compared this fingerprint with the partner's administrator": "Сравних този отпечатък с администратора на партньора",
-        "Add partner": "Добави партньор"
+        "Add partner": "Добави партньор",
+        "A secret from another organisation": "Тайна от друга организация",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s сподели \"%2$s\" с вас. Приемете я в Входящи от други организации.",
+        "Incoming from other organisations": "Входящи от други организации",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Хора от партньорски организации могат да споделят тайна с вас. Приемете я, за да запазите копие само за четене във вашето хранилище.",
+        "Nothing shared with you yet": "Все още нищо не е споделено с вас",
+        "Secrets that people in partner organisations share with you appear here.": "Тук се показват тайните, които хора от партньорски организации споделят с вас.",
+        "From {sender}": "От {sender}",
+        "Accept": "Приемане",
+        "Open in vault": "Отваряне в хранилището",
+        "The other organisation did not hand over the secret. Try again later.": "Другата организация не предаде тайната. Опитайте отново по-късно.",
+        "Set up your vault before you accept a shared secret.": "Настройте хранилището си, преди да приемете споделена тайна.",
+        "Something went wrong. Try again.": "Нещо се обърка. Опитайте отново.",
+        "Waiting for your answer": "Очаква вашия отговор",
+        "In your vault, read-only": "Във вашето хранилище, само за четене",
+        "Withdrawn by the sender": "Оттеглено от подателя",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} сподели това от друга организация. Можете да го четете, но не и да го променяте или споделяте.",
+        "Someone": "Някой"
     },
     "plurals": null
 }

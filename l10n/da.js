@@ -1615,7 +1615,24 @@ OC.L10N.register(
         "Check partner": "Tjek partner",
         "Partner root fingerprint": "Partnerens rodfingeraftryk",
         "I compared this fingerprint with the partner's administrator": "Jeg har sammenlignet dette fingeraftryk med partnerens administrator",
-        "Add partner": "Tilføj partner"
+        "Add partner": "Tilføj partner",
+        "A secret from another organisation": "En hemmelighed fra en anden organisation",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s har delt \"%2$s\" med dig. Accepter den under Modtaget fra andre organisationer.",
+        "Incoming from other organisations": "Modtaget fra andre organisationer",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Personer i partnerorganisationer kan dele en hemmelighed med dig. Accepter den for at beholde en skrivebeskyttet kopi i din boks.",
+        "Nothing shared with you yet": "Intet delt med dig endnu",
+        "Secrets that people in partner organisations share with you appear here.": "Hemmeligheder, som personer i partnerorganisationer deler med dig, vises her.",
+        "From {sender}": "Fra {sender}",
+        "Accept": "Accepter",
+        "Open in vault": "Åbn i boks",
+        "The other organisation did not hand over the secret. Try again later.": "Den anden organisation overdrog ikke hemmeligheden. Prøv igen senere.",
+        "Set up your vault before you accept a shared secret.": "Opsæt din boks, før du accepterer en delt hemmelighed.",
+        "Something went wrong. Try again.": "Noget gik galt. Prøv igen.",
+        "Waiting for your answer": "Venter på dit svar",
+        "In your vault, read-only": "I din boks, skrivebeskyttet",
+        "Withdrawn by the sender": "Trukket tilbage af afsenderen",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} delte dette fra en anden organisation. Du kan læse det, men ikke ændre eller dele det.",
+        "Someone": "Nogen"
     },
     "nplurals=2; plural=(n != 1);"
 )

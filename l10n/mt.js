@@ -1615,7 +1615,24 @@ OC.L10N.register(
         "Check partner": "Iċċekkja s-sieħeb",
         "Partner root fingerprint": "Il-marka ewlenija tas-sieħeb",
         "I compared this fingerprint with the partner's administrator": "Qabbilt din il-marka mal-amministratur tas-sieħeb",
-        "Add partner": "Żid sieħeb"
+        "Add partner": "Żid sieħeb",
+        "A secret from another organisation": "Sigriet minn organizzazzjoni oħra",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s qasam \"%2$s\" miegħek. Aċċettah taħt Deħlin minn organizzazzjonijiet oħra.",
+        "Incoming from other organisations": "Deħlin minn organizzazzjonijiet oħra",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Nies f’organizzazzjonijiet sħab jistgħu jaqsmu sigriet miegħek. Aċċettah biex iżżomm kopja għall-qari biss fil-vault tiegħek.",
+        "Nothing shared with you yet": "Għadu ma nqasam xejn miegħek",
+        "Secrets that people in partner organisations share with you appear here.": "Is-sigrieti li n-nies f’organizzazzjonijiet sħab jaqsmu miegħek jidhru hawn.",
+        "From {sender}": "Minn {sender}",
+        "Accept": "Aċċetta",
+        "Open in vault": "Iftaħ fil-vault",
+        "The other organisation did not hand over the secret. Try again later.": "L-organizzazzjoni l-oħra ma għaddietx is-sigriet. Erġa’ pprova aktar tard.",
+        "Set up your vault before you accept a shared secret.": "Issettja l-vault tiegħek qabel ma taċċetta sigriet maqsum.",
+        "Something went wrong. Try again.": "Xi ħaġa marret ħażin. Erġa’ pprova.",
+        "Waiting for your answer": "Qed jistenna t-tweġiba tiegħek",
+        "In your vault, read-only": "Fil-vault tiegħek, għall-qari biss",
+        "Withdrawn by the sender": "Irtirat mill-mittent",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} qasam dan minn organizzazzjoni oħra. Tista’ taqrah, iżda ma tistax tibdlu jew taqsmu.",
+        "Someone": "Xi ħadd"
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

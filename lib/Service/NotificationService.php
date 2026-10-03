@@ -50,6 +50,8 @@ class NotificationService {
 		'secret_shared' => 'notify_shares',
 		'share_request' => 'notify_shares',
 		'share_request_result' => 'notify_shares',
+		// A partner instance shared a secret (sharing-federated-recipients D4).
+		'federated_share_received' => 'notify_shares',
 		'group_member_added' => 'notify_group_shares',
 		'secret_compromised' => 'notify_security',
 		'request_fulfilled' => 'notify_requests',

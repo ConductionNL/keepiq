@@ -1615,7 +1615,24 @@ OC.L10N.register(
         "Check partner": "Ověřit partnera",
         "Partner root fingerprint": "Kořenový otisk partnera",
         "I compared this fingerprint with the partner's administrator": "Porovnal jsem tento otisk se správcem partnera",
-        "Add partner": "Přidat partnera"
+        "Add partner": "Přidat partnera",
+        "A secret from another organisation": "Tajemství z jiné organizace",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "Uživatel %1$s s vámi sdílí \"%2$s\". Přijměte ho v sekci Příchozí z jiných organizací.",
+        "Incoming from other organisations": "Příchozí z jiných organizací",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Lidé v partnerských organizacích s vámi mohou sdílet tajemství. Přijměte ho, abyste si ve svém trezoru ponechali kopii jen pro čtení.",
+        "Nothing shared with you yet": "Zatím s vámi nebylo nic sdíleno",
+        "Secrets that people in partner organisations share with you appear here.": "Zde se zobrazí tajemství, která s vámi sdílejí lidé v partnerských organizacích.",
+        "From {sender}": "Od {sender}",
+        "Accept": "Přijmout",
+        "Open in vault": "Otevřít v trezoru",
+        "The other organisation did not hand over the secret. Try again later.": "Druhá organizace tajemství nepředala. Zkuste to později znovu.",
+        "Set up your vault before you accept a shared secret.": "Než přijmete sdílené tajemství, nastavte si trezor.",
+        "Something went wrong. Try again.": "Něco se pokazilo. Zkuste to znovu.",
+        "Waiting for your answer": "Čeká na vaši odpověď",
+        "In your vault, read-only": "Ve vašem trezoru, jen pro čtení",
+        "Withdrawn by the sender": "Staženo odesílatelem",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} toto sdílí z jiné organizace. Můžete to číst, ale nemůžete to měnit ani sdílet.",
+        "Someone": "Někdo"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

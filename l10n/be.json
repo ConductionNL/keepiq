@@ -1710,7 +1710,24 @@
         "Check partner": "Праверыць партнёра",
         "Partner root fingerprint": "Каранёвы адбітак партнёра",
         "I compared this fingerprint with the partner's administrator": "Я звярыў гэты адбітак з адміністратарам партнёра",
-        "Add partner": "Дадаць партнёра"
+        "Add partner": "Дадаць партнёра",
+        "A secret from another organisation": "Сакрэт з іншай арганізацыі",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "Карыстальнік %1$s даў вам доступ да \"%2$s\". Прыміце яго ў раздзеле Уваходныя з іншых арганізацый.",
+        "Incoming from other organisations": "Уваходныя з іншых арганізацый",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Людзі з партнёрскіх арганізацый могуць даць вам доступ да сакрэту. Прыміце яго, каб захоўваць копію толькі для чытання ў сваім сховішчы.",
+        "Nothing shared with you yet": "Вам яшчэ нічога не дадзена",
+        "Secrets that people in partner organisations share with you appear here.": "Тут з’яўляюцца сакрэты, да якіх людзі з партнёрскіх арганізацый даюць вам доступ.",
+        "From {sender}": "Ад {sender}",
+        "Accept": "Прыняць",
+        "Open in vault": "Адкрыць у сховішчы",
+        "The other organisation did not hand over the secret. Try again later.": "Іншая арганізацыя не перадала сакрэт. Паспрабуйце пазней.",
+        "Set up your vault before you accept a shared secret.": "Наладзьце сховішча, перш чым прымаць агульны сакрэт.",
+        "Something went wrong. Try again.": "Нешта пайшло не так. Паспрабуйце яшчэ раз.",
+        "Waiting for your answer": "Чакае вашага адказу",
+        "In your vault, read-only": "У вашым сховішчы, толькі для чытання",
+        "Withdrawn by the sender": "Адклікана адпраўніком",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "Карыстальнік {sender} даў доступ да гэтага з іншай арганізацыі. Вы можаце яго чытаць, але не змяняць і не перадаваць.",
+        "Someone": "Хтосьці"
     },
     "plurals": null
 }

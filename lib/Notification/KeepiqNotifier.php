@@ -146,6 +146,15 @@ class KeepiqNotifier implements INotifier {
 				);
 				$this->withSecretLink(notification: $notification, params: $params);
 				return true;
+			case 'federated_share_received':
+				$secretName = (string)($params['secret_name'] ?? $l->t('a secret'));
+				$sharedBy = (string)($params['shared_by'] ?? $l->t('a user'));
+				$notification->setParsedSubject((string)$l->t('A secret from another organisation'));
+				$notification->setParsedMessage(
+					(string)$l->t('%1$s shared "%2$s" with you. Accept it under Incoming from other organisations.', [$sharedBy, $secretName])
+				);
+				$this->withAppLink(notification: $notification, path: 'incoming');
+				return true;
 			case 'share_request':
 				// Sent to the owner, so sourceSecretId is the owner's own secret.
 				$params = self::normaliseParams(params: $params, aliases: ['requesterId' => 'requester', 'sourceSecretId' => 'secret_id']);
@@ -676,6 +685,23 @@ class KeepiqNotifier implements INotifier {
 			->setPrimary(false);
 		$notification->addParsedAction($deny);
 	}//end addActions()
+
+	/**
+	 * Link a notification to a page of the app.
+	 *
+	 * @param INotification $notification The notification to mutate
+	 * @param string $path The app path, without a leading slash
+	 *
+	 * @return void
+	 */
+	private function withAppLink(INotification $notification, string $path): void {
+		try {
+			$route = $this->url->linkToRoute(Application::APP_ID . '.dashboard.page') . $path;
+			$notification->setLink($this->url->getAbsoluteURL($route));
+		} catch (InvalidArgumentException) {
+			// The link is optional; the notification still says what happened.
+		}
+	}//end withAppLink()
 
 	/**
 	 * Attach a deep-link to the affected secret, when the params include one.

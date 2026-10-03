@@ -1615,7 +1615,24 @@ OC.L10N.register(
         "Check partner": "Partner ellenőrzése",
         "Partner root fingerprint": "A partner gyökér-ujjlenyomata",
         "I compared this fingerprint with the partner's administrator": "Összevetettem ezt az ujjlenyomatot a partner rendszergazdájával",
-        "Add partner": "Partner hozzáadása"
+        "Add partner": "Partner hozzáadása",
+        "A secret from another organisation": "Titok egy másik szervezettől",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s megosztotta Önnel a következőt: \"%2$s\". Fogadja el a Más szervezetektől érkezett oldalon.",
+        "Incoming from other organisations": "Más szervezetektől érkezett",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "A partnerszervezetek munkatársai megoszthatnak Önnel egy titkot. Fogadja el, hogy írásvédett másolatot tartson a tárolójában.",
+        "Nothing shared with you yet": "Még semmit sem osztottak meg Önnel",
+        "Secrets that people in partner organisations share with you appear here.": "Itt jelennek meg azok a titkok, amelyeket a partnerszervezetek munkatársai megosztanak Önnel.",
+        "From {sender}": "Feladó: {sender}",
+        "Accept": "Elfogadás",
+        "Open in vault": "Megnyitás a tárolóban",
+        "The other organisation did not hand over the secret. Try again later.": "A másik szervezet nem adta át a titkot. Próbálja újra később.",
+        "Set up your vault before you accept a shared secret.": "Állítsa be a tárolóját, mielőtt elfogad egy megosztott titkot.",
+        "Something went wrong. Try again.": "Hiba történt. Próbálja újra.",
+        "Waiting for your answer": "Az Ön válaszára vár",
+        "In your vault, read-only": "Az Ön tárolójában, csak olvasható",
+        "Withdrawn by the sender": "A feladó visszavonta",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} ezt egy másik szervezettől osztotta meg. Elolvashatja, de nem módosíthatja és nem oszthatja meg.",
+        "Someone": "Valaki"
     },
     "nplurals=2; plural=(n != 1);"
 )

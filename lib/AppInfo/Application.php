@@ -211,5 +211,8 @@ class Application extends App implements IBootstrap {
 		OpenRegisterAutoloader::reportFailure(
 			logger: $context->getServerContainer()->get(LoggerInterface::class)
 		);
+
+		// The OCM provider of federated sharing registers at boot.
+		(new PlatformIntegrationRegistrar())->boot(context: $context);
 	}//end boot()
 }//end class

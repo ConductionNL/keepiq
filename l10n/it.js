@@ -1615,7 +1615,24 @@ OC.L10N.register(
         "Check partner": "Verifica partner",
         "Partner root fingerprint": "Impronta radice del partner",
         "I compared this fingerprint with the partner's administrator": "Ho confrontato questa impronta con l’amministratore del partner",
-        "Add partner": "Aggiungi partner"
+        "Add partner": "Aggiungi partner",
+        "A secret from another organisation": "Un segreto da un’altra organizzazione",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s ha condiviso \"%2$s\" con te. Accettalo in Ricevuti da altre organizzazioni.",
+        "Incoming from other organisations": "Ricevuti da altre organizzazioni",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Le persone delle organizzazioni partner possono condividere un segreto con te. Accettalo per conservarne una copia di sola lettura nella tua cassaforte.",
+        "Nothing shared with you yet": "Ancora nulla condiviso con te",
+        "Secrets that people in partner organisations share with you appear here.": "I segreti che le persone delle organizzazioni partner condividono con te appaiono qui.",
+        "From {sender}": "Da {sender}",
+        "Accept": "Accetta",
+        "Open in vault": "Apri nella cassaforte",
+        "The other organisation did not hand over the secret. Try again later.": "L’altra organizzazione non ha consegnato il segreto. Riprova più tardi.",
+        "Set up your vault before you accept a shared secret.": "Configura la tua cassaforte prima di accettare un segreto condiviso.",
+        "Something went wrong. Try again.": "Qualcosa è andato storto. Riprova.",
+        "Waiting for your answer": "In attesa della tua risposta",
+        "In your vault, read-only": "Nella tua cassaforte, sola lettura",
+        "Withdrawn by the sender": "Ritirato dal mittente",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} lo ha condiviso da un’altra organizzazione. Puoi leggerlo, ma non modificarlo né condividerlo.",
+        "Someone": "Qualcuno"
     },
     "nplurals=2; plural=(n != 1);"
 )

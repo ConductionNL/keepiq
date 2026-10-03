@@ -1710,7 +1710,24 @@
         "Check partner": "Seiceáil an comhpháirtí",
         "Partner root fingerprint": "Méarlorg fréimhe an chomhpháirtí",
         "I compared this fingerprint with the partner's administrator": "Rinne mé comparáid idir an méarlorg seo agus riarthóir an chomhpháirtí",
-        "Add partner": "Cuir comhpháirtí leis"
+        "Add partner": "Cuir comhpháirtí leis",
+        "A secret from another organisation": "Rún ó eagraíocht eile",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "Chomhroinn %1$s \"%2$s\" leat. Glac leis faoi Isteach ó eagraíochtaí eile.",
+        "Incoming from other organisations": "Isteach ó eagraíochtaí eile",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Is féidir le daoine in eagraíochtaí comhpháirtíochta rún a chomhroinnt leat. Glac leis chun cóip inléite amháin a choinneáil i do vailt.",
+        "Nothing shared with you yet": "Níl aon rud comhroinnte leat fós",
+        "Secrets that people in partner organisations share with you appear here.": "Taispeántar anseo na rúin a chomhroinneann daoine in eagraíochtaí comhpháirtíochta leat.",
+        "From {sender}": "Ó {sender}",
+        "Accept": "Glac leis",
+        "Open in vault": "Oscail sa vailt",
+        "The other organisation did not hand over the secret. Try again later.": "Níor thug an eagraíocht eile an rún uaithi. Bain triail eile as níos déanaí.",
+        "Set up your vault before you accept a shared secret.": "Socraigh do vailt sula nglacann tú le rún comhroinnte.",
+        "Something went wrong. Try again.": "Chuaigh rud éigin mícheart. Bain triail eile as.",
+        "Waiting for your answer": "Ag fanacht le do fhreagra",
+        "In your vault, read-only": "I do vailt, inléite amháin",
+        "Withdrawn by the sender": "Tarraingthe siar ag an seoltóir",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "Chomhroinn {sender} é seo ó eagraíocht eile. Is féidir leat é a léamh, ach ní féidir leat é a athrú ná a chomhroinnt.",
+        "Someone": "Duine éigin"
     },
     "plurals": null
 }

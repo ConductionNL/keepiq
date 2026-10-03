@@ -33,6 +33,7 @@ namespace OCA\Keepiq\Tests\Unit\Federation;
 
 use OCA\Keepiq\Listener\FederationOcmRequestListener;
 use OCA\Keepiq\Service\FederatedCertificateService;
+use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\ShareService;
@@ -89,7 +90,7 @@ class FederationOcmRequestListenerTest extends TestCase {
 			$this->createMock(IOCMDiscoveryService::class),
 		);
 
-		return new FederationOcmRequestListener($service);
+		return new FederationOcmRequestListener($service, $this->createMock(FederatedShareService::class));
 	}
 
 	/**

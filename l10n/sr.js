@@ -1615,7 +1615,24 @@ OC.L10N.register(
         "Check partner": "Провери партнера",
         "Partner root fingerprint": "Коренски отисак партнера",
         "I compared this fingerprint with the partner's administrator": "Упоредио сам овај отисак са администратором партнера",
-        "Add partner": "Додај партнера"
+        "Add partner": "Додај партнера",
+        "A secret from another organisation": "Тајна из друге организације",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s дели са вама \"%2$s\". Прихватите је у одељку Долазно из других организација.",
+        "Incoming from other organisations": "Долазно из других организација",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Особе у партнерским организацијама могу са вама да деле тајну. Прихватите је да бисте задржали копију само за читање у свом трезору.",
+        "Nothing shared with you yet": "Још ништа није подељено са вама",
+        "Secrets that people in partner organisations share with you appear here.": "Овде се приказују тајне које са вама деле особе у партнерским организацијама.",
+        "From {sender}": "Од {sender}",
+        "Accept": "Прихвати",
+        "Open in vault": "Отвори у трезору",
+        "The other organisation did not hand over the secret. Try again later.": "Друга организација није предала тајну. Покушајте поново касније.",
+        "Set up your vault before you accept a shared secret.": "Подесите свој трезор пре него што прихватите подељену тајну.",
+        "Something went wrong. Try again.": "Нешто није у реду. Покушајте поново.",
+        "Waiting for your answer": "Чека ваш одговор",
+        "In your vault, read-only": "У вашем трезору, само за читање",
+        "Withdrawn by the sender": "Пошиљалац је повукао",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} дели ово из друге организације. Можете то да читате, али не и да мењате или делите.",
+        "Someone": "Неко"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

@@ -1686,7 +1686,24 @@
         "Check partner": "Verificar parceiro",
         "Partner root fingerprint": "Impressão digital raiz do parceiro",
         "I compared this fingerprint with the partner's administrator": "Comparei esta impressão digital com o administrador do parceiro",
-        "Add partner": "Adicionar parceiro"
+        "Add partner": "Adicionar parceiro",
+        "A secret from another organisation": "Um segredo de outra organização",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s partilhou \"%2$s\" consigo. Aceite-o em Recebidos de outras organizações.",
+        "Incoming from other organisations": "Recebidos de outras organizações",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "As pessoas de organizações parceiras podem partilhar um segredo consigo. Aceite-o para guardar uma cópia só de leitura no seu cofre.",
+        "Nothing shared with you yet": "Ainda nada foi partilhado consigo",
+        "Secrets that people in partner organisations share with you appear here.": "Os segredos que as pessoas de organizações parceiras partilham consigo aparecem aqui.",
+        "From {sender}": "De {sender}",
+        "Accept": "Aceitar",
+        "Open in vault": "Abrir no cofre",
+        "The other organisation did not hand over the secret. Try again later.": "A outra organização não entregou o segredo. Tente novamente mais tarde.",
+        "Set up your vault before you accept a shared secret.": "Configure o seu cofre antes de aceitar um segredo partilhado.",
+        "Something went wrong. Try again.": "Algo correu mal. Tente novamente.",
+        "Waiting for your answer": "A aguardar a sua resposta",
+        "In your vault, read-only": "No seu cofre, só de leitura",
+        "Withdrawn by the sender": "Retirado pelo remetente",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} partilhou isto a partir de outra organização. Pode lê-lo, mas não alterá-lo nem partilhá-lo.",
+        "Someone": "Alguém"
     },
     "plurals": null
 }

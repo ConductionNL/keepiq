@@ -1686,7 +1686,24 @@
         "Check partner": "Partner prüfen",
         "Partner root fingerprint": "Root-Fingerabdruck des Partners",
         "I compared this fingerprint with the partner's administrator": "Ich habe diesen Fingerabdruck mit dem Administrator des Partners verglichen",
-        "Add partner": "Partner hinzufügen"
+        "Add partner": "Partner hinzufügen",
+        "A secret from another organisation": "Ein Geheimnis von einer anderen Organisation",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s hat \"%2$s\" mit Ihnen geteilt. Nehmen Sie es unter Eingang von anderen Organisationen an.",
+        "Incoming from other organisations": "Eingang von anderen Organisationen",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Personen in Partnerorganisationen können ein Geheimnis mit Ihnen teilen. Nehmen Sie es an, um eine schreibgeschützte Kopie in Ihrem Tresor zu behalten.",
+        "Nothing shared with you yet": "Noch nichts mit Ihnen geteilt",
+        "Secrets that people in partner organisations share with you appear here.": "Geheimnisse, die Personen in Partnerorganisationen mit Ihnen teilen, erscheinen hier.",
+        "From {sender}": "Von {sender}",
+        "Accept": "Annehmen",
+        "Open in vault": "Im Tresor öffnen",
+        "The other organisation did not hand over the secret. Try again later.": "Die andere Organisation hat das Geheimnis nicht übergeben. Versuchen Sie es später erneut.",
+        "Set up your vault before you accept a shared secret.": "Richten Sie Ihren Tresor ein, bevor Sie ein geteiltes Geheimnis annehmen.",
+        "Something went wrong. Try again.": "Etwas ist schiefgelaufen. Versuchen Sie es erneut.",
+        "Waiting for your answer": "Wartet auf Ihre Antwort",
+        "In your vault, read-only": "In Ihrem Tresor, schreibgeschützt",
+        "Withdrawn by the sender": "Vom Absender zurückgezogen",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} hat dies aus einer anderen Organisation geteilt. Sie können es lesen, aber nicht ändern oder teilen.",
+        "Someone": "Jemand"
     },
     "plurals": null
 }

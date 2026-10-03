@@ -48,6 +48,7 @@ import EmergencyAccessView from './views/EmergencyAccessView.vue'
 import EphemeralSendAccess from './views/EphemeralSendAccess.vue'
 import FlowDetailSidebar from './views/flows/FlowDetailSidebar.vue'
 import HealthReportView from './views/HealthReportView.vue'
+import IncomingSharesView from './views/IncomingSharesView.vue'
 import LinkShareAccess from './views/LinkShareAccess.vue'
 import LockScreen from './views/LockScreen.vue'
 import PersonalActivityView from './views/PersonalActivityView.vue'
@@ -69,6 +70,7 @@ export default {
 	EphemeralSendAccess: { kind: 'page', component: EphemeralSendAccess },
 	ApplicationRegisterView: { kind: 'page', component: ApplicationRegisterView },
 	ApplicationDetail: { kind: 'page', component: ApplicationDetail },
+	IncomingSharesView: { kind: 'page', component: IncomingSharesView },
 	PersonalActivityView: { kind: 'page', component: PersonalActivityView },
 	ShareApprovalView: { kind: 'page', component: ShareApprovalView },
 	HealthReportView: { kind: 'page', component: HealthReportView },
