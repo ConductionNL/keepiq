@@ -27,12 +27,13 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
-use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -46,7 +47,7 @@ class SecretTypeController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param SecretTypeService $typeService The secret type service
 	 * @param IUserSession $userSession The user session
-	 * @param IGroupManager $groupManager The group manager (admin check)
+	 * @param AdminAreaAuthorizer $areas Whether the caller holds the General admin area
 	 *
 	 * @return void
 	 */
@@ -54,7 +55,7 @@ class SecretTypeController extends OCSController {
 		IRequest $request,
 		private SecretTypeService $typeService,
 		private IUserSession $userSession,
-		private IGroupManager $groupManager,
+		private AdminAreaAuthorizer $areas,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -105,7 +106,7 @@ class SecretTypeController extends OCSController {
 		}
 
 		$userId = $user->getUID();
-		$isAdmin = $this->groupManager->isAdmin($userId);
+		$isAdmin = $this->areas->holds(userId: $userId, areaClass: AdminSettings::class);
 
 		try {
 			$type = $this->typeService->createType(
@@ -149,7 +150,7 @@ class SecretTypeController extends OCSController {
 		}
 
 		$userId = $user->getUID();
-		$isAdmin = $this->groupManager->isAdmin($userId);
+		$isAdmin = $this->areas->holds(userId: $userId, areaClass: AdminSettings::class);
 
 		try {
 			$type = $this->typeService->updateType(
@@ -187,7 +188,7 @@ class SecretTypeController extends OCSController {
 		}
 
 		$userId = $user->getUID();
-		$isAdmin = $this->groupManager->isAdmin($userId);
+		$isAdmin = $this->areas->holds(userId: $userId, areaClass: AdminSettings::class);
 
 		try {
 			$this->typeService->deleteType($id, $userId, $isAdmin);

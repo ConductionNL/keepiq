@@ -13,8 +13,10 @@
  */
 
 import axios from '@nextcloud/axios'
+import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
+import { PROOF_PURPOSE, sessionKeyProofHeaders } from '../../crypto/keyProof.js'
 
 export const useDelegationStore = defineStore('delegation', {
 	state: () => ({
@@ -25,13 +27,15 @@ export const useDelegationStore = defineStore('delegation', {
 		/** @type {string|null} The last error message. */
 		error: null,
 		/**
-		 * Whether the CURRENT USER is in the vault_admin group. Null until
-		 * asked. Group membership, not a per-secret verdict — the per-secret
-		 * preconditions are enforced server-side on the write.
+		 * Whether the CURRENT USER may use the admin handover: an instance
+		 * administrator or a holder of the People and offboarding admin area
+		 * (admin-scoped-roles D5). Null until asked. Not a per-secret
+		 * verdict: the per-secret preconditions are enforced server-side on
+		 * the write.
 		 *
 		 * @type {boolean|null}
 		 */
-		isVaultAdmin: null,
+		canHandover: null,
 	}),
 
 	getters: {
@@ -106,11 +110,21 @@ export const useDelegationStore = defineStore('delegation', {
 			this.loading = true
 			this.error = null
 			try {
+				// Every delegation needs a vault-key proof (keepiq#818).
+				const { headers } = await sessionKeyProofHeaders({
+					purpose: PROOF_PURPOSE.DELEGATION_CREATE,
+					reason: t(
+						'keepiq',
+						'Enter your master password to confirm this delegation.',
+					),
+					boundValues: [secretId, delegatedTo],
+				})
 				const response = await axios.post(
 					generateUrl(
 						`/apps/keepiq/api/v1/secrets/${secretId}/delegations`,
 					),
 					{ delegatedTo },
+					{ headers },
 				)
 				this.delegations.push(response.data)
 				return response.data
@@ -135,15 +149,16 @@ export const useDelegationStore = defineStore('delegation', {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+		 * @spec openspec/changes/admin-scoped-roles/tasks.md#3.2
 		 */
 		async fetchCapabilities() {
 			try {
 				const response = await axios.get(
 					generateUrl('/apps/keepiq/api/v1/delegations/capabilities'),
 				)
-				this.isVaultAdmin = response.data?.isVaultAdmin === true
+				this.canHandover = response.data?.canHandover === true
 			} catch (e) {
-				this.isVaultAdmin = false
+				this.canHandover = false
 			}
 		},
 
@@ -164,10 +179,22 @@ export const useDelegationStore = defineStore('delegation', {
 			this.loading = true
 			this.error = null
 			try {
+				// A handover creates a delegation too, so it needs a vault-key
+				// proof (keepiq#818).
+				const { headers } = await sessionKeyProofHeaders({
+					purpose: PROOF_PURPOSE.DELEGATION_HANDOVER,
+					reason: t(
+						'keepiq',
+						'Enter your master password to confirm this delegation.',
+					),
+					boundValues: [secretId],
+				})
 				const response = await axios.post(
 					generateUrl(
 						`/apps/keepiq/api/v1/secrets/${secretId}/delegations/handover`,
 					),
+					{},
+					{ headers },
 				)
 				this.delegations.push(response.data)
 				return response.data
@@ -222,7 +249,7 @@ export const useDelegationStore = defineStore('delegation', {
 		reset() {
 			this.delegations = []
 			this.error = null
-			// `isVaultAdmin` is deliberately NOT reset: it describes the
+			// `canHandover` is deliberately NOT reset: it describes the
 			// signed-in user, not the focused secret, so clearing it between
 			// detail mounts would re-fetch it on every navigation.
 		},

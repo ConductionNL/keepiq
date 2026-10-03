@@ -70,7 +70,7 @@ export default {
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin'),
+				generateUrl('/apps/keepiq/api/settings/admin/policies'),
 			)
 			this.enabled = response.data?.team_folder_auto_confirm === true
 		} catch (e) {
@@ -88,9 +88,12 @@ export default {
 		async save() {
 			this.error = null
 			try {
-				await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
-					team_folder_auto_confirm: this.enabled,
-				})
+				await axios.put(
+					generateUrl('/apps/keepiq/api/settings/admin/policies'),
+					{
+						team_folder_auto_confirm: this.enabled,
+					},
+				)
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
 			}
