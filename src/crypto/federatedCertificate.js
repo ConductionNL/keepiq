@@ -303,6 +303,27 @@ async function sha256Hex(der) {
 }
 
 /**
+ * A cloud id as `user@host[:port][/path]`: Nextcloud writes the user's own
+ * cloud id on an http instance with the scheme (`bob@http://host`), which
+ * is the common name of their certificate, while the owner types `bob@host`.
+ * The scheme and a trailing slash are dropped and the host lowercased; the
+ * user part stays as it is.
+ *
+ * @param {string} cloudId A cloud id.
+ * @return {string} The canonical form, or '' without `user@remote`.
+ * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+ */
+export function canonicalCloudId(cloudId) {
+	const text = String(cloudId ?? '')
+	const at = text.lastIndexOf('@')
+	if (at <= 0) {
+		return ''
+	}
+	const remote = text.slice(at + 1).replace(/^https?:\/\//i, '').replace(/\/+$/, '').toLowerCase()
+	return remote === '' ? '' : `${text.slice(0, at)}@${remote}`
+}
+
+/**
  * Verify a federated recipient's certificate against the pinned partner
  * root. Resolves with the certificate's fingerprint, for the owner to
  * compare with the recipient; rejects with a FederatedCertificateError.
@@ -338,7 +359,7 @@ export async function verifyFederatedCertificate({
 		}
 	}
 	const leaf = certs[0]
-	if (leaf.commonName === null || leaf.commonName !== cloudId) {
+	if (leaf.commonName === null || canonicalCloudId(leaf.commonName) !== canonicalCloudId(cloudId)) {
 		throw new FederatedCertificateError('name_mismatch')
 	}
 	if (now < leaf.notBefore || now > leaf.notAfter) {
