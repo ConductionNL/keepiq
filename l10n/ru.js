@@ -1593,7 +1593,13 @@ OC.L10N.register(
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Сколько версий секрета хранится, как долго и как долго удалённые секреты остаются в корзине.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Ограничения для зашифрованных вложений, применяемые на сервере к хранимым зашифрованным байтам.",
         "Type the suite ID again to confirm": "Введите ID набора ещё раз для подтверждения",
-        "This does not match the suite ID.": "Не совпадает с ID набора."
+        "This does not match the suite ID.": "Не совпадает с ID набора.",
+        "Confirm with your master password": "Подтвердите мастер-паролем",
+        "Confirm": "Подтвердить",
+        "That master password is not right.": "Этот мастер-пароль неверен.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Вы делитесь с новым человеком. Введите мастер-пароль для подтверждения.",
+        "Enter your master password to confirm this share.": "Введите мастер-пароль, чтобы подтвердить этот общий доступ.",
+        "Enter your master password to confirm this delegation.": "Введите мастер-пароль, чтобы подтвердить это делегирование."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

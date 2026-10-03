@@ -1593,7 +1593,13 @@ OC.L10N.register(
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Kemm verżjonijiet ta' sigriet jinżammu, għal kemm żmien, u kemm idumu s-sigrieti mħassra fl-iskart.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limiti għall-annessi kriptati, infurzati fuq is-server f'bytes kriptati maħżuna.",
         "Type the suite ID again to confirm": "Erġa' ikteb l-ID tas-suite biex tikkonferma",
-        "This does not match the suite ID.": "Dan ma jaqbilx mal-ID tas-suite."
+        "This does not match the suite ID.": "Dan ma jaqbilx mal-ID tas-suite.",
+        "Confirm with your master password": "Ikkonferma bil-password master tiegħek",
+        "Confirm": "Ikkonferma",
+        "That master password is not right.": "Dik il-password master mhix korretta.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Qed taqsam ma' persuna ġdida. Daħħal il-password master tiegħek biex tikkonferma.",
+        "Enter your master password to confirm this share.": "Daħħal il-password master tiegħek biex tikkonferma dan il-qsim.",
+        "Enter your master password to confirm this delegation.": "Daħħal il-password master tiegħek biex tikkonferma din id-delega."
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

@@ -1593,7 +1593,13 @@ OC.L10N.register(
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Колико верзија тајне се чува, колико дуго, и колико дуго обрисане тајне остају у смећу.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Ограничења за шифроване прилоге, која сервер примењује на сачуване шифроване бајтове.",
         "Type the suite ID again to confirm": "Поново унесите ID комплета ради потврде",
-        "This does not match the suite ID.": "Ово се не поклапа са ID-ом комплета."
+        "This does not match the suite ID.": "Ово се не поклапа са ID-ом комплета.",
+        "Confirm with your master password": "Потврдите главном лозинком",
+        "Confirm": "Потврди",
+        "That master password is not right.": "Та главна лозинка није исправна.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Делите са новом особом. Унесите главну лозинку ради потврде.",
+        "Enter your master password to confirm this share.": "Унесите главну лозинку да потврдите ово дељење.",
+        "Enter your master password to confirm this delegation.": "Унесите главну лозинку да потврдите ово делегирање."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

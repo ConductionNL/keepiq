@@ -1272,7 +1272,7 @@ OC.L10N.register(
         "Removed the user from {count} team folders.": "De Benotzer gouf aus {count} Teamuerdner ewechgeholl.",
         "Approve a share": "Eng Deelung guttheeschen",
         "This approval link is incomplete. Open it again from the notification.": "Dëse Link fir d'Guttheeschen ass net komplett. Maach en nach eng Kéier aus der Notifikatioun op.",
-        "Deny": "Ofleenen",
+        "Deny": "Refuséieren",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} ass enger Grupp bäigetrueden, mat där s du e Geheimnis deels. Dat Geheimnis och mat him deelen?",
         "{requester} asks you to share a secret with {user}.": "{requester} freet dech, e Geheimnis mat {user} ze deelen.",
         "Shared. The recipient can now open the secret.": "Gedeelt. Den Empfänger kann d'Geheimnis elo opmaachen.",
@@ -1593,7 +1593,13 @@ OC.L10N.register(
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Wéi vill Versioune vun engem Geheimnis wéi laang gehale ginn, a wéi laang geläschte Geheimnisser an der Poubelle bleiwen.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Grenze fir verschlësselt Unhäng, um Server a gespäicherte verschlësselte Bytes duerchgesat.",
         "Type the suite ID again to confirm": "Gitt d'Suite-ID nach eng Kéier an fir ze confirméieren",
-        "This does not match the suite ID.": "Dat entsprécht net der Suite-ID."
+        "This does not match the suite ID.": "Dat entsprécht net der Suite-ID.",
+        "Confirm with your master password": "Mat Ärem Masterpasswuert confirméieren",
+        "Confirm": "Confirméieren",
+        "That master password is not right.": "Dëst Masterpasswuert ass net richteg.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Dir deelt mat enger neier Persoun. Gitt Äert Masterpasswuert an fir ze confirméieren.",
+        "Enter your master password to confirm this share.": "Gitt Äert Masterpasswuert an fir dës Deelung ze confirméieren.",
+        "Enter your master password to confirm this delegation.": "Gitt Äert Masterpasswuert an fir dës Delegatioun ze confirméieren."
     },
     "nplurals=2; plural=(n != 1);"
 )
