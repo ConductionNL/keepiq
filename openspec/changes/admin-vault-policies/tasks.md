@@ -14,7 +14,7 @@
 - [x] 3.1 Withhold `privateKey` and add `unlockBlocked` in `EncryptionSuiteController::index()` and `show()` when the policy applies and no provider other than `backup_codes` is enabled. Verify with a PHPUnit test with a mocked `IRegistry`.
 - [x] 3.2 Refuse `POST /api/v1/suites` and leave the suite out of the offline manifest under the same condition. Verify with PHPUnit tests for `create()` and `OfflineManifestService`.
 - [x] 3.3 Show the two-factor notice in `LockScreen.vue` and drop the offline snapshot on `two_factor_required`. Verify with a vitest for the lock screen and the offline store.
-- [ ] 3.4 Map `two_factor_required` to a clear error in the CLI (`cli/`) and the browser extension. Verify with `go test ./...` and the extension vitest suite. Code done; owed: `go test ./...` was not run here (no Go toolchain on this machine). The extension vitest passes.
+- [x] 3.4 Map `two_factor_required` to a clear error in the CLI (`cli/`) and the browser extension. Verify with `go test ./...` and the extension vitest suite. Verified 4 Oct in docker golang:1.25 (go1.25.14): `cli` go test ./... ok (cli, cli/sshagent) after repointing `cli/useonly_test.go` from the removed `cli/internal/client` to `sdk/go/client` (the package did not build before); `sdk/go` go test ./... ok (the `ErrTwoFactorRequired` test lives in `sdk/go/client/client_test.go`); `npx vitest run tests/extension` 30 files, 243 tests passed.
 
 ## 4. Team folder ownership
 
