@@ -81,7 +81,7 @@ class RecoveryKeyService {
 	 *
 	 * @return RecoveryKey|null
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
 	 */
 	public function activeKey(): ?RecoveryKey {
 		return ($this->keyMapper->findByStatus(self::STATUS_ACTIVE)[0] ?? null);
@@ -93,7 +93,7 @@ class RecoveryKeyService {
 	 *
 	 * @return array{id:string,certificate:string,fingerprint:string,caChain:string[]}|null
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
 	 */
 	public function publicInfo(): ?array {
 		$key = $this->activeKey();
@@ -132,7 +132,7 @@ class RecoveryKeyService {
 	 * @throws ForbiddenException       When the caller is not an officer
 	 * @throws InvalidArgumentException When a copy is missing or one is for a non-officer
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
 	 */
 	public function createKey(string $officerUid, string $publicKeyPem, array $copies): RecoveryKey {
 		if ($this->policy->isOfficer(userId: $officerUid) === false) {
@@ -183,7 +183,7 @@ class RecoveryKeyService {
 	 *
 	 * @throws NotFoundException When the officer holds no copy
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
 	 */
 	public function ownCopy(string $officerUid, ?string $recoveryKeyId = null): RecoveryOfficer {
 		$keyId = ($recoveryKeyId ?? $this->activeKey()?->getId());
@@ -210,7 +210,7 @@ class RecoveryKeyService {
 	 * @throws NotFoundException        When the officer holds no copy of that key
 	 * @throws InvalidArgumentException When the officer has no active suite
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
 	 */
 	public function replaceOwnCopy(string $officerUid, string $recoveryKeyId, string $wrapped): void {
 		$copy = $this->ownCopy(officerUid: $officerUid, recoveryKeyId: $recoveryKeyId);
@@ -229,7 +229,7 @@ class RecoveryKeyService {
 	 *
 	 * @throws NotFoundException When the key does not exist
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
 	 */
 	public function retire(string $recoveryKeyId, string $adminUid): void {
 		try {
@@ -251,7 +251,7 @@ class RecoveryKeyService {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
 	 */
 	public static function fingerprint(string $certificatePem): string {
 		$body = preg_replace('/-----(BEGIN|END) CERTIFICATE-----|\s+/', '', $certificatePem);
