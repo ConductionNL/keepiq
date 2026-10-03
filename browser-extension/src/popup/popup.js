@@ -6,10 +6,15 @@
  */
 
 import { platformAuthenticatorAvailable } from '../unlock/ceremony.js'
-import { canAddAccount, renderAccountSwitcher, renderIdleChoices } from './views.js'
 import { initGenerator } from './generator-view.js'
 import { initSend } from './send-view.js'
 import { initVault } from './vault-view.js'
+import {
+	canAddAccount,
+	DEVICE_STATUS_TEXT,
+	renderAccountSwitcher,
+	renderIdleChoices,
+} from './views.js'
 
 // The last state the worker reported (accounts, active account, settings).
 let state = {}
@@ -47,6 +52,7 @@ function show(view) {
 		'view-unlocked',
 		'view-settings',
 		'view-update',
+		'view-device-approval',
 		'view-locked-generator',
 	]) {
 		$(id).hidden = id !== view
@@ -254,6 +260,65 @@ async function renderBiometricUnlock() {
 	$('unlock-biometric').hidden = !(options.credentials || []).length
 }
 
+// Device approval: poll every three seconds while the popup is open.
+const DEVICE_POLL_MS = 3000
+let devicePoll = null
+
+function stopDevicePoll() {
+	if (devicePoll) {
+		clearInterval(devicePoll)
+		devicePoll = null
+	}
+}
+
+/**
+ * Show the waiting view for a request and poll until it ends. The worker
+ * holds the one-time key; the popup only shows the phrase and the status.
+ *
+ * @param {{phrase: string}} request The request as the worker reports it.
+ * @return {void}
+ */
+function showDeviceApproval(request) {
+	show('view-device-approval')
+	showError('device-error', '')
+	$('device-phrase').textContent = request.phrase
+	$('device-status').textContent = DEVICE_STATUS_TEXT.pending
+	stopDevicePoll()
+	devicePoll = setInterval(async () => {
+		const res = await send('device-approval-poll')
+		if (res.error) {
+			stopDevicePoll()
+			showError('device-error', res.error)
+			return
+		}
+		if (res.status === 'unlocked') {
+			stopDevicePoll()
+			await refresh()
+			return
+		}
+		$('device-status').textContent =
+			DEVICE_STATUS_TEXT[res.status] ?? DEVICE_STATUS_TEXT.pending
+		if (res.status !== 'pending') stopDevicePoll()
+	}, DEVICE_POLL_MS)
+}
+
+/**
+ * Offer "Approve from another device" on the locked view when the
+ * organisation allows it, or go straight back to an open request.
+ *
+ * @return {Promise<boolean>} True when an open request took over the view.
+ */
+async function renderDeviceApprovalOption() {
+	$('unlock-device').hidden = true
+	const res = await send('device-approval-state')
+	if (res.request) {
+		showDeviceApproval(res.request)
+		return true
+	}
+	$('unlock-device').hidden = !res.enabled
+	return false
+}
+
 async function renderSettings() {
 	show('view-settings')
 	showError('settings-error', '')
@@ -283,7 +348,7 @@ async function refresh() {
 		show('view-update')
 	} else if (!state.unlocked) {
 		show('view-locked')
-		await renderBiometricUnlock()
+		if (!(await renderDeviceApprovalOption())) await renderBiometricUnlock()
 	} else {
 		show('view-unlocked')
 		await selectTab(await lastTab())
@@ -467,6 +532,22 @@ function wire() {
 		$('unlock-master').value = ''
 		if (res.error) showError('unlock-error', res.error)
 		else await refresh()
+	})
+
+	$('unlock-device').addEventListener('click', async () => {
+		showError('unlock-error', '')
+		const res = await send('device-approval-start')
+		if (res.error) {
+			showError('unlock-error', res.error)
+			return
+		}
+		showDeviceApproval(res.request)
+	})
+
+	$('device-cancel').addEventListener('click', async () => {
+		stopDevicePoll()
+		await send('device-approval-cancel')
+		await refresh()
 	})
 
 	$('unlock-unpair').addEventListener('click', async () => {

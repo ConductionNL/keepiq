@@ -94,3 +94,15 @@ export function renderIdleChoices(container, state, onPick) {
 		container.appendChild(note)
 	}
 }
+
+/**
+ * What the popup says while it waits for approval from another device, per
+ * request status.
+ */
+export const DEVICE_STATUS_TEXT = Object.freeze({
+	pending: 'Waiting for approval…',
+	denied: 'The request was denied on your other device.',
+	expired: 'The request expired. Start again.',
+	consumed: 'This request was already used. Start again.',
+	none: 'The request is gone, for example after the browser restarted. Start again.',
+})

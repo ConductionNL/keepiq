@@ -41,9 +41,20 @@
 			<p class="hint">Your master password is used only in this extension to decrypt your vault. It never reaches the server.</p>
 			<button id="unlock-submit" class="primary">Unlock</button>
 			<button id="unlock-biometric" class="link" hidden>Unlock with fingerprint or face</button>
+			<button id="unlock-device" class="link" hidden>Approve from another device</button>
 			<button id="locked-generate" class="link">Generate a password</button>
 			<button id="unlock-unpair" class="link">Disconnect</button>
 			<p id="unlock-error" class="error" role="alert" hidden></p>
+		</section>
+
+		<!-- Waiting for approval from another device -->
+		<section id="view-device-approval" hidden>
+			<h1>Approve from another device</h1>
+			<p class="hint">Open Keepiq on a device where your vault is unlocked and approve this request there. Check that it shows these same words.</p>
+			<p id="device-phrase" class="phrase" aria-live="polite"></p>
+			<p id="device-status" class="hint" role="status">Waiting for approval…</p>
+			<button id="device-cancel" class="link">Cancel</button>
+			<p id="device-error" class="error" role="alert" hidden></p>
 		</section>
 
 		<!-- Unlocked view -->

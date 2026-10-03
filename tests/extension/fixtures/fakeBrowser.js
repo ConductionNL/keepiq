@@ -160,6 +160,62 @@ export async function makeVault(masterPassword, prefix) {
 }
 
 /**
+ * The device approval routes, as DeviceApprovalController answers them. One
+ * request at a time in `s.deviceApproval`; the test plays the approving
+ * device by setting its status and sealed key.
+ *
+ * @param {object} s The server's state.
+ * @param {string} method The HTTP method.
+ * @param {string} path The path below the app.
+ * @param {object} body The JSON body.
+ * @param {object} headers The request headers.
+ * @param {Function} respond Builds a response.
+ * @return {object} The response.
+ */
+function deviceApprovalRoute(s, method, path, body, headers, respond) {
+	if (path === '/api/v1/device-approvals/status') {
+		return respond(200, { enabled: s.deviceApprovalEnabled ?? true })
+	}
+	if (path === '/api/v1/device-approvals' && method === 'POST') {
+		if (s.deviceApprovalEnabled === false) return respond(403, {})
+		s.deviceApproval = {
+			id: 'req-' + (s.deviceApprovalCount = (s.deviceApprovalCount ?? 0) + 1),
+			secret: 'secret-' + s.deviceApprovalCount,
+			publicKey: body.publicKey,
+			clientKind: body.clientKind,
+			deviceLabel: body.deviceLabel,
+			status: 'pending',
+			sealedUnlockKey: null,
+			expiresAt: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
+		}
+		return respond(201, {
+			id: s.deviceApproval.id,
+			requestSecret: s.deviceApproval.secret,
+			expiresAt: s.deviceApproval.expiresAt,
+		})
+	}
+	const request = s.deviceApproval
+	const match = /^\/api\/v1\/device-approvals\/([^/]+)(\/deny)?$/.exec(path)
+	if (!request || !match || decodeURIComponent(match[1]) !== request.id) {
+		return respond(404, {})
+	}
+	if (match[2]) {
+		request.status = 'denied'
+		return respond(200, { status: 'denied' })
+	}
+	if (headers['X-Keepiq-Request-Secret'] !== request.secret) {
+		return respond(404, {})
+	}
+	if (request.status === 'approved' && request.sealedUnlockKey) {
+		const sealedUnlockKey = request.sealedUnlockKey
+		request.sealedUnlockKey = null
+		request.status = 'consumed'
+		return respond(200, { status: 'approved', sealedUnlockKey })
+	}
+	return respond(200, { status: request.status })
+}
+
+/**
  * Install a fake `fetch` that answers per server URL.
  *
  * @param {object} servers Map of base URL → { suite, rows, maxIdleMinutes, passkeyOptions }.
@@ -170,7 +226,7 @@ export function installServer(servers) {
 	globalThis.fetch = vi.fn(async (url, init = {}) => {
 		const method = init.method || 'GET'
 		const body = init.body ? JSON.parse(init.body) : undefined
-		calls.push({ method, url, body })
+		calls.push({ method, url, body, headers: init.headers || {} })
 		const server = Object.entries(servers).find(([base]) => url.startsWith(base))
 		const respond = (status, data) => ({
 			ok: status < 400,
@@ -291,6 +347,16 @@ export function installServer(servers) {
 			return respond(201, { id: 'pk1', ...body })
 		if (path.startsWith('/api/v1/passkeys/'))
 			return respond(200, { recorded: true })
+		if (path.startsWith('/api/v1/device-approvals')) {
+			return deviceApprovalRoute(
+				s,
+				method,
+				path,
+				body,
+				init.headers || {},
+				respond,
+			)
+		}
 		return respond(404, {})
 	})
 	return { calls }
