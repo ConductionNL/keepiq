@@ -158,3 +158,10 @@ foreach (['ConnectionStatusReportedEvent', 'ConnectionRefreshRequestedEvent'] as
 		require_once __DIR__ . '/stubs/Integriq/Event/' . $integriqStubEvent . '.php';
 	}
 }
+
+// OpenRegister's MCP contract (hermiq-ai-tooling): KeepiqScannableServices
+// implements IMcpScannableServices and the read facades carry #[McpTool].
+// The stub loads only when OpenRegister's own classes do not resolve.
+if (interface_exists('\\OCA\\OpenRegister\\Mcp\\IMcpScannableServices') === false) {
+	require_once __DIR__ . '/stubs/openregister-mcp.stub.php';
+}
