@@ -126,6 +126,29 @@ class FederatedCertificateService {
 	}//end answer()
 
 	/**
+	 * Whether users here can share with another organisation at all: this
+	 * Nextcloud supports federation and at least one partner allows
+	 * outbound shares. With none, the share dialog offers nothing.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-no-partner-no-federation
+	 */
+	public function outboundAvailable(): bool {
+		if ($this->root->isSupported() === false) {
+			return false;
+		}
+
+		foreach ($this->partners->all() as $partner) {
+			if ($partner->getAllowOutbound() === true) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end outboundAvailable()
+
+	/**
 	 * Ask an outbound partner for a recipient's certificate.
 	 *
 	 * @param string $cloudId The recipient's cloud id, `bob@cloud.partner.example`
