@@ -14,6 +14,15 @@ It runs the extension tests, builds the Chrome and Firefox packages twice and fa
 
 Store review then takes from hours to days per store.
 
+## The signed Firefox file for self-hosting
+
+Firefox Add-ons signs the listed package once its review passes. The job `attach-amo-signed` in the same workflow then adds that signed file to the GitHub release as `keepiq-firefox-<version>-amo-signed.xpi`, with a `.sha256` file next to it. One version is one file everywhere: the self-hosted copy is the exact file Firefox Add-ons serves.
+
+- It runs every day at 05:23 UTC and looks at the five most recent `extension-v*` releases. A release that already holds the file is skipped. A version still in review is skipped with a notice.
+- To attach a file at once, run the workflow by hand (Actions, Extension release, Run workflow) and fill in `amo_version`, for example `1.2.0`. A manual run fails when that version is not approved yet.
+- Before it uploads, it checks the download against the hash Firefox Add-ons publishes, checks that the file carries a Mozilla signature, and checks that every other file in it is byte-identical to `keepiq-firefox-<version>.zip` from the same release.
+- It reads only public Firefox Add-ons data. It needs no store credential and does not wait for the `extension-stores` approval.
+
 ## Store credentials
 
 All of these are settings of the GitHub environment `extension-stores`. Environment secrets are readable only by jobs that name the environment, and the environment requires a maintainer's approval.
@@ -33,5 +42,5 @@ All of these are settings of the GitHub environment `extension-stores`. Environm
 ## Still to do before the first release
 
 - Create the publisher accounts on the three stores and the first listings, with the privacy policy (`privacy.md`) and the permission lines (`permissions.md`).
-- Create the `extension-stores` environment, add the settings above and name its required reviewers.
+- Add the settings above to the `extension-stores` environment. The environment and its required reviewers exist.
 - Run a first release on a test tag and check each store by hand.
