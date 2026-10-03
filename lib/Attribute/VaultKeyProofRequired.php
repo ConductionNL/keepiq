@@ -55,6 +55,10 @@ class VaultKeyProofRequired {
 	 *                         obtained for one guarded operation cannot be
 	 *                         presented to another. The client requests its
 	 *                         challenge with the same string.
+	 * @param string   $exemption Optional class name of a VaultKeyProofExemption.
+	 *                         When it says the request is exempt, no proof is
+	 *                         needed (keepiq#818: a share to a recipient the
+	 *                         caller already shares with). Empty means always.
 	 *
 	 * @return void
 	 */
@@ -62,6 +66,7 @@ class VaultKeyProofRequired {
 		private array $binds = [],
 		private string $subject = 'active',
 		private string $purpose = '',
+		private string $exemption = '',
 	) {
 	}//end __construct()
 
@@ -91,4 +96,15 @@ class VaultKeyProofRequired {
 	public function getPurpose(): string {
 		return $this->purpose;
 	}//end getPurpose()
+
+	/**
+	 * The class name of the exemption that may waive the proof, or ''.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
+	 */
+	public function getExemption(): string {
+		return $this->exemption;
+	}//end getExemption()
 }//end class
