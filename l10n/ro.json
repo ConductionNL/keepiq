@@ -1741,7 +1741,21 @@
         "This secret is already shared with that account.": "Acest secret este deja partajat cu acel cont.",
         "Other organisations": "Alte organizații",
         "Receive secrets from other organisations": "Primiți secrete de la alte organizații",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Persoanele din organizațiile partenere vă pot găsi apoi contul și pot partaja secrete cu dvs. Acceptați fiecare secret personal."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Persoanele din organizațiile partenere vă pot găsi apoi contul și pot partaja secrete cu dvs. Acceptați fiecare secret personal.",
+        "Shared": "Partajat",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Întrerupt: certificatul destinatarului sau parteneriatul s-a schimbat. Revocați partajarea sau partajați din nou.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Organizația destinatarului nu a primit ultima modificare. Revocați partajarea sau partajați din nou.",
+        "Being withdrawn": "Se retrage",
+        "Shared with another organisation": "Partajat cu o altă organizație",
+        "Change sent to another organisation": "Modificare trimisă unei alte organizații",
+        "Share with another organisation revoked": "Partajare cu o altă organizație revocată",
+        "Share with another organisation paused": "Partajare cu o altă organizație întreruptă",
+        "Another organisation did not get a change": "O altă organizație nu a primit o modificare",
+        "Secret received from another organisation": "Secret primit de la o altă organizație",
+        "Secret from another organisation accepted": "Secret de la o altă organizație acceptat",
+        "Secret from another organisation declined": "Secret de la o altă organizație refuzat",
+        "Copy from another organisation updated": "Copie de la o altă organizație actualizată",
+        "Copy from another organisation removed": "Copie de la o altă organizație eliminată"
     },
     "plurals": null
 }

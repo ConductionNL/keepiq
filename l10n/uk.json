@@ -1741,7 +1741,21 @@
         "This secret is already shared with that account.": "Доступ до цього секрету вже надано цьому обліковому запису.",
         "Other organisations": "Інші організації",
         "Receive secrets from other organisations": "Отримувати секрети з інших організацій",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Тоді люди з партнерських організацій зможуть знайти ваш обліковий запис і надавати вам доступ до секретів. Кожен із них ви приймаєте самі."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Тоді люди з партнерських організацій зможуть знайти ваш обліковий запис і надавати вам доступ до секретів. Кожен із них ви приймаєте самі.",
+        "Shared": "Доступ надано",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Призупинено: змінився їхній сертифікат або партнерство. Доступ можна відкликати або надати знову.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Їхня організація не отримала останню зміну. Доступ можна відкликати або надати знову.",
+        "Being withdrawn": "Відкликається",
+        "Shared with another organisation": "Спільний доступ надано іншій організації",
+        "Change sent to another organisation": "Зміну надіслано іншій організації",
+        "Share with another organisation revoked": "Спільний доступ для іншої організації відкликано",
+        "Share with another organisation paused": "Спільний доступ для іншої організації призупинено",
+        "Another organisation did not get a change": "Інша організація не отримала зміну",
+        "Secret received from another organisation": "Отримано секрет з іншої організації",
+        "Secret from another organisation accepted": "Секрет з іншої організації прийнято",
+        "Secret from another organisation declined": "Секрет з іншої організації відхилено",
+        "Copy from another organisation updated": "Копію з іншої організації оновлено",
+        "Copy from another organisation removed": "Копію з іншої організації вилучено"
     },
     "plurals": null
 }

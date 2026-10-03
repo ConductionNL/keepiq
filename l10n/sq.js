@@ -1646,7 +1646,21 @@ OC.L10N.register(
         "This secret is already shared with that account.": "Ky sekret është ndarë tashmë me atë llogari.",
         "Other organisations": "Organizata të tjera",
         "Receive secrets from other organisations": "Merr sekrete nga organizata të tjera",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personat në organizatat partnere mund ta gjejnë atëherë llogarinë tuaj dhe të ndajnë sekrete me ju. Secilin prej tyre e pranoni vetë."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personat në organizatat partnere mund ta gjejnë atëherë llogarinë tuaj dhe të ndajnë sekrete me ju. Secilin prej tyre e pranoni vetë.",
+        "Shared": "E ndarë",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Në pauzë: certifikata e tyre ose partneriteti ndryshoi. Revokojeni ose ndajeni përsëri.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Organizata e tyre nuk e mori ndryshimin e fundit. Revokojeni ose ndajeni përsëri.",
+        "Being withdrawn": "Po tërhiqet",
+        "Shared with another organisation": "U nda me një organizatë tjetër",
+        "Change sent to another organisation": "Ndryshimi u dërgua te një organizatë tjetër",
+        "Share with another organisation revoked": "Ndarja me një organizatë tjetër u revokua",
+        "Share with another organisation paused": "Ndarja me një organizatë tjetër u vu në pauzë",
+        "Another organisation did not get a change": "Një organizatë tjetër nuk e mori një ndryshim",
+        "Secret received from another organisation": "U mor një sekret nga një organizatë tjetër",
+        "Secret from another organisation accepted": "Sekreti nga një organizatë tjetër u pranua",
+        "Secret from another organisation declined": "Sekreti nga një organizatë tjetër u refuzua",
+        "Copy from another organisation updated": "Kopja nga një organizatë tjetër u përditësua",
+        "Copy from another organisation removed": "Kopja nga një organizatë tjetër u hoq"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1646,7 +1646,21 @@ OC.L10N.register(
         "This secret is already shared with that account.": "Тази тайна вече е споделена с този профил.",
         "Other organisations": "Други организации",
         "Receive secrets from other organisations": "Получаване на тайни от други организации",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Тогава хората от партньорски организации могат да намерят профила ви и да споделят тайни с вас. Всяка от тях приемате сами."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Тогава хората от партньорски организации могат да намерят профила ви и да споделят тайни с вас. Всяка от тях приемате сами.",
+        "Shared": "Споделено",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Спряно: сертификатът им или партньорството се промени. Отнемете споделянето или споделете отново.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Организацията им не получи последната промяна. Отнемете споделянето или споделете отново.",
+        "Being withdrawn": "Отнема се",
+        "Shared with another organisation": "Споделено с друга организация",
+        "Change sent to another organisation": "Промяната е изпратена до друга организация",
+        "Share with another organisation revoked": "Споделянето с друга организация е отменено",
+        "Share with another organisation paused": "Споделянето с друга организация е спряно",
+        "Another organisation did not get a change": "Друга организация не получи промяна",
+        "Secret received from another organisation": "Получена е тайна от друга организация",
+        "Secret from another organisation accepted": "Тайната от друга организация е приета",
+        "Secret from another organisation declined": "Тайната от друга организация е отказана",
+        "Copy from another organisation updated": "Копието от друга организация е обновено",
+        "Copy from another organisation removed": "Копието от друга организация е премахнато"
     },
     "nplurals=2; plural=(n != 1);"
 )

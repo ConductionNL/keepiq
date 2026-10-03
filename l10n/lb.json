@@ -1717,7 +1717,21 @@
         "This secret is already shared with that account.": "Dëst Geheimnis ass schonn mat deem Konto gedeelt.",
         "Other organisations": "Aner Organisatiounen",
         "Receive secrets from other organisations": "Geheimnisser vun anere Organisatiounen kréien",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Leit a Partnerorganisatiounen kënnen dann Äert Konto fannen a Geheimnisser mat Iech deelen. Dir acceptéiert all eenzelt selwer."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Leit a Partnerorganisatiounen kënnen dann Äert Konto fannen a Geheimnisser mat Iech deelen. Dir acceptéiert all eenzelt selwer.",
+        "Shared": "Gedeelt",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Pauséiert: hiert Zertifikat oder de Partenariat huet geännert. Zitt et zréck oder deelt et nach eng Kéier.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Hir Organisatioun huet déi lescht Ännerung net kritt. Zitt et zréck oder deelt et nach eng Kéier.",
+        "Being withdrawn": "Gëtt zréckgezunn",
+        "Shared with another organisation": "Mat enger anerer Organisatioun gedeelt",
+        "Change sent to another organisation": "Ännerung un eng aner Organisatioun geschéckt",
+        "Share with another organisation revoked": "Deelen mat enger anerer Organisatioun zréckgezunn",
+        "Share with another organisation paused": "Deelen mat enger anerer Organisatioun pauséiert",
+        "Another organisation did not get a change": "Eng aner Organisatioun huet eng Ännerung net kritt",
+        "Secret received from another organisation": "Geheimnis vun enger anerer Organisatioun kritt",
+        "Secret from another organisation accepted": "Geheimnis vun enger anerer Organisatioun acceptéiert",
+        "Secret from another organisation declined": "Geheimnis vun enger anerer Organisatioun refuséiert",
+        "Copy from another organisation updated": "Kopie vun enger anerer Organisatioun aktualiséiert",
+        "Copy from another organisation removed": "Kopie vun enger anerer Organisatioun ewechgeholl"
     },
     "plurals": null
 }

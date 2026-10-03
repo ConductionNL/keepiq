@@ -1741,7 +1741,21 @@
         "This secret is already shared with that account.": "Ten sekret jest już udostępniony temu kontu.",
         "Other organisations": "Inne organizacje",
         "Receive secrets from other organisations": "Odbieraj sekrety z innych organizacji",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Osoby z organizacji partnerskich mogą wtedy znaleźć Twoje konto i udostępniać Ci sekrety. Każdy z nich akceptujesz samodzielnie."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Osoby z organizacji partnerskich mogą wtedy znaleźć Twoje konto i udostępniać Ci sekrety. Każdy z nich akceptujesz samodzielnie.",
+        "Shared": "Udostępniono",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Wstrzymano: zmienił się ich certyfikat lub partnerstwo. Odwołaj udostępnienie albo udostępnij ponownie.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Ich organizacja nie otrzymała ostatniej zmiany. Odwołaj udostępnienie albo udostępnij ponownie.",
+        "Being withdrawn": "Trwa wycofywanie",
+        "Shared with another organisation": "Udostępniono innej organizacji",
+        "Change sent to another organisation": "Zmiana wysłana do innej organizacji",
+        "Share with another organisation revoked": "Udostępnienie innej organizacji odwołane",
+        "Share with another organisation paused": "Udostępnienie innej organizacji wstrzymane",
+        "Another organisation did not get a change": "Inna organizacja nie otrzymała zmiany",
+        "Secret received from another organisation": "Sekret otrzymany z innej organizacji",
+        "Secret from another organisation accepted": "Sekret z innej organizacji zaakceptowany",
+        "Secret from another organisation declined": "Sekret z innej organizacji odrzucony",
+        "Copy from another organisation updated": "Kopia z innej organizacji zaktualizowana",
+        "Copy from another organisation removed": "Kopia z innej organizacji usunięta"
     },
     "plurals": null
 }
