@@ -12,7 +12,7 @@
 
 ## 3. Commands
 
-- [ ] 3.1 Add `keepiq:backup:create` and `keepiq:backup:list` and a `<commands>` block in `appinfo/info.xml`. Verify manually with `occ keepiq:backup:create` and `occ keepiq:backup:list` on the dev instance. Code done (both commands and the `<commands>` block); live check owed: run them on an instance.
+- [x] 3.1 Add `keepiq:backup:create` and `keepiq:backup:list` and a `<commands>` block in `appinfo/info.xml`. Verify manually with `occ keepiq:backup:create` and `occ keepiq:backup:list` on the dev instance. Verified 4 Oct on a fresh Nextcloud 35.0.1 + PostgreSQL 16: both commands listed under `occ list keepiq`; create wrote `keepiq-backup-20261003-225701.zip (33234 bytes, not encrypted)`, rc 0, with a `backup.created` audit row; list showed it with size, time and path, rc 0.
 - [x] 3.2 Add `keepiq:backup:verify` with `--key-file`. Verify with a PHPUnit command test for a good archive, a tampered file and a wrong key.
 - [x] 3.3 Add `keepiq:backup:restore` with the maintenance mode check, schema fingerprint check, single transaction, blob replacement, `--dry-run` and the `--force` rule. Verify with a PHPUnit test that restores into SQLite and compares every table.
 - [x] 3.4 Print the restore warnings (old master password, lost later changes, instance secret probe, missing users). Verify with a PHPUnit command output test.
@@ -20,7 +20,7 @@
 ## 4. Admin UI
 
 - [x] 4.1 Add `VaultBackupSection.vue` with schedule, retention, public key upload, last result, archive list and "Back up now", and no download action. Verify with a vitest in `tests/components/`.
-- [ ] 4.2 Prove a restored vault still unlocks. Verify manually on the dev instance: create a backup, change a secret, restore, unlock as `admin` with the master password from before, and see the old value. Live check owed.
+- [ ] 4.2 Prove a restored vault still unlocks. Verify manually on the dev instance: create a backup, change a secret, restore, unlock as `admin` with the master password from before, and see the old value. Live 4 Oct: the restore engine works after binding values by type (PostgreSQL refused `false` bound as ''; `TableStoreTest`); through a harness running the same command class in maintenance mode, admin unlocked with the old master password and read the pre-backup value. Still open: `occ keepiq:backup:restore` itself cannot run, because Nextcloud loads no app commands in maintenance mode and the command refuses outside it (policy question in the tracker).
 
 ## Acceptance criteria
 
