@@ -272,12 +272,14 @@
        }
       ],
       "url": {
-       "raw": "{{baseUrl}}/index.php/settings/authorizedgroups/saveSettings",
+       "raw": "{{baseUrl}}/index.php/apps/settings/settings/authorizedgroups/saveSettings",
        "host": [
         "{{baseUrl}}"
        ],
        "path": [
         "index.php",
+        "apps",
+        "settings",
         "settings",
         "authorizedgroups",
         "saveSettings"

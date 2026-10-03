@@ -83,7 +83,7 @@ class AdminAuditController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.5
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-returns-metadata-only
 	 */
 	#[AuthorizedAdminSetting(AuditAdminSettings::class)]
 	public function events(
@@ -115,7 +115,7 @@ class AdminAuditController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.5
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-returns-metadata-only
 	 */
 	#[AuthorizedAdminSetting(AuditAdminSettings::class)]
 	public function reports(): JSONResponse {
@@ -139,7 +139,7 @@ class AdminAuditController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.5
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-returns-metadata-only
 	 */
 	#[AuthorizedAdminSetting(AuditAdminSettings::class)]
 	#[UserRateLimit(limit: 10, period: 60)]
@@ -159,7 +159,7 @@ class AdminAuditController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.5
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-returns-metadata-only
 	 */
 	#[AuthorizedAdminSetting(AuditAdminSettings::class)]
 	public function showReport(string $id): JSONResponse {
@@ -178,7 +178,7 @@ class AdminAuditController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.5
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-returns-metadata-only
 	 */
 	#[AuthorizedAdminSetting(AuditAdminSettings::class)]
 	public function sinks(): JSONResponse {
@@ -194,7 +194,7 @@ class AdminAuditController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.5
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-returns-metadata-only
 	 */
 	#[AuthorizedAdminSetting(AuditAdminSettings::class)]
 	#[UserRateLimit(limit: 30, period: 60)]
@@ -217,7 +217,7 @@ class AdminAuditController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.5
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-returns-metadata-only
 	 */
 	#[AuthorizedAdminSetting(AuditAdminSettings::class)]
 	#[UserRateLimit(limit: 30, period: 60)]
@@ -242,7 +242,7 @@ class AdminAuditController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.5
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-returns-metadata-only
 	 */
 	#[AuthorizedAdminSetting(AuditAdminSettings::class)]
 	#[UserRateLimit(limit: 30, period: 60)]
