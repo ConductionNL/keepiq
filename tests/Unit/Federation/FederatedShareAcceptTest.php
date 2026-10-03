@@ -161,6 +161,7 @@ class FederatedShareAcceptTest extends TestCase {
 				suiteMapper: $suites,
 				typeService: $types,
 			),
+			audit: new \OCA\Keepiq\Service\FederatedShareAuditTrail(),
 		);
 
 		$user = $this->createMock(IUser::class);
@@ -310,6 +311,8 @@ class FederatedShareAcceptTest extends TestCase {
 			cloudIdManager: $this->cloudIdManager(),
 			messenger: $this->createMock(FederatedShareMessenger::class),
 			random: $this->createMock(ISecureRandom::class),
+			delivery: $this->createMock(\OCA\Keepiq\Service\FederatedNotificationDelivery::class),
+			audit: new \OCA\Keepiq\Service\FederatedShareAuditTrail(),
 		);
 
 		return new FederationOcmRequestListener($this->createMock(FederatedCertificateService::class), $service);

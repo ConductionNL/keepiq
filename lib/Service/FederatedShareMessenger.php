@@ -4,9 +4,15 @@
  * Keepiq Federated Share Messenger
  *
  * Everything the sending side says to a recipient's instance over OCM
- * (sharing-federated-recipients D4): the share announcement, sent with
- * `sendCloudShare()` with resource type `keepiq-secret`. It carries the
- * owner's cloud id, the share id and the shared secret, never ciphertext.
+ * (sharing-federated-recipients D4, D5): the share announcement, sent with
+ * `sendCloudShare()` with resource type `keepiq-secret`, and the
+ * `SHARE_UPDATED` and `SHARE_UNSHARED` notifications, sent with
+ * `sendCloudNotification()`. None of them carries ciphertext.
+ *
+ * Nextcloud refuses a notification without a `sharedSecret`, and the
+ * sending side keeps only the secret's SHA-256. So a notification carries
+ * that hash; the receiver compares it with the hash of the secret it holds.
+ * The pull of the ciphertext still needs the secret itself.
  *
  * @category Service
  * @package  OCA\Keepiq\Service
@@ -97,4 +103,34 @@ class FederatedShareMessenger {
 
 		return $response->getStatusCode() === 201;
 	}//end announce()
+
+	/**
+	 * Tell the recipient's instance that a share changed or ended. Returns
+	 * whether it took the notification.
+	 *
+	 * @param FederatedShare $row The stored share
+	 * @param string $type `SHARE_UPDATED` or `SHARE_UNSHARED`
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 */
+	public function notify(FederatedShare $row, string $type): bool {
+		$notification = $this->factory->getCloudFederationNotification();
+		$notification->setMessage(
+			$type,
+			FederatedShareService::RESOURCE_TYPE,
+			$row->getId(),
+			['sharedSecret' => $row->getSharedSecretHash(), 'message' => $type]
+		);
+
+		try {
+			$remote = $this->cloudIdManager->resolveCloudId($row->getRecipientCloudId())->getRemote();
+			$response = $this->providerManager->sendCloudNotification($remote, $notification);
+		} catch (Throwable) {
+			return false;
+		}
+
+		return $response->getStatusCode() === 201;
+	}//end notify()
 }//end class

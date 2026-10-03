@@ -116,9 +116,10 @@ class FederatedShareReceiveTest extends TestCase {
 			config: $config,
 			crypto: $crypto,
 			notifications: $this->notifications,
+			audit: new \OCA\Keepiq\Service\FederatedShareAuditTrail(),
 		);
 
-		return new KeepiqSecretFederationProvider($service);
+		return new KeepiqSecretFederationProvider($service, $this->createMock(\OCA\Keepiq\Service\FederatedRemoteChangeService::class));
 	}
 
 	/**

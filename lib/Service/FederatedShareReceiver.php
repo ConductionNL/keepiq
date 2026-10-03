@@ -32,6 +32,7 @@ use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\FederatedInbound;
 use OCA\Keepiq\Db\FederatedInboundMapper;
 use OCA\Keepiq\Db\FederationPartner;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Federation\Exceptions\ProviderCouldNotAddShareException;
 use OCP\Federation\ICloudFederationShare;
@@ -73,6 +74,7 @@ class FederatedShareReceiver {
 	 * @param IConfig $config The receive preference
 	 * @param ICrypto $crypto Keeps the shared secret
 	 * @param NotificationService $notifications Tells the recipient
+	 * @param FederatedShareAuditTrail $audit Identifier-only audit
 	 *
 	 * @return void
 	 *
@@ -87,6 +89,7 @@ class FederatedShareReceiver {
 		private IConfig $config,
 		private ICrypto $crypto,
 		private NotificationService $notifications,
+		private FederatedShareAuditTrail $audit,
 	) {
 	}//end __construct()
 
@@ -130,6 +133,7 @@ class FederatedShareReceiver {
 		$row->setReceivedAt($now);
 		$row->setUpdatedAt($now);
 		$this->inboundMapper->insert(entity: $row);
+		$this->audit->recordInbound(eventType: AuditEventTypes::FEDERATED_SHARE_RECEIVED, row: $row, actorId: null);
 
 		$this->notifications->notify(
 			subject: 'federated_share_received',

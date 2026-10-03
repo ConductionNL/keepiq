@@ -162,6 +162,8 @@ class FederatedShareSendTest extends TestCase {
 				userManager: $users,
 			),
 			random: $random,
+			delivery: $this->createMock(\OCA\Keepiq\Service\FederatedNotificationDelivery::class),
+			audit: new \OCA\Keepiq\Service\FederatedShareAuditTrail(),
 		);
 
 		$user = $this->createMock(IUser::class);

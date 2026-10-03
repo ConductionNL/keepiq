@@ -24,9 +24,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Federation;
 
+use OCA\Keepiq\Service\FederatedRemoteChangeService;
 use OCA\Keepiq\Service\FederatedShareReceiver;
 use OCA\Keepiq\Service\FederatedShareService;
-use OCP\Federation\Exceptions\ActionNotSupportedException;
 use OCP\Federation\ICloudFederationProvider;
 use OCP\Federation\ICloudFederationShare;
 
@@ -40,6 +40,7 @@ class KeepiqSecretFederationProvider implements ICloudFederationProvider {
 	 * Constructor for KeepiqSecretFederationProvider.
 	 *
 	 * @param FederatedShareReceiver $receiver Takes incoming shares in
+	 * @param FederatedRemoteChangeService $remoteChanges Applies updates and revocations
 	 *
 	 * @return void
 	 *
@@ -47,6 +48,7 @@ class KeepiqSecretFederationProvider implements ICloudFederationProvider {
 	 */
 	public function __construct(
 		private FederatedShareReceiver $receiver,
+		private FederatedRemoteChangeService $remoteChanges,
 	) {
 	}//end __construct()
 
@@ -85,14 +87,12 @@ class KeepiqSecretFederationProvider implements ICloudFederationProvider {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @throws ActionNotSupportedException For every type until updates and revocation arrive (task 4.1, 4.2)
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Signature fixed by ICloudFederationProvider.
+	 * @throws \OCP\Share\Exceptions\ShareNotFound For every refusal
 	 *
 	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function notificationReceived(string $notificationType, string $providerId, array $notification) {
-		throw new ActionNotSupportedException($notificationType);
+		return $this->remoteChanges->handle(type: $notificationType, providerId: $providerId, notification: $notification);
 	}//end notificationReceived()
 
 	/**
