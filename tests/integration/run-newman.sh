@@ -65,6 +65,19 @@ fi
   --color on \
   "$@"
 
+# Admin API v1 contract (admin-public-api). Seeds its own Audit-only service
+# account through Nextcloud's provisioning API and admin delegation, and
+# removes it again at the end.
+"${NEWMAN[@]}" run "${SCRIPT_DIR}/admin-api.postman_collection.json" \
+  --env-var "baseUrl=${BASE_URL}" \
+  --env-var "noAuthBase=${NOAUTH_BASE}" \
+  --env-var "adminUser=${ADMIN_USER}" \
+  --env-var "adminPass=${ADMIN_PASS}" \
+  --ignore-redirects \
+  --reporters cli \
+  --color on \
+  "$@"
+
 # Machine secret-store API contract (openconnector-secret-store-api).
 # The unauthenticated subset (discovery + token negatives + bearer-required)
 # always runs; the seeded machine flow runs only when SEEDED_APP_ID +

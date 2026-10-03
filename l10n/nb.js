@@ -1272,7 +1272,7 @@ OC.L10N.register(
         "Removed the user from {count} team folders.": "Fjernet brukeren fra {count} teammapper.",
         "Approve a share": "Godkjenn en deling",
         "This approval link is incomplete. Open it again from the notification.": "Denne godkjenningslenken er ufullstendig. Åpne den igjen fra varselet.",
-        "Deny": "Avslå",
+        "Deny": "Avvis",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} ble med i en gruppe du deler en hemmelighet med. Vil du dele hemmeligheten med dem også?",
         "{requester} asks you to share a secret with {user}.": "{requester} ber deg dele en hemmelighet med {user}.",
         "Shared. The recipient can now open the secret.": "Delt. Mottakeren kan nå åpne hemmeligheten.",
@@ -1593,7 +1593,13 @@ OC.L10N.register(
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Hvor mange versjoner av en hemmelighet som beholdes, hvor lenge, og hvor lenge slettede hemmeligheter blir i papirkurven.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Grenser for krypterte vedlegg, håndhevet på serveren i lagrede krypterte byte.",
         "Type the suite ID again to confirm": "Skriv inn pakke-ID-en på nytt for å bekrefte",
-        "This does not match the suite ID.": "Dette samsvarer ikke med pakke-ID-en."
+        "This does not match the suite ID.": "Dette samsvarer ikke med pakke-ID-en.",
+        "Confirm with your master password": "Bekreft med hovedpassordet ditt",
+        "Confirm": "Bekreft",
+        "That master password is not right.": "Det hovedpassordet er ikke riktig.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Du deler med en ny person. Skriv inn hovedpassordet ditt for å bekrefte.",
+        "Enter your master password to confirm this share.": "Skriv inn hovedpassordet ditt for å bekrefte denne delingen.",
+        "Enter your master password to confirm this delegation.": "Skriv inn hovedpassordet ditt for å bekrefte denne delegeringen."
     },
     "nplurals=2; plural=(n != 1);"
 )
