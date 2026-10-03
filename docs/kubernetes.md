@@ -60,6 +60,9 @@ A `field` is `key`, `login` or `additionalFields.<name>`. Set `refreshInterval` 
 | `TokenRefused` | Check the application id, its approval, and the key. |
 | `FingerprintMismatch` | The key does not belong to the certificate. Put the right key in the Secret. |
 
+`FingerprintMismatch` needs the certificate: set `certificateSecretRef` on the `KeepiqConnection`.
+To get the certificate, call `GET /api/v1/app/certificate` with the application's access token. The answer holds the PEM and its fingerprint.
+
 No value ever lands in the resource, an event or the operator log.
 
 ## Keep the value out of Kubernetes Secrets

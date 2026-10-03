@@ -67,6 +67,7 @@ import { NcButton, NcDialog } from '@nextcloud/vue'
 import BulkRunPanel from '../components/BulkRunPanel.vue'
 import ShareRestrictionFields from '../components/share/ShareRestrictionFields.vue'
 import { useBulkStore } from '../store/modules/bulk.js'
+import { useKeyProofPromptStore } from '../store/modules/keyProofPrompt.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useShareStore } from '../store/modules/share.js'
 import { isUseOnly, restrictionPayload } from '../utils/shareRestriction.js'
@@ -97,6 +98,11 @@ export default {
 			error: null,
 			/** Whether a run was started FROM THIS DIALOG (the store's report outlives it). */
 			ran: false,
+			/**
+			 * The master password for this run's vault-key proofs (keepiq#818):
+			 * asked once before the fan-out, cleared when the run ends.
+			 */
+			runPassword: '',
 		}
 	},
 
@@ -175,22 +181,23 @@ export default {
 				this.certificate,
 			)
 
-			const response = await axios.post(
-				generateUrl('/apps/keepiq/api/v1/shares/register-batch'),
-				{
-					shares: [
-						{
-							sourceSecretId: secretId,
-							targetUserId: this.targetUserId,
-							encryptedKey: blob.key ?? '',
-							encryptedLogin: blob.login ?? null,
-							encryptedAdditionalFields: blob.additionalFields ?? null,
-							...restrictionPayload(this.restriction),
-						},
-					],
-				},
+			// register-batch needs a vault-key proof per request (keepiq#818).
+			// The password is asked once for the run and kept only for it.
+			const { items, masterPassword } = await shareStore.registerBatch(
+				[
+					{
+						sourceSecretId: secretId,
+						targetUserId: this.targetUserId,
+						encryptedKey: blob.key ?? '',
+						encryptedLogin: blob.login ?? null,
+						encryptedAdditionalFields: blob.additionalFields ?? null,
+						...restrictionPayload(this.restriction),
+					},
+				],
+				{ masterPassword: this.runPassword },
 			)
-			const item = response.data?.items?.[0]
+			this.runPassword = masterPassword
+			const item = items[0]
 			if (item?.status === 'created' || item?.status === 'exists') {
 				return {
 					status: 'ok',
@@ -226,16 +233,45 @@ export default {
 				return
 			}
 
+			if (!(await this.askRunPassword())) {
+				return
+			}
+
 			// Set only once the certificate resolved: a recipient without an
 			// active suite returns above, and that is a dialog that never ran
 			// — it must keep asking, with the reason on screen.
 			this.ran = true
-			await this.bulk.run(
-				this.bulk.selectedIds,
-				(id) => this.shareOne(id),
-				this.t('keepiq', 'Sharing secrets'),
-			)
+			try {
+				await this.bulk.run(
+					this.bulk.selectedIds,
+					(id) => this.shareOne(id),
+					this.t('keepiq', 'Sharing secrets'),
+				)
+			} finally {
+				this.runPassword = ''
+			}
 			this.$emit('done')
+		},
+
+		/**
+		 * Ask once for the master password the run's proofs need (keepiq#818).
+		 * A cancelled prompt starts nothing.
+		 *
+		 * @return {Promise<boolean>} Whether a password was given.
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
+		 */
+		async askRunPassword() {
+			try {
+				this.runPassword = await useKeyProofPromptStore().ask(
+					this.t(
+						'keepiq',
+						'Enter your master password to confirm this share.',
+					),
+				)
+				return true
+			} catch {
+				return false
+			}
 		},
 
 		/**
@@ -245,10 +281,17 @@ export default {
 		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
 		 */
 		async onRetry() {
-			await this.bulk.retryFailed(
-				(id) => this.shareOne(id),
-				this.t('keepiq', 'Retrying share'),
-			)
+			if (!(await this.askRunPassword())) {
+				return
+			}
+			try {
+				await this.bulk.retryFailed(
+					(id) => this.shareOne(id),
+					this.t('keepiq', 'Retrying share'),
+				)
+			} finally {
+				this.runPassword = ''
+			}
 			this.$emit('done')
 		},
 	},

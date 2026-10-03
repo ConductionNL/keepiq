@@ -90,6 +90,8 @@ describe('least permissions', () => {
 		tabs: /chrome\.tabs\./,
 		clipboardWrite: /navigator\.clipboard\.writeText/,
 		idle: /chrome\.idle\./,
+		// Scheduled vault syncs while unlocked (clients-extension-complete).
+		alarms: /chrome\.alarms\./,
 		windows: /chrome\.windows\./,
 	}
 	const source = files(SRC)

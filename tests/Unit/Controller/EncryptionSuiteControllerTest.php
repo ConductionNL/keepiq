@@ -980,10 +980,48 @@ class EncryptionSuiteControllerTest extends TestCase {
 	public function testForceRevokeRejectsAnEmptyReason(): void {
 		$this->suiteService->expects($this->never())->method('revokeSuite');
 
-		$response = $this->controller->forceRevoke('suite-1', '   ');
+		$response = $this->controller->forceRevoke('suite-1', '   ', confirmSuiteId: 'suite-1');
 
 		$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
 	}//end testForceRevokeRejectsAnEmptyReason()
+
+	/**
+	 * Data for the typed-confirmation refusals (keepiq#871).
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function badConfirmationProvider(): array {
+		return [
+			'missing'        => [''],
+			'another suite'  => ['suite-2'],
+			'a prefix'       => ['suite-'],
+			'different case' => ['SUITE-1'],
+		];
+	}//end badConfirmationProvider()
+
+	/**
+	 * A force-revoke whose typed confirmation is missing or is not the route's
+	 * suite id is refused with 400 before anything happens: no migration check,
+	 * no emergency count, no revoke, only the refusal audit (keepiq#871). This is
+	 * the guard that holds where sudo mode is skipped (SSO backends).
+	 *
+	 * @param string $confirmSuiteId The typed confirmation
+	 *
+	 * @return void
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('badConfirmationProvider')]
+	public function testForceRevokeRefusesAMissingOrWrongTypedConfirmation(string $confirmSuiteId): void {
+		$this->suiteService->expects($this->never())->method('revokeSuite');
+		$this->migrationService->expects($this->never())->method('assertNoMigrationInProgress');
+		$this->suiteService->expects($this->once())
+			->method('recordRevokeRefused')
+			->with('suite-1', 'testuser', 'confirmation_mismatch', true);
+
+		$response = $this->controller->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: $confirmSuiteId);
+
+		$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
+		$this->assertSame(expected: 'confirmation_mismatch', actual: $response->getData()['error']);
+	}//end testForceRevokeRefusesAMissingOrWrongTypedConfirmation()
 
 	/**
 	 * A refused force-revoke reaches the audit trail with a fixed reason code,
@@ -996,7 +1034,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 			->method('recordRevokeRefused')
 			->with('suite-1', 'testuser', 'empty_reason', true);
 
-		$this->controller->forceRevoke('suite-1', '   ', markCompromised: true);
+		$this->controller->forceRevoke('suite-1', '   ', markCompromised: true, confirmSuiteId: 'suite-1');
 	}//end testForceRevokeRecordsAnEmptyReasonRefusal()
 
 	/**
@@ -1012,7 +1050,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 			->method('recordRevokeRefused')
 			->with('suite-1', 'testuser', 'migration_in_progress', false);
 
-		$response = $this->controller->forceRevoke('suite-1', 'routine');
+		$response = $this->controller->forceRevoke('suite-1', 'routine', confirmSuiteId: 'suite-1');
 
 		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
 	}//end testForceRevokeRecordsAMigrationInProgressRefusal()
@@ -1046,7 +1084,8 @@ class EncryptionSuiteControllerTest extends TestCase {
 
 		$response = $this->controller->forceRevoke(
 			'00000000-0000-0000-0000-000000000000',
-			'application retired'
+			'application retired',
+			confirmSuiteId: '00000000-0000-0000-0000-000000000000'
 		);
 
 		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
@@ -1076,7 +1115,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 			->with('suite-1', 'compromise', 'testuser', true, 3)
 			->willReturn($revoked);
 
-		$response = $this->controller->forceRevoke('suite-1', 'compromise', markCompromised: true);
+		$response = $this->controller->forceRevoke('suite-1', 'compromise', markCompromised: true, confirmSuiteId: 'suite-1');
 
 		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
 		$data = $response->getData();
@@ -1102,7 +1141,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$this->emergencyService->method('countUsableForGrantorSuite')->willReturn(0);
 		$this->suiteService->method('revokeSuite')->willReturn($revoked);
 
-		$response = $this->controller->forceRevoke('suite-1', 'de-authorised departure');
+		$response = $this->controller->forceRevoke('suite-1', 'de-authorised departure', confirmSuiteId: 'suite-1');
 
 		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
 		$this->assertArrayHasKey('warning', $response->getData());
@@ -1126,7 +1165,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$this->emergencyService->expects($this->never())->method('countUsableForGrantorSuite');
 		$this->suiteService->expects($this->never())->method('revokeSuite');
 
-		$response = $this->controller->forceRevoke('suite-1', 'departed');
+		$response = $this->controller->forceRevoke('suite-1', 'departed', confirmSuiteId: 'suite-1');
 
 		$this->assertSame(expected: Http::STATUS_CONFLICT, actual: $response->getStatus());
 		$this->assertSame(expected: 'migration_in_progress', actual: $response->getData()['error']);
@@ -1213,7 +1252,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$log = [];
 		$this->recordCompromiseCalls($log);
 
-		$response = $this->controller->forceRevoke('suite-1', 'account taken over', true);
+		$response = $this->controller->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
 
 		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
 		$this->assertSame(['revoke:suite-1', 'revoke:suite-2', 'terminate:migration-1'], $log);
@@ -1233,7 +1272,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$log = [];
 		$this->recordCompromiseCalls($log);
 
-		$response = $this->controller->forceRevoke('suite-2', 'account taken over', true);
+		$response = $this->controller->forceRevoke('suite-2', 'account taken over', true, confirmSuiteId: 'suite-2');
 
 		$this->assertSame(['revoke:suite-2', 'revoke:suite-1', 'terminate:migration-1'], $log);
 		$this->assertSame('suite-1', $response->getData()['alsoRevokedSuite']);
@@ -1251,11 +1290,11 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$log = [];
 		$this->recordCompromiseCalls($log, 'suite-2');
 
-		$first = $this->controller->forceRevoke('suite-1', 'account taken over', true);
+		$first = $this->controller->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
 		$this->assertNotSame(Http::STATUS_OK, $first->getStatus());
 		$this->assertNotContains('terminate:migration-1', $log, 'nothing may be terminated while the other end is live');
 
-		$retry = $this->controller->forceRevoke('suite-1', 'account taken over', true);
+		$retry = $this->controller->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
 		$this->assertSame(Http::STATUS_OK, $retry->getStatus());
 		$this->assertContains('revoke:suite-2', $log);
 		$this->assertSame('terminate:migration-1', end($log));
@@ -1272,7 +1311,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$log = [];
 		$this->recordCompromiseCalls($log);
 
-		$response = $this->controller->forceRevoke('suite-1', 'account taken over', true);
+		$response = $this->controller->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
 
 		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
 		$this->assertSame(['revoke:suite-1'], $log);
@@ -1386,7 +1425,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 			}
 		);
 
-		$response = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true);
+		$response = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
 
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 		$this->assertSame(['collect', 'revoke:suite-1', 'revoke:suite-2', 'terminate:migration-1', 'contain'], $log);
@@ -1406,7 +1445,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$containment->method('collect')->willReturn(new CompromiseBlastRadius());
 		$containment->method('contain')->willReturn(['stamped' => 4, 'notified' => 1, 'failed' => 2]);
 
-		$response = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true);
+		$response = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
 
 		$data = $response->getData();
 		$this->assertTrue($data['cascadeIncomplete']);
@@ -1423,7 +1462,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$log = [];
 		$this->recordCompromiseCalls($log);
 
-		$response = $this->controller->forceRevoke('suite-1', 'account taken over', true);
+		$response = $this->controller->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
 
 		$this->assertFalse($response->getData()['cascadeIncomplete']);
 	}//end testACompleteCascadeIsNotFlagged()
@@ -1454,7 +1493,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 			->method('notifyEmergencyAccessCleared')
 			->with($this->callback(static fn (EncryptionSuite $suite): bool => $suite->getId() === 'suite-1'), 3);
 
-		$data = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true)->getData();
+		$data = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1')->getData();
 
 		$this->assertSame(2, $data['emergencyContactsDestroyed']);
 		$this->assertSame(1, $data['alsoRevokedEmergencyContactsDestroyed']);
@@ -1480,7 +1519,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$containment->expects($this->never())->method('contain');
 		$containment->expects($this->once())->method('notifyEmergencyAccessCleared')->with($revoked, 2);
 
-		$response = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'departed');
+		$response = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'departed', confirmSuiteId: 'suite-1');
 
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 	}//end testAPlainForceRevokeTellsTheOwnerButRunsNoContainment()

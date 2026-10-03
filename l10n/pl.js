@@ -1591,7 +1591,16 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "odejścia z zespołu, zestawy szyfrowania i przejęcie przez administratora",
         "audit log, compliance reports, SIEM export and honey alerts": "dziennik audytu, raporty zgodności, eksport SIEM i alerty przynęt",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Ile wersji sekretu jest przechowywanych, jak długo, i jak długo usunięte sekrety pozostają w koszu.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limity zaszyfrowanych załączników, egzekwowane na serwerze w zapisanych zaszyfrowanych bajtach."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limity zaszyfrowanych załączników, egzekwowane na serwerze w zapisanych zaszyfrowanych bajtach.",
+        "Type the suite ID again to confirm": "Wpisz ponownie ID pakietu, aby potwierdzić",
+        "This does not match the suite ID.": "To nie pasuje do ID pakietu.",
+        "Confirm with your master password": "Potwierdź hasłem głównym",
+        "Confirm": "Potwierdź",
+        "That master password is not right.": "To hasło główne jest nieprawidłowe.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Udostępniasz nowej osobie. Wpisz hasło główne, aby potwierdzić.",
+        "Enter your master password to confirm this share.": "Wpisz hasło główne, aby potwierdzić to udostępnienie.",
+        "Enter your master password to confirm this delegation.": "Wpisz hasło główne, aby potwierdzić to delegowanie.",
+        "Approve {member}": "Zatwierdź {member}"
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

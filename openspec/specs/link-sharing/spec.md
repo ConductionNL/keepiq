@@ -34,13 +34,34 @@ Note: The link password is not stored. The snapshot is re-encrypted with a key d
 ## Requirements
 
 ### Requirement: Create Link Share
-The system MUST allow a user to create a link share for a secret they own. The system MUST generate a link token and a one-time password for the recipient.
+The system MUST allow a user to create a link share for a secret they own, or may re-share (see Requirement: Who May Create A Link Share). The system MUST generate a link token and a one-time password for the recipient.
 
 #### Scenario: Create link share
 - GIVEN a user owns a secret and has their master password in session
 - WHEN they create a link share with a usage limit of N (1-10, default 1)
 - THEN the system MUST generate a unique token, encrypt a snapshot of the secret using a key derived from a generated password, and return both the link and the password to the user
 - AND the password MUST NOT be stored or recoverable server-side
+
+### Requirement: Who May Create A Link Share
+A public link widens the audience beyond what the owner chose, so only the secret's owner, or a recipient whose share permits re-sharing, MUST be able to create a link share for it (keepiq#214). On development a share permits re-sharing when its recipient is an active delegate of the secret (delegation grants share management rights). A use-only recipient MUST NEVER create a link share. A received copy is owned by its recipient, so `LinkShareService::create()` MUST judge a copy by its source secret. Everyone else MUST be refused with `404`, the same answer as a missing secret.
+
+#### Scenario: The owner creates a link share
+@e2e exclude Covered by PHPUnit LinkShareServiceTest and LinkShareControllerTest.
+- GIVEN user A owns secret S
+- WHEN A creates a link share for S
+- THEN the link share MUST be created
+
+#### Scenario: A delegate creates a link share from their copy
+@e2e exclude Needs two vault users and a delegation; covered by PHPUnit LinkShareServiceTest.
+- GIVEN user B holds a copy of A's secret S and an active delegation for S
+- WHEN B creates a link share for their copy
+- THEN the link share MUST be created
+
+#### Scenario: A plain recipient or a stranger is refused
+@e2e exclude Needs two vault users; covered by PHPUnit LinkShareServiceTest and LinkShareControllerTest.
+- GIVEN user C holds a copy of S without a delegation, and user D holds nothing of S
+- WHEN C creates a link share for their copy, or D for S
+- THEN the request MUST be refused with `404` and no link share MUST be written
 
 ### Requirement: Access via Link
 The system MUST allow anyone with the link and password to decrypt and retrieve the secret.

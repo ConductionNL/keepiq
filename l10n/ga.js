@@ -1591,7 +1591,16 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "imeachtaí ón bhfoireann, sraitheanna criptithe agus gabháil seilbhe ag riarthóir",
         "audit log, compliance reports, SIEM export and honey alerts": "loga iniúchta, tuarascálacha comhlíonta, easpórtáil SIEM agus foláirimh baoite",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Cé mhéad leagan de rún a choinnítear, ar feadh cé chomh fada, agus cé chomh fada a fhanann rúin scriosta sa bhruscar.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Teorainneacha do cheangaltáin chriptithe, curtha i bhfeidhm ar an bhfreastalaí i mbearta criptithe stóráilte."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Teorainneacha do cheangaltáin chriptithe, curtha i bhfeidhm ar an bhfreastalaí i mbearta criptithe stóráilte.",
+        "Type the suite ID again to confirm": "Clóscríobh aitheantas na sraithe arís le deimhniú",
+        "This does not match the suite ID.": "Ní hionann é seo agus aitheantas na sraithe.",
+        "Confirm with your master password": "Deimhnigh le do phríomhphasfhocal",
+        "Confirm": "Deimhnigh",
+        "That master password is not right.": "Níl an príomhphasfhocal sin ceart.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Tá tú ag comhroinnt le duine nua. Cuir isteach do phríomhphasfhocal le deimhniú.",
+        "Enter your master password to confirm this share.": "Cuir isteach do phríomhphasfhocal chun an chomhroinnt seo a dheimhniú.",
+        "Enter your master password to confirm this delegation.": "Cuir isteach do phríomhphasfhocal chun an tarmligean seo a dheimhniú.",
+        "Approve {member}": "Ceadaigh {member}"
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

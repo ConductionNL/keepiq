@@ -1591,7 +1591,16 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "largimet nga ekipi, paketat e enkriptimit dhe marrja përsipër nga administratori",
         "audit log, compliance reports, SIEM export and honey alerts": "regjistri i auditimit, raportet e përputhshmërisë, eksporti SIEM dhe sinjalizimet e karremave",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Sa versione të një sekreti ruhen, për sa kohë, dhe sa kohë qëndrojnë në kosh sekretet e fshira.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Kufijtë për bashkëngjitjet e enkriptuara, të zbatuara në server në bajtë të enkriptuar të ruajtur."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Kufijtë për bashkëngjitjet e enkriptuara, të zbatuara në server në bajtë të enkriptuar të ruajtur.",
+        "Type the suite ID again to confirm": "Shkruani përsëri ID-në e grupit për ta konfirmuar",
+        "This does not match the suite ID.": "Kjo nuk përputhet me ID-në e grupit.",
+        "Confirm with your master password": "Konfirmoni me fjalëkalimin kryesor",
+        "Confirm": "Konfirmo",
+        "That master password is not right.": "Ky fjalëkalim kryesor nuk është i saktë.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Po ndani me dikë të ri. Shkruani fjalëkalimin kryesor për ta konfirmuar.",
+        "Enter your master password to confirm this share.": "Shkruani fjalëkalimin kryesor për të konfirmuar këtë ndarje.",
+        "Enter your master password to confirm this delegation.": "Shkruani fjalëkalimin kryesor për të konfirmuar këtë delegim.",
+        "Approve {member}": "Mirato {member}"
     },
     "nplurals=2; plural=(n != 1);"
 )

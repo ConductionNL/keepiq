@@ -4,6 +4,7 @@ package provider
 import (
 	"context"
 	"os"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/ephemeral"
@@ -42,6 +43,16 @@ type providerModel struct {
 	ApplicationID  types.String `tfsdk:"application_id"`
 	PrivateKey     types.String `tfsdk:"private_key"`
 	CertificatePEM types.String `tfsdk:"certificate"`
+	AdminUser      types.String `tfsdk:"admin_user"`
+	AdminPassword  types.String `tfsdk:"admin_password"`
+}
+
+// clients is what Configure hands to resources: the application's machine
+// client for secrets, and the admin API client for applications. Either may
+// be nil when its credentials are not configured.
+type clients struct {
+	machine Client
+	admin   AdminClient
 }
 
 // Metadata names the provider.
@@ -71,6 +82,15 @@ func (p *KeepiqProvider) Schema(_ context.Context, _ provider.SchemaRequest, res
 			"certificate": schema.StringAttribute{
 				Optional:    true,
 				Description: "The application's certificate (PEM). With it, the provider checks the key belongs to it and refuses any secret encrypted to another certificate. Defaults to the file named in KEEPIQ_APP_CERT_FILE.",
+			},
+			"admin_user": schema.StringAttribute{
+				Optional:    true,
+				Description: "A Nextcloud user for the admin API (keepiq_application and keepiq_application_lease_policy), holding the Applications and machine access area. Defaults to KEEPIQ_ADMIN_USER.",
+			},
+			"admin_password": schema.StringAttribute{
+				Optional:    true,
+				Sensitive:   true,
+				Description: "A Nextcloud app password of admin_user. Defaults to KEEPIQ_ADMIN_PASSWORD, or the file named in KEEPIQ_ADMIN_PASSWORD_FILE.",
 			},
 		},
 	}
@@ -108,28 +128,41 @@ func (p *KeepiqProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	if cert == "" {
 		cert = fromFile("KEEPIQ_APP_CERT_FILE")
 	}
-	if url == "" || app == "" || key == "" {
+	adminUser, adminPassword := pick(m.AdminUser, "KEEPIQ_ADMIN_USER"), pick(m.AdminPassword, "KEEPIQ_ADMIN_PASSWORD")
+	if adminPassword == "" {
+		adminPassword = strings.TrimSpace(fromFile("KEEPIQ_ADMIN_PASSWORD_FILE"))
+	}
+	machine := app != "" && key != ""
+	admin := adminUser != "" && adminPassword != ""
+	if url == "" || (!machine && !admin) {
 		resp.Diagnostics.AddError("Keepiq provider is not configured",
-			"Set url, application_id and private_key, or KEEPIQ_URL, KEEPIQ_APP_ID and KEEPIQ_APP_KEY (or KEEPIQ_APP_KEY_FILE).")
+			"Set url, and application_id with private_key (or KEEPIQ_URL, KEEPIQ_APP_ID and KEEPIQ_APP_KEY or KEEPIQ_APP_KEY_FILE) for secrets, and/or admin_user with admin_password (or KEEPIQ_ADMIN_USER and KEEPIQ_ADMIN_PASSWORD) for applications.")
 		return
 	}
-	var opts []keepiq.Option
-	if cert != "" {
-		opts = append(opts, keepiq.WithCertificate(cert))
+	data := &clients{}
+	if machine {
+		var opts []keepiq.Option
+		if cert != "" {
+			opts = append(opts, keepiq.WithCertificate(cert))
+		}
+		c, err := keepiq.New(url, app, key, opts...)
+		if err != nil {
+			resp.Diagnostics.AddError("Keepiq provider cannot start", err.Error())
+			return
+		}
+		data.machine = Client(c)
 	}
-	c, err := keepiq.New(url, app, key, opts...)
-	if err != nil {
-		resp.Diagnostics.AddError("Keepiq provider cannot start", err.Error())
-		return
+	if admin {
+		data.admin = NewAdminClient(url, adminUser, adminPassword)
 	}
-	resp.ResourceData = Client(c)
-	resp.DataSourceData = Client(c)
-	resp.EphemeralResourceData = Client(c)
+	resp.ResourceData = data
+	resp.DataSourceData = data
+	resp.EphemeralResourceData = data
 }
 
 // Resources lists the resources.
 func (p *KeepiqProvider) Resources(context.Context) []func() resource.Resource {
-	return []func() resource.Resource{NewSecretResource}
+	return []func() resource.Resource{NewSecretResource, NewApplicationResource, NewApplicationLeasePolicyResource}
 }
 
 // DataSources lists the data sources.
@@ -143,13 +176,31 @@ func (p *KeepiqProvider) EphemeralResources(context.Context) []func() ephemeral.
 }
 
 func clientFrom(data any, add func(string, string)) Client {
-	if data == nil {
+	switch d := data.(type) {
+	case nil:
 		return nil
+	case Client:
+		return d
+	case *clients:
+		if d.machine == nil {
+			add("Keepiq secrets are not configured", "Set application_id and private_key on the provider (or KEEPIQ_APP_ID and KEEPIQ_APP_KEY) to manage secrets.")
+		}
+		return d.machine
 	}
-	c, ok := data.(Client)
-	if !ok {
-		add("Unexpected provider data", "the provider passed a value that is not a Keepiq client")
+	add("Unexpected provider data", "the provider passed a value that is not a Keepiq client")
+	return nil
+}
+
+func adminFrom(data any, add func(string, string)) AdminClient {
+	switch d := data.(type) {
+	case nil:
 		return nil
+	case *clients:
+		if d.admin == nil {
+			add("Keepiq admin API is not configured", "Set admin_user and admin_password on the provider (or KEEPIQ_ADMIN_USER and KEEPIQ_ADMIN_PASSWORD) to manage applications.")
+		}
+		return d.admin
 	}
-	return c
+	add("Unexpected provider data", "the provider passed a value that is not a Keepiq client")
+	return nil
 }

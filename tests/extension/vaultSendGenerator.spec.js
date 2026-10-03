@@ -112,6 +112,7 @@ function setup(overrides = {}) {
 		isUnlocked: () => vault.unlocked,
 		activeSuiteId: () => 'suite-1',
 		encryptField: vi.fn(async (id, plain) => 'enc:' + plain),
+		decryptField: vi.fn(async (id, ciphertext) => ciphertext.slice(4)),
 		decryptSecret: vi.fn(async (id, row) => ({
 			login: row.login.slice(4),
 			secret: row.key.slice(4),
@@ -178,27 +179,53 @@ describe('vault handlers', () => {
 		await expect(handlers['vault-list']({})).rejects.toThrow('vault is locked')
 	})
 
-	it('decrypts one item for the detail view, but never a blocked one', async () => {
-		const { handlers } = setup()
-		await handlers['vault-list']({})
-		expect(await handlers['vault-item']({ id: 's2' })).toMatchObject({
+	it('fetches one item fresh and decrypts it, extra fields included, but never a blocked one', async () => {
+		const { handlers, api } = setup({
+			getSecret: vi.fn(async (c, id) =>
+				id === 's2'
+					? {
+							...ROWS[0],
+							additionalFields: 'enc:{"pin":"1234","notes":"hi"}',
+							createdAt: '2026-10-01T10:00:00+00:00',
+						}
+					: {
+							id: 's5',
+							name: 'Blocked',
+							blocked: true,
+							blockedReason: 'Suite revoked',
+						},
+			),
+		})
+		const item = await handlers['vault-item']({ id: 's2' })
+		expect(api.getSecret).toHaveBeenCalledWith(ACCOUNT, 's2')
+		expect(item).toMatchObject({
 			login: 'ann',
 			secret: 'z',
 			name: 'zebra bank',
+			typeName: 'login',
+			additionalFields: { pin: '1234', notes: 'hi' },
+			createdAt: '2026-10-01T10:00:00+00:00',
 		})
-		await expect(handlers['vault-item']({ id: 's5' })).rejects.toThrow(
-			'cannot be opened here',
-		)
+		const blocked = await handlers['vault-item']({ id: 's5' })
+		expect(blocked).toMatchObject({
+			blocked: true,
+			blockedReason: 'Suite revoked',
+		})
+		expect(blocked).not.toHaveProperty('secret')
 	})
 
-	it('saves ciphertext only, in the chosen folder', async () => {
+	it('creates with every part encrypted, in the chosen folder', async () => {
 		const { handlers, api } = setup()
 		await handlers['vault-save']({
-			name: ' New site ',
-			url: 'https://new.example',
-			login: 'me',
-			secret: 'S3cret!',
-			folderId: 'f1',
+			typeId: 't1',
+			changes: {
+				name: ' New site ',
+				url: 'https://new.example',
+				login: 'me',
+				key: 'S3cret!',
+				folderId: 'f1',
+				additionalFields: { pin: '9' },
+			},
 		})
 		expect(api.createSecret).toHaveBeenCalledWith(ACCOUNT, {
 			name: 'New site',
@@ -206,30 +233,70 @@ describe('vault handlers', () => {
 			folderId: 'f1',
 			key: 'enc:S3cret!',
 			login: 'enc:me',
+			additionalFields: 'enc:{"pin":"9"}',
 			encryptionSuiteId: 'suite-1',
+			typeId: 't1',
 		})
+	})
+
+	it('updates only the parts that changed', async () => {
+		const { handlers, api } = setup()
 		await handlers['vault-save']({
 			id: 's1',
-			name: 'Alpha mail',
-			login: 'a',
-			secret: 'n3w',
+			changes: { url: 'https://x.example' },
 		})
-		expect(api.updateSecret).toHaveBeenCalledWith(
-			ACCOUNT,
-			's1',
-			expect.objectContaining({ key: 'enc:n3w' }),
-		)
+		expect(api.updateSecret).toHaveBeenLastCalledWith(ACCOUNT, 's1', {
+			url: 'https://x.example',
+		})
+		await handlers['vault-save']({ id: 's1', changes: { key: 'n3w' } })
+		expect(api.updateSecret).toHaveBeenLastCalledWith(ACCOUNT, 's1', {
+			key: 'enc:n3w',
+			encryptionSuiteId: 'suite-1',
+		})
 	})
 
 	it('refuses a nameless item and a value the org policy refuses', async () => {
 		const { handlers, api } = setup()
 		await expect(
-			handlers['vault-save']({ name: '  ', secret: 'x' }),
+			handlers['vault-save']({ changes: { name: '  ', key: 'x' } }),
 		).rejects.toThrow('Give the item a name')
 		await expect(
-			handlers['vault-save']({ name: 'A', secret: 'weak' }),
+			handlers['vault-save']({ changes: { name: 'A', key: 'weak' } }),
 		).rejects.toThrow('Too weak')
 		expect(api.createSecret).not.toHaveBeenCalled()
+	})
+
+	it('moves an item by changing only its folder', async () => {
+		const { handlers, api } = setup()
+		await handlers['vault-move']({ id: 's2', folderId: 'f2' })
+		expect(api.updateSecret).toHaveBeenCalledWith(ACCOUNT, 's2', {
+			folderId: 'f2',
+		})
+	})
+
+	it('says what went wrong on a refused write', async () => {
+		const failing = (status, body) =>
+			vi.fn(async () => {
+				throw Object.assign(new Error('x'), { status, body })
+			})
+		let { handlers } = setup({ updateSecret: failing(423) })
+		await expect(handlers['vault-move']({ id: 's2' })).rejects.toThrow(
+			'temporarily locked for a key migration',
+		)
+		;({ handlers } = setup({
+			updateSecret: failing(400, '{"message":"Folder not found"}'),
+		}))
+		await expect(
+			handlers['vault-save']({ id: 's2', changes: { url: 'u' } }),
+		).rejects.toThrow('Folder not found')
+		;({ handlers } = setup({
+			updateSecret: vi.fn(async () => {
+				throw new TypeError('Failed to fetch')
+			}),
+		}))
+		await expect(
+			handlers['vault-save']({ id: 's2', changes: { url: 'u' } }),
+		).rejects.toThrow('Could not reach the server')
 	})
 
 	it('moves an item to the trash', async () => {

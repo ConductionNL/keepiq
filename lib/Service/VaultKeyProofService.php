@@ -73,6 +73,13 @@ class VaultKeyProofService {
 	public const PURPOSE_EMERGENCY_RE_ENVELOPE = 'emergency-access-re-envelope';
 	public const PURPOSE_DELETE_ACCOUNT_DATA = 'delete-account-data';
 	public const PURPOSE_ABORT_MIGRATION = 'abort-migration';
+	// Keepiq#818: a session alone must not subscribe a new party to future
+	// values of a secret. A share to a new recipient, a batch registration and
+	// every delegation need a proof; a share to a known recipient does not.
+	public const PURPOSE_SHARE_NEW_RECIPIENT = 'share-new-recipient';
+	public const PURPOSE_SHARE_REGISTER_BATCH = 'share-register-batch';
+	public const PURPOSE_DELEGATION_CREATE = 'delegation-create';
+	public const PURPOSE_DELEGATION_HANDOVER = 'delegation-handover';
 	public const PURPOSE_APPROVE_DEVICE = 'approve-device';
 	public const PURPOSE_APPROVE_ACCOUNT_RECOVERY = 'approve-account-recovery';
 
@@ -89,6 +96,10 @@ class VaultKeyProofService {
 		self::PURPOSE_EMERGENCY_RE_ENVELOPE,
 		self::PURPOSE_DELETE_ACCOUNT_DATA,
 		self::PURPOSE_ABORT_MIGRATION,
+		self::PURPOSE_SHARE_NEW_RECIPIENT,
+		self::PURPOSE_SHARE_REGISTER_BATCH,
+		self::PURPOSE_DELEGATION_CREATE,
+		self::PURPOSE_DELEGATION_HANDOVER,
 		self::PURPOSE_APPROVE_DEVICE,
 		self::PURPOSE_APPROVE_ACCOUNT_RECOVERY,
 	];

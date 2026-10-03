@@ -22,20 +22,24 @@ The system MUST, on an authenticated machine fetch, create or reuse a policy-bou
 #### Scenario: Poll reuses without extending
 - GIVEN a live lease for a secret
 - WHEN the application re-fetches that secret
-- THEN the existing lease MUST be reused and its expiry MUST NOT be extended without an explicit renewal
+- THEN the existing lease MUST be reused and its expiry MUST NOT be extended
 
-### Requirement: Lease renewal within policy
-The system MUST let an application renew its own active lease within the maximum-TTL policy, incrementing the renewal count, and MUST refuse renewal past the maximum lifetime or when the policy marks the application non-renewable. Renewing another application's lease MUST return the same 404 as a nonexistent lease.
+### Requirement: Fetching again is the one renewal path
+An application MUST renew access by fetching the secret again; there is no separate renew operation (keepiq#753, decided 2 October 2026). The former `POST /api/v1/app/leases/{id}/renew` route is removed. A fetch while a lease is live reuses that lease without extending it. A fetch after the lease has expired grants a new lease with a fresh TTL and returns the current value, so a long-running consumer also picks up a value that a rotation replaced. A renewal that kept the lease alive without re-reading would leave the consumer holding a value that may already be stale.
 
-#### Scenario: Renewal extends up to the cap
-- GIVEN an active, renewable lease before its maximum lifetime
-- WHEN the application renews it
-- THEN the expiry MUST advance up to the policy cap and the renewal count MUST increment
+The `renewable` policy flag and the lease's `renewed_count` are still stored and advertised, but no operation reads them any more.
 
-#### Scenario: Renewal past maximum refused
-- GIVEN a lease that has reached `granted_at + max TTL`
-- WHEN the application renews it
-- THEN the renewal MUST be refused
+#### Scenario: A fetch after expiry grants a fresh lease
+@e2e exclude Machine API with a bearer token; covered by PHPUnit LeaseServiceTest::testFetchingAgainAfterExpiryGrantsAFreshLease and the Newman machine API collection.
+- GIVEN an application whose lease for a secret has expired
+- WHEN the application fetches that secret again
+- THEN a new lease MUST be granted with the policy's default TTL
+- AND the response MUST carry the current value
+
+#### Scenario: There is no renew route
+@e2e exclude Route table; covered by PHPUnit LeaseServiceTest::testThereIsNoRenewOperation.
+- WHEN an application calls `POST /api/v1/app/leases/{id}/renew`
+- THEN no route MUST answer it
 
 ### Requirement: Lease revocation by admin, owner, or application
 The system MUST let an administrator or the secret owner revoke an active lease, and an application revoke its own, recording the withdrawal and emitting an audit event plus a rotation trigger. Revocation MUST NOT be represented as recovering an already-served value. When the block-on-revoke policy is enabled, a subsequent fetch of the scoped secret by that application MUST be refused until re-granted; by default (policy off) re-fetch MUST succeed with a new lease.

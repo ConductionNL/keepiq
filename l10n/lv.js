@@ -1591,7 +1591,16 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "aiziešana no komandas, šifrēšanas komplekti un administratora pārņemšana",
         "audit log, compliance reports, SIEM export and honey alerts": "audita žurnāls, atbilstības atskaites, SIEM eksports un ēsmas brīdinājumi",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Cik noslēpuma versiju tiek glabātas, cik ilgi, un cik ilgi dzēsti noslēpumi paliek miskastē.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Šifrētu pielikumu ierobežojumi, ko serveris piemēro saglabātos šifrētos baitos."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Šifrētu pielikumu ierobežojumi, ko serveris piemēro saglabātos šifrētos baitos.",
+        "Type the suite ID again to confirm": "Lai apstiprinātu, vēlreiz ievadiet komplekta ID",
+        "This does not match the suite ID.": "Tas nesakrīt ar komplekta ID.",
+        "Confirm with your master password": "Apstipriniet ar galveno paroli",
+        "Confirm": "Apstiprināt",
+        "That master password is not right.": "Šī galvenā parole nav pareiza.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Jūs kopīgojat ar jaunu personu. Lai apstiprinātu, ievadiet galveno paroli.",
+        "Enter your master password to confirm this share.": "Lai apstiprinātu šo kopīgošanu, ievadiet galveno paroli.",
+        "Enter your master password to confirm this delegation.": "Lai apstiprinātu šo deleģēšanu, ievadiet galveno paroli.",
+        "Approve {member}": "Apstiprināt {member}"
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

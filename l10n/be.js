@@ -1591,7 +1591,16 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "звальненне з каманды, наборы шыфравання і перадача адміністратару",
         "audit log, compliance reports, SIEM export and honey alerts": "журнал аўдыту, справаздачы аб адпаведнасці, экспарт у SIEM і абвесткі пра прынады",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Колькі версій сакрэту захоўваецца, як доўга і як доўга выдаленыя сакрэты застаюцца ў сметніцы.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Абмежаванні для зашыфраваных далучэнняў, якія сервер прымяняе да захаваных зашыфраваных байтаў."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Абмежаванні для зашыфраваных далучэнняў, якія сервер прымяняе да захаваных зашыфраваных байтаў.",
+        "Type the suite ID again to confirm": "Увядзіце ID набору яшчэ раз для пацвярджэння",
+        "This does not match the suite ID.": "Гэта не супадае з ID набору.",
+        "Confirm with your master password": "Пацвердзіце асноўным паролем",
+        "Confirm": "Пацвердзіць",
+        "That master password is not right.": "Гэты асноўны пароль няправільны.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Вы дзеліцеся з новым чалавекам. Увядзіце асноўны пароль для пацвярджэння.",
+        "Enter your master password to confirm this share.": "Увядзіце асноўны пароль, каб пацвердзіць гэты доступ.",
+        "Enter your master password to confirm this delegation.": "Увядзіце асноўны пароль, каб пацвердзіць гэта дэлегаванне.",
+        "Approve {member}": "Ухваліць {member}"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

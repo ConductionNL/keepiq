@@ -1662,7 +1662,16 @@
         "team offboarding, encryption suites and admin handover": "tiimistä lähtijät, salauspaketit ja ylläpitäjän haltuunotto",
         "audit log, compliance reports, SIEM export and honey alerts": "tarkastusloki, vaatimustenmukaisuusraportit, SIEM-vienti ja syöttihälytykset",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Kuinka monta salaisuuden versiota säilytetään, kuinka kauan, ja kuinka kauan poistetut salaisuudet pysyvät roskakorissa.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Salattujen liitteiden rajat, joita palvelin valvoo tallennettuina salattuina tavuina."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Salattujen liitteiden rajat, joita palvelin valvoo tallennettuina salattuina tavuina.",
+        "Type the suite ID again to confirm": "Vahvista kirjoittamalla sarjan tunnus uudelleen",
+        "This does not match the suite ID.": "Tämä ei vastaa sarjan tunnusta.",
+        "Confirm with your master password": "Vahvista pääsalasanalla",
+        "Confirm": "Vahvista",
+        "That master password is not right.": "Pääsalasana ei ole oikein.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Jaat uudelle henkilölle. Vahvista syöttämällä pääsalasanasi.",
+        "Enter your master password to confirm this share.": "Vahvista tämä jako syöttämällä pääsalasanasi.",
+        "Enter your master password to confirm this delegation.": "Vahvista tämä delegointi syöttämällä pääsalasanasi.",
+        "Approve {member}": "Hyväksy {member}"
     },
     "plurals": null
 }

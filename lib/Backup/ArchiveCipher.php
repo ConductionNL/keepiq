@@ -33,8 +33,8 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Backup;
 
 use InvalidArgumentException;
-use phpseclib3\Crypt\PublicKeyLoader;
-use phpseclib3\Crypt\RSA;
+use phpseclib4\Crypt\PublicKeyLoader;
+use phpseclib4\Crypt\RSA;
 use RuntimeException;
 use Throwable;
 

@@ -8,6 +8,12 @@
 
 User documentation: `docs/client-libraries.md` and `docs/ci-integrations.md`.
 
+An application reads its own certificate and `certificateFingerprint` at
+`GET /api/v1/app/certificate` (Bearer token; the discovery document names it
+under `certificate`). The Go `WithCertificate`, Python `certificate_pem=` and
+TypeScript `{ certificatePem }` options take that PEM; each library still
+checks it against the key at start.
+
 ## Shared vectors (`testdata/`)
 
 Every file in `testdata/` is TEST ONLY. The key in it protects nothing.

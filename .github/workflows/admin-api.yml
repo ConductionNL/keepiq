@@ -1,0 +1,30 @@
+name: Admin API document
+
+# Lints docs/api/admin-v1.openapi.json as OpenAPI 3.1 (admin-public-api §2.1).
+# That the document and appinfo/routes.php agree is checked by PHPUnit
+# (tests/Unit/Contract/AdminApiContractTest.php) in the code quality workflow.
+
+on:
+  push:
+    branches: [main, development]
+    paths: ["docs/api/**", ".github/workflows/admin-api.yml"]
+  pull_request:
+    branches: [main, development, beta]
+    paths: ["docs/api/**", ".github/workflows/admin-api.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npx --yes @redocly/cli@1 lint docs/api/admin-v1.openapi.json

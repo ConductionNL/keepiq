@@ -13,6 +13,8 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import TeamFolderDialog from '../../src/modals/TeamFolderDialog.vue'
 import { resetPolicyCache } from '../../src/policy/policy.js'
+import { useSecretStore } from '../../src/store/modules/secret.js'
+import { useShareStore } from '../../src/store/modules/share.js'
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
@@ -28,6 +30,7 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
  * @param {Array}         [options.sharees]   Users the sharee search returns —
  *   a user id, or a `[userId, displayName]` pair.
  * @param {Array<string>} [options.shareable] Which of those hold a suite.
+ * @param {Array<object>} [options.recipients] Reconcile's recipient certificates.
  * @param {string}        [options.failing]   A URL fragment whose request
  *   rejects, for the paths where the lookup itself fails.
  */
@@ -38,6 +41,7 @@ function mockApi({
 	sharees = [],
 	shareable = [],
 	failing = null,
+	recipients = [],
 } = {}) {
 	vi.spyOn(axios, 'get').mockImplementation((url) => {
 		if (failing !== null && url.includes(failing)) {
@@ -45,7 +49,7 @@ function mockApi({
 		}
 		if (url.includes('/reconcile')) {
 			return Promise.resolve({
-				data: { secrets: [], recipients: [], missing },
+				data: { secrets: [], recipients, missing },
 			})
 		}
 		if (url.includes('cloud/groups')) {
@@ -482,5 +486,62 @@ describe('TeamFolderDialog automatic confirmation (admin-auto-confirm-members §
 		expect(
 			wrapper.find('[data-testid="team-folder-needs-reshare"]').exists(),
 		).toBe(true)
+	})
+
+	it('approves one waiting member and holds the other back (keepiq#747)', async () => {
+		mockApi({
+			owned: [
+				{
+					id: 'tf-1',
+					folderId: 'folder-1',
+					folderName: 'DevOps',
+					members: [],
+				},
+			],
+			missing: [
+				{ secretId: 'sec-1', userId: 'bob' },
+				{ secretId: 'sec-2', userId: 'bob' },
+				{ secretId: 'sec-1', userId: 'carol' },
+			],
+			recipients: [
+				{ userId: 'bob', certificate: 'PEM-BOB' },
+				{ userId: 'carol', certificate: 'PEM-CAROL' },
+			],
+		})
+		vi.spyOn(useSecretStore(), 'fetchSecret').mockResolvedValue({ key: 'k' })
+		vi.spyOn(useShareStore(), 'encryptForRecipient').mockImplementation(
+			async (fields, cert) => ({ key: `enc(${cert})` }),
+		)
+		const wrapper = mount(TeamFolderDialog, {
+			propsData: { open: true, folderId: 'folder-1', folderName: 'DevOps' },
+		})
+		wrapper.vm.refresh()
+		await flush()
+
+		// One Approve per waiting member, next to the bulk share button.
+		expect(
+			wrapper.find('[data-testid="team-folder-approve-bob"]').exists(),
+		).toBe(true)
+		expect(
+			wrapper.find('[data-testid="team-folder-approve-carol"]').exists(),
+		).toBe(true)
+		expect(wrapper.find('[data-testid="team-folder-run-fanout"]').exists()).toBe(
+			true,
+		)
+
+		await wrapper
+			.find('[data-testid="team-folder-approve-bob"]')
+			.trigger('click')
+		await flush()
+		await flush()
+
+		const posts = axios.post.mock.calls
+		const approve = posts.find(([url]) => url.endsWith('/approve-join'))
+		expect(approve[0]).toContain('/team-folders/tf-1/approve-join')
+		expect(approve[1]).toEqual({ newMemberId: 'bob' })
+		const shared = posts
+			.filter(([url]) => url.endsWith('/team-folders/tf-1/shares'))
+			.flatMap(([, body]) => body.shares)
+		expect(shared.map((row) => row.targetUserId)).toEqual(['bob', 'bob'])
 	})
 })

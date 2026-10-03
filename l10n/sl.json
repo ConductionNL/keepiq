@@ -1710,7 +1710,16 @@
         "team offboarding, encryption suites and admin handover": "odhodi iz ekipe, šifrirni nabori in prevzem s strani skrbnika",
         "audit log, compliance reports, SIEM export and honey alerts": "revizijski dnevnik, poročila o skladnosti, izvoz SIEM in opozorila vab",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Koliko različic skrivnosti se hrani, kako dolgo in kako dolgo izbrisane skrivnosti ostanejo v košu.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Omejitve za šifrirane priloge, ki jih strežnik uveljavlja v shranjenih šifriranih bajtih."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Omejitve za šifrirane priloge, ki jih strežnik uveljavlja v shranjenih šifriranih bajtih.",
+        "Type the suite ID again to confirm": "Za potrditev znova vnesite ID nabora",
+        "This does not match the suite ID.": "To se ne ujema z ID-jem nabora.",
+        "Confirm with your master password": "Potrdite z glavnim geslom",
+        "Confirm": "Potrdi",
+        "That master password is not right.": "To glavno geslo ni pravilno.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Delite z novo osebo. Za potrditev vnesite glavno geslo.",
+        "Enter your master password to confirm this share.": "Za potrditev te souporabe vnesite glavno geslo.",
+        "Enter your master password to confirm this delegation.": "Za potrditev tega pooblastila vnesite glavno geslo.",
+        "Approve {member}": "Odobri {member}"
     },
     "plurals": null
 }

@@ -4,7 +4,8 @@
 // RS256 signature against the application key, as JwtAuthService does), the
 // secrets routes (list with updated_since, by id, by name with 404 / envelope /
 // 409 candidates, create, update) with ETags and 304, and, when enabled, the
-// lease headers and lease renewal. Every request body is recorded so a test can
+// lease headers (there is no renew route; a consumer fetches again).
+// Every request body is recorded so a test can
 // prove no plaintext was sent.
 //
 // The default key and the first secret come from sdk/testdata/machine_envelope.json,
@@ -65,26 +66,24 @@ func LoadFixture() (*Fixture, error) {
 
 // Stub is the fake Keepiq. Lock Mu before touching its fields while the server runs.
 type Stub struct {
-	Mu          sync.Mutex
-	App         string
-	Fixture     *Fixture
-	Key         *rsa.PrivateKey
-	Envelopes   map[string]map[string]any
-	Exchanges   int
-	Bodies      []string
-	Requests    []string // "METHOD path" of every request
-	RevokeNext  bool
-	Leases      bool          // advertise and attach leases
-	LeaseTTL    time.Duration // lease lifetime when Leases is on
-	RefuseRenew bool          // answer 409 to a renewal
-	Renewals    int
-	PutCount    int // accepted PUT write-backs
-	leases      map[string]time.Time
-	tokens      map[string]bool
-	leaseSeq    int
-	updates     int
-	Server      *httptest.Server
-	Now         func() time.Time
+	Mu         sync.Mutex
+	App        string
+	Fixture    *Fixture
+	Key        *rsa.PrivateKey
+	Envelopes  map[string]map[string]any
+	Exchanges  int
+	Bodies     []string
+	Requests   []string // "METHOD path" of every request
+	RevokeNext bool
+	Leases     bool          // advertise and attach leases
+	LeaseTTL   time.Duration // lease lifetime when Leases is on
+	PutCount   int           // accepted PUT write-backs
+	leases     map[string]time.Time
+	tokens     map[string]bool
+	leaseSeq   int
+	updates    int
+	Server     *httptest.Server
+	Now        func() time.Time
 }
 
 // Start runs a stub for application app with the fixture key and the fixture
@@ -253,22 +252,7 @@ func (s *Stub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 401, map[string]any{"message": "Bearer token required"})
 		return
 	}
-	leasePrefix := Webroot + "/apps/keepiq/api/v1/app/leases/"
 	switch {
-	case strings.HasPrefix(p, leasePrefix) && strings.HasSuffix(p, "/renew") && r.Method == http.MethodPost:
-		id := strings.TrimSuffix(strings.TrimPrefix(p, leasePrefix), "/renew")
-		if _, ok := s.leases[id]; !ok {
-			writeJSON(w, 404, map[string]any{"message": "Lease not found"})
-			return
-		}
-		if s.RefuseRenew {
-			writeJSON(w, 409, map[string]any{"message": "Lease cannot be renewed"})
-			return
-		}
-		s.Renewals++
-		exp := s.Now().Add(s.LeaseTTL).UTC()
-		s.leases[id] = exp
-		writeJSON(w, 200, map[string]any{"id": id, "applicationId": s.App, "expiresAt": exp.Format(time.RFC3339), "status": "active", "renewedCount": s.Renewals})
 	case p == api && r.Method == http.MethodGet:
 		since := r.URL.Query().Get("updated_since")
 		ids := make([]string, 0, len(s.Envelopes))

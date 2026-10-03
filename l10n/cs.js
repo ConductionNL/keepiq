@@ -1591,7 +1591,16 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "odchody z týmu, šifrovací sady a převzetí správcem",
         "audit log, compliance reports, SIEM export and honey alerts": "auditní protokol, zprávy o shodě, export SIEM a návnadová upozornění",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Kolik verzí tajemství se uchovává, jak dlouho a jak dlouho zůstávají smazaná tajemství v koši.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limity šifrovaných příloh, vynucované na serveru v uložených šifrovaných bajtech."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limity šifrovaných příloh, vynucované na serveru v uložených šifrovaných bajtech.",
+        "Type the suite ID again to confirm": "Pro potvrzení zadejte ID sady znovu",
+        "This does not match the suite ID.": "Neshoduje se s ID sady.",
+        "Confirm with your master password": "Potvrďte hlavním heslem",
+        "Confirm": "Potvrdit",
+        "That master password is not right.": "Toto hlavní heslo není správné.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Sdílíte s někým novým. Pro potvrzení zadejte hlavní heslo.",
+        "Enter your master password to confirm this share.": "Pro potvrzení tohoto sdílení zadejte hlavní heslo.",
+        "Enter your master password to confirm this delegation.": "Pro potvrzení tohoto delegování zadejte hlavní heslo.",
+        "Approve {member}": "Schválit {member}"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

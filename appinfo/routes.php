@@ -54,6 +54,33 @@ $extra = [
     ['name' => 'settings#getPolicy',           'url' => '/api/settings/policy', 'verb' => 'GET'],
     ['name' => 'settings#updateUserSettings',  'url' => '/api/settings/user',  'verb' => 'PUT'],
 
+    // Admin API v1 (admin-public-api): a documented, versioned surface for
+    // scripts, each route guarded by one admin area (admin-scoped-roles).
+    // docs/api/admin-v1.openapi.json describes exactly these routes
+    // (AdminApiContractTest). The policies pair reuses the area settings
+    // methods; `postfix` keeps their route names distinct.
+    ['name' => 'adminIndex#index', 'url' => '/api/v1/admin', 'verb' => 'GET'],
+    ['name' => 'adminAreaSettings#getPolicySettings', 'url' => '/api/v1/admin/policies', 'verb' => 'GET', 'postfix' => 'AdminApi'],
+    ['name' => 'adminAreaSettings#updatePolicySettings', 'url' => '/api/v1/admin/policies', 'verb' => 'PUT', 'postfix' => 'AdminApi'],
+    ['name' => 'adminPeople#suites',    'url' => '/api/v1/admin/suites',      'verb' => 'GET'],
+    ['name' => 'adminPeople#offboard',  'url' => '/api/v1/admin/offboarding', 'verb' => 'POST'],
+    ['name' => 'adminApplication#index',          'url' => '/api/v1/admin/applications',                       'verb' => 'GET'],
+    ['name' => 'adminApplication#create',         'url' => '/api/v1/admin/applications',                       'verb' => 'POST'],
+    ['name' => 'adminApplication#approve',        'url' => '/api/v1/admin/applications/{id}/approve',          'verb' => 'POST'],
+    ['name' => 'adminApplication#reject',         'url' => '/api/v1/admin/applications/{id}/reject',           'verb' => 'POST'],
+    ['name' => 'adminApplication#getLeasePolicy', 'url' => '/api/v1/admin/applications/{id}/lease-policy',     'verb' => 'GET'],
+    ['name' => 'adminApplication#setLeasePolicy', 'url' => '/api/v1/admin/applications/{id}/lease-policy',     'verb' => 'PUT'],
+    ['name' => 'adminApplication#show',           'url' => '/api/v1/admin/applications/{id}',                  'verb' => 'GET'],
+    ['name' => 'adminApplication#destroy',        'url' => '/api/v1/admin/applications/{id}',                  'verb' => 'DELETE'],
+    ['name' => 'adminAudit#events',         'url' => '/api/v1/admin/audit',                    'verb' => 'GET'],
+    ['name' => 'adminAudit#reports',        'url' => '/api/v1/admin/compliance/reports',       'verb' => 'GET'],
+    ['name' => 'adminAudit#generateReport', 'url' => '/api/v1/admin/compliance/reports',       'verb' => 'POST'],
+    ['name' => 'adminAudit#showReport',     'url' => '/api/v1/admin/compliance/reports/{id}',  'verb' => 'GET'],
+    ['name' => 'adminAudit#sinks',          'url' => '/api/v1/admin/siem/sinks',               'verb' => 'GET'],
+    ['name' => 'adminAudit#createSink',     'url' => '/api/v1/admin/siem/sinks',               'verb' => 'POST'],
+    ['name' => 'adminAudit#updateSink',     'url' => '/api/v1/admin/siem/sinks/{id}',          'verb' => 'PUT'],
+    ['name' => 'adminAudit#destroySink',    'url' => '/api/v1/admin/siem/sinks/{id}',          'verb' => 'DELETE'],
+
     // EncryptionSuite CRUD.
     ['name' => 'encryptionSuite#index',             'url' => '/api/v1/suites',                          'verb' => 'GET'],
     ['name' => 'encryptionSuite#show',              'url' => '/api/v1/suites/{id}',                     'verb' => 'GET'],
@@ -367,6 +394,10 @@ $extra = [
     // Bearer-authenticated application secrets API (openconnector-secret-store-api).
     // JwtAuthMiddleware enforces the Authorization header before the controller runs.
     // The by-name route precedes {id} so its extra path segment resolves first.
+    // The calling application's own certificate and fingerprint
+    // (app-own-certificate), so a client can check envelopes without
+    // configuring the certificate.
+    ['name' => 'applicationCertificate#show', 'url' => '/api/v1/app/certificate', 'verb' => 'GET'],
     ['name' => 'applicationSecrets#index',  'url' => '/api/v1/app/secrets',                 'verb' => 'GET'],
     ['name' => 'applicationSecrets#create', 'url' => '/api/v1/app/secrets',                 'verb' => 'POST'],
     ['name' => 'applicationSecrets#byName', 'url' => '/api/v1/app/secrets/by-name/{name}',  'verb' => 'GET',
@@ -383,7 +414,6 @@ $extra = [
     ['name' => 'applicationSecretRequests#create', 'url' => '/api/v1/app/secret-requests', 'verb' => 'POST'],
 
     ['name' => 'machineLease#index',  'url' => '/api/v1/app/leases',              'verb' => 'GET'],
-    ['name' => 'machineLease#renew',  'url' => '/api/v1/app/leases/{id}/renew',   'verb' => 'POST'],
     ['name' => 'machineLease#revoke', 'url' => '/api/v1/app/leases/{id}/revoke',  'verb' => 'POST'],
     // Session-authenticated admin/owner lease management.
     ['name' => 'leaseAdmin#index',     'url' => '/api/v1/applications/{id}/leases',       'verb' => 'GET'],

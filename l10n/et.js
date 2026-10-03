@@ -1591,7 +1591,16 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "meeskonnast lahkumine, krüpteerimiskomplektid ja administraatori ülevõtmine",
         "audit log, compliance reports, SIEM export and honey alerts": "auditilogi, vastavusaruanded, SIEM-eksport ja peibutushoiatused",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Mitu saladuse versiooni säilitatakse, kui kaua, ja kui kaua kustutatud saladused prügikastis püsivad.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Krüpteeritud manuste piirangud, mida server jõustab salvestatud krüpteeritud baitides."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Krüpteeritud manuste piirangud, mida server jõustab salvestatud krüpteeritud baitides.",
+        "Type the suite ID again to confirm": "Kinnitamiseks sisestage komplekti ID uuesti",
+        "This does not match the suite ID.": "See ei ühti komplekti ID-ga.",
+        "Confirm with your master password": "Kinnitage põhiparooliga",
+        "Confirm": "Kinnita",
+        "That master password is not right.": "See põhiparool ei ole õige.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Jagate uue inimesega. Kinnitamiseks sisestage põhiparool.",
+        "Enter your master password to confirm this share.": "Selle jagamise kinnitamiseks sisestage põhiparool.",
+        "Enter your master password to confirm this delegation.": "Selle delegeerimise kinnitamiseks sisestage põhiparool.",
+        "Approve {member}": "Kinnita {member}"
     },
     "nplurals=2; plural=(n != 1);"
 )

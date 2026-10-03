@@ -1591,7 +1591,16 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "напускане на екипа, шифровъчни пакети и поемане от администратор",
         "audit log, compliance reports, SIEM export and honey alerts": "одитен дневник, отчети за съответствие, SIEM износ и сигнали за примамки",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Колко версии на дадена тайна се пазят, колко дълго и колко дълго изтритите тайни остават в кошчето.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Ограничения за шифровани прикачени файлове, налагани на сървъра в съхранени шифровани байтове."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Ограничения за шифровани прикачени файлове, налагани на сървъра в съхранени шифровани байтове.",
+        "Type the suite ID again to confirm": "Въведете отново ID на пакета за потвърждение",
+        "This does not match the suite ID.": "Това не съвпада с ID на пакета.",
+        "Confirm with your master password": "Потвърдете с главната си парола",
+        "Confirm": "Потвърждаване",
+        "That master password is not right.": "Тази главна парола не е правилна.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Споделяте с нов човек. Въведете главната си парола за потвърждение.",
+        "Enter your master password to confirm this share.": "Въведете главната си парола, за да потвърдите това споделяне.",
+        "Enter your master password to confirm this delegation.": "Въведете главната си парола, за да потвърдите това делегиране.",
+        "Approve {member}": "Одобряване на {member}"
     },
     "nplurals=2; plural=(n != 1);"
 )

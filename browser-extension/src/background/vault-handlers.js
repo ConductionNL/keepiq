@@ -10,6 +10,7 @@
  */
 
 import { generateKey } from '../../../src/generator/generator.js'
+import { parsePasskey } from '../../../src/passkey/passkey.js'
 import { deriveAesKeyArgon2id } from '../../../src/crypto/argon2.js'
 import {
 	aesEncrypt,
@@ -20,6 +21,8 @@ import {
 import { installArgon2Wasm } from '../lib/argon2-wasm.js'
 import { credentialPayload, expirySeconds, maxViewsFrom } from '../lib/send-form.js'
 import { buildIndex } from '../lib/vault-index.js'
+import { writeErrorMessage } from '../lib/item-form.js'
+import { folderNameProblem } from '../lib/folder-rules.js'
 
 /** Longest secret name the server stores. */
 export const MAX_NAME_LENGTH = 255
@@ -41,9 +44,21 @@ export function buildVaultHandlers({
 	activeAccount,
 	policyRefusalFor,
 	touchActivity = async () => {},
+	sync = null,
 }) {
 	// Per account: the last listed rows (with blobs), keyed by id.
 	const rowCache = new Map()
+
+	/**
+	 * After a write: sync, so the list and the cache show it at once.
+	 *
+	 * @param {object} account The account.
+	 * @return {Promise<void>}
+	 */
+	async function afterWrite(account) {
+		rowCache.delete(account.id)
+		if (sync) await sync().sync(account, { force: true })
+	}
 
 	/**
 	 * The active account, refused when its vault is locked.
@@ -58,16 +73,25 @@ export function buildVaultHandlers({
 		return account
 	}
 
+	// Per account: the secret types, id to name, fetched once.
+	const typeCache = new Map()
+
 	/**
-	 * A row of the active account, from the last list or fetched fresh.
+	 * The name of a secret type, or 'login'.
 	 *
 	 * @param {object} account The account.
-	 * @param {string} id The secret id.
-	 * @return {Promise<object>}
+	 * @param {string|null} typeId The type id.
+	 * @return {Promise<string>}
 	 */
-	async function rowOf(account, id) {
-		const cached = rowCache.get(account.id)?.get(id)
-		return cached || api.getSecret(account, id)
+	async function typeNameOf(account, typeId) {
+		if (!typeCache.has(account.id)) {
+			const types = await api.listTypes(account).catch(() => [])
+			typeCache.set(
+				account.id,
+				new Map(types.map((t) => [t.id, t.name || t.slug])),
+			)
+		}
+		return typeCache.get(account.id).get(typeId) || 'login'
 	}
 
 	return {
@@ -78,15 +102,33 @@ export function buildVaultHandlers({
 		 */
 		'vault-list': async () => {
 			const account = await unlockedAccount()
-			const [rows, folders, types] = await Promise.all([
-				api.listSecrets(account),
-				api.listFolders(account),
-				api.listTypes(account),
-			])
+			let rows
+			let folders
+			let types
+			let status = null
+			const snapshot = sync
+				? await (async () => {
+						// Popup open with an old snapshot: sync first (cheaply).
+						if (await sync().isStale(account.id))
+							await sync().sync(account)
+						status = sync().statusOf(account.id)
+						return sync().snapshotOf(account.id)
+					})()
+				: null
+			if (snapshot) {
+				;({ secrets: rows, folders, types } = snapshot)
+			} else {
+				;[rows, folders, types] = await Promise.all([
+					api.listSecrets(account),
+					api.listFolders(account),
+					api.listTypes(account),
+				])
+			}
 			rowCache.set(account.id, new Map(rows.map((r) => [r.id, r])))
 			await touchActivity(account.id)
 			return {
 				accountId: account.id,
+				webAppUrl: api.publicBase(account).replace(/\/public$/, '/'),
 				items: buildIndex(rows, types, folders),
 				folders: folders.map((f) => ({
 					id: f.id,
@@ -94,78 +136,300 @@ export function buildVaultHandlers({
 					parentId: f.parentId || null,
 				})),
 				types: types.map((t) => ({ id: t.id, name: t.name || t.slug })),
+				sync: status,
 			}
 		},
 
 		/**
-		 * One item's decrypted login and value, for the detail view.
+		 * Sync now, whatever the snapshot's age.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault-sync/spec.md#requirement-sync-when-it-matters-and-cheaply
+		 */
+		'vault-sync-now': async () => {
+			const account = await unlockedAccount()
+			return sync ? sync().sync(account, { force: true }) : { syncedAt: null }
+		},
+
+		/**
+		 * One item, fetched fresh and decrypted, for the detail view and the
+		 * form: a stale list row never seeds an edit. A blocked item is not
+		 * decrypted; its reason is returned instead.
 		 *
 		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-item-detail-with-copy-and-reveal
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-detail-sections-for-every-kind-of-item
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-a-passkeys-private-key-stays-in-the-worker
 		 */
 		'vault-item': async (payload) => {
 			const account = await unlockedAccount()
-			const row = await rowOf(account, payload.id)
-			if (!row || row.blocked === true) {
-				throw new Error(
-					'This item cannot be opened here. Open it in the web app.',
-				)
+			let row
+			let fromCache = false
+			try {
+				row = await api.getSecret(account, payload.id)
+			} catch (e) {
+				// Offline: read the item from the snapshot instead.
+				const cached = rowCache.get(account.id)?.get(payload.id)
+				if (!cached || (e?.status && e.status < 500)) throw e
+				row = cached
+				fromCache = true
 			}
-			const { login, secret } = await vault.decryptSecret(account.id, row)
-			await touchActivity(account.id)
-			return {
+			if (!row) {
+				throw new Error('This item no longer exists')
+			}
+			const meta = {
 				id: row.id,
 				name: row.name || '',
 				url: row.url || '',
 				folderId: row.folderId || null,
 				typeId: row.typeId || null,
+				typeName: await typeNameOf(account, row.typeId),
+				createdAt: row.createdAt || null,
+				updatedAt: row.updatedAt || null,
+				expiresAt: row.expiresAt || null,
+			}
+			if (row.blocked === true) {
+				return {
+					...meta,
+					blocked: true,
+					blockedReason:
+						row.blockedReason || 'This item cannot be opened here.',
+					migrationError: row.migrationError || null,
+				}
+			}
+			const decrypted = await vault.decryptSecret(account.id, row)
+			const login = decrypted.login
+			let secret = decrypted.secret
+			// A passkey's private key stays in the worker: the popup gets only
+			// what it shows, so the key never reaches a page or its DOM.
+			let passkey
+			if (meta.typeName === 'passkey') {
+				const credential = parsePasskey(secret)
+				passkey = credential
+					? {
+							rpId: credential.rpId,
+							rpName: credential.rpName,
+							userName: credential.userName,
+							userDisplayName: credential.userDisplayName,
+							createdAt: credential.createdAt,
+						}
+					: null
+				secret = ''
+			}
+			let additionalFields = null
+			let additionalFieldsError = false
+			if (row.additionalFields) {
+				const json = await vault.decryptField(
+					account.id,
+					row.additionalFields,
+				)
+				try {
+					const parsed = JSON.parse(json)
+					if (
+						parsed
+						&& typeof parsed === 'object'
+						&& !Array.isArray(parsed)
+					) {
+						additionalFields = parsed
+					} else {
+						additionalFieldsError = true
+					}
+				} catch {
+					additionalFieldsError = true
+				}
+			}
+			await touchActivity(account.id)
+			return {
+				...meta,
+				blocked: false,
+				fromCache,
 				login,
 				secret,
+				...(passkey !== undefined ? { passkey } : {}),
+				additionalFields,
+				additionalFieldsError,
 			}
 		},
 
 		/**
-		 * Create or update an item: encrypted here, saved as ciphertext.
+		 * Create an item, or update only the parts that changed. Values are
+		 * encrypted here; the popup never sends ciphertext or receives keys.
 		 *
 		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-add-edit-and-delete-items
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-edit-every-kind-of-item
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-a-passkeys-private-key-stays-in-the-worker
 		 */
 		'vault-save': async (payload) => {
 			const account = await unlockedAccount()
-			const name = String(payload.name || '').trim()
-			if (name === '') {
-				throw new Error('Give the item a name')
+			const changes = payload.changes || {}
+			const creating = !payload.id
+			// A passkey is made and updated by the website that uses it; here
+			// only its name, address, folder and notes change.
+			if (payload.typeName === 'passkey' && (creating || 'key' in changes)) {
+				throw new Error(
+					'A passkey is created by the website that uses it, and its key cannot be edited',
+				)
 			}
-			if (name.length > MAX_NAME_LENGTH) {
-				throw new Error(`A name has at most ${MAX_NAME_LENGTH} characters`)
+			if (creating || 'name' in changes) {
+				const name = String(changes.name ?? '').trim()
+				if (name === '') {
+					throw new Error('Give the item a name')
+				}
+				if (name.length > MAX_NAME_LENGTH) {
+					throw new Error(
+						`A name has at most ${MAX_NAME_LENGTH} characters`,
+					)
+				}
 			}
-			const secret = String(payload.secret || '')
-			const refusal = await policyRefusalFor(
-				account,
-				secret,
-				payload.typeName || 'login',
-			)
-			if (refusal !== null) {
-				throw new Error(refusal)
+			if ('key' in changes) {
+				const refusal = await policyRefusalFor(
+					account,
+					String(changes.key ?? ''),
+					payload.typeName || 'login',
+				)
+				if (refusal !== null) {
+					throw new Error(refusal)
+				}
 			}
-			const body = {
-				name,
-				url: String(payload.url || ''),
-				folderId: payload.folderId || null,
-				key: await vault.encryptField(account.id, secret),
-				login: await vault.encryptField(
+			const body = {}
+			for (const field of ['name', 'url', 'folderId']) {
+				if (field in changes)
+					body[field] =
+						field === 'name'
+							? String(changes.name).trim()
+							: (changes[field] ?? null)
+			}
+			if ('key' in changes || creating)
+				body.key = await vault.encryptField(
 					account.id,
-					String(payload.login || ''),
-				),
-				encryptionSuiteId: vault.activeSuiteId(account.id),
+					String(changes.key ?? ''),
+				)
+			if ('login' in changes || creating)
+				body.login = await vault.encryptField(
+					account.id,
+					String(changes.login ?? ''),
+				)
+			if ('additionalFields' in changes) {
+				body.additionalFields = changes.additionalFields
+					? await vault.encryptField(
+							account.id,
+							JSON.stringify(changes.additionalFields),
+						)
+					: null
 			}
-			const saved = payload.id
-				? await api.updateSecret(account, payload.id, body)
-				: await api.createSecret(account, {
-						...body,
-						...(payload.typeId ? { typeId: payload.typeId } : {}),
-					})
-			rowCache.delete(account.id)
+			if (
+				body.key !== undefined
+				|| body.login !== undefined
+				|| body.additionalFields
+			) {
+				body.encryptionSuiteId = vault.activeSuiteId(account.id)
+			}
+			let saved
+			try {
+				saved = creating
+					? await api.createSecret(account, {
+							...body,
+							...(payload.typeId ? { typeId: payload.typeId } : {}),
+						})
+					: await api.updateSecret(account, payload.id, body)
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
+			await afterWrite(account)
 			await touchActivity(account.id)
 			return { ok: true, id: saved?.id || payload.id || null }
+		},
+
+		/**
+		 * Move an item to another folder: only its folder changes.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-clone-and-move
+		 */
+		'vault-move': async (payload) => {
+			const account = await unlockedAccount()
+			try {
+				await api.updateSecret(account, payload.id, {
+					folderId: payload.folderId || null,
+				})
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
+			await afterWrite(account)
+			return { ok: true }
+		},
+
+		/**
+		 * Create a folder.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 */
+		'folder-create': async (payload) => {
+			const account = await unlockedAccount()
+			const problem = folderNameProblem(payload.name)
+			if (problem) throw new Error(problem)
+			try {
+				const folder = await api.createFolder(account, {
+					name: String(payload.name).trim(),
+					parentId: payload.parentId || null,
+				})
+				await afterWrite(account)
+				return { ok: true, id: folder?.id || null }
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
+		},
+
+		/**
+		 * Rename a folder.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 */
+		'folder-rename': async (payload) => {
+			const account = await unlockedAccount()
+			const problem = folderNameProblem(payload.name)
+			if (problem) throw new Error(problem)
+			try {
+				await api.renameFolder(
+					account,
+					payload.id,
+					String(payload.name).trim(),
+				)
+				await afterWrite(account)
+				return { ok: true }
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
+		},
+
+		/**
+		 * What a folder holds, to choose how to delete it.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 */
+		'folder-children': async (payload) => {
+			const account = await unlockedAccount()
+			try {
+				return await api.folderChildren(account, payload.id)
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
+		},
+
+		/**
+		 * Delete a folder with the user's choice for what it holds.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 */
+		'folder-delete': async (payload) => {
+			const account = await unlockedAccount()
+			try {
+				await api.deleteFolder(account, payload.id, {
+					cascade: payload.cascade,
+					resolution: payload.resolution,
+				})
+				await afterWrite(account)
+				return { ok: true }
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
 		},
 
 		/**
@@ -175,8 +439,12 @@ export function buildVaultHandlers({
 		 */
 		'vault-trash': async (payload) => {
 			const account = await unlockedAccount()
-			await api.trashSecret(account, payload.id)
-			rowCache.get(account.id)?.delete(payload.id)
+			try {
+				await api.trashSecret(account, payload.id)
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
+			await afterWrite(account)
 			return { ok: true }
 		},
 

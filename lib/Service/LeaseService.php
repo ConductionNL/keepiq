@@ -27,7 +27,6 @@ namespace OCA\Keepiq\Service;
 
 use DateInterval;
 use DateTime;
-use InvalidArgumentException;
 use OCA\Keepiq\Db\MachineLease;
 use OCA\Keepiq\Db\MachineLeaseMapper;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
@@ -139,61 +138,6 @@ class LeaseService {
 
 		return $lease;
 	}//end grantOrReuse()
-
-	/**
-	 * Renew a lease: extend to `min(now + default TTL, granted_at + max
-	 * TTL)`. Refused past max, when non-renewable, or when the lease is
-	 * not active. Cross-application access throws the SAME not-found as
-	 * a nonexistent lease.
-	 *
-	 * @param string $leaseId The lease UUID
-	 * @param string $applicationId The calling application (must own the lease)
-	 *
-	 * @return MachineLease
-	 *
-	 * @throws DoesNotExistException When the lease is missing or foreign
-	 * @throws InvalidArgumentException When renewal is refused
-	 *
-	 * @spec openspec/changes/machine-secret-leases/specs/machine-secret-leases/spec.md#requirement-lease-renewal
-	 */
-	public function renew(string $leaseId, string $applicationId): MachineLease {
-		$lease = $this->loadOwned(leaseId: $leaseId, applicationId: $applicationId);
-		if ($lease->getStatus() !== 'active') {
-			throw new InvalidArgumentException('Lease is not active');
-		}
-
-		$policy = $this->effectivePolicy(applicationId: $applicationId);
-		if ($policy['renewable'] === false) {
-			throw new InvalidArgumentException('Leases are not renewable for this application');
-		}
-
-		$now = new DateTime();
-		$granted = $lease->getGrantedAt() ?? $now;
-		$hardCap = (clone $granted)->add(new DateInterval('PT' . $policy['maxTtl'] . 'S'));
-		$target = (clone $now)->add(new DateInterval('PT' . $policy['defaultTtl'] . 'S'));
-		if ($target > $hardCap) {
-			$target = $hardCap;
-		}
-
-		$current = $lease->getExpiresAt();
-		if ($current !== null && $target <= $current) {
-			throw new InvalidArgumentException('Lease has reached its maximum lifetime');
-		}
-
-		$lease->setExpiresAt($target);
-		$lease->setRenewedCount($lease->getRenewedCount() + 1);
-		$lease->setLastRenewedAt($now);
-		$lease = $this->leaseMapper->update($lease);
-
-		$this->dispatchAudit(
-			actorId: $applicationId,
-			eventType: AuditEventTypes::LEASE_RENEWED,
-			lease: $lease,
-			extra: ['renewedCount' => $lease->getRenewedCount()],
-		);
-
-		return $lease;
-	}//end renew()
 
 	/**
 	 * Revoke a lease (admin / owner / holding application) and raise a
