@@ -1593,7 +1593,13 @@ OC.L10N.register(
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Quantes versions d'un secret es conserven, durant quant de temps, i quant de temps resten a la paperera els secrets suprimits.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Límits per als adjunts xifrats, aplicats al servidor en bytes xifrats emmagatzemats.",
         "Type the suite ID again to confirm": "Torneu a escriure l'ID del conjunt per confirmar",
-        "This does not match the suite ID.": "No coincideix amb l'ID del conjunt."
+        "This does not match the suite ID.": "No coincideix amb l'ID del conjunt.",
+        "Confirm with your master password": "Confirmeu amb la contrasenya mestra",
+        "Confirm": "Confirma",
+        "That master password is not right.": "Aquesta contrasenya mestra no és correcta.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Esteu compartint amb algú nou. Introduïu la contrasenya mestra per confirmar.",
+        "Enter your master password to confirm this share.": "Introduïu la contrasenya mestra per confirmar aquesta compartició.",
+        "Enter your master password to confirm this delegation.": "Introduïu la contrasenya mestra per confirmar aquesta delegació."
     },
     "nplurals=2; plural=(n != 1);"
 )

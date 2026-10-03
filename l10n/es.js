@@ -1593,7 +1593,13 @@ OC.L10N.register(
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Cuántas versiones de un secreto se guardan, durante cuánto tiempo y cuánto tiempo permanecen en la papelera los secretos eliminados.",
         "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Límites para adjuntos cifrados, aplicados en el servidor en bytes cifrados almacenados.",
         "Type the suite ID again to confirm": "Vuelva a escribir el ID del conjunto para confirmar",
-        "This does not match the suite ID.": "No coincide con el ID del conjunto."
+        "This does not match the suite ID.": "No coincide con el ID del conjunto.",
+        "Confirm with your master password": "Confirme con su contraseña maestra",
+        "Confirm": "Confirmar",
+        "That master password is not right.": "Esa contraseña maestra no es correcta.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Está compartiendo con alguien nuevo. Introduzca su contraseña maestra para confirmar.",
+        "Enter your master password to confirm this share.": "Introduzca su contraseña maestra para confirmar este uso compartido.",
+        "Enter your master password to confirm this delegation.": "Introduzca su contraseña maestra para confirmar esta delegación."
     },
     "nplurals=2; plural=(n != 1);"
 )
