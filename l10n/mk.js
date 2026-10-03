@@ -1575,7 +1575,25 @@ OC.L10N.register(
         "Role of {member}": "Улога на {member}",
         "Team folders you manage": "Тимски папки со кои управувате",
         "Viewer": "Прегледувач",
-        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Немате копија од овие тајни, па новите членови сè уште не ги добиле. Сопственикот може да ги сподели: {names}"
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Немате копија од овие тајни, па новите членови сè уште не ги добиле. Сопственикот може да ги сподели: {names}",
+        "Admin areas": "Области на администрација",
+        "Give a group only the parts of Keepiq administration it needs.": "Дајте ѝ на групата само делови од администрацијата на Keepiq што ѝ се потребни.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Старата група vault_admin има членови: {count}. Сè уште се смета за областа Луѓе и заминување, додека подоцнежна верзија не ја отстрани. Наместо тоа, делегирајте ја таа област на група.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Делегирајте една или повеќе области на група на страницата за административни привилегии. Администраторите на инстанцата ги имаат сите области.",
+        "Open administration privileges": "Отвори административни привилегии",
+        "Policies": "Политики",
+        "Applications and machine access": "Апликации и машински пристап",
+        "People and offboarding": "Луѓе и заминување",
+        "Audit and compliance": "Ревизија и усогласеност",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "верзија, издавач на сертификати, прилози, офлајн кеш, проверка на протекување, типови тајни и резервни копии",
+        "master password, organisation password, vault policies, rotation, version history and trash": "главна лозинка, лозинка на организацијата, политики на трезорот, ротација, историја на верзии и корпа",
+        "application queue, application requests and machine leases": "редица на апликации, барања на апликации и машински закупи",
+        "team offboarding, encryption suites and admin handover": "заминување од тимот, пакети за шифрирање и преземање од администратор",
+        "audit log, compliance reports, SIEM export and honey alerts": "ревизорски дневник, извештаи за усогласеност, SIEM извоз и предупредувања за мамки",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Колку верзии од тајна се чуваат, колку долго, и колку долго избришаните тајни остануваат во корпата.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Ограничувања за шифрирани прилози, што серверот ги применува на зачуваните шифрирани бајти.",
+        "Type the suite ID again to confirm": "Повторно внесете го ID на пакетот за потврда",
+        "This does not match the suite ID.": "Ова не се совпаѓа со ID на пакетот."
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

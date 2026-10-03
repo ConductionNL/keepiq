@@ -1670,7 +1670,25 @@
         "Role of {member}": "Uloga korisnika {member}",
         "Team folders you manage": "Timske mape kojima upravljate",
         "Viewer": "Preglednik",
-        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nemate kopiju ovih tajni, pa ih novi članovi još nisu dobili. Vlasnik ih može podijeliti: {names}"
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Nemate kopiju ovih tajni, pa ih novi članovi još nisu dobili. Vlasnik ih može podijeliti: {names}",
+        "Admin areas": "Područja administracije",
+        "Give a group only the parts of Keepiq administration it needs.": "Dajte grupi samo one dijelove administracije Keepiqa koji su joj potrebni.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Stara grupa vault_admin ima članova: {count}. I dalje se računa kao područje Ljudi i odlasci, dok je kasnija verzija ne ukloni. Umjesto toga delegirajte to područje grupi.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegirajte jedno ili više područja grupi na stranici administratorskih ovlaštenja. Administratori instance imaju svako područje.",
+        "Open administration privileges": "Otvori administratorska ovlaštenja",
+        "Policies": "Pravila",
+        "Applications and machine access": "Aplikacije i pristup mašina",
+        "People and offboarding": "Ljudi i odlasci",
+        "Audit and compliance": "Revizija i usklađenost",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "verzija, certifikacijsko tijelo, prilozi, offline keš, provjera curenja, tipovi tajni i rezervne kopije",
+        "master password, organisation password, vault policies, rotation, version history and trash": "glavna lozinka, lozinka organizacije, pravila trezora, rotacija, historija verzija i smeće",
+        "application queue, application requests and machine leases": "red aplikacija, zahtjevi aplikacija i zakupi mašina",
+        "team offboarding, encryption suites and admin handover": "odlasci iz tima, paketi šifriranja i preuzimanje od strane administratora",
+        "audit log, compliance reports, SIEM export and honey alerts": "revizijski dnevnik, izvještaji o usklađenosti, SIEM izvoz i upozorenja mamaca",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Koliko verzija tajne se čuva, koliko dugo, i koliko dugo obrisane tajne ostaju u smeću.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Ograničenja za šifrirane priloge, koja server primjenjuje na sačuvane šifrirane bajtove.",
+        "Type the suite ID again to confirm": "Ponovo unesite ID paketa za potvrdu",
+        "This does not match the suite ID.": "Ovo se ne podudara s ID-om paketa."
     },
     "plurals": null
 }

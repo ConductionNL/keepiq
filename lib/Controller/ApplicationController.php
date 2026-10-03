@@ -27,7 +27,9 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\Application;
+use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\ApplicationService;
+use OCA\Keepiq\Settings\ApplicationAdminSettings;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -36,7 +38,6 @@ use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
 use OCP\IAppConfig;
-use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -50,7 +51,7 @@ class ApplicationController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param ApplicationService $service The application service
 	 * @param IUserSession $session The user session
-	 * @param IGroupManager $groupManager The group manager
+	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Applications admin area
 	 * @param IAppConfig $appConfig The app config
 	 *
 	 * @return void
@@ -59,7 +60,7 @@ class ApplicationController extends OCSController {
 		IRequest $request,
 		private ApplicationService $service,
 		private IUserSession $session,
-		private IGroupManager $groupManager,
+		private AdminAreaAuthorizer $areas,
 		private IAppConfig $appConfig,
 	) {
 		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
@@ -82,7 +83,7 @@ class ApplicationController extends OCSController {
 		}
 
 		$uid = $user->getUID();
-		$isAdmin = $this->groupManager->isAdmin($uid);
+		$isAdmin = $this->areas->holds(userId: $uid, areaClass: ApplicationAdminSettings::class);
 
 		$apps = $this->service->listForUser($uid, $isAdmin);
 
@@ -107,7 +108,7 @@ class ApplicationController extends OCSController {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		$isAdmin = $this->groupManager->isAdmin($user->getUID());
+		$isAdmin = $this->areas->holds(userId: $user->getUID(), areaClass: ApplicationAdminSettings::class);
 
 		try {
 			$pending = $this->service->listPending($isAdmin);
@@ -142,7 +143,7 @@ class ApplicationController extends OCSController {
 		}
 
 		$uid = $user->getUID();
-		$isAdmin = $this->groupManager->isAdmin($uid);
+		$isAdmin = $this->areas->holds(userId: $uid, areaClass: ApplicationAdminSettings::class);
 
 		try {
 			$entity = $this->service->get($id, $uid, $isAdmin);
@@ -231,7 +232,7 @@ class ApplicationController extends OCSController {
 		$isAdmin = false;
 		if ($user !== null) {
 			$uid = $user->getUID();
-			$isAdmin = $this->groupManager->isAdmin($uid);
+			$isAdmin = $this->areas->holds(userId: $uid, areaClass: ApplicationAdminSettings::class);
 		}
 
 		try {
@@ -272,7 +273,7 @@ class ApplicationController extends OCSController {
 		}
 
 		$uid = $user->getUID();
-		$isAdmin = $this->groupManager->isAdmin($uid);
+		$isAdmin = $this->areas->holds(userId: $uid, areaClass: ApplicationAdminSettings::class);
 
 		try {
 			$entity = $this->service->approve(applicationId: $id, adminUserId: $uid, isAdmin: $isAdmin);
@@ -307,7 +308,7 @@ class ApplicationController extends OCSController {
 		}
 
 		$uid = $user->getUID();
-		$isAdmin = $this->groupManager->isAdmin($uid);
+		$isAdmin = $this->areas->holds(userId: $uid, areaClass: ApplicationAdminSettings::class);
 
 		try {
 			$this->service->reject(applicationId: $id, adminUserId: $uid, isAdmin: $isAdmin);
@@ -341,7 +342,7 @@ class ApplicationController extends OCSController {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		$isAdmin = $this->groupManager->isAdmin($user->getUID());
+		$isAdmin = $this->areas->holds(userId: $user->getUID(), areaClass: ApplicationAdminSettings::class);
 
 		try {
 			$this->service->delete(applicationId: $id, isAdmin: $isAdmin);

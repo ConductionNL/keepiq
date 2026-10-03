@@ -1575,7 +1575,25 @@ OC.L10N.register(
         "Role of {member}": "{member} vaidmuo",
         "Team folders you manage": "Jūsų valdomi komandos aplankai",
         "Viewer": "Peržiūrėtojas",
-        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Neturite šių paslapčių kopijos, todėl nauji nariai jų dar negavo. Savininkas gali jomis pasidalyti: {names}"
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Neturite šių paslapčių kopijos, todėl nauji nariai jų dar negavo. Savininkas gali jomis pasidalyti: {names}",
+        "Admin areas": "Administravimo sritys",
+        "Give a group only the parts of Keepiq administration it needs.": "Suteikite grupei tik tas Keepiq administravimo dalis, kurių jai reikia.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Senoje grupėje vault_admin yra narių: {count}. Ji vis dar laikoma sritimi Žmonės ir išėjimas, kol vėlesnė versija ją pašalins. Vietoj to deleguokite šią sritį grupei.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Deleguokite vieną ar daugiau sričių grupei administravimo teisių puslapyje. Egzemplioriaus administratoriai turi visas sritis.",
+        "Open administration privileges": "Atverti administravimo teises",
+        "Policies": "Politikos",
+        "Applications and machine access": "Programos ir mašinų prieiga",
+        "People and offboarding": "Žmonės ir išėjimas",
+        "Audit and compliance": "Auditas ir atitiktis",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "versija, sertifikavimo institucija, priedai, neprisijungus naudojama talpykla, nutekėjimų patikra, paslapčių tipai ir atsarginės kopijos",
+        "master password, organisation password, vault policies, rotation, version history and trash": "pagrindinis slaptažodis, organizacijos slaptažodis, saugyklos politikos, rotacija, versijų istorija ir šiukšlinė",
+        "application queue, application requests and machine leases": "programų eilė, programų užklausos ir mašinų nuomos",
+        "team offboarding, encryption suites and admin handover": "išėjimas iš komandos, šifravimo rinkiniai ir administratoriaus perėmimas",
+        "audit log, compliance reports, SIEM export and honey alerts": "audito žurnalas, atitikties ataskaitos, SIEM eksportas ir masalo įspėjimai",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Kiek paslapties versijų saugoma, kiek laiko, ir kiek laiko ištrintos paslaptys lieka šiukšlinėje.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Šifruotų priedų ribos, kurias serveris taiko saugomiems šifruotiems baitams.",
+        "Type the suite ID again to confirm": "Patvirtinkite dar kartą įvesdami rinkinio ID",
+        "This does not match the suite ID.": "Tai nesutampa su rinkinio ID."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

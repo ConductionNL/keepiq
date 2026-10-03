@@ -1575,7 +1575,25 @@ OC.L10N.register(
         "Role of {member}": "Roll vun {member}",
         "Team folders you manage": "Teamdossieren, déi Dir verwalt",
         "Viewer": "Lieser",
-        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Dir hutt keng Kopie vun dëse Geheimnisser, dofir hunn déi nei Memberen se nach net kritt. De Besëtzer kann se deelen: {names}"
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Dir hutt keng Kopie vun dëse Geheimnisser, dofir hunn déi nei Memberen se nach net kritt. De Besëtzer kann se deelen: {names}",
+        "Admin areas": "Verwaltungsberäicher",
+        "Give a group only the parts of Keepiq administration it needs.": "Gitt engem Grupp nëmmen déi Deeler vun der Keepiq-Verwaltung, déi e brauch.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Den ale Grupp vault_admin huet {count} Memberen. Hie gëllt nach als de Beräich Leit an Austrëtt, bis eng spéider Versioun en ewechhëlt. Delegéiert deen Beräich amplaz un e Grupp.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegéiert een oder méi Beräicher un e Grupp op der Säit vun de Verwaltungsrechter. Instanzadministrateure hunn all Beräich.",
+        "Open administration privileges": "Verwaltungsrechter opmaachen",
+        "Policies": "Richtlinnen",
+        "Applications and machine access": "Applikatiounen a Maschinnenzougang",
+        "People and offboarding": "Leit an Austrëtt",
+        "Audit and compliance": "Audit a Konformitéit",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "Versioun, Zertifizéierungsstell, Unhäng, Offline-Cache, Leckkontroll, Geheimnistypen a Sécherungskopien",
+        "master password, organisation password, vault policies, rotation, version history and trash": "Masterpasswuert, Organisatiounspasswuert, Tresorrichtlinnen, Rotatioun, Versiounsverlaf a Poubelle",
+        "application queue, application requests and machine leases": "Applikatiounsschlaang, Applikatiounsufroen a Maschinnen-Leasen",
+        "team offboarding, encryption suites and admin handover": "Team-Austrëtt, Verschlësselungssuiten an Iwwerhuele vum Administrateur",
+        "audit log, compliance reports, SIEM export and honey alerts": "Auditprotokoll, Konformitéitsberichter, SIEM-Export an Hunneg-Alarmer",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Wéi vill Versioune vun engem Geheimnis wéi laang gehale ginn, a wéi laang geläschte Geheimnisser an der Poubelle bleiwen.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Grenze fir verschlësselt Unhäng, um Server a gespäicherte verschlësselte Bytes duerchgesat.",
+        "Type the suite ID again to confirm": "Gitt d'Suite-ID nach eng Kéier an fir ze confirméieren",
+        "This does not match the suite ID.": "Dat entsprécht net der Suite-ID."
     },
     "nplurals=2; plural=(n != 1);"
 )

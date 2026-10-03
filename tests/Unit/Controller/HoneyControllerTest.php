@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use OCA\Keepiq\Tests\Support\AdminAreaFixture;
+use OCA\Keepiq\Settings\AuditAdminSettings;
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\HoneyController;
 use OCA\Keepiq\Db\HoneyAlert;
@@ -52,6 +54,8 @@ use PHPUnit\Framework\TestCase;
  *
  */
 class HoneyControllerTest extends TestCase {
+	use AdminAreaFixture;
+
 
 	/**
 	 * The mocked honey-credential service.
@@ -115,7 +119,7 @@ class HoneyControllerTest extends TestCase {
 			request: $this->createMock(IRequest::class),
 			service: $this->service,
 			userSession: $this->userSession,
-			groupManager: $this->groupManager
+			areas: $this->areaAuthorizer(groupManager: $this->groupManager)
 		);
 	}//end controller()
 
@@ -370,4 +374,22 @@ class HoneyControllerTest extends TestCase {
 		$this->assertSame(['message' => 'Unauthenticated'], $response->getData());
 	}//end testUnflagByAnAnonymousCallerIs403AndNeverReachesTheService()
 
+
+	/**
+	 * A holder of the Audit area gets the instance-wide alert scope
+	 * (admin-scoped-roles §2.3).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.3
+	 */
+	public function testAlertsRequestsTheInstanceWideScopeForAnAuditAreaHolder(): void {
+		$this->delegatedAreas = [AuditAdminSettings::class];
+		$this->signIn('auditor');
+		$this->groupManager->method('isAdmin')->willReturn(false);
+
+		$this->service->expects($this->once())->method('listAlerts')->with('auditor', true)->willReturn([]);
+
+		$this->controller()->alerts();
+	}//end testAlertsRequestsTheInstanceWideScopeForAnAuditAreaHolder()
 }//end class

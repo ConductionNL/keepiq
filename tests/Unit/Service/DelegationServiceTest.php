@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use OCA\Keepiq\Tests\Support\AdminAreaFixture;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegation;
@@ -36,6 +37,8 @@ use PHPUnit\Framework\TestCase;
  * Tests for DelegationService.
  */
 class DelegationServiceTest extends TestCase {
+	use AdminAreaFixture;
+
 	/**
 	 * Build a service + return all the collaborator mocks.
 	 *
@@ -239,7 +242,7 @@ class DelegationServiceTest extends TestCase {
 			authorizer: new DelegationAuthorizer(
 				secretMapper: $secretMapper,
 				shareTargetMapper: $shareTargetMapper,
-				groupManager: $groupManager,
+				areas: $this->areaAuthorizer(groupManager: $groupManager),
 			),
 		);
 

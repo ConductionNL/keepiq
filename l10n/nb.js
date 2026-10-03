@@ -1575,7 +1575,25 @@ OC.L10N.register(
         "Role of {member}": "Rollen til {member}",
         "Team folders you manage": "Teammapper du administrerer",
         "Viewer": "Leser",
-        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Du har ingen kopi av disse hemmelighetene, så de nye medlemmene har ikke fått dem ennå. Eieren kan dele dem: {names}"
+        "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Du har ingen kopi av disse hemmelighetene, så de nye medlemmene har ikke fått dem ennå. Eieren kan dele dem: {names}",
+        "Admin areas": "Administrasjonsområder",
+        "Give a group only the parts of Keepiq administration it needs.": "Gi en gruppe bare de delene av Keepiq-administrasjonen den trenger.",
+        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Den gamle gruppen vault_admin har {count} medlemmer. Den teller fortsatt som området Personer og fratredelse, til en senere versjon fjerner den. Deleger heller det området til en gruppe.",
+        "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Deleger ett eller flere områder til en gruppe på siden for administrasjonsrettigheter. Instansadministratorer har alle områder.",
+        "Open administration privileges": "Åpne administrasjonsrettigheter",
+        "Policies": "Retningslinjer",
+        "Applications and machine access": "Applikasjoner og maskintilgang",
+        "People and offboarding": "Personer og fratredelse",
+        "Audit and compliance": "Revisjon og samsvar",
+        "version, certificate authority, attachments, offline cache, breach check, secret types and backups": "versjon, sertifikatutsteder, vedlegg, frakoblet hurtigbuffer, lekkasjesjekk, hemmelighetstyper og sikkerhetskopier",
+        "master password, organisation password, vault policies, rotation, version history and trash": "hovedpassord, organisasjonspassord, hvelvets retningslinjer, rotasjon, versjonshistorikk og papirkurv",
+        "application queue, application requests and machine leases": "applikasjonskø, applikasjonsforespørsler og maskinleieavtaler",
+        "team offboarding, encryption suites and admin handover": "teamfratredelse, krypteringssuiter og overtakelse av administrator",
+        "audit log, compliance reports, SIEM export and honey alerts": "revisjonslogg, samsvarsrapporter, SIEM-eksport og lokkevarsler",
+        "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Hvor mange versjoner av en hemmelighet som beholdes, hvor lenge, og hvor lenge slettede hemmeligheter blir i papirkurven.",
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Grenser for krypterte vedlegg, håndhevet på serveren i lagrede krypterte byte.",
+        "Type the suite ID again to confirm": "Skriv inn pakke-ID-en på nytt for å bekrefte",
+        "This does not match the suite ID.": "Dette samsvarer ikke med pakke-ID-en."
     },
     "nplurals=2; plural=(n != 1);"
 )
