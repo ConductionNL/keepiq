@@ -34,6 +34,7 @@ use OCA\Keepiq\Service\TeamFolderMembershipResolver;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRevocationService;
 use OCA\Keepiq\Service\WriteLockService;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 use OCP\IUserManager;
 use OCP\Share\IManager as IShareManager;
@@ -138,12 +139,20 @@ class UseOnlyServerRefusalTest extends TestCase {
 		$this->copy->setUseOnly(true);
 		$links = $this->createMock(LinkShareMapper::class);
 		$links->expects($this->never())->method('insert');
+		// Bob holds the row and it is no one's copy, so the re-share check
+		// passes and the use-only refusal is what stops the link.
+		$shareTargets = $this->createMock(ShareTargetMapper::class);
+		$shareTargets->method('findByRecipientSecret')->willThrowException(new DoesNotExistException('not a copy'));
 		$service = new LinkShareService(
 			mapper: $links,
 			logger: $this->createMock(LoggerInterface::class),
 			writeLockService: $this->createMock(WriteLockService::class),
-			shareAuth: $this->createMock(ShareAuthorizationService::class),
-			secretMapper: $this->secrets,
+			shareAuth: new ShareAuthorizationService(
+				secretMapper: $this->secrets,
+				delegationMapper: $this->createMock(SecretDelegationMapper::class),
+				suiteMapper: $this->createMock(EncryptionSuiteMapper::class),
+				shareTargetMapper: $shareTargets,
+			),
 		);
 
 		$this->expectExceptionMessage(Secret::ONWARD_SHARE_REFUSAL);

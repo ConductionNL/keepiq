@@ -142,8 +142,10 @@ class ShareAuthorizationService {
 	 * @return void
 	 *
 	 * @throws DoesNotExistException When the user may not re-share the secret
+	 * @throws InvalidArgumentException When the copy is use-only or expiring
 	 *
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function assertMayReshare(string $secretId, string $userId): void {
 		if ($this->shareTargetMapper === null) {
@@ -151,15 +153,18 @@ class ShareAuthorizationService {
 		}
 
 		try {
-			$secret = $this->loadSecret(secretId: $secretId);
-			$secret = $this->sourceOf(copy: $secret);
+			$copy   = $this->loadSecret(secretId: $secretId);
+			$source = $this->sourceOf(copy: $copy);
 		} catch (InvalidArgumentException) {
 			throw new DoesNotExistException('Secret not found');
 		}
 
-		if ($this->isOwnerOrDelegate(secret: $secret, userId: $userId) === false) {
+		if ($this->isOwnerOrDelegate(secret: $source, userId: $userId) === false) {
 			throw new DoesNotExistException('Secret not found');
 		}
+
+		// A delegate's use-only or expiring copy still may not leave as a link.
+		$copy->assertOnwardShareable();
 	}//end assertMayReshare()
 
 	/**
