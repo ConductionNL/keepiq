@@ -46,7 +46,7 @@ Per `KeepiqSecret`: load the connection and key, get a bearer token (cached unti
 
 ### D4: Leases
 
-When discovery advertises leases, the operator renews a lease through `POST /api/v1/app/leases/{id}/renew` before it expires, and treats a refused renewal or a revoked lease as a signal to refetch on the next loop. Against an instance without leases it works unchanged.
+When discovery advertises leases, the operator fetches the item again before its lease expires; fetching again is the one renewal path, and there is no renew route (keepiq#753). A revoked lease is likewise a signal to fetch again on the next loop. Against an instance without leases it works unchanged.
 
 ### D5: A no-Secret recipe with the CLI
 

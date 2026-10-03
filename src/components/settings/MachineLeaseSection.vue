@@ -111,7 +111,7 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
-		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-renewal-within-policy
+		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
 		 */
 		async save() {
 			this.error = null
