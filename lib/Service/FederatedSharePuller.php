@@ -91,7 +91,7 @@ class FederatedSharePuller {
 
 		if ($status !== 200 || is_array($body) === false
 			|| is_string($body['key'] ?? null) === false || $body['key'] === ''
-			|| ($body['recipientCloudId'] ?? null) !== $recipient
+			|| (new CloudIdForm())->same((string)($body['recipientCloudId'] ?? ''), $recipient) === false
 		) {
 			throw new RuntimeException('pull_failed');
 		}

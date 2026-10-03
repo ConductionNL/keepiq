@@ -222,6 +222,15 @@ class FederatedShareAcceptTest extends TestCase {
 		$this->assertSame('CIPHER-LOGIN-FOR-BOB', $copy->getLogin());
 	}
 
+	public function testBobOnAnHttpInstanceAcceptsAnAnswerForHisCloudIdWithoutScheme(): void {
+		$this->localHost = 'http://cloud.here.example';
+
+		$response = $this->bob()->accept('in-1');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertCount(1, $this->stored);
+	}
+
 	public function testAFailedPullStoresNothingAndLeavesTheSharePending(): void {
 		foreach ([[404, ['message' => 'Unknown recipient']], [200, ['key' => 'X', 'recipientCloudId' => 'eve@cloud.here.example']], [200, 'garbage']] as [$status, $answer]) {
 			$this->pending->setStatus(FederatedInbound::STATUS_PENDING);

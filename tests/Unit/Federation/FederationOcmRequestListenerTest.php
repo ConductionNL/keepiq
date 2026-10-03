@@ -148,6 +148,24 @@ class FederationOcmRequestListenerTest extends TestCase {
 	}
 
 	/**
+	 * On an http instance Nextcloud writes a user's own cloud id with the
+	 * scheme (`bob@http://cloud.here.example`) while the partner asks for
+	 * `bob@cloud.here.example`; that is the same user.
+	 */
+	public function testAUserOfAnHttpInstanceIsFoundUnderTheCloudIdWithoutScheme(): void {
+		$this->localHost = 'http://cloud.here.example';
+		$listener = $this->listener([$this->partner('cloud.city.example', false, true)]);
+
+		[$status, $data] = $this->answerOf($this->ask($listener, 'cloud.city.example', 'bob@cloud.here.example'));
+
+		$this->assertSame(Http::STATUS_OK, $status);
+		$this->assertSame('BOB-CERT', $data['certificate']);
+		// And still not a user of another instance.
+		[$status] = $this->answerOf($this->ask($listener, 'cloud.city.example', 'bob@cloud.elsewhere.example'));
+		$this->assertSame(Http::STATUS_NOT_FOUND, $status);
+	}
+
+	/**
 	 * Each refusal, and the answer it must be indistinguishable from.
 	 *
 	 * @return array<string,array{0:?string,1:string,2:array<int,array{0:string,1:bool,2:bool}>}>
