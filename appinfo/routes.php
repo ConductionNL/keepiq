@@ -394,6 +394,10 @@ $extra = [
     // Bearer-authenticated application secrets API (openconnector-secret-store-api).
     // JwtAuthMiddleware enforces the Authorization header before the controller runs.
     // The by-name route precedes {id} so its extra path segment resolves first.
+    // The calling application's own certificate and fingerprint
+    // (app-own-certificate), so a client can check envelopes without
+    // configuring the certificate.
+    ['name' => 'applicationCertificate#show', 'url' => '/api/v1/app/certificate', 'verb' => 'GET'],
     ['name' => 'applicationSecrets#index',  'url' => '/api/v1/app/secrets',                 'verb' => 'GET'],
     ['name' => 'applicationSecrets#create', 'url' => '/api/v1/app/secrets',                 'verb' => 'POST'],
     ['name' => 'applicationSecrets#byName', 'url' => '/api/v1/app/secrets/by-name/{name}',  'verb' => 'GET',
