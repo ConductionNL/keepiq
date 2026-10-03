@@ -141,9 +141,32 @@
 			     design): a secret always lives in a vault, so creating one
 			     at the root cannot be offered. Replaces a local NcSelect
 			     that still listed the root. -->
+			<!-- The team folder ownership policy (admin-vault-policies §4.3):
+			     a covered type goes into one of the user's own team folders,
+			     or into a team folder they can write to. -->
+			<NcNoteCard
+				v-if="ownershipApplies"
+				type="info"
+				data-testid="secret-create-ownership">
+				{{
+					t(
+						'keepiq',
+						'Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.',
+					)
+				}}
+			</NcNoteCard>
+			<NcSelect
+				v-if="ownershipApplies && contributable.length > 0"
+				v-model="contributeTo"
+				:options="contributable"
+				label="folderName"
+				:inputLabel="t('keepiq', 'Team folder you can write to')"
+				data-testid="secret-create-contribute-to" />
 			<DestinationSelect
+				v-if="!contributeTo"
 				v-model="selectedFolderId"
 				mode="folders"
+				:onlyIds="ownershipApplies ? ownTeamFolderIds : null"
 				:label="t('keepiq', 'Folder')" />
 
 			<NcNoteCard
@@ -170,6 +193,8 @@
 </template>
 
 <script>
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcDialog,
@@ -198,6 +223,7 @@ import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
+import { useTeamFolderStore } from '../store/modules/teamFolder.js'
 import {
 	resolveDefaultTypeId,
 	useUserPreferencesStore,
@@ -209,6 +235,28 @@ import {
 	missingRequired,
 	typedFieldsOf,
 } from '../utils/typedFields.js'
+
+/**
+ * Every folder id at or below the given roots.
+ *
+ * @param {Array<{id: string, parentId: string|null}>} folders The user's folders.
+ * @param {Array<string>} roots The root folder ids.
+ * @return {Array<string>}
+ */
+function subtreeIds(folders, roots) {
+	const ids = new Set(roots)
+	let grew = true
+	while (grew) {
+		grew = false
+		for (const folder of folders) {
+			if (folder.parentId && ids.has(folder.parentId) && !ids.has(folder.id)) {
+				ids.add(folder.id)
+				grew = true
+			}
+		}
+	}
+	return [...ids]
+}
 
 /**
  * Create a secret. The value (and optional login) are RSA-encrypted by the
@@ -262,6 +310,12 @@ export default {
 			typedValues: {},
 			typedMissing: [],
 			selectedFolderId: this.folderId,
+			/** Team folders the user can write to but does not own (admin-vault-policies §4.3). */
+			contributable: [],
+			/** The chosen contributable team folder, or null. */
+			contributeTo: null,
+			/** Folder ids inside a team folder the user owns. */
+			ownTeamFolderIds: [],
 			saving: false,
 			error: '',
 			generatorOpen: false,
@@ -335,6 +389,21 @@ export default {
 			return useSecretTypeStore().typesById[this.typeId]?.name ?? ''
 		},
 
+		/**
+		 * Whether the team folder ownership policy covers this user and type.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
+		 */
+		ownershipApplies() {
+			return (
+				this.policy?.vault_org_ownership === true
+				&& (this.policy?.vault_org_ownership_types ?? []).includes(
+					this.selectedTypeName,
+				)
+			)
+		},
+
 		isCard() {
 			return this.selectedTypeName === CARD_TYPE_NAME
 		},
@@ -395,7 +464,7 @@ export default {
 			if (this.saving || this.locked || this.name.trim() === '') {
 				return false
 			}
-			if (!this.selectedFolderId) {
+			if (!this.selectedFolderId && !this.contributeTo) {
 				return false
 			}
 			if (this.isCard) {
@@ -434,10 +503,41 @@ export default {
 		if (folderStore.folders.length === 0) {
 			await folderStore.fetchFolders()
 		}
+		if (this.policy?.vault_org_ownership === true) {
+			await this.loadOwnershipTargets()
+		}
 	},
 
 	methods: {
 		t,
+
+		/**
+		 * Where a covered type may go: folders inside the user's own team
+		 * folders, and the team folders they can write to.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
+		 */
+		async loadOwnershipTargets() {
+			try {
+				const teamFolderStore = useTeamFolderStore()
+				await teamFolderStore.fetchTeamFolders()
+				const roots = teamFolderStore.owned.map(
+					(teamFolder) => teamFolder.folderId,
+				)
+				this.ownTeamFolderIds = subtreeIds(useFolderStore().folders, roots)
+				this.contributable =
+					(
+						await axios.get(
+							generateUrl(
+								'/apps/keepiq/api/v1/team-folders/contributable',
+							),
+						)
+					).data ?? []
+			} catch {
+				this.contributable = []
+			}
+		},
 
 		/**
 		 * Take the typed values and clear the marks of fields now filled.
@@ -544,6 +644,26 @@ export default {
 						this.saving = false
 						return
 					}
+				}
+				if (this.contributeTo) {
+					// A team folder this user can write to but does not own
+					// (admin-vault-policies D5): encrypted for owner and members.
+					const result = await useSecretStore().contributeSecret(
+						this.contributeTo.teamFolderId,
+						{
+							name: this.name.trim(),
+							typeId: this.typeId,
+							url: this.url || null,
+							login: this.login || '',
+							key: this.effectiveValue,
+							...(Object.keys(this.additionalBlob()).length > 0
+								? { additionalFields: this.additionalBlob() }
+								: {}),
+						},
+					)
+					this.$emit('saved', result.secret)
+					this.onUpdateOpen(false)
+					return
 				}
 				const created = await useSecretStore().createSecret({
 					name: this.name.trim(),

@@ -73,6 +73,34 @@ The system MUST allow a user to share a secret they own with another Nextcloud u
 - WHEN user A attempts to share a secret with user B
 - THEN the system MUST return an error indicating the recipient has no encryption suite
 
+### Requirement: Sharing With A New Party Requires A Verified Key Proof
+A session alone MUST NOT be able to add a new party who then receives a secret and every later value of it through sync (keepiq#818). The risky sharing shapes MUST carry a verified vault-key proof (a signature with the caller's active suite key over a single-use, purpose-bound challenge), enforced by `#[VaultKeyProofRequired]` and VaultKeyProofMiddleware:
+
+- `POST /api/v1/secrets/{secretId}/shares` (purpose `share-new-recipient`, bound to `secretId` and `targetUserId`), unless the caller already holds a DIRECT share (no group share, no team folder) of any secret with that recipient. Group and team folder rows do not count, because they are created without a proof.
+- `POST /api/v1/shares/register-batch` (purpose `share-register-batch`), on every call.
+- `POST /api/v1/secrets/{secretId}/delegations` (purpose `delegation-create`, bound to `secretId` and `delegatedTo`) and `POST /api/v1/secrets/{secretId}/delegations/handover` (purpose `delegation-handover`, bound to `secretId`).
+
+A missing or invalid proof MUST be refused with `403` and `error: key_proof_required` before the share or delegation is written, and audited as `KEY_PROOF_REFUSED`. The exemption MUST fail closed: when it cannot decide, a proof is required. The web client asks for the master password through one app-wide prompt, checks it against the session's key envelope, and asks once per bulk run.
+
+#### Scenario: A share to a new recipient without a proof is refused
+@e2e exclude Needs two vault users and a stolen-session request without proof headers; covered by PHPUnit SharingKeyProofGuardTest through the real middleware and controller.
+- GIVEN user A has no direct share with user M
+- WHEN a request on A's session shares a secret with M without a vault-key proof
+- THEN the request MUST be refused with `403` and `error: key_proof_required`
+- AND no share target MUST be written
+
+#### Scenario: A share to a known recipient needs no proof
+@e2e exclude Covered by PHPUnit SharingKeyProofGuardTest and vitest on the share store.
+- GIVEN user A already holds a direct share with user B
+- WHEN A shares another secret with B
+- THEN the share MUST be created without a vault-key proof
+
+#### Scenario: Batch registration and delegations always need a proof
+@e2e exclude Covered by PHPUnit SharingKeyProofGuardTest and vitest on BulkShareDialog and the delegation store.
+- GIVEN any user with an unlocked vault
+- WHEN they register a batch of shares, create a delegation or take over a secret as vault admin without a vault-key proof
+- THEN the request MUST be refused with `403` and `error: key_proof_required`
+
 ### Requirement: Recipient Shareability Lookup
 Sharing requires the recipient's public certificate, so a client MUST be able to
 learn, before it attempts a share, which of a set of candidate users can receive
@@ -267,7 +295,11 @@ When a recipient's EncryptionSuite is **revoked** (deliberate decommissioning), 
 ### Requirement: EncryptionSuite Compromise — Shared Copy Migration and Owner Notification
 When a recipient's EncryptionSuite is **replaced due to compromise**, the suite migration process (see encryption-suites spec) MUST cover all `Secret` rows encrypted with the old suite — including shared copies held by the recipient. Those copies MUST be re-encrypted with the new suite and flagged `possibly_compromised_at` as part of the standard migration.
 
-The additional responsibility of User Sharing is: when a shared copy is flagged `possibly_compromised_at` during migration, the **original owner of the secret MUST be notified** that the secret may have been compromised and its value should be replaced.
+The additional responsibility of User Sharing is: when a shared copy is flagged `possibly_compromised_at` during migration, the **original owner of the secret MUST be notified** that the secret may have been compromised and its value should be replaced. The notification MUST point at the SOURCE secret, which the owner can open, not at the recipient's copy.
+
+The SOURCE secret MUST itself be stamped `possibly_compromised_at` (when not already stamped) and carry a `suite_compromise` rotation flag. It is not sealed under the recipient's suite, so nothing else in the migration marks it, and without the stamp it does not appear in the owner's rotation and compliance views. The same holds when the recipient's suite is force-revoked as compromised (see encryption-suites: Administrator Force-Revocation).
+
+A shared copy whose source no longer exists falls back to the copy and its holder. Any other failure to resolve the source MUST be logged, and a failure to mark one secret MUST NOT stop the cascade for the others.
 
 When the owner replaces the secret value, sync-on-update (see Requirement: Sync on Update) propagates the new value to all copies, including the migrated copy in the recipient's new suite. Updating the value MUST unset `possibly_compromised_at` on all copies.
 
@@ -275,7 +307,20 @@ When the owner replaces the secret value, sync-on-update (see Requirement: Sync 
 - GIVEN user B holds a shared copy of a secret owned by A
 - WHEN B's EncryptionSuite is replaced due to compromise and the copy is migrated
 - THEN the copy MUST be flagged `possibly_compromised_at` (per encryption-suites migration)
-- AND A MUST receive a Nextcloud notification: "A secret you shared may have been compromised — please replace its value"
+- AND A MUST receive a Nextcloud notification: "A secret you shared may have been compromised — please replace its value", pointing at A's source secret
+- AND A's source secret MUST be stamped `possibly_compromised_at` and flagged for rotation
+
+#### Scenario: Shared copy on a force-revoked compromised suite
+- GIVEN user B holds a shared copy of a secret owned by A
+- WHEN an administrator force-revokes B's EncryptionSuite with `markCompromised: true`
+- THEN both the copy and A's source secret MUST be stamped `possibly_compromised_at` and flagged for rotation
+- AND A MUST be notified about the source secret
+
+#### Scenario: Source secret is gone
+- GIVEN a compromised shared copy whose source secret has been deleted
+- WHEN the compromise cascade runs
+- THEN the copy's holder MUST be notified about the copy
+- AND nothing is logged as an error
 
 #### Scenario: Owner replaces possibly-compromised secret value
 - GIVEN A's secret (and its shared copies) is flagged `possibly_compromised_at`
@@ -322,7 +367,7 @@ The original owner MUST be able to reclaim ownership at any time while delegatio
 - AND the original owner is sole owner again
 
 ### Requirement: Permanent Transfer on Suite Revocation
-When the original owner's EncryptionSuite is revoked or deleted, all temporary delegations for their secrets MUST automatically become permanent.
+When the original owner's EncryptionSuite is revoked or deleted, all temporary delegations for their secrets MUST automatically become permanent, except on an administrator's compromise force-revoke, which revokes them (keepiq#817, ADR-005).
 
 #### Scenario: Original owner's suite revoked or deleted
 - GIVEN secret S has one or more active temporary delegations (is_permanent = false)
@@ -330,6 +375,13 @@ When the original owner's EncryptionSuite is revoked or deleted, all temporary d
 - THEN all SecretDelegation records for S MUST have `is_permanent` set to true and `made_permanent_at` set to now
 - AND the original owner's (now inaccessible) copy MUST be deleted
 - AND the delegates retain co-owner rights permanently — reclaim is no longer possible
+
+#### Scenario: Original owner's suite force-revoked as compromised
+- GIVEN the original owner has created one or more temporary delegations (is_permanent = false)
+- WHEN an administrator force-revokes the owner's EncryptionSuite with `markCompromised: true`
+- THEN every temporary SecretDelegation the owner created MUST be deleted instead of promoted
+- AND each removal MUST be audited as `share.delegation_reclaimed` with the administrator as actor
+- AND permanent delegations MUST NOT be touched
 
 ### Requirement: Revoke Share
 The system MUST allow the original owner to revoke a share, removing the recipient's copy.

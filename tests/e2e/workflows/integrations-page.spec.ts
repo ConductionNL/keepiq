@@ -50,8 +50,8 @@ import {
 const CONNECTIONS_API =
 	'/index.php/apps/openregister/api/objects/integriq/app_connection?app=keepiq&_limit=50'
 
-/** Keepiq's admin settings endpoint. */
-const ADMIN_SETTINGS_API = `${APP_BASE}/api/settings/admin`
+/** Keepiq's General area settings endpoint (admin-scoped-roles). */
+const ADMIN_SETTINGS_API = `${APP_BASE}/api/settings/admin/general`
 
 /** The declared keys and titles, in declared order. */
 const DECLARED = [

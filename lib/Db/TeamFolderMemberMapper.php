@@ -25,6 +25,7 @@ namespace OCA\Keepiq\Db;
 
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\QBMapper;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 
 /**
@@ -33,6 +34,8 @@ use OCP\IDBConnection;
  * @template-extends QBMapper<TeamFolderMember>
  */
 class TeamFolderMemberMapper extends QBMapper {
+	use ExpiringGrantQueries;
+
 	/**
 	 * Constructor for TeamFolderMemberMapper.
 	 *
@@ -152,4 +155,39 @@ class TeamFolderMemberMapper extends QBMapper {
 			->where($qb->expr()->eq('team_folder_id', $qb->createNamedParameter($teamFolderId)));
 		$qb->executeStatement();
 	}//end deleteByTeamFolder()
+
+	/**
+	 * Count the direct user-type memberships of each user, in one grouped query.
+	 *
+	 * @param string[] $userIds The user IDs to count for
+	 *
+	 * @return array<string,int> Membership count keyed by user ID
+	 *
+	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.1
+	 */
+	public function countUserMemberships(array $userIds): array {
+		if ($userIds === []) {
+			return [];
+		}
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('member_id')
+			->selectAlias($qb->func()->count('id'), 'row_count')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('member_type', $qb->createNamedParameter('user')))
+			->andWhere(
+				$qb->expr()->in('member_id', $qb->createNamedParameter($userIds, IQueryBuilder::PARAM_STR_ARRAY))
+			)
+			->groupBy('member_id');
+
+		$counts = [];
+		$result = $qb->executeQuery();
+		while (($row = $result->fetch()) !== false) {
+			$counts[(string)$row['member_id']] = (int)$row['row_count'];
+		}
+
+		$result->closeCursor();
+
+		return $counts;
+	}//end countUserMemberships()
 }//end class

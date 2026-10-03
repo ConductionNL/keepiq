@@ -41,6 +41,12 @@ use Ramsey\Uuid\Uuid;
  */
 class PasskeyService {
 	/**
+	 * The clients that enrol their own credentials.
+	 *
+	 * @var string[]
+	 */
+	public const CLIENT_KINDS = ['web', 'extension'];
+	/**
 	 * Constructor for PasskeyService.
 	 *
 	 * @param PasskeyMapper $mapper The passkey mapper
@@ -88,7 +94,7 @@ class PasskeyService {
 	 * suite's unlock-key epoch so a later password change can stale it.
 	 *
 	 * @param string $uid The calling owner
-	 * @param array<string,mixed> $dto {credentialId, publicKey, prfSalt, wrappedUnlockKey, label, transports, aaguid}
+	 * @param array<string,mixed> $dto {credentialId, publicKey, prfSalt, wrappedUnlockKey, label, transports, aaguid, clientKind, rpId}
 	 *
 	 * @return PasskeyCredential
 	 *
@@ -102,6 +108,22 @@ class PasskeyService {
 		$wrappedUnlockKey = (string)($dto['wrappedUnlockKey'] ?? '');
 		if ($credentialId === '' || $prfSalt === '' || $wrappedUnlockKey === '') {
 			throw new InvalidArgumentException('credentialId, prfSalt and wrappedUnlockKey are required');
+		}
+
+		// An extension credential is bound to the extension's own relying
+		// party, so the extension's login options can be scoped to it.
+		$clientKind = (string)($dto['clientKind'] ?? 'web');
+		if ($clientKind === '') {
+			$clientKind = 'web';
+		}
+
+		$rpId = $this->optionalString(value: $dto['rpId'] ?? null);
+		if (in_array($clientKind, self::CLIENT_KINDS, true) === false) {
+			throw new InvalidArgumentException('clientKind must be web or extension');
+		}
+
+		if ($clientKind === 'extension' && $rpId === null) {
+			throw new InvalidArgumentException('An extension passkey needs its relying party id');
 		}
 
 		if ($this->mapper->findByCredentialId($uid, $credentialId) !== null) {
@@ -119,6 +141,8 @@ class PasskeyService {
 		$credential->setLabel($this->optionalString(value: $dto['label'] ?? null));
 		$credential->setTransports($this->optionalString(value: $dto['transports'] ?? null));
 		$credential->setAaguid($this->optionalString(value: $dto['aaguid'] ?? null));
+		$credential->setClientKind($clientKind);
+		$credential->setRpId($rpId);
 		$credential->setStatus('active');
 		$credential->setCreatedAt(new DateTime());
 
@@ -131,13 +155,20 @@ class PasskeyService {
 	 * suite epoch, and a fresh challenge. Stale/revoked envelopes are
 	 * refused (not returned).
 	 *
+	 * Only the asking client's credentials are offered: the web app never
+	 * gets an extension credential, and the extension only gets the
+	 * credentials bound to its own relying party.
+	 *
 	 * @param string $uid The calling owner
+	 * @param string $client web or extension
+	 * @param string $rpId The extension's relying party id (extension only)
 	 *
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passwordless-unlock-derives-the-unlock-key-client-side
+	 * @spec openspec/specs/extension-biometric-unlock/spec.md#requirement-extension-credentials-are-visible-and-revocable-in-the-web-app
 	 */
-	public function loginOptions(string $uid): array {
+	public function loginOptions(string $uid, string $client='web', string $rpId=''): array {
 		$epoch = $this->currentEpoch(uid: $uid);
 		$credentials = [];
 		foreach ($this->mapper->findActiveByOwner($uid) as $credential) {
@@ -146,6 +177,10 @@ class PasskeyService {
 			if ($credential->getUnlockKeyEpoch() !== $epoch) {
 				$credential->setStatus('stale');
 				$this->mapper->update($credential);
+				continue;
+			}
+
+			if ($this->offeredTo(credential: $credential, client: $client, rpId: $rpId) === false) {
 				continue;
 			}
 
@@ -231,6 +266,25 @@ class PasskeyService {
 	public function deleteAllOnRotation(string $uid): void {
 		$this->mapper->deleteByOwner($uid);
 	}//end deleteAllOnRotation()
+
+	/**
+	 * Whether a credential belongs to the asking client.
+	 *
+	 * @param PasskeyCredential $credential The credential
+	 * @param string $client web or extension
+	 * @param string $rpId The asking extension's relying party id
+	 *
+	 * @return bool
+	 */
+	private function offeredTo(PasskeyCredential $credential, string $client, string $rpId): bool {
+		if ($client !== 'extension') {
+			return $credential->getClientKind() !== 'extension';
+		}
+
+		return $credential->getClientKind() === 'extension'
+			&& $rpId !== ''
+			&& $credential->getRpId() === $rpId;
+	}//end offeredTo()
 
 	/**
 	 * Load a credential and enforce the owner guard.

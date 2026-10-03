@@ -45,6 +45,42 @@ export const useLeaseStore = defineStore('lease', {
 		},
 
 		/**
+		 * Read an application's lease policy: effective, stored override,
+		 * instance values and whether the caller may change it (keepiq#753).
+		 *
+		 * @param {string} applicationId The application id.
+		 * @return {Promise<object>} The policy view.
+		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
+		 */
+		async fetchPolicy(applicationId) {
+			const response = await axios.get(
+				generateUrl(
+					`/apps/keepiq/api/v1/applications/${applicationId}/lease-policy`,
+				),
+			)
+			return response.data
+		},
+
+		/**
+		 * Store an application's lease-policy override (admin only). A null
+		 * field inherits the instance value.
+		 *
+		 * @param {string} applicationId The application id.
+		 * @param {{defaultTtl: ?number, maxTtl: ?number, renewable: ?boolean}} override The override.
+		 * @return {Promise<object>} The effective policy now in force.
+		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
+		 */
+		async savePolicy(applicationId, override) {
+			const response = await axios.put(
+				generateUrl(
+					`/apps/keepiq/api/v1/applications/${applicationId}/lease-policy`,
+				),
+				override,
+			)
+			return response.data
+		},
+
+		/**
 		 * Revoke a lease; the row flips to revoked in place.
 		 *
 		 * @param {string} leaseId The lease id.

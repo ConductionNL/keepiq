@@ -35,15 +35,20 @@ namespace OCA\Keepiq\Middleware;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\SuiteMigrationMapper;
+use OCA\Keepiq\Event\Audit\AuditEventFactory;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\KeyProofRequiredException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Service\VaultKeyProofExemption;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Middleware;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IRequest;
 use OCP\IUserSession;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionMethod;
 use Throwable;
@@ -78,6 +83,10 @@ class VaultKeyProofMiddleware extends Middleware {
 	 * @param VaultKeyProofService $proofService Verifies the proof
 	 * @param SuiteMigrationMapper $migrationMapper Resolves a migration's old suite
 	 * @param LoggerInterface $logger Records every refused proof
+	 * @param IEventDispatcher|null $eventDispatcher Carries the refusal to the audit trail
+	 * @param AuditEventFactory $auditEvents Builds the refusal's audit event
+	 * @param ContainerInterface|null $container Resolves an attribute's exemption;
+	 *                                           without it no exemption applies
 	 *
 	 * @return void
 	 */
@@ -88,6 +97,9 @@ class VaultKeyProofMiddleware extends Middleware {
 		private VaultKeyProofService $proofService,
 		private SuiteMigrationMapper $migrationMapper,
 		private LoggerInterface $logger,
+		private ?IEventDispatcher $eventDispatcher = null,
+		private AuditEventFactory $auditEvents = new AuditEventFactory(),
+		private ?ContainerInterface $container = null,
 	) {
 	}//end __construct()
 
@@ -116,6 +128,10 @@ class VaultKeyProofMiddleware extends Middleware {
 		}
 
 		$userId = $user->getUID();
+		if ($this->isExempt(attribute: $attribute, userId: $userId) === true) {
+			return;
+		}
+
 		$certificate = $this->subjectCertificate(attribute: $attribute, userId: $userId);
 
 		$boundValues = [];
@@ -154,17 +170,22 @@ class VaultKeyProofMiddleware extends Middleware {
 		}
 
 		// A refusal is exactly what a session-only attacker produces, so it must
-		// leave a record rather than only a 403 (#804 review).
+		// leave a record rather than only a 403 (#804 review): in nextcloud.log,
+		// and in the audit trail the SIEM export reads (keepiq#870).
+		$userId = $this->userSession->getUser()?->getUID();
+		$route = $controller::class . '::' . $methodName;
+		$purpose = $this->attributeFor(controller: $controller, methodName: $methodName)?->getPurpose();
 		$this->logger->warning(
 			'Keepiq: vault key proof refused on {route}: {reason}',
 			[
 				'app' => 'keepiq',
-				'userId' => $this->userSession->getUser()?->getUID(),
-				'route' => $controller::class . '::' . $methodName,
-				'purpose' => $this->attributeFor(controller: $controller, methodName: $methodName)?->getPurpose(),
+				'userId' => $userId,
+				'route' => $route,
+				'purpose' => $purpose,
 				'reason' => $exception->getMessage(),
 			]
 		);
+		$this->auditRefusal(userId: $userId, route: $route, purpose: $purpose, reason: $exception->getMessage());
 
 		return new JSONResponse(
 			data: [
@@ -174,6 +195,43 @@ class VaultKeyProofMiddleware extends Middleware {
 			statusCode: Http::STATUS_FORBIDDEN
 		);
 	}//end afterException()
+
+	/**
+	 * Record a refused proof in the audit trail.
+	 *
+	 * The reason is one of the fixed messages KeyProofRequiredException is
+	 * thrown with, never request data; the proof, nonce and signature are not
+	 * recorded. Without a session user (the framework's own auth refused
+	 * first) there is nobody to attribute it to, and no record is written.
+	 *
+	 * @param string|null $userId  The acting user
+	 * @param string      $route   Controller::method of the guarded route
+	 * @param string|null $purpose The guarded operation's purpose
+	 * @param string      $reason  Why the proof was refused
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
+	 */
+	private function auditRefusal(?string $userId, string $route, ?string $purpose, string $reason): void {
+		if ($userId === null) {
+			return;
+		}
+
+		$this->eventDispatcher?->dispatchTyped(
+			$this->auditEvents->forUser(
+				actorId: $userId,
+				eventType: AuditEventTypes::KEY_PROOF_REFUSED,
+				objectType: 'key_proof',
+				objectId: $purpose,
+				metadata: [
+					'route' => $route,
+					'purpose' => $purpose,
+					'reason' => $reason,
+				],
+			)
+		);
+	}//end auditRefusal()
 
 	/**
 	 * The #[VaultKeyProofRequired] attribute on the method, or null.
@@ -192,6 +250,40 @@ class VaultKeyProofMiddleware extends Middleware {
 
 		return $attributes[0]->newInstance();
 	}//end attributeFor()
+
+	/**
+	 * Whether the attribute's exemption waives the proof for this request
+	 * (keepiq#818). Fails closed: no exemption declared, no container, a class
+	 * that is not a VaultKeyProofExemption, or any error means a proof is needed.
+	 *
+	 * @param VaultKeyProofRequired $attribute The guard declaration
+	 * @param string $userId The acting user
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
+	 */
+	private function isExempt(VaultKeyProofRequired $attribute, string $userId): bool {
+		$class = $attribute->getExemption();
+		if ($class === '' || $this->container === null) {
+			return false;
+		}
+
+		try {
+			$exemption = $this->container->get($class);
+			if (($exemption instanceof VaultKeyProofExemption) === false) {
+				return false;
+			}
+
+			return $exemption->exempts(request: $this->request, userId: $userId) === true;
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'Keepiq: vault key proof exemption {class} failed; requiring a proof',
+				['app' => 'keepiq', 'class' => $class, 'exception' => $e]
+			);
+			return false;
+		}
+	}//end isExempt()
 
 	/**
 	 * Resolve the certificate whose public key verifies the proof.

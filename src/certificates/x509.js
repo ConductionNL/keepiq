@@ -237,3 +237,110 @@ export async function parseCertificatePem(pem) {
 		return null
 	}
 }
+
+/**
+ * The DER bytes of the SubjectPublicKeyInfo of a certificate.
+ *
+ * @param {Uint8Array} der The certificate DER.
+ * @return {Uint8Array}
+ */
+function spkiOf(der) {
+	const certificate = readTlv(der, 0)
+	const tbsHeaderStart = certificate.start
+	const tbs = readTlv(der, tbsHeaderStart)
+	// Walk the TBS fields keeping each field's header start.
+	const fields = []
+	let cursor = tbs.start
+	while (cursor < tbs.end) {
+		const field = readTlv(der, cursor)
+		fields.push({ ...field, headerStart: cursor })
+		cursor = field.end
+	}
+	const index = fields[0] && fields[0].tag === 0xa0 ? 6 : 5
+	const spki = fields[index]
+	return der.slice(spki.headerStart, spki.end)
+}
+
+/**
+ * Whether `certificatePem` carries a valid RSA (PKCS #1 v1.5, SHA-256)
+ * signature by the key of `issuerPem`. Checks the signature only, not dates
+ * or extensions: enough to tell that the instance CA issued a certificate
+ * (crypto-organisation-account-recovery D5).
+ *
+ * @param {string} certificatePem The certificate to check.
+ * @param {string} issuerPem The issuer certificate.
+ * @return {Promise<boolean>}
+ * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+ */
+export async function isIssuedBy(certificatePem, issuerPem) {
+	const der = pemToDer(certificatePem)
+	const issuerDer = pemToDer(issuerPem)
+	if (!der || !issuerDer) {
+		return false
+	}
+	try {
+		const certificate = readTlv(der, 0)
+		const [tbs, , signature] = children(der, certificate)
+		const tbsHeaderStart = certificate.start
+		const tbsBytes = der.slice(tbsHeaderStart, tbs.end)
+		// BIT STRING: the first value byte is the count of unused bits.
+		const signatureBytes = der.slice(signature.start + 1, signature.end)
+		const key = await crypto.subtle.importKey(
+			'spki',
+			spkiOf(issuerDer),
+			{ name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+			false,
+			['verify'],
+		)
+		return await crypto.subtle.verify(
+			'RSASSA-PKCS1-v1_5',
+			key,
+			signatureBytes,
+			tbsBytes,
+		)
+	} catch {
+		return false
+	}
+}
+
+/**
+ * Whether a certificate chains through `chain` (issuer first, root last) to
+ * a root that signed itself.
+ *
+ * @param {string} certificatePem The leaf certificate.
+ * @param {Array<string>} chain The issuer certificates, nearest first.
+ * @return {Promise<boolean>}
+ * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+ */
+export async function chainsTo(certificatePem, chain) {
+	if (!Array.isArray(chain) || chain.length === 0) {
+		return false
+	}
+	let current = certificatePem
+	for (const issuer of chain) {
+		if (!(await isIssuedBy(current, issuer))) {
+			return false
+		}
+		current = issuer
+	}
+	return isIssuedBy(current, current)
+}
+
+/**
+ * The SHA-256 fingerprint (hex) of a PEM certificate's DER bytes, the same
+ * value the server shows as RecoveryKeyService::fingerprint().
+ *
+ * @param {string} certificatePem The certificate.
+ * @return {Promise<string>}
+ * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+ */
+export async function certificateFingerprint(certificatePem) {
+	const der = pemToDer(certificatePem)
+	if (!der) {
+		return ''
+	}
+	const digest = await crypto.subtle.digest('SHA-256', der)
+	return Array.from(new Uint8Array(digest))
+		.map((b) => b.toString(16).padStart(2, '0'))
+		.join('')
+}

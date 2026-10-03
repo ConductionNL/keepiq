@@ -135,19 +135,19 @@ class ShareRequestService {
 	}//end submitShareRequest()
 
 	/**
-	 * Approve a share request — returns the parameters the calling
-	 * controller hands to ShareService::createShare. The actual share
-	 * creation is the controller's responsibility because the browser
-	 * has to produce the recipient's RSA-encrypted Secret copy first.
+	 * Approve a share request. The browser produces the recipient's
+	 * RSA-encrypted copy and registers it first, then calls this to confirm:
+	 * once the share exists the requester is told it was approved.
 	 *
 	 * @param array<string,mixed> $params The notification parameters {sourceSecretId, requesterId, targetUserId}
 	 * @param string $ownerId The approver (must be the secret owner)
 	 *
-	 * @return array{sourceSecretId:string,requesterId:string,targetUserId:string}
+	 * @return array{sourceSecretId:string,requesterId:string,targetUserId:string,shared:bool}
 	 *
 	 * @throws InvalidArgumentException When the approver is not the owner
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#5.2
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated
 	 */
 	public function approveShareRequest(array $params, string $ownerId): array {
 		$sourceSecretId = (string)($params['sourceSecretId'] ?? '');
@@ -165,10 +165,39 @@ class ShareRequestService {
 			);
 		}
 
+		// The browser encrypts and registers the copy first, then confirms
+		// here. The requester hears "approved" only once the share exists, so
+		// a fan-out that failed half way never reads as approved.
+		$shared = true;
+		try {
+			$this->shareTargetMapper->findBySourceSecretAndTargetUser(
+				sourceSecretId: $sourceSecretId,
+				targetUserId: $targetUserId
+			);
+		} catch (DoesNotExistException) {
+			$shared = false;
+		}
+
+		if ($shared === true) {
+			$this->notificationService->notify(
+				subject: 'share_request_result',
+				recipientId: $requesterId,
+				params: [
+					'sourceSecretId' => $sourceSecretId,
+					'secretName' => $secret->getName(),
+					'targetUserId' => $targetUserId,
+					'result' => 'approved',
+				],
+				objectType: 'secret',
+				objectId: $sourceSecretId,
+			);
+		}
+
 		return [
 			'sourceSecretId' => $sourceSecretId,
 			'requesterId' => $requesterId,
 			'targetUserId' => $targetUserId,
+			'shared' => $shared,
 		];
 	}//end approveShareRequest()
 

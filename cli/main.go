@@ -12,7 +12,9 @@
 // requires re-wrapping the value under every recipient's public key (the share
 // fan-out), which is a separate, larger surface deferred to a follow-up.
 //
-// Single static binary, stdlib only — cross-compile with GOOS/GOARCH.
+// Single static binary, pure Go — cross-compile with GOOS/GOARCH. The only
+// dependencies are the Go project's own golang.org/x/crypto and
+// golang.org/x/sys, for the SSH agent (cli-ssh-agent).
 package main
 
 import (
@@ -55,6 +57,10 @@ func main() {
 		err = cmdCI(args)
 	case "completion":
 		err = cmdCompletion(args)
+	case "ssh-agent":
+		err = cmdSSHAgent(args)
+	case "install":
+		err = cmdInstall(args)
 	case "help", "--help", "-h":
 		usage()
 	default:
@@ -82,6 +88,13 @@ CI mode (RFC 7523 machine consumer):
   keepiq ci fetch <name> [--output env|json]       fetch+decrypt an application secret
   keepiq ci run <name>[,<name>...] -- <cmd...>      run <cmd> with the secret(s) in its env
 
+  install <path>                                   copy this binary to <path> (init containers)
+
+SSH agent (Linux and macOS):
+  keepiq ssh-agent [--socket <path>] [--confirm] [--idle <minutes>] [--folder <name>] [--locked]
+                                                   serve your vault SSH keys to ssh and git;
+                                                   eval its output to set SSH_AUTH_SOCK
+
   version | completion <bash|zsh|fish> | help
 
 v1 is READ-ONLY: no create/edit/update/delete (share fan-out is a follow-up).
@@ -89,7 +102,7 @@ The master password is prompted per session and never leaves this process.
 `)
 }
 
-// --- flag helpers (stdlib only, minimal) ---
+// --- flag helpers (minimal) ---
 
 func popFlag(args []string, name string) (string, []string) {
 	out := make([]string, 0, len(args))
@@ -172,9 +185,38 @@ func cmdList(args []string) error {
 	}
 	fmt.Printf("%-38s  %s\n", "ID", "NAME")
 	for _, s := range secrets {
-		fmt.Printf("%-38s  %s\n", s.ID, s.Name)
+		fmt.Println(listLine(s))
 	}
 	return nil
+}
+
+// useOnlyRefusal is what the CLI says instead of printing or copying the
+// value of a use-only copy (sharing-use-only-and-expiring-shares D3).
+const useOnlyRefusal = "This secret is use-only. Sign in through the Keepiq browser extension."
+
+// visibleFields are the fields of a use-only copy the CLI may still print or
+// copy: its plaintext metadata and login name, never its value.
+var visibleFields = map[string]bool{"id": true, "name": true, "url": true, "login": true}
+
+// listLine is one row of `keepiq list`, with a marker on a use-only copy.
+func listLine(s client.Secret) string {
+	name := s.Name
+	if s.UseOnly {
+		name += " [use only]"
+	}
+	return fmt.Sprintf("%-38s  %s", s.ID, name)
+}
+
+// refuseUseOnly refuses a command that would print or copy a value of a
+// use-only copy. An empty field means the whole secret (`show`).
+func refuseUseOnly(s *client.Secret, field string) error {
+	if s == nil || !s.UseOnly {
+		return nil
+	}
+	if field != "" && visibleFields[field] {
+		return nil
+	}
+	return fmt.Errorf("%s", useOnlyRefusal)
 }
 
 func cmdShow(args []string) error {
@@ -188,6 +230,9 @@ func cmdShow(args []string) error {
 	}
 	s, err := c.GetSecret(args[0])
 	if err != nil {
+		return err
+	}
+	if err := refuseUseOnly(s, ""); err != nil {
 		return err
 	}
 	fields := decryptSecret(s, session)
@@ -210,6 +255,9 @@ func cmdGet(args []string) error {
 	}
 	s, err := c.GetSecret(args[0])
 	if err != nil {
+		return err
+	}
+	if err := refuseUseOnly(s, args[1]); err != nil {
 		return err
 	}
 	fields := decryptSecret(s, session)
@@ -267,11 +315,11 @@ func cmdCompletion(args []string) error {
 	// A minimal, valid completion script per shell (§1.3).
 	switch shell {
 	case "bash":
-		fmt.Print("complete -W 'login list show get copy ci version completion help' keepiq\n")
+		fmt.Print("complete -W 'login list show get copy ci ssh-agent version completion help' keepiq\n")
 	case "zsh":
-		fmt.Print("#compdef keepiq\ncompadd login list show get copy ci version completion help\n")
+		fmt.Print("#compdef keepiq\ncompadd login list show get copy ci ssh-agent version completion help\n")
 	case "fish":
-		fmt.Print("complete -c keepiq -a 'login list show get copy ci version completion help'\n")
+		fmt.Print("complete -c keepiq -a 'login list show get copy ci ssh-agent version completion help'\n")
 	default:
 		return fmt.Errorf("unsupported shell %q (bash|zsh|fish)", shell)
 	}

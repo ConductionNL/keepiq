@@ -35,6 +35,9 @@ use OCP\Migration\SimpleMigrationStep;
  *
  * @psalm-suppress UnusedClass Loaded by the Nextcloud migration framework.
  *
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength) Most of the class is the SCHEMA
+ *   constant, one entry per table; new tables are declared here by rule.
+ *
  * @psalm-type ColumnSpec = array{0: string, 1: string, 2: array<string, mixed>}
  * @psalm-type IndexSpec = array{0: string, 1: list<string>}
  * @psalm-type TableSpec = array{columns: list<ColumnSpec>, primary: list<string>,
@@ -299,6 +302,31 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 			],
 			'uniqueIndexes' => [],
 		],
+		// New device approval (crypto-new-device-approval); also added to
+		// existing installs by Version001009Date20261002182000.
+		'device_approvals' => [
+			'columns' => [
+				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['user_id', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['client_kind', Types::STRING, ['notnull' => true, 'length' => 16]],
+				['device_label', Types::STRING, ['notnull' => true, 'length' => 255]],
+				['requester_ip', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['requester_agent', Types::STRING, ['notnull' => true, 'length' => 512]],
+				['request_public_key', Types::TEXT, ['notnull' => true]],
+				['request_secret_hash', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['status', Types::STRING, ['notnull' => true, 'length' => 16]],
+				['created_at', Types::DATETIME, ['notnull' => true]],
+				['expires_at', Types::DATETIME, ['notnull' => true]],
+				['decided_at', Types::DATETIME, ['notnull' => false]],
+				['sealed_unlock_key', Types::TEXT, ['notnull' => false]],
+			],
+			'primary' => ['id'],
+			'indexes' => [
+				['keepiq_dev_appr_user_idx', ['user_id', 'status']],
+				['keepiq_dev_appr_exp_idx', ['status', 'expires_at']],
+			],
+			'uniqueIndexes' => [],
+		],
 		'ephemeral_sends' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
@@ -545,6 +573,96 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 			],
 			'uniqueIndexes' => [],
 		],
+		// Organisation account recovery (crypto-organisation-account-recovery);
+		// also added to existing installs by Version001010Date20261002183000.
+		'recovery_keys' => [
+			'columns' => [
+				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['certificate', Types::TEXT, ['notnull' => true]],
+				['fingerprint', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['threshold', Types::INTEGER, ['notnull' => true, 'default' => 1]],
+				['status', Types::STRING, ['notnull' => true, 'length' => 16]],
+				['created_by', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['created_at', Types::DATETIME, ['notnull' => false]],
+				['retired_at', Types::DATETIME, ['notnull' => false]],
+			],
+			'primary' => ['id'],
+			'indexes' => [
+				['keepiq_rk_status_idx', ['status']],
+			],
+			'uniqueIndexes' => [],
+		],
+		'recovery_officers' => [
+			'columns' => [
+				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['recovery_key_id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['officer_uid', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['officer_suite_id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['wrapped_private_key', Types::TEXT, ['notnull' => true]],
+				['added_by', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['added_at', Types::DATETIME, ['notnull' => false]],
+			],
+			'primary' => ['id'],
+			'indexes' => [
+				['keepiq_ro_officer_idx', ['officer_uid']],
+			],
+			'uniqueIndexes' => [
+				['keepiq_ro_key_officer_uniq', ['recovery_key_id', 'officer_uid']],
+			],
+		],
+		'recovery_enrolments' => [
+			'columns' => [
+				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['user_id', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['suite_id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['recovery_key_id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['envelope', Types::TEXT, ['notnull' => true]],
+				['enrolled_at', Types::DATETIME, ['notnull' => false]],
+			],
+			'primary' => ['id'],
+			'indexes' => [
+				['keepiq_re_user_idx', ['user_id']],
+				['keepiq_re_suite_idx', ['suite_id']],
+				['keepiq_re_key_idx', ['recovery_key_id']],
+			],
+			'uniqueIndexes' => [],
+		],
+		'recovery_requests' => [
+			'columns' => [
+				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['user_id', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['suite_id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['enrolment_id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['request_public_key', Types::TEXT, ['notnull' => true]],
+				['status', Types::STRING, ['notnull' => true, 'length' => 16]],
+				['created_at', Types::DATETIME, ['notnull' => false]],
+				['expires_at', Types::DATETIME, ['notnull' => false]],
+				['handled_by', Types::STRING, ['notnull' => false, 'length' => 64]],
+				['sealed_result', Types::TEXT, ['notnull' => false]],
+				['fulfilled_at', Types::DATETIME, ['notnull' => false]],
+				['purpose', Types::STRING, ['notnull' => true, 'length' => 16, 'default' => 'password']],
+			],
+			'primary' => ['id'],
+			'indexes' => [
+				['keepiq_rr_user_idx', ['user_id']],
+				['keepiq_rr_status_idx', ['status', 'expires_at']],
+			],
+			'uniqueIndexes' => [],
+		],
+		'recovery_approvals' => [
+			'columns' => [
+				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['request_id', Types::STRING, ['notnull' => true, 'length' => 36]],
+				['officer_uid', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['decision', Types::STRING, ['notnull' => true, 'length' => 16]],
+				['decided_at', Types::DATETIME, ['notnull' => false]],
+			],
+			'primary' => ['id'],
+			'indexes' => [],
+			'uniqueIndexes' => [
+				['keepiq_ra_request_officer_uniq', ['request_id', 'officer_uid']],
+			],
+		],
 		'secret_requests' => [
 			'columns' => [
 				['id', Types::STRING, ['notnull' => true, 'length' => 36]],
@@ -755,6 +873,23 @@ class Version001000Date20260908000000 extends SimpleMigrationStep {
 			],
 			'uniqueIndexes' => [
 				['keepiq_tfm_membership_uniq', ['team_folder_id', 'member_type', 'member_id']],
+			],
+		],
+		// Consumed vault-key-proof challenges, so every proof is single-use on every
+		// install (keepiq#868); also added to existing installs by
+		// Version001004Date20261002120000.
+		'used_proofs' => [
+			'columns' => [
+				['id', Types::BIGINT, ['notnull' => true, 'autoincrement' => true, 'unsigned' => true]],
+				['nonce_hash', Types::STRING, ['notnull' => true, 'length' => 64]],
+				['expires_at', Types::BIGINT, ['notnull' => true]],
+			],
+			'primary' => ['id'],
+			'indexes' => [
+				['keepiq_used_proofs_exp', ['expires_at']],
+			],
+			'uniqueIndexes' => [
+				['keepiq_used_proofs_hash', ['nonce_hash']],
 			],
 		],
 		'team_folders' => [

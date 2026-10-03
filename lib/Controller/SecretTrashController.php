@@ -28,6 +28,7 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Exception\NotFoundException;
+use OCA\Keepiq\Exception\StaleWriteException;
 use OCA\Keepiq\Service\SecretTrashService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -65,16 +66,18 @@ class SecretTrashController extends Controller {
 	 * `trashed: true`.
 	 *
 	 * @param string $id The secret ID
+	 * @param string|null $baseUpdatedAt The version an offline delete was made from (409 when it changed)
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-deleting-a-secret-moves-it-to-the-trash
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
 	#[NoAdminRequired]
-	public function trash(string $id): JSONResponse {
+	public function trash(string $id, ?string $baseUpdatedAt=null): JSONResponse {
 		return $this->run(
-			action: function (string $userId) use ($id): array {
-				$this->trashService->trash($id, $userId);
+			action: function (string $userId) use ($id, $baseUpdatedAt): array {
+				$this->trashService->trash($id, $userId, $baseUpdatedAt);
 				return ['status' => 'deleted', 'trashed' => true];
 			}
 		);
@@ -162,6 +165,11 @@ class SecretTrashController extends Controller {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (ForbiddenException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+		} catch (StaleWriteException $e) {
+			return new JSONResponse(
+				data: ['message' => $e->getMessage(), 'current' => $e->getCurrent()->jsonSerialize()],
+				statusCode: Http::STATUS_CONFLICT
+			);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_CONFLICT);
 		}

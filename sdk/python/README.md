@@ -21,7 +21,8 @@ are `name`, `url` and `typeId` (sent as they are) and `key`, `login` and
 `candidates`), `KeyMismatchError` and `ApiError`.
 
 Pass `certificate_pem=` to refuse any envelope encrypted to another certificate
-before decryption.
+before decryption. The application can read its own certificate at
+`GET /api/v1/app/certificate` (with its access token) and pass that PEM here.
 
 Tests: `python -m pytest` (or `python -m unittest discover -s tests`) in this
 directory. They run against `sdk/testdata/`, shared with the Go and TypeScript

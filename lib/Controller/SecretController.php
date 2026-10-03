@@ -228,8 +228,9 @@ class SecretController extends OCSController {
 			// The folder named in the request does not exist (keepiq#795).
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (ForbiddenException|SuiteBlockedException $e) {
-			// ForbiddenException: the folder belongs to another user (keepiq#795).
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+			// ForbiddenException: the folder belongs to another user (keepiq#795),
+			// or a vault policy refused the write (admin-vault-policies D4).
+			return $this->forbidden(exception: $e);
 		} catch (WriteLockedException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: self::STATUS_LOCKED);
 		} catch (InvalidArgumentException $e) {
@@ -296,69 +297,21 @@ class SecretController extends OCSController {
 	}//end createOwnedSecret()
 
 	/**
-	 * Update a secret. Only the supplied fields are changed.
+	 * A 403 for a refused write, with the policy code when a vault policy
+	 * refused it (admin-vault-policies D4).
 	 *
-	 * @param string $id The secret ID
-	 * @param string|null $name The new name
-	 * @param string|null $url The new URL
-	 * @param string|null $typeId The new type ID
-	 * @param string|null $folderId The new folder ID
-	 * @param string|null $key The new RSA-encrypted key blob
-	 * @param string|null $login The new RSA-encrypted login blob
-	 * @param string|null $additionalFields The new RSA-encrypted additional fields blob
-	 * @param int|null $mergedPending How many pending request-filled blobs the
-	 *                                client merged into $additionalFields (keepiq#750)
-	 *
-	 * @NoAdminRequired
+	 * @param ForbiddenException|SuiteBlockedException $exception The refusal
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Each parameter is read indirectly via the
-	 *   variable-variable ${$field} loop that forwards only fields present in the request.
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.1
 	 */
-	#[NoAdminRequired]
-	public function update(
-		string $id,
-		?string $name = null,
-		?string $url = null,
-		?string $typeId = null,
-		?string $folderId = null,
-		?string $key = null,
-		?string $login = null,
-		?string $additionalFields = null,
-		?int $mergedPending = null,
-	): JSONResponse {
-		$userId = $this->uid();
-		if ($userId === null) {
-			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+	private function forbidden(ForbiddenException|SuiteBlockedException $exception): JSONResponse {
+		$data = ['message' => $exception->getMessage()];
+		if ($exception instanceof ForbiddenException && $exception->policyCode() !== null) {
+			$data['code'] = $exception->policyCode();
 		}
 
-		// Only forward fields that were explicitly provided in the request.
-		$data = [];
-		foreach (['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields'] as $field) {
-			if ($this->request->getParam($field, '__unset__') !== '__unset__') {
-				$data[$field] = ${$field};
-			}
-		}
-
-		if ($mergedPending !== null) {
-			$data['mergedPending'] = $mergedPending;
-		}
-
-		try {
-			$secret = $this->secretService->update($id, $data, $userId);
-		} catch (NotFoundException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
-		} catch (ForbiddenException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
-		} catch (WriteLockedException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: self::STATUS_LOCKED);
-		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
-		}
-
-		return new JSONResponse(data: $secret->jsonSerialize());
-	}//end update()
+		return new JSONResponse(data: $data, statusCode: Http::STATUS_FORBIDDEN);
+	}//end forbidden()
 }//end class

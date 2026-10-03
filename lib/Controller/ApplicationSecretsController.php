@@ -383,20 +383,15 @@ class ApplicationSecretsController extends ApplicationApiController {
 			return $this->notFound();
 		}
 
-		$current = $this->envelopeService->etag($secret);
-		foreach (explode(',', $header) as $candidate) {
-			$candidate = trim($candidate);
-			// Strong comparison (RFC 9110 13.1.1): a weak tag never matches.
-			if ($candidate === '*' || $candidate === $current) {
-				return null;
-			}
+		if ($this->envelopeService->ifMatchHolds(secret: $secret, header: $header) === true) {
+			return null;
 		}
 
 		$response = new JSONResponse(
 			data: ['message' => 'The secret changed since it was read; read it again before writing'],
 			statusCode: Http::STATUS_PRECONDITION_FAILED
 		);
-		$response->addHeader('ETag', $current);
+		$response->addHeader('ETag', $this->envelopeService->etag($secret));
 		return $response;
 	}//end checkIfMatch()
 

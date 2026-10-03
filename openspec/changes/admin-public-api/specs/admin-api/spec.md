@@ -28,7 +28,7 @@ Every admin API endpoint MUST accept a Nextcloud session or a Nextcloud app pass
 
 ### Requirement: Admin API covers the administration jobs
 
-The v1 admin API MUST offer: the member overview, offboarding, suite listing and reinstatement, reading and updating policies, listing, approving, rejecting and deleting applications, reading audit events, generating and reading compliance reports, and managing SIEM sinks. Each endpoint MUST call the same service the admin screen calls.
+The v1 admin API MUST offer: the member overview, offboarding, suite listing, reading and updating policies, registering, listing, reading, approving, rejecting and deleting applications and setting their lease policy, reading audit events, generating and reading compliance reports, and managing SIEM sinks. Each endpoint MUST call the same service the admin screen calls.
 
 #### Scenario: Script approves a pending application
 
@@ -39,7 +39,7 @@ The v1 admin API MUST offer: the member overview, offboarding, suite listing and
 
 ### Requirement: Admin API returns metadata only
 
-No admin API response MUST contain a private key blob, a secret value, secret ciphertext or a SIEM sink credential in plain form. Suite force revocation MUST NOT be reachable through the admin API, because it requires a fresh password confirmation.
+No admin API response MUST contain a private key blob, a secret value, secret ciphertext or a SIEM sink credential in plain form. Suite force revocation and suite reinstatement MUST NOT be reachable through the admin API, because both require a fresh password confirmation.
 
 #### Scenario: Suite listing carries no key material
 
