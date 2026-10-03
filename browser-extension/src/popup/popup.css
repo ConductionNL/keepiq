@@ -139,19 +139,18 @@ button.link {
 	background: #f9fafb;
 }
 
+/* Dark surfaces: the system preference unless data-theme says light, or
+   data-theme dark on any system. The tokens are set with the shell below. */
 @media (prefers-color-scheme: dark) {
-	:root {
-		--fg: #e5e7eb;
-		--bg: #1f2937;
-		--border: #374151;
-		--muted: #9ca3af;
-	}
-	.candidate-fill {
+	:root:not([data-theme='light']) .candidate-fill,
+	:root:not([data-theme='light']) .save-prompt {
 		background: #111827;
 	}
-	.save-prompt {
-		background: #111827;
-	}
+}
+
+:root[data-theme='dark'] .candidate-fill,
+:root[data-theme='dark'] .save-prompt {
+	background: #111827;
 }
 
 .account-bar {
@@ -344,13 +343,21 @@ input[type='range'] {
 }
 
 @media (prefers-color-scheme: dark) {
-	.gen-digit {
+	:root:not([data-theme='light']) .gen-digit {
 		color: #6ee7b7;
 	}
 
-	.gen-special {
+	:root:not([data-theme='light']) .gen-special {
 		color: #fdba74;
 	}
+}
+
+:root[data-theme='dark'] .gen-digit {
+	color: #6ee7b7;
+}
+
+:root[data-theme='dark'] .gen-special {
+	color: #fdba74;
 }
 
 /* Item detail sections and the item form (clients-extension-complete) */
@@ -408,7 +415,7 @@ fieldset.fields {
 		--muted: #9ca3af;
 		--border: #374151;
 		--error: #f87171;
-		--bg: #111827;
+		--bg: #1f2937;
 	}
 }
 
@@ -418,7 +425,7 @@ fieldset.fields {
 	--muted: #9ca3af;
 	--border: #374151;
 	--error: #f87171;
-	--bg: #111827;
+	--bg: #1f2937;
 }
 
 body {

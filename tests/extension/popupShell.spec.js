@@ -149,6 +149,24 @@ describe('popup shell', () => {
 })
 
 describe('router', () => {
+	it('answers the popped-out window, as the top frame of its own tab only', async () => {
+		const window = {
+			...POPUP,
+			url: POPUP.url + '?popout=1&tabId=7',
+			tab: { id: 9, url: POPUP.url + '?popout=1&tabId=7' },
+		}
+		const ok = await router.handleMessage(
+			{ type: 'get-state', payload: {} },
+			{ ...window, frameId: 0 },
+		)
+		expect(ok.error).toBeUndefined()
+		const framed = await router.handleMessage(
+			{ type: 'get-state', payload: {} },
+			{ ...window, frameId: 3 },
+		)
+		expect(framed.error).toBe('not allowed from a web page')
+	})
+
 	it('refuses to fill a pinned tab that moved to another site', async () => {
 		const [offered] = await router.handleMessage(
 			{ type: 'match', payload: { host: 'example.com' } },

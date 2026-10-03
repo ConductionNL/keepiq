@@ -232,16 +232,22 @@ export function extensionRpId() {
 
 /**
  * Whether a message comes from one of the extension's own pages (popup,
- * unlock window), not from a content script in a tab.
+ * unlock window, popped-out popup), not from a content script in a tab.
+ *
+ * A page in its own window is a tab too. It counts only as that tab's top
+ * frame: the extension's pages are not web-accessible, so a web page can
+ * neither frame them nor navigate to them.
  *
  * @param {object|undefined} sender The runtime.MessageSender.
  * @return {boolean}
  */
 export function fromExtensionPage(sender) {
-	if (!sender || sender.tab) return false
-	if (sender.id !== chrome.runtime.id) return false
+	if (!sender || sender.id !== chrome.runtime.id) return false
 	const base = chrome.runtime.getURL('')
-	return typeof sender.url === 'string' && sender.url.startsWith(base)
+	if (typeof sender.url !== 'string' || !sender.url.startsWith(base)) {
+		return false
+	}
+	return !sender.tab || sender.frameId === 0
 }
 
 /**
