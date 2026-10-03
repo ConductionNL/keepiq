@@ -136,6 +136,7 @@ beforeEach(async () => {
 				{ id: 't2', name: 'totp' },
 				{ id: 't3', name: 'card' },
 				{ id: 't4', name: 'note' },
+				{ id: 't5', name: 'passkey' },
 			],
 			folders: [
 				{ id: 'f1', name: 'Work', parentId: null },
@@ -291,5 +292,97 @@ describe('changing items', () => {
 		expect(post.body).toMatchObject({ name: 'Wifi', typeId: 't4' })
 		expect(post.body.key).toBeTruthy()
 		expect(JSON.stringify(post.body)).not.toContain('Lobby')
+	})
+})
+
+describe('passkeys', () => {
+	const PRIVATE_KEY = 'MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgPRIVATEKEY'
+
+	/** Add a passkey row to the fake server and sync it into the snapshot. */
+	async function addPasskey() {
+		const publicKey = await importPublicKey(RSA4096_PUBLIC_KEY_SPKI_PEM)
+		rows.push({
+			id: 'p1',
+			name: 'GitHub passkey',
+			url: 'github.com',
+			typeId: 't5',
+			folderId: null,
+			login: await rsaEncrypt('', publicKey),
+			key: await rsaEncrypt(
+				JSON.stringify({
+					credentialId: 'cred-1',
+					rpId: 'github.com',
+					rpName: 'GitHub',
+					userName: 'ann',
+					userHandle: 'aGFuZGxl',
+					privateKey: PRIVATE_KEY,
+					algorithm: -7,
+					counter: 3,
+					createdAt: '2026-09-01T10:00:00.000Z',
+				}),
+				publicKey,
+			),
+		})
+		await router.handleMessage({ type: 'vault-sync-now', payload: {} }, POPUP)
+	}
+
+	it('keeps the private key in the worker: the popup gets site and account only', async () => {
+		await addPasskey()
+		const item = await router.handleMessage(
+			{ type: 'vault-item', payload: { id: 'p1' } },
+			POPUP,
+		)
+		expect(item.passkey).toMatchObject({ rpId: 'github.com', userName: 'ann' })
+		expect(item.secret).toBe('')
+		expect(JSON.stringify(item)).not.toContain(PRIVATE_KEY)
+	})
+
+	it('shows a passkey without clone or Send, and its edit form has no key field', async () => {
+		await addPasskey()
+		await openPopup()
+		await openByName('GitHub passkey')
+		expect($('detail-sections').textContent).toContain('GitHub (github.com)')
+		expect($('detail-clone').hidden).toBe(true)
+		expect($('detail-send').hidden).toBe(true)
+		$('detail-edit').click()
+		await vi.waitFor(() => expect($('vault-edit').hidden).toBe(false))
+		expect($('edit-secret-block').hidden).toBe(true)
+		expect(document.body.innerHTML).not.toContain(PRIVATE_KEY)
+		expect($('edit-secret').value).toBe('')
+	})
+
+	it('refuses to create a passkey or change its key, and offers no passkey type for a new item', async () => {
+		await addPasskey()
+		const create = await router.handleMessage(
+			{
+				type: 'vault-save',
+				payload: {
+					typeId: 't5',
+					typeName: 'passkey',
+					changes: { name: 'X' },
+				},
+			},
+			POPUP,
+		)
+		expect(create.error).toMatch(/created by the website/)
+		const rekey = await router.handleMessage(
+			{
+				type: 'vault-save',
+				payload: {
+					id: 'p1',
+					typeId: 't5',
+					typeName: 'passkey',
+					changes: { key: '{}' },
+				},
+			},
+			POPUP,
+		)
+		expect(rekey.error).toMatch(/key cannot be edited/)
+		await openPopup()
+		$('vault-new').click()
+		await vi.waitFor(() => expect($('vault-edit').hidden).toBe(false))
+		expect([...$('edit-type').options].map((o) => o.textContent)).not.toContain(
+			'passkey',
+		)
 	})
 })
