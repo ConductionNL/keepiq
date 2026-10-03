@@ -24,7 +24,7 @@
 -->
 <template>
 	<div
-		v-if="store.isVaultAdmin === true"
+		v-if="store.canHandover === true"
 		class="admin-handover"
 		data-testid="admin-handover-panel">
 		<NcButton
@@ -93,13 +93,15 @@ export default {
 	},
 
 	/**
-	 * Ask whether this user is a vault admin at all. The panel renders
-	 * nothing until the answer arrives, and nothing if it is false.
+	 * Ask whether this user may use the admin handover at all (the People
+	 * and offboarding area). The panel renders nothing until the answer
+	 * arrives, and nothing if it is false.
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#3.2
 	 */
 	created() {
-		if (this.store.isVaultAdmin === null) {
+		if (this.store.canHandover === null) {
 			this.store.fetchCapabilities()
 		}
 	},

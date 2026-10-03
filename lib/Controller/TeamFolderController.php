@@ -255,7 +255,7 @@ class TeamFolderController extends OCSController {
 	/**
 	 * Admin offboarding: revoke a leaver's team-derived access and
 	 * transfer their owned team secrets to a successor. Authorization
-	 * (instance admin or vault_admin) is asserted in the service body.
+	 * (instance admin or People area holder) is asserted in the service body.
 	 *
 	 * @param string $leavingUserId The user being offboarded
 	 * @param string $successorUserId The successor user

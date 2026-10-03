@@ -49,6 +49,17 @@ The system MUST propagate group membership changes to team-folder-derived shares
 - WHEN Y leaves group G
 - THEN all of Y's `team_folder_id`-derived shares for that folder MUST be automatically revoked
 
+### Requirement: Approve one waiting member
+The team folder owner MUST be able to approve one waiting member at a time (keepiq#747). The team folder dialog MUST list every member who still lacks copies, each with an Approve button next to the bulk "Encrypt and share now". Approve MUST call `POST /api/v1/team-folders/{id}/approve-join` (the owner and coverage check) and then encrypt and share the copies for that member only, so the other waiting members stay held back.
+
+#### Scenario: The owner approves one of two waiting members
+@e2e exclude Needs a group join by a second vault user; covered by vitest on TeamFolderDialog and the team folder store.
+- GIVEN members B and C both wait for their copies of team folder T
+- WHEN the owner clicks Approve next to B
+- THEN `approve-join` MUST be called for B
+- AND copies MUST be shared with B only
+- AND C MUST still be listed as waiting
+
 ### Requirement: Admin offboarding
 The system MUST provide a single admin action that, given a leaving user and a successor, revokes the leaver's team-folder-derived shares and transfers the team secrets they owned to the successor via the existing permanent-delegation mechanism.
 

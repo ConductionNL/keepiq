@@ -82,7 +82,7 @@ export default {
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin'),
+				generateUrl('/apps/keepiq/api/settings/admin/policies'),
 			)
 			this.maxIdleMinutes = response.data.extension_max_idle_minutes ?? 240
 		} catch (e) {
@@ -100,9 +100,12 @@ export default {
 		async save() {
 			this.error = null
 			try {
-				await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
-					extension_max_idle_minutes: this.maxIdleMinutes,
-				})
+				await axios.put(
+					generateUrl('/apps/keepiq/api/settings/admin/policies'),
+					{
+						extension_max_idle_minutes: this.maxIdleMinutes,
+					},
+				)
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
 			}

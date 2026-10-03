@@ -604,7 +604,6 @@ documented intent rather than silently drop a limit during refactoring.
 | `ApplicationSecretsController::show` | 30 / 60s | Same rationale as `index`. |
 | `ApplicationController::create` | 10 / 60s | Anonymous application self-registration — only reachable when an admin opts in via `anonymous_application_registration_enabled`. Admins enabling anonymous registration inherit this rate limit. |
 | `MachineLeaseController::index` | 30 / 60s | Bearer-authenticated lease list (machine-secret-leases §4.1); `#[PublicPage]` pre-auth surface, same polling profile as the secrets endpoints. |
-| `MachineLeaseController::renew` | 30 / 60s | Lease renewal — legitimate connectors renew at most once per default-TTL window. |
 | `MachineLeaseController::revoke` | 30 / 60s | Lease self-revocation — rare in legitimate use; the limit caps abuse of the rotation-flag side effect. |
 | `EphemeralSendAccessController::peek` | 15 / 60s | Anonymous ephemeral-send metadata (ephemeral-send §4.2); the ≥256-bit token is the real access control, the limit caps enumeration attempts. |
 | `EphemeralSendAccessController::access` | 15 / 60s | Ciphertext fetch phase of the two-phase protocol; a view is only consumed on confirm. |

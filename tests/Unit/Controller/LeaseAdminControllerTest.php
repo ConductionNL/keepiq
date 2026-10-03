@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use OCA\Keepiq\Tests\Support\AdminAreaFixture;
+use OCA\Keepiq\Settings\AuditAdminSettings;
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\LeaseAdminController;
 use OCA\Keepiq\Db\Application;
@@ -51,6 +53,8 @@ use PHPUnit\Framework\TestCase;
  *
  */
 class LeaseAdminControllerTest extends TestCase {
+	use AdminAreaFixture;
+
 
 	/**
 	 * The mocked lease service.
@@ -124,7 +128,7 @@ class LeaseAdminControllerTest extends TestCase {
 			leaseMapper: $this->createMock(MachineLeaseMapper::class),
 			applicationMapper: $this->applicationMapper,
 			userSession: $this->userSession,
-			groupManager: $this->groupManager
+			areas: $this->areaAuthorizer(groupManager: $this->groupManager)
 		);
 	}//end controller()
 
@@ -444,4 +448,23 @@ class LeaseAdminControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
 	}//end testGetPolicyForAnUnknownApplicationIs404()
 
+
+	/**
+	 * A holder of only the Audit area is refused like any non-admin
+	 * (admin-scoped-roles §2.2).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.2
+	 */
+	public function testSetPolicyByAnAuditAreaHolderIs404AndWritesNothing(): void {
+		$this->delegatedAreas = [AuditAdminSettings::class];
+		$this->signIn('auditor');
+		$this->groupManager->method('isAdmin')->willReturn(false);
+		$this->leaseService->expects($this->never())->method('setPolicyOverride');
+
+		$response = $this->controller()->setPolicy(id: 'app-0000-4000-8000-000000000001', defaultTtl: 3600);
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	}//end testSetPolicyByAnAuditAreaHolderIs404AndWritesNothing()
 }//end class

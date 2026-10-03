@@ -584,7 +584,7 @@ class TeamFolderService {
 	 *
 	 * @param string $leavingUserId The user being offboarded
 	 * @param string $successorUserId The user taking over owned team secrets
-	 * @param string $adminId The caller (instance admin or vault_admin)
+	 * @param string $adminId The caller (instance admin or People area holder)
 	 *
 	 * @return array{revoked:int,transferred:int,skipped:array<int,string>}
 	 *

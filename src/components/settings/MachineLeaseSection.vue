@@ -93,7 +93,7 @@ export default {
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin'),
+				generateUrl('/apps/keepiq/api/settings/admin/applications'),
 			)
 			this.defaultTtl = response.data.lease_default_ttl_seconds ?? 900
 			this.maxTtl = response.data.lease_max_ttl_seconds ?? 86400
@@ -111,17 +111,20 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
-		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-lease-renewal-within-policy
+		 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
 		 */
 		async save() {
 			this.error = null
 			try {
-				await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
-					lease_default_ttl_seconds: this.defaultTtl,
-					lease_max_ttl_seconds: this.maxTtl,
-					lease_renewable: this.renewable,
-					lease_revocation_blocks_refetch: this.blockOnRevoke,
-				})
+				await axios.put(
+					generateUrl('/apps/keepiq/api/settings/admin/applications'),
+					{
+						lease_default_ttl_seconds: this.defaultTtl,
+						lease_max_ttl_seconds: this.maxTtl,
+						lease_renewable: this.renewable,
+						lease_revocation_blocks_refetch: this.blockOnRevoke,
+					},
+				)
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
 			}

@@ -26,10 +26,10 @@ import (
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	keepiq "github.com/ConductionNL/keepiq/sdk/go"
 
@@ -64,7 +64,6 @@ const (
 type KeepiqClient interface {
 	GetByNameIfNoneMatch(name, folder, etag string) (*keepiq.Secret, error)
 	LeaseSupported() (bool, error)
-	RenewLease(id string) (*keepiq.Lease, error)
 }
 
 // ClientFactory builds a Keepiq client for a connection.
@@ -203,15 +202,11 @@ func (r *KeepiqSecretReconciler) sync(ctx context.Context, ks *v1.KeepiqSecret, 
 			etag = ""
 		}
 
-		// Renew a lease that would lapse before the next loop. A refused
-		// renewal means the grant is gone: read again now for a fresh one.
-		if leases && st.LeaseID != "" && st.LeaseExpires != nil && st.LeaseExpires.Time.Before(now.Add(interval+30*time.Second)) {
-			if lease, rerr := kc.RenewLease(st.LeaseID); rerr == nil {
-				st.LeaseExpires = leaseTime(lease)
-			} else {
-				log.FromContext(ctx).Info("lease renewal refused, reading again", "lease", st.LeaseID, "error", rerr.Error())
-				st.LeaseID, st.LeaseExpires, etag = "", nil, ""
-			}
+		// There is no renew route (keepiq#753): a read while the lease is
+		// live reuses it, so once it has lapsed read the whole envelope again
+		// for a fresh lease and the current value.
+		if leases && st.LeaseID != "" && st.LeaseExpires != nil && !now.Before(st.LeaseExpires.Time) {
+			st.LeaseID, st.LeaseExpires, etag = "", nil, ""
 		}
 
 		secret, err := kc.GetByNameIfNoneMatch(item.Name, item.Folder, etag)
@@ -274,7 +269,22 @@ func (r *KeepiqSecretReconciler) sync(ctx context.Context, ks *v1.KeepiqSecret, 
 	if err := r.Status().Update(ctx, ks); err != nil {
 		return ctrl.Result{}, err
 	}
-	return ctrl.Result{RequeueAfter: interval}, nil
+	return ctrl.Result{RequeueAfter: untilLeaseLapses(items, now, interval)}, nil
+}
+
+// untilLeaseLapses shortens the requeue to just after the first lease that
+// lapses before the next loop, so the read for a fresh lease comes on time.
+func untilLeaseLapses(items []v1.ItemStatus, now time.Time, interval time.Duration) time.Duration {
+	next := interval
+	for _, it := range items {
+		if it.LeaseExpires == nil {
+			continue
+		}
+		if wait := it.LeaseExpires.Time.Sub(now) + time.Second; wait < next {
+			next = max(wait, time.Second)
+		}
+	}
+	return next
 }
 
 // keepiqClient loads the connection and the key, and returns a cached client

@@ -28,7 +28,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\AppInfo;
 
 use OCA\Keepiq\Controller\SettingsController;
-use OCA\Keepiq\Service\Connection\ConnectionReporter;
+use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\SettingsService;
 use OCA\Keepiq\Service\TwoFactorGate;
 use OCP\IRequest;
@@ -60,7 +60,7 @@ final class SettingsControllerFactory {
 			request: $container->get(IRequest::class),
 			settingsService: $container->get(SettingsService::class),
 			userSession: $container->get(IUserSession::class),
-			connectionReporter: $container->get(ConnectionReporter::class),
+			areas: $container->get(AdminAreaAuthorizer::class),
 			twoFactor: $container->get(TwoFactorGate::class),
 		);
 	}//end __invoke()

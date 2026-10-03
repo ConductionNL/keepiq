@@ -74,7 +74,10 @@ class RoutesWithoutOpenRegisterTest extends TestCase {
 		$this->assertContains('dashboard#page', $names);
 		$this->assertContains('secret#index', $names);
 		$this->assertSame('dashboard#catchAll', end($names));
-		$this->assertSame(count($names), count(array_unique($names)), 'Every route name registers once.');
+		// Nextcloud names a route by `name` plus its optional `postfix`
+		// (RouteParser), so two URLs may reach one method with distinct postfixes.
+		$registered = array_map(static fn (array $route): string => $route['name'] . ($route['postfix'] ?? ''), $routes['routes']);
+		$this->assertSame(count($registered), count(array_unique($registered)), 'Every route name registers once.');
 	}//end testRoutesFileLoadsWithoutOpenRegister()
 
 	/**
