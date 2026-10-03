@@ -135,11 +135,7 @@ class ShareController extends OCSController {
 	 *   field the server stores, not a mode switch.
 	 */
 	#[NoAdminRequired]
-	#[VaultKeyProofRequired(
-		binds: ['secretId', 'targetUserId'],
-		purpose: VaultKeyProofService::PURPOSE_SHARE_NEW_RECIPIENT,
-		exemption: KnownShareRecipientExemption::class
-	)]
+	#[VaultKeyProofRequired(binds: ['secretId', 'targetUserId'], purpose: VaultKeyProofService::PURPOSE_SHARE_NEW_RECIPIENT, exemption: KnownShareRecipientExemption::class)]
 	public function create(
 		string $secretId,
 		string $targetUserId,
