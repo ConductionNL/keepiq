@@ -66,22 +66,24 @@ func LoadFixture() (*Fixture, error) {
 
 // Stub is the fake Keepiq. Lock Mu before touching its fields while the server runs.
 type Stub struct {
-	Mu          sync.Mutex
-	App         string
-	Fixture     *Fixture
-	Key         *rsa.PrivateKey
-	Envelopes   map[string]map[string]any
-	Exchanges   int
-	Bodies      []string
-	Requests    []string // "METHOD path" of every request
-	RevokeNext  bool
-	Leases      bool          // advertise and attach leases
-	LeaseTTL    time.Duration // lease lifetime when Leases is on
-	leases      map[string]time.Time
-	leaseSeq    int
-	updates     int
-	Server      *httptest.Server
-	Now         func() time.Time
+	Mu         sync.Mutex
+	App        string
+	Fixture    *Fixture
+	Key        *rsa.PrivateKey
+	Envelopes  map[string]map[string]any
+	Exchanges  int
+	Bodies     []string
+	Requests   []string // "METHOD path" of every request
+	RevokeNext bool
+	Leases     bool          // advertise and attach leases
+	LeaseTTL   time.Duration // lease lifetime when Leases is on
+	PutCount   int           // accepted PUT write-backs
+	leases     map[string]time.Time
+	tokens     map[string]bool
+	leaseSeq   int
+	updates    int
+	Server     *httptest.Server
+	Now        func() time.Time
 }
 
 // Start runs a stub for application app with the fixture key and the fixture
@@ -130,6 +132,35 @@ func (s *Stub) Add(id, name, folderPath string, fields map[string]string) (strin
 	return id, nil
 }
 
+// SetExpiry sets a secret's expiresAt (ISO 8601; "" for none).
+func (s *Stub) SetExpiry(id, expiresAt string) {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	var v any
+	if expiresAt != "" {
+		v = expiresAt
+	}
+	s.Envelopes[id]["secret"].(map[string]any)["expiresAt"] = v
+}
+
+// Plain decrypts one field of a stored secret, for assertions.
+func (s *Stub) Plain(id, field string) (string, error) {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	ct, _ := s.Envelopes[id]["ciphertext"].(map[string]any)[field].(string)
+	if ct == "" {
+		return "", nil
+	}
+	return kcrypto.DecryptField(ct, s.Key)
+}
+
+// ETagOf is the ETag the stub serves for a secret now.
+func (s *Stub) ETagOf(id string) string {
+	s.Mu.Lock()
+	defer s.Mu.Unlock()
+	return s.etagOf(s.Envelopes[id])
+}
+
 // SetValue rotates one field of a secret to a new plaintext, the way a
 // machine client's PUT would, and moves updatedAt forward.
 func (s *Stub) SetValue(id, field, plaintext string) error {
@@ -168,7 +199,7 @@ func (s *Stub) newEnvelope(id string, meta map[string]any, ct map[string]any) ma
 	return map[string]any{
 		"format": "doriath-machine-secret-v1",
 		"secret": map[string]any{"id": id, "name": meta["name"], "url": meta["url"], "folderPath": "", "type": meta["typeId"],
-			"createdAt": "2026-10-02T10:00:00+00:00", "updatedAt": "2026-10-02T10:00:00+00:00", "keyUpdatedAt": "2026-10-02T10:00:00+00:00"},
+			"createdAt": "2026-10-02T10:00:00+00:00", "updatedAt": "2026-10-02T10:00:00+00:00", "keyUpdatedAt": "2026-10-02T10:00:00+00:00", "expiresAt": nil},
 		"encryption": map[string]any{"suiteId": enc["suiteId"], "certificateFingerprint": enc["certificateFingerprint"], "scheme": "rsa-oaep-sha256-chunked-v1"},
 		"ciphertext": ct,
 	}
@@ -204,11 +235,20 @@ func (s *Stub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.Exchanges++
-		writeJSON(w, 200, map[string]any{"access_token": fmt.Sprintf("tok-%d", s.Exchanges), "token_type": "Bearer", "expires_in": 300})
+		tok := fmt.Sprintf("tok-%d", s.Exchanges)
+		if s.tokens == nil {
+			s.tokens = map[string]bool{}
+		}
+		s.tokens[tok] = true
+		writeJSON(w, 200, map[string]any{"access_token": tok, "token_type": "Bearer", "expires_in": 300})
 		return
 	}
-	if s.Exchanges == 0 || r.Header.Get("Authorization") != fmt.Sprintf("Bearer tok-%d", s.Exchanges) || s.RevokeNext {
+	// Every issued token stays valid until RevokeNext revokes them all, as on
+	// the server, where several clients (or provider processes) hold tokens
+	// at once.
+	if !s.tokens[strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")] || s.RevokeNext {
 		s.RevokeNext = false
+		s.tokens = map[string]bool{}
 		writeJSON(w, 401, map[string]any{"message": "Bearer token required"})
 		return
 	}
@@ -276,6 +316,12 @@ func (s *Stub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, 404, map[string]any{"message": "Secret not found"})
 			return
 		}
+		if im := r.Header.Get("If-Match"); im != "" && im != s.etagOf(e) {
+			w.Header().Set("ETag", s.etagOf(e))
+			writeJSON(w, 412, map[string]any{"message": "The secret changed since it was read"})
+			return
+		}
+		s.PutCount++
 		var in map[string]any
 		_ = json.Unmarshal(body, &in)
 		ct := e["ciphertext"].(map[string]any)
@@ -306,10 +352,15 @@ func (s *Stub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (s *Stub) envelope(w http.ResponseWriter, r *http.Request, e map[string]any) {
+func (s *Stub) etagOf(e map[string]any) string {
 	raw, _ := json.Marshal(e)
 	sum := sha256.Sum256(raw)
-	etag := fmt.Sprintf(`"%x"`, sum[:8])
+	return fmt.Sprintf(`"%x"`, sum[:8])
+}
+
+func (s *Stub) envelope(w http.ResponseWriter, r *http.Request, e map[string]any) {
+	raw, _ := json.Marshal(e)
+	etag := s.etagOf(e)
 	w.Header().Set("ETag", etag)
 	if s.Leases {
 		s.leaseSeq++

@@ -234,11 +234,13 @@ class TeamFolderAuditor {
 	 * @param string $successorUserId The successor taking ownership
 	 * @param int $revoked The number of derived shares revoked
 	 * @param int $transferred The number of secrets transferred
-	 * @param int $removedMemberships The number of direct team-folder memberships removed
+	 * @param int $membershipsRemoved The number of direct team-folder memberships removed
+	 * @param string[] $coveringGroupIds The groups whose membership rows still cover the leaver
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.5
+	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.3
 	 */
 	public function offboarded(
 		string $adminId,
@@ -246,7 +248,8 @@ class TeamFolderAuditor {
 		string $successorUserId,
 		int $revoked,
 		int $transferred,
-		int $removedMemberships=0,
+		int $membershipsRemoved=0,
+		array $coveringGroupIds=[],
 	): void {
 		$this->dispatch(
 			event: $this->auditEvents->forUser(
@@ -259,8 +262,9 @@ class TeamFolderAuditor {
 					'leavingUserId' => $leavingUserId,
 					'successorUserId' => $successorUserId,
 					'revokedCount' => $revoked,
-					'removedMembershipCount' => $removedMemberships,
 					'transferredCount' => $transferred,
+					'membershipsRemovedCount' => $membershipsRemoved,
+					'coveringGroupIds' => $coveringGroupIds,
 				],
 			)
 		);

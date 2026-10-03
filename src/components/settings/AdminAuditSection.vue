@@ -300,7 +300,7 @@ export default {
 		async loadRetention() {
 			try {
 				const response = await axios.get(
-					generateUrl('/apps/keepiq/api/settings/admin'),
+					generateUrl('/apps/keepiq/api/settings/admin/audit'),
 				)
 				this.retentionDays = response.data.audit_retention_days ?? 365
 			} catch (e) {
@@ -317,9 +317,12 @@ export default {
 		async saveRetention() {
 			this.retentionError = ''
 			try {
-				await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
-					audit_retention_days: this.retentionDays,
-				})
+				await axios.put(
+					generateUrl('/apps/keepiq/api/settings/admin/audit'),
+					{
+						audit_retention_days: this.retentionDays,
+					},
+				)
 			} catch (e) {
 				this.retentionError =
 					e?.response?.data?.message

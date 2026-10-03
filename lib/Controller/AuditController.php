@@ -30,7 +30,7 @@ use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\RecentlyUsedService;
-use OCA\Keepiq\Settings\AdminSettings;
+use OCA\Keepiq\Settings\AuditAdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -195,13 +195,13 @@ class AuditController extends Controller {
 	 * @param int $page 1-based page number
 	 * @param int $limit Page size (default 50)
 	 *
-	 * @AuthorizedAdminSetting(AdminSettings::class)
+	 * @AuthorizedAdminSetting(AuditAdminSettings::class)
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-4.1
 	 */
-	#[AuthorizedAdminSetting(AdminSettings::class)]
+	#[AuthorizedAdminSetting(AuditAdminSettings::class)]
 	public function index(
 		?string $eventType = null,
 		?string $actor = null,

@@ -76,12 +76,26 @@
 			v-if="offlineStore.servedFromCache"
 			class="keepiq-offline-banner"
 			data-testid="offline-stale-banner">
-			{{
-				t('keepiq', 'Offline — read-only. Last synced {when}.', {
-					when: syncedLabel,
-				})
-			}}
+			<template v-if="offlineStore.editsQueued">
+				{{
+					t(
+						'keepiq',
+						'Offline. Your changes stay on this device and sync when you are back online. Last synced {when}.',
+						{ when: syncedLabel },
+					)
+				}}
+			</template>
+			<template v-else>
+				{{
+					t('keepiq', 'Offline — read-only. Last synced {when}.', {
+						when: syncedLabel,
+					})
+				}}
+			</template>
 		</div>
+
+		<!-- The offline edit queue: pending count, conflicts, refused changes. -->
+		<OfflineSyncPanel />
 
 		<!-- An interrupted compromise recovery leaves the vault write-locked with
 		     nothing else in the UI saying why, so this sits at shell level rather
@@ -167,6 +181,12 @@
 					</div>
 					<div class="user-settings__field">
 						<PasskeyManager />
+					</div>
+					<div class="user-settings__field">
+						<AccountRecoveryEnrolment />
+					</div>
+					<div class="user-settings__field">
+						<RecoveryOfficerPanel />
 					</div>
 					<div class="user-settings__field">
 						<NcButton
@@ -386,6 +406,9 @@
 				</p>
 			</template>
 		</CnAppRoot>
+		<!-- New device approval (crypto-new-device-approval D3): an unlocked
+		     vault answers requests from the user's other devices. -->
+		<DeviceApprovalDialog :active="!isLocked && offlineStore.online" />
 	</div>
 </template>
 
@@ -409,14 +432,18 @@ import KeyIcon from 'vue-material-design-icons/Key.vue'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import TimerIcon from 'vue-material-design-icons/Timer.vue'
 import TuneVariantIcon from 'vue-material-design-icons/TuneVariant.vue'
+import AccountRecoveryEnrolment from './components/AccountRecoveryEnrolment.vue'
 import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
 import KeepiqAppNav from './components/KeepiqAppNav/KeepiqAppNav.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
+import OfflineSyncPanel from './components/OfflineSyncPanel.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
+import RecoveryOfficerPanel from './components/RecoveryOfficerPanel.vue'
 import SecretDetailSidebar from './components/SecretDetailSidebar.vue'
 import DefaultsSection from './components/settings/DefaultsSection.vue'
 import ExpiryPoliciesSection from './components/settings/ExpiryPoliciesSection.vue'
+import DeviceApprovalDialog from './dialogs/DeviceApprovalDialog.vue'
 import {
 	handleLockTransition,
 	isPublicRoute,
@@ -446,6 +473,9 @@ export default {
 
 	components: {
 		CnAppRoot,
+		DeviceApprovalDialog,
+		AccountRecoveryEnrolment,
+		RecoveryOfficerPanel,
 		NcAppSettingsSection,
 		NcButton,
 		NcEmptyContent,
@@ -465,6 +495,7 @@ export default {
 		CompromiseRecoveryForm,
 		KeepiqAppNav,
 		MigrationResumeBanner,
+		OfflineSyncPanel,
 		SecretDetailSidebar,
 	},
 
@@ -902,9 +933,17 @@ export default {
 		 * redirect: if the page is still alive shortly after, the normal
 		 * lock transition runs after all and the lock screen appears.
 		 *
+		 * @param {BeforeUnloadEvent} event The unload event.
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-pending-changes-block-logout-and-rotation
 		 */
-		handleBeforeUnload() {
+		handleBeforeUnload(event) {
+			// Offline changes not yet on the server: let the browser ask before
+			// the user leaves, as for a logout (offline-edit-queue D6).
+			if (this.offlineStore.pendingCount > 0 && event) {
+				event.preventDefault()
+				event.returnValue = ''
+			}
 			this.unloading = true
 			this.sessionStore.lock()
 			setTimeout(() => {

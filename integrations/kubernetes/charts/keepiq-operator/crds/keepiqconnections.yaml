@@ -1,0 +1,60 @@
+# The KeepiqConnection resource: which Keepiq instance and application the
+# operator authenticates as, and where the application key sits in the cluster.
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: keepiqconnections.keepiq.conduction.nl
+spec:
+  group: keepiq.conduction.nl
+  names:
+    kind: KeepiqConnection
+    listKind: KeepiqConnectionList
+    plural: keepiqconnections
+    singular: keepiqconnection
+    shortNames: [kqc]
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      additionalPrinterColumns:
+        - name: URL
+          type: string
+          jsonPath: .spec.url
+        - name: Application
+          type: string
+          jsonPath: .spec.applicationId
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            apiVersion: {type: string}
+            kind: {type: string}
+            metadata: {type: object}
+            spec:
+              type: object
+              required: [url, applicationId, privateKeySecretRef]
+              properties:
+                url:
+                  type: string
+                  description: The Keepiq (Nextcloud) address. Include /index.php when the instance has no pretty URLs.
+                  pattern: '^https?://[^\s]+$'
+                applicationId:
+                  type: string
+                  minLength: 1
+                  description: The approved Keepiq application's id.
+                privateKeySecretRef:
+                  type: object
+                  description: The Kubernetes Secret key holding the application private key (PEM). It never leaves the cluster.
+                  required: [name, key]
+                  properties:
+                    name: {type: string, minLength: 1}
+                    key: {type: string, minLength: 1}
+                certificateSecretRef:
+                  type: object
+                  description: Optional. The Kubernetes Secret key holding the application certificate (PEM). When set, a key that does not belong to it, or an envelope encrypted to another certificate, is refused before decryption.
+                  required: [name, key]
+                  properties:
+                    name: {type: string, minLength: 1}
+                    key: {type: string, minLength: 1}

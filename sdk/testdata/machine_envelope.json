@@ -17,7 +17,8 @@
             "type": "9c491896-3d6b-5a1a-9b0e-e89dfeb6617c",
             "createdAt": "2026-09-28T09:00:00+00:00",
             "updatedAt": "2026-09-28T09:00:00+00:00",
-            "keyUpdatedAt": "2026-09-28T09:00:00+00:00"
+            "keyUpdatedAt": "2026-09-28T09:00:00+00:00",
+            "expiresAt": null
         },
         "encryption": {
             "suiteId": "suite-cli-fixture",

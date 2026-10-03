@@ -32,10 +32,12 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
+use OCA\Keepiq\Controller\DeviceApprovalController;
 use OCA\Keepiq\Controller\EmergencyAccessController;
 use OCA\Keepiq\Controller\EncryptionSuiteController;
 use OCA\Keepiq\Controller\GdprController;
 use OCA\Keepiq\Controller\MigrationController;
+use OCA\Keepiq\Controller\RecoveryOfficerController;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
@@ -122,6 +124,20 @@ class VaultKeyProofAttributesTest extends TestCase {
 				['confirmation'],
 				'active',
 				VaultKeyProofService::PURPOSE_DELETE_ACCOUNT_DATA,
+			],
+			'approve a new device' => [
+				DeviceApprovalController::class,
+				'approve',
+				['id', 'sealedUnlockKey'],
+				'active',
+				VaultKeyProofService::PURPOSE_APPROVE_DEVICE,
+			],
+			'approve an account recovery' => [
+				RecoveryOfficerController::class,
+				'approve',
+				['id'],
+				'active',
+				VaultKeyProofService::PURPOSE_APPROVE_ACCOUNT_RECOVERY,
 			],
 		];
 	}//end guardedMethodsProvider()

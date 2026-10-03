@@ -30,6 +30,7 @@ namespace OCA\Keepiq\Controller;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Service\AdminSettingsService;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -77,6 +78,7 @@ class ExtensionController extends Controller {
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param IUserSession $userSession The user session
 	 * @param AdminSettingsService $adminSettings The admin settings (extension idle maximum)
+	 * @param IAppManager $appManager The app manager (server version for the pairing handshake)
 	 *
 	 * @return void
 	 */
@@ -85,6 +87,7 @@ class ExtensionController extends Controller {
 		private SecretMapper $secretMapper,
 		private IUserSession $userSession,
 		private AdminSettingsService $adminSettings,
+		private IAppManager $appManager,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -111,6 +114,7 @@ class ExtensionController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-pairing-against-the-nextcloud-session
+	 * @spec openspec/specs/extension-store-release/spec.md#requirement-the-extension-checks-the-server-version-on-pairing
 	 */
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
@@ -125,6 +129,9 @@ class ExtensionController extends Controller {
 				'ok' => true,
 				'user' => $uid,
 				'apiVersion' => 1,
+				// The extension compares this with its minimum and asks for a
+				// server update instead of failing on a missing route.
+				'serverVersion' => $this->appManager->getAppVersion(Application::APP_ID),
 				'capabilities' => ['match', 'autofill', 'passkey-provider', 'totp'],
 			]
 		);

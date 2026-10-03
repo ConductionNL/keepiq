@@ -30,6 +30,7 @@ use OCA\Keepiq\Event\SuiteMigrationStartedEvent;
 use OCA\Keepiq\Listener\EmergencyAccessSuiteRevocationListener;
 use OCA\Keepiq\Listener\EmergencyAccessSuiteRotationListener;
 use OCA\Keepiq\Listener\EncryptionSuiteRevokedListener;
+use OCA\Keepiq\Listener\RecoverySuiteListener;
 use OCA\Keepiq\Listener\SuiteCompromiseListener;
 use OCA\Keepiq\Listener\SuiteMigrationAbortedListener;
 use OCA\Keepiq\Listener\SuiteMigrationCompletedListener;
@@ -114,6 +115,17 @@ final class SuiteLifecycleEventRegistrar {
 		$context->registerEventListener(
 			event: EncryptionSuiteRevokedEvent::class,
 			listener: EmergencyAccessSuiteRevocationListener::class
+		);
+
+		// Organisation account recovery: enrolments and open requests follow
+		// the suite (crypto-organisation-account-recovery D7).
+		$context->registerEventListener(
+			event: SuiteMigrationCompletedEvent::class,
+			listener: RecoverySuiteListener::class
+		);
+		$context->registerEventListener(
+			event: EncryptionSuiteRevokedEvent::class,
+			listener: RecoverySuiteListener::class
 		);
 
 	}//end register()
