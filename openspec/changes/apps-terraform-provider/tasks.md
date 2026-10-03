@@ -9,7 +9,7 @@
 
 ## 2. Applications
 
-- [ ] 2.1 (BLOCKED: `/api/v1/admin/applications` from change `admin-public-api` does not exist on development; see POLICY.md) Add `keepiq_application` (register from CSR, approve, `allow_vault_deletion` guard) and `keepiq_application_lease_policy` on the admin API. Verify with stub tests for create, approve and a refused destroy, and an acceptance test when `KEEPIQ_LIVE_URL` is set.
+- [x] 2.1 Done on the admin API of PR #966 (admin-public-api): `admin_user`/`admin_password` provider arguments, `AdminClient`, `keepiq_application` and `keepiq_application_lease_policy`; stub tests in `admin_test.go`, live test `TestAdminAPILive` (skips without `KEEPIQ_LIVE_URL`). Add `keepiq_application` (register from CSR, approve, `allow_vault_deletion` guard) and `keepiq_application_lease_policy` on the admin API. Verify with stub tests for create, approve and a refused destroy, and an acceptance test when `KEEPIQ_LIVE_URL` is set.
 
 ## 3. Release and docs
 
