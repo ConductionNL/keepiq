@@ -87,6 +87,11 @@ The agent asks for your master password once and decrypts the keys in its own
 memory. Nothing decrypted is written to disk, core dumps are off, and the
 server sees the same reads `keepiq show` makes.
 
+Under `eval` the agent moves to the background and your shell gets its prompt
+back. It also exports `SSH_AGENT_PID`, so `kill $SSH_AGENT_PID` stops it. Run
+`keepiq ssh-agent` straight in a terminal and it stays in the foreground until
+you press Ctrl+C.
+
 Options:
 
 - `--socket <path>`: where to listen. The default is
@@ -99,7 +104,9 @@ Options:
 - `--confirm`: ask before each signature through the program in
   `SSH_ASKPASS`. Without `SSH_ASKPASS` the agent does not start.
 - `--locked`: start without keys, for a service manager. Unlock it with
-  `ssh-add -X` and your master password; lock it again with `ssh-add -x`.
+  `ssh-add -X` and your master password. Lock it again with `ssh-add -x`:
+  it asks for a lock password, which the agent ignores, because unlocking
+  always takes your master password.
 
 The vault is the only place keys come from: `ssh-add some_key` and
 `ssh-add -d` are refused. RSA keys sign with SHA-2 only; a client that asks
