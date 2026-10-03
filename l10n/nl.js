@@ -1596,7 +1596,15 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "team-uitdiensttreding, versleutelingssuites en beheerdersovername",
         "audit log, compliance reports, SIEM export and honey alerts": "auditlog, compliancerapporten, SIEM-export en honingmeldingen",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Hoeveel versies van een geheim bewaard blijven, hoe lang, en hoe lang verwijderde geheimen in de prullenbak blijven.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limieten voor versleutelde bijlagen, op de server afgedwongen in opgeslagen versleutelde bytes."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limieten voor versleutelde bijlagen, op de server afgedwongen in opgeslagen versleutelde bytes.",
+        "Type the suite ID again to confirm": "Typ de suite-ID nogmaals ter bevestiging",
+        "This does not match the suite ID.": "Dit komt niet overeen met de suite-ID.",
+        "Confirm with your master password": "Bevestig met je masterwachtwoord",
+        "Confirm": "Bevestigen",
+        "That master password is not right.": "Dat masterwachtwoord klopt niet.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Je deelt met iemand nieuw. Voer je masterwachtwoord in om te bevestigen.",
+        "Enter your master password to confirm this share.": "Voer je masterwachtwoord in om deze deling te bevestigen.",
+        "Enter your master password to confirm this delegation.": "Voer je masterwachtwoord in om deze delegatie te bevestigen."
     },
     "nplurals=2; plural=(n != 1);"
 )

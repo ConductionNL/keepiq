@@ -1591,7 +1591,15 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "odlasci iz tima, paketi šifriranja i preuzimanje od strane administratora",
         "audit log, compliance reports, SIEM export and honey alerts": "revizijski zapisnik, izvješća o usklađenosti, SIEM izvoz i upozorenja mamaca",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Koliko se verzija tajne čuva, koliko dugo, i koliko dugo izbrisane tajne ostaju u smeću.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Ograničenja za šifrirane privitke, koja poslužitelj primjenjuje na spremljene šifrirane bajtove."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Ograničenja za šifrirane privitke, koja poslužitelj primjenjuje na spremljene šifrirane bajtove.",
+        "Type the suite ID again to confirm": "Ponovno upišite ID paketa za potvrdu",
+        "This does not match the suite ID.": "Ovo se ne podudara s ID-om paketa.",
+        "Confirm with your master password": "Potvrdite glavnom lozinkom",
+        "Confirm": "Potvrdi",
+        "That master password is not right.": "Ta glavna lozinka nije ispravna.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Dijelite s novom osobom. Unesite glavnu lozinku za potvrdu.",
+        "Enter your master password to confirm this share.": "Unesite glavnu lozinku za potvrdu ovog dijeljenja.",
+        "Enter your master password to confirm this delegation.": "Unesite glavnu lozinku za potvrdu ovog delegiranja."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

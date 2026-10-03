@@ -12,6 +12,21 @@ import axios from '@nextcloud/axios'
 import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useGroupShareStore } from '../../src/store/modules/groupShare.js'
+
+// Sharing needs a vault-key proof (keepiq#818). The proof itself is built by
+// sessionKeyProofHeaders; here it returns a fixed header and echoes the
+// password, so the tests can see that each request carried a proof.
+vi.mock('../../src/crypto/keyProof.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	sessionKeyProofHeaders: vi.fn(
+		async ({ purpose, boundValues, masterPassword }) => ({
+			headers: {
+				'X-Keepiq-Key-Proof': `proof(${purpose}|${(boundValues ?? []).join(',')})`,
+			},
+			masterPassword: masterPassword || 'from-prompt',
+		}),
+	),
+}))
 import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useShareStore } from '../../src/store/modules/share.js'
 
@@ -82,8 +97,12 @@ describe('useGroupShareStore', () => {
 			{ groupId: 'finance' },
 		)
 		expect(encrypt).toHaveBeenCalledTimes(3)
-		const [url, body] = post.mock.calls[1]
+		const [url, body, config] = post.mock.calls[1]
 		expect(url).toBe('/apps/keepiq/api/v1/shares/register-batch')
+		// keepiq#818: the batch registration carries a proof.
+		expect(config.headers).toEqual({
+			'X-Keepiq-Key-Proof': 'proof(share-register-batch|)',
+		})
 		expect(body.shares[0]).toEqual({
 			sourceSecretId: 's-1',
 			targetUserId: 'bob',

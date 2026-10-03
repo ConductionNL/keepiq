@@ -203,8 +203,9 @@ describe('Vault tab', () => {
 		expect($('detail-secret').textContent).toBe('x-password')
 
 		// Edit: a new password, saved as ciphertext.
+		// Edit fetches the item fresh before the form opens.
 		$('detail-edit').click()
-		expect($('edit-name').value).toBe('Example')
+		await vi.waitFor(() => expect($('edit-name').value).toBe('Example'))
 		$('edit-secret').value = 'Brand-new-Pa55word!'
 		$('vault-edit').dispatchEvent(new Event('submit', { cancelable: true }))
 		await vi.waitFor(() =>
@@ -216,7 +217,9 @@ describe('Vault tab', () => {
 			).toBe(true),
 		)
 		const put = server.calls.find((c) => c.method === 'PUT')
-		expect(put.body).toMatchObject({ name: 'Example', folderId: 'f1' })
+		// Only the changed password goes out: untouched fields are never
+		// rewritten from the form.
+		expect(Object.keys(put.body).sort()).toEqual(['encryptionSuiteId', 'key'])
 		expect(put.body.key).toBeTruthy()
 
 		// New item with a generated password.

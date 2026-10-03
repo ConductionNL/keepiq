@@ -1591,7 +1591,15 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "teamfratrædelse, krypteringssuiter og overtagelse ved administrator",
         "audit log, compliance reports, SIEM export and honey alerts": "revisionslog, overholdelsesrapporter, SIEM-eksport og lokkealarmer",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Hvor mange versioner af en hemmelighed der gemmes, hvor længe, og hvor længe slettede hemmeligheder bliver i papirkurven.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Grænser for krypterede vedhæftede filer, håndhævet på serveren i gemte krypterede bytes."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Grænser for krypterede vedhæftede filer, håndhævet på serveren i gemte krypterede bytes.",
+        "Type the suite ID again to confirm": "Skriv pakke-ID'et igen for at bekræfte",
+        "This does not match the suite ID.": "Dette matcher ikke pakke-ID'et.",
+        "Confirm with your master password": "Bekræft med din masteradgangskode",
+        "Confirm": "Bekræft",
+        "That master password is not right.": "Den masteradgangskode er ikke korrekt.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Du deler med en ny person. Indtast din masteradgangskode for at bekræfte.",
+        "Enter your master password to confirm this share.": "Indtast din masteradgangskode for at bekræfte denne deling.",
+        "Enter your master password to confirm this delegation.": "Indtast din masteradgangskode for at bekræfte denne delegering."
     },
     "nplurals=2; plural=(n != 1);"
 )

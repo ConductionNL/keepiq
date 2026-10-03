@@ -134,13 +134,8 @@ export const useGroupShareStore = defineStore('groupShare', {
 						groupShare.id,
 						members,
 					)
-					const response = await axios.post(
-						generateUrl('/apps/keepiq/api/v1/shares/register-batch'),
-						{ shares: rows },
-					)
-					const items = Array.isArray(response.data?.items)
-						? response.data.items
-						: []
+					// register-batch needs a vault-key proof (keepiq#818).
+					const { items } = await useShareStore().registerBatch(rows)
 					received = items.filter(
 						(item) =>
 							item.status === 'created' || item.status === 'exists',

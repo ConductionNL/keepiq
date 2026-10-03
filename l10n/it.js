@@ -1272,7 +1272,7 @@ OC.L10N.register(
         "Removed the user from {count} team folders.": "Utente rimosso da {count} cartelle di team.",
         "Approve a share": "Approva una condivisione",
         "This approval link is incomplete. Open it again from the notification.": "Questo link di approvazione è incompleto. Aprilo di nuovo dalla notifica.",
-        "Deny": "Nega",
+        "Deny": "Rifiuta",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} si è unito a un gruppo con cui condividi un segreto. Condividere il segreto anche con questa persona?",
         "{requester} asks you to share a secret with {user}.": "{requester} ti chiede di condividere un segreto con {user}.",
         "Shared. The recipient can now open the secret.": "Condiviso. Il destinatario ora può aprire il segreto.",
@@ -1591,7 +1591,15 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "uscite dal team, suite di cifratura e subentro dell'amministratore",
         "audit log, compliance reports, SIEM export and honey alerts": "registro di audit, report di conformità, esportazione SIEM e avvisi esca",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Quante versioni di un segreto vengono conservate, per quanto tempo e per quanto tempo i segreti eliminati restano nel cestino.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limiti per gli allegati cifrati, applicati sul server in byte cifrati memorizzati."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limiti per gli allegati cifrati, applicati sul server in byte cifrati memorizzati.",
+        "Type the suite ID again to confirm": "Digita di nuovo l'ID del set per confermare",
+        "This does not match the suite ID.": "Non corrisponde all'ID del set.",
+        "Confirm with your master password": "Conferma con la password master",
+        "Confirm": "Conferma",
+        "That master password is not right.": "Questa password master non è corretta.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Stai condividendo con una persona nuova. Inserisci la password master per confermare.",
+        "Enter your master password to confirm this share.": "Inserisci la password master per confermare questa condivisione.",
+        "Enter your master password to confirm this delegation.": "Inserisci la password master per confermare questa delega."
     },
     "nplurals=2; plural=(n != 1);"
 )

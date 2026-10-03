@@ -1591,7 +1591,15 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "plecări din echipă, suite de criptare și preluare de către administrator",
         "audit log, compliance reports, SIEM export and honey alerts": "jurnal de audit, rapoarte de conformitate, export SIEM și alerte momeală",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Câte versiuni ale unui secret se păstrează, cât timp și cât timp rămân secretele șterse în coșul de gunoi.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limite pentru atașamentele criptate, aplicate pe server în octeți criptați stocați."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Limite pentru atașamentele criptate, aplicate pe server în octeți criptați stocați.",
+        "Type the suite ID again to confirm": "Introduceți din nou ID-ul suitei pentru confirmare",
+        "This does not match the suite ID.": "Nu corespunde cu ID-ul suitei.",
+        "Confirm with your master password": "Confirmați cu parola principală",
+        "Confirm": "Confirmare",
+        "That master password is not right.": "Această parolă principală nu este corectă.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Partajați cu o persoană nouă. Introduceți parola principală pentru confirmare.",
+        "Enter your master password to confirm this share.": "Introduceți parola principală pentru a confirma această partajare.",
+        "Enter your master password to confirm this delegation.": "Introduceți parola principală pentru a confirma această delegare."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

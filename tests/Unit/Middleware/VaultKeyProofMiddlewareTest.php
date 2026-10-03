@@ -65,6 +65,10 @@ class GuardFixtureController extends Controller {
 	public function guardedMigrationNewSuite(): void {
 	}
 
+	#[VaultKeyProofRequired(purpose: 'share-new-recipient', exemption: \OCA\Keepiq\Service\KnownShareRecipientExemption::class)]
+	public function guardedExemptable(): void {
+	}
+
 	public function unguarded(): void {
 	}
 }//end class
@@ -287,6 +291,46 @@ class VaultKeyProofMiddlewareTest extends TestCase {
 			AuditEventTypes::WHITELIST[AuditEventTypes::KEY_PROOF_REFUSED]
 		);
 	}//end testAfterExceptionRecordsAKeyProofRefusedAuditEvent()
+
+	/**
+	 * Without a container the declared exemption cannot be asked, so the proof
+	 * is still required (keepiq#818 fails closed).
+	 *
+	 * @return void
+	 */
+	public function testAnExemptionWithoutAContainerStillRequiresTheProof(): void {
+		$this->suiteService->method('getActiveSuite')->willReturn($this->suiteWithCertificate('CERT-PEM'));
+		$this->request->method('getHeader')->willReturn('');
+		$this->proofService->expects($this->once())->method('verify')
+			->willThrowException(new KeyProofRequiredException('No challenge presented'));
+
+		$this->expectException(KeyProofRequiredException::class);
+		$this->middleware->beforeController($this->controller, 'guardedExemptable');
+	}//end testAnExemptionWithoutAContainerStillRequiresTheProof()
+
+	/**
+	 * A container entry that is not a VaultKeyProofExemption waives nothing.
+	 *
+	 * @return void
+	 */
+	public function testAnExemptionOfTheWrongTypeStillRequiresTheProof(): void {
+		$container = $this->createMock(\Psr\Container\ContainerInterface::class);
+		$container->method('get')->willReturn(new \stdClass());
+		$middleware = new VaultKeyProofMiddleware(
+			request: $this->request,
+			userSession: $this->userSession,
+			suiteService: $this->suiteService,
+			proofService: $this->proofService,
+			migrationMapper: $this->migrationMapper,
+			logger: $this->logger,
+			container: $container,
+		);
+		$this->suiteService->method('getActiveSuite')->willReturn($this->suiteWithCertificate('CERT-PEM'));
+		$this->request->method('getHeader')->willReturn('');
+		$this->proofService->expects($this->once())->method('verify');
+
+		$middleware->beforeController($this->controller, 'guardedExemptable');
+	}//end testAnExemptionOfTheWrongTypeStillRequiresTheProof()
 
 	public function testAfterExceptionRethrowsAForeignException(): void {
 		$this->expectException(RuntimeException::class);

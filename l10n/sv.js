@@ -1591,7 +1591,15 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "teamavslut, krypteringssviter och övertagande av administratör",
         "audit log, compliance reports, SIEM export and honey alerts": "granskningslogg, efterlevnadsrapporter, SIEM-export och lockbeteslarm",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Hur många versioner av en hemlighet som sparas, hur länge, och hur länge raderade hemligheter ligger kvar i papperskorgen.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Gränser för krypterade bilagor, som servern tillämpar i lagrade krypterade byte."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Gränser för krypterade bilagor, som servern tillämpar i lagrade krypterade byte.",
+        "Type the suite ID again to confirm": "Skriv svit-ID:t igen för att bekräfta",
+        "This does not match the suite ID.": "Detta matchar inte svit-ID:t.",
+        "Confirm with your master password": "Bekräfta med ditt huvudlösenord",
+        "Confirm": "Bekräfta",
+        "That master password is not right.": "Det huvudlösenordet stämmer inte.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Du delar med en ny person. Ange ditt huvudlösenord för att bekräfta.",
+        "Enter your master password to confirm this share.": "Ange ditt huvudlösenord för att bekräfta delningen.",
+        "Enter your master password to confirm this delegation.": "Ange ditt huvudlösenord för att bekräfta delegeringen."
     },
     "nplurals=2; plural=(n != 1);"
 )

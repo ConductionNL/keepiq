@@ -92,6 +92,8 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 		setTab: (url, id = 1) => {
 			tab = { id, url }
 		},
+		// Other tabs the popup can name by id (a popped-out popup).
+		otherTabs: new Map(),
 		runtime: {
 			id: EXTENSION_ID,
 			getURL: (path) => EXTENSION_BASE + path,
@@ -99,6 +101,11 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 		},
 		tabs: {
 			query: vi.fn(async () => [tab]),
+			get: vi.fn(async (id) => {
+				const found = id === tab.id ? tab : fake.otherTabs.get(id)
+				if (!found) throw new Error('No tab with id: ' + id)
+				return found
+			}),
 			sendMessage: vi.fn(async (tabId, msg, options) => {
 				filled.push(options ? { ...msg, tabId, options } : msg)
 				if (msg.type === 'fill-otp') return { filled: fake.otpFieldOnPage }
@@ -106,6 +113,11 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 			}),
 		},
 		windows: { create: vi.fn() },
+		alarms: {
+			create: vi.fn(),
+			clear: vi.fn(),
+			onAlarm: { addListener: () => {} },
+		},
 	}
 	globalThis.chrome = {
 		...fake,
@@ -195,6 +207,50 @@ export function installServer(servers) {
 		// (clients-extension-generator-vault-send).
 		if (path.startsWith('/api/v1/secrets?') && method === 'GET') {
 			return respond(200, { items: s.rows, total: s.rows.length, page: 1 })
+		}
+		// The offline manifest (clients-extension-complete); s.manifestStatus
+		// makes it fail, as when an administrator switched offline caching off.
+		if (path === '/api/v1/offline/manifest') {
+			if (s.manifestStatus)
+				return respond(s.manifestStatus, { message: 'off' })
+			return respond(200, {
+				suite: s.suite,
+				secrets: s.rows,
+				folders: s.folders ?? [],
+				types: s.types ?? [],
+				syncedAt: '2026-10-03T00:00:00+00:00',
+			})
+		}
+		// Folders, kept in s.folders (clients-extension-complete).
+		if (path === '/api/v1/folders' && method === 'POST') {
+			const folder = {
+				id: 'new-folder-' + ((s.folders ?? []).length + 1),
+				name: body.name,
+				parentId: body.parentId ?? null,
+			}
+			s.folders = [...(s.folders ?? []), folder]
+			return respond(201, folder)
+		}
+		if (/^\/api\/v1\/folders\/[^/]+\/children$/.test(path)) {
+			const id = decodeURIComponent(path.split('/')[4])
+			return respond(
+				200,
+				s.children?.[id] ?? { directSecretCount: 0, subfolders: [] },
+			)
+		}
+		if (path.startsWith('/api/v1/folders/') && method === 'PUT') {
+			const id = decodeURIComponent(path.slice('/api/v1/folders/'.length))
+			s.folders = (s.folders ?? []).map((f) =>
+				f.id === id ? { ...f, ...body } : f,
+			)
+			return respond(200, { id })
+		}
+		if (path.startsWith('/api/v1/folders/') && method === 'DELETE') {
+			const id = decodeURIComponent(
+				path.slice('/api/v1/folders/'.length).split('?')[0],
+			)
+			s.folders = (s.folders ?? []).filter((f) => f.id !== id)
+			return respond(200, { status: 'deleted' })
 		}
 		if (path === '/api/v1/folders') return respond(200, s.folders ?? [])
 		if (path.startsWith('/api/v1/secrets/') && method === 'PUT')

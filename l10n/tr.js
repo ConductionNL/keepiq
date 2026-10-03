@@ -1591,7 +1591,15 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "ekipten ayrılanlar, şifreleme paketleri ve yönetici devralması",
         "audit log, compliance reports, SIEM export and honey alerts": "denetim günlüğü, uyumluluk raporları, SIEM dışa aktarımı ve tuzak uyarıları",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Bir gizli bilginin kaç sürümünün ne kadar süre saklandığı ve silinen gizli bilgilerin çöp kutusunda ne kadar kaldığı.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Şifreli ekler için sınırlar; sunucu bunları depolanan şifreli baytlarda uygular."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Şifreli ekler için sınırlar; sunucu bunları depolanan şifreli baytlarda uygular.",
+        "Type the suite ID again to confirm": "Onaylamak için paket kimliğini yeniden yazın",
+        "This does not match the suite ID.": "Bu, paket kimliğiyle eşleşmiyor.",
+        "Confirm with your master password": "Ana parolanızla onaylayın",
+        "Confirm": "Onayla",
+        "That master password is not right.": "Bu ana parola doğru değil.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Yeni biriyle paylaşıyorsunuz. Onaylamak için ana parolanızı girin.",
+        "Enter your master password to confirm this share.": "Bu paylaşımı onaylamak için ana parolanızı girin.",
+        "Enter your master password to confirm this delegation.": "Bu yetki devrini onaylamak için ana parolanızı girin."
     },
     "nplurals=1; plural=0;"
 )

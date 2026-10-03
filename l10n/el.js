@@ -1272,7 +1272,7 @@ OC.L10N.register(
         "Removed the user from {count} team folders.": "Ο χρήστης αφαιρέθηκε από {count} φακέλους ομάδας.",
         "Approve a share": "Έγκριση κοινής χρήσης",
         "This approval link is incomplete. Open it again from the notification.": "Αυτός ο σύνδεσμος έγκρισης είναι ελλιπής. Ανοίξτε τον ξανά από την ειδοποίηση.",
-        "Deny": "Άρνηση",
+        "Deny": "Απόρριψη",
         "{user} joined a group you share a secret with. Share the secret with them too?": "Ο χρήστης {user} εντάχθηκε σε μια ομάδα με την οποία μοιράζεστε ένα μυστικό. Να μοιραστεί το μυστικό και μαζί του;",
         "{requester} asks you to share a secret with {user}.": "Ο χρήστης {requester} σας ζητά να μοιραστείτε ένα μυστικό με τον χρήστη {user}.",
         "Shared. The recipient can now open the secret.": "Κοινοποιήθηκε. Ο παραλήπτης μπορεί πλέον να ανοίξει το μυστικό.",
@@ -1591,7 +1591,15 @@ OC.L10N.register(
         "team offboarding, encryption suites and admin handover": "αποχωρήσεις από την ομάδα, σουίτες κρυπτογράφησης και ανάληψη από διαχειριστή",
         "audit log, compliance reports, SIEM export and honey alerts": "αρχείο ελέγχου, αναφορές συμμόρφωσης, εξαγωγή SIEM και ειδοποιήσεις δολωμάτων",
         "How many versions of a secret are kept, for how long, and how long deleted secrets stay in the trash.": "Πόσες εκδόσεις ενός μυστικού διατηρούνται, για πόσο, και για πόσο μένουν στον κάδο τα διαγραμμένα μυστικά.",
-        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Όρια για κρυπτογραφημένα συνημμένα, που επιβάλλει ο διακομιστής στα αποθηκευμένα κρυπτογραφημένα byte."
+        "Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.": "Όρια για κρυπτογραφημένα συνημμένα, που επιβάλλει ο διακομιστής στα αποθηκευμένα κρυπτογραφημένα byte.",
+        "Type the suite ID again to confirm": "Πληκτρολογήστε ξανά το αναγνωριστικό σουίτας για επιβεβαίωση",
+        "This does not match the suite ID.": "Δεν ταιριάζει με το αναγνωριστικό σουίτας.",
+        "Confirm with your master password": "Επιβεβαίωση με τον κύριο κωδικό πρόσβασης",
+        "Confirm": "Επιβεβαίωση",
+        "That master password is not right.": "Αυτός ο κύριος κωδικός πρόσβασης δεν είναι σωστός.",
+        "You are sharing with someone new. Enter your master password to confirm.": "Μοιράζεστε με κάποιο νέο άτομο. Εισαγάγετε τον κύριο κωδικό πρόσβασης για επιβεβαίωση.",
+        "Enter your master password to confirm this share.": "Εισαγάγετε τον κύριο κωδικό πρόσβασης για να επιβεβαιώσετε αυτή την κοινή χρήση.",
+        "Enter your master password to confirm this delegation.": "Εισαγάγετε τον κύριο κωδικό πρόσβασης για να επιβεβαιώσετε αυτή την ανάθεση."
     },
     "nplurals=2; plural=(n != 1);"
 )
