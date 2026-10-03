@@ -40,3 +40,17 @@ export {
 	toBase64Url,
 	fromBase64Url,
 } from '../../../src/crypto/passkey.js'
+
+// New device approval (crypto-new-device-approval D1, D2, D4): the one-time
+// X25519 key, the shared verification phrase and the opening of the sealed
+// unlock key, re-exported from the web app.
+export { generateRecipientKeyPair } from '../../../src/crypto/hpke.js'
+export {
+	openUnlockKey,
+	sealUnlockKey,
+	toBase64,
+} from '../../../src/crypto/deviceApproval.js'
+export {
+	verificationPhrase,
+	verificationPhraseFromBase64,
+} from '../../../src/crypto/verificationPhrase.js'

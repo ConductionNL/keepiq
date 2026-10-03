@@ -207,10 +207,11 @@ function base(config) {
 	return String(config.url).replace(/\/+$/, '')
 }
 
-async function request(config, method, path, body) {
+async function request(config, method, path, body, extraHeaders = {}) {
 	const res = await fetch(base(config) + '/index.php/apps/keepiq' + path, {
 		method,
 		headers: {
+			...extraHeaders,
 			Authorization: authHeader(config),
 			'Content-Type': 'application/json',
 			'OCS-APIRequest': 'true',
@@ -688,5 +689,75 @@ export function markPasskeyUsed(config, id) {
 		config,
 		'POST',
 		'/api/v1/passkeys/' + encodeURIComponent(id) + '/used',
+	)
+}
+
+/** The header that carries a device approval request's one-time secret. */
+export const REQUEST_SECRET_HEADER = 'X-Keepiq-Request-Secret'
+
+/**
+ * Whether an administrator left device approval on.
+ *
+ * @param {object} config The paired config.
+ * @return {Promise<boolean>}
+ * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+ */
+export async function deviceApprovalEnabled(config) {
+	try {
+		const res = await request(config, 'GET', '/api/v1/device-approvals/status')
+		return res?.enabled === true
+	} catch {
+		return false
+	}
+}
+
+/**
+ * Ask to unlock this extension from another device.
+ *
+ * @param {object} config The paired config.
+ * @param {{publicKey: string, deviceLabel: string}} body The one-time public key (base64) and a label.
+ * @return {Promise<{id: string, requestSecret: string, expiresAt: string}>}
+ * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+ */
+export function createDeviceApproval(config, body) {
+	return request(config, 'POST', '/api/v1/device-approvals', {
+		publicKey: body.publicKey,
+		clientKind: 'extension',
+		deviceLabel: body.deviceLabel,
+	})
+}
+
+/**
+ * Pick up a device approval request with its one-time secret.
+ *
+ * @param {object} config The paired config.
+ * @param {string} id The request id.
+ * @param {string} secret The request secret the create call returned.
+ * @return {Promise<{status: string, sealedUnlockKey?: string}>}
+ * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+ */
+export function pickupDeviceApproval(config, id, secret) {
+	return request(
+		config,
+		'GET',
+		'/api/v1/device-approvals/' + encodeURIComponent(id),
+		undefined,
+		{ [REQUEST_SECRET_HEADER]: secret },
+	)
+}
+
+/**
+ * End a device approval request this extension no longer waits for.
+ *
+ * @param {object} config The paired config.
+ * @param {string} id The request id.
+ * @return {Promise<object>}
+ * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+ */
+export function endDeviceApproval(config, id) {
+	return request(
+		config,
+		'POST',
+		'/api/v1/device-approvals/' + encodeURIComponent(id) + '/deny',
 	)
 }
