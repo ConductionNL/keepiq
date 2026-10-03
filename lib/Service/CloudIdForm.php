@@ -43,18 +43,18 @@ final class CloudIdForm {
 	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public function canonical(string $cloudId): string {
-		$at = strrpos($cloudId, '@');
-		if ($at === false || $at === 0) {
+		$atSign = strrpos($cloudId, '@');
+		if ($atSign === false || $atSign === 0) {
 			return '';
 		}
 
-		$remote = (string)preg_replace('#^https?://#i', '', substr($cloudId, $at + 1));
+		$remote = (string)preg_replace('#^https?://#i', '', substr($cloudId, $atSign + 1));
 		$remote = strtolower(rtrim($remote, '/'));
 		if ($remote === '') {
 			return '';
 		}
 
-		return substr($cloudId, 0, $at) . '@' . $remote;
+		return substr($cloudId, 0, $atSign) . '@' . $remote;
 	}//end canonical()
 
 	/**
