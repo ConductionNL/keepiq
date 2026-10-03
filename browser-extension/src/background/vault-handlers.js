@@ -10,6 +10,7 @@
  */
 
 import { generateKey } from '../../../src/generator/generator.js'
+import { parsePasskey } from '../../../src/passkey/passkey.js'
 import { deriveAesKeyArgon2id } from '../../../src/crypto/argon2.js'
 import {
 	aesEncrypt,
@@ -156,6 +157,7 @@ export function buildVaultHandlers({
 		 *
 		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-item-detail-with-copy-and-reveal
 		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-detail-sections-for-every-kind-of-item
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-a-passkeys-private-key-stays-in-the-worker
 		 */
 		'vault-item': async (payload) => {
 			const account = await unlockedAccount()
@@ -193,7 +195,25 @@ export function buildVaultHandlers({
 					migrationError: row.migrationError || null,
 				}
 			}
-			const { login, secret } = await vault.decryptSecret(account.id, row)
+			const decrypted = await vault.decryptSecret(account.id, row)
+			const login = decrypted.login
+			let secret = decrypted.secret
+			// A passkey's private key stays in the worker: the popup gets only
+			// what it shows, so the key never reaches a page or its DOM.
+			let passkey
+			if (meta.typeName === 'passkey') {
+				const credential = parsePasskey(secret)
+				passkey = credential
+					? {
+							rpId: credential.rpId,
+							rpName: credential.rpName,
+							userName: credential.userName,
+							userDisplayName: credential.userDisplayName,
+							createdAt: credential.createdAt,
+						}
+					: null
+				secret = ''
+			}
 			let additionalFields = null
 			let additionalFieldsError = false
 			if (row.additionalFields) {
@@ -223,6 +243,7 @@ export function buildVaultHandlers({
 				fromCache,
 				login,
 				secret,
+				...(passkey !== undefined ? { passkey } : {}),
 				additionalFields,
 				additionalFieldsError,
 			}
@@ -234,11 +255,19 @@ export function buildVaultHandlers({
 		 *
 		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-add-edit-and-delete-items
 		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-edit-every-kind-of-item
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-a-passkeys-private-key-stays-in-the-worker
 		 */
 		'vault-save': async (payload) => {
 			const account = await unlockedAccount()
 			const changes = payload.changes || {}
 			const creating = !payload.id
+			// A passkey is made and updated by the website that uses it; here
+			// only its name, address, folder and notes change.
+			if (payload.typeName === 'passkey' && (creating || 'key' in changes)) {
+				throw new Error(
+					'A passkey is created by the website that uses it, and its key cannot be edited',
+				)
+			}
 			if (creating || 'name' in changes) {
 				const name = String(changes.name ?? '').trim()
 				if (name === '') {

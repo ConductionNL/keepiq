@@ -59,3 +59,18 @@ The Vault tab MUST offer a folder manager that shows the folders as a tree, sort
 - **GIVEN** Work holds items and the subfolder Clients
 - **WHEN** the user chooses to move Clients' items and confirms
 - **THEN** the delete request carries a plan for Work's items and for Clients
+
+### Requirement: A passkey's private key stays in the worker
+The worker MUST NOT send a passkey's private key to the popup. The popup receives the site and account of a passkey only, and its edit form MUST NOT offer the key. The extension MUST NOT create a passkey item, change a passkey's key, clone a passkey or offer it for Send: a passkey is made and updated by the website that uses it. Name, address, folder and notes stay editable.
+
+#### Scenario: Opening a passkey
+@e2e exclude Browser-extension worker and popup. Covered by tests/extension/popupItemDetail.spec.js ("keeps the private key in the worker: the popup gets site and account only") and ("shows a passkey without clone or Send, and its edit form has no key field").
+- **GIVEN** a passkey item in the vault
+- **WHEN** the user opens it and then edits it
+- **THEN** the popup shows its site and account, no clone or Send, no key field, and the private key appears nowhere in the popup
+
+#### Scenario: Creating or re-keying a passkey
+@e2e exclude Browser-extension worker. Covered by tests/extension/popupItemDetail.spec.js ("refuses to create a passkey or change its key, and offers no passkey type for a new item").
+- **GIVEN** an unlocked vault
+- **WHEN** a save would create a passkey or change a passkey's key
+- **THEN** the worker refuses it, and the new-item form offers no passkey type

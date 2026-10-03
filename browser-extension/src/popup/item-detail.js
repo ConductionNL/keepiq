@@ -1,10 +1,11 @@
 /**
  * The item detail view: sections for every kind of item. Values arrive
  * decrypted from the worker when the item opens and live in this view only;
- * `clearDetail` drops them when the view closes. A passkey's private key is
- * never shown or copyable.
+ * `clearDetail` drops them when the view closes. A passkey's private key
+ * never reaches this view: the worker sends only the site and account.
  *
  * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-detail-sections-for-every-kind-of-item
+ * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-a-passkeys-private-key-stays-in-the-worker
  */
 
 import {
@@ -12,7 +13,6 @@ import {
 	cardLast4,
 	parsePayload,
 } from '../../../src/cardIdentity/cardIdentity.js'
-import { parsePasskey } from '../../../src/passkey/passkey.js'
 import {
 	generateTotp,
 	parseOtpauth,
@@ -184,6 +184,10 @@ export function renderDetail({ $, doc }, item, folders) {
 		$(id).dataset.blocked = blocked ? 'true' : 'false'
 		$(id).disabled = blocked || $('vault-offline').hidden === false
 	}
+	// A clone would copy a passkey's key and a Send would carry it.
+	const isPasskey = formKind(item.typeName) === 'passkey'
+	$('detail-clone').hidden = isPasskey
+	$('detail-send').hidden = isPasskey
 	if (blocked) {
 		$('detail-blocked-reason').textContent = item.blockedReason
 		$('detail-migration').textContent = item.migrationError || ''
@@ -238,7 +242,7 @@ export function renderDetail({ $, doc }, item, folders) {
 		sections.appendChild(el)
 	}
 	if (kind === 'passkey') {
-		const credential = parsePasskey(item.secret)
+		const credential = item.passkey
 		const el = section(doc, 'Passkey')
 		if (!credential) {
 			const p = doc.createElement('p')

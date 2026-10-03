@@ -5,6 +5,7 @@
  *
  * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
  * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-edit-every-kind-of-item
+ * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-a-passkeys-private-key-stays-in-the-worker
  */
 
 import {
@@ -268,7 +269,6 @@ export function initVault({
 			kind === 'login'
 			|| kind === 'generic'
 			|| kind === 'totp'
-			|| kind === 'passkey'
 		)
 		$('edit-generate').hidden = kind !== 'login' && kind !== 'generic'
 		$('edit-secret-label').firstChild.textContent =
@@ -314,7 +314,10 @@ export function initVault({
 		$('edit-type-label').hidden = !creating || clone
 		fillSelect(
 			$('edit-type'),
-			types.map((t) => ({ value: t.id, label: t.name })),
+			// Passkeys are created by the website that uses them.
+			types
+				.filter((t) => t.name !== 'passkey')
+				.map((t) => ({ value: t.id, label: t.name })),
 			doc,
 		)
 		$('edit-type').value = typeId
