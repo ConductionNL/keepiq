@@ -95,7 +95,7 @@ class ImportService {
 	 * @throws SuiteBlockedException When the user has no active EncryptionSuite
 	 * @throws InvalidArgumentException When the chunk exceeds the item cap
 	 *
-	 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+	 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 	 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
 	 */
 	public function commitChunk(array $items, string $userId): array {

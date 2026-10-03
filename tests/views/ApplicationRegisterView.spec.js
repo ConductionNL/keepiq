@@ -76,20 +76,13 @@ describe('ApplicationRegisterView', () => {
 		expect(dialog.attributes('data-open')).toBe('true')
 	})
 
-	it('opens the PrivateKeyDownloadDialog when the store has a one-time key', async () => {
+	it('mounts no private-key download dialog (pki-09 decided no)', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({ data: [] })
 		const wrapper = mount(ApplicationRegisterView)
 		await flush()
-		const dialog = wrapper.find('[data-testid="private-key-dialog"]')
-		expect(dialog.attributes('data-open')).toBe('false')
-		// Simulate the registration flow having captured the key.
-		const { useApplicationStore } =
-			await import('../../src/store/modules/application.js')
-		const store = useApplicationStore()
-		store.oneTimePrivateKey =
-			'-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----'
-		await flush()
-		expect(dialog.attributes('data-open')).toBe('true')
+		expect(wrapper.find('[data-testid="private-key-dialog"]').exists()).toBe(
+			false,
+		)
 	})
 
 	// The dashboard's "Register application" tile deep-links to

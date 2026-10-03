@@ -181,6 +181,8 @@ class ComplianceReportService {
 	 * List snapshots, newest first.
 	 *
 	 * @return ComplianceReport[]
+	 *
+	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-immutable-timestamped-evidence-snapshot
 	 */
 	public function listReports(): array {
 		return $this->mapper->findAll();
@@ -207,6 +209,8 @@ class ComplianceReportService {
 	 * @param string $format The export format (csv|pdf)
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-csv-and-pdf-export
 	 */
 	public function recordExport(string $adminUid, string $reportId, string $format): void {
 		$this->dispatchAudit(
@@ -221,6 +225,8 @@ class ComplianceReportService {
 	 * Recompute the warm metrics cache (daily job, §3.1).
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-org-level-metadata-only-compliance-report
 	 */
 	public function refreshMetricsCache(): void {
 		$appId = Application::APP_ID;
@@ -232,6 +238,8 @@ class ComplianceReportService {
 	 * The warm metrics cache (computed on demand when cold).
 	 *
 	 * @return array{computedAt:string|null, metrics:array<string,mixed>}
+	 *
+	 * @spec openspec/specs/compliance-reporting/spec.md#requirement-org-level-metadata-only-compliance-report
 	 */
 	public function cachedMetrics(): array {
 		$appId = Application::APP_ID;

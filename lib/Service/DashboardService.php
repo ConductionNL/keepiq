@@ -88,6 +88,8 @@ class DashboardService {
 	 * @return mixed The decoded value, or null when no row exists.
 	 *
 	 * @throws InvalidArgumentException When the key is not whitelisted.
+	 *
+	 * @spec openspec/specs/user-settings/spec.md#requirement-default-view-preference-v1
 	 */
 	public function get(string $userId, string $settingKey): mixed {
 		$this->validateUserId(userId: $userId);
@@ -108,6 +110,8 @@ class DashboardService {
 	 * @param string $userId The Nextcloud user ID
 	 *
 	 * @return array<string,mixed>
+	 *
+	 * @spec openspec/specs/user-settings/spec.md#requirement-default-view-preference-v1
 	 */
 	public function listForUser(string $userId): array {
 		$this->validateUserId(userId: $userId);
@@ -180,6 +184,8 @@ class DashboardService {
 	 * @return array<string,mixed> The full settings map for the user post-update.
 	 *
 	 * @throws InvalidArgumentException
+	 *
+	 * @spec openspec/specs/user-settings/spec.md#requirement-default-view-preference-v1
 	 */
 	public function setMany(string $userId, array $settings): array {
 		foreach ($settings as $key => $value) {
@@ -195,6 +201,8 @@ class DashboardService {
 	 * @param string $userId The Nextcloud user ID
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/user-settings/spec.md#requirement-default-view-preference-v1
 	 */
 	public function deleteAllForUser(string $userId): void {
 		$this->mapper->deleteByUser($userId);

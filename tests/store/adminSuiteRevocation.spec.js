@@ -22,7 +22,7 @@
  * `markCompromised` was left off the server's rotation-may-be-warranted warning
  * is surfaced too. Contact identities never cross the wire (count only).
  *
- * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+ * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
  */
 
 import axios from '@nextcloud/axios'
@@ -77,6 +77,7 @@ describe('useEncryptionSuiteStore — administrator force-revocation', () => {
 			id: 'suite-1',
 			reason: 'offboarding',
 			markCompromised: true,
+			confirmSuiteId: 'suite-1',
 		})
 
 		// THE SECURITY INVARIANT. The endpoint's #[PasswordConfirmationRequired]
@@ -94,7 +95,13 @@ describe('useEncryptionSuiteStore — administrator force-revocation', () => {
 		expect(url).toContain('/apps/keepiq/api/v1/suites/suite-1/force-revoke')
 		// The administrator's collected inputs: a required reason and the explicit,
 		// transient compromise decision. No vault-key proof (the admin holds none).
-		expect(body).toEqual({ reason: 'offboarding', markCompromised: true })
+		// The typed suite id is echoed for the backend-independent confirmation
+		// (keepiq#871).
+		expect(body).toEqual({
+			reason: 'offboarding',
+			markCompromised: true,
+			confirmSuiteId: 'suite-1',
+		})
 	})
 
 	it('does NOT post when the administrator cancels the sudo prompt', async () => {
@@ -173,6 +180,7 @@ describe('useEncryptionSuiteStore — administrator force-revocation', () => {
 		expect(post.mock.calls[0][1]).toEqual({
 			reason: 'lost password',
 			markCompromised: false,
+			confirmSuiteId: '',
 		})
 		// A response without the extra keys must not throw — count falls back to 0
 		// and warning to null.
@@ -205,6 +213,36 @@ describe('useEncryptionSuiteStore — administrator force-revocation', () => {
 		expect(post).not.toHaveBeenCalled()
 	})
 
+	it('returns the second suite, the ended migration and an incomplete cascade', async () => {
+		vi.spyOn(axios, 'post').mockResolvedValue({
+			data: {
+				id: 'suite-1',
+				status: 'revoked',
+				emergencyContactsDestroyed: 1,
+				alsoRevokedSuite: 'suite-2',
+				terminatedMigration: 'migration-1',
+				alsoRevokedEmergencyContactsDestroyed: 2,
+				cascade: { stamped: 3, notified: 1, failed: 1 },
+				cascadeIncomplete: true,
+			},
+		})
+		const store = useEncryptionSuiteStore()
+
+		const outcome = await store.forceRevokeSuite({
+			id: 'suite-1',
+			reason: 'account taken over',
+			markCompromised: true,
+		})
+
+		// keepiq#877: the administrator must see the second revoked suite.
+		expect(outcome.alsoRevokedSuite).toBe('suite-2')
+		expect(outcome.terminatedMigration).toBe('migration-1')
+		expect(outcome.alsoRevokedEmergencyContactsDestroyed).toBe(2)
+		// keepiq#863: a partial cascade must reach the UI.
+		expect(outcome.cascadeIncomplete).toBe(true)
+		expect(outcome.cascadeFailed).toBe(1)
+	})
+
 	it('propagates a server refusal for the caller to surface', async () => {
 		vi.spyOn(axios, 'post').mockRejectedValue({
 			response: {
@@ -229,7 +267,8 @@ describe('useEncryptionSuiteStore — administrator reinstate', () => {
 		confirmPassword.mockClear()
 	})
 
-	it('posts the reinstate for the suite id and returns the reinstated suite', async () => {
+	it('completes sudo BEFORE posting the reinstate, and returns the reinstated suite', async () => {
+		confirmPassword.mockResolvedValue()
 		const post = vi.spyOn(axios, 'post').mockResolvedValue({
 			data: { id: 'suite-1', status: 'active' },
 		})
@@ -241,10 +280,24 @@ describe('useEncryptionSuiteStore — administrator reinstate', () => {
 		expect(post.mock.calls[0][0]).toContain(
 			'/apps/keepiq/api/v1/suites/suite-1/reinstate',
 		)
-		// Reinstate is admin-guarded but carries NO sudo — the confirmation flow
-		// must not run here.
-		expect(confirmPassword).not.toHaveBeenCalled()
+		// Reinstating re-opens every secret under the key, so it carries sudo
+		// like force-revoke does (keepiq#865).
+		expect(confirmPassword).toHaveBeenCalledTimes(1)
+		expect(confirmPassword.mock.invocationCallOrder[0]).toBeLessThan(
+			post.mock.invocationCallOrder[0],
+		)
 		expect(suite.status).toBe('active')
+	})
+
+	it('does NOT post the reinstate when the sudo prompt is cancelled', async () => {
+		confirmPassword.mockRejectedValueOnce(new Error('Dialog closed'))
+		const post = vi.spyOn(axios, 'post')
+		const store = useEncryptionSuiteStore()
+
+		await expect(store.reinstateSuiteAdmin('suite-1')).rejects.toThrow(
+			/Dialog closed/,
+		)
+		expect(post).not.toHaveBeenCalled()
 	})
 
 	it('refuses to reinstate without an id, before any request', async () => {
@@ -253,5 +306,81 @@ describe('useEncryptionSuiteStore — administrator reinstate', () => {
 
 		await expect(store.reinstateSuiteAdmin('')).rejects.toThrow(/No suite id/)
 		expect(post).not.toHaveBeenCalled()
+	})
+})
+
+describe('useEncryptionSuiteStore — re-enrolment after a revocation', () => {
+	beforeEach(() => {
+		setActivePinia(createPinia())
+		vi.restoreAllMocks()
+		confirmPassword.mockClear()
+		confirmPassword.mockResolvedValue()
+	})
+
+	it('posts a plain create when the server accepts it, with no sudo', async () => {
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockResolvedValue({ data: { id: 'suite-1' } })
+		const store = useEncryptionSuiteStore()
+
+		await store.postNewSuite({ publicKey: 'pk', encryptedPrivateKey: 'env' })
+
+		expect(post).toHaveBeenCalledTimes(1)
+		expect(post.mock.calls[0][0]).toMatch(/\/api\/v1\/suites$/)
+		expect(confirmPassword).not.toHaveBeenCalled()
+	})
+
+	it('confirms the password and re-enrols when the server asks for it (keepiq#860)', async () => {
+		const post = vi
+			.spyOn(axios, 'post')
+			.mockRejectedValueOnce({
+				response: {
+					status: 403,
+					data: { error: 'reauthentication_required' },
+				},
+			})
+			.mockResolvedValueOnce({ data: { id: 'suite-2' } })
+		const store = useEncryptionSuiteStore()
+
+		const response = await store.postNewSuite({
+			publicKey: 'pk',
+			encryptedPrivateKey: 'env',
+		})
+
+		expect(response.data.id).toBe('suite-2')
+		expect(post).toHaveBeenCalledTimes(2)
+		expect(post.mock.calls[1][0]).toContain('/apps/keepiq/api/v1/suites/reenrol')
+		expect(post.mock.calls[1][1]).toEqual({
+			publicKey: 'pk',
+			encryptedPrivateKey: 'env',
+		})
+		expect(confirmPassword.mock.invocationCallOrder[0]).toBeLessThan(
+			post.mock.invocationCallOrder[1],
+		)
+	})
+
+	it('does not re-enrol when the password prompt is cancelled', async () => {
+		confirmPassword.mockRejectedValueOnce(new Error('Dialog closed'))
+		const post = vi.spyOn(axios, 'post').mockRejectedValueOnce({
+			response: { status: 403, data: { error: 'reauthentication_required' } },
+		})
+		const store = useEncryptionSuiteStore()
+
+		await expect(
+			store.postNewSuite({ publicKey: 'pk', encryptedPrivateKey: 'env' }),
+		).rejects.toThrow(/Dialog closed/)
+		expect(post).toHaveBeenCalledTimes(1)
+	})
+
+	it('passes any other refusal through untouched', async () => {
+		vi.spyOn(axios, 'post').mockRejectedValueOnce({
+			response: { status: 409, data: { error: 'suite_already_exists' } },
+		})
+		const store = useEncryptionSuiteStore()
+
+		await expect(
+			store.postNewSuite({ publicKey: 'pk', encryptedPrivateKey: 'env' }),
+		).rejects.toMatchObject({ response: { status: 409 } })
+		expect(confirmPassword).not.toHaveBeenCalled()
 	})
 })

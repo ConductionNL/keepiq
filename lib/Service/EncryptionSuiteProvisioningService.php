@@ -34,7 +34,6 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
-use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Support\SuppressesDiagnostics;
 use OCP\IAppConfig;
 use OCP\IUserManager;
@@ -49,6 +48,13 @@ class EncryptionSuiteProvisioningService {
 	use SuppressesDiagnostics;
 
 	/**
+	 * Makes the single-active-suite check and the insert atomic per owner.
+	 *
+	 * @var SuiteSetupGuard
+	 */
+	private SuiteSetupGuard $setupGuard;
+
+	/**
 	 * Constructor for EncryptionSuiteProvisioningService.
 	 *
 	 * @param EncryptionSuiteMapper $mapper The encryption suite mapper
@@ -56,6 +62,7 @@ class EncryptionSuiteProvisioningService {
 	 * @param IAppConfig $appConfig The app config interface
 	 * @param IUserManager $userManager The user manager
 	 * @param LoggerInterface $logger The logger interface
+	 * @param SuiteSetupGuard|null $setupGuard The per-owner single-active-suite guard
 	 *
 	 * @return void
 	 *
@@ -67,7 +74,9 @@ class EncryptionSuiteProvisioningService {
 		private IAppConfig $appConfig,
 		private IUserManager $userManager,
 		private LoggerInterface $logger,
+		?SuiteSetupGuard $setupGuard = null,
 	) {
+		$this->setupGuard = ($setupGuard ?? new SuiteSetupGuard(mapper: $mapper));
 	}//end __construct()
 
 	/**
@@ -80,9 +89,11 @@ class EncryptionSuiteProvisioningService {
 	 *
 	 * @return EncryptionSuite
 	 *
-	 * @throws ConflictException When the owner already has an active suite. Use
-	 *                           createSuccessorSuite() for a compromise recovery,
-	 *                           which is the one flow allowed a second active suite.
+	 * @throws RuntimeException A ConflictException (from SuiteSetupGuard) when the
+	 *                           owner already has an active suite or a setup for it
+	 *                           is in progress. Use createSuccessorSuite() for a
+	 *                           compromise recovery, the one flow allowed a second
+	 *                           active suite.
 	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-plain-create-refuses-to-mint-a-second-active-suite
 	 */
@@ -110,24 +121,17 @@ class EncryptionSuiteProvisioningService {
 			publicKeyPem: $publicKeyPem
 		);
 
-		// Reported as #289 — the endpoint checked auth, parameters and the migration
-		// write-lock, but never whether a suite already existed, so any session could
-		// mint a second active suite. Resolution picks the NEWEST active suite, so new
-		// secrets were sealed to a key the owner was not unlocking with: they decrypt
-		// for nobody, and nothing reports it at the time.
-		$active = $this->mapper->countActiveByOwner(ownerType: $ownerType, ownerId: $ownerId);
-		if ($active > 0) {
-			throw new ConflictException(
-				message: 'An active EncryptionSuite already exists for this owner. '
-				. 'Change the master password or start a compromise recovery instead of creating a second suite.'
-			);
-		}
-
-		return $this->persistSuite(
+		// The count and the insert run under one lock per owner, so two setups
+		// submitted at the same moment cannot both count zero (keepiq#751).
+		return $this->setupGuard->createExclusive(
 			ownerType: $ownerType,
 			ownerId: $ownerId,
-			certificate: $certificate,
-			encryptedPrivateKey: $encryptedPrivateKey
+			persist: fn (): EncryptionSuite => $this->persistSuite(
+				ownerType: $ownerType,
+				ownerId: $ownerId,
+				certificate: $certificate,
+				encryptedPrivateKey: $encryptedPrivateKey
+			)
 		);
 	}//end createSuite()
 

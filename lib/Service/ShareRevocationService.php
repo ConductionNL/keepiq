@@ -138,15 +138,51 @@ class ShareRevocationService {
 	}//end revokeShare()
 
 	/**
-	 * Cascade-delete all share targets for a secret (called on secret delete).
+	 * End every share of a secret (called when the secret is trashed or
+	 * deleted): each recipient's copy goes with its share row, exactly as a
+	 * single revokeShare() does (keepiq#83). Deleting only the link rows left
+	 * the copies behind as ordinary-looking live secrets nobody tracked.
 	 *
 	 * @param string $sourceSecretId The source secret ID
 	 *
 	 * @return void
 	 *
+	 * @throws Throwable When a step fails; the transaction is rolled back
+	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
 	 */
 	public function deleteAllForSecret(string $sourceSecretId): void {
-		$this->mapper->deleteBySourceSecret($sourceSecretId);
+		$this->db->beginTransaction();
+		try {
+			foreach ($this->mapper->findBySourceSecret($sourceSecretId) as $share) {
+				$this->deleteRecipientCopy(copyId: $share->getSecretId());
+			}
+
+			$this->mapper->deleteBySourceSecret($sourceSecretId);
+			$this->db->commit();
+		} catch (Throwable $exception) {
+			$this->db->rollBack();
+			throw $exception;
+		}
 	}//end deleteAllForSecret()
+
+	/**
+	 * Delete one recipient copy and the attachment grants it holds. A copy
+	 * that is already gone is fine.
+	 *
+	 * @param string $copyId The recipient copy's Secret ID
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-revoke-share
+	 */
+	private function deleteRecipientCopy(string $copyId): void {
+		try {
+			$this->secretMapper->delete($this->secretMapper->findById($copyId));
+		} catch (DoesNotExistException) {
+			// Already gone; continue.
+		}
+
+		$this->attachmentService?->deleteGrantsForSecretCopy($copyId);
+	}//end deleteRecipientCopy()
 }//end class

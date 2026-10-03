@@ -43,6 +43,12 @@ use OCP\AppFramework\Db\Entity;
  * @method void setHmacSecretEnc(?string $hmacSecretEnc)
  * @method string|null getCategoryFilter()
  * @method void setCategoryFilter(?string $categoryFilter)
+ * @method string getFormat()
+ * @method void setFormat(string $format)
+ * @method string|null getCredentialEnc()
+ * @method void setCredentialEnc(?string $credentialEnc)
+ * @method string|null getConnectorOptions()
+ * @method void setConnectorOptions(?string $connectorOptions)
  * @method int getQueueCap()
  * @method void setQueueCap(int $queueCap)
  * @method string|null getLastDeliveryStatus()
@@ -114,6 +120,29 @@ class SiemSink extends Entity implements JsonSerializable {
 	 * @var string|null
 	 */
 	protected ?string $categoryFilter = null;
+
+	/**
+	 * Message format: json (default) or cef (syslog only).
+	 *
+	 * @var string
+	 */
+	protected string $format = 'json';
+
+	/**
+	 * The connector credential (Splunk HEC token or Sentinel client secret),
+	 * encrypted with ICrypto. Never serialized.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $credentialEnc = null;
+
+	/**
+	 * Non-secret connector settings as JSON (index, sourcetype, tenant id,
+	 * client id, data collection endpoint, rule id, stream, authority host).
+	 *
+	 * @var string|null
+	 */
+	protected ?string $connectorOptions = null;
 
 	/**
 	 * Bounded queue capacity (drop-oldest beyond).
@@ -226,6 +255,9 @@ class SiemSink extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'tls', type: 'boolean');
 		$this->addType(fieldName: 'hmacSecretEnc', type: 'string');
 		$this->addType(fieldName: 'categoryFilter', type: 'string');
+		$this->addType(fieldName: 'format', type: 'string');
+		$this->addType(fieldName: 'credentialEnc', type: 'string');
+		$this->addType(fieldName: 'connectorOptions', type: 'string');
 		$this->addType(fieldName: 'queueCap', type: 'integer');
 		$this->addType(fieldName: 'lastDeliveryStatus', type: 'string');
 		$this->addType(fieldName: 'lastSuccessAt', type: 'datetime');
@@ -257,6 +289,26 @@ class SiemSink extends Entity implements JsonSerializable {
 	}//end categoryFilterArray()
 
 	/**
+	 * The connector options as an array (empty when none are stored).
+	 *
+	 * @return array<string,string>
+	 *
+	 * @spec openspec/specs/siem-vendor-connectors/spec.md
+	 */
+	public function connectorOptionsArray(): array {
+		if ($this->connectorOptions === null || $this->connectorOptions === '') {
+			return [];
+		}
+
+		$decoded = json_decode($this->connectorOptions, true);
+		if (is_array($decoded) === false) {
+			return [];
+		}
+
+		return array_map('strval', $decoded);
+	}//end connectorOptionsArray()
+
+	/**
 	 * API shape — the HMAC secret NEVER appears here (§1.3), only
 	 * whether one is set.
 	 *
@@ -272,6 +324,10 @@ class SiemSink extends Entity implements JsonSerializable {
 			'tls' => $this->tls,
 			'hasHmacSecret' => ($this->hmacSecretEnc !== null && $this->hmacSecretEnc !== ''),
 			'categoryFilter' => $this->categoryFilterArray(),
+			'format' => $this->format,
+			'connectorOptions' => $this->connectorOptionsArray(),
+			// Write-only: whether a credential is stored, never the value.
+			'hasCredential' => ($this->credentialEnc !== null && $this->credentialEnc !== ''),
 			'queueCap' => $this->queueCap,
 			'lastDeliveryStatus' => $this->lastDeliveryStatus,
 			'lastSuccessAt' => $this->lastSuccessAt?->format('c'),

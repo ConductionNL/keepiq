@@ -1,7 +1,14 @@
 <template>
-	<CnAdminSettingsShell appId="keepiq" appName="Keepiq" @reimported="onReimported">
-		<Settings v-if="storesReady" />
+	<!-- The version card and re-import action belong to the General area
+	     only (admin-scoped-roles D3); every other area renders its sections. -->
+	<CnAdminSettingsShell
+		v-if="area === 'general'"
+		appId="keepiq"
+		appName="Keepiq"
+		@reimported="onReimported">
+		<Settings v-if="storesReady" :area="area" />
 	</CnAdminSettingsShell>
+	<Settings v-else-if="storesReady" :area="area" />
 </template>
 
 <script>
@@ -14,6 +21,17 @@ export default {
 	components: {
 		CnAdminSettingsShell,
 		Settings,
+	},
+
+	props: {
+		/**
+		 * The admin area this mount renders: general, policies,
+		 * applications, people or audit.
+		 */
+		area: {
+			type: String,
+			default: 'general',
+		},
 	},
 
 	data() {
@@ -37,6 +55,8 @@ export default {
 		/**
 		 * Re-initialise the stores after the shell's Re-import action
 		 * reloads the app configuration.
+		 *
+		 * @spec exclude Event handler: re-runs store initialisation after the shell re-imports configuration.
 		 */
 		onReimported() {
 			initializeStores()

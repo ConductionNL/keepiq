@@ -29,12 +29,15 @@ use OCA\Keepiq\Attribute\VaultKeyProofRequired;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\SuiteMigration;
 use OCA\Keepiq\Db\SuiteMigrationMapper;
+use OCA\Keepiq\Event\Audit\AuditEvent;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\KeyProofRequiredException;
 use OCA\Keepiq\Middleware\VaultKeyProofMiddleware;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
+use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -60,6 +63,10 @@ class GuardFixtureController extends Controller {
 
 	#[VaultKeyProofRequired(binds: ['id'], subject: 'migrationNewSuite', purpose: 'emergency-access-re-envelope')]
 	public function guardedMigrationNewSuite(): void {
+	}
+
+	#[VaultKeyProofRequired(purpose: 'share-new-recipient', exemption: \OCA\Keepiq\Service\KnownShareRecipientExemption::class)]
+	public function guardedExemptable(): void {
 	}
 
 	public function unguarded(): void {
@@ -242,6 +249,88 @@ class VaultKeyProofMiddlewareTest extends TestCase {
 
 		$this->middleware->afterException($this->controller, 'guardedActive', new KeyProofRequiredException('need a proof'));
 	}//end testAfterExceptionLogsTheRefusal()
+
+	/**
+	 * A refused proof also reaches the audit trail as key_proof.refused, so
+	 * the SIEM export sees a session thief probing guarded routes
+	 * (keepiq#870). The proof itself is never in the record.
+	 *
+	 * @return void
+	 */
+	public function testAfterExceptionRecordsAKeyProofRefusedAuditEvent(): void {
+		$dispatched = [];
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(
+			static function (object $event) use (&$dispatched): void {
+				$dispatched[] = $event;
+			}
+		);
+		$middleware = new VaultKeyProofMiddleware(
+			request: $this->request,
+			userSession: $this->userSession,
+			suiteService: $this->suiteService,
+			proofService: $this->proofService,
+			migrationMapper: $this->migrationMapper,
+			logger: $this->logger,
+			eventDispatcher: $dispatcher,
+		);
+
+		$middleware->afterException($this->controller, 'guardedActive', new KeyProofRequiredException('Proof does not verify'));
+
+		$this->assertCount(1, $dispatched);
+		$event = $dispatched[0];
+		$this->assertInstanceOf(AuditEvent::class, $event);
+		$this->assertSame(AuditEventTypes::KEY_PROOF_REFUSED, $event->getEventType());
+		$this->assertSame('alice', $event->getActorId());
+		$metadata = $event->getMetadata();
+		$this->assertSame('compromise-recovery', $metadata['purpose']);
+		$this->assertSame('Proof does not verify', $metadata['reason']);
+		$this->assertStringEndsWith('GuardFixtureController::guardedActive', $metadata['route']);
+		$this->assertSame(
+			['route', 'purpose', 'reason'],
+			AuditEventTypes::WHITELIST[AuditEventTypes::KEY_PROOF_REFUSED]
+		);
+	}//end testAfterExceptionRecordsAKeyProofRefusedAuditEvent()
+
+	/**
+	 * Without a container the declared exemption cannot be asked, so the proof
+	 * is still required (keepiq#818 fails closed).
+	 *
+	 * @return void
+	 */
+	public function testAnExemptionWithoutAContainerStillRequiresTheProof(): void {
+		$this->suiteService->method('getActiveSuite')->willReturn($this->suiteWithCertificate('CERT-PEM'));
+		$this->request->method('getHeader')->willReturn('');
+		$this->proofService->expects($this->once())->method('verify')
+			->willThrowException(new KeyProofRequiredException('No challenge presented'));
+
+		$this->expectException(KeyProofRequiredException::class);
+		$this->middleware->beforeController($this->controller, 'guardedExemptable');
+	}//end testAnExemptionWithoutAContainerStillRequiresTheProof()
+
+	/**
+	 * A container entry that is not a VaultKeyProofExemption waives nothing.
+	 *
+	 * @return void
+	 */
+	public function testAnExemptionOfTheWrongTypeStillRequiresTheProof(): void {
+		$container = $this->createMock(\Psr\Container\ContainerInterface::class);
+		$container->method('get')->willReturn(new \stdClass());
+		$middleware = new VaultKeyProofMiddleware(
+			request: $this->request,
+			userSession: $this->userSession,
+			suiteService: $this->suiteService,
+			proofService: $this->proofService,
+			migrationMapper: $this->migrationMapper,
+			logger: $this->logger,
+			container: $container,
+		);
+		$this->suiteService->method('getActiveSuite')->willReturn($this->suiteWithCertificate('CERT-PEM'));
+		$this->request->method('getHeader')->willReturn('');
+		$this->proofService->expects($this->once())->method('verify');
+
+		$middleware->beforeController($this->controller, 'guardedExemptable');
+	}//end testAnExemptionOfTheWrongTypeStillRequiresTheProof()
 
 	public function testAfterExceptionRethrowsAForeignException(): void {
 		$this->expectException(RuntimeException::class);

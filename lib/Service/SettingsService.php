@@ -108,6 +108,10 @@ class SettingsService {
 		// Offline read-only cache per-device opt-out (offline-readonly-cache
 		// §1.2); default on, gated behind the admin org-wide switch.
 		'offline_cache_optin' => '1',
+		// Receive secrets from other organisations (sharing-federated-
+		// recipients D6); default off. Until it is '1' a partner's
+		// certificate lookup gets the unknown-recipient answer.
+		'federation_receive' => '0',
 	];
 
 	/**
@@ -214,6 +218,37 @@ class SettingsService {
 	}//end updateAdminSettings()
 
 	/**
+	 * The settings of one admin area (admin-scoped-roles D2).
+	 *
+	 * @param string $area One of AdminSettingsService::SETTINGS_AREAS
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws InvalidArgumentException On an unknown area.
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 */
+	public function getAreaSettings(string $area): array {
+		return $this->adminSettings->getAreaSettings(area: $area);
+	}//end getAreaSettings()
+
+	/**
+	 * Write one admin area's keys (admin-scoped-roles D2).
+	 *
+	 * @param string $area One of AdminSettingsService::SETTINGS_AREAS
+	 * @param array<string,mixed> $data The input data
+	 *
+	 * @return array<string,mixed> The area's settings after the write
+	 *
+	 * @throws InvalidArgumentException On a key of another area or an out-of-bounds value.
+	 *
+	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 */
+	public function updateAreaSettings(string $area, array $data): array {
+		return $this->adminSettings->updateAreaSettings(area: $area, data: $data);
+	}//end updateAreaSettings()
+
+	/**
 	 * The user-visible policy floor for the write dialogs — policy gate,
 	 * generator floor, score floor, HIBP block, and exempt types only
 	 * (org-password-policies §1.3).
@@ -221,9 +256,10 @@ class SettingsService {
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
+	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
 	 */
 	public function getPolicy(): array {
-		return $this->adminSettings->getPolicy();
+		return $this->adminSettings->getPolicy(userId: $this->userSession->getUser()?->getUID());
 	}//end getPolicy()
 
 	/**
@@ -254,7 +290,11 @@ class SettingsService {
 	 */
 	public function getUserPreferences(string $userId): array {
 		$appId = Application::APP_ID;
-		$adminDefault = $this->appConfig->getValueString($appId, 'default_session_timeout', 'session');
+		$adminDefault = $this->appConfig->getValueString(
+			$appId,
+			'default_session_timeout',
+			AdminSettingsService::DEFAULT_SESSION_TIMEOUT
+		);
 
 		$prefs = [];
 		foreach (self::USER_PREF_KEYS as $key => $default) {

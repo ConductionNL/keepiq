@@ -78,18 +78,30 @@ export default {
 	components: { NcButton },
 	emits: ['retry'],
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns the Pinia bulk store with no domain logic.
+		 */
 		store() {
 			return useBulkStore()
 		},
 
+		/**
+		 * @spec exclude Store passthrough: returns the bulk store progress object unchanged.
+		 */
 		progress() {
 			return this.store.progress
 		},
 
+		/**
+		 * @spec exclude Store passthrough: returns the bulk store per-item report unchanged.
+		 */
 		report() {
 			return this.store.report
 		},
 
+		/**
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-chunked-execution-with-a-per-item-report
+		 */
 		failedCount() {
 			return this.store.failedItems.length
 		},
@@ -101,6 +113,8 @@ export default {
 		 *
 		 * @param {string} secretId The secret id.
 		 * @return {string}
+		 *
+		 * @spec exclude Presentation-only: resolves a secret id to its display name for a report row.
 		 */
 		nameFor(secretId) {
 			const secret = useSecretStore().secrets.find((s) => s.id === secretId)

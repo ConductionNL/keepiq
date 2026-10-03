@@ -16,6 +16,7 @@
  */
 
 import axios from '@nextcloud/axios'
+import { translatePlural as n } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { useAttachmentStore } from './attachment.js'
@@ -25,8 +26,39 @@ import { useShareStore } from './share.js'
 /** Number of (secret × recipient) rows per registration POST. */
 const FAN_OUT_CHUNK_SIZE = 20
 
+/** How often an unlocked vault confirms waiting members (admin-auto-confirm-members D5). */
+export const AUTO_CONFIRM_INTERVAL_MS = 15 * 60 * 1000
+
+/**
+ * The repeat timer of the automatic confirmation. Module scope, not state:
+ * a timer id is not reactive data and must not end up in a store snapshot.
+ *
+ * @type {ReturnType<typeof setInterval>|null}
+ */
+let autoConfirmTimer = null
+
+/**
+ * Turn decrypted secret fields into the shape encryptForRecipient takes.
+ *
+ * @param {object} plain The decrypted secret.
+ * @return {{key: string, login: string, additionalFields: string}}
+ */
+function recipientFields(plain) {
+	return {
+		key: plain.key ?? '',
+		login: plain.login ?? '',
+		additionalFields:
+			typeof plain.additionalFields === 'object'
+			&& plain.additionalFields !== null
+				? JSON.stringify(plain.additionalFields)
+				: (plain.additionalFields ?? ''),
+	}
+}
+
 export const useTeamFolderStore = defineStore('teamFolder', {
 	state: () => ({
+		/** @type {{created: number, members: number, at: number}|null} The last automatic confirmation run. */
+		lastAutoConfirm: null,
 		/** @type {Array<object>} Team folders the user owns (with members). */
 		owned: [],
 		/** @type {Array<object>} Team folders shared to the user. */
@@ -49,7 +81,20 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @return {function(string): object|null}
 		 */
 		byFolderId: (state) => (folderId) =>
-			state.owned.find((tf) => tf.folderId === folderId) ?? null,
+			state.owned.find((tf) => tf.folderId === folderId)
+			?? state.memberOf.find(
+				(tf) => tf.folderId === folderId && tf.grade === 'manage',
+			)
+			?? null,
+
+		/**
+		 * The team folders the current user manages without owning them
+		 * (sharing-team-folder-manager-role D5).
+		 *
+		 * @param {object} state The store state.
+		 * @return {Array<object>}
+		 */
+		managed: (state) => state.memberOf.filter((tf) => tf.grade === 'manage'),
 	},
 
 	actions: {
@@ -102,16 +147,17 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {string} teamFolderId The team folder.
 		 * @param {string} memberType   `user` or `group`.
 		 * @param {string} memberId     The Nextcloud user/group id.
+		 * @param {{useOnly: boolean, expiresAt: string|null}} [restriction] Use-only (read grade) and end date.
 		 * @return {Promise<object>}
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-nested-subfolder-inheritance
 		 */
-		async addMember(teamFolderId, memberType, memberId) {
+		async addMember(teamFolderId, memberType, memberId, restriction = {}) {
 			const response = await axios.post(
 				generateUrl(
 					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/members`,
 				),
-				{ memberType, memberId },
+				{ memberType, memberId, ...restriction },
 			)
 			await this.fetchTeamFolders()
 			return response.data
@@ -210,6 +256,22 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		},
 
 		/**
+		 * Approve one waiting member (keepiq#747): the server checks that the
+		 * caller owns the team folder and that the member is covered by its
+		 * membership, then only that member's copies are encrypted and shared.
+		 * Everyone else keeps waiting.
+		 *
+		 * @param {string} teamFolderId The team folder.
+		 * @param {string} userId The member to approve.
+		 * @return {Promise<{created: number, cancelled: boolean}>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-approve-one-waiting-member
+		 */
+		async approveMember(teamFolderId, userId) {
+			await this.approveJoin(teamFolderId, userId)
+			return this.runFanOut(teamFolderId, { onlyUserId: userId })
+		},
+
+		/**
 		 * Run the admin offboarding action.
 		 *
 		 * @param {string} leavingUserId   The user being offboarded.
@@ -230,6 +292,8 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * idempotent server upsert makes the next reconcile resume safely).
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
 		cancelFanOut() {
 			this.fanOutCancelled = true
@@ -244,6 +308,8 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {Array<object>} rows The created fan-out descriptors.
 		 * @param {object} certByUser userId → PEM certificate map.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/encrypted-attachments/spec.md#scenario-sharing-re-wraps-the-key-not-the-blob
 		 */
 		async regrantAttachments(rows, certByUser) {
 			const attachmentStore = useAttachmentStore()
@@ -270,12 +336,20 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * missing secret with the in-memory CryptoKey → RSA-encrypt per
 		 * recipient certificate → POST in idempotent chunks.
 		 *
+		 * A manager fans out from its OWN recipient copies: reconcile names
+		 * the caller's copy of each folder secret (`copyId`), and a secret
+		 * the caller holds no copy of is skipped and reported, never faked
+		 * (sharing-team-folder-manager-role D3).
+		 *
 		 * @param {string} teamFolderId The team folder to fan out.
-		 * @return {Promise<{created: number, cancelled: boolean}>}
+		 * @param {object} [options] Options.
+		 * @param {string} [options.onlyUserId] Fan out to this member only
+		 *   (a per-member approval, keepiq#747); every member when omitted.
+		 * @return {Promise<{created: number, cancelled: boolean, skipped: Array<string>}>}
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
-		async runFanOut(teamFolderId) {
+		async runFanOut(teamFolderId, { onlyUserId = null } = {}) {
 			const secretStore = useSecretStore()
 			const shareStore = useShareStore()
 
@@ -284,11 +358,20 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 
 			try {
 				const state = await this.reconcile(teamFolderId)
-				const missing = state.missing ?? []
+				const missing = (state.missing ?? []).filter(
+					(pair) => onlyUserId === null || pair.userId === onlyUserId,
+				)
 				this.fanOut.total = missing.length
 				if (missing.length === 0) {
-					return { created: 0, cancelled: false }
+					return { created: 0, cancelled: false, skipped: [] }
 				}
+
+				// The copy this browser decrypts for each source secret: the
+				// owner's own row, or a manager's recipient copy (or none).
+				const refs = Object.fromEntries(
+					(state.secrets ?? []).map((ref) => [ref.id, ref]),
+				)
+				const skipped = new Set()
 
 				const certByUser = Object.fromEntries(
 					(state.recipients ?? []).map((r) => [r.userId, r.certificate]),
@@ -310,11 +393,20 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 						continue
 					}
 
+					const ref = refs[pair.secretId]
+					const readId =
+						ref && 'copyId' in ref ? ref.copyId : pair.secretId
+					if (!readId) {
+						skipped.add(ref?.name ?? pair.secretId)
+						this.fanOut.done++
+						continue
+					}
+
 					if (!plaintextCache[pair.secretId]) {
 						// fetchSecret decrypts with the session CryptoKey and
 						// returns the PLAINTEXT secret — do not decrypt twice.
 
-						const plain = await secretStore.fetchSecret(pair.secretId)
+						const plain = await secretStore.fetchSecret(readId)
 						plaintextCache[pair.secretId] = {
 							key: plain.key ?? '',
 							login: plain.login ?? '',
@@ -371,13 +463,170 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					this.fanOut.done += chunk.length
 				}
 
-				return { created, cancelled: this.fanOutCancelled }
+				return {
+					created,
+					cancelled: this.fanOutCancelled,
+					skipped: [...skipped],
+				}
 			} catch (e) {
 				this.error =
 					e?.response?.data?.message || e?.message || 'Fan-out failed'
 				throw e
 			} finally {
 				this.fanOut.running = false
+			}
+		},
+
+		/**
+		 * Confirm waiting team folder members in the background
+		 * (admin-auto-confirm-members D5). Asks the server which pairs this
+		 * user may confirm, decrypts each needed secret once with the session
+		 * key (the owner's source, or the member's own copy), encrypts it for
+		 * each recipient and posts only ciphertext in chunks. A failure is
+		 * logged and retried on the next run; it never blocks the vault.
+		 *
+		 * @return {Promise<{enabled: boolean, created: number, members: number}>}
+		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.1
+		 */
+		async autoConfirm() {
+			const secretStore = useSecretStore()
+			const shareStore = useShareStore()
+			const response = await axios.get(
+				generateUrl(
+					'/apps/keepiq/api/v1/team-folders/pending-confirmations',
+				),
+			)
+			const enabled = response.data?.enabled === true
+			let created = 0
+			const members = new Set()
+
+			for (const folder of response.data?.folders ?? []) {
+				const certByUser = Object.fromEntries(
+					(folder.recipients ?? []).map((r) => [r.userId, r.certificate]),
+				)
+				const fieldsBySecret = {}
+				let chunk = []
+
+				const post = async () => {
+					const result = await axios.post(
+						generateUrl(
+							`/apps/keepiq/api/v1/team-folders/${folder.teamFolderId}/shares`,
+						),
+						{ shares: chunk },
+					)
+					created += result.data?.created ?? 0
+					for (const row of result.data?.rows ?? []) {
+						members.add(row.targetUserId)
+					}
+					await this.regrantAttachments(
+						result.data?.rows ?? [],
+						certByUser,
+					)
+					chunk = []
+				}
+
+				for (const pair of folder.missing ?? []) {
+					const certificate = certByUser[pair.userId]
+					if (!certificate) {
+						continue
+					}
+
+					// An owner reads the source; a member reads their own copy.
+					const readId = pair.ownCopyId ?? pair.secretId
+					if (!fieldsBySecret[readId]) {
+						const raw = await axios.get(
+							generateUrl(`/apps/keepiq/api/v1/secrets/${readId}`),
+						)
+						fieldsBySecret[readId] = recipientFields(
+							await secretStore.decryptSecret(raw.data),
+						)
+					}
+
+					const blob = await shareStore.encryptForRecipient(
+						fieldsBySecret[readId],
+						certificate,
+					)
+					chunk.push({
+						sourceSecretId: pair.secretId,
+						targetUserId: pair.userId,
+						encryptedKey: blob.key ?? '',
+						encryptedLogin: blob.login ?? null,
+						encryptedAdditionalFields: blob.additionalFields ?? null,
+					})
+
+					if (chunk.length >= FAN_OUT_CHUNK_SIZE) {
+						await post()
+					}
+				}
+
+				if (chunk.length > 0) {
+					await post()
+				}
+			}
+
+			this.lastAutoConfirm = { created, members: members.size, at: Date.now() }
+			return { enabled, created, members: members.size }
+		},
+
+		/**
+		 * Start the automatic confirmation after an unlock: run once now, and
+		 * every 15 minutes while the switch is on and the vault stays unlocked.
+		 * Never throws; a failed run is logged and the next one retries.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.2
+		 */
+		async startAutoConfirm() {
+			this.stopAutoConfirm()
+			const run = async () => {
+				try {
+					const result = await this.autoConfirm()
+					if (result.members > 0) {
+						// One quiet notice per run, never per secret. Loaded on
+						// demand: @nextcloud/dialogs needs a window at import
+						// time, and node-run specs import this store.
+						const { showSuccess } = await import('@nextcloud/dialogs')
+						showSuccess(
+							n(
+								'keepiq',
+								'Gave %n new member access to a team folder.',
+								'Gave %n new members access to a team folder.',
+								result.members,
+							),
+						)
+					}
+					return result
+				} catch (e) {
+					// Kept for the dialog; the next run retries.
+					this.lastAutoConfirm = {
+						created: 0,
+						members: 0,
+						at: Date.now(),
+						error: e?.message || 'error',
+					}
+					return null
+				}
+			}
+
+			const first = await run()
+			// The switch is off: nothing to repeat until the next unlock.
+			if (first !== null && first.enabled === false) {
+				return
+			}
+
+			autoConfirmTimer = setInterval(run, AUTO_CONFIRM_INTERVAL_MS)
+		},
+
+		/**
+		 * Stop the repeating confirmation (on lock).
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.2
+		 */
+		stopAutoConfirm() {
+			if (autoConfirmTimer !== null) {
+				clearInterval(autoConfirmTimer)
+				autoConfirmTimer = null
 			}
 		},
 	},

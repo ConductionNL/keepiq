@@ -59,10 +59,20 @@ class NotificationService {
 		// existing security-notification category (add-emergency-access §4.2).
 		'emergency_access_requested' => 'notify_security',
 		'emergency_access_accessed' => 'notify_security',
+		// Administrator compromise force-revoke (admin-suite-revocation):
+		// the holders of copies of the revoked user's secrets, the grantors
+		// whose vault the revoked key could open (keepiq#872), and the owner
+		// whose emergency contacts the revoke deleted (keepiq#876).
+		'shared_secret_compromised' => 'notify_security',
+		'emergency_grantee_compromised' => 'notify_security',
+		'emergency_access_cleared' => 'notify_security',
 		// Team folder sharing (team-folder-sharing §4.2): fan-out share
 		// to a recipient; group-join approval request to the owner.
 		'team_folder_shared' => 'notify_shares',
 		'team_folder_join_request' => 'notify_group_shares',
+		// Automatic member confirmation (admin-auto-confirm-members D6): the
+		// owner learns who confirmed whom, under the same group-share toggle.
+		'team_folder_member_confirmed' => 'notify_group_shares',
 		// Rotation & expiry (rotation-expiry-policies §4): approaching
 		// expiry reminders and the overdue/rotation-due flag.
 		'secret_expiring' => 'notify_security',
@@ -73,9 +83,26 @@ class NotificationService {
 		// Certificate lifecycle (certificate-lifecycle §3.2): suite
 		// certificate approaching notAfter.
 		'certificate_expiring' => 'notify_security',
+		// The CA root approaching expiry (keepiq#741): an operational admin
+		// alert like siem_dead_letter, never user-suppressible.
+		'ca_root_expiring' => null,
 		// Honey credentials (honey-credentials §D3): a muted tripwire
 		// is worthless — always pages, like app_pending.
 		'honey_access' => null,
+		// Shares that end by themselves (sharing-use-only-and-expiring-shares
+		// D6): the holder a day ahead and when it ended; the owner when it ended.
+		'share_access_ending' => 'notify_shares',
+		'share_access_ended' => 'notify_shares',
+		'share_access_ended_owner' => 'notify_shares',
+		// New device approval (crypto-new-device-approval D5): someone
+		// signed in as this user asks to open the vault. Always shown.
+		'device_approval_requested' => null,
+		// Organisation account recovery (crypto-organisation-account-recovery
+		// 5.2): security events, never suppressible.
+		'recovery_officer_named' => null,
+		'recovery_requested' => null,
+		'recovery_declined' => null,
+		'recovery_ready' => null,
 	];
 
 	/**

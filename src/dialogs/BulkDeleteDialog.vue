@@ -2,9 +2,9 @@
   SPDX-License-Identifier: EUPL-1.2
   SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 
-  Bulk-delete dialog (bulk-actions §5): an explicit, count-confirmed,
-  IRREVERSIBLE hard delete (no trash exists) reusing the per-secret
-  cascade; large sets require a typed confirmation. An already-gone
+  Bulk-delete dialog (bulk-actions §5): an explicit, count-confirmed
+  delete that moves the selection to the trash (vault-trash-and-archive)
+  and ends its shares now; large sets require a typed confirmation. An already-gone
   secret reports skipped, not failed.
 
   Two phases in one dialog, and the phase is what decides the chrome. Before
@@ -32,7 +32,7 @@
 				{{
 					t(
 						'keepiq',
-						'This permanently deletes {count} secrets and revokes their shares. There is no trash — this cannot be undone.',
+						'This moves {count} secrets to the trash and ends their shares now. You can restore them from the trash until the retention period ends.',
 						{ count: bulk.selectionCount },
 					)
 				}}
@@ -112,6 +112,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
+		 */
 		bulk() {
 			return useBulkStore()
 		},
@@ -147,14 +150,23 @@ export default {
 			})
 		},
 
+		/**
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 */
 		needsTypedConfirmation() {
 			return this.bulk.selectionCount > TYPED_CONFIRMATION_THRESHOLD
 		},
 
+		/**
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 */
 		confirmWord() {
 			return `DELETE ${this.bulk.selectionCount}`
 		},
 
+		/**
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+		 */
 		confirmed() {
 			if (!this.needsTypedConfirmation) {
 				return true
@@ -170,6 +182,8 @@ export default {
 		 *
 		 * @param {string} secretId The secret id.
 		 * @return {Promise<object>}
+		 *
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
 		 */
 		async deleteOne(secretId) {
 			try {

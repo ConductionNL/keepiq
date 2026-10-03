@@ -23,6 +23,7 @@ import { defineStore } from 'pinia'
 import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
 import { dedupeKey, folderSegments } from '../../import/model.js'
 import { getParser } from '../../import/parserRegistry.js'
+import { evaluateScore, fetchPolicy } from '../../policy/policy.js'
 import { useSecretStore } from './secret.js'
 import { useSecretTypeStore } from './secretType.js'
 import { useSessionStore } from './session.js'
@@ -103,6 +104,12 @@ export const useImportStore = defineStore('import', {
 		rejected: [],
 		/** @type {Array<object>} The detected/adjusted CSV column mapping. */
 		mapping: [],
+		/** @type {Array<string>} The CSV header row, for the mapping step. */
+		headers: [],
+		/** @type {boolean} Whether the parsed format lets the user remap columns. */
+		adjustableMapping: false,
+		/** @type {string|null} The file text, kept only to re-parse after a remap; cleared on reset. */
+		sourceText: null,
 		/** @type {Object<number,string>} Per-row duplicate resolution: 'skip'|'copy'. */
 		duplicateResolutions: {},
 		/** @type {Array<object>} Rows detected as duplicates of an existing secret. */
@@ -120,6 +127,18 @@ export const useImportStore = defineStore('import', {
 	}),
 
 	getters: {
+		/**
+		 * Whether some column is mapped to the secret name. Always true for a
+		 * format without an adjustable mapping.
+		 *
+		 * @param {object} state The store state.
+		 * @return {boolean}
+		 * @spec openspec/specs/portability-import-mapping/spec.md#requirement-adjustable-csv-mapping
+		 */
+		mappingHasName: (state) =>
+			!state.adjustableMapping
+			|| state.mapping.some((entry) => entry.target === 'name'),
+
 		/**
 		 * The rows that will be committed (accepted, non-duplicate, plus
 		 * duplicates resolved as "import as copy").
@@ -149,7 +168,7 @@ export const useImportStore = defineStore('import', {
 		 * @param {string} format The parser/format id.
 		 * @param {object} [options] Parser options (CSV mapping, backup passphrase).
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-supported-import-formats
+		 * @spec openspec/specs/secret-import/spec.md#requirement-supported-import-formats
 		 */
 		async parseFile(text, format, options = {}) {
 			this.loading = true
@@ -159,7 +178,24 @@ export const useImportStore = defineStore('import', {
 				if (!parser) {
 					throw new Error(`Unknown import format: ${format}`)
 				}
-				const parsed = await parser.parse(text, options)
+				let parsed
+				if (
+					parser.adjustableMapping === true
+					&& typeof parser.parseDetailed === 'function'
+				) {
+					const detailed = await parser.parseDetailed(text, options)
+					parsed = detailed.rows
+					this.mapping = detailed.mapping
+					this.headers = detailed.headers
+					this.adjustableMapping = true
+					this.sourceText = text
+				} else {
+					parsed = await parser.parse(text, options)
+					this.mapping = []
+					this.headers = []
+					this.adjustableMapping = false
+					this.sourceText = null
+				}
 				this.format = format
 				this.rows = this.expandTotpRows(
 					parsed.filter((r) => !r.errors || r.errors.length === 0),
@@ -232,7 +268,7 @@ export const useImportStore = defineStore('import', {
 		 * secret list API already returns — never decrypts the vault (design D6).
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-duplicate-detection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-duplicate-detection
 		 */
 		async detectDuplicates() {
 			const secretStore = useSecretStore()
@@ -257,7 +293,7 @@ export const useImportStore = defineStore('import', {
 		 * @param {number} sourceRow The duplicate row's source position.
 		 * @param {string} resolution 'skip' or 'copy'.
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-duplicate-detection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-duplicate-detection
 		 */
 		resolveDuplicate(sourceRow, resolution) {
 			this.duplicateResolutions = {
@@ -271,7 +307,7 @@ export const useImportStore = defineStore('import', {
 		 *
 		 * @param {string} resolution 'skip' or 'copy'.
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-duplicate-detection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-duplicate-detection
 		 */
 		resolveAllDuplicates(resolution) {
 			const resolutions = {}
@@ -291,7 +327,7 @@ export const useImportStore = defineStore('import', {
 		 * @param {string|null} typeId The vault type id resolved for the row's
 		 *   `type` (see typeIdResolver), or null for the server's default type.
 		 * @return {Promise<object>} The ciphertext-only item.
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 */
@@ -327,15 +363,69 @@ export const useImportStore = defineStore('import', {
 		},
 
 		/**
+		 * Hold every row to the organisation password policy, as the create
+		 * and edit dialogs do (keepiq#746). The server cannot check a value it
+		 * only sees encrypted, so the check runs here, before encryption. A
+		 * row below the policy is taken out of `rows` (in place) and listed
+		 * as rejected with the policy's reason.
+		 *
+		 * @param {Array<object>} rows The rows about to be committed (mutated).
+		 * @param {Array<object>} types The vault's secret types ({ id, name }).
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 */
+		async dropPolicyRejected(rows, types) {
+			const policy = await fetchPolicy()
+			if (!policy || policy.policy_enabled !== true) {
+				return
+			}
+			const nameById = new Map(
+				(Array.isArray(types) ? types : []).map((type) => [
+					type.id,
+					type.name,
+				]),
+			)
+			const kept = []
+			for (const row of rows) {
+				const typeName =
+					nameById.get(row.type) || row.type || DEFAULT_TYPE_NAME
+				const verdict = evaluateScore(
+					policy,
+					typeName,
+					String(row.password ?? ''),
+				)
+				if (verdict.compliant) {
+					kept.push(row)
+				} else {
+					this.rejected.push({
+						sourceRow: row.sourceRow,
+						reason: verdict.reason,
+						name: row.name,
+					})
+				}
+			}
+			rows.splice(0, rows.length, ...kept)
+		},
+
+		/**
 		 * Commit the accepted rows: encrypt client-side, POST in chunks of 50 with
 		 * one retry per failed chunk, fold per-index + chunk failures into the
 		 * rejected list, and build the transient summary (design D7/D8).
 		 *
+		 * @param {object} [options] Options.
+		 * @param {string} [options.rootFolder] Import everything beneath one new
+		 *   folder with this name; the source folders keep their hierarchy
+		 *   below it (keepiq#749).
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-a-restored-backup-keeps-types-and-row-positions
 		 */
-		async commit() {
+		async commit(options = {}) {
+			// A slash would split the one folder into a path.
+			const rootFolder =
+				typeof options.rootFolder === 'string'
+					? options.rootFolder.replaceAll('/', '-').trim()
+					: ''
 			const session = useSessionStore()
 			if (!session.certificate || session.isLocked) {
 				throw new Error('Vault is locked')
@@ -372,20 +462,23 @@ export const useImportStore = defineStore('import', {
 				}
 			}
 			const typeIdFor = typeIdResolver(typeStore.types)
+			await this.dropPolicyRejected(rows, typeStore.types)
 
 			// Encrypt every row client-side BEFORE any request leaves the browser.
 			const items = []
 			const itemRowByIndex = []
 			for (const row of rows) {
 				const asCopy = dupRows.has(row.sourceRow)
-				items.push(
-					await this.encryptRow(
-						row,
-						publicKey,
-						asCopy,
-						typeIdFor(row.type),
-					),
+				const item = await this.encryptRow(
+					row,
+					publicKey,
+					asCopy,
+					typeIdFor(row.type),
 				)
+				if (rootFolder !== '') {
+					item.folderPath = [rootFolder, ...item.folderPath]
+				}
+				items.push(item)
 				itemRowByIndex.push(row)
 			}
 
@@ -455,7 +548,7 @@ export const useImportStore = defineStore('import', {
 		 *
 		 * @param {object} body The chunk body ({ folders, items }).
 		 * @return {Promise<object|null>} The response data, or null after two failures.
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+		 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 		 */
 		async postChunk(body) {
 			for (let attempt = 0; attempt < 2; attempt++) {
@@ -480,7 +573,7 @@ export const useImportStore = defineStore('import', {
 		 * plaintext-adjacent data, so this stays local.
 		 *
 		 * @return {string} The rejected-rows CSV text.
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-malformed-row-rejection
+		 * @spec openspec/specs/secret-import/spec.md#requirement-malformed-row-rejection
 		 */
 		rejectedCsv() {
 			const lines = ['row,name,reason']
@@ -501,10 +594,25 @@ export const useImportStore = defineStore('import', {
 		 *
 		 * @param {string} step The target step.
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-field-mapping-preview
+		 * @spec openspec/specs/secret-import/spec.md#requirement-field-mapping-preview
 		 */
 		goToStep(step) {
 			this.step = step
+		},
+
+		/**
+		 * Remap the columns of the parsed CSV and parse it again, so the
+		 * preview and the import both use the new mapping.
+		 *
+		 * @param {Array<{column: string, target: string}>} mapping The new mapping.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/portability-import-mapping/spec.md#requirement-adjustable-csv-mapping
+		 */
+		async applyMapping(mapping) {
+			if (!this.adjustableMapping || this.sourceText === null) {
+				return
+			}
+			await this.parseFile(this.sourceText, this.format, { mapping })
 		},
 
 		/**
@@ -513,7 +621,7 @@ export const useImportStore = defineStore('import', {
 		 * Mechanism / spec persistence rule).
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 */
 		reset() {
 			this.step = 'pick'
@@ -521,6 +629,9 @@ export const useImportStore = defineStore('import', {
 			this.rows = []
 			this.rejected = []
 			this.mapping = []
+			this.headers = []
+			this.adjustableMapping = false
+			this.sourceText = null
 			this.duplicateResolutions = {}
 			this.duplicates = []
 			this.committedChunks = 0

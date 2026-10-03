@@ -159,6 +159,10 @@ class LinkShareController extends OCSController {
 				expiresAt: $expiry,
 				userId: $userId
 			);
+		} catch (DoesNotExistException) {
+			// Not the owner and not a delegate, or no such secret: the same
+			// answer either way (keepiq#214).
+			return new JSONResponse(data: ['message' => 'Secret not found'], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],

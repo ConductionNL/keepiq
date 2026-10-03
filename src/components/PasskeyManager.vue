@@ -51,6 +51,12 @@
 					cred.label || t('keepiq', 'Passkey')
 				}}</span>
 				<span
+					v-if="cred.clientKind === 'extension'"
+					class="passkey-manager__client"
+					:data-testid="`passkey-client-${cred.id}`"
+					>{{ t('keepiq', 'Browser extension') }}</span
+				>
+				<span
 					:class="`passkey-manager__status passkey-manager__status--${cred.status}`"
 					>{{ cred.status }}</span
 				>
@@ -144,6 +150,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkey-enrollment-requires-an-unlocked-vault
+		 */
 		vaultLocked() {
 			return useSessionStore().isLocked
 		},
@@ -155,6 +164,8 @@ export default {
 
 	/**
 	 * Load enrolled passkeys when WebAuthn is available.
+	 *
+	 * @spec openspec/specs/passkey-vault-login/spec.md#requirement-passkeys-are-manageable-revocable-and-owner-scoped
 	 */
 	created() {
 		if (this.store.supported) {
@@ -184,6 +195,8 @@ export default {
 
 		/**
 		 * Close the enroll form and clear the captured master password.
+		 *
+		 * @spec exclude Form-state reset: closes the enroll form and clears its transient inputs.
 		 */
 		cancel() {
 			this.enrollOpen = false
@@ -196,6 +209,8 @@ export default {
 		 *
 		 * @param {string} iso The ISO timestamp.
 		 * @return {string}
+		 *
+		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as a locale date string.
 		 */
 		formatDate(iso) {
 			return new Date(iso).toLocaleDateString()
@@ -223,6 +238,14 @@ export default {
 			padding: 4px 0;
 			border-bottom: 1px solid var(--color-border);
 		}
+	}
+
+	&__client {
+		font-size: 0.85em;
+		padding: 0 6px;
+		border: 1px solid var(--color-border);
+		border-radius: var(--border-radius-pill, 12px);
+		color: var(--color-text-maxcontrast);
 	}
 
 	&__label {

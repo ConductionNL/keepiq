@@ -75,6 +75,14 @@
 					:reduce="(opt) => opt.value"
 					:inputLabel="t('keepiq', 'Usage limit')"
 					:clearable="false" />
+				<label class="share-dialog__expiry">
+					<span>{{ t('keepiq', 'Expires on (optional)') }}</span>
+					<input
+						v-model="expiryDate"
+						type="date"
+						:min="minExpiryDate"
+						data-testid="link-share-expiry" />
+				</label>
 			</div>
 
 			<!-- Existing link shares. -->
@@ -95,6 +103,13 @@
 								limit: share.usageLimit,
 							})
 						}}
+						<template v-if="share.expiresAt">
+							{{
+								t('keepiq', 'Expires {date}', {
+									date: formatDate(share.expiresAt),
+								})
+							}}
+						</template>
 					</span>
 					<NcButton
 						variant="tertiary"
@@ -157,6 +172,22 @@ import { useSecretStore } from '../store/modules/secret.js'
  * `close` on dismiss. The link password is generated and AES-encrypted in the
  * browser and is never transmitted to the server.
  */
+/**
+ * The server timestamp for an expiry date: the end of that day, local time,
+ * so the link works for the whole of the day the owner picked.
+ *
+ * @param {string} date YYYY-MM-DD, or '' for no expiry.
+ * @return {string|null} ISO-8601, or null.
+ * @spec openspec/specs/link-sharing/spec.md#requirement-create-link-share
+ */
+export function expiryTimestamp(date) {
+	if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+		return null
+	}
+	const end = new Date(`${date}T23:59:59`)
+	return Number.isNaN(end.getTime()) ? null : end.toISOString()
+}
+
 export default {
 	name: 'SecretShareDialog',
 
@@ -184,6 +215,8 @@ export default {
 		return {
 			open: true,
 			usageLimit: 1,
+			// YYYY-MM-DD from the date input, or '' for a link that never expires.
+			expiryDate: '',
 			creating: false,
 			loadingShares: true,
 			error: '',
@@ -193,10 +226,30 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns the link-share list from the store with no domain logic.
+		 */
 		linkShares() {
 			return useLinkShareStore().linkShares
 		},
 
+		/**
+		 * The earliest date the picker offers: tomorrow, so a link cannot be
+		 * born expired.
+		 *
+		 * @return {string} YYYY-MM-DD in local time.
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-create-link-share
+		 */
+		minExpiryDate() {
+			const tomorrow = new Date()
+			tomorrow.setDate(tomorrow.getDate() + 1)
+			const pad = (n) => String(n).padStart(2, '0')
+			return `${tomorrow.getFullYear()}-${pad(tomorrow.getMonth() + 1)}-${pad(tomorrow.getDate())}`
+		},
+
+		/**
+		 * @spec openspec/specs/link-sharing/spec.md#scenario-create-link-share
+		 */
 		usageOptions() {
 			return Array.from({ length: 10 }, (_, i) => ({
 				value: i + 1,
@@ -242,6 +295,8 @@ export default {
 		 *
 		 * @param {boolean} value The new open state.
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-create-link-share
 		 */
 		onUpdateOpen(value) {
 			this.open = value
@@ -277,6 +332,7 @@ export default {
 					this.secretId,
 					snapshot,
 					this.usageLimit,
+					expiryTimestamp(this.expiryDate),
 				)
 				this.createdUrl = linkStore.createdLinkUrl
 				this.createdPassword = linkStore.createdPassword
@@ -289,6 +345,20 @@ export default {
 			} finally {
 				this.creating = false
 			}
+		},
+
+		/**
+		 * A link share's expiry as a local date.
+		 *
+		 * @param {string} iso The ISO-8601 timestamp.
+		 * @return {string}
+		 * @spec openspec/specs/link-sharing/spec.md#requirement-create-link-share
+		 */
+		formatDate(iso) {
+			const date = new Date(iso)
+			return Number.isNaN(date.getTime())
+				? String(iso)
+				: date.toLocaleDateString()
 		},
 
 		/**
@@ -369,6 +439,13 @@ export default {
 .share-dialog__intro {
 	margin: 0 0 12px 0;
 	color: var(--color-text-maxcontrast);
+}
+
+.share-dialog__expiry {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+	margin-top: 12px;
 }
 
 .share-dialog__existing h4 {

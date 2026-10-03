@@ -609,6 +609,52 @@ class SecretRequestServiceTest extends TestCase {
 	}//end testFillStoresCiphertextPlaintextAndTheAdditionalBlob()
 
 	/**
+	 * Keepiq#750: when the secret already holds an extra-field blob, a fill
+	 * does not overwrite it (the filler cannot read it to merge). The filled
+	 * blob is appended to the pending list on the secret and the other
+	 * values still go through update().
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+	 */
+	public function testFillKeepsTheOwnersExtraFieldsAndHoldsTheFilledBlobPending(): void {
+		$entity = $this->buildPending();
+		$entity->setRequestedFields(json_encode(['key', 'api-interface-id']));
+
+		$this->mapper->method('findByToken')->willReturn($entity);
+		$this->mapper->method('findById')->willReturn($entity);
+		$this->mapper->method('update')->willReturnArgument(0);
+
+		$secret = new Secret();
+		$secret->setId('sec-1');
+		$secret->setOwnerType('user');
+		$secret->setOwnerId('requester');
+		$secret->setAdditionalFields('OWNERS_OWN_BLOB');
+		$secret->setPendingAdditionalFieldList(['EARLIER_FILL']);
+		$this->secretMapper->method('findById')->willReturn($secret);
+
+		$this->secretMapper->expects($this->once())
+			->method('update')
+			->willReturnCallback(static function (Secret $saved): Secret {
+				return $saved;
+			});
+		$this->secretService->expects($this->once())
+			->method('update')
+			->with('sec-1', ['key' => 'CIPHER_KEY'], 'requester')
+			->willReturn($secret);
+
+		$this->makeFillService()->fill(
+			token: 'tok-good',
+			encryptedFields: ['key' => 'CIPHER_KEY', 'additionalFields' => 'CIPHER_BLOB'],
+		);
+
+		$this->assertSame('OWNERS_OWN_BLOB', $secret->getAdditionalFields());
+		$this->assertSame(['EARLIER_FILL', 'CIPHER_BLOB'], $secret->pendingAdditionalFieldList());
+		$this->assertSame(['EARLIER_FILL', 'CIPHER_BLOB'], $secret->jsonSerialize()['pendingAdditionalFields']);
+	}//end testFillKeepsTheOwnersExtraFieldsAndHoldsTheFilledBlobPending()
+
+	/**
 	 * A plaintext metadata field sent as ciphertext is refused.
 	 *
 	 * @return void
@@ -2020,7 +2066,7 @@ class SecretRequestServiceTest extends TestCase {
 	 *
 	 * @dataProvider compromisedSuiteProvider
 	 *
-	 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 */
 	public function testACompromiseTerminationUnlocksButKeepsTheFillLinkClosed(string $suiteStatus): void {
 		$request = $this->buildPending();

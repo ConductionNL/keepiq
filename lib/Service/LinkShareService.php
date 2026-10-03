@@ -72,6 +72,7 @@ class LinkShareService {
 	 * @param LinkShareMapper $mapper The link share mapper
 	 * @param LoggerInterface $logger The logger interface
 	 * @param WriteLockService $writeLockService The compromise-recovery write lock
+	 * @param ShareAuthorizationService $shareAuth Who may re-share a secret (keepiq#214)
 	 * @param LinkShareAuditTrail|null $auditTrail The link-share audit trail
 	 *
 	 * @return void
@@ -80,16 +81,22 @@ class LinkShareService {
 		private LinkShareMapper $mapper,
 		private LoggerInterface $logger,
 		private WriteLockService $writeLockService,
+		private ShareAuthorizationService $shareAuth,
 		?LinkShareAuditTrail $auditTrail = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new LinkShareAuditTrail());
 	}//end __construct()
 
 	/**
-	 * Create a link share for a secret owned by the given user.
+	 * Create a link share for a secret the given user may re-share.
 	 *
-	 * The caller (controller) is responsible for confirming the user owns
-	 * the secret and for resolving the user's active encryption suite ID.
+	 * A public link widens the audience beyond what the owner chose, so only
+	 * the secret's owner, or a recipient whose share permits re-sharing (an
+	 * active delegate, who holds share management rights), may create one
+	 * (keepiq#214). Anyone else gets the same DoesNotExistException as a missing
+	 * secret (from ShareAuthorizationService::assertMayReshare()), so the
+	 * check does not reveal which secrets exist. The controller
+	 * resolves the user's active encryption suite ID.
 	 * Ownership of the resulting link share is recorded in created_by, which
 	 * is the sole authority used by delete()/listBySecret() — this keeps the
 	 * feature self-contained and IDOR-safe.
@@ -105,8 +112,10 @@ class LinkShareService {
 	 * @return LinkShare
 	 *
 	 * @throws InvalidArgumentException When validation fails
+	 * @throws DoesNotExistException When the user may not re-share the secret
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.4
+	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
 	 */
 	public function create(
 		string $secretId,
@@ -132,6 +141,8 @@ class LinkShareService {
 				'Usage limit must be between ' . self::MIN_USAGE_LIMIT . ' and ' . self::MAX_USAGE_LIMIT
 			);
 		}
+
+		$this->shareAuth->assertMayReshare(secretId: $secretId, userId: $userId);
 
 		$linkShare = new LinkShare();
 		$linkShare->setId(Uuid::uuid4()->toString());
@@ -182,6 +193,8 @@ class LinkShareService {
 	 * @return LinkShare
 	 *
 	 * @throws RuntimeException When the token is invalid, expired, or exhausted
+	 *
+	 * @spec openspec/specs/link-sharing/spec.md#requirement-access-via-link
 	 */
 	public function getByToken(string $token): LinkShare {
 		try {
@@ -292,6 +305,8 @@ class LinkShareService {
 	 * @param string $userId The requesting Nextcloud user ID
 	 *
 	 * @return LinkShare[]
+	 *
+	 * @spec openspec/specs/link-sharing/spec.md#requirement-multiple-concurrent-link-shares
 	 */
 	public function listBySecret(string $secretId, string $userId): array {
 		$shares = $this->mapper->findBySecretId($secretId);

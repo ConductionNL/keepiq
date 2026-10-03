@@ -226,6 +226,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
+		 */
 		store() {
 			return useApplicationStore()
 		},
@@ -241,14 +244,21 @@ export default {
 		 * Read from the settings store, which resolves it from `/api/settings` at
 		 * boot, rather than from the DOM (ADR-004 / gate-10).
 		 *
-		 * @return {boolean} True for an administrator.
+		 * The endpoint is guarded by the Applications admin area
+		 * (admin-scoped-roles §2.2), so the section follows that area.
+		 *
+		 * @return {boolean} True for a holder of the Applications area.
 		 *
 		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
+		 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.5
 		 */
 		isAdmin() {
-			return useSettingsStore().isAdmin === true
+			return useSettingsStore().holdsArea('applications') === true
 		},
 
+		/**
+		 * @spec exclude Store-state passthrough: returns the current application record.
+		 */
 		application() {
 			return this.store.currentApplication
 		},
@@ -270,12 +280,18 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec exclude Presentation gate: shows the delete button; the server enforces admin-only delete.
+		 */
 		canDelete() {
 			// Server enforces admin-only delete; the button is only
 			// rendered when the row is visible to the current user.
 			return this.application?.status !== undefined
 		},
 
+		/**
+		 * @spec exclude Trivial getter: reads the application id from prop or route.
+		 */
 		routeId() {
 			return this.id || this.$route?.params?.id || ''
 		},
@@ -284,6 +300,11 @@ export default {
 	watch: {
 		routeId: {
 			immediate: true,
+			/**
+			 * @param {string} value The application id from the route.
+			 *
+			 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
+			 */
 			handler(value) {
 				if (value) {
 					this.load(value)
@@ -317,6 +338,11 @@ export default {
 			}
 		},
 
+		/**
+		 * @param {string} id The item id.
+		 *
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-encryptionsuite-via-csr
+		 */
 		async loadCertificate(id) {
 			this.suiteLoading = true
 			this.certificate = ''
@@ -331,6 +357,11 @@ export default {
 			}
 		},
 
+		/**
+		 * @param {string} iso ISO 8601 timestamp.
+		 *
+		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as locale text.
+		 */
 		formatDate(iso) {
 			if (!iso) {
 				return ''
@@ -343,20 +374,32 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec exclude Navigation plumbing: routes back to the application register.
+		 */
 		goBack() {
 			if (this.$router) {
 				this.$router.push({ name: 'ApplicationRegister' })
 			}
 		},
 
+		/**
+		 * @spec exclude Presentation state: opens the write-secret dialog.
+		 */
 		openWriteDialog() {
 			this.writeDialogOpen = true
 		},
 
+		/**
+		 * @spec exclude Presentation state: closes the write-secret dialog.
+		 */
 		closeWriteDialog() {
 			this.writeDialogOpen = false
 		},
 
+		/**
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-attribute-secrets-to-application
+		 */
 		onSecretWritten() {
 			this.writeDialogOpen = false
 			// Panel re-fetches its own list via the @written bridge.

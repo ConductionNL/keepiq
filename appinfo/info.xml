@@ -36,7 +36,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.3.4-unstable.20260912202807</version>
+    <version>0.3.4-unstable.20261002230000</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Keepiq</namespace>
@@ -114,14 +114,19 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Keepiq\BackgroundJob\CheckRootCertificateExpiry</job>
         <job>OCA\Keepiq\BackgroundJob\PurgeAuditLogJob</job>
         <job>OCA\Keepiq\BackgroundJob\ExpireSecretRequestsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ExpireSharesJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ExpireDeviceApprovalsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ExpireRecoveryRequestsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ApproveElapsedEmergencyRequests</job>
         <job>OCA\Keepiq\BackgroundJob\PruneSecretVersionsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\PurgeTrashedSecretsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ScanExpiringSecretsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ExpireMachineLeasesJob</job>
         <job>OCA\Keepiq\BackgroundJob\EphemeralSendPurgeJob</job>
         <job>OCA\Keepiq\BackgroundJob\RefreshComplianceMetricsJob</job>
         <job>OCA\Keepiq\BackgroundJob\DeliverSiemEventsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ScanCertificateExpiryJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ScheduledVaultBackupJob</job>
     </background-jobs>
 
     <!--
@@ -228,8 +233,21 @@ Vrij en open source onder de EUPL-1.2-licentie.
         </install>
     </repair-steps>
 
+    <!-- Vault backups (admin-scheduled-vault-backups D4). -->
+    <commands>
+        <command>OCA\Keepiq\Command\BackupCreate</command>
+        <command>OCA\Keepiq\Command\BackupList</command>
+        <command>OCA\Keepiq\Command\BackupVerify</command>
+        <command>OCA\Keepiq\Command\BackupRestore</command>
+    </commands>
+
     <settings>
+        <!-- Five delegable admin areas (admin-scoped-roles D1). -->
         <admin>OCA\Keepiq\Settings\AdminSettings</admin>
+        <admin>OCA\Keepiq\Settings\PolicyAdminSettings</admin>
+        <admin>OCA\Keepiq\Settings\ApplicationAdminSettings</admin>
+        <admin>OCA\Keepiq\Settings\PeopleAdminSettings</admin>
+        <admin>OCA\Keepiq\Settings\AuditAdminSettings</admin>
         <admin-section>OCA\Keepiq\Sections\SettingsSection</admin-section>
     </settings>
 

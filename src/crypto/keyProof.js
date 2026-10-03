@@ -33,6 +33,14 @@ export const PROOF_PURPOSE = {
 	EMERGENCY_DESIGNATE: 'emergency-access-designate',
 	EMERGENCY_RE_ENVELOPE: 'emergency-access-re-envelope',
 	DELETE_ACCOUNT_DATA: 'delete-account-data',
+	ABORT_MIGRATION: 'abort-migration',
+	// keepiq#818: sharing with a new party and delegating.
+	SHARE_NEW_RECIPIENT: 'share-new-recipient',
+	SHARE_REGISTER_BATCH: 'share-register-batch',
+	DELEGATION_CREATE: 'delegation-create',
+	DELEGATION_HANDOVER: 'delegation-handover',
+	APPROVE_DEVICE: 'approve-device',
+	APPROVE_ACCOUNT_RECOVERY: 'approve-account-recovery',
 }
 
 /**
@@ -69,4 +77,39 @@ export async function buildKeyProofHeaders({
 		[HEADER_NONCE]: data.nonce,
 		[HEADER_PROOF]: signature,
 	}
+}
+
+/**
+ * Build proof headers for the unlocked session's own suite, asking for the
+ * master password through the app-wide prompt when none is given
+ * (keepiq#818). Returns the password too, so a caller that sends several
+ * requests in one action (a bulk share) asks only once.
+ *
+ * @param {object} params The parameters.
+ * @param {string} params.purpose The PROOF_PURPOSE the route is bound to.
+ * @param {string} params.reason Why the password is asked, shown in the prompt.
+ * @param {Array<string>} [params.boundValues] The values the route binds, in order.
+ * @param {string} [params.masterPassword] A password already asked for in this action.
+ * @return {Promise<{headers: object, masterPassword: string}>}
+ * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
+ */
+export async function sessionKeyProofHeaders({
+	purpose,
+	reason,
+	boundValues = [],
+	masterPassword = '',
+}) {
+	const { useSessionStore } = await import('../store/modules/session.js')
+	const { useKeyProofPromptStore } =
+		await import('../store/modules/keyProofPrompt.js')
+	const password = masterPassword || (await useKeyProofPromptStore().ask(reason))
+	const session = useSessionStore()
+	const headers = await buildKeyProofHeaders({
+		suiteId: session.suiteId,
+		purpose,
+		encryptedPrivateKey: session.encryptedPrivateKey,
+		masterPassword: password,
+		boundValues,
+	})
+	return { headers, masterPassword: password }
 }

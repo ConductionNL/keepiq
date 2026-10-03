@@ -38,6 +38,8 @@ use OCP\AppFramework\Db\Entity;
  * @method void setScope(string $scope)
  * @method string|null getOwnerId()
  * @method void setOwnerId(?string $ownerId)
+ * @method string|null getFields()
+ * @method void setFields(?string $fields)
  * @method DateTime|null getCreatedAt()
  * @method void setCreatedAt(DateTime $createdAt)
  */
@@ -70,6 +72,14 @@ class SecretType extends Entity implements JsonSerializable {
 	 * @var string|null
 	 */
 	protected ?string $ownerId = null;
+
+	/**
+	 * The fields an item of this type carries, as JSON (admin-18); null for
+	 * a type without a field list, such as the built-in types.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $fields = null;
 
 	/**
 	 * When the type was created.
@@ -116,8 +126,47 @@ class SecretType extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'label', type: 'string');
 		$this->addType(fieldName: 'scope', type: 'string');
 		$this->addType(fieldName: 'ownerId', type: 'string');
+		$this->addType(fieldName: 'fields', type: 'string');
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
 	}//end __construct()
+
+	/**
+	 * The field list, decoded; an empty list when the type has none.
+	 *
+	 * @return list<array{key: string, label: string, kind: string, required: bool}>
+	 *
+	 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+	 */
+	public function getFieldList(): array {
+		if ($this->fields === null || $this->fields === '') {
+			return [];
+		}
+
+		$decoded = json_decode($this->fields, true);
+		if (is_array($decoded) === false) {
+			return [];
+		}
+
+		return $decoded;
+	}//end getFieldList()
+
+	/**
+	 * Store a field list; an empty list is stored as null.
+	 *
+	 * @param list<array{key: string, label: string, kind: string, required: bool}> $fields The fields
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+	 */
+	public function setFieldList(array $fields): void {
+		$json = null;
+		if ($fields !== []) {
+			$json = json_encode(array_values($fields), JSON_THROW_ON_ERROR);
+		}
+
+		$this->setFields($json);
+	}//end setFieldList()
 
 	/**
 	 * Serialize the entity to an array for the API.
@@ -131,6 +180,7 @@ class SecretType extends Entity implements JsonSerializable {
 			'label' => $this->label,
 			'scope' => $this->scope,
 			'ownerId' => $this->ownerId,
+			'fields' => $this->getFieldList(),
 			'createdAt' => $this->createdAt?->format('c'),
 		];
 	}//end jsonSerialize()

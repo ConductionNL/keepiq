@@ -152,6 +152,30 @@ class MachineSecretEnvelopeServiceTest extends TestCase {
 	}//end testNullableKeyUpdatedAt()
 
 	/**
+	 * The envelope carries the secret's expiry date, or null without one,
+	 * right after keyUpdatedAt and without changing any other field.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-store-api/spec.md
+	 */
+	public function testEnvelopeCarriesExpiresAt(): void {
+		$this->suiteMapper->method('findById')
+			->willThrowException(new DoesNotExistException('none'));
+
+		$secret = $this->makeSecret();
+		$this->assertNull($this->service->serialize($secret)['secret']['expiresAt']);
+
+		$secret->setExpiresAt(new \DateTime('2026-12-01T00:00:00+00:00'));
+		$env = $this->service->serialize($secret);
+		$this->assertSame('2026-12-01T00:00:00+00:00', $env['secret']['expiresAt']);
+		$this->assertSame(
+			['id', 'name', 'url', 'folderPath', 'type', 'createdAt', 'updatedAt', 'keyUpdatedAt', 'expiresAt'],
+			array_keys($env['secret'])
+		);
+	}//end testEnvelopeCarriesExpiresAt()
+
+	/**
 	 * A root-level secret (no folder) yields an empty folder path and never
 	 * calls the folder mapper.
 	 *
@@ -207,6 +231,23 @@ class MachineSecretEnvelopeServiceTest extends TestCase {
 		$b->setKey('CIPHER-KEY-ROTATED');
 		$this->assertNotSame($this->service->etag($a), $this->service->etag($b));
 	}//end testEtagStableAndChanges()
+
+	/**
+	 * If-Match holds for the current tag, for `*` and for a list that contains
+	 * the current tag, and fails for a stale or weak tag (a 412 in the controller).
+	 *
+	 * @return void
+	 */
+	public function testIfMatchHolds(): void {
+		$secret = $this->makeSecret();
+		$current = $this->service->etag($secret);
+
+		$this->assertTrue($this->service->ifMatchHolds($secret, $current));
+		$this->assertTrue($this->service->ifMatchHolds($secret, '*'));
+		$this->assertTrue($this->service->ifMatchHolds($secret, '"stale", ' . $current));
+		$this->assertFalse($this->service->ifMatchHolds($secret, '"stale"'));
+		$this->assertFalse($this->service->ifMatchHolds($secret, 'W/' . $current));
+	}//end testIfMatchHolds()
 
 	/**
 	 * The candidate descriptor carries only non-sensitive metadata, no

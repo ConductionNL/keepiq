@@ -76,18 +76,36 @@
 			v-if="offlineStore.servedFromCache"
 			class="keepiq-offline-banner"
 			data-testid="offline-stale-banner">
-			{{
-				t('keepiq', 'Offline — read-only. Last synced {when}.', {
-					when: syncedLabel,
-				})
-			}}
+			<template v-if="offlineStore.editsQueued">
+				{{
+					t(
+						'keepiq',
+						'Offline. Your changes stay on this device and sync when you are back online. Last synced {when}.',
+						{ when: syncedLabel },
+					)
+				}}
+			</template>
+			<template v-else>
+				{{
+					t('keepiq', 'Offline — read-only. Last synced {when}.', {
+						when: syncedLabel,
+					})
+				}}
+			</template>
 		</div>
+
+		<!-- The offline edit queue: pending count, conflicts, refused changes. -->
+		<OfflineSyncPanel />
 
 		<!-- An interrupted compromise recovery leaves the vault write-locked with
 		     nothing else in the UI saying why, so this sits at shell level rather
 		     than inside any one view. It renders nothing when no migration is in
 		     progress. -->
 		<MigrationResumeBanner />
+
+		<!-- The master password prompt for vault-key proofs on sharing and
+		     delegation (keepiq#818). One instance; stores await it. -->
+		<KeyProofPromptDialog />
 
 		<CnAppRoot
 			:aiCompanion="true"
@@ -134,13 +152,28 @@
 					</template>
 					<div class="user-settings__field">
 						<NcSelect
-							v-model="sessionTimeout"
+							:modelValue="sessionStore.timeoutChoice"
 							:options="timeoutOptions"
 							:inputLabel="t('keepiq', 'Session timeout')"
 							label="label"
 							:reduce="(opt) => opt.value"
-							@input="saveTimeout" />
+							:clearable="false"
+							data-testid="session-timeout-select"
+							@update:modelValue="onTimeoutChange" />
 					</div>
+				</NcAppSettingsSection>
+
+				<NcAppSettingsSection id="defaults" :name="t('keepiq', 'Defaults')">
+					<template #icon>
+						<TuneVariantIcon :size="20" />
+					</template>
+					<DefaultsSection />
+				</NcAppSettingsSection>
+
+				<NcAppSettingsSection
+					id="expiry-rules"
+					:name="t('keepiq', 'Expiry rules')">
+					<ExpiryPoliciesSection />
 				</NcAppSettingsSection>
 
 				<NcAppSettingsSection id="security" :name="t('keepiq', 'Security')">
@@ -152,6 +185,12 @@
 					</div>
 					<div class="user-settings__field">
 						<PasskeyManager />
+					</div>
+					<div class="user-settings__field">
+						<AccountRecoveryEnrolment />
+					</div>
+					<div class="user-settings__field">
+						<RecoveryOfficerPanel />
 					</div>
 					<div class="user-settings__field">
 						<NcButton
@@ -371,11 +410,15 @@
 				</p>
 			</template>
 		</CnAppRoot>
+		<!-- New device approval (crypto-new-device-approval D3): an unlocked
+		     vault answers requests from the user's other devices. -->
+		<DeviceApprovalDialog :active="!isLocked && offlineStore.online" />
 	</div>
 </template>
 
 <script>
 import { CnAppRoot } from '@conduction/nextcloud-vue'
+import { getCurrentUser } from '@nextcloud/auth'
 import { loadState } from '@nextcloud/initial-state'
 import { translate as ncT } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
@@ -392,12 +435,20 @@ import KeyIcon from 'vue-material-design-icons/Key.vue'
 // import PuzzleIcon from 'vue-material-design-icons/Puzzle.vue' // browser-extension section, hidden until it ships
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import TimerIcon from 'vue-material-design-icons/Timer.vue'
+import TuneVariantIcon from 'vue-material-design-icons/TuneVariant.vue'
+import AccountRecoveryEnrolment from './components/AccountRecoveryEnrolment.vue'
 import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
 import KeepiqAppNav from './components/KeepiqAppNav/KeepiqAppNav.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
+import OfflineSyncPanel from './components/OfflineSyncPanel.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
+import RecoveryOfficerPanel from './components/RecoveryOfficerPanel.vue'
 import SecretDetailSidebar from './components/SecretDetailSidebar.vue'
+import DefaultsSection from './components/settings/DefaultsSection.vue'
+import ExpiryPoliciesSection from './components/settings/ExpiryPoliciesSection.vue'
+import DeviceApprovalDialog from './dialogs/DeviceApprovalDialog.vue'
+import KeyProofPromptDialog from './dialogs/KeyProofPromptDialog.vue'
 import {
 	handleLockTransition,
 	isPublicRoute,
@@ -410,12 +461,26 @@ import { useOfflineStore } from './store/modules/offline.js'
 import { useSessionStore } from './store/modules/session.js'
 import { initializeStores } from './store/store.js'
 import { activeDetailSecretId, closeDetailLocation } from './utils/detailRoute.js'
+import { shellPermissions } from './utils/navEntries.js'
+
+/** The document events that count as activity for the inactivity lock (crypto-06). */
+const ACTIVITY_EVENTS = Object.freeze([
+	'pointerdown',
+	'pointermove',
+	'keydown',
+	'wheel',
+	'scroll',
+	'touchstart',
+])
 
 export default {
 	name: 'App',
 
 	components: {
 		CnAppRoot,
+		DeviceApprovalDialog,
+		AccountRecoveryEnrolment,
+		RecoveryOfficerPanel,
 		NcAppSettingsSection,
 		NcButton,
 		NcEmptyContent,
@@ -424,6 +489,9 @@ export default {
 		NcSelect,
 		NcTextField,
 		TimerIcon,
+		TuneVariantIcon,
+		DefaultsSection,
+		ExpiryPoliciesSection,
 		ShieldIcon,
 		KeyIcon,
 		// PuzzleIcon, // browser-extension section, hidden until it ships
@@ -432,6 +500,8 @@ export default {
 		CompromiseRecoveryForm,
 		KeepiqAppNav,
 		MigrationResumeBanner,
+		KeyProofPromptDialog,
+		OfflineSyncPanel,
 		SecretDetailSidebar,
 	},
 
@@ -494,7 +564,6 @@ export default {
 			appVersion: loadState('keepiq', 'appVersion', ''),
 			storesReady: false,
 			timeoutInterval: null,
-			sessionTimeout: 'session',
 			showRecovery: false,
 			revokeConfirm: false,
 			revokeReason: '',
@@ -596,13 +665,16 @@ export default {
 		},
 
 		/**
-		 * Current Nextcloud user permissions, surfaced to the app shell.
+		 * The permissions the app shell enforces on manifest pages.
 		 *
-		 * @return {Array} Permission list (empty when unauthenticated).
-		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * Never empty: CnPageRenderer serves every page on an empty list, which
+		 * is how the admin-only Integrations page opened for any user (#878).
+		 *
+		 * @return {Array<string>} `user`, plus `admin` for the instance admin.
+		 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
 		 */
 		permissions() {
-			return window.OC?.currentUser?.permissions ?? []
+			return shellPermissions(getCurrentUser()?.isAdmin === true)
 		},
 
 		/**
@@ -612,6 +684,8 @@ export default {
 		 * template until the extension ships.
 		 *
 		 * @return {string}
+		 *
+		 * @spec openspec/specs/browser-extension-autofill/spec.md#requirement-pairing-against-the-nextcloud-session
 		 */
 		securitySettingsUrl() {
 			return generateUrl('/settings/user/security')
@@ -775,6 +849,18 @@ export default {
 			this.offlineStore.syncNow().catch(() => {})
 		}
 
+		// The saved timeout applies from this page load on (crypto-07).
+		this.sessionStore.loadTimeoutPreference()
+
+		// Activity resets the inactivity lock (crypto-06). Passive listeners
+		// on the document; the store throttles the writes.
+		for (const type of ACTIVITY_EVENTS) {
+			document.addEventListener(type, this.handleActivity, {
+				passive: true,
+				capture: true,
+			})
+		}
+
 		// Poll every 10 s for session-timeout expiry.
 		this.timeoutInterval = setInterval(() => {
 			this.sessionStore.checkTimeout()
@@ -798,6 +884,11 @@ export default {
 		}
 		document.removeEventListener('visibilitychange', this.handleVisibilityChange)
 		window.removeEventListener('beforeunload', this.handleBeforeUnload)
+		for (const type of ACTIVITY_EVENTS) {
+			document.removeEventListener(type, this.handleActivity, {
+				capture: true,
+			})
+		}
 	},
 
 	methods: {
@@ -848,9 +939,17 @@ export default {
 		 * redirect: if the page is still alive shortly after, the normal
 		 * lock transition runs after all and the lock screen appears.
 		 *
+		 * @param {BeforeUnloadEvent} event The unload event.
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-pending-changes-block-logout-and-rotation
 		 */
-		handleBeforeUnload() {
+		handleBeforeUnload(event) {
+			// Offline changes not yet on the server: let the browser ask before
+			// the user leaves, as for a logout (offline-edit-queue D6).
+			if (this.offlineStore.pendingCount > 0 && event) {
+				event.preventDefault()
+				event.returnValue = ''
+			}
 			this.unloading = true
 			this.sessionStore.lock()
 			setTimeout(() => {
@@ -864,14 +963,24 @@ export default {
 		},
 
 		/**
-		 * Persist the chosen session-timeout preference into the store
-		 * (mapping the enum to a millisecond duration).
+		 * Save the chosen session timeout and apply it at once.
 		 *
-		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * @param {string} choice The timeout choice.
+		 * @return {void}
+		 * @spec openspec/specs/vault-session-lock/spec.md#requirement-saved-session-timeout
 		 */
-		saveTimeout() {
-			const timeouts = { session: 0, '10min': 600000, '30min': 1800000 }
-			this.sessionStore.timeout = timeouts[this.sessionTimeout] || 600000
+		onTimeoutChange(choice) {
+			this.sessionStore.saveTimeoutPreference(choice).catch(() => {})
+		},
+
+		/**
+		 * Record user activity for the inactivity lock.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/vault-session-lock/spec.md#requirement-inactivity-lock
+		 */
+		handleActivity() {
+			this.sessionStore.noteActivity()
 		},
 
 		/**
@@ -894,6 +1003,7 @@ export default {
 		 * surfacing success/error state to the UI. The master password signs the
 		 * vault-key proof the guarded endpoint requires and is never sent.
 		 *
+		 * @param {boolean} acceptEmergencyLoss Whether the user accepted losing emergency access.
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 		 */

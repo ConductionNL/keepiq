@@ -151,6 +151,23 @@
 				  MigrationResumeBanner then asks for the old password and does
 				  the actual resuming.
 				-->
+				<!-- The two-factor vault policy (admin-vault-policies D3): the
+				     server withholds the wrapped key until a provider is on. -->
+				<NcNoteCard
+					v-if="twoFactorRequired"
+					type="warning"
+					data-testid="lock-two-factor-required">
+					{{
+						t(
+							'keepiq',
+							'Your organisation requires two-factor login before you can open your vault.',
+						)
+					}}
+					<a :href="securitySettingsUrl">{{
+						t('keepiq', 'Set up two-factor login')
+					}}</a>
+				</NcNoteCard>
+
 				<NcNoteCard v-if="hasPausedMigration" type="warning">
 					{{
 						t(
@@ -283,6 +300,12 @@
 								: t('keepiq', 'Unlock')
 						}}
 					</NcButton>
+					<DeviceApprovalRequest
+						v-if="deviceApprovalOffered"
+						@unlocked="onApprovedUnlock" />
+					<ForgotPasswordRecovery
+						v-if="offlineStore.online"
+						@recovered="onRecovered" />
 				</template>
 			</template>
 		</div>
@@ -290,11 +313,16 @@
 </template>
 
 <script>
+import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcLoadingIcon, NcNoteCard, NcPasswordField } from '@nextcloud/vue'
 import KeyIcon from 'vue-material-design-icons/Key.vue'
 import LockIcon from 'vue-material-design-icons/Lock.vue'
 import LockOpenVariantIcon from 'vue-material-design-icons/LockOpenVariant.vue'
+import DeviceApprovalRequest from '../components/DeviceApprovalRequest.vue'
+import ForgotPasswordRecovery from '../components/ForgotPasswordRecovery.vue'
 import PasswordStrengthMeter from '../components/PasswordStrengthMeter.vue'
+import { useAccountRecoveryStore } from '../store/modules/accountRecovery.js'
+import { useDeviceApprovalStore } from '../store/modules/deviceApproval.js'
 import { useEncryptionSuiteStore } from '../store/modules/encryptionSuite.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { usePasskeyStore } from '../store/modules/passkey.js'
@@ -364,6 +392,8 @@ export default {
 		LockOpenVariantIcon,
 		KeyIcon,
 		PasswordStrengthMeter,
+		DeviceApprovalRequest,
+		ForgotPasswordRecovery,
 	},
 
 	data() {
@@ -372,8 +402,12 @@ export default {
 			confirmPassword: '',
 			loading: false,
 			error: null,
+			/** Set when the server refused for the two-factor policy. */
+			twoFactorRefused: false,
 			strengthValid: false,
 			passkeyOffered: false,
+			/** Whether "Approve from another device" is offered (admin switch, online). */
+			deviceApprovalOffered: false,
 			/**
 			 * Suite-check state machine: 'pending' (spinner, no form),
 			 * 'resolved' (server answered — setup or unlock is now KNOWN),
@@ -475,6 +509,31 @@ export default {
 		 */
 		suiteStore() {
 			return useEncryptionSuiteStore()
+		},
+
+		/**
+		 * Whether the two-factor vault policy keeps this vault shut: the
+		 * suite came without its wrapped key, or a setup was refused.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/admin-vault-policies/tasks.md#3.3
+		 */
+		twoFactorRequired() {
+			return (
+				this.twoFactorRefused
+				|| this.suiteStore.currentSuite?.unlockBlocked
+					=== 'two_factor_required'
+			)
+		},
+
+		/**
+		 * Nextcloud's own security settings, where a user enables a provider.
+		 *
+		 * @return {string}
+		 * @spec openspec/changes/admin-vault-policies/tasks.md#3.3
+		 */
+		securitySettingsUrl() {
+			return generateUrl('/settings/user/security')
 		},
 
 		/**
@@ -658,10 +717,76 @@ export default {
 				// never assumed).
 				if (this.offlineStore.online) {
 					this.passkeyOffered = await usePasskeyStore().isUnlockOffered()
+					this.deviceApprovalOffered =
+						await useDeviceApprovalStore().fetchStatus()
 				}
 			} catch {
 				// Best-effort extras — the unlock/setup form still renders.
 			}
+		},
+
+		/**
+		 * Another device approved this one and the session is unlocked
+		 * (crypto-new-device-approval D4): continue as after any unlock.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+		 */
+		/**
+		 * Enrol in account recovery while the master password is in hand,
+		 * when the policy requires it or an enrolment fell behind a key or
+		 * suite rotation, and say so (crypto-organisation-account-recovery D5).
+		 *
+		 * @param {string} masterPassword The password just used to unlock.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+		 */
+		async enrolForRecovery(masterPassword) {
+			const store = useAccountRecoveryStore()
+			if ((await store.enrolAtUnlock(masterPassword)) !== 'enrolled') {
+				return
+			}
+			const { showSuccess } = await import('@nextcloud/dialogs')
+			showSuccess(
+				t(
+					'keepiq',
+					'You are enrolled in account recovery. Recovery key fingerprint: {fingerprint}',
+					{
+						fingerprint: store.status?.key?.fingerprint ?? '',
+					},
+				),
+			)
+		},
+
+		/**
+		 * Recovery is done and the vault is unlocked under the new master
+		 * password: say who handled it and offer a key rotation (D4).
+		 *
+		 * @param {string} handledBy The officer who handed the key over.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-user-is-told-what-happened-and-offered-a-rotation
+		 */
+		async onRecovered(handledBy) {
+			// Tell the user who handled it and offer a key rotation (D4).
+			const { showSuccess } = await import('@nextcloud/dialogs')
+			showSuccess(
+				t(
+					'keepiq',
+					'Recovered with help from {officer}. Rotate your vault key now in Settings, Security: "My master password was compromised".',
+					{ officer: handledBy || t('keepiq', 'a recovery officer') },
+				),
+				{ timeout: -1 },
+			)
+			await this.onApprovedUnlock()
+		},
+
+		/**
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+		 */
+		async onApprovedUnlock() {
+			const returnUrl = this.$route.query.returnUrl || '/'
+			await this.playUnlockAnimation()
+			this.$router.push(returnUrl)
 		},
 
 		/**
@@ -709,6 +834,7 @@ export default {
 			try {
 				if (this.offlineStore.online) {
 					await this.sessionStore.unlock(this.masterPassword)
+					await this.enrolForRecovery(this.masterPassword)
 				} else {
 					// Offline unlock from the cached snapshot — no server request;
 					// the master password never leaves the browser (offline §4.1).
@@ -730,6 +856,13 @@ export default {
 					} catch {
 						// fall through to the generic error below
 					}
+				}
+				if (e?.code === 'two_factor_required') {
+					// Not a wrong password: the policy withholds the key.
+					// Drop any offline snapshot so it cannot open either.
+					this.twoFactorRefused = true
+					await this.offlineStore.evict()
+					return
 				}
 				this.error = t(
 					'keepiq',
@@ -824,6 +957,8 @@ export default {
 		 *
 		 * @param {Error} e The unlock error.
 		 * @return {boolean}
+		 *
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-offline-unlock-re-derives-the-master-key-locally
 		 */
 		isNetworkError(e) {
 			return (
@@ -850,6 +985,10 @@ export default {
 				await this.suiteStore.createSuite(this.masterPassword)
 				this.$router.push('/')
 			} catch (e) {
+				if (e?.response?.data?.code === 'two_factor_required') {
+					this.twoFactorRefused = true
+					return
+				}
 				this.error = e.message || t('keepiq', 'Setup failed')
 			} finally {
 				this.loading = false

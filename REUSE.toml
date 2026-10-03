@@ -34,3 +34,9 @@ path = "**"
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 Conduction B.V. <info@conduction.nl>"
 SPDX-License-Identifier = "EUPL-1.2"
+
+[[annotations]]
+path = "src/generator/eff-large-wordlist.js"
+precedence = "override"
+SPDX-FileCopyrightText = "2016 Electronic Frontier Foundation"
+SPDX-License-Identifier = "CC-BY-3.0-US"

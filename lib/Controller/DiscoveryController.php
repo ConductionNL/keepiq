@@ -44,6 +44,7 @@ namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Service\AudiencePolicy;
+use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\JwtAuthService;
 use OCA\Keepiq\Service\MachineSecretEnvelopeService;
 use OCP\AppFramework\Controller;
@@ -98,6 +99,7 @@ class DiscoveryController extends Controller {
 	 * @param IURLGenerator $urlGenerator The URL generator
 	 * @param IAppConfig|null $appConfig The app config (lease policy advert)
 	 * @param LoggerInterface|null $logger Logger for the deprecated-path warning
+	 * @param FederationRootService|null $federationRoot Root fingerprint and version gate for federation
 	 *
 	 * @return void
 	 */
@@ -106,6 +108,7 @@ class DiscoveryController extends Controller {
 		private IURLGenerator $urlGenerator,
 		private ?IAppConfig $appConfig = null,
 		private ?LoggerInterface $logger = null,
+		private ?FederationRootService $federationRoot = null,
 	) {
 		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
 	}//end __construct()
@@ -127,6 +130,7 @@ class DiscoveryController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
+	 * @spec openspec/changes/app-own-certificate/tasks.md#1.2
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -176,10 +180,25 @@ class DiscoveryController extends Controller {
 					'create' => $this->urlGenerator->linkToRoute('keepiq.applicationSecrets.index'),
 					'update' => $this->urlGenerator->linkToRoute('keepiq.applicationSecrets.index') . '/{id}',
 				],
+				// Federated recipients (sharing-federated-recipients D1): a
+				// partner's administrator reads this root fingerprint and
+				// compares it out of band before pinning this instance.
+				'federation' => [
+					'enabled' => ($this->federationRoot?->isSupported() === true),
+					'rootFingerprint' => $this->federationRoot?->localRootFingerprint(),
+				],
+				// Additive capabilities of this apiVersion: PUT honours
+				// If-Match (412 on a stale ETag), and the envelope carries
+				// secret.expiresAt.
+				'conditionalWrite' => true,
+				'expiresAt' => true,
 				// What this instance actually emits today. The successor is
 				// announced separately rather than listed here, because
 				// listing a format nothing writes would be a lie a consumer
 				// could reasonably act on.
+				// The calling application's own certificate and fingerprint
+				// (app-own-certificate); Bearer-authenticated.
+				'certificate' => $this->urlGenerator->linkToRoute('keepiq.applicationCertificate.show'),
 				'envelopeFormats' => [MachineSecretEnvelopeService::FORMAT],
 				'upcomingEnvelopeFormats' => [
 					[

@@ -11,6 +11,7 @@
  */
 
 import { createCredential, getAssertion } from './webauthn.js'
+import { rpIdAllowed } from './rp.js'
 import { serializePasskey, parsePasskey } from './vault-passkey.js'
 
 /**
@@ -72,8 +73,10 @@ function requestConsent(rpId, op) {
  */
 export function buildPasskeyOrchestrator({ api, vault, loadConfig }) {
 	async function handleCreate(options, origin) {
-		if (!vault.isUnlocked()) throw new Error('locked')
-		const rpId = (options.rp && options.rp.id) || new URL(origin).hostname
+		if (!(await vault.isUnlocked())) throw new Error('locked')
+		const rpId = (options.rp && options.rp.id) || hostnameOf(origin)
+		// The rpId must belong to the requesting origin (clients-passkey-origin).
+		if (!rpIdAllowed(rpId, origin)) throw new Error('rp-origin-mismatch')
 		if (!(await requestConsent(rpId, 'create'))) throw new Error('declined')
 
 		const { record, credential } = await createCredential(options, origin) // throws unsupported-algorithm → fall-through
@@ -85,14 +88,16 @@ export function buildPasskeyOrchestrator({ api, vault, loadConfig }) {
 			url: rpId,
 			typeId,
 			key: encryptedKey,
-			encryptionSuiteId: vault.activeSuiteId(),
+			encryptionSuiteId: await vault.activeSuiteId(),
 		})
 		return credential
 	}
 
 	async function handleGet(options, origin) {
-		if (!vault.isUnlocked()) throw new Error('locked')
-		const rpId = options.rpId || new URL(origin).hostname
+		if (!(await vault.isUnlocked())) throw new Error('locked')
+		const rpId = options.rpId || hostnameOf(origin)
+		// Checked before any vault read: a foreign rpId learns nothing.
+		if (!rpIdAllowed(rpId, origin)) throw new Error('rp-origin-mismatch')
 		const config = await loadConfig()
 
 		// Candidate passkeys for this RP (matched on the plaintext url index).
@@ -133,13 +138,27 @@ export function buildPasskeyOrchestrator({ api, vault, loadConfig }) {
 				url: chosen.row.url,
 				typeId: chosen.row.typeId,
 				key: encryptedKey,
-				encryptionSuiteId: vault.activeSuiteId(),
+				encryptionSuiteId: await vault.activeSuiteId(),
 			})
 		}
 		return assertion
 	}
 
 	return { handleCreate, handleGet }
+}
+
+/**
+ * The hostname of an origin, or '' when it does not parse.
+ *
+ * @param {string} origin The origin.
+ * @return {string} The hostname.
+ */
+function hostnameOf(origin) {
+	try {
+		return new URL(origin).hostname
+	} catch {
+		return ''
+	}
 }
 
 // allowCredentials ids arrive as base64url strings or byte arrays; normalise to

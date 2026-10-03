@@ -435,7 +435,7 @@ choice.
 | **EncryptionSuites & CA** | Core security model — no Nextcloud equivalent |
 | **Secret storage (encrypted)** | Field-level encryption with per-user keys — cannot use generic storage |
 | **Master password session** | Custom session management with configurable timeout and tab-close detection |
-| **Key generator** | Server-side cryptographic randomness with configurable rules |
+| **Key generator** | Browser-side randomness (`crypto.getRandomValues`) in `src/generator/generator.js`, shared by the web app and the extension, with configurable rules, passphrases and the org policy clamp; the server never sees a generated value |
 | **Sharing (user/link/request)** | Encryption-aware sharing — each share is a re-encrypted copy |
 | **Suite migration** | Compromise recovery with re-encryption — domain-specific |
 | **Application management** | CSR processing, approval queue — domain-specific PKI |
@@ -604,7 +604,6 @@ documented intent rather than silently drop a limit during refactoring.
 | `ApplicationSecretsController::show` | 30 / 60s | Same rationale as `index`. |
 | `ApplicationController::create` | 10 / 60s | Anonymous application self-registration — only reachable when an admin opts in via `anonymous_application_registration_enabled`. Admins enabling anonymous registration inherit this rate limit. |
 | `MachineLeaseController::index` | 30 / 60s | Bearer-authenticated lease list (machine-secret-leases §4.1); `#[PublicPage]` pre-auth surface, same polling profile as the secrets endpoints. |
-| `MachineLeaseController::renew` | 30 / 60s | Lease renewal — legitimate connectors renew at most once per default-TTL window. |
 | `MachineLeaseController::revoke` | 30 / 60s | Lease self-revocation — rare in legitimate use; the limit caps abuse of the rotation-flag side effect. |
 | `EphemeralSendAccessController::peek` | 15 / 60s | Anonymous ephemeral-send metadata (ephemeral-send §4.2); the ≥256-bit token is the real access control, the limit caps enumeration attempts. |
 | `EphemeralSendAccessController::access` | 15 / 60s | Ciphertext fetch phase of the two-phase protocol; a view is only consumed on confirm. |
@@ -637,9 +636,20 @@ Enforced declaratively by `#[VaultKeyProofRequired(binds, subject, purpose)]`
 |---|---|---|---|
 | `EncryptionSuiteController::compromiseRecovery` | `active` (old suite) | `publicKey`, `encryptedPrivateKey` | `compromise-recovery` |
 | `EncryptionSuiteController::updatePrivateKey` | `routeParam:id` | `encryptedPrivateKey` | `update-private-key` |
-| `EncryptionSuiteController::revoke` | `routeParam:id` | `reason` | `revoke-suite` |
+| `EncryptionSuiteController::revoke` | `routeParam:id` | `reason`, `acceptEmergencyLoss` | `revoke-suite` |
 | `MigrationController::complete` | `migrationOldSuite` | `id`, `hasErrors`, `acceptUnrecoverable` | `complete-migration` |
+| `MigrationController::abort` | `migrationNewSuite` | `id` | `abort-migration` |
+| `MigrationController::reEnvelopeEmergencyContact` | `migrationNewSuite` | `id`, `contactId`, `recoveryEnvelope`, `granteeSuiteId` | `emergency-access-re-envelope` |
+| `EmergencyAccessController::create` (designate) | `active` | `granteeUserId`, `waitPeriodDays`, `recoveryEnvelope` | `emergency-access-designate` |
 | `EmergencyAccessController::destroy` | `active` | `id` | `emergency-access-destroy` |
+| `GdprController::deleteAccountData` | `active` | `confirmation` | `delete-account-data` |
+
+This table is generated from the attributes themselves
+(`grep -rn "VaultKeyProofRequired(" lib/Controller`) and
+`VaultKeyProofAttributesTest` pins every row. `updatePrivateKey` is also
+refused while the suite is part of an open migration or not `active`
+(keepiq#869), because during a compromise recovery the old password may be the
+leaked one.
 
 Load-bearing design points — change these only deliberately:
 
@@ -658,27 +668,45 @@ Load-bearing design points — change these only deliberately:
   the purpose and an expiry, so issuing and checking it needs no store. Binding
   to the operation's parameters is not enough on its own: on an upsert route a
   replayed designate proof would recreate a contact the owner just revoked. So
-  once a proof verifies, its nonce is consumed in the distributed cache
-  (`keepiq_proof_nonce`, atomic `add()` on a memcache) for the rest of its
-  lifetime, and never before verification. Best-effort: without a memcache the
-  NullCache detects no reuse (logged once as a warning) and the flows keep
-  working.
+  once a proof verifies, a hash of its nonce is inserted into
+  `keepiq_used_proofs`, unique on that hash, and a second use hits the index
+  and is refused (keepiq#868). The database holds on every install: without a
+  memcache, with APCu alone, and across cluster nodes. A cache did not. If the
+  insert fails for any other reason the proof is refused. Expired rows are
+  swept on each use. A nonce is never consumed before its proof verifies.
+- **Every refusal is recorded.** A refused proof is logged and written to the
+  audit trail as `key_proof.refused` (route, purpose, reason, never the proof),
+  because a session thief probing guarded routes produces exactly that.
 - **Not waived for any session type.** The middleware consults no auth backend
   and no token scope, so it behaves identically on SSO, app-password and
   ordinary sessions — its authority is key material, not the login method.
 - **`complete` proves the OLD key** (`migrationOldSuite`), not the new one: at
   completion both suites are active so `active` is ambiguous, and the old key is
   the one both the initiate and resume clients already hold the password for.
-- **Abort is deliberately unguarded.** `MigrationController::abort` is
-  restorative (it returns the vault to the still-active old suite), so requiring
-  a proof would leave a vault wedged by an unauthorised rotation wedged.
+- **Abort proves the NEW key** (`migrationNewSuite`, keepiq#859). A stolen
+  session could otherwise abort the owner's recovery every time it started, and
+  the old password may be the leaked one. Only whoever holds the key the
+  rotation moves to can call it off. A rotation started by someone else with a
+  leaked old password is contained by the administrator's compromise
+  force-revoke, which ends the migration. Every abort is audited as
+  `suite.recovery_aborted`.
 
 **A new route that can irreversibly destroy vault data MUST be added to
 `tests/Unit/Controller/VaultKeyProofAttributesTest.php`.** A declarative guard
 fails *open* when it is omitted — nothing errors, the attribute is just absent —
 so that reflection test enumerates the guarded routes and fails the build if one
 loses its attribute or has its binding/subject/purpose loosened. The test also
-carries a documented exclusion list (`proofChallenge`, `abort`).
+carries a documented exclusion list:
+
+- `EncryptionSuiteController::proofChallenge`: issuing a challenge grants
+  nothing on its own, and guarding it would be circular.
+- `EncryptionSuiteController::forceRevoke`: an administrator holds no vault key
+  (zero-knowledge), so a proof cannot be produced. It is guarded by the admin
+  check plus Nextcloud's password confirmation (sudo) instead.
+
+The master password is the only key to an owner's own revoke. An owner who has
+lost it cannot sign the proof, so the locked-out owner's revoke path is an
+administrator's force-revoke.
 
 ## 5. Open Research Questions
 

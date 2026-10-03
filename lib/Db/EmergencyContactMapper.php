@@ -28,6 +28,7 @@ namespace OCA\Keepiq\Db;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Db\QBMapper;
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 
 /**
@@ -82,6 +83,30 @@ class EmergencyContactMapper extends QBMapper {
 
 		return $this->findEntities(query: $qb);
 	}//end findByGrantor()
+
+	/**
+	 * Delete every relationship the user is part of, as grantor or as grantee
+	 * (GDPR Art. 17 erasure). A grantor row holds the user's private key
+	 * escrowed to the grantee, so it must not survive the erasure.
+	 *
+	 * @param string $userId The Nextcloud user ID
+	 *
+	 * @return int The number of rows deleted
+	 *
+	 * @spec openspec/specs/gdpr-compliance/spec.md
+	 */
+	public function deleteByUser(string $userId): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where(
+				$qb->expr()->orX(
+					$qb->expr()->eq('grantor_user_id', $qb->createNamedParameter($userId)),
+					$qb->expr()->eq('grantee_user_id', $qb->createNamedParameter($userId))
+				)
+			);
+
+		return $qb->executeStatement();
+	}//end deleteByUser()
 
 	/**
 	 * List all relationships where the user is the grantee (incoming access).
@@ -168,4 +193,43 @@ class EmergencyContactMapper extends QBMapper {
 
 		return $this->findEntities(query: $qb);
 	}//end findByGranteeSuite()
+
+	/**
+	 * The users among the given ones who have set up an emergency contact
+	 * that is in force (granted, accepted or active), in one query.
+	 *
+	 * @param string[] $userIds The user IDs to check
+	 *
+	 * @return string[] The grantor user IDs that have a contact in force
+	 *
+	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.1
+	 */
+	public function grantorsWithContact(array $userIds): array {
+		if ($userIds === []) {
+			return [];
+		}
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->selectDistinct('grantor_user_id')
+			->from($this->getTableName())
+			->where(
+				$qb->expr()->in('grantor_user_id', $qb->createNamedParameter($userIds, IQueryBuilder::PARAM_STR_ARRAY))
+			)
+			->andWhere(
+				$qb->expr()->in(
+					'state',
+					$qb->createNamedParameter(['granted', 'accepted', 'active'], IQueryBuilder::PARAM_STR_ARRAY)
+				)
+			);
+
+		$grantors = [];
+		$result = $qb->executeQuery();
+		while (($row = $result->fetch()) !== false) {
+			$grantors[] = (string)$row['grantor_user_id'];
+		}
+
+		$result->closeCursor();
+
+		return $grantors;
+	}//end grantorsWithContact()
 }//end class

@@ -2,27 +2,20 @@
   "manifest_version": 3,
   "name": "Keepiq",
   "version": "0.1.0",
-  "description": "Zero-knowledge autofill for the Keepiq secrets manager. The vault is unlocked and every secret decrypted inside the extension — the server only ever ships encrypted blobs.",
+  "description": "Fill logins, one-time codes and passkeys from your Keepiq vault. It opens in the extension, so your server only sees encrypted data.",
   "permissions": [
     "storage",
     "activeTab",
     "tabs",
-    "scripting",
     "clipboardWrite",
     "idle",
+    "alarms",
     "windows"
-  ],
-  "optional_permissions": [
-    "webAuthenticationProxy"
   ],
   "host_permissions": [
     "http://*/*",
     "https://*/*"
   ],
-  "background": {
-    "service_worker": "service-worker.js",
-    "type": "module"
-  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "Keepiq"
@@ -42,6 +35,6 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   }
 }

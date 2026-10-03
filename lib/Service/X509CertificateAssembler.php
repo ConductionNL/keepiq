@@ -30,10 +30,10 @@ namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Support\PublicKeyLoaderAdapter;
-use phpseclib3\Crypt\RSA;
-use phpseclib3\Crypt\RSA\PrivateKey;
-use phpseclib3\Crypt\RSA\PublicKey;
-use phpseclib3\File\X509;
+use phpseclib4\Crypt\RSA;
+use phpseclib4\Crypt\RSA\PrivateKey;
+use phpseclib4\Crypt\RSA\PublicKey;
+use phpseclib4\File\X509;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -90,30 +90,23 @@ class X509CertificateAssembler {
 			throw new RuntimeException('Intermediate private key could not be loaded for issuance');
 		}
 
-		$issuer = new X509();
-		$issuer->loadX509($intermediateCertPem);
-		$issuer->setPrivateKey($issuerPrivate->withPadding(RSA::SIGNATURE_PKCS1));
-
-		$subject = new X509();
 		// PKCS1 padding on the subject key so the SPKI carries the plain
-		// rsaEncryption OID — phpseclib's PSS default would emit an
+		// rsaEncryption OID: phpseclib's PSS default would emit an
 		// id-RSASSA-PSS SPKI that WebCrypto/openssl consumers reject.
-		$subject->setPublicKey($subjectPublic->withPadding(RSA::SIGNATURE_PKCS1));
+		$certificate = new X509($subjectPublic->withPadding(RSA::SIGNATURE_PKCS1));
 		foreach ($subjectDn as $dnProp => $dnValue) {
-			$subject->setDNProp($dnProp, $dnValue);
+			$certificate->addSubjectDNProp($dnProp, $dnValue);
 		}
 
-		$signer = new X509();
-		$signer->setSerialNumber((string)random_int(1, PHP_INT_MAX), 10);
-		$signer->setEndDate('+365 days');
-		$issued = $signer->sign($issuer, $subject);
-		if ($issued === false) {
-			throw new RuntimeException('phpseclib certificate issuance failed');
-		}
+		$certificate->setSerialNumber((string)random_int(1, PHP_INT_MAX), 10);
+		$certificate->setEndDate('+365 days');
+		$this->signWithIntermediate(
+			certificate: $certificate,
+			intermediateCertPem: $intermediateCertPem,
+			issuerPrivate: $issuerPrivate,
+		);
 
-		// The saveX509() helper is declared `: string`, so the only failure
-		// shape left to guard is an empty export.
-		$pem = $signer->saveX509($issued);
+		$pem = $certificate->toString();
 		if ($pem === '') {
 			throw new RuntimeException('phpseclib certificate export failed');
 		}
@@ -128,6 +121,8 @@ class X509CertificateAssembler {
 	 * @param string $oldCert The current PEM certificate to re-sign
 	 * @param string $intermediateCert The signing intermediate certificate (PEM)
 	 * @param string $intermediateKeyPem The decrypted intermediate private key (PEM)
+	 * @param string|null $fallbackCn CommonName to add when the old subject has none;
+	 *                                an existing commonName is always kept
 	 *
 	 * @return string|null The new PEM certificate, or null when signing failed.
 	 *
@@ -137,31 +132,38 @@ class X509CertificateAssembler {
 		string $oldCert,
 		string $intermediateCert,
 		string $intermediateKeyPem,
+		?string $fallbackCn = null,
 	): ?string {
 		try {
-			$old = new X509();
-			if ($old->loadX509($oldCert) === false) {
+			$old = $this->keyLoader->loadCertificate($oldCert);
+			$oldPublic = $old->getPublicKey();
+			if ($oldPublic instanceof PublicKey === false) {
 				return null;
 			}
 
-			$issuer = new X509();
-			$issuer->loadX509($intermediateCert);
-			$issuer->setPrivateKey($this->keyLoader->loadPrivateKey($intermediateKeyPem));
-
-			$subject = new X509();
-			$subject->setPublicKey($old->getPublicKey());
-			$subject->setDN($old->getDN());
-
-			$signer = new X509();
-			$signer->setStartDate('-1 day');
-			$signer->setEndDate('+365 days');
-			$signer->setSerialNumber((string)random_int(1, PHP_INT_MAX), 10);
-			$signed = $signer->sign($issuer, $subject);
-			if ($signed === false) {
+			$issuerPrivate = $this->keyLoader->loadPrivateKey($intermediateKeyPem);
+			if ($issuerPrivate instanceof PrivateKey === false) {
 				return null;
 			}
 
-			return $signer->saveX509($signed);
+			// Same PKCS1 pin as issuance: a key read back from a certificate
+			// carries phpseclib's PSS default, which would rewrite the SPKI.
+			$certificate = new X509($oldPublic->withPadding(RSA::SIGNATURE_PKCS1));
+			$certificate->setSubjectDN($old->getSubjectDN(X509::DN_ARRAY));
+			if ($fallbackCn !== null && $fallbackCn !== '' && $old->hasSubjectDNProp('id-at-commonName') === false) {
+				$certificate->addSubjectDNProp('id-at-commonName', $fallbackCn);
+			}
+
+			$certificate->setStartDate('-1 day');
+			$certificate->setEndDate('+365 days');
+			$certificate->setSerialNumber((string)random_int(1, PHP_INT_MAX), 10);
+			$this->signWithIntermediate(
+				certificate: $certificate,
+				intermediateCertPem: $intermediateCert,
+				issuerPrivate: $issuerPrivate,
+			);
+
+			return $certificate->toString();
 		} catch (Throwable $exception) {
 			$this->logger->warning(
 				'Keepiq: phpseclib re-sign failed: ' . $exception->getMessage(),
@@ -171,4 +173,26 @@ class X509CertificateAssembler {
 			return null;
 		}//end try
 	}//end resignPreservingSubject()
+
+	/**
+	 * Sign a certificate with the intermediate: copy the intermediate's
+	 * subject DN and key identifier into the issuer fields, then sign with
+	 * PKCS#1 v1.5 (sha256WithRSAEncryption), for issuance and renewal alike.
+	 *
+	 * @param X509 $certificate The certificate to sign, signed in place
+	 * @param string $intermediateCertPem The signing intermediate certificate (PEM)
+	 * @param PrivateKey $issuerPrivate The intermediate's private key
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/certificate-lifecycle/spec.md
+	 */
+	private function signWithIntermediate(
+		X509 $certificate,
+		string $intermediateCertPem,
+		PrivateKey $issuerPrivate,
+	): void {
+		$certificate->copySigningX509Attributes($this->keyLoader->loadCertificate($intermediateCertPem));
+		$issuerPrivate->withPadding(RSA::SIGNATURE_PKCS1)->withHash('sha256')->sign($certificate);
+	}//end signWithIntermediate()
 }//end class

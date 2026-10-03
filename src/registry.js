@@ -37,7 +37,6 @@ import ShareList from './components/share/ShareList.vue'
 import ApplicationRegisterDialog from './dialogs/ApplicationRegisterDialog.vue'
 import FolderCreateDialog from './dialogs/FolderCreateDialog.vue'
 import MoveDialog from './dialogs/MoveDialog.vue'
-import PrivateKeyDownloadDialog from './dialogs/PrivateKeyDownloadDialog.vue'
 import SecretCreateDialog from './dialogs/SecretCreateDialog.vue'
 import SecretDeleteConfirmDialog from './dialogs/SecretDeleteConfirmDialog.vue'
 import SecretEditDialog from './dialogs/SecretEditDialog.vue'
@@ -54,6 +53,7 @@ import LockScreen from './views/LockScreen.vue'
 import PersonalActivityView from './views/PersonalActivityView.vue'
 import SecretList from './views/SecretList.vue'
 import SecretRequestFill from './views/SecretRequestFill.vue'
+import ShareApprovalView from './views/ShareApprovalView.vue'
 
 export default {
 	// --- Flows (ADR-110 Decision 4). Only the SIDEBAR is an app component;
@@ -70,6 +70,7 @@ export default {
 	ApplicationRegisterView: { kind: 'page', component: ApplicationRegisterView },
 	ApplicationDetail: { kind: 'page', component: ApplicationDetail },
 	PersonalActivityView: { kind: 'page', component: PersonalActivityView },
+	ShareApprovalView: { kind: 'page', component: ShareApprovalView },
 	HealthReportView: { kind: 'page', component: HealthReportView },
 	EmergencyAccessView: { kind: 'page', component: EmergencyAccessView },
 	CertificateInventoryView: { kind: 'page', component: CertificateInventoryView },
@@ -94,11 +95,6 @@ export default {
 	'application-register': {
 		kind: 'modal',
 		component: ApplicationRegisterDialog,
-		propsSchema: {},
-	},
-	'private-key-download': {
-		kind: 'modal',
-		component: PrivateKeyDownloadDialog,
 		propsSchema: {},
 	},
 	'share-dialog': { kind: 'modal', component: ShareDialog, propsSchema: {} },

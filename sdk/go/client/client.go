@@ -1,0 +1,397 @@
+// Package client is Keepiq's shared HTTP client (keepiq-cli §1.2) for both
+// the human session API (Nextcloud app-password auth) and the CI machine
+// secret-store API (RFC 7523 JWT bearer). It never transmits the master
+// password or any derived key — those stay in the CLI process (§3.2).
+package client
+
+import (
+	"bytes"
+	"crypto/rsa"
+	"encoding/base64"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"net/url"
+	"strings"
+	"time"
+
+	dcrypto "github.com/ConductionNL/keepiq/sdk/go/crypto"
+)
+
+// ErrNotModified is returned by a conditional fetch when the server answers 304
+// (the secret is unchanged since the last observed ETag) — the caller keeps its
+// cached value (§4.2, poll loops).
+var ErrNotModified = errors.New("not modified")
+
+// Client talks to one Keepiq instance.
+type Client struct {
+	BaseURL    string
+	HTTP       *http.Client
+	appUser    string // Nextcloud user (human mode)
+	appPass    string // Nextcloud app-password (human mode)
+	leaseID    string // last observed machine lease id (§4.4)
+	leaseUntil string // last observed lease expiry
+	lastETag   string // last observed secret ETag (§4.2, conditional re-fetch)
+}
+
+// New builds a client with sane timeouts.
+func New(baseURL string) *Client {
+	return &Client{
+		BaseURL: strings.TrimRight(baseURL, "/"),
+		HTTP:    &http.Client{Timeout: 30 * time.Second},
+	}
+}
+
+// WithAppPassword sets the human-mode Nextcloud credentials (an app-password,
+// never the login password, §3.1).
+func (c *Client) WithAppPassword(user, appPassword string) {
+	c.appUser = user
+	c.appPass = appPassword
+}
+
+// LeaseID / LeaseExpires expose the last machine lease headers (§4.4).
+func (c *Client) LeaseID() string      { return c.leaseID }
+func (c *Client) LeaseExpires() string { return c.leaseUntil }
+
+// LastETag exposes the ETag of the last fetched secret (§4.2).
+func (c *Client) LastETag() string { return c.lastETag }
+
+// Suite is the active EncryptionSuite blob the human unlock needs.
+type Suite struct {
+	ID          string `json:"id"`
+	Certificate string `json:"certificate"`
+	PrivateKey  string `json:"privateKey"`
+	Status      string `json:"status"`
+	// UnlockBlocked names a vault policy that withholds PrivateKey, such as
+	// two_factor_required (admin-vault-policies D3).
+	UnlockBlocked string `json:"unlockBlocked"`
+}
+
+// ErrTwoFactorRequired is returned when the organisation requires Nextcloud
+// two-factor login before the vault unlocks and the account has none.
+var ErrTwoFactorRequired = errors.New("two_factor_required: your organisation requires two-factor login in Nextcloud before you can open your vault")
+
+// Secret is one vault secret (ciphertext fields until decrypted locally).
+type Secret struct {
+	ID               string `json:"id"`
+	Name             string `json:"name"`
+	URL              string `json:"url"`
+	TypeID           string `json:"typeId"`
+	FolderID         string `json:"folderId"`
+	Key              string `json:"key"`
+	Login            string `json:"login"`
+	AdditionalFields string `json:"additionalFields"`
+	// UseOnly marks a copy the holder may fill but never see or copy
+	// (sharing-use-only-and-expiring-shares D3).
+	UseOnly bool `json:"useOnly"`
+}
+
+// ActiveSuite fetches the caller's active suite (human mode).
+func (c *Client) ActiveSuite() (*Suite, error) {
+	var suites []Suite
+	if err := c.getJSON("/apps/keepiq/api/v1/suites", &suites); err != nil {
+		return nil, err
+	}
+	for i := range suites {
+		if suites[i].Status == "active" {
+			if suites[i].UnlockBlocked == "two_factor_required" {
+				return nil, ErrTwoFactorRequired
+			}
+			if suites[i].UnlockBlocked != "" {
+				return nil, fmt.Errorf("vault unlock blocked: %s", suites[i].UnlockBlocked)
+			}
+			return &suites[i], nil
+		}
+	}
+	return nil, fmt.Errorf("no active encryption suite")
+}
+
+// ListSecrets fetches the caller's secret list (metadata + ciphertext).
+func (c *Client) ListSecrets() ([]Secret, error) {
+	var page struct {
+		Items []Secret `json:"items"`
+	}
+	if err := c.getJSON("/apps/keepiq/api/v1/secrets?limit=100000", &page); err != nil {
+		return nil, err
+	}
+	return page.Items, nil
+}
+
+// GetSecret fetches one secret by id (human mode).
+func (c *Client) GetSecret(id string) (*Secret, error) {
+	var s Secret
+	if err := c.getJSON("/apps/keepiq/api/v1/secrets/"+id, &s); err != nil {
+		return nil, err
+	}
+	return &s, nil
+}
+
+// SecretType is one entry of the secret-type catalogue.
+type SecretType struct {
+	ID    string `json:"id"`
+	Name  string `json:"name"`
+	Label string `json:"label"`
+	Scope string `json:"scope"`
+}
+
+// SSHKeyTypeName is the seeded type whose secrets hold an OpenSSH private key
+// in the encrypted `key` field (cli-ssh-agent).
+const SSHKeyTypeName = "ssh_key"
+
+// SecretTypes fetches the secret types available to the caller (human mode).
+func (c *Client) SecretTypes() ([]SecretType, error) {
+	var types []SecretType
+	if err := c.getJSON("/apps/keepiq/api/v1/secret-types", &types); err != nil {
+		return nil, err
+	}
+	return types, nil
+}
+
+// SSHKeyTypeID returns the id of the `ssh_key` type, or an error when the
+// catalogue has none.
+func (c *Client) SSHKeyTypeID() (string, error) {
+	types, err := c.SecretTypes()
+	if err != nil {
+		return "", err
+	}
+	for _, t := range types {
+		if t.Name == SSHKeyTypeName {
+			return t.ID, nil
+		}
+	}
+	return "", fmt.Errorf("no %q secret type on this server", SSHKeyTypeName)
+}
+
+// Folder is one of the caller's folders (index fields only).
+type Folder struct {
+	ID       string `json:"id"`
+	Name     string `json:"name"`
+	ParentID string `json:"parentId"`
+}
+
+// FolderIDByName returns the id of the caller's folder with this name.
+func (c *Client) FolderIDByName(name string) (string, error) {
+	var folders []Folder
+	if err := c.getJSON("/apps/keepiq/api/v1/folders", &folders); err != nil {
+		return "", err
+	}
+	for _, f := range folders {
+		if f.Name == name {
+			return f.ID, nil
+		}
+	}
+	return "", fmt.Errorf("no folder named %q", name)
+}
+
+// --- CI mode (RFC 7523 machine secret store) ---
+
+// Discovery is the machine-store discovery document (subset used by the CLI).
+// The field names mirror the server's DiscoveryController.document() shape
+// (camelCase, nested) so the CLI self-configures from discovery alone (§4.1).
+type Discovery struct {
+	APIVersion    int    `json:"apiVersion"`
+	TokenEndpoint string `json:"tokenEndpoint"`
+	GrantType     string `json:"grantType"`
+	Assertion     struct {
+		Alg      string `json:"alg"`
+		Audience string `json:"audience"`
+	} `json:"assertion"`
+	Secrets struct {
+		ByName string `json:"byName"`
+	} `json:"secrets"`
+	Lease struct {
+		Supported bool `json:"supported"`
+	} `json:"lease"`
+}
+
+// Discovery paths. The keepiq path is canonical; the doriath path is the
+// pre-rename alias, tried only when a server answers 404 on the canonical one.
+const (
+	discoveryPath       = "/apps/keepiq/api/v1/app/.well-known/keepiq"
+	legacyDiscoveryPath = "/apps/keepiq/api/v1/app/.well-known/doriath"
+)
+
+// DefaultAudience is the JWT audience used when discovery names none. It
+// matches the server's AudiencePolicy::CANONICAL_AUDIENCE.
+const DefaultAudience = "keepiq"
+
+// Discover fetches and returns the machine-store discovery document.
+func (c *Client) Discover() (*Discovery, error) {
+	var d Discovery
+	err := c.getJSON(discoveryPath, &d)
+	var se *statusError
+	if errors.As(err, &se) && se.code == http.StatusNotFound {
+		d = Discovery{}
+		err = c.getJSON(legacyDiscoveryPath, &d)
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &d, nil
+}
+
+// LeaseSupported reports whether the last discovery advertised lease support.
+func (d *Discovery) LeaseSupported() bool { return d.Lease.Supported }
+
+// MachineToken signs an RFC 7523 JWT assertion with the application private key
+// and exchanges it for an opaque bearer token (§4.1). The private key never
+// leaves the process.
+func (c *Client) MachineToken(applicationID string, key *rsa.PrivateKey, disc *Discovery, now int64) (string, error) {
+	aud := disc.Assertion.Audience
+	if aud == "" {
+		aud = DefaultAudience
+	}
+	header := base64.RawURLEncoding.EncodeToString([]byte(`{"alg":"RS256","typ":"JWT"}`))
+	claims := map[string]any{
+		"iss": applicationID,
+		"sub": applicationID,
+		"aud": aud,
+		"iat": now,
+		"exp": now + 300,
+		"jti": fmt.Sprintf("%s-%d", applicationID, now),
+	}
+	claimsJSON, _ := json.Marshal(claims)
+	payload := base64.RawURLEncoding.EncodeToString(claimsJSON)
+	signingInput := header + "." + payload
+	sig, err := dcrypto.SignRS256(signingInput, key)
+	if err != nil {
+		return "", err
+	}
+	assertion := signingInput + "." + sig
+
+	// NB: Keepiq's token endpoint reads camelCase param names (grantType), not
+	// the OAuth-standard snake_case — verified against the live server.
+	form := url.Values{
+		"grantType": {"urn:ietf:params:oauth:grant-type:jwt-bearer"},
+		"assertion": {assertion},
+	}.Encode()
+	req, _ := http.NewRequest(http.MethodPost, c.abs(disc.TokenEndpoint), strings.NewReader(form))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("token exchange failed (%d): %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+	var tok struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err := json.Unmarshal(body, &tok); err != nil {
+		return "", err
+	}
+	return tok.AccessToken, nil
+}
+
+// MachineEnvelope is the doriath-machine-secret-v1 envelope (CI fetch, §4.2),
+// in the shape lib/Service/MachineSecretEnvelopeService.php serialize()
+// writes: metadata under `secret`, the scheme under `encryption.scheme`, and
+// the base64 ciphertext under `ciphertext.key`, `ciphertext.login` and
+// `ciphertext.additionalFields`. sdk/testdata/machine_envelope.json is that
+// serializer's real output, guarded by a PHPUnit test (keepiq#793).
+type MachineEnvelope struct {
+	Format string `json:"format"`
+	Secret struct {
+		ID           string `json:"id"`
+		Name         string `json:"name"`
+		URL          string `json:"url"`
+		FolderPath   string `json:"folderPath"`
+		Type         string `json:"type"`
+		CreatedAt    string `json:"createdAt"`
+		UpdatedAt    string `json:"updatedAt"`
+		KeyUpdatedAt string `json:"keyUpdatedAt"`
+	} `json:"secret"`
+	Encryption struct {
+		SuiteID                string `json:"suiteId"`
+		CertificateFingerprint string `json:"certificateFingerprint"`
+		Scheme                 string `json:"scheme"`
+	} `json:"encryption"`
+	Ciphertext struct {
+		Key              string `json:"key"`
+		Login            string `json:"login"`
+		AdditionalFields string `json:"additionalFields"`
+	} `json:"ciphertext"`
+}
+
+// FetchByName fetches an application secret envelope by name with the bearer
+// token, capturing any Doriath-Lease-* headers (§4.4 — the header names keep
+// the old prefix; they are a published wire contract, see
+// lib/Service/MachineSecretResponseService.php). When the client has a
+// prior ETag for this secret it sends If-None-Match; on a 304 it returns
+// ErrNotModified so a poll loop can keep its cached value (§4.2).
+func (c *Client) FetchByName(name, bearer string) (*MachineEnvelope, error) {
+	req, _ := http.NewRequest(http.MethodGet, c.BaseURL+"/apps/keepiq/api/v1/app/secrets/by-name/"+name, nil)
+	req.Header.Set("Authorization", "Bearer "+bearer)
+	if c.lastETag != "" {
+		req.Header.Set("If-None-Match", c.lastETag)
+	}
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	c.leaseID = resp.Header.Get("Doriath-Lease-Id")
+	c.leaseUntil = resp.Header.Get("Doriath-Lease-Expires")
+	if etag := resp.Header.Get("ETag"); etag != "" {
+		c.lastETag = etag
+	}
+	if resp.StatusCode == http.StatusNotModified {
+		return nil, ErrNotModified
+	}
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("fetch %q failed (%d): %s", name, resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+	var env MachineEnvelope
+	if err := json.Unmarshal(body, &env); err != nil {
+		return nil, err
+	}
+	return &env, nil
+}
+
+// --- internals ---
+
+func (c *Client) getJSON(path string, out any) error {
+	req, _ := http.NewRequest(http.MethodGet, c.BaseURL+path, nil)
+	c.authenticate(req)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("OCS-APIRequest", "true")
+	resp, err := c.HTTP.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return &statusError{path: path, code: resp.StatusCode, body: strings.TrimSpace(string(body))}
+	}
+	return json.Unmarshal(bytes.TrimSpace(body), out)
+}
+
+// statusError is a GET answered with a status other than 200.
+type statusError struct {
+	path string
+	code int
+	body string
+}
+
+func (e *statusError) Error() string {
+	return fmt.Sprintf("GET %s failed (%d): %s", e.path, e.code, e.body)
+}
+
+func (c *Client) authenticate(req *http.Request) {
+	if c.appUser != "" {
+		req.SetBasicAuth(c.appUser, c.appPass)
+	}
+}
+
+func (c *Client) abs(endpoint string) string {
+	if strings.HasPrefix(endpoint, "http") {
+		return endpoint
+	}
+	return c.BaseURL + endpoint
+}

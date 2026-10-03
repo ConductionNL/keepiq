@@ -14,6 +14,7 @@
 
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import ApplicationOutline from 'vue-material-design-icons/ApplicationOutline.vue'
+import ArchiveOutline from 'vue-material-design-icons/ArchiveOutline.vue'
 import Autorenew from 'vue-material-design-icons/Autorenew.vue'
 import BookOpenVariantOutline from 'vue-material-design-icons/BookOpenVariantOutline.vue'
 import CertificateOutline from 'vue-material-design-icons/CertificateOutline.vue'
@@ -31,11 +32,13 @@ import PowerPlugOutline from 'vue-material-design-icons/PowerPlugOutline.vue'
 import Pulse from 'vue-material-design-icons/Pulse.vue'
 import ShieldKeyOutline from 'vue-material-design-icons/ShieldKeyOutline.vue'
 import Sitemap from 'vue-material-design-icons/Sitemap.vue'
+import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import ViewDashboardOutline from 'vue-material-design-icons/ViewDashboardOutline.vue'
 
 export default {
 	AccountGroup,
 	ApplicationOutline,
+	ArchiveOutline,
 	Autorenew,
 	BookOpenVariantOutline,
 	CertificateOutline,
@@ -53,5 +56,6 @@ export default {
 	Pulse,
 	ShieldKeyOutline,
 	Sitemap,
+	TrashCanOutline,
 	ViewDashboardOutline,
 }

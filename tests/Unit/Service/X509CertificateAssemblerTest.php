@@ -312,6 +312,120 @@ class X509CertificateAssemblerTest extends TestCase {
 	}//end testResignPreservesTheSubjectPublicKeyAndDn()
 
 	/**
+	 * Full certificate round trip, checked by ext-openssl rather than by the
+	 * library that produced it: issue, verify against the intermediate, re-sign,
+	 * verify again, and re-sign the renewal once more. Every certificate in the
+	 * chain must carry the plain rsaEncryption SPKI, a PKCS#1 v1.5 SHA-256
+	 * signature, the issuer DN of the intermediate and the original modulus.
+	 *
+	 * This is the evidence for the phpseclib 3 to 4 migration (keepiq#444):
+	 * 4.0 replaced the X509 signing API, and its RSA keys default to PSS, which
+	 * would turn the SPKI into id-RSASSA-PSS unless both paths pin PKCS#1.
+	 *
+	 * @return void
+	 */
+	public function testCertificateRoundTripIssueVerifyResignVerify(): void {
+		$pub = $this->publicKeyPem(2048);
+		$intermediatePublic = openssl_pkey_get_public($this->intermediateCertPem);
+		$intermediateSubject = openssl_x509_parse($this->intermediateCertPem)['subject'];
+		$modulus = bin2hex(openssl_pkey_get_details(openssl_pkey_get_public($pub))['rsa']['n']);
+
+		$issued = $this->assembler->issueForPublicKey(
+			$pub,
+			[
+				'id-at-countryName' => 'NL',
+				'id-at-organizationName' => 'Conduction',
+				'id-at-commonName' => 'roundtrip@example.com',
+			],
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+		);
+		$renewed = $this->assembler->resignPreservingSubject(
+			$issued,
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+		);
+		$this->assertNotNull($renewed, 'first re-sign returned null');
+		$renewedAgain = $this->assembler->resignPreservingSubject(
+			$renewed,
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+		);
+		$this->assertNotNull($renewedAgain, 'second re-sign returned null');
+
+		foreach (['issued' => $issued, 'renewed' => $renewed, 'renewed again' => $renewedAgain] as $label => $pem) {
+			$this->assertSame(
+				1,
+				openssl_x509_verify($pem, $intermediatePublic),
+				"the $label certificate does not verify against the intermediate's key"
+			);
+
+			$parsed = openssl_x509_parse($pem);
+			$this->assertSame('sha256WithRSAEncryption', $parsed['signatureTypeLN'], "$label signature algorithm");
+			$this->assertSame($intermediateSubject, $parsed['issuer'], "$label issuer DN");
+			$this->assertSame('roundtrip@example.com', $parsed['subject']['CN'], "$label subject CN");
+			$this->assertSame('Conduction', $parsed['subject']['O'], "$label subject O");
+			$this->assertGreaterThan(time() + (360 * 86400), $parsed['validTo_time_t'], "$label validity end");
+			$this->assertLessThanOrEqual(time() + 60, $parsed['validFrom_time_t'], "$label validity start");
+
+			$this->assertSame(
+				$modulus,
+				bin2hex(openssl_pkey_get_details(openssl_pkey_get_public($pem))['rsa']['n']),
+				"the $label certificate carries another public key"
+			);
+
+			$der = base64_decode(preg_replace('/-----(BEGIN|END) CERTIFICATE-----|\s+/', '', $pem));
+			$this->assertStringNotContainsString(
+				hex2bin('2a864886f70d01010a'),
+				$der,
+				"the $label certificate carries id-RSASSA-PSS; WebCrypto and openssl consumers reject it"
+			);
+		}//end foreach
+
+	}//end testCertificateRoundTripIssueVerifyResignVerify()
+
+	/**
+	 * A renewal adds the fallback commonName only when the old subject has
+	 * none, and keeps an existing commonName untouched.
+	 *
+	 * @return void
+	 */
+	public function testResignAddsTheFallbackCommonNameOnlyWhenMissing(): void {
+		$withoutCn = $this->assembler->issueForPublicKey(
+			$this->publicKeyPem(2048),
+			['id-at-countryName' => 'NL', 'id-at-organizationName' => 'Conduction'],
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+		);
+		$withCn = $this->assembler->issueForPublicKey(
+			$this->publicKeyPem(2048),
+			['id-at-countryName' => 'NL', 'id-at-commonName' => 'kept@example.com'],
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+		);
+
+		$filled = $this->assembler->resignPreservingSubject(
+			$withoutCn,
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+			'fallback@example.com',
+		);
+		$kept = $this->assembler->resignPreservingSubject(
+			$withCn,
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+			'fallback@example.com',
+		);
+
+		$this->assertNotNull($filled);
+		$this->assertNotNull($kept);
+		$this->assertSame('fallback@example.com', openssl_x509_parse($filled)['subject']['CN']);
+		$this->assertSame('Conduction', openssl_x509_parse($filled)['subject']['O']);
+		$this->assertSame('kept@example.com', openssl_x509_parse($kept)['subject']['CN']);
+
+	}//end testResignAddsTheFallbackCommonNameOnlyWhenMissing()
+
+	/**
 	 * Re-signing garbage must degrade to null rather than throw, since the
 	 * caller treats null as "this certificate could not be renewed".
 	 *

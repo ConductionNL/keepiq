@@ -122,10 +122,23 @@
 
 			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
 
+			<TypedFieldsForm
+				v-if="typedFields.length > 0"
+				:fields="typedFields"
+				:values="typedValues"
+				:missing="typedMissing"
+				:disabled="saving || loading"
+				@update:values="onTypedValues" />
+
 			<AdditionalFieldsEditor
 				:members="additionalFields"
 				:disabled="saving || loading"
 				@update:members="additionalFields = $event" />
+
+			<SecretTagsField
+				:modelValue="tags"
+				:disabled="saving || loading"
+				@update:modelValue="tags = $event" />
 
 			<NcNoteCard
 				v-if="!policyVerdict.compliant"
@@ -162,6 +175,8 @@ import {
 import ContentSave from 'vue-material-design-icons/ContentSave.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
+import SecretTagsField from '../components/SecretTagsField.vue'
+import TypedFieldsForm from '../components/TypedFieldsForm.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import {
 	CARD_FIELDS,
@@ -177,6 +192,13 @@ import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { membersToObject, objectToMembers } from '../utils/additionalFields.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
+import { sameTags } from '../utils/tags.js'
+import {
+	mergeTypedValues,
+	missingRequired,
+	splitTypedValues,
+	typedFieldsOf,
+} from '../utils/typedFields.js'
 
 /**
  * Edit a secret. Loads + decrypts on mount; on save sends only changed fields,
@@ -188,6 +210,8 @@ export default {
 
 	components: {
 		AdditionalFieldsEditor,
+		SecretTagsField,
+		TypedFieldsForm,
 		ContentSave,
 		Dice5,
 		KeyGeneratorModal,
@@ -228,6 +252,9 @@ export default {
 			url: '',
 			login: '',
 			additionalFields: [],
+			tags: [],
+			typedValues: {},
+			typedMissing: [],
 			generatorOpen: false,
 			card: { number: '', expiry: '', cvv: '', pin: '', cardholder: '' },
 			identity: {
@@ -271,7 +298,22 @@ export default {
 				: t('keepiq', 'Secret value')
 		},
 
-		/** The selected type's system name (card-identity-items §3.1). */
+		/**
+		 * The fields an administrator defined on the chosen type; empty for
+		 * the built-in types, which keep their own forms.
+		 *
+		 * @return {Array<object>} The fields.
+		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 */
+		typedFields() {
+			return typedFieldsOf(useSecretTypeStore().typesById[this.typeId])
+		},
+
+		/**
+		 * The selected type's system name (card-identity-items §3.1).
+		 *
+		 * @spec exclude Trivial lookup: resolves the selected type id to its name.
+		 */
 		selectedTypeName() {
 			return useSecretTypeStore().typesById[this.typeId]?.name ?? ''
 		},
@@ -284,7 +326,11 @@ export default {
 			return this.selectedTypeName === IDENTITY_TYPE_NAME
 		},
 
-		/** The value serialized for the encrypted key field. */
+		/**
+		 * The value serialized for the encrypted key field.
+		 *
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
+		 */
 		effectiveValue() {
 			if (this.isCard) {
 				return serializeCard(this.card)
@@ -300,6 +346,8 @@ export default {
 		 * unchanged value is never re-gated.
 		 *
 		 * @return {{compliant: boolean, reason: string|null}}
+		 *
+		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
 		 */
 		policyVerdict() {
 			if (
@@ -312,6 +360,9 @@ export default {
 			return evaluateScore(this.policy, this.selectedTypeName, this.value)
 		},
 
+		/**
+		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
+		 */
 		canSubmit() {
 			return (
 				!this.loading
@@ -322,6 +373,9 @@ export default {
 		},
 	},
 
+	/**
+	 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-edit-a-secret-from-the-ui
+	 */
 	async mounted() {
 		this.policy = await fetchPolicy()
 		const typeStore = useSecretTypeStore()
@@ -333,6 +387,20 @@ export default {
 
 	methods: {
 		t,
+
+		/**
+		 * Take the typed values and clear the marks of fields now filled.
+		 *
+		 * @param {object} values The values by field key.
+		 * @return {void}
+		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 */
+		onTypedValues(values) {
+			this.typedValues = values
+			this.typedMissing = this.typedMissing.filter((key) =>
+				missingRequired(this.typedFields, values).includes(key),
+			)
+		},
 
 		/**
 		 * Load + decrypt the secret and seed the form fields.
@@ -356,12 +424,20 @@ export default {
 				this.value = secret.key || ''
 				this.url = secret.url || ''
 				this.login = secret.login || ''
+				this.tags = Array.isArray(secret.tags) ? [...secret.tags] : []
 				// From the DECRYPTED blob the store already parsed. Pre-filling from
 				// the current decrypted copy is also what bounds the known
 				// last-writer-wins window: the whole blob is rewritten on save, so an
 				// edit begun from a stale copy would drop members another session
 				// added meanwhile.
-				this.additionalFields = objectToMembers(secret.additionalFields)
+				// Typed values (admin-18) come out of the same blob into their own
+				// form, so the free-field editor does not list them twice.
+				const split = splitTypedValues(
+					secret.additionalFields,
+					this.typedFields,
+				)
+				this.typedValues = split.values
+				this.additionalFields = objectToMembers(split.rest)
 
 				// Seed the per-type composite fields from the decrypted
 				// payload (card-identity-items §3.1); a legacy plain value
@@ -394,6 +470,8 @@ export default {
 		 *
 		 * @param {boolean} value The new open state.
 		 * @return {void}
+		 *
+		 * @spec exclude Event re-emitter: syncs the open flag and emits close to the parent.
 		 */
 		onUpdateOpen(value) {
 			this.open = value
@@ -406,6 +484,8 @@ export default {
 		 * Open the key generator dialog.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
 		 */
 		openGenerator() {
 			this.generatorOpen = true
@@ -416,6 +496,8 @@ export default {
 		 *
 		 * @param {string} key The generated key.
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
 		 */
 		onGenerated(key) {
 			if (typeof key === 'string' && key.length > 0) {
@@ -432,6 +514,11 @@ export default {
 		 */
 		async submit() {
 			if (!this.canSubmit) {
+				return
+			}
+			// A required field of the type blocks the save and is marked (admin-18).
+			this.typedMissing = missingRequired(this.typedFields, this.typedValues)
+			if (this.typedMissing.length > 0) {
 				return
 			}
 			this.saving = true
@@ -479,9 +566,21 @@ export default {
 				// rather than null when the last member is removed: null would mean
 				// "not provided", which the store reads as "leave the stored blob
 				// alone" — the opposite of what removing the last field means.
-				const nextMembers = membersToObject(this.additionalFields)
-				const priorMembers = membersToObject(
-					objectToMembers(o.additionalFields),
+				const nextMembers = mergeTypedValues(
+					membersToObject(this.additionalFields),
+					this.typedFields,
+					this.typedValues,
+				)
+				// The prior blob in the same shape (free members, then typed values),
+				// so a blob whose typed members only moved is not read as changed.
+				const priorSplit = splitTypedValues(
+					o.additionalFields,
+					this.typedFields,
+				)
+				const priorMembers = mergeTypedValues(
+					membersToObject(objectToMembers(priorSplit.rest)),
+					this.typedFields,
+					priorSplit.values,
 				)
 				if (JSON.stringify(nextMembers) !== JSON.stringify(priorMembers)) {
 					diff.additionalFields = nextMembers
@@ -493,6 +592,11 @@ export default {
 						this.secretId,
 						diff,
 					)
+				}
+				// Tags are the holder's own, stored apart from the value
+				// (vault-favourites-tags-and-last-used).
+				if (!sameTags(this.tags, o.tags)) {
+					await useSecretStore().setTags(this.secretId, this.tags)
 				}
 				this.$emit('saved', updated)
 				if (this.onSaved) {

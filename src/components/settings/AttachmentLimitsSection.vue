@@ -6,16 +6,19 @@
   §6.4): per-attachment size limit and per-user quota, expressed in MiB
   for humans, stored and enforced server-side in ciphertext bytes.
 
+  Version and trash retention moved to RetentionPolicySection in the
+  Policies area (admin-scoped-roles, decision of 2 Oct).
+
   @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
-  @spec openspec/specs/secret-version-history/spec.md#requirement-admin-configurable-retention-and-pruning
+  @spec openspec/changes/admin-scoped-roles/tasks.md#3.1
 -->
 <template>
 	<CnSettingsSection
-		:name="t('keepiq', 'Attachments & version history')"
+		:name="t('keepiq', 'Attachments')"
 		:description="
 			t(
 				'keepiq',
-				'Limits for encrypted file attachments (enforced server-side in stored ciphertext bytes) and version-history retention.',
+				'Limits for encrypted file attachments, enforced on the server in stored ciphertext bytes.',
 			)
 		">
 		<div class="attachment-limits" data-testid="attachment-limits-section">
@@ -40,26 +43,6 @@
 					data-testid="attachment-quota-mib"
 					@change="save" />
 			</label>
-			<label class="attachment-limits__field">
-				<span>{{ t('keepiq', 'Versions kept per secret') }}</span>
-				<input
-					v-model.number="retentionCount"
-					type="number"
-					min="1"
-					data-testid="version-retention-count"
-					@change="save" />
-			</label>
-			<label class="attachment-limits__field">
-				<span>{{
-					t('keepiq', 'Version age limit (days, 0 = unlimited)')
-				}}</span>
-				<input
-					v-model.number="retentionDays"
-					type="number"
-					min="0"
-					data-testid="version-retention-days"
-					@change="save" />
-			</label>
 		</div>
 	</CnSettingsSection>
 </template>
@@ -80,8 +63,6 @@ export default {
 		return {
 			maxMib: 25,
 			quotaMib: 100,
-			retentionCount: 20,
-			retentionDays: 365,
 			error: null,
 		}
 	},
@@ -90,12 +71,11 @@ export default {
 	 * Load the current admin limits.
 	 *
 	 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
-	 * @spec openspec/specs/secret-version-history/spec.md#requirement-admin-configurable-retention-and-pruning
 	 */
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin'),
+				generateUrl('/apps/keepiq/api/settings/admin/general'),
 			)
 			this.maxMib = Math.round(
 				(response.data.attachment_max_bytes ?? 25 * MIB) / MIB,
@@ -103,8 +83,6 @@ export default {
 			this.quotaMib = Math.round(
 				(response.data.attachment_user_quota_bytes ?? 100 * MIB) / MIB,
 			)
-			this.retentionCount = response.data.version_retention_count ?? 20
-			this.retentionDays = response.data.version_retention_days ?? 365
 		} catch (e) {
 			this.error = e?.response?.data?.message || e?.message
 		}
@@ -116,17 +94,18 @@ export default {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
-		 * @spec openspec/specs/secret-version-history/spec.md#requirement-admin-configurable-retention-and-pruning
 		 */
 		async save() {
 			this.error = null
 			try {
-				await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
-					attachment_max_bytes: Math.max(1, this.maxMib) * MIB,
-					attachment_user_quota_bytes: Math.max(1, this.quotaMib) * MIB,
-					version_retention_count: Math.max(1, this.retentionCount),
-					version_retention_days: Math.max(0, this.retentionDays),
-				})
+				await axios.put(
+					generateUrl('/apps/keepiq/api/settings/admin/general'),
+					{
+						attachment_max_bytes: Math.max(1, this.maxMib) * MIB,
+						attachment_user_quota_bytes:
+							Math.max(1, this.quotaMib) * MIB,
+					},
+				)
 			} catch (e) {
 				this.error = e?.response?.data?.message || e?.message
 			}

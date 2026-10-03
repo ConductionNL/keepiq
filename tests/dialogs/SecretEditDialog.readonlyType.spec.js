@@ -46,7 +46,7 @@ const stubs = {
 	// rather than fail to resolve the component.
 	NcSelect: {
 		props: ['options', 'reduce', 'inputLabel', 'clearable', 'modelValue'],
-		template: '<div class="stub-select" />',
+		template: '<div class="stub-select" :data-label="inputLabel" />',
 	},
 	NcTextField: {
 		props: ['modelValue', 'label', 'placeholder', 'disabled', 'required'],
@@ -111,7 +111,12 @@ describe('SecretEditDialog — type is read-only', () => {
 		})
 
 		expect(wrapper.find('[data-testid="secret-edit-type"]').text()).toBe('Login')
-		expect(wrapper.find('.stub-select').exists()).toBe(false)
+		// The only select left is the tags field (vault-favourites-tags-and-last-used),
+		// never one for the type.
+		const labels = wrapper
+			.findAll('.stub-select')
+			.map((select) => select.attributes('data-label'))
+		expect(labels).toEqual(['Tags'])
 	})
 
 	it('labels the type with its translated name, not the raw id', async () => {

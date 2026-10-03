@@ -156,6 +156,8 @@ class RotationController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 	 */
 	#[NoAdminRequired]
 	public function policies(): JSONResponse {
@@ -219,6 +221,8 @@ class RotationController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-expiry-policies-with-admin-default-and-user-override
 	 */
 	#[NoAdminRequired]
 	public function destroyPolicy(string $id): JSONResponse {
@@ -334,6 +338,8 @@ class RotationController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-rotate-after-breach-and-rotate-after-compromise-flagging
 	 */
 	#[NoAdminRequired]
 	public function dismissFlag(string $id): JSONResponse {

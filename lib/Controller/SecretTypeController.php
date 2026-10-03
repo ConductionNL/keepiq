@@ -27,12 +27,13 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\SecretTypeService;
+use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
-use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -46,7 +47,7 @@ class SecretTypeController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param SecretTypeService $typeService The secret type service
 	 * @param IUserSession $userSession The user session
-	 * @param IGroupManager $groupManager The group manager (admin check)
+	 * @param AdminAreaAuthorizer $areas Whether the caller holds the General admin area
 	 *
 	 * @return void
 	 */
@@ -54,7 +55,7 @@ class SecretTypeController extends OCSController {
 		IRequest $request,
 		private SecretTypeService $typeService,
 		private IUserSession $userSession,
-		private IGroupManager $groupManager,
+		private AdminAreaAuthorizer $areas,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -88,25 +89,34 @@ class SecretTypeController extends OCSController {
 	 * @param string $name The unique type name
 	 * @param string $label The human-readable label
 	 * @param string $scope The scope (user or global)
+	 * @param array<mixed>|null $fields The fields an item of this type carries
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.2
+	 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
 	 */
 	#[NoAdminRequired]
-	public function create(string $name, string $label, string $scope = 'user'): JSONResponse {
+	public function create(string $name, string $label, string $scope='user', ?array $fields=null): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
 		$userId = $user->getUID();
-		$isAdmin = $this->groupManager->isAdmin($userId);
+		$isAdmin = $this->areas->holds(userId: $userId, areaClass: AdminSettings::class);
 
 		try {
-			$type = $this->typeService->createType($name, $label, $scope, $userId, $isAdmin);
+			$type = $this->typeService->createType(
+				name: $name,
+				label: $label,
+				scope: $scope,
+				userId: $userId,
+				isAdmin: $isAdmin,
+				fields: $fields,
+			);
 		} catch (ForbiddenException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (ConflictException $e) {
@@ -123,25 +133,33 @@ class SecretTypeController extends OCSController {
 	 *
 	 * @param string $id The type ID
 	 * @param string $label The new label
+	 * @param array<mixed>|null $fields The new field list, or null to keep it
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.2
+	 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
 	 */
 	#[NoAdminRequired]
-	public function update(string $id, string $label): JSONResponse {
+	public function update(string $id, string $label, ?array $fields=null): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
 		$userId = $user->getUID();
-		$isAdmin = $this->groupManager->isAdmin($userId);
+		$isAdmin = $this->areas->holds(userId: $userId, areaClass: AdminSettings::class);
 
 		try {
-			$type = $this->typeService->updateType($id, $label, $userId, $isAdmin);
+			$type = $this->typeService->updateType(
+				id: $id,
+				label: $label,
+				userId: $userId,
+				isAdmin: $isAdmin,
+				fields: $fields,
+			);
 		} catch (ForbiddenException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $e) {
@@ -170,7 +188,7 @@ class SecretTypeController extends OCSController {
 		}
 
 		$userId = $user->getUID();
-		$isAdmin = $this->groupManager->isAdmin($userId);
+		$isAdmin = $this->areas->holds(userId: $userId, areaClass: AdminSettings::class);
 
 		try {
 			$this->typeService->deleteType($id, $userId, $isAdmin);
