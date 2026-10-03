@@ -1600,7 +1600,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Þú ert að deila með nýjum aðila. Sláðu inn aðallykilorðið til að staðfesta.",
         "Enter your master password to confirm this share.": "Sláðu inn aðallykilorðið til að staðfesta þessa deilingu.",
         "Enter your master password to confirm this delegation.": "Sláðu inn aðallykilorðið til að staðfesta þessa úthlutun.",
-        "Approve {member}": "Samþykkja {member}"
+        "Approve {member}": "Samþykkja {member}",
+        "Recipient": "Viðtakandi",
+        "No vault yet": "Engin hvelfing enn",
+        "No matching users": "Engir notendur passa"
     },
     "nplurals=2; plural=(n != 1);"
 )

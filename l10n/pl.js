@@ -1600,7 +1600,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Udostępniasz nowej osobie. Wpisz hasło główne, aby potwierdzić.",
         "Enter your master password to confirm this share.": "Wpisz hasło główne, aby potwierdzić to udostępnienie.",
         "Enter your master password to confirm this delegation.": "Wpisz hasło główne, aby potwierdzić to delegowanie.",
-        "Approve {member}": "Zatwierdź {member}"
+        "Approve {member}": "Zatwierdź {member}",
+        "Recipient": "Odbiorca",
+        "No vault yet": "Jeszcze bez skarbca",
+        "No matching users": "Brak pasujących użytkowników"
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

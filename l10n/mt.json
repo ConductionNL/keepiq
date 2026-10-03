@@ -1719,7 +1719,10 @@
         "You are sharing with someone new. Enter your master password to confirm.": "Qed taqsam ma' persuna ġdida. Daħħal il-password master tiegħek biex tikkonferma.",
         "Enter your master password to confirm this share.": "Daħħal il-password master tiegħek biex tikkonferma dan il-qsim.",
         "Enter your master password to confirm this delegation.": "Daħħal il-password master tiegħek biex tikkonferma din id-delega.",
-        "Approve {member}": "Approva lil {member}"
+        "Approve {member}": "Approva lil {member}",
+        "Recipient": "Benefiċjarju",
+        "No vault yet": "Għad m’għandux vault",
+        "No matching users": "L-ebda utent ma jaqbel"
     },
     "plurals": null
 }

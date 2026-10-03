@@ -1600,7 +1600,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Zdieľate s novou osobou. Na potvrdenie zadajte hlavné heslo.",
         "Enter your master password to confirm this share.": "Na potvrdenie tohto zdieľania zadajte hlavné heslo.",
         "Enter your master password to confirm this delegation.": "Na potvrdenie tohto delegovania zadajte hlavné heslo.",
-        "Approve {member}": "Schváliť {member}"
+        "Approve {member}": "Schváliť {member}",
+        "Recipient": "Príjemca",
+        "No vault yet": "Zatiaľ nemá trezor",
+        "No matching users": "Žiadni zodpovedajúci používatelia"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

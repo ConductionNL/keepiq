@@ -1695,7 +1695,10 @@
         "You are sharing with someone new. Enter your master password to confirm.": "Вы дзеліцеся з новым чалавекам. Увядзіце асноўны пароль для пацвярджэння.",
         "Enter your master password to confirm this share.": "Увядзіце асноўны пароль, каб пацвердзіць гэты доступ.",
         "Enter your master password to confirm this delegation.": "Увядзіце асноўны пароль, каб пацвердзіць гэта дэлегаванне.",
-        "Approve {member}": "Ухваліць {member}"
+        "Approve {member}": "Ухваліць {member}",
+        "Recipient": "Атрымальнік",
+        "No vault yet": "Яшчэ няма сховішча",
+        "No matching users": "Няма адпаведных карыстальнікаў"
     },
     "plurals": null
 }

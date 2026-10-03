@@ -1600,7 +1600,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Esteu compartint amb algú nou. Introduïu la contrasenya mestra per confirmar.",
         "Enter your master password to confirm this share.": "Introduïu la contrasenya mestra per confirmar aquesta compartició.",
         "Enter your master password to confirm this delegation.": "Introduïu la contrasenya mestra per confirmar aquesta delegació.",
-        "Approve {member}": "Aprova {member}"
+        "Approve {member}": "Aprova {member}",
+        "Recipient": "Destinatari",
+        "No vault yet": "Encara no té cap caixa forta",
+        "No matching users": "No hi ha cap usuari coincident"
     },
     "nplurals=2; plural=(n != 1);"
 )

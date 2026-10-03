@@ -1600,7 +1600,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Jūs kopīgojat ar jaunu personu. Lai apstiprinātu, ievadiet galveno paroli.",
         "Enter your master password to confirm this share.": "Lai apstiprinātu šo kopīgošanu, ievadiet galveno paroli.",
         "Enter your master password to confirm this delegation.": "Lai apstiprinātu šo deleģēšanu, ievadiet galveno paroli.",
-        "Approve {member}": "Apstiprināt {member}"
+        "Approve {member}": "Apstiprināt {member}",
+        "Recipient": "Saņēmējs",
+        "No vault yet": "Vēl nav glabātuves",
+        "No matching users": "Nav atbilstošu lietotāju"
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

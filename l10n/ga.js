@@ -1600,7 +1600,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Tá tú ag comhroinnt le duine nua. Cuir isteach do phríomhphasfhocal le deimhniú.",
         "Enter your master password to confirm this share.": "Cuir isteach do phríomhphasfhocal chun an chomhroinnt seo a dheimhniú.",
         "Enter your master password to confirm this delegation.": "Cuir isteach do phríomhphasfhocal chun an tarmligean seo a dheimhniú.",
-        "Approve {member}": "Ceadaigh {member}"
+        "Approve {member}": "Ceadaigh {member}",
+        "Recipient": "Faighteoir",
+        "No vault yet": "Gan vailt fós",
+        "No matching users": "Níl aon úsáideoirí comhoiriúnacha"
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

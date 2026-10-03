@@ -1600,7 +1600,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Qed taqsam ma' persuna ġdida. Daħħal il-password master tiegħek biex tikkonferma.",
         "Enter your master password to confirm this share.": "Daħħal il-password master tiegħek biex tikkonferma dan il-qsim.",
         "Enter your master password to confirm this delegation.": "Daħħal il-password master tiegħek biex tikkonferma din id-delega.",
-        "Approve {member}": "Approva lil {member}"
+        "Approve {member}": "Approva lil {member}",
+        "Recipient": "Benefiċjarju",
+        "No vault yet": "Għad m’għandux vault",
+        "No matching users": "L-ebda utent ma jaqbel"
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

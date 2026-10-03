@@ -1695,7 +1695,10 @@
         "You are sharing with someone new. Enter your master password to confirm.": "Ви ділитеся з новою людиною. Введіть головний пароль для підтвердження.",
         "Enter your master password to confirm this share.": "Введіть головний пароль, щоб підтвердити цей спільний доступ.",
         "Enter your master password to confirm this delegation.": "Введіть головний пароль, щоб підтвердити це делегування.",
-        "Approve {member}": "Схвалити {member}"
+        "Approve {member}": "Схвалити {member}",
+        "Recipient": "Отримувач",
+        "No vault yet": "Ще немає сховища",
+        "No matching users": "Немає відповідних користувачів"
     },
     "plurals": null
 }

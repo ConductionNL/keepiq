@@ -1600,7 +1600,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Yeni biriyle paylaşıyorsunuz. Onaylamak için ana parolanızı girin.",
         "Enter your master password to confirm this share.": "Bu paylaşımı onaylamak için ana parolanızı girin.",
         "Enter your master password to confirm this delegation.": "Bu yetki devrini onaylamak için ana parolanızı girin.",
-        "Approve {member}": "{member} onayla"
+        "Approve {member}": "{member} onayla",
+        "Recipient": "Alıcı",
+        "No vault yet": "Henüz kasası yok",
+        "No matching users": "Eşleşen kullanıcı yok"
     },
     "nplurals=1; plural=0;"
 )

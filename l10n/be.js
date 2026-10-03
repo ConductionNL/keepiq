@@ -1600,7 +1600,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Вы дзеліцеся з новым чалавекам. Увядзіце асноўны пароль для пацвярджэння.",
         "Enter your master password to confirm this share.": "Увядзіце асноўны пароль, каб пацвердзіць гэты доступ.",
         "Enter your master password to confirm this delegation.": "Увядзіце асноўны пароль, каб пацвердзіць гэта дэлегаванне.",
-        "Approve {member}": "Ухваліць {member}"
+        "Approve {member}": "Ухваліць {member}",
+        "Recipient": "Атрымальнік",
+        "No vault yet": "Яшчэ няма сховішча",
+        "No matching users": "Няма адпаведных карыстальнікаў"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )
