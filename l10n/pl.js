@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "W Twoim skarbcu, tylko do odczytu",
         "Withdrawn by the sender": "Wycofane przez nadawcę",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "Użytkownik {sender} udostępnił to z innej organizacji. Możesz to odczytać, ale nie możesz tego zmieniać ani udostępniać.",
-        "Someone": "Ktoś"
+        "Someone": "Ktoś",
+        "Share with someone at another organisation": "Udostępnij komuś z innej organizacji",
+        "Their account at the other organisation": "Konto tej osoby w innej organizacji",
+        "Check account": "Sprawdź konto",
+        "Certificate fingerprint of {account}": "Odcisk certyfikatu konta {account}",
+        "Compare it with them by phone if you want to be sure.": "Porównaj go z tą osobą przez telefon, jeśli chcesz mieć pewność.",
+        "Shared. {account} can accept it in their own vault.": "Udostępniono. {account} może go zaakceptować we własnym skarbcu.",
+        "The certificate could not be verified. Nothing was shared.": "Nie udało się zweryfikować certyfikatu. Niczego nie udostępniono.",
+        "That organisation is not one of your partners.": "Ta organizacja nie należy do Twoich partnerów.",
+        "No one with that account can receive secrets from you.": "Nikt z tym kontem nie może otrzymywać od Ciebie sekretów.",
+        "The other organisation did not answer. Try again later.": "Druga organizacja nie odpowiedziała. Spróbuj ponownie później.",
+        "This secret is already shared with that account.": "Ten sekret jest już udostępniony temu kontu.",
+        "Other organisations": "Inne organizacje",
+        "Receive secrets from other organisations": "Odbieraj sekrety z innych organizacji",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Osoby z organizacji partnerskich mogą wtedy znaleźć Twoje konto i udostępniać Ci sekrety. Każdy z nich akceptujesz samodzielnie."
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

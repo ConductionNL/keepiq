@@ -1727,7 +1727,21 @@
         "In your vault, read-only": "У вашем трезору, само за читање",
         "Withdrawn by the sender": "Пошиљалац је повукао",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} дели ово из друге организације. Можете то да читате, али не и да мењате или делите.",
-        "Someone": "Неко"
+        "Someone": "Неко",
+        "Share with someone at another organisation": "Подели са неким из друге организације",
+        "Their account at the other organisation": "Рачун те особе у другој организацији",
+        "Check account": "Провери рачун",
+        "Certificate fingerprint of {account}": "Отисак сертификата за {account}",
+        "Compare it with them by phone if you want to be sure.": "Упоредите га са том особом телефоном ако желите да будете сигурни.",
+        "Shared. {account} can accept it in their own vault.": "Подељено. {account} то може да прихвати у свом трезору.",
+        "The certificate could not be verified. Nothing was shared.": "Сертификат није могуће проверити. Ништа није подељено.",
+        "That organisation is not one of your partners.": "Та организација није један од ваших партнера.",
+        "No one with that account can receive secrets from you.": "Нико са тим рачуном не може да прима тајне од вас.",
+        "The other organisation did not answer. Try again later.": "Друга организација није одговорила. Покушајте поново касније.",
+        "This secret is already shared with that account.": "Ова тајна је већ подељена са тим рачуном.",
+        "Other organisations": "Друге организације",
+        "Receive secrets from other organisations": "Примање тајни из других организација",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Особе у партнерским организацијама тада могу да пронађу ваш рачун и деле тајне са вама. Сваку од њих прихватате сами."
     },
     "plurals": null
 }

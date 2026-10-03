@@ -1608,7 +1608,21 @@ OC.L10N.register(
         "In your vault, read-only": "En Vossa cassaforta, mo per leger",
         "Withdrawn by the sender": "Retratg dal speditur",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} ha cundividì quai dad ina autra organisaziun. Vus pudais leger el, ma betg midar u cundivider.",
-        "Someone": "Insatgi"
+        "Someone": "Insatgi",
+        "Share with someone at another organisation": "Cundivider cun insatgi dad ina autra organisaziun",
+        "Their account at the other organisation": "Il conto da la persuna en l’autra organisaziun",
+        "Check account": "Controllar il conto",
+        "Certificate fingerprint of {account}": "Impronta dal certificat da {account}",
+        "Compare it with them by phone if you want to be sure.": "Cumparai ella cun la persuna per telefon, sche Vus vulais esser segirs.",
+        "Shared. {account} can accept it in their own vault.": "Cundividì. {account} po acceptar el en sia atgna cassaforta.",
+        "The certificate could not be verified. Nothing was shared.": "Il certificat n’ha betg pudì vegnir verifitgà. Nagut n’è vegnì cundividì.",
+        "That organisation is not one of your partners.": "Questa organisaziun n’è betg in da Voss partenaris.",
+        "No one with that account can receive secrets from you.": "Nagin cun quest conto na po retschaiver secrets da Vus.",
+        "The other organisation did not answer. Try again later.": "L’autra organisaziun n’ha betg respundì. Empruvai pli tard anc ina giada.",
+        "This secret is already shared with that account.": "Quest secret è gia cundividì cun quest conto.",
+        "Other organisations": "Autras organisaziuns",
+        "Receive secrets from other organisations": "Retschaiver secrets dad autras organisaziuns",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Persunas en organisaziuns partenarias pon lura chattar Voss conto e cundivider secrets cun Vus. Vus acceptais mintgin sez."
     },
     "nplurals=1; plural=0;"
 )

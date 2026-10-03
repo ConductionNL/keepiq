@@ -1703,7 +1703,21 @@
         "In your vault, read-only": "I hvelvet ditt, skrivebeskyttet",
         "Withdrawn by the sender": "Trukket tilbake av avsenderen",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} delte dette fra en annen organisasjon. Du kan lese det, men ikke endre eller dele det.",
-        "Someone": "Noen"
+        "Someone": "Noen",
+        "Share with someone at another organisation": "Del med noen i en annen organisasjon",
+        "Their account at the other organisation": "Personens konto i den andre organisasjonen",
+        "Check account": "Sjekk konto",
+        "Certificate fingerprint of {account}": "Sertifikatets fingeravtrykk for {account}",
+        "Compare it with them by phone if you want to be sure.": "Sammenlign det med personen over telefon hvis du vil være sikker.",
+        "Shared. {account} can accept it in their own vault.": "Delt. {account} kan godta den i sitt eget hvelv.",
+        "The certificate could not be verified. Nothing was shared.": "Sertifikatet kunne ikke bekreftes. Ingenting ble delt.",
+        "That organisation is not one of your partners.": "Den organisasjonen er ikke en av partnerne dine.",
+        "No one with that account can receive secrets from you.": "Ingen med den kontoen kan motta hemmeligheter fra deg.",
+        "The other organisation did not answer. Try again later.": "Den andre organisasjonen svarte ikke. Prøv igjen senere.",
+        "This secret is already shared with that account.": "Denne hemmeligheten er allerede delt med den kontoen.",
+        "Other organisations": "Andre organisasjoner",
+        "Receive secrets from other organisations": "Motta hemmeligheter fra andre organisasjoner",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personer i partnerorganisasjoner kan da finne kontoen din og dele hemmeligheter med deg. Du godtar hver enkelt selv."
     },
     "plurals": null
 }

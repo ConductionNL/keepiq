@@ -1703,7 +1703,21 @@
         "In your vault, read-only": "Az Ön tárolójában, csak olvasható",
         "Withdrawn by the sender": "A feladó visszavonta",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} ezt egy másik szervezettől osztotta meg. Elolvashatja, de nem módosíthatja és nem oszthatja meg.",
-        "Someone": "Valaki"
+        "Someone": "Valaki",
+        "Share with someone at another organisation": "Megosztás valakivel egy másik szervezetből",
+        "Their account at the other organisation": "Az illető fiókja a másik szervezetnél",
+        "Check account": "Fiók ellenőrzése",
+        "Certificate fingerprint of {account}": "{account} tanúsítványának ujjlenyomata",
+        "Compare it with them by phone if you want to be sure.": "Ha biztos akar lenni, telefonon egyeztesse az illetővel.",
+        "Shared. {account} can accept it in their own vault.": "Megosztva. {account} a saját tárolójában fogadhatja el.",
+        "The certificate could not be verified. Nothing was shared.": "A tanúsítványt nem sikerült ellenőrizni. Semmi sem lett megosztva.",
+        "That organisation is not one of your partners.": "Ez a szervezet nem tartozik a partnerei közé.",
+        "No one with that account can receive secrets from you.": "Ezzel a fiókkal senki sem fogadhat Öntől titkokat.",
+        "The other organisation did not answer. Try again later.": "A másik szervezet nem válaszolt. Próbálja újra később.",
+        "This secret is already shared with that account.": "Ez a titok már meg van osztva ezzel a fiókkal.",
+        "Other organisations": "Más szervezetek",
+        "Receive secrets from other organisations": "Titkok fogadása más szervezetektől",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "A partnerszervezetek munkatársai ekkor megtalálhatják a fiókját, és titkokat oszthatnak meg Önnel. Mindegyiket Ön fogadja el."
     },
     "plurals": null
 }

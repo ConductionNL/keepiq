@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "U vašem trezoru, samo za čitanje",
         "Withdrawn by the sender": "Pošiljalac je povukao",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} dijeli ovo iz druge organizacije. Možete to čitati, ali ne i mijenjati ili dijeliti.",
-        "Someone": "Neko"
+        "Someone": "Neko",
+        "Share with someone at another organisation": "Dijeli s nekim iz druge organizacije",
+        "Their account at the other organisation": "Račun te osobe u drugoj organizaciji",
+        "Check account": "Provjeri račun",
+        "Certificate fingerprint of {account}": "Otisak certifikata za {account}",
+        "Compare it with them by phone if you want to be sure.": "Uporedite ga s tom osobom telefonom ako želite biti sigurni.",
+        "Shared. {account} can accept it in their own vault.": "Podijeljeno. {account} to može prihvatiti u svom trezoru.",
+        "The certificate could not be verified. Nothing was shared.": "Certifikat nije moguće provjeriti. Ništa nije podijeljeno.",
+        "That organisation is not one of your partners.": "Ta organizacija nije jedan od vaših partnera.",
+        "No one with that account can receive secrets from you.": "Niko s tim računom ne može primati tajne od vas.",
+        "The other organisation did not answer. Try again later.": "Druga organizacija nije odgovorila. Pokušajte ponovo kasnije.",
+        "This secret is already shared with that account.": "Ova tajna je već podijeljena s tim računom.",
+        "Other organisations": "Druge organizacije",
+        "Receive secrets from other organisations": "Primanje tajni iz drugih organizacija",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Osobe u partnerskim organizacijama tada mogu pronaći vaš račun i dijeliti tajne s vama. Svaku od njih prihvatate sami."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

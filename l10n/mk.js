@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "Во вашиот трезор, само за читање",
         "Withdrawn by the sender": "Повлечено од испраќачот",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} го сподели ова од друга организација. Можете да го читате, но не и да го менувате или споделувате.",
-        "Someone": "Некој"
+        "Someone": "Некој",
+        "Share with someone at another organisation": "Сподели со некого од друга организација",
+        "Their account at the other organisation": "Сметката на лицето во другата организација",
+        "Check account": "Провери сметка",
+        "Certificate fingerprint of {account}": "Отпечаток на сертификатот за {account}",
+        "Compare it with them by phone if you want to be sure.": "Споредете го со лицето по телефон ако сакате да бидете сигурни.",
+        "Shared. {account} can accept it in their own vault.": "Споделено. {account} може да го прифати во својот трезор.",
+        "The certificate could not be verified. Nothing was shared.": "Сертификатот не можеше да се провери. Ништо не е споделено.",
+        "That organisation is not one of your partners.": "Таа организација не е еден од вашите партнери.",
+        "No one with that account can receive secrets from you.": "Никој со таа сметка не може да прима тајни од вас.",
+        "The other organisation did not answer. Try again later.": "Другата организација не одговори. Обидете се повторно подоцна.",
+        "This secret is already shared with that account.": "Оваа тајна веќе е споделена со таа сметка.",
+        "Other organisations": "Други организации",
+        "Receive secrets from other organisations": "Примај тајни од други организации",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Луѓето во партнерски организации тогаш можат да ја најдат вашата сметка и да споделуваат тајни со вас. Секоја од нив ја прифаќате сами."
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

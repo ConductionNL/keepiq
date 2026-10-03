@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "V vašem trezorju, samo za branje",
         "Withdrawn by the sender": "Pošiljatelj je preklical",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} je to delil iz druge organizacije. Lahko to berete, ne morete pa tega spreminjati ali deliti.",
-        "Someone": "Nekdo"
+        "Someone": "Nekdo",
+        "Share with someone at another organisation": "Deli z nekom iz druge organizacije",
+        "Their account at the other organisation": "Račun te osebe v drugi organizaciji",
+        "Check account": "Preveri račun",
+        "Certificate fingerprint of {account}": "Prstni odtis potrdila za {account}",
+        "Compare it with them by phone if you want to be sure.": "Če želite biti prepričani, ga primerjajte s to osebo po telefonu.",
+        "Shared. {account} can accept it in their own vault.": "Deljeno. {account} ga lahko sprejme v svoj trezor.",
+        "The certificate could not be verified. Nothing was shared.": "Potrdila ni bilo mogoče preveriti. Nič ni bilo deljeno.",
+        "That organisation is not one of your partners.": "Ta organizacija ni med vašimi partnerji.",
+        "No one with that account can receive secrets from you.": "Nihče s tem računom ne more prejemati skrivnosti od vas.",
+        "The other organisation did not answer. Try again later.": "Druga organizacija se ni odzvala. Poskusite znova pozneje.",
+        "This secret is already shared with that account.": "Ta skrivnost je s tem računom že deljena.",
+        "Other organisations": "Druge organizacije",
+        "Receive secrets from other organisations": "Prejemanje skrivnosti iz drugih organizacij",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Osebe v partnerskih organizacijah lahko nato najdejo vaš račun in z vami delijo skrivnosti. Vsako sprejmete sami."
     },
     "nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);"
 )

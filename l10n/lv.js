@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "Jūsu glabātuvē, tikai lasāms",
         "Withdrawn by the sender": "Sūtītājs atsauca",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} kopīgoja šo no citas organizācijas. Jūs to varat lasīt, bet ne mainīt vai kopīgot.",
-        "Someone": "Kāds"
+        "Someone": "Kāds",
+        "Share with someone at another organisation": "Kopīgot ar kādu no citas organizācijas",
+        "Their account at the other organisation": "Šīs personas konts otrā organizācijā",
+        "Check account": "Pārbaudīt kontu",
+        "Certificate fingerprint of {account}": "Konta {account} sertifikāta pirksta nospiedums",
+        "Compare it with them by phone if you want to be sure.": "Ja vēlaties būt droši, salīdziniet to ar šo personu pa tālruni.",
+        "Shared. {account} can accept it in their own vault.": "Kopīgots. {account} to var pieņemt savā glabātuvē.",
+        "The certificate could not be verified. Nothing was shared.": "Sertifikātu neizdevās pārbaudīt. Nekas netika kopīgots.",
+        "That organisation is not one of your partners.": "Šī organizācija nav viens no jūsu partneriem.",
+        "No one with that account can receive secrets from you.": "Neviens ar šo kontu nevar saņemt no jums noslēpumus.",
+        "The other organisation did not answer. Try again later.": "Otra organizācija neatbildēja. Mēģiniet vēlreiz vēlāk.",
+        "This secret is already shared with that account.": "Šis noslēpums jau ir kopīgots ar šo kontu.",
+        "Other organisations": "Citas organizācijas",
+        "Receive secrets from other organisations": "Saņemt noslēpumus no citām organizācijām",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Tad partneru organizāciju cilvēki var atrast jūsu kontu un kopīgot ar jums noslēpumus. Katru no tiem jūs pieņemat paši."
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

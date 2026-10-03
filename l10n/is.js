@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "Í hvelfingunni þinni, aðeins til lestrar",
         "Withdrawn by the sender": "Sendandi dró til baka",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} deildi þessu frá öðru fyrirtæki. Þú getur lesið það en ekki breytt því eða deilt því.",
-        "Someone": "Einhver"
+        "Someone": "Einhver",
+        "Share with someone at another organisation": "Deila með einhverjum hjá öðru fyrirtæki",
+        "Their account at the other organisation": "Aðgangur viðkomandi hjá hinu fyrirtækinu",
+        "Check account": "Athuga aðgang",
+        "Certificate fingerprint of {account}": "Fingrafar skilríkis fyrir {account}",
+        "Compare it with them by phone if you want to be sure.": "Berðu það saman við viðkomandi í síma ef þú vilt vera viss.",
+        "Shared. {account} can accept it in their own vault.": "Deilt. {account} getur samþykkt það í sinni eigin hvelfingu.",
+        "The certificate could not be verified. Nothing was shared.": "Ekki tókst að staðfesta skilríkið. Engu var deilt.",
+        "That organisation is not one of your partners.": "Það fyrirtæki er ekki eitt af samstarfsfyrirtækjum þínum.",
+        "No one with that account can receive secrets from you.": "Enginn með þann aðgang getur tekið við leyndarmálum frá þér.",
+        "The other organisation did not answer. Try again later.": "Hitt fyrirtækið svaraði ekki. Reyndu aftur síðar.",
+        "This secret is already shared with that account.": "Þessu leyndarmáli er þegar deilt með þeim aðgangi.",
+        "Other organisations": "Önnur fyrirtæki",
+        "Receive secrets from other organisations": "Taka við leyndarmálum frá öðrum fyrirtækjum",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Fólk í samstarfsfyrirtækjum getur þá fundið aðganginn þinn og deilt leyndarmálum með þér. Þú samþykkir hvert þeirra fyrir sig."
     },
     "nplurals=2; plural=(n != 1);"
 )

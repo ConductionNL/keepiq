@@ -1703,7 +1703,21 @@
         "In your vault, read-only": "In Ihrem Tresor, schreibgeschützt",
         "Withdrawn by the sender": "Vom Absender zurückgezogen",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} hat dies aus einer anderen Organisation geteilt. Sie können es lesen, aber nicht ändern oder teilen.",
-        "Someone": "Jemand"
+        "Someone": "Jemand",
+        "Share with someone at another organisation": "Mit jemandem in einer anderen Organisation teilen",
+        "Their account at the other organisation": "Konto der Person bei der anderen Organisation",
+        "Check account": "Konto prüfen",
+        "Certificate fingerprint of {account}": "Fingerabdruck des Zertifikats von {account}",
+        "Compare it with them by phone if you want to be sure.": "Vergleichen Sie ihn telefonisch mit der Person, wenn Sie sichergehen möchten.",
+        "Shared. {account} can accept it in their own vault.": "Geteilt. {account} kann es im eigenen Tresor annehmen.",
+        "The certificate could not be verified. Nothing was shared.": "Das Zertifikat konnte nicht überprüft werden. Es wurde nichts geteilt.",
+        "That organisation is not one of your partners.": "Diese Organisation gehört nicht zu Ihren Partnern.",
+        "No one with that account can receive secrets from you.": "Niemand mit diesem Konto kann Geheimnisse von Ihnen empfangen.",
+        "The other organisation did not answer. Try again later.": "Die andere Organisation hat nicht geantwortet. Versuchen Sie es später erneut.",
+        "This secret is already shared with that account.": "Dieses Geheimnis ist bereits mit diesem Konto geteilt.",
+        "Other organisations": "Andere Organisationen",
+        "Receive secrets from other organisations": "Geheimnisse von anderen Organisationen empfangen",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personen in Partnerorganisationen können dann Ihr Konto finden und Geheimnisse mit Ihnen teilen. Sie nehmen jedes davon selbst an."
     },
     "plurals": null
 }

@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "Vo vašom trezore, iba na čítanie",
         "Withdrawn by the sender": "Stiahnuté odosielateľom",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} to zdieľa z inej organizácie. Môžete to čítať, ale nie meniť ani zdieľať.",
-        "Someone": "Niekto"
+        "Someone": "Niekto",
+        "Share with someone at another organisation": "Zdieľať s niekým z inej organizácie",
+        "Their account at the other organisation": "Účet danej osoby v druhej organizácii",
+        "Check account": "Skontrolovať účet",
+        "Certificate fingerprint of {account}": "Odtlačok certifikátu účtu {account}",
+        "Compare it with them by phone if you want to be sure.": "Ak si chcete byť istí, porovnajte ho s danou osobou telefonicky.",
+        "Shared. {account} can accept it in their own vault.": "Zdieľané. {account} to môže prijať vo svojom vlastnom trezore.",
+        "The certificate could not be verified. Nothing was shared.": "Certifikát sa nepodarilo overiť. Nič nebolo zdieľané.",
+        "That organisation is not one of your partners.": "Táto organizácia nie je medzi vašimi partnermi.",
+        "No one with that account can receive secrets from you.": "Nikto s týmto účtom od vás nemôže prijímať tajomstvá.",
+        "The other organisation did not answer. Try again later.": "Druhá organizácia neodpovedala. Skúste to neskôr znova.",
+        "This secret is already shared with that account.": "Toto tajomstvo je s týmto účtom už zdieľané.",
+        "Other organisations": "Iné organizácie",
+        "Receive secrets from other organisations": "Prijímať tajomstvá z iných organizácií",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Ľudia v partnerských organizáciách potom môžu nájsť váš účet a zdieľať s vami tajomstvá. Každé z nich prijímate sami."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )
