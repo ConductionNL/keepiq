@@ -35,6 +35,12 @@ import { PROOF_PURPOSE, sessionKeyProofHeaders } from '../../crypto/keyProof.js'
  */
 const MAX_RECIPIENT_PROBE = 100
 
+/**
+ * One page of the recipient picker's search; the recipient-status endpoint
+ * answers at most this many users at once (RecipientStatusService::MAX_USERS).
+ */
+const RECIPIENT_PAGE = 25
+
 export const useShareStore = defineStore('share', {
 	state: () => ({
 		/** @type {Array<object>} The shares for the currently focused secret. */
@@ -185,13 +191,14 @@ export const useShareStore = defineStore('share', {
 		 * about ids and knows nothing of names.
 		 *
 		 * @param {string} search The search term.
+		 * @param {number} [perPage] Page size; the probe's own bound by default.
 		 *
 		 * @return {Promise<Array<{id: string, label: string}>>} Distinct
 		 *   users, capped at the probe's own bound.
 		 *
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-recipient-shareability-lookup
 		 */
-		async searchSharees(search) {
+		async searchSharees(search, perPage = MAX_RECIPIENT_PROBE) {
 			const response = await axios.get(
 				generateOcsUrl('apps/files_sharing/api/v1/sharees'),
 				{
@@ -205,7 +212,7 @@ export const useShareStore = defineStore('share', {
 						// Users only. Groups come from the provisioning API,
 						// which needs no shareability probe.
 						shareType: 0,
-						perPage: MAX_RECIPIENT_PROBE,
+						perPage,
 						// No global address book: a remote lookup answers with
 						// users this server cannot hold a suite for.
 						lookup: false,
@@ -230,7 +237,44 @@ export const useShareStore = defineStore('share', {
 				users.push({ id, label: String(row?.label || id) })
 			}
 
-			return users.slice(0, MAX_RECIPIENT_PROBE)
+			return users.slice(0, perPage)
+		},
+
+		/**
+		 * Users matching a search, each marked with whether they can receive
+		 * a share yet (keepiq#37). One page of Nextcloud's sharee search,
+		 * then one call that answers, for those ids and that term, who holds
+		 * an active vault. The server reruns the same search, so it answers
+		 * only about users this search can return.
+		 *
+		 * A user the server leaves out of its answer is left out here too:
+		 * nothing about them can be shown honestly.
+		 *
+		 * @param {string} [search] The search term.
+		 * @return {Promise<Array<{id: string, label: string, hasSuite: boolean}>>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-recipient-search-marks-who-cannot-receive-a-share
+		 */
+		async searchRecipients(search = '') {
+			const sharees = await this.searchSharees(search, RECIPIENT_PAGE)
+			if (sharees.length === 0) {
+				return []
+			}
+			const response = await axios.post(
+				generateUrl('/apps/keepiq/api/v1/shares/recipient-status'),
+				{ search, userIds: sharees.map((sharee) => sharee.id) },
+			)
+			const answered = new Map(
+				(Array.isArray(response.data?.recipients)
+					? response.data.recipients
+					: []
+				).map((row) => [String(row?.userId ?? ''), row?.hasSuite === true]),
+			)
+			return sharees
+				.filter((sharee) => answered.has(sharee.id))
+				.map((sharee) => ({
+					...sharee,
+					hasSuite: answered.get(sharee.id),
+				}))
 		},
 
 		/**

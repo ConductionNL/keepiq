@@ -1671,7 +1671,10 @@
         "You are sharing with someone new. Enter your master password to confirm.": "Μοιράζεστε με κάποιο νέο άτομο. Εισαγάγετε τον κύριο κωδικό πρόσβασης για επιβεβαίωση.",
         "Enter your master password to confirm this share.": "Εισαγάγετε τον κύριο κωδικό πρόσβασης για να επιβεβαιώσετε αυτή την κοινή χρήση.",
         "Enter your master password to confirm this delegation.": "Εισαγάγετε τον κύριο κωδικό πρόσβασης για να επιβεβαιώσετε αυτή την ανάθεση.",
-        "Approve {member}": "Έγκριση {member}"
+        "Approve {member}": "Έγκριση {member}",
+        "Recipient": "Παραλήπτης",
+        "No vault yet": "Δεν έχει ακόμη θησαυροφυλάκιο",
+        "No matching users": "Δεν βρέθηκαν χρήστες"
     },
     "plurals": null
 }

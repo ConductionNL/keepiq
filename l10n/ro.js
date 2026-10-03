@@ -1600,7 +1600,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Partajați cu o persoană nouă. Introduceți parola principală pentru confirmare.",
         "Enter your master password to confirm this share.": "Introduceți parola principală pentru a confirma această partajare.",
         "Enter your master password to confirm this delegation.": "Introduceți parola principală pentru a confirma această delegare.",
-        "Approve {member}": "Aprobați {member}"
+        "Approve {member}": "Aprobați {member}",
+        "Recipient": "Destinatar",
+        "No vault yet": "Încă nu are seif",
+        "No matching users": "Niciun utilizator potrivit"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

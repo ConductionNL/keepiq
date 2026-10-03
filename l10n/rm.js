@@ -1576,7 +1576,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Vus partis cun ina persuna nova. Endatai Voss pled-clav principal per confermar.",
         "Enter your master password to confirm this share.": "Endatai Voss pled-clav principal per confermar questa partiziun.",
         "Enter your master password to confirm this delegation.": "Endatai Voss pled-clav principal per confermar questa delegaziun.",
-        "Approve {member}": "Approvar {member}"
+        "Approve {member}": "Approvar {member}",
+        "Recipient": "Destinatari",
+        "No vault yet": "Anc nagina cassaforta",
+        "No matching users": "Nagins utilisaders correspundents"
     },
     "nplurals=1; plural=0;"
 )

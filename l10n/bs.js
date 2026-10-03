@@ -1600,7 +1600,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Dijelite s novom osobom. Unesite glavnu lozinku za potvrdu.",
         "Enter your master password to confirm this share.": "Unesite glavnu lozinku da potvrdite ovo dijeljenje.",
         "Enter your master password to confirm this delegation.": "Unesite glavnu lozinku da potvrdite ovo delegiranje.",
-        "Approve {member}": "Odobri {member}"
+        "Approve {member}": "Odobri {member}",
+        "Recipient": "Primalac",
+        "No vault yet": "Još nema trezora",
+        "No matching users": "Nema odgovarajućih korisnika"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

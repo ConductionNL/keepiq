@@ -1695,7 +1695,10 @@
         "You are sharing with someone new. Enter your master password to confirm.": "Dijelite s novom osobom. Unesite glavnu lozinku za potvrdu.",
         "Enter your master password to confirm this share.": "Unesite glavnu lozinku da potvrdite ovo dijeljenje.",
         "Enter your master password to confirm this delegation.": "Unesite glavnu lozinku da potvrdite ovo delegiranje.",
-        "Approve {member}": "Odobri {member}"
+        "Approve {member}": "Odobri {member}",
+        "Recipient": "Primalac",
+        "No vault yet": "Još nema trezora",
+        "No matching users": "Nema odgovarajućih korisnika"
     },
     "plurals": null
 }

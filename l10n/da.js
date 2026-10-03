@@ -1600,7 +1600,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Du deler med en ny person. Indtast din masteradgangskode for at bekræfte.",
         "Enter your master password to confirm this share.": "Indtast din masteradgangskode for at bekræfte denne deling.",
         "Enter your master password to confirm this delegation.": "Indtast din masteradgangskode for at bekræfte denne delegering.",
-        "Approve {member}": "Godkend {member}"
+        "Approve {member}": "Godkend {member}",
+        "Recipient": "Modtager",
+        "No vault yet": "Har endnu ingen boks",
+        "No matching users": "Ingen matchende brugere"
     },
     "nplurals=2; plural=(n != 1);"
 )

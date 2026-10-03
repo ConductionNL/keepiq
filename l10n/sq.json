@@ -1671,7 +1671,10 @@
         "You are sharing with someone new. Enter your master password to confirm.": "Po ndani me dikë të ri. Shkruani fjalëkalimin kryesor për ta konfirmuar.",
         "Enter your master password to confirm this share.": "Shkruani fjalëkalimin kryesor për të konfirmuar këtë ndarje.",
         "Enter your master password to confirm this delegation.": "Shkruani fjalëkalimin kryesor për të konfirmuar këtë delegim.",
-        "Approve {member}": "Mirato {member}"
+        "Approve {member}": "Mirato {member}",
+        "Recipient": "Marrësi",
+        "No vault yet": "Ende pa kasafortë",
+        "No matching users": "Asnjë përdorues që përputhet"
     },
     "plurals": null
 }

@@ -1600,7 +1600,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Du delar med en ny person. Ange ditt huvudlösenord för att bekräfta.",
         "Enter your master password to confirm this share.": "Ange ditt huvudlösenord för att bekräfta delningen.",
         "Enter your master password to confirm this delegation.": "Ange ditt huvudlösenord för att bekräfta delegeringen.",
-        "Approve {member}": "Godkänn {member}"
+        "Approve {member}": "Godkänn {member}",
+        "Recipient": "Mottagare",
+        "No vault yet": "Har inget valv än",
+        "No matching users": "Inga matchande användare"
     },
     "nplurals=2; plural=(n != 1);"
 )

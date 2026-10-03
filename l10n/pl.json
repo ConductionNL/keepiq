@@ -1695,7 +1695,10 @@
         "You are sharing with someone new. Enter your master password to confirm.": "Udostępniasz nowej osobie. Wpisz hasło główne, aby potwierdzić.",
         "Enter your master password to confirm this share.": "Wpisz hasło główne, aby potwierdzić to udostępnienie.",
         "Enter your master password to confirm this delegation.": "Wpisz hasło główne, aby potwierdzić to delegowanie.",
-        "Approve {member}": "Zatwierdź {member}"
+        "Approve {member}": "Zatwierdź {member}",
+        "Recipient": "Odbiorca",
+        "No vault yet": "Jeszcze bez skarbca",
+        "No matching users": "Brak pasujących użytkowników"
     },
     "plurals": null
 }

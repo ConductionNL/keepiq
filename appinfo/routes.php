@@ -187,6 +187,7 @@ $extra = [
     // Bulk direct-share registration + recipient-cert lookup (bulk-actions §6.1).
     ['name' => 'share#registerBatch',        'url' => '/api/v1/shares/register-batch',        'verb' => 'POST'],
     ['name' => 'share#recipientCertificate', 'url' => '/api/v1/shares/recipient-certificate', 'verb' => 'GET'],
+    ['name' => 'recipientStatus#status',     'url' => '/api/v1/shares/recipient-status',      'verb' => 'POST'],
     // POST, not GET: a candidate list does not belong in a query string,
     // and the sharee-search pages these ids come from can be long.
     ['name' => 'share#recipientCertificates', 'url' => '/api/v1/shares/recipient-certificates', 'verb' => 'POST'],

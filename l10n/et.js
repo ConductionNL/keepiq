@@ -1600,7 +1600,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Jagate uue inimesega. Kinnitamiseks sisestage põhiparool.",
         "Enter your master password to confirm this share.": "Selle jagamise kinnitamiseks sisestage põhiparool.",
         "Enter your master password to confirm this delegation.": "Selle delegeerimise kinnitamiseks sisestage põhiparool.",
-        "Approve {member}": "Kinnita {member}"
+        "Approve {member}": "Kinnita {member}",
+        "Recipient": "Adressaat",
+        "No vault yet": "Seifi veel pole",
+        "No matching users": "Sobivaid kasutajaid pole"
     },
     "nplurals=2; plural=(n != 1);"
 )

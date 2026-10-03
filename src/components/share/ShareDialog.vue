@@ -32,15 +32,11 @@
 			</button>
 		</header>
 		<form @submit.prevent="onSubmit">
-			<label class="keepiq-share-dialog__field">
-				<span>{{ t('keepiq', 'Recipient user ID') }}</span>
-				<input
-					v-model.trim="targetUserId"
-					type="text"
-					required
-					autocomplete="off"
-					data-testid="share-dialog-target" />
-			</label>
+			<div
+				class="keepiq-share-dialog__field"
+				data-testid="share-dialog-target">
+				<RecipientPicker v-model="targetUserId" :disabled="busy" />
+			</div>
 			<p
 				v-if="error"
 				class="keepiq-share-dialog__error"
@@ -67,10 +63,12 @@
 </template>
 
 <script>
+import RecipientPicker from './RecipientPicker.vue'
 import { useShareStore } from '../../store/modules/share.js'
 
 export default {
 	name: 'ShareDialog',
+	components: { RecipientPicker },
 	props: {
 		open: {
 			type: Boolean,
@@ -186,12 +184,6 @@ export default {
 	flex-direction: column;
 	gap: 4px;
 	margin-bottom: 12px;
-}
-
-.keepiq-share-dialog__field input {
-	padding: 8px;
-	border: 1px solid var(--color-border-dark, #999);
-	border-radius: var(--border-radius, 4px);
 }
 
 .keepiq-share-dialog__error {

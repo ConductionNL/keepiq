@@ -1605,7 +1605,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "Je deelt met iemand nieuw. Voer je masterwachtwoord in om te bevestigen.",
         "Enter your master password to confirm this share.": "Voer je masterwachtwoord in om deze deling te bevestigen.",
         "Enter your master password to confirm this delegation.": "Voer je masterwachtwoord in om deze delegatie te bevestigen.",
-        "Approve {member}": "{member} goedkeuren"
+        "Approve {member}": "{member} goedkeuren",
+        "Recipient": "Ontvanger",
+        "No vault yet": "Nog geen kluis",
+        "No matching users": "Geen gebruikers gevonden"
     },
     "nplurals=2; plural=(n != 1);"
 )

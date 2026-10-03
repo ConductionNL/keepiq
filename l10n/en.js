@@ -1600,7 +1600,10 @@ OC.L10N.register(
         "You are sharing with someone new. Enter your master password to confirm.": "You are sharing with someone new. Enter your master password to confirm.",
         "Enter your master password to confirm this share.": "Enter your master password to confirm this share.",
         "Enter your master password to confirm this delegation.": "Enter your master password to confirm this delegation.",
-        "Approve {member}": "Approve {member}"
+        "Approve {member}": "Approve {member}",
+        "Recipient": "Recipient",
+        "No vault yet": "No vault yet",
+        "No matching users": "No matching users"
     },
     "nplurals=2; plural=(n != 1);"
 )
