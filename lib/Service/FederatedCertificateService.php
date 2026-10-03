@@ -237,9 +237,11 @@ class FederatedCertificateService {
 			return null;
 		}
 
-		// Ours only when it is this user's own cloud id here (an http instance
-		// writes its own with the scheme; CloudIdForm compares without).
-		if ((new CloudIdForm())->same($this->cloudIdManager->getCloudId($userId, null)->getId(), $resolved->getId()) === false) {
+		// Ours only when it names this user on this instance. Compared by host,
+		// because an http instance writes its own cloud id with the scheme.
+		$own = $this->cloudIdManager->getCloudId($userId, null);
+		$ownHost = $this->partners->hostOf(url: $own->getRemote());
+		if ($own->getUser() !== $userId || $ownHost === null || $ownHost !== $this->partners->hostOf(url: $resolved->getRemote())) {
 			return null;
 		}
 
