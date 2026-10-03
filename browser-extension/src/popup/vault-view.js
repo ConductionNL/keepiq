@@ -18,6 +18,7 @@ import {
 	validateDraft,
 } from '../lib/item-form.js'
 import { filterIndex, folderChoices, presentTypes } from '../lib/vault-index.js'
+import { relativeTime } from '../lib/generator-state.js'
 import { initFolders } from './folder-view.js'
 import { clearDetail, renderDetail } from './item-detail.js'
 
@@ -66,6 +67,39 @@ export function initVault({
 	let folders = []
 	let types = []
 	let webAppUrl = ''
+	// Whether the server could not be reached on the last sync.
+	let offline = false
+
+	/** The buttons that change the vault, disabled while offline. */
+	const WRITE_CONTROLS = [
+		'vault-new',
+		'detail-edit',
+		'detail-clone',
+		'detail-move',
+		'detail-delete',
+		'edit-save',
+		'folder-add-save',
+		'folder-delete-confirm',
+	]
+
+	/**
+	 * Show the sync status, and allow or block writes.
+	 *
+	 * @param {object|null} status The sync status from the worker.
+	 */
+	function renderSync(status) {
+		offline = status?.offline === true
+		$('vault-sync').textContent = status?.syncedAt
+			? `Last synced ${relativeTime(Date.parse(status.syncedAt))}${offline ? ' (offline)' : ''}`
+			: offline
+				? 'Offline'
+				: ''
+		$('vault-offline').hidden = !offline
+		for (const id of WRITE_CONTROLS) {
+			const el = $(id)
+			if (el) el.disabled = offline || el.dataset.blocked === 'true'
+		}
+	}
 	// The open item, decrypted; dropped when it closes.
 	let current = null
 	// The form: its type and the parts it opened with, to detect changes.
@@ -348,6 +382,7 @@ export function initVault({
 		folders = result.folders || []
 		types = result.types || []
 		webAppUrl = result.webAppUrl || ''
+		renderSync(result.sync)
 		fillSelect($('vault-folder'), folderOptions(), doc)
 		fillSelect(
 			$('vault-type'),
@@ -367,6 +402,11 @@ export function initVault({
 		getFolders: () => folders,
 		reload: load,
 		doc,
+	})
+	$('vault-sync-now').addEventListener('click', async () => {
+		$('vault-sync').textContent = 'Syncing…'
+		await send('vault-sync-now')
+		await load()
 	})
 	$('vault-folders-open').addEventListener('click', async () => {
 		showView('vault-folders')

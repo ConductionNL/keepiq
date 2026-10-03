@@ -32,6 +32,7 @@ import {
 import { isServerSupported } from '../lib/version.js'
 import { buildVaultHandlers } from './vault-handlers.js'
 import { areaOrMemory, buildGeneratorHandlers } from './generator-handlers.js'
+import { buildVaultSync, isOffline, SYNC_INTERVAL_MINUTES } from './vault-sync.js'
 
 /**
  * The messages a content script (a tab) may send. Everything else needs an
@@ -90,6 +91,61 @@ function generatorModule() {
 	}
 	return generatorState
 }
+
+// The vault snapshot and its sync (clients-extension-complete), built on
+// first use, like the generator state.
+let syncState = null
+
+function syncModule() {
+	if (!syncState) {
+		syncState = buildVaultSync({
+			api,
+			local: chrome.storage.local,
+			activeSuiteId: (id) => vault.activeSuiteId(id),
+			lock: (id) => lockAccount(id),
+		})
+	}
+	return syncState
+}
+
+const SYNC_ALARM = (id) => 'keepiq-sync:' + id
+
+/**
+ * After an unlock: sync now, then every SYNC_INTERVAL_MINUTES while unlocked.
+ *
+ * @param {object} account The account.
+ * @return {void}
+ */
+function startSync(account) {
+	syncModule()
+		.sync(account, { force: true })
+		.catch(() => {})
+	chrome.alarms?.create(SYNC_ALARM(account.id), {
+		periodInMinutes: SYNC_INTERVAL_MINUTES,
+	})
+}
+
+/**
+ * A scheduled sync fired: sync that account if it is still unlocked.
+ *
+ * @param {{name: string}} alarm The alarm.
+ * @return {Promise<void>}
+ */
+export async function onAlarm(alarm) {
+	if (!alarm?.name?.startsWith('keepiq-sync:')) return
+	const id = alarm.name.slice('keepiq-sync:'.length)
+	const account = await api.loadAccount(id)
+	if (account && vault.isUnlocked(id)) {
+		await syncModule()
+			.sync(account)
+			.catch(() => {})
+	}
+}
+
+// No sync runs while locked: the alarm goes with the key.
+vault.onLock((accountId) => {
+	chrome.alarms?.clear(SYNC_ALARM(accountId))
+})
 
 // Generator history goes whenever an account locks, for any reason.
 vault.onLock((accountId) => {
@@ -318,6 +374,9 @@ async function doUnpair(payload) {
 	await generatorModule()
 		.forget(id)
 		.catch(() => {})
+	await syncModule()
+		.forget(id)
+		.catch(() => {})
 	await api.removeAccount(id)
 	return { ok: true, revoked }
 }
@@ -361,6 +420,7 @@ async function doUnlock(payload) {
 	await vault.unlock(account.id, account, payload.masterPassword)
 	await refreshPolicy(account)
 	await touchActivity(account.id)
+	startSync(account)
 	return { ok: true }
 }
 
@@ -384,6 +444,7 @@ async function doUnlockRaw(payload) {
 	}
 	await refreshPolicy(account)
 	await touchActivity(account.id)
+	startSync(account)
 	return { ok: true }
 }
 
@@ -400,7 +461,19 @@ async function doMatch(payload) {
 		)
 	}
 	const host = hostOf(payload.host)
-	const rows = await api.match(account, payload.host)
+	let rows
+	try {
+		rows = await api.match(account, payload.host)
+	} catch (e) {
+		// Offline: offer logins from the vault snapshot instead.
+		const snapshot = isOffline(e)
+			? await syncModule().snapshotOf(account.id)
+			: null
+		if (!snapshot) throw e
+		rows = snapshot.secrets.filter(
+			(r) => !r.blocked && !r.trashedAt && !r.archivedAt,
+		)
+	}
 	// A use-only copy is only ever offered on its own site (no "fill anyway").
 	const ranked = filterForHost(matchSecrets(rows, payload.host), payload.host)
 	// Return only index fields; the blobs stay in this account's cache.
@@ -836,6 +909,7 @@ const handlers = {
 					),
 				),
 		touchActivity,
+		sync: syncModule,
 	}),
 	// WebAuthn ceremonies relayed from the page-context shim. The origin is the
 	// sender's, as the browser reports it; the page's own claim in the payload

@@ -181,7 +181,8 @@ export function renderDetail({ $, doc }, item, folders) {
 	const blocked = item.blocked === true
 	$('detail-blocked').hidden = !blocked
 	for (const id of ['detail-edit', 'detail-clone', 'detail-move', 'detail-send']) {
-		$(id).disabled = blocked
+		$(id).dataset.blocked = blocked ? 'true' : 'false'
+		$(id).disabled = blocked || $('vault-offline').hidden === false
 	}
 	if (blocked) {
 		$('detail-blocked-reason').textContent = item.blockedReason

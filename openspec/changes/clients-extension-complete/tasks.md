@@ -20,7 +20,7 @@
 
 ## 4. Offline vault cache and sync
 
-- [ ] 4.1 Snapshot, triggers, offline reads.
+- [x] 4.1 Snapshot, triggers (unlock, popup open, alarm, writes, Sync now), cheap check, manifest and fallback, suite change, offline reads and autofill, offline write lock. Verify: `tests/extension/vaultSync.spec.js`, live in Chromium.
 
 ## 5. Popup shell
 

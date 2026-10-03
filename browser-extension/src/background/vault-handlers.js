@@ -43,9 +43,21 @@ export function buildVaultHandlers({
 	activeAccount,
 	policyRefusalFor,
 	touchActivity = async () => {},
+	sync = null,
 }) {
 	// Per account: the last listed rows (with blobs), keyed by id.
 	const rowCache = new Map()
+
+	/**
+	 * After a write: sync, so the list and the cache show it at once.
+	 *
+	 * @param {object} account The account.
+	 * @return {Promise<void>}
+	 */
+	async function afterWrite(account) {
+		rowCache.delete(account.id)
+		if (sync) await sync().sync(account, { force: true })
+	}
 
 	/**
 	 * The active account, refused when its vault is locked.
@@ -89,11 +101,28 @@ export function buildVaultHandlers({
 		 */
 		'vault-list': async () => {
 			const account = await unlockedAccount()
-			const [rows, folders, types] = await Promise.all([
-				api.listSecrets(account),
-				api.listFolders(account),
-				api.listTypes(account),
-			])
+			let rows
+			let folders
+			let types
+			let status = null
+			const snapshot = sync
+				? await (async () => {
+						// Popup open with an old snapshot: sync first (cheaply).
+						if (await sync().isStale(account.id))
+							await sync().sync(account)
+						status = sync().statusOf(account.id)
+						return sync().snapshotOf(account.id)
+					})()
+				: null
+			if (snapshot) {
+				;({ secrets: rows, folders, types } = snapshot)
+			} else {
+				;[rows, folders, types] = await Promise.all([
+					api.listSecrets(account),
+					api.listFolders(account),
+					api.listTypes(account),
+				])
+			}
 			rowCache.set(account.id, new Map(rows.map((r) => [r.id, r])))
 			await touchActivity(account.id)
 			return {
@@ -106,7 +135,18 @@ export function buildVaultHandlers({
 					parentId: f.parentId || null,
 				})),
 				types: types.map((t) => ({ id: t.id, name: t.name || t.slug })),
+				sync: status,
 			}
+		},
+
+		/**
+		 * Sync now, whatever the snapshot's age.
+		 *
+		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault-sync/spec.md#requirement-sync-when-it-matters-and-cheaply
+		 */
+		'vault-sync-now': async () => {
+			const account = await unlockedAccount()
+			return sync ? sync().sync(account, { force: true }) : { syncedAt: null }
 		},
 
 		/**
@@ -119,7 +159,17 @@ export function buildVaultHandlers({
 		 */
 		'vault-item': async (payload) => {
 			const account = await unlockedAccount()
-			const row = await api.getSecret(account, payload.id)
+			let row
+			let fromCache = false
+			try {
+				row = await api.getSecret(account, payload.id)
+			} catch (e) {
+				// Offline: read the item from the snapshot instead.
+				const cached = rowCache.get(account.id)?.get(payload.id)
+				if (!cached || (e?.status && e.status < 500)) throw e
+				row = cached
+				fromCache = true
+			}
 			if (!row) {
 				throw new Error('This item no longer exists')
 			}
@@ -170,6 +220,7 @@ export function buildVaultHandlers({
 			return {
 				...meta,
 				blocked: false,
+				fromCache,
 				login,
 				secret,
 				additionalFields,
@@ -253,7 +304,7 @@ export function buildVaultHandlers({
 			} catch (e) {
 				throw new Error(writeErrorMessage(e), { cause: e })
 			}
-			rowCache.delete(account.id)
+			await afterWrite(account)
 			await touchActivity(account.id)
 			return { ok: true, id: saved?.id || payload.id || null }
 		},
@@ -272,7 +323,7 @@ export function buildVaultHandlers({
 			} catch (e) {
 				throw new Error(writeErrorMessage(e), { cause: e })
 			}
-			rowCache.delete(account.id)
+			await afterWrite(account)
 			return { ok: true }
 		},
 
@@ -290,6 +341,7 @@ export function buildVaultHandlers({
 					name: String(payload.name).trim(),
 					parentId: payload.parentId || null,
 				})
+				await afterWrite(account)
 				return { ok: true, id: folder?.id || null }
 			} catch (e) {
 				throw new Error(writeErrorMessage(e), { cause: e })
@@ -311,6 +363,7 @@ export function buildVaultHandlers({
 					payload.id,
 					String(payload.name).trim(),
 				)
+				await afterWrite(account)
 				return { ok: true }
 			} catch (e) {
 				throw new Error(writeErrorMessage(e), { cause: e })
@@ -343,7 +396,7 @@ export function buildVaultHandlers({
 					cascade: payload.cascade,
 					resolution: payload.resolution,
 				})
-				rowCache.delete(account.id)
+				await afterWrite(account)
 				return { ok: true }
 			} catch (e) {
 				throw new Error(writeErrorMessage(e), { cause: e })
@@ -357,8 +410,12 @@ export function buildVaultHandlers({
 		 */
 		'vault-trash': async (payload) => {
 			const account = await unlockedAccount()
-			await api.trashSecret(account, payload.id)
-			rowCache.get(account.id)?.delete(payload.id)
+			try {
+				await api.trashSecret(account, payload.id)
+			} catch (e) {
+				throw new Error(writeErrorMessage(e), { cause: e })
+			}
+			await afterWrite(account)
 			return { ok: true }
 		},
 

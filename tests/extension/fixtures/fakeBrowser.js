@@ -106,6 +106,11 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 			}),
 		},
 		windows: { create: vi.fn() },
+		alarms: {
+			create: vi.fn(),
+			clear: vi.fn(),
+			onAlarm: { addListener: () => {} },
+		},
 	}
 	globalThis.chrome = {
 		...fake,
@@ -195,6 +200,19 @@ export function installServer(servers) {
 		// (clients-extension-generator-vault-send).
 		if (path.startsWith('/api/v1/secrets?') && method === 'GET') {
 			return respond(200, { items: s.rows, total: s.rows.length, page: 1 })
+		}
+		// The offline manifest (clients-extension-complete); s.manifestStatus
+		// makes it fail, as when an administrator switched offline caching off.
+		if (path === '/api/v1/offline/manifest') {
+			if (s.manifestStatus)
+				return respond(s.manifestStatus, { message: 'off' })
+			return respond(200, {
+				suite: s.suite,
+				secrets: s.rows,
+				folders: s.folders ?? [],
+				types: s.types ?? [],
+				syncedAt: '2026-10-03T00:00:00+00:00',
+			})
 		}
 		// Folders, kept in s.folders (clients-extension-complete).
 		if (path === '/api/v1/folders' && method === 'POST') {
