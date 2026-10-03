@@ -8,6 +8,14 @@ name: Extension release
 # maintainer approves, submits the packages to the Chrome Web Store, Firefox
 # Add-ons and Edge Add-ons and attaches them to a GitHub release.
 #
+# Firefox Add-ons signs the listed package only after its review, which takes
+# hours to days. A third job, `attach-amo-signed`, runs daily and on demand: once
+# a released version is approved, it downloads the file Firefox Add-ons signed,
+# checks it holds exactly the files of the package the release job built, and
+# attaches it to the same GitHub release for administrators who host it
+# themselves. It reads only public Firefox Add-ons data, so it needs no store
+# credential and no environment approval.
+#
 # Store credentials and who approves the environment: docs/browser-extension-release.md.
 
 on:
@@ -18,13 +26,22 @@ on:
   pull_request:
     branches: [main, development, beta]
     paths: ["browser-extension/**", "src/crypto/**", "src/totp/**", "src/policy/**", "src/health/**", ".github/workflows/extension-release.yml"]
+  schedule:
+    # Daily check for Firefox Add-ons approvals of released versions.
+    - cron: "23 5 * * *"
   workflow_dispatch:
+    inputs:
+      amo_version:
+        description: "Attach the Firefox Add-ons signed file for this released version (for example 1.2.0); leave empty to build"
+        required: false
+        default: ""
 
 permissions:
   contents: read
 
 jobs:
   build:
+    if: github.event_name != 'schedule' && (github.event_name != 'workflow_dispatch' || inputs.amo_version == '')
     runs-on: ubuntu-latest
     # Tests, two builds per target, a lint and a zip; minutes at most.
     timeout-minutes: 20
@@ -144,3 +161,70 @@ jobs:
           files: |
             packages/*
             signed/*
+
+  attach-amo-signed:
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.amo_version != '')
+    runs-on: ubuntu-latest
+    # A few small downloads per release; the scheduled run looks at the last five.
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REQUESTED: ${{ inputs.amo_version }}
+      # The add-on id in the Firefox manifest (browser-extension/manifests/browsers.mjs).
+      GECKO_ID: keepiq@conduction.nl
+    steps:
+      - name: Attach the signed Firefox file to approved releases
+        run: |
+          set -euo pipefail
+          if [ -n "$REQUESTED" ]; then
+            versions="$REQUESTED"
+          else
+            versions=$(gh release list -R "$GITHUB_REPOSITORY" --limit 30 --json tagName \
+              -q '[.[].tagName | select(startswith("extension-v")) | ltrimstr("extension-v")] | .[0:5][]')
+          fi
+          for v in $versions; do
+            tag="extension-v$v"
+            asset="keepiq-firefox-$v-amo-signed.xpi"
+            if gh release view "$tag" -R "$GITHUB_REPOSITORY" --json assets -q '.assets[].name' | grep -qx "$asset"; then
+              echo "$tag already holds $asset"
+              continue
+            fi
+            # The public version detail answers only for a listed version that passed review.
+            code=$(curl -sS -o amo.json -w '%{http_code}' \
+              "https://addons.mozilla.org/api/v5/addons/addon/$GECKO_ID/versions/v$v/")
+            status=$(jq -r '.file.status // empty' amo.json 2>/dev/null || true)
+            if [ "$code" != "200" ] || [ "$status" != "public" ]; then
+              echo "::notice::Firefox Add-ons has not approved $v yet (HTTP $code, file status '${status:-none}')"
+              if [ -n "$REQUESTED" ]; then exit 1; fi
+              continue
+            fi
+            url=$(jq -r '.file.url' amo.json)
+            expected=$(jq -r '.file.hash' amo.json)
+            case "$url" in
+              https://addons.mozilla.org/*) ;;
+              *) echo "::error::Unexpected download host in $url"; exit 1 ;;
+            esac
+            curl -fsSL -o "$asset" "$url"
+            actual="sha256:$(sha256sum "$asset" | cut -d' ' -f1)"
+            if [ "$actual" != "$expected" ]; then
+              echo "::error::$asset hash $actual does not match Firefox Add-ons ($expected)"
+              exit 1
+            fi
+            # The signed file must be the package this release built, plus the signature.
+            gh release download "$tag" -R "$GITHUB_REPOSITORY" -p "keepiq-firefox-$v.zip" --clobber
+            rm -rf built signed && mkdir built signed
+            unzip -q "keepiq-firefox-$v.zip" -d built
+            unzip -q "$asset" -d signed
+            ls signed/META-INF/mozilla.rsa signed/META-INF/cose.sig > /dev/null
+            ( cd built && find . -type f | LC_ALL=C sort | xargs sha256sum ) > built.sha
+            ( cd signed && find . -type f ! -path './META-INF/*' | LC_ALL=C sort | xargs sha256sum ) > signed.sha
+            if ! diff -u built.sha signed.sha; then
+              echo "::error::$asset does not hold exactly the files of keepiq-firefox-$v.zip"
+              exit 1
+            fi
+            sha256sum "$asset" > "$asset.sha256"
+            gh release upload "$tag" -R "$GITHUB_REPOSITORY" "$asset" "$asset.sha256"
+            echo "Attached $asset to $tag"
+          done

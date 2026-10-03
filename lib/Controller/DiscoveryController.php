@@ -127,6 +127,7 @@ class DiscoveryController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
+	 * @spec openspec/changes/app-own-certificate/tasks.md#1.2
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -185,6 +186,9 @@ class DiscoveryController extends Controller {
 				// announced separately rather than listed here, because
 				// listing a format nothing writes would be a lie a consumer
 				// could reasonably act on.
+				// The calling application's own certificate and fingerprint
+				// (app-own-certificate); Bearer-authenticated.
+				'certificate' => $this->urlGenerator->linkToRoute('keepiq.applicationCertificate.show'),
 				'envelopeFormats' => [MachineSecretEnvelopeService::FORMAT],
 				'upcomingEnvelopeFormats' => [
 					[

@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\DashboardSummaryService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -31,7 +32,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\TemplateResponse;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\IAppConfig;
-use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -48,7 +48,7 @@ class DashboardController extends Controller {
 	 * @param IAppManager $appManager The app manager (version source)
 	 * @param DashboardSummaryService $summaryService The dashboard summary aggregator
 	 * @param IUserSession $userSession The user session
-	 * @param IGroupManager $groupManager The group manager
+	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Applications admin area
 	 *
 	 * @return void
 	 */
@@ -59,7 +59,7 @@ class DashboardController extends Controller {
 		private IAppManager $appManager,
 		private DashboardSummaryService $summaryService,
 		private IUserSession $userSession,
-		private IGroupManager $groupManager,
+		private AdminAreaAuthorizer $areas,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -81,7 +81,7 @@ class DashboardController extends Controller {
 		}
 
 		$userId = $user->getUID();
-		$isAdmin = $this->groupManager->isAdmin($userId);
+		$isAdmin = $this->areas->holds(userId: $userId, areaClass: AdminAreaAuthorizer::APPLICATIONS);
 
 		return new JSONResponse(data: $this->summaryService->fetchSummary(userId: $userId, isAdmin: $isAdmin));
 	}//end summary()

@@ -13,6 +13,15 @@ import { createPinia, setActivePinia } from 'pinia'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import DelegationManager from '../../src/components/share/DelegationManager.vue'
 
+// keepiq#818: a delegation carries a vault-key proof; the proof is stubbed.
+vi.mock('../../src/crypto/keyProof.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	sessionKeyProofHeaders: vi.fn(async () => ({
+		headers: { 'X-Keepiq-Key-Proof': 'proof' },
+		masterPassword: 'pw',
+	})),
+}))
+
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 describe('DelegationManager', () => {
@@ -126,6 +135,7 @@ describe('DelegationManager', () => {
 		expect(post).toHaveBeenCalledWith(
 			'/apps/keepiq/api/v1/secrets/sec-1/delegations',
 			{ delegatedTo: 'bob' },
+			{ headers: { 'X-Keepiq-Key-Proof': 'proof' } },
 		)
 		expect(wrapper.emitted('delegated')).toBeTruthy()
 	})

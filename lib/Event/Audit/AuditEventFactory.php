@@ -36,7 +36,7 @@ namespace OCA\Keepiq\Event\Audit;
 /**
  * Builds AuditEvent instances through instance methods.
  *
- * @SuppressWarnings(PHPMD.StaticAccess) The four methods below are the ONE
+ * @SuppressWarnings(PHPMD.StaticAccess) The methods below are the ONE
  * place in the app that reaches AuditEvent's static named constructors; every
  * other call site goes through this factory. Collapsing the constructors into
  * this class instead would duplicate the ACTOR_* mapping and break the tests
@@ -88,6 +88,31 @@ class AuditEventFactory {
 	): AuditEvent {
 		return AuditEvent::forApplication($actorId, $eventType, $objectType, $objectId, $objectName, $metadata);
 	}//end forApplication()
+
+	/**
+	 * Build an event actored by an AI agent through the MCP surface.
+	 *
+	 * @param string $actorId The user the agent acts for
+	 * @param string $eventType The event type
+	 * @param string $objectType The object type
+	 * @param string|null $objectId The object id
+	 * @param string|null $objectName The object name
+	 * @param array<string,mixed> $metadata The metadata
+	 *
+	 * @return AuditEvent
+	 *
+	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-invocations-are-audited-as-agent-reads
+	 */
+	public function forMcp(
+		string $actorId,
+		string $eventType,
+		string $objectType,
+		?string $objectId = null,
+		?string $objectName = null,
+		array $metadata = [],
+	): AuditEvent {
+		return AuditEvent::forMcp($actorId, $eventType, $objectType, $objectId, $objectName, $metadata);
+	}//end forMcp()
 
 	/**
 	 * Build an event with no human/application actor (background/system).

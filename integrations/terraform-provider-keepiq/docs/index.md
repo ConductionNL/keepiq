@@ -23,6 +23,8 @@ provider "keepiq" {}
 
 ### Optional
 
+- `admin_password` (String, Sensitive) A Nextcloud app password of admin_user. Defaults to KEEPIQ_ADMIN_PASSWORD, or the file named in KEEPIQ_ADMIN_PASSWORD_FILE.
+- `admin_user` (String) A Nextcloud user for the admin API (keepiq_application and keepiq_application_lease_policy), holding the Applications and machine access area. Defaults to KEEPIQ_ADMIN_USER.
 - `application_id` (String) The approved Keepiq application. Defaults to KEEPIQ_APP_ID.
 - `certificate` (String) The application's certificate (PEM). With it, the provider checks the key belongs to it and refuses any secret encrypted to another certificate. Defaults to the file named in KEEPIQ_APP_CERT_FILE.
 - `private_key` (String, Sensitive) The application's private key (PEM). Defaults to KEEPIQ_APP_KEY, or the file named in KEEPIQ_APP_KEY_FILE. It never leaves the provider.

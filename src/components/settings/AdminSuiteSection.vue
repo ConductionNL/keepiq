@@ -6,7 +6,9 @@
   Lets an administrator force-revoke any suite by id — a required reason and a
   markCompromised toggle — and reinstate a revoked one. Force-revoke carries
   #[PasswordConfirmationRequired], so the Nextcloud sudo (password-confirmation)
-  flow runs before the request; reinstate carries the same sudo. Only
+  flow runs before the request; reinstate carries the same sudo. The
+  administrator also types the suite id again, which the server checks on every
+  user backend, SSO included (keepiq#871). Only
   the destroyed-usable emergency-contact count crosses the wire, never contact
   identities.
 
@@ -38,6 +40,21 @@
 					:disabled="busy"
 					data-testid="admin-suite-reason" />
 
+				<!-- Typed confirmation (keepiq#871): sudo mode is skipped on SSO
+				     backends, so the administrator types the suite id again and the
+				     server refuses the request unless it matches. -->
+				<NcTextField
+					v-model="confirmSuiteId"
+					:label="t('keepiq', 'Type the suite ID again to confirm')"
+					:disabled="busy"
+					:error="confirmSuiteId !== '' && !confirmed"
+					:helperText="
+						confirmSuiteId !== '' && !confirmed
+							? t('keepiq', 'This does not match the suite ID.')
+							: ''
+					"
+					data-testid="admin-suite-confirm-id" />
+
 				<NcCheckboxRadioSwitch
 					v-model="markCompromised"
 					type="switch"
@@ -51,9 +68,20 @@
 					}}
 				</NcCheckboxRadioSwitch>
 
+				<NcNoteCard
+					v-if="enrolledInRecovery"
+					type="warning"
+					data-testid="admin-suite-recovery-warning">
+					{{
+						t(
+							'keepiq',
+							'This user is enrolled in account recovery. Recovering keeps their secrets; revoking deletes their enrolment.',
+						)
+					}}
+				</NcNoteCard>
 				<NcButton
 					variant="error"
-					:disabled="!suiteId || !reason || busy"
+					:disabled="!suiteId || !reason || !confirmed || busy"
 					data-testid="admin-suite-force-revoke"
 					@click="onForceRevoke">
 					{{
@@ -182,6 +210,8 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -210,6 +240,7 @@ export default {
 	data() {
 		return {
 			suiteId: '',
+			confirmSuiteId: '',
 			reason: '',
 			markCompromised: false,
 			busy: false,
@@ -223,10 +254,22 @@ export default {
 			alsoRevokedEmergencyContactsDestroyed: 0,
 			cascadeIncomplete: false,
 			cascadeFailed: 0,
+			/** Whether the suite's owner is enrolled in account recovery. */
+			enrolledInRecovery: false,
 		}
 	},
 
 	computed: {
+		/**
+		 * Whether the typed confirmation matches the suite id (keepiq#871).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+		 */
+		confirmed() {
+			return this.suiteId !== '' && this.confirmSuiteId === this.suiteId
+		},
+
 		/**
 		 * The member overview store, which carries the prefill from a row.
 		 *
@@ -251,6 +294,33 @@ export default {
 				this.suiteId = suiteId
 			}
 		},
+
+		/**
+		 * Look up the account recovery enrolment of the entered suite, so the
+		 * warning shows before the force-revoke action
+		 * (crypto-organisation-account-recovery D8).
+		 *
+		 * @param {string} id The suite id typed so far.
+		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-force-revocation-warns-about-enrolled-users
+		 */
+		async suiteId(id) {
+			this.enrolledInRecovery = false
+			const trimmed = (id ?? '').trim()
+			if (trimmed.length < 8) {
+				return
+			}
+			try {
+				const response = await axios.get(
+					generateUrl('/apps/keepiq/api/v1/recovery/admin/enrolled'),
+					{ params: { suiteId: trimmed } },
+				)
+				if (this.suiteId.trim() === trimmed) {
+					this.enrolledInRecovery = response.data?.enrolled === true
+				}
+			} catch {
+				this.enrolledInRecovery = false
+			}
+		},
 	},
 
 	methods: {
@@ -272,6 +342,7 @@ export default {
 					id: this.suiteId,
 					reason: this.reason,
 					markCompromised: this.markCompromised,
+					confirmSuiteId: this.confirmSuiteId,
 				})
 				this.result = outcome.suite
 				this.emergencyContactsDestroyed = outcome.emergencyContactsDestroyed

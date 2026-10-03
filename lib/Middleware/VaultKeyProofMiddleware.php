@@ -39,6 +39,7 @@ use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\KeyProofRequiredException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
+use OCA\Keepiq\Service\VaultKeyProofExemption;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -47,6 +48,7 @@ use OCP\AppFramework\Middleware;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IRequest;
 use OCP\IUserSession;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionMethod;
 use Throwable;
@@ -83,6 +85,8 @@ class VaultKeyProofMiddleware extends Middleware {
 	 * @param LoggerInterface $logger Records every refused proof
 	 * @param IEventDispatcher|null $eventDispatcher Carries the refusal to the audit trail
 	 * @param AuditEventFactory $auditEvents Builds the refusal's audit event
+	 * @param ContainerInterface|null $container Resolves an attribute's exemption;
+	 *                                           without it no exemption applies
 	 *
 	 * @return void
 	 */
@@ -95,6 +99,7 @@ class VaultKeyProofMiddleware extends Middleware {
 		private LoggerInterface $logger,
 		private ?IEventDispatcher $eventDispatcher = null,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
+		private ?ContainerInterface $container = null,
 	) {
 	}//end __construct()
 
@@ -123,6 +128,10 @@ class VaultKeyProofMiddleware extends Middleware {
 		}
 
 		$userId = $user->getUID();
+		if ($this->isExempt(attribute: $attribute, userId: $userId) === true) {
+			return;
+		}
+
 		$certificate = $this->subjectCertificate(attribute: $attribute, userId: $userId);
 
 		$boundValues = [];
@@ -241,6 +250,40 @@ class VaultKeyProofMiddleware extends Middleware {
 
 		return $attributes[0]->newInstance();
 	}//end attributeFor()
+
+	/**
+	 * Whether the attribute's exemption waives the proof for this request
+	 * (keepiq#818). Fails closed: no exemption declared, no container, a class
+	 * that is not a VaultKeyProofExemption, or any error means a proof is needed.
+	 *
+	 * @param VaultKeyProofRequired $attribute The guard declaration
+	 * @param string $userId The acting user
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
+	 */
+	private function isExempt(VaultKeyProofRequired $attribute, string $userId): bool {
+		$class = $attribute->getExemption();
+		if ($class === '' || $this->container === null) {
+			return false;
+		}
+
+		try {
+			$exemption = $this->container->get($class);
+			if (($exemption instanceof VaultKeyProofExemption) === false) {
+				return false;
+			}
+
+			return $exemption->exempts(request: $this->request, userId: $userId) === true;
+		} catch (Throwable $e) {
+			$this->logger->warning(
+				'Keepiq: vault key proof exemption {class} failed; requiring a proof',
+				['app' => 'keepiq', 'class' => $class, 'exception' => $e]
+			);
+			return false;
+		}
+	}//end isExempt()
 
 	/**
 	 * Resolve the certificate whose public key verifies the proof.

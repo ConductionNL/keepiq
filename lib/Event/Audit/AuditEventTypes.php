@@ -41,6 +41,8 @@ final class AuditEventTypes {
 	public const SECRET_PURGED = 'secret.purged';
 	public const SECRET_ARCHIVED = 'secret.archived';
 	public const SECRET_UNARCHIVED = 'secret.unarchived';
+	// The holder of a use-only copy filled it (sharing-use-only-and-expiring-shares §3.3).
+	public const SECRET_USED = 'secret.used';
 
 	// Folder.
 	public const FOLDER_DELETED_CASCADE = 'folder.deleted_cascade';
@@ -184,6 +186,10 @@ final class AuditEventTypes {
 	public const SIEM_SINK_DELETED = 'siem.sink_deleted';
 	public const SIEM_SINK_TESTED = 'siem.sink_tested';
 
+	// An AI agent called a Keepiq MCP read tool (hermiq-ai-tooling): the tool
+	// name and a result count, never an entry name, subject or value.
+	public const MCP_TOOL_INVOKED = 'mcp.tool_invoked';
+
 	// Certificate lifecycle (certificate-lifecycle §5) — identifiers
 	// only; no PEM, key, or secret value is ever recorded.
 	public const CERTIFICATE_REISSUED = 'certificate.reissued';
@@ -199,6 +205,20 @@ final class AuditEventTypes {
 	public const DEVICE_APPROVAL_DENIED = 'device_approval.denied';
 	public const DEVICE_APPROVAL_EXPIRED = 'device_approval.expired';
 	public const DEVICE_APPROVAL_PICKED_UP = 'device_approval.picked_up';
+
+	// Organisation account recovery (crypto-organisation-account-recovery 5.2),
+	// identifiers only: never an envelope, a wrapped copy or a sealed result.
+	public const RECOVERY_SETTINGS_CHANGED = 'recovery.settings_changed';
+	public const RECOVERY_KEY_CREATED = 'recovery.key_created';
+	public const RECOVERY_KEY_RETIRED = 'recovery.key_retired';
+	public const RECOVERY_ENROLLED = 'recovery.enrolled';
+	public const RECOVERY_WITHDRAWN = 'recovery.withdrawn';
+	public const RECOVERY_REQUESTED = 'recovery.requested';
+	public const RECOVERY_APPROVED = 'recovery.approved';
+	public const RECOVERY_DECLINED = 'recovery.declined';
+	public const RECOVERY_HANDED_OFF = 'recovery.handed_off';
+	public const RECOVERY_COMPLETED = 'recovery.completed';
+	public const RECOVERY_EXPIRED = 'recovery.expired';
 
 	/**
 	 * Metadata keys that MUST NEVER appear in any audit entry, in any position.
@@ -238,6 +258,7 @@ final class AuditEventTypes {
 		self::SECRET_PURGED => ['reason'],
 		self::SECRET_ARCHIVED => [],
 		self::SECRET_UNARCHIVED => [],
+		self::SECRET_USED => ['copyId'],
 		self::FOLDER_DELETED_CASCADE => ['secretCount', 'subfolderCount'],
 		self::SHARE_GRANTED => ['recipientType', 'recipientId'],
 		self::SHARE_REVOKED => ['recipientType', 'recipientId'],
@@ -335,6 +356,7 @@ final class AuditEventTypes {
 		self::SIEM_SINK_UPDATED => ['sinkId', 'type'],
 		self::SIEM_SINK_DELETED => ['sinkId'],
 		self::SIEM_SINK_TESTED => ['sinkId', 'outcome'],
+		self::MCP_TOOL_INVOKED => ['tool', 'resultCount'],
 		// Certificate lifecycle — identifiers only, never PEM/key.
 		self::CERTIFICATE_REISSUED => ['suiteId'],
 		self::CERTIFICATE_RENEWAL_MARKED => [],
@@ -345,6 +367,17 @@ final class AuditEventTypes {
 		self::DEVICE_APPROVAL_DENIED => [],
 		self::DEVICE_APPROVAL_EXPIRED => [],
 		self::DEVICE_APPROVAL_PICKED_UP => [],
+		self::RECOVERY_SETTINGS_CHANGED => ['policy', 'threshold', 'officerCount'],
+		self::RECOVERY_KEY_CREATED => [],
+		self::RECOVERY_KEY_RETIRED => [],
+		self::RECOVERY_ENROLLED => ['suiteId'],
+		self::RECOVERY_WITHDRAWN => [],
+		self::RECOVERY_REQUESTED => ['userId'],
+		self::RECOVERY_APPROVED => ['userId', 'approvals', 'threshold'],
+		self::RECOVERY_DECLINED => ['userId'],
+		self::RECOVERY_HANDED_OFF => ['userId'],
+		self::RECOVERY_COMPLETED => ['handledBy'],
+		self::RECOVERY_EXPIRED => ['userId'],
 	];
 
 	/**

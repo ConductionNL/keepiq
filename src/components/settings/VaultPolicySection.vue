@@ -200,7 +200,7 @@ export default {
 		}
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin'),
+				generateUrl('/apps/keepiq/api/settings/admin/policies'),
 			)
 			for (const key of KEYS) {
 				if (response.data?.[key] !== undefined) {
@@ -275,7 +275,7 @@ export default {
 			}
 			try {
 				await axios.put(
-					generateUrl('/apps/keepiq/api/settings/admin'),
+					generateUrl('/apps/keepiq/api/settings/admin/policies'),
 					payload,
 				)
 			} catch (e) {

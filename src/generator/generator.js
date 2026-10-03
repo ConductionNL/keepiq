@@ -31,6 +31,8 @@ const UPPERCASE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 const LOWERCASE = 'abcdefghijklmnopqrstuvwxyz'
 const DIGITS = '0123456789'
 const SPECIAL = '!@#$%^&*()-_=+[]{}|;:,.<>?/'
+/** Characters that are easy to mistake for one another. */
+const AMBIGUOUS = 'IOl01'
 
 /** Thrown for a request the generator refuses; `message` is user-facing. */
 export class GeneratorError extends Error {
@@ -239,20 +241,42 @@ function forceRequiredClasses(result, policy, charset, rand) {
  */
 function generateFromCharset(options, policy, rand) {
 	let length = Number(options.length ?? 16)
+	let includeUpper = options.includeUppercase !== false
+	let includeLower = options.includeLowercase !== false
+	let includeDigits = options.includeDigits !== false
 	let includeSpecial = options.includeSpecialCharacters !== false
+	let minDigits = Math.max(0, Number(options.minDigits ?? 0) || 0)
+	let minSpecial = Math.max(0, Number(options.minSpecial ?? 0) || 0)
 	const excluded = new Set(options.excludedCharacters ?? '')
-
-	// Org policy clamp: the length is raised to the floor, and required
-	// classes are forced into the set and into the output.
-	if (policy !== null) {
-		length = Math.max(length, policy.minLength)
-		if (policy.requireSymbol) {
-			includeSpecial = true
+	if (options.avoidAmbiguous === true) {
+		for (const char of AMBIGUOUS) {
+			excluded.add(char)
 		}
 	}
+
+	// Org policy clamp: the length is raised to the floor, and required
+	// classes are switched on, forced into the set and into the output.
+	if (policy !== null) {
+		length = Math.max(length, policy.minLength)
+		includeUpper = includeUpper || policy.requireUpper
+		includeLower = includeLower || policy.requireLower
+		includeDigits = includeDigits || policy.requireDigit
+		includeSpecial = includeSpecial || policy.requireSymbol
+	}
+	if (!includeUpper && !includeLower && !includeDigits && !includeSpecial) {
+		throw new GeneratorError('Choose at least one kind of character')
+	}
+	minDigits = includeDigits ? minDigits : 0
+	minSpecial = includeSpecial ? minSpecial : 0
+	// The minimums must fit: the length grows to hold them.
+	length = Math.max(length, minDigits + minSpecial)
 	assertLengthInRange(length)
 
-	let charset = UPPERCASE + LOWERCASE + DIGITS + (includeSpecial ? SPECIAL : '')
+	let charset =
+		(includeUpper ? UPPERCASE : '')
+		+ (includeLower ? LOWERCASE : '')
+		+ (includeDigits ? DIGITS : '')
+		+ (includeSpecial ? SPECIAL : '')
 	charset = dedupe([...charset].filter((c) => !excluded.has(c)))
 	if (policy !== null) {
 		// An exclusion list may not hollow out a required class.
@@ -264,10 +288,58 @@ function generateFromCharset(options, policy, rand) {
 	}
 	assertCharsetViable(charset)
 
-	const result = buildString(charset, length, rand)
+	let result = buildString(charset, length, rand)
+	result = ensureMinimums(
+		result,
+		charset,
+		[
+			[DIGITS, minDigits],
+			[SPECIAL, minSpecial],
+		],
+		rand,
+	)
 	return policy !== null
 		? forceRequiredClasses(result, policy, charset, rand)
 		: result
+}
+
+/**
+ * Make sure the value holds at least `count` characters of each class, by
+ * replacing characters of other classes at random positions.
+ *
+ * @param {string} value The generated value.
+ * @param {string} charset The resolved set.
+ * @param {Array<[string, number]>} minimums Class set and minimum count.
+ * @param {(min: number, max: number) => number} rand The random-integer source.
+ * @return {string}
+ */
+function ensureMinimums(value, charset, minimums, rand) {
+	const chars = [...value]
+	const reserved = new Set()
+	for (const [classSet, count] of minimums) {
+		const allowed = [...classSet].filter((c) => charset.includes(c))
+		if (count === 0 || allowed.length === 0) {
+			continue
+		}
+		const have = chars
+			.map((c, i) => (classSet.includes(c) ? i : -1))
+			.filter((i) => i >= 0)
+		for (const i of have.slice(0, count)) {
+			reserved.add(i)
+		}
+		let missing = count - Math.min(have.length, count)
+		while (missing > 0) {
+			const free = chars.map((c, i) => i).filter((i) => !reserved.has(i))
+			if (free.length === 0) {
+				break
+			}
+			const position = free[rand(0, free.length - 1)]
+			chars[position] = allowed[rand(0, allowed.length - 1)]
+			reserved.add(position)
+			missing--
+		}
+	}
+	return chars.join('')
 }
 
 /**

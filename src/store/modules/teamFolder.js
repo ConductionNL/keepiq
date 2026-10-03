@@ -81,7 +81,20 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @return {function(string): object|null}
 		 */
 		byFolderId: (state) => (folderId) =>
-			state.owned.find((tf) => tf.folderId === folderId) ?? null,
+			state.owned.find((tf) => tf.folderId === folderId)
+			?? state.memberOf.find(
+				(tf) => tf.folderId === folderId && tf.grade === 'manage',
+			)
+			?? null,
+
+		/**
+		 * The team folders the current user manages without owning them
+		 * (sharing-team-folder-manager-role D5).
+		 *
+		 * @param {object} state The store state.
+		 * @return {Array<object>}
+		 */
+		managed: (state) => state.memberOf.filter((tf) => tf.grade === 'manage'),
 	},
 
 	actions: {
@@ -134,16 +147,17 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {string} teamFolderId The team folder.
 		 * @param {string} memberType   `user` or `group`.
 		 * @param {string} memberId     The Nextcloud user/group id.
+		 * @param {{useOnly: boolean, expiresAt: string|null}} [restriction] Use-only (read grade) and end date.
 		 * @return {Promise<object>}
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-nested-subfolder-inheritance
 		 */
-		async addMember(teamFolderId, memberType, memberId) {
+		async addMember(teamFolderId, memberType, memberId, restriction = {}) {
 			const response = await axios.post(
 				generateUrl(
 					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/members`,
 				),
-				{ memberType, memberId },
+				{ memberType, memberId, ...restriction },
 			)
 			await this.fetchTeamFolders()
 			return response.data
@@ -242,6 +256,22 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		},
 
 		/**
+		 * Approve one waiting member (keepiq#747): the server checks that the
+		 * caller owns the team folder and that the member is covered by its
+		 * membership, then only that member's copies are encrypted and shared.
+		 * Everyone else keeps waiting.
+		 *
+		 * @param {string} teamFolderId The team folder.
+		 * @param {string} userId The member to approve.
+		 * @return {Promise<{created: number, cancelled: boolean}>}
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-approve-one-waiting-member
+		 */
+		async approveMember(teamFolderId, userId) {
+			await this.approveJoin(teamFolderId, userId)
+			return this.runFanOut(teamFolderId, { onlyUserId: userId })
+		},
+
+		/**
 		 * Run the admin offboarding action.
 		 *
 		 * @param {string} leavingUserId   The user being offboarded.
@@ -306,12 +336,20 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * missing secret with the in-memory CryptoKey → RSA-encrypt per
 		 * recipient certificate → POST in idempotent chunks.
 		 *
+		 * A manager fans out from its OWN recipient copies: reconcile names
+		 * the caller's copy of each folder secret (`copyId`), and a secret
+		 * the caller holds no copy of is skipped and reported, never faked
+		 * (sharing-team-folder-manager-role D3).
+		 *
 		 * @param {string} teamFolderId The team folder to fan out.
-		 * @return {Promise<{created: number, cancelled: boolean}>}
+		 * @param {object} [options] Options.
+		 * @param {string} [options.onlyUserId] Fan out to this member only
+		 *   (a per-member approval, keepiq#747); every member when omitted.
+		 * @return {Promise<{created: number, cancelled: boolean, skipped: Array<string>}>}
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
-		async runFanOut(teamFolderId) {
+		async runFanOut(teamFolderId, { onlyUserId = null } = {}) {
 			const secretStore = useSecretStore()
 			const shareStore = useShareStore()
 
@@ -320,11 +358,20 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 
 			try {
 				const state = await this.reconcile(teamFolderId)
-				const missing = state.missing ?? []
+				const missing = (state.missing ?? []).filter(
+					(pair) => onlyUserId === null || pair.userId === onlyUserId,
+				)
 				this.fanOut.total = missing.length
 				if (missing.length === 0) {
-					return { created: 0, cancelled: false }
+					return { created: 0, cancelled: false, skipped: [] }
 				}
+
+				// The copy this browser decrypts for each source secret: the
+				// owner's own row, or a manager's recipient copy (or none).
+				const refs = Object.fromEntries(
+					(state.secrets ?? []).map((ref) => [ref.id, ref]),
+				)
+				const skipped = new Set()
 
 				const certByUser = Object.fromEntries(
 					(state.recipients ?? []).map((r) => [r.userId, r.certificate]),
@@ -346,11 +393,20 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 						continue
 					}
 
+					const ref = refs[pair.secretId]
+					const readId =
+						ref && 'copyId' in ref ? ref.copyId : pair.secretId
+					if (!readId) {
+						skipped.add(ref?.name ?? pair.secretId)
+						this.fanOut.done++
+						continue
+					}
+
 					if (!plaintextCache[pair.secretId]) {
 						// fetchSecret decrypts with the session CryptoKey and
 						// returns the PLAINTEXT secret — do not decrypt twice.
 
-						const plain = await secretStore.fetchSecret(pair.secretId)
+						const plain = await secretStore.fetchSecret(readId)
 						plaintextCache[pair.secretId] = {
 							key: plain.key ?? '',
 							login: plain.login ?? '',
@@ -407,7 +463,11 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 					this.fanOut.done += chunk.length
 				}
 
-				return { created, cancelled: this.fanOutCancelled }
+				return {
+					created,
+					cancelled: this.fanOutCancelled,
+					skipped: [...skipped],
+				}
 			} catch (e) {
 				this.error =
 					e?.response?.data?.message || e?.message || 'Fan-out failed'

@@ -59,11 +59,20 @@ A value rotated outside Terraform, by the rotation runner for example, shows no 
 
 `data "keepiq_secret_metadata"` gives the id, timestamps, `expires_at` and certificate fingerprint of a secret, never its value.
 
-## Not yet available
+## Manage applications
 
-Registering and approving applications from Terraform waits for the Keepiq admin API.
-Until then, register the application in Keepiq and give the provider its key.
+`keepiq_application` registers an application through Keepiq's admin API and approves it.
+Give it a CSR in `csr_pem`; Keepiq signs it and the certificate appears in `certificate_pem`.
+The private key stays with whoever made the CSR. If you generate it with `tls_private_key`, it sits in state.
+
+The application resources log in as a Nextcloud user, not as an application.
+Set `admin_user` and `admin_password` (an app password), or `KEEPIQ_ADMIN_USER` and `KEEPIQ_ADMIN_PASSWORD`.
+Give that user only the "Applications and machine access" admin area, on Nextcloud's administration privileges page.
+
+Deleting an application deletes its vault. So `terraform destroy` refuses until you set `allow_vault_deletion = true` and apply.
+
+`keepiq_application_lease_policy` sets the lease TTL override of one application. Leave an argument out to inherit the instance setting; destroy removes the override.
 
 ## Next step
 
-Put the application key in `KEEPIQ_APP_KEY`, add the provider block, and run `terraform plan`.
+Put the application key in `KEEPIQ_APP_KEY`, add the provider block, and run `terraform plan`. To register applications too, create the admin user's app password and set `KEEPIQ_ADMIN_USER` and `KEEPIQ_ADMIN_PASSWORD`.
