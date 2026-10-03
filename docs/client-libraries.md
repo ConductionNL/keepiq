@@ -75,6 +75,10 @@ It lists both ids and folder paths, so you can pick one with a folder path or re
 Pass your application's certificate as well, and the library checks it against your key at start.
 After that it refuses any secret encrypted to another certificate, before it decrypts anything.
 
+Don't have the certificate at hand? Your application can read its own at `GET /api/v1/app/certificate` with its access token.
+The answer holds the certificate in PEM and its `certificateFingerprint`, the same value every envelope carries.
+Pass that PEM as the certificate option. The library still checks it against your key, so a wrong answer stops it at start.
+
 ## Base URL
 
 Use the address you open Nextcloud on. When your instance has no pretty URLs, add `/index.php`.

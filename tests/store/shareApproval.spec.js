@@ -17,6 +17,21 @@ import { useSecretStore } from '../../src/store/modules/secret.js'
 import { useShareStore } from '../../src/store/modules/share.js'
 import { useShareApprovalStore } from '../../src/store/modules/shareApproval.js'
 
+// Sharing needs a vault-key proof (keepiq#818). The proof itself is built by
+// sessionKeyProofHeaders; here it returns a fixed header and echoes the
+// password, so the tests can see that each request carried a proof.
+vi.mock('../../src/crypto/keyProof.js', async (importOriginal) => ({
+	...(await importOriginal()),
+	sessionKeyProofHeaders: vi.fn(
+		async ({ purpose, boundValues, masterPassword }) => ({
+			headers: {
+				'X-Keepiq-Key-Proof': `proof(${purpose}|${(boundValues ?? []).join(',')})`,
+			},
+			masterPassword: masterPassword || 'from-prompt',
+		}),
+	),
+}))
+
 const REQUEST = { sourceSecretId: 's-1', requesterId: 'bob', targetUserId: 'carol' }
 
 /**
@@ -75,6 +90,10 @@ describe('useShareApprovalStore', () => {
 			'/apps/keepiq/api/v1/shares/register-batch',
 			'/apps/keepiq/api/v1/share-requests/approve',
 		])
+		// keepiq#818: the batch registration carries a proof.
+		expect(post.mock.calls[1][2].headers).toEqual({
+			'X-Keepiq-Key-Proof': 'proof(share-register-batch|)',
+		})
 		expect(post.mock.calls[1][1].shares[0]).toMatchObject({
 			sourceSecretId: 's-1',
 			targetUserId: 'carol',

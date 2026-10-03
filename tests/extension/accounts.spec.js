@@ -222,6 +222,8 @@ describe('matching and filling use the active account only', () => {
 				login: 'home-user',
 				secret: 'home-password',
 				host: 'example.com',
+				// A use-only copy tells the page to hide the value (sharing-use-only-and-expiring-shares).
+				useOnly: false,
 			},
 		})
 	})

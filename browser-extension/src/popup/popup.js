@@ -7,15 +7,32 @@
 
 import { platformAuthenticatorAvailable } from '../unlock/ceremony.js'
 import { canAddAccount, renderAccountSwitcher, renderIdleChoices } from './views.js'
+import { initGenerator } from './generator-view.js'
+import { initSend } from './send-view.js'
+import { initVault } from './vault-view.js'
 
 // The last state the worker reported (accounts, active account, settings).
 let state = {}
 // The pairing form is open to add another account.
 let adding = false
 
+// A popped-out popup (its own window) acts on the tab it was opened over.
+const params = new URLSearchParams(location.search)
+const POPPED_OUT = params.get('popout') === '1'
+const PINNED_TAB = Number.parseInt(params.get('tabId') || '', 10)
+const PINNED = Number.isInteger(PINNED_TAB) ? PINNED_TAB : undefined
+// The messages that act on the page tab carry the pinned tab.
+const TAB_MESSAGES = new Set(['fill', 'generator-context'])
+
 function send(type, payload) {
+	const body =
+		PINNED !== undefined && TAB_MESSAGES.has(type)
+			? { ...(payload || {}), tabId: PINNED }
+			: payload
 	return new Promise((resolve) => {
-		chrome.runtime.sendMessage({ type, payload }, (res) => resolve(res || {}))
+		chrome.runtime.sendMessage({ type, payload: body }, (res) =>
+			resolve(res || {}),
+		)
 	})
 }
 
@@ -30,6 +47,7 @@ function show(view) {
 		'view-unlocked',
 		'view-settings',
 		'view-update',
+		'view-locked-generator',
 	]) {
 		$(id).hidden = id !== view
 	}
@@ -45,10 +63,32 @@ function showError(id, message) {
 	el.hidden = false
 }
 
-async function activeHost() {
+/**
+ * The page tab the popup is about: the pinned one when popped out, else the
+ * active tab.
+ *
+ * @return {Promise<object|null>}
+ */
+async function activeTab() {
+	if (PINNED !== undefined) {
+		return chrome.tabs.get(PINNED).catch(() => null)
+	}
 	const [tab] = await chrome.tabs.query({ active: true, currentWindow: true })
+	return tab || null
+}
+
+/**
+ * The host of the page tab, for http and https pages only.
+ *
+ * @return {Promise<string>}
+ */
+async function activeHost() {
+	const tab = await activeTab()
 	try {
-		return tab ? new URL(tab.url).hostname : ''
+		const url = new URL(tab?.url || '')
+		return url.protocol === 'http:' || url.protocol === 'https:'
+			? url.hostname
+			: ''
 	} catch {
 		return ''
 	}
@@ -57,6 +97,15 @@ async function activeHost() {
 async function renderUnlocked() {
 	const host = await activeHost()
 	$('active-host').textContent = host
+	if (!host) {
+		// No website in this tab: nothing to suggest or fill.
+		$('candidates').replaceChildren()
+		$('no-candidates').textContent = 'Open a website to see its logins.'
+		$('no-candidates').hidden = false
+		$('totp-block').hidden = true
+		return
+	}
+	$('no-candidates').textContent = 'No matching secrets for this site.'
 	const candidates = await send('match', { host })
 	const list = $('candidates')
 	list.innerHTML = ''
@@ -237,11 +286,122 @@ async function refresh() {
 		await renderBiometricUnlock()
 	} else {
 		show('view-unlocked')
-		await renderUnlocked()
+		await selectTab(await lastTab())
 	}
 }
 
+// --- tabs: This site, Vault, Generator, Send ---
+
+const TABS = ['site', 'vault', 'generator', 'send']
+const LAST_TAB_KEY = 'popup:lastTab'
+
+/**
+ * The tab the popup was last on in this browser session, or This site.
+ *
+ * @return {Promise<string>}
+ */
+async function lastTab() {
+	try {
+		const saved = (await chrome.storage.session.get(LAST_TAB_KEY))[LAST_TAB_KEY]
+		return TABS.includes(saved) ? saved : 'site'
+	} catch {
+		return 'site'
+	}
+}
+
+/**
+ * Remember the tab for this browser session only.
+ *
+ * @param {string} name The tab.
+ */
+function rememberTab(name) {
+	try {
+		chrome.storage.session.set({ [LAST_TAB_KEY]: name }).catch(() => {})
+	} catch {
+		// No session storage: the popup opens on This site.
+	}
+}
+let generatorView = null
+let vaultView = null
+let sendView = null
+
+/**
+ * Show one tab and, unless returning to it, open its view.
+ *
+ * @param {string} name One of TABS.
+ * @param {object} [arg] Passed to the view's open (Send prefill, Generator pick mode).
+ * @param {{reopen?: boolean}} [how] reopen false: switch without reloading the view.
+ * @return {Promise<void>}
+ */
+async function selectTab(name, arg, { reopen = true } = {}) {
+	for (const tab of TABS) {
+		const selected = tab === name
+		$('tab-' + tab).setAttribute('aria-selected', selected ? 'true' : 'false')
+		$('panel-' + tab).hidden = !selected
+	}
+	rememberTab(name)
+	if (!reopen) return
+	if (name === 'site') await renderUnlocked()
+	if (name === 'vault') await vaultView.open()
+	if (name === 'generator') await generatorView.open(arg)
+	if (name === 'send') await sendView.open(arg)
+}
+
+/**
+ * Open the Generator in pick mode for the item form, and come back to the
+ * form (with the user's other input intact) when a value is picked.
+ *
+ * @param {string} kind password or username.
+ * @param {(value: string) => void} onPick Puts the value in the form.
+ * @return {Promise<void>}
+ */
+function pickGenerated(kind, onPick) {
+	return selectTab('generator', {
+		kind,
+		onPick: (value) => {
+			onPick(value)
+			selectTab('vault', undefined, { reopen: false })
+		},
+	})
+}
+
+// The Generator while locked: its panel moves into the locked view and back.
+function openLockedGenerator() {
+	$('locked-generator-slot').appendChild($('panel-generator'))
+	$('panel-generator').hidden = false
+	show('view-locked-generator')
+	return generatorView.open()
+}
+
+function closeLockedGenerator() {
+	$('panel-send').before($('panel-generator'))
+	$('panel-generator').hidden = true
+	return refresh()
+}
+
+function wireTabs() {
+	const ctx = { $, send, showError }
+	generatorView = initGenerator(ctx)
+	sendView = initSend(ctx)
+	vaultView = initVault({
+		...ctx,
+		pickGenerated,
+		sendItem: (item) => selectTab('send', item),
+	})
+	for (const tab of TABS) {
+		$('tab-' + tab).addEventListener('click', () => {
+			// Leaving an item form with changes asks first.
+			const onVault = $('tab-vault').getAttribute('aria-selected') === 'true'
+			if (onVault && tab !== 'vault' && !vaultView.canLeave()) return
+			selectTab(tab)
+		})
+	}
+	$('locked-generate').addEventListener('click', openLockedGenerator)
+	$('locked-generator-back').addEventListener('click', closeLockedGenerator)
+}
+
 function wire() {
+	wireTabs()
 	$('pair-submit').addEventListener('click', async () => {
 		showError('pair-error', '')
 		const res = await send('pair', {
@@ -279,6 +439,20 @@ function wire() {
 	$('unlock-biometric').addEventListener('click', () => openUnlockWindow('unlock'))
 	$('biometric-enrol').addEventListener('click', () => openUnlockWindow('enrol'))
 	$('settings-btn').addEventListener('click', () => renderSettings())
+	$('tab-settings').addEventListener('click', () => renderSettings())
+	$('popout-btn').hidden = POPPED_OUT
+	if (POPPED_OUT) document.body.classList.add('popped-out')
+	$('popout-btn').addEventListener('click', async () => {
+		const tab = await activeTab()
+		const query = 'popout=1' + (tab?.id !== undefined ? '&tabId=' + tab.id : '')
+		chrome.windows.create({
+			url: chrome.runtime.getURL('popup.html?' + query),
+			type: 'popup',
+			width: 380,
+			height: 630,
+		})
+		window.close()
+	})
 	$('settings-back').addEventListener('click', () => refresh())
 	$('settings-unpair').addEventListener('click', async () => {
 		await send('unpair', { accountId: state.activeAccountId })

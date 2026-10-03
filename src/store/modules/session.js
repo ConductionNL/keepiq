@@ -209,6 +209,31 @@ export const useSessionStore = defineStore('session', {
 		},
 
 		/**
+		 * Unlock this session from a recovered private key, for one session
+		 * only (crypto-new-device-approval D6, the officer path). There is no
+		 * raw unlock key, so the offline cache stays off for this session.
+		 *
+		 * @param {string} privateKeyPem The recovered private key.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
+		 */
+		async unlockWithPrivateKeyPem(privateKeyPem) {
+			const response = await axios.get(
+				generateUrl('/apps/keepiq/api/v1/suites'),
+			)
+			const activeSuite = response.data.find((s) => s.status === 'active')
+			if (!activeSuite) {
+				throw new Error('No active EncryptionSuite found')
+			}
+			this.cryptoKey = await importPrivateKey(privateKeyPem)
+			this.aesKey = null
+			this.encryptedPrivateKey = activeSuite.privateKey
+			this.certificate = activeSuite.certificate
+			this.suiteId = activeSuite.id
+			this.lastActivity = Date.now()
+		},
+
+		/**
 		 * Lock the vault — clear all keys from memory.
 		 *
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7

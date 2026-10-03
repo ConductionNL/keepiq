@@ -29,13 +29,14 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\HoneyAlert;
+use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\HoneyCredentialService;
+use OCA\Keepiq\Settings\AuditAdminSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
-use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -49,7 +50,7 @@ class HoneyController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param HoneyCredentialService $service The honey service
 	 * @param IUserSession $userSession The user session
-	 * @param IGroupManager $groupManager The group manager (admin scope)
+	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Audit admin area
 	 *
 	 * @return void
 	 */
@@ -57,7 +58,7 @@ class HoneyController extends OCSController {
 		IRequest $request,
 		private HoneyCredentialService $service,
 		private IUserSession $userSession,
-		private IGroupManager $groupManager,
+		private AdminAreaAuthorizer $areas,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -79,7 +80,7 @@ class HoneyController extends OCSController {
 	 * @return bool
 	 */
 	private function isAdmin(string $uid): bool {
-		return $this->groupManager->isAdmin($uid);
+		return $this->areas->holds(userId: $uid, areaClass: AuditAdminSettings::class);
 	}//end isAdmin()
 
 	/**

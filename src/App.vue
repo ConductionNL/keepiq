@@ -103,6 +103,10 @@
 		     progress. -->
 		<MigrationResumeBanner />
 
+		<!-- The master password prompt for vault-key proofs on sharing and
+		     delegation (keepiq#818). One instance; stores await it. -->
+		<KeyProofPromptDialog />
+
 		<CnAppRoot
 			:aiCompanion="true"
 			:supportDialog="showSupportDialog"
@@ -181,6 +185,12 @@
 					</div>
 					<div class="user-settings__field">
 						<PasskeyManager />
+					</div>
+					<div class="user-settings__field">
+						<AccountRecoveryEnrolment />
+					</div>
+					<div class="user-settings__field">
+						<RecoveryOfficerPanel />
 					</div>
 					<div class="user-settings__field">
 						<NcButton
@@ -400,6 +410,9 @@
 				</p>
 			</template>
 		</CnAppRoot>
+		<!-- New device approval (crypto-new-device-approval D3): an unlocked
+		     vault answers requests from the user's other devices. -->
+		<DeviceApprovalDialog :active="!isLocked && offlineStore.online" />
 	</div>
 </template>
 
@@ -423,15 +436,19 @@ import KeyIcon from 'vue-material-design-icons/Key.vue'
 import ShieldIcon from 'vue-material-design-icons/Shield.vue'
 import TimerIcon from 'vue-material-design-icons/Timer.vue'
 import TuneVariantIcon from 'vue-material-design-icons/TuneVariant.vue'
+import AccountRecoveryEnrolment from './components/AccountRecoveryEnrolment.vue'
 import CompromiseRecoveryForm from './components/CompromiseRecoveryForm.vue'
 import KeepiqAppNav from './components/KeepiqAppNav/KeepiqAppNav.vue'
 import MasterPasswordForm from './components/MasterPasswordForm.vue'
 import MigrationResumeBanner from './components/MigrationResumeBanner.vue'
 import OfflineSyncPanel from './components/OfflineSyncPanel.vue'
 import PasskeyManager from './components/PasskeyManager.vue'
+import RecoveryOfficerPanel from './components/RecoveryOfficerPanel.vue'
 import SecretDetailSidebar from './components/SecretDetailSidebar.vue'
 import DefaultsSection from './components/settings/DefaultsSection.vue'
 import ExpiryPoliciesSection from './components/settings/ExpiryPoliciesSection.vue'
+import DeviceApprovalDialog from './dialogs/DeviceApprovalDialog.vue'
+import KeyProofPromptDialog from './dialogs/KeyProofPromptDialog.vue'
 import {
 	handleLockTransition,
 	isPublicRoute,
@@ -461,6 +478,9 @@ export default {
 
 	components: {
 		CnAppRoot,
+		DeviceApprovalDialog,
+		AccountRecoveryEnrolment,
+		RecoveryOfficerPanel,
 		NcAppSettingsSection,
 		NcButton,
 		NcEmptyContent,
@@ -480,6 +500,7 @@ export default {
 		CompromiseRecoveryForm,
 		KeepiqAppNav,
 		MigrationResumeBanner,
+		KeyProofPromptDialog,
 		OfflineSyncPanel,
 		SecretDetailSidebar,
 	},

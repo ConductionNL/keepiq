@@ -70,6 +70,7 @@ class GroupShareService {
 	 * @param LoggerInterface $logger The logger
 	 * @param IShareManager $shareManager Nextcloud's share settings (group sharing on, own groups only)
 	 * @param ShareRevocationService $revocationService Revokes one member's share and deletes its copy
+	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
 	 *
 	 * @return void
 	 */
@@ -85,6 +86,7 @@ class GroupShareService {
 		private LoggerInterface $logger,
 		private IShareManager $shareManager,
 		private ShareRevocationService $revocationService,
+		private ?ShareRestrictionResolver $restrictions = null,
 	) {
 	}//end __construct()
 
@@ -98,6 +100,7 @@ class GroupShareService {
 	 * @param string $secretId The source Secret ID
 	 * @param string $groupId The Nextcloud group ID
 	 * @param string $userId The initiator (must be owner or delegate)
+	 * @param ShareRestriction|null $restriction Use-only and end date for every member
 	 *
 	 * `skipped` counts the members (owner excluded) left out for want of an
 	 * active EncryptionSuite, so the sharer can be told who did not get it.
@@ -108,14 +111,21 @@ class GroupShareService {
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#4.2
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
 	 */
-	public function createGroupShare(string $secretId, string $groupId, string $userId): array {
+	public function createGroupShare(
+		string $secretId,
+		string $groupId,
+		string $userId,
+		?ShareRestriction $restriction = null,
+	): array {
 		if ($groupId === '') {
 			throw new InvalidArgumentException(message: 'groupId is required');
 		}
 
 		$secret = $this->loadSecret(secretId: $secretId);
 		$this->assertOwnerOrDelegate(secret: $secret, userId: $userId);
+		$secret->assertOnwardShareable();
 
 		$group = $this->groupManager->get($groupId);
 		if ($group === null) {
@@ -140,7 +150,17 @@ class GroupShareService {
 			$row->setGroupId($groupId);
 			$row->setCreatedBy($userId);
 			$row->setCreatedAt(new DateTime());
+			$row->setUseOnly(($restriction?->useOnly === true));
+			$row->setExpiresAt($restriction?->expiresAt);
 			$existing = $this->mapper->insert($row);
+		} elseif ($restriction !== null) {
+			// Sharing again with the same group changes its restriction.
+			$existing->setUseOnly($restriction->useOnly);
+			$existing->setExpiresAt($restriction->expiresAt);
+			$existing = $this->mapper->update($existing);
+			$this->restrictions?->resolveTargets(
+				targets: $this->bulkGrantMapper->findByGroupShare(groupShareId: $existing->getId())
+			);
 		}
 
 		$members = [];
@@ -382,7 +402,8 @@ class GroupShareService {
 		$shareTarget->setGroupShareId($groupShareId);
 		$shareTarget->setCreatedBy($userId);
 		$shareTarget->setCreatedAt(new DateTime());
-		$this->shareTargetMapper->insert($shareTarget);
+		$persisted = $this->shareTargetMapper->insert($shareTarget);
+		$this->restrictions?->resolveTarget(target: $persisted);
 
 		$this->notificationService->notify(
 			subject: 'secret_shared',
