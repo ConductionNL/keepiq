@@ -26,7 +26,7 @@ use PHPUnit\Framework\TestCase;
  * and every register.d fragment carry no `linkedTypes` and no
  * `mailObjectTemplate`, anywhere. A fleet codemod that adds one fails here.
  *
- * @spec openspec/changes/leaf-integrations/specs/integration-boundary/spec.md#requirement-no-integration-leaf-is-declared
+ * @spec openspec/specs/integration-boundary/spec.md#requirement-no-integration-leaf-is-declared
  */
 class RegisterLeafGuardTest extends TestCase {
 
