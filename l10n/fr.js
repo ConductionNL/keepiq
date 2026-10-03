@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Ce mot de passe maître n'est pas correct.",
         "You are sharing with someone new. Enter your master password to confirm.": "Vous partagez avec une nouvelle personne. Saisissez votre mot de passe maître pour confirmer.",
         "Enter your master password to confirm this share.": "Saisissez votre mot de passe maître pour confirmer ce partage.",
-        "Enter your master password to confirm this delegation.": "Saisissez votre mot de passe maître pour confirmer cette délégation."
+        "Enter your master password to confirm this delegation.": "Saisissez votre mot de passe maître pour confirmer cette délégation.",
+        "Approve {member}": "Approuver {member}"
     },
     "nplurals=2; plural=(n > 1);"
 )

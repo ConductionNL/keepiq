@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "To glavno geslo ni pravilno.",
         "You are sharing with someone new. Enter your master password to confirm.": "Delite z novo osebo. Za potrditev vnesite glavno geslo.",
         "Enter your master password to confirm this share.": "Za potrditev te souporabe vnesite glavno geslo.",
-        "Enter your master password to confirm this delegation.": "Za potrditev tega pooblastila vnesite glavno geslo."
+        "Enter your master password to confirm this delegation.": "Za potrditev tega pooblastila vnesite glavno geslo.",
+        "Approve {member}": "Odobri {member}"
     },
     "nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);"
 )

@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Den masteradgangskode er ikke korrekt.",
         "You are sharing with someone new. Enter your master password to confirm.": "Du deler med en ny person. Indtast din masteradgangskode for at bekræfte.",
         "Enter your master password to confirm this share.": "Indtast din masteradgangskode for at bekræfte denne deling.",
-        "Enter your master password to confirm this delegation.": "Indtast din masteradgangskode for at bekræfte denne delegering."
+        "Enter your master password to confirm this delegation.": "Indtast din masteradgangskode for at bekræfte denne delegering.",
+        "Approve {member}": "Godkend {member}"
     },
     "nplurals=2; plural=(n != 1);"
 )

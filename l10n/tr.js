@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Bu ana parola doğru değil.",
         "You are sharing with someone new. Enter your master password to confirm.": "Yeni biriyle paylaşıyorsunuz. Onaylamak için ana parolanızı girin.",
         "Enter your master password to confirm this share.": "Bu paylaşımı onaylamak için ana parolanızı girin.",
-        "Enter your master password to confirm this delegation.": "Bu yetki devrini onaylamak için ana parolanızı girin."
+        "Enter your master password to confirm this delegation.": "Bu yetki devrini onaylamak için ana parolanızı girin.",
+        "Approve {member}": "{member} onayla"
     },
     "nplurals=1; plural=0;"
 )

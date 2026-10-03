@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Ez a főjelszó nem helyes.",
         "You are sharing with someone new. Enter your master password to confirm.": "Új személlyel oszt meg. A megerősítéshez adja meg a főjelszavát.",
         "Enter your master password to confirm this share.": "A megosztás megerősítéséhez adja meg a főjelszavát.",
-        "Enter your master password to confirm this delegation.": "A delegálás megerősítéséhez adja meg a főjelszavát."
+        "Enter your master password to confirm this delegation.": "A delegálás megerősítéséhez adja meg a főjelszavát.",
+        "Approve {member}": "{member} jóváhagyása"
     },
     "nplurals=2; plural=(n != 1);"
 )

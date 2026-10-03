@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Этот мастер-пароль неверен.",
         "You are sharing with someone new. Enter your master password to confirm.": "Вы делитесь с новым человеком. Введите мастер-пароль для подтверждения.",
         "Enter your master password to confirm this share.": "Введите мастер-пароль, чтобы подтвердить этот общий доступ.",
-        "Enter your master password to confirm this delegation.": "Введите мастер-пароль, чтобы подтвердить это делегирование."
+        "Enter your master password to confirm this delegation.": "Введите мастер-пароль, чтобы подтвердить это делегирование.",
+        "Approve {member}": "Одобрить {member}"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

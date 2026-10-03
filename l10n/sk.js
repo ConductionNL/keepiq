@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Toto hlavné heslo nie je správne.",
         "You are sharing with someone new. Enter your master password to confirm.": "Zdieľate s novou osobou. Na potvrdenie zadajte hlavné heslo.",
         "Enter your master password to confirm this share.": "Na potvrdenie tohto zdieľania zadajte hlavné heslo.",
-        "Enter your master password to confirm this delegation.": "Na potvrdenie tohto delegovania zadajte hlavné heslo."
+        "Enter your master password to confirm this delegation.": "Na potvrdenie tohto delegovania zadajte hlavné heslo.",
+        "Approve {member}": "Schváliť {member}"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

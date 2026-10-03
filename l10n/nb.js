@@ -1272,7 +1272,7 @@ OC.L10N.register(
         "Removed the user from {count} team folders.": "Fjernet brukeren fra {count} teammapper.",
         "Approve a share": "Godkjenn en deling",
         "This approval link is incomplete. Open it again from the notification.": "Denne godkjenningslenken er ufullstendig. Åpne den igjen fra varselet.",
-        "Deny": "Avvis",
+        "Deny": "Avslå",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} ble med i en gruppe du deler en hemmelighet med. Vil du dele hemmeligheten med dem også?",
         "{requester} asks you to share a secret with {user}.": "{requester} ber deg dele en hemmelighet med {user}.",
         "Shared. The recipient can now open the secret.": "Delt. Mottakeren kan nå åpne hemmeligheten.",
@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Det hovedpassordet er ikke riktig.",
         "You are sharing with someone new. Enter your master password to confirm.": "Du deler med en ny person. Skriv inn hovedpassordet ditt for å bekrefte.",
         "Enter your master password to confirm this share.": "Skriv inn hovedpassordet ditt for å bekrefte denne delingen.",
-        "Enter your master password to confirm this delegation.": "Skriv inn hovedpassordet ditt for å bekrefte denne delegeringen."
+        "Enter your master password to confirm this delegation.": "Skriv inn hovedpassordet ditt for å bekrefte denne delegeringen.",
+        "Approve {member}": "Godkjenn {member}"
     },
     "nplurals=2; plural=(n != 1);"
 )

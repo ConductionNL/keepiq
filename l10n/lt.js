@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Šis pagrindinis slaptažodis neteisingas.",
         "You are sharing with someone new. Enter your master password to confirm.": "Bendrinate su nauju asmeniu. Patvirtinkite įvesdami pagrindinį slaptažodį.",
         "Enter your master password to confirm this share.": "Įveskite pagrindinį slaptažodį, kad patvirtintumėte šį bendrinimą.",
-        "Enter your master password to confirm this delegation.": "Įveskite pagrindinį slaptažodį, kad patvirtintumėte šį delegavimą."
+        "Enter your master password to confirm this delegation.": "Įveskite pagrindinį slaptažodį, kad patvirtintumėte šį delegavimą.",
+        "Approve {member}": "Patvirtinti {member}"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

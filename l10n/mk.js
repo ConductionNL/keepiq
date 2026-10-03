@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Таа главна лозинка не е точна.",
         "You are sharing with someone new. Enter your master password to confirm.": "Споделувате со ново лице. Внесете ја главната лозинка за потврда.",
         "Enter your master password to confirm this share.": "Внесете ја главната лозинка за да го потврдите ова споделување.",
-        "Enter your master password to confirm this delegation.": "Внесете ја главната лозинка за да го потврдите ова делегирање."
+        "Enter your master password to confirm this delegation.": "Внесете ја главната лозинка за да го потврдите ова делегирање.",
+        "Approve {member}": "Одобри {member}"
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

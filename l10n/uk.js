@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Цей головний пароль неправильний.",
         "You are sharing with someone new. Enter your master password to confirm.": "Ви ділитеся з новою людиною. Введіть головний пароль для підтвердження.",
         "Enter your master password to confirm this share.": "Введіть головний пароль, щоб підтвердити цей спільний доступ.",
-        "Enter your master password to confirm this delegation.": "Введіть головний пароль, щоб підтвердити це делегування."
+        "Enter your master password to confirm this delegation.": "Введіть головний пароль, щоб підтвердити це делегування.",
+        "Approve {member}": "Схвалити {member}"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

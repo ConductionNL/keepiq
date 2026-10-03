@@ -1272,7 +1272,7 @@ OC.L10N.register(
         "Removed the user from {count} team folders.": "Utente rimosso da {count} cartelle di team.",
         "Approve a share": "Approva una condivisione",
         "This approval link is incomplete. Open it again from the notification.": "Questo link di approvazione è incompleto. Aprilo di nuovo dalla notifica.",
-        "Deny": "Rifiuta",
+        "Deny": "Nega",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} si è unito a un gruppo con cui condividi un segreto. Condividere il segreto anche con questa persona?",
         "{requester} asks you to share a secret with {user}.": "{requester} ti chiede di condividere un segreto con {user}.",
         "Shared. The recipient can now open the secret.": "Condiviso. Il destinatario ora può aprire il segreto.",
@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Questa password master non è corretta.",
         "You are sharing with someone new. Enter your master password to confirm.": "Stai condividendo con una persona nuova. Inserisci la password master per confermare.",
         "Enter your master password to confirm this share.": "Inserisci la password master per confermare questa condivisione.",
-        "Enter your master password to confirm this delegation.": "Inserisci la password master per confermare questa delega."
+        "Enter your master password to confirm this delegation.": "Inserisci la password master per confermare questa delega.",
+        "Approve {member}": "Approva {member}"
     },
     "nplurals=2; plural=(n != 1);"
 )

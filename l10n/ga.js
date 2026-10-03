@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Níl an príomhphasfhocal sin ceart.",
         "You are sharing with someone new. Enter your master password to confirm.": "Tá tú ag comhroinnt le duine nua. Cuir isteach do phríomhphasfhocal le deimhniú.",
         "Enter your master password to confirm this share.": "Cuir isteach do phríomhphasfhocal chun an chomhroinnt seo a dheimhniú.",
-        "Enter your master password to confirm this delegation.": "Cuir isteach do phríomhphasfhocal chun an tarmligean seo a dheimhniú."
+        "Enter your master password to confirm this delegation.": "Cuir isteach do phríomhphasfhocal chun an tarmligean seo a dheimhniú.",
+        "Approve {member}": "Ceadaigh {member}"
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

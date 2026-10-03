@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Pääsalasana ei ole oikein.",
         "You are sharing with someone new. Enter your master password to confirm.": "Jaat uudelle henkilölle. Vahvista syöttämällä pääsalasanasi.",
         "Enter your master password to confirm this share.": "Vahvista tämä jako syöttämällä pääsalasanasi.",
-        "Enter your master password to confirm this delegation.": "Vahvista tämä delegointi syöttämällä pääsalasanasi."
+        "Enter your master password to confirm this delegation.": "Vahvista tämä delegointi syöttämällä pääsalasanasi.",
+        "Approve {member}": "Hyväksy {member}"
     },
     "nplurals=2; plural=(n != 1);"
 )

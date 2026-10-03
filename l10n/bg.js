@@ -1272,7 +1272,7 @@ OC.L10N.register(
         "Removed the user from {count} team folders.": "Потребителят е премахнат от {count} екипни папки.",
         "Approve a share": "Одобряване на споделяне",
         "This approval link is incomplete. Open it again from the notification.": "Тази връзка за одобрение е непълна. Отворете я отново от известието.",
-        "Deny": "Отказ",
+        "Deny": "Откажи",
         "{user} joined a group you share a secret with. Share the secret with them too?": "{user} се присъедини към група, с която споделяте тайна. Да споделите ли тайната и с него?",
         "{requester} asks you to share a secret with {user}.": "{requester} ви моли да споделите тайна с {user}.",
         "Shared. The recipient can now open the secret.": "Споделено. Получателят вече може да отвори тайната.",
@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Тази главна парола не е правилна.",
         "You are sharing with someone new. Enter your master password to confirm.": "Споделяте с нов човек. Въведете главната си парола за потвърждение.",
         "Enter your master password to confirm this share.": "Въведете главната си парола, за да потвърдите това споделяне.",
-        "Enter your master password to confirm this delegation.": "Въведете главната си парола, за да потвърдите това делегиране."
+        "Enter your master password to confirm this delegation.": "Въведете главната си парола, за да потвърдите това делегиране.",
+        "Approve {member}": "Одобряване на {member}"
     },
     "nplurals=2; plural=(n != 1);"
 )

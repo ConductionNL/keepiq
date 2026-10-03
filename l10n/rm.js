@@ -1575,7 +1575,8 @@ OC.L10N.register(
         "That master password is not right.": "Quest pled-clav principal n'è betg correct.",
         "You are sharing with someone new. Enter your master password to confirm.": "Vus partis cun ina persuna nova. Endatai Voss pled-clav principal per confermar.",
         "Enter your master password to confirm this share.": "Endatai Voss pled-clav principal per confermar questa partiziun.",
-        "Enter your master password to confirm this delegation.": "Endatai Voss pled-clav principal per confermar questa delegaziun."
+        "Enter your master password to confirm this delegation.": "Endatai Voss pled-clav principal per confermar questa delegaziun.",
+        "Approve {member}": "Approvar {member}"
     },
     "nplurals=1; plural=0;"
 )

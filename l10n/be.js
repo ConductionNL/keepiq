@@ -1599,7 +1599,8 @@ OC.L10N.register(
         "That master password is not right.": "Гэты асноўны пароль няправільны.",
         "You are sharing with someone new. Enter your master password to confirm.": "Вы дзеліцеся з новым чалавекам. Увядзіце асноўны пароль для пацвярджэння.",
         "Enter your master password to confirm this share.": "Увядзіце асноўны пароль, каб пацвердзіць гэты доступ.",
-        "Enter your master password to confirm this delegation.": "Увядзіце асноўны пароль, каб пацвердзіць гэта дэлегаванне."
+        "Enter your master password to confirm this delegation.": "Увядзіце асноўны пароль, каб пацвердзіць гэта дэлегаванне.",
+        "Approve {member}": "Ухваліць {member}"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )
