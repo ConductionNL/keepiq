@@ -105,11 +105,12 @@ export const useGroupShareStore = defineStore('groupShare', {
 		 *
 		 * @param {string} secretId The source secret id.
 		 * @param {string} groupId The Nextcloud group id.
+		 * @param {{useOnly: boolean, expiresAt: string|null}} [restriction] Use-only and end date.
 		 * @return {Promise<{received: number, skipped: number}>} How many members
 		 *   got a copy, and how many did not (no encryption suite, or refused).
 		 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
 		 */
-		async shareWithGroup(secretId, groupId) {
+		async shareWithGroup(secretId, groupId, restriction = {}) {
 			this.loading = true
 			this.error = null
 			try {
@@ -117,7 +118,7 @@ export const useGroupShareStore = defineStore('groupShare', {
 					generateUrl(
 						`/apps/keepiq/api/v1/secrets/${secretId}/group-shares`,
 					),
-					{ groupId },
+					{ groupId, ...restriction },
 				)
 				const groupShare = created.data?.groupShare ?? null
 				const members = Array.isArray(created.data?.members)
@@ -133,13 +134,8 @@ export const useGroupShareStore = defineStore('groupShare', {
 						groupShare.id,
 						members,
 					)
-					const response = await axios.post(
-						generateUrl('/apps/keepiq/api/v1/shares/register-batch'),
-						{ shares: rows },
-					)
-					const items = Array.isArray(response.data?.items)
-						? response.data.items
-						: []
+					// register-batch needs a vault-key proof (keepiq#818).
+					const { items } = await useShareStore().registerBatch(rows)
 					received = items.filter(
 						(item) =>
 							item.status === 'created' || item.status === 'exists',

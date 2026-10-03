@@ -65,6 +65,9 @@ var (
 	// ErrKeyMismatch is returned when the envelope was encrypted to a
 	// certificate other than the one configured with WithCertificate.
 	ErrKeyMismatch = errors.New("keepiq: the envelope is encrypted to a different certificate")
+	// ErrPreconditionFailed is returned by UpdateIfMatch when the secret
+	// changed since the ETag was read (HTTP 412); nothing was written.
+	ErrPreconditionFailed = errors.New("keepiq: the secret changed since it was read")
 )
 
 // Candidate is one of several secrets that share a name.
@@ -133,11 +136,18 @@ type Secret struct {
 	CreatedAt    string
 	UpdatedAt    string
 	KeyUpdatedAt string
+	// ExpiresAt is the secret's expiry date (ISO 8601), empty when it has
+	// none or the instance does not send it.
+	ExpiresAt string
 
 	// Decrypted values.
 	Key              string
 	Login            string
 	AdditionalFields string
+
+	// CertificateFingerprint is the sha256 fingerprint of the certificate
+	// the values are encrypted to, as the envelope states it.
+	CertificateFingerprint string
 
 	// ETag of this version; the next read of the same address sends it.
 	ETag string
@@ -370,6 +380,42 @@ func (c *Client) Update(id string, fields map[string]string) (*Secret, error) {
 	return c.write(http.MethodPut, addr, payload, http.StatusOK)
 }
 
+// UpdateIfMatch is Update with a precondition: the server writes only when
+// etag is still the secret's current ETag, and otherwise answers 412, which
+// is ErrPreconditionFailed. Use it to write back a value derived from a read.
+func (c *Client) UpdateIfMatch(id, etag string, fields map[string]string) (*Secret, error) {
+	d, err := c.discover()
+	if err != nil {
+		return nil, err
+	}
+	payload, err := c.writePayload(fields)
+	if err != nil {
+		return nil, err
+	}
+	addr := c.endpoint(d.Secrets.Update, "/apps/keepiq/api/v1/app/secrets/{id}", "{id}", id)
+	raw, _ := json.Marshal(payload)
+	resp, body, err := c.doWith(http.MethodPut, addr, raw, "", etag)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode == http.StatusPreconditionFailed {
+		return nil, ErrPreconditionFailed
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, c.statusError(resp.StatusCode, body, id)
+	}
+	return c.decodeOne(resp, body)
+}
+
+// PublicKey is the public half of the application key, for encrypting
+// values the caller keeps itself (for example a recovery journal).
+func (c *Client) PublicKey() *rsa.PublicKey { return &c.key.PublicKey }
+
+// Decrypt opens a value this client encrypted with EncryptField to PublicKey.
+func (c *Client) Decrypt(ciphertext string) (string, error) {
+	return kcrypto.DecryptField(ciphertext, c.key)
+}
+
 // --- internals ---
 
 type envelope struct {
@@ -383,6 +429,7 @@ type envelope struct {
 		CreatedAt    string `json:"createdAt"`
 		UpdatedAt    string `json:"updatedAt"`
 		KeyUpdatedAt string `json:"keyUpdatedAt"`
+		ExpiresAt    string `json:"expiresAt"`
 	} `json:"secret"`
 	Encryption struct {
 		SuiteID                string `json:"suiteId"`
@@ -488,6 +535,8 @@ func (c *Client) open(env *envelope) (*Secret, error) {
 		ID: env.Secret.ID, Name: env.Secret.Name, URL: env.Secret.URL,
 		FolderPath: env.Secret.FolderPath, Type: env.Secret.Type,
 		CreatedAt: env.Secret.CreatedAt, UpdatedAt: env.Secret.UpdatedAt, KeyUpdatedAt: env.Secret.KeyUpdatedAt,
+		ExpiresAt:              env.Secret.ExpiresAt,
+		CertificateFingerprint: env.Encryption.CertificateFingerprint,
 	}
 	for _, f := range []struct {
 		ct  *string
@@ -536,6 +585,10 @@ func (c *Client) statusError(status int, body []byte, label string) error {
 // once with a fresh one, so a token revoked or expired early does not fail a
 // long-running consumer.
 func (c *Client) do(method, addr string, body []byte, etag string) (*http.Response, []byte, error) {
+	return c.doWith(method, addr, body, etag, "")
+}
+
+func (c *Client) doWith(method, addr string, body []byte, etag, ifMatch string) (*http.Response, []byte, error) {
 	for attempt := 0; ; attempt++ {
 		token, err := c.bearer()
 		if err != nil {
@@ -556,6 +609,9 @@ func (c *Client) do(method, addr string, body []byte, etag string) (*http.Respon
 		}
 		if etag != "" {
 			req.Header.Set("If-None-Match", etag)
+		}
+		if ifMatch != "" {
+			req.Header.Set("If-Match", ifMatch)
 		}
 		resp, err := c.http.Do(req)
 		if err != nil {

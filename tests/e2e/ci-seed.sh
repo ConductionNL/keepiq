@@ -112,7 +112,7 @@ php occ app:enable keepiq
 # `InitializeSettings` imports it with `force: false`, the version-guarded path,
 # which can advance the recorded configuration version WITHOUT applying
 # anything. Keepiq has no `settings#import` route of its own (appinfo/routes.php
-# registers only getAdminSettings / updateAdminSettings / getUserSettings /
+# registers only the per-area admin settings routes / getUserSettings /
 # updateUserSettings / getPolicy), so use OpenRegister's generic importer.
 #
 # That endpoint accepts exactly three input shapes — a multipart file under the

@@ -69,7 +69,7 @@ export default {
 	async created() {
 		try {
 			const response = await axios.get(
-				generateUrl('/apps/keepiq/api/settings/admin'),
+				generateUrl('/apps/keepiq/api/settings/admin/general'),
 			)
 			this.enabled =
 				response.data?.breach_check_enabled === true
@@ -87,7 +87,7 @@ export default {
 		 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity
 		 */
 		async save() {
-			await axios.put(generateUrl('/apps/keepiq/api/settings/admin'), {
+			await axios.put(generateUrl('/apps/keepiq/api/settings/admin/general'), {
 				breach_check_enabled: this.enabled,
 			})
 		},

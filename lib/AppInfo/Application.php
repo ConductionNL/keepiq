@@ -164,6 +164,9 @@ class Application extends App implements IBootstrap {
 		// ORDER MATTERS here: a registerService() for an id the AppHost engine
 		// already aliased only wins when it runs after that call.
 		(new DomainOverrideRegistrar())->register(context: $context);
+		// The five admin areas, as themselves, so a delegation of an area
+		// satisfies the guard that names it (admin-scoped-roles D1).
+		(new AdminAreaRegistrar())->register(context: $context);
 
 		// Domain event wiring, one registrar per trigger family. Each is
 		// independent: a listener graph can be extended without touching the

@@ -106,28 +106,23 @@ class KeepiqNotifier implements INotifier {
 
 		// Each renderer owns one family of subjects and reports whether it
 		// recognised this one. The first renderer that claims the subject wins.
-		$handled = $this->renderSharingSubject(notification: $notification, subject: $subj, params: $params, l: $l);
-		if ($handled === false) {
-			$handled = $this->renderSecretLifecycleSubject(notification: $notification, subject: $subj, params: $params, l: $l);
+		$renderers = [
+			fn (): bool => $this->renderSharingSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderSecretLifecycleSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderAdminSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderVaultAccessSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderEmergencySubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderDeviceApprovalSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderRecoverySubject(notification: $notification, subject: $subj, params: $params, l: $l),
+			fn (): bool => $this->renderAccessEndSubject(notification: $notification, subject: $subj, params: $params, l: $l),
+		];
+		foreach ($renderers as $render) {
+			if ($render() === true) {
+				return $notification;
+			}
 		}
 
-		if ($handled === false) {
-			$handled = $this->renderAdminSubject(notification: $notification, subject: $subj, params: $params, l: $l);
-		}
-
-		if ($handled === false) {
-			$handled = $this->renderVaultAccessSubject(notification: $notification, subject: $subj, params: $params, l: $l);
-		}
-
-		if ($handled === false) {
-			$handled = $this->renderEmergencySubject(notification: $notification, subject: $subj, params: $params, l: $l);
-		}
-
-		if ($handled === false) {
-			throw new UnknownNotificationException();
-		}
-
-		return $notification;
+		throw new UnknownNotificationException();
 	}//end prepare()
 
 	/**
@@ -195,6 +190,125 @@ class KeepiqNotifier implements INotifier {
 
 		return false;
 	}//end renderSharingSubject()
+
+	/**
+	 * Render the organisation account recovery subjects
+	 * (crypto-organisation-account-recovery 5.2). All link to the app.
+	 *
+	 * @param INotification $notification The notification to mutate
+	 * @param string $subject The notification subject identifier
+	 * @param array<string,mixed> $params The subject parameters
+	 * @param IL10N $l The localisation helper
+	 *
+	 * @return bool True when this renderer recognised the subject.
+	 *
+	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+	 */
+	private function renderRecoverySubject(INotification $notification, string $subject, array $params, IL10N $l): bool {
+		$texts = [
+			'recovery_officer_named' => (string)$l->t('You are now an account recovery officer'),
+			'recovery_requested' => (string)$l->t(
+				'%s asks to recover their account. Compare the words with them before you approve.',
+				[(string)($params['user'] ?? $l->t('A user'))]
+			),
+			'recovery_declined' => (string)$l->t('Your account recovery request was declined'),
+			'recovery_ready' => (string)$l->t('Your account recovery is ready. Open Keepiq in the browser you asked from.'),
+		];
+		if (isset($texts[$subject]) === false) {
+			return false;
+		}
+
+		$notification->setParsedSubject($texts[$subject]);
+		try {
+			$notification->setLink(
+				$this->url->getAbsoluteURL($this->url->linkToRoute(Application::APP_ID . '.dashboard.page'))
+			);
+		} catch (InvalidArgumentException) {
+			// The link is optional; the notification still says what happened.
+		}
+
+		return true;
+	}//end renderRecoverySubject()
+
+	/**
+	 * Render a new device's request to open the vault
+	 * (crypto-new-device-approval D5). Links to the app, where the unlocked
+	 * vault shows the approval dialog.
+	 *
+	 * @param INotification $notification The notification to mutate
+	 * @param string $subject The notification subject identifier
+	 * @param array<string,mixed> $params The subject parameters
+	 * @param IL10N $l The localisation helper
+	 *
+	 * @return bool True when this renderer recognised the subject.
+	 *
+	 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+	 */
+	private function renderDeviceApprovalSubject(INotification $notification, string $subject, array $params, IL10N $l): bool {
+		if ($subject !== 'device_approval_requested') {
+			return false;
+		}
+
+		$label = (string)($params['device_label'] ?? '');
+		if ($label === '') {
+			$label = (string)$l->t('A device');
+		}
+
+		$notification->setParsedSubject((string)$l->t('A new device asks to open your vault'));
+		$notification->setParsedMessage(
+			(string)$l->t('%s asks to be approved. Only approve a device you are using right now.', [$label])
+		);
+		try {
+			$notification->setLink(
+				$this->url->getAbsoluteURL($this->url->linkToRoute(Application::APP_ID . '.dashboard.page'))
+			);
+		} catch (InvalidArgumentException) {
+			// The link is optional; the notification still says what happened.
+		}
+
+		return true;
+	}//end renderDeviceApprovalSubject()
+
+	/**
+	 * Render the end-of-access subjects of shares that end by themselves
+	 * (sharing-use-only-and-expiring-shares D6).
+	 *
+	 * @param INotification $notification The notification to mutate
+	 * @param string $subject The notification subject identifier
+	 * @param array<string,mixed> $params The subject parameters
+	 * @param IL10N $l The localisation helper
+	 *
+	 * @return bool True when this renderer recognised the subject.
+	 *
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-people-are-told-before-and-when-access-ends
+	 */
+	private function renderAccessEndSubject(INotification $notification, string $subject, array $params, IL10N $l): bool {
+		$secretName = (string)($params['secret_name'] ?? $l->t('a secret'));
+		switch ($subject) {
+			case 'share_access_ending':
+				$notification->setParsedSubject((string)$l->t('Your access to "%s" ends tomorrow', [$secretName]));
+				$this->withSecretLink(notification: $notification, params: $params);
+				return true;
+			case 'share_access_ended':
+				$notification->setParsedSubject((string)$l->t('Your access to "%s" has ended', [$secretName]));
+				return true;
+			case 'share_access_ended_owner':
+				$recipient = (string)($params['recipient'] ?? $l->t('a user'));
+				$notification->setParsedSubject(
+					(string)$l->t('%1$s no longer has access to "%2$s"', [$recipient, $secretName])
+				);
+				$message = (string)$l->t('%1$s could see this password. Rotate it if %1$s should no longer know it.', [$recipient]);
+				if (($params['use_only'] ?? false) === true) {
+					$message = (string)$l->t('%s could not view this password in Keepiq.', [$recipient]);
+				}
+
+				$notification->setParsedMessage($message);
+				$this->withSecretLink(notification: $notification, params: $params);
+				return true;
+		}//end switch
+
+		return false;
+	}//end renderAccessEndSubject()
 
 	/**
 	 * Render the secret-lifecycle subjects. All of them deep-link to a secret.

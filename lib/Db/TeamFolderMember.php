@@ -42,6 +42,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setCreatedAt(DateTime $createdAt)
  * @method string getGrade()
  * @method void setGrade(string $grade)
+ * @method bool|null getUseOnly()
+ * @method void setUseOnly(bool $useOnly)
+ * @method DateTime|null getExpiresAt()
+ * @method void setExpiresAt(?DateTime $expiresAt)
  */
 class TeamFolderMember extends Entity implements JsonSerializable {
 
@@ -95,6 +99,21 @@ class TeamFolderMember extends Entity implements JsonSerializable {
 	protected string $grade = '';
 
 	/**
+	 * Whether the recipient may only use the value, not view or copy it
+	 * (sharing-use-only-and-expiring-shares D1).
+	 *
+	 * @var boolean|null
+	 */
+	protected ?bool $useOnly = false;
+
+	/**
+	 * When the access this grant gives ends (nullable = no end).
+	 *
+	 * @var DateTime|null
+	 */
+	protected ?DateTime $expiresAt = null;
+
+	/**
 	 * The UUID primary key.
 	 *
 	 * @var string
@@ -134,16 +153,36 @@ class TeamFolderMember extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'addedBy', type: 'string');
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
 		$this->addType(fieldName: 'grade', type: 'string');
+		$this->addType(fieldName: 'useOnly', type: 'boolean');
+		$this->addType(fieldName: 'expiresAt', type: 'datetime');
 	}//end __construct()
 
 	/**
-	 * The effective grade — an unset/legacy row reads as `read`.
+	 * The grades a membership can carry, lowest first
+	 * (sharing-team-folder-manager-role D1): Viewer, Editor, Manager.
+	 *
+	 * @var string[]
+	 */
+	public const GRADES = ['read', 'write', 'manage'];
+
+	/**
+	 * The grades that may update values for the whole team: `write` and
+	 * everything above it.
+	 *
+	 * @var string[]
+	 */
+	public const WRITE_GRADES = ['write', 'manage'];
+
+	/**
+	 * The effective grade — an unset/legacy/unknown row reads as `read`.
 	 *
 	 * @return string
+	 *
+	 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
 	 */
 	public function effectiveGrade(): string {
-		if ($this->grade === 'write') {
-			return 'write';
+		if (in_array($this->grade, self::GRADES, true) === true) {
+			return $this->grade;
 		}
 
 		return 'read';
@@ -163,6 +202,8 @@ class TeamFolderMember extends Entity implements JsonSerializable {
 			'addedBy' => $this->addedBy,
 			'createdAt' => $this->createdAt?->format('c'),
 			'grade' => $this->effectiveGrade(),
+			'useOnly' => ($this->useOnly === true),
+			'expiresAt' => $this->expiresAt?->format('c'),
 		];
 	}//end jsonSerialize()
 }//end class

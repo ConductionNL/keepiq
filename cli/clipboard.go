@@ -55,6 +55,9 @@ func cmdCopy(args []string) error {
 	if err != nil {
 		return err
 	}
+	if err := refuseUseOnly(s, args[1]); err != nil {
+		return err
+	}
 	fields := decryptSecret(s, session)
 	v, ok := fields[args[1]]
 	if !ok {

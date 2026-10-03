@@ -27,7 +27,8 @@ Application-owned suites additionally have no human owner who can produce a
 proof at all, so administrator revocation is their only revocation path.
 
 Revocation is destructive: `EncryptionSuiteRevokedListener` deletes the owner's
-inbound `ShareTarget`s, promotes their temporary delegations, and the emergency
+inbound `ShareTarget`s, promotes their temporary delegations (or, on a
+compromise, revokes them; see below), and the emergency
 listener clears their break-glass recovery envelopes; all secret reads are then
 refused.
 
@@ -69,6 +70,18 @@ revokes **any** suite by id (user- or application-owned), guarded by:
   re-confirms their **own** password; there is no vault key to prove. This is
   the app's first use of `PasswordConfirmationRequired`.
 
+**Typed confirmation** (keepiq#871, decided 2 October 2026). Sudo mode is not a
+second factor on every deployment. Nextcloud skips the password confirmation for
+accounts that cannot confirm a password (user_oidc, user_saml, sessions with
+`SCOPE_SKIP_PASSWORD_VALIDATION`), and it accepts any confirmation from the last
+30 minutes. On the single sign-on setups common for government tenants, a
+hijacked admin session would be enough. So the administrator also types the
+suite id, which the request carries as `confirmSuiteId`. The controller refuses
+the request with `400` (`confirmation_mismatch`) before anything else when it is
+missing or differs from the route's id, and audits the refusal. This check does
+not depend on the user backend. `#[PasswordConfirmationRequired]` stays, for the
+backends where it does apply.
+
 It reuses `EncryptionSuiteService::revokeSuite()`, which is owner-agnostic and
 records `revokedBy` (the administrator).
 
@@ -87,6 +100,18 @@ recordable). No new column, no migration.
   revoke path (no migration; scope is the revoked suite itself).
 - When `false`, no cascade runs, and the UI shows a warning that the revoked
   user still knows these secrets and rotation may be warranted.
+
+**Temporary delegations on a compromise** (keepiq#817, decided 2 October 2026).
+Every revoke used to promote the revoked user's temporary delegations to
+permanent. On a `markCompromised: true` force-revoke, `EncryptionSuiteRevokedListener`
+now deletes those temporary delegations instead, and audits each removal as
+`share.delegation_reclaimed` with the administrator as actor. Permanent
+delegations are not touched. A temporary delegation is the cheapest foothold to
+create from a stolen session, and promoting it would make the foothold
+permanent during the incident response. The cost is that a legitimate stand-in
+loses delegated rights (they keep their own share) and has to be re-delegated
+by the re-onboarded owner. A revoke that is not marked compromised still
+promotes, as before.
 
 **Emergency access** is cleared unconditionally — revocation is authoritative —
 but the count of destroyed *usable* emergency contacts
@@ -124,6 +149,9 @@ suite through the existing onboarding flow.
   revoke path specifically (it cannot ride the migration-complete tests).
 - Sudo mode adds a re-authentication step administrators must complete; it is
   new to this app and needs a client-side confirmation flow.
+- Sudo mode is skipped on single sign-on backends and lasts 30 minutes, so on
+  its own it is not a second factor there; the typed suite id is the
+  confirmation that holds on every backend (keepiq#871).
 
 ## Alternatives Considered
 

@@ -84,7 +84,7 @@ describe('VaultPolicySection', () => {
 		await flushPromises()
 
 		expect(put).toHaveBeenCalledWith(
-			'/apps/keepiq/api/settings/admin',
+			'/apps/keepiq/api/settings/admin/policies',
 			expect.objectContaining({
 				vault_export_disabled: true,
 				vault_export_disabled_groups: ['staff'],

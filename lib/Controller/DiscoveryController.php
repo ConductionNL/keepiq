@@ -177,6 +177,11 @@ class DiscoveryController extends Controller {
 					'create' => $this->urlGenerator->linkToRoute('keepiq.applicationSecrets.index'),
 					'update' => $this->urlGenerator->linkToRoute('keepiq.applicationSecrets.index') . '/{id}',
 				],
+				// Additive capabilities of this apiVersion: PUT honours
+				// If-Match (412 on a stale ETag), and the envelope carries
+				// secret.expiresAt.
+				'conditionalWrite' => true,
+				'expiresAt' => true,
 				// What this instance actually emits today. The successor is
 				// announced separately rather than listed here, because
 				// listing a format nothing writes would be a lie a consumer

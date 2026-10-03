@@ -48,7 +48,13 @@ export function pageSender(url = 'https://evil.example/') {
 function area(map) {
 	return {
 		get: async (keys) => {
-			const list = Array.isArray(keys) ? keys : [keys]
+			// null reads everything, as chrome.storage does.
+			const list =
+				keys === null || keys === undefined
+					? [...map.keys()]
+					: Array.isArray(keys)
+						? keys
+						: [keys]
 			const out = {}
 			for (const k of list) {
 				if (map.has(k)) out[k] = structuredClone(map.get(k))
@@ -86,6 +92,8 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 		setTab: (url, id = 1) => {
 			tab = { id, url }
 		},
+		// Other tabs the popup can name by id (a popped-out popup).
+		otherTabs: new Map(),
 		runtime: {
 			id: EXTENSION_ID,
 			getURL: (path) => EXTENSION_BASE + path,
@@ -93,6 +101,11 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 		},
 		tabs: {
 			query: vi.fn(async () => [tab]),
+			get: vi.fn(async (id) => {
+				const found = id === tab.id ? tab : fake.otherTabs.get(id)
+				if (!found) throw new Error('No tab with id: ' + id)
+				return found
+			}),
 			sendMessage: vi.fn(async (tabId, msg, options) => {
 				filled.push(options ? { ...msg, tabId, options } : msg)
 				if (msg.type === 'fill-otp') return { filled: fake.otpFieldOnPage }
@@ -100,6 +113,11 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 			}),
 		},
 		windows: { create: vi.fn() },
+		alarms: {
+			create: vi.fn(),
+			clear: vi.fn(),
+			onAlarm: { addListener: () => {} },
+		},
 	}
 	globalThis.chrome = {
 		...fake,
@@ -185,6 +203,75 @@ export function installServer(servers) {
 		if (path === '/api/settings/policy') return respond(200, null)
 		if (path === '/api/v1/secrets' && method === 'POST')
 			return respond(201, { id: 'new' })
+		// The vault list, folders, updates, trash and sends
+		// (clients-extension-generator-vault-send).
+		if (path.startsWith('/api/v1/secrets?') && method === 'GET') {
+			return respond(200, { items: s.rows, total: s.rows.length, page: 1 })
+		}
+		// The offline manifest (clients-extension-complete); s.manifestStatus
+		// makes it fail, as when an administrator switched offline caching off.
+		if (path === '/api/v1/offline/manifest') {
+			if (s.manifestStatus)
+				return respond(s.manifestStatus, { message: 'off' })
+			return respond(200, {
+				suite: s.suite,
+				secrets: s.rows,
+				folders: s.folders ?? [],
+				types: s.types ?? [],
+				syncedAt: '2026-10-03T00:00:00+00:00',
+			})
+		}
+		// Folders, kept in s.folders (clients-extension-complete).
+		if (path === '/api/v1/folders' && method === 'POST') {
+			const folder = {
+				id: 'new-folder-' + ((s.folders ?? []).length + 1),
+				name: body.name,
+				parentId: body.parentId ?? null,
+			}
+			s.folders = [...(s.folders ?? []), folder]
+			return respond(201, folder)
+		}
+		if (/^\/api\/v1\/folders\/[^/]+\/children$/.test(path)) {
+			const id = decodeURIComponent(path.split('/')[4])
+			return respond(
+				200,
+				s.children?.[id] ?? { directSecretCount: 0, subfolders: [] },
+			)
+		}
+		if (path.startsWith('/api/v1/folders/') && method === 'PUT') {
+			const id = decodeURIComponent(path.slice('/api/v1/folders/'.length))
+			s.folders = (s.folders ?? []).map((f) =>
+				f.id === id ? { ...f, ...body } : f,
+			)
+			return respond(200, { id })
+		}
+		if (path.startsWith('/api/v1/folders/') && method === 'DELETE') {
+			const id = decodeURIComponent(
+				path.slice('/api/v1/folders/'.length).split('?')[0],
+			)
+			s.folders = (s.folders ?? []).filter((f) => f.id !== id)
+			return respond(200, { status: 'deleted' })
+		}
+		if (path === '/api/v1/folders') return respond(200, s.folders ?? [])
+		if (path.startsWith('/api/v1/secrets/') && method === 'PUT')
+			return respond(200, {
+				id: decodeURIComponent(path.slice('/api/v1/secrets/'.length)),
+			})
+		if (path.startsWith('/api/v1/secrets/') && method === 'DELETE')
+			return respond(200, { trashed: true })
+		if (path === '/api/v1/sends' && method === 'POST') {
+			return respond(201, {
+				id: 'send-1',
+				token: 'tok-1',
+				createdAt: '2026-10-02T10:00:00+00:00',
+				maxViews: body.maxViews,
+				viewCount: 0,
+				payloadType: body.payloadType,
+			})
+		}
+		if (path === '/api/v1/sends') return respond(200, s.sends ?? [])
+		if (path.startsWith('/api/v1/sends/') && method === 'DELETE')
+			return respond(200, { revoked: true })
 		if (path.startsWith('/api/v1/secrets/')) {
 			const id = decodeURIComponent(path.slice('/api/v1/secrets/'.length))
 			const row = s.rows.find((r) => r.id === id)

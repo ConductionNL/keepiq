@@ -257,7 +257,7 @@ describe('the admin switch', () => {
 		expect(box.element.checked).toBe(false)
 		await box.setValue(true)
 		await flush()
-		expect(put).toHaveBeenCalledWith('/apps/keepiq/api/settings/admin', {
+		expect(put).toHaveBeenCalledWith('/apps/keepiq/api/settings/admin/general', {
 			offline_edits_enabled: true,
 		})
 	})

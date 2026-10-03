@@ -26,9 +26,13 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
+use DateTime;
+use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Service\GroupShareService;
+use OCA\Keepiq\Service\ShareRestriction;
+use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -92,15 +96,21 @@ class GroupShareController extends OCSController {
 	 *
 	 * @param string $secretId The source secret ID
 	 * @param string $groupId The Nextcloud group ID
+	 * @param bool $useOnly Whether the members may only use the value
+	 * @param string|null $expiresAt When the members' access ends (ISO 8601)
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#9.2
+	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
+	 *   field the server stores, not a mode switch.
 	 */
 	#[NoAdminRequired]
-	public function create(string $secretId, string $groupId): JSONResponse {
+	public function create(string $secretId, string $groupId, bool $useOnly = false, ?string $expiresAt = null): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
@@ -110,7 +120,12 @@ class GroupShareController extends OCSController {
 			$result = $this->groupShareService->createGroupShare(
 				secretId: $secretId,
 				groupId: $groupId,
-				userId: $user->getUID()
+				userId: $user->getUID(),
+				restriction: (new ShareRestrictionRules())->fromRequest(
+					useOnly: $useOnly,
+					expiresAt: $expiresAt,
+					now: new DateTime('now', new DateTimeZone('UTC'))
+				)
 			);
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(
