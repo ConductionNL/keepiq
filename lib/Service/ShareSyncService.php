@@ -108,6 +108,9 @@ class ShareSyncService {
 		string $userId,
 	): int {
 		$source = $this->auth->loadSecret(secretId: $secretId);
+		// A copy from another organisation is never written by its holder
+		// (sharing-federated-recipients task 3.4).
+		$source->assertNotReadOnly();
 		if ($source->getUseOnly() === true) {
 			// A use-only copy is never written by its holder (D4).
 			throw new InvalidArgumentException(message: 'A use-only copy cannot be changed');

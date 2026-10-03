@@ -28,6 +28,7 @@ use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\KnownShareRecipientExemption;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRestrictionRules;
@@ -165,6 +166,9 @@ class ShareController extends OCSController {
 					now: new DateTime('now', new DateTimeZone('UTC'))
 				)
 			);
+		} catch (ForbiddenException $e) {
+			// A copy from another organisation (sharing-federated-recipients task 3.4).
+			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
@@ -284,6 +288,9 @@ class ShareController extends OCSController {
 				groupShareId: $groupShareId,
 				userId: $user->getUID()
 			);
+		} catch (ForbiddenException $exception) {
+			// A copy from another organisation (sharing-federated-recipients task 3.4).
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(
 				data: ['message' => $exception->getMessage()],
@@ -328,6 +335,9 @@ class ShareController extends OCSController {
 				expectedUpdatedAt: $expectedUpdatedAt,
 				userId: $user->getUID()
 			);
+		} catch (ForbiddenException $exception) {
+			// A copy from another organisation (sharing-federated-recipients task 3.4).
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(
 				data: ['message' => $exception->getMessage()],

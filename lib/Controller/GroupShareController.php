@@ -30,6 +30,7 @@ use DateTime;
 use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\GroupShareService;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRestrictionRules;
@@ -127,6 +128,9 @@ class GroupShareController extends OCSController {
 					now: new DateTime('now', new DateTimeZone('UTC'))
 				)
 			);
+		} catch (ForbiddenException $exception) {
+			// A copy from another organisation (sharing-federated-recipients task 3.4).
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(
 				data: ['message' => $exception->getMessage()],

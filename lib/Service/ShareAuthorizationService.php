@@ -34,6 +34,7 @@ use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 
@@ -143,6 +144,7 @@ class ShareAuthorizationService {
 	 *
 	 * @throws DoesNotExistException When the user may not re-share the secret
 	 * @throws InvalidArgumentException When the copy is use-only or expiring
+	 * @throws ForbiddenException When the copy is a read-only copy from another organisation
 	 *
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
 	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce

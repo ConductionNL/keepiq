@@ -76,6 +76,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setUseOnly(bool $useOnly)
  * @method DateTime|null getAccessExpiresAt()
  * @method void setAccessExpiresAt(?DateTime $accessExpiresAt)
+ * @method bool|null getReadOnly()
+ * @method void setReadOnly(bool $readOnly)
+ * @method string|null getFederatedSource()
+ * @method void setFederatedSource(?string $federatedSource)
  * @method string|null getPendingAdditionalFields()
  * @method void setPendingAdditionalFields(?string $pendingAdditionalFields)
  * @method void setTombstoneReason(?string $tombstoneReason)
@@ -95,6 +99,14 @@ class Secret extends Entity implements JsonSerializable {
 	 * @var string
 	 */
 	public const ONWARD_SHARE_REFUSAL = 'A use-only or time-limited copy cannot be shared onward';
+
+	/**
+	 * What every write and share path answers for a copy received from
+	 * another organisation (sharing-federated-recipients task 3.4).
+	 *
+	 * @var string
+	 */
+	public const READ_ONLY_REFUSAL = 'A copy from another organisation is read-only';
 
 	/**
 	 * The plaintext secret name.
@@ -266,6 +278,23 @@ class Secret extends Entity implements JsonSerializable {
 	protected ?DateTime $accessExpiresAt = null;
 
 	/**
+	 * Whether this is a copy received from another organisation, which its
+	 * holder may read but never change or pass on
+	 * (sharing-federated-recipients D4, "Remote copies are read-only").
+	 *
+	 * @var boolean|null
+	 */
+	protected ?bool $readOnly = false;
+
+	/**
+	 * The cloud id of the user on a partner instance who shared this copy,
+	 * or null for a secret that did not arrive by federation.
+	 *
+	 * @var string|null
+	 */
+	protected ?string $federatedSource = null;
+
+	/**
 	 * Extra-field blobs a secret request filled in that the owner has not
 	 * merged yet: a JSON list of ciphertexts, each encrypted to the owner's
 	 * suite (nullable = none). The filler cannot read the owner's own blob,
@@ -356,6 +385,8 @@ class Secret extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'lastUsedAt', type: 'datetime');
 		$this->addType(fieldName: 'useOnly', type: 'boolean');
 		$this->addType(fieldName: 'accessExpiresAt', type: 'datetime');
+		$this->addType(fieldName: 'readOnly', type: 'boolean');
+		$this->addType(fieldName: 'federatedSource', type: 'string');
 		$this->addType(fieldName: 'pendingAdditionalFields', type: 'string');
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
 		$this->addType(fieldName: 'updatedAt', type: 'datetime');
@@ -396,8 +427,24 @@ class Secret extends Entity implements JsonSerializable {
 	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-an-expiring-copy-cannot-be-shared-onward
 	 */
 	public function isRestrictedCopy(): bool {
-		return $this->useOnly === true || $this->accessExpiresAt !== null;
+		return $this->useOnly === true || $this->accessExpiresAt !== null || $this->readOnly === true;
 	}//end isRestrictedCopy()
+
+	/**
+	 * Refuse any change or onward share of a copy received from another
+	 * organisation (sharing-federated-recipients task 3.4).
+	 *
+	 * @return void
+	 *
+	 * @throws ForbiddenException When it is a read-only federated copy
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-remote-copies-are-read-only
+	 */
+	public function assertNotReadOnly(): void {
+		if ($this->readOnly === true) {
+			throw new ForbiddenException(message: self::READ_ONLY_REFUSAL);
+		}
+	}//end assertNotReadOnly()
 
 	/**
 	 * Refuse this secret as the source of a share when it is a use-only or
@@ -406,10 +453,12 @@ class Secret extends Entity implements JsonSerializable {
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException When it is a restricted copy
+	 * @throws ForbiddenException When it is a read-only copy from another organisation
 	 *
 	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function assertOnwardShareable(): void {
+		$this->assertNotReadOnly();
 		if ($this->isRestrictedCopy() === true) {
 			throw new InvalidArgumentException(self::ONWARD_SHARE_REFUSAL);
 		}
@@ -426,6 +475,7 @@ class Secret extends Entity implements JsonSerializable {
 	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function assertEditableByHolder(): self {
+		$this->assertNotReadOnly();
 		if ($this->useOnly === true) {
 			throw new ForbiddenException(message: 'A use-only copy cannot be changed');
 		}
@@ -465,6 +515,8 @@ class Secret extends Entity implements JsonSerializable {
 			'lastUsedAt' => $this->lastUsedAt?->format('c'),
 			'useOnly' => ($this->useOnly === true),
 			'accessExpiresAt' => $this->accessExpiresAt?->format('c'),
+			'readOnly' => ($this->readOnly === true),
+			'federatedSource' => $this->federatedSource,
 			'pendingAdditionalFields' => $this->pendingAdditionalFieldList(),
 		];
 	}//end jsonSerialize()
@@ -561,6 +613,8 @@ class Secret extends Entity implements JsonSerializable {
 			'lastUsedAt' => $this->lastUsedAt?->format('c'),
 			'useOnly' => ($this->useOnly === true),
 			'accessExpiresAt' => $this->accessExpiresAt?->format('c'),
+			'readOnly' => ($this->readOnly === true),
+			'federatedSource' => $this->federatedSource,
 			'createdAt' => $this->createdAt?->format('c'),
 			'updatedAt' => $this->updatedAt?->format('c'),
 		];
