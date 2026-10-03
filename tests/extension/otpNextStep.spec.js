@@ -93,7 +93,18 @@ describe('after a login fill without a code field on the page', () => {
 		const stored = JSON.stringify(intents)
 		expect(stored).not.toContain(SEED)
 		expect(stored).not.toContain(res.totpCode)
-		expect(JSON.stringify([...browser.storage.values()])).not.toContain('totp-1')
+		// The intent stays out of persistent storage. The vault snapshot is
+		// there by design (ciphertext and metadata, ADR-002) and lists every
+		// row's id, so it is left out of this check; no seed or code may be
+		// anywhere on disk.
+		const persistent = [...browser.storage.entries()].filter(
+			([key]) => !key.startsWith('vault-snapshot:'),
+		)
+		expect(JSON.stringify(persistent)).not.toContain('totp-1')
+		expect(JSON.stringify([...browser.storage.values()])).not.toContain(SEED)
+		expect(JSON.stringify([...browser.storage.values()])).not.toContain(
+			res.totpCode,
+		)
 	})
 
 	it('fills the code field on the next step once, in the reporting frame', async () => {
