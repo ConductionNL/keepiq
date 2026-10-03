@@ -44,6 +44,7 @@ namespace OCA\Keepiq\Controller;
 
 use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Service\AudiencePolicy;
+use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\JwtAuthService;
 use OCA\Keepiq\Service\MachineSecretEnvelopeService;
 use OCP\AppFramework\Controller;
@@ -98,6 +99,7 @@ class DiscoveryController extends Controller {
 	 * @param IURLGenerator $urlGenerator The URL generator
 	 * @param IAppConfig|null $appConfig The app config (lease policy advert)
 	 * @param LoggerInterface|null $logger Logger for the deprecated-path warning
+	 * @param FederationRootService|null $federationRoot Root fingerprint and version gate for federation
 	 *
 	 * @return void
 	 */
@@ -106,6 +108,7 @@ class DiscoveryController extends Controller {
 		private IURLGenerator $urlGenerator,
 		private ?IAppConfig $appConfig = null,
 		private ?LoggerInterface $logger = null,
+		private ?FederationRootService $federationRoot = null,
 	) {
 		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
 	}//end __construct()
@@ -176,6 +179,13 @@ class DiscoveryController extends Controller {
 					'byName' => $this->urlGenerator->linkToRoute('keepiq.applicationSecrets.index') . '/by-name/{name}',
 					'create' => $this->urlGenerator->linkToRoute('keepiq.applicationSecrets.index'),
 					'update' => $this->urlGenerator->linkToRoute('keepiq.applicationSecrets.index') . '/{id}',
+				],
+				// Federated recipients (sharing-federated-recipients D1): a
+				// partner's administrator reads this root fingerprint and
+				// compares it out of band before pinning this instance.
+				'federation' => [
+					'enabled' => ($this->federationRoot?->isSupported() === true),
+					'rootFingerprint' => $this->federationRoot?->localRootFingerprint(),
 				],
 				// Additive capabilities of this apiVersion: PUT honours
 				// If-Match (412 on a stale ETag), and the envelope carries
