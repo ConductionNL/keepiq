@@ -1603,7 +1603,19 @@ OC.L10N.register(
         "Approve {member}": "Hyväksy {member}",
         "Recipient": "Vastaanottaja",
         "No vault yet": "Ei vielä holvia",
-        "No matching users": "Ei vastaavia käyttäjiä"
+        "No matching users": "Ei vastaavia käyttäjiä",
+        "Partner organisations": "Kumppaniorganisaatiot",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Vaihda salaisuuksia toisen Keepiqin kanssa. Molemmat ylläpitäjät lisäävät toisensa ja vertaavat juurisormenjälkiä puhelimessa tai kasvokkain ennen tallentamista.",
+        "Federation needs Nextcloud 33 or later.": "Federointi vaatii Nextcloud 33:n tai uudemman.",
+        "Your root fingerprint": "Oma juurisormenjälkesi",
+        "No partners yet.": "Ei vielä kumppaneita.",
+        "Users here may share to this partner": "Täkäläiset käyttäjät voivat jakaa tälle kumppanille",
+        "This partner may share to users here": "Tämä kumppani voi jakaa täkäläisille käyttäjille",
+        "Partner address": "Kumppanin osoite",
+        "Check partner": "Tarkista kumppani",
+        "Partner root fingerprint": "Kumppanin juurisormenjälki",
+        "I compared this fingerprint with the partner's administrator": "Vertasin tätä sormenjälkeä kumppanin ylläpitäjän kanssa",
+        "Add partner": "Lisää kumppani"
     },
     "nplurals=2; plural=(n != 1);"
 )

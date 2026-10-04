@@ -52,6 +52,7 @@ final class BackupTableRegistry {
 		'enc_suites',
 		'ephemeral_sends',
 		'expiry_policies',
+		'federation_partners',
 		'folders',
 		'group_shares',
 		'honey_alerts',
