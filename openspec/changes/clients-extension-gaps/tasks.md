@@ -15,4 +15,4 @@
 
 - [x] 2.1 Build group A, one PR per item or small group, each with a test that fails without the change.
 - [x] 2.2 Build the chosen items of group C.
-- [ ] 2.3 Update `openspec/references/keepiq-extension/mapping.md` as rows close.
+- [x] 2.3 Update `openspec/references/keepiq-extension/mapping.md` as rows close.

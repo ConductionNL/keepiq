@@ -404,3 +404,54 @@ Security or privacy weight first.
 - ext-send/specs/send/spec.md:50 (S4) PARTIAL: no confirmation before End, and a 404 shows as an error.
 - ext-send/specs/send/spec.md:86 (S7) PARTIAL: the server's error message is not shown.
 - ext-generator/specs/credential-generator/spec.md:211 (G13) CHANGED: whether the CC BY 3.0 attribution ships in the extension package is UNKNOWN (build.mjs copies no licence file).
+
+## Closed by clients-extension-gaps (October 2026)
+
+The rows above describe Keepiq at `61329cb0`. The change `clients-extension-gaps` then closed the gaps Ruben chose: all of group A, group B recorded, and four groups of C. Each old requirement below now has a Keepiq spec under `openspec/changes/clients-extension-gaps/specs/`, with tests named in its scenarios.
+
+| Old requirement (spec:line) | Was | Keepiq spec now |
+| --- | --- | --- |
+| account-management:16 server address | MISSING | `extension-pairing` |
+| api-client:10 no cookies | PARTIAL | `extension-pairing` |
+| api-client:21, account-management:145 revocation and re-login | PARTIAL, MISSING | `extension-pairing` |
+| item-detail:115 forget on lock | PARTIAL | `extension-lock` |
+| vault-sync:68, vault-unlock:43 key epoch | PARTIAL | `extension-lock` |
+| settings:65 lock one account, confirm disconnect | PARTIAL | `extension-lock` |
+| autofill:3, vault-sync:82 blocked rows | PARTIAL | `extension-fill-and-capture` |
+| autofill:66, autofill:176 frames | PARTIAL | `extension-fill-and-capture` |
+| autofill:79 https to http | MISSING | `extension-fill-and-capture` |
+| login-capture:3, login-capture:21 capture from the sender, per tab | PARTIAL | `extension-fill-and-capture` |
+| vault-list:90, settings:156, credential-generator:113 clipboard | MISSING, PARTIAL | `extension-clipboard` |
+| vault-sync:35 large vault | PARTIAL | `extension-clipboard` |
+| api-client:3, vault-sync:133 worker only, pages kept out | CODE-ONLY | `extension-baseline` |
+| account-management:121 disconnect revokes | CODE-ONLY | `extension-baseline` |
+| account-management:76 one account per user and server | CODE-ONLY | `extension-baseline` |
+| send:173 nothing of a send stored | CODE-ONLY | `extension-baseline` |
+| settings:43, vault-unlock:90, vault-unlock:103 idle choices, no logout on idle | CHANGED | `extension-baseline` (recorded) |
+| autofill:21 one match rule | CHANGED | `extension-baseline` (recorded) |
+| item-editing:167 name limit | CHANGED | `item-name-limit` (255) |
+| vault-unlock:15, vault-unlock:30 offline unlock | PARTIAL | `extension-unlock-and-accounts` |
+| vault-unlock:3, vault-unlock:23 unlock screen, message | PARTIAL | `extension-unlock-and-accounts` |
+| account-management:50, api-client:49 pairing errors | PARTIAL | `extension-unlock-and-accounts` |
+| account-management:89, :100, :133 initials, log out, log out all | MISSING, PARTIAL | `extension-unlock-and-accounts` |
+| settings:78 PIN | MISSING | `extension-pin-unlock` |
+| autofill:92 field detection | PARTIAL | `extension-autofill-extras` |
+| autofill:46 no form found | PARTIAL | `extension-autofill-extras` |
+| autofill:110, autofill:142 context menu, shortcut | MISSING | `extension-autofill-extras` |
+| login-capture:66 never for this site | MISSING | `extension-autofill-extras` |
+| login-capture:34 folder on save | PARTIAL | `extension-autofill-extras` |
+| vault-list:25, :69, :82, :117, :125 list | PARTIAL | `extension-list-and-settings` |
+| settings:3, :127, :164, :205, :222, :234 settings groups | PARTIAL, MISSING | `extension-list-and-settings` |
+| settings:115, settings:182 master password, notifications | MISSING | `extension-list-and-settings` (a link to Keepiq on the web) |
+| credential-generator:211 word list credit | CHANGED | `extension-release` |
+
+Also added without an old requirement: extension icons, Firefox's data collection declaration (`extension-release`), and a passkey's private key kept in the worker (`clients-extension-complete`, `extension-vault`).
+
+### Still open
+
+Not chosen in October 2026, so still as the rows above describe them:
+
+- The Send items: Create off while offline (send:155), a progress state during Argon2id (send:112), Send for logins only (send:142), badges in the list (send:3), confirm before ending a send (send:50), the server's message (send:86).
+- The finer save-prompt behaviour: several logins with the same username (login-capture:75), an update that rewrites the username (login-capture:88), the bar after redirects (login-capture:110), a confirmation in the bar (login-capture:52).
+- The generator under a policy: clamped controls labelled (credential-generator:172), a class with minimum 0 guaranteed (credential-generator:42).
+- Smaller list and form details: suggestions by last use (autofill:155), the tab URL prefilled for a new item (item-editing:3), TOTP validation on save (item-editing:61), folder buttons offline (folder-management:110), deleting a blocked item (item-detail:107), the scroll position (item-detail:3), a fallback for the last tab without session storage (popup-shell:25).
