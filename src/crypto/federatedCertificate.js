@@ -319,7 +319,11 @@ export function canonicalCloudId(cloudId) {
 	if (at <= 0) {
 		return ''
 	}
-	const remote = text.slice(at + 1).replace(/^https?:\/\//i, '').replace(/\/+$/, '').toLowerCase()
+	const remote = text
+		.slice(at + 1)
+		.replace(/^https?:\/\//i, '')
+		.replace(/\/+$/, '')
+		.toLowerCase()
 	return remote === '' ? '' : `${text.slice(0, at)}@${remote}`
 }
 
@@ -359,7 +363,10 @@ export async function verifyFederatedCertificate({
 		}
 	}
 	const leaf = certs[0]
-	if (leaf.commonName === null || canonicalCloudId(leaf.commonName) !== canonicalCloudId(cloudId)) {
+	if (
+		leaf.commonName === null
+		|| canonicalCloudId(leaf.commonName) !== canonicalCloudId(cloudId)
+	) {
 		throw new FederatedCertificateError('name_mismatch')
 	}
 	if (now < leaf.notBefore || now > leaf.notAfter) {
