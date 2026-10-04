@@ -352,7 +352,7 @@ class AdminSettingsService {
 	 *
 	 * @throws InvalidArgumentException On an unknown area.
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	public function getAreaSettings(string $area): array {
 		$keys = $this->areaKeys(area: $area);
@@ -378,7 +378,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On an unknown area, a key of another
 	 *                                  area, or an out-of-bounds value.
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	public function updateAreaSettings(string $area, array $data): array {
 		$own = $this->areaKeys(area: $area);

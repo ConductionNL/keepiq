@@ -70,7 +70,7 @@ class PeopleAreaAgreementTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.4
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.4
 	 */
 	#[DataProvider('users')]
 	public function testTheFlagAndBothGuardsAgree(string $uid, array $delegated, bool $expected): void {

@@ -137,7 +137,7 @@ class AdminAreaGuardTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	#[DataProvider('cases')]
 	public function testTheMiddlewareAdmitsOnlyTheArea(array $delegated, string $class, string $method, bool $expected): void {
@@ -151,7 +151,7 @@ class AdminAreaGuardTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	public function testEveryAdminGuardNamesExactlyOneArea(): void {
 		$checked = 0;
@@ -186,7 +186,7 @@ class AdminAreaGuardTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	public function testEachAreaRouteIsGuardedByItsArea(): void {
 		$routes = (require __DIR__ . '/../../../appinfo/routes.php')['routes'];
