@@ -287,6 +287,8 @@ vault.onLock((accountId) => {
 	sessionStore()
 		?.remove('popup:lastTab')
 		.catch(() => {})
+	// Where a browser without session storage keeps it.
+	chrome.storage?.local?.remove?.('popup:lastTab')?.catch?.(() => {})
 })
 
 // Generator history goes whenever an account locks, for any reason.
