@@ -38,6 +38,7 @@ use OCA\Keepiq\Db\TeamFolder;
 use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
+use OCA\Keepiq\Exception\ManagerOnlyException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 
@@ -361,7 +362,9 @@ class TeamFolderQueryService {
 		if ($teamFolder->getOwnerId() !== $userId
 			&& $this->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId) !== 'manage'
 		) {
-			throw new InvalidArgumentException(message: 'Not authorized to manage this team folder');
+			// A viewer or an editor: forbidden, not a bad request
+			// (folder-permission-grades, "Non-owner cannot change a grade").
+			throw new ManagerOnlyException(message: 'Not authorized to manage this team folder');
 		}
 
 		return $teamFolder;

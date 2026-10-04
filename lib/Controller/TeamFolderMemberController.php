@@ -37,6 +37,7 @@ use DateTime;
 use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Exception\ManagerOnlyException;
 use OCA\Keepiq\Exception\OwnerOnlyException;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRestrictionRules;
@@ -293,7 +294,9 @@ class TeamFolderMemberController extends OCSController {
 
 	/**
 	 * The response for a refused membership change: a change only the owner
-	 * may make is forbidden (`owner_only`), anything else is a bad request.
+	 * may make is forbidden (`owner_only`), so is one by a member who is
+	 * neither owner nor manager (`manager_only`); anything else is a bad
+	 * request.
 	 * The 403 leaves as 428 through OcsRefusalMiddleware, so the browser sees
 	 * the refusal and its code.
 	 *
@@ -302,11 +305,19 @@ class TeamFolderMemberController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 * @spec openspec/specs/folder-permission-grades/spec.md#scenario-non-owner-cannot-change-a-grade
 	 */
 	private function refusal(InvalidArgumentException $exception): JSONResponse {
 		if ($exception instanceof OwnerOnlyException) {
 			return new JSONResponse(
 				data: ['message' => $exception->getMessage(), 'error' => OwnerOnlyException::CODE],
+				statusCode: Http::STATUS_FORBIDDEN
+			);
+		}
+
+		if ($exception instanceof ManagerOnlyException) {
+			return new JSONResponse(
+				data: ['message' => $exception->getMessage(), 'error' => ManagerOnlyException::CODE],
 				statusCode: Http::STATUS_FORBIDDEN
 			);
 		}
