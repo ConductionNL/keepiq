@@ -362,7 +362,10 @@ test.describe.serial('Workflow: vault policies for one group', () => {
 			key: 'work-login-value',
 		})
 		expect(refused.ok, 'a personal login is refused').toBe(false)
-		expect(refused.status).toBe(403)
+		// 428, not 403: Nextcloud turns a 403 of an OCSController into an
+		// HTTP 200 envelope, so Keepiq refuses with 428 and an error code.
+		expect(refused.status).toBe(428)
+		expect(refused.data?.error).toBe('org_ownership_required')
 		expect(refused.data?.code).toBe('org_ownership_required')
 
 		const ops = await call(gina, 'POST', '/folders', { name: `Ops ${RUN}` })
