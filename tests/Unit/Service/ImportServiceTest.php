@@ -175,6 +175,30 @@ class ImportServiceTest extends TestCase {
 	}//end testChunkOverCapThrows()
 
 	/**
+	 * A name fits the 255-character name column; a longer one is refused per
+	 * item instead of failing at the database.
+	 *
+	 * @spec openspec/changes/clients-extension-gaps/specs/item-name-limit/spec.md#requirement-a-name-has-at-most-255-characters
+	 *
+	 * @return void
+	 */
+	public function testNameLongerThanTheColumnIsRefused(): void {
+		$secretService = $this->createMock(SecretService::class);
+		$folderService = $this->createMock(FolderService::class);
+		$folderService->method('listForUser')->willReturn([]);
+		$secretService->method('assertActiveSuite');
+		$secretService->method('create')->willReturn($this->secret('s'));
+
+		$service = new ImportService($secretService, $folderService, $this->createMock(LoggerInterface::class));
+
+		$fits   = str_repeat('é', 255);
+		$result = $service->commitChunk([$this->item($fits), $this->item($fits.'x')], 'alice');
+		$this->assertSame('created', $result['results'][0]['status']);
+		$this->assertSame('failed', $result['results'][1]['status']);
+		$this->assertStringContainsString('255', $result['results'][1]['error']);
+	}//end testNameLongerThanTheColumnIsRefused()
+
+	/**
 	 * Plaintext-shaped sensitive fields are rejected by the envelope check.
 	 *
 	 * @return void
