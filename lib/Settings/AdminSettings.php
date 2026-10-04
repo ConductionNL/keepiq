@@ -28,11 +28,9 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Settings;
 
 use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\IAppConfig;
-use OCP\IGroupManager;
 use OCP\IL10N;
 
 /**
@@ -49,7 +47,6 @@ class AdminSettings extends AdminAreaSettings {
 	 * @param IInitialState $initialState The admin bundle's initial state
 	 * @param IAppManager $appManager The running app version
 	 * @param IAppConfig $appConfig The version the configuration was imported for
-	 * @param IGroupManager $groupManager Counts the legacy vault_admin group
 	 *
 	 * @return void
 	 *
@@ -60,7 +57,6 @@ class AdminSettings extends AdminAreaSettings {
 		IInitialState $initialState,
 		private readonly IAppManager $appManager,
 		private readonly IAppConfig $appConfig,
-		private readonly IGroupManager $groupManager,
 	) {
 		parent::__construct(l10n: $l10n, initialState: $initialState);
 	}//end __construct()
@@ -100,8 +96,7 @@ class AdminSettings extends AdminAreaSettings {
 
 	/**
 	 * The version card state the admin settings shell reads (formerly
-	 * provided by the AppHost generic), and the size of the legacy
-	 * vault_admin group for the "Admin areas" notice (admin-scoped-roles D4).
+	 * provided by the AppHost generic).
 	 *
 	 * @return void
 	 *
@@ -115,8 +110,5 @@ class AdminSettings extends AdminAreaSettings {
 		$this->initialState->provideInitialState('version', $version);
 		$this->initialState->provideInitialState('configuredVersion', $configuredVersion);
 		$this->initialState->provideInitialState('isUpToDate', ($configuredVersion !== '' && $configuredVersion === $version));
-
-		$legacyGroup = $this->groupManager->get(AdminAreaAuthorizer::LEGACY_PEOPLE_GROUP);
-		$this->initialState->provideInitialState('vault-admin-members', ($legacyGroup?->count() ?? 0));
 	}//end provideAreaState()
 }//end class

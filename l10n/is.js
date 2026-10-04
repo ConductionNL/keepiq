@@ -1578,7 +1578,6 @@ OC.L10N.register(
         "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Þú átt ekkert afrit af þessum leyndarmálum, svo nýju meðlimirnir hafa ekki fengið þau enn. Eigandinn getur deilt þeim: {names}",
         "Admin areas": "Stjórnunarsvið",
         "Give a group only the parts of Keepiq administration it needs.": "Gefðu hópi aðeins þá hluta Keepiq-stjórnunar sem hann þarf.",
-        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Gamli hópurinn vault_admin hefur {count} meðlimi. Hann telst enn sem sviðið Fólk og starfslok, þar til síðari útgáfa fjarlægir hann. Úthlutaðu frekar því sviði til hóps.",
         "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Úthlutaðu einu eða fleiri sviðum til hóps á síðunni fyrir stjórnunarheimildir. Kerfisstjórar tilviksins hafa öll svið.",
         "Open administration privileges": "Opna stjórnunarheimildir",
         "Policies": "Reglur",

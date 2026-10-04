@@ -60,7 +60,6 @@ final class AdminAreaRegistrar {
 				initialState: $c->get(\OCP\AppFramework\Services\IInitialState::class),
 				appManager: $c->get(\OCP\App\IAppManager::class),
 				appConfig: $c->get(\OCP\IAppConfig::class),
-				groupManager: $c->get(\OCP\IGroupManager::class),
 			)
 		);
 

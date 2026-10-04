@@ -52,7 +52,7 @@ class PeopleAreaAgreementTest extends TestCase {
 		return [
 			'instance admin' => ['root', [], true],
 			'people delegate' => ['helpdesk', [PeopleAdminSettings::class], true],
-			'vault_admin member' => ['legacy', [], true],
+			'vault_admin member without a delegation' => ['legacy', [], false],
 			'audit delegate' => ['auditor', [AuditAdminSettings::class], false],
 			'outsider' => ['bob', [], false],
 		];
@@ -62,7 +62,8 @@ class PeopleAreaAgreementTest extends TestCase {
 	 * The capabilities flag, the handover guard and the offboarding guard
 	 * give the same answer (red before: an instance admin outside
 	 * vault_admin was offered no handover yet could offboard, and a People
-	 * delegate could do neither).
+	 * delegate could do neither). A vault_admin member without a delegation
+	 * is refused by all three (red before #1043: the alias let them through).
 	 *
 	 * @param string $uid The user
 	 * @param string[] $delegated The areas delegated to the user's groups

@@ -234,7 +234,7 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 |-------|-------------|-----------------|-----------------|------|
 | Secret shared with user | `secret_shared` | `notify_shares` | Notify recipient | **MVP** |
 | Secret request fulfilled | `request_fulfilled` | `notify_requests` | Notify requester | **MVP** |
-| Application pending approval | `app_pending` | — (always notify admins) | All vault_admins | **MVP** |
+| Application pending approval | `app_pending` | — (always notify admins) | Members of the Nextcloud `admin` group | **MVP** |
 | Group share: new member needs approval | `group_member_added` | `notify_group_shares` | Notify secret owner | **MVP** |
 | Share request from recipient | `share_request` | `notify_shares` | Notify secret owner | **MVP** |
 | Share request approved/denied | `share_request_result` | `notify_shares` | Notify requester | **MVP** |

@@ -1583,7 +1583,6 @@ OC.L10N.register(
         "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Je hebt geen kopie van deze geheimen, dus de nieuwe leden hebben ze nog niet gekregen. De eigenaar kan ze delen: {names}",
         "Admin areas": "Beheergebieden",
         "Give a group only the parts of Keepiq administration it needs.": "Geef een groep alleen de delen van het Keepiq-beheer die ze nodig heeft.",
-        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "De oude groep vault_admin heeft {count} leden. Die telt nog als het gebied Personen en uitdiensttreding, tot een latere versie dat weghaalt. Delegeer dat gebied liever aan een groep.",
         "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegeer een of meer gebieden aan een groep op de pagina Beheerrechten. Instantiebeheerders hebben elk gebied.",
         "Open administration privileges": "Beheerrechten openen",
         "Policies": "Beleid",

@@ -14,8 +14,9 @@
   does not, and it is the only answer when an owner is gone, unresponsive or
   hostile. Without it those secrets are destroyed on account deletion.
 
-  The panel renders nothing at all unless the signed-in user is in the
-  vault_admin group. Group membership is the only thing checked here; whether
+  The panel renders nothing at all unless the signed-in user holds the People
+  and offboarding admin area (`canHandover`). That is the only thing checked
+  here; whether
   THIS admin may take over THIS secret (they must already hold a share of it,
   and must not already be its owner) is decided server-side on the write, so a
   visible button is an offer, never a permission.

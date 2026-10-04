@@ -1673,7 +1673,6 @@
         "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Немате копију ових тајни, па их нови чланови још нису добили. Власник може да их подели: {names}",
         "Admin areas": "Области администрације",
         "Give a group only the parts of Keepiq administration it needs.": "Дајте групи само оне делове администрације Keepiq-а који су јој потребни.",
-        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Стара група vault_admin има чланова: {count}. И даље се рачуна као област Људи и одласци, док је каснија верзија не уклони. Уместо тога делегирајте ту област групи.",
         "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Делегирајте једну или више области групи на страници администраторских овлашћења. Администратори инстанце имају сваку област.",
         "Open administration privileges": "Отвори администраторска овлашћења",
         "Policies": "Смернице",

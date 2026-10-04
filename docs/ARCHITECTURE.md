@@ -418,7 +418,7 @@ choice.
 | Feature | OCP Interface | What to Reuse | How |
 |---------|--------------|---------------|-----|
 | **Users** | `OCP\IUserManager` | Authentication identity, vault ownership | Reference by Nextcloud user UID |
-| **Groups** | `OCP\IGroupManager` | Group sharing, vault_admin role | Query group membership for group shares |
+| **Groups** | `OCP\IGroupManager` | Group sharing, instance admin check | Query group membership for group shares |
 | **Session** | `OCP\ISession` | Store AES-derived key during vault session | `ISession::set('keepiq_aes_key', $derivedKey)` |
 | **Notifications** | `OCP\Notification\IManager` | Share received, request fulfilled, CA expiry, app approval | Implement `INotifier` for rendering |
 | **Search** | `OCP\Search\IProvider` | Unified search (Ctrl+F) for secrets by name/URL | Query name + url without AES key; deep-link to secret |

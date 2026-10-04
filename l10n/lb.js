@@ -1578,7 +1578,6 @@ OC.L10N.register(
         "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Dir hutt keng Kopie vun dëse Geheimnisser, dofir hunn déi nei Memberen se nach net kritt. De Besëtzer kann se deelen: {names}",
         "Admin areas": "Verwaltungsberäicher",
         "Give a group only the parts of Keepiq administration it needs.": "Gitt engem Grupp nëmmen déi Deeler vun der Keepiq-Verwaltung, déi e brauch.",
-        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Den ale Grupp vault_admin huet {count} Memberen. Hie gëllt nach als de Beräich Leit an Austrëtt, bis eng spéider Versioun en ewechhëlt. Delegéiert deen Beräich amplaz un e Grupp.",
         "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegéiert een oder méi Beräicher un e Grupp op der Säit vun de Verwaltungsrechter. Instanzadministrateure hunn all Beräich.",
         "Open administration privileges": "Verwaltungsrechter opmaachen",
         "Policies": "Richtlinnen",

@@ -1578,7 +1578,6 @@ OC.L10N.register(
         "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "M'għandek l-ebda kopja ta' dawn is-sigrieti, għalhekk il-membri l-ġodda għadhom ma rċevewhomx. Is-sid jista' jaqsamhom: {names}",
         "Admin areas": "Oqsma ta' amministrazzjoni",
         "Give a group only the parts of Keepiq administration it needs.": "Agħti lil grupp biss il-partijiet tal-amministrazzjoni ta' Keepiq li għandu bżonn.",
-        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Il-grupp il-qadim vault_admin għandu {count} membri. Għadu jgħodd bħala l-qasam Nies u tluq, sakemm verżjoni aktar tard tneħħih. Minflok, iddelega dak il-qasam lil grupp.",
         "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Iddelega qasam wieħed jew aktar lil grupp fuq il-paġna tal-privileġġi tal-amministrazzjoni. L-amministraturi tal-istanza għandhom kull qasam.",
         "Open administration privileges": "Iftaħ il-privileġġi tal-amministrazzjoni",
         "Policies": "Politiki",

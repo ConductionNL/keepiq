@@ -31,8 +31,6 @@ use OCP\App\IAppManager;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\IAppConfig;
-use OCP\IGroup;
-use OCP\IGroupManager;
 use OCP\IL10N;
 use OCP\Settings\IDelegatedSettings;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -73,12 +71,7 @@ class AdminAreaSettingsTest extends TestCase {
 		$apps->method('getAppVersion')->willReturn('0.3.4');
 		$config = $this->createStub(IAppConfig::class);
 		$config->method('getValueString')->willReturn('0.3.4');
-		$group = $this->createStub(IGroup::class);
-		$group->method('count')->willReturn(2);
-		$groups = $this->createStub(IGroupManager::class);
-		$groups->method('get')->willReturnCallback(static fn (string $gid): ?IGroup => $gid === 'vault_admin' ? $group : null);
-
-		return new AdminSettings(l10n: $l10n, initialState: $state, appManager: $apps, appConfig: $config, groupManager: $groups);
+		return new AdminSettings(l10n: $l10n, initialState: $state, appManager: $apps, appConfig: $config);
 	}//end area()
 
 	/**
@@ -146,19 +139,20 @@ class AdminAreaSettingsTest extends TestCase {
 	}//end testFiveAreasOnOnePageKeepFiveKeys()
 
 	/**
-	 * General also carries the version card and the vault_admin size.
+	 * General also carries the version card, and no longer the vault_admin
+	 * size: the alias and its notice are gone (#1043).
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.3
 	 */
-	public function testGeneralProvidesTheVersionAndTheLegacyGroupSize(): void {
+	public function testGeneralProvidesTheVersionAndNoVaultAdminSize(): void {
 		$this->area(class: AdminSettings::class)->getForm();
 
 		$this->assertSame('0.3.4', $this->state['version']);
 		$this->assertTrue($this->state['isUpToDate']);
-		$this->assertSame(2, $this->state['vault-admin-members']);
-	}//end testGeneralProvidesTheVersionAndTheLegacyGroupSize()
+		$this->assertArrayNotHasKey('vault-admin-members', $this->state);
+	}//end testGeneralProvidesTheVersionAndNoVaultAdminSize()
 
 	/**
 	 * The registrar binds every area id to an instance of exactly that class,
@@ -185,7 +179,6 @@ class AdminAreaSettingsTest extends TestCase {
 			IInitialState::class => $this->createStub(IInitialState::class),
 			IAppManager::class => $this->createStub(IAppManager::class),
 			IAppConfig::class => $this->createStub(IAppConfig::class),
-			IGroupManager::class => $this->createStub(IGroupManager::class),
 		];
 		$container = $this->createStub(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(static fn (string $id): object => $services[$id]);

@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use OCA\Keepiq\Settings\PeopleAdminSettings;
 use OCA\Keepiq\Tests\Support\AdminAreaFixture;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\Secret;
@@ -231,7 +232,7 @@ class DelegationServiceTest extends TestCase {
 	 *
 	 * @return array{0:DelegationService,1:SecretDelegationMapper,2:SecretMapper,3:ShareTargetMapper,4:IGroupManager}
 	 */
-	private function buildWithAdmin(): array {
+	private function buildWithAdmin(array $delegated = []): array {
 		$mapper = $this->createMock(originalClassName: SecretDelegationMapper::class);
 		$secretMapper = $this->createMock(originalClassName: SecretMapper::class);
 		$shareTargetMapper = $this->createMock(originalClassName: ShareTargetMapper::class);
@@ -242,7 +243,7 @@ class DelegationServiceTest extends TestCase {
 			authorizer: new DelegationAuthorizer(
 				secretMapper: $secretMapper,
 				shareTargetMapper: $shareTargetMapper,
-				areas: $this->areaAuthorizer(groupManager: $groupManager),
+				areas: $this->areaAuthorizer(groupManager: $groupManager, delegated: $delegated),
 			),
 		);
 
@@ -290,9 +291,9 @@ class DelegationServiceTest extends TestCase {
 	}//end testCreateDelegationAcceptsDelegateWithPreExistingShare()
 
 	/**
-	 * Admin handover: a vault_admin who already holds a share of someone
-	 * else's secret can promote their own copy to co-owner without owner
-	 * consent.
+	 * Admin handover: a holder of the People and offboarding area who
+	 * already holds a share of someone else's secret can promote their own
+	 * copy to co-owner without owner consent.
 	 *
 	 * @return void
 	 *
@@ -300,11 +301,10 @@ class DelegationServiceTest extends TestCase {
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-17.1
 	 */
 	public function testCreateDelegationAdminHandoverPromotesAdminCopy(): void {
-		[$service, $mapper, $secretMapper, $shareTargetMapper, $groupManager] = $this->buildWithAdmin();
+		[$service, $mapper, $secretMapper, $shareTargetMapper, $_groupManager] = $this->buildWithAdmin(
+			delegated: [PeopleAdminSettings::class]
+		);
 		$secretMapper->method('findById')->willReturn($this->buildSecret(ownerId: 'alice'));
-		$groupManager->method('isInGroup')
-			->with('mallory', DelegationAuthorizer::VAULT_ADMIN_GROUP)
-			->willReturn(true);
 		$shareTargetMapper->method('findBySourceSecretAndTargetUser')->willReturn(new ShareTarget());
 		$mapper->expects($this->once())
 			->method('insert')
@@ -323,8 +323,34 @@ class DelegationServiceTest extends TestCase {
 	}//end testCreateDelegationAdminHandoverPromotesAdminCopy()
 
 	/**
-	 * Admin handover is rejected when the caller is not in the
-	 * vault_admin group.
+	 * Admin handover is refused for a member of the former vault_admin group
+	 * who holds no delegation, even with a share of the secret (#1043; red
+	 * before: the vault_admin alias let them through).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#4.1
+	 */
+	public function testCreateDelegationAdminHandoverRefusesAVaultAdminMemberWithoutADelegation(): void {
+		[$service, $mapper, $secretMapper, $shareTargetMapper, $groupManager] = $this->buildWithAdmin();
+		$secretMapper->method('findById')->willReturn($this->buildSecret(ownerId: 'alice'));
+		$groupManager->method('isInGroup')->willReturnCallback(
+			static fn (string $uid, string $group): bool => $uid === 'mallory' && $group === 'vault_admin'
+		);
+		$shareTargetMapper->method('findBySourceSecretAndTargetUser')->willReturn(new ShareTarget());
+		$mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$service->createAdminHandover(
+			secretId: 'sec-1',
+			delegatedTo: 'mallory',
+			initiatedBy: 'mallory',
+		);
+	}//end testCreateDelegationAdminHandoverRefusesAVaultAdminMemberWithoutADelegation()
+
+	/**
+	 * Admin handover is rejected when the caller holds no People and
+	 * offboarding area.
 	 *
 	 * @return void
 	 *

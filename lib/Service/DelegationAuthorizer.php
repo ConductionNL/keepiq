@@ -38,16 +38,6 @@ use OCP\AppFramework\Db\DoesNotExistException;
  */
 class DelegationAuthorizer {
 	/**
-	 * The legacy group that still counts as holding the People area until
-	 * the alias is removed (admin-scoped-roles D4). Kept as a constant so
-	 * existing references keep compiling; the rule itself lives in
-	 * AdminAreaAuthorizer.
-	 *
-	 * @var string
-	 */
-	public const VAULT_ADMIN_GROUP = AdminAreaAuthorizer::LEGACY_PEOPLE_GROUP;
-
-	/**
 	 * Constructor for DelegationAuthorizer.
 	 *
 	 * @param SecretMapper $secretMapper The Secret mapper (owner lookup)

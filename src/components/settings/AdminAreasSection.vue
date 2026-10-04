@@ -3,10 +3,9 @@
   SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 
   The "Admin areas" note in the General area (admin-scoped-roles §3.3):
-  lists the five delegable areas and what each covers, links to
-  Nextcloud's administration privileges page, and warns while the legacy
-  vault_admin group still has members (D4). The member count comes from
-  initial state (`vault-admin-members`), never from the DOM.
+  lists the five delegable areas and what each covers, and links to
+  Nextcloud's administration privileges page. The notice about the former
+  vault_admin group is gone with its alias (#1043).
 
   @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.3
 -->
@@ -20,18 +19,6 @@
 			)
 		">
 		<div class="admin-areas" data-testid="admin-areas-section">
-			<NcNoteCard
-				v-if="vaultAdminMembers > 0"
-				type="warning"
-				data-testid="admin-areas-legacy-warning">
-				{{
-					t(
-						'keepiq',
-						'The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.',
-						{ count: vaultAdminMembers },
-					)
-				}}
-			</NcNoteCard>
 			<p>
 				{{
 					t(
@@ -61,19 +48,11 @@
 
 <script>
 import { CnSettingsSection } from '@conduction/nextcloud-vue'
-import { loadState } from '@nextcloud/initial-state'
 import { generateUrl } from '@nextcloud/router'
-import { NcNoteCard } from '@nextcloud/vue'
 
 export default {
 	name: 'AdminAreasSection',
-	components: { CnSettingsSection, NcNoteCard },
-
-	data() {
-		return {
-			vaultAdminMembers: loadState('keepiq', 'vault-admin-members', 0),
-		}
-	},
+	components: { CnSettingsSection },
 
 	computed: {
 		/**

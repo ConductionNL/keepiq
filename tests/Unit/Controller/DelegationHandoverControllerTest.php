@@ -123,14 +123,14 @@ class DelegationHandoverControllerTest extends TestCase {
 		$this->signIn('someuser');
 		$this->service->method('createAdminHandover')
 			->willThrowException(
-				new InvalidArgumentException('Admin handover requires membership in the vault_admin group')
+				new InvalidArgumentException('Admin handover requires the People and offboarding admin area')
 			);
 
 		$response = $this->controller()->handover(secretId: 'secret-1');
 
 		$this->assertSame(403, $response->getStatus());
 		$this->assertSame(
-			'Admin handover requires membership in the vault_admin group',
+			'Admin handover requires the People and offboarding admin area',
 			$response->getData()['message']
 		);
 	}//end testAServiceRefusalBecomesA403CarryingItsReason()

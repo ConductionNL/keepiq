@@ -29,18 +29,20 @@ use OCP\IGroupManager;
 use OCP\IUser;
 use OCP\IUserManager;
 use OCP\Settings\IManager;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
- * Admin, delegated user, alias member and outsider.
+ * Admin, delegated user, vault_admin member and outsider.
  */
 class AdminAreaAuthorizerTest extends TestCase {
 	use AdminAreaFixture;
 
 	/**
-	 * A group manager answering for one admin and one vault_admin member.
+	 * A group manager answering for one admin and one member of the former
+	 * vault_admin group, which no longer grants anything.
 	 *
 	 * @return IGroupManager
 	 */
@@ -83,17 +85,36 @@ class AdminAreaAuthorizerTest extends TestCase {
 	}//end testADelegatedUserHoldsOnlyTheDelegatedArea()
 
 	/**
-	 * A vault_admin member holds People and nothing else (D4 alias).
+	 * Every area class, keyed by area key, for the alias refusal.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function everyArea(): array {
+		$cases = [];
+		foreach (AdminAreaAuthorizer::AREAS as $key => $class) {
+			$cases[$key] = [$class];
+		}
+
+		return $cases;
+	}//end everyArea()
+
+	/**
+	 * A vault_admin member without a delegation holds no area: the alias for
+	 * People is gone (red before: People answered true).
+	 *
+	 * @param string $areaClass The area class asked about
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.3
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#4.1
 	 */
-	public function testTheLegacyGroupHoldsOnlyPeople(): void {
+	#[DataProvider('everyArea')]
+	public function testAVaultAdminMemberWithoutADelegationHoldsNoArea(string $areaClass): void {
 		$areas = $this->areaAuthorizer(groupManager: $this->groupDirectory(), delegated: []);
 
-		$this->assertSame(['people'], $areas->areasOf(userId: 'legacy'));
-	}//end testTheLegacyGroupHoldsOnlyPeople()
+		$this->assertFalse($areas->holds(userId: 'legacy', areaClass: $areaClass));
+		$this->assertSame([], $areas->areasOf(userId: 'legacy'));
+	}//end testAVaultAdminMemberWithoutADelegationHoldsNoArea()
 
 	/**
 	 * An outsider holds nothing, and an unknown class is never held, even by

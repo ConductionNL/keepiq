@@ -1578,7 +1578,6 @@ OC.L10N.register(
         "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Níl cóip de na rúin seo agat, mar sin níor fhaigh na baill nua iad fós. Is féidir leis an úinéir iad a roinnt: {names}",
         "Admin areas": "Réimsí riaracháin",
         "Give a group only the parts of Keepiq administration it needs.": "Tabhair do ghrúpa na codanna de riarachán Keepiq a theastaíonn uaidh amháin.",
-        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Tá {count} ball sa sean-ghrúpa vault_admin. Áirítear fós é mar an réimse Daoine agus imeachtaí, go dtí go mbainfidh leagan níos déanaí é. Tarmligh an réimse sin chuig grúpa ina ionad.",
         "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Tarmligh réimse amháin nó níos mó chuig grúpa ar leathanach na bpribhléidí riaracháin. Tá gach réimse ag riarthóirí an chásanna.",
         "Open administration privileges": "Oscail pribhléidí riaracháin",
         "Policies": "Polasaithe",
