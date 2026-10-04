@@ -44,7 +44,7 @@ use Throwable;
  *   stored secret, the copy and the audit, and answers a declined share with
  *   the decline (task 4.4); each refusal is the same "share not found".
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
  */
 class FederatedRemoteChangeService {
 	/**
@@ -98,7 +98,7 @@ class FederatedRemoteChangeService {
 	 *
 	 * @throws ShareNotFound For every refusal
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function handle(string $type, string $providerId, array $notification): array {
 		$row = $this->verifiedRow(providerId: $providerId, presented: $notification['sharedSecret'] ?? null);
@@ -176,7 +176,7 @@ class FederatedRemoteChangeService {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function senderOf(string $presented, array $notification): string {
 		$row = $this->rowFor(providerId: (string)($notification['providerId'] ?? ''), presented: $presented);

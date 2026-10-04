@@ -34,7 +34,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 /**
  * The recipient's inbound federated shares.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
  */
 class FederatedInboundService {
 	/**
@@ -62,7 +62,7 @@ class FederatedInboundService {
 	 *
 	 * @return FederatedInbound[]
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 	 */
 	public function listFor(string $userId): array {
 		return $this->inboundMapper->findByRecipient(recipientUid: $userId);
@@ -79,7 +79,7 @@ class FederatedInboundService {
 	 * @throws NotFoundException When it is not the user's pending share
 	 * @throws \RuntimeException `pull_failed` or `no_suite`
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 	 */
 	public function accept(string $id, string $userId): FederatedInbound {
 		$row = $this->pendingOf(id: $id, userId: $userId);
@@ -104,7 +104,7 @@ class FederatedInboundService {
 	 *
 	 * @throws NotFoundException When it is not the user's pending share
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 	 */
 	public function decline(string $id, string $userId): FederatedInbound {
 		$row = $this->pendingOf(id: $id, userId: $userId);

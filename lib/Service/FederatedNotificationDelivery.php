@@ -34,7 +34,7 @@ use OCA\Keepiq\Event\Audit\AuditEventTypes;
 /**
  * OCM notifications with retries.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
  */
 class FederatedNotificationDelivery {
 	/**
@@ -91,7 +91,7 @@ class FederatedNotificationDelivery {
 	 *
 	 * @return bool Whether it was delivered
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function deliver(FederatedShare $row, string $type): bool {
 		$row->setPendingNotification($type);
@@ -108,7 +108,7 @@ class FederatedNotificationDelivery {
 	 *
 	 * @return int How many were delivered
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function retryDue(DateTime $now, int $limit = 50): int {
 		$delivered = 0;

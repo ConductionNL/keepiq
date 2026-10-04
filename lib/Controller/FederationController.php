@@ -40,7 +40,7 @@ use RuntimeException;
 /**
  * Federated recipient certificate lookup for vault owners.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
  */
 class FederationController extends Controller {
 	/**
@@ -76,7 +76,7 @@ class FederationController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	#[NoAdminRequired]
 	#[UserRateLimit(limit: 60, period: 60)]
@@ -116,7 +116,7 @@ class FederationController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-no-partner-no-federation
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-no-partner-no-federation
 	 */
 	#[NoAdminRequired]
 	public function status(): JSONResponse {

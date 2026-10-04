@@ -47,7 +47,7 @@ use OCP\OCM\Events\OCMEndpointRequestEvent;
  *
  * @template-implements IEventListener<Event>
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
  */
 class FederationOcmRequestListener implements IEventListener {
 	/**
@@ -73,7 +73,7 @@ class FederationOcmRequestListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof OCMEndpointRequestEvent === false
@@ -102,7 +102,7 @@ class FederationOcmRequestListener implements IEventListener {
 	 *
 	 * @return array<string,mixed>|null
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	private function answerFor(OCMEndpointRequestEvent $event): ?array {
 		if (strtoupper($event->getUsedMethod()) !== 'POST') {

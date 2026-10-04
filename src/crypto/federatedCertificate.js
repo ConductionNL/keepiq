@@ -16,7 +16,7 @@
  *
  * Only the structure needed for those checks is parsed; no ASN.1 library.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
  */
 
 const OID_COMMON_NAME = '2.5.4.3'
@@ -311,7 +311,7 @@ async function sha256Hex(der) {
  *
  * @param {string} cloudId A cloud id.
  * @return {string} The canonical form, or '' without `user@remote`.
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
  */
 export function canonicalCloudId(cloudId) {
 	const text = String(cloudId ?? '')
@@ -339,7 +339,7 @@ export function canonicalCloudId(cloudId) {
  * @param {string} input.cloudId The cloud id the owner entered.
  * @param {number} [input.now] The time to check validity at (ms), default now.
  * @return {Promise<{fingerprint: string}>} The recipient certificate's SHA-256, colon separated.
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
  */
 export async function verifyFederatedCertificate({
 	certificate,

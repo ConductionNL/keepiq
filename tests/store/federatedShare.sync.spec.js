@@ -9,7 +9,7 @@
  * value and sends only ciphertext. A certificate that no longer verifies,
  * or a recipient the partner no longer knows, suspends that share instead.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
  */
 
 import axios from '@nextcloud/axios'

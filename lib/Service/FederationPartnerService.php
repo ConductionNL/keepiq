@@ -39,7 +39,7 @@ use Throwable;
 /**
  * Partner allowlist: add, pin, permissions, and lookups by host.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
  */
 class FederationPartnerService {
 	/**
@@ -75,7 +75,7 @@ class FederationPartnerService {
 	 *
 	 * @return string|null Null when there is no host
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public function hostOf(string $url): ?string {
 		$url = trim($url);
@@ -111,7 +111,7 @@ class FederationPartnerService {
 	 *
 	 * @throws InvalidArgumentException When the URL is not usable
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function normaliseBaseUrl(string $url): string {
 		$parts = parse_url(trim($url));
@@ -142,7 +142,7 @@ class FederationPartnerService {
 	 *
 	 * @throws InvalidArgumentException When the partner cannot federate
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function preview(string $url): array {
 		$baseUrl = $this->normaliseBaseUrl(url: $url);
@@ -194,7 +194,7 @@ class FederationPartnerService {
 	 *
 	 * @throws InvalidArgumentException When the partner is invalid, known, or its fingerprint changed
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function add(
 		string $url,
@@ -236,7 +236,7 @@ class FederationPartnerService {
 	 *
 	 * @throws DoesNotExistException When the partner does not exist
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function update(string $id, bool $allowOutbound, bool $allowInbound): FederationPartner {
 		$partner = $this->partnerMapper->findById(id: $id);
@@ -255,7 +255,7 @@ class FederationPartnerService {
 	 *
 	 * @throws DoesNotExistException When the partner does not exist
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function remove(string $id): void {
 		$this->partnerMapper->delete(entity: $this->partnerMapper->findById(id: $id));
@@ -266,7 +266,7 @@ class FederationPartnerService {
 	 *
 	 * @return FederationPartner[]
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function all(): array {
 		return $this->partnerMapper->findAllPartners();
@@ -277,7 +277,7 @@ class FederationPartnerService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function hasAny(): bool {
 		return $this->partnerMapper->findAllPartners() !== [];
@@ -290,7 +290,7 @@ class FederationPartnerService {
 	 *
 	 * @return FederationPartner|null Null for an unsigned call, a stranger, or a partner without inbound
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public function inboundPartnerForSigner(?string $signer): ?FederationPartner {
 		if ($signer === null) {
@@ -312,7 +312,7 @@ class FederationPartnerService {
 	 *
 	 * @return FederationPartner|null Null when that host is no outbound partner
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public function outboundPartnerForRemote(string $remote): ?FederationPartner {
 		$partner = $this->findByHost(host: (string)$this->hostOf(url: $remote));

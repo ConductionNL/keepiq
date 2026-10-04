@@ -6,7 +6,7 @@
  * (sharing-federated-recipients tasks 3.5 and 4.4): Bob may file it in a
  * folder and delete it, and still cannot edit, archive or share it.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-files-his-copy-in-a-folder
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-files-his-copy-in-a-folder
  */
 
 import axios from '@nextcloud/axios'

@@ -7,7 +7,7 @@
   partner's certificate lookup treats this user as unknown and a share sent
   to them is refused.
 
-  @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-users-opt-in-to-receiving
+  @spec openspec/specs/federated-sharing/spec.md#requirement-users-opt-in-to-receiving
 -->
 <template>
 	<div class="federation-receive" data-testid="federation-receive-section">
@@ -47,7 +47,7 @@ export default {
 	/**
 	 * Load the current preference.
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-users-opt-in-to-receiving
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-users-opt-in-to-receiving
 	 */
 	async created() {
 		try {
@@ -66,7 +66,7 @@ export default {
 		 * Store the preference.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-users-opt-in-to-receiving
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-users-opt-in-to-receiving
 		 */
 		async save() {
 			await axios.put(generateUrl('/apps/keepiq/api/settings/user'), {

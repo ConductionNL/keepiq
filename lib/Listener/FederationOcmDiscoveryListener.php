@@ -35,7 +35,7 @@ use OCP\OCM\Events\LocalOCMDiscoveryEvent;
  *
  * @template-implements IEventListener<Event>
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
  */
 class FederationOcmDiscoveryListener implements IEventListener {
 	/**
@@ -59,7 +59,7 @@ class FederationOcmDiscoveryListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public function handle(Event $event): void {
 		if ($event instanceof LocalOCMDiscoveryEvent === false || $this->partners->hasAny() === false) {

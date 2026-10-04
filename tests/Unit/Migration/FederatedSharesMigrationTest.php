@@ -29,7 +29,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Task 1.1 of sharing-federated-recipients.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 class FederatedSharesMigrationTest extends TestCase {
 

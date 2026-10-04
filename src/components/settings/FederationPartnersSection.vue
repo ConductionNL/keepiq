@@ -8,7 +8,7 @@
   partner's administrator before adding it. Each partner has two
   directions. Every change asks for the Nextcloud password again.
 
-  @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+  @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 -->
 <template>
 	<CnSettingsSection
@@ -181,7 +181,7 @@ export default {
 	/**
 	 * Load the partners.
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	async created() {
 		await this.load()
@@ -210,7 +210,7 @@ export default {
 		 * Read the partners, the own fingerprint and the version gate.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 		 */
 		async load() {
 			try {
@@ -229,7 +229,7 @@ export default {
 		 * Read the partner's root fingerprint for comparison.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 		 */
 		async check() {
 			this.error = null
@@ -252,7 +252,7 @@ export default {
 		 * Add the previewed partner with the fingerprint the administrator compared.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 		 */
 		async add() {
 			if (!this.preview || !this.compared) {
@@ -285,7 +285,7 @@ export default {
 		 * @param {object} partner The partner row.
 		 * @param {object} change `{allowOutbound}` or `{allowInbound}`.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 		 */
 		async updatePartner(partner, change) {
 			this.error = null
@@ -310,7 +310,7 @@ export default {
 		 *
 		 * @param {object} partner The partner row.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 		 */
 		async removePartner(partner) {
 			this.error = null

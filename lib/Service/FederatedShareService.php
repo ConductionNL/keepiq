@@ -53,7 +53,7 @@ use RuntimeException;
  *   and the OCM messenger in one transaction-like step, and answers the
  *   partner's pull from the same row; each refusal is its own exception.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 class FederatedShareService {
 	/**
@@ -116,7 +116,7 @@ class FederatedShareService {
 	 * @throws InvalidArgumentException `invalid`, `not_a_partner`, `unknown_recipient` or `already_shared`
 	 * @throws RuntimeException `federation_unavailable`, or `delivery_failed` when the partner refused it
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function create(
 		string $secretId,
@@ -195,7 +195,7 @@ class FederatedShareService {
 	 * @throws NotFoundException When it is not the user's live share
 	 * @throws InvalidArgumentException `invalid`
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
 	 */
 	public function update(string $shareId, string $userId, string $certFingerprint, array $ciphertext): FederatedShare {
 		$row = $this->ownedShare(shareId: $shareId, userId: $userId);
@@ -232,7 +232,7 @@ class FederatedShareService {
 	 *
 	 * @return int How many recipients were told
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-new-name-reaches-bob
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-new-name-reaches-bob
 	 */
 	public function detailsChanged(string $secretId, string $userId): int {
 		$count = 0;
@@ -262,7 +262,7 @@ class FederatedShareService {
 	 *
 	 * @throws NotFoundException When it is not the user's share
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
 	 */
 	public function revoke(string $shareId, string $userId): void {
 		$row = $this->ownedShare(shareId: $shareId, userId: $userId);
@@ -287,7 +287,7 @@ class FederatedShareService {
 	 *
 	 * @throws NotFoundException When it is not the user's share
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function suspend(string $shareId, string $userId, string $reason): FederatedShare {
 		$row = $this->ownedShare(shareId: $shareId, userId: $userId);
@@ -302,7 +302,7 @@ class FederatedShareService {
 	 *
 	 * @return int How many shares were suspended
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function suspendForPartner(string $partnerId): int {
 		$count = 0;
@@ -399,7 +399,7 @@ class FederatedShareService {
 	 *
 	 * @throws NotFoundException When the secret is not the user's own
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function listForSecret(string $secretId, string $userId): array {
 		$this->ownedSecret(secretId: $secretId, userId: $userId);
@@ -417,7 +417,7 @@ class FederatedShareService {
 	 *
 	 * @return array<string,mixed>|null
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function answerPull(?string $signer, string $shareId, array $payload): ?array {
 		$sharedSecret = $payload['sharedSecret'] ?? null;

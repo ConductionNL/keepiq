@@ -31,7 +31,7 @@ use OCP\IDBConnection;
  *
  * @template-extends QBMapper<FederatedInbound>
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 class FederatedInboundMapper extends QBMapper {
 	/**
@@ -54,7 +54,7 @@ class FederatedInboundMapper extends QBMapper {
 	 *
 	 * @throws DoesNotExistException When no row matches
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function findById(string $id): FederatedInbound {
 		$qb = $this->db->getQueryBuilder();
@@ -75,7 +75,7 @@ class FederatedInboundMapper extends QBMapper {
 	 *
 	 * @throws DoesNotExistException When no row matches
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function findByRemote(string $partnerId, string $remoteShareId): FederatedInbound {
 		$qb = $this->db->getQueryBuilder();
@@ -95,7 +95,7 @@ class FederatedInboundMapper extends QBMapper {
 	 *
 	 * @return FederatedInbound[]
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function findByRemoteShareId(string $remoteShareId): array {
 		$qb = $this->db->getQueryBuilder();
@@ -113,7 +113,7 @@ class FederatedInboundMapper extends QBMapper {
 	 *
 	 * @return FederatedInbound[]
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
 	 */
 	public function findBySecretId(string $secretId): array {
 		$qb = $this->db->getQueryBuilder();
@@ -131,7 +131,7 @@ class FederatedInboundMapper extends QBMapper {
 	 *
 	 * @return FederatedInbound[]
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function findByRecipient(string $recipientUid): array {
 		$qb = $this->db->getQueryBuilder();

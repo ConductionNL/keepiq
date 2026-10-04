@@ -1548,7 +1548,7 @@ export default {
 		 * moving it to a folder and deleting it stay (tasks 3.5 and 4.4).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-remote-copies-are-read-only
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-remote-copies-are-read-only
 		 */
 		federatedReadOnly() {
 			return this.secret?.readOnly === true

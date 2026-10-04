@@ -92,7 +92,7 @@ final class PlatformIntegrationRegistrar {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function boot(IBootContext $context): void {
 		(new FederationEventRegistrar())->boot(context: $context);

@@ -30,7 +30,7 @@ namespace OCA\Keepiq\Service;
 /**
  * Canonical form of a federated cloud id.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
  */
 final class CloudIdForm {
 	/**
@@ -40,7 +40,7 @@ final class CloudIdForm {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public function canonical(string $cloudId): string {
 		$atSign = strrpos($cloudId, '@');
@@ -65,7 +65,7 @@ final class CloudIdForm {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public function same(string $first, string $second): bool {
 		$canonical = $this->canonical(cloudId: $first);

@@ -46,7 +46,7 @@ use OCP\AppFramework\Db\Entity;
  * @method DateTime|null getAddedAt()
  * @method void setAddedAt(DateTime $addedAt)
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
  */
 class FederationPartner extends Entity implements JsonSerializable {
 	/**
@@ -146,7 +146,7 @@ class FederationPartner extends Entity implements JsonSerializable {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function jsonSerialize(): array {
 		return [
