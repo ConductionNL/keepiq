@@ -97,7 +97,14 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 		runtime: {
 			id: EXTENSION_ID,
 			getURL: (path) => EXTENSION_BASE + path,
-			onMessage: { addListener: () => {}, removeListener: () => {} },
+			// Listeners a page registered, so a test can play the worker.
+			onMessage: {
+				listeners: [],
+				addListener(fn) {
+					this.listeners.push(fn)
+				},
+				removeListener() {},
+			},
 		},
 		tabs: {
 			query: vi.fn(async () => [tab]),

@@ -60,12 +60,27 @@ export function activeSuiteId(accountId) {
 	return accounts.get(accountId)?.suiteId ?? null
 }
 
+/**
+ * The unlock-key epoch of the suite an account was unlocked with, or null.
+ *
+ * @param {string} accountId The account id.
+ * @return {number|null}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-lock/spec.md#requirement-a-changed-master-password-locks-the-extension
+ */
+export function activeSuiteEpoch(accountId) {
+	return accounts.get(accountId)?.suiteEpoch ?? null
+}
+
 async function hold(accountId, suite, pem) {
 	lock(accountId)
 	accounts.set(accountId, {
 		cryptoKey: await importPrivateKey(pem), // extractable: false
 		publicKey: await importPublicKey(suite.certificate),
 		suiteId: suite.id,
+		// Rises when the master password changes (the key is re-wrapped).
+		suiteEpoch: Number.isInteger(suite.unlockKeyEpoch)
+			? suite.unlockKeyEpoch
+			: null,
 		idleTimer: null,
 	})
 }

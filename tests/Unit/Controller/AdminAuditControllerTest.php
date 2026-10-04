@@ -88,7 +88,7 @@ class AdminAuditControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.5
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-returns-metadata-only
 	 */
 	public function testEventsPassTheFilters(): void {
 		$page = ['results' => [], 'total' => 0];
@@ -106,7 +106,7 @@ class AdminAuditControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.5
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-returns-metadata-only
 	 */
 	public function testComplianceReports(): void {
 		$report = new ComplianceReport();
@@ -130,7 +130,7 @@ class AdminAuditControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.5
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-returns-metadata-only
 	 */
 	public function testSinksCarryNoSecret(): void {
 		$sink = new SiemSink();
@@ -155,7 +155,7 @@ class AdminAuditControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.5
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-returns-metadata-only
 	 */
 	public function testSinkWrites(): void {
 		$this->siem->method('createSink')->willThrowException(new InvalidArgumentException('endpoint is required'));

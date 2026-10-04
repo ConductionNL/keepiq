@@ -553,11 +553,13 @@ function wire() {
 		await refresh()
 	})
 	$('signed-out-disconnect').addEventListener('click', async () => {
+		if (!confirmDisconnect()) return
 		await send('unpair', { accountId: state.activeAccountId })
 		await refresh()
 	})
 
 	$('settings-unpair').addEventListener('click', async () => {
+		if (!confirmDisconnect()) return
 		await send('unpair', { accountId: state.activeAccountId })
 		await refresh()
 	})
@@ -589,15 +591,56 @@ function wire() {
 	})
 
 	$('unlock-unpair').addEventListener('click', async () => {
+		if (!confirmDisconnect()) return
 		await send('unpair', { accountId: state.activeAccountId })
 		await refresh()
 	})
 
 	$('lock-btn').addEventListener('click', async () => {
-		await send('lock')
+		// The account on screen; the others stay as they are.
+		await send('lock', { accountId: state.activeAccountId })
 		await refresh()
 	})
 }
 
+/**
+ * The worker locked an account. When it is the one on screen, drop what the
+ * popup shows of the vault at once and show the lock screen.
+ *
+ * @param {object} msg The worker's message.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-lock/spec.md#requirement-the-popup-forgets-the-vault-when-it-locks
+ */
+function onWorkerMessage(msg) {
+	if (msg?.type !== 'keepiq-locked') return
+	if (msg.accountId && msg.accountId !== state.activeAccountId) return
+	vaultView?.forget()
+	$('candidates').replaceChildren()
+	$('totp-code').textContent = ''
+	$('totp-block').hidden = true
+	$('gen-output').textContent = ''
+	$('view-unlocked').hidden = true
+	refresh()
+}
+
+/**
+ * Ask before disconnecting: it deletes the account's app password in
+ * Nextcloud and its data in this browser.
+ *
+ * @return {boolean} Whether the user confirmed.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-lock/spec.md#requirement-lock-locks-the-account-on-screen-and-disconnect-asks-first
+ */
+function confirmDisconnect() {
+	const account = (state.accounts || []).find(
+		(a) => a.id === state.activeAccountId,
+	)
+	const name = account
+		? account.label || account.user + '@' + account.host
+		: 'this account'
+	return window.confirm(
+		`Disconnect ${name}? Its app password is deleted in Nextcloud and its data is removed from this browser.`,
+	)
+}
+
+chrome.runtime.onMessage?.addListener(onWorkerMessage)
 wire()
 refresh()

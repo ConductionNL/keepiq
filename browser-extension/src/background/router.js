@@ -116,6 +116,7 @@ function syncModule() {
 			api,
 			local: chrome.storage.local,
 			activeSuiteId: (id) => vault.activeSuiteId(id),
+			activeSuiteEpoch: (id) => vault.activeSuiteEpoch(id),
 			lock: (id) => lockAccount(id),
 		})
 	}
@@ -160,6 +161,14 @@ export async function onAlarm(alarm) {
 // tab is forgotten too, so a locked popup reopens on its first tab.
 vault.onLock((accountId) => {
 	chrome.alarms?.clear(SYNC_ALARM(accountId))
+	// Tell an open popup, so it drops what it shows of the vault at once.
+	try {
+		chrome.runtime
+			.sendMessage({ type: 'keepiq-locked', accountId })
+			?.catch?.(() => {})
+	} catch {
+		// No page is listening.
+	}
 	sessionStore()
 		?.remove('popup:lastTab')
 		.catch(() => {})
@@ -808,7 +817,8 @@ async function doOtpFieldDetected(payload, sender) {
 	const intents = await readIntents()
 	const intent = intents[tabId]
 	if (!intent) return { filled: false }
-	const site = registrableDomain(hostOf(senderOrigin(sender)))
+	const host = hostOf(senderOrigin(sender))
+	const site = registrableDomain(host)
 	if (site === '' || site !== intent.site) return { filled: false }
 	delete intents[tabId]
 	await writeIntents(intents)
@@ -822,7 +832,9 @@ async function doOtpFieldDetected(payload, sender) {
 	const res = await chrome.tabs
 		.sendMessage(
 			tabId,
-			{ type: 'fill-otp', payload: { code: result.code } },
+			// The frame fills only for its own host (fillScope, #740), so
+			// the message names the host the field was reported from.
+			{ type: 'fill-otp', payload: { code: result.code, host } },
 			{ frameId: sender.frameId ?? 0 },
 		)
 		.catch(() => ({ filled: false }))
