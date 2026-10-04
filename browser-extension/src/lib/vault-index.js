@@ -52,7 +52,31 @@ export function buildIndex(rows, types, folders) {
  * @return {number}
  */
 export function byName(a, b) {
-	return a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+	return (
+		a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+		// Same name: a fixed order, so the list does not shuffle.
+		|| String(a.id).localeCompare(String(b.id))
+	)
+}
+
+/** The folder filter value for items in no folder. */
+export const NO_FOLDER = '__none__'
+
+/**
+ * What the list should say: loading, an empty vault, nothing matching, every
+ * item blocked, or the items.
+ *
+ * @param {Array<object>|null} index The whole index, or null while loading.
+ * @param {Array<object>} shown The entries after filtering.
+ * @return {'loading'|'empty'|'no-match'|'all-blocked'|'items'}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-list-and-settings/spec.md#requirement-a-list-that-says-what-it-shows
+ */
+export function listState(index, shown) {
+	if (index === null) return 'loading'
+	if (index.length === 0) return 'empty'
+	if (shown.length === 0) return 'no-match'
+	if (index.every((e) => e.blocked)) return 'all-blocked'
+	return 'items'
 }
 
 /**
@@ -72,7 +96,8 @@ export function filterIndex(
 	const needle = query.trim().toLowerCase()
 	return entries.filter(
 		(e) =>
-			(!folderId || e.folderId === folderId)
+			(!folderId
+				|| (folderId === NO_FOLDER ? !e.folderId : e.folderId === folderId))
 			&& (!typeName || e.typeName === typeName)
 			&& (needle === ''
 				|| e.name.toLowerCase().includes(needle)

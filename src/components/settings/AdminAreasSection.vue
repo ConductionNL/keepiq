@@ -8,7 +8,7 @@
   vault_admin group still has members (D4). The member count comes from
   initial state (`vault-admin-members`), never from the DOM.
 
-  @spec openspec/changes/admin-scoped-roles/tasks.md#3.3
+  @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.3
 -->
 <template>
 	<CnSettingsSection
@@ -80,7 +80,7 @@ export default {
 		 * The five areas with what each one covers.
 		 *
 		 * @return {Array<{key: string, name: string, covers: string}>} The areas
-		 * @spec openspec/changes/admin-scoped-roles/tasks.md#3.3
+		 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.3
 		 */
 		areas() {
 			return [
@@ -131,7 +131,7 @@ export default {
 		 * Nextcloud's administration privileges page.
 		 *
 		 * @return {string} The URL
-		 * @spec openspec/changes/admin-scoped-roles/tasks.md#3.3
+		 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.3
 		 */
 		privilegesUrl() {
 			return generateUrl('/settings/admin/admindelegation')

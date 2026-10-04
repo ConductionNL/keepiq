@@ -12,9 +12,9 @@ import type { APIRequestContext, Page } from '@playwright/test'
  * (`AuthorizedGroup#saveSettings`). It then signs in as that member and checks
  * what the member sees and what the server refuses.
  *
- * @e2e openspec/changes/admin-scoped-roles/specs/admin-scoped-roles/spec.md#administrator-builds-an-auditor-role
- * @e2e openspec/changes/admin-scoped-roles/specs/admin-scoped-roles/spec.md#auditor-cannot-change-policies
- * @e2e openspec/changes/admin-scoped-roles/specs/admin-scoped-roles/spec.md#an-area-write-carries-only-its-own-keys
+ * @e2e openspec/specs/admin-scoped-roles/spec.md#administrator-builds-an-auditor-role
+ * @e2e openspec/specs/admin-scoped-roles/spec.md#auditor-cannot-change-policies
+ * @e2e openspec/specs/admin-scoped-roles/spec.md#an-area-write-carries-only-its-own-keys
  */
 import { expect, test } from '@playwright/test'
 import { BASE_URL } from '../base-url.ts'

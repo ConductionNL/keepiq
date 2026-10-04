@@ -75,7 +75,7 @@ class AdminSettingsAreaTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	public function testTheAreasPartitionTheAdminSettings(): void {
 		$seen = [];
@@ -99,7 +99,7 @@ class AdminSettingsAreaTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	public function testRetentionIsPoliciesAndAttachmentLimitsAreGeneral(): void {
 		$policies = $this->service->getAreaSettings(area: 'policies');
@@ -123,7 +123,7 @@ class AdminSettingsAreaTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	public function testAnAreaWriteRefusesAKeyOfAnotherArea(): void {
 		try {
@@ -141,7 +141,7 @@ class AdminSettingsAreaTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	public function testEveryAreaRefusesForeignKeys(): void {
 		foreach ([['general', 'lease_renewable'], ['policies', 'breach_check_enabled'], ['applications', 'trash_retention_days']] as [$area, $key]) {
@@ -161,7 +161,7 @@ class AdminSettingsAreaTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	public function testAnAreaWriteStoresItsOwnKeys(): void {
 		$result = $this->service->updateAreaSettings(area: 'policies', data: ['trash_retention_days' => 60, 'version_retention_count' => 5]);
@@ -179,7 +179,7 @@ class AdminSettingsAreaTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	public function testGeneralWritesTheDeviceApprovalAndOfflineEditSwitches(): void {
 		$this->service->updateAreaSettings(area: 'general', data: ['device_approval_enabled' => false, 'offline_edits_enabled' => true]);
@@ -193,7 +193,7 @@ class AdminSettingsAreaTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	public function testAnUnknownAreaIsRefused(): void {
 		$this->expectException(InvalidArgumentException::class);

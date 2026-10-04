@@ -251,7 +251,7 @@ class DelegationService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.4
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.4
 	 */
 	public function canHandover(string $userId): bool {
 		return $this->authorizer->canHandover(userId: $userId);

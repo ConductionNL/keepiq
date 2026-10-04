@@ -6,7 +6,7 @@
  * each area mounts only where the server provided its initial-state flag,
  * renders only its own sections, and only General carries the shell.
  *
- * @spec openspec/changes/admin-scoped-roles/tasks.md#3.1
+ * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.1
  */
 
 import { shallowMount } from '@vue/test-utils'

@@ -25,7 +25,7 @@ Firefox Add-ons signs the listed package once its review passes. The job `attach
 
 ## Store credentials
 
-All of these are settings of the GitHub environment `extension-stores`. Environment secrets are readable only by jobs that name the environment, and the environment requires a maintainer's approval.
+All of these are settings of the GitHub environment `extension-stores`. Environment secrets are readable only by jobs that name the environment, and the environment requires a maintainer's approval. Two maintainers can approve, rubenvdlinde and rjzondervan, and one approval is enough (decided 2 October 2026, keepiq#783).
 
 | Name | Kind | What it holds | Where it comes from |
 |---|---|---|---|
