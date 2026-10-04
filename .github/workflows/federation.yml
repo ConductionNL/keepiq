@@ -1,0 +1,97 @@
+name: Federation (two instances)
+
+# The two-instance test of federated sharing (sharing-federated-recipients
+# task 5.1): two Nextcloud 35 containers on one network, each with Keepiq and
+# OpenRegister, partners pinned on both sides, then a browser shares a secret
+# from A to a user of B, B accepts and reads it, A updates it and revokes it.
+# See tests/integration/federation/.
+
+on:
+  pull_request:
+    branches: [main, development, beta]
+    paths:
+      - "lib/**"
+      - "src/**"
+      - "appinfo/**"
+      - "tests/integration/federation/**"
+      - ".github/workflows/federation.yml"
+  push:
+    branches: [development]
+    paths:
+      - "lib/**"
+      - "src/**"
+      - "appinfo/**"
+      - "tests/integration/federation/**"
+      - ".github/workflows/federation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  two-instances:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: keepiq
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: ConductionNL/openregister
+          ref: development
+          path: openregister
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: composer:v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Build Keepiq
+        working-directory: keepiq
+        run: |
+          composer install --no-dev --prefer-dist --no-interaction
+          npm ci
+          npm run build
+      - name: Build OpenRegister
+        working-directory: openregister
+        run: |
+          composer install --no-dev --prefer-dist --no-interaction
+          npm ci
+          npm run build
+
+      - name: Start the two instances
+        run: docker compose -p kq-fed -f keepiq/tests/integration/federation/compose.yaml up -d
+      - name: Provision both instances and pin the partners
+        run: bash keepiq/tests/integration/federation/setup.sh kq-fed keepiq openregister
+
+      - name: Install the browser
+        working-directory: keepiq
+        run: |
+          npx playwright install --with-deps chromium
+      - name: Share, accept, update and revoke across the two instances
+        working-directory: keepiq
+        env:
+          FED_A_URL: http://localhost:8101
+          FED_B_URL: http://localhost:8102
+        run: npx playwright test --config tests/integration/federation/playwright.config.ts
+
+      - name: Server logs
+        if: failure()
+        run: |
+          for side in a b; do
+            echo "== instance ${side}"
+            docker exec "kq-fed-nc-${side}-1" tail -n 200 /var/www/html/data/nextcloud.log || true
+          done
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: federation-playwright-report
+          path: |
+            keepiq/playwright-report-federation/
+            keepiq/test-results-federation/
+          if-no-files-found: ignore
