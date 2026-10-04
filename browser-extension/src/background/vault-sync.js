@@ -8,7 +8,7 @@
  * One sync runs per account at a time; a trigger during a running sync gets
  * that sync. A suite change discards the snapshot and locks the vault.
  *
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault-sync/spec.md#requirement-keep-a-snapshot-of-the-vault
+ * @spec openspec/specs/extension-vault-sync/spec.md#requirement-keep-a-snapshot-of-the-vault
  */
 
 /** Minutes between scheduled syncs while unlocked. */

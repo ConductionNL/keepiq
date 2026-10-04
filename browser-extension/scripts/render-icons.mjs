@@ -4,7 +4,7 @@
  * `node browser-extension/scripts/render-icons.mjs` after the SVG changes;
  * the PNGs are committed (clients-extension-gaps).
  *
- * @spec openspec/changes/clients-extension-gaps/specs/extension-release/spec.md#requirement-the-extension-ships-its-own-icons
+ * @spec openspec/specs/extension-release/spec.md#requirement-the-extension-ships-its-own-icons
  */
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'

@@ -65,7 +65,7 @@ export function activeSuiteId(accountId) {
  *
  * @param {string} accountId The account id.
  * @return {number|null}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-lock/spec.md#requirement-a-changed-master-password-locks-the-extension
+ * @spec openspec/specs/extension-lock/spec.md#requirement-a-changed-master-password-locks-the-extension
  */
 export function activeSuiteEpoch(accountId) {
 	return accounts.get(accountId)?.suiteEpoch ?? null
@@ -95,7 +95,7 @@ async function hold(accountId, suite, pem) {
  * @param {string} masterPassword The master password (used only here)
  * @return {Promise<void>}
  * @param {{suite?: object}} [options] A suite to use instead of fetching one.
- * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-unlock-offline-and-say-what-went-wrong
+ * @spec openspec/specs/extension-unlock-and-accounts/spec.md#requirement-unlock-offline-and-say-what-went-wrong
  */
 export async function unlock(accountId, config, masterPassword, options = {}) {
 	// A suite from the vault snapshot unlocks while the server is away.
@@ -122,7 +122,7 @@ export async function unlock(accountId, config, masterPassword, options = {}) {
  * @param {Uint8Array} rawKey The raw 32-byte unlock key
  * @return {Promise<void>}
  * @param {{suite?: object}} [options] A suite to use instead of fetching one.
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
+ * @spec openspec/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
  */
 export async function unlockWithRawKey(accountId, config, rawKey, options = {}) {
 	// A suite from the vault snapshot unlocks while the server is away.

@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-complete/specs/extension-popup-shell/spec.md
+ * @spec openspec/specs/extension-popup-shell/spec.md
  *
  * The popup shell on the REAL popup and router: the last tab, the Settings
  * tab, the pop-out window and the tab it stays pinned to, and the hint when

@@ -6,7 +6,7 @@
  *
  * Pure: no DOM, no network.
  *
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
+ * @spec openspec/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
  */
 
 // Where a pasted Nextcloud page address stops being the server address.

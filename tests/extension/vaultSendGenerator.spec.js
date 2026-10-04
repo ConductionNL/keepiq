@@ -6,9 +6,9 @@
  * are "encrypted" by prefixing, so a test can see that only ciphertext
  * reaches the API and that the popup only gets index fields from a list.
  *
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-generator/spec.md
+ * @spec openspec/specs/extension-vault/spec.md
+ * @spec openspec/specs/extension-send/spec.md
+ * @spec openspec/specs/extension-generator/spec.md
  */
 import { describe, expect, it, vi } from 'vitest'
 import { buildVaultHandlers } from '../../browser-extension/src/background/vault-handlers.js'

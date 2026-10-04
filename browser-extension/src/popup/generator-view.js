@@ -5,7 +5,7 @@
  * popup, with the web app's generator; nothing needs the vault key, so the
  * tab also works while locked.
  *
- * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-generator-sub-tabs
+ * @spec openspec/specs/extension-generator/spec.md#requirement-generator-sub-tabs
  */
 
 import {
@@ -26,7 +26,7 @@ import { copyText } from './clipboard.js'
  * @param {object|null} policy The org policy, raw.
  * @param {string} website The active site's host name, or ''.
  * @return {{value: string}|{error: string}}
- * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-generator-sub-tabs
+ * @spec openspec/specs/extension-generator/spec.md#requirement-generator-sub-tabs
  */
 export function generateFor(kind, options, policy, website) {
 	try {
@@ -142,7 +142,7 @@ export function initGenerator({ $, send, showError, doc = document }) {
 	 * stays on, its minimum starts at one, and the length cannot go below
 	 * the floor. Each locked control says why.
 	 *
-	 * @spec openspec/changes/clients-extension-finish/specs/extension-generator-policy/spec.md#requirement-controls-the-policy-decides-are-shown-as-such
+	 * @spec openspec/specs/extension-generator-policy/spec.md#requirement-controls-the-policy-decides-are-shown-as-such
 	 */
 	function lockToPolicy() {
 		const rule = generatorPolicy(policy)

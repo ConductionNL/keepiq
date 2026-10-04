@@ -1,7 +1,7 @@
 /**
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-generator/spec.md
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md
+ * @spec openspec/specs/extension-vault/spec.md
+ * @spec openspec/specs/extension-generator/spec.md
+ * @spec openspec/specs/extension-send/spec.md
  *
  * The REAL popup (popup.html + popup.js) against the worker's REAL router and
  * a real RSA vault: the Generator, Vault and Send tabs end to end. Every

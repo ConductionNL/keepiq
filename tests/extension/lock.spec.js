@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-gaps/specs/extension-lock/spec.md
+ * @spec openspec/specs/extension-lock/spec.md
  *
  * Locking: a changed master password locks, the popup forgets the vault the
  * moment the worker locks, Lock locks the account on screen only, and

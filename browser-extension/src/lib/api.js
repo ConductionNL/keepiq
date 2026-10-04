@@ -154,7 +154,7 @@ export async function addAccount(config) {
  * @param {string} id The account id.
  * @param {{label?: string, idleMinutes?: number, serverVersion?: string|null, appPassword?: string, loggedOut?: boolean}} patch The changes.
  * @return {Promise<object>} The updated account.
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ * @spec openspec/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
  */
 export async function updateAccount(id, patch) {
 	const accounts = await loadAccounts()
@@ -228,7 +228,7 @@ const unauthorizedListeners = []
  * means it was revoked or changed.
  *
  * @param {(config: object) => void} listener Called with the account.
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ * @spec openspec/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
  */
 export function onUnauthorized(listener) {
 	unauthorizedListeners.push(listener)
@@ -240,7 +240,7 @@ export function onUnauthorized(listener) {
  *
  * @param {object} config The account.
  * @throws {Error} When the address is not secure.
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
+ * @spec openspec/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
  */
 function assertSecure(config) {
 	if (!isSecureServerUrl(base(config))) {
@@ -261,7 +261,7 @@ function assertSecure(config) {
  * @param {string} url The full address.
  * @param {object} init The fetch options.
  * @return {Promise<Response>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-requests-carry-the-app-password-and-no-cookies
+ * @spec openspec/specs/extension-pairing/spec.md#requirement-requests-carry-the-app-password-and-no-cookies
  */
 function serverFetch(config, url, init = {}) {
 	assertSecure(config)
@@ -364,7 +364,7 @@ export function unpair(config) {
  *
  * @param {object} config The account.
  * @return {Promise<string>}
- * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-username-generator
+ * @spec openspec/specs/extension-generator/spec.md#requirement-username-generator
  */
 export async function fetchAccountEmail(config) {
 	const res = await serverFetch(
@@ -501,7 +501,7 @@ export function updateSecret(config, id, body) {
  *
  * @param {object} config The account.
  * @return {Promise<object>}
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault-sync/spec.md#requirement-keep-a-snapshot-of-the-vault
+ * @spec openspec/specs/extension-vault-sync/spec.md#requirement-keep-a-snapshot-of-the-vault
  */
 export function fetchOfflineManifest(config) {
 	return request(config, 'GET', '/api/v1/offline/manifest')
@@ -513,7 +513,7 @@ export function fetchOfflineManifest(config) {
  *
  * @param {object} config The account.
  * @return {Promise<{items: Array<object>, total: number}>}
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault-sync/spec.md#requirement-sync-when-it-matters-and-cheaply
+ * @spec openspec/specs/extension-vault-sync/spec.md#requirement-sync-when-it-matters-and-cheaply
  */
 export function latestSecret(config) {
 	return request(
@@ -535,8 +535,8 @@ export const MAX_SECRET_PAGES = 1000
  * @param {object} config The account.
  * @return {Promise<Array<object>>}
  * @throws {Error} When the vault has more pages than the fallback reads.
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
- * @spec openspec/changes/clients-extension-gaps/specs/extension-clipboard/spec.md#requirement-a-large-vault-is-never-cut-off-in-silence
+ * @spec openspec/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
+ * @spec openspec/specs/extension-clipboard/spec.md#requirement-a-large-vault-is-never-cut-off-in-silence
  */
 export async function listSecrets(config) {
 	const items = []
@@ -565,7 +565,7 @@ export async function listSecrets(config) {
  *
  * @param {object} config The account.
  * @return {Promise<Array<object>>}
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
+ * @spec openspec/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
  */
 export async function listFolders(config) {
 	const data = await request(config, 'GET', '/api/v1/folders')
@@ -578,7 +578,7 @@ export async function listFolders(config) {
  * @param {object} config The account.
  * @param {{name: string, parentId?: string|null}} body The folder.
  * @return {Promise<object>} The folder.
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+ * @spec openspec/specs/extension-vault/spec.md#requirement-manage-folders
  */
 export function createFolder(config, body) {
 	return request(config, 'POST', '/api/v1/folders', body)
@@ -591,7 +591,7 @@ export function createFolder(config, body) {
  * @param {string} id The folder id.
  * @param {string} name The new name.
  * @return {Promise<object>} The folder.
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+ * @spec openspec/specs/extension-vault/spec.md#requirement-manage-folders
  */
 export function renameFolder(config, id, name) {
 	return request(config, 'PUT', '/api/v1/folders/' + encodeURIComponent(id), {
@@ -605,7 +605,7 @@ export function renameFolder(config, id, name) {
  * @param {object} config The account.
  * @param {string} id The folder id.
  * @return {Promise<{directSecretCount: number, subfolders: Array<object>}>}
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+ * @spec openspec/specs/extension-vault/spec.md#requirement-manage-folders
  */
 export function folderChildren(config, id) {
 	return request(
@@ -623,7 +623,7 @@ export function folderChildren(config, id) {
  * @param {string} id The folder id.
  * @param {{cascade?: string, resolution?: object}} [how] From deleteRequest.
  * @return {Promise<object>}
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+ * @spec openspec/specs/extension-vault/spec.md#requirement-manage-folders
  */
 export function deleteFolder(config, id, { cascade, resolution } = {}) {
 	const query = cascade ? '?cascade=' + encodeURIComponent(cascade) : ''
@@ -641,7 +641,7 @@ export function deleteFolder(config, id, { cascade, resolution } = {}) {
  * @param {object} config The account.
  * @param {string} id The secret id.
  * @return {Promise<object|null>}
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-add-edit-and-delete-items
+ * @spec openspec/specs/extension-vault/spec.md#requirement-add-edit-and-delete-items
  */
 export function trashSecret(config, id) {
 	return request(config, 'DELETE', '/api/v1/secrets/' + encodeURIComponent(id))
@@ -653,7 +653,7 @@ export function trashSecret(config, id) {
  * @param {object} config The account.
  * @param {object} body encryptedPayload, payloadType, maxViews, ttlSeconds, hasPassword.
  * @return {Promise<object>} The send, with its token.
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-create-a-send-from-the-popup
+ * @spec openspec/specs/extension-send/spec.md#requirement-create-a-send-from-the-popup
  */
 export function createSend(config, body) {
 	return request(config, 'POST', '/api/v1/sends', body)
@@ -664,7 +664,7 @@ export function createSend(config, body) {
  *
  * @param {object} config The account.
  * @return {Promise<Array<object>>}
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-list-and-end-my-sends
+ * @spec openspec/specs/extension-send/spec.md#requirement-list-and-end-my-sends
  */
 export async function listSends(config) {
 	const data = await request(config, 'GET', '/api/v1/sends')
@@ -677,7 +677,7 @@ export async function listSends(config) {
  * @param {object} config The account.
  * @param {string} id The send id.
  * @return {Promise<object|null>}
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-list-and-end-my-sends
+ * @spec openspec/specs/extension-send/spec.md#requirement-list-and-end-my-sends
  */
 export function revokeSend(config, id) {
 	return request(config, 'DELETE', '/api/v1/sends/' + encodeURIComponent(id))

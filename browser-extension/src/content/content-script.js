@@ -167,7 +167,7 @@ async function captureCurrent() {
  *
  * @param {{action: string, name?: string}} offer The worker's offer.
  * @return {Promise<void>}
- * @spec openspec/changes/clients-extension-finish/specs/extension-save-prompt-details/spec.md#requirement-a-save-that-confirms
+ * @spec openspec/specs/extension-save-prompt-details/spec.md#requirement-a-save-that-confirms
  */
 async function offerInPage(offer) {
 	if (offer?.action !== 'save' && offer?.action !== 'update') return

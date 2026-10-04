@@ -9,7 +9,7 @@
  * The offer lives in a closed shadow root, so page script can neither read
  * nor click it.
  *
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-generator/spec.md#requirement-suggest-a-strong-password-in-a-sign-up-field
+ * @spec openspec/specs/extension-generator/spec.md#requirement-suggest-a-strong-password-in-a-sign-up-field
  */
 
 const HOST_ID = 'keepiq-password-suggest'

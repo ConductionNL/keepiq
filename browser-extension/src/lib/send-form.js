@@ -2,7 +2,7 @@
  * Send form rules for the popup: expiry presets, view bounds, the credential
  * body and the row label. Pure: no DOM, no network.
  *
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-create-a-send-from-the-popup
+ * @spec openspec/specs/extension-send/spec.md#requirement-create-a-send-from-the-popup
  */
 
 /** Most views a send may allow (EphemeralSendService::MAX_VIEWS_CAP). */
@@ -87,7 +87,7 @@ export function credentialPayload(username, password) {
  * @param {string|null} expiresAt The expiry time.
  * @param {number} [now] The clock, in ms.
  * @return {string} Like "expires in 3 hours", or '' without a time.
- * @spec openspec/changes/clients-extension-finish/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
+ * @spec openspec/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
  */
 export function expiresIn(expiresAt, now = Date.now()) {
 	const at = Date.parse(expiresAt || '')

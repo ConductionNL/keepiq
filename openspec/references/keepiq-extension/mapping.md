@@ -25,7 +25,7 @@ Every requirement in `changes/*/specs/*/spec.md` of this reference, held against
 | ext-send | 13 | 5 | 1 | 6 | 1 | 0 |
 | **All** | **163** | **57** | **6** | **53** | **28** | **19** |
 
-Fixed since this snapshot: a passkey's private key reached the popup's edit form and Clone copied it (item-editing, old line 61 and 141). The worker now keeps it; see the requirement "A passkey's private key stays in the worker" in `openspec/changes/clients-extension-complete/specs/extension-vault/spec.md`.
+Fixed since this snapshot: a passkey's private key reached the popup's edit form and Clone copied it (item-editing, old line 61 and 141). The worker now keeps it; see the requirement "A passkey's private key stays in the worker" in `openspec/specs/extension-vault/spec.md`.
 
 ## The ADRs
 
@@ -69,7 +69,7 @@ The old docs (`docs/WXT-AND-BROWSERS.md`) describe WXT, Firefox on MV2 and `brow
 |---|---|---|---|---|---|
 | 1 | Single background-only client | 3 | CODE-ONLY | BE/lib/api.js is the only fetch site (none in BE/popup or BE/content, checked by grep); BE/background/router.js:1-15,244 `fromExtensionPage`, :982 refuses non-page messages from tabs; tests/extension/accounts.spec.js "a web page cannot use the popup messages" | No keepiq spec requirement states that all server calls run in the worker (browser-extension-autofill names "Extension architecture" only in code comments). |
 | 2 | Request shape | 10 | PARTIAL | BE/lib/api.js:210-220 `request`: base `<url>/index.php/apps/keepiq`, Basic auth, `OCS-APIRequest: true`, `Accept: application/json`, JSON body; :268 OCS `cloud/user?format=json` | `credentials: 'omit'` is not set. `Content-Type: application/json` goes on every request, GETs included. No spec. |
-| 3 | 401 is revocation | 21 | PARTIAL | BE/background/vault-sync.js:179-181: a 401 during sync locks the account (`lastError: 'auth'`); spec openspec/changes/clients-extension-complete/specs/extension-vault-sync/spec.md "A changed suite discards the snapshot" ("An authentication failure MUST lock the account") | Only the sync path reacts. A 401 on match, fill, save, item or unlock is a generic error. The app password is never purged, there is no "Logged out" state and no `SessionRevoked` message. Keepiq locks the account on a 401; it does not log out. |
+| 3 | 401 is revocation | 21 | PARTIAL | BE/background/vault-sync.js:179-181: a 401 during sync locks the account (`lastError: 'auth'`); spec openspec/specs/extension-vault-sync/spec.md "A changed suite discards the snapshot" ("An authentication failure MUST lock the account") | Only the sync path reacts. A 401 on match, fill, save, item or unlock is a generic error. The app password is never purged, there is no "Logged out" state and no `SessionRevoked` message. Keepiq locks the account on a 401; it does not log out. |
 | 4 | 423 is a retryable write lock | 34 | SPEC | extension-vault-sync "A changed suite discards the snapshot" ("a key-migration lock MUST keep the snapshot and try again later"); extension-vault "Edit every kind of item" ("a key migration in progress"); BE/lib/item-form.js:258 `writeErrorMessage`; BE/background/vault-sync.js:189 | None material. Nothing is purged and the account stays unlocked. |
 | 5 | Network failure is offline | 41 | SPEC | extension-vault-sync "Work offline from the snapshot"; BE/background/vault-sync.js:25 `isOffline` (no status or ≥500); router.js:489-498 offline match from the snapshot; tests/extension/vaultSync.spec.js "keeps the snapshot and says offline when the server cannot be reached" | Keepiq also treats 5xx as offline, a broader rule than the old spec's. |
 | 6 | Other error responses | 49 | PARTIAL | BE/lib/api.js:221-227 attaches `status` and the raw `body`; BE/lib/item-form.js:262-270 parses `{message}` for 400/409 only | Outside writes the error is `Keepiq <method> <path> failed (<status>)`, not the server's `message` or the status text. There is no `KeepiqNotInstalled` for a 404 with an HTML body. The closest feature is a too-old server, which the version check handles (router.js:281 `view-update`). |
@@ -95,7 +95,7 @@ The old docs (`docs/WXT-AND-BROWSERS.md`) describe WXT, Firefox on MV2 and `brow
 | 14 | Alternative unlock method hook | 131 | CHANGED (recorded) | Two entry points, `unlock` and `unlock-raw` (BE/background/router.js:439,456), both ending in BE/lib/vault.js:63 `hold`; the popup offers fingerprint or face unlock (popup.html:43) | Keepiq shipped a second method (passkey PRF) instead of a single method-parameterised entry point with no other option shown. Recorded: openspec/specs/extension-biometric-unlock/spec.md. |
 
 ### openspec/changes/ext-vault-edit/specs/folder-management/spec.md
-Keepiq spec referenced as "Manage folders" = openspec/changes/clients-extension-complete/specs/extension-vault/spec.md "Requirement: Manage folders".
+Keepiq spec referenced as "Manage folders" = openspec/specs/extension-vault/spec.md "Requirement: Manage folders".
 
 | # | Requirement (old title) | old line | Class | Keepiq evidence | Gap (if any) |
 |---|---|---|---|---|---|
@@ -110,7 +110,7 @@ Keepiq spec referenced as "Manage folders" = openspec/changes/clients-extension-
 | 9 | Folder write errors and offline | 110 | PARTIAL | BE/background/vault-handlers.js:346,368,401 map errors through `writeErrorMessage` (423/403/400/409/network); the typed name stays on error (folder-view.js:195-196); offline disables `folder-add-save` and `folder-delete-confirm` (vault-view.js:74-83) with the offline text (popup.html:84) | The per-row Rename and Delete buttons are created dynamically (folder-view.js:278-282), are not in `WRITE_CONTROLS`, and stay enabled offline. A network failure offers no Retry. No keepiq spec maps folder write errors; extension-vault-sync "Work offline" disables "the controls that change the vault" in general. |
 
 ### openspec/changes/ext-vault-edit/specs/item-editing/spec.md
-Keepiq specs referenced: "Edit every kind" / "Clone and move" / "Detail sections" = openspec/changes/clients-extension-complete/specs/extension-vault/spec.md; "Add, edit and delete items" = openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md; "Pick mode" = openspec/changes/clients-extension-complete/specs/extension-generator/spec.md; "Work offline" = clients-extension-complete/specs/extension-vault-sync/spec.md.
+Keepiq specs referenced: "Edit every kind" / "Clone and move" / "Detail sections" = openspec/specs/extension-vault/spec.md; "Add, edit and delete items" = openspec/specs/extension-vault/spec.md; "Pick mode" = openspec/specs/extension-generator/spec.md; "Work offline" = clients-extension-complete/specs/extension-vault-sync/spec.md.
 
 | # | Requirement (old title) | old line | Class | Keepiq evidence | Gap (if any) |
 |---|---|---|---|---|---|
@@ -407,7 +407,7 @@ Security or privacy weight first.
 
 ## Closed by clients-extension-gaps (October 2026)
 
-The rows above describe Keepiq at `61329cb0`. The change `clients-extension-gaps` then closed the gaps Ruben chose: all of group A, group B recorded, and four groups of C. Each old requirement below now has a Keepiq spec under `openspec/changes/clients-extension-gaps/specs/`, with tests named in its scenarios.
+The rows above describe Keepiq at `61329cb0`. The change `clients-extension-gaps` then closed the gaps Ruben chose: all of group A, group B recorded, and four groups of C. Each old requirement below now has a Keepiq spec under `openspec/specs/`, with tests named in its scenarios.
 
 | Old requirement (spec:line) | Was | Keepiq spec now |
 | --- | --- | --- |
@@ -449,7 +449,7 @@ Also added without an old requirement: extension icons, Firefox's data collectio
 
 ### Closed by clients-extension-finish (October 2026)
 
-Ruben then chose to build what was still open. Each has a Keepiq spec under `openspec/changes/clients-extension-finish/specs/`.
+Ruben then chose to build what was still open. Each has a Keepiq spec under `openspec/specs/`.
 
 | Old requirement (spec:line) | Keepiq spec now |
 | --- | --- |

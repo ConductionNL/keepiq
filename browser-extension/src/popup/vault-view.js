@@ -3,9 +3,9 @@
  * edit, clone, move or delete items. The worker decrypts and encrypts; this
  * view holds the open item's values only while it is open.
  *
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-edit-every-kind-of-item
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-a-passkeys-private-key-stays-in-the-worker
+ * @spec openspec/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
+ * @spec openspec/specs/extension-vault/spec.md#requirement-edit-every-kind-of-item
+ * @spec openspec/specs/extension-vault/spec.md#requirement-a-passkeys-private-key-stays-in-the-worker
  */
 
 import {
@@ -62,7 +62,7 @@ function fillSelect(select, options, doc) {
  * @param {(item: object) => void} ctx.sendItem Open the Send tab for an item.
  * @param {Document} [ctx.doc] The popup document.
  * @param {() => Promise<string>} [ctx.currentSite] The address of the site the popup is on.
- * @spec openspec/changes/clients-extension-finish/specs/extension-small-items/spec.md#requirement-a-form-that-starts-and-checks-sensibly
+ * @spec openspec/specs/extension-small-items/spec.md#requirement-a-form-that-starts-and-checks-sensibly
  * @return {{open: () => Promise<void>, canLeave: () => boolean}}
  */
 export function initVault({
@@ -178,7 +178,7 @@ export function initVault({
 	 *
 	 * @param {object} entry The index entry.
 	 * @return {HTMLLIElement}
-	 * @spec openspec/changes/clients-extension-gaps/specs/extension-list-and-settings/spec.md#requirement-a-list-that-says-what-it-shows
+	 * @spec openspec/specs/extension-list-and-settings/spec.md#requirement-a-list-that-says-what-it-shows
 	 */
 	function card(entry) {
 		const li = doc.createElement('li')
@@ -657,7 +657,7 @@ export function initVault({
 		 * Drop everything this view holds of the vault: the open item, the
 		 * form, the list. Called when the worker locks.
 		 *
-		 * @spec openspec/changes/clients-extension-gaps/specs/extension-lock/spec.md#requirement-the-popup-forgets-the-vault-when-it-locks
+		 * @spec openspec/specs/extension-lock/spec.md#requirement-the-popup-forgets-the-vault-when-it-locks
 		 */
 		forget() {
 			current = null

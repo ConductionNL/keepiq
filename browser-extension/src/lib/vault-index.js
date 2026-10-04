@@ -2,7 +2,7 @@
  * The vault index the popup browses: names, addresses, types and folders,
  * never a decrypted value. Pure: no DOM, no network.
  *
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
+ * @spec openspec/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
  */
 
 /**
@@ -69,7 +69,7 @@ export const NO_FOLDER = '__none__'
  * @param {Array<object>|null} index The whole index, or null while loading.
  * @param {Array<object>} shown The entries after filtering.
  * @return {'loading'|'empty'|'no-match'|'all-blocked'|'items'}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-list-and-settings/spec.md#requirement-a-list-that-says-what-it-shows
+ * @spec openspec/specs/extension-list-and-settings/spec.md#requirement-a-list-that-says-what-it-shows
  */
 export function listState(index, shown) {
 	if (index === null) return 'loading'

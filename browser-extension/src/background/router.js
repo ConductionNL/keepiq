@@ -80,7 +80,7 @@ const FRAMES_KEY = (tabId) => 'frames:' + tabId
  * @param {object} payload Unused: the page's claims are not read.
  * @param {object} sender The runtime.MessageSender of the content script.
  * @return {Promise<{ok: boolean}>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-a-fill-reaches-only-frames-on-the-matched-site
+ * @spec openspec/specs/extension-fill-and-capture/spec.md#requirement-a-fill-reaches-only-frames-on-the-matched-site
  */
 async function doFrameReady(payload, sender) {
 	const tabId = sender?.tab?.id
@@ -113,7 +113,7 @@ chrome.tabs?.onUpdated?.addListener((tabId, info) => {
  * @param {number} tabId The tab.
  * @param {string} host The matched host.
  * @return {Promise<Array<number>>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-a-fill-reaches-only-frames-on-the-matched-site
+ * @spec openspec/specs/extension-fill-and-capture/spec.md#requirement-a-fill-reaches-only-frames-on-the-matched-site
  */
 async function framesOn(tabId, host) {
 	const store = sessionStore()
@@ -133,7 +133,7 @@ async function framesOn(tabId, host) {
  * @param {string} host The matched host.
  * @param {object} message The message.
  * @return {Promise<{filled: boolean}>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-a-fill-reaches-only-frames-on-the-matched-site
+ * @spec openspec/specs/extension-fill-and-capture/spec.md#requirement-a-fill-reaches-only-frames-on-the-matched-site
  */
 async function sendToFramesOn(tabId, host, message) {
 	let filled = false
@@ -185,7 +185,7 @@ let clipboardState = null
  * The clipboard clearer.
  *
  * @return {object}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-clipboard/spec.md#requirement-every-copy-is-cleared-after-a-delay-the-user-sets
+ * @spec openspec/specs/extension-clipboard/spec.md#requirement-every-copy-is-cleared-after-a-delay-the-user-sets
  */
 function clipboardModule() {
 	if (!clipboardState) {
@@ -349,7 +349,7 @@ const NEVER_KEY = 'capture-never'
  * The sites with no save offer.
  *
  * @return {Promise<Array<string>>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-never-offer-to-save-on-a-site
+ * @spec openspec/specs/extension-autofill-extras/spec.md#requirement-never-offer-to-save-on-a-site
  */
 async function neverSites() {
 	const area = chrome.storage?.local
@@ -364,7 +364,7 @@ async function neverSites() {
  * @param {string} host The site.
  * @param {boolean} on Add (true) or remove (false).
  * @return {Promise<Array<string>>} The list.
- * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-never-offer-to-save-on-a-site
+ * @spec openspec/specs/extension-autofill-extras/spec.md#requirement-never-offer-to-save-on-a-site
  */
 async function setNever(host, on) {
 	const list = (await neverSites()).filter((h) => h !== host)
@@ -382,7 +382,7 @@ export const CAPTURE_TTL_MS = 5 * 60 * 1000
  *
  * @param {number|undefined} tabId The tab.
  * @return {object|null}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-the-save-prompt-trusts-the-browser-not-the-page
+ * @spec openspec/specs/extension-fill-and-capture/spec.md#requirement-the-save-prompt-trusts-the-browser-not-the-page
  */
 function captureOf(tabId) {
 	const capture = captures.get(tabId)
@@ -475,7 +475,7 @@ let pinState = null
  * The PIN store.
  *
  * @return {object}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
+ * @spec openspec/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
  */
 function pinModule() {
 	if (!pinState) pinState = buildPinUnlock(areaOrMemory(sessionStore()))
@@ -488,7 +488,7 @@ function pinModule() {
  *
  * @param {object} account The account.
  * @return {Promise<object>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
+ * @spec openspec/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
  */
 async function suiteFor(account) {
 	try {
@@ -508,7 +508,7 @@ async function suiteFor(account) {
  *
  * @param {{masterPassword: string, pin: string}} payload The master password and the new PIN.
  * @return {Promise<{ok: boolean}>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
+ * @spec openspec/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
  */
 async function doPinSet(payload) {
 	const account = await activeAccount()
@@ -538,7 +538,7 @@ async function doPinSet(payload) {
  *
  * @param {{pin: string}} payload The PIN.
  * @return {Promise<{ok: boolean}>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
+ * @spec openspec/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
  */
 async function doPinUnlock(payload) {
 	const account = await activeAccount()
@@ -581,8 +581,8 @@ const signingOut = new Set()
  * @param {string} accountId The account.
  * @param {string} [reason] revoked (the server refused it) or logout (the user's choice).
  * @return {Promise<void>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
+ * @spec openspec/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ * @spec openspec/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
  */
 export async function signOutAccount(accountId, reason = 'revoked') {
 	if (!accountId || signingOut.has(accountId)) return
@@ -658,10 +658,10 @@ async function refreshServerVersion(account) {
  * Current state for the popup to render the right view.
  *
  * @return {Promise<object>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
- * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-lock-and-log-out-per-account-or-all
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
+ * @spec openspec/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ * @spec openspec/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
+ * @spec openspec/specs/extension-unlock-and-accounts/spec.md#requirement-lock-and-log-out-per-account-or-all
+ * @spec openspec/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
  */
 async function getState() {
 	const accounts = await api.loadAccounts()
@@ -706,8 +706,8 @@ async function getState() {
  *
  * @param {{url: string, user: string, appPassword: string}} payload The pairing form.
  * @return {Promise<{ok: boolean, accountId: string}>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
- * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-unlock-offline-and-say-what-went-wrong
+ * @spec openspec/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
+ * @spec openspec/specs/extension-unlock-and-accounts/spec.md#requirement-unlock-offline-and-say-what-went-wrong
  */
 async function doPair(payload) {
 	if ((await api.loadAccounts()).length >= api.MAX_ACCOUNTS) {
@@ -738,8 +738,8 @@ async function doPair(payload) {
  *
  * @param {{accountId?: string}} payload The account, or the active one.
  * @return {Promise<{ok: boolean, revoked: boolean}>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
+ * @spec openspec/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ * @spec openspec/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
  */
 async function doUnpair(payload) {
 	const id = payload.accountId || (await api.activeAccountId())
@@ -780,7 +780,7 @@ async function doUnpair(payload) {
  *
  * @param {{status?: number, insecure?: boolean, message?: string}} error The failure.
  * @return {string}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-unlock-offline-and-say-what-went-wrong
+ * @spec openspec/specs/extension-unlock-and-accounts/spec.md#requirement-unlock-offline-and-say-what-went-wrong
  */
 export function pairingProblem(error) {
 	if (error?.insecure) return error.message
@@ -803,7 +803,7 @@ export function pairingProblem(error) {
  *
  * @param {{accountId?: string, all?: boolean}} payload One account, or all.
  * @return {Promise<{ok: boolean}>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-lock-and-log-out-per-account-or-all
+ * @spec openspec/specs/extension-unlock-and-accounts/spec.md#requirement-lock-and-log-out-per-account-or-all
  */
 async function doLogout(payload) {
 	const ids = payload.all
@@ -828,7 +828,7 @@ async function doLogout(payload) {
  *
  * @param {{accountId: string, appPassword: string}} payload The account and its new app password.
  * @return {Promise<{ok: boolean}>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ * @spec openspec/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
  */
 async function doRelogin(payload) {
 	const account = await api.loadAccount(payload.accountId)
@@ -884,8 +884,8 @@ async function refreshPolicy(account) {
  *
  * @param {{masterPassword: string}} payload The master password.
  * @return {Promise<{ok: boolean}>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
- * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-unlock-offline-and-say-what-went-wrong
+ * @spec openspec/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ * @spec openspec/specs/extension-unlock-and-accounts/spec.md#requirement-unlock-offline-and-say-what-went-wrong
  */
 async function doUnlock(payload) {
 	const account = await activeAccount()
@@ -919,7 +919,7 @@ async function doUnlock(payload) {
  *
  * @param {{accountId: string, rawKey: number[]}} payload The account and key bytes.
  * @return {Promise<{ok: boolean}>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ * @spec openspec/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
  */
 async function doUnlockRaw(payload) {
 	const account = await api.loadAccount(payload.accountId)
@@ -1004,7 +1004,7 @@ async function doDeviceApprovalCancel() {
  *
  * @param {{host: string}} payload The site.
  * @return {Promise<Array<object>>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-blocked-items-are-never-offered
+ * @spec openspec/specs/extension-fill-and-capture/spec.md#requirement-blocked-items-are-never-offered
  */
 async function doMatch(payload) {
 	const account = await activeAccount()
@@ -1071,7 +1071,7 @@ async function openPopupForChoice() {
  *
  * @param {object} tab The tab.
  * @return {Promise<{filled: boolean, opened?: boolean}>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-fill-from-the-context-menu-and-a-shortcut
+ * @spec openspec/specs/extension-autofill-extras/spec.md#requirement-fill-from-the-context-menu-and-a-shortcut
  */
 export async function fillFromShortcut(tab) {
 	if (!tab || !/^https?:/i.test(String(tab.url || ''))) return { filled: false }
@@ -1126,7 +1126,7 @@ chrome.commands?.onCommand?.addListener(async (command, tab) => {
  * @param {object} row The matched row.
  * @param {string} pageUrl The page address.
  * @return {boolean}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-ask-before-filling-an-https-login-into-an-http-page
+ * @spec openspec/specs/extension-fill-and-capture/spec.md#requirement-ask-before-filling-an-https-login-into-an-http-page
  */
 export function downgradesToHttp(row, pageUrl) {
 	try {
@@ -1148,8 +1148,8 @@ export function downgradesToHttp(row, pageUrl) {
  *
  * @param {{id: string, accountId: string, tabId?: number, allowHttp?: boolean}} payload The choice.
  * @return {Promise<object>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-a-fill-reaches-only-frames-on-the-matched-site
- * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-ask-before-filling-an-https-login-into-an-http-page
+ * @spec openspec/specs/extension-fill-and-capture/spec.md#requirement-a-fill-reaches-only-frames-on-the-matched-site
+ * @spec openspec/specs/extension-fill-and-capture/spec.md#requirement-ask-before-filling-an-https-login-into-an-http-page
  */
 async function doFill(payload) {
 	const account = await activeAccount()
@@ -1324,9 +1324,9 @@ async function policyRefusalFor(config, value) {
  * @param {number} tabId The tab it was held for.
  * @param {string|null} [folderId] The folder a new login goes into.
  * @return {Promise<{ok: boolean, saved: string}>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-save-a-new-login-into-a-folder
- * @spec openspec/changes/clients-extension-finish/specs/extension-save-prompt-details/spec.md#requirement-update-the-one-login-that-is-meant
- * @spec openspec/changes/clients-extension-finish/specs/extension-save-prompt-details/spec.md#requirement-a-save-that-confirms
+ * @spec openspec/specs/extension-autofill-extras/spec.md#requirement-save-a-new-login-into-a-folder
+ * @spec openspec/specs/extension-save-prompt-details/spec.md#requirement-update-the-one-login-that-is-meant
+ * @spec openspec/specs/extension-save-prompt-details/spec.md#requirement-a-save-that-confirms
  */
 async function saveHeldCapture(capture, tabId, folderId = null) {
 	const accountId = capture.accountId
@@ -1387,7 +1387,7 @@ async function saveHeldCapture(capture, tabId, folderId = null) {
  *
  * @param {{tabId?: number}} payload The popup's pinned tab, if popped out.
  * @return {Promise<{ok: boolean}>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-the-save-prompt-trusts-the-browser-not-the-page
+ * @spec openspec/specs/extension-fill-and-capture/spec.md#requirement-the-save-prompt-trusts-the-browser-not-the-page
  */
 async function doSaveCapture(payload) {
 	const tab = await targetTab(payload.tabId)
@@ -1401,7 +1401,7 @@ async function doSaveCapture(payload) {
  *
  * @param {{tabId?: number}} payload The popup's pinned tab, if popped out.
  * @return {Promise<{ok: boolean}>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-never-offer-to-save-on-a-site
+ * @spec openspec/specs/extension-autofill-extras/spec.md#requirement-never-offer-to-save-on-a-site
  */
 async function doCaptureNever(payload) {
 	const tab = await targetTab(payload.tabId)
@@ -1418,7 +1418,7 @@ async function doCaptureNever(payload) {
  *
  * @param {{tabId?: number}} payload The popup's pinned tab, if popped out.
  * @return {Promise<{capture: object|null}>}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-the-save-prompt-trusts-the-browser-not-the-page
+ * @spec openspec/specs/extension-fill-and-capture/spec.md#requirement-the-save-prompt-trusts-the-browser-not-the-page
  */
 async function takePendingCapture(payload = {}) {
 	const tab = await targetTab(payload.tabId)
@@ -1446,7 +1446,7 @@ async function takePendingCapture(payload = {}) {
  * @param {object} capture The submitted login from the content script.
  * @param {object} sender The runtime.MessageSender of the content script.
  * @return {Promise<{action: string, name?: string}>} The offer, without ids or secrets.
- * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-the-save-prompt-trusts-the-browser-not-the-page
+ * @spec openspec/specs/extension-fill-and-capture/spec.md#requirement-the-save-prompt-trusts-the-browser-not-the-page
  */
 export async function doCapture(capture, sender) {
 	const tabId = sender?.tab?.id
@@ -1519,7 +1519,7 @@ export async function doCapture(capture, sender) {
  * @param {object} payload Unused.
  * @param {object} sender The runtime.MessageSender of the content script.
  * @return {Promise<{action: string, name?: string}>}
- * @spec openspec/changes/clients-extension-finish/specs/extension-save-prompt-details/spec.md#requirement-the-offer-follows-the-site-not-the-page
+ * @spec openspec/specs/extension-save-prompt-details/spec.md#requirement-the-offer-follows-the-site-not-the-page
  */
 async function doCaptureOffer(payload, sender) {
 	const tabId = sender?.tab?.id
@@ -1539,7 +1539,7 @@ async function doCaptureOffer(payload, sender) {
  * @param {{choice: string}} payload save, update or dismiss.
  * @param {object} sender The runtime.MessageSender of the content script.
  * @return {Promise<object>} The save result, or ok.
- * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-the-save-prompt-trusts-the-browser-not-the-page
+ * @spec openspec/specs/extension-fill-and-capture/spec.md#requirement-the-save-prompt-trusts-the-browser-not-the-page
  */
 async function doCaptureDecision(payload, sender) {
 	const tabId = sender?.tab?.id

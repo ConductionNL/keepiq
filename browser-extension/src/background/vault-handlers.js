@@ -6,7 +6,7 @@
  * item's decrypted values only when it opens that item; blobs and keys stay
  * in the worker, as for autofill.
  *
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
+ * @spec openspec/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
  */
 
 import { generateKey } from '../../../src/generator/generator.js'
@@ -47,7 +47,7 @@ export const MAX_NAME_LENGTH = 255
  *
  * @param {{status?: number, body?: string, message?: string}} error The failure.
  * @return {string}
- * @spec openspec/changes/clients-extension-finish/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
+ * @spec openspec/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
  */
 export function sendProblem(error) {
 	if (!error?.status) {
@@ -126,7 +126,7 @@ export function buildVaultHandlers({
 		/**
 		 * The vault index, folders and types (no values).
 		 *
-		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
+		 * @spec openspec/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
 		 */
 		'vault-list': async () => {
 			const account = await unlockedAccount()
@@ -171,7 +171,7 @@ export function buildVaultHandlers({
 		/**
 		 * Sync now, whatever the snapshot's age.
 		 *
-		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault-sync/spec.md#requirement-sync-when-it-matters-and-cheaply
+		 * @spec openspec/specs/extension-vault-sync/spec.md#requirement-sync-when-it-matters-and-cheaply
 		 */
 		'vault-sync-now': async () => {
 			const account = await unlockedAccount()
@@ -183,9 +183,9 @@ export function buildVaultHandlers({
 		 * form: a stale list row never seeds an edit. A blocked item is not
 		 * decrypted; its reason is returned instead.
 		 *
-		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-item-detail-with-copy-and-reveal
-		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-detail-sections-for-every-kind-of-item
-		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-a-passkeys-private-key-stays-in-the-worker
+		 * @spec openspec/specs/extension-vault/spec.md#requirement-item-detail-with-copy-and-reveal
+		 * @spec openspec/specs/extension-vault/spec.md#requirement-detail-sections-for-every-kind-of-item
+		 * @spec openspec/specs/extension-vault/spec.md#requirement-a-passkeys-private-key-stays-in-the-worker
 		 */
 		'vault-item': async (payload) => {
 			const account = await unlockedAccount()
@@ -281,9 +281,9 @@ export function buildVaultHandlers({
 		 * Create an item, or update only the parts that changed. Values are
 		 * encrypted here; the popup never sends ciphertext or receives keys.
 		 *
-		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-add-edit-and-delete-items
-		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-edit-every-kind-of-item
-		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-a-passkeys-private-key-stays-in-the-worker
+		 * @spec openspec/specs/extension-vault/spec.md#requirement-add-edit-and-delete-items
+		 * @spec openspec/specs/extension-vault/spec.md#requirement-edit-every-kind-of-item
+		 * @spec openspec/specs/extension-vault/spec.md#requirement-a-passkeys-private-key-stays-in-the-worker
 		 */
 		'vault-save': async (payload) => {
 			const account = await unlockedAccount()
@@ -369,7 +369,7 @@ export function buildVaultHandlers({
 		/**
 		 * Move an item to another folder: only its folder changes.
 		 *
-		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-clone-and-move
+		 * @spec openspec/specs/extension-vault/spec.md#requirement-clone-and-move
 		 */
 		'vault-move': async (payload) => {
 			const account = await unlockedAccount()
@@ -387,7 +387,7 @@ export function buildVaultHandlers({
 		/**
 		 * Create a folder.
 		 *
-		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 * @spec openspec/specs/extension-vault/spec.md#requirement-manage-folders
 		 */
 		'folder-create': async (payload) => {
 			const account = await unlockedAccount()
@@ -408,7 +408,7 @@ export function buildVaultHandlers({
 		/**
 		 * Rename a folder.
 		 *
-		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 * @spec openspec/specs/extension-vault/spec.md#requirement-manage-folders
 		 */
 		'folder-rename': async (payload) => {
 			const account = await unlockedAccount()
@@ -430,7 +430,7 @@ export function buildVaultHandlers({
 		/**
 		 * What a folder holds, to choose how to delete it.
 		 *
-		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 * @spec openspec/specs/extension-vault/spec.md#requirement-manage-folders
 		 */
 		'folder-children': async (payload) => {
 			const account = await unlockedAccount()
@@ -444,7 +444,7 @@ export function buildVaultHandlers({
 		/**
 		 * Delete a folder with the user's choice for what it holds.
 		 *
-		 * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+		 * @spec openspec/specs/extension-vault/spec.md#requirement-manage-folders
 		 */
 		'folder-delete': async (payload) => {
 			const account = await unlockedAccount()
@@ -463,7 +463,7 @@ export function buildVaultHandlers({
 		/**
 		 * Move an item to the trash.
 		 *
-		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-add-edit-and-delete-items
+		 * @spec openspec/specs/extension-vault/spec.md#requirement-add-edit-and-delete-items
 		 */
 		'vault-trash': async (payload) => {
 			const account = await unlockedAccount()
@@ -479,8 +479,8 @@ export function buildVaultHandlers({
 		/**
 		 * A strong password for a sign-up field on a page, under the org policy.
 		 *
-		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-generator/spec.md#requirement-suggest-a-strong-password-in-a-sign-up-field
-		 * @spec openspec/changes/clients-extension-gaps/specs/extension-list-and-settings/spec.md#requirement-settings-for-autofill-new-items-and-appearance
+		 * @spec openspec/specs/extension-generator/spec.md#requirement-suggest-a-strong-password-in-a-sign-up-field
+		 * @spec openspec/specs/extension-list-and-settings/spec.md#requirement-settings-for-autofill-new-items-and-appearance
 		 */
 		'generate-for-field': async () => {
 			// Switched off in Settings: nothing to suggest.
@@ -497,9 +497,9 @@ export function buildVaultHandlers({
 		/**
 		 * Encrypt and create a send; the link carries the key in its fragment.
 		 *
-		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-create-a-send-from-the-popup
-		 * @spec openspec/changes/clients-extension-complete/specs/extension-send/spec.md#requirement-password-protected-sends
-		 * @spec openspec/changes/clients-extension-finish/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
+		 * @spec openspec/specs/extension-send/spec.md#requirement-create-a-send-from-the-popup
+		 * @spec openspec/specs/extension-send/spec.md#requirement-password-protected-sends
+		 * @spec openspec/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
 		 */
 		'send-create': async (payload) => {
 			const account = await unlockedAccount()
@@ -564,8 +564,8 @@ export function buildVaultHandlers({
 		/**
 		 * The account's sends (metadata only).
 		 *
-		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-list-and-end-my-sends
-		 * @spec openspec/changes/clients-extension-finish/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
+		 * @spec openspec/specs/extension-send/spec.md#requirement-list-and-end-my-sends
+		 * @spec openspec/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
 		 */
 		'send-list': async () => {
 			const account = await unlockedAccount()
@@ -592,7 +592,7 @@ export function buildVaultHandlers({
 		/**
 		 * Whether a send can be made now: not while the server is away.
 		 *
-		 * @spec openspec/changes/clients-extension-finish/specs/extension-send-details/spec.md#requirement-no-send-while-offline
+		 * @spec openspec/specs/extension-send-details/spec.md#requirement-no-send-while-offline
 		 */
 		'send-state': async () => {
 			const account = await unlockedAccount()
@@ -604,8 +604,8 @@ export function buildVaultHandlers({
 		/**
 		 * End a send.
 		 *
-		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-list-and-end-my-sends
-		 * @spec openspec/changes/clients-extension-finish/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
+		 * @spec openspec/specs/extension-send/spec.md#requirement-list-and-end-my-sends
+		 * @spec openspec/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
 		 */
 		'send-revoke': async (payload) => {
 			const account = await unlockedAccount()

@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md
+ * @spec openspec/specs/extension-pin-unlock/spec.md
  *
  * Unlock with a PIN on the REAL router and popup: set with the master
  * password, unlock until the browser closes, five tries, forgotten on log

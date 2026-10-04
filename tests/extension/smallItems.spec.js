@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-finish/specs/extension-small-items/spec.md
+ * @spec openspec/specs/extension-small-items/spec.md
  *
  * The small items: suggestions by last use, a new item with the site's
  * address, a checked authenticator secret, folder changes off while

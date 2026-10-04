@@ -3,7 +3,7 @@
  * delete plan the server's deletion protocol expects. Pure: no DOM, no
  * network.
  *
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+ * @spec openspec/specs/extension-vault/spec.md#requirement-manage-folders
  */
 
 /**

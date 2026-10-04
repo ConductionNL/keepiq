@@ -4,8 +4,8 @@
  * `clearDetail` drops them when the view closes. A passkey's private key
  * never reaches this view: the worker sends only the site and account.
  *
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-detail-sections-for-every-kind-of-item
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-a-passkeys-private-key-stays-in-the-worker
+ * @spec openspec/specs/extension-vault/spec.md#requirement-detail-sections-for-every-kind-of-item
+ * @spec openspec/specs/extension-vault/spec.md#requirement-a-passkeys-private-key-stays-in-the-worker
  */
 
 import {

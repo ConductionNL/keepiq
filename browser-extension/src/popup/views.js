@@ -11,7 +11,7 @@
  * @param {HTMLSelectElement} select The switcher.
  * @param {object} state The worker's get-state answer.
  * @return {void}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ * @spec openspec/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
  */
 export function renderAccountSwitcher(select, state) {
 	const doc = select.ownerDocument

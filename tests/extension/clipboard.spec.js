@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-gaps/specs/extension-clipboard/spec.md
+ * @spec openspec/specs/extension-clipboard/spec.md
  *
  * Every copy is cleared after the user's delay, by the worker, also when the
  * popup has closed; and a large vault is never cut off in silence.

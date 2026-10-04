@@ -2,7 +2,7 @@
  * The item form's rules: drafts per type, the parts sent to the worker, the
  * sparse update, validation and messages.
  *
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-edit-every-kind-of-item
+ * @spec openspec/specs/extension-vault/spec.md#requirement-edit-every-kind-of-item
  */
 import { describe, expect, it } from 'vitest'
 import {

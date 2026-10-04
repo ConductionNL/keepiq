@@ -3,7 +3,7 @@
  * the save and update offers, password suggestions in sign-up fields, the
  * type of a new item and the colour theme. One record for every account.
  *
- * @spec openspec/changes/clients-extension-gaps/specs/extension-list-and-settings/spec.md#requirement-settings-for-autofill-new-items-and-appearance
+ * @spec openspec/specs/extension-list-and-settings/spec.md#requirement-settings-for-autofill-new-items-and-appearance
  */
 
 const KEY = 'extension-settings'

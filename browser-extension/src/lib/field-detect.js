@@ -6,7 +6,7 @@
  *
  * Pure apart from reading the document it is given.
  *
- * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-find-fields-in-shadow-roots-and-by-their-label
+ * @spec openspec/specs/extension-autofill-extras/spec.md#requirement-find-fields-in-shadow-roots-and-by-their-label
  */
 
 export const USERNAME_SELECTORS = [

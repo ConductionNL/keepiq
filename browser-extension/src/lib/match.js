@@ -112,7 +112,7 @@ export function matchScore(secret, targetHost) {
  * @param {Array<{ url?: string, name?: string }>} secrets
  * @param {string} targetHost
  * @return {Array<object>} matching secrets, best-first, each with `_score`
- * @spec openspec/changes/clients-extension-finish/specs/extension-small-items/spec.md#requirement-suggestions-by-last-use
+ * @spec openspec/specs/extension-small-items/spec.md#requirement-suggestions-by-last-use
  */
 export function matchSecrets(secrets, targetHost) {
 	return (secrets || [])

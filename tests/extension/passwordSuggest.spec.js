@@ -1,7 +1,7 @@
 /**
  * The in-page offer of a strong password in a sign-up field.
  *
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-generator/spec.md#requirement-suggest-a-strong-password-in-a-sign-up-field
+ * @spec openspec/specs/extension-generator/spec.md#requirement-suggest-a-strong-password-in-a-sign-up-field
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {

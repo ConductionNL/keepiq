@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-finish/specs/extension-send-details/spec.md
+ * @spec openspec/specs/extension-send-details/spec.md
  *
  * Send details on the REAL router and popup: no send while offline, a
  * progress note during Argon2id, Send for logins only, what each send is,

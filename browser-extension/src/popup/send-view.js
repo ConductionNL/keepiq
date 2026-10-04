@@ -2,7 +2,7 @@
  * The popup's Send tab: create a send from text or a username and password,
  * copy its link once, and see or end your sends.
  *
- * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-create-a-send-from-the-popup
+ * @spec openspec/specs/extension-send/spec.md#requirement-create-a-send-from-the-popup
  */
 
 import { expiresIn, EXPIRY_PRESETS, sendRowLabel } from '../lib/send-form.js'
@@ -48,7 +48,7 @@ export function initSend({ $, send, showError, doc = document }) {
 	 * Load and render the account's sends: what each is, when it expires,
 	 * whether it has a password, and how often it was opened.
 	 *
-	 * @spec openspec/changes/clients-extension-finish/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
+	 * @spec openspec/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
 	 */
 	async function loadSends() {
 		const { sends = [], error } = await send('send-list')
