@@ -71,7 +71,7 @@ class RecoveryPolicyService {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 	 */
 	public function policy(): string {
 		$policy = $this->appConfig->getValueString(Application::APP_ID, self::POLICY_KEY, 'off');
@@ -87,7 +87,7 @@ class RecoveryPolicyService {
 	 *
 	 * @return string[]
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 	 */
 	public function officers(): array {
 		$decoded = json_decode($this->appConfig->getValueString(Application::APP_ID, self::OFFICERS_KEY, '[]'), true);
@@ -105,7 +105,7 @@ class RecoveryPolicyService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 	 */
 	public function isOfficer(string $userId): bool {
 		return in_array($userId, $this->officers(), true);
@@ -116,7 +116,7 @@ class RecoveryPolicyService {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 	 */
 	public function threshold(): int {
 		return max(1, $this->appConfig->getValueInt(Application::APP_ID, self::THRESHOLD_KEY, 1));
@@ -127,7 +127,7 @@ class RecoveryPolicyService {
 	 *
 	 * @return array{policy:string,officers:string[],threshold:int}
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 	 */
 	public function settings(): array {
 		return [
@@ -150,7 +150,7 @@ class RecoveryPolicyService {
 	 *
 	 * @throws InvalidArgumentException When a value is refused
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 	 */
 	public function update(string $policy, array $officers, int $threshold): array {
 		if (in_array($policy, self::POLICIES, true) === false) {

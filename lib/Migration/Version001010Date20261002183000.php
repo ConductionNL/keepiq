@@ -31,7 +31,7 @@ use OCP\Migration\SimpleMigrationStep;
  *
  * @psalm-suppress UnusedClass Loaded by the Nextcloud migration framework.
  *
- * @spec openspec/changes/crypto-organisation-account-recovery/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-10-04-crypto-organisation-account-recovery/tasks.md#task-1.1
  */
 class Version001010Date20261002183000 extends SimpleMigrationStep {
 
@@ -47,7 +47,7 @@ class Version001010Date20261002183000 extends SimpleMigrationStep {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Signature fixed by SimpleMigrationStep.
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) One flat column list per table.
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-10-04-crypto-organisation-account-recovery/tasks.md#task-1.1
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		$schema  = $schemaClosure();

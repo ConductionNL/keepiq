@@ -614,7 +614,7 @@ class TeamFolderService {
 	 *
 	 * @throws InvalidArgumentException On non-owner, unknown member, or invalid grade
 	 *
-	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-or-write-grade
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
 	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 */
@@ -685,7 +685,7 @@ class TeamFolderService {
 	 *
 	 * @return array<int,array{id:string,name:string,copyId:string|null}>
 	 *
-	 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
 	 */
 	private function withCallerCopies(array $refs, TeamFolder $teamFolder, string $userId): array {
 		$isOwner = ($teamFolder->getOwnerId() === $userId);
@@ -723,7 +723,7 @@ class TeamFolderService {
 	 *
 	 * @throws InvalidArgumentException When a manager reaches above their role
 	 *
-	 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 	 */
 	private function assertManagerMayTouch(
 		TeamFolder $teamFolder,

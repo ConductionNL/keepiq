@@ -301,7 +301,7 @@ export default {
 		 * (crypto-organisation-account-recovery D8).
 		 *
 		 * @param {string} id The suite id typed so far.
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-force-revocation-warns-about-enrolled-users
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-force-revocation-warns-about-enrolled-users
 		 */
 		async suiteId(id) {
 			this.enrolledInRecovery = false

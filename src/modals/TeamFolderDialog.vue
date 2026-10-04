@@ -420,7 +420,7 @@ export default {
 		 * Whether the current user owns this team folder.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 		 */
 		isOwner() {
 			const uid = getCurrentUser()?.uid ?? null
@@ -753,7 +753,7 @@ export default {
 		 *
 		 * @param {object} member The membership row.
 		 * @return {boolean}
-		 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 		 */
 		canChangeMember(member) {
 			return this.isOwner || member.grade !== 'manage'
@@ -765,7 +765,7 @@ export default {
 		 *
 		 * @param {object} member The membership row.
 		 * @return {boolean}
-		 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 		 */
 		canRemoveMember(member) {
 			if (this.canChangeMember(member)) {
@@ -803,7 +803,7 @@ export default {
 		 * @param {string} grade The new grade ('read'|'write').
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-or-write-grade
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
 		 */
 		async onGradeChange(member, grade) {
 			this.busy = true
