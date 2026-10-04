@@ -108,6 +108,10 @@ class SettingsService {
 		// Offline read-only cache per-device opt-out (offline-readonly-cache
 		// §1.2); default on, gated behind the admin org-wide switch.
 		'offline_cache_optin' => '1',
+		// Receive secrets from other organisations (sharing-federated-
+		// recipients D6); default off. Until it is '1' a partner's
+		// certificate lookup gets the unknown-recipient answer.
+		'federation_receive' => '0',
 	];
 
 	/**

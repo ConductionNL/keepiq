@@ -32,6 +32,7 @@ import CaHealthSection from '../../components/settings/CaHealthSection.vue'
 import ComplianceSection from '../../components/settings/ComplianceSection.vue'
 import DeviceApprovalSection from '../../components/settings/DeviceApprovalSection.vue'
 import ExtensionSection from '../../components/settings/ExtensionSection.vue'
+import FederationPartnersSection from '../../components/settings/FederationPartnersSection.vue'
 import HoneySection from '../../components/settings/HoneySection.vue'
 import ItemTypesSection from '../../components/settings/ItemTypesSection.vue'
 import MachineLeaseSection from '../../components/settings/MachineLeaseSection.vue'
@@ -70,6 +71,7 @@ export default {
 		DeviceApprovalSection,
 		AccountRecoverySection,
 		ExtensionSection,
+		FederationPartnersSection,
 		MemberOverviewSection,
 		OffboardingSection,
 		AdminSuiteSection,
