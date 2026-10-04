@@ -10,6 +10,7 @@
 	<main id="app" class="keepiq-popup">
 		<!-- Account switcher (extension-account-switching) -->
 		<header id="account-bar" class="row account-bar" hidden>
+			<span id="account-initials" class="account-initials" aria-hidden="true"></span>
 			<label class="account-select-label">Account
 				<select id="account-select" aria-label="Active account"></select>
 			</label>
@@ -50,7 +51,10 @@
 		<!-- Locked view -->
 		<section id="view-locked" hidden>
 			<h1>Unlock vault</h1>
-			<label>Master password<input id="unlock-master" type="password" autocomplete="off"></label>
+			<div class="row">
+				<label class="grow">Master password<input id="unlock-master" type="password" autocomplete="off"></label>
+				<button id="unlock-show" type="button" class="link" aria-pressed="false" aria-controls="unlock-master">Show</button>
+			</div>
 			<p class="hint">Your master password is used only in this extension to decrypt your vault. It never reaches the server.</p>
 			<button id="unlock-submit" class="primary">Unlock</button>
 			<button id="unlock-biometric" class="link" hidden>Unlock with fingerprint or face</button>
@@ -319,6 +323,9 @@
 				<select id="clipboard-clear"></select>
 			</label>
 			<button id="biometric-enrol" class="link" hidden>Set up fingerprint or face unlock</button>
+			<button id="settings-logout" class="link">Log out of this account</button>
+			<button id="settings-lock-all" class="link">Lock all accounts</button>
+			<button id="settings-logout-all" class="link">Log out of all accounts</button>
 			<button id="settings-unpair" class="link">Disconnect this account</button>
 			<button id="settings-back" class="primary">Done</button>
 			<p id="settings-error" class="error" role="alert" hidden></p>

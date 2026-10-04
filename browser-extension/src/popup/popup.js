@@ -371,6 +371,9 @@ async function refresh() {
 	$('account-bar').hidden = !paired || adding
 	if (paired) {
 		renderAccountSwitcher($('account-select'), state)
+		$('account-initials').textContent = initialsOf(
+			(state.accounts || []).find((a) => a.id === state.activeAccountId),
+		)
 		$('account-add').hidden = !canAddAccount(state)
 	}
 	$('pair-cancel').hidden = !paired
@@ -383,11 +386,26 @@ async function refresh() {
 		renderSignedOut()
 	} else if (!state.unlocked) {
 		show('view-locked')
+		$('unlock-master').focus()
 		if (!(await renderDeviceApprovalOption())) await renderBiometricUnlock()
 	} else {
 		show('view-unlocked')
 		await selectTab(await lastTab())
 	}
+}
+
+/**
+ * Up to two initials for an account, from its label or user name.
+ *
+ * @param {object|undefined} account The account.
+ * @return {string}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-lock-and-log-out-per-account-or-all
+ */
+export function initialsOf(account) {
+	const name = String(account?.label || account?.user || '').trim()
+	const parts = name.split(/[\s._@-]+/).filter(Boolean)
+	const letters = parts.length > 1 ? parts[0][0] + parts[1][0] : name.slice(0, 2)
+	return letters.toUpperCase()
 }
 
 /**
@@ -403,7 +421,9 @@ function renderSignedOut() {
 	$('relogin-form').hidden = !state.loggedOut || state.insecure
 	$('signed-out-text').textContent = state.insecure
 		? 'This account was connected over http. Keepiq now needs https, so your app password is never sent in clear. Disconnect it and connect again over https.'
-		: 'Keepiq refused the app password of this account. It was revoked or changed in Nextcloud. Create a new app password in Nextcloud and enter it here.'
+		: state.loggedOutReason === 'logout'
+			? 'You logged out of this account. Create a new app password in Nextcloud and enter it here to sign in again.'
+			: 'Keepiq refused the app password of this account. It was revoked or changed in Nextcloud. Create a new app password in Nextcloud and enter it here.'
 }
 
 // --- tabs: This site, Vault, Generator, Send ---
@@ -601,6 +621,9 @@ function wire() {
 		const res = await send('unlock', {
 			masterPassword: $('unlock-master').value,
 		})
+		$('unlock-master').type = 'password'
+		$('unlock-show').textContent = 'Show'
+		$('unlock-show').setAttribute('aria-pressed', 'false')
 		$('unlock-master').value = ''
 		if (res.error) showError('unlock-error', res.error)
 		else await refresh()
@@ -625,6 +648,42 @@ function wire() {
 	$('unlock-unpair').addEventListener('click', async () => {
 		if (!confirmDisconnect()) return
 		await send('unpair', { accountId: state.activeAccountId })
+		await refresh()
+	})
+
+	// Show or hide the master password while typing it.
+	$('unlock-show').addEventListener('click', () => {
+		const shown = $('unlock-master').type === 'text'
+		$('unlock-master').type = shown ? 'password' : 'text'
+		$('unlock-show').textContent = shown ? 'Show' : 'Hide'
+		$('unlock-show').setAttribute('aria-pressed', shown ? 'false' : 'true')
+		$('unlock-master').focus()
+	})
+	$('unlock-master').addEventListener('keydown', (event) => {
+		if (event.key === 'Enter') $('unlock-submit').click()
+	})
+	$('settings-logout').addEventListener('click', async () => {
+		if (
+			!window.confirm(
+				'Log out of this account? Its app password is deleted in Nextcloud, and you need a new one to sign in again.',
+			)
+		)
+			return
+		await send('logout', { accountId: state.activeAccountId })
+		await refresh()
+	})
+	$('settings-logout-all').addEventListener('click', async () => {
+		if (
+			!window.confirm(
+				'Log out of all accounts? Their app passwords are deleted in Nextcloud, and you need new ones to sign in again.',
+			)
+		)
+			return
+		await send('logout', { all: true })
+		await refresh()
+	})
+	$('settings-lock-all').addEventListener('click', async () => {
+		await send('lock', {})
 		await refresh()
 	})
 
