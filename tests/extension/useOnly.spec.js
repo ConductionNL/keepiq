@@ -6,7 +6,7 @@
  * shares task 4.2): its own site only, a real password field only, no save
  * prompt, and a use report per fill.
  *
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+ * @spec openspec/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
  */
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { reportUseOnlyFill } from '../../browser-extension/src/lib/api.js'

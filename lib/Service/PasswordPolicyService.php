@@ -215,7 +215,7 @@ class PasswordPolicyService {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 	 */
 	public function readAdminPolicyKeys(): array {
 		return array_merge($this->readPolicyKeys(), $this->vaultPolicies?->read() ?? []);

@@ -72,7 +72,7 @@ class RecoveryAdminController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 	 */
 	#[AuthorizedAdminSetting(settings: PeopleAdminSettings::class)]
 	public function show(): JSONResponse {
@@ -99,7 +99,7 @@ class RecoveryAdminController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 	 */
 	#[AuthorizedAdminSetting(settings: PeopleAdminSettings::class)]
 	#[PasswordConfirmationRequired]
@@ -131,7 +131,7 @@ class RecoveryAdminController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
 	 */
 	#[AuthorizedAdminSetting(settings: PeopleAdminSettings::class)]
 	#[PasswordConfirmationRequired]
@@ -153,7 +153,7 @@ class RecoveryAdminController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-force-revocation-warns-about-enrolled-users
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-force-revocation-warns-about-enrolled-users
 	 */
 	#[AuthorizedAdminSetting(settings: PeopleAdminSettings::class)]
 	public function enrolled(string $suiteId = ''): JSONResponse {

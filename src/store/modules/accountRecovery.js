@@ -37,7 +37,7 @@ const API = '/apps/keepiq/api/v1/recovery'
 export const requestKeyStore = {
 	/**
 	 * @return {Promise<IDBDatabase>}
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
 	open() {
 		return new Promise((resolve, reject) => {
@@ -53,7 +53,7 @@ export const requestKeyStore = {
 	 * @param {string} id The request id.
 	 * @param {object} value { privateKey, publicKeyRaw }.
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
 	async put(id, value) {
 		const db = await this.open()
@@ -68,7 +68,7 @@ export const requestKeyStore = {
 	/**
 	 * @param {string} id The request id.
 	 * @return {Promise<object|undefined>}
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
 	async get(id) {
 		const db = await this.open()
@@ -85,7 +85,7 @@ export const requestKeyStore = {
 	/**
 	 * @param {string} id The request id.
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
 	async delete(id) {
 		const db = await this.open()
@@ -113,7 +113,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 * Load the user's enrolment status.
 		 *
 		 * @return {Promise<object>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
 		 */
 		async fetchStatus() {
 			const response = await axios.get(generateUrl(`${API}/enrolment`))
@@ -127,7 +127,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 *
 		 * @param {object} key { certificate, fingerprint, caChain }.
 		 * @return {Promise<string>} The fingerprint to show the user.
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
 		 */
 		async verifyKey(key) {
 			if (!key || !(await chainsTo(key.certificate, key.caChain ?? []))) {
@@ -156,7 +156,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 *
 		 * @param {string} masterPassword The master password, typed just now.
 		 * @return {Promise<object>} The new status.
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
 		 */
 		async enrol(masterPassword) {
 			const status = this.status ?? (await this.fetchStatus())
@@ -185,7 +185,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 *
 		 * @param {string} masterPassword The master password just used to unlock.
 		 * @return {Promise<string|null>} 'enrolled' when it enrolled, else null.
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
 		 */
 		async enrolAtUnlock(masterPassword) {
 			try {
@@ -209,7 +209,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 * Withdraw (refused under the required policy).
 		 *
 		 * @return {Promise<object>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
 		 */
 		async withdraw() {
 			const response = await axios.delete(generateUrl(`${API}/enrolment`))
@@ -221,7 +221,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 * Load the officer view and each request's phrase.
 		 *
 		 * @return {Promise<object>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 		 */
 		async fetchOfficer() {
 			const response = await axios.get(generateUrl(`${API}/officer`))
@@ -244,7 +244,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 * officer, post the wrapped copies and the public key, keep nothing.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
 		 */
 		async createKey() {
 			const officers = this.officer?.officers ?? []
@@ -277,7 +277,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 * @param {object} request The request row.
 		 * @param {string} masterPassword The officer's master password, typed just now.
 		 * @return {Promise<string>} The request status afterwards.
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 		 */
 		async approve(request, masterPassword) {
 			const session = useSessionStore()
@@ -302,7 +302,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 *
 		 * @param {string} id The request id.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 		 */
 		async decline(id) {
 			await axios.post(generateUrl(`${API}/requests/${id}/decline`))
@@ -315,7 +315,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 *
 		 * @param {object} request The approved request row.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
 		 */
 		async handOff(request) {
 			const material = await axios.get(
@@ -338,7 +338,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 *
 		 * @param {string} [purpose] `password` (forgot it) or `device` (unlock this device once).
 		 * @return {Promise<object>} The request with its phrase.
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 		 */
 		async startRequest(purpose = 'password') {
 			const pair = await generateRequestKeyPair()
@@ -358,7 +358,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 * Load the user's latest request.
 		 *
 		 * @return {Promise<object|null>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
 		 */
 		async fetchMyRequest() {
 			const response = await axios.get(generateUrl(`${API}/requests/mine`))
@@ -384,7 +384,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 * without a new master password (crypto-new-device-approval D6).
 		 *
 		 * @return {Promise<string>} The officer who handled it.
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
 		 */
 		async unlockDevice() {
 			const request = this.myRequest
@@ -426,7 +426,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 *
 		 * @param {string} newMasterPassword The new master password.
 		 * @return {Promise<string>} The officer who handled the recovery.
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
 		 */
 		async complete(newMasterPassword) {
 			const request = this.myRequest

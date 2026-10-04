@@ -106,7 +106,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#3.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -141,7 +141,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#3.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
 	 */
 	#[NoAdminRequired]
 	public function show(string $id): JSONResponse {
@@ -171,7 +171,7 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#3.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
 	 */
 	private static function withholdKey(array $suite, bool $blocked): array {
 		if ($blocked === false) {
@@ -227,7 +227,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#3.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-re-enrolment-after-a-revocation-requires-a-fresh-password-confirmation
 	 */
 	#[NoAdminRequired]

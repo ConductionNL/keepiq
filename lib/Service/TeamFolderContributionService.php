@@ -100,7 +100,7 @@ class TeamFolderContributionService {
 	 * @throws ForbiddenException When the caller holds no write grade there
 	 * @throws InvalidArgumentException On a missing name or owner ciphertext
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.2
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
 	 */
 	public function contribute(string $teamFolderId, array $data, string $userId): array {
 		$teamFolder = $this->loadTeamFolder(teamFolderId: $teamFolderId);
@@ -179,7 +179,7 @@ class TeamFolderContributionService {
 	 *
 	 * @return array<int,array{teamFolderId:string,folderId:string,folderName:string}>
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
 	 */
 	public function contributable(string $userId): array {
 		$found = [];
@@ -229,7 +229,7 @@ class TeamFolderContributionService {
 	 * @throws NotFoundException When the team folder is unknown
 	 * @throws ForbiddenException When the caller holds no write grade there
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
 	 */
 	public function context(string $teamFolderId, string $userId): array {
 		$teamFolder = $this->loadTeamFolder(teamFolderId: $teamFolderId);
@@ -270,7 +270,7 @@ class TeamFolderContributionService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.2
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
 	 */
 	private function mayContribute(TeamFolder $teamFolder, string $folderId, string $userId): bool {
 		if ($teamFolder->getOwnerId() === $userId) {
@@ -293,7 +293,7 @@ class TeamFolderContributionService {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.2
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
 	 */
 	private function memberCopies(TeamFolder $teamFolder, string $secretId, array $copies): array {
 		$eligible = [];

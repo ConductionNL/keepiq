@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
  * Reading the two options from a request, and combining grants
  * (sharing-use-only-and-expiring-shares D1, D2).
  *
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.2
  */
 class ShareRestrictionTest extends TestCase {
 

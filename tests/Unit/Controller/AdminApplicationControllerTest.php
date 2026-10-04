@@ -96,7 +96,7 @@ class AdminApplicationControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	public function testIndexListsEveryApplication(): void {
 		$this->applications->expects($this->once())->method('listForUser')->with('svc-apps', true)->willReturn([$this->application(id: 'app-1')]);
@@ -111,7 +111,7 @@ class AdminApplicationControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	public function testCreateRegistersAsAnAdministrator(): void {
 		$this->applications->expects($this->once())->method('register')
@@ -128,7 +128,7 @@ class AdminApplicationControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	public function testApproveRecordsTheCallerAsApprover(): void {
 		$this->applications->expects($this->exactly(2))->method('approve')
@@ -144,7 +144,7 @@ class AdminApplicationControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	public function testRejectRunsTheService(): void {
 		$this->applications->expects($this->once())->method('reject')->with('app-1', 'svc-apps', true);
@@ -157,7 +157,7 @@ class AdminApplicationControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	public function testUnknownApplicationsAre404(): void {
 		$this->applications->method('get')->willThrowException(new InvalidArgumentException('Application not found'));
@@ -172,7 +172,7 @@ class AdminApplicationControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	public function testDestroyDeletesThroughTheService(): void {
 		$this->applications->expects($this->once())->method('delete')->with('app-1', true);
@@ -186,7 +186,7 @@ class AdminApplicationControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	public function testLeasePolicyReadAndWrite(): void {
 		$this->mapper->method('findById')->willReturnCallback(function (string $id): Application {
@@ -211,7 +211,7 @@ class AdminApplicationControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	public function testARefusedLeasePolicyIs400(): void {
 		$this->mapper->method('findById')->willReturn($this->application(id: 'app-1'));
@@ -226,7 +226,7 @@ class AdminApplicationControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	public function testShowCarriesTheCertificateOfAnActiveApplication(): void {
 		$active = $this->application(id: 'app-1');

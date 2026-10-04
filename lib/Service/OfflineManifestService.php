@@ -86,7 +86,7 @@ class OfflineManifestService {
 	 *                               than no snapshot at all.
 	 *
 	 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-online-sessions-write-through-an-encrypted-local-snapshot
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#3.2
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
 	 */
 	public function buildForUser(string $userId): array {
 		$suite = $this->suiteMapper->findActiveByOwner('user', $userId)->jsonSerialize();

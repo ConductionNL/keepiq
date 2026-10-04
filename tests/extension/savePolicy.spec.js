@@ -14,6 +14,9 @@ import {
 } from '../../browser-extension/src/content/save-prompt.js'
 import { sha1Hex } from '../../src/health/hibpMatch.js'
 
+// The tab the login is submitted in, and the popup's active tab.
+const PAGE_TAB = { id: 7, url: 'https://example.org/login' }
+
 const ACCOUNT = {
 	id: 'acc-1',
 	url: 'https://cloud.test',
@@ -130,8 +133,6 @@ async function holdThenPolicy(secret, policy) {
 	vi.clearAllMocks()
 	api.fetchPolicy.mockResolvedValue(policy)
 }
-
-const PAGE_TAB = { id: 7, url: 'https://example.org/login' }
 
 const FLOOR_THREE = {
 	policy_enabled: true,
