@@ -4,10 +4,11 @@
  * Keepiq Restore Service
  *
  * Restores a vault backup (admin-scheduled-vault-backups D4 and D5). A
- * restore refuses outside maintenance mode, decrypts with the administrator's
+ * restore switches Nextcloud maintenance mode on for itself and always off
+ * again, refuses when it is already on, decrypts with the administrator's
  * key file when the archive is encrypted, verifies every checksum, refuses
  * an archive from a different schema, and refuses an archive older than the
- * newest audit entry unless forced. It then replaces every Keepiq table in
+ * newest audit entry unless forced or a dry run. It then replaces every Keepiq table in
  * one database transaction and only after that the attachment blobs.
  *
  * A restore gives back ciphertext as it was: every user unlocks with the
@@ -47,6 +48,13 @@ use Throwable;
  *   database, blob, crypto, user and audit sides by nature.
  */
 class RestoreService {
+	/**
+	 * Why a restore refuses to start while maintenance mode is on.
+	 */
+	public const MAINTENANCE_ALREADY_ON = 'Maintenance mode is already on. The restore switches it on and off by itself, '
+		. 'and switching it off at the end would cut short maintenance someone else started. '
+		. 'Run occ maintenance:mode --off when that work is done, then restore again.';
+
 	/**
 	 * Constructor.
 	 *
@@ -112,31 +120,49 @@ class RestoreService {
 	 *
 	 * @param array<string,mixed> $manifest The verified manifest
 	 * @param bool $force Whether the administrator forces an older archive
+	 * @param bool $dryRun Whether this is a dry run, which skips the age rule
 	 *
 	 * @return string[]
 	 *
 	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
+	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.2
 	 */
-	public function refusals(array $manifest, bool $force): array {
+	public function refusals(array $manifest, bool $force, bool $dryRun=false): array {
 		$refusals = [];
-		if ((bool)$this->config->getSystemValue('maintenance', false) === false) {
-			$refusals[] = 'Maintenance mode is off. Run occ maintenance:mode --on first.';
+		if ($this->maintenanceIsOn() === true) {
+			$refusals[] = self::MAINTENANCE_ALREADY_ON;
 		}
 
 		if (($manifest['schemaFingerprint'] ?? '') !== $this->fingerprint->current()) {
 			$refusals[] = 'The archive was written by a different Keepiq schema. Restore it on the same Keepiq version.';
 		}
 
-		$newest = $this->tables->newestAuditEntry();
-		$createdAt = (string)($manifest['createdAt'] ?? '');
-		if ($force === false && $newest !== null && $createdAt !== ''
-			&& new DateTime($createdAt) < new DateTime($newest)
-		) {
+		if ($force === false && $dryRun === false && $this->isOlderThanNewestAuditEntry(manifest: $manifest) === true) {
 			$refusals[] = 'The archive is older than the newest audit entry. Pass --force to roll back on purpose.';
 		}
 
 		return $refusals;
 	}//end refusals()
+
+	/**
+	 * Whether the archive was written before the newest audit entry, so a
+	 * restore would roll back later changes.
+	 *
+	 * @param array<string,mixed> $manifest The verified manifest
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.2
+	 */
+	public function isOlderThanNewestAuditEntry(array $manifest): bool {
+		$newest = $this->tables->newestAuditEntry();
+		$createdAt = (string)($manifest['createdAt'] ?? '');
+		if ($newest === null || $createdAt === '') {
+			return false;
+		}
+
+		return new DateTime($createdAt) < new DateTime($newest);
+	}//end isOlderThanNewestAuditEntry()
 
 	/**
 	 * Per table: rows now, and rows in the archive.
@@ -190,7 +216,11 @@ class RestoreService {
 	}//end warnings()
 
 	/**
-	 * Replace every Keepiq table, then the attachment blobs, and audit.
+	 * Switch maintenance mode on, replace every Keepiq table, then the
+	 * attachment blobs, audit, and always switch maintenance mode off again.
+	 *
+	 * Nextcloud loads no app commands while maintenance mode is on, so the
+	 * restore command cannot ask the administrator to switch it on first.
 	 *
 	 * @param string $zip The verified archive
 	 * @param array<string,mixed> $manifest Its manifest
@@ -198,9 +228,43 @@ class RestoreService {
 	 *
 	 * @return array{rows:int,blobs:int}
 	 *
+	 * @throws InvalidArgumentException When maintenance mode is already on
+	 *
 	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
+	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.2
 	 */
 	public function restore(string $zip, array $manifest, string $archiveName): array {
+		if ($this->maintenanceIsOn() === true) {
+			throw new InvalidArgumentException(self::MAINTENANCE_ALREADY_ON);
+		}
+
+		$this->config->setSystemValue('maintenance', true);
+		try {
+			return $this->replace(zip: $zip, manifest: $manifest, archiveName: $archiveName);
+		} finally {
+			$this->config->setSystemValue('maintenance', false);
+		}
+	}//end restore()
+
+	/**
+	 * Whether Nextcloud maintenance mode is on.
+	 *
+	 * @return bool
+	 */
+	private function maintenanceIsOn(): bool {
+		return (bool)$this->config->getSystemValue('maintenance', false) === true;
+	}//end maintenanceIsOn()
+
+	/**
+	 * Replace every Keepiq table, then the attachment blobs, and audit.
+	 *
+	 * @param string $zip The verified archive
+	 * @param array<string,mixed> $manifest Its manifest
+	 * @param string $archiveName The name for the audit entry
+	 *
+	 * @return array{rows:int,blobs:int}
+	 */
+	private function replace(string $zip, array $manifest, string $archiveName): array {
 		$written = $this->tables->replaceAll(
 			rowsFor: fn (string $table): iterable => $this->reader->rows(zipPath: $zip, table: $table)
 		);
@@ -234,7 +298,7 @@ class RestoreService {
 		);
 
 		return ['rows' => $rows, 'blobs' => $blobs];
-	}//end restore()
+	}//end replace()
 
 	/**
 	 * Whether this instance's secret opens the first CA key in the archive.

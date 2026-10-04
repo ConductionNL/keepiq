@@ -34,20 +34,29 @@ When a backup public key is configured, each archive MUST be encrypted with a ra
 
 ### Requirement: Archives are verified and restored from the command line
 
-The system MUST offer `occ keepiq:backup:list`, `occ keepiq:backup:verify` and `occ keepiq:backup:restore`. Restore MUST refuse unless Nextcloud maintenance mode is on, MUST verify every checksum first, MUST refuse an archive whose schema fingerprint differs from the installed schema, and MUST replace all Keepiq tables in one database transaction before replacing the attachment blobs. `--dry-run` MUST print per-table current and archive row counts and change nothing. Restoring an archive older than the newest audit entry MUST require `--force`. Every restore MUST be audited as `BACKUP_RESTORED`.
+The system MUST offer `occ keepiq:backup:list`, `occ keepiq:backup:verify` and `occ keepiq:backup:restore`. Restore MUST switch Nextcloud maintenance mode on for the duration of the restore and MUST switch it off again afterwards, also when the restore fails. It MUST refuse to start when maintenance mode is already on, because switching it off at the end would cut short maintenance someone else started. Nextcloud loads no app commands in maintenance mode, so the command cannot ask the administrator to switch it on first. Restore MUST verify every checksum first, MUST refuse an archive whose schema fingerprint differs from the installed schema, and MUST replace all Keepiq tables in one database transaction before replacing the attachment blobs. `--dry-run` MUST print per-table current and archive row counts and change nothing. Restoring an archive older than the newest audit entry MUST require `--force`; a `--dry-run` MUST print that rule as a notice instead of refusing, so the administrator sees the counts before choosing `--force`. Every restore MUST be audited as `BACKUP_RESTORED`.
 
-#### Scenario: Restore outside maintenance mode is refused
+#### Scenario: Restore runs inside maintenance mode it sets itself
 
-- **GIVEN** maintenance mode is off
+- **GIVEN** maintenance mode is off and a valid archive
+- **WHEN** an administrator runs `occ keepiq:backup:restore <file>` and confirms
+- **THEN** maintenance mode MUST be on while the tables and blobs are replaced
+- **AND** maintenance mode MUST be off when the command ends, also when the restore failed
+
+#### Scenario: Restore refuses when maintenance mode is already on
+
+- **GIVEN** maintenance mode is on
 - **WHEN** an administrator runs `occ keepiq:backup:restore <file>`
-- **THEN** the command MUST exit with an error and no table MUST change
+- **THEN** the command MUST exit with an error that says why
+- **AND** no table MUST change and maintenance mode MUST stay on
 
 #### Scenario: Dry run shows the difference
 
-- **GIVEN** maintenance mode is on and a valid archive
-- **WHEN** an administrator runs `occ keepiq:backup:restore <file> --dry-run`
+- **GIVEN** maintenance mode is off and a valid archive older than the newest audit entry
+- **WHEN** an administrator runs `occ keepiq:backup:restore <file> --dry-run` without `--force`
 - **THEN** the command MUST print current and archive row counts per table
-- **AND** no table MUST change
+- **AND** it MUST print as a notice that a real restore needs `--force`
+- **AND** no table MUST change and maintenance mode MUST stay off
 
 ### Requirement: A restore returns ciphertext that still needs each user's key
 

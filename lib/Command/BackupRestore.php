@@ -3,8 +3,9 @@
 /**
  * Keepiq occ command: keepiq:backup:restore
  *
- * Restores a vault backup in maintenance mode, after verification, schema
- * and age checks and a confirmation that names what a restore means
+ * Restores a vault backup after verification, schema and age checks and a
+ * confirmation that names what a restore means. The restore switches
+ * maintenance mode on for itself and always off again
  * (admin-scheduled-vault-backups D4 and D5).
  *
  * @category Command
@@ -24,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Command;
 
 use InvalidArgumentException;
+use Throwable;
 use OCA\Keepiq\Backup\BackupService;
 use OCA\Keepiq\Backup\RestoreService;
 use Symfony\Component\Console\Command\Command;
@@ -65,7 +67,7 @@ class BackupRestore extends Command {
 	 */
 	protected function configure(): void {
 		$this->setName(name: 'keepiq:backup:restore')
-			->setDescription(description: 'Restore every Keepiq vault from a backup (maintenance mode only)')
+			->setDescription(description: 'Restore every Keepiq vault from a backup, in maintenance mode it switches on and off itself')
 			->addArgument(name: 'file', mode: InputArgument::REQUIRED, description: 'An archive name from keepiq:backup:list, or a file path')
 			->addOption(name: 'key-file', mode: InputOption::VALUE_REQUIRED, description: 'The private key for an encrypted archive')
 			->addOption(name: 'dry-run', mode: InputOption::VALUE_NONE, description: 'Show current and archive row counts and change nothing')
@@ -82,6 +84,7 @@ class BackupRestore extends Command {
 	 *
 	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
 	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.4
+	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.2
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$file = (string)$input->getArgument('file');
@@ -95,7 +98,9 @@ class BackupRestore extends Command {
 			return 1;
 		}
 
-		$refusals = $this->restore->refusals(manifest: $opened['manifest'], force: (bool)$input->getOption('force'));
+		$force    = (bool)$input->getOption('force');
+		$dryRun   = (bool)$input->getOption('dry-run');
+		$refusals = $this->restore->refusals(manifest: $opened['manifest'], force: $force, dryRun: $dryRun);
 		if ($refusals !== []) {
 			foreach ($refusals as $refusal) {
 				$output->writeln('<error>' . $refusal . '</error>');
@@ -110,7 +115,11 @@ class BackupRestore extends Command {
 		}
 
 		(new Table($output))->setHeaders(['Table', 'Rows now', 'Rows in archive'])->setRows($rows)->render();
-		if ((bool)$input->getOption('dry-run') === true) {
+		if ($dryRun === true) {
+			if ($force === false && $this->restore->isOlderThanNewestAuditEntry(manifest: $opened['manifest']) === true) {
+				$output->writeln('<comment>The archive is older than the newest audit entry. A real restore needs --force to roll back on purpose.</comment>');
+			}
+
 			$output->writeln('Dry run: nothing changed.');
 			return 0;
 		}
@@ -127,7 +136,16 @@ class BackupRestore extends Command {
 			return 1;
 		}
 
-		$result = $this->restore->restore(zip: $opened['zip'], manifest: $opened['manifest'], archiveName: basename($file));
+		$output->writeln('Switching maintenance mode on for the restore.');
+		try {
+			$result = $this->restore->restore(zip: $opened['zip'], manifest: $opened['manifest'], archiveName: basename($file));
+		} catch (Throwable $exception) {
+			$output->writeln('<error>Restore failed: ' . $exception->getMessage() . '</error>');
+			$output->writeln('<error>Maintenance mode is off again.</error>');
+			return 1;
+		}
+
+		$output->writeln('Maintenance mode is off again.');
 		$output->writeln(sprintf('Restored %d rows and %d attachment blobs.', $result['rows'], $result['blobs']));
 
 		return 0;

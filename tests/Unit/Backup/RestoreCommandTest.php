@@ -60,7 +60,15 @@ class RestoreCommandTest extends TestCase {
 	/** @var array<string,string> The attachment blobs */
 	private array $blobs = [];
 
-	private bool $maintenance = true;
+	private bool $maintenance = false;
+
+	/** @var array<int,bool> Every value written to the maintenance switch, in order */
+	private array $maintenanceWrites = [];
+
+	/** @var array<int,bool> The maintenance switch at each table replacement */
+	private array $maintenanceDuringReplace = [];
+
+	private ?\Throwable $replaceFails = null;
 
 	private string $fingerprint = 'fp-1';
 
@@ -101,6 +109,10 @@ class RestoreCommandTest extends TestCase {
 		$tables->method('count')->willReturnCallback(fn (string $t): int => count($this->db[$t]));
 		$tables->method('newestAuditEntry')->willReturnCallback(fn (): ?string => $this->newestAudit);
 		$tables->method('replaceAll')->willReturnCallback(function (callable $rowsFor): array {
+			$this->maintenanceDuringReplace[] = $this->maintenance;
+			if ($this->replaceFails !== null) {
+				throw $this->replaceFails;
+			}
 			$written = [];
 			foreach (BackupTableRegistry::TABLES as $table) {
 				$this->db[$table] = [];
@@ -121,6 +133,12 @@ class RestoreCommandTest extends TestCase {
 		$config->method('getSystemValue')->willReturnCallback(
 			fn (string $key, $default = '') => ($key === 'maintenance' ? $this->maintenance : $default)
 		);
+		$config->method('setSystemValue')->willReturnCallback(function (string $key, $value): void {
+			if ($key === 'maintenance') {
+				$this->maintenance = (bool)$value;
+				$this->maintenanceWrites[] = (bool)$value;
+			}
+		});
 
 		$this->archive = $this->dir . '/keepiq-backup.zip';
 		(new ArchiveWriter(tables: $tables, appDataFactory: $this->blobStore(), appManager: $appManager, config: $config, fingerprint: $fingerprint))
@@ -259,19 +277,77 @@ class RestoreCommandTest extends TestCase {
 	}//end testVerifyEncryptedNeedsTheRightKey()
 
 	/**
-	 * Scenario "Restore outside maintenance mode is refused": no table changes.
+	 * Scenario "Restore runs inside maintenance mode it sets itself": the
+	 * switch is on while the tables are replaced and off afterwards.
 	 *
 	 * @return void
 	 */
-	public function testRestoreOutsideMaintenanceIsRefused(): void {
-		$this->maintenance = false;
+	public function testRestoreSwitchesMaintenanceOnAndOffAgain(): void {
+		$restore = $this->tester(new BackupRestore(backups: $this->backups, restore: $this->restore));
+
+		$restore->setInputs(['yes']);
+		$this->assertSame(0, $restore->execute(['file' => $this->archive]));
+		$this->assertSame([true], $this->maintenanceDuringReplace);
+		$this->assertSame([true, false], $this->maintenanceWrites);
+		$this->assertFalse($this->maintenance);
+	}//end testRestoreSwitchesMaintenanceOnAndOffAgain()
+
+	/**
+	 * A restore that fails still switches maintenance mode off again.
+	 *
+	 * @return void
+	 */
+	public function testFailedRestoreSwitchesMaintenanceOffAgain(): void {
+		$this->replaceFails = new \RuntimeException('database went away');
+		$restore = $this->tester(new BackupRestore(backups: $this->backups, restore: $this->restore));
+
+		$restore->setInputs(['yes']);
+		$this->assertSame(1, $restore->execute(['file' => $this->archive]));
+		$this->assertStringContainsString('database went away', $restore->getDisplay());
+		$this->assertSame([true], $this->maintenanceDuringReplace);
+		$this->assertSame([true, false], $this->maintenanceWrites);
+		$this->assertFalse($this->maintenance);
+	}//end testFailedRestoreSwitchesMaintenanceOffAgain()
+
+	/**
+	 * Scenario "Restore refuses when maintenance mode is already on": nothing
+	 * changes and maintenance mode stays on.
+	 *
+	 * @return void
+	 */
+	public function testRestoreRefusedWhenMaintenanceIsAlreadyOn(): void {
+		$this->maintenance = true;
 		$before = $this->db;
 		$restore = $this->tester(new BackupRestore(backups: $this->backups, restore: $this->restore));
 
+		$restore->setInputs(['yes']);
 		$this->assertSame(1, $restore->execute(['file' => $this->archive]));
-		$this->assertStringContainsString('Maintenance mode is off', $restore->getDisplay());
+		$this->assertStringContainsString('Maintenance mode is already on', $restore->getDisplay());
 		$this->assertSame($before, $this->db);
-	}//end testRestoreOutsideMaintenanceIsRefused()
+		$this->assertSame([], $this->maintenanceWrites);
+		$this->assertTrue($this->maintenance);
+	}//end testRestoreRefusedWhenMaintenanceIsAlreadyOn()
+
+	/**
+	 * A dry run of an archive older than the newest audit entry prints the
+	 * age rule as a notice, prints the counts and changes nothing.
+	 *
+	 * @return void
+	 */
+	public function testDryRunOfAnOlderArchiveShowsANoticeAndTheCounts(): void {
+		$this->newestAudit = '2999-01-01 00:00:00';
+		$this->db['secrets'][] = ['id' => 's3', 'owner_type' => 'user', 'owner_id' => 'alice', 'key' => 'NEWER'];
+		$before = $this->db;
+		$restore = $this->tester(new BackupRestore(backups: $this->backups, restore: $this->restore));
+
+		$this->assertSame(0, $restore->execute(['file' => $this->archive, '--dry-run' => true]));
+		$display = $restore->getDisplay();
+		$this->assertStringContainsString('older than the newest audit entry', $display);
+		$this->assertMatchesRegularExpression('/secrets\s*\|\s*3\s*\|\s*2/', $display);
+		$this->assertStringContainsString('Dry run: nothing changed.', $display);
+		$this->assertSame($before, $this->db);
+		$this->assertSame([], $this->maintenanceWrites);
+	}//end testDryRunOfAnOlderArchiveShowsANoticeAndTheCounts()
 
 	/**
 	 * A different schema and an archive older than the audit log are refused;
@@ -288,9 +364,13 @@ class RestoreCommandTest extends TestCase {
 
 		$this->fingerprint = 'fp-1';
 		$this->newestAudit = '2999-01-01 00:00:00';
-		$this->assertSame(1, $restore->execute(['file' => $this->archive, '--dry-run' => true]));
+		$restore->setInputs(['yes']);
+		$this->assertSame(1, $restore->execute(['file' => $this->archive]));
 		$this->assertStringContainsString('--force', $restore->getDisplay());
-		$this->assertSame(0, $restore->execute(['file' => $this->archive, '--dry-run' => true, '--force' => true]));
+		$this->assertSame([], $this->maintenanceDuringReplace);
+		$restore->setInputs(['yes']);
+		$this->assertSame(0, $restore->execute(['file' => $this->archive, '--force' => true]));
+		$this->assertSame([true], $this->maintenanceDuringReplace);
 	}//end testSchemaAndAgeRules()
 
 	/**

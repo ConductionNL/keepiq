@@ -27,6 +27,6 @@
 - With backups on, an archive of every Keepiq table and attachment blob appears in the app data folder at the chosen interval, and old archives beyond the retention count are removed.
 - No archive contains a plaintext secret value or a master password.
 - With a backup public key set, an archive cannot be verified or restored without the matching private key.
-- `occ keepiq:backup:restore` refuses to run outside maintenance mode and refuses an archive from a different schema.
+- `occ keepiq:backup:restore` runs in maintenance mode it switches on and off itself, refuses when maintenance mode is already on, and refuses an archive from a different schema.
 - After a restore, each user unlocks with the master password valid at backup time and reads the values as they were then.
 - The web interface offers no way to download an archive.
