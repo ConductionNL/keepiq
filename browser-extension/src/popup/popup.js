@@ -10,6 +10,7 @@ import { initGenerator } from './generator-view.js'
 import { initSend } from './send-view.js'
 import { initVault } from './vault-view.js'
 import { copyText } from './clipboard.js'
+import { folderChoices } from '../lib/vault-index.js'
 import {
 	canAddAccount,
 	DEVICE_STATUS_TEXT,
@@ -107,6 +108,20 @@ async function activeHost() {
 	}
 }
 
+/**
+ * Fill the save prompt's folder picker from the vault.
+ *
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-save-a-new-login-into-a-folder
+ */
+async function fillSaveFolders() {
+	const select = $('save-folder')
+	select.replaceChildren(select.options[0] || new Option('No folder', ''))
+	const { folders = [] } = await send('vault-list')
+	for (const { id, label } of folderChoices(folders)) {
+		select.appendChild(new Option(label, id))
+	}
+}
+
 async function renderUnlocked() {
 	const host = await activeHost()
 	$('active-host').textContent = host
@@ -155,6 +170,14 @@ async function renderUnlocked() {
 				if (res.totpCode) {
 					await copyText(res.totpCode)
 				}
+				if (!res.filled) {
+					// Say so instead of closing as if it worked.
+					showError(
+						'unlock-error',
+						'Keepiq found no login form on this page to fill.',
+					)
+					return
+				}
 				window.close()
 			})
 			li.appendChild(btn)
@@ -171,13 +194,23 @@ async function renderUnlocked() {
 		$('save-text').textContent = capture.account
 			? `Save login for ${capture.host} to ${capture.account}?`
 			: `Save login for ${capture.host}?`
+		// A new login can go into a folder; an update stays where it is.
+		$('save-folder-label').hidden = !!capture.update
+		$('save-never').hidden = !!capture.update
+		if (!capture.update) await fillSaveFolders()
 		$('save-yes').onclick = async () => {
 			// The worker saves what it holds for this tab; nothing is sent back.
-			const res = await send('save-capture', {})
+			const res = await send('save-capture', {
+				folderId: $('save-folder').value || null,
+			})
 			if (res.error) showError('unlock-error', res.error)
 			$('save-prompt').hidden = true
 		}
 		$('save-no').onclick = () => {
+			$('save-prompt').hidden = true
+		}
+		$('save-never').onclick = async () => {
+			await send('capture-never', {})
 			$('save-prompt').hidden = true
 		}
 	}
@@ -333,6 +366,55 @@ async function renderSettings() {
 	$('pin-set-form').hidden = !!state.pinSet
 	$('pin-remove').hidden = !state.pinSet
 	await renderClipboardSetting()
+	await renderNeverSites()
+	await renderShortcut()
+}
+
+/**
+ * The sites with no save offer, each with Remove.
+ *
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-never-offer-to-save-on-a-site
+ */
+async function renderNeverSites() {
+	const { sites = [] } = await send('never-sites')
+	const list = $('never-list')
+	list.replaceChildren()
+	for (const host of sites) {
+		const li = document.createElement('li')
+		li.className = 'candidate row'
+		const name = document.createElement('span')
+		name.textContent = host
+		const remove = document.createElement('button')
+		remove.type = 'button'
+		remove.className = 'link'
+		remove.textContent = 'Remove'
+		remove.setAttribute('aria-label', `Offer to save on ${host} again`)
+		remove.addEventListener('click', async () => {
+			await send('never-remove', { host })
+			await renderNeverSites()
+		})
+		li.append(name, remove)
+		list.appendChild(li)
+	}
+	$('never-empty').hidden = sites.length > 0
+}
+
+/**
+ * The keyboard shortcut that fills a login, as the browser set it.
+ *
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-fill-from-the-context-menu-and-a-shortcut
+ */
+async function renderShortcut() {
+	let shortcut = ''
+	try {
+		const commands = (await chrome.commands?.getAll?.()) || []
+		shortcut = commands.find((c) => c.name === 'fill-login')?.shortcut || ''
+	} catch {
+		shortcut = ''
+	}
+	$('shortcut-text').textContent = shortcut
+		? `Press ${shortcut} on a login page to fill its login. Change the shortcut in your browser's extension settings.`
+		: "Set a keyboard shortcut for filling a login in your browser's extension settings."
 }
 
 /**

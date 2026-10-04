@@ -11,7 +11,8 @@
     "idle",
     "alarms",
     "windows",
-    "offscreen"
+    "offscreen",
+    "contextMenus"
   ],
   "host_permissions": [
     "http://*/*",
@@ -22,6 +23,15 @@
     "32": "icons/icon-32.png",
     "48": "icons/icon-48.png",
     "128": "icons/icon-128.png"
+  },
+  "commands": {
+    "fill-login": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+L",
+        "mac": "Command+Shift+L"
+      },
+      "description": "Fill the login for this site"
+    }
   },
   "action": {
     "default_popup": "popup.html",
