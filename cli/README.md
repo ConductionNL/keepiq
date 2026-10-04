@@ -205,10 +205,10 @@ omits lease reporting.
 The `sdk/go/crypto` package (shared with the client libraries, see `../sdk/`) reimplements the browser recipe **byte-for-byte**:
 
 - **Private-key blob** (human unlock): base64 of `[4B version][16B salt][12B
-  IV][ciphertext+16B GCM tag]`. The unlock key is
+IV][ciphertext+16B GCM tag]`. The unlock key is
   `PBKDF2-HMAC-SHA256(masterPassword, salt, 600000)` → AES-256-GCM.
 - **Secret fields** (`rsa-oaep-sha256-chunked-v1`): base64 of `[4B chunk count
-  BE][512B RSA-OAEP-SHA256 blocks…]`, each block decrypted with the suite's
+BE][512B RSA-OAEP-SHA256 blocks…]`, each block decrypted with the suite's
   RSA-4096 private key and concatenated.
 
 PBKDF2 is implemented in-house over `crypto/hmac` (RFC 8018) so the CLI has zero
