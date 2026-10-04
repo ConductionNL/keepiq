@@ -103,6 +103,10 @@ Options:
   (60 by default, 0 turns it off).
 - `--confirm`: ask before each signature through the program in
   `SSH_ASKPASS`. Without `SSH_ASKPASS` the agent does not start.
+- `--foreground`: never move to the background, even when the output is not a
+  terminal. A service manager needs this: systemd sends the output to its
+  journal, and without `--foreground` the agent would leave the unit, which
+  systemd then stops.
 - `--locked`: start without keys, for a service manager. Unlock it with
   `ssh-add -X` and your master password. Lock it again with `ssh-add -x`:
   it asks for a lock password, which the agent ignores, because unlocking
@@ -124,7 +128,7 @@ systemd user unit, `~/.config/systemd/user/keepiq-agent.service`:
 Description=Keepiq SSH agent
 
 [Service]
-ExecStart=%h/.local/bin/keepiq ssh-agent --locked --socket %t/keepiq/agent.sock
+ExecStart=%h/.local/bin/keepiq ssh-agent --locked --foreground --socket %t/keepiq/agent.sock
 Restart=on-failure
 
 [Install]

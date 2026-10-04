@@ -15,6 +15,9 @@ type agentFlags struct {
 	Idle    int // minutes; 0 disables
 	Folder  string
 	Locked  bool
+	// Foreground keeps the agent in this process even when stdout is not a
+	// terminal, for a service manager such as systemd.
+	Foreground bool
 }
 
 // parseAgentFlags reads the ssh-agent flags. Idle defaults to 60 minutes.
@@ -35,6 +38,8 @@ func parseAgentFlags(args []string) (agentFlags, error) {
 			f.Confirm = true
 		case "--locked":
 			f.Locked = true
+		case "--foreground":
+			f.Foreground = true
 		case "--socket":
 			f.Socket, err = value()
 		case "--folder":

@@ -58,7 +58,7 @@ func cmdSSHAgent(args []string) error {
 		return err
 	}
 	detached := os.Getenv(detachedEnv) == "1"
-	if !detached && !isTerminal(os.Stdout) {
+	if shouldDetach(flags, detached, isTerminal(os.Stdout)) {
 		return startDetached(args, flags)
 	}
 	var confirm sshagent.Confirmer
@@ -162,6 +162,14 @@ func startDetached(args []string, flags agentFlags) error {
 	fmt.Print(string(exports))
 	fmt.Printf("SSH_AGENT_PID=%d; export SSH_AGENT_PID;\n", cmd.Process.Pid)
 	return cmd.Process.Release()
+}
+
+// shouldDetach is true only for `eval "$(keepiq ssh-agent)"`: stdout is a
+// pipe, this is not already the background copy, and --foreground is not set.
+// A service manager also gives a stdout that is no terminal (systemd's
+// journal), and there the agent must stay the unit's main process.
+func shouldDetach(flags agentFlags, detached bool, stdoutIsTerminal bool) bool {
+	return !flags.Foreground && !detached && !stdoutIsTerminal
 }
 
 // isTerminal reports whether f is a character device, so a terminal and not a
