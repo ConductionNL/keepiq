@@ -16,7 +16,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
  */
 
 declare(strict_types=1);

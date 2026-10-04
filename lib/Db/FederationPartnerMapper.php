@@ -52,7 +52,7 @@ class FederationPartnerMapper extends QBMapper {
 	 *
 	 * @throws DoesNotExistException When no row matches
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function findById(string $id): FederationPartner {
 		$qb = $this->db->getQueryBuilder();
@@ -72,7 +72,7 @@ class FederationPartnerMapper extends QBMapper {
 	 *
 	 * @throws DoesNotExistException When no partner has that host
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public function findByHost(string $host): FederationPartner {
 		$qb = $this->db->getQueryBuilder();
@@ -88,7 +88,7 @@ class FederationPartnerMapper extends QBMapper {
 	 *
 	 * @return FederationPartner[]
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function findAllPartners(): array {
 		$qb = $this->db->getQueryBuilder();

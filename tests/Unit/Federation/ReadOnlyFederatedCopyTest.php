@@ -69,7 +69,7 @@ use Psr\Log\LoggerInterface;
 /**
  * Bob holds a read-only copy of a secret Alice shared from another instance.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-remote-copies-are-read-only
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-remote-copies-are-read-only
  */
 class ReadOnlyFederatedCopyTest extends TestCase {
 

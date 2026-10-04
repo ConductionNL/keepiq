@@ -31,7 +31,7 @@ use OCP\OCM\Events\OCMEndpointRequestEvent;
 /**
  * The local root fingerprint and CA chain for federation.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
  */
 class FederationRootService {
 	/**
@@ -53,7 +53,7 @@ class FederationRootService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function isSupported(): bool {
 		return class_exists(OCMEndpointRequestEvent::class);
@@ -66,7 +66,7 @@ class FederationRootService {
 	 *
 	 * @return string|null Null when the PEM holds no certificate
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function fingerprint(string $pem): ?string {
 		if (preg_match('/-----BEGIN CERTIFICATE-----(.+?)-----END CERTIFICATE-----/s', $pem, $match) !== 1) {
@@ -86,7 +86,7 @@ class FederationRootService {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
 	 */
 	public function localRootFingerprint(): ?string {
 		try {
@@ -101,7 +101,7 @@ class FederationRootService {
 	 *
 	 * @return array<int,string> PEM certificates, empty before the CA exists
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public function localChain(): array {
 		try {

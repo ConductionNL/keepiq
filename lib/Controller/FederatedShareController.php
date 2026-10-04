@@ -42,7 +42,7 @@ use RuntimeException;
 /**
  * Owner-side federated share routes.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 class FederatedShareController extends Controller {
 	/**
@@ -82,7 +82,7 @@ class FederatedShareController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
 	 */
 	#[NoAdminRequired]
@@ -126,7 +126,7 @@ class FederatedShareController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	#[NoAdminRequired]
 	public function index(string $secretId): JSONResponse {
@@ -158,7 +158,7 @@ class FederatedShareController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
 	 */
 	#[NoAdminRequired]
 	public function update(
@@ -198,7 +198,7 @@ class FederatedShareController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
 	 */
 	#[NoAdminRequired]
 	public function destroy(string $id): JSONResponse {
@@ -227,7 +227,7 @@ class FederatedShareController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	#[NoAdminRequired]
 	public function suspend(string $id, string $reason = ''): JSONResponse {

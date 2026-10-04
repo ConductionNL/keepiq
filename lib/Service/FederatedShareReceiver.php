@@ -52,7 +52,7 @@ use Throwable;
  *   crypto, plus the row it stores and the refusal it throws; splitting the
  *   checks apart would spread one security decision over several classes.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-non-partner-cannot-deliver
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-a-non-partner-cannot-deliver
  */
 class FederatedShareReceiver {
 	/**
@@ -102,7 +102,7 @@ class FederatedShareReceiver {
 	 *
 	 * @throws ProviderCouldNotAddShareException When the share is refused
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-non-partner-cannot-deliver
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-non-partner-cannot-deliver
 	 */
 	public function receive(ICloudFederationShare $share): string {
 		$partner = $this->senderPartner(owner: (string)$share->getOwner());

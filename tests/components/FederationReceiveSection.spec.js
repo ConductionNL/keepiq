@@ -6,7 +6,7 @@
  * sharing-federated-recipients D6): off unless the stored preference says
  * on, and each change is stored as federation_receive.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-users-opt-in-to-receiving
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-users-opt-in-to-receiving
  */
 
 import axios from '@nextcloud/axios'

@@ -50,7 +50,7 @@ use Throwable;
 /**
  * Declines the share behind a deleted read-only copy.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
  */
 class FederatedCopyDeclineService {
 	/**
@@ -94,7 +94,7 @@ class FederatedCopyDeclineService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
 	 */
 	public function copyDeleted(Secret $secret, string $userId): void {
 		if ($secret->getReadOnly() !== true) {
@@ -124,7 +124,7 @@ class FederatedCopyDeclineService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
 	 */
 	public function tellOwner(FederatedInbound $row): bool {
 		try {

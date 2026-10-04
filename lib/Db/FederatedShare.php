@@ -65,7 +65,7 @@ use OCP\AppFramework\Db\Entity;
  *
  * @SuppressWarnings(PHPMD.LongVariable) Property names mirror the design's DB columns.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 class FederatedShare extends Entity implements JsonSerializable {
 	/**
@@ -270,7 +270,7 @@ class FederatedShare extends Entity implements JsonSerializable {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function jsonSerialize(): array {
 		return [

@@ -51,7 +51,7 @@ use OCP\AppFramework\Db\Entity;
  * @method DateTime|null getUpdatedAt()
  * @method void setUpdatedAt(?DateTime $updatedAt)
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 class FederatedInbound extends Entity implements JsonSerializable {
 	/**
@@ -203,7 +203,7 @@ class FederatedInbound extends Entity implements JsonSerializable {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function jsonSerialize(): array {
 		return [

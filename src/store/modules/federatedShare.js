@@ -26,7 +26,7 @@ const ENCRYPTED_FIELDS = ['key', 'login', 'additionalFields']
  *
  * @param {string} fingerprint `AB:CD:...`
  * @return {string}
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
  */
 export function fingerprintHex(fingerprint) {
 	return String(fingerprint).replaceAll(':', '').toLowerCase()
@@ -38,7 +38,7 @@ export function fingerprintHex(fingerprint) {
  *
  * @param {object} secret The decrypted secret.
  * @return {object}
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 function snapshotOf(secret) {
 	const snapshot = {}
@@ -72,7 +72,7 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 * Ask whether the dialog may offer another organisation at all.
 		 *
 		 * @return {Promise<boolean>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-no-partner-no-federation
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-no-partner-no-federation
 		 */
 		async checkAvailable() {
 			try {
@@ -93,7 +93,7 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 *
 		 * @param {string} cloudId What the owner typed.
 		 * @return {Promise<{cloudId: string, certificate: string, fingerprint: string}>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-verified-remote-certificate
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-verified-remote-certificate
 		 */
 		async lookup(cloudId) {
 			const response = await axios.post(
@@ -119,7 +119,7 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 *
 		 * @param {string} secretId The owner's secret.
 		 * @return {Promise<Array<object>>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 		 */
 		async listFor(secretId) {
 			const response = await axios.get(
@@ -136,7 +136,7 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 *
 		 * @param {string} id The federated share.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
 		 */
 		async revoke(id) {
 			await axios.delete(
@@ -153,7 +153,7 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 *
 		 * @param {string} secretId The owner's secret.
 		 * @return {Promise<{updated: number, suspended: number}>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
 		 */
 		async syncUpdate(secretId) {
 			const live = (await this.listFor(secretId)).filter(
@@ -214,7 +214,7 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 * @param {object} secret The decrypted secret (key, login, additionalFields).
 		 * @param {{cloudId: string, certificate: string, fingerprint: string}} recipient From lookup().
 		 * @return {Promise<object>} The federated share.
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 		 */
 		async share(secretId, secret, recipient) {
 			const encrypted = await useShareStore().encryptForRecipient(

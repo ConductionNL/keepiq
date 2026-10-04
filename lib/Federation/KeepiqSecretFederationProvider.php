@@ -35,7 +35,7 @@ use OCP\Federation\ICloudFederationShare;
 /**
  * Receives Keepiq secrets shared from partner instances.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 	/**
@@ -61,7 +61,7 @@ class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function getShareType() {
 		return FederatedShareService::RESOURCE_TYPE;
@@ -76,7 +76,7 @@ class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 	 *
 	 * @throws \OCP\Federation\Exceptions\ProviderCouldNotAddShareException When refused
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-non-partner-cannot-deliver
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-non-partner-cannot-deliver
 	 */
 	public function shareReceived(ICloudFederationShare $share) {
 		return $this->receiver->receive(share: $share);
@@ -93,7 +93,7 @@ class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 	 *
 	 * @throws \OCP\Share\Exceptions\ShareNotFound For every refusal
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function notificationReceived(string $notificationType, string $providerId, array $notification) {
 		// The recipient removed their copy: the owner's side (task 4.4).
@@ -117,7 +117,7 @@ class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 	 *
 	 * @return string The other side's cloud id, or '' when no share matches
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function getFederationIdFromSharedSecret(string $sharedSecret, array $payload): string {
 		$sender = $this->remoteChanges->senderOf(presented: $sharedSecret, notification: $payload);
@@ -133,7 +133,7 @@ class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 	 *
 	 * @return string[]
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function getSupportedShareTypes() {
 		return ['user'];

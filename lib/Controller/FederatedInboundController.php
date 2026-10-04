@@ -37,7 +37,7 @@ use RuntimeException;
 /**
  * The recipient's inbound federated shares.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
  */
 class FederatedInboundController extends Controller {
 	/**
@@ -66,7 +66,7 @@ class FederatedInboundController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -90,7 +90,7 @@ class FederatedInboundController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 	 */
 	#[NoAdminRequired]
 	public function accept(string $id): JSONResponse {
@@ -124,7 +124,7 @@ class FederatedInboundController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 	 */
 	#[NoAdminRequired]
 	public function decline(string $id): JSONResponse {

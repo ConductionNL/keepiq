@@ -272,7 +272,7 @@ export default {
 	 * offered (no outbound partner, no federated recipient).
 	 *
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-multiple-concurrent-link-shares
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-no-partner-no-federation
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-no-partner-no-federation
 	 */
 	async mounted() {
 		await Promise.all([

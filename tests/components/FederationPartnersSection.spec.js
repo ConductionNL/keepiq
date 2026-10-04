@@ -7,7 +7,7 @@
  * administrator ticked that they compared it, with the password confirmed
  * first; below Nextcloud 33 the section says so and offers nothing.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-administrators-approve-and-pin-partner-instances
  */
 
 import axios from '@nextcloud/axios'

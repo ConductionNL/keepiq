@@ -29,7 +29,7 @@ export const useFederatedInboundStore = defineStore('federatedInbound', {
 		 *
 		 * @param {object} state The store state.
 		 * @return {Array<object>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 		 */
 		pending: (state) =>
 			state.shares.filter((share) => share.status === 'pending'),
@@ -40,7 +40,7 @@ export const useFederatedInboundStore = defineStore('federatedInbound', {
 		 * Load the inbound shares.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 		 */
 		async fetch() {
 			this.loading = true
@@ -64,7 +64,7 @@ export const useFederatedInboundStore = defineStore('federatedInbound', {
 		 * @param {string} id The inbound share id.
 		 * @param {'accept'|'decline'} action What to do.
 		 * @return {Promise<object>} The updated share.
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 		 */
 		async answer(id, action) {
 			this.busyId = id

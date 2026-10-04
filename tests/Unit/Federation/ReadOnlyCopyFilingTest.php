@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-files-his-copy-in-a-folder
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-files-his-copy-in-a-folder
  */
 
 declare(strict_types=1);

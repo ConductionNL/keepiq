@@ -7,7 +7,7 @@
   user. Accepting asks this server to pull the ciphertext and keep a
   read-only copy in the vault; declining drops the offer.
 
-  @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+  @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 -->
 <template>
 	<div class="incoming-shares" data-testid="incoming-shares-view">
@@ -114,7 +114,7 @@ export default {
 		 * The error, in words the user can act on.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 		 */
 		errorText() {
 			if (this.store.error === 'pull_failed') {
@@ -134,7 +134,7 @@ export default {
 	},
 
 	/**
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 	 */
 	async created() {
 		await this.store.fetch()
@@ -146,7 +146,7 @@ export default {
 		 *
 		 * @param {string} status The share status.
 		 * @return {string}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 		 */
 		statusText(status) {
 			const texts = {
@@ -164,7 +164,7 @@ export default {
 		 * @param {string} id The inbound share id.
 		 * @param {'accept'|'decline'} action What to do.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 		 */
 		async answer(id, action) {
 			try {
@@ -179,7 +179,7 @@ export default {
 		 *
 		 * @param {string} secretId The local copy.
 		 * @return {void}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 		 */
 		open(secretId) {
 			this.$router?.push({ name: 'SecretList', params: { id: secretId } })

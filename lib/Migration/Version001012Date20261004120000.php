@@ -44,7 +44,7 @@ use OCP\Migration\SimpleMigrationStep;
  *
  * @psalm-suppress UnusedClass Loaded by the Nextcloud migration framework.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 class Version001012Date20261004120000 extends SimpleMigrationStep {
 	/**
@@ -117,7 +117,7 @@ class Version001012Date20261004120000 extends SimpleMigrationStep {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Signature fixed by SimpleMigrationStep.
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		$schema  = $schemaClosure();
@@ -138,7 +138,7 @@ class Version001012Date20261004120000 extends SimpleMigrationStep {
 	 *
 	 * @return bool Whether a table was created
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	private function createMissingTables(ISchemaWrapper $schema): bool {
 		$changed = false;
@@ -174,7 +174,7 @@ class Version001012Date20261004120000 extends SimpleMigrationStep {
 	 *
 	 * @return bool Whether a column was added
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-remote-copies-are-read-only
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-remote-copies-are-read-only
 	 */
 	private function addSecretColumns(ISchemaWrapper $schema): bool {
 		if ($schema->hasTable('keepiq_secrets') === false) {

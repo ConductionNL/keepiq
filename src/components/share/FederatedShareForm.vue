@@ -12,7 +12,7 @@
 
   Rendered by SecretShareDialog only while an outbound partner exists.
 
-  @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+  @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 -->
 <template>
 	<section class="federated-share" data-testid="federated-share-form">
@@ -148,7 +148,7 @@ export default {
 		 * The secret's federated shares, from the store.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 		 */
 		shares() {
 			return useFederatedShareStore().shares
@@ -158,7 +158,7 @@ export default {
 	/**
 	 * Load the secret's federated shares.
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	async created() {
 		try {
@@ -173,7 +173,7 @@ export default {
 		 * Fetch the recipient's certificate and verify it in this browser.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-certificate-from-another-root-is-refused
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-certificate-from-another-root-is-refused
 		 */
 		async check() {
 			this.busy = true
@@ -193,7 +193,7 @@ export default {
 		 * Encrypt the secret for the verified recipient and send the ciphertext.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 		 */
 		async share() {
 			if (this.recipient === null) {
@@ -225,7 +225,7 @@ export default {
 		 *
 		 * @param {string} id The federated share.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
 		 */
 		async revoke(id) {
 			this.busy = true
@@ -244,7 +244,7 @@ export default {
 		 *
 		 * @param {string} status The share status.
 		 * @return {string}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 		 */
 		stateText(status) {
 			const texts = {
@@ -273,7 +273,7 @@ export default {
 		 *
 		 * @param {Error|object} e The failure.
 		 * @return {string}
-		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-certificate-from-another-root-is-refused
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-certificate-from-another-root-is-refused
 		 */
 		explain(e) {
 			if (e instanceof FederatedCertificateError) {
