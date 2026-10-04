@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
  *
  * "Approve from another device" in the extension (keepiq#787 task 3.1), with
  * the worker's REAL router, real crypto and a fake server. The test plays the
