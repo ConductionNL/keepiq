@@ -84,6 +84,11 @@ function entriesFor(browser) {
 			out: 'unlock',
 			format: 'esm',
 		},
+		{
+			in: resolve(root, 'src/offscreen/offscreen.js'),
+			out: 'offscreen',
+			format: 'esm',
+		},
 	]
 }
 
@@ -117,6 +122,10 @@ async function buildBrowser(browser, base) {
 		resolve(outdir, 'consent.html'),
 	)
 	await cp(resolve(root, 'src/unlock/unlock.html'), resolve(outdir, 'unlock.html'))
+	await cp(
+		resolve(root, 'src/offscreen/offscreen.html'),
+		resolve(outdir, 'offscreen.html'),
+	)
 }
 
 async function run() {

@@ -35,6 +35,11 @@ import { isSecureServerUrl, normalizeServerUrl } from '../lib/server-url.js'
 import { buildVaultHandlers } from './vault-handlers.js'
 import { areaOrMemory, buildGeneratorHandlers } from './generator-handlers.js'
 import { buildVaultSync, isOffline, SYNC_INTERVAL_MINUTES } from './vault-sync.js'
+import {
+	buildClipboardClear,
+	CLEAR_CHOICES,
+	clearClipboardNow,
+} from './clipboard-clear.js'
 
 /**
  * The messages a content script (a tab) may send. Everything else needs an
@@ -153,6 +158,26 @@ async function targetTab(tabId) {
 // so it binds to the storage areas the browser provides at that time.
 let generatorState = null
 
+// Clearing the clipboard after a copy (clients-extension-gaps), built on first
+// use like the generator state.
+let clipboardState = null
+
+/**
+ * The clipboard clearer.
+ *
+ * @return {object}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-clipboard/spec.md#requirement-every-copy-is-cleared-after-a-delay-the-user-sets
+ */
+function clipboardModule() {
+	if (!clipboardState) {
+		clipboardState = buildClipboardClear({
+			local: areaOrMemory(chrome.storage?.local),
+			clear: clearClipboardNow,
+		})
+	}
+	return clipboardState
+}
+
 function generatorModule() {
 	if (!generatorState) {
 		generatorState = buildGeneratorHandlers({
@@ -217,6 +242,7 @@ function startSync(account) {
  * @return {Promise<void>}
  */
 export async function onAlarm(alarm) {
+	if (await clipboardModule().onAlarm(alarm)) return
 	if (!alarm?.name?.startsWith('keepiq-sync:')) return
 	const id = alarm.name.slice('keepiq-sync:'.length)
 	const account = await api.loadAccount(id)
@@ -1246,6 +1272,15 @@ const handlers = {
 	'save-capture': doSaveCapture,
 	'totp-for-host': doTotpForHost,
 	'pending-capture': takePendingCapture,
+	// A copy in the popup; the worker clears the clipboard later.
+	'clipboard-copied': () => clipboardModule().copied(),
+	'clipboard-settings': async () => ({
+		seconds: await clipboardModule().seconds(),
+		choices: CLEAR_CHOICES,
+	}),
+	'set-clipboard-clear': async (payload) => ({
+		seconds: await clipboardModule().setSeconds(payload.seconds),
+	}),
 	'frame-ready': doFrameReady,
 	'capture-decision': doCaptureDecision,
 	'biometric-enrol-context': doBiometricEnrolContext,

@@ -10,7 +10,8 @@
     "clipboardWrite",
     "idle",
     "alarms",
-    "windows"
+    "windows",
+    "offscreen"
   ],
   "host_permissions": [
     "http://*/*",

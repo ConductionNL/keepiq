@@ -16,20 +16,7 @@ import {
 } from '../../../src/generator/generator.js'
 import { generateUsername } from '../../../src/generator/username.js'
 import { relativeTime, sanitizeOptions } from '../lib/generator-state.js'
-
-/**
- * Copy text, quietly doing nothing where the clipboard is unavailable.
- *
- * @param {string} text The text.
- * @return {Promise<void>}
- */
-async function copyText(text) {
-	try {
-		await navigator.clipboard.writeText(text)
-	} catch {
-		// No clipboard (no focus, or not allowed): the value stays visible.
-	}
-}
+import { copyText } from './clipboard.js'
 
 /**
  * Generate a value for a sub-tab, or return why it cannot.
