@@ -268,6 +268,8 @@ struct ItemEditView: View {
     }
 
     private func load() async {
+        // Load once: coming back to the form keeps what the user typed.
+        guard base == nil else { return }
         if let itemId {
             let opened = try? await model.repository.open(id: itemId)
             if let opened = opened as? OpenResultOpened {
@@ -277,7 +279,7 @@ struct ItemEditView: View {
             } else if let failed = opened as? OpenResultFailed {
                 problem = failed.problem
             }
-        } else if base == nil {
+        } else {
             let initial = types.first { $0.name == "login" } ?? types.first
             pickType(initial)
             folder = folderId
