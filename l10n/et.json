@@ -1733,7 +1733,16 @@
         "Copy from another organisation updated": "Koopia teisest organisatsioonist uuendatud",
         "Copy from another organisation removed": "Koopia teisest organisatsioonist eemaldatud",
         "Declined: they removed their copy. Share again if they need it.": "Tagasi lükatud: saaja eemaldas oma koopia. Jagage uuesti, kui tal seda vaja on.",
-        "Recipient at another organisation removed their copy": "Teise organisatsiooni saaja eemaldas oma koopia"
+        "Recipient at another organisation removed their copy": "Teise organisatsiooni saaja eemaldas oma koopia",
+        "Removed the user from %n team folder.": "Kasutaja eemaldati %n meeskonnakaustast.",
+        "Removed the user from %n team folders.": "Kasutaja eemaldati %n meeskonnakaustast.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": [
+            "Kasutaja eemaldati %n meeskonnakaustast.",
+            "Kasutaja eemaldati %n meeskonnakaustast."
+        ],
+        "A restored copy came from a share that has ended. It stays read-only.": "Taastatud koopia pärineb lõppenud jagamisest. See jääb kirjutuskaitstuks.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Taastatud koopia jaganud organisatsiooniga ei saadud ühendust. Koopia jääb kirjutuskaitstuks ega järgi nende muudatusi.",
+        "Recipient at another organisation restored their copy": "Teise organisatsiooni saaja taastas oma koopia"
     },
     "plurals": null
 }

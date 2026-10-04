@@ -139,25 +139,31 @@ class SecretTrashService {
 	}//end trash()
 
 	/**
-	 * Take a secret out of the trash. It comes back unshared.
+	 * Take a secret out of the trash. It comes back unshared. A read-only
+	 * copy from another organisation takes back the share it came from,
+	 * when the owner still has it (sharing-federated-recipients, decision of
+	 * 4 Oct 2026); `federatedShare` says what became of it, null for any
+	 * other secret.
 	 *
 	 * @param string $id The secret ID
 	 * @param string $userId The owner
 	 *
-	 * @return Secret
+	 * @return array{secret: Secret, federatedShare: string|null}
 	 *
 	 * @throws InvalidArgumentException When the secret is not in the trash
 	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-restores-his-copy
 	 */
-	public function restore(string $id, string $userId): Secret {
+	public function restore(string $id, string $userId): array {
 		$secret = $this->loadTrashed(id: $id, userId: $userId);
 		$secret->setTrashedAt(null);
 		$this->mapper->update($secret);
 
 		$this->record(userId: $userId, type: AuditEventTypes::SECRET_RESTORED, secret: $secret);
+		$federatedShare = $this->federatedDeclines?->copyRestored(secret: $secret, userId: $userId);
 
-		return $secret;
+		return ['secret' => $secret, 'federatedShare' => $federatedShare];
 	}//end restore()
 
 	/**
@@ -174,8 +180,9 @@ class SecretTrashService {
 	 */
 	public function purge(string $id, string $userId): void {
 		$secret = $this->loadTrashed(id: $id, userId: $userId);
-		// A copy trashed before its share could be declined (task 4.4).
-		$this->federatedDeclines?->copyDeleted(secret: $secret, userId: $userId);
+		// A copy trashed before its share could be declined (task 4.4); the
+		// link a restore would have used goes with the copy.
+		$this->federatedDeclines?->copyPurged(secret: $secret, userId: $userId);
 		$this->secretService->delete($id, $userId, 'owner');
 	}//end purge()
 

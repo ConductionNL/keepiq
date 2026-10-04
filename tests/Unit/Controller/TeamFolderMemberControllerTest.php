@@ -22,6 +22,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\TeamFolderMemberController;
 use OCA\Keepiq\Db\TeamFolderMember;
+use OCA\Keepiq\Exception\ManagerOnlyException;
 use OCA\Keepiq\Exception\OwnerOnlyException;
 use OCA\Keepiq\Middleware\OcsRefusalMiddleware;
 use OCA\Keepiq\Service\TeamFolderService;
@@ -99,6 +100,28 @@ class TeamFolderMemberControllerTest extends TestCase {
 		$this->assertSame(428, $delivered->getStatus());
 		$this->assertSame('owner_only', $delivered->getData()['error']);
 	}//end testAManagerRemovingAManagerIsRefusedVisibly()
+
+	/**
+	 * Vic, a viewer, changes Ed's grade: refused as forbidden, and the
+	 * browser receives 428 with error manager_only and the reason, not 400.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#scenario-non-owner-cannot-change-a-grade
+	 */
+	public function testAViewerChangingAGradeIsRefusedVisibly(): void {
+		$this->service->method('setMemberGrade')->willThrowException(
+			new ManagerOnlyException(message: 'Not authorized to manage this team folder')
+		);
+
+		$response = $this->controller->setMemberGrade(id: 'tf-1', memberId: 'mem-ed', grade: 'read');
+		$this->assertSame(403, $response->getStatus());
+
+		$delivered = $this->refusals->afterController($this->controller, 'setMemberGrade', $response);
+		$this->assertSame(428, $delivered->getStatus());
+		$this->assertSame('manager_only', $delivered->getData()['error']);
+		$this->assertSame('Not authorized to manage this team folder', $delivered->getData()['message']);
+	}//end testAViewerChangingAGradeIsRefusedVisibly()
 
 	/**
 	 * An invalid request stays a 400.
