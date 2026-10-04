@@ -6,20 +6,7 @@
  */
 
 import { EXPIRY_PRESETS, sendRowLabel } from '../lib/send-form.js'
-
-/**
- * Copy text, quietly doing nothing where the clipboard is unavailable.
- *
- * @param {string} text The text.
- * @return {Promise<void>}
- */
-async function copyText(text) {
-	try {
-		await navigator.clipboard.writeText(text)
-	} catch {
-		// No clipboard (no focus, or not allowed): the value stays visible.
-	}
-}
+import { copyText } from './clipboard.js'
 
 /**
  * Wire the Send tab.
