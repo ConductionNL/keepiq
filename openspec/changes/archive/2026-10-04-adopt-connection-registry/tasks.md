@@ -36,4 +36,4 @@
 
 ## 6. After integriq ships
 
-- [ ] 6.1 Run the e2e spec against an instance with both apps, then archive this change.
+- [x] 6.1 Run the e2e spec against an instance with both apps, then archive this change. Evidence (4 Oct 2026, lane M): `tests/e2e/workflows/integrations-page.spec.ts` 3 passed against a Nextcloud 35.0.1 instance with keepiq 0.3.4-unstable.20261002230000, openregister 2.1.34-unstable.20260930110000 and integriq 0.4.8-unstable.20260930170001, all from development. Red control: the disabled-status expectation flipped to `unconfigured` fails with `Received: "disabled|..."`.
