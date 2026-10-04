@@ -1636,7 +1636,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Secret d’ina autra organisaziun acceptà",
         "Secret from another organisation declined": "Secret d’ina autra organisaziun refusà",
         "Copy from another organisation updated": "Copia d’ina autra organisaziun actualisada",
-        "Copy from another organisation removed": "Copia d’ina autra organisaziun stizzada"
+        "Copy from another organisation removed": "Copia d’ina autra organisaziun stizzada",
+        "Declined: they removed their copy. Share again if they need it.": "Refusà: il retschavider ha stizzà sia copia. Cundividai danovamain sch’el ha basegn.",
+        "Recipient at another organisation removed their copy": "In retschavider d’ina autra organisaziun ha stizzà sia copia"
     },
     "nplurals=1; plural=0;"
 )

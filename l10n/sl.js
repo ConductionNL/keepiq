@@ -1660,7 +1660,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Skrivnost iz druge organizacije sprejeta",
         "Secret from another organisation declined": "Skrivnost iz druge organizacije zavrnjena",
         "Copy from another organisation updated": "Kopija iz druge organizacije posodobljena",
-        "Copy from another organisation removed": "Kopija iz druge organizacije odstranjena"
+        "Copy from another organisation removed": "Kopija iz druge organizacije odstranjena",
+        "Declined: they removed their copy. Share again if they need it.": "Zavrnjeno: prejemnik je odstranil svojo kopijo. Delite znova, če jo potrebuje.",
+        "Recipient at another organisation removed their copy": "Prejemnik iz druge organizacije je odstranil svojo kopijo"
     },
     "nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);"
 )

@@ -1660,7 +1660,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Noslēpums no citas organizācijas pieņemts",
         "Secret from another organisation declined": "Noslēpums no citas organizācijas noraidīts",
         "Copy from another organisation updated": "Kopija no citas organizācijas atjaunināta",
-        "Copy from another organisation removed": "Kopija no citas organizācijas noņemta"
+        "Copy from another organisation removed": "Kopija no citas organizācijas noņemta",
+        "Declined: they removed their copy. Share again if they need it.": "Noraidīts: saņēmējs noņēma savu kopiju. Kopīgojiet vēlreiz, ja tā ir vajadzīga.",
+        "Recipient at another organisation removed their copy": "Citas organizācijas saņēmējs noņēma savu kopiju"
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

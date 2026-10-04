@@ -107,6 +107,24 @@ class FederatedInboundMapper extends QBMapper {
 	}//end findByRemoteShareId()
 
 	/**
+	 * The inbound shares whose copy is this secret (at most one in practice).
+	 *
+	 * @param string $secretId The recipient's copy
+	 *
+	 * @return FederatedInbound[]
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
+	 */
+	public function findBySecretId(string $secretId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('secret_id', $qb->createNamedParameter($secretId)));
+
+		return $this->findEntities(query: $qb);
+	}//end findBySecretId()
+
+	/**
 	 * Every inbound share of one local user, newest first.
 	 *
 	 * @param string $recipientUid The local user
