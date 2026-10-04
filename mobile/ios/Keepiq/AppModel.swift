@@ -279,9 +279,9 @@ final class AppModel: ObservableObject {
         showUnlock(vault.accountId)
     }
 
-    func openSettings(_ vault: UnlockedVault) { screen = .settings(vault) }
+    func openSettings(_ vault: UnlockedVault) { touch(); screen = .settings(vault) }
 
-    func closeSettings(_ vault: UnlockedVault) { screen = .unlocked(vault) }
+    func closeSettings(_ vault: UnlockedVault) { touch(); screen = .unlocked(vault) }
 
     // MARK: Unpair (2.6)
 
@@ -301,7 +301,11 @@ final class AppModel: ObservableObject {
 
     // MARK: Helpers
 
+    /// Every action restarts the idle time. A tap gesture over the whole app
+    /// would do it for plain taps too, but it swallows the taps of Form
+    /// buttons on iOS 18.
     private func perform(_ work: @escaping () async throws -> Void) {
+        touch()
         busy = true
         message = nil
         Task {

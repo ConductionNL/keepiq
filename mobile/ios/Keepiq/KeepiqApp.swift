@@ -12,7 +12,6 @@ struct KeepiqApp: App {
         WindowGroup {
             RootView()
                 .environmentObject(model)
-                .simultaneousGesture(TapGesture().onEnded { model.touch() })
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { model.cameToForeground() }
