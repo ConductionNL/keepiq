@@ -45,6 +45,7 @@ export function buildVaultHandlers({
 	policyRefusalFor,
 	touchActivity = async () => {},
 	sync = null,
+	suggestPasswords = async () => true,
 }) {
 	// Per account: the last listed rows (with blobs), keyed by id.
 	const rowCache = new Map()
@@ -452,8 +453,11 @@ export function buildVaultHandlers({
 		 * A strong password for a sign-up field on a page, under the org policy.
 		 *
 		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-generator/spec.md#requirement-suggest-a-strong-password-in-a-sign-up-field
+		 * @spec openspec/changes/clients-extension-gaps/specs/extension-list-and-settings/spec.md#requirement-settings-for-autofill-new-items-and-appearance
 		 */
 		'generate-for-field': async () => {
+			// Switched off in Settings: nothing to suggest.
+			if (!(await suggestPasswords())) return { value: null }
 			let policy = null
 			try {
 				policy = await api.fetchPolicy(await activeAccount())
