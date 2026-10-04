@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "An Ärem Tresor, nëmme liesen",
         "Withdrawn by the sender": "Vum Ofsender zréckgezunn",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} huet dëst vun enger anerer Organisatioun gedeelt. Dir kënnt et liesen, mee net änneren oder deelen.",
-        "Someone": "Iergendeen"
+        "Someone": "Iergendeen",
+        "Share with someone at another organisation": "Mat engem vun enger anerer Organisatioun deelen",
+        "Their account at the other organisation": "D’Konto vun der Persoun bei der anerer Organisatioun",
+        "Check account": "Konto préiwen",
+        "Certificate fingerprint of {account}": "Fangerofdrock vum Zertifikat vun {account}",
+        "Compare it with them by phone if you want to be sure.": "Vergläicht en mat der Persoun um Telefon, wann Dir sécher wëllt sinn.",
+        "Shared. {account} can accept it in their own vault.": "Gedeelt. {account} kann et am eegenen Tresor acceptéieren.",
+        "The certificate could not be verified. Nothing was shared.": "D’Zertifikat konnt net verifizéiert ginn. Et gouf näischt gedeelt.",
+        "That organisation is not one of your partners.": "Déi Organisatioun ass keen vun Äre Partner.",
+        "No one with that account can receive secrets from you.": "Keen mat deem Konto ka Geheimnisser vun Iech kréien.",
+        "The other organisation did not answer. Try again later.": "Déi aner Organisatioun huet net geäntwert. Probéiert et méi spéit nach eng Kéier.",
+        "This secret is already shared with that account.": "Dëst Geheimnis ass schonn mat deem Konto gedeelt.",
+        "Other organisations": "Aner Organisatiounen",
+        "Receive secrets from other organisations": "Geheimnisser vun anere Organisatiounen kréien",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Leit a Partnerorganisatiounen kënnen dann Äert Konto fannen a Geheimnisser mat Iech deelen. Dir acceptéiert all eenzelt selwer."
     },
     "nplurals=2; plural=(n != 1);"
 )

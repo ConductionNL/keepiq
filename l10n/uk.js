@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "У вашому сховищі, лише для читання",
         "Withdrawn by the sender": "Відкликано відправником",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "Користувач {sender} надав доступ до цього з іншої організації. Ви можете його читати, але не змінювати й не поширювати.",
-        "Someone": "Хтось"
+        "Someone": "Хтось",
+        "Share with someone at another organisation": "Поділитися з людиною з іншої організації",
+        "Their account at the other organisation": "Обліковий запис цієї людини в іншій організації",
+        "Check account": "Перевірити обліковий запис",
+        "Certificate fingerprint of {account}": "Відбиток сертифіката облікового запису {account}",
+        "Compare it with them by phone if you want to be sure.": "Звірте його з цією людиною телефоном, якщо хочете бути впевненими.",
+        "Shared. {account} can accept it in their own vault.": "Доступ надано. {account} може прийняти секрет у своєму сховищі.",
+        "The certificate could not be verified. Nothing was shared.": "Не вдалося перевірити сертифікат. Нічого не передано.",
+        "That organisation is not one of your partners.": "Ця організація не входить до ваших партнерів.",
+        "No one with that account can receive secrets from you.": "Ніхто з цим обліковим записом не може отримувати від вас секрети.",
+        "The other organisation did not answer. Try again later.": "Інша організація не відповіла. Спробуйте пізніше.",
+        "This secret is already shared with that account.": "Доступ до цього секрету вже надано цьому обліковому запису.",
+        "Other organisations": "Інші організації",
+        "Receive secrets from other organisations": "Отримувати секрети з інших організацій",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Тоді люди з партнерських організацій зможуть знайти ваш обліковий запис і надавати вам доступ до секретів. Кожен із них ви приймаєте самі."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

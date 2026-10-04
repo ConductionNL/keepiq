@@ -176,6 +176,12 @@
 					<ExpiryPoliciesSection />
 				</NcAppSettingsSection>
 
+				<NcAppSettingsSection
+					id="other-organisations"
+					:name="t('keepiq', 'Other organisations')">
+					<FederationReceiveSection />
+				</NcAppSettingsSection>
+
 				<NcAppSettingsSection id="security" :name="t('keepiq', 'Security')">
 					<template #icon>
 						<ShieldIcon :size="20" />
@@ -447,6 +453,7 @@ import RecoveryOfficerPanel from './components/RecoveryOfficerPanel.vue'
 import SecretDetailSidebar from './components/SecretDetailSidebar.vue'
 import DefaultsSection from './components/settings/DefaultsSection.vue'
 import ExpiryPoliciesSection from './components/settings/ExpiryPoliciesSection.vue'
+import FederationReceiveSection from './components/settings/FederationReceiveSection.vue'
 import DeviceApprovalDialog from './dialogs/DeviceApprovalDialog.vue'
 import KeyProofPromptDialog from './dialogs/KeyProofPromptDialog.vue'
 import {
@@ -492,6 +499,7 @@ export default {
 		TuneVariantIcon,
 		DefaultsSection,
 		ExpiryPoliciesSection,
+		FederationReceiveSection,
 		ShieldIcon,
 		KeyIcon,
 		// PuzzleIcon, // browser-extension section, hidden until it ships

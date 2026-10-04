@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "Fil-vault tiegħek, għall-qari biss",
         "Withdrawn by the sender": "Irtirat mill-mittent",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} qasam dan minn organizzazzjoni oħra. Tista’ taqrah, iżda ma tistax tibdlu jew taqsmu.",
-        "Someone": "Xi ħadd"
+        "Someone": "Xi ħadd",
+        "Share with someone at another organisation": "Aqsam ma’ xi ħadd f’organizzazzjoni oħra",
+        "Their account at the other organisation": "Il-kont tal-persuna fl-organizzazzjoni l-oħra",
+        "Check account": "Iċċekkja l-kont",
+        "Certificate fingerprint of {account}": "Il-marka tas-swaba’ taċ-ċertifikat ta’ {account}",
+        "Compare it with them by phone if you want to be sure.": "Qabblu magħhom bit-telefon jekk trid tkun ċert.",
+        "Shared. {account} can accept it in their own vault.": "Maqsum. {account} jista’ jaċċettah fil-vault tiegħu stess.",
+        "The certificate could not be verified. Nothing was shared.": "Iċ-ċertifikat ma setax jiġi vverifikat. Xejn ma ġie maqsum.",
+        "That organisation is not one of your partners.": "Dik l-organizzazzjoni mhix waħda mis-sħab tiegħek.",
+        "No one with that account can receive secrets from you.": "Ħadd b’dak il-kont ma jista’ jirċievi sigrieti mingħandek.",
+        "The other organisation did not answer. Try again later.": "L-organizzazzjoni l-oħra ma wieġbitx. Erġa’ pprova aktar tard.",
+        "This secret is already shared with that account.": "Dan is-sigriet diġà maqsum ma’ dak il-kont.",
+        "Other organisations": "Organizzazzjonijiet oħra",
+        "Receive secrets from other organisations": "Irċievi sigrieti minn organizzazzjonijiet oħra",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Nies f’organizzazzjonijiet sħab imbagħad jistgħu jsibu l-kont tiegħek u jaqsmu sigrieti miegħek. Inti taċċetta kull wieħed minnhom."
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

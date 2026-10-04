@@ -1727,7 +1727,21 @@
         "In your vault, read-only": "În seiful dvs., doar în citire",
         "Withdrawn by the sender": "Retras de expeditor",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} a partajat acest lucru dintr-o altă organizație. Îl puteți citi, dar nu îl puteți modifica sau partaja.",
-        "Someone": "Cineva"
+        "Someone": "Cineva",
+        "Share with someone at another organisation": "Partajați cu cineva dintr-o altă organizație",
+        "Their account at the other organisation": "Contul persoanei în cealaltă organizație",
+        "Check account": "Verificați contul",
+        "Certificate fingerprint of {account}": "Amprenta certificatului pentru {account}",
+        "Compare it with them by phone if you want to be sure.": "Comparați-o cu persoana respectivă la telefon dacă vreți să fiți sigur.",
+        "Shared. {account} can accept it in their own vault.": "Partajat. {account} îl poate accepta în propriul seif.",
+        "The certificate could not be verified. Nothing was shared.": "Certificatul nu a putut fi verificat. Nu s-a partajat nimic.",
+        "That organisation is not one of your partners.": "Organizația respectivă nu este unul dintre partenerii dvs.",
+        "No one with that account can receive secrets from you.": "Nimeni cu acel cont nu poate primi secrete de la dvs.",
+        "The other organisation did not answer. Try again later.": "Cealaltă organizație nu a răspuns. Încercați din nou mai târziu.",
+        "This secret is already shared with that account.": "Acest secret este deja partajat cu acel cont.",
+        "Other organisations": "Alte organizații",
+        "Receive secrets from other organisations": "Primiți secrete de la alte organizații",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Persoanele din organizațiile partenere vă pot găsi apoi contul și pot partaja secrete cu dvs. Acceptați fiecare secret personal."
     },
     "plurals": null
 }

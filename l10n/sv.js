@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "I ditt valv, skrivskyddad",
         "Withdrawn by the sender": "Återkallad av avsändaren",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} delade detta från en annan organisation. Du kan läsa det, men inte ändra eller dela det.",
-        "Someone": "Någon"
+        "Someone": "Någon",
+        "Share with someone at another organisation": "Dela med någon i en annan organisation",
+        "Their account at the other organisation": "Personens konto i den andra organisationen",
+        "Check account": "Kontrollera konto",
+        "Certificate fingerprint of {account}": "Certifikatets fingeravtryck för {account}",
+        "Compare it with them by phone if you want to be sure.": "Jämför det med personen per telefon om du vill vara säker.",
+        "Shared. {account} can accept it in their own vault.": "Delad. {account} kan godkänna den i sitt eget valv.",
+        "The certificate could not be verified. Nothing was shared.": "Certifikatet kunde inte verifieras. Inget delades.",
+        "That organisation is not one of your partners.": "Den organisationen är inte en av dina partner.",
+        "No one with that account can receive secrets from you.": "Ingen med det kontot kan ta emot hemligheter från dig.",
+        "The other organisation did not answer. Try again later.": "Den andra organisationen svarade inte. Försök igen senare.",
+        "This secret is already shared with that account.": "Den här hemligheten är redan delad med det kontot.",
+        "Other organisations": "Andra organisationer",
+        "Receive secrets from other organisations": "Ta emot hemligheter från andra organisationer",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personer i partnerorganisationer kan då hitta ditt konto och dela hemligheter med dig. Du godkänner var och en själv."
     },
     "nplurals=2; plural=(n != 1);"
 )

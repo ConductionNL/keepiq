@@ -1703,7 +1703,21 @@
         "In your vault, read-only": "In your vault, read-only",
         "Withdrawn by the sender": "Withdrawn by the sender",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} shared this from another organisation. You can read it, but not change or share it.",
-        "Someone": "Someone"
+        "Someone": "Someone",
+        "Share with someone at another organisation": "Share with someone at another organisation",
+        "Their account at the other organisation": "Their account at the other organisation",
+        "Check account": "Check account",
+        "Certificate fingerprint of {account}": "Certificate fingerprint of {account}",
+        "Compare it with them by phone if you want to be sure.": "Compare it with them by phone if you want to be sure.",
+        "Shared. {account} can accept it in their own vault.": "Shared. {account} can accept it in their own vault.",
+        "The certificate could not be verified. Nothing was shared.": "The certificate could not be verified. Nothing was shared.",
+        "That organisation is not one of your partners.": "That organisation is not one of your partners.",
+        "No one with that account can receive secrets from you.": "No one with that account can receive secrets from you.",
+        "The other organisation did not answer. Try again later.": "The other organisation did not answer. Try again later.",
+        "This secret is already shared with that account.": "This secret is already shared with that account.",
+        "Other organisations": "Other organisations",
+        "Receive secrets from other organisations": "Receive secrets from other organisations",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "People in partner organisations can then find your account and share secrets with you. You accept each one yourself."
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

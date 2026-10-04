@@ -1703,7 +1703,21 @@
         "In your vault, read-only": "A la vostra caixa forta, només lectura",
         "Withdrawn by the sender": "Retirat pel remitent",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} ha compartit això des d’una altra organització. Podeu llegir-ho, però no modificar-ho ni compartir-ho.",
-        "Someone": "Algú"
+        "Someone": "Algú",
+        "Share with someone at another organisation": "Comparteix amb algú d’una altra organització",
+        "Their account at the other organisation": "El seu compte a l’altra organització",
+        "Check account": "Comprova el compte",
+        "Certificate fingerprint of {account}": "Empremta del certificat de {account}",
+        "Compare it with them by phone if you want to be sure.": "Compareu-la amb aquesta persona per telèfon si en voleu estar segurs.",
+        "Shared. {account} can accept it in their own vault.": "Compartit. {account} el pot acceptar a la seva pròpia caixa forta.",
+        "The certificate could not be verified. Nothing was shared.": "No s’ha pogut verificar el certificat. No s’ha compartit res.",
+        "That organisation is not one of your partners.": "Aquesta organització no és cap de les vostres sòcies.",
+        "No one with that account can receive secrets from you.": "Ningú amb aquest compte pot rebre secrets vostres.",
+        "The other organisation did not answer. Try again later.": "L’altra organització no ha respost. Torneu-ho a provar més tard.",
+        "This secret is already shared with that account.": "Aquest secret ja està compartit amb aquest compte.",
+        "Other organisations": "Altres organitzacions",
+        "Receive secrets from other organisations": "Rep secrets d’altres organitzacions",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Aleshores, les persones de les organitzacions sòcies podran trobar el vostre compte i compartir secrets amb vós. Cadascun l’accepteu vós mateix."
     },
     "plurals": null
 }

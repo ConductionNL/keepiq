@@ -1637,7 +1637,21 @@ OC.L10N.register(
         "In your vault, read-only": "In uw kluis, alleen-lezen",
         "Withdrawn by the sender": "Ingetrokken door de afzender",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} heeft dit gedeeld vanuit een andere organisatie. U kunt het lezen, maar niet wijzigen of delen.",
-        "Someone": "Iemand"
+        "Someone": "Iemand",
+        "Share with someone at another organisation": "Delen met iemand bij een andere organisatie",
+        "Their account at the other organisation": "Hun account bij de andere organisatie",
+        "Check account": "Account controleren",
+        "Certificate fingerprint of {account}": "Certificaatvingerafdruk van {account}",
+        "Compare it with them by phone if you want to be sure.": "Vergelijk deze telefonisch met de ander als u zeker wilt zijn.",
+        "Shared. {account} can accept it in their own vault.": "Gedeeld. {account} kan het in de eigen kluis accepteren.",
+        "The certificate could not be verified. Nothing was shared.": "Het certificaat kon niet worden geverifieerd. Er is niets gedeeld.",
+        "That organisation is not one of your partners.": "Die organisatie is geen van uw partners.",
+        "No one with that account can receive secrets from you.": "Niemand met dat account kan geheimen van u ontvangen.",
+        "The other organisation did not answer. Try again later.": "De andere organisatie heeft niet geantwoord. Probeer het later opnieuw.",
+        "This secret is already shared with that account.": "Dit geheim is al gedeeld met dat account.",
+        "Other organisations": "Andere organisaties",
+        "Receive secrets from other organisations": "Geheimen van andere organisaties ontvangen",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Mensen in partnerorganisaties kunnen dan uw account vinden en geheimen met u delen. U accepteert elk geheim zelf."
     },
     "nplurals=2; plural=(n != 1);"
 )

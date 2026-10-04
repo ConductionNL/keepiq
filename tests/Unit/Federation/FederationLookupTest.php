@@ -195,6 +195,16 @@ class FederationLookupTest extends TestCase {
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $anonymous->recipientCertificate('bob@cloud.partner.example')->getStatus());
 	}
 
+	/**
+	 * No partner, no federation: the share dialog is told it may offer a
+	 * federated recipient only while an outbound partner exists.
+	 */
+	public function testTheDialogIsOfferedFederationOnlyWithAnOutboundPartner(): void {
+		$this->assertFalse($this->controller([])->status()->getData()['outbound']);
+		$this->assertFalse($this->controller([$this->partner('cloud.partner.example', false, true)])->status()->getData()['outbound']);
+		$this->assertTrue($this->controller([$this->partner('cloud.partner.example', true, false)])->status()->getData()['outbound']);
+	}
+
 	public function testAdvertisesTheKeepiqCapabilityOnlyWhileAPartnerExists(): void {
 		$config = $this->createMock(IConfig::class);
 		$withPartner = new FederationOcmDiscoveryListener(

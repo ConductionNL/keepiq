@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "Dans votre coffre, en lecture seule",
         "Withdrawn by the sender": "Retiré par l’expéditeur",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} a partagé ceci depuis une autre organisation. Vous pouvez le lire, mais pas le modifier ni le partager.",
-        "Someone": "Quelqu’un"
+        "Someone": "Quelqu’un",
+        "Share with someone at another organisation": "Partager avec une personne d’une autre organisation",
+        "Their account at the other organisation": "Son compte dans l’autre organisation",
+        "Check account": "Vérifier le compte",
+        "Certificate fingerprint of {account}": "Empreinte du certificat de {account}",
+        "Compare it with them by phone if you want to be sure.": "Comparez-la avec cette personne par téléphone si vous voulez en être sûr.",
+        "Shared. {account} can accept it in their own vault.": "Partagé. {account} peut l’accepter dans son propre coffre.",
+        "The certificate could not be verified. Nothing was shared.": "Le certificat n’a pas pu être vérifié. Rien n’a été partagé.",
+        "That organisation is not one of your partners.": "Cette organisation ne fait pas partie de vos partenaires.",
+        "No one with that account can receive secrets from you.": "Personne avec ce compte ne peut recevoir de secrets de votre part.",
+        "The other organisation did not answer. Try again later.": "L’autre organisation n’a pas répondu. Réessayez plus tard.",
+        "This secret is already shared with that account.": "Ce secret est déjà partagé avec ce compte.",
+        "Other organisations": "Autres organisations",
+        "Receive secrets from other organisations": "Recevoir des secrets d’autres organisations",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Les personnes des organisations partenaires peuvent alors trouver votre compte et partager des secrets avec vous. Vous acceptez chacun d’eux vous-même."
     },
     "nplurals=2; plural=(n > 1);"
 )

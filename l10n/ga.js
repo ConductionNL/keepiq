@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "I do vailt, inléite amháin",
         "Withdrawn by the sender": "Tarraingthe siar ag an seoltóir",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "Chomhroinn {sender} é seo ó eagraíocht eile. Is féidir leat é a léamh, ach ní féidir leat é a athrú ná a chomhroinnt.",
-        "Someone": "Duine éigin"
+        "Someone": "Duine éigin",
+        "Share with someone at another organisation": "Comhroinn le duine in eagraíocht eile",
+        "Their account at the other organisation": "Cuntas an duine san eagraíocht eile",
+        "Check account": "Seiceáil an cuntas",
+        "Certificate fingerprint of {account}": "Méarlorg deimhnithe {account}",
+        "Compare it with them by phone if you want to be sure.": "Cuir i gcomparáid é leis an duine ar an bhfón más mian leat a bheith cinnte.",
+        "Shared. {account} can accept it in their own vault.": "Comhroinnte. Is féidir le {account} glacadh leis ina vailt féin.",
+        "The certificate could not be verified. Nothing was shared.": "Níorbh fhéidir an deimhniú a fhíorú. Níor comhroinneadh aon rud.",
+        "That organisation is not one of your partners.": "Ní ceann de do chomhpháirtithe í an eagraíocht sin.",
+        "No one with that account can receive secrets from you.": "Ní féidir le duine ar bith leis an gcuntas sin rúin a fháil uait.",
+        "The other organisation did not answer. Try again later.": "Níor fhreagair an eagraíocht eile. Bain triail eile as níos déanaí.",
+        "This secret is already shared with that account.": "Tá an rún seo comhroinnte leis an gcuntas sin cheana.",
+        "Other organisations": "Eagraíochtaí eile",
+        "Receive secrets from other organisations": "Faigh rúin ó eagraíochtaí eile",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Is féidir le daoine in eagraíochtaí comhpháirtíochta do chuntas a aimsiú ansin agus rúin a chomhroinnt leat. Glacann tú féin le gach ceann acu."
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

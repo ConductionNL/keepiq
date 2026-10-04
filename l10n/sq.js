@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "Në kasafortën tuaj, vetëm për lexim",
         "Withdrawn by the sender": "Tërhequr nga dërguesi",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} e ndau këtë nga një organizatë tjetër. Mund ta lexoni, por jo ta ndryshoni ose ta ndani.",
-        "Someone": "Dikush"
+        "Someone": "Dikush",
+        "Share with someone at another organisation": "Ndaj me dikë nga një organizatë tjetër",
+        "Their account at the other organisation": "Llogaria e personit në organizatën tjetër",
+        "Check account": "Kontrollo llogarinë",
+        "Certificate fingerprint of {account}": "Gjurma e certifikatës së {account}",
+        "Compare it with them by phone if you want to be sure.": "Krahasojeni me personin në telefon nëse doni të jeni të sigurt.",
+        "Shared. {account} can accept it in their own vault.": "U nda. {account} mund ta pranojë në kasafortën e vet.",
+        "The certificate could not be verified. Nothing was shared.": "Certifikata nuk mund të verifikohej. Asgjë nuk u nda.",
+        "That organisation is not one of your partners.": "Ajo organizatë nuk është një nga partnerët tuaj.",
+        "No one with that account can receive secrets from you.": "Askush me atë llogari nuk mund të marrë sekrete nga ju.",
+        "The other organisation did not answer. Try again later.": "Organizata tjetër nuk u përgjigj. Provoni përsëri më vonë.",
+        "This secret is already shared with that account.": "Ky sekret është ndarë tashmë me atë llogari.",
+        "Other organisations": "Organizata të tjera",
+        "Receive secrets from other organisations": "Merr sekrete nga organizata të tjera",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personat në organizatat partnere mund ta gjejnë atëherë llogarinë tuaj dhe të ndajnë sekrete me ju. Secilin prej tyre e pranoni vetë."
     },
     "nplurals=2; plural=(n != 1);"
 )

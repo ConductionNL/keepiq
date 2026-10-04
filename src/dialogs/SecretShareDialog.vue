@@ -131,6 +131,10 @@
 					{{ t('keepiq', 'Share with a Nextcloud user (coming soon)') }}
 				</NcButton>
 			</div>
+
+			<!-- Another organisation (sharing-federated-recipients 2.3): only
+			     while this instance has an outbound partner. -->
+			<FederatedShareForm v-if="federationAvailable" :secretId="secretId" />
 		</div>
 
 		<template #actions>
@@ -164,6 +168,8 @@ import AccountPlus from 'vue-material-design-icons/AccountPlus.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import ShareVariant from 'vue-material-design-icons/ShareVariant.vue'
 import CopyButton from '../components/CopyButton.vue'
+import FederatedShareForm from '../components/share/FederatedShareForm.vue'
+import { useFederatedShareStore } from '../store/modules/federatedShare.js'
 import { useLinkShareStore } from '../store/modules/linkShare.js'
 import { useSecretStore } from '../store/modules/secret.js'
 
@@ -201,6 +207,7 @@ export default {
 		AccountPlus,
 		Delete,
 		CopyButton,
+		FederatedShareForm,
 	},
 
 	props: {
@@ -222,6 +229,8 @@ export default {
 			error: '',
 			createdUrl: null,
 			createdPassword: null,
+			// Whether an outbound partner exists; no partner, no federation.
+			federationAvailable: false,
 		}
 	},
 
@@ -258,8 +267,22 @@ export default {
 		},
 	},
 
+	/**
+	 * Load the link shares, and ask whether another organisation may be
+	 * offered (no outbound partner, no federated recipient).
+	 *
+	 * @spec openspec/specs/link-sharing/spec.md#requirement-multiple-concurrent-link-shares
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-no-partner-no-federation
+	 */
 	async mounted() {
-		await this.loadShares()
+		await Promise.all([
+			this.loadShares(),
+			useFederatedShareStore()
+				.checkAvailable()
+				.then((available) => {
+					this.federationAvailable = available
+				}),
+		])
 	},
 
 	beforeUnmount() {

@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "Holvissasi, vain luku",
         "Withdrawn by the sender": "Lähettäjä perui jaon",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} jakoi tämän toisesta organisaatiosta. Voit lukea sen, mutta et muokata tai jakaa sitä.",
-        "Someone": "Joku"
+        "Someone": "Joku",
+        "Share with someone at another organisation": "Jaa jollekulle toisessa organisaatiossa",
+        "Their account at the other organisation": "Henkilön tili toisessa organisaatiossa",
+        "Check account": "Tarkista tili",
+        "Certificate fingerprint of {account}": "Käyttäjän {account} varmenteen sormenjälki",
+        "Compare it with them by phone if you want to be sure.": "Vertaa sitä henkilön kanssa puhelimessa, jos haluat olla varma.",
+        "Shared. {account} can accept it in their own vault.": "Jaettu. {account} voi hyväksyä sen omaan holviinsa.",
+        "The certificate could not be verified. Nothing was shared.": "Varmennetta ei voitu vahvistaa. Mitään ei jaettu.",
+        "That organisation is not one of your partners.": "Kyseinen organisaatio ei ole kumppanisi.",
+        "No one with that account can receive secrets from you.": "Kukaan tällä tilillä ei voi vastaanottaa salaisuuksia sinulta.",
+        "The other organisation did not answer. Try again later.": "Toinen organisaatio ei vastannut. Yritä myöhemmin uudelleen.",
+        "This secret is already shared with that account.": "Tämä salaisuus on jo jaettu kyseiselle tilille.",
+        "Other organisations": "Muut organisaatiot",
+        "Receive secrets from other organisations": "Vastaanota salaisuuksia muista organisaatioista",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Kumppaniorganisaatioiden henkilöt voivat silloin löytää tilisi ja jakaa salaisuuksia kanssasi. Hyväksyt jokaisen itse."
     },
     "nplurals=2; plural=(n != 1);"
 )

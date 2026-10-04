@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "Ve vašem trezoru, jen pro čtení",
         "Withdrawn by the sender": "Staženo odesílatelem",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} toto sdílí z jiné organizace. Můžete to číst, ale nemůžete to měnit ani sdílet.",
-        "Someone": "Někdo"
+        "Someone": "Někdo",
+        "Share with someone at another organisation": "Sdílet s někým z jiné organizace",
+        "Their account at the other organisation": "Účet dané osoby v druhé organizaci",
+        "Check account": "Zkontrolovat účet",
+        "Certificate fingerprint of {account}": "Otisk certifikátu účtu {account}",
+        "Compare it with them by phone if you want to be sure.": "Pokud si chcete být jisti, porovnejte ho s danou osobou po telefonu.",
+        "Shared. {account} can accept it in their own vault.": "Sdíleno. {account} to může přijmout ve svém vlastním trezoru.",
+        "The certificate could not be verified. Nothing was shared.": "Certifikát se nepodařilo ověřit. Nic nebylo sdíleno.",
+        "That organisation is not one of your partners.": "Tato organizace není mezi vašimi partnery.",
+        "No one with that account can receive secrets from you.": "Nikdo s tímto účtem od vás nemůže přijímat tajemství.",
+        "The other organisation did not answer. Try again later.": "Druhá organizace neodpověděla. Zkuste to později znovu.",
+        "This secret is already shared with that account.": "Toto tajemství je s tímto účtem již sdíleno.",
+        "Other organisations": "Jiné organizace",
+        "Receive secrets from other organisations": "Přijímat tajemství z jiných organizací",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Lidé v partnerských organizacích pak mohou najít váš účet a sdílet s vámi tajemství. Každé z nich přijímáte sami."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

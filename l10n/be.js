@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "У вашым сховішчы, толькі для чытання",
         "Withdrawn by the sender": "Адклікана адпраўніком",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "Карыстальнік {sender} даў доступ да гэтага з іншай арганізацыі. Вы можаце яго чытаць, але не змяняць і не перадаваць.",
-        "Someone": "Хтосьці"
+        "Someone": "Хтосьці",
+        "Share with someone at another organisation": "Падзяліцца з кімсьці з іншай арганізацыі",
+        "Their account at the other organisation": "Уліковы запіс гэтага чалавека ў іншай арганізацыі",
+        "Check account": "Праверыць уліковы запіс",
+        "Certificate fingerprint of {account}": "Адбітак сертыфіката {account}",
+        "Compare it with them by phone if you want to be sure.": "Звярыце яго з гэтым чалавекам па тэлефоне, калі хочаце быць упэўненымі.",
+        "Shared. {account} can accept it in their own vault.": "Доступ дадзены. {account} можа прыняць сакрэт у сваім сховішчы.",
+        "The certificate could not be verified. Nothing was shared.": "Не ўдалося праверыць сертыфікат. Нічога не перададзена.",
+        "That organisation is not one of your partners.": "Гэтая арганізацыя не з’яўляецца вашым партнёрам.",
+        "No one with that account can receive secrets from you.": "Ніхто з гэтым уліковым запісам не можа атрымліваць ад вас сакрэты.",
+        "The other organisation did not answer. Try again later.": "Іншая арганізацыя не адказала. Паспрабуйце пазней.",
+        "This secret is already shared with that account.": "Доступ да гэтага сакрэту ўжо дадзены гэтаму ўліковаму запісу.",
+        "Other organisations": "Іншыя арганізацыі",
+        "Receive secrets from other organisations": "Атрымліваць сакрэты з іншых арганізацый",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Тады людзі з партнёрскіх арганізацый змогуць знайсці ваш уліковы запіс і даваць вам доступ да сакрэтаў. Кожны з іх вы прымаеце самі."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

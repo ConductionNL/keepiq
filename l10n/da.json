@@ -1703,7 +1703,21 @@
         "In your vault, read-only": "I din boks, skrivebeskyttet",
         "Withdrawn by the sender": "Trukket tilbage af afsenderen",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} delte dette fra en anden organisation. Du kan læse det, men ikke ændre eller dele det.",
-        "Someone": "Nogen"
+        "Someone": "Nogen",
+        "Share with someone at another organisation": "Del med en person i en anden organisation",
+        "Their account at the other organisation": "Personens konto i den anden organisation",
+        "Check account": "Tjek konto",
+        "Certificate fingerprint of {account}": "Certifikatets fingeraftryk for {account}",
+        "Compare it with them by phone if you want to be sure.": "Sammenlign det med personen over telefonen, hvis du vil være sikker.",
+        "Shared. {account} can accept it in their own vault.": "Delt. {account} kan acceptere den i sin egen boks.",
+        "The certificate could not be verified. Nothing was shared.": "Certifikatet kunne ikke bekræftes. Intet blev delt.",
+        "That organisation is not one of your partners.": "Den organisation er ikke en af dine partnere.",
+        "No one with that account can receive secrets from you.": "Ingen med den konto kan modtage hemmeligheder fra dig.",
+        "The other organisation did not answer. Try again later.": "Den anden organisation svarede ikke. Prøv igen senere.",
+        "This secret is already shared with that account.": "Denne hemmelighed er allerede delt med den konto.",
+        "Other organisations": "Andre organisationer",
+        "Receive secrets from other organisations": "Modtag hemmeligheder fra andre organisationer",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personer i partnerorganisationer kan så finde din konto og dele hemmeligheder med dig. Du accepterer hver enkelt selv."
     },
     "plurals": null
 }

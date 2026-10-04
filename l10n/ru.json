@@ -1727,7 +1727,21 @@
         "In your vault, read-only": "В вашем хранилище, только для чтения",
         "Withdrawn by the sender": "Отозвано отправителем",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "Пользователь {sender} поделился этим из другой организации. Вы можете читать его, но не можете изменять или делиться им.",
-        "Someone": "Кто-то"
+        "Someone": "Кто-то",
+        "Share with someone at another organisation": "Поделиться с человеком из другой организации",
+        "Their account at the other organisation": "Учётная запись этого человека в другой организации",
+        "Check account": "Проверить учётную запись",
+        "Certificate fingerprint of {account}": "Отпечаток сертификата учётной записи {account}",
+        "Compare it with them by phone if you want to be sure.": "Сверьте его с этим человеком по телефону, если хотите быть уверены.",
+        "Shared. {account} can accept it in their own vault.": "Доступ предоставлен. {account} может принять секрет в своём хранилище.",
+        "The certificate could not be verified. Nothing was shared.": "Не удалось проверить сертификат. Ничего не передано.",
+        "That organisation is not one of your partners.": "Эта организация не входит в число ваших партнёров.",
+        "No one with that account can receive secrets from you.": "Никто с этой учётной записью не может получать от вас секреты.",
+        "The other organisation did not answer. Try again later.": "Другая организация не ответила. Повторите попытку позже.",
+        "This secret is already shared with that account.": "Этот секрет уже передан этой учётной записи.",
+        "Other organisations": "Другие организации",
+        "Receive secrets from other organisations": "Получать секреты из других организаций",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Тогда сотрудники партнёрских организаций смогут найти вашу учётную запись и делиться с вами секретами. Каждый из них вы принимаете сами."
     },
     "plurals": null
 }

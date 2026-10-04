@@ -1703,7 +1703,21 @@
         "In your vault, read-only": "No seu cofre, só de leitura",
         "Withdrawn by the sender": "Retirado pelo remetente",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} partilhou isto a partir de outra organização. Pode lê-lo, mas não alterá-lo nem partilhá-lo.",
-        "Someone": "Alguém"
+        "Someone": "Alguém",
+        "Share with someone at another organisation": "Partilhar com alguém de outra organização",
+        "Their account at the other organisation": "A conta da pessoa na outra organização",
+        "Check account": "Verificar conta",
+        "Certificate fingerprint of {account}": "Impressão digital do certificado de {account}",
+        "Compare it with them by phone if you want to be sure.": "Compare-a com a pessoa por telefone se quiser ter a certeza.",
+        "Shared. {account} can accept it in their own vault.": "Partilhado. {account} pode aceitá-lo no seu próprio cofre.",
+        "The certificate could not be verified. Nothing was shared.": "Não foi possível verificar o certificado. Nada foi partilhado.",
+        "That organisation is not one of your partners.": "Essa organização não é uma das suas parceiras.",
+        "No one with that account can receive secrets from you.": "Ninguém com essa conta pode receber segredos seus.",
+        "The other organisation did not answer. Try again later.": "A outra organização não respondeu. Tente novamente mais tarde.",
+        "This secret is already shared with that account.": "Este segredo já está partilhado com essa conta.",
+        "Other organisations": "Outras organizações",
+        "Receive secrets from other organisations": "Receber segredos de outras organizações",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "As pessoas de organizações parceiras podem então encontrar a sua conta e partilhar segredos consigo. Aceita cada um pessoalmente."
     },
     "plurals": null
 }

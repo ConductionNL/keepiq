@@ -1703,7 +1703,21 @@
         "In your vault, read-only": "En su bóveda, solo lectura",
         "Withdrawn by the sender": "Retirado por el remitente",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} compartió esto desde otra organización. Puede leerlo, pero no modificarlo ni compartirlo.",
-        "Someone": "Alguien"
+        "Someone": "Alguien",
+        "Share with someone at another organisation": "Compartir con alguien de otra organización",
+        "Their account at the other organisation": "Su cuenta en la otra organización",
+        "Check account": "Comprobar cuenta",
+        "Certificate fingerprint of {account}": "Huella digital del certificado de {account}",
+        "Compare it with them by phone if you want to be sure.": "Compárela con esa persona por teléfono si quiere estar seguro.",
+        "Shared. {account} can accept it in their own vault.": "Compartido. {account} puede aceptarlo en su propia bóveda.",
+        "The certificate could not be verified. Nothing was shared.": "No se pudo verificar el certificado. No se ha compartido nada.",
+        "That organisation is not one of your partners.": "Esa organización no es una de sus organizaciones asociadas.",
+        "No one with that account can receive secrets from you.": "Nadie con esa cuenta puede recibir secretos de usted.",
+        "The other organisation did not answer. Try again later.": "La otra organización no respondió. Inténtelo de nuevo más tarde.",
+        "This secret is already shared with that account.": "Este secreto ya está compartido con esa cuenta.",
+        "Other organisations": "Otras organizaciones",
+        "Receive secrets from other organisations": "Recibir secretos de otras organizaciones",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Las personas de organizaciones asociadas podrán encontrar su cuenta y compartir secretos con usted. Usted acepta cada uno personalmente."
     },
     "plurals": null
 }

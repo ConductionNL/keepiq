@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "Във вашето хранилище, само за четене",
         "Withdrawn by the sender": "Оттеглено от подателя",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} сподели това от друга организация. Можете да го четете, но не и да го променяте или споделяте.",
-        "Someone": "Някой"
+        "Someone": "Някой",
+        "Share with someone at another organisation": "Споделяне с някого от друга организация",
+        "Their account at the other organisation": "Профилът на човека в другата организация",
+        "Check account": "Проверка на профила",
+        "Certificate fingerprint of {account}": "Пръстов отпечатък на сертификата на {account}",
+        "Compare it with them by phone if you want to be sure.": "Сравнете го с човека по телефона, ако искате да сте сигурни.",
+        "Shared. {account} can accept it in their own vault.": "Споделено. {account} може да го приеме в собственото си хранилище.",
+        "The certificate could not be verified. Nothing was shared.": "Сертификатът не можа да бъде проверен. Нищо не беше споделено.",
+        "That organisation is not one of your partners.": "Тази организация не е сред вашите партньори.",
+        "No one with that account can receive secrets from you.": "Никой с този профил не може да получава тайни от вас.",
+        "The other organisation did not answer. Try again later.": "Другата организация не отговори. Опитайте отново по-късно.",
+        "This secret is already shared with that account.": "Тази тайна вече е споделена с този профил.",
+        "Other organisations": "Други организации",
+        "Receive secrets from other organisations": "Получаване на тайни от други организации",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Тогава хората от партньорски организации могат да намерят профила ви и да споделят тайни с вас. Всяка от тях приемате сами."
     },
     "nplurals=2; plural=(n != 1);"
 )

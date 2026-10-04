@@ -104,4 +104,26 @@ class FederationController extends Controller {
 			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: $status);
 		}//end try
 	}//end recipientCertificate()
+
+	/**
+	 * Whether the share dialog may offer a recipient at another
+	 * organisation.
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @no-admin-idor-exempt Reads no object: it answers whether any outbound partner exists,
+	 *   the same for every signed-in user.
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-no-partner-no-federation
+	 */
+	#[NoAdminRequired]
+	public function status(): JSONResponse {
+		if ($this->userSession->getUser() === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		return new JSONResponse(data: ['outbound' => $this->certificates->outboundAvailable()]);
+	}//end status()
 }//end class

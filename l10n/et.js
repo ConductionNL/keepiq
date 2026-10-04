@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "Teie seifis, kirjutuskaitstud",
         "Withdrawn by the sender": "Saatja võttis tagasi",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} jagas seda teisest organisatsioonist. Saate seda lugeda, kuid mitte muuta ega jagada.",
-        "Someone": "Keegi"
+        "Someone": "Keegi",
+        "Share with someone at another organisation": "Jaga kellegagi teisest organisatsioonist",
+        "Their account at the other organisation": "Selle inimese konto teises organisatsioonis",
+        "Check account": "Kontrolli kontot",
+        "Certificate fingerprint of {account}": "Konto {account} sertifikaadi sõrmejälg",
+        "Compare it with them by phone if you want to be sure.": "Kui soovite kindel olla, võrrelge seda selle inimesega telefoni teel.",
+        "Shared. {account} can accept it in their own vault.": "Jagatud. {account} saab selle oma seifis vastu võtta.",
+        "The certificate could not be verified. Nothing was shared.": "Sertifikaati ei õnnestunud kontrollida. Midagi ei jagatud.",
+        "That organisation is not one of your partners.": "See organisatsioon ei ole teie partner.",
+        "No one with that account can receive secrets from you.": "Keegi selle kontoga ei saa teilt saladusi vastu võtta.",
+        "The other organisation did not answer. Try again later.": "Teine organisatsioon ei vastanud. Proovige hiljem uuesti.",
+        "This secret is already shared with that account.": "See saladus on selle kontoga juba jagatud.",
+        "Other organisations": "Teised organisatsioonid",
+        "Receive secrets from other organisations": "Võta vastu saladusi teistest organisatsioonidest",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Partnerorganisatsioonide inimesed saavad siis teie konto leida ja teiega saladusi jagada. Iga saladuse võtate vastu ise."
     },
     "nplurals=2; plural=(n != 1);"
 )

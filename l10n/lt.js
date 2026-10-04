@@ -1632,7 +1632,21 @@ OC.L10N.register(
         "In your vault, read-only": "Jūsų saugykloje, tik skaitymui",
         "Withdrawn by the sender": "Siuntėjas atšaukė",
         "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} bendrino tai iš kitos organizacijos. Galite tai skaityti, bet negalite keisti ar bendrinti.",
-        "Someone": "Kažkas"
+        "Someone": "Kažkas",
+        "Share with someone at another organisation": "Bendrinti su kuo nors iš kitos organizacijos",
+        "Their account at the other organisation": "Šio asmens paskyra kitoje organizacijoje",
+        "Check account": "Patikrinti paskyrą",
+        "Certificate fingerprint of {account}": "Paskyros {account} sertifikato kontrolinis kodas",
+        "Compare it with them by phone if you want to be sure.": "Jei norite būti tikri, palyginkite jį su tuo asmeniu telefonu.",
+        "Shared. {account} can accept it in their own vault.": "Pabendrinta. {account} gali tai priimti savo saugykloje.",
+        "The certificate could not be verified. Nothing was shared.": "Nepavyko patikrinti sertifikato. Niekas nebuvo bendrinta.",
+        "That organisation is not one of your partners.": "Ši organizacija nėra jūsų partnerė.",
+        "No one with that account can receive secrets from you.": "Niekas su šia paskyra negali gauti iš jūsų paslapčių.",
+        "The other organisation did not answer. Try again later.": "Kita organizacija neatsakė. Bandykite dar kartą vėliau.",
+        "This secret is already shared with that account.": "Ši paslaptis jau bendrinama su šia paskyra.",
+        "Other organisations": "Kitos organizacijos",
+        "Receive secrets from other organisations": "Gauti paslaptis iš kitų organizacijų",
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Tada partnerių organizacijų žmonės galės rasti jūsų paskyrą ir bendrinti su jumis paslaptis. Kiekvieną jų priimate patys."
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )
