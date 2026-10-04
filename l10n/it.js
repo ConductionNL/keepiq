@@ -1665,7 +1665,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Un destinatario di un’altra organizzazione ha rimosso la sua copia",
         "Removed the user from %n team folder.": "Utente rimosso da %n cartella di team.",
         "Removed the user from %n team folders.": "Utente rimosso da %n cartelle di team.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Utente rimosso da %n cartella di team.","Utente rimosso da %n cartelle di team."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Utente rimosso da %n cartella di team.","Utente rimosso da %n cartelle di team."],
+        "A restored copy came from a share that has ended. It stays read-only.": "Una copia ripristinata proviene da una condivisione terminata. Resta in sola lettura.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Non è stato possibile raggiungere l’organizzazione che ha condiviso una copia ripristinata. La copia resta in sola lettura e non segue le loro modifiche.",
+        "Recipient at another organisation restored their copy": "Un destinatario di un’altra organizzazione ha ripristinato la sua copia"
     },
     "nplurals=2; plural=(n != 1);"
 )

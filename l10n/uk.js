@@ -1665,7 +1665,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Отримувач з іншої організації вилучив свою копію",
         "Removed the user from %n team folder.": "Користувача вилучено з %n командної теки.",
         "Removed the user from %n team folders.": "Користувача вилучено з командних тек: %n.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Користувача вилучено з %n командної теки.","Користувача вилучено з командних тек: %n.","Користувача вилучено з командних тек: %n."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Користувача вилучено з %n командної теки.","Користувача вилучено з командних тек: %n.","Користувача вилучено з командних тек: %n."],
+        "A restored copy came from a share that has ended. It stays read-only.": "Відновлена копія походить зі спільного доступу, який завершився. Вона залишається лише для читання.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Не вдалося зв’язатися з організацією, яка поділилася відновленою копією. Копія залишається лише для читання й не отримує їхніх змін.",
+        "Recipient at another organisation restored their copy": "Отримувач з іншої організації відновив свою копію"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

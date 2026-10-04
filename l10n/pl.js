@@ -1665,7 +1665,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Odbiorca z innej organizacji usunął swoją kopię",
         "Removed the user from %n team folder.": "Usunięto użytkownika z %n folderu zespołu.",
         "Removed the user from %n team folders.": "Usunięto użytkownika z %n folderów zespołu.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Usunięto użytkownika z %n folderu zespołu.","Usunięto użytkownika z %n folderów zespołu.","Usunięto użytkownika z %n folderów zespołu."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Usunięto użytkownika z %n folderu zespołu.","Usunięto użytkownika z %n folderów zespołu.","Usunięto użytkownika z %n folderów zespołu."],
+        "A restored copy came from a share that has ended. It stays read-only.": "Przywrócona kopia pochodzi z udostępnienia, które się zakończyło. Pozostaje tylko do odczytu.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Nie udało się połączyć z organizacją, która udostępniła przywróconą kopię. Kopia pozostaje tylko do odczytu i nie śledzi ich zmian.",
+        "Recipient at another organisation restored their copy": "Odbiorca z innej organizacji przywrócił swoją kopię"
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

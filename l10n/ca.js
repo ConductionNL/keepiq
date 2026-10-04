@@ -1665,7 +1665,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Un destinatari d’una altra organització ha suprimit la seva còpia",
         "Removed the user from %n team folder.": "S'ha tret l'usuari de %n carpeta d'equip.",
         "Removed the user from %n team folders.": "S'ha tret l'usuari de %n carpetes d'equip.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["S'ha tret l'usuari de %n carpeta d'equip.","S'ha tret l'usuari de %n carpetes d'equip."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["S'ha tret l'usuari de %n carpeta d'equip.","S'ha tret l'usuari de %n carpetes d'equip."],
+        "A restored copy came from a share that has ended. It stays read-only.": "Una còpia restaurada prové d’una compartició que ha acabat. Continua sent només de lectura.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "No s’ha pogut contactar amb l’organització que va compartir una còpia restaurada. La còpia continua sent només de lectura i no segueix els seus canvis.",
+        "Recipient at another organisation restored their copy": "Un destinatari d’una altra organització ha restaurat la seva còpia"
     },
     "nplurals=2; plural=(n != 1);"
 )

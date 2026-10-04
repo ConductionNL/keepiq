@@ -1665,7 +1665,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Mottagare i en annan organisation tog bort sin kopia",
         "Removed the user from %n team folder.": "Användaren togs bort från %n teammapp.",
         "Removed the user from %n team folders.": "Användaren togs bort från %n teammappar.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Användaren togs bort från %n teammapp.","Användaren togs bort från %n teammappar."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Användaren togs bort från %n teammapp.","Användaren togs bort från %n teammappar."],
+        "A restored copy came from a share that has ended. It stays read-only.": "En återställd kopia kom från en delning som har upphört. Den förblir skrivskyddad.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Organisationen som delade en återställd kopia gick inte att nå. Kopian förblir skrivskyddad och följer inte deras ändringar.",
+        "Recipient at another organisation restored their copy": "Mottagare i en annan organisation återställde sin kopia"
     },
     "nplurals=2; plural=(n != 1);"
 )

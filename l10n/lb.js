@@ -1665,7 +1665,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Empfänger vun enger anerer Organisatioun huet seng Kopie ewechgeholl",
         "Removed the user from %n team folder.": "De Benotzer gouf aus %n Teamuerdner ewechgeholl.",
         "Removed the user from %n team folders.": "De Benotzer gouf aus %n Teamuerdner ewechgeholl.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["De Benotzer gouf aus %n Teamuerdner ewechgeholl.","De Benotzer gouf aus %n Teamuerdner ewechgeholl."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["De Benotzer gouf aus %n Teamuerdner ewechgeholl.","De Benotzer gouf aus %n Teamuerdner ewechgeholl."],
+        "A restored copy came from a share that has ended. It stays read-only.": "Eng restauréiert Kopie kënnt vun enger Deelung, déi eriwwer ass. Si bleift nëmmen ze liesen.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "D’Organisatioun, déi eng restauréiert Kopie gedeelt huet, ass net z’erreechen. D’Kopie bleift nëmmen ze liesen a follegt hiren Ännerungen net.",
+        "Recipient at another organisation restored their copy": "Empfänger vun enger anerer Organisatioun huet seng Kopie restauréiert"
     },
     "nplurals=2; plural=(n != 1);"
 )

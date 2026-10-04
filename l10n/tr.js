@@ -1665,7 +1665,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Başka bir kuruluştaki alıcı kendi kopyasını kaldırdı",
         "Removed the user from %n team folder.": "Kullanıcı %n takım klasöründen çıkarıldı.",
         "Removed the user from %n team folders.": "Kullanıcı %n takım klasöründen çıkarıldı.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Kullanıcı %n takım klasöründen çıkarıldı."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Kullanıcı %n takım klasöründen çıkarıldı."],
+        "A restored copy came from a share that has ended. It stays read-only.": "Geri yüklenen bir kopya sona ermiş bir paylaşımdan geliyor. Salt okunur kalır.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Geri yüklenen bir kopyayı paylaşan kuruluşa ulaşılamadı. Kopya salt okunur kalır ve onların değişikliklerini izlemez.",
+        "Recipient at another organisation restored their copy": "Başka bir kuruluştaki alıcı kendi kopyasını geri yükledi"
     },
     "nplurals=1; plural=0;"
 )

@@ -1665,7 +1665,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Viðtakandi hjá öðru fyrirtæki fjarlægði afritið sitt",
         "Removed the user from %n team folder.": "Notandinn var fjarlægður úr %n teymismöppu.",
         "Removed the user from %n team folders.": "Notandinn var fjarlægður úr %n teymismöppum.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Notandinn var fjarlægður úr %n teymismöppu.","Notandinn var fjarlægður úr %n teymismöppum."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Notandinn var fjarlægður úr %n teymismöppu.","Notandinn var fjarlægður úr %n teymismöppum."],
+        "A restored copy came from a share that has ended. It stays read-only.": "Endurheimt afrit kom úr deilingu sem er lokið. Það er áfram skrifvarið.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Ekki náðist í fyrirtækið sem deildi endurheimtu afriti. Afritið er áfram skrifvarið og fylgir ekki breytingum þeirra.",
+        "Recipient at another organisation restored their copy": "Viðtakandi hjá öðru fyrirtæki endurheimti afritið sitt"
     },
     "nplurals=2; plural=(n != 1);"
 )

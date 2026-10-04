@@ -1670,7 +1670,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Ontvanger bij een andere organisatie heeft de kopie verwijderd",
         "Removed the user from %n team folder.": "Gebruiker verwijderd uit %n teammap.",
         "Removed the user from %n team folders.": "Gebruiker verwijderd uit %n teammappen.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Gebruiker verwijderd uit %n teammap.","Gebruiker verwijderd uit %n teammappen."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Gebruiker verwijderd uit %n teammap.","Gebruiker verwijderd uit %n teammappen."],
+        "A restored copy came from a share that has ended. It stays read-only.": "Een teruggezette kopie komt uit een deling die is beëindigd. Die blijft alleen-lezen.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "De organisatie die een teruggezette kopie deelde, is niet bereikbaar. De kopie blijft alleen-lezen en volgt hun wijzigingen niet.",
+        "Recipient at another organisation restored their copy": "Ontvanger bij een andere organisatie heeft de kopie teruggezet"
     },
     "nplurals=2; plural=(n != 1);"
 )

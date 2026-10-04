@@ -1665,7 +1665,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Примач од друга организација ја отстрани својата копија",
         "Removed the user from %n team folder.": "Корисникот е отстранет од %n тимска папка.",
         "Removed the user from %n team folders.": "Корисникот е отстранет од %n тимски папки.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Корисникот е отстранет од %n тимска папка.","Корисникот е отстранет од %n тимски папки."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Корисникот е отстранет од %n тимска папка.","Корисникот е отстранет од %n тимски папки."],
+        "A restored copy came from a share that has ended. It stays read-only.": "Вратената копија потекнува од споделување што заврши. Останува само за читање.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Организацијата што сподели вратена копија не е достапна. Копијата останува само за читање и не ги следи нивните промени.",
+        "Recipient at another organisation restored their copy": "Примач од друга организација ја врати својата копија"
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

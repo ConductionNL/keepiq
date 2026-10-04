@@ -1,0 +1,19 @@
+# Tasks: decline a pending federated share, take a deleted copy back, and refuse grade changes visibly
+
+## 1. Federated sharing
+
+- [x] 1.1 Declining a pending incoming share sends OCM `SHARE_DECLINED` to the owner's instance; the owner's share shows declined and drops its retries. Verify: PHPUnit through `FederatedInboundService::decline()` and the owner's provider. Done: `FederatedInboundService::decline()` calls `FederatedCopyDeclineService::tellOwner()`. `tests/Unit/Federation/FederatedCopyDeclineTest.php` `testDecliningAPendingShareTellsTheOwner`, `testThePendingDeclineEndsTheOwnersShare`, `testDecliningSomeoneElsesShareSendsNothing`; red with the service wired but not called (nothing sent), green after.
+- [x] 1.2 Restoring a declined read-only copy sends OCM `SHARE_ACCEPTED`; on 201 the inbound share is accepted, the copy pulls the current value and the owner's share is active again; a revoked, removed or replaced share ends and the copy stays read-only; an unreachable owner leaves the share declined. Verify: PHPUnit through `SecretTrashService::restore()` and the owner's provider, and the refusals. Done: `FederatedCopyDeclineService::copyRestored()` (from `SecretTrashService::restore()`), `copyPurged()`, `FederatedDeclineReceiver::resume()` (from `KeepiqSecretFederationProvider::notificationReceived()`), audit `federated_share.recipient_resumed`. `tests/Unit/Federation/FederatedCopyRestoreTest.php` (15 tests, Bob's notification handed to Alice's real provider): resumed with the current value pulled, ended after a revoke, a removed share or a share sent again, ended without asking after a `SHARE_UNSHARED`, unreachable leaves it declined, an ordinary secret tells no one, the trash keeps the link and purge drops it, four refused accepts and an accept for a live share change nothing. Red before (no copies parameter; Alice's provider sent `SHARE_ACCEPTED` to the update handler); mutations: restore hook removed 6 red, sent-again check removed 1 red, owner checks bypassed 5 red.
+- [x] 1.3 The restore answer carries `federatedShare` and the restore dialog says when a share ended or the owner could not be reached. Verify: PHPUnit for the controller, vitest for the store and the dialog. Done: `SecretTrashController::restore()` adds `federatedShare`; `changeSecretState()` returns the body; `BulkStateDialog` shows a note for `ended` and for `unreachable`. `SecretTrashControllerTest::testRestoreSaysWhatBecameOfAFederatedShare` (red on the old return type), `tests/store/secretTrashState.spec.js` and `tests/dialogs/BulkStateDialog.spec.js` (3 red before, green after).
+- [ ] 1.4 Live on the two-instance pair: decline a pending share, and restore a deleted copy before and after the owner revokes. Verify: `tests/integration/federation/federated-sharing.spec.ts`.
+
+## 2. Mechanics
+
+- [x] 2.1 The offboarding summary says "team folder" for one membership (n(), seeded in every catalogue). Verify: vitest. Done: `OffboardingSection.vue` uses n() with 'Removed the user from %n team folder.' and the plural, seeded in all 36 catalogues; `tests/components/MemberOverviewSection.spec.js` red before (2), green after.
+- [x] 2.2 A viewer or editor changing a grade is refused with 428 and `error: manager_only`. Verify: PHPUnit through the service and the controller with OcsRefusalMiddleware. Done: `ManagerOnlyException` from `TeamFolderQueryService::loadManageableTeamFolder()`, mapped by `TeamFolderMemberController::refusal()`. `TeamFolderServiceTest::testAViewerOrEditorChangingAGradeIsRefusedAsForbidden` and `TeamFolderMemberControllerTest::testAViewerChangingAGradeIsRefusedVisibly` red before (a plain 400), green after.
+
+## Acceptance criteria
+
+- The owner sees "declined" as soon as the recipient declines a pending share.
+- A restored copy follows the owner again, or the recipient is told the share has ended.
+- No restore gives the recipient access the owner did not grant.

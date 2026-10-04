@@ -1665,7 +1665,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Riċevitur f’organizzazzjoni oħra neħħa l-kopja tiegħu",
         "Removed the user from %n team folder.": "L-utent tneħħa minn %n folder tat-tim.",
         "Removed the user from %n team folders.": "L-utent tneħħa minn %n folders tat-tim.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["L-utent tneħħa minn %n folder tat-tim.","L-utent tneħħa minn %n folders tat-tim.","L-utent tneħħa minn %n folders tat-tim.","L-utent tneħħa minn %n folders tat-tim."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["L-utent tneħħa minn %n folder tat-tim.","L-utent tneħħa minn %n folders tat-tim.","L-utent tneħħa minn %n folders tat-tim.","L-utent tneħħa minn %n folders tat-tim."],
+        "A restored copy came from a share that has ended. It stays read-only.": "Kopja rrestawrata ġiet minn qsim li ntemm. Tibqa’ għall-qari biss.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "L-organizzazzjoni li qasmet kopja rrestawrata ma setgħetx tintlaħaq. Il-kopja tibqa’ għall-qari biss u ma ssegwix il-bidliet tagħhom.",
+        "Recipient at another organisation restored their copy": "Riċevitur f’organizzazzjoni oħra rrestawra l-kopja tiegħu"
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

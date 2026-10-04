@@ -344,7 +344,8 @@ class FederatedCopyDeclineTest extends TestCase {
 		$this->bobsTrash($this->copy)->trash('copy-1', 'bob');
 
 		$this->assertSame(FederatedInbound::STATUS_DECLINED, $this->inbound->getStatus());
-		$this->assertNull($this->inbound->getSecretId());
+		// The link stays while the copy is in the trash, for a restore.
+		$this->assertSame('copy-1', $this->inbound->getSecretId());
 		$this->assertOneDeclineSent();
 		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_DECLINED, $this->audit[0]->getEventType());
 		$this->assertSame('bob', $this->audit[0]->getActorId());
@@ -416,6 +417,7 @@ class FederatedCopyDeclineTest extends TestCase {
 		$this->bobsTrash($this->copy)->purge('copy-1', 'bob');
 
 		$this->assertSame(FederatedInbound::STATUS_DECLINED, $this->inbound->getStatus());
+		$this->assertNull($this->inbound->getSecretId());
 		$this->assertOneDeclineSent();
 	}
 

@@ -1665,7 +1665,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Príjemca z inej organizácie odstránil svoju kópiu",
         "Removed the user from %n team folder.": "Používateľ bol odstránený z %n tímového priečinka.",
         "Removed the user from %n team folders.": "Používateľ bol odstránený z %n tímových priečinkov.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Používateľ bol odstránený z %n tímového priečinka.","Používateľ bol odstránený z %n tímových priečinkov.","Používateľ bol odstránený z %n tímových priečinkov."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Používateľ bol odstránený z %n tímového priečinka.","Používateľ bol odstránený z %n tímových priečinkov.","Používateľ bol odstránený z %n tímových priečinkov."],
+        "A restored copy came from a share that has ended. It stays read-only.": "Obnovená kópia pochádza zo zdieľania, ktoré skončilo. Zostáva iba na čítanie.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Organizáciu, ktorá zdieľala obnovenú kópiu, sa nepodarilo zastihnúť. Kópia zostáva iba na čítanie a nesleduje ich zmeny.",
+        "Recipient at another organisation restored their copy": "Príjemca z inej organizácie obnovil svoju kópiu"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

@@ -1665,7 +1665,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Recipient at another organisation removed their copy",
         "Removed the user from %n team folder.": "Removed the user from %n team folder.",
         "Removed the user from %n team folders.": "Removed the user from %n team folders.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Removed the user from %n team folder.","Removed the user from %n team folders."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Removed the user from %n team folder.","Removed the user from %n team folders."],
+        "A restored copy came from a share that has ended. It stays read-only.": "A restored copy came from a share that has ended. It stays read-only.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.",
+        "Recipient at another organisation restored their copy": "Recipient at another organisation restored their copy"
     },
     "nplurals=2; plural=(n != 1);"
 )

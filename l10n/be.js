@@ -1665,7 +1665,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Атрымальнік з іншай арганізацыі выдаліў сваю копію",
         "Removed the user from %n team folder.": "Карыстальніка выдалена з %n камандной папкі.",
         "Removed the user from %n team folders.": "Карыстальніка выдалена з камандных папак: %n.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Карыстальніка выдалена з %n камандной папкі.","Карыстальніка выдалена з камандных папак: %n.","Карыстальніка выдалена з камандных папак: %n."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Карыстальніка выдалена з %n камандной папкі.","Карыстальніка выдалена з камандных папак: %n.","Карыстальніка выдалена з камандных папак: %n."],
+        "A restored copy came from a share that has ended. It stays read-only.": "Адноўленая копія паходзіць з доступу, які скончыўся. Яна застаецца толькі для чытання.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Не ўдалося звязацца з арганізацыяй, якая падзялілася адноўленай копіяй. Копія застаецца толькі для чытання і не атрымлівае іх змены.",
+        "Recipient at another organisation restored their copy": "Атрымальнік з іншай арганізацыі аднавіў сваю копію"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

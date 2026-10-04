@@ -1764,7 +1764,10 @@
             "Корисник је уклоњен из %n тимске фасцикле.",
             "Корисник је уклоњен из %n тимских фасцикли.",
             "Корисник је уклоњен из %n тимских фасцикли."
-        ]
+        ],
+        "A restored copy came from a share that has ended. It stays read-only.": "Враћена копија потиче из дељења које је завршено. Остаје само за читање.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Организација која је поделила враћену копију није доступна. Копија остаје само за читање и не прати њихове измене.",
+        "Recipient at another organisation restored their copy": "Прималац из друге организације вратио је своју копију"
     },
     "plurals": null
 }

@@ -25,6 +25,28 @@
 				data-testid="bulk-state-note">
 				{{ note }}
 			</NcNoteCard>
+			<NcNoteCard
+				v-if="finished && federated.ended"
+				type="warning"
+				data-testid="bulk-state-federated-ended">
+				{{
+					t(
+						'keepiq',
+						'A restored copy came from a share that has ended. It stays read-only.',
+					)
+				}}
+			</NcNoteCard>
+			<NcNoteCard
+				v-if="finished && federated.unreachable"
+				type="warning"
+				data-testid="bulk-state-federated-unreachable">
+				{{
+					t(
+						'keepiq',
+						'The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.',
+					)
+				}}
+			</NcNoteCard>
 			<BulkRunPanel v-if="ran || bulk.progress.running" @retry="onRetry" />
 		</div>
 		<template #actions>
@@ -81,6 +103,11 @@ export default {
 		return {
 			/** Whether a run was started from this dialog. */
 			ran: false,
+			/**
+			 * What restored copies from other organisations reported about
+			 * their shares (sharing-federated-recipients).
+			 */
+			federated: { ended: false, unreachable: false },
 		}
 	},
 
@@ -172,15 +199,25 @@ export default {
 
 	methods: {
 		/**
-		 * The per-item state change; a 404 (already gone) is skipped.
+		 * The per-item state change; a 404 (already gone) is skipped. A
+		 * restored copy from another organisation whose share ended, or
+		 * whose owner could not be reached, is remembered for the note.
 		 *
 		 * @param {string} secretId The secret id.
 		 * @return {Promise<object>}
 		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-owner-revoked-the-share-meanwhile
 		 */
 		async changeOne(secretId) {
 			try {
-				await useSecretStore().changeSecretState(secretId, this.action)
+				const answer = await useSecretStore().changeSecretState(
+					secretId,
+					this.action,
+				)
+				const share = answer?.federatedShare
+				if (share === 'ended' || share === 'unreachable') {
+					this.federated = { ...this.federated, [share]: true }
+				}
 				return { status: 'ok' }
 			} catch (e) {
 				if (e?.response?.status === 404) {

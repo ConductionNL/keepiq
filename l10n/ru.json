@@ -1764,7 +1764,10 @@
             "Пользователь удалён из %n командной папки.",
             "Пользователь удалён из командных папок: %n.",
             "Пользователь удалён из командных папок: %n."
-        ]
+        ],
+        "A restored copy came from a share that has ended. It stays read-only.": "Восстановленная копия получена из общего доступа, который завершён. Она остаётся только для чтения.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Не удалось связаться с организацией, которая поделилась восстановленной копией. Копия остаётся только для чтения и не получает их изменения.",
+        "Recipient at another organisation restored their copy": "Получатель из другой организации восстановил свою копию"
     },
     "plurals": null
 }

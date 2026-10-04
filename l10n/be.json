@@ -1764,7 +1764,10 @@
             "Карыстальніка выдалена з %n камандной папкі.",
             "Карыстальніка выдалена з камандных папак: %n.",
             "Карыстальніка выдалена з камандных папак: %n."
-        ]
+        ],
+        "A restored copy came from a share that has ended. It stays read-only.": "Адноўленая копія паходзіць з доступу, які скончыўся. Яна застаецца толькі для чытання.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Не ўдалося звязацца з арганізацыяй, якая падзялілася адноўленай копіяй. Копія застаецца толькі для чытання і не атрымлівае іх змены.",
+        "Recipient at another organisation restored their copy": "Атрымальнік з іншай арганізацыі аднавіў сваю копію"
     },
     "plurals": null
 }

@@ -1764,7 +1764,10 @@
             "Utilizatorul a fost eliminat din %n dosar de echipă.",
             "Utilizatorul a fost eliminat din %n dosare de echipă.",
             "Utilizatorul a fost eliminat din %n dosare de echipă."
-        ]
+        ],
+        "A restored copy came from a share that has ended. It stays read-only.": "O copie restaurată provine dintr-o partajare care s-a încheiat. Rămâne doar în citire.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Organizația care a partajat o copie restaurată nu a putut fi contactată. Copia rămâne doar în citire și nu urmează modificările lor.",
+        "Recipient at another organisation restored their copy": "Un destinatar dintr-o altă organizație și-a restaurat copia"
     },
     "plurals": null
 }

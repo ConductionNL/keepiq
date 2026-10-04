@@ -1665,7 +1665,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Kitos organizacijos gavėjas pašalino savo kopiją",
         "Removed the user from %n team folder.": "Naudotojas pašalintas iš %n komandos aplanko.",
         "Removed the user from %n team folders.": "Naudotojas pašalintas iš %n komandos aplankų.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Naudotojas pašalintas iš %n komandos aplanko.","Naudotojas pašalintas iš %n komandos aplankų.","Naudotojas pašalintas iš %n komandos aplankų."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Naudotojas pašalintas iš %n komandos aplanko.","Naudotojas pašalintas iš %n komandos aplankų.","Naudotojas pašalintas iš %n komandos aplankų."],
+        "A restored copy came from a share that has ended. It stays read-only.": "Atkurta kopija gauta iš pasibaigusio bendrinimo. Ji lieka tik skaitymui.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Nepavyko susisiekti su organizacija, kuri bendrino atkurtą kopiją. Kopija lieka tik skaitymui ir neseka jų pakeitimų.",
+        "Recipient at another organisation restored their copy": "Kitos organizacijos gavėjas atkūrė savo kopiją"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

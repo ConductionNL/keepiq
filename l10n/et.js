@@ -1665,7 +1665,10 @@ OC.L10N.register(
         "Recipient at another organisation removed their copy": "Teise organisatsiooni saaja eemaldas oma koopia",
         "Removed the user from %n team folder.": "Kasutaja eemaldati %n meeskonnakaustast.",
         "Removed the user from %n team folders.": "Kasutaja eemaldati %n meeskonnakaustast.",
-        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Kasutaja eemaldati %n meeskonnakaustast.","Kasutaja eemaldati %n meeskonnakaustast."]
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Kasutaja eemaldati %n meeskonnakaustast.","Kasutaja eemaldati %n meeskonnakaustast."],
+        "A restored copy came from a share that has ended. It stays read-only.": "Taastatud koopia pärineb lõppenud jagamisest. See jääb kirjutuskaitstuks.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Taastatud koopia jaganud organisatsiooniga ei saadud ühendust. Koopia jääb kirjutuskaitstuks ega järgi nende muudatusi.",
+        "Recipient at another organisation restored their copy": "Teise organisatsiooni saaja taastas oma koopia"
     },
     "nplurals=2; plural=(n != 1);"
 )
