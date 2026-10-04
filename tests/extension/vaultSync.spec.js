@@ -117,7 +117,7 @@ describe('sync', () => {
 	it('falls back to the paged lists when offline caching is off', async () => {
 		const { sync, api } = setup({
 			fetchOfflineManifest: vi.fn(async () => {
-				throw Object.assign(new Error('off'), { status: 403 })
+				throw Object.assign(new Error('off'), { status: 428 })
 			}),
 		})
 		await sync.sync(ACCOUNT, { force: true })

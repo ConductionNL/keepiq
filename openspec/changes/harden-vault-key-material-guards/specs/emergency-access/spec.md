@@ -19,7 +19,7 @@ The requirement is on the grantor-initiated revocation of a designated contact. 
 - **GIVEN** A has designated B as an emergency contact
 - **AND** an authenticated session for A
 - **WHEN** revocation is requested without a verified key proof
-- **THEN** the system MUST refuse with `403` and `error: key_proof_required`
+- **THEN** the system MUST refuse with `428` and `error: key_proof_required`
 - **AND** the recovery envelope MUST be unchanged and still usable
 
 ### Requirement: Designate Emergency Contact
@@ -47,5 +47,5 @@ Designation MUST require a verified key proof (see the `vault-key-proof` capabil
 @e2e exclude Middleware enforcement on a session-authenticated route; not DOM-observable. Covered by PHPUnit on the middleware and the attribute-coverage test.
 - **GIVEN** an authenticated session for A, and no key proof
 - **WHEN** a designation of any grantee, or a re-designation of an existing contact, is requested
-- **THEN** the system MUST refuse with `403` and `error: key_proof_required`
+- **THEN** the system MUST refuse with `428` and `error: key_proof_required`
 - **AND** no contact MUST be created, and an existing contact's envelope MUST be unchanged

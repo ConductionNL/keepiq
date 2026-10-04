@@ -1092,8 +1092,13 @@ class TeamFolderServiceTest extends TestCase {
 			try {
 				$this->service->setMemberGrade(teamFolderId: 'tf-1', memberId: $target, grade: $grade, ownerId: $caller);
 				$this->fail($caller . ' must not set ' . $target . ' to ' . $grade);
-			} catch (InvalidArgumentException) {
-				// Refused, as it should be.
+			} catch (InvalidArgumentException $refusal) {
+				// Refused, as it should be. A manager reaching for what only the
+				// owner governs is refused as such (owner_only), so the browser
+				// can show it as a refusal and not as a bad request (#790).
+				if ($caller === 'olga') {
+					$this->assertInstanceOf(\OCA\Keepiq\Exception\OwnerOnlyException::class, $refusal, $target . ' ' . $grade);
+				}
 			}
 		}
 

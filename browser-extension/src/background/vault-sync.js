@@ -91,7 +91,8 @@ export function buildVaultSync({
 				types: manifest.types ?? [],
 			}
 		} catch (e) {
-			if (e?.status !== 403 && e?.status !== 404) throw e
+			// Offline caching off: 403 on older servers, 428 since keepiq#673.
+			if (e?.status !== 403 && e?.status !== 428 && e?.status !== 404) throw e
 		}
 		const [secrets, folders, types, suite] = await Promise.all([
 			api.listSecrets(account),

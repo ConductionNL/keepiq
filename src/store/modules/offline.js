@@ -36,6 +36,7 @@ import {
 	sealEntry,
 } from '../../offline/queue.js'
 import { decryptSnapshot, encryptSnapshot } from '../../offline/snapshot.js'
+import { isRefusal } from '../../utils/refusal.js'
 import { onVaultLock, useSessionStore } from './session.js'
 
 /** The fields whose change fans out to recipients. */
@@ -205,7 +206,7 @@ export const useOfflineStore = defineStore('offline', {
 				}
 				return written
 			} catch (e) {
-				if (e?.response?.status === 403) {
+				if (isRefusal(e)) {
 					// Admin disabled offline caching org-wide: the queue was
 					// replayed above; purge the snapshot and what is left.
 					await purge().catch(() => {})

@@ -23,6 +23,7 @@ import {
 	buildRecoveryEnvelope,
 	openRecoveryEnvelope,
 } from '../crypto/emergencyEnvelope.js'
+import { isRefusal } from '../utils/refusal.js'
 
 /** The fields an entry keeps in plain. Everything else is sealed. */
 export const PLAIN_FIELDS = Object.freeze([
@@ -180,6 +181,6 @@ export function replayOrder(entries) {
 export function classifyReplayError(error) {
 	const status = error?.response?.status
 	if (status === 409) return 'conflict'
-	if (status === 403 || status === 404) return 'failed'
+	if (isRefusal(error) || status === 404) return 'failed'
 	return 'retry'
 }

@@ -23,7 +23,7 @@ The flow already holds the current master password in order to derive the old AE
 @e2e exclude Middleware enforcement on a session-authenticated route; not DOM-observable. Covered by PHPUnit on the middleware and the attribute-coverage test.
 - **GIVEN** an authenticated session for the suite owner
 - **WHEN** a replacement private-key envelope is submitted without a verified key proof
-- **THEN** the system MUST refuse with `403` and `error: key_proof_required`
+- **THEN** the system MUST refuse with `428` and `error: key_proof_required`
 - **AND** the stored envelope MUST be unchanged
 
 #### Scenario: Envelope replacement on a suite in an open migration or not active is refused
@@ -58,7 +58,7 @@ Requiring the proof does not obstruct legitimate recovery: rotation exists for a
 @e2e exclude Middleware enforcement on a session-authenticated route; not DOM-observable. Covered by PHPUnit on the middleware and the attribute-coverage test.
 - **GIVEN** an authenticated session for a user with an active EncryptionSuite
 - **WHEN** compromise recovery is requested with key material not accompanied by a verified proof over the existing suite's private key
-- **THEN** the system MUST refuse with `403` and `error: key_proof_required`
+- **THEN** the system MUST refuse with `428` and `error: key_proof_required`
 - **AND** MUST NOT create a successor suite, a migration record, or a write lock
 
 ### Requirement: A Migration Always Has A Way To Terminate
@@ -144,7 +144,7 @@ Every abort MUST be recorded in the audit trail as `suite.recovery_aborted`, wit
 @e2e exclude Middleware enforcement on a session-authenticated route; covered by VaultKeyProofAttributesTest and VaultKeyProofMiddlewareTest.
 - **GIVEN** a migration `in_progress` with no record committed to the new suite
 - **WHEN** abort is requested with a session alone, or with a proof over the old suite's key
-- **THEN** the system MUST refuse with `403` and `error: key_proof_required`
+- **THEN** the system MUST refuse with `428` and `error: key_proof_required`
 - **AND** the migration MUST stay `in_progress`
 
 #### Scenario: Aborting after records have moved is refused

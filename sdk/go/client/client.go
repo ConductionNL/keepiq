@@ -380,10 +380,50 @@ func (c *Client) getJSON(path string, out any) error {
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusPreconditionRequired {
+		return refusalFrom(path, resp.StatusCode, body)
+	}
 	if resp.StatusCode != http.StatusOK {
 		return &statusError{path: path, code: resp.StatusCode, body: strings.TrimSpace(string(body))}
 	}
+	// Nextcloud answers a refusal it raises itself on an OCS controller as an
+	// HTTP 200 envelope with the real status inside (keepiq#673). That is an
+	// error, not data.
+	var envelope struct {
+		OCS *struct {
+			Meta struct {
+				StatusCode int    `json:"statuscode"`
+				Message    string `json:"message"`
+			} `json:"meta"`
+		} `json:"ocs"`
+	}
+	if json.Unmarshal(bytes.TrimSpace(body), &envelope) == nil && envelope.OCS != nil && envelope.OCS.Meta.StatusCode >= 400 {
+		code := envelope.OCS.Meta.StatusCode
+		if code == http.StatusForbidden || code == http.StatusPreconditionRequired {
+			return &RefusalError{Path: path, Status: code, Message: envelope.OCS.Meta.Message}
+		}
+		return &statusError{path: path, code: code, body: envelope.OCS.Meta.Message}
+	}
 	return json.Unmarshal(bytes.TrimSpace(body), out)
+}
+
+// refusalFrom reads a refusal body: `error`, else the policy `code`, and the message.
+func refusalFrom(path string, status int, body []byte) *RefusalError {
+	var b struct {
+		Error   string `json:"error"`
+		Code    string `json:"code"`
+		Message string `json:"message"`
+	}
+	_ = json.Unmarshal(bytes.TrimSpace(body), &b)
+	code := b.Error
+	if code == "" {
+		code = b.Code
+	}
+	msg := b.Message
+	if msg == "" && code == "" {
+		msg = strings.TrimSpace(string(body))
+	}
+	return &RefusalError{Path: path, Status: status, Code: code, Message: msg}
 }
 
 // statusError is a GET answered with a status other than 200.
@@ -408,4 +448,27 @@ func (c *Client) abs(endpoint string) string {
 		return endpoint
 	}
 	return c.BaseURL + endpoint
+}
+
+// RefusalError is a request Keepiq refused: 403, or 428 on its OCS routes,
+// where Nextcloud would turn a 403 into an HTTP 200 envelope (keepiq#673).
+// Code is the body's `error`, else its policy `code`.
+type RefusalError struct {
+	Path    string
+	Status  int
+	Code    string
+	Message string
+}
+
+func (e *RefusalError) Error() string {
+	if e.Code != "" {
+		return fmt.Sprintf("GET %s refused (%d, %s): %s", e.Path, e.Status, e.Code, e.Message)
+	}
+	return fmt.Sprintf("GET %s refused (%d): %s", e.Path, e.Status, e.Message)
+}
+
+// IsRefusal reports whether err is a refusal (403 or 428).
+func IsRefusal(err error) bool {
+	var r *RefusalError
+	return errors.As(err, &r)
 }
