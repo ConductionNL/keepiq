@@ -13,6 +13,7 @@ public struct VaultAppView: View {
     private let onSwitchAccount: (Account) -> Void
     private let onAddAccount: (() -> Void)?
     @State private var showAccounts = false
+    @State private var openLink: String?
 
     public init(
         session: MobileSession,
@@ -59,6 +60,17 @@ public struct VaultAppView: View {
                         try? await Task.sleep(nanoseconds: 3_000_000_000)
                         model.toast = nil
                     }
+            }
+        }
+        // A Send link handed to the app (a universal link, once the server
+        // publishes an apple-app-site-association file) opens here.
+        .onOpenURL { url in
+            if SendLink.companion.parse(link: url.absoluteString) != nil { openLink = url.absoluteString }
+        }
+        .sheet(isPresented: Binding(get: { openLink != nil }, set: { if !$0 { openLink = nil } })) {
+            NavigationStack {
+                OpenSendView(initialLink: openLink ?? "", onCopy: model.copy)
+                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button(L("action_close")) { openLink = nil } } }
             }
         }
         .sheet(isPresented: $showAccounts) {

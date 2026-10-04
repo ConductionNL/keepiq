@@ -213,6 +213,7 @@ fun VaultApp(
                 session = session,
                 modifier = modifier,
                 onNew = { push(Route.NewSend()) },
+                onCopy = copy,
             )
             is Route.NewSend -> NewSendScreen(
                 session = session,

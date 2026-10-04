@@ -69,7 +69,7 @@ import java.util.Date
 
 /** The account's sends (task 3.6): metadata only, with delete, and a field to open a Send link. */
 @Composable
-fun SendListScreen(session: VaultSession, modifier: Modifier, onNew: () -> Unit) {
+fun SendListScreen(session: VaultSession, modifier: Modifier, onNew: () -> Unit, onCopy: (String) -> Unit) {
     var sends by remember(session) { mutableStateOf<List<SendSummary>?>(null) }
     var problem by remember { mutableStateOf<WriteProblem?>(null) }
     var deleting by remember { mutableStateOf<SendSummary?>(null) }
@@ -129,7 +129,7 @@ fun SendListScreen(session: VaultSession, modifier: Modifier, onNew: () -> Unit)
     if (opening) {
         AlertDialog(
             onDismissRequest = { opening = false },
-            text = { OpenSendScreen(initialLink = "", modifier = Modifier) },
+            text = { OpenSendScreen(initialLink = "", modifier = Modifier, onCopy = onCopy) },
             confirmButton = { TextButton(onClick = { opening = false }) { Text(stringResource(R.string.action_close)) } },
         )
     }
