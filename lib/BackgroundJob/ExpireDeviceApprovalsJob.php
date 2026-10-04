@@ -63,7 +63,7 @@ class ExpireDeviceApprovalsJob extends TimedJob {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Mandated by TimedJob::run().
 	 *
-	 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+	 * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
 	 */
 	protected function run($argument): void {
 		try {

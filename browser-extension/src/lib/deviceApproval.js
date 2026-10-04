@@ -32,7 +32,7 @@ const FINAL = new Set(['denied', 'expired', 'consumed'])
  *
  * @param {string} agent The user agent string.
  * @return {string} For example "Keepiq extension in Firefox on Linux".
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
  */
 export function deviceLabel(agent = '') {
 	const browser =
@@ -67,7 +67,7 @@ function publicView(request) {
  *
  * @param {string} accountId The account.
  * @return {object|null}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-both-devices-show-the-same-verification-phrase
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-both-devices-show-the-same-verification-phrase
  */
 export function current(accountId) {
 	const request = requests.get(accountId)
@@ -81,7 +81,7 @@ export function current(accountId) {
  * @param {object} account The paired account.
  * @param {string} agent The user agent, for the device label.
  * @return {Promise<object>} The request as the popup shows it.
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
  */
 export async function start(account, agent = '') {
 	const open = requests.get(account.id)
@@ -130,7 +130,7 @@ function lapsed(request) {
  * @param {object} account The paired account.
  * @param {function(Uint8Array): Promise<void>} unlock The worker's raw-key unlock.
  * @return {Promise<string>} `none`, `pending`, `unlocked`, `denied`, `expired` or `consumed`.
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
  */
 export async function poll(account, unlock) {
 	const request = requests.get(account.id)
@@ -183,7 +183,7 @@ export async function poll(account, unlock) {
  *
  * @param {object} account The paired account.
  * @return {Promise<void>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
  */
 export async function cancel(account) {
 	const request = requests.get(account.id)
@@ -201,7 +201,7 @@ export async function cancel(account) {
  *
  * @param {string} accountId The account.
  * @return {void}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
  */
 export function forget(accountId) {
 	requests.delete(accountId)

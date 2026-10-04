@@ -730,7 +730,7 @@ export default {
 		 * (crypto-new-device-approval D4): continue as after any unlock.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
 		 */
 		/**
 		 * Enrol in account recovery while the master password is in hand,
@@ -781,7 +781,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
 		 */
 		async onApprovedUnlock() {
 			const returnUrl = this.$route.query.returnUrl || '/'

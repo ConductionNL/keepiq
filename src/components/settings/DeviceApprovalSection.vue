@@ -6,7 +6,7 @@
   On by default. When off, the lock screen does not offer "Approve from
   another device" and the server refuses new requests.
 
-  @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+  @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
 -->
 <template>
 	<CnSettingsSection
@@ -58,7 +58,7 @@ export default {
 	 * Load the current instance-wide device-approval switch.
 	 *
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+	 * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
 	 */
 	async created() {
 		try {
@@ -78,7 +78,7 @@ export default {
 		 * Persist the instance-wide device-approval switch.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
 		 */
 		async save() {
 			await axios.put(generateUrl('/apps/keepiq/api/settings/admin/general'), {

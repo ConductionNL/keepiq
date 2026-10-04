@@ -11,6 +11,7 @@ import {
 	folderPath,
 	formKind,
 	MAX_FIELD_CHARS,
+	MAX_NAME_CHARS,
 	partsFromDraft,
 	validateDraft,
 	writeErrorMessage,
@@ -112,6 +113,15 @@ describe('validation', () => {
 			'field-1': 'Give the field a name',
 			'field-3': 'Another field has this name',
 		})
+	})
+
+	it('allows a name of 255 characters and refuses a longer one, the width of the server column', () => {
+		const draft = draftFromItem(LOGIN, 'login')
+		draft.name = 'n'.repeat(MAX_NAME_CHARS)
+		expect(validateDraft(draft).name).toBeUndefined()
+		draft.name = 'n'.repeat(256)
+		expect(validateDraft(draft).name).toBe('At most 255 characters')
+		expect(MAX_NAME_CHARS).toBe(255)
 	})
 
 	it('refuses values over the limits', () => {

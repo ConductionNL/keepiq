@@ -11,6 +11,8 @@
  * the master password and the derived CryptoKey never touch storage.
  */
 
+import { isSecureServerUrl } from './server-url.js'
+
 // The single pairing before several accounts (read once, then removed).
 const LEGACY_CONFIG_KEY = 'keepiq.config'
 const ACCOUNTS_KEY = 'keepiq.accounts'
@@ -145,11 +147,14 @@ export async function addAccount(config) {
 }
 
 /**
- * Change stored, non-sensitive settings of one account (label, idle delay).
+ * Change stored settings of one account: label, idle delay, server version,
+ * and the app password and signed-out flag when a revoked password signs it
+ * out or the user signs in again.
  *
  * @param {string} id The account id.
- * @param {{label?: string, idleMinutes?: number, serverVersion?: string|null}} patch The changes.
+ * @param {{label?: string, idleMinutes?: number, serverVersion?: string|null, appPassword?: string, loggedOut?: boolean}} patch The changes.
  * @return {Promise<object>} The updated account.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
  */
 export async function updateAccount(id, patch) {
 	const accounts = await loadAccounts()
@@ -165,6 +170,11 @@ export async function updateAccount(id, patch) {
 	if (patch.serverVersion !== undefined) {
 		account.serverVersion = patch.serverVersion ?? null
 	}
+	// Signing out after a revoked app password, and signing in again.
+	if (patch.appPassword !== undefined) {
+		account.appPassword = String(patch.appPassword)
+	}
+	if (patch.loggedOut !== undefined) account.loggedOut = patch.loggedOut === true
 	await saveAccounts(accounts)
 	return account
 }
@@ -207,23 +217,80 @@ function base(config) {
 	return String(config.url).replace(/\/+$/, '')
 }
 
+// Called with the account when the server answers 401 to its app password.
+const unauthorizedListeners = []
+
+/**
+ * Listen for a server refusing an account's app password (HTTP 401), which
+ * means it was revoked or changed.
+ *
+ * @param {(config: object) => void} listener Called with the account.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ */
+export function onUnauthorized(listener) {
+	unauthorizedListeners.push(listener)
+}
+
+/**
+ * Refuse to send an app password to a server address that is not https
+ * (or http on a local host), such as one paired before that rule.
+ *
+ * @param {object} config The account.
+ * @throws {Error} When the address is not secure.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
+ */
+function assertSecure(config) {
+	if (!isSecureServerUrl(base(config))) {
+		const err = new Error(
+			'Keepiq needs an https address. Disconnect this account and connect it again over https.',
+		)
+		err.status = 0
+		err.insecure = true
+		throw err
+	}
+}
+
+/**
+ * Fetch from the server with the account's app password and no cookies, so
+ * a Nextcloud browser session never rides along.
+ *
+ * @param {object} config The account.
+ * @param {string} url The full address.
+ * @param {object} init The fetch options.
+ * @return {Promise<Response>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-requests-carry-the-app-password-and-no-cookies
+ */
+function serverFetch(config, url, init = {}) {
+	assertSecure(config)
+	return fetch(url, { ...init, credentials: 'omit' })
+}
+
 async function request(config, method, path, body, extraHeaders = {}) {
-	const res = await fetch(base(config) + '/index.php/apps/keepiq' + path, {
-		method,
-		headers: {
-			...extraHeaders,
-			Authorization: authHeader(config),
-			'Content-Type': 'application/json',
-			'OCS-APIRequest': 'true',
-			Accept: 'application/json',
+	const res = await serverFetch(
+		config,
+		base(config) + '/index.php/apps/keepiq' + path,
+		{
+			method,
+			headers: {
+				...extraHeaders,
+				Authorization: authHeader(config),
+				'Content-Type': 'application/json',
+				'OCS-APIRequest': 'true',
+				Accept: 'application/json',
+			},
+			body: body ? JSON.stringify(body) : undefined,
 		},
-		body: body ? JSON.stringify(body) : undefined,
-	})
+	)
 	if (!res.ok) {
 		const text = await res.text().catch(() => '')
 		const err = new Error(`Keepiq ${method} ${path} failed (${res.status})`)
 		err.status = res.status
 		err.body = text
+		// A stored account whose app password stopped working. A pairing
+		// attempt has no id yet; its 401 is just a wrong password.
+		if (res.status === 401 && config.id) {
+			for (const listener of unauthorizedListeners) listener(config)
+		}
 		throw err
 	}
 	if (res.status === 204) return null
@@ -267,27 +334,35 @@ export function unpair(config) {
  * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-username-generator
  */
 export async function fetchAccountEmail(config) {
-	const res = await fetch(base(config) + '/ocs/v2.php/cloud/user?format=json', {
-		headers: {
-			Authorization: authHeader(config),
-			'OCS-APIRequest': 'true',
-			Accept: 'application/json',
+	const res = await serverFetch(
+		config,
+		base(config) + '/ocs/v2.php/cloud/user?format=json',
+		{
+			headers: {
+				Authorization: authHeader(config),
+				'OCS-APIRequest': 'true',
+				Accept: 'application/json',
+			},
 		},
-	})
+	)
 	if (!res.ok) return ''
 	const data = await res.json().catch(() => null)
 	return typeof data?.ocs?.data?.email === 'string' ? data.ocs.data.email : ''
 }
 
 export async function revokeAppPassword(config) {
-	const res = await fetch(base(config) + '/ocs/v2.php/core/apppassword', {
-		method: 'DELETE',
-		headers: {
-			Authorization: authHeader(config),
-			'OCS-APIRequest': 'true',
-			Accept: 'application/json',
+	const res = await serverFetch(
+		config,
+		base(config) + '/ocs/v2.php/core/apppassword',
+		{
+			method: 'DELETE',
+			headers: {
+				Authorization: authHeader(config),
+				'OCS-APIRequest': 'true',
+				Accept: 'application/json',
+			},
 		},
-	})
+	)
 	return res.ok
 }
 
@@ -700,7 +775,7 @@ export const REQUEST_SECRET_HEADER = 'X-Keepiq-Request-Secret'
  *
  * @param {object} config The paired config.
  * @return {Promise<boolean>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
  */
 export async function deviceApprovalEnabled(config) {
 	try {
@@ -717,7 +792,7 @@ export async function deviceApprovalEnabled(config) {
  * @param {object} config The paired config.
  * @param {{publicKey: string, deviceLabel: string}} body The one-time public key (base64) and a label.
  * @return {Promise<{id: string, requestSecret: string, expiresAt: string}>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
  */
 export function createDeviceApproval(config, body) {
 	return request(config, 'POST', '/api/v1/device-approvals', {
@@ -734,7 +809,7 @@ export function createDeviceApproval(config, body) {
  * @param {string} id The request id.
  * @param {string} secret The request secret the create call returned.
  * @return {Promise<{status: string, sealedUnlockKey?: string}>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
  */
 export function pickupDeviceApproval(config, id, secret) {
 	return request(
@@ -752,7 +827,7 @@ export function pickupDeviceApproval(config, id, secret) {
  * @param {object} config The paired config.
  * @param {string} id The request id.
  * @return {Promise<object>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
  */
 export function endDeviceApproval(config, id) {
 	return request(
