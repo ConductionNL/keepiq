@@ -9,7 +9,7 @@
 
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.4
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.5
-  @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+  @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
   @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
   @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.2
   @spec openspec/changes/admin-scoped-roles/tasks.md#3.1

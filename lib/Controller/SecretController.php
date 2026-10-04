@@ -30,17 +30,21 @@ use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCA\Keepiq\Service\SecretService;
+use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 use OCP\IUserSession;
 
 /**
  * Authenticated API controller for Secret CRUD.
+ *
+ * A plain Controller, not an OCSController: Nextcloud's OCSMiddleware turns a
+ * 403 JSONResponse of an OCSController into an OCS v1 envelope with HTTP 200
+ * and drops its `code`, so a policy refusal would read as a saved secret.
  */
-class SecretController extends OCSController {
+class SecretController extends Controller {
 	/**
 	 * HTTP 423 Locked status code.
 	 *
@@ -304,7 +308,7 @@ class SecretController extends OCSController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-work-logins-are-kept-in-team-folders
 	 */
 	private function forbidden(ForbiddenException|SuiteBlockedException $exception): JSONResponse {
 		$data = ['message' => $exception->getMessage()];
