@@ -31,7 +31,7 @@ Code at development `4c214a9d`:
 
 ### D1: A subcommand of the existing CLI
 
-`keepiq ssh-agent [--socket <path>] [--confirm] [--idle <minutes>] [--folder <name>] [--locked]` runs in the foreground and prints `SSH_AUTH_SOCK=<path>; export SSH_AUTH_SOCK;` for `eval`. The default socket is `$XDG_RUNTIME_DIR/keepiq/agent.sock` on Linux and `$TMPDIR/keepiq-<uid>/agent.sock` on macOS. Running it under a systemd user unit or a launchd agent is documented.
+`keepiq ssh-agent [--socket <path>] [--confirm] [--idle <minutes>] [--folder <name>] [--locked]` runs in the foreground on a terminal and prints `SSH_AUTH_SOCK=<path>; export SSH_AUTH_SOCK;`. When its output is not a terminal (`eval "$(keepiq ssh-agent)"`), it asks for the master password, starts a copy of itself in its own session with the password on a pipe, prints the `SSH_AUTH_SOCK` and `SSH_AGENT_PID` exports once that copy listens, and returns, so the command substitution ends (found in the manual Linux run, keepiq#786). The default socket is `$XDG_RUNTIME_DIR/keepiq/agent.sock` on Linux and `$TMPDIR/keepiq-<uid>/agent.sock` on macOS. Running it under a systemd user unit or a launchd agent is documented.
 
 Alternative considered: a separate `keepiq-agent` binary. Rejected: one binary already carries the pairing, the crypto and the release pipeline.
 
