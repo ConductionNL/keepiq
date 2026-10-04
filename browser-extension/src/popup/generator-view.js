@@ -137,6 +137,41 @@ export function initGenerator({ $, send, showError, doc = document }) {
 		)
 	}
 
+	/**
+	 * Lock the controls the organisation's policy decides: a required kind
+	 * stays on, its minimum starts at one, and the length cannot go below
+	 * the floor. Each locked control says why.
+	 *
+	 * @spec openspec/changes/clients-extension-finish/specs/extension-generator-policy/spec.md#requirement-controls-the-policy-decides-are-shown-as-such
+	 */
+	function lockToPolicy() {
+		const rule = generatorPolicy(policy)
+		const required = {
+			'gen-upper': rule?.requireUpper,
+			'gen-lower': rule?.requireLower,
+			'gen-digits': rule?.requireDigit,
+			'gen-symbols': rule?.requireSymbol,
+		}
+		for (const [id, on] of Object.entries(required)) {
+			const box = $(id)
+			box.disabled = !!on
+			const label = box.closest('label')
+			let note = label.querySelector('.gen-required')
+			if (on && !note) {
+				note = doc.createElement('span')
+				note.className = 'gen-required hint'
+				note.textContent = ' (required by your organisation)'
+				label.appendChild(note)
+			}
+			if (!on && note) note.remove()
+		}
+		$('gen-min-digits').min = rule?.requireDigit ? '1' : '0'
+		$('gen-min-special').min = rule?.requireSymbol ? '1' : '0'
+		const floor = String(rule ? rule.minLength : 8)
+		$('gen-length').min = floor
+		$('gen-length-range').min = floor
+	}
+
 	/** Put the options into the form, and show the right fields. */
 	function writeForm() {
 		const p = options.password
@@ -150,6 +185,7 @@ export function initGenerator({ $, send, showError, doc = document }) {
 		$('gen-min-digits').value = p.minDigits
 		$('gen-min-special').value = p.minSpecial
 		$('gen-ambiguous').checked = p.avoidAmbiguous
+		lockToPolicy()
 		const w = options.passphrase
 		$('gen-words').value = w.words
 		$('gen-separator').value = w.separator
