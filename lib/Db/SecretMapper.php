@@ -144,7 +144,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-the-server-stops-serving-an-expired-copy-at-its-end-date
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-the-server-stops-serving-an-expired-copy-at-its-end-date
 	 */
 	private function excludeAccessExpired(IQueryBuilder $qb): void {
 		$qb->andWhere(
@@ -168,7 +168,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return Secret[]
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
 	 */
 	public function findAccessEndingBetween(?DateTime $from, DateTime $to): array {
 		$qb = $this->db->getQueryBuilder();

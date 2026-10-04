@@ -114,7 +114,7 @@ export default {
 		 * decrypt). No-op when a direct `value` is supplied.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+		 * @spec openspec/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
 		 * @spec openspec/specs/mobile-pwa/spec.md#scenario-copy-inside-the-tap-gesture-honest-failure-without-a-secure-context
 		 */
 		async prewarm() {
@@ -135,7 +135,7 @@ export default {
 		 * the clipboard auto-clear.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+		 * @spec openspec/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
 		 * @spec openspec/specs/mobile-pwa/spec.md#requirement-mobile-webcrypto-and-clipboard-verification
 		 */
 		async onCopy() {

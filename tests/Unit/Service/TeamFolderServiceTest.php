@@ -948,7 +948,7 @@ class TeamFolderServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 */
 	public function testUseOnlyIsRefusedWithTheWriteGrade(): void {
 		$teamFolder = new \OCA\Keepiq\Db\TeamFolder();
@@ -999,7 +999,7 @@ class TeamFolderServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 */
 	public function testANonOwnerCannotRestrictAMembership(): void {
 		$teamFolder = new \OCA\Keepiq\Db\TeamFolder();

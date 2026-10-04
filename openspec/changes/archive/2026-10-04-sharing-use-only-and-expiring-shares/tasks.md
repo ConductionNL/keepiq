@@ -32,7 +32,7 @@
 
 ## 6. End to end
 
-- [ ] 6.1 Add a Playwright flow: the owner shares a login use-only with a one-day end; the recipient sees no reveal or copy in the web app; after the end date (clock moved in the test) the secret is gone from the recipient's list. Verify: the Playwright spec passes in the E2E job. **Live check owed**: the Playwright flow needs the E2E job; not written in this change.
+- [x] 6.1 Add a Playwright flow: the owner shares a login use-only with a one-day end; the recipient sees no reveal or copy in the web app; after the end date (clock moved in the test) the secret is gone from the recipient's list. Verify: the Playwright spec passes in the E2E job. Done 4 Oct: `tests/e2e/workflows/expiring-use-only-share.spec.ts` (two throwaway accounts; the share is made through the app's share store as BulkShareDialog makes it; the recipient's detail view shows the use-only note, no Show and no Copy password while the owner's shows both). A browser test cannot move the server's clock, so the owner moves the END to five seconds ahead through `PATCH /api/v1/shares/{id}` and the test waits it out: the copy is then gone from the list API, the detail read (404) and the web app list. Green on Nextcloud 35 in 1.2 min; red with `excludeAccessExpired` removed on the instance (the list still served the copy).
 
 ## Acceptance criteria
 

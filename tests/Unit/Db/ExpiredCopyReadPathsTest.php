@@ -23,7 +23,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-the-server-stops-serving-an-expired-copy-at-its-end-date
+ * @spec openspec/specs/expiring-shares/spec.md#requirement-the-server-stops-serving-an-expired-copy-at-its-end-date
  */
 
 declare(strict_types=1);
