@@ -172,11 +172,11 @@ final class AppModel: ObservableObject {
                 current = try await self.client.unlockGate(accountId: accountId)
             }
             self.gate = current
-            if let blocked = current as? UnlockGateBlocked {
+            if let blocked = current as? UnlockGate.Blocked {
                 self.message = blocked.message
                 return
             }
-            guard let ready = current as? UnlockGateReady else { return }
+            guard let ready = current as? UnlockGate.Ready else { return }
             let vault = try await open(ready.suite)
             self.message = nil
             self.screen = .unlocked(vault)

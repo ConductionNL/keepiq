@@ -80,12 +80,12 @@ struct UnlockView: View {
             if let account {
                 Text("\(account.loginName) on \(account.server.withoutScheme)").accessibilityIdentifier("account")
             }
-            if let blocked = model.gate as? UnlockGateBlocked {
+            if let blocked = model.gate as? UnlockGate.Blocked {
                 Section {
                     Text(blocked.message).accessibilityIdentifier("blocked")
                     Button("Check again") { model.refreshGate(accountId) }.disabled(model.busy)
                 }
-            } else if let ready = model.gate as? UnlockGateReady {
+            } else if let ready = model.gate as? UnlockGate.Ready {
                 if ready.offline {
                     Text("You are offline. Keepiq unlocks with what this phone stored at the last unlock.")
                 }

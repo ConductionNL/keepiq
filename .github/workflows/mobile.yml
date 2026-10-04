@@ -93,3 +93,21 @@ jobs:
           ./gradlew --no-daemon :shared:assembleKeepiqSharedReleaseXCFramework
           cd ios/KeepiqApp
           xcodebuild -scheme KeepiqApp -destination "generic/platform=iOS Simulator" build
+      # The SwiftUI app itself (mobile/ios/project.yml), so a Swift compile
+      # error shows here and not only in mobile-e2e.yml.
+      - name: The iOS app compiles against the shared framework
+        run: |
+          ./gradlew --no-daemon :shared:assembleKeepiqSharedDebugXCFramework
+          brew install xcodegen
+          cd ios
+          xcodegen generate
+          xcodebuild build -project Keepiq.xcodeproj -scheme Keepiq \
+            -destination "generic/platform=iOS Simulator" CODE_SIGNING_ALLOWED=NO -quiet
+      # The Objective-C header Kotlin generates: the names Swift sees.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: keepiq-shared-header
+          path: mobile/shared/build/XCFrameworks/debug/KeepiqShared.xcframework/*/KeepiqShared.framework/Headers/
+          if-no-files-found: ignore
+          retention-days: 14
