@@ -256,4 +256,21 @@ describe('SecretShareDialog and another organisation', () => {
 				.exists(),
 		).toBe(true)
 	})
+	// sharing-federated-recipients task 4.4: the recipient removed their copy.
+	it('tells the owner that the recipient removed their copy', async () => {
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: [
+				{ id: 'fs-1', recipientCloudId: BOB, status: 'declined' },
+			],
+		})
+		const wrapper = mount(FederatedShareForm, {
+			props: { secretId: 'src' },
+			global: { stubs },
+		})
+		await settled(wrapper, ['federated-share-state'])
+
+		expect(wrapper.find('[data-testid="federated-share-state"]').text()).toBe(
+			'Declined: they removed their copy. Share again if they need it.',
+		)
+	})
 })

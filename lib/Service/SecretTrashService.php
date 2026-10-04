@@ -75,6 +75,7 @@ class SecretTrashService {
 	 * @param SecretSharingRevoker $sharingRevoker Ends everybody else's access
 	 * @param AuditService $auditService The audit recorder
 	 * @param LoggerInterface $logger The logger
+	 * @param FederatedCopyDeclineService|null $federatedDeclines Declines the share behind a deleted read-only copy
 	 *
 	 * @return void
 	 *
@@ -86,6 +87,7 @@ class SecretTrashService {
 		private SecretSharingRevoker $sharingRevoker,
 		private AuditService $auditService,
 		private LoggerInterface $logger,
+		private ?FederatedCopyDeclineService $federatedDeclines = null,
 	) {
 		$this->auditEvents = new AuditEventFactory();
 	}//end __construct()
@@ -118,6 +120,9 @@ class SecretTrashService {
 		}
 
 		$this->sharingRevoker->revokeAll(secretId: $id);
+		// A read-only copy from another organisation: the share it came
+		// from is declined and its owner told (sharing-federated-recipients 4.4).
+		$this->federatedDeclines?->copyDeleted(secret: $secret, userId: $userId);
 
 		$secret->setTrashedAt(new DateTime());
 		$secret->setArchivedAt(null);
@@ -163,7 +168,9 @@ class SecretTrashService {
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
 	 */
 	public function purge(string $id, string $userId): void {
-		$this->loadTrashed(id: $id, userId: $userId);
+		$secret = $this->loadTrashed(id: $id, userId: $userId);
+		// A copy trashed before its share could be declined (task 4.4).
+		$this->federatedDeclines?->copyDeleted(secret: $secret, userId: $userId);
 		$this->secretService->delete($id, $userId, 'owner');
 	}//end purge()
 
