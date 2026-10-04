@@ -105,7 +105,7 @@ class GroupShareController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#9.2
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
 	 *   field the server stores, not a mode switch.

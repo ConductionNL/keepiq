@@ -63,7 +63,7 @@ class ConfirmerCopyResolver {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.2
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
 	 */
 	public function currentWriteCopy(string $sourceId, string $confirmerId): ?string {
 		try {
@@ -101,7 +101,7 @@ class ConfirmerCopyResolver {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.2
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
 	 */
 	private function copyIsCurrent(Secret $source, Secret $copy): bool {
 		$keyChangedAt = $source->getKeyUpdatedAt();

@@ -81,7 +81,7 @@ class ApplicationCertificateControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/app-own-certificate/tasks.md#1.1
+	 * @spec openspec/specs/secret-store-api/spec.md#requirement-an-application-reads-its-own-certificate
 	 */
 	public function testTheApplicationGetsItsOwnCertificate(): void {
 		$suite = new EncryptionSuite();
@@ -106,7 +106,7 @@ class ApplicationCertificateControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/app-own-certificate/tasks.md#1.1
+	 * @spec openspec/specs/secret-store-api/spec.md#requirement-an-application-reads-its-own-certificate
 	 */
 	public function testNoTokenIs401(): void {
 		$this->suites->expects($this->never())->method('findActiveByOwner');
@@ -119,7 +119,7 @@ class ApplicationCertificateControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/app-own-certificate/tasks.md#1.1
+	 * @spec openspec/specs/secret-store-api/spec.md#requirement-an-application-reads-its-own-certificate
 	 */
 	public function testNoActiveSuiteIs404(): void {
 		$this->suites->method('findActiveByOwner')->willThrowException(new DoesNotExistException('none'));
@@ -134,7 +134,7 @@ class ApplicationCertificateControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/app-own-certificate/tasks.md#1.1
+	 * @spec openspec/specs/secret-store-api/spec.md#requirement-an-application-reads-its-own-certificate
 	 */
 	public function testTheRouteIsOnTheBearerSurface(): void {
 		$method = new ReflectionMethod(ApplicationCertificateController::class, 'show');

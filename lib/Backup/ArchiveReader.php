@@ -40,7 +40,7 @@ class ArchiveReader {
 	 *
 	 * @throws InvalidArgumentException When the archive is not a complete, unchanged backup
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function verify(string $zipPath): array {
 		$zip = $this->open(zipPath: $zipPath);
@@ -79,7 +79,7 @@ class ArchiveReader {
 	 *
 	 * @return iterable<int,array<string,mixed>>
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function rows(string $zipPath, string $table): iterable {
 		$zip = $this->open(zipPath: $zipPath);
@@ -107,7 +107,7 @@ class ArchiveReader {
 	 *
 	 * @return iterable<string,string>
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function blobs(string $zipPath): iterable {
 		$zip = $this->open(zipPath: $zipPath);

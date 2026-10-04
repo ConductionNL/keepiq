@@ -165,11 +165,18 @@ class NotificationService {
 			return false;
 		}
 
+		// Nextcloud refuses an empty object id (InvalidValueException), so a
+		// notification about no particular object names its subject instead
+		// (found live on Nextcloud 35, keepiq#788).
+		if ($objectId === null || $objectId === '') {
+			$objectId = $subject;
+		}
+
 		$notification = $this->notificationManager->createNotification();
 		$notification->setApp(Application::APP_ID)
 			->setUser($recipientId)
 			->setDateTime(new DateTime())
-			->setObject($objectType ?? $subject, $objectId ?? '')
+			->setObject($objectType ?? $subject, $objectId)
 			->setSubject($subject, $params);
 
 		$this->notificationManager->notify($notification);

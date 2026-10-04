@@ -90,7 +90,7 @@ class ExportController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/secret-export/spec.md
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#2.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-personal-vault-export-can-be-blocked
 	 *
 	 * @no-admin-idor-exempt no object is addressed. The three parameters are an
 	 * export mode, a scope and a count, each validated against a fixed

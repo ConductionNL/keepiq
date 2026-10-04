@@ -79,7 +79,7 @@ class RecoveryAudit {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-user-is-told-what-happened-and-offered-a-rotation
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-user-is-told-what-happened-and-offered-a-rotation
 	 */
 	public function record(string $actorId, string $eventType, string $objectId, array $metadata = []): void {
 		$this->eventDispatcher->dispatchTyped(

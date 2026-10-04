@@ -9,7 +9,7 @@
   the members), or into one they can write to by contributing a copy and
   then removing the personal one. Nothing is moved by the server.
 
-  @spec openspec/changes/admin-vault-policies/tasks.md#4.4
+  @spec openspec/specs/vault-policies/spec.md#requirement-users-see-personal-items-that-break-the-ownership-policy
 -->
 <template>
 	<section
@@ -82,7 +82,7 @@ export default {
 		 * ones this user can write to.
 		 *
 		 * @return {Array<{label: string, kind: string, teamFolderId: string, folderId: string}>}
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#4.4
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-users-see-personal-items-that-break-the-ownership-policy
 		 */
 		targetOptions() {
 			return [
@@ -106,7 +106,7 @@ export default {
 	 * Load the findings and the possible targets when the policy applies.
 	 *
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.4
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-users-see-personal-items-that-break-the-ownership-policy
 	 */
 	async created() {
 		const policy = await fetchPolicy()
@@ -140,7 +140,7 @@ export default {
 		 *
 		 * @param {object} finding The finding row.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#4.4
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-users-see-personal-items-that-break-the-ownership-policy
 		 */
 		async move(finding) {
 			const target = this.targets[finding.id]

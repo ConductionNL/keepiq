@@ -46,7 +46,7 @@ use Psr\Log\LoggerInterface;
  * Alice owns `src`. Bob holds `copy`, his recipient copy of it. Mallory
  * holds nothing.
  *
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+ * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
  */
 class UseOnlyShareRefusalTest extends TestCase {
 

@@ -15,8 +15,11 @@ import {
 	serializeIdentity,
 } from '../../../src/cardIdentity/cardIdentity.js'
 
-/** Longest name, address or field value, in characters (the import limits). */
+/** Longest address or field value, in characters (the import limits). */
 export const MAX_FIELD_CHARS = 4096
+
+/** Longest name, in characters: the width of the server's name column. */
+export const MAX_NAME_CHARS = 255
 
 /** Largest key or additional-fields payload, in UTF-8 bytes. */
 export const MAX_PAYLOAD_BYTES = 65536
@@ -198,8 +201,8 @@ function bytes(text) {
 export function validateDraft(draft) {
 	const errors = {}
 	if (draft.name.trim() === '') errors.name = 'Give the item a name'
-	if (draft.name.length > MAX_FIELD_CHARS)
-		errors.name = `At most ${MAX_FIELD_CHARS} characters`
+	if (draft.name.length > MAX_NAME_CHARS)
+		errors.name = `At most ${MAX_NAME_CHARS} characters`
 	if (draft.url.length > MAX_FIELD_CHARS)
 		errors.url = `At most ${MAX_FIELD_CHARS} characters`
 	if (draft.login.length > MAX_FIELD_CHARS)

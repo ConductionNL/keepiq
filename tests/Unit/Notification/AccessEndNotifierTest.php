@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * The end-of-access notifications (sharing-use-only-and-expiring-shares 5.3).
  *
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-people-are-told-before-and-when-access-ends
+ * @spec openspec/specs/expiring-shares/spec.md#requirement-people-are-told-before-and-when-access-ends
  */
 class AccessEndNotifierTest extends TestCase {
 

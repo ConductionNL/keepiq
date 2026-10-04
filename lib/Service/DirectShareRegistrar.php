@@ -98,7 +98,7 @@ class DirectShareRegistrar {
 	 *
 	 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
 	 */
 	public function registerDirectShares(string $userId, array $shares): array {
 		$report = [];
@@ -323,7 +323,7 @@ class DirectShareRegistrar {
 	 *
 	 * @return ShareRestriction|null
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
 	 */
 	private function parseRestriction(array $row): ?ShareRestriction {
 		try {
@@ -345,7 +345,7 @@ class DirectShareRegistrar {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	private function refusalFor(?Secret $source, ?ShareRestriction $restriction): ?string {
 		if ($source === null) {

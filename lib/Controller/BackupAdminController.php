@@ -69,8 +69,7 @@ class BackupAdminController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.1
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function index(): JSONResponse {
@@ -100,7 +99,7 @@ class BackupAdminController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function run(): JSONResponse {
@@ -117,7 +116,7 @@ class BackupAdminController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.1
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function update(): JSONResponse {

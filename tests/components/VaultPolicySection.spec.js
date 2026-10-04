@@ -6,7 +6,7 @@
  * policies, labels every picker, saves the keys, and warns how many users
  * in the two-factor scope have no second factor.
  *
- * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+ * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
  */
 
 import axios from '@nextcloud/axios'

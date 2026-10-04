@@ -31,7 +31,7 @@ use Psr\Log\LoggerInterface;
 /**
  * The expiry job's work (sharing-use-only-and-expiring-shares tasks 5.2, 5.3).
  *
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
+ * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
  */
 class ShareExpiryTest extends TestCase {
 

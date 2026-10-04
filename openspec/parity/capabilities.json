@@ -5509,7 +5509,7 @@
       "id": "admin-04",
       "area": "admin",
       "name": "Remove a leaving user from every team folder in one step.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -5517,20 +5517,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-member-overview-and-offboarding on 2026-09-27 for the missing half: offboarding also removes the leaver's own team folder member rows; revoking derived shares and handing over owned team secrets is built. Before: src/components/settings/OffboardingSection.vue:150 (after OffboardingConfirmDialog) -> src/store/modules/teamFolder.js:220 POST /api/v1/team-folders/offboard -> lib/Controller/TeamFolderController.php:236 -> lib/Service/TeamFolderOffboardingService.php:83 offboard: revokeTeamSharesForUser (lib/Service/TeamFolderShareService.php:232) then transfer owned team secrets to a successor",
+        "state": "built",
+        "evidence": "lib/Service/TeamFolderOffboardingService.php offboard: revoke derived shares, transfer owned team secrets, then delete every direct user membership row (membershipsRemoved) and report covering group rows (stillCoveredByGroups); src/components/settings/OffboardingSection.vue summary; tests/e2e/workflows/member-overview-offboarding.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Nextcloud admin settings -> Keepiq -> Team offboarding (admin or vault_admin)",
-        "note": "One action revokes every team-folder-derived share and hands owned team secrets to a successor. It does not delete the user's team-folder member rows, so a direct user membership survives.",
-        "defects": [
-          {
-            "at": "lib/Service/TeamFolderOffboardingService.php:95",
-            "what": "Offboarding revokes derived share rows but never removes TeamFolderMember rows for the leaver; a later reconcile or share fan-out by the folder owner could re-share to them.",
-            "issue": null,
-            "needsLiveCheck": true
-          }
-        ],
-        "change": "openspec/changes/admin-member-overview-and-offboarding"
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> People and offboarding: Members row \"Offboard\" or Team offboarding",
+        "note": "Built 2026-10-04 (archived). Direct memberships are removed; group rows that still cover the leaver stay and are named in the result.",
+        "change": "openspec/changes/archive/2026-10-04-admin-member-overview-and-offboarding"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5713,7 +5705,7 @@
       "id": "admin-10",
       "area": "admin",
       "name": "Enforce rules such as two-factor login or a ban on exporting personal vaults.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -5721,11 +5713,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-vault-policies on 2026-09-27. Before: grep -rni 'export_disabled|allow_export|require_2fa|twofactor' lib/Service/AdminSettingsService.php lib/Controller/ExportController.php src/components/settings: no hits",
+        "state": "built",
+        "evidence": "lib/Service/VaultPolicyService.php (vault_export_disabled, vault_require_two_factor, per group), lib/Controller/ExportController.php events() 403 export_disabled_by_policy, lib/Service/TwoFactorGate.php withholds privateKey, src/components/settings/VaultPolicySection.vue, src/dialogs/ExportDialog.vue; tests/e2e/workflows/vault-policies.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "note": "Keepiq has no policy to require two-factor login or to block personal vault export. Nextcloud can enforce two-factor for the whole login, which also guards keepiq, but that is a server setting, not a vault rule.",
-        "change": "openspec/changes/admin-vault-policies"
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Policies -> Vault policies",
+        "note": "Built 2026-10-04 (archived). Each policy is off by default and applies to everyone or to chosen groups; the GDPR package stays available under the export ban.",
+        "change": "openspec/changes/archive/2026-10-04-admin-vault-policies"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5775,7 +5768,7 @@
       "id": "admin-12",
       "area": "admin",
       "name": "See which users have set up a vault.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -5783,20 +5776,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-member-overview-and-offboarding on 2026-09-27 for the missing half: a list of which users have set up a vault; the count is built. Before: src/components/settings/ComplianceSection.vue:44 shows metrics.adoption.usersWithActiveSuite <- lib/Service/ComplianceReportService.php:107 countDistinct keepiq_enc_suites; no per-user list endpoint (open #37)",
+        "state": "built",
+        "evidence": "GET /api/v1/admin/members (lib/Controller/MemberOverviewController.php, lib/Service/MemberOverviewService.php) with status and search filters; src/components/settings/MemberOverviewSection.vue with Offboard and Revoke suite row actions; tests/e2e/workflows/member-overview-offboarding.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Nextcloud admin settings -> Keepiq -> Compliance section (count only)",
-        "note": "Admins see how many users have an active vault, not which ones. The encryption-suite admin section needs a suite id typed in by hand.",
-        "defects": [
-          {
-            "at": "src/components/settings/AdminSuiteSection.vue:24",
-            "what": "Force-revoke asks for a suite id but no screen lists users or suites to find it.",
-            "issue": "#37",
-            "needsLiveCheck": false
-          }
-        ],
-        "change": "openspec/changes/admin-member-overview-and-offboarding"
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> People and offboarding -> Members",
+        "note": "Built 2026-10-04 (archived). Metadata only: no certificate, key or ciphertext in a row.",
+        "change": "openspec/changes/archive/2026-10-04-admin-member-overview-and-offboarding"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5814,7 +5799,7 @@
       "id": "admin-13",
       "area": "admin",
       "name": "Manage the organisation through a public admin API.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "partial",
       "passbolt": "yes",
@@ -5822,11 +5807,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-public-api on 2026-09-27. Before: no OpenAPI or admin API docs in docs/; machine routes /api/v1/app/* (appinfo/routes.php:295-321) cover application secrets only; admin endpoints like PUT /api/settings/admin are internal session routes",
+        "state": "built",
+        "evidence": "GET /api/v1/admin (lib/Controller/AdminIndexController.php) with People, Policies, Applications and Audit endpoints under /api/v1/admin, each guarded by its admin area; docs/api/admin-v1.openapi.json; tests/Unit/Contract/AdminApiContractTest.php; tests/integration/admin-api.postman_collection.json (Audit-only service account, green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "note": "The admin screens call internal REST routes that a script could reach with a Nextcloud app password, but there is no documented, versioned admin API or scoped admin token.",
-        "change": "openspec/changes/admin-public-api"
+        "reachedOn": "HTTP Basic with a Nextcloud app password of a user whose group holds a Keepiq admin area, GET /index.php/apps/keepiq/api/v1/admin",
+        "note": "Built 2026-10-04 (archived). Force revocation and suite reinstatement stay out of the API because both need a fresh password confirmation.",
+        "change": "openspec/changes/archive/2026-10-04-admin-public-api"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -6106,7 +6092,7 @@
       "id": "admin-22",
       "area": "admin",
       "name": "Require that work logins are kept in the organisation's vault rather than in personal vaults.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "partial",
       "passbolt": "no",
@@ -6114,12 +6100,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-vault-policies on 2026-09-27. Before: lib/Service/AdminSettingsService.php: no ownership or personal-vault policy; git grep -i 'personal vault' lib: descriptive text only",
+        "state": "built",
+        "evidence": "lib/Service/OrgOwnershipGuard.php (403 org_ownership_required on create, move and import of in-scope types outside an own team folder), POST /api/v1/team-folders/{id}/secrets for write-grade members, src/components/OwnershipFindings.vue; tests/e2e/workflows/vault-policies.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing",
-        "note": "Every secret starts in the creator's personal vault; nothing forces work logins into a team folder.",
-        "change": "openspec/changes/admin-vault-policies"
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Policies -> Vault policies -> Keep work logins in team folders",
+        "note": "Built 2026-10-04 (archived). Default types login, api_key and database; other types stay personal.",
+        "change": "openspec/changes/archive/2026-10-04-admin-vault-policies"
       },
       "rowSource": "competitor",
       "origin": "tender",
@@ -6199,7 +6185,7 @@
       "id": "admin-25",
       "area": "admin",
       "name": "New members are confirmed automatically, without an administrator handing over access by hand.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "unknown",
       "passbolt": "partial",
@@ -6207,12 +6193,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-auto-confirm-members on 2026-09-27. Before: lib/Service/TeamFolderService.php:496 approveJoin returns a fan-out payload the owner's browser must encrypt; src/modals/TeamFolderDialog.vue:469 shows pendingCount and src/store/modules/teamFolder.js:278 runFanOut shares keys when the owner runs it; approveJoin (teamFolder.js:202) has no caller in src",
+        "state": "built",
+        "evidence": "Policies switch team_folder_auto_confirm; GET /api/v1/team-folders/pending-confirmations and write-grade confirmers in POST /api/v1/team-folders/{id}/shares (lib/Service/TeamFolderConfirmationService.php, ConfirmerCopyResolver.php); src/store/modules/teamFolder.js autoConfirm() after unlock and every 15 minutes; tests/e2e/workflows/team-folder-auto-confirm.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Team folder dialog, pending members count and fan-out run by the owner",
-        "note": "A new team folder member gets access only when the owner's browser runs the key fan-out; there is no automatic confirmation.",
-        "change": "openspec/changes/admin-auto-confirm-members"
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Policies -> New team folder members; then any unlocked owner or write member",
+        "note": "Built 2026-10-04 (archived). The server never sees plaintext: an unlocked owner's or write member's browser encrypts for the newcomer.",
+        "change": "openspec/changes/archive/2026-10-04-admin-auto-confirm-members"
       },
       "rowSource": "competitor",
       "origin": "changelog",
