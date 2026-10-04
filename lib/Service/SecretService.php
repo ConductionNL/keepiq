@@ -142,6 +142,7 @@ class SecretService {
 	 *                                        list rows carry them, a delete removes them
 	 * @param OrgOwnershipGuard|null $orgOwnership The team folder ownership policy (admin-vault-policies)
 	 * @param OfflineEditGuard $editGuard Refuses an offline edit made on an older version
+	 * @param FederatedShareService|null $federatedShares Tells partner recipients of a new name or URL
 	 *
 	 * @return void
 	 */
@@ -166,6 +167,7 @@ class SecretService {
 		private ?SecretTagMapper $tagMapper = null,
 		private ?OrgOwnershipGuard $orgOwnership = null,
 		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
+		private ?FederatedShareService $federatedShares = null,
 	) {
 	}//end __construct()
 
@@ -982,6 +984,16 @@ class SecretService {
 
 		$secret->setUpdatedAt(new DateTime());
 		$this->mapper->update($secret);
+
+		// Recipients at partner organisations follow a new name or URL
+		// (sharing-federated-recipients 4.5). A new value reaches them through
+		// the browser's sync, which sends its own notification.
+		if ($this->federatedShares !== null
+			&& array_intersect(['key', 'login', 'additionalFields'], array_keys($data)) === []
+			&& ($preUpdate->getName() !== $secret->getName() || $preUpdate->getUrl() !== $secret->getUrl())
+		) {
+			$this->federatedShares->detailsChanged(secretId: $secret->getId(), userId: $userId);
+		}
 
 		$changedFields = array_values(
 			array_intersect(
