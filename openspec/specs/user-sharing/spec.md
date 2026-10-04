@@ -80,13 +80,13 @@ A session alone MUST NOT be able to add a new party who then receives a secret a
 - `POST /api/v1/shares/register-batch` (purpose `share-register-batch`), on every call.
 - `POST /api/v1/secrets/{secretId}/delegations` (purpose `delegation-create`, bound to `secretId` and `delegatedTo`) and `POST /api/v1/secrets/{secretId}/delegations/handover` (purpose `delegation-handover`, bound to `secretId`).
 
-A missing or invalid proof MUST be refused with `403` and `error: key_proof_required` before the share or delegation is written, and audited as `KEY_PROOF_REFUSED`. The exemption MUST fail closed: when it cannot decide, a proof is required. The web client asks for the master password through one app-wide prompt, checks it against the session's key envelope, and asks once per bulk run.
+A missing or invalid proof MUST be refused with `428` and `error: key_proof_required` before the share or delegation is written (not `403`: Nextcloud's OCS layer turns a `403` of an OCS controller into an HTTP `200` envelope, so a refused first share read as a success), and audited as `KEY_PROOF_REFUSED`. The exemption MUST fail closed: when it cannot decide, a proof is required. The web client asks for the master password through one app-wide prompt, checks it against the session's key envelope, and asks once per bulk run.
 
 #### Scenario: A share to a new recipient without a proof is refused
 @e2e exclude Needs two vault users and a stolen-session request without proof headers; covered by PHPUnit SharingKeyProofGuardTest through the real middleware and controller.
 - GIVEN user A has no direct share with user M
 - WHEN a request on A's session shares a secret with M without a vault-key proof
-- THEN the request MUST be refused with `403` and `error: key_proof_required`
+- THEN the request MUST be refused with `428` and `error: key_proof_required`
 - AND no share target MUST be written
 
 #### Scenario: A share to a known recipient needs no proof
@@ -99,7 +99,7 @@ A missing or invalid proof MUST be refused with `403` and `error: key_proof_requ
 @e2e exclude Covered by PHPUnit SharingKeyProofGuardTest and vitest on BulkShareDialog and the delegation store.
 - GIVEN any user with an unlocked vault
 - WHEN they register a batch of shares, create a delegation or take over a secret as vault admin without a vault-key proof
-- THEN the request MUST be refused with `403` and `error: key_proof_required`
+- THEN the request MUST be refused with `428` and `error: key_proof_required`
 
 ### Requirement: Recipient Shareability Lookup
 Sharing requires the recipient's public certificate, so a client MUST be able to

@@ -7,7 +7,7 @@
  * front of the REAL ShareController and DelegationController, the way the
  * framework dispatches a request: beforeController, then the method, and
  * afterException on a refusal. Without a proof, a share to a new recipient, a
- * batch registration and a delegation are refused with 403 and the service is
+ * batch registration and a delegation are refused with 428 and the service is
  * never reached. A share to a recipient the caller already shares with directly
  * goes through without a proof.
  *
@@ -185,7 +185,7 @@ class SharingKeyProofGuardTest extends TestCase {
 			['secretId' => 'sec-1', 'targetUserId' => 'mallory', 'recipientSecretId' => 'copy-1']
 		);
 
-		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame(Http::STATUS_PRECONDITION_REQUIRED, $response->getStatus());
 		$this->assertSame('key_proof_required', $response->getData()['error']);
 	}//end testAShareToANewRecipientWithoutAProofIsRefused()
 
@@ -226,7 +226,7 @@ class SharingKeyProofGuardTest extends TestCase {
 			['secretId' => 'sec-1', 'targetUserId' => 'bob', 'recipientSecretId' => 'copy-1']
 		);
 
-		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame(Http::STATUS_PRECONDITION_REQUIRED, $response->getStatus());
 	}//end testAFailingRecipientLookupStillNeedsAProof()
 
 	/**
@@ -245,7 +245,7 @@ class SharingKeyProofGuardTest extends TestCase {
 			['shares' => [['sourceSecretId' => 'sec-1', 'targetUserId' => 'bob', 'encryptedKey' => 'x']]]
 		);
 
-		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame(Http::STATUS_PRECONDITION_REQUIRED, $response->getStatus());
 	}//end testABatchRegistrationWithoutAProofIsRefused()
 
 	/**
@@ -263,7 +263,7 @@ class SharingKeyProofGuardTest extends TestCase {
 			['secretId' => 'sec-1', 'delegatedTo' => 'bob']
 		);
 
-		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame(Http::STATUS_PRECONDITION_REQUIRED, $response->getStatus());
 	}//end testADelegationWithoutAProofIsRefused()
 
 	/**
@@ -281,6 +281,6 @@ class SharingKeyProofGuardTest extends TestCase {
 			['secretId' => 'sec-1']
 		);
 
-		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame(Http::STATUS_PRECONDITION_REQUIRED, $response->getStatus());
 	}//end testAnAdminHandoverWithoutAProofIsRefused()
 }//end class

@@ -134,9 +134,11 @@ Our guard has no equivalent bypass to make: it never consults the auth backend, 
 
 ### D8: Verification lives in a service, not in the middleware
 
-`VaultKeyProofService` owns challenge issuance and signature verification; the middleware owns attribute dispatch, subject resolution, parameter collection and the 403. This keeps the crypto unit-testable without the app framework, and mirrors how `JwtAuthMiddleware` delegates to `JwtAuthService`.
+`VaultKeyProofService` owns challenge issuance and signature verification; the middleware owns attribute dispatch, subject resolution, parameter collection and the refusal. This keeps the crypto unit-testable without the app framework, and mirrors how `JwtAuthMiddleware` delegates to `JwtAuthService`.
 
-The 403 body carries `error: 'key_proof_required'` so a client can tell "fetch a challenge and retry" from a dead end, the same way `migration_incomplete` and `migration_in_progress` are already distinguishable.
+The refusal body carries `error: 'key_proof_required'` so a client can tell "fetch a challenge and retry" from a dead end, the same way `migration_incomplete` and `migration_in_progress` are already distinguishable.
+
+The refusal is `428 Precondition Required`, not `403` (decided 4 Oct 2026 after the live check, task 6.5). Nextcloud's `OCSMiddleware` rewrites any `401`/`403` an OCS controller returns into an OCS v1 envelope, which on an `/index.php/apps` route is HTTP `200` without the `error`; measured on Nextcloud 35, `400`, `409`, `422` and `428` pass untouched. `428` means exactly "obtain a challenge and retry". The CSRF model is unchanged: the controllers stay OCS controllers. Keepiq's `OcsRefusalMiddleware` applies the same rule to every `403` a Keepiq OCS controller returns itself, so a policy refusal also reaches the browser (as `428` with its code as `error`).
 
 ## Risks / Trade-offs
 
