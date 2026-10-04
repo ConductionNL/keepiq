@@ -128,11 +128,10 @@
 					:ariaLabel="t('keepiq', 'Secret actions')"
 					:forceMenu="true"
 					data-testid="secret-detail-more">
-					<template
-						v-if="
-							(!offlineReadOnly || offlineEditable)
-							&& !federatedReadOnly
-						">
+					<!-- A read-only copy from another organisation may still be
+					     filed in a folder and deleted (sharing-federated-recipients
+					     3.5 and 4.4); deleting it declines the share. -->
+					<template v-if="!offlineReadOnly || offlineEditable">
 						<NcActionButton
 							:closeAfterClick="true"
 							data-testid="secret-detail-move"
@@ -143,7 +142,7 @@
 							{{ t('keepiq', 'Move') }}
 						</NcActionButton>
 						<NcActionButton
-							v-if="!offlineReadOnly"
+							v-if="!offlineReadOnly && !federatedReadOnly"
 							:closeAfterClick="true"
 							data-testid="secret-detail-archive"
 							@click="toggleArchive">
@@ -1544,7 +1543,8 @@ export default {
 
 		/**
 		 * Whether this is a read-only copy from another organisation: no
-		 * edit, move or share (sharing-federated-recipients task 3.4).
+		 * edit, archive or share (sharing-federated-recipients task 3.4);
+		 * moving it to a folder and deleting it stay (tasks 3.5 and 4.4).
 		 *
 		 * @return {boolean}
 		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-remote-copies-are-read-only

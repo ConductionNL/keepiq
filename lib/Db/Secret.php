@@ -109,6 +109,15 @@ class Secret extends Entity implements JsonSerializable {
 	public const READ_ONLY_REFUSAL = 'A copy from another organisation is read-only';
 
 	/**
+	 * What the holder of a read-only copy may still change: where it is filed
+	 * (sharing-federated-recipients task 3.5). `baseUpdatedAt` only names the
+	 * version an offline move was made from.
+	 *
+	 * @var string[]
+	 */
+	public const FILING_FIELDS = ['folderId', 'baseUpdatedAt'];
+
+	/**
 	 * The plaintext secret name.
 	 *
 	 * @var string
@@ -466,16 +475,27 @@ class Secret extends Entity implements JsonSerializable {
 
 	/**
 	 * Refuse an edit of a use-only copy by its holder
-	 * (sharing-use-only-and-expiring-shares D4).
+	 * (sharing-use-only-and-expiring-shares D4), and any change of a
+	 * read-only copy from another organisation except filing it in a folder
+	 * (sharing-federated-recipients task 3.5).
+	 *
+	 * @param string[]|null $fields The fields the edit changes; null for an unspecified edit
 	 *
 	 * @return self The same secret, for chaining after a load
 	 *
-	 * @throws ForbiddenException When it is a use-only copy
+	 * @throws ForbiddenException When it is a use-only copy, or a read-only copy and more than its folder changes
 	 *
 	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-files-his-copy-in-a-folder
 	 */
-	public function assertEditableByHolder(): self {
-		$this->assertNotReadOnly();
+	public function assertEditableByHolder(?array $fields = null): self {
+		$filingOnly = $fields !== null
+			&& in_array('folderId', $fields, true) === true
+			&& array_diff($fields, self::FILING_FIELDS) === [];
+		if ($filingOnly === false) {
+			$this->assertNotReadOnly();
+		}
+
 		if ($this->useOnly === true) {
 			throw new ForbiddenException(message: 'A use-only copy cannot be changed');
 		}

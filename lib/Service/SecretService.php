@@ -906,7 +906,7 @@ class SecretService {
 	public function update(string $id, array $data, string $userId): Secret {
 		$this->assertNotWriteLocked(userId: $userId);
 
-		$secret = $this->loadOwned(id: $id, userId: $userId)->assertEditableByHolder();
+		$secret = $this->loadOwned(id: $id, userId: $userId)->assertEditableByHolder(fields: array_keys($data));
 
 		$data = $this->editGuard->checkedUpdate(secret: $secret, data: $data);
 
