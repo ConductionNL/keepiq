@@ -51,6 +51,11 @@
 		<!-- Locked view -->
 		<section id="view-locked" hidden>
 			<h1>Unlock vault</h1>
+			<div id="pin-block" hidden>
+				<label>PIN<input id="unlock-pin" type="password" inputmode="numeric" autocomplete="off"></label>
+				<button id="unlock-pin-submit" class="primary">Unlock with PIN</button>
+				<p class="hint">Or unlock with your master password below.</p>
+			</div>
 			<div class="row">
 				<label class="grow">Master password<input id="unlock-master" type="password" autocomplete="off"></label>
 				<button id="unlock-show" type="button" class="link" aria-pressed="false" aria-controls="unlock-master">Show</button>
@@ -323,6 +328,16 @@
 				<select id="clipboard-clear"></select>
 			</label>
 			<button id="biometric-enrol" class="link" hidden>Set up fingerprint or face unlock</button>
+			<fieldset id="pin-settings">
+				<legend>Unlock with a PIN</legend>
+				<div id="pin-set-form">
+					<label>Master password<input id="pin-master" type="password" autocomplete="off"></label>
+					<label>New PIN<input id="pin-new" type="password" inputmode="numeric" autocomplete="off"></label>
+					<button id="pin-set" class="link">Set PIN</button>
+				</div>
+				<button id="pin-remove" class="link" hidden>Remove PIN</button>
+				<p class="hint">The PIN works until you close the browser. After five wrong PINs, Keepiq asks for your master password.</p>
+			</fieldset>
 			<button id="settings-logout" class="link">Log out of this account</button>
 			<button id="settings-lock-all" class="link">Lock all accounts</button>
 			<button id="settings-logout-all" class="link">Log out of all accounts</button>
