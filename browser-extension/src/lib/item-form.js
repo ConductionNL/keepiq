@@ -14,6 +14,7 @@ import {
 	serializeCard,
 	serializeIdentity,
 } from '../../../src/cardIdentity/cardIdentity.js'
+import { parseOtpauth } from '../../../src/totp/totp.js'
 
 /** Longest address or field value, in characters (the import limits). */
 export const MAX_FIELD_CHARS = 4096
@@ -197,6 +198,7 @@ function bytes(text) {
  *
  * @param {object} draft The form's draft.
  * @return {Record<string, string>}
+ * @spec openspec/changes/clients-extension-finish/specs/extension-small-items/spec.md#requirement-a-form-that-starts-and-checks-sensibly
  */
 export function validateDraft(draft) {
 	const errors = {}
@@ -219,6 +221,14 @@ export function validateDraft(draft) {
 			errors['field-' + i] = `At most ${MAX_FIELD_CHARS} characters`
 		seen.add(clean)
 	})
+	// An authenticator secret must be one the code generator can read.
+	if (draft.kind === 'totp' && draft.secret.trim() !== '') {
+		try {
+			parseOtpauth(draft.secret)
+		} catch {
+			errors.secret = 'This is not a valid authenticator secret'
+		}
+	}
 	const parts = partsFromDraft(draft)
 	if (bytes(parts.key) > MAX_PAYLOAD_BYTES)
 		errors.secret = 'This value is too long to save'

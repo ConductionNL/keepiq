@@ -591,11 +591,23 @@ const LAST_TAB_KEY = 'popup:lastTab'
  */
 async function lastTab() {
 	try {
-		const saved = (await chrome.storage.session.get(LAST_TAB_KEY))[LAST_TAB_KEY]
+		const area = tabArea()
+		const saved = (await area.get(LAST_TAB_KEY))[LAST_TAB_KEY]
 		return TABS.includes(saved) ? saved : 'site'
 	} catch {
 		return 'site'
 	}
+}
+
+/**
+ * Where the last tab is kept: session storage, or local storage in a
+ * browser without it (the worker clears it on lock either way).
+ *
+ * @return {object}
+ * @spec openspec/changes/clients-extension-finish/specs/extension-small-items/spec.md#requirement-the-popup-keeps-its-place
+ */
+function tabArea() {
+	return chrome.storage.session || chrome.storage.local
 }
 
 /**
@@ -605,9 +617,11 @@ async function lastTab() {
  */
 function rememberTab(name) {
 	try {
-		chrome.storage.session.set({ [LAST_TAB_KEY]: name }).catch(() => {})
+		tabArea()
+			.set({ [LAST_TAB_KEY]: name })
+			.catch(() => {})
 	} catch {
-		// No session storage: the popup opens on This site.
+		// No storage at all: the popup opens on This site.
 	}
 }
 let generatorView = null
@@ -674,6 +688,15 @@ function wireTabs() {
 	sendView = initSend(ctx)
 	vaultView = initVault({
 		...ctx,
+		currentSite: async () => {
+			const tab = await activeTab()
+			try {
+				const url = new URL(tab?.url || '')
+				return /^https?:$/.test(url.protocol) ? url.origin : ''
+			} catch {
+				return ''
+			}
+		},
 		pickGenerated,
 		sendItem: (item) => selectTab('send', item),
 	})

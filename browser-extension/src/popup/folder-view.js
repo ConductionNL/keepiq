@@ -159,6 +159,13 @@ export function initFolders({
 		}
 		$('folders-notice').hidden = seen
 		fillParents()
+		// Folder changes need the server: off while it cannot be reached.
+		const offline = $('vault-offline').hidden === false
+		$('folder-add-save').disabled = offline
+		showError(
+			'folders-error',
+			offline ? 'You are offline. Changes need a connection to Keepiq.' : '',
+		)
 		const tree = $('folder-tree')
 		tree.replaceChildren()
 		for (const folder of folderTree(getFolders())) {
@@ -175,6 +182,9 @@ export function initFolders({
 				),
 				button('Delete', `Delete ${folder.name}`, () => startDelete(folder)),
 			)
+			for (const action of li.querySelectorAll('button')) {
+				action.disabled = offline
+			}
 			tree.appendChild(li)
 		}
 	}
