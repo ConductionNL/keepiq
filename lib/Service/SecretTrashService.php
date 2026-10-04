@@ -36,7 +36,12 @@ use Throwable;
 
 /**
  * Trash, restore, purge, archive and unarchive a user-owned secret.
-
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A delete ends every kind
+ *   of access at once: local sharing, audit, and since
+ *   sharing-federated-recipients 4.4 the share a read-only copy came from.
+ *   Each is one injected collaborator; splitting them out would scatter the
+ *   one trash step over several classes.
  */
 class SecretTrashService {
 	/**

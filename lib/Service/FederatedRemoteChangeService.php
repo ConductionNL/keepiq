@@ -39,6 +39,11 @@ use Throwable;
 /**
  * Applies the sender's changes to the recipient's copy.
  *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) One notification joins the
+ *   inbound row, the partner allowlist, Nextcloud's signature check, the
+ *   stored secret, the copy and the audit, and answers a declined share with
+ *   the decline (task 4.4); each refusal is the same "share not found".
+ *
  * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
  */
 class FederatedRemoteChangeService {

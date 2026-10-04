@@ -259,9 +259,7 @@ describe('SecretShareDialog and another organisation', () => {
 	// sharing-federated-recipients task 4.4: the recipient removed their copy.
 	it('tells the owner that the recipient removed their copy', async () => {
 		vi.spyOn(axios, 'get').mockResolvedValue({
-			data: [
-				{ id: 'fs-1', recipientCloudId: BOB, status: 'declined' },
-			],
+			data: [{ id: 'fs-1', recipientCloudId: BOB, status: 'declined' }],
 		})
 		const wrapper = mount(FederatedShareForm, {
 			props: { secretId: 'src' },
