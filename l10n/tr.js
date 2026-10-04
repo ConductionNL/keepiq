@@ -1646,7 +1646,21 @@ OC.L10N.register(
         "This secret is already shared with that account.": "Bu gizli zaten bu hesapla paylaşılmış.",
         "Other organisations": "Diğer kuruluşlar",
         "Receive secrets from other organisations": "Diğer kuruluşlardan gizli al",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Ortak kuruluşlardaki kişiler böylece hesabınızı bulabilir ve sizinle gizli paylaşabilir. Her birini kendiniz kabul edersiniz."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Ortak kuruluşlardaki kişiler böylece hesabınızı bulabilir ve sizinle gizli paylaşabilir. Her birini kendiniz kabul edersiniz.",
+        "Shared": "Paylaşıldı",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Duraklatıldı: alıcının sertifikası veya ortaklık değişti. İptal edin veya yeniden paylaşın.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Alıcının kuruluşu son değişikliği almadı. İptal edin veya yeniden paylaşın.",
+        "Being withdrawn": "Geri çekiliyor",
+        "Shared with another organisation": "Başka bir kuruluşla paylaşıldı",
+        "Change sent to another organisation": "Değişiklik başka bir kuruluşa gönderildi",
+        "Share with another organisation revoked": "Başka bir kuruluşla paylaşım kaldırıldı",
+        "Share with another organisation paused": "Başka bir kuruluşla paylaşım duraklatıldı",
+        "Another organisation did not get a change": "Başka bir kuruluş bir değişikliği almadı",
+        "Secret received from another organisation": "Başka bir kuruluştan gizli alındı",
+        "Secret from another organisation accepted": "Başka bir kuruluştan gelen gizli kabul edildi",
+        "Secret from another organisation declined": "Başka bir kuruluştan gelen gizli reddedildi",
+        "Copy from another organisation updated": "Başka bir kuruluştan gelen kopya güncellendi",
+        "Copy from another organisation removed": "Başka bir kuruluştan gelen kopya kaldırıldı"
     },
     "nplurals=1; plural=0;"
 )

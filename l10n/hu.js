@@ -1646,7 +1646,21 @@ OC.L10N.register(
         "This secret is already shared with that account.": "Ez a titok már meg van osztva ezzel a fiókkal.",
         "Other organisations": "Más szervezetek",
         "Receive secrets from other organisations": "Titkok fogadása más szervezetektől",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "A partnerszervezetek munkatársai ekkor megtalálhatják a fiókját, és titkokat oszthatnak meg Önnel. Mindegyiket Ön fogadja el."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "A partnerszervezetek munkatársai ekkor megtalálhatják a fiókját, és titkokat oszthatnak meg Önnel. Mindegyiket Ön fogadja el.",
+        "Shared": "Megosztva",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Szüneteltetve: megváltozott a címzett tanúsítványa vagy a partnerség. Vonja vissza, vagy ossza meg újra.",
+        "Their organisation did not get the last change. Revoke it or share again.": "A címzett szervezete nem kapta meg az utolsó módosítást. Vonja vissza, vagy ossza meg újra.",
+        "Being withdrawn": "Visszavonás folyamatban",
+        "Shared with another organisation": "Megosztva egy másik szervezettel",
+        "Change sent to another organisation": "Módosítás elküldve egy másik szervezetnek",
+        "Share with another organisation revoked": "Megosztás egy másik szervezettel visszavonva",
+        "Share with another organisation paused": "Megosztás egy másik szervezettel szüneteltetve",
+        "Another organisation did not get a change": "Egy másik szervezet nem kapott meg egy módosítást",
+        "Secret received from another organisation": "Titok érkezett egy másik szervezettől",
+        "Secret from another organisation accepted": "Egy másik szervezettől kapott titok elfogadva",
+        "Secret from another organisation declined": "Egy másik szervezettől kapott titok elutasítva",
+        "Copy from another organisation updated": "Egy másik szervezettől kapott másolat frissítve",
+        "Copy from another organisation removed": "Egy másik szervezettől kapott másolat eltávolítva"
     },
     "nplurals=2; plural=(n != 1);"
 )

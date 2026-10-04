@@ -88,6 +88,25 @@ class FederatedInboundMapper extends QBMapper {
 	}//end findByRemote()
 
 	/**
+	 * The shares announced under one remote share id, from any partner
+	 * (normally one: share ids are UUIDs).
+	 *
+	 * @param string $remoteShareId The share id on the sending instance
+	 *
+	 * @return FederatedInbound[]
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 */
+	public function findByRemoteShareId(string $remoteShareId): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('remote_share_id', $qb->createNamedParameter($remoteShareId)));
+
+		return $this->findEntities(query: $qb);
+	}//end findByRemoteShareId()
+
+	/**
 	 * Every inbound share of one local user, newest first.
 	 *
 	 * @param string $recipientUid The local user

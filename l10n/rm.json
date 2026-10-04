@@ -1621,7 +1621,21 @@
         "This secret is already shared with that account.": "Quest secret è gia cundividì cun quest conto.",
         "Other organisations": "Autras organisaziuns",
         "Receive secrets from other organisations": "Retschaiver secrets dad autras organisaziuns",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Persunas en organisaziuns partenarias pon lura chattar Voss conto e cundivider secrets cun Vus. Vus acceptais mintgin sez."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Persunas en organisaziuns partenarias pon lura chattar Voss conto e cundivider secrets cun Vus. Vus acceptais mintgin sez.",
+        "Shared": "Cundividì",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "En pausa: lur certificat u la partenadad è sa midà. Revocai la cundivisiun u cundividai danovamain.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Lur organisaziun n’ha betg retschavì l’ultima midada. Revocai la cundivisiun u cundividai danovamain.",
+        "Being withdrawn": "Vegn retratg",
+        "Shared with another organisation": "Cundividì cun ina autra organisaziun",
+        "Change sent to another organisation": "Midada tramessa ad ina autra organisaziun",
+        "Share with another organisation revoked": "Cundivisiun cun ina autra organisaziun revocada",
+        "Share with another organisation paused": "Cundivisiun cun ina autra organisaziun en pausa",
+        "Another organisation did not get a change": "Ina autra organisaziun n’ha betg retschavì ina midada",
+        "Secret received from another organisation": "Secret retschavì dad ina autra organisaziun",
+        "Secret from another organisation accepted": "Secret d’ina autra organisaziun acceptà",
+        "Secret from another organisation declined": "Secret d’ina autra organisaziun refusà",
+        "Copy from another organisation updated": "Copia d’ina autra organisaziun actualisada",
+        "Copy from another organisation removed": "Copia d’ina autra organisaziun stizzada"
     },
     "plurals": null
 }

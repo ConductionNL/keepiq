@@ -1646,7 +1646,21 @@ OC.L10N.register(
         "This secret is already shared with that account.": "Šis noslēpums jau ir kopīgots ar šo kontu.",
         "Other organisations": "Citas organizācijas",
         "Receive secrets from other organisations": "Saņemt noslēpumus no citām organizācijām",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Tad partneru organizāciju cilvēki var atrast jūsu kontu un kopīgot ar jums noslēpumus. Katru no tiem jūs pieņemat paši."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Tad partneru organizāciju cilvēki var atrast jūsu kontu un kopīgot ar jums noslēpumus. Katru no tiem jūs pieņemat paši.",
+        "Shared": "Kopīgots",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Apturēts: mainījās viņu sertifikāts vai partnerība. Varat atsaukt kopīgošanu vai kopīgot vēlreiz.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Viņu organizācija nesaņēma pēdējās izmaiņas. Varat atsaukt kopīgošanu vai kopīgot vēlreiz.",
+        "Being withdrawn": "Tiek atsaukts",
+        "Shared with another organisation": "Kopīgots ar citu organizāciju",
+        "Change sent to another organisation": "Izmaiņas nosūtītas citai organizācijai",
+        "Share with another organisation revoked": "Kopīgošana ar citu organizāciju atsaukta",
+        "Share with another organisation paused": "Kopīgošana ar citu organizāciju apturēta",
+        "Another organisation did not get a change": "Cita organizācija nesaņēma izmaiņas",
+        "Secret received from another organisation": "Saņemts noslēpums no citas organizācijas",
+        "Secret from another organisation accepted": "Noslēpums no citas organizācijas pieņemts",
+        "Secret from another organisation declined": "Noslēpums no citas organizācijas noraidīts",
+        "Copy from another organisation updated": "Kopija no citas organizācijas atjaunināta",
+        "Copy from another organisation removed": "Kopija no citas organizācijas noņemta"
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

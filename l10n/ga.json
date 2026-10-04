@@ -1741,7 +1741,21 @@
         "This secret is already shared with that account.": "Tá an rún seo comhroinnte leis an gcuntas sin cheana.",
         "Other organisations": "Eagraíochtaí eile",
         "Receive secrets from other organisations": "Faigh rúin ó eagraíochtaí eile",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Is féidir le daoine in eagraíochtaí comhpháirtíochta do chuntas a aimsiú ansin agus rúin a chomhroinnt leat. Glacann tú féin le gach ceann acu."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Is féidir le daoine in eagraíochtaí comhpháirtíochta do chuntas a aimsiú ansin agus rúin a chomhroinnt leat. Glacann tú féin le gach ceann acu.",
+        "Shared": "Comhroinnte",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Ar sos: d’athraigh a ndeimhniú nó an chomhpháirtíocht. Cúlghair é nó comhroinn arís.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Ní bhfuair a n-eagraíocht an t-athrú is déanaí. Cúlghair é nó comhroinn arís.",
+        "Being withdrawn": "Á tharraingt siar",
+        "Shared with another organisation": "Comhroinnte le heagraíocht eile",
+        "Change sent to another organisation": "Athrú seolta chuig eagraíocht eile",
+        "Share with another organisation revoked": "Comhroinnt le heagraíocht eile cúlghairthe",
+        "Share with another organisation paused": "Comhroinnt le heagraíocht eile ar sos",
+        "Another organisation did not get a change": "Ní bhfuair eagraíocht eile athrú",
+        "Secret received from another organisation": "Rún faighte ó eagraíocht eile",
+        "Secret from another organisation accepted": "Rún ó eagraíocht eile glactha",
+        "Secret from another organisation declined": "Rún ó eagraíocht eile diúltaithe",
+        "Copy from another organisation updated": "Cóip ó eagraíocht eile nuashonraithe",
+        "Copy from another organisation removed": "Cóip ó eagraíocht eile bainte"
     },
     "plurals": null
 }

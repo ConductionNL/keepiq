@@ -100,6 +100,67 @@ class FederatedCopyService {
 
 
 	/**
+	 * Pull again after the sender changed the secret, and replace the copy
+	 * whole (task 4.1).
+	 *
+	 * @param FederatedInbound $row The accepted share
+	 *
+	 * @return Secret The updated copy
+	 *
+	 * @throws RuntimeException `pull_failed`, or `copy_missing` when the copy is gone
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
+	 */
+	public function refresh(FederatedInbound $row): Secret {
+		$copy = $this->copyOf(row: $row);
+		$answer = $this->puller->pull(row: $row);
+		$this->fill(copy: $copy, answer: $answer, now: new DateTime());
+
+		return $this->secretMapper->update($copy);
+	}//end refresh()
+
+	/**
+	 * Delete the copy after the sender revoked the share (task 4.2). A copy
+	 * that is already gone is fine.
+	 *
+	 * @param FederatedInbound $row The share
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
+	 */
+	public function remove(FederatedInbound $row): void {
+		try {
+			$this->secretMapper->delete($this->copyOf(row: $row));
+		} catch (RuntimeException) {
+			// Already gone.
+		}
+	}//end remove()
+
+	/**
+	 * The share's copy: the recipient's own read-only secret from that sender.
+	 *
+	 * @param FederatedInbound $row The share
+	 *
+	 * @return Secret
+	 *
+	 * @throws RuntimeException `copy_missing`
+	 */
+	private function copyOf(FederatedInbound $row): Secret {
+		try {
+			$copy = $this->secretMapper->findById((string)$row->getSecretId());
+		} catch (DoesNotExistException) {
+			throw new RuntimeException('copy_missing');
+		}
+
+		if ($copy->getOwnerId() !== $row->getRecipientUid() || $copy->getReadOnly() !== true) {
+			throw new RuntimeException('copy_missing');
+		}
+
+		return $copy;
+	}//end copyOf()
+
+	/**
 	 * Write a pulled answer into a copy.
 	 *
 	 * @param Secret $copy The copy

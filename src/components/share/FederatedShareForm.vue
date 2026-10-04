@@ -81,6 +81,34 @@
 				})
 			}}
 		</NcNoteCard>
+
+		<ul
+			v-if="shares.length > 0"
+			class="federated-share__list"
+			data-testid="federated-share-list">
+			<li
+				v-for="row in shares"
+				:key="row.id"
+				class="federated-share__row"
+				:data-testid="`federated-share-row-${row.id}`">
+				<span class="federated-share__account">{{
+					row.recipientCloudId
+				}}</span>
+				<span
+					class="federated-share__state"
+					data-testid="federated-share-state"
+					>{{ stateText(row.status) }}</span
+				>
+				<NcButton
+					v-if="row.status !== 'revoked'"
+					variant="tertiary"
+					:disabled="busy"
+					data-testid="federated-share-revoke"
+					@click="revoke(row.id)">
+					{{ t('keepiq', 'Revoke') }}
+				</NcButton>
+			</li>
+		</ul>
 	</section>
 </template>
 
@@ -112,6 +140,31 @@ export default {
 			busy: false,
 			error: '',
 			sharedWith: '',
+		}
+	},
+
+	computed: {
+		/**
+		 * The secret's federated shares, from the store.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+		 */
+		shares() {
+			return useFederatedShareStore().shares
+		},
+	},
+
+	/**
+	 * Load the secret's federated shares.
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 */
+	async created() {
+		try {
+			await useFederatedShareStore().listFor(this.secretId)
+		} catch {
+			// The form still works without the list.
 		}
 	},
 
@@ -158,12 +211,57 @@ export default {
 				this.sharedWith = this.recipient.cloudId
 				this.recipient = null
 				this.cloudId = ''
+				await useFederatedShareStore().listFor(this.secretId)
 				this.$emit('shared', row)
 			} catch (e) {
 				this.error = this.explain(e)
 			} finally {
 				this.busy = false
 			}
+		},
+
+		/**
+		 * Revoke a federated share; the recipient's copy is deleted.
+		 *
+		 * @param {string} id The federated share.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
+		 */
+		async revoke(id) {
+			this.busy = true
+			this.error = ''
+			try {
+				await useFederatedShareStore().revoke(id)
+			} catch (e) {
+				this.error = this.explain(e)
+			} finally {
+				this.busy = false
+			}
+		},
+
+		/**
+		 * The state of a federated share, in words the owner can act on.
+		 *
+		 * @param {string} status The share status.
+		 * @return {string}
+		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+		 */
+		stateText(status) {
+			const texts = {
+				active: t('keepiq', 'Shared'),
+				suspended: t(
+					'keepiq',
+					'Paused: their certificate or the partnership changed. Revoke it or share again.',
+				),
+
+				failed: t(
+					'keepiq',
+					'Their organisation did not get the last change. Revoke it or share again.',
+				),
+
+				revoked: t('keepiq', 'Being withdrawn'),
+			}
+			return texts[status] ?? status
 		},
 
 		/**
@@ -237,6 +335,29 @@ export default {
 	overflow-wrap: anywhere;
 	font-family: var(--font-face-monospace, monospace);
 	margin: 4px 0;
+}
+
+.federated-share__list {
+	list-style: none;
+	padding: 0;
+	margin: 12px 0 0;
+}
+
+.federated-share__row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 0;
+	border-bottom: 1px solid var(--color-border);
+}
+
+.federated-share__account {
+	flex: 1;
+	overflow-wrap: anywhere;
+}
+
+.federated-share__state {
+	color: var(--color-text-maxcontrast);
 }
 
 .federated-share__hint {

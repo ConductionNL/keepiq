@@ -145,6 +145,107 @@ class FederatedShareController extends Controller {
 	}//end index()
 
 	/**
+	 * Replace a share's ciphertext after the owner changed the secret; the
+	 * recipient's instance is told to pull again (task 4.1).
+	 *
+	 * @param string $id The federated share
+	 * @param string $certFingerprint SHA-256 of the certificate the browser verified now
+	 * @param string $key The value, encrypted for the recipient
+	 * @param string|null $login The login, encrypted for the recipient
+	 * @param string|null $additionalFields The additional fields, encrypted for the recipient
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
+	 */
+	#[NoAdminRequired]
+	public function update(
+		string $id,
+		string $certFingerprint = '',
+		string $key = '',
+		?string $login = null,
+		?string $additionalFields = null,
+	): JSONResponse {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$row = $this->shares->update(
+				shareId: $id,
+				userId: $user->getUID(),
+				certFingerprint: $certFingerprint,
+				ciphertext: ['key' => $key, 'login' => $login, 'additionalFields' => $additionalFields],
+			);
+		} catch (InvalidArgumentException $exception) {
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+		} catch (RuntimeException $exception) {
+			return $this->refusal(exception: $exception);
+		}
+
+		return new JSONResponse(data: $row->jsonSerialize());
+	}//end update()
+
+	/**
+	 * Revoke a share; the recipient's instance deletes its copy (task 4.2).
+	 *
+	 * @param string $id The federated share
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
+	 */
+	#[NoAdminRequired]
+	public function destroy(string $id): JSONResponse {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$this->shares->revoke(shareId: $id, userId: $user->getUID());
+		} catch (RuntimeException $exception) {
+			return $this->refusal(exception: $exception);
+		}
+
+		return new JSONResponse(data: ['revoked' => $id]);
+	}//end destroy()
+
+	/**
+	 * Suspend a share whose recipient certificate no longer verifies in the
+	 * owner's browser (task 4.2).
+	 *
+	 * @param string $id The federated share
+	 * @param string $reason Why, as the verifier reported it
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 */
+	#[NoAdminRequired]
+	public function suspend(string $id, string $reason = ''): JSONResponse {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$row = $this->shares->suspend(shareId: $id, userId: $user->getUID(), reason: $reason);
+		} catch (RuntimeException $exception) {
+			return $this->refusal(exception: $exception);
+		}
+
+		return new JSONResponse(data: $row->jsonSerialize());
+	}//end suspend()
+
+	/**
 	 * Map a service refusal to its status: not found, forbidden (a read-only
 	 * copy), federation unavailable below Nextcloud 33, or a partner that
 	 * did not take the share.

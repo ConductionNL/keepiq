@@ -1741,7 +1741,21 @@
         "This secret is already shared with that account.": "Toto tajemství je s tímto účtem již sdíleno.",
         "Other organisations": "Jiné organizace",
         "Receive secrets from other organisations": "Přijímat tajemství z jiných organizací",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Lidé v partnerských organizacích pak mohou najít váš účet a sdílet s vámi tajemství. Každé z nich přijímáte sami."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Lidé v partnerských organizacích pak mohou najít váš účet a sdílet s vámi tajemství. Každé z nich přijímáte sami.",
+        "Shared": "Sdíleno",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Pozastaveno: změnil se jejich certifikát nebo partnerství. Sdílení můžete odvolat nebo sdílet znovu.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Jejich organizace nedostala poslední změnu. Sdílení můžete odvolat nebo sdílet znovu.",
+        "Being withdrawn": "Odvolává se",
+        "Shared with another organisation": "Sdíleno s jinou organizací",
+        "Change sent to another organisation": "Změna odeslána jiné organizaci",
+        "Share with another organisation revoked": "Sdílení s jinou organizací odvoláno",
+        "Share with another organisation paused": "Sdílení s jinou organizací pozastaveno",
+        "Another organisation did not get a change": "Jiná organizace nedostala změnu",
+        "Secret received from another organisation": "Tajemství přijato z jiné organizace",
+        "Secret from another organisation accepted": "Tajemství z jiné organizace přijato",
+        "Secret from another organisation declined": "Tajemství z jiné organizace odmítnuto",
+        "Copy from another organisation updated": "Kopie z jiné organizace aktualizována",
+        "Copy from another organisation removed": "Kopie z jiné organizace odstraněna"
     },
     "plurals": null
 }

@@ -1651,7 +1651,21 @@ OC.L10N.register(
         "This secret is already shared with that account.": "Dit geheim is al gedeeld met dat account.",
         "Other organisations": "Andere organisaties",
         "Receive secrets from other organisations": "Geheimen van andere organisaties ontvangen",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Mensen in partnerorganisaties kunnen dan uw account vinden en geheimen met u delen. U accepteert elk geheim zelf."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Mensen in partnerorganisaties kunnen dan uw account vinden en geheimen met u delen. U accepteert elk geheim zelf.",
+        "Shared": "Gedeeld",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Gepauzeerd: hun certificaat of het partnerschap is gewijzigd. Trek het delen in of deel opnieuw.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Hun organisatie heeft de laatste wijziging niet ontvangen. Trek het delen in of deel opnieuw.",
+        "Being withdrawn": "Wordt ingetrokken",
+        "Shared with another organisation": "Gedeeld met een andere organisatie",
+        "Change sent to another organisation": "Wijziging verstuurd naar een andere organisatie",
+        "Share with another organisation revoked": "Delen met een andere organisatie ingetrokken",
+        "Share with another organisation paused": "Delen met een andere organisatie gepauzeerd",
+        "Another organisation did not get a change": "Een andere organisatie heeft een wijziging niet ontvangen",
+        "Secret received from another organisation": "Geheim ontvangen van een andere organisatie",
+        "Secret from another organisation accepted": "Geheim van een andere organisatie geaccepteerd",
+        "Secret from another organisation declined": "Geheim van een andere organisatie geweigerd",
+        "Copy from another organisation updated": "Kopie van een andere organisatie bijgewerkt",
+        "Copy from another organisation removed": "Kopie van een andere organisatie verwijderd"
     },
     "nplurals=2; plural=(n != 1);"
 )

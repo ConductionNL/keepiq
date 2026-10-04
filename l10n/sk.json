@@ -1741,7 +1741,21 @@
         "This secret is already shared with that account.": "Toto tajomstvo je s týmto účtom už zdieľané.",
         "Other organisations": "Iné organizácie",
         "Receive secrets from other organisations": "Prijímať tajomstvá z iných organizácií",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Ľudia v partnerských organizáciách potom môžu nájsť váš účet a zdieľať s vami tajomstvá. Každé z nich prijímate sami."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Ľudia v partnerských organizáciách potom môžu nájsť váš účet a zdieľať s vami tajomstvá. Každé z nich prijímate sami.",
+        "Shared": "Zdieľané",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Pozastavené: zmenil sa ich certifikát alebo partnerstvo. Zdieľanie môžete odvolať alebo zdieľať znova.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Ich organizácia nedostala poslednú zmenu. Zdieľanie môžete odvolať alebo zdieľať znova.",
+        "Being withdrawn": "Odvoláva sa",
+        "Shared with another organisation": "Zdieľané s inou organizáciou",
+        "Change sent to another organisation": "Zmena odoslaná inej organizácii",
+        "Share with another organisation revoked": "Zdieľanie s inou organizáciou odvolané",
+        "Share with another organisation paused": "Zdieľanie s inou organizáciou pozastavené",
+        "Another organisation did not get a change": "Iná organizácia nedostala zmenu",
+        "Secret received from another organisation": "Tajomstvo prijaté z inej organizácie",
+        "Secret from another organisation accepted": "Tajomstvo z inej organizácie prijaté",
+        "Secret from another organisation declined": "Tajomstvo z inej organizácie odmietnuté",
+        "Copy from another organisation updated": "Kópia z inej organizácie aktualizovaná",
+        "Copy from another organisation removed": "Kópia z inej organizácie odstránená"
     },
     "plurals": null
 }

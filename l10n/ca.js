@@ -1646,7 +1646,21 @@ OC.L10N.register(
         "This secret is already shared with that account.": "Aquest secret ja està compartit amb aquest compte.",
         "Other organisations": "Altres organitzacions",
         "Receive secrets from other organisations": "Rep secrets d’altres organitzacions",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Aleshores, les persones de les organitzacions sòcies podran trobar el vostre compte i compartir secrets amb vós. Cadascun l’accepteu vós mateix."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Aleshores, les persones de les organitzacions sòcies podran trobar el vostre compte i compartir secrets amb vós. Cadascun l’accepteu vós mateix.",
+        "Shared": "Compartit",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "En pausa: ha canviat el seu certificat o l’associació. Revoqueu-lo o torneu-lo a compartir.",
+        "Their organisation did not get the last change. Revoke it or share again.": "La seva organització no ha rebut l’últim canvi. Revoqueu-lo o torneu-lo a compartir.",
+        "Being withdrawn": "S’està retirant",
+        "Shared with another organisation": "Compartit amb una altra organització",
+        "Change sent to another organisation": "Canvi enviat a una altra organització",
+        "Share with another organisation revoked": "Compartició amb una altra organització revocada",
+        "Share with another organisation paused": "Compartició amb una altra organització en pausa",
+        "Another organisation did not get a change": "Una altra organització no ha rebut un canvi",
+        "Secret received from another organisation": "Secret rebut d’una altra organització",
+        "Secret from another organisation accepted": "Secret d’una altra organització acceptat",
+        "Secret from another organisation declined": "Secret d’una altra organització rebutjat",
+        "Copy from another organisation updated": "Còpia d’una altra organització actualitzada",
+        "Copy from another organisation removed": "Còpia d’una altra organització suprimida"
     },
     "nplurals=2; plural=(n != 1);"
 )

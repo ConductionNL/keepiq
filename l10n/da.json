@@ -1717,7 +1717,21 @@
         "This secret is already shared with that account.": "Denne hemmelighed er allerede delt med den konto.",
         "Other organisations": "Andre organisationer",
         "Receive secrets from other organisations": "Modtag hemmeligheder fra andre organisationer",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personer i partnerorganisationer kan så finde din konto og dele hemmeligheder med dig. Du accepterer hver enkelt selv."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personer i partnerorganisationer kan så finde din konto og dele hemmeligheder med dig. Du accepterer hver enkelt selv.",
+        "Shared": "Delt",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Sat på pause: modtagerens certifikat eller partnerskabet er ændret. Tilbagekald den, eller del igen.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Modtagerens organisation fik ikke den seneste ændring. Tilbagekald den, eller del igen.",
+        "Being withdrawn": "Trækkes tilbage",
+        "Shared with another organisation": "Delt med en anden organisation",
+        "Change sent to another organisation": "Ændring sendt til en anden organisation",
+        "Share with another organisation revoked": "Deling med en anden organisation tilbagekaldt",
+        "Share with another organisation paused": "Deling med en anden organisation sat på pause",
+        "Another organisation did not get a change": "En anden organisation fik ikke en ændring",
+        "Secret received from another organisation": "Hemmelighed modtaget fra en anden organisation",
+        "Secret from another organisation accepted": "Hemmelighed fra en anden organisation accepteret",
+        "Secret from another organisation declined": "Hemmelighed fra en anden organisation afvist",
+        "Copy from another organisation updated": "Kopi fra en anden organisation opdateret",
+        "Copy from another organisation removed": "Kopi fra en anden organisation fjernet"
     },
     "plurals": null
 }

@@ -1717,7 +1717,21 @@
         "This secret is already shared with that account.": "Αυτό το μυστικό έχει ήδη κοινοποιηθεί σε αυτόν τον λογαριασμό.",
         "Other organisations": "Άλλοι οργανισμοί",
         "Receive secrets from other organisations": "Λήψη μυστικών από άλλους οργανισμούς",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Τα άτομα σε συνεργαζόμενους οργανισμούς μπορούν τότε να βρουν τον λογαριασμό σας και να κοινοποιούν μυστικά σε εσάς. Αποδέχεστε κάθε ένα μόνοι σας."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Τα άτομα σε συνεργαζόμενους οργανισμούς μπορούν τότε να βρουν τον λογαριασμό σας και να κοινοποιούν μυστικά σε εσάς. Αποδέχεστε κάθε ένα μόνοι σας.",
+        "Shared": "Κοινοποιήθηκε",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Σε παύση: άλλαξε το πιστοποιητικό του παραλήπτη ή η συνεργασία. Κάντε ανάκληση ή κοινοποιήστε ξανά.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Ο οργανισμός του παραλήπτη δεν έλαβε την τελευταία αλλαγή. Κάντε ανάκληση ή κοινοποιήστε ξανά.",
+        "Being withdrawn": "Ανακαλείται",
+        "Shared with another organisation": "Κοινοποιήθηκε σε άλλον οργανισμό",
+        "Change sent to another organisation": "Η αλλαγή στάλθηκε σε άλλον οργανισμό",
+        "Share with another organisation revoked": "Η κοινοποίηση σε άλλον οργανισμό ανακλήθηκε",
+        "Share with another organisation paused": "Η κοινοποίηση σε άλλον οργανισμό τέθηκε σε παύση",
+        "Another organisation did not get a change": "Άλλος οργανισμός δεν έλαβε μια αλλαγή",
+        "Secret received from another organisation": "Ελήφθη μυστικό από άλλον οργανισμό",
+        "Secret from another organisation accepted": "Το μυστικό από άλλον οργανισμό έγινε αποδεκτό",
+        "Secret from another organisation declined": "Το μυστικό από άλλον οργανισμό απορρίφθηκε",
+        "Copy from another organisation updated": "Το αντίγραφο από άλλον οργανισμό ενημερώθηκε",
+        "Copy from another organisation removed": "Το αντίγραφο από άλλον οργανισμό αφαιρέθηκε"
     },
     "plurals": null
 }

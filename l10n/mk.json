@@ -1717,7 +1717,21 @@
         "This secret is already shared with that account.": "Оваа тајна веќе е споделена со таа сметка.",
         "Other organisations": "Други организации",
         "Receive secrets from other organisations": "Примај тајни од други организации",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Луѓето во партнерски организации тогаш можат да ја најдат вашата сметка и да споделуваат тајни со вас. Секоја од нив ја прифаќате сами."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Луѓето во партнерски организации тогаш можат да ја најдат вашата сметка и да споделуваат тајни со вас. Секоја од нив ја прифаќате сами.",
+        "Shared": "Споделено",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Паузирано: се промени нивниот сертификат или партнерството. Отповикајте или споделете повторно.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Нивната организација не ја доби последната промена. Отповикајте или споделете повторно.",
+        "Being withdrawn": "Се повлекува",
+        "Shared with another organisation": "Споделено со друга организација",
+        "Change sent to another organisation": "Промената е испратена до друга организација",
+        "Share with another organisation revoked": "Споделувањето со друга организација е укинато",
+        "Share with another organisation paused": "Споделувањето со друга организација е паузирано",
+        "Another organisation did not get a change": "Друга организација не доби промена",
+        "Secret received from another organisation": "Примена е тајна од друга организација",
+        "Secret from another organisation accepted": "Тајната од друга организација е прифатена",
+        "Secret from another organisation declined": "Тајната од друга организација е одбиена",
+        "Copy from another organisation updated": "Копијата од друга организација е ажурирана",
+        "Copy from another organisation removed": "Копијата од друга организација е отстранета"
     },
     "plurals": null
 }

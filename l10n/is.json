@@ -1717,7 +1717,21 @@
         "This secret is already shared with that account.": "Þessu leyndarmáli er þegar deilt með þeim aðgangi.",
         "Other organisations": "Önnur fyrirtæki",
         "Receive secrets from other organisations": "Taka við leyndarmálum frá öðrum fyrirtækjum",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Fólk í samstarfsfyrirtækjum getur þá fundið aðganginn þinn og deilt leyndarmálum með þér. Þú samþykkir hvert þeirra fyrir sig."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Fólk í samstarfsfyrirtækjum getur þá fundið aðganginn þinn og deilt leyndarmálum með þér. Þú samþykkir hvert þeirra fyrir sig.",
+        "Shared": "Deilt",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Í bið: skilríki viðtakanda eða samstarfið breyttist. Afturkallaðu deilinguna eða deildu aftur.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Fyrirtæki viðtakanda fékk ekki síðustu breytingu. Afturkallaðu deilinguna eða deildu aftur.",
+        "Being withdrawn": "Verið að afturkalla",
+        "Shared with another organisation": "Deilt með öðru fyrirtæki",
+        "Change sent to another organisation": "Breyting send til annars fyrirtækis",
+        "Share with another organisation revoked": "Sameign með öðru fyrirtæki afturkölluð",
+        "Share with another organisation paused": "Sameign með öðru fyrirtæki sett í bið",
+        "Another organisation did not get a change": "Annað fyrirtæki fékk ekki breytingu",
+        "Secret received from another organisation": "Leyndarmál móttekið frá öðru fyrirtæki",
+        "Secret from another organisation accepted": "Leyndarmál frá öðru fyrirtæki samþykkt",
+        "Secret from another organisation declined": "Leyndarmáli frá öðru fyrirtæki hafnað",
+        "Copy from another organisation updated": "Afrit frá öðru fyrirtæki uppfært",
+        "Copy from another organisation removed": "Afrit frá öðru fyrirtæki fjarlægt"
     },
     "plurals": null
 }

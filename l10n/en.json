@@ -1717,7 +1717,21 @@
         "This secret is already shared with that account.": "This secret is already shared with that account.",
         "Other organisations": "Other organisations",
         "Receive secrets from other organisations": "Receive secrets from other organisations",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "People in partner organisations can then find your account and share secrets with you. You accept each one yourself."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.",
+        "Shared": "Shared",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Paused: their certificate or the partnership changed. Revoke it or share again.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Their organisation did not get the last change. Revoke it or share again.",
+        "Being withdrawn": "Being withdrawn",
+        "Shared with another organisation": "Shared with another organisation",
+        "Change sent to another organisation": "Change sent to another organisation",
+        "Share with another organisation revoked": "Share with another organisation revoked",
+        "Share with another organisation paused": "Share with another organisation paused",
+        "Another organisation did not get a change": "Another organisation did not get a change",
+        "Secret received from another organisation": "Secret received from another organisation",
+        "Secret from another organisation accepted": "Secret from another organisation accepted",
+        "Secret from another organisation declined": "Secret from another organisation declined",
+        "Copy from another organisation updated": "Copy from another organisation updated",
+        "Copy from another organisation removed": "Copy from another organisation removed"
     },
     "plurals": "",
     "pluralForm": "nplurals=2; plural=(n != 1);"

@@ -162,6 +162,8 @@ class FederatedShareSendTest extends TestCase {
 				userManager: $users,
 			),
 			random: $random,
+			delivery: $this->createMock(\OCA\Keepiq\Service\FederatedNotificationDelivery::class),
+			audit: new \OCA\Keepiq\Service\FederatedShareAuditTrail(),
 		);
 
 		$user = $this->createMock(IUser::class);
@@ -264,6 +266,20 @@ class FederatedShareSendTest extends TestCase {
 		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
 		$this->assertSame('already_shared', $response->getData()['message']);
 		$this->assertCount(1, $this->sent);
+	}
+
+	public function testTheOwnerCanShareAgainAfterASuspendedOrFailedShare(): void {
+		$controller = $this->controller([$this->partner('cloud.partner.example', true, false)]);
+		foreach (['suspended', 'failed', 'revoked'] as $status) {
+			$this->share($controller);
+			foreach ($this->rows as $row) {
+				$row->setStatus($status);
+			}
+
+			// The owner's list says "Revoke it or share again": sharing again works.
+			$this->assertSame(Http::STATUS_CREATED, $this->share($controller)->getStatus(), $status);
+			$this->rows = [];
+		}
 	}
 
 	public function testAMalformedRequestIsRefusedBeforeAnythingIsStored(): void {
