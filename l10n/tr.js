@@ -1660,7 +1660,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Başka bir kuruluştan gelen gizli kabul edildi",
         "Secret from another organisation declined": "Başka bir kuruluştan gelen gizli reddedildi",
         "Copy from another organisation updated": "Başka bir kuruluştan gelen kopya güncellendi",
-        "Copy from another organisation removed": "Başka bir kuruluştan gelen kopya kaldırıldı"
+        "Copy from another organisation removed": "Başka bir kuruluştan gelen kopya kaldırıldı",
+        "Declined: they removed their copy. Share again if they need it.": "Reddedildi: alıcı kendi kopyasını kaldırdı. Gerekirse yeniden paylaşın.",
+        "Recipient at another organisation removed their copy": "Başka bir kuruluştaki alıcı kendi kopyasını kaldırdı"
     },
     "nplurals=1; plural=0;"
 )

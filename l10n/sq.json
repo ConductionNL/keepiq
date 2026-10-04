@@ -1731,7 +1731,9 @@
         "Secret from another organisation accepted": "Sekreti nga një organizatë tjetër u pranua",
         "Secret from another organisation declined": "Sekreti nga një organizatë tjetër u refuzua",
         "Copy from another organisation updated": "Kopja nga një organizatë tjetër u përditësua",
-        "Copy from another organisation removed": "Kopja nga një organizatë tjetër u hoq"
+        "Copy from another organisation removed": "Kopja nga një organizatë tjetër u hoq",
+        "Declined: they removed their copy. Share again if they need it.": "Refuzuar: marrësi hoqi kopjen e vet. Ndajeni përsëri nëse i nevojitet.",
+        "Recipient at another organisation removed their copy": "Një marrës nga një organizatë tjetër hoqi kopjen e vet"
     },
     "plurals": null
 }

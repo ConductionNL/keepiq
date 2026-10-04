@@ -1660,7 +1660,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Leyndarmál frá öðru fyrirtæki samþykkt",
         "Secret from another organisation declined": "Leyndarmáli frá öðru fyrirtæki hafnað",
         "Copy from another organisation updated": "Afrit frá öðru fyrirtæki uppfært",
-        "Copy from another organisation removed": "Afrit frá öðru fyrirtæki fjarlægt"
+        "Copy from another organisation removed": "Afrit frá öðru fyrirtæki fjarlægt",
+        "Declined: they removed their copy. Share again if they need it.": "Hafnað: viðtakandi fjarlægði afritið sitt. Deildu aftur ef hann þarf það.",
+        "Recipient at another organisation removed their copy": "Viðtakandi hjá öðru fyrirtæki fjarlægði afritið sitt"
     },
     "nplurals=2; plural=(n != 1);"
 )

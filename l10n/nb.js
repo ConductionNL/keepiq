@@ -1660,7 +1660,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Hemmelighet fra en annen organisasjon godtatt",
         "Secret from another organisation declined": "Hemmelighet fra en annen organisasjon avslått",
         "Copy from another organisation updated": "Kopi fra en annen organisasjon oppdatert",
-        "Copy from another organisation removed": "Kopi fra en annen organisasjon fjernet"
+        "Copy from another organisation removed": "Kopi fra en annen organisasjon fjernet",
+        "Declined: they removed their copy. Share again if they need it.": "Avslått: mottakeren fjernet kopien sin. Del på nytt hvis de trenger den.",
+        "Recipient at another organisation removed their copy": "Mottaker i en annen organisasjon fjernet kopien sin"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1660,7 +1660,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Paslaptis iš kitos organizacijos priimta",
         "Secret from another organisation declined": "Paslaptis iš kitos organizacijos atmesta",
         "Copy from another organisation updated": "Kopija iš kitos organizacijos atnaujinta",
-        "Copy from another organisation removed": "Kopija iš kitos organizacijos pašalinta"
+        "Copy from another organisation removed": "Kopija iš kitos organizacijos pašalinta",
+        "Declined: they removed their copy. Share again if they need it.": "Atmesta: gavėjas pašalino savo kopiją. Bendrinkite iš naujo, jei jos reikia.",
+        "Recipient at another organisation removed their copy": "Kitos organizacijos gavėjas pašalino savo kopiją"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

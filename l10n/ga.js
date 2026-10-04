@@ -1660,7 +1660,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Rún ó eagraíocht eile glactha",
         "Secret from another organisation declined": "Rún ó eagraíocht eile diúltaithe",
         "Copy from another organisation updated": "Cóip ó eagraíocht eile nuashonraithe",
-        "Copy from another organisation removed": "Cóip ó eagraíocht eile bainte"
+        "Copy from another organisation removed": "Cóip ó eagraíocht eile bainte",
+        "Declined: they removed their copy. Share again if they need it.": "Diúltaithe: bhain an faighteoir a chóip. Comhroinn arís má tá sí ag teastáil.",
+        "Recipient at another organisation removed their copy": "Bhain faighteoir in eagraíocht eile a chóip"
     },
     "nplurals=3; plural=(n==1 ? 0 : n==2 ? 1 : 2);"
 )

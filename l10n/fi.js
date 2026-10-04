@@ -1660,7 +1660,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Salaisuus toisesta organisaatiosta hyväksytty",
         "Secret from another organisation declined": "Salaisuus toisesta organisaatiosta hylätty",
         "Copy from another organisation updated": "Kopio toisesta organisaatiosta päivitetty",
-        "Copy from another organisation removed": "Kopio toisesta organisaatiosta poistettu"
+        "Copy from another organisation removed": "Kopio toisesta organisaatiosta poistettu",
+        "Declined: they removed their copy. Share again if they need it.": "Hylätty: vastaanottaja poisti kopionsa. Jaa uudelleen, jos hän tarvitsee sitä.",
+        "Recipient at another organisation removed their copy": "Toisen organisaation vastaanottaja poisti kopionsa"
     },
     "nplurals=2; plural=(n != 1);"
 )

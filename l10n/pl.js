@@ -1660,7 +1660,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Sekret z innej organizacji zaakceptowany",
         "Secret from another organisation declined": "Sekret z innej organizacji odrzucony",
         "Copy from another organisation updated": "Kopia z innej organizacji zaktualizowana",
-        "Copy from another organisation removed": "Kopia z innej organizacji usunięta"
+        "Copy from another organisation removed": "Kopia z innej organizacji usunięta",
+        "Declined: they removed their copy. Share again if they need it.": "Odrzucono: odbiorca usunął swoją kopię. Udostępnij ponownie, jeśli jej potrzebuje.",
+        "Recipient at another organisation removed their copy": "Odbiorca z innej organizacji usunął swoją kopię"
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

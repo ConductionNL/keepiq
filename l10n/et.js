@@ -1660,7 +1660,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Saladus teisest organisatsioonist vastu võetud",
         "Secret from another organisation declined": "Saladus teisest organisatsioonist tagasi lükatud",
         "Copy from another organisation updated": "Koopia teisest organisatsioonist uuendatud",
-        "Copy from another organisation removed": "Koopia teisest organisatsioonist eemaldatud"
+        "Copy from another organisation removed": "Koopia teisest organisatsioonist eemaldatud",
+        "Declined: they removed their copy. Share again if they need it.": "Tagasi lükatud: saaja eemaldas oma koopia. Jagage uuesti, kui tal seda vaja on.",
+        "Recipient at another organisation removed their copy": "Teise organisatsiooni saaja eemaldas oma koopia"
     },
     "nplurals=2; plural=(n != 1);"
 )
