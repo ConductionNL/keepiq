@@ -163,7 +163,7 @@
     <string name="send_kind_text">Tekst</string>
     <string name="send_kind_login">Inlog</string>
     <string name="send_text_label">Tekst om te versturen</string>
-    <string name="send_views_label">Keer bekijken</string>
+    <string name="send_views_label">Aantal keer bekijken</string>
     <string name="send_expiry_label">Verloopt na</string>
     <string name="send_hours_label">Uren</string>
     <string name="send_password_label">Wachtwoord (optioneel)</string>
