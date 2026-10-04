@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/ConductionNL/keepiq/cli/internal/client"
+	"github.com/ConductionNL/keepiq/sdk/go/client"
 )
 
 // A use-only copy is never printed or copied by the CLI
