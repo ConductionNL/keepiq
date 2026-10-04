@@ -44,6 +44,8 @@ vi.mock('../../browser-extension/src/lib/api.js', () => ({
 	activeAccountId: vi.fn(async () => ACCOUNT.id),
 	migrateLegacyConfig: vi.fn(async () => {}),
 	onUnauthorized: vi.fn(),
+	typeIdByName: vi.fn(async () => 't-login'),
+	getSecret: vi.fn(async () => ({ id: 's1' })),
 	IDLE_CHOICES: [1, 5, 15, 30, 60, 240],
 	DEFAULT_IDLE_MINUTES: 15,
 	MAX_ACCOUNTS: 5,
@@ -177,7 +179,7 @@ describe('extension save path applies the org password policy', () => {
 
 		const res = await send('save-capture', {})
 
-		expect(res).toEqual({ ok: true })
+		expect(res).toEqual({ ok: true, saved: 'saved' })
 		expect(api.createSecret).toHaveBeenCalledTimes(1)
 	})
 
@@ -186,7 +188,7 @@ describe('extension save path applies the org password policy', () => {
 
 		const res = await send('save-capture', {})
 
-		expect(res).toEqual({ ok: true })
+		expect(res).toEqual({ ok: true, saved: 'saved' })
 		expect(api.createSecret).toHaveBeenCalledTimes(1)
 	})
 
@@ -217,7 +219,7 @@ describe('extension save path applies the org password policy', () => {
 
 		const res = await send('save-capture', {})
 
-		expect(res).toEqual({ ok: true })
+		expect(res).toEqual({ ok: true, saved: 'saved' })
 	})
 
 	it('answers a submitted weak password with a refusal instead of a save offer', async () => {

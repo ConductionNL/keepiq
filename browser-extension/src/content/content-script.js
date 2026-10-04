@@ -17,7 +17,7 @@
 import { frameMayFill } from '../lib/fillScope.js'
 import { watchForOtpField } from './otp-watch.js'
 import { attachPasswordSuggestions } from './password-suggest.js'
-import { showSavePrompt } from './save-prompt.js'
+import { showSavePrompt, showSaveResult } from './save-prompt.js'
 import { useOnlyPasswordTarget } from '../lib/useOnly.js'
 import { findLoginFields, firstUsable } from '../lib/field-detect.js'
 
@@ -158,16 +158,42 @@ async function captureCurrent() {
 		await showSavePrompt(offer, location.hostname)
 		return
 	}
-	if (offer.action !== 'save' && offer.action !== 'update') return
+	await offerInPage(offer)
+}
+
+/**
+ * Show a save or update offer in the bar, pass on the choice, and say how
+ * the save went.
+ *
+ * @param {{action: string, name?: string}} offer The worker's offer.
+ * @return {Promise<void>}
+ * @spec openspec/changes/clients-extension-finish/specs/extension-save-prompt-details/spec.md#requirement-a-save-that-confirms
+ */
+async function offerInPage(offer) {
+	if (offer?.action !== 'save' && offer?.action !== 'update') return
 	const choice = await showSavePrompt(offer, location.hostname)
+	let result
 	try {
-		await chrome.runtime.sendMessage({
+		result = await chrome.runtime.sendMessage({
 			type: 'capture-decision',
 			payload: { choice },
 		})
 	} catch {
 		// The popup still offers the capture.
+		return
 	}
+	if (choice === 'save' || choice === 'update') showSaveResult(result || {})
+}
+
+// After a login redirects, the next page of the same site shows the offer
+// that is still waiting for this tab.
+if (window.top === window) {
+	Promise.resolve(
+		chrome.runtime.sendMessage({ type: 'capture-offer', payload: {} }),
+	)
+		.catch(() => null)
+		.then((offer) => offerInPage(offer))
+		.catch(() => {})
 }
 
 // --- message handling from the popup / background worker ---
