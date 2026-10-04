@@ -329,7 +329,7 @@ export default {
 		 * The team folders the user manages without owning them.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
 		 */
 		managedTeamFolders() {
 			return useTeamFolderStore().managed
