@@ -126,6 +126,13 @@ async function buildBrowser(browser, base) {
 		resolve(root, 'src/offscreen/offscreen.html'),
 		resolve(outdir, 'offscreen.html'),
 	)
+	// The toolbar and store icons, and the notices for bundled third-party
+	// material (clients-extension-gaps).
+	await cp(resolve(root, 'icons'), resolve(outdir, 'icons'), { recursive: true })
+	await cp(
+		resolve(root, 'THIRD-PARTY-NOTICES.txt'),
+		resolve(outdir, 'THIRD-PARTY-NOTICES.txt'),
+	)
 }
 
 async function run() {
