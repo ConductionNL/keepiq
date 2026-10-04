@@ -17,6 +17,8 @@ on:
       - "src/send/**"
       - "src/totp/**"
       - "src/passkey/**"
+      - "src/generator/**"
+      - "tests/vitest/generator-vectors.spec.js"
       - ".github/workflows/mobile.yml"
   pull_request:
     branches: [main, development, beta]
@@ -28,6 +30,8 @@ on:
       - "src/send/**"
       - "src/totp/**"
       - "src/passkey/**"
+      - "src/generator/**"
+      - "tests/vitest/generator-vectors.spec.js"
       - ".github/workflows/mobile.yml"
   workflow_dispatch:
 
@@ -71,7 +75,8 @@ jobs:
         run: |
           npm ci --ignore-scripts
           KEEPIQ_KOTLIN_VECTORS=mobile/shared/build/vectors/kotlin-output.json \
-            npx vitest run tests/vitest/crypto-vectors.spec.js tests/vitest/crypto-vectors-kotlin.spec.js
+            npx vitest run tests/vitest/crypto-vectors.spec.js tests/vitest/crypto-vectors-kotlin.spec.js \
+              tests/vitest/generator-vectors.spec.js
 
   ios:
     runs-on: macos-latest
