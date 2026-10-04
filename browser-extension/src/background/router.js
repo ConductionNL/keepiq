@@ -425,16 +425,21 @@ const signingOut = new Set()
  * user can sign in again with a new app password.
  *
  * @param {string} accountId The account.
+ * @param {string} [reason] revoked (the server refused it) or logout (the user's choice).
  * @return {Promise<void>}
  * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
  */
-export async function signOutAccount(accountId) {
+export async function signOutAccount(accountId, reason = 'revoked') {
 	if (!accountId || signingOut.has(accountId)) return
 	signingOut.add(accountId)
 	try {
 		lockAccount(accountId)
 		await api
-			.updateAccount(accountId, { appPassword: '', loggedOut: true })
+			.updateAccount(accountId, {
+				appPassword: '',
+				loggedOut: true,
+				loggedOutReason: reason,
+			})
 			.catch(() => {})
 		await syncModule()
 			.forget(accountId)
@@ -497,6 +502,7 @@ async function refreshServerVersion(account) {
  * @return {Promise<object>}
  * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
  * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-lock-and-log-out-per-account-or-all
  */
 async function getState() {
 	const accounts = await api.loadAccounts()
@@ -522,6 +528,7 @@ async function getState() {
 			loggedOut: a.loggedOut === true,
 		})),
 		loggedOut,
+		loggedOutReason: loggedOut ? active.loggedOutReason || 'revoked' : null,
 		insecure,
 		unlocked: active ? vault.isUnlocked(active.id) : false,
 		user: active ? active.user : null,
@@ -540,6 +547,7 @@ async function getState() {
  * @param {{url: string, user: string, appPassword: string}} payload The pairing form.
  * @return {Promise<{ok: boolean, accountId: string}>}
  * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-unlock-offline-and-say-what-went-wrong
  */
 async function doPair(payload) {
 	if ((await api.loadAccounts()).length >= api.MAX_ACCOUNTS) {
@@ -555,7 +563,9 @@ async function doPair(payload) {
 		appPassword: payload.appPassword,
 	}
 	// Verify the credential actually pairs before persisting it.
-	const res = await api.pair(config)
+	const res = await api.pair(config).catch((e) => {
+		throw new Error(pairingProblem(e))
+	})
 	const account = await api.addAccount({
 		...config,
 		serverVersion: res?.serverVersion ?? null,
@@ -599,6 +609,53 @@ async function doUnpair(payload) {
 		.catch(() => {})
 	await api.removeAccount(id)
 	return { ok: true, revoked }
+}
+
+/**
+ * What went wrong when pairing, in words the user can act on.
+ *
+ * @param {{status?: number, insecure?: boolean, message?: string}} error The failure.
+ * @return {string}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-unlock-offline-and-say-what-went-wrong
+ */
+export function pairingProblem(error) {
+	if (error?.insecure) return error.message
+	const status = error?.status
+	if (!status) return 'Cannot reach this server. Check the address.'
+	if (status === 401) {
+		return 'Nextcloud did not accept this user name and app password.'
+	}
+	if (status === 403) return 'This Nextcloud account may not use Keepiq.'
+	if (status === 404) {
+		return 'Keepiq is not installed on this server, or the address is wrong.'
+	}
+	if (status >= 500) return 'The server could not answer. Try again later.'
+	return 'Connecting failed (' + status + ').'
+}
+
+/**
+ * Log out of accounts on purpose: delete each app password in Nextcloud and
+ * sign the account out here, keeping its address and user.
+ *
+ * @param {{accountId?: string, all?: boolean}} payload One account, or all.
+ * @return {Promise<{ok: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-lock-and-log-out-per-account-or-all
+ */
+async function doLogout(payload) {
+	const ids = payload.all
+		? (await api.loadAccounts()).map((a) => a.id)
+		: [payload.accountId || (await api.activeAccountId())]
+	for (const id of ids) {
+		const account = id ? await api.loadAccount(id) : null
+		if (!account || account.loggedOut) continue
+		try {
+			await api.revokeAppPassword(account)
+		} catch {
+			// Offline: the password is still forgotten here.
+		}
+		await signOutAccount(id, 'logout')
+	}
+	return { ok: true }
 }
 
 /**
@@ -664,6 +721,7 @@ async function refreshPolicy(account) {
  * @param {{masterPassword: string}} payload The master password.
  * @return {Promise<{ok: boolean}>}
  * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-unlock-offline-and-say-what-went-wrong
  */
 async function doUnlock(payload) {
 	const account = await activeAccount()
@@ -673,11 +731,22 @@ async function doUnlock(payload) {
 		)
 	}
 	await refreshServerVersion(account)
-	await vault.unlock(account.id, account, payload.masterPassword)
+	let offline = false
+	try {
+		await vault.unlock(account.id, account, payload.masterPassword)
+	} catch (e) {
+		// No server: unlock with the suite in the vault snapshot, if any.
+		const suite = isOffline(e)
+			? (await syncModule().snapshotOf(account.id))?.suite
+			: null
+		if (!suite) throw e
+		await vault.unlock(account.id, account, payload.masterPassword, { suite })
+		offline = true
+	}
 	await refreshPolicy(account)
 	await touchActivity(account.id)
 	startSync(account)
-	return { ok: true }
+	return { ok: true, offline }
 }
 
 /**
@@ -1253,6 +1322,7 @@ const handlers = {
 	'get-state': getState,
 	pair: doPair,
 	relogin: doRelogin,
+	logout: doLogout,
 	unpair: doUnpair,
 	'switch-account': doSwitchAccount,
 	'set-idle': doSetIdle,

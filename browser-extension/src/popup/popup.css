@@ -472,3 +472,26 @@ textarea {
 	font-weight: 600;
 	margin: 12px 0;
 }
+
+/* Unlock and accounts (clients-extension-gaps) */
+.grow {
+	flex: 1;
+}
+
+.account-initials {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 28px;
+	height: 28px;
+	flex: none;
+	border-radius: 50%;
+	background: var(--cobalt);
+	color: var(--bg);
+	font-size: 12px;
+	font-weight: 600;
+}
+
+.account-initials:empty {
+	display: none;
+}
