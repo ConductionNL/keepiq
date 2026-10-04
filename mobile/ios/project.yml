@@ -48,6 +48,8 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: nl.conduction.keepiq
         GENERATE_INFOPLIST_FILE: NO
+        # The Kotlin runtime in the static KeepiqShared framework is C++.
+        OTHER_LDFLAGS: ["$(inherited)", "-lc++"]
   KeepiqUITests:
     type: bundle.ui-testing
     platform: iOS
