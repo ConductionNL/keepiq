@@ -28,6 +28,7 @@ export const ADMIN_AREAS = [
 			'DeviceApprovalSection',
 			'ItemTypesSection',
 			'VaultBackupSection',
+			'FederationPartnersSection',
 		],
 	},
 	{
