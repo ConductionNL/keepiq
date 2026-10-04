@@ -232,6 +232,8 @@ final class AuditEventTypes {
 	public const FEDERATED_SHARE_DECLINED = 'federated_share.declined';
 	public const FEDERATED_COPY_UPDATED = 'federated_share.copy_updated';
 	public const FEDERATED_COPY_REMOVED = 'federated_share.copy_removed';
+	// The owner's side of a recipient deleting their copy (task 4.4).
+	public const FEDERATED_SHARE_RECIPIENT_DECLINED = 'federated_share.recipient_declined';
 
 	/**
 	 * Metadata keys that MUST NEVER appear in any audit entry, in any position.
@@ -402,6 +404,7 @@ final class AuditEventTypes {
 		self::FEDERATED_SHARE_DECLINED => ['inboundShareId', 'senderCloudId', 'partnerId'],
 		self::FEDERATED_COPY_UPDATED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
 		self::FEDERATED_COPY_REMOVED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
+		self::FEDERATED_SHARE_RECIPIENT_DECLINED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
 	];
 
 	/**

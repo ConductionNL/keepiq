@@ -1660,7 +1660,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Το μυστικό από άλλον οργανισμό έγινε αποδεκτό",
         "Secret from another organisation declined": "Το μυστικό από άλλον οργανισμό απορρίφθηκε",
         "Copy from another organisation updated": "Το αντίγραφο από άλλον οργανισμό ενημερώθηκε",
-        "Copy from another organisation removed": "Το αντίγραφο από άλλον οργανισμό αφαιρέθηκε"
+        "Copy from another organisation removed": "Το αντίγραφο από άλλον οργανισμό αφαιρέθηκε",
+        "Declined: they removed their copy. Share again if they need it.": "Απορρίφθηκε: ο παραλήπτης αφαίρεσε το αντίγραφό του. Κοινοποιήστε ξανά αν το χρειάζεται.",
+        "Recipient at another organisation removed their copy": "Παραλήπτης σε άλλον οργανισμό αφαίρεσε το αντίγραφό του"
     },
     "nplurals=2; plural=(n != 1);"
 )

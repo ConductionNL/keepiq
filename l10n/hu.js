@@ -1660,7 +1660,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Egy másik szervezettől kapott titok elfogadva",
         "Secret from another organisation declined": "Egy másik szervezettől kapott titok elutasítva",
         "Copy from another organisation updated": "Egy másik szervezettől kapott másolat frissítve",
-        "Copy from another organisation removed": "Egy másik szervezettől kapott másolat eltávolítva"
+        "Copy from another organisation removed": "Egy másik szervezettől kapott másolat eltávolítva",
+        "Declined: they removed their copy. Share again if they need it.": "Elutasítva: a címzett eltávolította a másolatát. Ossza meg újra, ha szüksége van rá.",
+        "Recipient at another organisation removed their copy": "Egy másik szervezet címzettje eltávolította a másolatát"
     },
     "nplurals=2; plural=(n != 1);"
 )

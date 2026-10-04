@@ -1660,7 +1660,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Sigriet minn organizzazzjoni oħra aċċettat",
         "Secret from another organisation declined": "Sigriet minn organizzazzjoni oħra miċħud",
         "Copy from another organisation updated": "Kopja minn organizzazzjoni oħra aġġornata",
-        "Copy from another organisation removed": "Kopja minn organizzazzjoni oħra mneħħija"
+        "Copy from another organisation removed": "Kopja minn organizzazzjoni oħra mneħħija",
+        "Declined: they removed their copy. Share again if they need it.": "Miċħud: ir-riċevitur neħħa l-kopja tiegħu. Erġa’ aqsam jekk jeħtieġha.",
+        "Recipient at another organisation removed their copy": "Riċevitur f’organizzazzjoni oħra neħħa l-kopja tiegħu"
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

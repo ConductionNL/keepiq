@@ -67,6 +67,10 @@ export function auditEventLabel(eventType) {
 			'keepiq',
 			'Copy from another organisation removed',
 		),
+		'federated_share.recipient_declined': t(
+			'keepiq',
+			'Recipient at another organisation removed their copy',
+		),
 		'request.created': t('keepiq', 'Secret request created'),
 		'request.fulfilled': t('keepiq', 'Secret request fulfilled'),
 		'request.re_requested': t('keepiq', 'Secret request re-requested'),
@@ -132,6 +136,7 @@ export function auditEventOptions() {
 		'federated_share.declined',
 		'federated_share.copy_updated',
 		'federated_share.copy_removed',
+		'federated_share.recipient_declined',
 		'request.created',
 		'request.fulfilled',
 		'request.re_requested',

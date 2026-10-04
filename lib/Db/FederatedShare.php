@@ -99,6 +99,15 @@ class FederatedShare extends Entity implements JsonSerializable {
 	public const STATUS_REVOKED = 'revoked';
 
 	/**
+	 * The recipient removed the copy they had accepted
+	 * (sharing-federated-recipients task 4.4). Nothing is served or sent;
+	 * the owner may share again.
+	 *
+	 * @var string
+	 */
+	public const STATUS_DECLINED = 'declined';
+
+	/**
 	 * The owner's secret this share copies.
 	 *
 	 * @var string

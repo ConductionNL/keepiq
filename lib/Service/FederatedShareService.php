@@ -222,6 +222,35 @@ class FederatedShareService {
 	}//end update()
 
 	/**
+	 * Tell every live federated recipient of a secret that its plain name or
+	 * URL changed (task 4.5): their server pulls again and the copy follows.
+	 * No new ciphertext is needed, because the pull reads the name and URL
+	 * from the source. One notification per recipient.
+	 *
+	 * @param string $secretId The owner's secret
+	 * @param string $userId The owner, for the audit
+	 *
+	 * @return int How many recipients were told
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-new-name-reaches-bob
+	 */
+	public function detailsChanged(string $secretId, string $userId): int {
+		$count = 0;
+		foreach ($this->shareMapper->findBySourceSecret(sourceSecretId: $secretId) as $row) {
+			if ($row->getStatus() !== FederatedShare::STATUS_ACTIVE || $row->getOwnerId() !== $userId) {
+				continue;
+			}
+
+			$row->setUpdatedAt(new DateTime());
+			$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_UPDATED, row: $row, actorId: $userId);
+			$this->delivery->deliver(row: $row, type: FederatedNotificationDelivery::SHARE_UPDATED);
+			$count++;
+		}
+
+		return $count;
+	}//end detailsChanged()
+
+	/**
 	 * Revoke a share: nothing is served any more, and the recipient's
 	 * instance is told to delete its copy (task 4.2). The row goes once that
 	 * notification arrives; until then the retry job keeps trying.

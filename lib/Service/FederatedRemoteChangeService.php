@@ -39,6 +39,11 @@ use Throwable;
 /**
  * Applies the sender's changes to the recipient's copy.
  *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) One notification joins the
+ *   inbound row, the partner allowlist, Nextcloud's signature check, the
+ *   stored secret, the copy and the audit, and answers a declined share with
+ *   the decline (task 4.4); each refusal is the same "share not found".
+ *
  * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
  */
 class FederatedRemoteChangeService {
@@ -65,6 +70,7 @@ class FederatedRemoteChangeService {
 	 * @param ICrypto $crypto Opens the stored shared secret
 	 * @param FederatedCopyService $copies Refreshes or removes the copy
 	 * @param FederatedShareAuditTrail $audit Identifier-only audit
+	 * @param FederatedCopyDeclineService|null $declines Repeats a decline the owner did not get
 	 *
 	 * @return void
 	 *
@@ -77,6 +83,7 @@ class FederatedRemoteChangeService {
 		private ICrypto $crypto,
 		private FederatedCopyService $copies,
 		private FederatedShareAuditTrail $audit,
+		private ?FederatedCopyDeclineService $declines = null,
 	) {
 	}//end __construct()
 
@@ -109,7 +116,7 @@ class FederatedRemoteChangeService {
 
 	/**
 	 * Pull again when the share is accepted; a pending share pulls on
-	 * acceptance anyway.
+	 * acceptance anyway, and a declined one answers with the decline.
 	 *
 	 * @param FederatedInbound $row The share
 	 *
@@ -118,6 +125,13 @@ class FederatedRemoteChangeService {
 	 * @throws ShareNotFound When the pull fails, so the sender retries
 	 */
 	private function applyUpdate(FederatedInbound $row): void {
+		// The recipient deleted the copy, and the owner still sends changes:
+		// the decline did not arrive, so it goes again (task 4.4).
+		if ($row->getStatus() === FederatedInbound::STATUS_DECLINED) {
+			$this->declines?->tellOwner(row: $row);
+			return;
+		}
+
 		if ($row->getStatus() !== FederatedInbound::STATUS_ACCEPTED) {
 			return;
 		}

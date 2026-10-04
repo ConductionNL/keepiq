@@ -1660,7 +1660,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Geheimnis vun enger anerer Organisatioun acceptéiert",
         "Secret from another organisation declined": "Geheimnis vun enger anerer Organisatioun refuséiert",
         "Copy from another organisation updated": "Kopie vun enger anerer Organisatioun aktualiséiert",
-        "Copy from another organisation removed": "Kopie vun enger anerer Organisatioun ewechgeholl"
+        "Copy from another organisation removed": "Kopie vun enger anerer Organisatioun ewechgeholl",
+        "Declined: they removed their copy. Share again if they need it.": "Refuséiert: den Empfänger huet seng Kopie ewechgeholl. Deelt et nach eng Kéier, wann hien se brauch.",
+        "Recipient at another organisation removed their copy": "Empfänger vun enger anerer Organisatioun huet seng Kopie ewechgeholl"
     },
     "nplurals=2; plural=(n != 1);"
 )

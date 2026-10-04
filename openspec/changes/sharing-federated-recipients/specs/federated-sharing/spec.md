@@ -57,13 +57,20 @@ The owner's browser MUST encrypt the value, login and additional fields for the 
 
 ### Requirement: Owner updates reach the remote copy and revocation removes it
 
-When the owner updates a federated shared secret, the owner's browser MUST encrypt the new value for each federated recipient with a freshly verified certificate, and the sending server MUST send an OCM `SHARE_UPDATED` notification after which the receiving server pulls the new ciphertext. Revoking MUST send `SHARE_UNSHARED`, after which the receiving server MUST delete the copy. A share whose partner was removed, or whose recipient certificate no longer verifies, MUST be suspended and shown to the owner.
+When the owner updates a federated shared secret, the owner's browser MUST encrypt the new value for each federated recipient with a freshly verified certificate, and the sending server MUST send an OCM `SHARE_UPDATED` notification after which the receiving server pulls the new ciphertext. When the owner changes only the plain name or URL, the sending server MUST send `SHARE_UPDATED` to each live federated recipient without new ciphertext, one notification per recipient, so the copy follows. Revoking MUST send `SHARE_UNSHARED`, after which the receiving server MUST delete the copy. A share whose partner was removed, or whose recipient certificate no longer verifies, MUST be suspended and shown to the owner.
 
 #### Scenario: A password change reaches Bob
 
 - **GIVEN** a federated share accepted by Bob
 - **WHEN** Alice changes the password in her vault
 - **THEN** Bob's copy MUST show the new password after his server pulls the update
+
+#### Scenario: A new name reaches Bob
+
+- **GIVEN** a federated share accepted by Bob
+- **WHEN** Alice renames the secret or changes its URL, and nothing else
+- **THEN** Alice's server MUST send one `SHARE_UPDATED` for Bob's share
+- **AND** Bob's copy MUST show the new name or URL after his server pulls the update
 
 #### Scenario: Revocation removes Bob's copy
 
@@ -73,13 +80,26 @@ When the owner updates a federated shared secret, the owner's browser MUST encry
 
 ### Requirement: Remote copies are read-only
 
-The system MUST refuse update, sync, onward sharing and link-share creation on a secret marked read-only for its owner.
+Read-only covers the value and the sharing, not where the recipient files the copy. The system MUST refuse, for its owner, any change of a read-only secret's value, login, additional fields, name, URL or type, a sync, onward sharing and link-share creation. The system MUST allow a change of only its folder. When the recipient moves an accepted copy to the trash or deletes it for good, the receiving server MUST mark the inbound share declined and send OCM `SHARE_DECLINED` to the owner's instance. The owner's share MUST then show as declined, and the sending server MUST NOT serve it or send further notifications for it.
 
 #### Scenario: Bob cannot edit or pass it on
 
 - **GIVEN** a read-only federated copy in Bob's vault
-- **WHEN** Bob calls `PUT /api/v1/secrets/{id}` or tries to share it
+- **WHEN** Bob calls `PUT /api/v1/secrets/{id}` with a new name, value, login or fields, or tries to share it
 - **THEN** the system MUST refuse the request with a forbidden response
+
+#### Scenario: Bob files his copy in a folder
+
+- **GIVEN** a read-only federated copy in Bob's vault and a folder of Bob's
+- **WHEN** Bob moves the copy to that folder
+- **THEN** the system MUST store the new folder and leave the value, name and sharing as the owner sent them
+
+#### Scenario: Bob deletes his copy
+
+- **GIVEN** a federated share accepted by Bob
+- **WHEN** Bob moves his copy to the trash
+- **THEN** Bob's server MUST mark the share declined and send `SHARE_DECLINED` to Alice's instance
+- **AND** Alice's share MUST show as declined, and her later changes MUST NOT be sent to Bob
 
 ### Requirement: Users opt in to receiving
 

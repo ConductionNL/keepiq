@@ -36,7 +36,12 @@ use Throwable;
 
 /**
  * Trash, restore, purge, archive and unarchive a user-owned secret.
-
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) A delete ends every kind
+ *   of access at once: local sharing, audit, and since
+ *   sharing-federated-recipients 4.4 the share a read-only copy came from.
+ *   Each is one injected collaborator; splitting them out would scatter the
+ *   one trash step over several classes.
  */
 class SecretTrashService {
 	/**
@@ -75,6 +80,7 @@ class SecretTrashService {
 	 * @param SecretSharingRevoker $sharingRevoker Ends everybody else's access
 	 * @param AuditService $auditService The audit recorder
 	 * @param LoggerInterface $logger The logger
+	 * @param FederatedCopyDeclineService|null $federatedDeclines Declines the share behind a deleted read-only copy
 	 *
 	 * @return void
 	 *
@@ -86,6 +92,7 @@ class SecretTrashService {
 		private SecretSharingRevoker $sharingRevoker,
 		private AuditService $auditService,
 		private LoggerInterface $logger,
+		private ?FederatedCopyDeclineService $federatedDeclines = null,
 	) {
 		$this->auditEvents = new AuditEventFactory();
 	}//end __construct()
@@ -118,6 +125,9 @@ class SecretTrashService {
 		}
 
 		$this->sharingRevoker->revokeAll(secretId: $id);
+		// A read-only copy from another organisation: the share it came
+		// from is declined and its owner told (sharing-federated-recipients 4.4).
+		$this->federatedDeclines?->copyDeleted(secret: $secret, userId: $userId);
 
 		$secret->setTrashedAt(new DateTime());
 		$secret->setArchivedAt(null);
@@ -163,7 +173,9 @@ class SecretTrashService {
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
 	 */
 	public function purge(string $id, string $userId): void {
-		$this->loadTrashed(id: $id, userId: $userId);
+		$secret = $this->loadTrashed(id: $id, userId: $userId);
+		// A copy trashed before its share could be declined (task 4.4).
+		$this->federatedDeclines?->copyDeleted(secret: $secret, userId: $userId);
 		$this->secretService->delete($id, $userId, 'owner');
 	}//end purge()
 

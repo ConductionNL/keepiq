@@ -260,6 +260,10 @@ export default {
 				),
 
 				revoked: t('keepiq', 'Being withdrawn'),
+				declined: t(
+					'keepiq',
+					'Declined: they removed their copy. Share again if they need it.',
+				),
 			}
 			return texts[status] ?? status
 		},

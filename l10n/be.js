@@ -1660,7 +1660,9 @@ OC.L10N.register(
         "Secret from another organisation accepted": "Сакрэт з іншай арганізацыі прыняты",
         "Secret from another organisation declined": "Сакрэт з іншай арганізацыі адхілены",
         "Copy from another organisation updated": "Копія з іншай арганізацыі абноўлена",
-        "Copy from another organisation removed": "Копія з іншай арганізацыі выдалена"
+        "Copy from another organisation removed": "Копія з іншай арганізацыі выдалена",
+        "Declined: they removed their copy. Share again if they need it.": "Адхілена: атрымальнік выдаліў сваю копію. Дайце доступ зноў, калі ён патрэбны.",
+        "Recipient at another organisation removed their copy": "Атрымальнік з іншай арганізацыі выдаліў сваю копію"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )
