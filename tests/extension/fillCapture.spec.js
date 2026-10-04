@@ -31,8 +31,9 @@ let state
  * @param {object} [sender] The sender.
  * @return {Promise<object>}
  */
-const send = (type, payload = {}, sender = POPUP) =>
-	router.handleMessage({ type, payload }, sender)
+function send(type, payload = {}, sender = POPUP) {
+	return router.handleMessage({ type, payload }, sender)
+}
 
 /**
  * A content script in a frame of tab 1.
@@ -41,11 +42,13 @@ const send = (type, payload = {}, sender = POPUP) =>
  * @param {number} frameId The frame.
  * @return {object}
  */
-const frame = (url, frameId) => ({
-	...pageSender(url),
-	tab: { id: 1, url: 'https://example.com/login' },
-	frameId,
-})
+function frame(url, frameId) {
+	return {
+		...pageSender(url),
+		tab: { id: 1, url: 'https://example.com/login' },
+		frameId,
+	}
+}
 
 beforeEach(async () => {
 	vi.resetModules()
