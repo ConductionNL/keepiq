@@ -64,7 +64,7 @@ class BackupSettings {
 	 *
 	 * @return array{backup_enabled:bool,backup_interval_hours:int,backup_retention_count:int,backup_recipient_public_key:string}
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.1
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function read(): array {
 		$appId = Application::APP_ID;
@@ -86,7 +86,7 @@ class BackupSettings {
 	 *
 	 * @throws InvalidArgumentException On an out-of-range value or an unusable key
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.1
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function update(array $data): void {
 		$appId = Application::APP_ID;

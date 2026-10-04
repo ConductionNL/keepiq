@@ -72,7 +72,7 @@ class RecoveryOfficerController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
 	 */
 	#[NoAdminRequired]
 	public function overview(): JSONResponse {
@@ -104,7 +104,7 @@ class RecoveryOfficerController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
 	 */
 	#[NoAdminRequired]
 	public function createKey(string $publicKey = '', array $copies = []): JSONResponse {
@@ -131,7 +131,7 @@ class RecoveryOfficerController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
 	 */
 	#[NoAdminRequired]
 	public function ownCopy(string $keyId = ''): JSONResponse {
@@ -164,7 +164,7 @@ class RecoveryOfficerController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
 	 */
 	#[NoAdminRequired]
 	public function replaceOwnCopy(string $keyId, string $wrappedPrivateKey = ''): JSONResponse {
@@ -192,7 +192,7 @@ class RecoveryOfficerController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 	 */
 	#[NoAdminRequired]
 	#[VaultKeyProofRequired(binds: ['id'], subject: 'active', purpose: VaultKeyProofService::PURPOSE_APPROVE_ACCOUNT_RECOVERY)]
@@ -207,7 +207,7 @@ class RecoveryOfficerController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 	 */
 	#[NoAdminRequired]
 	public function decline(string $id): JSONResponse {
@@ -226,7 +226,7 @@ class RecoveryOfficerController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
 	 */
 	#[NoAdminRequired]
 	public function handoff(string $id): JSONResponse {
@@ -241,7 +241,7 @@ class RecoveryOfficerController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
 	 */
 	#[NoAdminRequired]
 	public function postSealed(string $id, string $sealedResult = ''): JSONResponse {

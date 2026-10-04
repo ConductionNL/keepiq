@@ -3,8 +3,9 @@
 /**
  * Keepiq occ command: keepiq:backup:restore
  *
- * Restores a vault backup in maintenance mode, after verification, schema
- * and age checks and a confirmation that names what a restore means
+ * Restores a vault backup after verification, schema and age checks and a
+ * confirmation that names what a restore means. The restore switches
+ * maintenance mode on for itself and always off again
  * (admin-scheduled-vault-backups D4 and D5).
  *
  * @category Command
@@ -24,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Command;
 
 use InvalidArgumentException;
+use Throwable;
 use OCA\Keepiq\Backup\BackupService;
 use OCA\Keepiq\Backup\RestoreService;
 use Symfony\Component\Console\Command\Command;
@@ -61,11 +63,11 @@ class BackupRestore extends Command {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	protected function configure(): void {
 		$this->setName(name: 'keepiq:backup:restore')
-			->setDescription(description: 'Restore every Keepiq vault from a backup (maintenance mode only)')
+			->setDescription(description: 'Restore every Keepiq vault from a backup, in maintenance mode it switches on and off itself')
 			->addArgument(name: 'file', mode: InputArgument::REQUIRED, description: 'An archive name from keepiq:backup:list, or a file path')
 			->addOption(name: 'key-file', mode: InputOption::VALUE_REQUIRED, description: 'The private key for an encrypted archive')
 			->addOption(name: 'dry-run', mode: InputOption::VALUE_NONE, description: 'Show current and archive row counts and change nothing')
@@ -80,8 +82,8 @@ class BackupRestore extends Command {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.4
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-a-restore-returns-ciphertext-that-still-needs-each-users-key
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$file = (string)$input->getArgument('file');
@@ -95,43 +97,112 @@ class BackupRestore extends Command {
 			return 1;
 		}
 
-		$refusals = $this->restore->refusals(manifest: $opened['manifest'], force: (bool)$input->getOption('force'));
-		if ($refusals !== []) {
-			foreach ($refusals as $refusal) {
-				$output->writeln('<error>' . $refusal . '</error>');
-			}
+		$force  = (bool)$input->getOption('force');
+		$dryRun = (bool)$input->getOption('dry-run');
 
+		// A dry run changes nothing, so the age rule is a notice there, not a refusal.
+		$refusals = $this->restore->refusals(manifest: $opened['manifest'], force: ($force === true || $dryRun === true));
+		foreach ($refusals as $refusal) {
+			$output->writeln('<error>' . $refusal . '</error>');
+		}
+
+		if ($refusals !== []) {
 			return 1;
 		}
 
-		$rows = [];
-		foreach ($this->restore->compare(manifest: $opened['manifest']) as $table => $counts) {
-			$rows[] = [$table, (string)$counts['current'], (string)$counts['archive']];
-		}
-
-		(new Table($output))->setHeaders(['Table', 'Rows now', 'Rows in archive'])->setRows($rows)->render();
-		if ((bool)$input->getOption('dry-run') === true) {
-			$output->writeln('Dry run: nothing changed.');
-			return 0;
+		$this->printCounts(manifest: $opened['manifest'], output: $output);
+		if ($dryRun === true) {
+			return $this->finishDryRun(manifest: $opened['manifest'], force: $force, output: $output);
 		}
 
 		foreach ($this->restore->warnings(zip: $opened['zip'], manifest: $opened['manifest']) as $warning) {
 			$output->writeln('<comment>' . $warning . '</comment>');
 		}
 
-		$helper = $this->getHelper(name: 'question');
-		if (($helper instanceof QuestionHelper) === false
-			|| $helper->ask($input, $output, new ConfirmationQuestion('Replace every Keepiq vault with this backup? [y/N] ', false)) !== true
-		) {
+		if ($this->confirmed(input: $input, output: $output) === false) {
 			$output->writeln('Restore cancelled. Nothing changed.');
 			return 1;
 		}
 
-		$result = $this->restore->restore(zip: $opened['zip'], manifest: $opened['manifest'], archiveName: basename($file));
+		return $this->runRestore(opened: $opened, archiveName: basename($file), output: $output);
+	}//end execute()
+
+	/**
+	 * Print the rows per table now and in the archive.
+	 *
+	 * @param array<string,mixed> $manifest The verified manifest
+	 * @param OutputInterface $output The output
+	 *
+	 * @return void
+	 */
+	private function printCounts(array $manifest, OutputInterface $output): void {
+		$rows = [];
+		foreach ($this->restore->compare(manifest: $manifest) as $table => $counts) {
+			$rows[] = [$table, (string)$counts['current'], (string)$counts['archive']];
+		}
+
+		(new Table($output))->setHeaders(['Table', 'Rows now', 'Rows in archive'])->setRows($rows)->render();
+	}//end printCounts()
+
+	/**
+	 * End a dry run: name the age rule a real restore would apply.
+	 *
+	 * @param array<string,mixed> $manifest The verified manifest
+	 * @param bool $force Whether --force was given
+	 * @param OutputInterface $output The output
+	 *
+	 * @return int
+	 */
+	private function finishDryRun(array $manifest, bool $force, OutputInterface $output): int {
+		if ($force === false && $this->restore->isOlderThanNewestAuditEntry(manifest: $manifest) === true) {
+			$output->writeln('<comment>The archive is older than the newest audit entry. A real restore needs --force to roll back on purpose.</comment>');
+		}
+
+		$output->writeln('Dry run: nothing changed.');
+		return 0;
+	}//end finishDryRun()
+
+	/**
+	 * Whether the administrator confirms the restore.
+	 *
+	 * @param InputInterface $input The input
+	 * @param OutputInterface $output The output
+	 *
+	 * @return bool
+	 */
+	private function confirmed(InputInterface $input, OutputInterface $output): bool {
+		$helper = $this->getHelper(name: 'question');
+		if (($helper instanceof QuestionHelper) === false) {
+			return false;
+		}
+
+		return $helper->ask($input, $output, new ConfirmationQuestion('Replace every Keepiq vault with this backup? [y/N] ', false)) === true;
+	}//end confirmed()
+
+	/**
+	 * Run the restore, which switches maintenance mode on and always off again.
+	 *
+	 * @param array{zip:string,manifest:array<string,mixed>} $opened The opened archive
+	 * @param string $archiveName The name for the audit entry
+	 * @param OutputInterface $output The output
+	 *
+	 * @return int
+	 */
+	private function runRestore(array $opened, string $archiveName, OutputInterface $output): int {
+		$output->writeln('Switching maintenance mode on for the restore.');
+		try {
+			$result = $this->restore->restore(zip: $opened['zip'], manifest: $opened['manifest'], archiveName: $archiveName);
+		} catch (Throwable $exception) {
+			$output->writeln('<error>Restore failed: ' . $exception->getMessage() . '</error>');
+			$output->writeln('<error>Maintenance mode is off again.</error>');
+			return 1;
+		}
+
+		$output->writeln('Maintenance mode is off again.');
 		$output->writeln(sprintf('Restored %d rows and %d attachment blobs.', $result['rows'], $result['blobs']));
 
 		return 0;
-	}//end execute()
+	}//end runRestore()
 
 	/**
 	 * The --key-file option, or null when not given.

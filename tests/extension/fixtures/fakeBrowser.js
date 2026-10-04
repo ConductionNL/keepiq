@@ -113,6 +113,13 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 				if (!found) throw new Error('No tab with id: ' + id)
 				return found
 			}),
+			// A test navigates a tab by calling these listeners.
+			onUpdated: {
+				listeners: [],
+				addListener(fn) {
+					this.listeners.push(fn)
+				},
+			},
 			// A test closes a tab by calling these listeners.
 			onRemoved: {
 				listeners: [],

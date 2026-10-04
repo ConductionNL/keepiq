@@ -96,7 +96,7 @@ class BreachProxyController extends Controller {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
+	 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
 	 */
 	public function __construct(
 		IRequest $request,
@@ -154,7 +154,7 @@ class BreachProxyController extends Controller {
 	 * @return DataResponse
 	 *
 	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity
-	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
+	 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
 	 */
 	#[NoAdminRequired]
 	public function range(string $prefix = ''): DataResponse {

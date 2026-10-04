@@ -7,7 +7,7 @@
   the user, approve with the master password, decline, or hand the key over
   once enough officers approved.
 
-  @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+  @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 -->
 <template>
 	<div
@@ -133,14 +133,14 @@ export default {
 
 	computed: {
 		/**
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 		 */
 		store() {
 			return useAccountRecoveryStore()
 		},
 
 		/**
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 		 */
 		officer() {
 			return this.store.officer
@@ -148,7 +148,7 @@ export default {
 	},
 
 	/**
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 	 */
 	async created() {
 		try {
@@ -164,7 +164,7 @@ export default {
 		 *
 		 * @param {Function} action The action.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 		 */
 		async run(action) {
 			this.busy = true

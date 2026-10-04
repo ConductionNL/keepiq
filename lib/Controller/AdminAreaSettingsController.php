@@ -88,7 +88,7 @@ class AdminAreaSettingsController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
-	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
+	 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	#[UserRateLimit(limit: 60, period: 60)]

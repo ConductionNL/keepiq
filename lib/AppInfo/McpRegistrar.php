@@ -29,7 +29,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  * OpenRegister is present and enabled; otherwise nothing is registered and
  * Keepiq has no MCP surface at all.
  *
- * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-surface-is-exposed-only-through-the-scannable-services-opt-in
+ * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-surface-is-exposed-only-through-the-scannable-services-opt-in
  */
 class McpRegistrar {
 
@@ -60,7 +60,7 @@ class McpRegistrar {
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) The prelude is static by design (see OpenRegisterAutoloader).
 	 *
-	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-surface-is-exposed-only-through-the-scannable-services-opt-in
+	 * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-surface-is-exposed-only-through-the-scannable-services-opt-in
 	 */
 	public function register(IRegistrationContext $context): bool {
 		$present = $this->openRegisterPresent ?? static fn (): bool => OpenRegisterAutoloader::register();

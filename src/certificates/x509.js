@@ -270,7 +270,7 @@ function spkiOf(der) {
  * @param {string} certificatePem The certificate to check.
  * @param {string} issuerPem The issuer certificate.
  * @return {Promise<boolean>}
- * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
  */
 export async function isIssuedBy(certificatePem, issuerPem) {
 	const der = pemToDer(certificatePem)
@@ -310,7 +310,7 @@ export async function isIssuedBy(certificatePem, issuerPem) {
  * @param {string} certificatePem The leaf certificate.
  * @param {Array<string>} chain The issuer certificates, nearest first.
  * @return {Promise<boolean>}
- * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
  */
 export async function chainsTo(certificatePem, chain) {
 	if (!Array.isArray(chain) || chain.length === 0) {
@@ -332,7 +332,7 @@ export async function chainsTo(certificatePem, chain) {
  *
  * @param {string} certificatePem The certificate.
  * @return {Promise<string>}
- * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
  */
 export async function certificateFingerprint(certificatePem) {
 	const der = pemToDer(certificatePem)
