@@ -14,7 +14,7 @@
  *
  * @param {object|null|undefined} secret A secret row or decrypted secret.
  * @return {boolean}
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+ * @spec openspec/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
  */
 export function isUseOnly(secret) {
 	return secret?.useOnly === true
@@ -26,7 +26,7 @@ export function isUseOnly(secret) {
  * @param {object|null|undefined} secret A secret row.
  * @param {Date} [now] The current time.
  * @return {boolean}
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-offline-copies-respect-the-end-date
+ * @spec openspec/specs/expiring-shares/spec.md#requirement-offline-copies-respect-the-end-date
  */
 export function isAccessExpired(secret, now = new Date()) {
 	const end = secret?.accessExpiresAt
@@ -43,7 +43,7 @@ export function isAccessExpired(secret, now = new Date()) {
  *
  * @param {string} date YYYY-MM-DD, or '' for no end.
  * @return {string|null} ISO 8601, or null.
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-shares-and-memberships-can-carry-an-end-date
+ * @spec openspec/specs/expiring-shares/spec.md#requirement-shares-and-memberships-can-carry-an-end-date
  */
 export function accessEndTimestamp(date) {
 	if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
@@ -58,7 +58,7 @@ export function accessEndTimestamp(date) {
  *
  * @param {{useOnly: boolean, endDate: string}} restriction The picked options.
  * @return {{useOnly: boolean, expiresAt: string|null}}
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.3
+ * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.3
  */
 export function restrictionPayload(restriction) {
 	return {

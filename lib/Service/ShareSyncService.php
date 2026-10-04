@@ -99,7 +99,7 @@ class ShareSyncService {
 	 * @throws InvalidArgumentException When validation or optimistic-lock check fails
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function syncUpdate(
 		string $secretId,

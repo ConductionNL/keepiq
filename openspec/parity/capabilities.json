@@ -5815,7 +5815,7 @@
       "id": "admin-13",
       "area": "admin",
       "name": "Manage the organisation through a public admin API.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "partial",
       "passbolt": "yes",
@@ -5823,11 +5823,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-public-api on 2026-09-27. Before: no OpenAPI or admin API docs in docs/; machine routes /api/v1/app/* (appinfo/routes.php:295-321) cover application secrets only; admin endpoints like PUT /api/settings/admin are internal session routes",
+        "state": "built",
+        "evidence": "GET /api/v1/admin (lib/Controller/AdminIndexController.php) with People, Policies, Applications and Audit endpoints under /api/v1/admin, each guarded by its admin area; docs/api/admin-v1.openapi.json; tests/Unit/Contract/AdminApiContractTest.php; tests/integration/admin-api.postman_collection.json (Audit-only service account, green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "note": "The admin screens call internal REST routes that a script could reach with a Nextcloud app password, but there is no documented, versioned admin API or scoped admin token.",
-        "change": "openspec/changes/admin-public-api"
+        "reachedOn": "HTTP Basic with a Nextcloud app password of a user whose group holds a Keepiq admin area, GET /index.php/apps/keepiq/api/v1/admin",
+        "note": "Built 2026-10-04 (archived). Force revocation and suite reinstatement stay out of the API because both need a fresh password confirmation.",
+        "change": "openspec/changes/archive/2026-10-04-admin-public-api"
       },
       "rowSource": "competitor",
       "provider": "keepiq",

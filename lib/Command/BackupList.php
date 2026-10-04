@@ -51,7 +51,7 @@ class BackupList extends Command {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.1
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	protected function configure(): void {
 		$this->setName(name: 'keepiq:backup:list')
@@ -68,7 +68,7 @@ class BackupList extends Command {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $input is mandated by Command::execute().
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.1
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$rows = [];

@@ -47,7 +47,7 @@ use Psr\Log\LoggerInterface;
  * no link, no group share) and the read-path end of an expiring copy
  * (sharing-use-only-and-expiring-shares tasks 3.1, 3.2 and 5.1).
  *
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+ * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
  */
 class UseOnlyServerRefusalTest extends TestCase {
 

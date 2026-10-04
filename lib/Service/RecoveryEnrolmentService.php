@@ -64,7 +64,7 @@ class RecoveryEnrolmentService {
 	 *
 	 * @return array{policy:string,enrolled:bool,current:bool,key:array<string,mixed>|null}
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
 	 */
 	public function status(string $userId): array {
 		$key       = $this->keys->publicInfo();
@@ -89,7 +89,7 @@ class RecoveryEnrolmentService {
 	 *
 	 * @return RecoveryEnrolment|null
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
 	 */
 	public function current(string $userId): ?RecoveryEnrolment {
 		return ($this->mapper->findByUser($userId)[0] ?? null);
@@ -107,7 +107,7 @@ class RecoveryEnrolmentService {
 	 * @throws ForbiddenException       When recovery is off
 	 * @throws InvalidArgumentException When the key is not the active one or the envelope is empty
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
 	 */
 	public function enrol(string $userId, string $recoveryKeyId, string $envelope): RecoveryEnrolment {
 		if ($this->policy->policy() === 'off') {
@@ -161,7 +161,7 @@ class RecoveryEnrolmentService {
 	 *
 	 * @throws ForbiddenException When the policy requires enrolment
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
 	 */
 	public function withdraw(string $userId): void {
 		if ($this->policy->policy() === 'required') {
@@ -181,7 +181,7 @@ class RecoveryEnrolmentService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-force-revocation-warns-about-enrolled-users
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-force-revocation-warns-about-enrolled-users
 	 */
 	public function isSuiteEnrolled(string $suiteId): bool {
 		return $suiteId !== '' && $this->mapper->findBySuite($suiteId) !== [];
@@ -194,7 +194,7 @@ class RecoveryEnrolmentService {
 	 *
 	 * @return int The number deleted
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
 	 */
 	public function deleteForSuite(string $suiteId): int {
 		$deleted = 0;

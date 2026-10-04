@@ -76,7 +76,7 @@ class AdminApplicationController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	#[AuthorizedAdminSetting(ApplicationAdminSettings::class)]
 	public function index(): JSONResponse {
@@ -97,7 +97,7 @@ class AdminApplicationController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	#[AuthorizedAdminSetting(ApplicationAdminSettings::class)]
 	public function show(string $id): JSONResponse {
@@ -130,7 +130,7 @@ class AdminApplicationController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	#[AuthorizedAdminSetting(ApplicationAdminSettings::class)]
 	#[UserRateLimit(limit: 30, period: 60)]
@@ -169,7 +169,7 @@ class AdminApplicationController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	#[AuthorizedAdminSetting(ApplicationAdminSettings::class)]
 	#[UserRateLimit(limit: 60, period: 60)]
@@ -190,7 +190,7 @@ class AdminApplicationController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	#[AuthorizedAdminSetting(ApplicationAdminSettings::class)]
 	#[UserRateLimit(limit: 60, period: 60)]
@@ -213,7 +213,7 @@ class AdminApplicationController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	#[AuthorizedAdminSetting(ApplicationAdminSettings::class)]
 	#[UserRateLimit(limit: 30, period: 60)]
@@ -236,7 +236,7 @@ class AdminApplicationController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	#[AuthorizedAdminSetting(ApplicationAdminSettings::class)]
 	public function getLeasePolicy(string $id): JSONResponse {
@@ -259,7 +259,7 @@ class AdminApplicationController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.4
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	#[AuthorizedAdminSetting(ApplicationAdminSettings::class)]
 	#[UserRateLimit(limit: 60, period: 60)]

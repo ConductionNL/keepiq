@@ -111,7 +111,7 @@ class GroupShareService {
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#4.2
 	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
 	 */
 	public function createGroupShare(
 		string $secretId,

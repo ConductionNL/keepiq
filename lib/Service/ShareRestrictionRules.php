@@ -43,7 +43,7 @@ class ShareRestrictionRules {
 	 *
 	 * @throws InvalidArgumentException When the date cannot be read or is not in the future
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-shares-and-memberships-can-carry-an-end-date
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-shares-and-memberships-can-carry-an-end-date
 	 */
 	public function fromRequest(mixed $useOnly, mixed $expiresAt, DateTime $now): ShareRestriction {
 		$flag = ($useOnly === true || $useOnly === 1 || $useOnly === '1' || $useOnly === 'true');
@@ -80,8 +80,8 @@ class ShareRestrictionRules {
 	 *
 	 * @return ShareRestriction
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-owners-can-share-a-secret-as-use-only
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-shares-and-memberships-can-carry-an-end-date
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-owners-can-share-a-secret-as-use-only
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-shares-and-memberships-can-carry-an-end-date
 	 */
 	public function combine(array $grants): ShareRestriction {
 		if ($grants === []) {

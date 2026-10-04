@@ -69,7 +69,7 @@ class ShareRestrictionResolver {
 	 *
 	 * @return ShareRestriction
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.2
 	 */
 	public function effectiveFor(ShareTarget $target): ShareRestriction {
 		return (new ShareRestrictionRules())->combine(grants: $this->grantsFor(target: $target));
@@ -82,7 +82,7 @@ class ShareRestrictionResolver {
 	 *
 	 * @return bool Whether the copy was written
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.2
 	 */
 	public function resolveTarget(ShareTarget $target): bool {
 		try {
@@ -114,7 +114,7 @@ class ShareRestrictionResolver {
 	 *
 	 * @return int The number of copies written
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.2
 	 */
 	public function resolveSource(string $sourceSecretId): int {
 		return $this->resolveTargets(targets: $this->shareTargetMapper->findBySourceSecret($sourceSecretId));
@@ -127,7 +127,7 @@ class ShareRestrictionResolver {
 	 *
 	 * @return int The number of copies written
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.2
 	 */
 	public function resolveTargets(array $targets): int {
 		$written = 0;

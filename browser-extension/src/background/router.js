@@ -31,9 +31,15 @@ import {
 	isUseOnly,
 } from '../lib/useOnly.js'
 import { isServerSupported } from '../lib/version.js'
+import { isSecureServerUrl, normalizeServerUrl } from '../lib/server-url.js'
 import { buildVaultHandlers } from './vault-handlers.js'
 import { areaOrMemory, buildGeneratorHandlers } from './generator-handlers.js'
 import { buildVaultSync, isOffline, SYNC_INTERVAL_MINUTES } from './vault-sync.js'
+import {
+	buildClipboardClear,
+	CLEAR_CHOICES,
+	clearClipboardNow,
+} from './clipboard-clear.js'
 
 /**
  * The messages a content script (a tab) may send. Everything else needs an
@@ -43,6 +49,8 @@ export const PAGE_MESSAGES = Object.freeze(
 	new Set([
 		'capture-credential',
 		'capture-decision',
+		// A frame says it loaded; the worker records its host from the sender.
+		'frame-ready',
 		'webauthn-create',
 		'webauthn-get',
 		'otp-field-detected',
@@ -50,6 +58,82 @@ export const PAGE_MESSAGES = Object.freeze(
 		'generate-for-field',
 	]),
 )
+
+// chrome.storage.session key of a tab's frames, { frameId: host }, recorded
+// from the browser's sender record when each frame's content script loads.
+const FRAMES_KEY = (tabId) => 'frames:' + tabId
+
+/**
+ * Record a frame of a tab with the host the browser says it is on.
+ *
+ * @param {object} payload Unused: the page's claims are not read.
+ * @param {object} sender The runtime.MessageSender of the content script.
+ * @return {Promise<{ok: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-a-fill-reaches-only-frames-on-the-matched-site
+ */
+async function doFrameReady(payload, sender) {
+	const tabId = sender?.tab?.id
+	const frameId = sender?.frameId
+	const host = hostOf(sender?.url || '')
+	const store = sessionStore()
+	if (!store || !Number.isInteger(tabId) || !Number.isInteger(frameId) || !host) {
+		return { ok: false }
+	}
+	const key = FRAMES_KEY(tabId)
+	const frames = (await store.get(key))[key] || {}
+	// Frames report in any order; a new page clears the record when it
+	// starts loading (below), never when its top frame reports.
+	await store.set({ [key]: { ...frames, [frameId]: host } })
+	return { ok: true }
+}
+
+// A tab starts loading a new page: its frames are gone.
+chrome.tabs?.onUpdated?.addListener((tabId, info) => {
+	if (info?.status !== 'loading') return
+	sessionStore()
+		?.remove(FRAMES_KEY(tabId))
+		.catch(() => {})
+})
+
+/**
+ * The frames of a tab that are on a host. Without a record (the worker
+ * restarted), only the top frame, whose page the caller already checked.
+ *
+ * @param {number} tabId The tab.
+ * @param {string} host The matched host.
+ * @return {Promise<Array<number>>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-a-fill-reaches-only-frames-on-the-matched-site
+ */
+async function framesOn(tabId, host) {
+	const store = sessionStore()
+	const key = FRAMES_KEY(tabId)
+	const frames = store ? (await store.get(key))[key] : null
+	if (!frames || Object.keys(frames).length === 0) return [0]
+	return Object.entries(frames)
+		.filter(([, h]) => h === host)
+		.map(([id]) => Number(id))
+}
+
+/**
+ * Send a message to the frames of a tab on a host, one by one, and report
+ * whether any of them handled it.
+ *
+ * @param {number} tabId The tab.
+ * @param {string} host The matched host.
+ * @param {object} message The message.
+ * @return {Promise<{filled: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-a-fill-reaches-only-frames-on-the-matched-site
+ */
+async function sendToFramesOn(tabId, host, message) {
+	let filled = false
+	for (const frameId of await framesOn(tabId, host)) {
+		const res = await chrome.tabs
+			.sendMessage(tabId, message, { frameId })
+			.catch(() => null)
+		if (res?.filled) filled = true
+	}
+	return { filled }
+}
 
 /** How long after a login fill the code may fill on the next step. */
 export const OTP_INTENT_MS = 5 * 60 * 1000
@@ -81,6 +165,26 @@ async function targetTab(tabId) {
 // The Generator tab's state (clients-extension-complete), built on first use
 // so it binds to the storage areas the browser provides at that time.
 let generatorState = null
+
+// Clearing the clipboard after a copy (clients-extension-gaps), built on first
+// use like the generator state.
+let clipboardState = null
+
+/**
+ * The clipboard clearer.
+ *
+ * @return {object}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-clipboard/spec.md#requirement-every-copy-is-cleared-after-a-delay-the-user-sets
+ */
+function clipboardModule() {
+	if (!clipboardState) {
+		clipboardState = buildClipboardClear({
+			local: areaOrMemory(chrome.storage?.local),
+			clear: clearClipboardNow,
+		})
+	}
+	return clipboardState
+}
 
 function generatorModule() {
 	if (!generatorState) {
@@ -115,6 +219,7 @@ function syncModule() {
 			api,
 			local: chrome.storage.local,
 			activeSuiteId: (id) => vault.activeSuiteId(id),
+			activeSuiteEpoch: (id) => vault.activeSuiteEpoch(id),
 			lock: (id) => lockAccount(id),
 		})
 	}
@@ -145,6 +250,7 @@ function startSync(account) {
  * @return {Promise<void>}
  */
 export async function onAlarm(alarm) {
+	if (await clipboardModule().onAlarm(alarm)) return
 	if (!alarm?.name?.startsWith('keepiq-sync:')) return
 	const id = alarm.name.slice('keepiq-sync:'.length)
 	const account = await api.loadAccount(id)
@@ -159,6 +265,14 @@ export async function onAlarm(alarm) {
 // tab is forgotten too, so a locked popup reopens on its first tab.
 vault.onLock((accountId) => {
 	chrome.alarms?.clear(SYNC_ALARM(accountId))
+	// Tell an open popup, so it drops what it shows of the vault at once.
+	try {
+		chrome.runtime
+			.sendMessage({ type: 'keepiq-locked', accountId })
+			?.catch?.(() => {})
+	} catch {
+		// No page is listening.
+	}
 	sessionStore()
 		?.remove('popup:lastTab')
 		.catch(() => {})
@@ -210,9 +324,37 @@ const maxIdleByAccount = new Map()
 // Cleared on lock.
 const matchCache = new Map()
 
-// A pending submit-capture, surfaced for save/update confirmation. It is bound
-// to the account that was active when the login was submitted.
-let pendingCapture = null
+// Submitted logins waiting for a save or update decision, one per tab. Each is
+// bound to the account active at submit and expires after CAPTURE_TTL_MS
+// (clients-extension-gaps).
+const captures = new Map()
+
+/** How long a submitted login waits for a decision. */
+export const CAPTURE_TTL_MS = 5 * 60 * 1000
+
+/**
+ * The live capture of a tab, or null. An expired one is dropped.
+ *
+ * @param {number|undefined} tabId The tab.
+ * @return {object|null}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-the-save-prompt-trusts-the-browser-not-the-page
+ */
+function captureOf(tabId) {
+	const capture = captures.get(tabId)
+	if (!capture) return null
+	if (capture.expiresAt <= Date.now()) {
+		captures.delete(tabId)
+		return null
+	}
+	return capture
+}
+
+chrome.tabs?.onRemoved?.addListener((tabId) => {
+	captures.delete(tabId)
+	sessionStore()
+		?.remove(FRAMES_KEY(tabId))
+		.catch(() => {})
+})
 
 // Passkey provider: the orchestrator works on the active account.
 const passkey = buildPasskeyOrchestrator({
@@ -276,10 +418,46 @@ function lockAccount(accountId) {
 	vault.lock(accountId)
 	matchCache.delete(accountId)
 	clearOtpIntents().catch(() => {})
-	if (pendingCapture && pendingCapture.accountId === accountId) {
-		pendingCapture = null
+	for (const [tabId, capture] of captures) {
+		if (capture.accountId === accountId) captures.delete(tabId)
 	}
 }
+
+// Accounts being signed out right now, so parallel 401s do it once.
+const signingOut = new Set()
+
+/**
+ * Sign an account out after the server refused its app password (401): the
+ * password was revoked or changed in Nextcloud. Lock it, forget the password,
+ * the vault snapshot and the generator state, and keep the account so the
+ * user can sign in again with a new app password.
+ *
+ * @param {string} accountId The account.
+ * @return {Promise<void>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ */
+export async function signOutAccount(accountId) {
+	if (!accountId || signingOut.has(accountId)) return
+	signingOut.add(accountId)
+	try {
+		lockAccount(accountId)
+		await api
+			.updateAccount(accountId, { appPassword: '', loggedOut: true })
+			.catch(() => {})
+		await syncModule()
+			.forget(accountId)
+			.catch(() => {})
+		await generatorModule()
+			.forget(accountId)
+			.catch(() => {})
+	} finally {
+		signingOut.delete(accountId)
+	}
+}
+
+api.onUnauthorized((config) => {
+	signOutAccount(config.id)
+})
 
 /** Lock every account and drop every cache (OS lock, Lock button). */
 export function lockEverything() {
@@ -321,13 +499,21 @@ async function refreshServerVersion(account) {
 	return account.serverVersion ?? null
 }
 
-/** Current state for the popup to render the right view. */
+/**
+ * Current state for the popup to render the right view.
+ *
+ * @return {Promise<object>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
+ */
 async function getState() {
 	const accounts = await api.loadAccounts()
 	const activeId = await api.activeAccountId()
 	const active = accounts.find((a) => a.id === activeId) || null
+	const loggedOut = active?.loggedOut === true
+	const insecure = active ? !isSecureServerUrl(active.url) : false
 	// An account paired before the handshake has no version yet: ask once.
-	if (active && active.serverVersion === undefined) {
+	if (active && active.serverVersion === undefined && !loggedOut && !insecure) {
 		await refreshServerVersion(active)
 	}
 	return {
@@ -341,7 +527,10 @@ async function getState() {
 			label: a.label || '',
 			unlocked: vault.isUnlocked(a.id),
 			idleMinutes: a.idleMinutes,
+			loggedOut: a.loggedOut === true,
 		})),
+		loggedOut,
+		insecure,
 		unlocked: active ? vault.isUnlocked(active.id) : false,
 		user: active ? active.user : null,
 		url: active ? active.url : null,
@@ -353,6 +542,13 @@ async function getState() {
 	}
 }
 
+/**
+ * Pair an account: clean the address, verify the app password, store it.
+ *
+ * @param {{url: string, user: string, appPassword: string}} payload The pairing form.
+ * @return {Promise<{ok: boolean, accountId: string}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
+ */
 async function doPair(payload) {
 	if ((await api.loadAccounts()).length >= api.MAX_ACCOUNTS) {
 		throw new Error(
@@ -362,7 +558,7 @@ async function doPair(payload) {
 		)
 	}
 	const config = {
-		url: payload.url,
+		url: normalizeServerUrl(payload.url),
 		user: payload.user,
 		appPassword: payload.appPassword,
 	}
@@ -375,6 +571,13 @@ async function doPair(payload) {
 	return { ok: true, accountId: account.id }
 }
 
+/**
+ * Disconnect an account and delete its app password in Nextcloud.
+ *
+ * @param {{accountId?: string}} payload The account, or the active one.
+ * @return {Promise<{ok: boolean, revoked: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ */
 async function doUnpair(payload) {
 	const id = payload.accountId || (await api.activeAccountId())
 	const account = id ? await api.loadAccount(id) : null
@@ -387,8 +590,9 @@ async function doUnpair(payload) {
 	let revoked = false
 	try {
 		// Delete the app password itself, so Disconnect really ends the
-		// pairing (#748). The local state is cleared either way.
-		revoked = await api.revokeAppPassword(account)
+		// pairing (#748). The local state is cleared either way. A signed-out
+		// account has no password left to delete.
+		revoked = account.loggedOut ? false : await api.revokeAppPassword(account)
 	} catch {
 		revoked = false
 	}
@@ -403,6 +607,29 @@ async function doUnpair(payload) {
 		.catch(() => {})
 	await api.removeAccount(id)
 	return { ok: true, revoked }
+}
+
+/**
+ * Sign a signed-out account in again with a new app password. The address
+ * and user stay; the password is verified before it is stored.
+ *
+ * @param {{accountId: string, appPassword: string}} payload The account and its new app password.
+ * @return {Promise<{ok: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ */
+async function doRelogin(payload) {
+	const account = await api.loadAccount(payload.accountId)
+	if (!account) throw new Error('This account is no longer connected')
+	const appPassword = String(payload.appPassword ?? '').trim()
+	if (appPassword === '') throw new Error('Enter a new app password')
+	const config = { url: account.url, user: account.user, appPassword }
+	const res = await api.pair(config)
+	await api.updateAccount(account.id, {
+		appPassword,
+		loggedOut: false,
+		serverVersion: res?.serverVersion ?? account.serverVersion ?? null,
+	})
+	return { ok: true }
 }
 
 async function doSwitchAccount(payload) {
@@ -438,8 +665,21 @@ async function refreshPolicy(account) {
 	maxIdleByAccount.set(account.id, max)
 }
 
+/**
+ * Unlock the active account with its master password. A signed-out account
+ * cannot unlock.
+ *
+ * @param {{masterPassword: string}} payload The master password.
+ * @return {Promise<{ok: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ */
 async function doUnlock(payload) {
 	const account = await activeAccount()
+	if (account.loggedOut) {
+		throw new Error(
+			'This account is signed out. Sign in again with a new app password.',
+		)
+	}
 	await refreshServerVersion(account)
 	await vault.unlock(account.id, account, payload.masterPassword)
 	await refreshPolicy(account)
@@ -454,10 +694,16 @@ async function doUnlock(payload) {
  *
  * @param {{accountId: string, rawKey: number[]}} payload The account and key bytes.
  * @return {Promise<{ok: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
  */
 async function doUnlockRaw(payload) {
 	const account = await api.loadAccount(payload.accountId)
 	if (!account) throw new Error('unknown account')
+	if (account.loggedOut) {
+		throw new Error(
+			'This account is signed out. Sign in again with a new app password.',
+		)
+	}
 	const bytes = Array.isArray(payload.rawKey) ? payload.rawKey : []
 	if (bytes.length !== 32) throw new Error('invalid unlock key')
 	const rawKey = Uint8Array.from(bytes)
@@ -476,7 +722,7 @@ async function doUnlockRaw(payload) {
  * Whether device approval is on, and the active account's open request.
  *
  * @return {Promise<{enabled: boolean, request: object|null}>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
  */
 async function doDeviceApprovalState() {
 	const account = await activeAccount()
@@ -490,7 +736,7 @@ async function doDeviceApprovalState() {
  * Start "Approve from another device" for the active account.
  *
  * @return {Promise<object>} The request: id, phrase, expiry and status.
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
  */
 async function doDeviceApprovalStart() {
 	const account = await activeAccount()
@@ -503,7 +749,7 @@ async function doDeviceApprovalStart() {
  * through the same raw-key unlock as a passkey.
  *
  * @return {Promise<{status: string}>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
  */
 async function doDeviceApprovalPoll() {
 	const account = await activeAccount()
@@ -519,7 +765,7 @@ async function doDeviceApprovalPoll() {
  * Stop waiting for an approval.
  *
  * @return {Promise<{ok: boolean}>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
  */
 async function doDeviceApprovalCancel() {
 	await deviceApproval.cancel(await activeAccount())
@@ -529,7 +775,11 @@ async function doDeviceApprovalCancel() {
 /**
  * Candidate list for a host — metadata only (id/name/url). No decryption
  * happens here; a locked-but-paired extension can still list names/urls.
- * @param payload
+ * A blocked row is never offered.
+ *
+ * @param {{host: string}} payload The site.
+ * @return {Promise<Array<object>>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-blocked-items-are-never-offered
  */
 async function doMatch(payload) {
 	const account = await activeAccount()
@@ -552,6 +802,8 @@ async function doMatch(payload) {
 			(r) => !r.blocked && !r.trashedAt && !r.archivedAt,
 		)
 	}
+	// A blocked row (its key cannot be used) is never offered, online or not.
+	rows = rows.filter((r) => !r.blocked)
 	// A use-only copy is only ever offered on its own site (no "fill anyway").
 	const ranked = filterForHost(matchSecrets(rows, payload.host), payload.host)
 	// Return only index fields; the blobs stay in this account's cache.
@@ -570,10 +822,36 @@ async function doMatch(payload) {
 }
 
 /**
+ * Whether filling a row into a page would send an https login to a plain
+ * http page.
+ *
+ * @param {object} row The matched row.
+ * @param {string} pageUrl The page address.
+ * @return {boolean}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-ask-before-filling-an-https-login-into-an-http-page
+ */
+export function downgradesToHttp(row, pageUrl) {
+	try {
+		return (
+			new URL(pageUrl).protocol === 'http:'
+			&& /^https:\/\//i.test(String(row.url || ''))
+		)
+	} catch {
+		return false
+	}
+}
+
+/**
  * Decrypt the chosen secret and fill it into the active tab. Refused unless
  * the id came from the ACTIVE account's own last match, the message names
- * that account, and the tab is still on the matched site.
- * @param payload
+ * that account, and the tab is still on the matched site. Only the tab's
+ * frames on the matched host receive the values, and an https login waits
+ * for the user's yes before it fills a plain http page.
+ *
+ * @param {{id: string, accountId: string, tabId?: number, allowHttp?: boolean}} payload The choice.
+ * @return {Promise<object>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-a-fill-reaches-only-frames-on-the-matched-site
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-ask-before-filling-an-https-login-into-an-http-page
  */
 async function doFill(payload) {
 	const account = await activeAccount()
@@ -596,15 +874,17 @@ async function doFill(payload) {
 		// Never fill a use-only copy on another site.
 		return { filled: false }
 	}
+	// An https login into a plain http page: the user decides, in the popup.
+	if (downgradesToHttp(row, tab.url) && payload.allowHttp !== true) {
+		return { filled: false, confirm: 'http-page' }
+	}
 	const { login, secret } = await vault.decryptSecret(account.id, row)
 	await touchActivity(account.id)
-	const results = await chrome.tabs
-		.sendMessage(tab.id, {
-			type: 'fill-credential',
-			// Every frame gets the message; only frames on this host fill (#740).
-			payload: { login, secret, host: cache.host, useOnly },
-		})
-		.catch(() => ({ filled: false }))
+	// Only frames on this host get the values; each frame checks again (#740).
+	const results = await sendToFramesOn(tab.id, cache.host, {
+		type: 'fill-credential',
+		payload: { login, secret, host: cache.host, useOnly },
+	})
 	// A fill counts as a use for the vault's Last used sort; a failed report
 	// never fails the fill (vault-favourites-tags-and-last-used). A use-only
 	// fill is also recorded for its owner (sharing-use-only-and-expiring-shares).
@@ -619,13 +899,10 @@ async function doFill(payload) {
 	if (totp) {
 		// Best-effort: fill a detected OTP field on the page; the popup also
 		// copies the code as the fallback (extension-totp-autofill §4.1).
-		const otp = await chrome.tabs
-			.sendMessage(tab.id, {
-				type: 'fill-otp',
-				// Every frame gets the message; only frames on this host fill (#740).
-				payload: { code: totp.code, host: cache.host },
-			})
-			.catch(() => ({ filled: false }))
+		const otp = await sendToFramesOn(tab.id, cache.host, {
+			type: 'fill-otp',
+			payload: { code: totp.code, host: cache.host },
+		})
 		if (!otp?.filled) {
 			// The code field is on the next step: remember, for this tab, this
 			// site and five minutes, which secret to compute it from. No seed,
@@ -703,7 +980,8 @@ async function doOtpFieldDetected(payload, sender) {
 	const intents = await readIntents()
 	const intent = intents[tabId]
 	if (!intent) return { filled: false }
-	const site = registrableDomain(hostOf(senderOrigin(sender)))
+	const host = hostOf(senderOrigin(sender))
+	const site = registrableDomain(host)
 	if (site === '' || site !== intent.site) return { filled: false }
 	delete intents[tabId]
 	await writeIntents(intents)
@@ -717,7 +995,9 @@ async function doOtpFieldDetected(payload, sender) {
 	const res = await chrome.tabs
 		.sendMessage(
 			tabId,
-			{ type: 'fill-otp', payload: { code: result.code } },
+			// The frame fills only for its own host (fillScope, #740), so
+			// the message names the host the field was reported from.
+			{ type: 'fill-otp', payload: { code: result.code, host } },
 			{ frameId: sender.frameId ?? 0 },
 		)
 		.catch(() => ({ filled: false }))
@@ -738,36 +1018,36 @@ async function policyRefusalFor(config, value) {
 }
 
 /**
- * Save or update a captured credential (encrypted client-side) to the account
- * the capture belongs to. A password the org policy refuses is not saved; the
- * reason comes back as the error.
- * @param payload
+ * Save or update a held capture (encrypted here) to the account it belongs
+ * to. A password the org policy refuses is not saved; the reason comes back
+ * as the error.
+ *
+ * @param {object} capture The held capture.
+ * @param {number} tabId The tab it was held for.
+ * @return {Promise<{ok: boolean}>}
  */
-async function doSaveCapture(payload) {
-	const accountId =
-		pendingCapture?.accountId
-		|| payload.accountId
-		|| (await api.activeAccountId())
+async function saveHeldCapture(capture, tabId) {
+	const accountId = capture.accountId
 	const config = await api.loadAccount(accountId)
 	if (!config) throw new Error('not paired')
 	if (!vault.isUnlocked(accountId)) throw new Error('vault is locked')
-	const refusal = await policyRefusalFor(config, payload.secret)
+	const refusal = await policyRefusalFor(config, capture.secret)
 	if (refusal !== null) {
-		pendingCapture = null
+		captures.delete(tabId)
 		throw new Error(refusal)
 	}
-	const encryptedKey = await vault.encryptField(accountId, payload.secret)
-	const encryptedLogin = await vault.encryptField(accountId, payload.login || '')
+	const encryptedKey = await vault.encryptField(accountId, capture.secret)
+	const encryptedLogin = await vault.encryptField(accountId, capture.login || '')
 	const body = {
-		name: payload.name || hostOf(payload.host),
-		url: payload.url || payload.host,
+		name: capture.name || capture.host,
+		url: capture.url || capture.host,
 		key: encryptedKey,
 		login: encryptedLogin,
 		encryptionSuiteId: vault.activeSuiteId(accountId),
 	}
-	if (payload.id) {
+	if (capture.id) {
 		// An update changes the credential only; the saved name and address stay.
-		await api.updateSecret(config, payload.id, {
+		await api.updateSecret(config, capture.id, {
 			key: encryptedKey,
 			login: encryptedLogin,
 			encryptionSuiteId: body.encryptionSuiteId,
@@ -775,23 +1055,44 @@ async function doSaveCapture(payload) {
 	} else {
 		await api.createSecret(config, body)
 	}
-	pendingCapture = null
+	captures.delete(tabId)
 	await touchActivity(accountId)
 	return { ok: true }
 }
 
 /**
- * The pending capture for the popup's save prompt, with the account it will
- * be saved to.
+ * Save the capture held for the popup's tab. The popup names the tab, never
+ * the credential: what is saved is what the browser saw submitted there.
  *
- * @return {Promise<{capture: object|null}>}
+ * @param {{tabId?: number}} payload The popup's pinned tab, if popped out.
+ * @return {Promise<{ok: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-the-save-prompt-trusts-the-browser-not-the-page
  */
-async function takePendingCapture() {
-	if (!pendingCapture) return { capture: null }
-	const account = await api.loadAccount(pendingCapture.accountId)
+async function doSaveCapture(payload) {
+	const tab = await targetTab(payload.tabId)
+	const capture = tab ? captureOf(tab.id) : null
+	if (!capture) throw new Error('There is no login waiting to be saved here')
+	return saveHeldCapture(capture, tab.id)
+}
+
+/**
+ * The capture held for the popup's tab, for its save prompt, with the account
+ * it will be saved to. No secret leaves the worker.
+ *
+ * @param {{tabId?: number}} payload The popup's pinned tab, if popped out.
+ * @return {Promise<{capture: object|null}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-the-save-prompt-trusts-the-browser-not-the-page
+ */
+async function takePendingCapture(payload = {}) {
+	const tab = await targetTab(payload.tabId)
+	const capture = tab ? captureOf(tab.id) : null
+	if (!capture) return { capture: null }
+	const account = await api.loadAccount(capture.accountId)
 	return {
 		capture: {
-			...pendingCapture,
+			host: capture.host,
+			login: capture.login,
+			update: !!capture.id,
 			account: account ? account.user + '@' + hostLabel(account) : '',
 		},
 	}
@@ -802,64 +1103,83 @@ async function takePendingCapture() {
  * when a saved login for the site has this username and another password,
  * nothing when it has this password, else save. A locked vault cannot tell,
  * so it offers nothing in the page and leaves the popup fallback. The capture
- * belongs to the account active at submit time.
+ * belongs to the account active at submit time and to the tab it came from.
+ * Its site is the one the browser says sent it, never the page's claim.
  *
  * @param {object} capture The submitted login from the content script.
+ * @param {object} sender The runtime.MessageSender of the content script.
  * @return {Promise<{action: string, name?: string}>} The offer, without ids or secrets.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-the-save-prompt-trusts-the-browser-not-the-page
  */
-export async function doCapture(capture) {
+export async function doCapture(capture, sender) {
+	const tabId = sender?.tab?.id
+	let origin
+	try {
+		origin = new URL(sender?.url || '')
+	} catch {
+		return { action: 'none' }
+	}
+	if (!Number.isInteger(tabId) || !/^https?:$/.test(origin.protocol)) {
+		return { action: 'none' }
+	}
+	const host = origin.hostname
 	const config = await api.loadConfig()
 	if (!config) return { action: 'none' }
-	pendingCapture = {
-		host: capture.host,
-		url: capture.url,
-		name: capture.name,
-		login: capture.login,
-		secret: capture.secret,
+	captures.set(tabId, {
+		host,
+		url: origin.origin,
+		name: host,
+		login: String(capture?.login ?? ''),
+		secret: String(capture?.secret ?? ''),
 		accountId: config.id,
-	}
+		expiresAt: Date.now() + CAPTURE_TTL_MS,
+	})
 	if (!vault.isUnlocked(config.id)) return { action: 'locked' }
 	let offer
 	try {
-		const rows = await api.match(config, capture.host)
+		const rows = await api.match(config, host)
 		// A login that belongs to a use-only copy is never offered for save
 		// or update (sharing-use-only-and-expiring-shares D3).
-		if (blocksSavePrompt(rows, capture.host)) {
-			pendingCapture = null
+		if (blocksSavePrompt(rows, host)) {
+			captures.delete(tabId)
 			return { action: 'none' }
 		}
-		offer = await classifyCapture(capture, rows, (row) =>
+		offer = await classifyCapture({ ...captures.get(tabId) }, rows, (row) =>
 			vault.decryptSecret(config.id, row),
 		)
 	} catch {
 		return { action: 'none' }
 	}
 	if (offer.action === 'none') {
-		pendingCapture = null
+		captures.delete(tabId)
 		return { action: 'none' }
 	}
 	// Say so in the page instead of offering a save the policy would refuse.
-	const refusal = await policyRefusalFor(config, capture.secret)
+	const refusal = await policyRefusalFor(config, captures.get(tabId).secret)
 	if (refusal !== null) {
-		pendingCapture = null
+		captures.delete(tabId)
 		return { action: 'refused', reason: refusal }
 	}
-	pendingCapture.id = offer.id
+	captures.get(tabId).id = offer.id
 	return { action: offer.action, name: offer.name }
 }
 
 /**
- * Act on the choice made in the in-page offer.
+ * Act on the choice made in the in-page offer, for the tab that made it.
  *
  * @param {{choice: string}} payload save, update or dismiss.
+ * @param {object} sender The runtime.MessageSender of the content script.
  * @return {Promise<object>} The save result, or ok.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md#requirement-the-save-prompt-trusts-the-browser-not-the-page
  */
-async function doCaptureDecision(payload) {
-	if (!pendingCapture) return { ok: false }
+async function doCaptureDecision(payload, sender) {
+	const tabId = sender?.tab?.id
+	const capture = captureOf(tabId)
+	if (!capture) return { ok: false }
 	if (payload.choice === 'save' || payload.choice === 'update') {
-		return doSaveCapture(pendingCapture)
+		return saveHeldCapture(capture, tabId)
 	}
-	pendingCapture = null
+	captures.delete(tabId)
 	return { ok: true }
 }
 
@@ -943,6 +1263,7 @@ async function doBiometricUsed(payload) {
 const handlers = {
 	'get-state': getState,
 	pair: doPair,
+	relogin: doRelogin,
 	unpair: doUnpair,
 	'switch-account': doSwitchAccount,
 	'set-idle': doSetIdle,
@@ -962,6 +1283,16 @@ const handlers = {
 	'save-capture': doSaveCapture,
 	'totp-for-host': doTotpForHost,
 	'pending-capture': takePendingCapture,
+	// A copy in the popup; the worker clears the clipboard later.
+	'clipboard-copied': () => clipboardModule().copied(),
+	'clipboard-settings': async () => ({
+		seconds: await clipboardModule().seconds(),
+		choices: CLEAR_CHOICES,
+	}),
+	'set-clipboard-clear': async (payload) => ({
+		seconds: await clipboardModule().setSeconds(payload.seconds),
+	}),
+	'frame-ready': doFrameReady,
 	'capture-decision': doCaptureDecision,
 	'biometric-enrol-context': doBiometricEnrolContext,
 	'biometric-enrol': doBiometricEnrol,
@@ -1033,7 +1364,9 @@ export function handleMessage(msg, sender) {
 	if (type === 'capture-credential') {
 		// Submit-capture arrives from a content script: hold it and answer
 		// with the offer the page shows at once.
-		return doCapture(msg.payload || {}).catch(() => ({ action: 'none' }))
+		return doCapture(msg.payload || {}, sender).catch(() => ({
+			action: 'none',
+		}))
 	}
 	const handler = Object.prototype.hasOwnProperty.call(handlers, type)
 		? handlers[type]

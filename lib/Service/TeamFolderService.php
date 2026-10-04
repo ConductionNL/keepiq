@@ -229,7 +229,7 @@ class TeamFolderService {
 	 * @throws InvalidArgumentException On invalid input / not authorized
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 */
 	public function addMember(
 		string $teamFolderId,
@@ -614,9 +614,9 @@ class TeamFolderService {
 	 *
 	 * @throws InvalidArgumentException On non-owner, unknown member, or invalid grade
 	 *
-	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-or-write-grade
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 */
 	public function setMemberGrade(
 		string $teamFolderId,
@@ -685,7 +685,7 @@ class TeamFolderService {
 	 *
 	 * @return array<int,array{id:string,name:string,copyId:string|null}>
 	 *
-	 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
 	 */
 	private function withCallerCopies(array $refs, TeamFolder $teamFolder, string $userId): array {
 		$isOwner = ($teamFolder->getOwnerId() === $userId);
@@ -723,7 +723,7 @@ class TeamFolderService {
 	 *
 	 * @throws InvalidArgumentException When a manager reaches above their role
 	 *
-	 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 	 */
 	private function assertManagerMayTouch(
 		TeamFolder $teamFolder,
@@ -756,7 +756,7 @@ class TeamFolderService {
 	 *
 	 * @throws InvalidArgumentException When use-only is asked for a write grade
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 */
 	private function applyRestriction(TeamFolderMember $membership, ShareRestriction $restriction): TeamFolderMember {
 		$this->assertRestrictionFitsGrade(grade: $membership->effectiveGrade(), restriction: $restriction);
@@ -779,7 +779,7 @@ class TeamFolderService {
 	 *
 	 * @throws InvalidArgumentException When use-only is asked for a write grade
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-owners-can-share-a-secret-as-use-only
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-owners-can-share-a-secret-as-use-only
 	 */
 	private function assertRestrictionFitsGrade(string $grade, ShareRestriction $restriction): void {
 		if ($restriction->useOnly === true && $grade !== 'read') {
@@ -794,7 +794,7 @@ class TeamFolderService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.2
 	 */
 	private function resolveCopiesOf(TeamFolderMember $membership): void {
 		if ($this->restrictions === null || $this->shareTargets === null) {

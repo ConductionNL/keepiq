@@ -53,7 +53,7 @@ final class ShareRestriction {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-an-expiring-copy-cannot-be-shared-onward
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-an-expiring-copy-cannot-be-shared-onward
 	 */
 	public function isRestricted(): bool {
 		return ($this->useOnly === true || $this->expiresAt !== null);
