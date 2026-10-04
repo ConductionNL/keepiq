@@ -96,8 +96,10 @@
 				</div>
 				<div id="save-prompt" class="save-prompt" hidden>
 					<p id="save-text"></p>
+					<label id="save-folder-label">Folder<select id="save-folder"><option value="">No folder</option></select></label>
 					<button id="save-yes" class="primary">Save</button>
 					<button id="save-no" class="link">Not now</button>
+					<button id="save-never" class="link">Never for this site</button>
 				</div>
 			</div>
 
@@ -324,6 +326,12 @@
 				<div id="idle-choices"></div>
 			</fieldset>
 			<p class="hint">Keepiq also locks when your computer locks.</p>
+			<p id="shortcut-text" class="hint"></p>
+			<fieldset id="never-settings">
+				<legend>Never offer to save logins on</legend>
+				<ul id="never-list" class="candidates"></ul>
+				<p id="never-empty" class="hint">No sites yet.</p>
+			</fieldset>
 			<label>Clear the clipboard after a copy
 				<select id="clipboard-clear"></select>
 			</label>

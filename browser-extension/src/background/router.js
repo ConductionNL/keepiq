@@ -327,6 +327,38 @@ const matchCache = new Map()
 // (clients-extension-gaps).
 const captures = new Map()
 
+// Sites the user never wants a save offer on (clients-extension-gaps).
+const NEVER_KEY = 'capture-never'
+
+/**
+ * The sites with no save offer.
+ *
+ * @return {Promise<Array<string>>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-never-offer-to-save-on-a-site
+ */
+async function neverSites() {
+	const area = chrome.storage?.local
+	if (!area) return []
+	const list = (await area.get(NEVER_KEY))[NEVER_KEY]
+	return Array.isArray(list) ? list : []
+}
+
+/**
+ * Add or remove a site from the no-save list.
+ *
+ * @param {string} host The site.
+ * @param {boolean} on Add (true) or remove (false).
+ * @return {Promise<Array<string>>} The list.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-never-offer-to-save-on-a-site
+ */
+async function setNever(host, on) {
+	const list = (await neverSites()).filter((h) => h !== host)
+	if (on && host) list.push(host)
+	list.sort()
+	await chrome.storage.local.set({ [NEVER_KEY]: list })
+	return list
+}
+
 /** How long a submitted login waits for a decision. */
 export const CAPTURE_TTL_MS = 5 * 60 * 1000
 
@@ -999,6 +1031,79 @@ async function doMatch(payload) {
 	}))
 }
 
+/** The context menu item and the keyboard command that fill a login. */
+export const FILL_MENU_ID = 'keepiq-fill'
+export const FILL_COMMAND = 'fill-login'
+
+/**
+ * Open the popup, where the user can unlock or choose. Browsers allow it only
+ * right after a user action, which a menu click or a shortcut is.
+ *
+ * @return {Promise<void>}
+ */
+async function openPopupForChoice() {
+	try {
+		await chrome.action?.openPopup?.()
+	} catch {
+		// Not allowed here: the toolbar button still opens it.
+	}
+}
+
+/**
+ * Fill the login for a tab from the context menu or the shortcut: the only
+ * login for the site fills at once; several, a locked vault or an https
+ * login on an http page open the popup instead.
+ *
+ * @param {object} tab The tab.
+ * @return {Promise<{filled: boolean, opened?: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-fill-from-the-context-menu-and-a-shortcut
+ */
+export async function fillFromShortcut(tab) {
+	if (!tab || !/^https?:/i.test(String(tab.url || ''))) return { filled: false }
+	const account = await api.loadConfig()
+	if (!account) return { filled: false }
+	if (account.loggedOut || !vault.isUnlocked(account.id)) {
+		await openPopupForChoice()
+		return { filled: false, opened: true }
+	}
+	const offered = await doMatch({ host: hostOf(tab.url) })
+	if (offered.length !== 1) {
+		if (offered.length > 1) await openPopupForChoice()
+		return { filled: false, opened: offered.length > 1 }
+	}
+	const res = await doFill({
+		id: offered[0].id,
+		accountId: account.id,
+		tabId: tab.id,
+	})
+	if (res.confirm) {
+		await openPopupForChoice()
+		return { filled: false, opened: true }
+	}
+	return { filled: !!res.filled }
+}
+
+chrome.runtime?.onInstalled?.addListener(() => {
+	chrome.contextMenus?.removeAll?.(() => {
+		chrome.contextMenus.create({
+			id: FILL_MENU_ID,
+			title: 'Fill a login with Keepiq',
+			contexts: ['editable'],
+		})
+	})
+})
+
+chrome.contextMenus?.onClicked?.addListener((info, tab) => {
+	if (info?.menuItemId === FILL_MENU_ID) fillFromShortcut(tab).catch(() => {})
+})
+
+chrome.commands?.onCommand?.addListener(async (command, tab) => {
+	if (command !== FILL_COMMAND) return
+	const target =
+		tab || (await chrome.tabs.query({ active: true, currentWindow: true }))[0]
+	fillFromShortcut(target).catch(() => {})
+})
+
 /**
  * Whether filling a row into a page would send an https login to a plain
  * http page.
@@ -1199,9 +1304,11 @@ async function policyRefusalFor(config, value) {
  *
  * @param {object} capture The held capture.
  * @param {number} tabId The tab it was held for.
+ * @param {string|null} [folderId] The folder a new login goes into.
  * @return {Promise<{ok: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-save-a-new-login-into-a-folder
  */
-async function saveHeldCapture(capture, tabId) {
+async function saveHeldCapture(capture, tabId, folderId = null) {
 	const accountId = capture.accountId
 	const config = await api.loadAccount(accountId)
 	if (!config) throw new Error('not paired')
@@ -1219,6 +1326,7 @@ async function saveHeldCapture(capture, tabId) {
 		key: encryptedKey,
 		login: encryptedLogin,
 		encryptionSuiteId: vault.activeSuiteId(accountId),
+		...(folderId ? { folderId } : {}),
 	}
 	if (capture.id) {
 		// An update changes the credential only; the saved name and address stay.
@@ -1247,7 +1355,23 @@ async function doSaveCapture(payload) {
 	const tab = await targetTab(payload.tabId)
 	const capture = tab ? captureOf(tab.id) : null
 	if (!capture) throw new Error('There is no login waiting to be saved here')
-	return saveHeldCapture(capture, tab.id)
+	return saveHeldCapture(capture, tab.id, payload.folderId || null)
+}
+
+/**
+ * Never offer to save on the site of the popup's held capture.
+ *
+ * @param {{tabId?: number}} payload The popup's pinned tab, if popped out.
+ * @return {Promise<{ok: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-never-offer-to-save-on-a-site
+ */
+async function doCaptureNever(payload) {
+	const tab = await targetTab(payload.tabId)
+	const capture = tab ? captureOf(tab.id) : null
+	if (!capture) return { ok: false }
+	await setNever(capture.host, true)
+	captures.delete(tab.id)
+	return { ok: true }
 }
 
 /**
@@ -1298,6 +1422,8 @@ export async function doCapture(capture, sender) {
 		return { action: 'none' }
 	}
 	const host = origin.hostname
+	// The user said never for this site.
+	if ((await neverSites()).includes(host)) return { action: 'none' }
 	const config = await api.loadConfig()
 	if (!config) return { action: 'none' }
 	captures.set(tabId, {
@@ -1354,6 +1480,7 @@ async function doCaptureDecision(payload, sender) {
 	if (payload.choice === 'save' || payload.choice === 'update') {
 		return saveHeldCapture(capture, tabId)
 	}
+	if (payload.choice === 'never') await setNever(capture.host, true)
 	captures.delete(tabId)
 	return { ok: true }
 }
@@ -1465,6 +1592,11 @@ const handlers = {
 	'save-capture': doSaveCapture,
 	'totp-for-host': doTotpForHost,
 	'pending-capture': takePendingCapture,
+	'capture-never': doCaptureNever,
+	'never-sites': async () => ({ sites: await neverSites() }),
+	'never-remove': async (payload) => ({
+		sites: await setNever(String(payload.host || ''), false),
+	}),
 	// A copy in the popup; the worker clears the clipboard later.
 	'clipboard-copied': () => clipboardModule().copied(),
 	'clipboard-settings': async () => ({
