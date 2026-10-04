@@ -289,6 +289,7 @@ async function request(config, method, path, body, extraHeaders = {}) {
 		const err = new Error(`Keepiq ${method} ${path} failed (${res.status})`)
 		err.status = res.status
 		err.body = text
+		err.code = refusalCodeOf(text)
 		// A stored account whose app password stopped working. A pairing
 		// attempt has no id yet; its 401 is just a wrong password.
 		if (res.status === 401 && config.id) {
@@ -297,7 +298,36 @@ async function request(config, method, path, body, extraHeaders = {}) {
 		throw err
 	}
 	if (res.status === 204) return null
-	return res.json()
+	const data = await res.json()
+	// Nextcloud answers a refusal it raises itself on an OCS controller as an
+	// HTTP 200 envelope with the real status inside (keepiq#673). Keepiq's own
+	// refusals are 428, but this one must not read as a success either.
+	const meta = data?.ocs?.meta
+	if (meta && Number(meta.statuscode) >= 400) {
+		const err = new Error(`Keepiq ${method} ${path} failed (${meta.statuscode})`)
+		err.status = Number(meta.statuscode)
+		err.body = JSON.stringify({ message: meta.message ?? '' })
+		err.code = null
+		throw err
+	}
+	return data
+}
+
+/**
+ * The machine-readable code of a refusal body: its `error`, else its policy
+ * `code`. Keepiq's OCS routes refuse with 428 and an `error` (keepiq#673).
+ *
+ * @param {string} text The response body.
+ * @return {string|null}
+ * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
+ */
+function refusalCodeOf(text) {
+	try {
+		const body = JSON.parse(text || '{}')
+		return body?.error ?? body?.code ?? null
+	} catch {
+		return null
+	}
 }
 
 /**
