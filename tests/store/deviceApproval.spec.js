@@ -6,7 +6,7 @@
  * to 2.3): the phrase, sealing and opening the unlock key, what the approve
  * request carries, and the unlock after a mocked approval.
  *
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
  */
 
 import axios from '@nextcloud/axios'

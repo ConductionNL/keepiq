@@ -48,7 +48,7 @@ export function fromBase64(base64) {
  * @param {string} masterPassword The master password, typed just now.
  * @param {string} privateKeyEnvelope The active suite's private-key envelope.
  * @return {Promise<Uint8Array>} The raw unlock key.
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
  */
 export async function unlockKeyFromPassword(masterPassword, privateKeyEnvelope) {
 	const { salt } = decodeEnvelope(privateKeyEnvelope)
@@ -65,7 +65,7 @@ export async function unlockKeyFromPassword(masterPassword, privateKeyEnvelope) 
  * @param {string} requestPublicKey The request's X25519 public key, base64.
  * @param {string} requestId The request id (the AAD).
  * @return {Promise<string>} The sealed key, base64 JSON `{enc, ciphertext}`.
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
  */
 export async function sealUnlockKey(rawUnlockKey, requestPublicKey, requestId) {
 	const { enc, ciphertext } = await seal(
@@ -87,7 +87,7 @@ export async function sealUnlockKey(rawUnlockKey, requestPublicKey, requestId) {
  * @param {Uint8Array} publicKeyRaw The request's raw public key.
  * @param {string} requestId The request id (the AAD).
  * @return {Promise<Uint8Array>} The raw unlock key.
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
  */
 export async function openUnlockKey(sealed, privateKey, publicKeyRaw, requestId) {
 	const { enc, ciphertext } = JSON.parse(atob(sealed))
