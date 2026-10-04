@@ -25,8 +25,9 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
  * @param {object} vars The placeholder values.
  * @return {string}
  */
-const interpolate = (_app, text, vars = {}) =>
-	text.replace(/{(\w+)}/g, (match, name) => vars[name] ?? match)
+function interpolate(_app, text, vars = {}) {
+	return text.replace(/{(\w+)}/g, (match, name) => vars[name] ?? match)
+}
 
 const stubs = {
 	NcButton: {
