@@ -88,6 +88,23 @@ describe('fill', () => {
 		expect(frames).toEqual([0, 6])
 	})
 
+	it('keeps a frame that reported before the top frame, and forgets them all when the tab loads a new page', async () => {
+		await send('frame-ready', {}, frame('https://example.com/sso', 4))
+		await send('frame-ready', {}, frame('https://example.com/login', 0))
+		let [offered] = await send('match', { host: 'example.com' })
+		await send('fill', { id: offered.id, accountId: offered.accountId })
+		expect(browser.filled.map((m) => m.options.frameId).sort()).toEqual([0, 4])
+
+		for (const listener of browser.tabs.onUpdated.listeners) {
+			listener(1, { status: 'loading' })
+		}
+		await new Promise((r) => setTimeout(r, 20))
+		browser.filled.length = 0
+		;[offered] = await send('match', { host: 'example.com' })
+		await send('fill', { id: offered.id, accountId: offered.accountId })
+		expect(browser.filled.map((m) => m.options.frameId)).toEqual([0])
+	})
+
 	it('falls back to the top frame alone when no frame was recorded', async () => {
 		const [offered] = await send('match', { host: 'example.com' })
 		await send('fill', { id: offered.id, accountId: offered.accountId })

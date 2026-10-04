@@ -76,11 +76,19 @@ async function doFrameReady(payload, sender) {
 	}
 	const key = FRAMES_KEY(tabId)
 	const frames = (await store.get(key))[key] || {}
-	// A new top-level page replaces the frames of the one before.
-	const next = frameId === 0 ? { 0: host } : { ...frames, [frameId]: host }
-	await store.set({ [key]: next })
+	// Frames report in any order; a new page clears the record when it
+	// starts loading (below), never when its top frame reports.
+	await store.set({ [key]: { ...frames, [frameId]: host } })
 	return { ok: true }
 }
+
+// A tab starts loading a new page: its frames are gone.
+chrome.tabs?.onUpdated?.addListener((tabId, info) => {
+	if (info?.status !== 'loading') return
+	sessionStore()
+		?.remove(FRAMES_KEY(tabId))
+		.catch(() => {})
+})
 
 /**
  * The frames of a tab that are on a host. Without a record (the worker
