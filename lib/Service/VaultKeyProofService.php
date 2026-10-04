@@ -134,7 +134,7 @@ class VaultKeyProofService {
 	 *
 	 * @return array{nonce:string,expiresAt:int}
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
+	 * @spec openspec/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
 	 */
 	public function issueChallenge(string $userId, string $purpose): array {
 		$expiresAt = ($this->timeFactory->getTime() + self::TTL);
@@ -168,7 +168,7 @@ class VaultKeyProofService {
 	 *
 	 * @throws KeyProofRequiredException When the proof is absent, stale, mis-bound or invalid
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+	 * @spec openspec/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 	 */
 	public function verify(
 		string $nonce,
@@ -234,7 +234,7 @@ class VaultKeyProofService {
 	 *
 	 * @throws KeyProofRequiredException When the nonce was already used, or the claim could not be recorded
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
+	 * @spec openspec/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
 	 */
 	private function consume(string $nonce, int $expiresAt): void {
 		try {
@@ -264,7 +264,7 @@ class VaultKeyProofService {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-a-proof-is-bound-to-the-operation-it-authorises
+	 * @spec openspec/specs/vault-key-proof/spec.md#requirement-a-proof-is-bound-to-the-operation-it-authorises
 	 */
 	public function signedMessage(string $nonce, array $boundValues): string {
 		$lines = [$nonce];

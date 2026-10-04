@@ -996,7 +996,7 @@ export default {
 		 * and any emergency-loss prompt.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+		 * @spec openspec/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
 		cancelRevoke() {
@@ -1013,7 +1013,7 @@ export default {
 		 *
 		 * @param {boolean} acceptEmergencyLoss Whether the user accepted losing emergency access.
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
-		 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+		 * @spec openspec/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 		 */
 		async handleRevoke(acceptEmergencyLoss = false) {
 			this.revoking = true

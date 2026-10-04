@@ -14,7 +14,7 @@
  *  - a guard refusal is surfaced and the dialog stays open to retry;
  *  - a successful revoke closes the dialog.
  *
- * @spec openspec/changes/harden-vault-key-material-guards/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
+ * @spec openspec/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
  */
 
 import { mount } from '@vue/test-utils'

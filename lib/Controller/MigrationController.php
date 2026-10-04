@@ -222,7 +222,7 @@ class MigrationController extends OCSController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
 	 */
 	#[NoAdminRequired]
 	#[VaultKeyProofRequired(binds: ['id'], subject: 'migrationNewSuite', purpose: VaultKeyProofService::PURPOSE_ABORT_MIGRATION)]

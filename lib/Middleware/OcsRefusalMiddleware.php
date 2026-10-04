@@ -66,7 +66,7 @@ class OcsRefusalMiddleware extends Middleware {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $methodName is mandated by
 	 *   OCP\AppFramework\Middleware::afterController().
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/tasks.md#task-6.5
+	 * @spec openspec/changes/archive/2026-10-04-harden-vault-key-material-guards/tasks.md#task-6.5
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 	 */
 	public function afterController($controller, $methodName, Response $response): Response {

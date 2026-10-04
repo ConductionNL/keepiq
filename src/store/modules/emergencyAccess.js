@@ -177,7 +177,7 @@ export const useEmergencyAccessStore = defineStore('emergencyAccess', {
 		 * @param {string} id The relationship ID.
 		 * @param {string} masterPassword The current master password, for the proof.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/harden-vault-key-material-guards/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
+		 * @spec openspec/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
 		 */
 		async revoke(id, masterPassword) {
 			const session = useSessionStore()

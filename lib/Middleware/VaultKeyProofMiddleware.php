@@ -168,7 +168,7 @@ class VaultKeyProofMiddleware extends Middleware {
 	 *   overrides; only the exception is acted on.
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
-	 * @spec openspec/changes/harden-vault-key-material-guards/tasks.md#task-6.5
+	 * @spec openspec/changes/archive/2026-10-04-harden-vault-key-material-guards/tasks.md#task-6.5
 	 */
 	public function afterException($controller, $methodName, Throwable $exception): JSONResponse {
 		if (($exception instanceof KeyProofRequiredException) === false) {
@@ -217,7 +217,7 @@ class VaultKeyProofMiddleware extends Middleware {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
+	 * @spec openspec/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
 	 */
 	private function auditRefusal(?string $userId, string $route, ?string $purpose, string $reason): void {
 		if ($userId === null) {
@@ -330,7 +330,7 @@ class VaultKeyProofMiddleware extends Middleware {
 	 *
 	 * @throws KeyProofRequiredException When a named suite is not the caller's own
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+	 * @spec openspec/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 	 */
 	private function resolveSubjectSuite(string $subject, string $userId): EncryptionSuite {
 		if ($subject === 'migrationNewSuite') {
