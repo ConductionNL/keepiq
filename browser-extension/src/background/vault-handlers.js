@@ -11,7 +11,10 @@
 
 import { generateKey } from '../../../src/generator/generator.js'
 import { parsePasskey } from '../../../src/passkey/passkey.js'
-import { deriveAesKeyArgon2id } from '../../../src/crypto/argon2.js'
+import {
+	deriveAesKeyArgon2id,
+	isArgon2Supported,
+} from '../../../src/crypto/argon2.js'
 import {
 	aesEncrypt,
 	sealPayload,
@@ -38,6 +41,30 @@ export const MAX_NAME_LENGTH = 255
  * @param {(accountId: string) => Promise<void>} [deps.touchActivity] Re-arm the idle lock.
  * @return {Record<string, (payload: object) => Promise<object>>}
  */
+/**
+ * What went wrong with a send, in words: offline, the server's own message,
+ * or the error itself.
+ *
+ * @param {{status?: number, body?: string, message?: string}} error The failure.
+ * @return {string}
+ * @spec openspec/changes/clients-extension-finish/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
+ */
+export function sendProblem(error) {
+	if (!error?.status) {
+		return error?.message && !/fetch/i.test(error.message)
+			? error.message
+			: 'You are offline. A send needs a connection to Keepiq.'
+	}
+	try {
+		const body = JSON.parse(error.body || '')
+		const message = body?.message || body?.error
+		if (typeof message === 'string' && message.trim() !== '') return message
+	} catch {
+		// No JSON: fall through.
+	}
+	return error.message || 'The send failed.'
+}
+
 export function buildVaultHandlers({
 	api,
 	vault,
@@ -472,6 +499,7 @@ export function buildVaultHandlers({
 		 *
 		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-create-a-send-from-the-popup
 		 * @spec openspec/changes/clients-extension-complete/specs/extension-send/spec.md#requirement-password-protected-sends
+		 * @spec openspec/changes/clients-extension-finish/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
 		 */
 		'send-create': async (payload) => {
 			const account = await unlockedAccount()
@@ -503,6 +531,11 @@ export function buildVaultHandlers({
 			// from it, as the web app does; the link then carries no key.
 			const sendPassword = String(payload.sendPassword || '')
 			if (sendPassword !== '') {
+				if (!isArgon2Supported()) {
+					throw new Error(
+						'This browser cannot protect a send with a password.',
+					)
+				}
 				installArgon2Wasm()
 				const salt = crypto.getRandomValues(new Uint8Array(16))
 				const kek = await deriveAesKeyArgon2id(sendPassword, salt)
@@ -510,7 +543,12 @@ export function buildVaultHandlers({
 				body.wrappedKey = await aesEncrypt(kek, rawKey)
 				body.argon2idSalt = toBase64(salt)
 			}
-			const send = await api.createSend(account, body)
+			let send
+			try {
+				send = await api.createSend(account, body)
+			} catch (e) {
+				throw new Error(sendProblem(e))
+			}
 			await touchActivity(account.id)
 			return {
 				id: send?.id || null,
@@ -527,10 +565,16 @@ export function buildVaultHandlers({
 		 * The account's sends (metadata only).
 		 *
 		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-list-and-end-my-sends
+		 * @spec openspec/changes/clients-extension-finish/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
 		 */
 		'send-list': async () => {
 			const account = await unlockedAccount()
-			const sends = await api.listSends(account)
+			let sends
+			try {
+				sends = await api.listSends(account)
+			} catch (e) {
+				throw new Error(sendProblem(e))
+			}
 			return {
 				sends: sends.map((s) => ({
 					id: s.id,
@@ -540,7 +584,20 @@ export function buildVaultHandlers({
 					viewCount: s.viewCount ?? 0,
 					maxViews: s.maxViews ?? 1,
 					status: s.status || null,
+					hasPassword: s.hasPassword === true,
 				})),
+			}
+		},
+
+		/**
+		 * Whether a send can be made now: not while the server is away.
+		 *
+		 * @spec openspec/changes/clients-extension-finish/specs/extension-send-details/spec.md#requirement-no-send-while-offline
+		 */
+		'send-state': async () => {
+			const account = await unlockedAccount()
+			return {
+				offline: sync ? sync().statusOf(account.id).offline === true : false,
 			}
 		},
 
@@ -548,10 +605,17 @@ export function buildVaultHandlers({
 		 * End a send.
 		 *
 		 * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-list-and-end-my-sends
+		 * @spec openspec/changes/clients-extension-finish/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
 		 */
 		'send-revoke': async (payload) => {
 			const account = await unlockedAccount()
-			await api.revokeSend(account, payload.id)
+			try {
+				await api.revokeSend(account, payload.id)
+			} catch (e) {
+				// Already ended or expired: nothing left to end.
+				if (e?.status === 404) return { ok: true, gone: true }
+				throw new Error(sendProblem(e))
+			}
 			return { ok: true }
 		},
 	}

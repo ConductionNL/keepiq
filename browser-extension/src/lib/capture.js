@@ -20,10 +20,12 @@ import { hostOf, matchSecrets } from './match.js'
  * @param {Array<object>} rows Candidate rows from the match endpoint (ciphertext).
  * @param {Function} decrypt Resolves a row to {login, secret} in plain text.
  * @return {Promise<{action: 'save'|'update'|'none', id?: string, name?: string}>} The offer.
+ * @spec openspec/changes/clients-extension-finish/specs/extension-save-prompt-details/spec.md#requirement-update-the-one-login-that-is-meant
  */
 export async function classifyCapture(capture, rows, decrypt) {
 	const host = hostOf(capture.host)
 	const candidates = matchSecrets(rows, host).filter((row) => row._score >= 80)
+	const sameLogin = []
 	for (const row of candidates) {
 		let plain
 		try {
@@ -37,7 +39,13 @@ export async function classifyCapture(capture, rows, decrypt) {
 		if ((plain.secret || '') === capture.secret) {
 			return { action: 'none', id: row.id, name: row.name }
 		}
-		return { action: 'update', id: row.id, name: row.name }
+		sameLogin.push(row)
 	}
+	// One saved login with this username: update it. Several: which one is
+	// meant cannot be told, so offer nothing rather than guess.
+	if (sameLogin.length === 1) {
+		return { action: 'update', id: sameLogin[0].id, name: sameLogin[0].name }
+	}
+	if (sameLogin.length > 1) return { action: 'none' }
 	return { action: 'save' }
 }

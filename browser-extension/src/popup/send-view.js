@@ -5,7 +5,7 @@
  * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-send/spec.md#requirement-create-a-send-from-the-popup
  */
 
-import { EXPIRY_PRESETS, sendRowLabel } from '../lib/send-form.js'
+import { expiresIn, EXPIRY_PRESETS, sendRowLabel } from '../lib/send-form.js'
 import { copyText } from './clipboard.js'
 
 /**
@@ -30,6 +30,8 @@ export function initSend({ $, send, showError, doc = document }) {
 	// Links of sends made while this popup is open, by send id. A link holds
 	// the key, so it lives only here and only until the popup closes.
 	const sessionLinks = new Map()
+	// The server cannot be reached: no send can be made.
+	let offline = false
 
 	/** @return {string} The chosen kind of send. */
 	const kind = () =>
@@ -42,12 +44,18 @@ export function initSend({ $, send, showError, doc = document }) {
 		$('send-text-label').hidden = credential
 	}
 
-	/** Load and render the account's sends. */
+	/**
+	 * Load and render the account's sends: what each is, when it expires,
+	 * whether it has a password, and how often it was opened.
+	 *
+	 * @spec openspec/changes/clients-extension-finish/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
+	 */
 	async function loadSends() {
 		const { sends = [], error } = await send('send-list')
 		const list = $('send-list')
 		list.replaceChildren()
 		$('send-empty').hidden = sends.length > 0 || !!error
+		$('send-retry').hidden = !error
 		if (error) {
 			showError('send-error', error)
 			return
@@ -56,12 +64,23 @@ export function initSend({ $, send, showError, doc = document }) {
 			const li = doc.createElement('li')
 			li.className = 'candidate row'
 			const label = doc.createElement('span')
-			label.textContent = `${sendRowLabel(row)} (${row.viewCount} of ${row.maxViews} opened)`
+			const details = [
+				`${row.viewCount} of ${row.maxViews} opened`,
+				expiresIn(row.expiresAt),
+				row.hasPassword ? 'password' : '',
+			].filter(Boolean)
+			label.textContent = `${sendRowLabel(row)} (${details.join(', ')})`
 			const end = doc.createElement('button')
 			end.className = 'link danger'
 			end.textContent = 'End'
 			end.setAttribute('aria-label', `End ${sendRowLabel(row)}`)
 			end.addEventListener('click', async () => {
+				if (
+					!window.confirm(
+						`End ${sendRowLabel(row)}? Its link stops working.`,
+					)
+				)
+					return
 				const res = await send('send-revoke', { id: row.id })
 				if (res.error) showError('send-error', res.error)
 				await loadSends()
@@ -91,9 +110,17 @@ export function initSend({ $, send, showError, doc = document }) {
 	$('send-expiry').addEventListener('change', () => {
 		$('send-custom-label').hidden = $('send-expiry').value !== 'custom'
 	})
+	$('send-retry').addEventListener('click', () => {
+		showError('send-error', '')
+		loadSends()
+	})
 	$('send-form').addEventListener('submit', async (event) => {
 		event.preventDefault()
 		showError('send-error', '')
+		// Argon2id takes a moment: say so, and allow one press.
+		const protecting = $('send-protect').value !== ''
+		$('send-progress').hidden = !protecting
+		$('send-create').disabled = true
 		const res = await send('send-create', {
 			payloadType: kind(),
 			text: $('send-text').value,
@@ -104,6 +131,8 @@ export function initSend({ $, send, showError, doc = document }) {
 			customHours: $('send-custom').value,
 			sendPassword: $('send-protect').value,
 		})
+		$('send-progress').hidden = true
+		$('send-create').disabled = offline
 		if (res.error) {
 			showError('send-error', res.error)
 			return
@@ -140,6 +169,9 @@ export function initSend({ $, send, showError, doc = document }) {
 				$('send-password').value = prefill.secret || ''
 			}
 			syncKind()
+			offline = (await send('send-state')).offline === true
+			$('send-offline').hidden = !offline
+			$('send-create').disabled = offline
 			await loadSends()
 		},
 	}
