@@ -10,6 +10,7 @@
 	<main id="app" class="keepiq-popup">
 		<!-- Account switcher (extension-account-switching) -->
 		<header id="account-bar" class="row account-bar" hidden>
+			<span id="account-initials" class="account-initials" aria-hidden="true"></span>
 			<label class="account-select-label">Account
 				<select id="account-select" aria-label="Active account"></select>
 			</label>
@@ -20,6 +21,19 @@
 		<section id="view-update" hidden>
 			<h1>Update Keepiq on your server</h1>
 			<p class="hint">This extension version needs a newer Keepiq on your Nextcloud server. Ask your administrator to update it, then open the extension again.</p>
+		</section>
+
+		<!-- Signed out: the server refused the app password, or the account
+		     was paired over http (clients-extension-gaps) -->
+		<section id="view-signed-out" hidden>
+			<h1>Signed out</h1>
+			<p id="signed-out-text" class="hint"></p>
+			<form id="relogin-form">
+				<label>New app password<input id="relogin-app-password" type="password" autocomplete="off" required></label>
+				<p id="relogin-error" class="error" role="alert" hidden></p>
+				<button type="submit" id="relogin-submit">Sign in again</button>
+			</form>
+			<button type="button" id="signed-out-disconnect" class="link">Disconnect this account</button>
 		</section>
 
 		<!-- Pairing view -->
@@ -37,7 +51,15 @@
 		<!-- Locked view -->
 		<section id="view-locked" hidden>
 			<h1>Unlock vault</h1>
-			<label>Master password<input id="unlock-master" type="password" autocomplete="off"></label>
+			<div id="pin-block" hidden>
+				<label>PIN<input id="unlock-pin" type="password" inputmode="numeric" autocomplete="off"></label>
+				<button id="unlock-pin-submit" class="primary">Unlock with PIN</button>
+				<p class="hint">Or unlock with your master password below.</p>
+			</div>
+			<div class="row">
+				<label class="grow">Master password<input id="unlock-master" type="password" autocomplete="off"></label>
+				<button id="unlock-show" type="button" class="link" aria-pressed="false" aria-controls="unlock-master">Show</button>
+			</div>
 			<p class="hint">Your master password is used only in this extension to decrypt your vault. It never reaches the server.</p>
 			<button id="unlock-submit" class="primary">Unlock</button>
 			<button id="unlock-biometric" class="link" hidden>Unlock with fingerprint or face</button>
@@ -74,8 +96,10 @@
 				</div>
 				<div id="save-prompt" class="save-prompt" hidden>
 					<p id="save-text"></p>
+					<label id="save-folder-label">Folder<select id="save-folder"><option value="">No folder</option></select></label>
 					<button id="save-yes" class="primary">Save</button>
 					<button id="save-no" class="link">Not now</button>
+					<button id="save-never" class="link">Never for this site</button>
 				</div>
 			</div>
 
@@ -151,7 +175,7 @@
 				<form id="vault-edit" hidden novalidate>
 					<h2 id="edit-title">New item</h2>
 					<label id="edit-type-label">Type<select id="edit-type"></select></label>
-					<label>Name<input id="edit-name" type="text" maxlength="4096" autocomplete="off" required></label>
+					<label>Name<input id="edit-name" type="text" maxlength="255" autocomplete="off" required></label>
 					<label>Website<input id="edit-url" type="url" maxlength="4096" autocomplete="off"></label>
 					<div id="edit-login-block">
 						<label>Username<input id="edit-login" type="text" maxlength="4096" autocomplete="off"></label>
@@ -302,7 +326,29 @@
 				<div id="idle-choices"></div>
 			</fieldset>
 			<p class="hint">Keepiq also locks when your computer locks.</p>
+			<p id="shortcut-text" class="hint"></p>
+			<fieldset id="never-settings">
+				<legend>Never offer to save logins on</legend>
+				<ul id="never-list" class="candidates"></ul>
+				<p id="never-empty" class="hint">No sites yet.</p>
+			</fieldset>
+			<label>Clear the clipboard after a copy
+				<select id="clipboard-clear"></select>
+			</label>
 			<button id="biometric-enrol" class="link" hidden>Set up fingerprint or face unlock</button>
+			<fieldset id="pin-settings">
+				<legend>Unlock with a PIN</legend>
+				<div id="pin-set-form">
+					<label>Master password<input id="pin-master" type="password" autocomplete="off"></label>
+					<label>New PIN<input id="pin-new" type="password" inputmode="numeric" autocomplete="off"></label>
+					<button id="pin-set" class="link">Set PIN</button>
+				</div>
+				<button id="pin-remove" class="link" hidden>Remove PIN</button>
+				<p class="hint">The PIN works until you close the browser. After five wrong PINs, Keepiq asks for your master password.</p>
+			</fieldset>
+			<button id="settings-logout" class="link">Log out of this account</button>
+			<button id="settings-lock-all" class="link">Lock all accounts</button>
+			<button id="settings-logout-all" class="link">Log out of all accounts</button>
 			<button id="settings-unpair" class="link">Disconnect this account</button>
 			<button id="settings-back" class="primary">Done</button>
 			<p id="settings-error" class="error" role="alert" hidden></p>

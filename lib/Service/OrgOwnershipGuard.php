@@ -74,7 +74,7 @@ class OrgOwnershipGuard {
 	 *
 	 * @throws PolicyViolationException When the policy refuses the write
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-work-logins-are-kept-in-team-folders
 	 */
 	public function assertAllowed(string $userId, string $typeId, ?string $folderId): void {
 		if ($this->policies->appliesTo(policy: VaultPolicyService::ORG_OWNERSHIP, userId: $userId) === false) {
@@ -107,7 +107,7 @@ class OrgOwnershipGuard {
 	 *
 	 * @throws PolicyViolationException When the policy refuses the change
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-work-logins-are-kept-in-team-folders
 	 */
 	public function assertKept(Secret $secret, Secret $before, string $userId): void {
 		if ($secret->getFolderId() === $before->getFolderId() && $secret->getTypeId() === $before->getTypeId()) {
@@ -126,7 +126,7 @@ class OrgOwnershipGuard {
 	 *
 	 * @return array<int,array{id:string,name:string,typeId:string,folderId:string|null}>
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.4
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-users-see-personal-items-that-break-the-ownership-policy
 	 */
 	public function findings(string $userId): array {
 		if ($this->secretMapper === null

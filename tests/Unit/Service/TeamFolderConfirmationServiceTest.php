@@ -68,6 +68,13 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 
 	private bool $switchOn = true;
 
+	/**
+	 * The team folder's membership rows; a test may add one.
+	 *
+	 * @var array<int,TeamFolderMember>
+	 */
+	private array $members = [];
+
 	/** @var array<string,bool> */
 	private array $enabled = [];
 
@@ -97,7 +104,7 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		parent::setUp();
-		$this->enabled = ['iris' => true, 'hank' => true, 'jack' => true, 'kim' => true];
+		$this->enabled = ['iris' => true, 'hank' => true, 'jack' => true, 'kim' => true, 'olga' => true];
 
 		$source = new Secret();
 		$source->setId('db-root');
@@ -122,6 +129,7 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 			$this->member(type: 'user', id: 'jack', grade: 'read'),
 			$this->member(type: 'group', id: 'ops-team', grade: 'read'),
 		];
+		$this->members = $members;
 
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueBool')->willReturnCallback(fn (): bool => $this->switchOn);
@@ -138,10 +146,10 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 		);
 
 		$memberMapper = $this->createMock(TeamFolderMemberMapper::class);
-		$memberMapper->method('findByTeamFolder')->willReturn($members);
+		$memberMapper->method('findByTeamFolder')->willReturnCallback(fn (): array => $this->members);
 		$memberMapper->method('findUserMemberships')->willReturnCallback(
-			static fn (string $uid): array => array_values(
-				array_filter($members, static fn ($m) => $m->getMemberType() === 'user' && $m->getMemberId() === $uid)
+			fn (string $uid): array => array_values(
+				array_filter($this->members, static fn ($m) => $m->getMemberType() === 'user' && $m->getMemberId() === $uid)
 			)
 		);
 		$memberMapper->method('findGroupMemberships')->willReturnCallback(
@@ -250,6 +258,14 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 		);
 		$this->teamFolders = $this->createMock(TeamFolderService::class);
 
+		$queries = new TeamFolderQueryService(
+			mapper: $mapper,
+			memberMapper: $memberMapper,
+			folderMapper: $folderMapper,
+			secretMapper: $secretMapper,
+			groupManager: $groupManager,
+			memberships: $memberships,
+		);
 		$this->service = new TeamFolderConfirmationService(
 			appConfig: $appConfig,
 			mapper: $mapper,
@@ -257,19 +273,13 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 			memberships: $memberships,
 			shares: $shares,
 			copies: new \OCA\Keepiq\Service\ConfirmerCopyResolver(
-				queries: new TeamFolderQueryService(
-					mapper: $mapper,
-					memberMapper: $memberMapper,
-					folderMapper: $folderMapper,
-					secretMapper: $secretMapper,
-					groupManager: $groupManager,
-					memberships: $memberships,
-				),
+				queries: $queries,
 				shareTargetMapper: $shareTargetMapper,
 				secretMapper: $secretMapper,
 			),
 			notificationService: $notificationService,
 			audit: new TeamFolderAuditor(eventDispatcher: $dispatcher),
+			queries: $queries,
 		);
 	}//end setUp()
 
@@ -473,4 +483,27 @@ class TeamFolderConfirmationServiceTest extends TestCase {
 
 		$this->assertSame(1, $result['created']);
 	}//end testOwnerUsesThePlainFanOut()
+	/**
+	 * A manager registers the fan-out like the owner, switch on or off
+	 * (sharing-team-folder-manager-role D2, task 2.3).
+	 *
+	 * Found by the manager Playwright flow (keepiq#790): the route sent every
+	 * non-owner to the automatic-confirmation path, so with the switch off a
+	 * manager adding a viewer got "Not authorized to manage this team folder"
+	 * and the viewer never received a copy. TeamFolderService already accepts
+	 * a manager; the route never reached it.
+	 *
+	 * @return void
+	 */
+	public function testAManagerUsesThePlainFanOut(): void {
+		$this->members[] = $this->member(type: 'user', id: 'olga', grade: 'manage');
+		$this->switchOn = false;
+		$this->teamFolders->expects($this->once())->method('registerFanOutShares')
+			->with('tf-ops', [$this->row(target: 'kim')], 'olga')
+			->willReturn(['created' => 1, 'rows' => []]);
+
+		$result = $this->service->registerShares(teamFolderId: 'tf-ops', rows: [$this->row(target: 'kim')], userId: 'olga');
+
+		$this->assertSame(1, $result['created']);
+	}//end testAManagerUsesThePlainFanOut()
 }//end class

@@ -46,7 +46,7 @@ use Psr\Log\LoggerInterface;
  * Officers olga and omar, threshold 2; bob is an ordinary user; mallory
  * holds nothing.
  *
- * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
  */
 class AccountRecoveryTest extends TestCase {
 

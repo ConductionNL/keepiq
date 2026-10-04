@@ -12,7 +12,7 @@
  * Pure: the URL builder and the navigation are passed in, so
  * the module runs under vitest's node environment with nothing mocked.
  *
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
  */
 
 /**
@@ -30,7 +30,7 @@ export const INTEGRIQ_CONNECTIONS_PATH =
  *
  * @param {{generateUrl: function(string): string, assign: function(string): void}} deps Builds the instance URL and navigates to it.
  * @return {{openIntegriqConnections: function(): void}} The handler, keyed by its manifest name.
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
  */
 export function createConnectionHandlers({ generateUrl, assign }) {
 	return {
@@ -38,7 +38,7 @@ export function createConnectionHandlers({ generateUrl, assign }) {
 		 * Open integriq's Connections overview on the link-a-source dialog.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+		 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
 		 */
 		openIntegriqConnections() {
 			assign(generateUrl(INTEGRIQ_CONNECTIONS_PATH))

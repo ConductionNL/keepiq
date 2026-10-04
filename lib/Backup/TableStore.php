@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Backup;
 
+use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IDBConnection;
 
 /**
@@ -51,7 +52,7 @@ class TableStore {
 	 *
 	 * @return iterable<int,array<string,mixed>>
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#1.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-hold-ciphertext-and-metadata-only
 	 */
 	public function rows(string $table): iterable {
 		$result = $this->db->getQueryBuilder()->select('*')->from(BackupTableRegistry::PREFIX . $table)->executeQuery();
@@ -69,7 +70,7 @@ class TableStore {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function count(string $table): int {
 		$qb = $this->db->getQueryBuilder();
@@ -85,7 +86,7 @@ class TableStore {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function newestAuditEntry(): ?string {
 		$qb = $this->db->getQueryBuilder();
@@ -108,7 +109,7 @@ class TableStore {
 	 *
 	 * @return array<string,int> Rows written per table
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function replaceAll(callable $rowsFor): array {
 		$written = [];
@@ -121,7 +122,7 @@ class TableStore {
 					$qb = $this->db->getQueryBuilder();
 					$values = [];
 					foreach ($row as $column => $value) {
-						$values[(string)$column] = $qb->createNamedParameter($value);
+						$values[(string)$column] = $qb->createNamedParameter($value, self::parameterType(value: $value));
 					}
 
 					$qb->insert(BackupTableRegistry::PREFIX . $table)->values($values)->executeStatement();
@@ -139,6 +140,35 @@ class TableStore {
 
 		return $written;
 	}//end replaceAll()
+
+	/**
+	 * The binding type for one archived value.
+	 *
+	 * PostgreSQL returns boolean columns as PHP booleans and the archive keeps
+	 * them. Bound as a string, `false` reaches PostgreSQL as '' and the insert
+	 * is refused, so each value is bound with the type it carries.
+	 *
+	 * @param mixed $value The archived value
+	 *
+	 * @return mixed The IQueryBuilder parameter type
+	 *
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
+	 */
+	private static function parameterType(mixed $value): mixed {
+		if (is_bool($value) === true) {
+			return IQueryBuilder::PARAM_BOOL;
+		}
+
+		if (is_int($value) === true) {
+			return IQueryBuilder::PARAM_INT;
+		}
+
+		if ($value === null) {
+			return IQueryBuilder::PARAM_NULL;
+		}
+
+		return IQueryBuilder::PARAM_STR;
+	}//end parameterType()
 
 	/**
 	 * On PostgreSQL an explicit id insert leaves the sequence behind; move it

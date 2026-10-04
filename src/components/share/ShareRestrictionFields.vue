@@ -7,7 +7,7 @@
   (sharing-use-only-and-expiring-shares D6). v-model is
   `{ useOnly: boolean, endDate: 'YYYY-MM-DD' | '' }`.
 
-  @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-share-dialog-states-the-limit-of-use-only
+  @spec openspec/specs/use-only-shares/spec.md#requirement-the-share-dialog-states-the-limit-of-use-only
 -->
 <template>
 	<fieldset class="keepiq-share-restriction" data-testid="share-restriction">
@@ -67,7 +67,7 @@ export default {
 		 * Today as YYYY-MM-DD, the earliest end date the picker offers.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.3
 		 */
 		today() {
 			const now = new Date()
@@ -82,7 +82,7 @@ export default {
 		 *
 		 * @param {object} change The changed field.
 		 * @return {void}
-		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.3
 		 */
 		update(change) {
 			this.$emit('update:modelValue', { ...this.modelValue, ...change })

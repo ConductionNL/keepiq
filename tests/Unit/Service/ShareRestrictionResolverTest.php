@@ -22,7 +22,7 @@ use PHPUnit\Framework\TestCase;
  * Materialising use-only and the access end onto a recipient copy
  * (sharing-use-only-and-expiring-shares task 1.2).
  *
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.2
  */
 class ShareRestrictionResolverTest extends TestCase {
 

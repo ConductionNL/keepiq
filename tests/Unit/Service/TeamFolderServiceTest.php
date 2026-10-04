@@ -948,7 +948,7 @@ class TeamFolderServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 */
 	public function testUseOnlyIsRefusedWithTheWriteGrade(): void {
 		$teamFolder = new \OCA\Keepiq\Db\TeamFolder();
@@ -999,7 +999,7 @@ class TeamFolderServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 */
 	public function testANonOwnerCannotRestrictAMembership(): void {
 		$teamFolder = new \OCA\Keepiq\Db\TeamFolder();
@@ -1055,7 +1055,7 @@ class TeamFolderServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-team-folder-manager-role/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-10-04-sharing-team-folder-manager-role/tasks.md#task-1.1
 	 */
 	public function testManageRanksAboveWriteAboveRead(): void {
 		$member = new TeamFolderMember();
@@ -1079,7 +1079,7 @@ class TeamFolderServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-team-folder-manager-role/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-team-folder-manager-role/tasks.md#task-2.2
 	 */
 	public function testAManagerChangesGradesBelowManagerOnly(): void {
 		$members = $this->managedFolder();
@@ -1110,7 +1110,7 @@ class TeamFolderServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-team-folder-manager-role/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-team-folder-manager-role/tasks.md#task-2.2
 	 */
 	public function testAManagerRemovesViewersAndMayLeave(): void {
 		$this->managedFolder();
@@ -1158,7 +1158,7 @@ class TeamFolderServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-team-folder-manager-role/tasks.md#task-2.3
+	 * @spec openspec/changes/archive/2026-10-04-sharing-team-folder-manager-role/tasks.md#task-2.3
 	 */
 	public function testAManagerReconcilesFromItsOwnCopies(): void {
 		$this->managedFolder();
@@ -1196,7 +1196,7 @@ class TeamFolderServiceTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-team-folder-manager-role/tasks.md#task-4.1
+	 * @spec openspec/changes/archive/2026-10-04-sharing-team-folder-manager-role/tasks.md#task-4.1
 	 */
 	public function testAManagersActionsCarryTheManagerAsActor(): void {
 		$this->managedFolder();

@@ -5,7 +5,7 @@
  * The use-only and end-date options in the share and team-folder dialogs
  * (sharing-use-only-and-expiring-shares task 2.3).
  *
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-share-dialog-states-the-limit-of-use-only
+ * @spec openspec/specs/use-only-shares/spec.md#requirement-the-share-dialog-states-the-limit-of-use-only
  */
 
 import axios from '@nextcloud/axios'

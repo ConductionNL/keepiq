@@ -81,7 +81,7 @@ class AdminPeopleController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.2
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	#[AuthorizedAdminSetting(PeopleAdminSettings::class)]
 	public function suites(int $limit = 100, int $offset = 0): JSONResponse {
@@ -111,7 +111,7 @@ class AdminPeopleController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.2
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	#[AuthorizedAdminSetting(PeopleAdminSettings::class)]
 	#[UserRateLimit(limit: 30, period: 60)]

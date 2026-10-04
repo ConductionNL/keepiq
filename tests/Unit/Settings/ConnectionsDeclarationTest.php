@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-001-keepiq-declares-its-outside-connections-in-one-static-file
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-001-keepiq-declares-its-outside-connections-in-one-static-file
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
