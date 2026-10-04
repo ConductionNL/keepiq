@@ -323,7 +323,7 @@ class TeamFolderQueryService {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-effective-grade-is-the-highest-grade-along-the-ancestor-folder-chain
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-effective-grade-is-the-highest-grade-along-the-ancestor-folder-chain
 	 */
 	public function gradeOnTeamFolder(TeamFolder $teamFolder, string $userId): ?string {
 		$best = null;
@@ -349,7 +349,7 @@ class TeamFolderQueryService {
 	 *
 	 * @throws InvalidArgumentException When missing or the caller may not manage it
 	 *
-	 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
 	 */
 	public function loadManageableTeamFolder(string $teamFolderId, string $userId): TeamFolder {
 		try {

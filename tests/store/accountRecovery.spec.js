@@ -5,7 +5,7 @@
  * Organisation account recovery in the browser
  * (crypto-organisation-account-recovery tasks 2.2, 3.2, 4.1, 4.4, 4.5, 5.3).
  *
- * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
  */
 
 import axios from '@nextcloud/axios'

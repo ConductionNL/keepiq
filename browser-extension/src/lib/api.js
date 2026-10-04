@@ -493,16 +493,21 @@ export function latestSecret(config) {
 /** The largest page the secrets list serves (SecretService::MAX_LIMIT). */
 export const SECRETS_PAGE_SIZE = 100
 
+/** The most pages the page-by-page fallback reads before it gives up loudly. */
+export const MAX_SECRET_PAGES = 1000
+
 /**
  * Every secret the account can open, page by page (index fields and blobs).
  *
  * @param {object} config The account.
  * @return {Promise<Array<object>>}
+ * @throws {Error} When the vault has more pages than the fallback reads.
  * @spec openspec/changes/clients-extension-generator-vault-send/specs/extension-vault/spec.md#requirement-browse-and-search-the-vault
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-clipboard/spec.md#requirement-a-large-vault-is-never-cut-off-in-silence
  */
 export async function listSecrets(config) {
 	const items = []
-	for (let page = 1; page <= 100; page++) {
+	for (let page = 1; page <= MAX_SECRET_PAGES; page++) {
 		const data = await request(
 			config,
 			'GET',
@@ -511,10 +516,15 @@ export async function listSecrets(config) {
 		const batch = data?.items || []
 		items.push(...batch)
 		if (batch.length < SECRETS_PAGE_SIZE || items.length >= (data?.total ?? 0)) {
-			break
+			return items
 		}
 	}
-	return items
+	// Never hand back part of a vault as if it were all of it.
+	const err = new Error(
+		`The vault has more than ${MAX_SECRET_PAGES * SECRETS_PAGE_SIZE} items, more than the extension can read page by page. Ask your administrator to switch on offline caching.`,
+	)
+	err.status = 413
+	throw err
 }
 
 /**

@@ -202,7 +202,7 @@ class KeepiqNotifier implements INotifier {
 	 *
 	 * @return bool True when this renderer recognised the subject.
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
 	private function renderRecoverySubject(INotification $notification, string $subject, array $params, IL10N $l): bool {
 		$texts = [
