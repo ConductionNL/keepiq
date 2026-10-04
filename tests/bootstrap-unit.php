@@ -147,6 +147,39 @@ if (class_exists('Doctrine\\DBAL\\ParameterType') === false) {
 	);
 }
 
+// IQueryBuilder's PARAM_* constants also name Doctrine\DBAL\Types\Types and
+// Doctrine\DBAL\ArrayParameterType, and PHP resolves every constant of the
+// interface the first time any one of them is read. Without these stubs a test
+// that reads IQueryBuilder::PARAM_BOOL fails with "Class not found". Values
+// match doctrine/dbal 4.
+if (class_exists('Doctrine\\DBAL\\Types\\Types') === false) {
+	eval(
+		'namespace Doctrine\\DBAL\\Types; '
+		. 'final class Types { '
+		. "public const BOOLEAN = 'boolean'; "
+		. "public const DATE_MUTABLE = 'date'; "
+		. "public const DATE_IMMUTABLE = 'date_immutable'; "
+		. "public const DATETIME_MUTABLE = 'datetime'; "
+		. "public const DATETIME_IMMUTABLE = 'datetime_immutable'; "
+		. "public const DATETIMETZ_MUTABLE = 'datetimetz'; "
+		. "public const DATETIMETZ_IMMUTABLE = 'datetimetz_immutable'; "
+		. "public const TIME_MUTABLE = 'time'; "
+		. '}'
+	);
+}
+
+if (class_exists('Doctrine\\DBAL\\ArrayParameterType') === false) {
+	eval(
+		'namespace Doctrine\\DBAL; '
+		. 'enum ArrayParameterType: int { '
+		. 'case INTEGER = 101; '
+		. 'case STRING = 102; '
+		. 'case ASCII = 117; '
+		. 'case BINARY = 16; '
+		. '}'
+	);
+}
+
 // Integriq's connection-registry events (adopt-connection-registry).
 // ConnectionReporter sends them by string class name behind class_exists
 // (ADR-041), so Keepiq stays installable without integriq. The stubs mirror
