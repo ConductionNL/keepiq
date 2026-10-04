@@ -19,6 +19,7 @@ import nl.conduction.keepiq.android.ui.OpenSendScreen
 import nl.conduction.keepiq.android.vault.AndroidClipboard
 import nl.conduction.keepiq.android.vault.HandlerScheduler
 import nl.conduction.keepiq.android.vault.VaultPreferences
+import nl.conduction.keepiq.shared.vault.ClearDelay
 import nl.conduction.keepiq.shared.vault.SensitiveClipboard
 
 /**
@@ -43,12 +44,12 @@ class OpenSendActivity : ComponentActivity() {
                 Surface(Modifier.fillMaxSize()) {
                     val prefs = remember { VaultPreferences(this) }
                     val clipboard = remember {
-                        SensitiveClipboard(AndroidClipboard(this), HandlerScheduler()) { prefs.clipboardClearSeconds }
+                        SensitiveClipboard(AndroidClipboard(this), HandlerScheduler(), ClearDelay { prefs.clipboardClearSeconds })
                     }
                     OpenSendScreen(
                         initialLink = link,
                         modifier = Modifier.safeDrawingPadding().padding(8.dp),
-                        onCopy = { clipboard.copy(it) },
+                        onCopy = { clipboard.write(it) },
                     )
                 }
             }

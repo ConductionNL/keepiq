@@ -17,13 +17,26 @@ interface ClipboardPort {
     fun clearIfOurs(token: String)
 }
 
-/** Schedules one delayed action and cancels it; the platform's main-thread timer. */
+/**
+ * Schedules one delayed action and cancels it; the platform's main-thread
+ * timer. Interfaces rather than function types, so Swift implements them
+ * without Kotlin's boxed function signatures.
+ */
 interface Scheduler {
-    fun schedule(delayMillis: Long, action: () -> Unit): Cancellable
+    fun schedule(delayMillis: Long, action: ScheduledAction): Cancellable
+}
+
+fun interface ScheduledAction {
+    fun run()
 }
 
 fun interface Cancellable {
     fun cancel()
+}
+
+/** The user's clipboard delay in seconds, read at each copy. */
+fun interface ClearDelay {
+    fun seconds(): Int
 }
 
 /**
@@ -37,22 +50,28 @@ fun interface Cancellable {
 class SensitiveClipboard(
     private val port: ClipboardPort,
     private val scheduler: Scheduler,
-    private val clearSeconds: () -> Int,
+    private val clearSeconds: ClearDelay,
 ) {
     private var pending: Cancellable? = null
 
-    /** Copies [text] and returns the seconds until it is cleared (0: not cleared). */
-    fun copy(text: String): Int {
-        val seconds = clearSeconds().takeIf { it in CLEAR_CHOICES } ?: DEFAULT_CLEAR_SECONDS
+    /**
+     * Copies [text] and returns the seconds until it is cleared (0: not
+     * cleared). Not named copy: Objective-C reads copy… as a method family.
+     */
+    fun write(text: String): Int {
+        val seconds = clearSeconds.seconds().takeIf { it in CLEAR_CHOICES } ?: DEFAULT_CLEAR_SECONDS
         pending?.cancel()
         pending = null
         port.writeSensitive(text, seconds)
         if (seconds > 0) {
             val token = tokenOf(text)
-            pending = scheduler.schedule(seconds * 1000L) {
-                pending = null
-                port.clearIfOurs(token)
-            }
+            pending = scheduler.schedule(
+                seconds * 1000L,
+                ScheduledAction {
+                    pending = null
+                    port.clearIfOurs(token)
+                },
+            )
         }
         return seconds
     }

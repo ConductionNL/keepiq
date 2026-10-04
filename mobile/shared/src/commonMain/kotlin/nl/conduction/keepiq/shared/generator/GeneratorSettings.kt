@@ -56,6 +56,13 @@ data class GeneratorSettings(
         }
     }
 
+    /** [generate] without throwing: the value, or why it was refused. For Swift. */
+    fun tryGenerate(policy: GeneratorPolicy?): GeneratorOutcome = try {
+        GeneratorOutcome(generate(policy), null)
+    } catch (e: GeneratorException) {
+        GeneratorOutcome(null, e.code)
+    }
+
     /** The shortest password length the screen may offer under [policy]. */
     fun minimumLength(policy: GeneratorPolicy?): Int = maxOf(Generator.MIN_LENGTH, policy?.minLength ?: 0)
 
@@ -72,4 +79,9 @@ data class GeneratorSettings(
             avoidAmbiguous = true,
         )
     }
+}
+
+/** A generated value, or the code of the refusal. */
+data class GeneratorOutcome(val value: String?, val error: GeneratorErrorCode?) {
+    override fun toString(): String = "GeneratorOutcome(error=$error)"
 }

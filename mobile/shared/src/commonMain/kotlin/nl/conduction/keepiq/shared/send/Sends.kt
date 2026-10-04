@@ -47,6 +47,12 @@ sealed class SendResult<out T> {
     data class Done<T>(val value: T) : SendResult<T>()
 
     data class Problem(val form: SendFormProblem? = null, val write: WriteProblem? = null) : SendResult<Nothing>()
+
+    /** The value when done, else null. For Swift, which cannot match a generic subclass. */
+    val valueOrNull: T? get() = (this as? Done<T>)?.value
+
+    /** The problem when not done, else null. */
+    val problemOrNull: Problem? get() = this as? Problem
 }
 
 /**

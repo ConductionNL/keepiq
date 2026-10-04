@@ -148,6 +148,29 @@ data class ItemDraft(
     val preserved: Map<String, JsonElement> = emptyMap(),
 ) {
     override fun toString(): String = "ItemDraft(kind=$kind, name=$name)"
+
+    val fieldNames: List<String> get() = fields.map { it.first }
+    val fieldValues: List<String> get() = fields.map { it.second }
+
+    /**
+     * The same draft with what a form edited; kind, type and preserved
+     * members stay. For Swift, which sees no default arguments.
+     */
+    fun edited(
+        name: String,
+        url: String,
+        folderId: String?,
+        login: String,
+        secret: String,
+        notes: String,
+        composite: Map<String, String>,
+        typed: Map<String, String>,
+        fieldNames: List<String>,
+        fieldValues: List<String>,
+    ): ItemDraft = copy(
+        name = name, url = url, folderId = folderId, login = login, secret = secret, notes = notes,
+        composite = composite, typed = typed, fields = fieldNames.zip(fieldValues),
+    )
 }
 
 /** Why a draft cannot be saved, per field. */

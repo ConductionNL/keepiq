@@ -25,20 +25,20 @@ class SensitiveClipboardTest {
             }
         },
         scheduler = object : Scheduler {
-            override fun schedule(delayMillis: Long, action: () -> Unit): Cancellable {
+            override fun schedule(delayMillis: Long, action: ScheduledAction): Cancellable {
                 val cancelled = booleanArrayOf(false)
-                timers += Triple(delayMillis, action, cancelled)
+                timers += Triple(delayMillis, { action.run() }, cancelled)
                 return Cancellable { cancelled[0] = true }
             }
         },
-        clearSeconds = { setting },
+        clearSeconds = ClearDelay { setting },
     )
 
     private fun fireLive() = timers.filter { !it.third[0] }.forEach { it.second() }
 
     @Test
     fun aCopyIsMarkedSensitiveAndClearedAfterTheDefaultMinute() {
-        assertEquals(60, clipboard.copy("geheim"))
+        assertEquals(60, clipboard.write("geheim"))
         assertEquals(listOf("geheim" to 60), written)
         assertEquals(60_000L, timers.single().first)
         assertTrue(cleared.isEmpty())
@@ -49,9 +49,9 @@ class SensitiveClipboardTest {
 
     @Test
     fun aNewCopyRestartsTheTimerSoOnlyTheNewestIsCleared() {
-        clipboard.copy("eerste")
+        clipboard.write("eerste")
         setting = 10
-        clipboard.copy("tweede")
+        clipboard.write("tweede")
         fireLive()
         assertEquals(listOf(SensitiveClipboard.tokenOf("tweede")), cleared)
         assertEquals(10_000L, timers.last().first)
@@ -60,15 +60,15 @@ class SensitiveClipboardTest {
     @Test
     fun zeroNeverClearsAndAnUnknownDelayFallsBackToTheDefault() {
         setting = 0
-        assertEquals(0, clipboard.copy("blijft"))
+        assertEquals(0, clipboard.write("blijft"))
         assertTrue(timers.isEmpty())
         setting = 7
-        assertEquals(60, clipboard.copy("x"))
+        assertEquals(60, clipboard.write("x"))
     }
 
     @Test
     fun lockingClearsAtOnce() {
-        clipboard.copy("geheim")
+        clipboard.write("geheim")
         clipboard.clearNow("geheim")
         fireLive()
         assertEquals(listOf(SensitiveClipboard.tokenOf("geheim")), cleared)

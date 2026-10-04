@@ -176,7 +176,9 @@ class KeepiqApi(private val client: HttpClient, private val account: Account) {
     /** GET /api/settings/policy, or null when it cannot be read: an unread policy never blocks. */
     suspend fun fetchPolicy(): JsonObject? = try {
         request(HttpMethod.Get, "/api/settings/policy") as? JsonObject
-    } catch (e: KeepiqApiException) {
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
         null
     }
 

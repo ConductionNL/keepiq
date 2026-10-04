@@ -13,6 +13,7 @@ import android.os.Looper
 import android.os.PersistableBundle
 import nl.conduction.keepiq.shared.vault.Cancellable
 import nl.conduction.keepiq.shared.vault.ClipboardPort
+import nl.conduction.keepiq.shared.vault.ScheduledAction
 import nl.conduction.keepiq.shared.vault.Scheduler
 import nl.conduction.keepiq.shared.vault.SensitiveClipboard
 
@@ -64,8 +65,8 @@ class AndroidClipboard(context: Context) : ClipboardPort {
 class HandlerScheduler : Scheduler {
     private val handler = Handler(Looper.getMainLooper())
 
-    override fun schedule(delayMillis: Long, action: () -> Unit): Cancellable {
-        val runnable = Runnable { action() }
+    override fun schedule(delayMillis: Long, action: ScheduledAction): Cancellable {
+        val runnable = Runnable { action.run() }
         handler.postDelayed(runnable, delayMillis)
         return Cancellable { handler.removeCallbacks(runnable) }
     }

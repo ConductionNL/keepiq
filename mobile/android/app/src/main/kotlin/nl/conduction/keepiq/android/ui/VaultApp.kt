@@ -56,6 +56,7 @@ import nl.conduction.keepiq.android.vault.VaultSession
 import nl.conduction.keepiq.shared.api.Account
 import nl.conduction.keepiq.shared.generator.GeneratorPolicy
 import nl.conduction.keepiq.shared.generator.GeneratorSettings
+import nl.conduction.keepiq.shared.vault.ClearDelay
 import nl.conduction.keepiq.shared.vault.SensitiveClipboard
 
 /** Where the user is inside a tab. */
@@ -85,7 +86,7 @@ fun VaultApp(
     val context = LocalContext.current
     val prefs = remember { VaultPreferences(context) }
     val clipboard = remember {
-        SensitiveClipboard(AndroidClipboard(context), HandlerScheduler()) { prefs.clipboardClearSeconds }
+        SensitiveClipboard(AndroidClipboard(context), HandlerScheduler(), ClearDelay { prefs.clipboardClearSeconds })
     }
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -122,7 +123,7 @@ fun VaultApp(
     val copiedText = stringResource(R.string.copied)
     val copiedKept = stringResource(R.string.copied_kept)
     val copy: (String) -> Unit = { value ->
-        val seconds = clipboard.copy(value)
+        val seconds = clipboard.write(value)
         scope.launch { snackbar.showSnackbar(if (seconds > 0) copiedText.format(seconds) else copiedKept) }
     }
 
