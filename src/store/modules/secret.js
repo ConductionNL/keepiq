@@ -811,21 +811,23 @@ export const useSecretStore = defineStore('secret', {
 		 * Move a secret between trash and archive states and drop it from the
 		 * list being shown: every action takes it out of the current view.
 		 *
+		 * The server's answer comes back: a restored copy from another
+		 * organisation carries `federatedShare` (resumed, ended, unreachable).
+		 *
 		 * @param {string} id The secret ID.
 		 * @param {string} action restore, purge, archive or unarchive.
-		 * @return {Promise<void>}
+		 * @return {Promise<object>} The response body.
 		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
 		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-owner-revoked-the-share-meanwhile
 		 */
 		async changeSecretState(id, action) {
 			const url = generateUrl(`/apps/keepiq/api/v1/secrets/${id}/${action}`)
-			if (action === 'purge') {
-				await axios.delete(url)
-			} else {
-				await axios.post(url)
-			}
+			const response =
+				action === 'purge' ? await axios.delete(url) : await axios.post(url)
 			this.secrets = this.secrets.filter((s) => s.id !== id)
 			this.totalCount = Math.max(0, this.totalCount - 1)
+			return response?.data ?? {}
 		},
 
 		/**

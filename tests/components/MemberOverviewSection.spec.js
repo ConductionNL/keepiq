@@ -222,7 +222,7 @@ describe('OffboardingSection', () => {
 		await flushPromises()
 
 		expect(wrapper.find('[data-testid="offboarding-summary"]').text()).toContain(
-			'Removed the user from {count} team folders.',
+			'Removed the user from %n team folders.',
 		)
 		expect(
 			wrapper.find('[data-testid="offboarding-covering-groups"]').exists(),
@@ -230,6 +230,26 @@ describe('OffboardingSection', () => {
 		expect(wrapper.vm.coveringGroups).toEqual([
 			{ teamFolderId: 'tf-finance', groupId: 'finance-team' },
 		])
+	})
+
+	it('says team folder in the singular for one removed membership', async () => {
+		const wrapper = mountWith(OffboardingSection)
+		vi.spyOn(useTeamFolderStore(), 'offboard').mockResolvedValue({
+			revoked: 0,
+			transferred: 0,
+			skipped: [],
+			membershipsRemoved: 1,
+			stillCoveredByGroups: [],
+		})
+		wrapper.vm.leavingUser = { userId: 'carol', displayName: 'Carol' }
+		wrapper.vm.successorUser = { userId: 'dave', displayName: 'Dave' }
+
+		await wrapper.vm.run()
+		await flushPromises()
+
+		expect(wrapper.find('[data-testid="offboarding-summary"]').text()).toContain(
+			'Removed the user from %n team folder.',
+		)
 	})
 
 	it('shows no group warning when no group covers the leaver', async () => {

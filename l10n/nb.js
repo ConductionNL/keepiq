@@ -1662,7 +1662,13 @@ OC.L10N.register(
         "Copy from another organisation updated": "Kopi fra en annen organisasjon oppdatert",
         "Copy from another organisation removed": "Kopi fra en annen organisasjon fjernet",
         "Declined: they removed their copy. Share again if they need it.": "Avslått: mottakeren fjernet kopien sin. Del på nytt hvis de trenger den.",
-        "Recipient at another organisation removed their copy": "Mottaker i en annen organisasjon fjernet kopien sin"
+        "Recipient at another organisation removed their copy": "Mottaker i en annen organisasjon fjernet kopien sin",
+        "Removed the user from %n team folder.": "Fjernet brukeren fra %n teammappe.",
+        "Removed the user from %n team folders.": "Fjernet brukeren fra %n teammapper.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Fjernet brukeren fra %n teammappe.","Fjernet brukeren fra %n teammapper."],
+        "A restored copy came from a share that has ended. It stays read-only.": "En gjenopprettet kopi kom fra en deling som er avsluttet. Den forblir skrivebeskyttet.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Organisasjonen som delte en gjenopprettet kopi, kunne ikke nås. Kopien forblir skrivebeskyttet og følger ikke endringene deres.",
+        "Recipient at another organisation restored their copy": "Mottaker i en annen organisasjon gjenopprettet kopien sin"
     },
     "nplurals=2; plural=(n != 1);"
 )

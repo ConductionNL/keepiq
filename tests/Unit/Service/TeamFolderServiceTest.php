@@ -1110,6 +1110,32 @@ class TeamFolderServiceTest extends TestCase {
 	}//end testAManagerChangesGradesBelowManagerOnly()
 
 	/**
+	 * A viewer or an editor who tries to change another member's grade is
+	 * refused as forbidden (manager_only), not as a bad request, and the
+	 * grade stays as it was.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#scenario-non-owner-cannot-change-a-grade
+	 */
+	public function testAViewerOrEditorChangingAGradeIsRefusedAsForbidden(): void {
+		$members = $this->managedFolder();
+
+		foreach ([['ed', 'mem-vic', 'write'], ['vic', 'mem-ed', 'read'], ['vic', 'mem-vic', 'write']] as [$caller, $target, $grade]) {
+			try {
+				$this->service->setMemberGrade(teamFolderId: 'tf-1', memberId: $target, grade: $grade, ownerId: $caller);
+				$this->fail($caller . ' must not set ' . $target . ' to ' . $grade);
+			} catch (InvalidArgumentException $refusal) {
+				$this->assertInstanceOf(\OCA\Keepiq\Exception\ManagerOnlyException::class, $refusal, $caller . ' -> ' . $target);
+				$this->assertSame('manager_only', \OCA\Keepiq\Exception\ManagerOnlyException::CODE);
+			}
+		}
+
+		$this->assertSame('read', $members['vic']->effectiveGrade());
+		$this->assertSame('write', $members['ed']->effectiveGrade());
+	}//end testAViewerOrEditorChangingAGradeIsRefusedAsForbidden()
+
+	/**
 	 * A manager removes a viewer and may leave, but cannot remove another
 	 * manager or stop sharing the folder.
 	 *

@@ -21,12 +21,21 @@
  * 4.5): B files the copy in a folder, a new name from A reaches it while the
  * folder stays, and B deleting the copy shows the share as declined on A.
  *
+ * A third test covers the edges decided on 4 Oct 2026
+ * (federated-decline-and-restore): B declining a pending share shows it
+ * declined on A at once; B restoring a deleted copy takes the share back,
+ * A's share is live again and the copy carries A's current name; after A
+ * revokes, a restore says the share has ended and the copy keeps its value.
+ *
  * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
  * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
  * @spec openspec/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
  * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-files-his-copy-in-a-folder
  * @spec openspec/specs/federated-sharing/spec.md#scenario-a-new-name-reaches-bob
  * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-declines-a-pending-share
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-restores-his-copy
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-the-owner-revoked-the-share-meanwhile
  */
 
 import type { Browser, Page } from '@playwright/test'
@@ -225,6 +234,8 @@ async function shareWithBob(alice: Page, plain: string): Promise<void> {
  * @return {Promise<{row: import('@playwright/test').Locator, copyId: string}>}
  */
 async function acceptOnB(bob: Page, name: string) {
+	// Leave first, so a page already on the list loads it again.
+	await gotoVaultRoute(bob, 'secrets')
 	await gotoVaultRoute(bob, 'incoming')
 	const pending = bob
 		.locator('[data-testid^="incoming-share-"]')
@@ -389,13 +400,11 @@ test('the recipient files the copy, follows a new name, and declines by deleting
 		folderId: folder.data.id,
 		name: 'Mine now',
 	})
-	// Refused. The OCS layer of this route still turns a 403 into 200 with
-	// the status in the envelope (the 428 change of 4 Oct is another lane's),
-	// so the evidence is the refusal message and the unchanged name.
-	expect(
-		renamedByBob.status === 403
-			|| renamedByBob.data?.ocs?.meta?.statuscode === 403,
-	).toBe(true)
+	// Refused. Since #1104 a refusal on this OCS route reaches the browser
+	// as 428 with an error code (a plain 403 would become an HTTP 200
+	// envelope), and the name stays.
+	expect(renamedByBob.status).toBe(428)
+	expect(renamedByBob.data?.error).toBeTruthy()
 	expect((await call(bob, 'GET', `/api/v1/secrets/${copyId}`)).data?.name).toBe(
 		SECRET_NAME,
 	)
@@ -459,4 +468,144 @@ test('the recipient files the copy, follows a new name, and declines by deleting
 			.filter({ hasText: BOB })
 			.getByTestId('federated-share-state'),
 	).toHaveText('Declined: they removed their copy. Share again if they need it.')
+})
+
+/**
+ * Alice's shares with Bob of one secret, as her server has them.
+ *
+ * @param {Page} alice The owner's page.
+ * @param {string} sourceId The secret.
+ * @return {Promise<Array<{id: string, status: string}>>}
+ */
+async function aliceShares(alice: Page, sourceId: string) {
+	const rows = (
+		await call(alice, 'GET', `/api/v1/secrets/${sourceId}/federated-shares`)
+	).data as Array<{ id: string; recipientCloudId: string; status: string }> | null
+	return (rows ?? []).filter((share) => share.recipientCloudId === BOB)
+}
+
+/**
+ * The status of one of Alice's shares, or 'gone' once her server dropped it.
+ *
+ * @param {Page} alice The owner's page.
+ * @param {string} sourceId The secret.
+ * @param {string} shareId The share.
+ * @return {Promise<string>}
+ */
+async function aliceShareStatus(alice: Page, sourceId: string, shareId: string) {
+	return (
+		(await aliceShares(alice, sourceId)).find((share) => share.id === shareId)
+			?.status ?? 'gone'
+	)
+}
+
+/**
+ * The id of Alice's one live share with Bob of a secret.
+ *
+ * @param {Page} alice The owner's page.
+ * @param {string} sourceId The secret.
+ * @return {Promise<string>}
+ */
+async function liveShareId(alice: Page, sourceId: string): Promise<string> {
+	const live = (await aliceShares(alice, sourceId)).filter(
+		(share) => share.status === 'active',
+	)
+	expect(live).toHaveLength(1)
+	return live[0].id
+}
+
+test('the recipient declines a pending share, and takes a deleted copy back', async ({
+	browser,
+}) => {
+	const alice = await signIn(browser, A)
+	const sourceId = await secretId(alice, SECRET_NAME)
+	await revokeLeftovers(alice, sourceId)
+	await openSecret(alice, sourceId)
+	const value = await revealedValue(alice)
+	await shareWithBob(alice, value)
+	const first = await liveShareId(alice, sourceId)
+
+	// Declining a pending share tells Alice at once.
+	const bob = await signIn(browser, B)
+	await gotoVaultRoute(bob, 'incoming')
+	const pending = bob
+		.locator('[data-testid^="incoming-share-"]')
+		.filter({ hasText: SECRET_NAME })
+		.filter({ hasText: 'Waiting for your answer' })
+		.first()
+	await expect(pending).toBeVisible()
+	const declinedRow = bob.getByTestId(
+		(await pending.getAttribute('data-testid')) ?? '',
+	)
+	await declinedRow.getByTestId('incoming-share-decline').click()
+	await expect(declinedRow.getByTestId('incoming-share-status')).toHaveText(
+		'Declined',
+	)
+	await expect
+		.poll(async () => await aliceShareStatus(alice, sourceId, first), {
+			timeout: 30_000,
+		})
+		.toBe('declined')
+
+	// Alice shares again; Bob accepts and then deletes the copy.
+	await openSecret(alice, sourceId)
+	await shareWithBob(alice, value)
+	const second = await liveShareId(alice, sourceId)
+	const { copyId } = await acceptOnB(bob, SECRET_NAME)
+	expect((await call(bob, 'DELETE', `/api/v1/secrets/${copyId}`)).status).toBe(200)
+	await expect
+		.poll(async () => await aliceShareStatus(alice, sourceId, second), {
+			timeout: 30_000,
+		})
+		.toBe('declined')
+
+	// While declined, Alice renames: nothing is sent to Bob.
+	const newName = `${SECRET_NAME} ${Date.now()}`
+	expect(
+		(await call(alice, 'PUT', `/api/v1/secrets/${sourceId}`, { name: newName }))
+			.status,
+	).toBe(200)
+	try {
+		// Bob restores the copy: the share is live again on both sides and the
+		// copy carries Alice's current name.
+		const restored = await call(bob, 'POST', `/api/v1/secrets/${copyId}/restore`)
+		expect(restored.status).toBe(200)
+		expect(restored.data?.federatedShare).toBe('resumed')
+		expect(await aliceShareStatus(alice, sourceId, second)).toBe('active')
+		const copy = await call(bob, 'GET', `/api/v1/secrets/${copyId}`)
+		expect(copy.data?.name).toBe(newName)
+		await openSecret(bob, copyId)
+		expect(await revealedValue(bob)).toBe(value)
+	} finally {
+		await call(alice, 'PUT', `/api/v1/secrets/${sourceId}`, {
+			name: SECRET_NAME,
+		})
+	}
+	// Alice's next change reaches the copy again.
+	await expect
+		.poll(
+			async () =>
+				(await call(bob, 'GET', `/api/v1/secrets/${copyId}`)).data?.name,
+			{ timeout: 30_000 },
+		)
+		.toBe(SECRET_NAME)
+
+	// Bob deletes it again, Alice revokes, and Bob restores: the share has
+	// ended, the copy is back read-only with its value, and Alice's share is
+	// not live.
+	expect((await call(bob, 'DELETE', `/api/v1/secrets/${copyId}`)).status).toBe(200)
+	await expect
+		.poll(async () => await aliceShareStatus(alice, sourceId, second), {
+			timeout: 30_000,
+		})
+		.toBe('declined')
+	await revokeLeftovers(alice, sourceId)
+	const ended = await call(bob, 'POST', `/api/v1/secrets/${copyId}/restore`)
+	expect(ended.status).toBe(200)
+	expect(ended.data?.federatedShare).toBe('ended')
+	expect(ended.data?.readOnly).toBe(true)
+	expect(await aliceShareStatus(alice, sourceId, second)).not.toBe('active')
+	await openSecret(bob, copyId)
+	await expect(bob.getByTestId('secret-detail-edit')).toHaveCount(0)
+	expect(await revealedValue(bob)).toBe(value)
 })

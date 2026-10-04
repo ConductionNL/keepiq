@@ -38,6 +38,7 @@ use OCA\Keepiq\Db\TeamFolder;
 use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
+use OCA\Keepiq\Exception\ManagerOnlyException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 
@@ -47,6 +48,10 @@ use OCP\IGroupManager;
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The read side of team folders,
  *   including the ancestor walks that grades and restrictions both need.
  * @SuppressWarnings(PHPMD.TooManyPublicMethods) One public lookup per caller need.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The read side joins folders,
+ *   team folders, memberships, groups and secrets, and the manage check
+ *   refuses with its own exception so a viewer's grade change reads as
+ *   forbidden (folder-permission-grades).
  */
 class TeamFolderQueryService {
 	/**
@@ -361,7 +366,9 @@ class TeamFolderQueryService {
 		if ($teamFolder->getOwnerId() !== $userId
 			&& $this->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId) !== 'manage'
 		) {
-			throw new InvalidArgumentException(message: 'Not authorized to manage this team folder');
+			// A viewer or an editor: forbidden, not a bad request
+			// (folder-permission-grades, "Non-owner cannot change a grade").
+			throw new ManagerOnlyException(message: 'Not authorized to manage this team folder');
 		}
 
 		return $teamFolder;

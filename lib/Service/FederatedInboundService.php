@@ -43,6 +43,7 @@ class FederatedInboundService {
 	 * @param FederatedInboundMapper $inboundMapper Inbound share rows
 	 * @param FederatedCopyService $copies Pulls and stores the read-only copy
 	 * @param FederatedShareAuditTrail $audit Identifier-only audit
+	 * @param FederatedCopyDeclineService|null $declines Tells the owner about a decline
 	 *
 	 * @return void
 	 *
@@ -52,6 +53,7 @@ class FederatedInboundService {
 		private FederatedInboundMapper $inboundMapper,
 		private FederatedCopyService $copies,
 		private FederatedShareAuditTrail $audit,
+		private ?FederatedCopyDeclineService $declines = null,
 	) {
 	}//end __construct()
 
@@ -95,7 +97,9 @@ class FederatedInboundService {
 	}//end accept()
 
 	/**
-	 * Decline a pending share. Nothing is pulled.
+	 * Decline a pending share. Nothing is pulled, and the owner's instance
+	 * gets OCM `SHARE_DECLINED`, as when an accepted copy is deleted. A
+	 * decline that does not arrive goes again at the owner's next change.
 	 *
 	 * @param string $id The inbound share
 	 * @param string $userId The recipient
@@ -104,7 +108,7 @@ class FederatedInboundService {
 	 *
 	 * @throws NotFoundException When it is not the user's pending share
 	 *
-	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-declines-a-pending-share
 	 */
 	public function decline(string $id, string $userId): FederatedInbound {
 		$row = $this->pendingOf(id: $id, userId: $userId);
@@ -112,6 +116,7 @@ class FederatedInboundService {
 		$row->setUpdatedAt(new DateTime());
 		$row = $this->inboundMapper->update(entity: $row);
 		$this->audit->recordInbound(eventType: AuditEventTypes::FEDERATED_SHARE_DECLINED, row: $row, actorId: $userId);
+		$this->declines?->tellOwner(row: $row);
 
 		return $row;
 	}//end decline()
