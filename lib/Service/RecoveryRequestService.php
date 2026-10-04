@@ -122,7 +122,7 @@ class RecoveryRequestService {
 	 * @throws ForbiddenException       When the user is not enrolled or recovery is off
 	 * @throws InvalidArgumentException When the key is malformed
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
 	public function create(string $userId, string $publicKey, string $purpose = 'password'): RecoveryRequest {
 		if (in_array($purpose, self::PURPOSES, true) === false) {
@@ -176,7 +176,7 @@ class RecoveryRequestService {
 	 *
 	 * @throws ForbiddenException When the caller is not an officer
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 	 */
 	public function forOfficer(string $officerUid): array {
 		$this->assertOfficer(officerUid: $officerUid);
@@ -217,7 +217,7 @@ class RecoveryRequestService {
 	 * @throws ForbiddenException When the caller is not an officer or approves their own request
 	 * @throws NotFoundException  When the request is not open
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 	 */
 	public function approve(string $id, string $officerUid): string {
 		$this->assertOfficer(officerUid: $officerUid);
@@ -264,7 +264,7 @@ class RecoveryRequestService {
 	 * @throws ForbiddenException When the caller is not an officer
 	 * @throws NotFoundException  When the request is not open
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-recovery-needs-a-threshold-of-proven-officer-approvals
 	 */
 	public function decline(string $id, string $officerUid): void {
 		$this->assertOfficer(officerUid: $officerUid);
@@ -293,7 +293,7 @@ class RecoveryRequestService {
 	 *
 	 * @throws NotFoundException For every caller and state it is not for
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
 	 */
 	public function handoff(string $id, string $officerUid): array {
 		$request = $this->loadForApprover(id: $id, officerUid: $officerUid);
@@ -325,7 +325,7 @@ class RecoveryRequestService {
 	 * @throws NotFoundException        For every caller and state it is not for
 	 * @throws InvalidArgumentException When the sealed result is empty
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
 	 */
 	public function postSealed(string $id, string $officerUid, string $sealed): void {
 		if (trim($sealed) === '') {
@@ -352,7 +352,7 @@ class RecoveryRequestService {
 	 *
 	 * @return array<string,mixed>|null
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
 	 */
 	public function forUser(string $userId): ?array {
 		$request = ($this->requests->findByUser($userId)[0] ?? null);
@@ -392,7 +392,7 @@ class RecoveryRequestService {
 	 *
 	 * @throws NotFoundException For every caller and state it is not for
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
 	 */
 	public function complete(string $id, string $userId): string {
 		$request = $this->load(id: $id);
@@ -425,7 +425,7 @@ class RecoveryRequestService {
 	 *
 	 * @return int The number expired
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
 	public function expireLapsed(DateTime $now): int {
 		$count = 0;
@@ -452,7 +452,7 @@ class RecoveryRequestService {
 	 *
 	 * @return int The number ended
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
 	 */
 	public function endForSuite(string $suiteId): int {
 		$count = 0;

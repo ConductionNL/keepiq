@@ -32,7 +32,7 @@
 
 ## 6. End to end
 
-- [ ] 6.1 Add a Playwright flow: a user enrols, forgets their password, files a request, two officers approve after comparing the phrase, and the user sets a new master password and reads their old secrets. Verify: the Playwright spec passes in the E2E job. **Live check owed**: the Playwright flow needs the E2E job; not written in this change.
+- [x] 6.1 Add a Playwright flow: a user enrols, forgets their password, files a request, two officers approve after comparing the phrase, and the user sets a new master password and reads their old secrets. Verify: the Playwright spec passes in the E2E job. Done 4 Oct: `tests/e2e/workflows/account-recovery.spec.ts` (three throwaway accounts, vaults set up in the browser; an officer's browser makes the recovery key; the user enrols in Settings, files the request from a new browser, both officers check the phrase and approve with their own key, the second hands the key over, the asking browser sets a new master password; a fresh browser unlocks with it and decrypts the secret stored before, and the old password no longer unlocks). Red before, green after: on development, naming the officers answered 400 (`Value provided for objectId is not valid`) after saving, because `recovery_officer_named`, `recovery_declined` and `recovery_ready` are sent without an object id and Nextcloud refuses an empty one; `NotificationService::notify` now falls back to the subject (`NotificationServiceTest::testNotifyWithoutAnObjectIdSetsAValidOne`, red on the old code). Green on Nextcloud 35 in 3.3 min.
 
 ## Acceptance criteria
 

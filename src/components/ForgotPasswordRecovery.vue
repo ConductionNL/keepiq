@@ -8,7 +8,7 @@
   officers, and once an officer handed the key over, sets a new master
   password. Emits `recovered` with the officer who handled it.
 
-  @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+  @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 -->
 <template>
 	<div v-if="enrolled" class="forgot-password" data-testid="forgot-password">
@@ -126,14 +126,14 @@ export default {
 
 	computed: {
 		/**
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 		 */
 		store() {
 			return useAccountRecoveryStore()
 		},
 
 		/**
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 		 */
 		request() {
 			// A device-purpose request belongs to "Ask your organisation instead".
@@ -146,7 +146,7 @@ export default {
 	 * Offer the option only to an enrolled user, and resume an open request.
 	 *
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
 	async created() {
 		try {
@@ -163,7 +163,7 @@ export default {
 	methods: {
 		/**
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 		 */
 		async start() {
 			await this.guard(async () => {
@@ -174,7 +174,7 @@ export default {
 
 		/**
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 		 */
 		async refresh() {
 			await this.guard(() => this.store.fetchMyRequest())
@@ -182,7 +182,7 @@ export default {
 
 		/**
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
 		 */
 		async complete() {
 			await this.guard(async () => {
@@ -196,7 +196,7 @@ export default {
 		/**
 		 * @param {Function} action The action.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 		 */
 		async guard(action) {
 			this.busy = true
