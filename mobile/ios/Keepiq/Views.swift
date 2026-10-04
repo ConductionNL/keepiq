@@ -186,6 +186,13 @@ struct SettingsView: View {
                         .accessibilityIdentifier("setPin")
                 }
             }
+            Section("Account") {
+                if let account = model.account(vault.accountId) {
+                    Text("\(account.loginName) on \(account.server.withoutScheme)")
+                }
+                Button("Disconnect this account", role: .destructive) { confirmUnpair = true }
+                    .accessibilityIdentifier("unpair")
+            }
             Section("Lock after") {
                 if let max = model.maxIdle {
                     Text("Your organisation allows at most \(max) minutes.").font(.footnote)
@@ -201,17 +208,14 @@ struct SettingsView: View {
                 .pickerStyle(.inline)
                 .labelsHidden()
             }
-            Section("Account") {
-                if let account = model.account(vault.accountId) {
-                    Text("\(account.loginName) on \(account.server.withoutScheme)")
-                }
-                Button("Disconnect this account", role: .destructive) { confirmUnpair = true }
-                    .accessibilityIdentifier("unpair")
-            }
             ProblemText(message: model.message)
-            Button("Back") { model.closeSettings(vault) }.accessibilityIdentifier("back")
         }
         .navigationTitle("Unlock and account")
+        .toolbar {
+            ToolbarItem(placement: .cancellationAction) {
+                Button("Back") { model.closeSettings(vault) }.accessibilityIdentifier("back")
+            }
+        }
         .alert("Disconnect this account?", isPresented: $confirmUnpair) {
             Button("Disconnect", role: .destructive) { model.unpair(vault.accountId) }
             Button("Cancel", role: .cancel) {}
