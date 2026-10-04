@@ -1662,7 +1662,10 @@ OC.L10N.register(
         "Copy from another organisation updated": "Egy másik szervezettől kapott másolat frissítve",
         "Copy from another organisation removed": "Egy másik szervezettől kapott másolat eltávolítva",
         "Declined: they removed their copy. Share again if they need it.": "Elutasítva: a címzett eltávolította a másolatát. Ossza meg újra, ha szüksége van rá.",
-        "Recipient at another organisation removed their copy": "Egy másik szervezet címzettje eltávolította a másolatát"
+        "Recipient at another organisation removed their copy": "Egy másik szervezet címzettje eltávolította a másolatát",
+        "Removed the user from %n team folder.": "A felhasználó eltávolítva %n csapatmappából.",
+        "Removed the user from %n team folders.": "A felhasználó eltávolítva %n csapatmappából.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["A felhasználó eltávolítva %n csapatmappából.","A felhasználó eltávolítva %n csapatmappából."]
     },
     "nplurals=2; plural=(n != 1);"
 )

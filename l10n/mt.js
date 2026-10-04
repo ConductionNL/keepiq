@@ -1662,7 +1662,10 @@ OC.L10N.register(
         "Copy from another organisation updated": "Kopja minn organizzazzjoni oħra aġġornata",
         "Copy from another organisation removed": "Kopja minn organizzazzjoni oħra mneħħija",
         "Declined: they removed their copy. Share again if they need it.": "Miċħud: ir-riċevitur neħħa l-kopja tiegħu. Erġa’ aqsam jekk jeħtieġha.",
-        "Recipient at another organisation removed their copy": "Riċevitur f’organizzazzjoni oħra neħħa l-kopja tiegħu"
+        "Recipient at another organisation removed their copy": "Riċevitur f’organizzazzjoni oħra neħħa l-kopja tiegħu",
+        "Removed the user from %n team folder.": "L-utent tneħħa minn %n folder tat-tim.",
+        "Removed the user from %n team folders.": "L-utent tneħħa minn %n folders tat-tim.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["L-utent tneħħa minn %n folder tat-tim.","L-utent tneħħa minn %n folders tat-tim.","L-utent tneħħa minn %n folders tat-tim.","L-utent tneħħa minn %n folders tat-tim."]
     },
     "nplurals=4; plural=(n==1 ? 0 : n==0 || (n%100>1 && n%100<11) ? 1 : (n%100>10 && n%100<20) ? 2 : 3);"
 )

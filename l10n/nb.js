@@ -1662,7 +1662,10 @@ OC.L10N.register(
         "Copy from another organisation updated": "Kopi fra en annen organisasjon oppdatert",
         "Copy from another organisation removed": "Kopi fra en annen organisasjon fjernet",
         "Declined: they removed their copy. Share again if they need it.": "Avslått: mottakeren fjernet kopien sin. Del på nytt hvis de trenger den.",
-        "Recipient at another organisation removed their copy": "Mottaker i en annen organisasjon fjernet kopien sin"
+        "Recipient at another organisation removed their copy": "Mottaker i en annen organisasjon fjernet kopien sin",
+        "Removed the user from %n team folder.": "Fjernet brukeren fra %n teammappe.",
+        "Removed the user from %n team folders.": "Fjernet brukeren fra %n teammapper.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Fjernet brukeren fra %n teammappe.","Fjernet brukeren fra %n teammapper."]
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1662,7 +1662,10 @@ OC.L10N.register(
         "Copy from another organisation updated": "Copie de la o altă organizație actualizată",
         "Copy from another organisation removed": "Copie de la o altă organizație eliminată",
         "Declined: they removed their copy. Share again if they need it.": "Refuzat: destinatarul și-a eliminat copia. Partajați din nou dacă are nevoie de ea.",
-        "Recipient at another organisation removed their copy": "Un destinatar dintr-o altă organizație și-a eliminat copia"
+        "Recipient at another organisation removed their copy": "Un destinatar dintr-o altă organizație și-a eliminat copia",
+        "Removed the user from %n team folder.": "Utilizatorul a fost eliminat din %n dosar de echipă.",
+        "Removed the user from %n team folders.": "Utilizatorul a fost eliminat din %n dosare de echipă.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Utilizatorul a fost eliminat din %n dosar de echipă.","Utilizatorul a fost eliminat din %n dosare de echipă.","Utilizatorul a fost eliminat din %n dosare de echipă."]
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

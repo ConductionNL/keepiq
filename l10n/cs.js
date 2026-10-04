@@ -1662,7 +1662,10 @@ OC.L10N.register(
         "Copy from another organisation updated": "Kopie z jiné organizace aktualizována",
         "Copy from another organisation removed": "Kopie z jiné organizace odstraněna",
         "Declined: they removed their copy. Share again if they need it.": "Odmítnuto: příjemce odstranil svou kopii. Pokud ji potřebuje, sdílejte znovu.",
-        "Recipient at another organisation removed their copy": "Příjemce z jiné organizace odstranil svou kopii"
+        "Recipient at another organisation removed their copy": "Příjemce z jiné organizace odstranil svou kopii",
+        "Removed the user from %n team folder.": "Uživatel byl odebrán z %n týmové složky.",
+        "Removed the user from %n team folders.": "Uživatel byl odebrán z %n týmových složek.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Uživatel byl odebrán z %n týmové složky.","Uživatel byl odebrán z %n týmových složek.","Uživatel byl odebrán z %n týmových složek."]
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

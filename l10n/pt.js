@@ -1662,7 +1662,10 @@ OC.L10N.register(
         "Copy from another organisation updated": "Cópia de outra organização atualizada",
         "Copy from another organisation removed": "Cópia de outra organização eliminada",
         "Declined: they removed their copy. Share again if they need it.": "Recusado: o destinatário eliminou a sua cópia. Partilhe novamente se precisar dela.",
-        "Recipient at another organisation removed their copy": "Um destinatário de outra organização eliminou a sua cópia"
+        "Recipient at another organisation removed their copy": "Um destinatário de outra organização eliminou a sua cópia",
+        "Removed the user from %n team folder.": "Utilizador removido de %n pasta de equipa.",
+        "Removed the user from %n team folders.": "Utilizador removido de %n pastas de equipa.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Utilizador removido de %n pasta de equipa.","Utilizador removido de %n pastas de equipa."]
     },
     "nplurals=2; plural=(n != 1);"
 )

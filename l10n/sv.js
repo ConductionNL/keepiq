@@ -1662,7 +1662,10 @@ OC.L10N.register(
         "Copy from another organisation updated": "Kopia från en annan organisation uppdaterad",
         "Copy from another organisation removed": "Kopia från en annan organisation borttagen",
         "Declined: they removed their copy. Share again if they need it.": "Avböjd: mottagaren tog bort sin kopia. Dela igen om de behöver den.",
-        "Recipient at another organisation removed their copy": "Mottagare i en annan organisation tog bort sin kopia"
+        "Recipient at another organisation removed their copy": "Mottagare i en annan organisation tog bort sin kopia",
+        "Removed the user from %n team folder.": "Användaren togs bort från %n teammapp.",
+        "Removed the user from %n team folders.": "Användaren togs bort från %n teammappar.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Användaren togs bort från %n teammapp.","Användaren togs bort från %n teammappar."]
     },
     "nplurals=2; plural=(n != 1);"
 )

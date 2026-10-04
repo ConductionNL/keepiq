@@ -1733,7 +1733,13 @@
         "Copy from another organisation updated": "Kopie vun enger anerer Organisatioun aktualiséiert",
         "Copy from another organisation removed": "Kopie vun enger anerer Organisatioun ewechgeholl",
         "Declined: they removed their copy. Share again if they need it.": "Refuséiert: den Empfänger huet seng Kopie ewechgeholl. Deelt et nach eng Kéier, wann hien se brauch.",
-        "Recipient at another organisation removed their copy": "Empfänger vun enger anerer Organisatioun huet seng Kopie ewechgeholl"
+        "Recipient at another organisation removed their copy": "Empfänger vun enger anerer Organisatioun huet seng Kopie ewechgeholl",
+        "Removed the user from %n team folder.": "De Benotzer gouf aus %n Teamuerdner ewechgeholl.",
+        "Removed the user from %n team folders.": "De Benotzer gouf aus %n Teamuerdner ewechgeholl.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": [
+            "De Benotzer gouf aus %n Teamuerdner ewechgeholl.",
+            "De Benotzer gouf aus %n Teamuerdner ewechgeholl."
+        ]
     },
     "plurals": null
 }

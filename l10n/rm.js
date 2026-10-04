@@ -1638,7 +1638,9 @@ OC.L10N.register(
         "Copy from another organisation updated": "Copia d’ina autra organisaziun actualisada",
         "Copy from another organisation removed": "Copia d’ina autra organisaziun stizzada",
         "Declined: they removed their copy. Share again if they need it.": "Refusà: il retschavider ha stizzà sia copia. Cundividai danovamain sch’el ha basegn.",
-        "Recipient at another organisation removed their copy": "In retschavider d’ina autra organisaziun ha stizzà sia copia"
+        "Recipient at another organisation removed their copy": "In retschavider d’ina autra organisaziun ha stizzà sia copia",
+        "Removed the user from %n team folder.": "Allontanà l'utilisader da %n ordinatur da team.",
+        "Removed the user from %n team folders.": "Allontanà l'utilisader da %n ordinaturs da team."
     },
     "nplurals=1; plural=0;"
 )

@@ -1662,7 +1662,10 @@ OC.L10N.register(
         "Copy from another organisation updated": "Kopio toisesta organisaatiosta päivitetty",
         "Copy from another organisation removed": "Kopio toisesta organisaatiosta poistettu",
         "Declined: they removed their copy. Share again if they need it.": "Hylätty: vastaanottaja poisti kopionsa. Jaa uudelleen, jos hän tarvitsee sitä.",
-        "Recipient at another organisation removed their copy": "Toisen organisaation vastaanottaja poisti kopionsa"
+        "Recipient at another organisation removed their copy": "Toisen organisaation vastaanottaja poisti kopionsa",
+        "Removed the user from %n team folder.": "Käyttäjä poistettiin %n tiimikansiosta.",
+        "Removed the user from %n team folders.": "Käyttäjä poistettiin %n tiimikansiosta.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Käyttäjä poistettiin %n tiimikansiosta.","Käyttäjä poistettiin %n tiimikansiosta."]
     },
     "nplurals=2; plural=(n != 1);"
 )

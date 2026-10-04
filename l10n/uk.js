@@ -1662,7 +1662,10 @@ OC.L10N.register(
         "Copy from another organisation updated": "Копію з іншої організації оновлено",
         "Copy from another organisation removed": "Копію з іншої організації вилучено",
         "Declined: they removed their copy. Share again if they need it.": "Відхилено: отримувач вилучив свою копію. Надайте доступ знову, якщо він потрібен.",
-        "Recipient at another organisation removed their copy": "Отримувач з іншої організації вилучив свою копію"
+        "Recipient at another organisation removed their copy": "Отримувач з іншої організації вилучив свою копію",
+        "Removed the user from %n team folder.": "Користувача вилучено з %n командної теки.",
+        "Removed the user from %n team folders.": "Користувача вилучено з командних тек: %n.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Користувача вилучено з %n командної теки.","Користувача вилучено з командних тек: %n.","Користувача вилучено з командних тек: %n."]
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

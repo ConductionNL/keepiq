@@ -1733,7 +1733,13 @@
         "Copy from another organisation updated": "Afrit frá öðru fyrirtæki uppfært",
         "Copy from another organisation removed": "Afrit frá öðru fyrirtæki fjarlægt",
         "Declined: they removed their copy. Share again if they need it.": "Hafnað: viðtakandi fjarlægði afritið sitt. Deildu aftur ef hann þarf það.",
-        "Recipient at another organisation removed their copy": "Viðtakandi hjá öðru fyrirtæki fjarlægði afritið sitt"
+        "Recipient at another organisation removed their copy": "Viðtakandi hjá öðru fyrirtæki fjarlægði afritið sitt",
+        "Removed the user from %n team folder.": "Notandinn var fjarlægður úr %n teymismöppu.",
+        "Removed the user from %n team folders.": "Notandinn var fjarlægður úr %n teymismöppum.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": [
+            "Notandinn var fjarlægður úr %n teymismöppu.",
+            "Notandinn var fjarlægður úr %n teymismöppum."
+        ]
     },
     "plurals": null
 }

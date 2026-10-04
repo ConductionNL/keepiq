@@ -1733,7 +1733,13 @@
         "Copy from another organisation updated": "Còpia d’una altra organització actualitzada",
         "Copy from another organisation removed": "Còpia d’una altra organització suprimida",
         "Declined: they removed their copy. Share again if they need it.": "Rebutjat: el destinatari ha suprimit la seva còpia. Torneu-lo a compartir si la necessita.",
-        "Recipient at another organisation removed their copy": "Un destinatari d’una altra organització ha suprimit la seva còpia"
+        "Recipient at another organisation removed their copy": "Un destinatari d’una altra organització ha suprimit la seva còpia",
+        "Removed the user from %n team folder.": "S'ha tret l'usuari de %n carpeta d'equip.",
+        "Removed the user from %n team folders.": "S'ha tret l'usuari de %n carpetes d'equip.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": [
+            "S'ha tret l'usuari de %n carpeta d'equip.",
+            "S'ha tret l'usuari de %n carpetes d'equip."
+        ]
     },
     "plurals": null
 }

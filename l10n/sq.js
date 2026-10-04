@@ -1662,7 +1662,10 @@ OC.L10N.register(
         "Copy from another organisation updated": "Kopja nga një organizatë tjetër u përditësua",
         "Copy from another organisation removed": "Kopja nga një organizatë tjetër u hoq",
         "Declined: they removed their copy. Share again if they need it.": "Refuzuar: marrësi hoqi kopjen e vet. Ndajeni përsëri nëse i nevojitet.",
-        "Recipient at another organisation removed their copy": "Një marrës nga një organizatë tjetër hoqi kopjen e vet"
+        "Recipient at another organisation removed their copy": "Një marrës nga një organizatë tjetër hoqi kopjen e vet",
+        "Removed the user from %n team folder.": "Përdoruesi u hoq nga %n dosje ekipi.",
+        "Removed the user from %n team folders.": "Përdoruesi u hoq nga %n dosje ekipi.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Përdoruesi u hoq nga %n dosje ekipi.","Përdoruesi u hoq nga %n dosje ekipi."]
     },
     "nplurals=2; plural=(n != 1);"
 )

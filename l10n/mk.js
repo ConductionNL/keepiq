@@ -1662,7 +1662,10 @@ OC.L10N.register(
         "Copy from another organisation updated": "Копијата од друга организација е ажурирана",
         "Copy from another organisation removed": "Копијата од друга организација е отстранета",
         "Declined: they removed their copy. Share again if they need it.": "Одбиено: примачот ја отстрани својата копија. Споделете повторно ако му треба.",
-        "Recipient at another organisation removed their copy": "Примач од друга организација ја отстрани својата копија"
+        "Recipient at another organisation removed their copy": "Примач од друга организација ја отстрани својата копија",
+        "Removed the user from %n team folder.": "Корисникот е отстранет од %n тимска папка.",
+        "Removed the user from %n team folders.": "Корисникот е отстранет од %n тимски папки.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Корисникот е отстранет од %n тимска папка.","Корисникот е отстранет од %n тимски папки."]
     },
     "nplurals=2; plural=(n%10==1 ? 0 : 1);"
 )

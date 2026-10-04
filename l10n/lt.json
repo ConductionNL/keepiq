@@ -1757,7 +1757,14 @@
         "Copy from another organisation updated": "Kopija iš kitos organizacijos atnaujinta",
         "Copy from another organisation removed": "Kopija iš kitos organizacijos pašalinta",
         "Declined: they removed their copy. Share again if they need it.": "Atmesta: gavėjas pašalino savo kopiją. Bendrinkite iš naujo, jei jos reikia.",
-        "Recipient at another organisation removed their copy": "Kitos organizacijos gavėjas pašalino savo kopiją"
+        "Recipient at another organisation removed their copy": "Kitos organizacijos gavėjas pašalino savo kopiją",
+        "Removed the user from %n team folder.": "Naudotojas pašalintas iš %n komandos aplanko.",
+        "Removed the user from %n team folders.": "Naudotojas pašalintas iš %n komandos aplankų.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": [
+            "Naudotojas pašalintas iš %n komandos aplanko.",
+            "Naudotojas pašalintas iš %n komandos aplankų.",
+            "Naudotojas pašalintas iš %n komandos aplankų."
+        ]
     },
     "plurals": null
 }

@@ -1733,7 +1733,13 @@
         "Copy from another organisation updated": "Kopi fra en anden organisation opdateret",
         "Copy from another organisation removed": "Kopi fra en anden organisation fjernet",
         "Declined: they removed their copy. Share again if they need it.": "Afvist: modtageren har fjernet sin kopi. Del igen, hvis de har brug for den.",
-        "Recipient at another organisation removed their copy": "Modtager i en anden organisation har fjernet sin kopi"
+        "Recipient at another organisation removed their copy": "Modtager i en anden organisation har fjernet sin kopi",
+        "Removed the user from %n team folder.": "Brugeren blev fjernet fra %n teammappe.",
+        "Removed the user from %n team folders.": "Brugeren blev fjernet fra %n teammapper.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": [
+            "Brugeren blev fjernet fra %n teammappe.",
+            "Brugeren blev fjernet fra %n teammapper."
+        ]
     },
     "plurals": null
 }

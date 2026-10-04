@@ -1738,7 +1738,13 @@
         "Copy from another organisation updated": "Kopie van een andere organisatie bijgewerkt",
         "Copy from another organisation removed": "Kopie van een andere organisatie verwijderd",
         "Declined: they removed their copy. Share again if they need it.": "Geweigerd: de ontvanger heeft de kopie verwijderd. Deel opnieuw als die nodig is.",
-        "Recipient at another organisation removed their copy": "Ontvanger bij een andere organisatie heeft de kopie verwijderd"
+        "Recipient at another organisation removed their copy": "Ontvanger bij een andere organisatie heeft de kopie verwijderd",
+        "Removed the user from %n team folder.": "Gebruiker verwijderd uit %n teammap.",
+        "Removed the user from %n team folders.": "Gebruiker verwijderd uit %n teammappen.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": [
+            "Gebruiker verwijderd uit %n teammap.",
+            "Gebruiker verwijderd uit %n teammappen."
+        ]
     },
     "plurals": null,
     "pluralForm": "nplurals=2; plural=(n != 1);"

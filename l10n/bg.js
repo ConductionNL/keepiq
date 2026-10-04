@@ -1662,7 +1662,10 @@ OC.L10N.register(
         "Copy from another organisation updated": "Копието от друга организация е обновено",
         "Copy from another organisation removed": "Копието от друга организация е премахнато",
         "Declined: they removed their copy. Share again if they need it.": "Отказано: получателят премахна своето копие. Споделете отново, ако му трябва.",
-        "Recipient at another organisation removed their copy": "Получател от друга организация премахна своето копие"
+        "Recipient at another organisation removed their copy": "Получател от друга организация премахна своето копие",
+        "Removed the user from %n team folder.": "Потребителят е премахнат от %n екипна папка.",
+        "Removed the user from %n team folders.": "Потребителят е премахнат от %n екипни папки.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Потребителят е премахнат от %n екипна папка.","Потребителят е премахнат от %n екипни папки."]
     },
     "nplurals=2; plural=(n != 1);"
 )

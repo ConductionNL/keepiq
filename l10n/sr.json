@@ -1757,7 +1757,14 @@
         "Copy from another organisation updated": "Копија из друге организације ажурирана",
         "Copy from another organisation removed": "Копија из друге организације уклоњена",
         "Declined: they removed their copy. Share again if they need it.": "Одбијено: прималац је уклонио своју копију. Поделите поново ако му треба.",
-        "Recipient at another organisation removed their copy": "Прималац из друге организације уклонио је своју копију"
+        "Recipient at another organisation removed their copy": "Прималац из друге организације уклонио је своју копију",
+        "Removed the user from %n team folder.": "Корисник је уклоњен из %n тимске фасцикле.",
+        "Removed the user from %n team folders.": "Корисник је уклоњен из %n тимских фасцикли.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": [
+            "Корисник је уклоњен из %n тимске фасцикле.",
+            "Корисник је уклоњен из %n тимских фасцикли.",
+            "Корисник је уклоњен из %n тимских фасцикли."
+        ]
     },
     "plurals": null
 }

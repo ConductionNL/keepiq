@@ -1662,7 +1662,10 @@ OC.L10N.register(
         "Copy from another organisation updated": "Το αντίγραφο από άλλον οργανισμό ενημερώθηκε",
         "Copy from another organisation removed": "Το αντίγραφο από άλλον οργανισμό αφαιρέθηκε",
         "Declined: they removed their copy. Share again if they need it.": "Απορρίφθηκε: ο παραλήπτης αφαίρεσε το αντίγραφό του. Κοινοποιήστε ξανά αν το χρειάζεται.",
-        "Recipient at another organisation removed their copy": "Παραλήπτης σε άλλον οργανισμό αφαίρεσε το αντίγραφό του"
+        "Recipient at another organisation removed their copy": "Παραλήπτης σε άλλον οργανισμό αφαίρεσε το αντίγραφό του",
+        "Removed the user from %n team folder.": "Ο χρήστης αφαιρέθηκε από %n φάκελο ομάδας.",
+        "Removed the user from %n team folders.": "Ο χρήστης αφαιρέθηκε από %n φακέλους ομάδας.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Ο χρήστης αφαιρέθηκε από %n φάκελο ομάδας.","Ο χρήστης αφαιρέθηκε από %n φακέλους ομάδας."]
     },
     "nplurals=2; plural=(n != 1);"
 )

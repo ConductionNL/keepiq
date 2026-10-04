@@ -1662,7 +1662,10 @@ OC.L10N.register(
         "Copy from another organisation updated": "Kopija no citas organizācijas atjaunināta",
         "Copy from another organisation removed": "Kopija no citas organizācijas noņemta",
         "Declined: they removed their copy. Share again if they need it.": "Noraidīts: saņēmējs noņēma savu kopiju. Kopīgojiet vēlreiz, ja tā ir vajadzīga.",
-        "Recipient at another organisation removed their copy": "Citas organizācijas saņēmējs noņēma savu kopiju"
+        "Recipient at another organisation removed their copy": "Citas organizācijas saņēmējs noņēma savu kopiju",
+        "Removed the user from %n team folder.": "Lietotājs noņemts no %n komandas mapes.",
+        "Removed the user from %n team folders.": "Lietotājs noņemts no %n komandas mapēm.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": ["Lietotājs noņemts no %n komandas mapes.","Lietotājs noņemts no %n komandas mapēm.","Lietotājs noņemts no %n komandas mapēm."]
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )
