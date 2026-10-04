@@ -71,7 +71,7 @@ class ApplicationCertificateController extends ApplicationApiController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/app-own-certificate/tasks.md#1.1
+	 * @spec openspec/specs/secret-store-api/spec.md#requirement-an-application-reads-its-own-certificate
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
