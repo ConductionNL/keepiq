@@ -44,6 +44,9 @@ data class GeneratorPolicy(
             )
         }
 
+        /** Reads the policy from the server; null when none applies or it cannot be read (it never blocks). */
+        suspend fun fetch(api: nl.conduction.keepiq.shared.api.KeepiqApi): GeneratorPolicy? = from(api.fetchPolicy())
+
         private fun JsonObject.isTrue(name: String): Boolean = (this[name] as? JsonPrimitive)?.takeIf { !it.isString }?.booleanOrNull == true
 
         private fun JsonObject.isFalse(name: String): Boolean = (this[name] as? JsonPrimitive)?.takeIf { !it.isString }?.booleanOrNull == false

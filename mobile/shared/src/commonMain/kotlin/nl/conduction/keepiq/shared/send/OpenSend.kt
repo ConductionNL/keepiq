@@ -16,6 +16,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.longOrNull
+import nl.conduction.keepiq.shared.api.KeepiqApi
+import nl.conduction.keepiq.shared.api.platformHttpEngine
 import nl.conduction.keepiq.shared.crypto.Encoding
 import nl.conduction.keepiq.shared.crypto.SendCrypto
 
@@ -167,4 +169,9 @@ class OpenSendClient(private val client: HttpClient) {
     private fun JsonObject.text(name: String): String? = (this[name] as? JsonPrimitive)?.contentOrNull
 
     private fun JsonObject.bool(name: String): Boolean = (this[name] as? JsonPrimitive)?.booleanOrNull == true
+
+    companion object {
+        /** On the platform engine: no cookies, no redirects (design D3). */
+        fun platform(): OpenSendClient = OpenSendClient(KeepiqApi.httpClient(platformHttpEngine()))
+    }
 }
