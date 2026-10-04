@@ -44,17 +44,29 @@ describe('DeviceApprovalRequest on the lock screen', () => {
 		await flush()
 
 		expect(errors).toEqual([])
-		expect(wrapper.find('[data-testid="device-approval-start"]').exists()).toBe(true)
-		expect(wrapper.find('[data-testid="device-approval-phrase"]').exists()).toBe(false)
+		expect(wrapper.find('[data-testid="device-approval-start"]').exists()).toBe(
+			true,
+		)
+		expect(wrapper.find('[data-testid="device-approval-phrase"]').exists()).toBe(
+			false,
+		)
 	})
 
 	it('shows the phrase once a request is pending', async () => {
 		const wrapper = mount(DeviceApprovalRequest)
 		await flush()
-		useDeviceApprovalStore().request = { id: 'r1', status: 'pending', phrase: 'one two three four five' }
+		useDeviceApprovalStore().request = {
+			id: 'r1',
+			status: 'pending',
+			phrase: 'one two three four five',
+		}
 		await flush()
 
-		expect(wrapper.find('[data-testid="device-approval-start"]').exists()).toBe(false)
-		expect(wrapper.find('[data-testid="device-approval-phrase"]').text()).toBe('one two three four five')
+		expect(wrapper.find('[data-testid="device-approval-start"]').exists()).toBe(
+			false,
+		)
+		expect(wrapper.find('[data-testid="device-approval-phrase"]').text()).toBe(
+			'one two three four five',
+		)
 	})
 })
