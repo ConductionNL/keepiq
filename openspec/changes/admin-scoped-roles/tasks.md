@@ -1,7 +1,7 @@
 ## 1. Areas
 
 - [x] 1.1 Add `PolicyAdminSettings`, `ApplicationAdminSettings`, `PeopleAdminSettings` and `AuditAdminSettings` under `lib/Settings/`, each implementing `IDelegatedSettings` with a translated name, the Keepiq section and an area in initial state; give `AdminSettings` its General name. Verify with a PHPUnit test per class for name, section, priority and initial state.
-- [ ] 1.2 Register the four classes in `appinfo/info.xml` and bump `<version>`; register all five as themselves in `DomainOverrideRegistrar` (done, `AdminAreaSettingsTest`). Live check owed: verify manually that Nextcloud's "Administration privileges" page lists five Keepiq areas after `occ upgrade`.
+- [x] 1.2 Register the four classes in `appinfo/info.xml` and bump `<version>`; register all five as themselves in `DomainOverrideRegistrar` (done, `AdminAreaSettingsTest`). Verified live 4 Oct on a fresh Nextcloud 35.0.1: "Administration privileges" lists Keepiq - General, Keepiq - Policies, Keepiq - Applications and machine access, Keepiq - People and offboarding, Keepiq - Audit and compliance; a group delegated only Audit sees only the Audit area (see 3.4).
 - [x] 1.3 Add `AdminAreaAuthorizer::holds()` on top of `IManager::getAllowedAdminSettings()` with the `vault_admin` alias for People. Verify with a PHPUnit test for admin, delegated user, alias member and outsider.
 
 ## 2. Guards
@@ -17,7 +17,7 @@
 - [x] 3.1 Render only the sections of the mounted area in `Settings.vue`, and the shell in General only. Verify with a vitest per area and the initial-state and admin-router hydra gates.
 - [x] 3.2 Switch `AdminHandoverPanel.vue` and the delegation store to `canHandover`. Verify with a vitest in `tests/store/`.
 - [x] 3.3 Add an "Admin areas" note in the General area that lists the five areas, links to "Administration privileges", and warns while `vault_admin` has members. Verify with a vitest.
-- [ ] 3.4 Cover delegation end to end. Verify with a Playwright test in `tests/e2e/workflows/` where a user in a group delegated only the Audit area sees the audit sections and gets 403 from `PUT /api/settings/admin/policies`. Live check owed.
+- [x] 3.4 Cover delegation end to end. Verify with a Playwright test in `tests/e2e/workflows/` where a user in a group delegated only the Audit area sees the audit sections and gets 403 from `PUT /api/settings/admin/policies`. `tests/e2e/workflows/admin-area-delegation.spec.ts`: seeds the group, member and Audit-only delegation, checks the audit sections render and no other area mounts, `PUT .../policies` answers 403, an audit write with a policy key answers 400, nothing changes. Red-before/green-after: red (200 instead of 403) with the policies guard pointed at the Audit area, green on development.
 
 ## 4. Alias removal
 
