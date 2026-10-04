@@ -120,13 +120,12 @@ class RestoreService {
 	 *
 	 * @param array<string,mixed> $manifest The verified manifest
 	 * @param bool $force Whether the administrator forces an older archive
-	 * @param bool $dryRun Whether this is a dry run, which skips the age rule
 	 *
 	 * @return string[]
 	 *
 	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
-	public function refusals(array $manifest, bool $force, bool $dryRun=false): array {
+	public function refusals(array $manifest, bool $force): array {
 		$refusals = [];
 		if ($this->maintenanceIsOn() === true) {
 			$refusals[] = self::MAINTENANCE_ALREADY_ON;
@@ -136,7 +135,7 @@ class RestoreService {
 			$refusals[] = 'The archive was written by a different Keepiq schema. Restore it on the same Keepiq version.';
 		}
 
-		if ($force === false && $dryRun === false && $this->isOlderThanNewestAuditEntry(manifest: $manifest) === true) {
+		if ($force === false && $this->isOlderThanNewestAuditEntry(manifest: $manifest) === true) {
 			$refusals[] = 'The archive is older than the newest audit entry. Pass --force to roll back on purpose.';
 		}
 
