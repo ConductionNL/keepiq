@@ -1710,7 +1710,24 @@
         "Check partner": "Patikrinti partnerį",
         "Partner root fingerprint": "Partnerio šakninis piršto atspaudas",
         "I compared this fingerprint with the partner's administrator": "Palyginau šį piršto atspaudą su partnerio administratoriumi",
-        "Add partner": "Pridėti partnerį"
+        "Add partner": "Pridėti partnerį",
+        "A secret from another organisation": "Paslaptis iš kitos organizacijos",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s bendrina su jumis \"%2$s\". Priimkite ją skiltyje Gauta iš kitų organizacijų.",
+        "Incoming from other organisations": "Gauta iš kitų organizacijų",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Partnerių organizacijų žmonės gali bendrinti su jumis paslaptį. Priimkite ją, kad savo saugykloje laikytumėte kopiją tik skaitymui.",
+        "Nothing shared with you yet": "Su jumis dar niekas nebendrinta",
+        "Secrets that people in partner organisations share with you appear here.": "Čia rodomos paslaptys, kurias su jumis bendrina partnerių organizacijų žmonės.",
+        "From {sender}": "Nuo {sender}",
+        "Accept": "Priimti",
+        "Open in vault": "Atidaryti saugykloje",
+        "The other organisation did not hand over the secret. Try again later.": "Kita organizacija neperdavė paslapties. Bandykite dar kartą vėliau.",
+        "Set up your vault before you accept a shared secret.": "Prieš priimdami bendrinamą paslaptį, nustatykite savo saugyklą.",
+        "Something went wrong. Try again.": "Kažkas nepavyko. Bandykite dar kartą.",
+        "Waiting for your answer": "Laukiama jūsų atsakymo",
+        "In your vault, read-only": "Jūsų saugykloje, tik skaitymui",
+        "Withdrawn by the sender": "Siuntėjas atšaukė",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} bendrino tai iš kitos organizacijos. Galite tai skaityti, bet negalite keisti ar bendrinti.",
+        "Someone": "Kažkas"
     },
     "plurals": null
 }

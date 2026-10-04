@@ -1686,7 +1686,24 @@
         "Check partner": "Έλεγχος συνεργάτη",
         "Partner root fingerprint": "Ριζικό αποτύπωμα συνεργάτη",
         "I compared this fingerprint with the partner's administrator": "Σύγκρινα αυτό το αποτύπωμα με τον διαχειριστή του συνεργάτη",
-        "Add partner": "Προσθήκη συνεργάτη"
+        "Add partner": "Προσθήκη συνεργάτη",
+        "A secret from another organisation": "Ένα μυστικό από άλλον οργανισμό",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "Ο χρήστης %1$s κοινοποίησε το \"%2$s\" σε εσάς. Αποδεχτείτε το στα Εισερχόμενα από άλλους οργανισμούς.",
+        "Incoming from other organisations": "Εισερχόμενα από άλλους οργανισμούς",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Άτομα σε συνεργαζόμενους οργανισμούς μπορούν να κοινοποιήσουν ένα μυστικό σε εσάς. Αποδεχτείτε το για να κρατήσετε ένα αντίγραφο μόνο για ανάγνωση στο θησαυροφυλάκιό σας.",
+        "Nothing shared with you yet": "Δεν έχει κοινοποιηθεί τίποτα σε εσάς ακόμα",
+        "Secrets that people in partner organisations share with you appear here.": "Τα μυστικά που σας κοινοποιούν άτομα σε συνεργαζόμενους οργανισμούς εμφανίζονται εδώ.",
+        "From {sender}": "Από {sender}",
+        "Accept": "Αποδοχή",
+        "Open in vault": "Άνοιγμα στο θησαυροφυλάκιο",
+        "The other organisation did not hand over the secret. Try again later.": "Ο άλλος οργανισμός δεν παρέδωσε το μυστικό. Δοκιμάστε ξανά αργότερα.",
+        "Set up your vault before you accept a shared secret.": "Ρυθμίστε το θησαυροφυλάκιό σας πριν αποδεχτείτε ένα κοινόχρηστο μυστικό.",
+        "Something went wrong. Try again.": "Κάτι πήγε στραβά. Δοκιμάστε ξανά.",
+        "Waiting for your answer": "Αναμένει την απάντησή σας",
+        "In your vault, read-only": "Στο θησαυροφυλάκιό σας, μόνο για ανάγνωση",
+        "Withdrawn by the sender": "Αποσύρθηκε από τον αποστολέα",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "Ο χρήστης {sender} το κοινοποίησε από άλλον οργανισμό. Μπορείτε να το διαβάσετε, αλλά όχι να το αλλάξετε ή να το κοινοποιήσετε.",
+        "Someone": "Κάποιος"
     },
     "plurals": null
 }

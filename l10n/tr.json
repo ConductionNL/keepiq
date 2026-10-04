@@ -1662,7 +1662,24 @@
         "Check partner": "Ortağı denetle",
         "Partner root fingerprint": "Ortağın kök parmak izi",
         "I compared this fingerprint with the partner's administrator": "Bu parmak izini ortağın yöneticisiyle karşılaştırdım",
-        "Add partner": "Ortak ekle"
+        "Add partner": "Ortak ekle",
+        "A secret from another organisation": "Başka bir kuruluştan bir gizli",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s, \"%2$s\" öğesini sizinle paylaştı. Diğer kuruluşlardan gelenler altında kabul edin.",
+        "Incoming from other organisations": "Diğer kuruluşlardan gelenler",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Ortak kuruluşlardaki kişiler sizinle bir gizli paylaşabilir. Kasanızda salt okunur bir kopya tutmak için kabul edin.",
+        "Nothing shared with you yet": "Henüz sizinle hiçbir şey paylaşılmadı",
+        "Secrets that people in partner organisations share with you appear here.": "Ortak kuruluşlardaki kişilerin sizinle paylaştığı gizliler burada görünür.",
+        "From {sender}": "Gönderen: {sender}",
+        "Accept": "Kabul et",
+        "Open in vault": "Kasada aç",
+        "The other organisation did not hand over the secret. Try again later.": "Diğer kuruluş gizliyi teslim etmedi. Daha sonra yeniden deneyin.",
+        "Set up your vault before you accept a shared secret.": "Paylaşılan bir gizliyi kabul etmeden önce kasanızı kurun.",
+        "Something went wrong. Try again.": "Bir şeyler ters gitti. Yeniden deneyin.",
+        "Waiting for your answer": "Yanıtınız bekleniyor",
+        "In your vault, read-only": "Kasanızda, salt okunur",
+        "Withdrawn by the sender": "Gönderen tarafından geri çekildi",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} bunu başka bir kuruluştan paylaştı. Okuyabilirsiniz, ancak değiştiremez veya paylaşamazsınız.",
+        "Someone": "Biri"
     },
     "plurals": null
 }

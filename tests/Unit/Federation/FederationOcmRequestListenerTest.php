@@ -33,6 +33,7 @@ namespace OCA\Keepiq\Tests\Unit\Federation;
 
 use OCA\Keepiq\Listener\FederationOcmRequestListener;
 use OCA\Keepiq\Service\FederatedCertificateService;
+use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Service\ShareService;
@@ -89,7 +90,7 @@ class FederationOcmRequestListenerTest extends TestCase {
 			$this->createMock(IOCMDiscoveryService::class),
 		);
 
-		return new FederationOcmRequestListener($service);
+		return new FederationOcmRequestListener($service, $this->createMock(FederatedShareService::class));
 	}
 
 	/**
@@ -144,6 +145,24 @@ class FederationOcmRequestListenerTest extends TestCase {
 			],
 			$data
 		);
+	}
+
+	/**
+	 * On an http instance Nextcloud writes a user's own cloud id with the
+	 * scheme (`bob@http://cloud.here.example`) while the partner asks for
+	 * `bob@cloud.here.example`; that is the same user.
+	 */
+	public function testAUserOfAnHttpInstanceIsFoundUnderTheCloudIdWithoutScheme(): void {
+		$this->localHost = 'http://cloud.here.example';
+		$listener = $this->listener([$this->partner('cloud.city.example', false, true)]);
+
+		[$status, $data] = $this->answerOf($this->ask($listener, 'cloud.city.example', 'bob@cloud.here.example'));
+
+		$this->assertSame(Http::STATUS_OK, $status);
+		$this->assertSame('BOB-CERT', $data['certificate']);
+		// And still not a user of another instance.
+		[$status] = $this->answerOf($this->ask($listener, 'cloud.city.example', 'bob@cloud.elsewhere.example'));
+		$this->assertSame(Http::STATUS_NOT_FOUND, $status);
 	}
 
 	/**

@@ -129,6 +129,7 @@ class FederatedCertificateService {
 	 * Ask an outbound partner for a recipient's certificate.
 	 *
 	 * @param string $cloudId The recipient's cloud id, `bob@cloud.partner.example`
+	 * @param string $userId The owner asking; their cloud id goes along as `sender`
 	 *
 	 * @return array{cloudId:string,certificate:string,chain:array<int,string>,partnerRootFingerprint:string}
 	 *
@@ -137,7 +138,7 @@ class FederatedCertificateService {
 	 *
 	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
-	public function lookup(string $cloudId): array {
+	public function lookup(string $cloudId, string $userId): array {
 		// The OCM call requestRemoteOcmEndpoint() arrived in Nextcloud 33 with the
 		// OCM endpoint event that isSupported() checks for.
 		if ($this->root->isSupported() === false) {
@@ -160,7 +161,10 @@ class FederatedCertificateService {
 				self::OCM_CAPABILITY,
 				$partner->getBaseUrl(),
 				self::OCM_CAPABILITY . '/recipient-certificate',
-				['cloudId' => $resolved->getId()],
+				// Nextcloud 35 verifies an RFC 9421 signature on /ocm/<capability>
+				// only when the body names an OCM address (`owner`, `sender` or
+				// `sharedBy`) to take the signer's origin from.
+				['cloudId' => $resolved->getId(), 'sender' => $this->cloudIdManager->getCloudId($userId, null)->getId()],
 				'post',
 			);
 			$status = $response->getStatusCode();
@@ -233,8 +237,11 @@ class FederatedCertificateService {
 			return null;
 		}
 
-		// Ours only when it is exactly this user's own cloud id here.
-		if ($this->cloudIdManager->getCloudId($userId, null)->getId() !== $resolved->getId()) {
+		// Ours only when it names this user on this instance. Compared by host,
+		// because an http instance writes its own cloud id with the scheme.
+		$own = $this->cloudIdManager->getCloudId($userId, null);
+		$ownHost = $this->partners->hostOf(url: $own->getRemote());
+		if ($own->getUser() !== $userId || $ownHost === null || $ownHost !== $this->partners->hostOf(url: $resolved->getRemote())) {
 			return null;
 		}
 

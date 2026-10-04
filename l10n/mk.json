@@ -1686,7 +1686,24 @@
         "Check partner": "Провери партнер",
         "Partner root fingerprint": "Корен отпечаток на партнерот",
         "I compared this fingerprint with the partner's administrator": "Го споредив овој отпечаток со администраторот на партнерот",
-        "Add partner": "Додај партнер"
+        "Add partner": "Додај партнер",
+        "A secret from another organisation": "Тајна од друга организација",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s ја сподели \"%2$s\" со вас. Прифатете ја во Дојдовни од други организации.",
+        "Incoming from other organisations": "Дојдовни од други организации",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Луѓето во партнерски организации можат да споделат тајна со вас. Прифатете ја за да чувате копија само за читање во вашиот трезор.",
+        "Nothing shared with you yet": "Сè уште ништо не е споделено со вас",
+        "Secrets that people in partner organisations share with you appear here.": "Тајните што луѓето во партнерски организации ги споделуваат со вас се појавуваат тука.",
+        "From {sender}": "Од {sender}",
+        "Accept": "Прифати",
+        "Open in vault": "Отвори во трезорот",
+        "The other organisation did not hand over the secret. Try again later.": "Другата организација не ја предаде тајната. Обидете се повторно подоцна.",
+        "Set up your vault before you accept a shared secret.": "Поставете го вашиот трезор пред да прифатите споделена тајна.",
+        "Something went wrong. Try again.": "Нешто тргна наопаку. Обидете се повторно.",
+        "Waiting for your answer": "Чека ваш одговор",
+        "In your vault, read-only": "Во вашиот трезор, само за читање",
+        "Withdrawn by the sender": "Повлечено од испраќачот",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} го сподели ова од друга организација. Можете да го читате, но не и да го менувате или споделувате.",
+        "Someone": "Некој"
     },
     "plurals": null
 }

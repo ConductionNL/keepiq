@@ -1615,7 +1615,24 @@ OC.L10N.register(
         "Check partner": "Tarkista kumppani",
         "Partner root fingerprint": "Kumppanin juurisormenjälki",
         "I compared this fingerprint with the partner's administrator": "Vertasin tätä sormenjälkeä kumppanin ylläpitäjän kanssa",
-        "Add partner": "Lisää kumppani"
+        "Add partner": "Lisää kumppani",
+        "A secret from another organisation": "Salaisuus toisesta organisaatiosta",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s jakoi kohteen \"%2$s\" kanssasi. Hyväksy se kohdassa Saapuneet muista organisaatioista.",
+        "Incoming from other organisations": "Saapuneet muista organisaatioista",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Kumppaniorganisaatioiden henkilöt voivat jakaa salaisuuden kanssasi. Hyväksy se, niin saat vain luku -kopion holviisi.",
+        "Nothing shared with you yet": "Kanssasi ei ole vielä jaettu mitään",
+        "Secrets that people in partner organisations share with you appear here.": "Kumppaniorganisaatioiden henkilöiden kanssasi jakamat salaisuudet näkyvät täällä.",
+        "From {sender}": "Lähettäjä: {sender}",
+        "Accept": "Hyväksy",
+        "Open in vault": "Avaa holvissa",
+        "The other organisation did not hand over the secret. Try again later.": "Toinen organisaatio ei luovuttanut salaisuutta. Yritä myöhemmin uudelleen.",
+        "Set up your vault before you accept a shared secret.": "Ota holvi käyttöön ennen kuin hyväksyt jaetun salaisuuden.",
+        "Something went wrong. Try again.": "Jokin meni vikaan. Yritä uudelleen.",
+        "Waiting for your answer": "Odottaa vastaustasi",
+        "In your vault, read-only": "Holvissasi, vain luku",
+        "Withdrawn by the sender": "Lähettäjä perui jaon",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} jakoi tämän toisesta organisaatiosta. Voit lukea sen, mutta et muokata tai jakaa sitä.",
+        "Someone": "Joku"
     },
     "nplurals=2; plural=(n != 1);"
 )

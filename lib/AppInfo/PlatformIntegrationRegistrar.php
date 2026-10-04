@@ -26,6 +26,7 @@ use OCA\Keepiq\Middleware\JwtAuthMiddleware;
 use OCA\Keepiq\Middleware\VaultKeyProofMiddleware;
 use OCA\Keepiq\Notification\KeepiqNotifier;
 use OCA\Keepiq\Search\SecretSearchProvider;
+use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
@@ -75,4 +76,19 @@ final class PlatformIntegrationRegistrar {
 		(new FederationEventRegistrar())->register(context: $context);
 
 	}//end register()
+
+	/**
+	 * Boot-time wiring of the platform extension points: the Open Cloud
+	 * Mesh provider for federated secrets, which Nextcloud registers through
+	 * a service rather than a registration context.
+	 *
+	 * @param IBootContext $context The boot context
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 */
+	public function boot(IBootContext $context): void {
+		(new FederationEventRegistrar())->boot(context: $context);
+	}//end boot()
 }//end class

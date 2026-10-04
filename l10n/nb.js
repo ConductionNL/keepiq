@@ -1615,7 +1615,24 @@ OC.L10N.register(
         "Check partner": "Sjekk partner",
         "Partner root fingerprint": "Partnerens rotfingeravtrykk",
         "I compared this fingerprint with the partner's administrator": "Jeg har sammenlignet dette fingeravtrykket med partnerens administrator",
-        "Add partner": "Legg til partner"
+        "Add partner": "Legg til partner",
+        "A secret from another organisation": "En hemmelighet fra en annen organisasjon",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s har delt \"%2$s\" med deg. Godta den under Mottatt fra andre organisasjoner.",
+        "Incoming from other organisations": "Mottatt fra andre organisasjoner",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Personer i partnerorganisasjoner kan dele en hemmelighet med deg. Godta den for å beholde en skrivebeskyttet kopi i hvelvet ditt.",
+        "Nothing shared with you yet": "Ingenting delt med deg ennå",
+        "Secrets that people in partner organisations share with you appear here.": "Hemmeligheter som personer i partnerorganisasjoner deler med deg, vises her.",
+        "From {sender}": "Fra {sender}",
+        "Accept": "Godta",
+        "Open in vault": "Åpne i hvelvet",
+        "The other organisation did not hand over the secret. Try again later.": "Den andre organisasjonen overleverte ikke hemmeligheten. Prøv igjen senere.",
+        "Set up your vault before you accept a shared secret.": "Sett opp hvelvet ditt før du godtar en delt hemmelighet.",
+        "Something went wrong. Try again.": "Noe gikk galt. Prøv igjen.",
+        "Waiting for your answer": "Venter på svaret ditt",
+        "In your vault, read-only": "I hvelvet ditt, skrivebeskyttet",
+        "Withdrawn by the sender": "Trukket tilbake av avsenderen",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} delte dette fra en annen organisasjon. Du kan lese det, men ikke endre eller dele det.",
+        "Someone": "Noen"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1615,7 +1615,24 @@ OC.L10N.register(
         "Check partner": "Sprawdź partnera",
         "Partner root fingerprint": "Odcisk główny partnera",
         "I compared this fingerprint with the partner's administrator": "Porównałem ten odcisk z administratorem partnera",
-        "Add partner": "Dodaj partnera"
+        "Add partner": "Dodaj partnera",
+        "A secret from another organisation": "Sekret z innej organizacji",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "Użytkownik %1$s udostępnił Ci \"%2$s\". Zaakceptuj go w sekcji Przychodzące z innych organizacji.",
+        "Incoming from other organisations": "Przychodzące z innych organizacji",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Osoby z organizacji partnerskich mogą udostępnić Ci sekret. Zaakceptuj go, aby zachować kopię tylko do odczytu w swoim skarbcu.",
+        "Nothing shared with you yet": "Nic Ci jeszcze nie udostępniono",
+        "Secrets that people in partner organisations share with you appear here.": "Tutaj pojawiają się sekrety, które udostępniają Ci osoby z organizacji partnerskich.",
+        "From {sender}": "Od {sender}",
+        "Accept": "Akceptuj",
+        "Open in vault": "Otwórz w skarbcu",
+        "The other organisation did not hand over the secret. Try again later.": "Druga organizacja nie przekazała sekretu. Spróbuj ponownie później.",
+        "Set up your vault before you accept a shared secret.": "Skonfiguruj swój skarbiec, zanim zaakceptujesz udostępniony sekret.",
+        "Something went wrong. Try again.": "Coś poszło nie tak. Spróbuj ponownie.",
+        "Waiting for your answer": "Czeka na Twoją odpowiedź",
+        "In your vault, read-only": "W Twoim skarbcu, tylko do odczytu",
+        "Withdrawn by the sender": "Wycofane przez nadawcę",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "Użytkownik {sender} udostępnił to z innej organizacji. Możesz to odczytać, ale nie możesz tego zmieniać ani udostępniać.",
+        "Someone": "Ktoś"
     },
     "nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);"
 )

@@ -1615,7 +1615,24 @@ OC.L10N.register(
         "Check partner": "Verificați partenerul",
         "Partner root fingerprint": "Amprenta rădăcină a partenerului",
         "I compared this fingerprint with the partner's administrator": "Am comparat această amprentă cu administratorul partenerului",
-        "Add partner": "Adăugați partenerul"
+        "Add partner": "Adăugați partenerul",
+        "A secret from another organisation": "Un secret de la o altă organizație",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s a partajat \"%2$s\" cu dvs. Acceptați-l în Primite de la alte organizații.",
+        "Incoming from other organisations": "Primite de la alte organizații",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Persoanele din organizațiile partenere pot partaja un secret cu dvs. Acceptați-l pentru a păstra o copie doar în citire în seiful dvs.",
+        "Nothing shared with you yet": "Nimic partajat cu dvs. încă",
+        "Secrets that people in partner organisations share with you appear here.": "Secretele pe care persoanele din organizațiile partenere le partajează cu dvs. apar aici.",
+        "From {sender}": "De la {sender}",
+        "Accept": "Acceptați",
+        "Open in vault": "Deschideți în seif",
+        "The other organisation did not hand over the secret. Try again later.": "Cealaltă organizație nu a transmis secretul. Încercați din nou mai târziu.",
+        "Set up your vault before you accept a shared secret.": "Configurați-vă seiful înainte de a accepta un secret partajat.",
+        "Something went wrong. Try again.": "Ceva nu a funcționat. Încercați din nou.",
+        "Waiting for your answer": "Se așteaptă răspunsul dvs.",
+        "In your vault, read-only": "În seiful dvs., doar în citire",
+        "Withdrawn by the sender": "Retras de expeditor",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} a partajat acest lucru dintr-o altă organizație. Îl puteți citi, dar nu îl puteți modifica sau partaja.",
+        "Someone": "Cineva"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

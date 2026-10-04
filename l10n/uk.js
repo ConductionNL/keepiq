@@ -1615,7 +1615,24 @@ OC.L10N.register(
         "Check partner": "Перевірити партнера",
         "Partner root fingerprint": "Кореневий відбиток партнера",
         "I compared this fingerprint with the partner's administrator": "Я звірив цей відбиток з адміністратором партнера",
-        "Add partner": "Додати партнера"
+        "Add partner": "Додати партнера",
+        "A secret from another organisation": "Секрет з іншої організації",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "Користувач %1$s надав вам доступ до \"%2$s\". Прийміть його в розділі Вхідні з інших організацій.",
+        "Incoming from other organisations": "Вхідні з інших організацій",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Люди з партнерських організацій можуть надати вам доступ до секрету. Прийміть його, щоб зберігати копію лише для читання у своєму сховищі.",
+        "Nothing shared with you yet": "Вам ще нічого не надано",
+        "Secrets that people in partner organisations share with you appear here.": "Тут з’являються секрети, до яких люди з партнерських організацій надають вам доступ.",
+        "From {sender}": "Від {sender}",
+        "Accept": "Прийняти",
+        "Open in vault": "Відкрити у сховищі",
+        "The other organisation did not hand over the secret. Try again later.": "Інша організація не передала секрет. Спробуйте пізніше.",
+        "Set up your vault before you accept a shared secret.": "Налаштуйте сховище, перш ніж приймати спільний секрет.",
+        "Something went wrong. Try again.": "Щось пішло не так. Спробуйте ще раз.",
+        "Waiting for your answer": "Очікує на вашу відповідь",
+        "In your vault, read-only": "У вашому сховищі, лише для читання",
+        "Withdrawn by the sender": "Відкликано відправником",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "Користувач {sender} надав доступ до цього з іншої організації. Ви можете його читати, але не змінювати й не поширювати.",
+        "Someone": "Хтось"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

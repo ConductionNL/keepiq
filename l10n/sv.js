@@ -1615,7 +1615,24 @@ OC.L10N.register(
         "Check partner": "Kontrollera partner",
         "Partner root fingerprint": "Partnerns rotfingeravtryck",
         "I compared this fingerprint with the partner's administrator": "Jag har jämfört det här fingeravtrycket med partnerns administratör",
-        "Add partner": "Lägg till partner"
+        "Add partner": "Lägg till partner",
+        "A secret from another organisation": "En hemlighet från en annan organisation",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s har delat \"%2$s\" med dig. Godkänn den under Inkommande från andra organisationer.",
+        "Incoming from other organisations": "Inkommande från andra organisationer",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Personer i partnerorganisationer kan dela en hemlighet med dig. Godkänn den för att behålla en skrivskyddad kopia i ditt valv.",
+        "Nothing shared with you yet": "Inget delat med dig ännu",
+        "Secrets that people in partner organisations share with you appear here.": "Hemligheter som personer i partnerorganisationer delar med dig visas här.",
+        "From {sender}": "Från {sender}",
+        "Accept": "Godkänn",
+        "Open in vault": "Öppna i valvet",
+        "The other organisation did not hand over the secret. Try again later.": "Den andra organisationen lämnade inte över hemligheten. Försök igen senare.",
+        "Set up your vault before you accept a shared secret.": "Konfigurera ditt valv innan du godkänner en delad hemlighet.",
+        "Something went wrong. Try again.": "Något gick fel. Försök igen.",
+        "Waiting for your answer": "Väntar på ditt svar",
+        "In your vault, read-only": "I ditt valv, skrivskyddad",
+        "Withdrawn by the sender": "Återkallad av avsändaren",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} delade detta från en annan organisation. Du kan läsa det, men inte ändra eller dela det.",
+        "Someone": "Någon"
     },
     "nplurals=2; plural=(n != 1);"
 )

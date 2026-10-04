@@ -1591,7 +1591,24 @@ OC.L10N.register(
         "Check partner": "Verifitgar il partenari",
         "Partner root fingerprint": "Impronta da ragisch dal partenari",
         "I compared this fingerprint with the partner's administrator": "Jau hai cumparà questa impronta cun l’administratur dal partenari",
-        "Add partner": "Agiuntar il partenari"
+        "Add partner": "Agiuntar il partenari",
+        "A secret from another organisation": "In secret d’ina autra organisaziun",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s ha cundividì \"%2$s\" cun Vus. Acceptai el sut Retschavì dad autras organisaziuns.",
+        "Incoming from other organisations": "Retschavì dad autras organisaziuns",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Persunas en organisaziuns partenarias pon cundivider in secret cun Vus. Acceptai el per tegnair ina copia mo per leger en Vossa cassaforta.",
+        "Nothing shared with you yet": "Anc nagut cundividì cun Vus",
+        "Secrets that people in partner organisations share with you appear here.": "Secrets che persunas en organisaziuns partenarias cundividan cun Vus cumparan qua.",
+        "From {sender}": "Da {sender}",
+        "Accept": "Acceptar",
+        "Open in vault": "Avrir en la cassaforta",
+        "The other organisation did not hand over the secret. Try again later.": "L’autra organisaziun n’ha betg surdà il secret. Empruvai pli tard anc ina giada.",
+        "Set up your vault before you accept a shared secret.": "Configurai Vossa cassaforta avant che acceptar in secret cundividì.",
+        "Something went wrong. Try again.": "Insatge è ì mal. Empruvai anc ina giada.",
+        "Waiting for your answer": "Spetga Vossa resposta",
+        "In your vault, read-only": "En Vossa cassaforta, mo per leger",
+        "Withdrawn by the sender": "Retratg dal speditur",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} ha cundividì quai dad ina autra organisaziun. Vus pudais leger el, ma betg midar u cundivider.",
+        "Someone": "Insatgi"
     },
     "nplurals=1; plural=0;"
 )

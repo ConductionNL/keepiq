@@ -1615,7 +1615,24 @@ OC.L10N.register(
         "Check partner": "Overiť partnera",
         "Partner root fingerprint": "Koreňový odtlačok partnera",
         "I compared this fingerprint with the partner's administrator": "Porovnal som tento odtlačok so správcom partnera",
-        "Add partner": "Pridať partnera"
+        "Add partner": "Pridať partnera",
+        "A secret from another organisation": "Tajomstvo z inej organizácie",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "Používateľ %1$s s vami zdieľa \"%2$s\". Prijmite ho v sekcii Prichádzajúce z iných organizácií.",
+        "Incoming from other organisations": "Prichádzajúce z iných organizácií",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Ľudia v partnerských organizáciách s vami môžu zdieľať tajomstvo. Prijmite ho, aby ste si vo svojom trezore ponechali kópiu iba na čítanie.",
+        "Nothing shared with you yet": "Zatiaľ s vami nebolo nič zdieľané",
+        "Secrets that people in partner organisations share with you appear here.": "Tu sa zobrazia tajomstvá, ktoré s vami zdieľajú ľudia v partnerských organizáciách.",
+        "From {sender}": "Od {sender}",
+        "Accept": "Prijať",
+        "Open in vault": "Otvoriť v trezore",
+        "The other organisation did not hand over the secret. Try again later.": "Druhá organizácia tajomstvo neodovzdala. Skúste to neskôr znova.",
+        "Set up your vault before you accept a shared secret.": "Pred prijatím zdieľaného tajomstva si nastavte trezor.",
+        "Something went wrong. Try again.": "Niečo sa pokazilo. Skúste to znova.",
+        "Waiting for your answer": "Čaká na vašu odpoveď",
+        "In your vault, read-only": "Vo vašom trezore, iba na čítanie",
+        "Withdrawn by the sender": "Stiahnuté odosielateľom",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} to zdieľa z inej organizácie. Môžete to čítať, ale nie meniť ani zdieľať.",
+        "Someone": "Niekto"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

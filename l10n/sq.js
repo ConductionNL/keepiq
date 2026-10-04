@@ -1615,7 +1615,24 @@ OC.L10N.register(
         "Check partner": "Kontrollo partnerin",
         "Partner root fingerprint": "Gjurma rrënjë e partnerit",
         "I compared this fingerprint with the partner's administrator": "E krahasova këtë gjurmë me administratorin e partnerit",
-        "Add partner": "Shto partnerin"
+        "Add partner": "Shto partnerin",
+        "A secret from another organisation": "Një sekret nga një organizatë tjetër",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s ndau \"%2$s\" me ju. Pranojeni te Të ardhura nga organizata të tjera.",
+        "Incoming from other organisations": "Të ardhura nga organizata të tjera",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Personat në organizatat partnere mund të ndajnë një sekret me ju. Pranojeni për të mbajtur një kopje vetëm për lexim në kasafortën tuaj.",
+        "Nothing shared with you yet": "Asgjë nuk është ndarë ende me ju",
+        "Secrets that people in partner organisations share with you appear here.": "Sekretet që personat në organizatat partnere ndajnë me ju shfaqen këtu.",
+        "From {sender}": "Nga {sender}",
+        "Accept": "Prano",
+        "Open in vault": "Hape në kasafortë",
+        "The other organisation did not hand over the secret. Try again later.": "Organizata tjetër nuk e dorëzoi sekretin. Provoni përsëri më vonë.",
+        "Set up your vault before you accept a shared secret.": "Konfiguroni kasafortën tuaj përpara se të pranoni një sekret të ndarë.",
+        "Something went wrong. Try again.": "Diçka shkoi keq. Provoni përsëri.",
+        "Waiting for your answer": "Në pritje të përgjigjes suaj",
+        "In your vault, read-only": "Në kasafortën tuaj, vetëm për lexim",
+        "Withdrawn by the sender": "Tërhequr nga dërguesi",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} e ndau këtë nga një organizatë tjetër. Mund ta lexoni, por jo ta ndryshoni ose ta ndani.",
+        "Someone": "Dikush"
     },
     "nplurals=2; plural=(n != 1);"
 )

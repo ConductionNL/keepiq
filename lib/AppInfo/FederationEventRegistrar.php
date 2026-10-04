@@ -23,9 +23,13 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\AppInfo;
 
+use OCA\Keepiq\Federation\KeepiqSecretFederationProvider;
 use OCA\Keepiq\Listener\FederationOcmDiscoveryListener;
 use OCA\Keepiq\Listener\FederationOcmRequestListener;
+use OCA\Keepiq\Service\FederatedShareService;
+use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\Federation\ICloudFederationProviderManager;
 use OCP\OCM\Events\LocalOCMDiscoveryEvent;
 use OCP\OCM\Events\OCMEndpointRequestEvent;
 
@@ -54,4 +58,32 @@ final class FederationEventRegistrar {
 			listener: FederationOcmRequestListener::class
 		);
 	}//end register()
+
+	/**
+	 * Register the `keepiq-secret` OCM provider (task 3.1). Only where the
+	 * OCM endpoint event exists (Nextcloud 33 and later): below that,
+	 * federation stays off and no share of this type is accepted.
+	 *
+	 * @param IBootContext $context The boot context
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 */
+	public function boot(IBootContext $context): void {
+		if (class_exists(OCMEndpointRequestEvent::class) === false) {
+			return;
+		}
+
+		$container = $context->getAppContainer();
+		$context->injectFn(
+			static function (ICloudFederationProviderManager $manager) use ($container): void {
+				$manager->addCloudFederationProvider(
+					FederatedShareService::RESOURCE_TYPE,
+					'Keepiq secret',
+					static fn () => $container->get(KeepiqSecretFederationProvider::class)
+				);
+			}
+		);
+	}//end boot()
 }//end class

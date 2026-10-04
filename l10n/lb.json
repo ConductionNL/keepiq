@@ -1686,7 +1686,24 @@
         "Check partner": "Partner iwwerpréiwen",
         "Partner root fingerprint": "Root-Fangerofdrock vum Partner",
         "I compared this fingerprint with the partner's administrator": "Ech hunn dëse Fangerofdrock mam Administrateur vum Partner verglach",
-        "Add partner": "Partner derbäisetzen"
+        "Add partner": "Partner derbäisetzen",
+        "A secret from another organisation": "E Geheimnis vun enger anerer Organisatioun",
+        "%1$s shared \"%2$s\" with you. Accept it under Incoming from other organisations.": "%1$s huet \"%2$s\" mat Iech gedeelt. Acceptéiert et ënner Erakommend vun anere Organisatiounen.",
+        "Incoming from other organisations": "Erakommend vun anere Organisatiounen",
+        "People in partner organisations can share a secret with you. Accept it to keep a read-only copy in your vault.": "Leit a Partnerorganisatiounen kënnen e Geheimnis mat Iech deelen. Acceptéiert et, fir eng schreifgeschützt Kopie an Ärem Tresor ze halen.",
+        "Nothing shared with you yet": "Nach näischt mat Iech gedeelt",
+        "Secrets that people in partner organisations share with you appear here.": "Geheimnisser, déi Leit a Partnerorganisatiounen mat Iech deelen, erschéngen hei.",
+        "From {sender}": "Vun {sender}",
+        "Accept": "Acceptéieren",
+        "Open in vault": "Am Tresor opmaachen",
+        "The other organisation did not hand over the secret. Try again later.": "Déi aner Organisatioun huet d’Geheimnis net iwwerginn. Probéiert et méi spéit nach eng Kéier.",
+        "Set up your vault before you accept a shared secret.": "Riicht Ären Tresor an, ier Dir e gedeelt Geheimnis acceptéiert.",
+        "Something went wrong. Try again.": "Eppes ass schifgaang. Probéiert et nach eng Kéier.",
+        "Waiting for your answer": "Waart op Är Äntwert",
+        "In your vault, read-only": "An Ärem Tresor, nëmme liesen",
+        "Withdrawn by the sender": "Vum Ofsender zréckgezunn",
+        "{sender} shared this from another organisation. You can read it, but not change or share it.": "{sender} huet dëst vun enger anerer Organisatioun gedeelt. Dir kënnt et liesen, mee net änneren oder deelen.",
+        "Someone": "Iergendeen"
     },
     "plurals": null
 }

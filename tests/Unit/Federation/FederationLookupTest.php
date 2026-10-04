@@ -80,7 +80,9 @@ class FederationLookupTest extends TestCase {
 			$this->ocm,
 		);
 		$session = $this->createMock(IUserSession::class);
-		$session->method('getUser')->willReturn($this->createMock(IUser::class));
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$session->method('getUser')->willReturn($user);
 
 		return new FederationController($this->createMock(IRequest::class), $service, $session);
 	}
@@ -109,7 +111,9 @@ class FederationLookupTest extends TestCase {
 				'keepiq',
 				'https://cloud.partner.example',
 				'keepiq/recipient-certificate',
-				['cloudId' => 'bob@cloud.partner.example'],
+				// `sender` names the owner: Nextcloud 35 derives the signer's
+				// origin for an RFC 9421 signature from it (OCMRequestController).
+				['cloudId' => 'bob@cloud.partner.example', 'sender' => 'alice@cloud.here.example'],
 				'post',
 			)
 			->willReturn($this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 'ROOT']]));
