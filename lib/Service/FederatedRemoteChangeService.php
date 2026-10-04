@@ -153,8 +153,30 @@ class FederatedRemoteChangeService {
 	}//end applyUnshare()
 
 	/**
-	 * The share this notification is about, when the signer is its partner
-	 * and the presented hash matches the shared secret held here.
+	 * The sender of the share a notification's shared secret hash belongs to,
+	 * or '' for none. Nextcloud 35 needs it to verify the signature
+	 * (ISignedCloudFederationProvider::getFederationIdFromSharedSecret()).
+	 *
+	 * @param string $presented The hash the sender presented
+	 * @param array<array-key,mixed> $notification The payload, with `providerId`
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 */
+	public function senderOf(string $presented, array $notification): string {
+		$row = $this->rowFor(providerId: (string)($notification['providerId'] ?? ''), presented: $presented);
+		if ($row === null) {
+			return '';
+		}
+
+		return $row->getSenderCloudId();
+	}//end senderOf()
+
+	/**
+	 * The share this notification is about, when the presented hash matches
+	 * the shared secret held here and the request is signed by that share's
+	 * own partner, verified against the share's sender.
 	 *
 	 * @param string $providerId The share id on the sender
 	 * @param mixed $presented The hash the sender presented
@@ -164,27 +186,59 @@ class FederatedRemoteChangeService {
 	 * @throws ShareNotFound
 	 */
 	private function verifiedRow(string $providerId, mixed $presented): FederatedInbound {
+		$row = null;
+		if (is_string($presented) === true) {
+			$row = $this->rowFor(providerId: $providerId, presented: $presented);
+		}
+
+		if ($row === null || $row->getStatus() === FederatedInbound::STATUS_REVOKED) {
+			throw new ShareNotFound();
+		}
+
 		try {
-			$signed = $this->ocmDiscovery->getIncomingSignedRequest();
-			$partner = null;
-			if ($signed !== null) {
-				$partner = $this->partners->inboundPartnerForSigner(signer: $signed->getOrigin());
-			}
-
-			if ($partner === null || is_string($presented) === false) {
-				throw new ShareNotFound();
-			}
-
-			$row = $this->inboundMapper->findByRemote(partnerId: $partner->getId(), remoteShareId: $providerId);
-			$held = hash('sha256', $this->crypto->decrypt($row->getSharedSecretEnc()));
+			$signed = $this->ocmDiscovery->getIncomingSignedRequest($row->getSenderCloudId());
 		} catch (Throwable) {
 			throw new ShareNotFound();
 		}
 
-		if (hash_equals($held, $presented) === false || $row->getStatus() === FederatedInbound::STATUS_REVOKED) {
+		$partner = null;
+		if ($signed !== null) {
+			$partner = $this->partners->inboundPartnerForSigner(signer: $signed->getOrigin());
+		}
+
+		if ($partner === null || $partner->getId() !== $row->getPartnerId()) {
 			throw new ShareNotFound();
 		}
 
 		return $row;
 	}//end verifiedRow()
+
+	/**
+	 * The inbound share with that remote id whose shared secret hashes to
+	 * the presented value, or null.
+	 *
+	 * @param string $providerId The share id on the sender
+	 * @param string $presented The presented hash
+	 *
+	 * @return FederatedInbound|null
+	 */
+	private function rowFor(string $providerId, string $presented): ?FederatedInbound {
+		if ($providerId === '' || $presented === '') {
+			return null;
+		}
+
+		foreach ($this->inboundMapper->findByRemoteShareId(remoteShareId: $providerId) as $row) {
+			try {
+				$held = hash('sha256', $this->crypto->decrypt($row->getSharedSecretEnc()));
+			} catch (Throwable) {
+				continue;
+			}
+
+			if (hash_equals($held, $presented) === true) {
+				return $row;
+			}
+		}
+
+		return null;
+	}//end rowFor()
 }//end class

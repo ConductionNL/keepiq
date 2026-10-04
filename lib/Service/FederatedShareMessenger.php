@@ -121,7 +121,14 @@ class FederatedShareMessenger {
 			$type,
 			FederatedShareService::RESOURCE_TYPE,
 			$row->getId(),
-			['sharedSecret' => $row->getSharedSecretHash(), 'message' => $type]
+			[
+				'sharedSecret' => $row->getSharedSecretHash(),
+				// The share id and the owner let the receiver's Nextcloud find
+				// whose signature this is (ISignedCloudFederationProvider).
+				'providerId' => $row->getId(),
+				'sender' => $this->cloudIdManager->getCloudId($row->getOwnerId(), null)->getId(),
+				'message' => $type,
+			]
 		);
 
 		try {

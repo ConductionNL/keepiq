@@ -70,6 +70,9 @@ class FederatedRemoteChangeTest extends TestCase {
 
 	private IOCMDiscoveryService&MockObject $ocm;
 
+	/** @var array<int,string|null> The OCM addresses the signature check was asked with */
+	private array $askedWith = [];
+
 	protected function setUp(): void {
 		$this->row = new FederatedInbound();
 		$this->row->setId('in-1');
@@ -106,7 +109,12 @@ class FederatedRemoteChangeTest extends TestCase {
 			$signed = $this->createMock(IIncomingSignedRequest::class);
 			$signed->method('getOrigin')->willReturn($signer);
 		}
-		$this->ocm->method('getIncomingSignedRequest')->willReturn($signed);
+		$this->ocm->method('getIncomingSignedRequest')->willReturnCallback(
+			function (?string $address = null) use ($signed) {
+				$this->askedWith[] = $address;
+				return $signed;
+			}
+		);
 		$this->ocm->method('requestRemoteOcmEndpoint')->willReturnCallback(
 			function (): IResponse {
 				$this->pulls++;
@@ -123,9 +131,8 @@ class FederatedRemoteChangeTest extends TestCase {
 		);
 
 		$inbound = $this->createMock(FederatedInboundMapper::class);
-		$inbound->method('findByRemote')->willReturnCallback(
-			fn (string $partnerId, string $remoteId): FederatedInbound => ($partnerId === 'p-cloud.city.example' && $remoteId === self::REMOTE_ID)
-				? $this->row : throw new DoesNotExistException('none')
+		$inbound->method('findByRemoteShareId')->willReturnCallback(
+			fn (string $remoteId): array => ($remoteId === self::REMOTE_ID) ? [$this->row] : []
 		);
 		$inbound->method('update')->willReturnArgument(0);
 
@@ -188,14 +195,28 @@ class FederatedRemoteChangeTest extends TestCase {
 		}
 	}
 
-	private function notification(string $secret = self::SHARED_SECRET): array {
-		return ['sharedSecret' => hash('sha256', $secret), 'message' => 'x'];
+	private function notification(string $secret = self::SHARED_SECRET, string $remoteId = self::REMOTE_ID): array {
+		return ['sharedSecret' => hash('sha256', $secret), 'providerId' => $remoteId, 'sender' => 'alice@cloud.city.example', 'message' => 'x'];
+	}
+
+	/**
+	 * Nextcloud 35 learns whose signature a notification carries only from
+	 * the provider: the sender of the share the shared secret belongs to.
+	 */
+	public function testTheProviderNamesTheSenderOfTheShareTheSecretBelongsTo(): void {
+		$provider = $this->bob('cloud.city.example');
+
+		$this->assertInstanceOf(\OCP\Federation\ISignedCloudFederationProvider::class, $provider);
+		$this->assertSame('alice@cloud.city.example', $provider->getFederationIdFromSharedSecret(hash('sha256', self::SHARED_SECRET), $this->notification()));
+		$this->assertSame('', $provider->getFederationIdFromSharedSecret(hash('sha256', 'guess'), $this->notification('guess')));
+		$this->assertSame('', $provider->getFederationIdFromSharedSecret(hash('sha256', self::SHARED_SECRET), ['providerId' => 'other']));
 	}
 
 	public function testAnUpdatePullsAgainAndReplacesTheCopy(): void {
 		$result = $this->bob('cloud.city.example')->notificationReceived('SHARE_UPDATED', self::REMOTE_ID, $this->notification());
 
 		$this->assertSame([], $result);
+		$this->assertSame(['alice@cloud.city.example'], $this->askedWith);
 		$this->assertSame(1, $this->pulls);
 		$this->assertSame('copy-1', $this->copy->getId());
 		$this->assertSame('NEW-CIPHER-KEY-FOR-BOB', $this->copy->getKey());

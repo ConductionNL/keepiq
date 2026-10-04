@@ -213,6 +213,10 @@ class FederatedShareOwnerChangesTest extends TestCase {
 		$this->assertSame('cloud.partner.example', $this->sentTo[0]);
 		// The hash, never the secret, and never ciphertext.
 		$this->assertSame(hash('sha256', self::SHARED_SECRET), $message['notification']['sharedSecret']);
+		// The share id and the owner, so Bob's Nextcloud can find whose
+		// signature this is (ISignedCloudFederationProvider).
+		$this->assertSame('fs-1', $message['notification']['providerId']);
+		$this->assertSame('alice@cloud.here.example', $message['notification']['sender']);
 		$this->assertStringNotContainsString(self::NEW_KEY, json_encode($message));
 
 		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_UPDATED, $this->audit[0]->getEventType());
