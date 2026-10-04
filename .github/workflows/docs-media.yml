@@ -1,0 +1,85 @@
+name: Docs media
+
+# Captures the screenshots and videos of the browser extension for the user
+# documentation (browser-extension/capture/). One Nextcloud with Keepiq and
+# OpenRegister, seeded with the development vault; the capture fills it with
+# demo items and visits local demo sites only. The media is uploaded as an
+# artifact; committing it to docs/static/media/browser-extension/ stays a
+# reviewed step.
+
+on:
+  push:
+    branches: [development]
+    paths: ["browser-extension/capture/**", ".github/workflows/docs-media.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: ubuntu-latest
+    # Two builds, one Nextcloud install and two short browser runs.
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: keepiq
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: ConductionNL/openregister
+          ref: development
+          path: openregister
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: composer:v2
+      - uses: actions/setup-node@v4
+        with:
+          # npm 11, which both lockfiles need; Node 22 ships npm 10.
+          node-version: "24"
+
+      - name: Build Keepiq and the extension
+        working-directory: keepiq
+        run: |
+          composer install --no-dev --prefer-dist --no-interaction
+          npm ci
+          npm run build
+          npm run build:extension
+      - name: Build OpenRegister
+        working-directory: openregister
+        run: |
+          composer install --no-dev --prefer-dist --no-interaction
+          npm ci
+          npm run build
+
+      - name: Start the instance
+        run: docker compose -p kq-media -f keepiq/browser-extension/capture/compose.yaml up -d
+      - name: Provision it
+        run: bash keepiq/browser-extension/capture/setup.sh kq-media keepiq openregister
+
+      - name: Chromium screenshots and videos
+        working-directory: keepiq
+        run: |
+          npx playwright install --with-deps chromium
+          node browser-extension/capture/chromium.mjs
+      - name: Firefox screenshots
+        working-directory: keepiq
+        run: |
+          npm install --no-save selenium-webdriver@4
+          firefox --version
+          geckodriver --version
+          node browser-extension/capture/firefox.mjs
+
+      - name: Server log
+        if: failure()
+        run: docker exec kq-media-nc-1 tail -n 200 /var/www/html/data/nextcloud.log || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: docs-media
+          path: keepiq/browser-extension/capture/out/media/
+          if-no-files-found: ignore
+          retention-days: 14
