@@ -289,7 +289,7 @@ export function installServer(servers) {
 		if (path.startsWith('/api/v1/extension/used/'))
 			return respond(200, { recorded: true })
 		if (path === '/api/v1/secret-types') return respond(200, s.types ?? [])
-		if (path === '/api/settings/policy') return respond(200, null)
+		if (path === '/api/settings/policy') return respond(200, s.policy ?? null)
 		if (path === '/api/v1/secrets' && method === 'POST')
 			return respond(201, { id: 'new' })
 		// The vault list, folders, updates, trash and sends

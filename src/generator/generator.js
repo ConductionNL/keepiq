@@ -238,6 +238,7 @@ function forceRequiredClasses(result, policy, charset, rand) {
  * @param {object|null} policy A normalised policy.
  * @param {(min: number, max: number) => number} rand The random-integer source.
  * @return {string}
+ * @spec openspec/changes/clients-extension-finish/specs/extension-generator-policy/spec.md#requirement-every-chosen-kind-of-character-appears
  */
 function generateFromCharset(options, policy, rand) {
 	let length = Number(options.length ?? 16)
@@ -289,12 +290,15 @@ function generateFromCharset(options, policy, rand) {
 	assertCharsetViable(charset)
 
 	let result = buildString(charset, length, rand)
+	// Every chosen kind appears at least once, on top of the minimums.
 	result = ensureMinimums(
 		result,
 		charset,
 		[
-			[DIGITS, minDigits],
-			[SPECIAL, minSpecial],
+			[UPPERCASE, includeUpper ? 1 : 0],
+			[LOWERCASE, includeLower ? 1 : 0],
+			[DIGITS, includeDigits ? Math.max(minDigits, 1) : 0],
+			[SPECIAL, includeSpecial ? Math.max(minSpecial, 1) : 0],
 		],
 		rand,
 	)

@@ -447,11 +447,18 @@ The rows above describe Keepiq at `61329cb0`. The change `clients-extension-gaps
 
 Also added without an old requirement: extension icons, Firefox's data collection declaration (`extension-release`), and a passkey's private key kept in the worker (`clients-extension-complete`, `extension-vault`).
 
+### Closed by clients-extension-finish (October 2026)
+
+Ruben then chose to build what was still open. Each has a Keepiq spec under `openspec/changes/clients-extension-finish/specs/`.
+
+| Old requirement (spec:line) | Keepiq spec now |
+| --- | --- |
+| send:155, send:112, send:142, send:3, send:50, send:86 | `extension-send-details` |
+| login-capture:75, login-capture:88, login-capture:110, login-capture:52 | `extension-save-prompt-details` |
+| credential-generator:172, credential-generator:42 | `extension-generator-policy` |
+| autofill:155, item-editing:3, item-editing:61, folder-management:110, item-detail:3, popup-shell:25 | `extension-small-items` |
+| item-detail:107 delete on a blocked item | `extension-small-items` (recorded: delete stays allowed) |
+
 ### Still open
 
-Not chosen in October 2026, so still as the rows above describe them:
-
-- The Send items: Create off while offline (send:155), a progress state during Argon2id (send:112), Send for logins only (send:142), badges in the list (send:3), confirm before ending a send (send:50), the server's message (send:86).
-- The finer save-prompt behaviour: several logins with the same username (login-capture:75), an update that rewrites the username (login-capture:88), the bar after redirects (login-capture:110), a confirmation in the bar (login-capture:52).
-- The generator under a policy: clamped controls labelled (credential-generator:172), a class with minimum 0 guaranteed (credential-generator:42).
-- Smaller list and form details: suggestions by last use (autofill:155), the tab URL prefilled for a new item (item-editing:3), TOTP validation on save (item-editing:61), folder buttons offline (folder-management:110), deleting a blocked item (item-detail:107), the scroll position (item-detail:3), a fallback for the last tab without session storage (popup-shell:25).
+Nothing from the plans. Where Keepiq decided differently, the spec that records it is named in the tables above.

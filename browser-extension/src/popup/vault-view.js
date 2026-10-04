@@ -61,6 +61,8 @@ function fillSelect(select, options, doc) {
  * @param {(kind: string, onPick: (value: string) => void) => Promise<void>} ctx.pickGenerated Open the Generator to pick a value for the form.
  * @param {(item: object) => void} ctx.sendItem Open the Send tab for an item.
  * @param {Document} [ctx.doc] The popup document.
+ * @param {() => Promise<string>} [ctx.currentSite] The address of the site the popup is on.
+ * @spec openspec/changes/clients-extension-finish/specs/extension-small-items/spec.md#requirement-a-form-that-starts-and-checks-sensibly
  * @return {{open: () => Promise<void>, canLeave: () => boolean}}
  */
 export function initVault({
@@ -70,12 +72,17 @@ export function initVault({
 	pickGenerated,
 	sendItem,
 	doc = document,
+	currentSite = null,
 }) {
 	let index = []
 	// Whether the first list has arrived.
 	let loaded = false
 	// The type of a new item (Settings).
 	let preferredType = 'login'
+	// The address of the site the popup is on, for a new item.
+	let siteOrigin = ''
+	// Where the list was scrolled when an item opened.
+	let listScroll = 0
 	let folders = []
 	let types = []
 	let webAppUrl = ''
@@ -229,6 +236,7 @@ export function initVault({
 	 * @param {string} id The item id.
 	 */
 	async function openItem(id) {
+		listScroll = doc.body.scrollTop
 		showError('detail-error', '')
 		const item = await send('vault-item', { id })
 		if (item.error) {
@@ -396,6 +404,9 @@ export function initVault({
 			types.find((t) => t.id === typeId)?.name || item?.typeName || 'login'
 		const draft = draftFromItem(item, typeName)
 		if (clone) draft.name += ' - Clone'
+		// A new item starts with the address of the site the popup is on.
+		const fresh = creating && !clone
+		if (fresh && !draft.url) draft.url = siteOrigin
 		fillEditFolders()
 		layoutFor(draft.kind)
 		$('edit-name').value = draft.name
@@ -420,7 +431,10 @@ export function initVault({
 			id: creating ? null : item.id,
 			// A clone or new item has nothing on the server yet: every part is new.
 			initialParts: creating
-				? partsFromDraft(draftFromItem(null, typeName))
+				? partsFromDraft({
+						...draftFromItem(null, typeName),
+						url: fresh ? siteOrigin : '',
+					})
 				: partsFromDraft(draftFromItem(item, typeName)),
 		}
 		showView('vault-edit')
@@ -455,6 +469,7 @@ export function initVault({
 		index = result.items || []
 		loaded = true
 		preferredType = (await send('extension-settings')).defaultType || 'login'
+		siteOrigin = (await currentSite?.()) || ''
 		folders = result.folders || []
 		types = result.types || []
 		webAppUrl = result.webAppUrl || ''
@@ -514,7 +529,11 @@ export function initVault({
 		$('edit-name').value = keep.name
 	})
 	$('vault-new').addEventListener('click', () => openEdit(null))
-	$('detail-back').addEventListener('click', () => showView('vault-browse'))
+	$('detail-back').addEventListener('click', () => {
+		showView('vault-browse')
+		// Back where the user was in the list.
+		doc.body.scrollTop = listScroll
+	})
 	$('detail-open-web').addEventListener('click', () => {
 		if (webAppUrl) chrome.tabs.create({ url: webAppUrl })
 	})
