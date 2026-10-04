@@ -49,7 +49,9 @@ jobs:
           tools: composer:v2
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          # npm 11, which both lockfiles need (engines: npm ^11); Node 22
+          # ships npm 10, whose `npm ci` misreads them.
+          node-version: "24"
 
       - name: Build Keepiq
         working-directory: keepiq
