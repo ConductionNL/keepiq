@@ -111,7 +111,7 @@ async function activeHost() {
 /**
  * Fill the save prompt's folder picker from the vault.
  *
- * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-save-a-new-login-into-a-folder
+ * @spec openspec/specs/extension-autofill-extras/spec.md#requirement-save-a-new-login-into-a-folder
  */
 async function fillSaveFolders() {
 	const select = $('save-folder')
@@ -375,7 +375,7 @@ async function renderSettings() {
  * Show a theme: the system's, or light or dark whatever the system says.
  *
  * @param {string} theme system, light or dark.
- * @spec openspec/changes/clients-extension-gaps/specs/extension-list-and-settings/spec.md#requirement-settings-for-autofill-new-items-and-appearance
+ * @spec openspec/specs/extension-list-and-settings/spec.md#requirement-settings-for-autofill-new-items-and-appearance
  */
 function applyTheme(theme) {
 	if (theme === 'light' || theme === 'dark') {
@@ -389,7 +389,7 @@ function applyTheme(theme) {
  * The browser-wide settings: autofill offers, the type of a new item, the
  * theme, the web app and the About text.
  *
- * @spec openspec/changes/clients-extension-gaps/specs/extension-list-and-settings/spec.md#requirement-settings-for-autofill-new-items-and-appearance
+ * @spec openspec/specs/extension-list-and-settings/spec.md#requirement-settings-for-autofill-new-items-and-appearance
  */
 async function renderExtensionSettings() {
 	const settings = await send('extension-settings')
@@ -441,7 +441,7 @@ async function renderExtensionSettings() {
 /**
  * The sites with no save offer, each with Remove.
  *
- * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-never-offer-to-save-on-a-site
+ * @spec openspec/specs/extension-autofill-extras/spec.md#requirement-never-offer-to-save-on-a-site
  */
 async function renderNeverSites() {
 	const { sites = [] } = await send('never-sites')
@@ -470,7 +470,7 @@ async function renderNeverSites() {
 /**
  * The keyboard shortcut that fills a login, as the browser set it.
  *
- * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-fill-from-the-context-menu-and-a-shortcut
+ * @spec openspec/specs/extension-autofill-extras/spec.md#requirement-fill-from-the-context-menu-and-a-shortcut
  */
 async function renderShortcut() {
 	let shortcut = ''
@@ -489,7 +489,7 @@ async function renderShortcut() {
  * The clipboard delay picker: how long a copy stays on the clipboard. It
  * applies to every account in this browser.
  *
- * @spec openspec/changes/clients-extension-gaps/specs/extension-clipboard/spec.md#requirement-every-copy-is-cleared-after-a-delay-the-user-sets
+ * @spec openspec/specs/extension-clipboard/spec.md#requirement-every-copy-is-cleared-after-a-delay-the-user-sets
  */
 async function renderClipboardSetting() {
 	const { seconds, choices = [] } = await send('clipboard-settings')
@@ -552,7 +552,7 @@ async function refresh() {
  *
  * @param {object|undefined} account The account.
  * @return {string}
- * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-lock-and-log-out-per-account-or-all
+ * @spec openspec/specs/extension-unlock-and-accounts/spec.md#requirement-lock-and-log-out-per-account-or-all
  */
 export function initialsOf(account) {
 	const name = String(account?.label || account?.user || '').trim()
@@ -565,7 +565,7 @@ export function initialsOf(account) {
  * The signed-out view: the server refused the account's app password, or the
  * account was paired over http and cannot be used.
  *
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ * @spec openspec/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
  */
 function renderSignedOut() {
 	show('view-signed-out')
@@ -604,7 +604,7 @@ async function lastTab() {
  * browser without it (the worker clears it on lock either way).
  *
  * @return {object}
- * @spec openspec/changes/clients-extension-finish/specs/extension-small-items/spec.md#requirement-the-popup-keeps-its-place
+ * @spec openspec/specs/extension-small-items/spec.md#requirement-the-popup-keeps-its-place
  */
 function tabArea() {
 	return chrome.storage.session || chrome.storage.local
@@ -905,7 +905,7 @@ function wire() {
  * popup shows of the vault at once and show the lock screen.
  *
  * @param {object} msg The worker's message.
- * @spec openspec/changes/clients-extension-gaps/specs/extension-lock/spec.md#requirement-the-popup-forgets-the-vault-when-it-locks
+ * @spec openspec/specs/extension-lock/spec.md#requirement-the-popup-forgets-the-vault-when-it-locks
  */
 function onWorkerMessage(msg) {
 	if (msg?.type !== 'keepiq-locked') return
@@ -924,7 +924,7 @@ function onWorkerMessage(msg) {
  * Nextcloud and its data in this browser.
  *
  * @return {boolean} Whether the user confirmed.
- * @spec openspec/changes/clients-extension-gaps/specs/extension-lock/spec.md#requirement-lock-locks-the-account-on-screen-and-disconnect-asks-first
+ * @spec openspec/specs/extension-lock/spec.md#requirement-lock-locks-the-account-on-screen-and-disconnect-asks-first
  */
 function confirmDisconnect() {
 	const account = (state.accounts || []).find(

@@ -20,7 +20,7 @@ import { hostOf, matchSecrets } from './match.js'
  * @param {Array<object>} rows Candidate rows from the match endpoint (ciphertext).
  * @param {Function} decrypt Resolves a row to {login, secret} in plain text.
  * @return {Promise<{action: 'save'|'update'|'none', id?: string, name?: string}>} The offer.
- * @spec openspec/changes/clients-extension-finish/specs/extension-save-prompt-details/spec.md#requirement-update-the-one-login-that-is-meant
+ * @spec openspec/specs/extension-save-prompt-details/spec.md#requirement-update-the-one-login-that-is-meant
  */
 export async function classifyCapture(capture, rows, decrypt) {
 	const host = hostOf(capture.host)

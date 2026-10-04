@@ -8,7 +8,7 @@
  * The clipboard is cleared whatever it holds by then: reading it would
  * need a permission that lets the extension read every copy.
  *
- * @spec openspec/changes/clients-extension-gaps/specs/extension-clipboard/spec.md#requirement-every-copy-is-cleared-after-a-delay-the-user-sets
+ * @spec openspec/specs/extension-clipboard/spec.md#requirement-every-copy-is-cleared-after-a-delay-the-user-sets
  */
 
 /** The delays a user can pick, in seconds; 0 means never. */

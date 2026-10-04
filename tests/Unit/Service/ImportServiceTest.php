@@ -178,7 +178,7 @@ class ImportServiceTest extends TestCase {
 	 * A name fits the 255-character name column; a longer one is refused per
 	 * item instead of failing at the database.
 	 *
-	 * @spec openspec/changes/clients-extension-gaps/specs/item-name-limit/spec.md#requirement-a-name-has-at-most-255-characters
+	 * @spec openspec/specs/item-name-limit/spec.md#requirement-a-name-has-at-most-255-characters
 	 *
 	 * @return void
 	 */

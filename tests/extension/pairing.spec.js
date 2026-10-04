@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md
+ * @spec openspec/specs/extension-pairing/spec.md
  *
  * Pairing and transport: the server address is https and stored clean,
  * requests carry no cookies, and a revoked app password signs the account

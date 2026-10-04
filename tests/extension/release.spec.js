@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-gaps/specs/extension-release/spec.md
+ * @spec openspec/specs/extension-release/spec.md
  *
  * What a store package needs beyond the code: icons from the app's own
  * mark, Firefox's data collection declaration, and the notices for bundled

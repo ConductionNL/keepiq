@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md
+ * @spec openspec/specs/extension-unlock-and-accounts/spec.md
  *
  * Unlocking and accounts on the REAL router and popup: clear messages,
  * offline unlock from the snapshot, show and hide, log out of one account

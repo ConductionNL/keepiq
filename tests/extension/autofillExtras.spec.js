@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md
+ * @spec openspec/specs/extension-autofill-extras/spec.md
  *
  * Autofill extras: fields in shadow roots and by label, fill from the context
  * menu and a shortcut, never offer to save on a site, save into a folder, and

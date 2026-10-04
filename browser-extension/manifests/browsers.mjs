@@ -17,7 +17,7 @@ export const GECKO_ID = 'keepiq@conduction.nl'
 /**
  * Firefox's data collection categories for this extension.
  *
- * @spec openspec/changes/clients-extension-gaps/specs/extension-release/spec.md#requirement-firefox-is-told-what-leaves-the-browser
+ * @spec openspec/specs/extension-release/spec.md#requirement-firefox-is-told-what-leaves-the-browser
  */
 export const DATA_COLLECTION = Object.freeze([
 	'authenticationInfo',

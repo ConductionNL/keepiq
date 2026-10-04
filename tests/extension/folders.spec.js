@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+ * @spec openspec/specs/extension-vault/spec.md#requirement-manage-folders
  *
  * The folder manager: name rules, the tree, the delete request the server's
  * protocol expects, and the flows on the REAL popup and router.

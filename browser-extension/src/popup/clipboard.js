@@ -3,7 +3,7 @@
  * the worker, which clears the clipboard after the user's delay even when
  * the popup has closed by then.
  *
- * @spec openspec/changes/clients-extension-gaps/specs/extension-clipboard/spec.md#requirement-every-copy-is-cleared-after-a-delay-the-user-sets
+ * @spec openspec/specs/extension-clipboard/spec.md#requirement-every-copy-is-cleared-after-a-delay-the-user-sets
  */
 
 /**

@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault-sync/spec.md
+ * @spec openspec/specs/extension-vault-sync/spec.md
  *
  * The vault snapshot and its sync: one sync at a time, the cheap check, the
  * manifest and its fallback, suite changes, offline reads and writes, and

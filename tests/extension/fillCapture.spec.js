@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-gaps/specs/extension-fill-and-capture/spec.md
+ * @spec openspec/specs/extension-fill-and-capture/spec.md
  *
  * Fill and capture hardening on the REAL router and popup: a fill reaches
  * only frames on the matched site, blocked rows are never offered, an https

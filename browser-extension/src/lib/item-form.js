@@ -4,7 +4,7 @@
  * Pure: no DOM, no network. Card, identity and passkey payloads use the web
  * app's own modules.
  *
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-edit-every-kind-of-item
+ * @spec openspec/specs/extension-vault/spec.md#requirement-edit-every-kind-of-item
  */
 
 import {
@@ -198,7 +198,7 @@ function bytes(text) {
  *
  * @param {object} draft The form's draft.
  * @return {Record<string, string>}
- * @spec openspec/changes/clients-extension-finish/specs/extension-small-items/spec.md#requirement-a-form-that-starts-and-checks-sensibly
+ * @spec openspec/specs/extension-small-items/spec.md#requirement-a-form-that-starts-and-checks-sensibly
  */
 export function validateDraft(draft) {
 	const errors = {}

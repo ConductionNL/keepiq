@@ -2,9 +2,9 @@
  * The Generator tab's state in the worker: options per account, the history
  * and its lifetime, and the cached policy for offline use.
  *
- * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-generator-history
- * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-options-remembered-per-account
- * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-works-while-locked-and-offline
+ * @spec openspec/specs/extension-generator/spec.md#requirement-generator-history
+ * @spec openspec/specs/extension-generator/spec.md#requirement-options-remembered-per-account
+ * @spec openspec/specs/extension-generator/spec.md#requirement-works-while-locked-and-offline
  */
 import { describe, expect, it, vi } from 'vitest'
 import {

@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-finish/specs/extension-save-prompt-details/spec.md
+ * @spec openspec/specs/extension-save-prompt-details/spec.md
  *
  * Save prompt details on the REAL router and content script: one login to
  * update or none, an update that changes the password only, the offer after

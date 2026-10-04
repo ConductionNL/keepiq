@@ -7,7 +7,7 @@
  * where they differ: a password has at least 8 characters, a passphrase 4 to
  * 12 words.
  *
- * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-options-remembered-per-account
+ * @spec openspec/specs/extension-generator/spec.md#requirement-options-remembered-per-account
  */
 
 import {

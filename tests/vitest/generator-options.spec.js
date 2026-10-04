@@ -6,8 +6,8 @@
  * minimum digits and symbols, ambiguous characters, and the username
  * generator.
  *
- * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-password-options
- * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-username-generator
+ * @spec openspec/specs/extension-generator/spec.md#requirement-password-options
+ * @spec openspec/specs/extension-generator/spec.md#requirement-username-generator
  */
 
 import { describe, expect, it } from 'vitest'

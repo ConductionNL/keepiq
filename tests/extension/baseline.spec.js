@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-gaps/specs/extension-baseline/spec.md
+ * @spec openspec/specs/extension-baseline/spec.md
  *
  * Decisions Keepiq's extension already made, held by tests: one account per
  * user and server, nothing of a send left in extension storage, network

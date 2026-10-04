@@ -238,7 +238,7 @@ function forceRequiredClasses(result, policy, charset, rand) {
  * @param {object|null} policy A normalised policy.
  * @param {(min: number, max: number) => number} rand The random-integer source.
  * @return {string}
- * @spec openspec/changes/clients-extension-finish/specs/extension-generator-policy/spec.md#requirement-every-chosen-kind-of-character-appears
+ * @spec openspec/specs/extension-generator-policy/spec.md#requirement-every-chosen-kind-of-character-appears
  */
 function generateFromCharset(options, policy, rand) {
 	let length = Number(options.length ?? 16)

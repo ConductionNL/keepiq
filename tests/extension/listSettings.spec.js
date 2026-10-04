@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-gaps/specs/extension-list-and-settings/spec.md
+ * @spec openspec/specs/extension-list-and-settings/spec.md
  *
  * The vault list says what it shows and offers Copy and Open on each card;
  * Settings holds the autofill offers, the type of a new item, the theme, the

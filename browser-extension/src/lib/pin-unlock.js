@@ -5,7 +5,7 @@
  * with Argon2id. The wrapped key lives in session storage only, so the PIN
  * works until the browser closes; after five wrong PINs it is forgotten.
  *
- * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
+ * @spec openspec/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
  */
 
 import {

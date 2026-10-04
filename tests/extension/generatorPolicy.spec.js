@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-finish/specs/extension-generator-policy/spec.md
+ * @spec openspec/specs/extension-generator-policy/spec.md
  *
  * The generator under a policy, and every chosen kind of character present,
  * in the shared generator and the REAL popup.

@@ -138,7 +138,7 @@ export const RESULT_TTL_MS = 4000
  * @param {object} [options] Test seams; production uses the defaults.
  * @param {string} [options.mode] The shadow root mode, closed by default.
  * @return {string} The text shown.
- * @spec openspec/changes/clients-extension-finish/specs/extension-save-prompt-details/spec.md#requirement-a-save-that-confirms
+ * @spec openspec/specs/extension-save-prompt-details/spec.md#requirement-a-save-that-confirms
  */
 export function showSaveResult(result, doc = document, { mode = 'closed' } = {}) {
 	doc.getElementById(HOST_ID)?.remove()

@@ -3,7 +3,7 @@
  * folder that holds items or subfolders is deleted only with the user's
  * choice for what it holds, as the server's deletion protocol requires.
  *
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-manage-folders
+ * @spec openspec/specs/extension-vault/spec.md#requirement-manage-folders
  */
 
 import {

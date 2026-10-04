@@ -6,7 +6,7 @@
  * email, in the browser. Pure module; the random source can be swapped for
  * tests.
  *
- * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-username-generator
+ * @spec openspec/specs/extension-generator/spec.md#requirement-username-generator
  */
 
 import { EFF_LARGE_WORDLIST } from './eff-large-wordlist.js'

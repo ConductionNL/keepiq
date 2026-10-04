@@ -8,7 +8,7 @@
  * History lives in `storage.session` (memory on browsers without it) and goes
  * on lock, on account removal and when the browser or extension restarts.
  *
- * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-generator-history
+ * @spec openspec/specs/extension-generator/spec.md#requirement-generator-history
  */
 
 import { addToHistory, sanitizeOptions } from '../lib/generator-state.js'
@@ -120,7 +120,7 @@ export function buildGeneratorHandlers({
 			/**
 			 * Everything the Generator tab needs to open.
 			 *
-			 * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-works-while-locked-and-offline
+			 * @spec openspec/specs/extension-generator/spec.md#requirement-works-while-locked-and-offline
 			 */
 			'generator-context': async (payload = {}) => {
 				const account = await activeAccount()
@@ -143,7 +143,7 @@ export function buildGeneratorHandlers({
 			/**
 			 * Keep the options for the next time.
 			 *
-			 * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-options-remembered-per-account
+			 * @spec openspec/specs/extension-generator/spec.md#requirement-options-remembered-per-account
 			 */
 			'generator-options-save': async (payload) => {
 				const account = await activeAccount()
@@ -158,7 +158,7 @@ export function buildGeneratorHandlers({
 			/**
 			 * Add a generated value to the history.
 			 *
-			 * @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-generator-history
+			 * @spec openspec/specs/extension-generator/spec.md#requirement-generator-history
 			 */
 			'generator-history-add': async (payload) => {
 				const account = await activeAccount()
@@ -181,7 +181,7 @@ export function buildGeneratorHandlers({
 				return { history: await next }
 			},
 
-			/** @spec openspec/changes/clients-extension-complete/specs/extension-generator/spec.md#requirement-generator-history */
+			/** @spec openspec/specs/extension-generator/spec.md#requirement-generator-history */
 			'generator-history-clear': async () => {
 				const account = await activeAccount()
 				await clearHistory(account.id)

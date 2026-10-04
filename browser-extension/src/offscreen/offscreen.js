@@ -2,7 +2,7 @@
  * The offscreen document that clears the clipboard for the worker in
  * Chromium, where a service worker has no clipboard (clients-extension-gaps).
  *
- * @spec openspec/changes/clients-extension-gaps/specs/extension-clipboard/spec.md#requirement-every-copy-is-cleared-after-a-delay-the-user-sets
+ * @spec openspec/specs/extension-clipboard/spec.md#requirement-every-copy-is-cleared-after-a-delay-the-user-sets
  */
 import { clearWithDocument } from '../background/clipboard-clear.js'
 

@@ -1,7 +1,7 @@
 /**
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-detail-sections-for-every-kind-of-item
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-edit-every-kind-of-item
- * @spec openspec/changes/clients-extension-complete/specs/extension-vault/spec.md#requirement-clone-and-move
+ * @spec openspec/specs/extension-vault/spec.md#requirement-detail-sections-for-every-kind-of-item
+ * @spec openspec/specs/extension-vault/spec.md#requirement-edit-every-kind-of-item
+ * @spec openspec/specs/extension-vault/spec.md#requirement-clone-and-move
  *
  * The REAL popup and worker router with a real RSA vault: detail sections for
  * logins with extra fields and notes, authenticator codes, cards and blocked
