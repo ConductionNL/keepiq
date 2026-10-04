@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/admin-vault-policies/tasks.md#3.4
+ * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
  *
  * The extension names two_factor_required when the server withholds the
  * wrapped key, instead of failing inside the decryption.

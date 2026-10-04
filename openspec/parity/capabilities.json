@@ -5705,7 +5705,7 @@
       "id": "admin-10",
       "area": "admin",
       "name": "Enforce rules such as two-factor login or a ban on exporting personal vaults.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -5713,11 +5713,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-vault-policies on 2026-09-27. Before: grep -rni 'export_disabled|allow_export|require_2fa|twofactor' lib/Service/AdminSettingsService.php lib/Controller/ExportController.php src/components/settings: no hits",
+        "state": "built",
+        "evidence": "lib/Service/VaultPolicyService.php (vault_export_disabled, vault_require_two_factor, per group), lib/Controller/ExportController.php events() 403 export_disabled_by_policy, lib/Service/TwoFactorGate.php withholds privateKey, src/components/settings/VaultPolicySection.vue, src/dialogs/ExportDialog.vue; tests/e2e/workflows/vault-policies.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "note": "Keepiq has no policy to require two-factor login or to block personal vault export. Nextcloud can enforce two-factor for the whole login, which also guards keepiq, but that is a server setting, not a vault rule.",
-        "change": "openspec/changes/admin-vault-policies"
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Policies -> Vault policies",
+        "note": "Built 2026-10-04 (archived). Each policy is off by default and applies to everyone or to chosen groups; the GDPR package stays available under the export ban.",
+        "change": "openspec/changes/archive/2026-10-04-admin-vault-policies"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -6091,7 +6092,7 @@
       "id": "admin-22",
       "area": "admin",
       "name": "Require that work logins are kept in the organisation's vault rather than in personal vaults.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "partial",
       "passbolt": "no",
@@ -6099,12 +6100,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-vault-policies on 2026-09-27. Before: lib/Service/AdminSettingsService.php: no ownership or personal-vault policy; git grep -i 'personal vault' lib: descriptive text only",
+        "state": "built",
+        "evidence": "lib/Service/OrgOwnershipGuard.php (403 org_ownership_required on create, move and import of in-scope types outside an own team folder), POST /api/v1/team-folders/{id}/secrets for write-grade members, src/components/OwnershipFindings.vue; tests/e2e/workflows/vault-policies.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing",
-        "note": "Every secret starts in the creator's personal vault; nothing forces work logins into a team folder.",
-        "change": "openspec/changes/admin-vault-policies"
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Policies -> Vault policies -> Keep work logins in team folders",
+        "note": "Built 2026-10-04 (archived). Default types login, api_key and database; other types stay personal.",
+        "change": "openspec/changes/archive/2026-10-04-admin-vault-policies"
       },
       "rowSource": "competitor",
       "origin": "tender",

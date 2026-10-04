@@ -94,10 +94,22 @@ async function hold(accountId, suite, pem) {
  * @param {object} config The account's API config
  * @param {string} masterPassword The master password (used only here)
  * @return {Promise<void>}
+ * @param {{suite?: object}} [options] A suite to use instead of fetching one.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-unlock-offline-and-say-what-went-wrong
  */
-export async function unlock(accountId, config, masterPassword) {
-	const suite = await fetchActiveSuite(config)
-	const pem = await decryptPrivateKey(suite.privateKey, masterPassword)
+export async function unlock(accountId, config, masterPassword, options = {}) {
+	// A suite from the vault snapshot unlocks while the server is away.
+	const suite = options.suite || (await fetchActiveSuite(config))
+	let pem
+	try {
+		pem = await decryptPrivateKey(suite.privateKey, masterPassword)
+	} catch (e) {
+		// AES-GCM refuses a key derived from the wrong password.
+		if (e?.name === 'OperationError') {
+			throw new Error('Invalid master password')
+		}
+		throw e
+	}
 	await hold(accountId, suite, pem)
 }
 

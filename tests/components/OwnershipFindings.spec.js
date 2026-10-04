@@ -6,7 +6,7 @@
  * §4.4): an owner move changes the folder and shares it; a contribution
  * move contributes a copy and only then removes the personal secret.
  *
- * @spec openspec/changes/admin-vault-policies/tasks.md#4.4
+ * @spec openspec/specs/vault-policies/spec.md#requirement-users-see-personal-items-that-break-the-ownership-policy
  */
 
 import axios from '@nextcloud/axios'

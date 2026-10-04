@@ -36,7 +36,7 @@ class PolicyViolationException extends ForbiddenException {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-work-logins-are-kept-in-team-folders
 	 */
 	public function __construct(
 		public readonly string $policyCode,
@@ -50,7 +50,7 @@ class PolicyViolationException extends ForbiddenException {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-work-logins-are-kept-in-team-folders
 	 */
 	public function policyCode(): ?string {
 		return $this->policyCode;

@@ -7,7 +7,7 @@
  * chosen writable team folder saves through the contribution path
  * (admin-vault-policies §4.3).
  *
- * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
+ * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
  */
 
 import axios from '@nextcloud/axios'
