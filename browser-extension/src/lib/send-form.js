@@ -81,6 +81,26 @@ export function credentialPayload(username, password) {
  * @param {string} [locale] The display locale (default: the browser's).
  * @return {string}
  */
+/**
+ * When a send expires, in words.
+ *
+ * @param {string|null} expiresAt The expiry time.
+ * @param {number} [now] The clock, in ms.
+ * @return {string} Like "expires in 3 hours", or '' without a time.
+ * @spec openspec/changes/clients-extension-finish/specs/extension-send-details/spec.md#requirement-say-what-a-send-is-and-what-went-wrong
+ */
+export function expiresIn(expiresAt, now = Date.now()) {
+	const at = Date.parse(expiresAt || '')
+	if (Number.isNaN(at)) return ''
+	const minutes = Math.round((at - now) / 60000)
+	if (minutes <= 0) return 'expired'
+	if (minutes < 60)
+		return `expires in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
+	const hours = Math.round(minutes / 60)
+	if (hours < 48) return `expires in ${hours} ${hours === 1 ? 'hour' : 'hours'}`
+	return `expires in ${Math.round(hours / 24)} days`
+}
+
 export function sendRowLabel(send, locale) {
 	const kind = send.payloadType === 'credential' ? 'Credential send' : 'Text send'
 	const created = new Date(send.createdAt)

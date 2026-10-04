@@ -348,6 +348,10 @@ export function installServer(servers) {
 			})
 		if (path.startsWith('/api/v1/secrets/') && method === 'DELETE')
 			return respond(200, { trashed: true })
+		// s.sendError: { status, body } the next send create answers with.
+		if (path === '/api/v1/sends' && method === 'POST' && s.sendError) {
+			return respond(s.sendError.status, s.sendError.body)
+		}
 		if (path === '/api/v1/sends' && method === 'POST') {
 			return respond(201, {
 				id: 'send-1',
@@ -360,7 +364,7 @@ export function installServer(servers) {
 		}
 		if (path === '/api/v1/sends') return respond(200, s.sends ?? [])
 		if (path.startsWith('/api/v1/sends/') && method === 'DELETE')
-			return respond(200, { revoked: true })
+			return s.sendGone ? respond(404, {}) : respond(200, { revoked: true })
 		if (path.startsWith('/api/v1/secrets/')) {
 			const id = decodeURIComponent(path.slice('/api/v1/secrets/'.length))
 			const row = s.rows.find((r) => r.id === id)
