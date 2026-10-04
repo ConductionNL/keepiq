@@ -40,7 +40,7 @@ class TableStoreTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function testRestoreBindsEachValueWithItsOwnType(): void {
 		$bound = [];

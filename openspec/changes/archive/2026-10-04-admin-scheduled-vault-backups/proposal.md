@@ -31,7 +31,7 @@ The server never holds plaintext secret values or master passwords (ADR-003). A 
 - A background job writes a backup archive of every Keepiq table and every attachment blob on a schedule the administrator sets (default: daily, keep 7).
 - The archive holds ciphertext and metadata exactly as stored, with a manifest of row counts and checksums.
 - Optionally, the administrator uploads a backup public key; each archive is then encrypted to it, and only the matching private key, held off the server, can open it.
-- Four `occ` commands: `keepiq:backup:create`, `keepiq:backup:list`, `keepiq:backup:verify` and `keepiq:backup:restore`. Restore needs maintenance mode, checks the schema version, and supports `--dry-run`.
+- Four `occ` commands: `keepiq:backup:create`, `keepiq:backup:list`, `keepiq:backup:verify` and `keepiq:backup:restore`. Restore switches maintenance mode on and off itself, checks the schema version, and supports `--dry-run`.
 - A "Vault backups" section in the admin settings: schedule, retention, public key, last result and the list of archives. Archives are not downloadable from the web.
 - Backup runs, failures and restores are audited.
 
