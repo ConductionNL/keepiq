@@ -52,6 +52,7 @@ function show(view) {
 		'view-unlocked',
 		'view-settings',
 		'view-update',
+		'view-signed-out',
 		'view-device-approval',
 		'view-locked-generator',
 	]) {
@@ -346,6 +347,8 @@ async function refresh() {
 	} else if (state.serverOutdated) {
 		// Nothing else works against an older server: say so, ask nothing.
 		show('view-update')
+	} else if (state.loggedOut || state.insecure) {
+		renderSignedOut()
 	} else if (!state.unlocked) {
 		show('view-locked')
 		if (!(await renderDeviceApprovalOption())) await renderBiometricUnlock()
@@ -353,6 +356,22 @@ async function refresh() {
 		show('view-unlocked')
 		await selectTab(await lastTab())
 	}
+}
+
+/**
+ * The signed-out view: the server refused the account's app password, or the
+ * account was paired over http and cannot be used.
+ *
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ */
+function renderSignedOut() {
+	show('view-signed-out')
+	showError('relogin-error', '')
+	$('relogin-app-password').value = ''
+	$('relogin-form').hidden = !state.loggedOut || state.insecure
+	$('signed-out-text').textContent = state.insecure
+		? 'This account was connected over http. Keepiq now needs https, so your app password is never sent in clear. Disconnect it and connect again over https.'
+		: 'Keepiq refused the app password of this account. It was revoked or changed in Nextcloud. Create a new app password in Nextcloud and enter it here.'
 }
 
 // --- tabs: This site, Vault, Generator, Send ---
@@ -519,6 +538,25 @@ function wire() {
 		window.close()
 	})
 	$('settings-back').addEventListener('click', () => refresh())
+	$('relogin-form').addEventListener('submit', async (event) => {
+		event.preventDefault()
+		showError('relogin-error', '')
+		const res = await send('relogin', {
+			accountId: state.activeAccountId,
+			appPassword: $('relogin-app-password').value,
+		})
+		$('relogin-app-password').value = ''
+		if (res.error) {
+			showError('relogin-error', res.error)
+			return
+		}
+		await refresh()
+	})
+	$('signed-out-disconnect').addEventListener('click', async () => {
+		await send('unpair', { accountId: state.activeAccountId })
+		await refresh()
+	})
+
 	$('settings-unpair').addEventListener('click', async () => {
 		await send('unpair', { accountId: state.activeAccountId })
 		await refresh()
