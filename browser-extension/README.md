@@ -23,7 +23,7 @@ For users, see `docs/browser-extension/using.md`. In short:
 - **Offline:** an encrypted copy of the vault per account, synced every 15 minutes and after each change.
 - **Clipboard:** every copy is cleared after the delay the user picks, by the worker.
 
-The specs: `openspec/specs/browser-extension-autofill`, `extension-*` and `clients-*` in `openspec/specs/`, and the changes `clients-extension-*` in `openspec/changes/` until they are archived. `openspec/references/keepiq-extension/mapping.md` maps the former keepiq-extension plans onto them.
+The specs: `browser-extension-autofill`, `extension-*`, `clients-*` and `item-name-limit` in `openspec/specs/`; the changes that built them are under `openspec/changes/archive/`. `openspec/references/keepiq-extension/mapping.md` maps the former keepiq-extension plans onto them.
 
 ## Layout
 
