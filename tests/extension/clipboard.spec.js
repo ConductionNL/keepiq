@@ -7,13 +7,13 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { areaOrMemory } from '../../browser-extension/src/background/generator-handlers.js'
 import {
 	buildClipboardClear,
 	CLEAR_ALARM,
 	clearClipboardNow,
 	clearWithDocument,
 } from '../../browser-extension/src/background/clipboard-clear.js'
+import { areaOrMemory } from '../../browser-extension/src/background/generator-handlers.js'
 import {
 	listSecrets,
 	MAX_SECRET_PAGES,
@@ -96,7 +96,7 @@ describe('the clearer', () => {
 		}
 		await clearClipboardNow()
 		await clearClipboardNow()
-		expect(chrome.offscreen.createDocument).toHaveBeenCalledTimes(1)
+		expect(globalThis.chrome.offscreen.createDocument).toHaveBeenCalledTimes(1)
 		expect(sent).toEqual([
 			{ type: 'offscreen-clear-clipboard' },
 			{ type: 'offscreen-clear-clipboard' },

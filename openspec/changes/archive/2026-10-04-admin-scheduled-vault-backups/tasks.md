@@ -12,7 +12,7 @@
 
 ## 3. Commands
 
-- [ ] 3.1 Add `keepiq:backup:create` and `keepiq:backup:list` and a `<commands>` block in `appinfo/info.xml`. Verify manually with `occ keepiq:backup:create` and `occ keepiq:backup:list` on the dev instance. Code done (both commands and the `<commands>` block); live check owed: run them on an instance.
+- [x] 3.1 Add `keepiq:backup:create` and `keepiq:backup:list` and a `<commands>` block in `appinfo/info.xml`. Verify manually with `occ keepiq:backup:create` and `occ keepiq:backup:list` on the dev instance. Verified 4 Oct on a fresh Nextcloud 35.0.1 + PostgreSQL 16: both commands listed under `occ list keepiq`; create wrote `keepiq-backup-20261003-225701.zip (33234 bytes, not encrypted)`, rc 0, with a `backup.created` audit row; list showed it with size, time and path, rc 0.
 - [x] 3.2 Add `keepiq:backup:verify` with `--key-file`. Verify with a PHPUnit command test for a good archive, a tampered file and a wrong key.
 - [x] 3.3 Add `keepiq:backup:restore` with the maintenance mode check, schema fingerprint check, single transaction, blob replacement, `--dry-run` and the `--force` rule. Verify with a PHPUnit test that restores into SQLite and compares every table.
 - [x] 3.4 Print the restore warnings (old master password, lost later changes, instance secret probe, missing users). Verify with a PHPUnit command output test.
@@ -20,13 +20,13 @@
 ## 4. Admin UI
 
 - [x] 4.1 Add `VaultBackupSection.vue` with schedule, retention, public key upload, last result, archive list and "Back up now", and no download action. Verify with a vitest in `tests/components/`.
-- [ ] 4.2 Prove a restored vault still unlocks. Verify manually on the dev instance: create a backup, change a secret, restore, unlock as `admin` with the master password from before, and see the old value. Live check owed.
+- [x] 4.2 Prove a restored vault still unlocks. Verify manually on the dev instance: create a backup, change a secret, restore, unlock as `admin` with the master password from before, and see the old value. Verified 4 Oct on Nextcloud 35.0.1 + PostgreSQL 16: secret `__r_backup_probe` set to `value-before-backup-R1`, `occ keepiq:backup:create` wrote `keepiq-backup-20261004-060630.zip`, value changed to `value-after-backup-R2`. A `--dry-run` printed the counts and the age notice, rc 0; without `--force` the restore refused, rc 1. `occ keepiq:backup:restore --force` switched maintenance mode on (06:07:13.996) and off again (06:07:14.362), restored 334 rows with a `backup.restored` audit row, rc 0. Admin unlocked with the unchanged master password and revealed `value-before-backup-R1`. Earlier the same day PostgreSQL refused `false` bound as '' (fixed in `TableStore`, `TableStoreTest`).
 
 ## Acceptance criteria
 
 - With backups on, an archive of every Keepiq table and attachment blob appears in the app data folder at the chosen interval, and old archives beyond the retention count are removed.
 - No archive contains a plaintext secret value or a master password.
 - With a backup public key set, an archive cannot be verified or restored without the matching private key.
-- `occ keepiq:backup:restore` refuses to run outside maintenance mode and refuses an archive from a different schema.
+- `occ keepiq:backup:restore` runs in maintenance mode it switches on and off itself, refuses when maintenance mode is already on, and refuses an archive from a different schema.
 - After a restore, each user unlocks with the master password valid at backup time and reads the values as they were then.
 - The web interface offers no way to download an archive.

@@ -6,7 +6,7 @@
  * shows schedule, last result and archives, saves the settings, asks for a
  * backup now, and never offers a download.
  *
- * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
+ * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
  */
 
 import axios from '@nextcloud/axios'
