@@ -79,7 +79,8 @@ enum VaultSettings {
 
 /// One unlocked account for the screens. The unlock flow (task group 2)
 /// creates the shared MobileSession; this keeps the clipboard and the policy.
-@MainActor
+/// Kotlin suspend functions are called on the main thread, so the async
+/// work here is main-actor isolated.
 final class VaultModel: ObservableObject {
     let session: MobileSession
     let clipboard: SensitiveClipboard
@@ -97,10 +98,12 @@ final class VaultModel: ObservableObject {
 
     var repository: VaultRepository { session.repository }
 
+    @MainActor
     func loadPolicy() async {
         policy = try? await GeneratorPolicy.companion.fetch(api: session.api)
     }
 
+    /// Called from the screens, on the main thread.
     func copy(_ value: String) {
         let seconds = clipboard.write(text: value)
         toast = seconds > 0 ? L("copied", Int(seconds)) : L("copied_kept")
