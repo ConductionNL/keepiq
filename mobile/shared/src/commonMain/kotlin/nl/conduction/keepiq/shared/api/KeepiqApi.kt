@@ -137,6 +137,64 @@ class KeepiqApi(private val client: HttpClient, private val account: Account) {
     suspend fun updateSecret(id: String, body: JsonObject): JsonObject? =
         request(HttpMethod.Put, "/api/v1/secrets/" + encodePath(id), body) as? JsonObject
 
+    /** GET /api/v1/secrets/{id}: one secret with its ciphertext, fetched fresh. */
+    suspend fun getSecret(id: String): JsonObject? =
+        request(HttpMethod.Get, "/api/v1/secrets/" + encodePath(id)) as? JsonObject
+
+    /** DELETE /api/v1/secrets/{id}: moves the secret to the trash. */
+    suspend fun trashSecret(id: String) {
+        request(HttpMethod.Delete, "/api/v1/secrets/" + encodePath(id))
+    }
+
+    /** POST /api/v1/secrets/{id}/used: records a fill of a use-only copy for its owner. */
+    suspend fun reportUseOnlyFill(id: String) {
+        request(HttpMethod.Post, "/api/v1/secrets/" + encodePath(id) + "/used")
+    }
+
+    /** POST /api/v1/folders. */
+    suspend fun createFolder(name: String, parentId: String?): JsonObject? = request(
+        HttpMethod.Post,
+        "/api/v1/folders",
+        JsonObject(mapOf("name" to JsonPrimitive(name), "parentId" to (parentId?.let { JsonPrimitive(it) } ?: JsonNull))),
+    ) as? JsonObject
+
+    /** PUT /api/v1/folders/{id}: only the name is sent. */
+    suspend fun renameFolder(id: String, name: String) {
+        request(HttpMethod.Put, "/api/v1/folders/" + encodePath(id), JsonObject(mapOf("name" to JsonPrimitive(name))))
+    }
+
+    /** GET /api/v1/folders/{id}/children: the direct item count and the subfolders. */
+    suspend fun folderChildren(id: String): JsonObject? =
+        request(HttpMethod.Get, "/api/v1/folders/" + encodePath(id) + "/children") as? JsonObject
+
+    /** DELETE /api/v1/folders/{id}, with `?cascade=` for a leaf folder that holds items. */
+    suspend fun deleteFolder(id: String, cascade: String? = null) {
+        val query = if (cascade != null) "?cascade=" + encodePath(cascade) else ""
+        request(HttpMethod.Delete, "/api/v1/folders/" + encodePath(id) + query)
+    }
+
+    /** GET /api/settings/policy, or null when it cannot be read: an unread policy never blocks. */
+    suspend fun fetchPolicy(): JsonObject? = try {
+        request(HttpMethod.Get, "/api/settings/policy") as? JsonObject
+    } catch (e: KeepiqApiException) {
+        null
+    }
+
+    /** POST /api/v1/sends with an already-encrypted body. */
+    suspend fun createSend(body: JsonObject): JsonObject? = request(HttpMethod.Post, "/api/v1/sends", body) as? JsonObject
+
+    /** GET /api/v1/sends: the account's own sends, metadata only. */
+    suspend fun listSends(): List<JsonObject> = (request(HttpMethod.Get, "/api/v1/sends") as? JsonArray)
+        ?.mapNotNull { it as? JsonObject } ?: emptyList()
+
+    /** DELETE /api/v1/sends/{id}: ends a send. */
+    suspend fun revokeSend(id: String) {
+        request(HttpMethod.Delete, "/api/v1/sends/" + encodePath(id))
+    }
+
+    /** The public base for recipient links on this account's server. */
+    val publicBase: String get() = "$base/index.php/apps/keepiq/public"
+
     private fun itemsOf(data: JsonElement?): List<JsonObject> = when (data) {
         is JsonArray -> data.map { it.jsonObject }
         is JsonObject -> (data["items"] as? JsonArray)?.map { it.jsonObject } ?: emptyList()

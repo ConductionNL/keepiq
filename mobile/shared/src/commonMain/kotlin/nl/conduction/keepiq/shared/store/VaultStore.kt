@@ -53,6 +53,13 @@ data class StoredSecret(
     val additionalFields: String?,
     val encryptionSuiteId: String?,
     val updatedAt: String?,
+    /** A use-only copy: fill only, never reveal or copy (use-only-shares). */
+    val useOnly: Boolean = false,
+    /** The user may read this item but not change it. */
+    val readOnly: Boolean = false,
+    /** The item's key cannot be used here; [blockedReason] says why. */
+    val blocked: Boolean = false,
+    val blockedReason: String? = null,
 )
 
 data class StoredFolder(val id: String, val name: String, val parentId: String?)
@@ -108,6 +115,10 @@ class VaultStore(private val driver: SqlDriver, private val sealer: MetadataSeal
                         encryption_suite_id = s.text("encryptionSuiteId"),
                         updated_at = s.text("updatedAt"),
                         position = index.toLong(),
+                        use_only = if (s.flag("useOnly")) 1L else 0L,
+                        read_only = if (s.flag("readOnly")) 1L else 0L,
+                        blocked = if (s.flag("blocked")) 1L else 0L,
+                        blocked_reason = s.text("blockedReason"),
                     ),
                 )
             }
@@ -177,7 +188,13 @@ class VaultStore(private val driver: SqlDriver, private val sealer: MetadataSeal
         additionalFields = additional_fields_ciphertext,
         encryptionSuiteId = encryption_suite_id,
         updatedAt = updated_at,
+        useOnly = use_only != 0L,
+        readOnly = read_only != 0L,
+        blocked = blocked != 0L,
+        blockedReason = blocked_reason,
     )
 
     private fun JsonObject.text(name: String): String? = (this[name] as? JsonPrimitive)?.contentOrNull
+
+    private fun JsonObject.flag(name: String): Boolean = (this[name] as? JsonPrimitive)?.contentOrNull == "true"
 }
