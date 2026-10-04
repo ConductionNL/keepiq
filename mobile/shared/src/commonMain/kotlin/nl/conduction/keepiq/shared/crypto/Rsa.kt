@@ -75,7 +75,8 @@ object RsaFields {
         val raw = Encoding.fromBase64(ciphertext)
         if (raw.size < 4) throw KeepiqCryptoException("Field ciphertext too short")
         val count = Encoding.readUint32BigEndian(raw, 0)
-        if (count < 1 || raw.size.toLong() != 4 + count * BLOCK_SIZE) {
+        // Like rsaDecrypt: read `count` blocks and ignore anything after them.
+        if (raw.size.toLong() < 4 + count * BLOCK_SIZE) {
             throw KeepiqCryptoException("Field ciphertext holds ${raw.size} bytes for $count chunks")
         }
         val joined = ArrayList<ByteArray>(count.toInt())

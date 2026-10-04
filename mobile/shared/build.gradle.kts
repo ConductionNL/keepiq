@@ -3,6 +3,7 @@
 
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.apple.XCFramework
 import java.util.Base64
 
 plugins {
@@ -35,10 +36,13 @@ kotlin {
             compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
         }
     }
+    // mobile/ios links this as KeepiqShared.xcframework.
+    val xcframework = XCFramework("KeepiqShared")
     listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
         target.binaries.framework {
             baseName = "KeepiqShared"
             isStatic = true
+            xcframework.add(this)
         }
     }
 

@@ -1,0 +1,94 @@
+name: Mobile
+
+# The native apps' shared Kotlin Multiplatform core (clients-mobile-apps).
+# The crypto vectors in tests/vectors/crypto/ are the contract between the
+# core and the web app, so a change on either side runs both directions:
+# the core reads what the web app wrote, and the web app reads what the core
+# wrote in this same run.
+
+on:
+  push:
+    branches: [main, development]
+    paths:
+      - "mobile/**"
+      - "tests/vectors/**"
+      - "tests/vitest/crypto-vectors*.spec.js"
+      - "src/crypto/**"
+      - "src/send/**"
+      - "src/totp/**"
+      - "src/passkey/**"
+      - ".github/workflows/mobile.yml"
+  pull_request:
+    branches: [main, development, beta]
+    paths:
+      - "mobile/**"
+      - "tests/vectors/**"
+      - "tests/vitest/crypto-vectors*.spec.js"
+      - "src/crypto/**"
+      - "src/send/**"
+      - "src/totp/**"
+      - "src/passkey/**"
+      - ".github/workflows/mobile.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android-and-jvm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Shared core tests (jvm and Android unit tests)
+        run: ./gradlew --no-daemon :shared:allTests
+      - name: The placeholder app links the shared core
+        run: ./gradlew --no-daemon :android:app:assembleDebug
+      - name: No Google Play Services or Firebase in the dependency tree
+        run: |
+          ./gradlew --no-daemon -q :shared:dependencies :android:app:dependencies > deps.txt
+          if grep -E "com\.google\.android\.gms|com\.google\.firebase" deps.txt; then
+            echo "A proprietary Google artifact is in the dependency tree." >&2
+            exit 1
+          fi
+          grep -q "kotlinx-serialization-json" deps.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - name: The web app opens what the core wrote in this run
+        working-directory: .
+        run: |
+          npm ci --ignore-scripts
+          KEEPIQ_KOTLIN_VECTORS=mobile/shared/build/vectors/kotlin-output.json \
+            npx vitest run tests/vitest/crypto-vectors.spec.js tests/vitest/crypto-vectors-kotlin.spec.js
+
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Shared core tests on the iOS simulator
+        run: ./gradlew --no-daemon :shared:iosSimulatorArm64Test
+      - name: The iOS package links the shared framework
+        run: |
+          ./gradlew --no-daemon :shared:assembleKeepiqSharedReleaseXCFramework
+          cd ios/KeepiqApp
+          xcodebuild -scheme KeepiqApp -destination "generic/platform=iOS Simulator" build
