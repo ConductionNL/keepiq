@@ -51,7 +51,9 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 */
 		async checkAvailable() {
 			try {
-				const response = await axios.get(generateUrl('/apps/keepiq/api/v1/federation/status'))
+				const response = await axios.get(
+					generateUrl('/apps/keepiq/api/v1/federation/status'),
+				)
 				this.available = response.data?.outbound === true
 			} catch {
 				this.available = false
@@ -80,7 +82,11 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 				partnerRootFingerprint: answer.partnerRootFingerprint,
 				cloudId: answer.cloudId,
 			})
-			return { cloudId: answer.cloudId, certificate: answer.certificate, fingerprint }
+			return {
+				cloudId: answer.cloudId,
+				certificate: answer.certificate,
+				fingerprint,
+			}
 		},
 
 		/**
@@ -97,11 +103,17 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 			for (const field of ENCRYPTED_FIELDS) {
 				const value = secret[field]
 				if (value !== null && value !== undefined && value !== '') {
-					snapshot[field] = typeof value === 'string' ? value : JSON.stringify(value)
+					snapshot[field] =
+						typeof value === 'string' ? value : JSON.stringify(value)
 				}
 			}
-			const encrypted = await useShareStore().encryptForRecipient(snapshot, recipient.certificate)
-			const url = generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/federated-shares`)
+			const encrypted = await useShareStore().encryptForRecipient(
+				snapshot,
+				recipient.certificate,
+			)
+			const url = generateUrl(
+				`/apps/keepiq/api/v1/secrets/${secretId}/federated-shares`,
+			)
 			const body = {
 				recipientCloudId: recipient.cloudId,
 				certFingerprint: fingerprintHex(recipient.fingerprint),
@@ -119,7 +131,10 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 				}
 				const { headers } = await sessionKeyProofHeaders({
 					purpose: PROOF_PURPOSE.SHARE_NEW_RECIPIENT,
-					reason: t('keepiq', 'You are sharing with someone new. Enter your master password to confirm.'),
+					reason: t(
+						'keepiq',
+						'You are sharing with someone new. Enter your master password to confirm.',
+					),
 					boundValues: [secretId, recipient.cloudId],
 				})
 				return (await axios.post(url, body, { headers })).data
