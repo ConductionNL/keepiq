@@ -46,7 +46,7 @@ None. Local sharing stays as specified in `user-sharing`.
 
 ## Impact
 
-- **Backend**: an OCM provider registered with `OCP\Federation\ICloudFederationProviderManager::addCloudFederationProvider()`, outbound shares through `sendCloudShare()` and `sendNotification()`, partner discovery through `OCP\OCM\IOCMDiscoveryService`, request verification through `IOCMDiscoveryService::getIncomingSignedRequest()`, cloud id parsing through `OCP\Federation\ICloudIdManager`; new controllers and services for partners, federated shares and inbound shares.
+- **Backend**: an OCM provider registered with `OCP\Federation\ICloudFederationProviderManager::addCloudFederationProvider()`, outbound shares through `sendCloudShare()` and `sendNotification()`, partner discovery and signed partner calls through `OCP\OCM\IOCMDiscoveryService` (`requestRemoteOcmEndpoint()`), the `keepiq` OCM capability through `OCP\OCM\Events\LocalOCMDiscoveryEvent`, the partner-facing `/ocm/keepiq/...` endpoints through an `OCP\OCM\Events\OCMEndpointRequestEvent` listener that reads the verified signer from `getRemote()`, cloud id parsing through `OCP\Federation\ICloudIdManager`; new controllers and services for partners, federated shares and inbound shares.
 - **Frontend**: a federated recipient option in the share dialog, a partner list in the admin settings, and an "Incoming from other organisations" list for accepting shares.
 - **Database**: three new tables; a migration and a `<version>` bump.
 - **Security**: ciphertext only between instances; certificates checked against a pinned partner root; signed OCM requests; administrator allowlists in both directions.

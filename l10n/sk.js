@@ -1603,7 +1603,19 @@ OC.L10N.register(
         "Approve {member}": "Schváliť {member}",
         "Recipient": "Príjemca",
         "No vault yet": "Zatiaľ nemá trezor",
-        "No matching users": "Žiadni zodpovedajúci používatelia"
+        "No matching users": "Žiadni zodpovedajúci používatelia",
+        "Partner organisations": "Partnerské organizácie",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Vymieňajte si tajomstvá s iným Keepiq. Obaja správcovia sa navzájom pridajú a pred uložením porovnajú koreňové odtlačky telefonicky alebo osobne.",
+        "Federation needs Nextcloud 33 or later.": "Federácia vyžaduje Nextcloud 33 alebo novší.",
+        "Your root fingerprint": "Váš koreňový odtlačok",
+        "No partners yet.": "Zatiaľ žiadni partneri.",
+        "Users here may share to this partner": "Používatelia tu môžu zdieľať s týmto partnerom",
+        "This partner may share to users here": "Tento partner môže zdieľať s používateľmi tu",
+        "Partner address": "Adresa partnera",
+        "Check partner": "Overiť partnera",
+        "Partner root fingerprint": "Koreňový odtlačok partnera",
+        "I compared this fingerprint with the partner's administrator": "Porovnal som tento odtlačok so správcom partnera",
+        "Add partner": "Pridať partnera"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n>=2 && n<=4) ? 1 : 2);"
 )

@@ -1722,7 +1722,19 @@
         "Approve {member}": "Approva lil {member}",
         "Recipient": "Benefiċjarju",
         "No vault yet": "Għad m’għandux vault",
-        "No matching users": "L-ebda utent ma jaqbel"
+        "No matching users": "L-ebda utent ma jaqbel",
+        "Partner organisations": "Organizzazzjonijiet sħab",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Skambja sigrieti ma’ Keepiq ieħor. Iż-żewġ amministraturi jżidu lil xulxin u jqabblu l-marki tas-swaba’ ewlenin bit-telefon jew personalment qabel ma jissejvjaw.",
+        "Federation needs Nextcloud 33 or later.": "Il-federazzjoni teħtieġ Nextcloud 33 jew aktar ġdid.",
+        "Your root fingerprint": "Il-marka ewlenija tiegħek",
+        "No partners yet.": "Għad m’hemmx sħab.",
+        "Users here may share to this partner": "L-utenti hawn jistgħu jaqsmu ma’ dan is-sieħeb",
+        "This partner may share to users here": "Dan is-sieħeb jista’ jaqsam mal-utenti hawn",
+        "Partner address": "L-indirizz tas-sieħeb",
+        "Check partner": "Iċċekkja s-sieħeb",
+        "Partner root fingerprint": "Il-marka ewlenija tas-sieħeb",
+        "I compared this fingerprint with the partner's administrator": "Qabbilt din il-marka mal-amministratur tas-sieħeb",
+        "Add partner": "Żid sieħeb"
     },
     "plurals": null
 }

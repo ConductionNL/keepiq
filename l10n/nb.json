@@ -1674,7 +1674,19 @@
         "Approve {member}": "Godkjenn {member}",
         "Recipient": "Mottaker",
         "No vault yet": "Har ikke hvelv ennå",
-        "No matching users": "Ingen samsvarende brukere"
+        "No matching users": "Ingen samsvarende brukere",
+        "Partner organisations": "Partnerorganisasjoner",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Utveksle hemmeligheter med en annen Keepiq. Begge administratorene legger til hverandre og sammenligner rotfingeravtrykkene på telefon eller ansikt til ansikt før de lagrer.",
+        "Federation needs Nextcloud 33 or later.": "Føderasjon krever Nextcloud 33 eller nyere.",
+        "Your root fingerprint": "Ditt rotfingeravtrykk",
+        "No partners yet.": "Ingen partnere ennå.",
+        "Users here may share to this partner": "Brukere her kan dele med denne partneren",
+        "This partner may share to users here": "Denne partneren kan dele med brukere her",
+        "Partner address": "Partnerens adresse",
+        "Check partner": "Sjekk partner",
+        "Partner root fingerprint": "Partnerens rotfingeravtrykk",
+        "I compared this fingerprint with the partner's administrator": "Jeg har sammenlignet dette fingeravtrykket med partnerens administrator",
+        "Add partner": "Legg til partner"
     },
     "plurals": null
 }
