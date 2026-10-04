@@ -42,14 +42,22 @@ export async function withStore<T>(
 	return page.evaluate(
 		async ([id, body, value]) => {
 			const host = document.querySelector('#keepiq-app') as
-				| (HTMLElement & { __vue_app__?: { config: { globalProperties: { $pinia?: { _s: Map<string, unknown> } } } } })
+				| (HTMLElement & {
+						__vue_app__?: {
+							config: {
+								globalProperties: {
+									$pinia?: { _s: Map<string, unknown> }
+								}
+							}
+						}
+				  })
 				| null
 			const pinia = host?.__vue_app__?.config.globalProperties.$pinia
 			const store = pinia?._s.get(id as string)
 			if (!store) {
 				throw new Error(`store ${id} is not in use on this page`)
 			}
-			 
+
 			const run = new Function(`return (${body})`)()
 			return run(store, value)
 		},
@@ -65,9 +73,15 @@ export async function withStore<T>(
  * @param value The plaintext value.
  * @return The new secret's id.
  */
-export async function storeSecret(page: Page, name: string, value: string): Promise<string> {
+export async function storeSecret(
+	page: Page,
+	name: string,
+	value: string,
+): Promise<string> {
 	const types = await api(page, 'GET', '/secret-types')
-	const note = (types.body as Array<{ id: string, name: string }>).find((t) => t.name === 'note')
+	const note = (types.body as Array<{ id: string; name: string }>).find(
+		(t) => t.name === 'note',
+	)
 	expect(note, 'the note secret type').toBeTruthy()
 	const id = await withStore<string>(
 		page,
@@ -108,6 +122,12 @@ export async function readSecretValue(page: Page, id: string): Promise<string> {
  * @param page A page of the app.
  */
 export async function openUserSettings(page: Page): Promise<void> {
-	await page.getByTestId('cn-nav-entry-UserSettings').locator('a, button').first().evaluate((el: HTMLElement) => el.click())
-	await expect(page.locator('[data-testid="recovery-enrolment"], #security').first()).toBeAttached({ timeout: 20_000 })
+	await page
+		.getByTestId('cn-nav-entry-UserSettings')
+		.locator('a, button')
+		.first()
+		.evaluate((el: HTMLElement) => el.click())
+	await expect(
+		page.locator('[data-testid="recovery-enrolment"], #security').first(),
+	).toBeAttached({ timeout: 20_000 })
 }

@@ -17,7 +17,12 @@
  * Accounts are created through the OCS provisioning API as the admin, with
  * the credentials `global-setup.ts` signs in with (see `adminApi()`).
  */
-import type { APIRequestContext, Browser, BrowserContext, Page } from '@playwright/test'
+import type {
+	APIRequestContext,
+	Browser,
+	BrowserContext,
+	Page,
+} from '@playwright/test'
 
 import { expect, request as playwrightRequest } from '@playwright/test'
 import * as path from 'path'
@@ -37,7 +42,9 @@ export const ADMIN_STATE = path.resolve(__dirname, '..', '.auth', 'admin.json')
  * @param baseURL The instance.
  * @return The context; dispose it when done.
  */
-export async function adminApi(baseURL: string | undefined): Promise<APIRequestContext> {
+export async function adminApi(
+	baseURL: string | undefined,
+): Promise<APIRequestContext> {
 	return playwrightRequest.newContext({
 		baseURL,
 		// No stored session: a session cookie would win over basic auth and
@@ -96,9 +103,16 @@ export async function createUsers(
 	for (const user of users) {
 		const response = await request.post('/ocs/v2.php/cloud/users?format=json', {
 			headers: { 'OCS-APIRequest': 'true' },
-			form: { userid: user.uid, password: user.password, displayName: user.uid },
+			form: {
+				userid: user.uid,
+				password: user.password,
+				displayName: user.uid,
+			},
 		})
-		expect(response.status(), `create ${user.uid}: ${await response.text()}`).toBe(200)
+		expect(
+			response.status(),
+			`create ${user.uid}: ${await response.text()}`,
+		).toBe(200)
 	}
 }
 
@@ -131,7 +145,7 @@ export async function deleteUsers(
 export async function signedInContext(
 	browser: Browser,
 	user: VaultUser,
-): Promise<{ context: BrowserContext, page: Page }> {
+): Promise<{ context: BrowserContext; page: Page }> {
 	const context = await browser.newContext({
 		storageState: { cookies: [], origins: [] },
 		viewport: { width: 1600, height: 1000 },
@@ -161,7 +175,9 @@ export async function clickButton(page: Page, label: string): Promise<void> {
 	const clicked = await page.evaluate((pattern) => {
 		const re = new RegExp(pattern, 'i')
 		const button = Array.from(document.querySelectorAll('button')).find(
-			(b) => re.test((b.textContent || '').trim()) && !(b as HTMLButtonElement).disabled,
+			(b) =>
+				re.test((b.textContent || '').trim())
+				&& !(b as HTMLButtonElement).disabled,
 		)
 		if (button) {
 			;(button as HTMLButtonElement).click()
@@ -201,7 +217,9 @@ export async function unlockAs(page: Page, user: VaultUser): Promise<void> {
 	await field.waitFor({ state: 'visible', timeout: 30_000 })
 	await field.fill(user.masterPassword, { force: true })
 	await page.waitForTimeout(300)
-	await page.getByTestId('unlock-with-password').evaluate((el: HTMLElement) => el.click())
+	await page
+		.getByTestId('unlock-with-password')
+		.evaluate((el: HTMLElement) => el.click())
 	await expect(page.locator('.lock-screen')).toHaveCount(0, { timeout: 60_000 })
 }
 
@@ -216,7 +234,8 @@ export async function requestToken(page: Page): Promise<string> {
 		const head = document.querySelector('head[data-requesttoken]')
 		return (
 			head?.getAttribute('data-requesttoken')
-			|| (window as unknown as { OC?: { requestToken?: string } }).OC?.requestToken
+			|| (window as unknown as { OC?: { requestToken?: string } }).OC
+				?.requestToken
 			|| ''
 		)
 	})
@@ -236,7 +255,7 @@ export async function api(
 	method: string,
 	route: string,
 	data?: unknown,
-): Promise<{ status: number, body: any }> {
+): Promise<{ status: number; body: any }> {
 	const token = await requestToken(page)
 	const response = await page.request.fetch(`${APP_BASE}/api/v1${route}`, {
 		method,
