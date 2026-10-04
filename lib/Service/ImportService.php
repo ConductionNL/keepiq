@@ -57,6 +57,13 @@ class ImportService {
 	public const MAX_FIELD_LENGTH = 4096;
 
 	/**
+	 * Maximum character length of a name: the width of the `name` column.
+	 *
+	 * @var int
+	 */
+	public const MAX_NAME_LENGTH = 255;
+
+	/**
 	 * Maximum byte length of a single ciphertext blob (RSA-expanded).
 	 *
 	 * @var int
@@ -178,6 +185,8 @@ class ImportService {
 	 * look like an envelope, never plaintext. A missing/oversized name, an
 	 * oversized url, or an oversized blob is rejected.
 	 *
+	 * @spec openspec/changes/clients-extension-gaps/specs/item-name-limit/spec.md#requirement-a-name-has-at-most-255-characters
+	 *
 	 * @param array<string,mixed> $item The encrypted item
 	 *
 	 * @return void
@@ -190,8 +199,10 @@ class ImportService {
 			throw new InvalidArgumentException('Missing name');
 		}
 
-		if (strlen($name) > self::MAX_FIELD_LENGTH) {
-			throw new InvalidArgumentException('Name exceeds the maximum length');
+		// The name column holds 255 characters; a longer name would fail at
+		// the database instead of here.
+		if (mb_strlen($name) > self::MAX_NAME_LENGTH) {
+			throw new InvalidArgumentException('Name exceeds the maximum length of 255 characters');
 		}
 
 		if (isset($item['url']) === true && strlen((string)$item['url']) > self::MAX_FIELD_LENGTH) {
