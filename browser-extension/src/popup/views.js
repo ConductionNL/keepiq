@@ -11,6 +11,7 @@
  * @param {HTMLSelectElement} select The switcher.
  * @param {object} state The worker's get-state answer.
  * @return {void}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
  */
 export function renderAccountSwitcher(select, state) {
 	const doc = select.ownerDocument
@@ -19,7 +20,13 @@ export function renderAccountSwitcher(select, state) {
 		const option = doc.createElement('option')
 		option.value = account.id
 		const name = account.label || account.user + '@' + account.host
-		option.textContent = name + (account.unlocked ? '' : ' (locked)')
+		option.textContent =
+			name
+			+ (account.loggedOut
+				? ' (signed out)'
+				: account.unlocked
+					? ''
+					: ' (locked)')
 		option.selected = account.id === state.activeAccountId
 		select.appendChild(option)
 	}
