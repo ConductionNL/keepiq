@@ -96,8 +96,10 @@
 				</div>
 				<div id="save-prompt" class="save-prompt" hidden>
 					<p id="save-text"></p>
+					<label id="save-folder-label">Folder<select id="save-folder"><option value="">No folder</option></select></label>
 					<button id="save-yes" class="primary">Save</button>
 					<button id="save-no" class="link">Not now</button>
+					<button id="save-never" class="link">Never for this site</button>
 				</div>
 			</div>
 
@@ -116,6 +118,7 @@
 					</div>
 					<p id="vault-offline" class="hint" hidden>You are offline. Changes need a connection to Keepiq.</p>
 					<p id="vault-status" class="hint" role="status"></p>
+					<button id="vault-clear" type="button" class="link" hidden>Clear filters</button>
 					<ul id="vault-list" class="candidates"></ul>
 				</div>
 
@@ -318,30 +321,69 @@
 
 		<!-- Settings view (per account) -->
 		<section id="view-settings" hidden>
-			<h1>Settings for this account</h1>
-			<fieldset class="idle-fieldset">
-				<legend>Lock after being idle for</legend>
-				<div id="idle-choices"></div>
-			</fieldset>
-			<p class="hint">Keepiq also locks when your computer locks.</p>
-			<label>Clear the clipboard after a copy
-				<select id="clipboard-clear"></select>
-			</label>
-			<button id="biometric-enrol" class="link" hidden>Set up fingerprint or face unlock</button>
-			<fieldset id="pin-settings">
-				<legend>Unlock with a PIN</legend>
-				<div id="pin-set-form">
-					<label>Master password<input id="pin-master" type="password" autocomplete="off"></label>
-					<label>New PIN<input id="pin-new" type="password" inputmode="numeric" autocomplete="off"></label>
-					<button id="pin-set" class="link">Set PIN</button>
-				</div>
-				<button id="pin-remove" class="link" hidden>Remove PIN</button>
-				<p class="hint">The PIN works until you close the browser. After five wrong PINs, Keepiq asks for your master password.</p>
-			</fieldset>
-			<button id="settings-logout" class="link">Log out of this account</button>
-			<button id="settings-lock-all" class="link">Lock all accounts</button>
-			<button id="settings-logout-all" class="link">Log out of all accounts</button>
-			<button id="settings-unpair" class="link">Disconnect this account</button>
+			<h1>Settings</h1>
+			<section class="settings-group" aria-labelledby="settings-account-title">
+				<h2 id="settings-account-title">This account</h2>
+				<fieldset class="idle-fieldset">
+					<legend>Lock after being idle for</legend>
+					<div id="idle-choices"></div>
+				</fieldset>
+				<p class="hint">Keepiq also locks when your computer locks.</p>
+				<button id="biometric-enrol" class="link" hidden>Set up fingerprint or face unlock</button>
+				<fieldset id="pin-settings">
+					<legend>Unlock with a PIN</legend>
+					<div id="pin-set-form">
+						<label>Master password<input id="pin-master" type="password" autocomplete="off"></label>
+						<label>New PIN<input id="pin-new" type="password" inputmode="numeric" autocomplete="off"></label>
+						<button id="pin-set" class="link">Set PIN</button>
+					</div>
+					<button id="pin-remove" class="link" hidden>Remove PIN</button>
+					<p class="hint">The PIN works until you close the browser. After five wrong PINs, Keepiq asks for your master password.</p>
+				</fieldset>
+				<button id="settings-logout" class="link">Log out of this account</button>
+				<button id="settings-lock-all" class="link">Lock all accounts</button>
+				<button id="settings-logout-all" class="link">Log out of all accounts</button>
+				<button id="settings-unpair" class="link">Disconnect this account</button>
+			</section>
+			<section class="settings-group" aria-labelledby="settings-autofill-title">
+				<h2 id="settings-autofill-title">Autofill</h2>
+				<label class="check"><input id="setting-offer-save" type="checkbox"> Offer to save new logins</label>
+				<label class="check"><input id="setting-offer-update" type="checkbox"> Offer to update a changed password</label>
+				<label class="check"><input id="setting-suggest" type="checkbox"> Suggest a strong password in sign-up fields</label>
+				<p id="shortcut-text" class="hint"></p>
+				<fieldset id="never-settings">
+					<legend>Never offer to save logins on</legend>
+					<ul id="never-list" class="candidates"></ul>
+					<p id="never-empty" class="hint">No sites yet.</p>
+				</fieldset>
+				<label>Clear the clipboard after a copy
+					<select id="clipboard-clear"></select>
+				</label>
+			</section>
+			<section class="settings-group" aria-labelledby="settings-items-title">
+				<h2 id="settings-items-title">New items</h2>
+				<label>Type of a new item<select id="setting-default-type"></select></label>
+			</section>
+			<section class="settings-group" aria-labelledby="settings-look-title">
+				<h2 id="settings-look-title">Appearance</h2>
+				<label>Theme
+					<select id="setting-theme">
+						<option value="system">Same as the system</option>
+						<option value="light">Light</option>
+						<option value="dark">Dark</option>
+					</select>
+				</label>
+			</section>
+			<section class="settings-group" aria-labelledby="settings-web-title">
+				<h2 id="settings-web-title">Keepiq on the web</h2>
+				<p class="hint">Import and export, notifications and your master password are managed in Keepiq on your Nextcloud.</p>
+				<button id="settings-open-web" class="link">Open Keepiq on the web</button>
+			</section>
+			<section class="settings-group" aria-labelledby="settings-about-title">
+				<h2 id="settings-about-title">About</h2>
+				<p id="about-text" class="hint"></p>
+				<button id="settings-notices" class="link">Third-party notices</button>
+			</section>
 			<button id="settings-back" class="primary">Done</button>
 			<p id="settings-error" class="error" role="alert" hidden></p>
 		</section>

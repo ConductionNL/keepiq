@@ -10,6 +10,7 @@ import { initGenerator } from './generator-view.js'
 import { initSend } from './send-view.js'
 import { initVault } from './vault-view.js'
 import { copyText } from './clipboard.js'
+import { folderChoices } from '../lib/vault-index.js'
 import {
 	canAddAccount,
 	DEVICE_STATUS_TEXT,
@@ -107,6 +108,20 @@ async function activeHost() {
 	}
 }
 
+/**
+ * Fill the save prompt's folder picker from the vault.
+ *
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-save-a-new-login-into-a-folder
+ */
+async function fillSaveFolders() {
+	const select = $('save-folder')
+	select.replaceChildren(select.options[0] || new Option('No folder', ''))
+	const { folders = [] } = await send('vault-list')
+	for (const { id, label } of folderChoices(folders)) {
+		select.appendChild(new Option(label, id))
+	}
+}
+
 async function renderUnlocked() {
 	const host = await activeHost()
 	$('active-host').textContent = host
@@ -155,6 +170,14 @@ async function renderUnlocked() {
 				if (res.totpCode) {
 					await copyText(res.totpCode)
 				}
+				if (!res.filled) {
+					// Say so instead of closing as if it worked.
+					showError(
+						'unlock-error',
+						'Keepiq found no login form on this page to fill.',
+					)
+					return
+				}
 				window.close()
 			})
 			li.appendChild(btn)
@@ -171,13 +194,23 @@ async function renderUnlocked() {
 		$('save-text').textContent = capture.account
 			? `Save login for ${capture.host} to ${capture.account}?`
 			: `Save login for ${capture.host}?`
+		// A new login can go into a folder; an update stays where it is.
+		$('save-folder-label').hidden = !!capture.update
+		$('save-never').hidden = !!capture.update
+		if (!capture.update) await fillSaveFolders()
 		$('save-yes').onclick = async () => {
 			// The worker saves what it holds for this tab; nothing is sent back.
-			const res = await send('save-capture', {})
+			const res = await send('save-capture', {
+				folderId: $('save-folder').value || null,
+			})
 			if (res.error) showError('unlock-error', res.error)
 			$('save-prompt').hidden = true
 		}
 		$('save-no').onclick = () => {
+			$('save-prompt').hidden = true
+		}
+		$('save-never').onclick = async () => {
+			await send('capture-never', {})
 			$('save-prompt').hidden = true
 		}
 	}
@@ -333,6 +366,123 @@ async function renderSettings() {
 	$('pin-set-form').hidden = !!state.pinSet
 	$('pin-remove').hidden = !state.pinSet
 	await renderClipboardSetting()
+	await renderNeverSites()
+	await renderShortcut()
+	await renderExtensionSettings()
+}
+
+/**
+ * Show a theme: the system's, or light or dark whatever the system says.
+ *
+ * @param {string} theme system, light or dark.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-list-and-settings/spec.md#requirement-settings-for-autofill-new-items-and-appearance
+ */
+function applyTheme(theme) {
+	if (theme === 'light' || theme === 'dark') {
+		document.documentElement.dataset.theme = theme
+	} else {
+		delete document.documentElement.dataset.theme
+	}
+}
+
+/**
+ * The browser-wide settings: autofill offers, the type of a new item, the
+ * theme, the web app and the About text.
+ *
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-list-and-settings/spec.md#requirement-settings-for-autofill-new-items-and-appearance
+ */
+async function renderExtensionSettings() {
+	const settings = await send('extension-settings')
+	const list = state.unlocked ? await send('vault-list') : {}
+	$('setting-offer-save').checked = settings.offerSave !== false
+	$('setting-offer-update').checked = settings.offerUpdate !== false
+	$('setting-suggest').checked = settings.suggestPasswords !== false
+	const typeSelect = $('setting-default-type')
+	typeSelect.replaceChildren()
+	const names = (list.types || [])
+		.map((t) => t.name)
+		.filter((n) => n && n !== 'passkey')
+	for (const name of names.length ? names : ['login']) {
+		typeSelect.appendChild(
+			new Option(name, name, false, name === settings.defaultType),
+		)
+	}
+	$('setting-theme').value = settings.theme || 'system'
+	const save = async (patch) => {
+		const res = await send('set-extension-settings', patch)
+		if (res.error) showError('settings-error', res.error)
+		return res
+	}
+	$('setting-offer-save').onchange = () =>
+		save({ offerSave: $('setting-offer-save').checked })
+	$('setting-offer-update').onchange = () =>
+		save({ offerUpdate: $('setting-offer-update').checked })
+	$('setting-suggest').onchange = () =>
+		save({ suggestPasswords: $('setting-suggest').checked })
+	typeSelect.onchange = () => save({ defaultType: typeSelect.value })
+	$('setting-theme').onchange = async () => {
+		const res = await save({ theme: $('setting-theme').value })
+		applyTheme(res.theme)
+	}
+	$('settings-open-web').hidden = !list.webAppUrl
+	$('settings-open-web').onclick = () =>
+		chrome.tabs.create({ url: list.webAppUrl })
+	$('settings-notices').onclick = () =>
+		chrome.tabs.create({ url: chrome.runtime.getURL('THIRD-PARTY-NOTICES.txt') })
+	const version = chrome.runtime.getManifest?.().version || ''
+	$('about-text').textContent =
+		`Keepiq extension ${version}`
+		+ (state.serverVersion
+			? `, Keepiq ${state.serverVersion} on your server`
+			: '')
+		+ '.'
+}
+
+/**
+ * The sites with no save offer, each with Remove.
+ *
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-never-offer-to-save-on-a-site
+ */
+async function renderNeverSites() {
+	const { sites = [] } = await send('never-sites')
+	const list = $('never-list')
+	list.replaceChildren()
+	for (const host of sites) {
+		const li = document.createElement('li')
+		li.className = 'candidate row'
+		const name = document.createElement('span')
+		name.textContent = host
+		const remove = document.createElement('button')
+		remove.type = 'button'
+		remove.className = 'link'
+		remove.textContent = 'Remove'
+		remove.setAttribute('aria-label', `Offer to save on ${host} again`)
+		remove.addEventListener('click', async () => {
+			await send('never-remove', { host })
+			await renderNeverSites()
+		})
+		li.append(name, remove)
+		list.appendChild(li)
+	}
+	$('never-empty').hidden = sites.length > 0
+}
+
+/**
+ * The keyboard shortcut that fills a login, as the browser set it.
+ *
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-fill-from-the-context-menu-and-a-shortcut
+ */
+async function renderShortcut() {
+	let shortcut = ''
+	try {
+		const commands = (await chrome.commands?.getAll?.()) || []
+		shortcut = commands.find((c) => c.name === 'fill-login')?.shortcut || ''
+	} catch {
+		shortcut = ''
+	}
+	$('shortcut-text').textContent = shortcut
+		? `Press ${shortcut} on a login page to fill its login. Change the shortcut in your browser's extension settings.`
+		: "Set a keyboard shortcut for filling a login in your browser's extension settings."
 }
 
 /**
@@ -766,5 +916,6 @@ function confirmDisconnect() {
 }
 
 chrome.runtime.onMessage?.addListener(onWorkerMessage)
+send('extension-settings').then((settings) => applyTheme(settings?.theme))
 wire()
 refresh()

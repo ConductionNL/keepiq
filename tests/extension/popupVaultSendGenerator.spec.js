@@ -192,6 +192,7 @@ describe('Vault tab', () => {
 		)
 		expect([...$('vault-folder').options].map((o) => o.textContent)).toEqual([
 			'All folders',
+			'No folder',
 			'Work',
 		])
 

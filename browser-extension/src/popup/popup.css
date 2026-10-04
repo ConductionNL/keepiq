@@ -495,3 +495,42 @@ textarea {
 .account-initials:empty {
 	display: none;
 }
+
+/* Vault list cards (clients-extension-gaps) */
+.vault-card .candidate-fill {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	flex: 1;
+	min-width: 0;
+}
+
+.vault-card-name {
+	overflow: hidden;
+	max-width: 100%;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.vault-card-meta {
+	color: var(--muted);
+	font-size: 12px;
+}
+
+/* Settings groups (clients-extension-gaps) */
+.settings-group {
+	margin: 12px 0;
+	padding-top: 8px;
+	border-top: 1px solid var(--border);
+}
+
+.settings-group h2 {
+	margin: 0 0 6px;
+	font-size: 14px;
+}
+
+label.check {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
