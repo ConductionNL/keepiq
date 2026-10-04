@@ -1,0 +1,27 @@
+{
+	"description": "Passkey item JSON (src/passkey/passkey.js serializePasskey) and ES256 assertions from browser-extension/src/passkey/webauthn.js getAssertion. Signatures are DER and verify with publicKeySpki.",
+	"itemJson": "{\"credentialId\":\"oKGio6SlpqeoqaqrrK2urw\",\"rpId\":\"login.example.nl\",\"rpName\":\"Example Login\",\"userName\":\"alice@example.nl\",\"userDisplayName\":\"Alice de Vries\",\"userHandle\":\"dXNlci03ZjNh\",\"privateKey\":\"-----BEGIN PRIVATE KEY-----\\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgS1G9PAQRD2eNbVUz\\nznwRfD3qbAceoJTTTk/L9ujyWeOhRANCAAQ7y4FiBsJF/PMr1zZerKoErh1b92vf\\n2J/IevXr7BR84PqqW8O4dvp3Lf9WyfJR/jdaRxNKj+L5bzA3o6qPBpaB\\n-----END PRIVATE KEY-----\\n\",\"algorithm\":-7,\"counter\":41,\"transports\":[\"internal\",\"hybrid\"],\"createdAt\":\"2026-10-04T12:00:00.000Z\"}",
+	"publicKeySpki": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEO8uBYgbCRfzzK9c2XqyqBK4dW/dr39ifyHr16+wUfOD6qlvDuHb6dy3/VsnyUf43WkcTSo/i+W8wN6OqjwaWgQ==",
+	"challengeBase64Url": "AAcOFRwjKjE4P0ZNVFtiaXB3foWMk5qhqK-2vcTL0tk",
+	"origin": "https://login.example.nl",
+	"assertions": [
+		{
+			"storedCounter": 41,
+			"nextCounter": 42,
+			"clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiQUFjT0ZSd2pLakU0UDBaTlZGdGlhWEIzZm9XTWs1cWhxSy0ydmNUTDB0ayIsIm9yaWdpbiI6Imh0dHBzOi8vbG9naW4uZXhhbXBsZS5ubCIsImNyb3NzT3JpZ2luIjpmYWxzZX0=",
+			"authenticatorData": "UKjPjQCN8O7FARouxfFSW75BH5VKkSOzlxcwrAvq/UAFAAAAKg==",
+			"signatureDer": "MEUCIQDydZijiz505qjQgR1Pz8PGEvxbU5blgE4UMXSgiYEejgIgbGM67MhQWNkiVvOyTBon6DuUcRfX6G7AEVhwQGiKmCE=",
+			"userHandle": "dXNlci03ZjNh",
+			"rawId": "oKGio6SlpqeoqaqrrK2urw=="
+		},
+		{
+			"storedCounter": 0,
+			"nextCounter": 0,
+			"clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiQUFjT0ZSd2pLakU0UDBaTlZGdGlhWEIzZm9XTWs1cWhxSy0ydmNUTDB0ayIsIm9yaWdpbiI6Imh0dHBzOi8vbG9naW4uZXhhbXBsZS5ubCIsImNyb3NzT3JpZ2luIjpmYWxzZX0=",
+			"authenticatorData": "UKjPjQCN8O7FARouxfFSW75BH5VKkSOzlxcwrAvq/UAFAAAAAA==",
+			"signatureDer": "MEQCIH9kLtupZZahNiFWniifZx+BKQL/74ii+bsXRaC5iS2TAiAQ7HE+TLPLKHazAaMRamc6lmOqgv67pR2mERHRkzotSw==",
+			"userHandle": "dXNlci03ZjNh",
+			"rawId": "oKGio6SlpqeoqaqrrK2urw=="
+		}
+	]
+}

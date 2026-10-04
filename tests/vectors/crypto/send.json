@@ -1,0 +1,28 @@
+{
+	"description": "Send payloads (src/send/sendCrypto.js) and the password wrap from src/store/modules/ephemeralSend.js with Argon2id from src/crypto/argon2.js.",
+	"withoutPassword": {
+		"payload": "Wi-Fi: Keepiq-Gast / wachtwoord: zomer☀2026",
+		"encryptedPayload": "5299ZNlMMbj4x2ZrOs4cD7HM7rvxr59Su1ooTaKCPfbL+ghBIiaS0DihoWNZnTlID/wOdRo8qjuw6SVpsexAR5YuAbn5BUJ2dg==",
+		"rawKeyBase64Url": "FtBbamZW74VqO39N3C80iXwtemGi_DXXFacJpw8wZVI",
+		"publicBase": "https://cloud.example.nl/index.php/apps/keepiq/public",
+		"token": "Ab3_tOkEn-42",
+		"link": "https://cloud.example.nl/index.php/apps/keepiq/public/send/Ab3_tOkEn-42#k=FtBbamZW74VqO39N3C80iXwtemGi_DXXFacJpw8wZVI",
+		"linkWithoutKey": "https://cloud.example.nl/index.php/apps/keepiq/public/send/Ab3_tOkEn-42"
+	},
+	"withPassword": {
+		"payload": "Pincode kluis: 0472",
+		"password": "vier woorden in één regel",
+		"encryptedPayload": "xX0xbDHysGyfmiqYB5k77TN+SuW4VRdBOznq9sj114lhQGRipe4T2Hh75MWfGfY=",
+		"wrappedKey": "lokoQE5fkptwiaiPbcmLnx8EmHiDgCJmToMYlvP7YEYrSL0xVtmd+BIZFA0d+HTOSvoWv+8Q7mMUXIsq",
+		"argon2idSalt": "v/G2v/3xAkZiR95HebpRAg==",
+		"rawKeyBase64Url": "_mBfVSSINJxWAcxLGO1jq1buWzyreZBPCegbYPIq18w"
+	},
+	"argon2idKnownAnswer": {
+		"password": "password",
+		"saltHex": "01010101010101010101010101010101",
+		"memoryKiB": 65536,
+		"iterations": 3,
+		"parallelism": 1,
+		"keyHex": "29661e137750df9054176693d50d858c717c4da4aa852273131a082203946ee1"
+	}
+}

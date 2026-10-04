@@ -1,0 +1,287 @@
+{
+	"description": "TOTP codes from parseOtpauth + generateTotp (src/totp/totp.js). algorithm/digits/period are what the parser resolved; refused lists inputs the parser rejects.",
+	"cases": [
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Keepiq&algorithm=SHA1&digits=6&period=30",
+			"epochMs": 59000,
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"code": "287082"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Keepiq&algorithm=SHA1&digits=6&period=30",
+			"epochMs": 1111111109000,
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"code": "081804"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Keepiq&algorithm=SHA1&digits=6&period=30",
+			"epochMs": 1234567890000,
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"code": "005924"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Keepiq&algorithm=SHA1&digits=6&period=30",
+			"epochMs": 2000000000000,
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"code": "279037"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Keepiq&algorithm=SHA1&digits=6&period=30",
+			"epochMs": 20000000000000,
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"code": "353130"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Keepiq&algorithm=SHA1&digits=8&period=30",
+			"epochMs": 59000,
+			"algorithm": "SHA1",
+			"digits": 8,
+			"period": 30,
+			"code": "94287082"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Keepiq&algorithm=SHA1&digits=8&period=30",
+			"epochMs": 1111111109000,
+			"algorithm": "SHA1",
+			"digits": 8,
+			"period": 30,
+			"code": "07081804"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Keepiq&algorithm=SHA1&digits=8&period=30",
+			"epochMs": 1234567890000,
+			"algorithm": "SHA1",
+			"digits": 8,
+			"period": 30,
+			"code": "89005924"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Keepiq&algorithm=SHA1&digits=8&period=30",
+			"epochMs": 2000000000000,
+			"algorithm": "SHA1",
+			"digits": 8,
+			"period": 30,
+			"code": "69279037"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=Keepiq&algorithm=SHA1&digits=8&period=30",
+			"epochMs": 20000000000000,
+			"algorithm": "SHA1",
+			"digits": 8,
+			"period": 30,
+			"code": "65353130"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZA&issuer=Keepiq&algorithm=SHA256&digits=6&period=30",
+			"epochMs": 59000,
+			"algorithm": "SHA256",
+			"digits": 6,
+			"period": 30,
+			"code": "119246"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZA&issuer=Keepiq&algorithm=SHA256&digits=6&period=30",
+			"epochMs": 1111111109000,
+			"algorithm": "SHA256",
+			"digits": 6,
+			"period": 30,
+			"code": "084774"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZA&issuer=Keepiq&algorithm=SHA256&digits=6&period=30",
+			"epochMs": 1234567890000,
+			"algorithm": "SHA256",
+			"digits": 6,
+			"period": 30,
+			"code": "819424"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZA&issuer=Keepiq&algorithm=SHA256&digits=6&period=30",
+			"epochMs": 2000000000000,
+			"algorithm": "SHA256",
+			"digits": 6,
+			"period": 30,
+			"code": "698825"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZA&issuer=Keepiq&algorithm=SHA256&digits=6&period=30",
+			"epochMs": 20000000000000,
+			"algorithm": "SHA256",
+			"digits": 6,
+			"period": 30,
+			"code": "737706"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZA&issuer=Keepiq&algorithm=SHA256&digits=8&period=30",
+			"epochMs": 59000,
+			"algorithm": "SHA256",
+			"digits": 8,
+			"period": 30,
+			"code": "46119246"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZA&issuer=Keepiq&algorithm=SHA256&digits=8&period=30",
+			"epochMs": 1111111109000,
+			"algorithm": "SHA256",
+			"digits": 8,
+			"period": 30,
+			"code": "68084774"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZA&issuer=Keepiq&algorithm=SHA256&digits=8&period=30",
+			"epochMs": 1234567890000,
+			"algorithm": "SHA256",
+			"digits": 8,
+			"period": 30,
+			"code": "91819424"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZA&issuer=Keepiq&algorithm=SHA256&digits=8&period=30",
+			"epochMs": 2000000000000,
+			"algorithm": "SHA256",
+			"digits": 8,
+			"period": 30,
+			"code": "90698825"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZA&issuer=Keepiq&algorithm=SHA256&digits=8&period=30",
+			"epochMs": 20000000000000,
+			"algorithm": "SHA256",
+			"digits": 8,
+			"period": 30,
+			"code": "77737706"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNA&issuer=Keepiq&algorithm=SHA512&digits=6&period=30",
+			"epochMs": 59000,
+			"algorithm": "SHA512",
+			"digits": 6,
+			"period": 30,
+			"code": "816359"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNA&issuer=Keepiq&algorithm=SHA512&digits=6&period=30",
+			"epochMs": 1111111109000,
+			"algorithm": "SHA512",
+			"digits": 6,
+			"period": 30,
+			"code": "475079"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNA&issuer=Keepiq&algorithm=SHA512&digits=6&period=30",
+			"epochMs": 1234567890000,
+			"algorithm": "SHA512",
+			"digits": 6,
+			"period": 30,
+			"code": "884698"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNA&issuer=Keepiq&algorithm=SHA512&digits=6&period=30",
+			"epochMs": 2000000000000,
+			"algorithm": "SHA512",
+			"digits": 6,
+			"period": 30,
+			"code": "112781"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNA&issuer=Keepiq&algorithm=SHA512&digits=6&period=30",
+			"epochMs": 20000000000000,
+			"algorithm": "SHA512",
+			"digits": 6,
+			"period": 30,
+			"code": "146713"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNA&issuer=Keepiq&algorithm=SHA512&digits=8&period=30",
+			"epochMs": 59000,
+			"algorithm": "SHA512",
+			"digits": 8,
+			"period": 30,
+			"code": "01816359"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNA&issuer=Keepiq&algorithm=SHA512&digits=8&period=30",
+			"epochMs": 1111111109000,
+			"algorithm": "SHA512",
+			"digits": 8,
+			"period": 30,
+			"code": "67475079"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNA&issuer=Keepiq&algorithm=SHA512&digits=8&period=30",
+			"epochMs": 1234567890000,
+			"algorithm": "SHA512",
+			"digits": 8,
+			"period": 30,
+			"code": "79884698"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNA&issuer=Keepiq&algorithm=SHA512&digits=8&period=30",
+			"epochMs": 2000000000000,
+			"algorithm": "SHA512",
+			"digits": 8,
+			"period": 30,
+			"code": "46112781"
+		},
+		{
+			"uri": "otpauth://totp/Keepiq:alice%40example.nl?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQGEZDGNA&issuer=Keepiq&algorithm=SHA512&digits=8&period=30",
+			"epochMs": 20000000000000,
+			"algorithm": "SHA512",
+			"digits": 8,
+			"period": 30,
+			"code": "74146713"
+		},
+		{
+			"uri": "gezd gnbv gy3t qojq gezd gnbv gy3t qojq",
+			"epochMs": 1111111109000,
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"code": "081804"
+		},
+		{
+			"uri": "otpauth://totp/Example?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&period=60",
+			"epochMs": 1111111109000,
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 60,
+			"code": "360094"
+		},
+		{
+			"uri": "otpauth://totp/Example?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&digits=7",
+			"epochMs": 1111111109000,
+			"algorithm": "SHA1",
+			"digits": 6,
+			"period": 30,
+			"code": "081804"
+		}
+	],
+	"refused": [
+		{
+			"uri": "otpauth://hotp/Example?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&counter=1",
+			"webError": "Not an otpauth://totp URI"
+		},
+		{
+			"uri": "otpauth://totp/Example?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&algorithm=MD5",
+			"webError": "Unsupported TOTP algorithm: MD5"
+		},
+		{
+			"uri": "otpauth://totp/Example?issuer=NoSecret",
+			"webError": "otpauth URI has no secret"
+		},
+		{
+			"uri": "not base32 !",
+			"webError": "Invalid base32 character"
+		}
+	]
+}
