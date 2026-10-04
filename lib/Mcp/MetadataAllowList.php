@@ -29,7 +29,7 @@ use InvalidArgumentException;
  * capability. Secret values, ciphertext (key, login, additionalFields) and
  * encryptionSuiteId are on no list.
  *
- * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-no-tool-ever-returns-secret-material
+ * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-no-tool-ever-returns-secret-material
  */
 final class MetadataAllowList {
 
@@ -57,7 +57,7 @@ final class MetadataAllowList {
 	 *
 	 * @throws InvalidArgumentException On an unknown result type
 	 *
-	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-no-tool-ever-returns-secret-material
+	 * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-no-tool-ever-returns-secret-material
 	 */
 	public function project(array $row, string $type): array {
 		if (isset(self::KEYS[$type]) === false) {

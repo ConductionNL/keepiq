@@ -27,7 +27,12 @@ const POPPED_OUT = params.get('popout') === '1'
 const PINNED_TAB = Number.parseInt(params.get('tabId') || '', 10)
 const PINNED = Number.isInteger(PINNED_TAB) ? PINNED_TAB : undefined
 // The messages that act on the page tab carry the pinned tab.
-const TAB_MESSAGES = new Set(['fill', 'generator-context'])
+const TAB_MESSAGES = new Set([
+	'fill',
+	'generator-context',
+	'pending-capture',
+	'save-capture',
+])
 
 function send(type, payload) {
 	const body =
@@ -52,6 +57,7 @@ function show(view) {
 		'view-unlocked',
 		'view-settings',
 		'view-update',
+		'view-signed-out',
 		'view-device-approval',
 		'view-locked-generator',
 	]) {
@@ -126,7 +132,19 @@ async function renderUnlocked() {
 			btn.className = 'candidate-fill'
 			btn.textContent = c.name + (c.url ? ' — ' + c.url : '')
 			btn.addEventListener('click', async () => {
-				const res = await send('fill', { id: c.id, accountId: c.accountId })
+				let res = await send('fill', { id: c.id, accountId: c.accountId })
+				if (res.confirm === 'http-page') {
+					// The login was saved for https; this page is plain http.
+					const yes = window.confirm(
+						`${c.name} was saved for a secure (https) site, but this page is not secure. Anyone on the network could read what is filled in. Fill it anyway?`,
+					)
+					if (!yes) return
+					res = await send('fill', {
+						id: c.id,
+						accountId: c.accountId,
+						allowHttp: true,
+					})
+				}
 				if (res.error) {
 					showError('unlock-error', res.error)
 					return
@@ -153,7 +171,8 @@ async function renderUnlocked() {
 			? `Save login for ${capture.host} to ${capture.account}?`
 			: `Save login for ${capture.host}?`
 		$('save-yes').onclick = async () => {
-			const res = await send('save-capture', capture)
+			// The worker saves what it holds for this tab; nothing is sent back.
+			const res = await send('save-capture', {})
 			if (res.error) showError('unlock-error', res.error)
 			$('save-prompt').hidden = true
 		}
@@ -346,6 +365,8 @@ async function refresh() {
 	} else if (state.serverOutdated) {
 		// Nothing else works against an older server: say so, ask nothing.
 		show('view-update')
+	} else if (state.loggedOut || state.insecure) {
+		renderSignedOut()
 	} else if (!state.unlocked) {
 		show('view-locked')
 		if (!(await renderDeviceApprovalOption())) await renderBiometricUnlock()
@@ -353,6 +374,22 @@ async function refresh() {
 		show('view-unlocked')
 		await selectTab(await lastTab())
 	}
+}
+
+/**
+ * The signed-out view: the server refused the account's app password, or the
+ * account was paired over http and cannot be used.
+ *
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ */
+function renderSignedOut() {
+	show('view-signed-out')
+	showError('relogin-error', '')
+	$('relogin-app-password').value = ''
+	$('relogin-form').hidden = !state.loggedOut || state.insecure
+	$('signed-out-text').textContent = state.insecure
+		? 'This account was connected over http. Keepiq now needs https, so your app password is never sent in clear. Disconnect it and connect again over https.'
+		: 'Keepiq refused the app password of this account. It was revoked or changed in Nextcloud. Create a new app password in Nextcloud and enter it here.'
 }
 
 // --- tabs: This site, Vault, Generator, Send ---
@@ -519,7 +556,28 @@ function wire() {
 		window.close()
 	})
 	$('settings-back').addEventListener('click', () => refresh())
+	$('relogin-form').addEventListener('submit', async (event) => {
+		event.preventDefault()
+		showError('relogin-error', '')
+		const res = await send('relogin', {
+			accountId: state.activeAccountId,
+			appPassword: $('relogin-app-password').value,
+		})
+		$('relogin-app-password').value = ''
+		if (res.error) {
+			showError('relogin-error', res.error)
+			return
+		}
+		await refresh()
+	})
+	$('signed-out-disconnect').addEventListener('click', async () => {
+		if (!confirmDisconnect()) return
+		await send('unpair', { accountId: state.activeAccountId })
+		await refresh()
+	})
+
 	$('settings-unpair').addEventListener('click', async () => {
+		if (!confirmDisconnect()) return
 		await send('unpair', { accountId: state.activeAccountId })
 		await refresh()
 	})
@@ -551,15 +609,56 @@ function wire() {
 	})
 
 	$('unlock-unpair').addEventListener('click', async () => {
+		if (!confirmDisconnect()) return
 		await send('unpair', { accountId: state.activeAccountId })
 		await refresh()
 	})
 
 	$('lock-btn').addEventListener('click', async () => {
-		await send('lock')
+		// The account on screen; the others stay as they are.
+		await send('lock', { accountId: state.activeAccountId })
 		await refresh()
 	})
 }
 
+/**
+ * The worker locked an account. When it is the one on screen, drop what the
+ * popup shows of the vault at once and show the lock screen.
+ *
+ * @param {object} msg The worker's message.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-lock/spec.md#requirement-the-popup-forgets-the-vault-when-it-locks
+ */
+function onWorkerMessage(msg) {
+	if (msg?.type !== 'keepiq-locked') return
+	if (msg.accountId && msg.accountId !== state.activeAccountId) return
+	vaultView?.forget()
+	$('candidates').replaceChildren()
+	$('totp-code').textContent = ''
+	$('totp-block').hidden = true
+	$('gen-output').textContent = ''
+	$('view-unlocked').hidden = true
+	refresh()
+}
+
+/**
+ * Ask before disconnecting: it deletes the account's app password in
+ * Nextcloud and its data in this browser.
+ *
+ * @return {boolean} Whether the user confirmed.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-lock/spec.md#requirement-lock-locks-the-account-on-screen-and-disconnect-asks-first
+ */
+function confirmDisconnect() {
+	const account = (state.accounts || []).find(
+		(a) => a.id === state.activeAccountId,
+	)
+	const name = account
+		? account.label || account.user + '@' + account.host
+		: 'this account'
+	return window.confirm(
+		`Disconnect ${name}? Its app password is deleted in Nextcloud and its data is removed from this browser.`,
+	)
+}
+
+chrome.runtime.onMessage?.addListener(onWorkerMessage)
 wire()
 refresh()

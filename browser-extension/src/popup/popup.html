@@ -22,6 +22,19 @@
 			<p class="hint">This extension version needs a newer Keepiq on your Nextcloud server. Ask your administrator to update it, then open the extension again.</p>
 		</section>
 
+		<!-- Signed out: the server refused the app password, or the account
+		     was paired over http (clients-extension-gaps) -->
+		<section id="view-signed-out" hidden>
+			<h1>Signed out</h1>
+			<p id="signed-out-text" class="hint"></p>
+			<form id="relogin-form">
+				<label>New app password<input id="relogin-app-password" type="password" autocomplete="off" required></label>
+				<p id="relogin-error" class="error" role="alert" hidden></p>
+				<button type="submit" id="relogin-submit">Sign in again</button>
+			</form>
+			<button type="button" id="signed-out-disconnect" class="link">Disconnect this account</button>
+		</section>
+
 		<!-- Pairing view -->
 		<section id="view-pair" hidden>
 			<h1>Connect to Keepiq</h1>
@@ -151,7 +164,7 @@
 				<form id="vault-edit" hidden novalidate>
 					<h2 id="edit-title">New item</h2>
 					<label id="edit-type-label">Type<select id="edit-type"></select></label>
-					<label>Name<input id="edit-name" type="text" maxlength="4096" autocomplete="off" required></label>
+					<label>Name<input id="edit-name" type="text" maxlength="255" autocomplete="off" required></label>
 					<label>Website<input id="edit-url" type="url" maxlength="4096" autocomplete="off"></label>
 					<div id="edit-login-block">
 						<label>Username<input id="edit-login" type="text" maxlength="4096" autocomplete="off"></label>

@@ -11,7 +11,7 @@
 
 - [x] 2.1 Write `docs/api/admin-v1.openapi.json` for every v1 path, including HTTP Basic with the `OCS-APIRequest` header. Verify with an OpenAPI 3.1 schema lint in CI.
 - [x] 2.2 Add `tests/Unit/Contract/AdminApiContractTest.php` that compares the document with `appinfo/routes.php`. Verify by removing one path locally and watching the test fail.
-- [ ] 2.3 (written: the collection seeds its own Audit-only account through the provisioning API and `authorizedgroups/saveSettings`; not run locally, CI Newman owed) Add `tests/integration/admin-api.postman_collection.json` and its seed step (service account, delegation, app password). Verify with `tests/integration/run-newman.sh` in the CI Newman job.
+- [x] 2.3 Add `tests/integration/admin-api.postman_collection.json` and its seed step (service account, delegation, app password). Verify with `tests/integration/run-newman.sh` in the CI Newman job. Run locally 4 Oct the way the shared CI Newman job runs it (`newman run <collection>` with baseUrl, noAuthBase, adminUser, adminPass) against a fresh Nextcloud 35.0.1: 23 requests, 35 assertions, 0 failures. The first run failed 8 assertions because the delegation step posted to `/index.php/settings/authorizedgroups/saveSettings` (404); the route is `/index.php/apps/settings/settings/authorizedgroups/saveSettings`, fixed in the collection.
 
 ## 3. Documentation
 
