@@ -150,7 +150,11 @@ class FederatedShareService {
 		}
 
 		foreach ($this->shareMapper->findBySourceSecret(sourceSecretId: $secretId) as $existing) {
-			if ($existing->getRecipientCloudId() === $recipient->getId()) {
+			// Only a live share blocks: after a suspended, failed or revoked one
+			// the owner shares again, as the share list tells them to.
+			if ($existing->getRecipientCloudId() === $recipient->getId()
+				&& $existing->getStatus() === FederatedShare::STATUS_ACTIVE
+			) {
 				throw new InvalidArgumentException('already_shared');
 			}
 		}

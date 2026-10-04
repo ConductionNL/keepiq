@@ -268,6 +268,20 @@ class FederatedShareSendTest extends TestCase {
 		$this->assertCount(1, $this->sent);
 	}
 
+	public function testTheOwnerCanShareAgainAfterASuspendedOrFailedShare(): void {
+		$controller = $this->controller([$this->partner('cloud.partner.example', true, false)]);
+		foreach (['suspended', 'failed', 'revoked'] as $status) {
+			$this->share($controller);
+			foreach ($this->rows as $row) {
+				$row->setStatus($status);
+			}
+
+			// The owner's list says "Revoke it or share again": sharing again works.
+			$this->assertSame(Http::STATUS_CREATED, $this->share($controller)->getStatus(), $status);
+			$this->rows = [];
+		}
+	}
+
 	public function testAMalformedRequestIsRefusedBeforeAnythingIsStored(): void {
 		$controller = $this->controller([$this->partner('cloud.partner.example', true, false)]);
 
