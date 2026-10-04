@@ -26,23 +26,10 @@ import {
 	MASKED_COMPOSITE,
 	NOTES_FIELD,
 } from '../lib/item-form.js'
+import { copyText } from './clipboard.js'
 
 const MASK = '••••••••'
 let totpTimer = null
-
-/**
- * Copy text, quietly doing nothing where the clipboard is unavailable.
- *
- * @param {string} text The text.
- * @return {Promise<void>}
- */
-async function copyText(text) {
-	try {
-		await navigator.clipboard.writeText(text)
-	} catch {
-		// No clipboard (no focus, or not allowed): the value stays visible.
-	}
-}
 
 /**
  * A titled section.

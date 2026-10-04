@@ -388,7 +388,7 @@ export default {
 		 * admin or the app is not enabled (src/utils/navEntries.js).
 		 *
 		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
-		 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+		 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
 		 */
 		sortedMenu() {
 			const context = {
@@ -576,7 +576,7 @@ export default {
 		 * @param {object} item The menu entry.
 		 * @return {object|null}
 		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
-		 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+		 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
 		 */
 		itemTo(item) {
 			return menuEntryTo(item)
