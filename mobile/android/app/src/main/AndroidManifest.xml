@@ -2,6 +2,7 @@
 <!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:allowBackup="false"
         android:label="@string/app_name"
@@ -12,6 +13,29 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <!-- Opens a Keepiq Send link in the app (clients-mobile-apps task 3.6).
+             Self-hosted servers cannot be verified as app links, so Android
+             offers Keepiq for these links when the user allows it, and
+             "Share" sends a link here. -->
+        <activity
+            android:name=".OpenSendActivity"
+            android:exported="true"
+            android:label="@string/open_send_title">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="*" />
+                <data android:pathPattern="/.*/apps/keepiq/public/send/.*" />
+                <data android:pathPattern="/apps/keepiq/public/send/.*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
     </application>
