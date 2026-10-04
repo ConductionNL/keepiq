@@ -61,7 +61,7 @@ export const useDeviceApprovalStore = defineStore('deviceApproval', {
 		 * Ask whether device approval is on.
 		 *
 		 * @return {Promise<boolean>}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
 		 */
 		async fetchStatus() {
 			try {
@@ -81,7 +81,7 @@ export const useDeviceApprovalStore = defineStore('deviceApproval', {
 		 *
 		 * @param {string} [clientKind] `web` or `extension`.
 		 * @return {Promise<object>} The request as shown on this device.
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
 		 */
 		async startRequest(clientKind = 'web') {
 			const pair = await generateRecipientKeyPair()
@@ -114,7 +114,7 @@ export const useDeviceApprovalStore = defineStore('deviceApproval', {
 		 * and drop the one-time key.
 		 *
 		 * @return {Promise<string>} The request status.
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
 		 */
 		async pollOnce() {
 			if (!this.request || !this._oneTime) {
@@ -151,7 +151,7 @@ export const useDeviceApprovalStore = defineStore('deviceApproval', {
 		 * Forget this device's request and its one-time key.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
 		 */
 		cancelRequest() {
 			this._oneTime = null
@@ -162,7 +162,7 @@ export const useDeviceApprovalStore = defineStore('deviceApproval', {
 		 * Load this user's open requests, with their phrases.
 		 *
 		 * @return {Promise<Array<object>>}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-both-devices-show-the-same-verification-phrase
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-both-devices-show-the-same-verification-phrase
 		 */
 		async fetchPending() {
 			const response = await axios.get(
@@ -188,7 +188,7 @@ export const useDeviceApprovalStore = defineStore('deviceApproval', {
 		 * @param {object} request A pending request row.
 		 * @param {string} masterPassword The master password, typed just now.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
 		 */
 		async approve(request, masterPassword) {
 			const session = useSessionStore()
@@ -229,7 +229,7 @@ export const useDeviceApprovalStore = defineStore('deviceApproval', {
 		 *
 		 * @param {string} id The request id.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
 		 */
 		async deny(id) {
 			await axios.post(

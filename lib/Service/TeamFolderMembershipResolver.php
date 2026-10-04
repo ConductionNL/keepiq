@@ -257,7 +257,7 @@ class TeamFolderMembershipResolver {
 	 * @return array<int,array{id:string,name:string}>
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.3
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function subtreeSecretRefs(TeamFolder $teamFolder): array {
 		$refs = [];

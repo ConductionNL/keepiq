@@ -189,7 +189,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * @param {string} membershipId The membership row id.
 		 * @param {string} grade 'read' | 'write'.
 		 * @return {Promise<object>} The updated membership.
-		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-or-write-grade
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
 		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
 		 */
 		async setMemberGrade(teamFolderId, membershipId, grade) {

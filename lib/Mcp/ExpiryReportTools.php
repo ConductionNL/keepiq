@@ -31,7 +31,7 @@ use OCP\AppFramework\Utility\ITimeFactory;
  * keepiq.expiryReport: the caller's certificates and secrets that expire
  * within a window, and those already expired.
  *
- * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-expiry-report-tool
+ * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-expiry-report-tool
  */
 class ExpiryReportTools {
 
@@ -76,7 +76,7 @@ class ExpiryReportTools {
 	 *
 	 * @throws InvalidArgumentException On a window outside 0..365
 	 *
-	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-expiry-report-tool
+	 * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-expiry-report-tool
 	 */
 	public function expiryReport(int $withinDays = 30): array {
 		if ($withinDays < 0 || $withinDays > 365) {
@@ -106,7 +106,7 @@ class ExpiryReportTools {
 	 *
 	 * @return list<array<string,scalar|null>>
 	 *
-	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-expiry-report-tool
+	 * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-expiry-report-tool
 	 */
 	private function expiringSecrets(string $userId, DateTime $now, DateTime $until, array $skip): array {
 		$secrets = [];
@@ -141,7 +141,7 @@ class ExpiryReportTools {
 	 *
 	 * @return array{0: list<array<string,scalar|null>>, 1: array<string,true>}
 	 *
-	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-expiry-report-tool
+	 * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-expiry-report-tool
 	 */
 	private function expiringCertificates(string $userId, DateTime $now, DateTime $until): array {
 		$certificates = [];

@@ -5,7 +5,7 @@
  * Viewer, Editor and Manager in the team-folder dialog, and a manager's
  * fan-out from its own copies (sharing-team-folder-manager-role 3.1, 3.2).
  *
- * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
+ * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
  */
 
 import axios from '@nextcloud/axios'

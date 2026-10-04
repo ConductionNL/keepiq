@@ -215,7 +215,7 @@ export const useSessionStore = defineStore('session', {
 		 *
 		 * @param {string} privateKeyPem The recovered private key.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
 		 */
 		async unlockWithPrivateKeyPem(privateKeyPem) {
 			const response = await axios.get(

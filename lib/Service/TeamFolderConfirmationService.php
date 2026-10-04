@@ -61,6 +61,7 @@ class TeamFolderConfirmationService {
 	 * @param ConfirmerCopyResolver $copies The confirmer's own current write copy
 	 * @param NotificationService $notificationService The owner notice
 	 * @param TeamFolderAuditor $audit The confirmation audit event
+	 * @param TeamFolderQueryService $queries Reads the caller's grade on the folder
 	 *
 	 * @return void
 	 *
@@ -75,6 +76,7 @@ class TeamFolderConfirmationService {
 		private ConfirmerCopyResolver $copies,
 		private NotificationService $notificationService,
 		private TeamFolderAuditor $audit,
+		private TeamFolderQueryService $queries,
 	) {
 	}//end __construct()
 
@@ -120,11 +122,13 @@ class TeamFolderConfirmationService {
 	}//end pendingConfirmations()
 
 	/**
-	 * Register fan-out rows from the owner or from a `write`-grade confirmer.
+	 * Register fan-out rows from the owner, a manager or a `write`-grade confirmer.
 	 *
-	 * The owner keeps the existing path unchanged. A non-owner needs the
-	 * switch on, and every row is checked before anything is stored; rows
-	 * that fail a check are skipped, so the pair stays pending.
+	 * The owner and a manager (effective grade `manage`) take the plain
+	 * fan-out, which checks the manage grade and the subtree itself
+	 * (sharing-team-folder-manager-role D2). Anyone else needs the switch on,
+	 * and every row is checked before anything is stored; rows that fail a
+	 * check are skipped, so the pair stays pending.
 	 *
 	 * @param string $teamFolderId The team folder
 	 * @param array<int,array<string,mixed>> $rows The browser-encrypted rows
@@ -135,10 +139,13 @@ class TeamFolderConfirmationService {
 	 * @throws InvalidArgumentException When the folder is missing or the caller may not confirm
 	 *
 	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
 	 */
 	public function registerShares(string $teamFolderId, array $rows, string $userId): array {
 		$teamFolder = $this->loadTeamFolder(teamFolderId: $teamFolderId);
-		if ($teamFolder->getOwnerId() === $userId) {
+		if ($teamFolder->getOwnerId() === $userId
+			|| $this->queries->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId) === 'manage'
+		) {
 			return $this->teamFolders->registerFanOutShares(teamFolderId: $teamFolderId, shares: $rows, userId: $userId);
 		}
 

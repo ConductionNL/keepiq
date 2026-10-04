@@ -2,7 +2,7 @@
 
 ## 1. Dependencies and plumbing
 
-- [ ] 1.1 (blocked, POLICY.md keepiq#786) Dependencies, workflow and wording are in; govulncheck fails on Go 1.22 because the x/crypto versions without reachable advisories need Go 1.25. Add `golang.org/x/crypto` and `golang.org/x/sys` to `cli/go.mod`, add `govulncheck ./...` to the test job in `cli-release.yml`, and update the stdlib-only wording in `cli/README.md` and the workflow comment. Verify: `go vet ./...`, `go test ./...` and `govulncheck ./...` pass in the workflow.
+- [x] 1.1 Done: Go 1.25 landed in #932 (`cli/go.mod` `go 1.25.0`, x/crypto v0.52.0, x/sys v0.45.0; `cli-release.yml` on `1.25.x` with `govulncheck@v1.1.4`). Verified 4 Oct in `golang:1.25` (go1.25.14) with OpenSSH installed as the workflow does: `go vet ./...` 0, `go test ./...` 0 (the real-sshd `TestRealSSHThroughTheAgent` ran), govulncheck "Your code is affected by 0 vulnerabilities", `GOOS=windows go build` 0. That run first failed: `cli/useonly_test.go` still imported the removed `cli/internal/client`, fixed to `sdk/go/client`. Original note: govulncheck failed on Go 1.22 because the x/crypto versions without reachable advisories need Go 1.25. Add `golang.org/x/crypto` and `golang.org/x/sys` to `cli/go.mod`, add `govulncheck ./...` to the test job in `cli-release.yml`, and update the stdlib-only wording in `cli/README.md` and the workflow comment. Verify: `go vet ./...`, `go test ./...` and `govulncheck ./...` pass in the workflow.
 - [x] 1.2 Add `SecretTypes()` to `cli/internal/client/client.go` (`GET /api/v1/secret-types`) and a helper that returns the `ssh_key` type id. Verify: a Go unit test with an `httptest` server. Done: `cli/internal/client/secret_types_test.go`.
 
 ## 2. Agent core
@@ -20,7 +20,7 @@
 
 ## 4. Documentation
 
-- [ ] 4.1 (written; manual review and a manual `git clone` on macOS and Linux owed) Document the agent in `cli/README.md`: start, `eval`, `ssh-add -X` unlock, `--confirm`, `--idle`, a systemd user unit and a launchd plist, and the Windows status. Verify: manual review with the writing skill, and a manual `git clone` over SSH on macOS and Linux using the agent.
+- [ ] 4.1 (Linux done 4 Oct, macOS external: needs a Mac) README reviewed against `sshagent_flags.go` (all five flags, defaults, socket paths match). Manual Linux run in `golang:1.25` against a Nextcloud 35 instance: `eval "$(keepiq ssh-agent)"`, `ssh-add -l` lists the vault key, `git clone` over SSH to a local sshd succeeds, `ssh-add -x` locks and a clone is then refused, `ssh-add -X` unlocks, `ssh-add <file>` is refused. The run found two defects, both fixed with a test that fails first: the list read asked for `limit=100000`, which Nextcloud 35 refuses with a 400 (`sdk/go/client/list_secrets_test.go`, now paged), and `eval` hung because the agent stayed in the foreground (`cli/sshagent_eval_test.go`, now detaches). Original: Document the agent in `cli/README.md`: start, `eval`, `ssh-add -X` unlock, `--confirm`, `--idle`, a systemd user unit and a launchd plist, and the Windows status. Verify: manual review with the writing skill, and a manual `git clone` over SSH on macOS and Linux using the agent.
 
 ## Acceptance criteria
 

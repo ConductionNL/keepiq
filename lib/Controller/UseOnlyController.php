@@ -66,7 +66,7 @@ class UseOnlyController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-each-use-is-recorded
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-each-use-is-recorded
 	 */
 	#[NoAdminRequired]
 	#[NoCSRFRequired]
