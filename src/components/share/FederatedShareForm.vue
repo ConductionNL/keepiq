@@ -185,18 +185,22 @@ export default {
 					'keepiq',
 					'That organisation is not one of your partners.',
 				),
+
 				unknown_recipient: t(
 					'keepiq',
 					'No one with that account can receive secrets from you.',
 				),
+
 				partner_unreachable: t(
 					'keepiq',
 					'The other organisation did not answer. Try again later.',
 				),
+
 				delivery_failed: t(
 					'keepiq',
 					'The other organisation did not answer. Try again later.',
 				),
+
 				already_shared: t(
 					'keepiq',
 					'This secret is already shared with that account.',
