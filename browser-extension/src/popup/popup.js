@@ -27,7 +27,12 @@ const POPPED_OUT = params.get('popout') === '1'
 const PINNED_TAB = Number.parseInt(params.get('tabId') || '', 10)
 const PINNED = Number.isInteger(PINNED_TAB) ? PINNED_TAB : undefined
 // The messages that act on the page tab carry the pinned tab.
-const TAB_MESSAGES = new Set(['fill', 'generator-context'])
+const TAB_MESSAGES = new Set([
+	'fill',
+	'generator-context',
+	'pending-capture',
+	'save-capture',
+])
 
 function send(type, payload) {
 	const body =
@@ -127,7 +132,19 @@ async function renderUnlocked() {
 			btn.className = 'candidate-fill'
 			btn.textContent = c.name + (c.url ? ' — ' + c.url : '')
 			btn.addEventListener('click', async () => {
-				const res = await send('fill', { id: c.id, accountId: c.accountId })
+				let res = await send('fill', { id: c.id, accountId: c.accountId })
+				if (res.confirm === 'http-page') {
+					// The login was saved for https; this page is plain http.
+					const yes = window.confirm(
+						`${c.name} was saved for a secure (https) site, but this page is not secure. Anyone on the network could read what is filled in. Fill it anyway?`,
+					)
+					if (!yes) return
+					res = await send('fill', {
+						id: c.id,
+						accountId: c.accountId,
+						allowHttp: true,
+					})
+				}
 				if (res.error) {
 					showError('unlock-error', res.error)
 					return
@@ -154,7 +171,8 @@ async function renderUnlocked() {
 			? `Save login for ${capture.host} to ${capture.account}?`
 			: `Save login for ${capture.host}?`
 		$('save-yes').onclick = async () => {
-			const res = await send('save-capture', capture)
+			// The worker saves what it holds for this tab; nothing is sent back.
+			const res = await send('save-capture', {})
 			if (res.error) showError('unlock-error', res.error)
 			$('save-prompt').hidden = true
 		}

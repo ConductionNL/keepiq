@@ -96,7 +96,7 @@ class DeviceApprovalService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+	 * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
 	 */
 	public function isEnabled(): bool {
 		return $this->appConfig->getValueBool(Application::APP_ID, self::ENABLED_KEY, true);
@@ -117,7 +117,7 @@ class DeviceApprovalService {
 	 * @throws ForbiddenException       When the feature is off
 	 * @throws InvalidArgumentException When the input is malformed
 	 *
-	 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+	 * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Each argument is one recorded fact of the request.
 	 */
@@ -185,7 +185,7 @@ class DeviceApprovalService {
 	 *
 	 * @return DeviceApproval[]
 	 *
-	 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-both-devices-show-the-same-verification-phrase
+	 * @spec openspec/specs/new-device-approval/spec.md#requirement-both-devices-show-the-same-verification-phrase
 	 */
 	public function pending(string $userId): array {
 		return $this->mapper->findPendingForUser($userId, new DateTime());
@@ -201,7 +201,7 @@ class DeviceApprovalService {
 	 *
 	 * @throws NotFoundException When the request is not an open request of this user
 	 *
-	 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+	 * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
 	 */
 	public function deny(string $id, string $userId): void {
 		$request = $this->loadOpen(id: $id, userId: $userId);
@@ -225,7 +225,7 @@ class DeviceApprovalService {
 	 * @throws NotFoundException        When the request is not an open request of this user
 	 * @throws InvalidArgumentException When no sealed key is given
 	 *
-	 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
+	 * @spec openspec/specs/new-device-approval/spec.md#requirement-approval-seals-the-unlock-key-and-needs-proof-of-the-master-password
 	 */
 	public function approve(string $id, string $userId, string $sealedUnlockKey): void {
 		if (trim($sealedUnlockKey) === '') {
@@ -252,7 +252,7 @@ class DeviceApprovalService {
 	 *
 	 * @throws NotFoundException When the request is unknown, foreign, or the secret is wrong
 	 *
-	 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+	 * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
 	 */
 	public function pickup(string $id, string $userId, string $requestSecret): array {
 		$request = $this->loadOwn(id: $id, userId: $userId);
@@ -286,7 +286,7 @@ class DeviceApprovalService {
 	 *
 	 * @return int The number expired
 	 *
-	 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+	 * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
 	 */
 	public function expireLapsed(DateTime $now): int {
 		$count = 0;

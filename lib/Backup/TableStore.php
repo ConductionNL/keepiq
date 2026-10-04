@@ -52,7 +52,7 @@ class TableStore {
 	 *
 	 * @return iterable<int,array<string,mixed>>
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#1.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-hold-ciphertext-and-metadata-only
 	 */
 	public function rows(string $table): iterable {
 		$result = $this->db->getQueryBuilder()->select('*')->from(BackupTableRegistry::PREFIX . $table)->executeQuery();
@@ -70,7 +70,7 @@ class TableStore {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function count(string $table): int {
 		$qb = $this->db->getQueryBuilder();
@@ -86,7 +86,7 @@ class TableStore {
 	 *
 	 * @return string|null
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function newestAuditEntry(): ?string {
 		$qb = $this->db->getQueryBuilder();
@@ -109,7 +109,7 @@ class TableStore {
 	 *
 	 * @return array<string,int> Rows written per table
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function replaceAll(callable $rowsFor): array {
 		$written = [];
@@ -152,7 +152,7 @@ class TableStore {
 	 *
 	 * @return mixed The IQueryBuilder parameter type
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	private static function parameterType(mixed $value): mixed {
 		if (is_bool($value) === true) {

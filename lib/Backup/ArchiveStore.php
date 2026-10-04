@@ -64,7 +64,7 @@ class ArchiveStore {
 	 *
 	 * @return ISimpleFolder
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function archives(): ISimpleFolder {
 		return $this->folder(name: self::FOLDER);
@@ -75,7 +75,7 @@ class ArchiveStore {
 	 *
 	 * @return ISimpleFolder
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function blobs(): ISimpleFolder {
 		return $this->folder(name: ArchiveWriter::BLOB_FOLDER);
@@ -88,7 +88,7 @@ class ArchiveStore {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function tempFile(string $suffix): string {
 		return (string)$this->tempManager->getTemporaryFile($suffix);
@@ -99,7 +99,7 @@ class ArchiveStore {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function tempFolder(): string {
 		return (string)$this->tempManager->getTemporaryFolder('keepiq-backup');
@@ -114,7 +114,7 @@ class ArchiveStore {
 	 *
 	 * @throws InvalidArgumentException When no such archive exists
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function localCopy(string $nameOrPath): string {
 		if (is_file($nameOrPath) === true) {
@@ -140,7 +140,7 @@ class ArchiveStore {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.1
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function diskPath(string $name): string {
 		$dataDir = rtrim((string)$this->config->getSystemValue('datadirectory', ''), '/');
