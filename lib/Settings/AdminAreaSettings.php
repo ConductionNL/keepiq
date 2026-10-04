@@ -74,7 +74,7 @@ abstract class AdminAreaSettings implements IDelegatedSettings {
 	 *
 	 * @return TemplateResponse
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.1
 	 */
 	public function getForm(): TemplateResponse {
 		$this->initialState->provideInitialState('area-' . $this->getArea(), true);
@@ -88,7 +88,7 @@ abstract class AdminAreaSettings implements IDelegatedSettings {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.1
 	 */
 	protected function provideAreaState(): void {
 	}//end provideAreaState()
@@ -98,7 +98,7 @@ abstract class AdminAreaSettings implements IDelegatedSettings {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.1
 	 */
 	public function getSection(): string {
 		return self::SECTION;
@@ -110,7 +110,7 @@ abstract class AdminAreaSettings implements IDelegatedSettings {
 	 *
 	 * @return array<string, string[]>
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.1
 	 */
 	public function getAuthorizedAppConfig(): array {
 		return [];

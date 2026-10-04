@@ -396,6 +396,15 @@ $extra = [
     ['name' => 'federationPartner#update',  'url' => '/api/v1/federation/partners/{id}',    'verb' => 'PUT'],
     ['name' => 'federationPartner#destroy', 'url' => '/api/v1/federation/partners/{id}',    'verb' => 'DELETE'],
     ['name' => 'federation#recipientCertificate', 'url' => '/api/v1/federation/recipient-certificate', 'verb' => 'POST'],
+    ['name' => 'federation#status', 'url' => '/api/v1/federation/status', 'verb' => 'GET'],
+    // Federated shares (sharing-federated-recipients D4): the owner posts the
+    // ciphertext made for a partner's user; the recipient accepts or declines
+    // what arrived under "Incoming from other organisations".
+    ['name' => 'federatedShare#index',  'url' => '/api/v1/secrets/{secretId}/federated-shares', 'verb' => 'GET'],
+    ['name' => 'federatedShare#create', 'url' => '/api/v1/secrets/{secretId}/federated-shares', 'verb' => 'POST'],
+    ['name' => 'federatedInbound#index',   'url' => '/api/v1/federation/incoming',              'verb' => 'GET'],
+    ['name' => 'federatedInbound#accept',  'url' => '/api/v1/federation/incoming/{id}/accept',  'verb' => 'POST'],
+    ['name' => 'federatedInbound#decline', 'url' => '/api/v1/federation/incoming/{id}/decline', 'verb' => 'POST'],
     ['name' => 'discovery#legacyDocument', 'url' => '/api/v1/app/.well-known/doriath', 'verb' => 'GET'],
 
     // JWT-Bearer token exchange (public; signature-verified).

@@ -70,7 +70,7 @@ class AdminSettings extends AdminAreaSettings {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.1
 	 */
 	public function getArea(): string {
 		return 'general';
@@ -81,7 +81,7 @@ class AdminSettings extends AdminAreaSettings {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.1
 	 */
 	public function getName(): string {
 		return $this->l10n->t('General');
@@ -92,7 +92,7 @@ class AdminSettings extends AdminAreaSettings {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.1
 	 */
 	public function getPriority(): int {
 		return 10;
@@ -105,7 +105,7 @@ class AdminSettings extends AdminAreaSettings {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#3.3
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.3
 	 */
 	protected function provideAreaState(): void {
 		$version = $this->appManager->getAppVersion(Application::APP_ID);

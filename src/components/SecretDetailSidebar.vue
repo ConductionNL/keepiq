@@ -73,7 +73,11 @@
 			     native X hidden, the "…" menu is the pointer path to Close. -->
 			<div v-if="secret && !error" class="secret-detail__actions">
 				<NcButton
-					v-if="(!offlineReadOnly || offlineEditable) && !useOnly"
+					v-if="
+						(!offlineReadOnly || offlineEditable)
+						&& !useOnly
+						&& !federatedReadOnly
+					"
 					variant="primary"
 					data-testid="secret-detail-edit"
 					@click="openEdit">
@@ -105,7 +109,7 @@
 					</template>
 				</NcButton>
 				<NcButton
-					v-if="!useOnly"
+					v-if="!useOnly && !federatedReadOnly"
 					variant="secondary"
 					:disabled="offlineReadOnly"
 					:ariaLabel="t('keepiq', 'Share')"
@@ -124,7 +128,11 @@
 					:ariaLabel="t('keepiq', 'Secret actions')"
 					:forceMenu="true"
 					data-testid="secret-detail-more">
-					<template v-if="!offlineReadOnly || offlineEditable">
+					<template
+						v-if="
+							(!offlineReadOnly || offlineEditable)
+							&& !federatedReadOnly
+						">
 						<NcActionButton
 							:closeAfterClick="true"
 							data-testid="secret-detail-move"
@@ -196,6 +204,20 @@
 					t(
 						'keepiq',
 						'You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.',
+					)
+				}}
+			</NcNoteCard>
+			<!-- A copy from another organisation (sharing-federated-recipients
+			     task 3.4): readable, never changed or passed on. -->
+			<NcNoteCard
+				v-if="federatedReadOnly"
+				type="info"
+				data-testid="secret-detail-federated">
+				{{
+					t(
+						'keepiq',
+						'{sender} shared this from another organisation. You can read it, but not change or share it.',
+						{ sender: secret.federatedSource || t('keepiq', 'Someone') },
 					)
 				}}
 			</NcNoteCard>
@@ -1515,7 +1537,21 @@ export default {
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		canSeeSharing() {
-			return this.isOwner === true || this.isRecipient === true
+			return (
+				(this.isOwner === true || this.isRecipient === true)
+				&& this.federatedReadOnly === false
+			)
+		},
+
+		/**
+		 * Whether this is a read-only copy from another organisation: no
+		 * edit, move or share (sharing-federated-recipients task 3.4).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-remote-copies-are-read-only
+		 */
+		federatedReadOnly() {
+			return this.secret?.readOnly === true
 		},
 	},
 

@@ -133,6 +133,13 @@
 			"order": 24
 		},
 		{
+			"id": "IncomingSharesMenu",
+			"label": "Incoming from other organisations",
+			"icon": "InboxArrowDownOutline",
+			"route": "IncomingShares",
+			"order": 26
+		},
+		{
 			"id": "ApplicationsMenu",
 			"label": "Applications",
 			"icon": "ApplicationOutline",
@@ -597,6 +604,14 @@
 			"title": "Trash",
 			"component": "SecretList",
 			"_note": "The vault list in its trashed state (vault-trash-and-archive): restore or delete for good through the selection strip. No detail sidebar: a trashed secret is restored before it is opened."
+		},
+		{
+			"id": "IncomingShares",
+			"route": "/incoming",
+			"type": "custom",
+			"title": "Incoming from other organisations",
+			"component": "IncomingSharesView",
+			"_note": "Secrets that users of partner instances shared with this user (sharing-federated-recipients task 3.2). type:\"custom\" because accepting asks the server to pull ciphertext from the partner over OCM, which no built-in page type does."
 		},
 		{
 			"id": "ApplicationRegister",

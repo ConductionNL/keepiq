@@ -342,7 +342,7 @@ class ApplicationRequestAdminControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.2
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.2
 	 */
 	public function testAnApplicationsAreaHolderSeesTheRequests(): void {
 		$this->delegatedAreas = [ApplicationAdminSettings::class];
@@ -358,7 +358,7 @@ class ApplicationRequestAdminControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.2
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.2
 	 */
 	public function testAnAuditAreaHolderIsRefused(): void {
 		$this->delegatedAreas = [AuditAdminSettings::class];

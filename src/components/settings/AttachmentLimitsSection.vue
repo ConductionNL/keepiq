@@ -10,7 +10,7 @@
   Policies area (admin-scoped-roles, decision of 2 Oct).
 
   @spec openspec/specs/encrypted-attachments/spec.md#requirement-per-attachment-size-limit-and-per-user-quota
-  @spec openspec/changes/admin-scoped-roles/tasks.md#3.1
+  @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.1
 -->
 <template>
 	<CnSettingsSection

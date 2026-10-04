@@ -59,7 +59,7 @@ class AdminAreaAuthorizerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.3
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.3
 	 */
 	public function testAnInstanceAdminHoldsEveryArea(): void {
 		$areas = $this->areaAuthorizer(groupManager: $this->groupDirectory(), delegated: []);
@@ -72,7 +72,7 @@ class AdminAreaAuthorizerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.3
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.3
 	 */
 	public function testADelegatedUserHoldsOnlyTheDelegatedArea(): void {
 		$areas = $this->areaAuthorizer(groupManager: $this->groupDirectory(), delegated: [AuditAdminSettings::class]);
@@ -87,7 +87,7 @@ class AdminAreaAuthorizerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.3
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.3
 	 */
 	public function testTheLegacyGroupHoldsOnlyPeople(): void {
 		$areas = $this->areaAuthorizer(groupManager: $this->groupDirectory(), delegated: []);
@@ -101,7 +101,7 @@ class AdminAreaAuthorizerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.3
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.3
 	 */
 	public function testAnOutsiderHoldsNothingAndUnknownClassesAreNeverHeld(): void {
 		$areas = $this->areaAuthorizer(groupManager: $this->groupDirectory(), delegated: []);
@@ -118,7 +118,7 @@ class AdminAreaAuthorizerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.3
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.3
 	 */
 	public function testADelegationMatchesTheExactClass(): void {
 		$areas = $this->areaAuthorizer(groupManager: $this->groupDirectory(), delegated: [AdminSettings::class]);
@@ -132,7 +132,7 @@ class AdminAreaAuthorizerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.3
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.3
 	 */
 	public function testAFailingLookupGrantsNothing(): void {
 		$users = $this->createStub(IUserManager::class);

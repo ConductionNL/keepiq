@@ -80,7 +80,9 @@ class FederationLookupTest extends TestCase {
 			$this->ocm,
 		);
 		$session = $this->createMock(IUserSession::class);
-		$session->method('getUser')->willReturn($this->createMock(IUser::class));
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$session->method('getUser')->willReturn($user);
 
 		return new FederationController($this->createMock(IRequest::class), $service, $session);
 	}
@@ -109,7 +111,9 @@ class FederationLookupTest extends TestCase {
 				'keepiq',
 				'https://cloud.partner.example',
 				'keepiq/recipient-certificate',
-				['cloudId' => 'bob@cloud.partner.example'],
+				// `sender` names the owner: Nextcloud 35 derives the signer's
+				// origin for an RFC 9421 signature from it (OCMRequestController).
+				['cloudId' => 'bob@cloud.partner.example', 'sender' => 'alice@cloud.here.example'],
 				'post',
 			)
 			->willReturn($this->response(200, ['certificate' => 'BOB', 'chain' => ['INT', 'ROOT']]));
@@ -189,6 +193,16 @@ class FederationLookupTest extends TestCase {
 		);
 
 		$this->assertSame(Http::STATUS_UNAUTHORIZED, $anonymous->recipientCertificate('bob@cloud.partner.example')->getStatus());
+	}
+
+	/**
+	 * No partner, no federation: the share dialog is told it may offer a
+	 * federated recipient only while an outbound partner exists.
+	 */
+	public function testTheDialogIsOfferedFederationOnlyWithAnOutboundPartner(): void {
+		$this->assertFalse($this->controller([])->status()->getData()['outbound']);
+		$this->assertFalse($this->controller([$this->partner('cloud.partner.example', false, true)])->status()->getData()['outbound']);
+		$this->assertTrue($this->controller([$this->partner('cloud.partner.example', true, false)])->status()->getData()['outbound']);
 	}
 
 	public function testAdvertisesTheKeepiqCapabilityOnlyWhileAPartnerExists(): void {
