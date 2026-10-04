@@ -1,7 +1,7 @@
 # extension-store-release Specification
 
 ## Purpose
-TBD - created by archiving change clients-extension-store-release. Update Purpose after archive.
+Releasing the browser extension: building the packages, publishing them to the Chrome, Firefox and Edge stores, and rolling them out in an organisation.
 
 ## Requirements
 

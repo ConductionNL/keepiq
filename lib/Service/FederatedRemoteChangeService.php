@@ -94,7 +94,7 @@ class FederatedRemoteChangeService {
 	 * @param string $providerId The share id on the sender
 	 * @param array<array-key,mixed> $notification The payload, `{sharedSecret}` (its SHA-256)
 	 *
-	 * @return array<string,mixed>
+	 * @return array<array-key,string>
 	 *
 	 * @throws ShareNotFound For every refusal
 	 *

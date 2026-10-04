@@ -108,7 +108,7 @@ The user MUST be able to choose between list view and folder tree view as their 
 
 ## Notes
 
-- `NcAppSettingsDialog` is used (NOT `NcDialog`) per the shared nextcloud-app spec. See `openspec/specs/nextcloud-app/spec.md` for the full pattern.
+- `NcAppSettingsDialog` is used (NOT `NcDialog`) per the company frontend rule. See ADR-004 (frontend) and ADR-079 (settings surface placement) in hydra's `openspec/architecture/` for the full pattern.
 - Backend integration: settings are read/written via the existing `SettingsController`/`SettingsService` pattern. The service uses `OCP\IConfig::setUserValue()` / `getUserValue()`.
 - The `NotificationService` checks user settings via a `SUBJECT_SETTING_MAP` constant that maps notification subject keys to the corresponding user setting keys.
 - Related specs: encryption-suites (session timeout behavior), secrets (notification events)
