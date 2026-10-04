@@ -7,8 +7,8 @@
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { generateKey } from '../../src/generator/generator.js'
 import { sanitizeOptions } from '../../browser-extension/src/lib/generator-state.js'
+import { generateKey } from '../../src/generator/generator.js'
 import {
 	installChrome,
 	installServer,
