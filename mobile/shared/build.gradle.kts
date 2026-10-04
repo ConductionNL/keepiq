@@ -28,6 +28,10 @@ if (withAndroid) {
 }
 
 kotlin {
+    compilerOptions {
+        // expect/actual objects (Primitives) are Beta in Kotlin 2.2.
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
     jvm {
         compilerOptions { jvmTarget.set(JvmTarget.JVM_17) }
     }

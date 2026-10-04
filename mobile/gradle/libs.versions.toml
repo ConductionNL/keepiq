@@ -5,6 +5,8 @@
 [versions]
 kotlin = "2.2.21"
 agp = "8.13.0"
+# The aapt2 build AGP 8.13.0 downloads (aapt2_version.properties in the AGP jar).
+aapt2 = "8.13.0-13719691"
 kotlinx-serialization = "1.9.0"
 kotlinx-coroutines = "1.10.2"
 cryptography-kotlin = "0.5.0"
@@ -25,6 +27,7 @@ bouncycastle-prov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = 
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-bom" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
+aapt2-linux = { module = "com.android.tools.build:aapt2", version.ref = "aapt2" }
 
 [plugins]
 kotlin-multiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
