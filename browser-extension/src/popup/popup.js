@@ -368,6 +368,74 @@ async function renderSettings() {
 	await renderClipboardSetting()
 	await renderNeverSites()
 	await renderShortcut()
+	await renderExtensionSettings()
+}
+
+/**
+ * Show a theme: the system's, or light or dark whatever the system says.
+ *
+ * @param {string} theme system, light or dark.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-list-and-settings/spec.md#requirement-settings-for-autofill-new-items-and-appearance
+ */
+function applyTheme(theme) {
+	if (theme === 'light' || theme === 'dark') {
+		document.documentElement.dataset.theme = theme
+	} else {
+		delete document.documentElement.dataset.theme
+	}
+}
+
+/**
+ * The browser-wide settings: autofill offers, the type of a new item, the
+ * theme, the web app and the About text.
+ *
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-list-and-settings/spec.md#requirement-settings-for-autofill-new-items-and-appearance
+ */
+async function renderExtensionSettings() {
+	const settings = await send('extension-settings')
+	const list = state.unlocked ? await send('vault-list') : {}
+	$('setting-offer-save').checked = settings.offerSave !== false
+	$('setting-offer-update').checked = settings.offerUpdate !== false
+	$('setting-suggest').checked = settings.suggestPasswords !== false
+	const typeSelect = $('setting-default-type')
+	typeSelect.replaceChildren()
+	const names = (list.types || [])
+		.map((t) => t.name)
+		.filter((n) => n && n !== 'passkey')
+	for (const name of names.length ? names : ['login']) {
+		typeSelect.appendChild(
+			new Option(name, name, false, name === settings.defaultType),
+		)
+	}
+	$('setting-theme').value = settings.theme || 'system'
+	const save = async (patch) => {
+		const res = await send('set-extension-settings', patch)
+		if (res.error) showError('settings-error', res.error)
+		return res
+	}
+	$('setting-offer-save').onchange = () =>
+		save({ offerSave: $('setting-offer-save').checked })
+	$('setting-offer-update').onchange = () =>
+		save({ offerUpdate: $('setting-offer-update').checked })
+	$('setting-suggest').onchange = () =>
+		save({ suggestPasswords: $('setting-suggest').checked })
+	typeSelect.onchange = () => save({ defaultType: typeSelect.value })
+	$('setting-theme').onchange = async () => {
+		const res = await save({ theme: $('setting-theme').value })
+		applyTheme(res.theme)
+	}
+	$('settings-open-web').hidden = !list.webAppUrl
+	$('settings-open-web').onclick = () =>
+		chrome.tabs.create({ url: list.webAppUrl })
+	$('settings-notices').onclick = () =>
+		chrome.tabs.create({ url: chrome.runtime.getURL('THIRD-PARTY-NOTICES.txt') })
+	const version = chrome.runtime.getManifest?.().version || ''
+	$('about-text').textContent =
+		`Keepiq extension ${version}`
+		+ (state.serverVersion
+			? `, Keepiq ${state.serverVersion} on your server`
+			: '')
+		+ '.'
 }
 
 /**
@@ -848,5 +916,6 @@ function confirmDisconnect() {
 }
 
 chrome.runtime.onMessage?.addListener(onWorkerMessage)
+send('extension-settings').then((settings) => applyTheme(settings?.theme))
 wire()
 refresh()

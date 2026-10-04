@@ -199,7 +199,7 @@ class TeamFolderOffboardingService {
 	 *
 	 * @throws InvalidArgumentException When unauthorized
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.4
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.4
 	 */
 	private function assertOffboardingAdmin(string $userId): void {
 		if ($this->areas->holds(userId: $userId, areaClass: PeopleAdminSettings::class) === true) {

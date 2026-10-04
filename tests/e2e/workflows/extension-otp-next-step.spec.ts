@@ -19,7 +19,7 @@
  * the worker answers its own pages only, so a popup opened as a tab would be
  * refused.
  *
- * @spec openspec/changes/clients-extension-store-release/specs/extension-totp-autofill/spec.md#requirement-one-time-code-fill-on-the-step-after-the-login
+ * @spec openspec/specs/extension-totp-autofill/spec.md#requirement-one-time-code-fill-on-the-step-after-the-login
  */
 import type { BrowserContext, Page, Worker } from '@playwright/test'
 

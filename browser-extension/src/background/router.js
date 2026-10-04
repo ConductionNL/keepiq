@@ -33,6 +33,7 @@ import {
 import { isServerSupported } from '../lib/version.js'
 import { isSecureServerUrl, normalizeServerUrl } from '../lib/server-url.js'
 import { buildPinUnlock } from '../lib/pin-unlock.js'
+import { readSettings, writeSettings } from '../lib/extension-settings.js'
 import {
 	decodeEnvelope,
 	decryptPrivateKeyWithRawKey,
@@ -62,6 +63,8 @@ export const PAGE_MESSAGES = Object.freeze(
 		'otp-field-detected',
 		// A random password for a sign-up field; it carries no vault data.
 		'generate-for-field',
+		// Whether to offer those suggestions at all; no vault data either.
+		'page-settings',
 	]),
 )
 
@@ -1462,7 +1465,13 @@ export async function doCapture(capture, sender) {
 	} catch {
 		return { action: 'none' }
 	}
-	if (offer.action === 'none') {
+	// The user may have switched the save or the update offer off.
+	const settings = await readSettings(chrome.storage?.local)
+	if (
+		offer.action === 'none'
+		|| (offer.action === 'save' && !settings.offerSave)
+		|| (offer.action === 'update' && !settings.offerUpdate)
+	) {
 		captures.delete(tabId)
 		return { action: 'none' }
 	}
@@ -1603,6 +1612,14 @@ const handlers = {
 	'save-capture': doSaveCapture,
 	'totp-for-host': doTotpForHost,
 	'pending-capture': takePendingCapture,
+	// The extension's settings for this browser (clients-extension-gaps).
+	'extension-settings': () => readSettings(chrome.storage?.local),
+	'set-extension-settings': (payload) =>
+		writeSettings(chrome.storage?.local, payload || {}),
+	'page-settings': async () => ({
+		suggestPasswords: (await readSettings(chrome.storage?.local))
+			.suggestPasswords,
+	}),
 	'capture-never': doCaptureNever,
 	'never-sites': async () => ({ sites: await neverSites() }),
 	'never-remove': async (payload) => ({
@@ -1650,6 +1667,8 @@ const handlers = {
 				),
 		touchActivity,
 		sync: syncModule,
+		suggestPasswords: async () =>
+			(await readSettings(chrome.storage?.local)).suggestPasswords,
 	}),
 	// WebAuthn ceremonies relayed from the page-context shim. The origin is the
 	// sender's, as the browser reports it; the page's own claim in the payload

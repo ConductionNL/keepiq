@@ -35,7 +35,7 @@ class AuditAdminSettings extends AdminAreaSettings {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.1
 	 */
 	public function getArea(): string {
 		return 'audit';
@@ -46,7 +46,7 @@ class AuditAdminSettings extends AdminAreaSettings {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.1
 	 */
 	public function getName(): string {
 		return $this->l10n->t('Audit and compliance');
@@ -57,7 +57,7 @@ class AuditAdminSettings extends AdminAreaSettings {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.1
 	 */
 	public function getPriority(): int {
 		return 14;

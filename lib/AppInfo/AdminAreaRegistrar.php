@@ -50,7 +50,7 @@ final class AdminAreaRegistrar {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.2
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.2
 	 */
 	public function register(IRegistrationContext $context): void {
 		$context->registerService(

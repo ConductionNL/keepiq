@@ -70,7 +70,7 @@ class SettingsController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-5
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.5
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.5
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
