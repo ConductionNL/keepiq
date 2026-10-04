@@ -149,15 +149,7 @@ class FederatedShareService {
 			throw new InvalidArgumentException('not_a_partner');
 		}
 
-		foreach ($this->shareMapper->findBySourceSecret(sourceSecretId: $secretId) as $existing) {
-			// Only a live share blocks: after a suspended, failed or revoked one
-			// the owner shares again, as the share list tells them to.
-			if ($existing->getRecipientCloudId() === $recipient->getId()
-				&& $existing->getStatus() === FederatedShare::STATUS_ACTIVE
-			) {
-				throw new InvalidArgumentException('already_shared');
-			}
-		}
+		$this->assertNotSharedWith(secretId: $secretId, recipientCloudId: $recipient->getId());
 
 		$sharedSecret = $this->random->generate(self::SHARED_SECRET_LENGTH, ISecureRandom::CHAR_ALPHANUMERIC);
 		$now = new DateTime();
@@ -345,6 +337,28 @@ class FederatedShareService {
 
 		return $row;
 	}//end ownedShare()
+
+	/**
+	 * Refuse a second live share to the same recipient. After a suspended,
+	 * failed or revoked one the owner shares again, as the share list tells
+	 * them to.
+	 *
+	 * @param string $secretId The owner's secret
+	 * @param string $recipientCloudId The recipient
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException `already_shared`
+	 */
+	private function assertNotSharedWith(string $secretId, string $recipientCloudId): void {
+		foreach ($this->shareMapper->findBySourceSecret(sourceSecretId: $secretId) as $existing) {
+			if ($existing->getRecipientCloudId() === $recipientCloudId
+				&& $existing->getStatus() === FederatedShare::STATUS_ACTIVE
+			) {
+				throw new InvalidArgumentException('already_shared');
+			}
+		}
+	}//end assertNotSharedWith()
 
 	/**
 	 * The federated shares of one of the user's own secrets.
