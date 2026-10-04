@@ -81,11 +81,19 @@ async function doFrameReady(payload, sender) {
 	}
 	const key = FRAMES_KEY(tabId)
 	const frames = (await store.get(key))[key] || {}
-	// A new top-level page replaces the frames of the one before.
-	const next = frameId === 0 ? { 0: host } : { ...frames, [frameId]: host }
-	await store.set({ [key]: next })
+	// Frames report in any order; a new page clears the record when it
+	// starts loading (below), never when its top frame reports.
+	await store.set({ [key]: { ...frames, [frameId]: host } })
 	return { ok: true }
 }
+
+// A tab starts loading a new page: its frames are gone.
+chrome.tabs?.onUpdated?.addListener((tabId, info) => {
+	if (info?.status !== 'loading') return
+	sessionStore()
+		?.remove(FRAMES_KEY(tabId))
+		.catch(() => {})
+})
 
 /**
  * The frames of a tab that are on a host. Without a record (the worker
@@ -714,7 +722,7 @@ async function doUnlockRaw(payload) {
  * Whether device approval is on, and the active account's open request.
  *
  * @return {Promise<{enabled: boolean, request: object|null}>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
  */
 async function doDeviceApprovalState() {
 	const account = await activeAccount()
@@ -728,7 +736,7 @@ async function doDeviceApprovalState() {
  * Start "Approve from another device" for the active account.
  *
  * @return {Promise<object>} The request: id, phrase, expiry and status.
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
  */
 async function doDeviceApprovalStart() {
 	const account = await activeAccount()
@@ -741,7 +749,7 @@ async function doDeviceApprovalStart() {
  * through the same raw-key unlock as a passkey.
  *
  * @return {Promise<{status: string}>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
  */
 async function doDeviceApprovalPoll() {
 	const account = await activeAccount()
@@ -757,7 +765,7 @@ async function doDeviceApprovalPoll() {
  * Stop waiting for an approval.
  *
  * @return {Promise<{ok: boolean}>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-deny-expiry-audit-and-administrator-switch
  */
 async function doDeviceApprovalCancel() {
 	await deviceApproval.cancel(await activeAccount())
@@ -972,7 +980,8 @@ async function doOtpFieldDetected(payload, sender) {
 	const intents = await readIntents()
 	const intent = intents[tabId]
 	if (!intent) return { filled: false }
-	const site = registrableDomain(hostOf(senderOrigin(sender)))
+	const host = hostOf(senderOrigin(sender))
+	const site = registrableDomain(host)
 	if (site === '' || site !== intent.site) return { filled: false }
 	delete intents[tabId]
 	await writeIntents(intents)
@@ -986,7 +995,9 @@ async function doOtpFieldDetected(payload, sender) {
 	const res = await chrome.tabs
 		.sendMessage(
 			tabId,
-			{ type: 'fill-otp', payload: { code: result.code } },
+			// The frame fills only for its own host (fillScope, #740), so
+			// the message names the host the field was reported from.
+			{ type: 'fill-otp', payload: { code: result.code, host } },
 			{ frameId: sender.frameId ?? 0 },
 		)
 		.catch(() => ({ filled: false }))

@@ -6,7 +6,15 @@ kind: code
 
 ## Why
 
-`openspec/references/keepiq-extension/mapping.md` holds all 163 requirements of the former keepiq-extension plans against Keepiq. 57 are specified, 6 are built without a spec, 53 are partly built, 28 were decided differently and 19 are missing. This change proposes what to do with the gaps. It needs a decision per group before specs are written.
+`openspec/references/keepiq-extension/mapping.md` holds all 163 requirements of the former keepiq-extension plans against Keepiq. 57 are specified, 6 are built without a spec, 53 are partly built, 28 were decided differently and 19 are missing. This change proposes what to do with the gaps.
+
+## Decisions (2026-10-04)
+
+- **Group A:** build all twelve.
+- **Group B:** record as specs. The name limit is 255 characters everywhere, the width of the server's `name` column (the earlier 4096 was the import limit for addresses and values).
+- **Group C:** build all four groups: release, unlock and accounts, autofill extras, list and settings.
+
+Each build step adds its own spec delta with its tests.
 
 The row references below (`account-management:16`) point to the old spec and line, listed in `mapping.md`.
 
@@ -47,7 +55,7 @@ Behaviour that exists without a spec, or a deliberate difference without a recor
 - no favicons fetched;
 - a plain JavaScript popup, not React.
 
-The name limit conflicts: the worker allows 255 characters, the form and Keepiq's spec 4096 (item-editing:167). Pick one.
+The name limit conflicted: the worker allowed 255 characters, the form and Keepiq's spec 4096 (item-editing:167). Decided: 255, the width of the name column; the import is held to it too.
 
 ### C. Features the plans had and Keepiq lacks (proposed: decide per item)
 
