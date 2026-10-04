@@ -16,7 +16,10 @@ import { generateKey, generatePassphrase } from '../../src/generator/generator.j
 import { seededRandom } from '../vectors/seeded-random.mjs'
 
 const { cases } = JSON.parse(
-	readFileSync(new URL('../vectors/generator/cases.json', import.meta.url), 'utf8'),
+	readFileSync(
+		new URL('../vectors/generator/cases.json', import.meta.url),
+		'utf8',
+	),
 )
 
 describe('shared generator cases', () => {
