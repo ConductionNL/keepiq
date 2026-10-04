@@ -178,7 +178,7 @@ class TeamFolderMember extends Entity implements JsonSerializable {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
 	 */
 	public function effectiveGrade(): string {
 		if (in_array($this->grade, self::GRADES, true) === true) {

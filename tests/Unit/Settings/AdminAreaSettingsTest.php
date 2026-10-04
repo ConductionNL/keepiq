@@ -107,7 +107,7 @@ class AdminAreaSettingsTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.1
 	 */
 	#[DataProvider('areas')]
 	public function testAnAreaDescribesItself(string $class, string $key, string $name, int $priority): void {
@@ -133,7 +133,7 @@ class AdminAreaSettingsTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.1
 	 */
 	public function testFiveAreasOnOnePageKeepFiveKeys(): void {
 		foreach (AdminAreaAuthorizer::AREAS as $class) {
@@ -150,7 +150,7 @@ class AdminAreaSettingsTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#3.3
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.3
 	 */
 	public function testGeneralProvidesTheVersionAndTheLegacyGroupSize(): void {
 		$this->area(class: AdminSettings::class)->getForm();
@@ -167,7 +167,7 @@ class AdminAreaSettingsTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.2
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.2
 	 */
 	public function testTheRegistrarBindsEachAreaToItsOwnClass(): void {
 		$factories = [];
@@ -201,7 +201,7 @@ class AdminAreaSettingsTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.2
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.2
 	 */
 	public function testInfoXmlRegistersEveryArea(): void {
 		$info = simplexml_load_file(__DIR__ . '/../../../appinfo/info.xml');

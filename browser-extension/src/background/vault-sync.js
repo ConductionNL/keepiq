@@ -41,6 +41,7 @@ export function buildVaultSync({
 	api,
 	local,
 	activeSuiteId,
+	activeSuiteEpoch = () => null,
 	lock,
 	now = () => Date.now(),
 }) {
@@ -147,6 +148,26 @@ export function buildVaultSync({
 					syncedAt: null,
 					offline: false,
 					lastError: 'suite-changed',
+				})
+				return statusOf(id)
+			}
+			// The same suite with a new unlock-key epoch: the master password
+			// changed. The cached envelope is wrapped under the old one; drop
+			// it and ask for the new password.
+			const epochNow = vault.suite?.unlockKeyEpoch
+			const epochThen = activeSuiteEpoch(id)
+			if (
+				Number.isInteger(epochNow)
+				&& Number.isInteger(epochThen)
+				&& epochNow !== epochThen
+			) {
+				await local.remove(SNAPSHOT_KEY(id))
+				lock(id)
+				status.set(id, {
+					syncing: false,
+					syncedAt: null,
+					offline: false,
+					lastError: 'master-password-changed',
 				})
 				return statusOf(id)
 			}

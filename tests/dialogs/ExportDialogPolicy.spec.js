@@ -5,7 +5,7 @@
  * The export ban hides every file mode, and a refused report offers no
  * download (admin-vault-policies §2.2).
  *
- * @spec openspec/changes/admin-vault-policies/tasks.md#2.2
+ * @spec openspec/specs/vault-policies/spec.md#requirement-personal-vault-export-can-be-blocked
  */
 
 import axios from '@nextcloud/axios'
@@ -87,6 +87,29 @@ describe('ExportDialog under the export ban', () => {
 			wrapper.find('[data-testid="export-blocked-by-policy"]').exists(),
 		).toBe(false)
 		expect(wrapper.find('.export-dialog__modes').exists()).toBe(true)
+	})
+
+	it('reads the policy again when it opens, so a ban set during the session applies', async () => {
+		// Mounted with the page, closed, while the ban did not apply yet.
+		const get = vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { vault_export_disabled: false },
+		})
+		const wrapper = mount(ExportDialog, {
+			propsData: { open: false, secrets: [], folders: [] },
+			global: { stubs },
+		})
+		await flushPromises()
+		expect(wrapper.vm.exportBlocked).toBe(false)
+
+		// An administrator switches the ban on; the user then opens the dialog.
+		get.mockResolvedValue({ data: { vault_export_disabled: true } })
+		await wrapper.setProps({ open: true })
+		await flushPromises()
+
+		expect(
+			wrapper.find('[data-testid="export-blocked-by-policy"]').exists(),
+		).toBe(true)
+		expect(wrapper.find('.export-dialog__modes').exists()).toBe(false)
 	})
 
 	it('offers no file when the server refuses the report', async () => {

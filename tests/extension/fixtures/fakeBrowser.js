@@ -97,7 +97,14 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 		runtime: {
 			id: EXTENSION_ID,
 			getURL: (path) => EXTENSION_BASE + path,
-			onMessage: { addListener: () => {}, removeListener: () => {} },
+			// Listeners a page registered, so a test can play the worker.
+			onMessage: {
+				listeners: [],
+				addListener(fn) {
+					this.listeners.push(fn)
+				},
+				removeListener() {},
+			},
 		},
 		tabs: {
 			query: vi.fn(async () => [tab]),
@@ -106,6 +113,20 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 				if (!found) throw new Error('No tab with id: ' + id)
 				return found
 			}),
+			// A test navigates a tab by calling these listeners.
+			onUpdated: {
+				listeners: [],
+				addListener(fn) {
+					this.listeners.push(fn)
+				},
+			},
+			// A test closes a tab by calling these listeners.
+			onRemoved: {
+				listeners: [],
+				addListener(fn) {
+					this.listeners.push(fn)
+				},
+			},
 			sendMessage: vi.fn(async (tabId, msg, options) => {
 				filled.push(options ? { ...msg, tabId, options } : msg)
 				if (msg.type === 'fill-otp') return { filled: fake.otpFieldOnPage }
@@ -226,7 +247,13 @@ export function installServer(servers) {
 	globalThis.fetch = vi.fn(async (url, init = {}) => {
 		const method = init.method || 'GET'
 		const body = init.body ? JSON.parse(init.body) : undefined
-		calls.push({ method, url, body, headers: init.headers || {} })
+		calls.push({
+			method,
+			url,
+			body,
+			headers: init.headers || {},
+			credentials: init.credentials,
+		})
 		const server = Object.entries(servers).find(([base]) => url.startsWith(base))
 		const respond = (status, data) => ({
 			ok: status < 400,
@@ -237,6 +264,12 @@ export function installServer(servers) {
 		if (!server) return respond(404, {})
 		const [base, s] = server
 		const path = url.slice((base + '/index.php/apps/keepiq').length)
+		// s.revokedPasswords: app passwords Nextcloud no longer accepts.
+		const auth = String((init.headers || {}).Authorization || '')
+		const password = auth.startsWith('Basic ')
+			? atob(auth.slice(6)).split(':').slice(1).join(':')
+			: ''
+		if ((s.revokedPasswords || []).includes(password)) return respond(401, {})
 		if (path === '/api/v1/extension/pair') {
 			return respond(200, {
 				ok: true,

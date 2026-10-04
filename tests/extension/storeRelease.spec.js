@@ -93,6 +93,10 @@ describe('least permissions', () => {
 		// Scheduled vault syncs while unlocked (clients-extension-complete).
 		alarms: /chrome\.alarms\./,
 		windows: /chrome\.windows\./,
+		// Clearing the clipboard from a hidden page (clients-extension-gaps).
+		offscreen: /chrome\??\.offscreen/,
+		// The Fill a login menu item (clients-extension-gaps).
+		contextMenus: /chrome\.contextMenus\b/,
 	}
 	const source = files(SRC)
 		.filter((p) => p.endsWith('.js'))

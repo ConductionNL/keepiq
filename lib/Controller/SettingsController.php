@@ -50,7 +50,7 @@ class SettingsController extends Controller {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
+	 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
 	 */
 	public function __construct(
 		IRequest $request,
@@ -70,7 +70,7 @@ class SettingsController extends Controller {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-5
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.5
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.5
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {
@@ -202,7 +202,7 @@ class SettingsController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 	 */
 	#[AuthorizedAdminSetting(PolicyAdminSettings::class)]
 	public function twoFactorGaps(array $groups = []): JSONResponse {

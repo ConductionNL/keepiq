@@ -1230,7 +1230,7 @@ export default {
 		 * version reveal (sharing-use-only-and-expiring-shares D3).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+		 * @spec openspec/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
 		 */
 		useOnly() {
 			return isUseOnly(this.secret)
@@ -1240,7 +1240,7 @@ export default {
 		 * The day the holder's access to this copy ends, or '' for none.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-shares-and-memberships-can-carry-an-end-date
+		 * @spec openspec/specs/expiring-shares/spec.md#requirement-shares-and-memberships-can-carry-an-end-date
 		 */
 		accessEndsOn() {
 			const end = this.secret?.accessExpiresAt

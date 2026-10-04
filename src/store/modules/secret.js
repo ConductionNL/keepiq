@@ -402,7 +402,7 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {object} secret The secret with ciphertext blobs.
 		 * @return {Promise<object>} A copy of the secret with plaintext fields.
-		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-offline-copies-respect-the-end-date
+		 * @spec openspec/specs/expiring-shares/spec.md#requirement-offline-copies-respect-the-end-date
 		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 		 */
@@ -503,7 +503,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {string} teamFolderId The team folder.
 		 * @param {object} data name, url, typeId, key, login, additionalFields (plaintext).
 		 * @return {Promise<object>} The stored owner row and the copy count.
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
 		 */
 		async contributeSecret(teamFolderId, data) {
 			const context = (

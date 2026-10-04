@@ -137,7 +137,7 @@ class ShareController extends OCSController {
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-9.1
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
 	 *   field the server stores, not a mode switch.
@@ -194,7 +194,7 @@ class ShareController extends OCSController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
 	 *   field the server stores, not a mode switch.

@@ -175,7 +175,7 @@ class TeamFolderMembershipResolver {
 	 * @return array<int,array{userId:string,certificate:string}>
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.4
+	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-the-fan-out-never-re-shares-to-a-disabled-account
 	 */
 	public function eligibleRecipients(array $userIds): array {
 		$recipients = [];
@@ -209,7 +209,7 @@ class TeamFolderMembershipResolver {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.4
+	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-the-fan-out-never-re-shares-to-a-disabled-account
 	 */
 	private function isDisabledAccount(string $userId): bool {
 		$user = $this->userManager->get($userId);
@@ -257,7 +257,7 @@ class TeamFolderMembershipResolver {
 	 * @return array<int,array{id:string,name:string}>
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.3
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function subtreeSecretRefs(TeamFolder $teamFolder): array {
 		$refs = [];

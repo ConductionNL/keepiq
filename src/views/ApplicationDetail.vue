@@ -250,7 +250,7 @@ export default {
 		 * @return {boolean} True for a holder of the Applications area.
 		 *
 		 * @spec openspec/specs/application-mgmt/spec.md#requirement-outstanding-application-requests-visible-to-administrators
-		 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.5
+		 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.5
 		 */
 		isAdmin() {
 			return useSettingsStore().holdsArea('applications') === true

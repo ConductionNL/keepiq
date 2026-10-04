@@ -6,7 +6,7 @@
  * (admin-vault-policies §3.3): a withheld key reads as a policy notice with
  * a link, never as a wrong password, and the offline snapshot is dropped.
  *
- * @spec openspec/changes/admin-vault-policies/tasks.md#3.3
+ * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
  */
 
 import axios from '@nextcloud/axios'

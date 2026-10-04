@@ -9,10 +9,10 @@
 
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.4
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.5
-  @spec openspec/changes/admin-vault-policies/tasks.md#1.3
-  @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
-  @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.2
-  @spec openspec/changes/admin-scoped-roles/tasks.md#3.1
+  @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
+  @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-administrator-switches-automatic-member-confirmation-on
+  @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
+  @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.1
 -->
 <template>
 	<div class="keepiq-settings" :class="['keepiq-settings--' + area]">
@@ -95,7 +95,7 @@ export default {
 		 * The section components of this area, in page order.
 		 *
 		 * @return {string[]} Component names
-		 * @spec openspec/changes/admin-scoped-roles/tasks.md#3.1
+		 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.1
 		 */
 		sections() {
 			return sectionsOf(this.area)
