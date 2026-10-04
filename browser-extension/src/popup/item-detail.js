@@ -174,7 +174,8 @@ export function renderDetail({ $, doc }, item, folders) {
 	// A clone would copy a passkey's key and a Send would carry it.
 	const isPasskey = formKind(item.typeName) === 'passkey'
 	$('detail-clone').hidden = isPasskey
-	$('detail-send').hidden = isPasskey
+	// A send carries a username and password: logins only.
+	$('detail-send').hidden = formKind(item.typeName) !== 'login'
 	if (blocked) {
 		$('detail-blocked-reason').textContent = item.blockedReason
 		$('detail-migration').textContent = item.migrationError || ''
