@@ -1603,7 +1603,19 @@ OC.L10N.register(
         "Approve {member}": "Apstiprināt {member}",
         "Recipient": "Saņēmējs",
         "No vault yet": "Vēl nav glabātuves",
-        "No matching users": "Nav atbilstošu lietotāju"
+        "No matching users": "Nav atbilstošu lietotāju",
+        "Partner organisations": "Partneru organizācijas",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Apmainieties ar noslēpumiem ar citu Keepiq. Abi administratori pievieno viens otru un pirms saglabāšanas salīdzina saknes pirkstu nospiedumus pa tālruni vai klātienē.",
+        "Federation needs Nextcloud 33 or later.": "Federācijai nepieciešams Nextcloud 33 vai jaunāks.",
+        "Your root fingerprint": "Jūsu saknes pirkstu nospiedums",
+        "No partners yet.": "Vēl nav partneru.",
+        "Users here may share to this partner": "Šejienes lietotāji drīkst kopīgot ar šo partneri",
+        "This partner may share to users here": "Šis partneris drīkst kopīgot ar šejienes lietotājiem",
+        "Partner address": "Partnera adrese",
+        "Check partner": "Pārbaudīt partneri",
+        "Partner root fingerprint": "Partnera saknes pirkstu nospiedums",
+        "I compared this fingerprint with the partner's administrator": "Es salīdzināju šo pirkstu nospiedumu ar partnera administratoru",
+        "Add partner": "Pievienot partneri"
     },
     "nplurals=3; plural=(n==0 ? 0 : n%10==1 && n%100!=11 ? 1 : 2);"
 )

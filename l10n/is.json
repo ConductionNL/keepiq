@@ -1674,7 +1674,19 @@
         "Approve {member}": "Samþykkja {member}",
         "Recipient": "Viðtakandi",
         "No vault yet": "Engin hvelfing enn",
-        "No matching users": "Engir notendur passa"
+        "No matching users": "Engir notendur passa",
+        "Partner organisations": "Samstarfsfyrirtæki",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Skiptist á leyndarmálum við annað Keepiq. Báðir stjórnendur bæta hvor öðrum við og bera saman rótarfingraför í síma eða í eigin persónu áður en vistað er.",
+        "Federation needs Nextcloud 33 or later.": "Samtenging krefst Nextcloud 33 eða nýrra.",
+        "Your root fingerprint": "Rótarfingrafarið þitt",
+        "No partners yet.": "Engir samstarfsaðilar enn.",
+        "Users here may share to this partner": "Notendur hér mega deila með þessum samstarfsaðila",
+        "This partner may share to users here": "Þessi samstarfsaðili má deila með notendum hér",
+        "Partner address": "Vistfang samstarfsaðila",
+        "Check partner": "Athuga samstarfsaðila",
+        "Partner root fingerprint": "Rótarfingrafar samstarfsaðila",
+        "I compared this fingerprint with the partner's administrator": "Ég bar þetta fingrafar saman við stjórnanda samstarfsaðilans",
+        "Add partner": "Bæta við samstarfsaðila"
     },
     "plurals": null
 }

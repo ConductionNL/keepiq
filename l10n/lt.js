@@ -1603,7 +1603,19 @@ OC.L10N.register(
         "Approve {member}": "Patvirtinti {member}",
         "Recipient": "Gavėjas",
         "No vault yet": "Dar neturi saugyklos",
-        "No matching users": "Atitinkančių vartotojų nėra"
+        "No matching users": "Atitinkančių vartotojų nėra",
+        "Partner organisations": "Partnerių organizacijos",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Keiskitės paslaptimis su kitu Keepiq. Abu administratoriai prideda vienas kitą ir prieš įrašydami palygina šakninius piršto atspaudus telefonu arba asmeniškai.",
+        "Federation needs Nextcloud 33 or later.": "Federacijai reikia Nextcloud 33 arba naujesnės.",
+        "Your root fingerprint": "Jūsų šakninis piršto atspaudas",
+        "No partners yet.": "Partnerių dar nėra.",
+        "Users here may share to this partner": "Čia esantys vartotojai gali bendrinti su šiuo partneriu",
+        "This partner may share to users here": "Šis partneris gali bendrinti su čia esančiais vartotojais",
+        "Partner address": "Partnerio adresas",
+        "Check partner": "Patikrinti partnerį",
+        "Partner root fingerprint": "Partnerio šakninis piršto atspaudas",
+        "I compared this fingerprint with the partner's administrator": "Palyginau šį piršto atspaudą su partnerio administratoriumi",
+        "Add partner": "Pridėti partnerį"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )
