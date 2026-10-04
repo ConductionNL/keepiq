@@ -220,6 +220,19 @@ final class AuditEventTypes {
 	public const RECOVERY_COMPLETED = 'recovery.completed';
 	public const RECOVERY_EXPIRED = 'recovery.expired';
 
+	// Federated sharing (sharing-federated-recipients 4.3), both sides,
+	// identifiers only: never ciphertext, the shared secret or its hash.
+	public const FEDERATED_SHARE_SENT = 'federated_share.sent';
+	public const FEDERATED_SHARE_UPDATED = 'federated_share.updated';
+	public const FEDERATED_SHARE_REVOKED = 'federated_share.revoked';
+	public const FEDERATED_SHARE_SUSPENDED = 'federated_share.suspended';
+	public const FEDERATED_SHARE_FAILED = 'federated_share.failed';
+	public const FEDERATED_SHARE_RECEIVED = 'federated_share.received';
+	public const FEDERATED_SHARE_ACCEPTED = 'federated_share.accepted';
+	public const FEDERATED_SHARE_DECLINED = 'federated_share.declined';
+	public const FEDERATED_COPY_UPDATED = 'federated_share.copy_updated';
+	public const FEDERATED_COPY_REMOVED = 'federated_share.copy_removed';
+
 	/**
 	 * Metadata keys that MUST NEVER appear in any audit entry, in any position.
 	 * Recording any of these is rejected with an exception — defense in depth so
@@ -378,6 +391,17 @@ final class AuditEventTypes {
 		self::RECOVERY_HANDED_OFF => ['userId'],
 		self::RECOVERY_COMPLETED => ['handledBy'],
 		self::RECOVERY_EXPIRED => ['userId'],
+		// The other side by cloud id and partner, the share by id; nothing else.
+		self::FEDERATED_SHARE_SENT => ['federatedShareId', 'recipientCloudId', 'partnerId'],
+		self::FEDERATED_SHARE_UPDATED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
+		self::FEDERATED_SHARE_REVOKED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
+		self::FEDERATED_SHARE_SUSPENDED => ['federatedShareId', 'recipientCloudId', 'partnerId', 'reason'],
+		self::FEDERATED_SHARE_FAILED => ['federatedShareId', 'recipientCloudId', 'partnerId', 'notification'],
+		self::FEDERATED_SHARE_RECEIVED => ['inboundShareId', 'senderCloudId', 'partnerId'],
+		self::FEDERATED_SHARE_ACCEPTED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
+		self::FEDERATED_SHARE_DECLINED => ['inboundShareId', 'senderCloudId', 'partnerId'],
+		self::FEDERATED_COPY_UPDATED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
+		self::FEDERATED_COPY_REMOVED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
 	];
 
 	/**

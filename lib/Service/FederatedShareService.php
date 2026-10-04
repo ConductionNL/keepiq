@@ -37,6 +37,7 @@ use OCA\Keepiq\Db\FederatedShare;
 use OCA\Keepiq\Db\FederatedShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Federation\ICloudIdManager;
@@ -79,6 +80,8 @@ class FederatedShareService {
 	 * @param ICloudIdManager $cloudIdManager Cloud id parsing
 	 * @param FederatedShareMessenger $messenger OCM messages to the recipient's instance
 	 * @param ISecureRandom $random The shared secret
+	 * @param FederatedNotificationDelivery $delivery Notifications with retries
+	 * @param FederatedShareAuditTrail $audit Identifier-only audit
 	 *
 	 * @return void
 	 *
@@ -92,6 +95,8 @@ class FederatedShareService {
 		private ICloudIdManager $cloudIdManager,
 		private FederatedShareMessenger $messenger,
 		private ISecureRandom $random,
+		private FederatedNotificationDelivery $delivery,
+		private FederatedShareAuditTrail $audit,
 	) {
 	}//end __construct()
 
@@ -144,11 +149,7 @@ class FederatedShareService {
 			throw new InvalidArgumentException('not_a_partner');
 		}
 
-		foreach ($this->shareMapper->findBySourceSecret(sourceSecretId: $secretId) as $existing) {
-			if ($existing->getRecipientCloudId() === $recipient->getId()) {
-				throw new InvalidArgumentException('already_shared');
-			}
-		}
+		$this->assertNotSharedWith(secretId: $secretId, recipientCloudId: $recipient->getId());
 
 		$sharedSecret = $this->random->generate(self::SHARED_SECRET_LENGTH, ISecureRandom::CHAR_ALPHANUMERIC);
 		$now = new DateTime();
@@ -174,8 +175,190 @@ class FederatedShareService {
 			throw new RuntimeException('delivery_failed');
 		}
 
+		$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_SENT, row: $row, actorId: $userId);
+
 		return $row;
 	}//end create()
+
+	/**
+	 * Replace a share's ciphertext after the owner changed the secret, and
+	 * tell the recipient's instance to pull again (task 4.1). The owner's
+	 * browser made the new ciphertext for a freshly verified certificate.
+	 *
+	 * @param string $shareId The federated share
+	 * @param string $userId The owner
+	 * @param string $certFingerprint SHA-256 of the certificate the browser verified now
+	 * @param array{key:string,login:?string,additionalFields:?string} $ciphertext Encrypted for the recipient
+	 *
+	 * @return FederatedShare
+	 *
+	 * @throws NotFoundException When it is not the user's live share
+	 * @throws InvalidArgumentException `invalid`
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
+	 */
+	public function update(string $shareId, string $userId, string $certFingerprint, array $ciphertext): FederatedShare {
+		$row = $this->ownedShare(shareId: $shareId, userId: $userId);
+		if ($row->getStatus() !== FederatedShare::STATUS_ACTIVE) {
+			throw new NotFoundException(message: 'Share not found');
+		}
+
+		$certFingerprint = strtolower(trim($certFingerprint));
+		if (preg_match('/^[0-9a-f]{64}$/', $certFingerprint) !== 1 || ($ciphertext['key'] ?? '') === '') {
+			throw new InvalidArgumentException('invalid');
+		}
+
+		$row->setRecipientCertFingerprint($certFingerprint);
+		$row->setKey($ciphertext['key']);
+		$row->setLogin($ciphertext['login'] ?? null);
+		$row->setAdditionalFields($ciphertext['additionalFields'] ?? null);
+		$row->setUpdatedAt(new DateTime());
+		$this->shareMapper->update(entity: $row);
+
+		$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_UPDATED, row: $row, actorId: $userId);
+		$this->delivery->deliver(row: $row, type: FederatedNotificationDelivery::SHARE_UPDATED);
+
+		return $row;
+	}//end update()
+
+	/**
+	 * Revoke a share: nothing is served any more, and the recipient's
+	 * instance is told to delete its copy (task 4.2). The row goes once that
+	 * notification arrives; until then the retry job keeps trying.
+	 *
+	 * @param string $shareId The federated share
+	 * @param string $userId The owner
+	 *
+	 * @return void
+	 *
+	 * @throws NotFoundException When it is not the user's share
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
+	 */
+	public function revoke(string $shareId, string $userId): void {
+		$row = $this->ownedShare(shareId: $shareId, userId: $userId);
+		$row->setStatus(FederatedShare::STATUS_REVOKED);
+		$row->setUpdatedAt(new DateTime());
+		$this->shareMapper->update(entity: $row);
+
+		$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_REVOKED, row: $row, actorId: $userId);
+		$this->delivery->deliver(row: $row, type: FederatedNotificationDelivery::SHARE_UNSHARED);
+	}//end revoke()
+
+	/**
+	 * Suspend a share whose recipient certificate no longer verifies in the
+	 * owner's browser (task 4.2): nothing is served until the owner revokes
+	 * it or shares again.
+	 *
+	 * @param string $shareId The federated share
+	 * @param string $userId The owner
+	 * @param string $reason Why, as the browser reports it
+	 *
+	 * @return FederatedShare
+	 *
+	 * @throws NotFoundException When it is not the user's share
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 */
+	public function suspend(string $shareId, string $userId, string $reason): FederatedShare {
+		$row = $this->ownedShare(shareId: $shareId, userId: $userId);
+
+		return $this->suspendRow(row: $row, actorId: $userId, reason: $reason);
+	}//end suspend()
+
+	/**
+	 * Suspend every share to users of a partner that was removed (task 4.2).
+	 *
+	 * @param string $partnerId The removed partner
+	 *
+	 * @return int How many shares were suspended
+	 *
+	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 */
+	public function suspendForPartner(string $partnerId): int {
+		$count = 0;
+		foreach ($this->shareMapper->findByPartner(partnerId: $partnerId) as $row) {
+			if ($row->getStatus() === FederatedShare::STATUS_ACTIVE) {
+				$this->suspendRow(row: $row, actorId: null, reason: 'partner_removed');
+				$count++;
+			}
+		}
+
+		return $count;
+	}//end suspendForPartner()
+
+	/**
+	 * Suspend one row and record it.
+	 *
+	 * @param FederatedShare $row The share
+	 * @param string|null $actorId The owner, or null for the system
+	 * @param string $reason Why
+	 *
+	 * @return FederatedShare
+	 */
+	private function suspendRow(FederatedShare $row, ?string $actorId, string $reason): FederatedShare {
+		$reason = (string)preg_replace('/[^a-z_]/', '', strtolower($reason));
+		if ($reason === '') {
+			$reason = 'unverified';
+		}
+		$row->setStatus(FederatedShare::STATUS_SUSPENDED);
+		$row->setUpdatedAt(new DateTime());
+		$this->shareMapper->update(entity: $row);
+		$this->audit->recordOutbound(
+			eventType: AuditEventTypes::FEDERATED_SHARE_SUSPENDED,
+			row: $row,
+			actorId: $actorId,
+			extra: ['reason' => mb_substr($reason, 0, 32)],
+		);
+
+		return $row;
+	}//end suspendRow()
+
+	/**
+	 * The user's own outbound share, or not found.
+	 *
+	 * @param string $shareId The share
+	 * @param string $userId The owner
+	 *
+	 * @return FederatedShare
+	 *
+	 * @throws NotFoundException
+	 */
+	private function ownedShare(string $shareId, string $userId): FederatedShare {
+		try {
+			$row = $this->shareMapper->findById(id: $shareId);
+		} catch (DoesNotExistException) {
+			throw new NotFoundException(message: 'Share not found');
+		}
+
+		if ($row->getOwnerId() !== $userId) {
+			throw new NotFoundException(message: 'Share not found');
+		}
+
+		return $row;
+	}//end ownedShare()
+
+	/**
+	 * Refuse a second live share to the same recipient. After a suspended,
+	 * failed or revoked one the owner shares again, as the share list tells
+	 * them to.
+	 *
+	 * @param string $secretId The owner's secret
+	 * @param string $recipientCloudId The recipient
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException `already_shared`
+	 */
+	private function assertNotSharedWith(string $secretId, string $recipientCloudId): void {
+		foreach ($this->shareMapper->findBySourceSecret(sourceSecretId: $secretId) as $existing) {
+			if ($existing->getRecipientCloudId() === $recipientCloudId
+				&& $existing->getStatus() === FederatedShare::STATUS_ACTIVE
+			) {
+				throw new InvalidArgumentException('already_shared');
+			}
+		}
+	}//end assertNotSharedWith()
 
 	/**
 	 * The federated shares of one of the user's own secrets.

@@ -1741,7 +1741,21 @@
         "This secret is already shared with that account.": "Ova tajna je već podijeljena s tim računom.",
         "Other organisations": "Druge organizacije",
         "Receive secrets from other organisations": "Primanje tajni iz drugih organizacija",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Osobe u partnerskim organizacijama tada mogu pronaći vaš račun i dijeliti tajne s vama. Svaku od njih prihvatate sami."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Osobe u partnerskim organizacijama tada mogu pronaći vaš račun i dijeliti tajne s vama. Svaku od njih prihvatate sami.",
+        "Shared": "Podijeljeno",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Pauzirano: promijenio se njihov certifikat ili partnerstvo. Opozovite ili podijelite ponovo.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Njihova organizacija nije dobila posljednju promjenu. Opozovite ili podijelite ponovo.",
+        "Being withdrawn": "Povlači se",
+        "Shared with another organisation": "Podijeljeno s drugom organizacijom",
+        "Change sent to another organisation": "Promjena poslana drugoj organizaciji",
+        "Share with another organisation revoked": "Dijeljenje s drugom organizacijom ukinuto",
+        "Share with another organisation paused": "Dijeljenje s drugom organizacijom pauzirano",
+        "Another organisation did not get a change": "Druga organizacija nije dobila promjenu",
+        "Secret received from another organisation": "Tajna primljena iz druge organizacije",
+        "Secret from another organisation accepted": "Tajna iz druge organizacije prihvaćena",
+        "Secret from another organisation declined": "Tajna iz druge organizacije odbijena",
+        "Copy from another organisation updated": "Kopija iz druge organizacije ažurirana",
+        "Copy from another organisation removed": "Kopija iz druge organizacije uklonjena"
     },
     "plurals": null
 }

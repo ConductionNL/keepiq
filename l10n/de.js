@@ -1646,7 +1646,21 @@ OC.L10N.register(
         "This secret is already shared with that account.": "Dieses Geheimnis ist bereits mit diesem Konto geteilt.",
         "Other organisations": "Andere Organisationen",
         "Receive secrets from other organisations": "Geheimnisse von anderen Organisationen empfangen",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personen in Partnerorganisationen können dann Ihr Konto finden und Geheimnisse mit Ihnen teilen. Sie nehmen jedes davon selbst an."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personen in Partnerorganisationen können dann Ihr Konto finden und Geheimnisse mit Ihnen teilen. Sie nehmen jedes davon selbst an.",
+        "Shared": "Geteilt",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Pausiert: Das Zertifikat des Empfängers oder die Partnerschaft hat sich geändert. Widerrufen Sie die Freigabe oder teilen Sie erneut.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Die Organisation des Empfängers hat die letzte Änderung nicht erhalten. Widerrufen Sie die Freigabe oder teilen Sie erneut.",
+        "Being withdrawn": "Wird zurückgezogen",
+        "Shared with another organisation": "Mit einer anderen Organisation geteilt",
+        "Change sent to another organisation": "Änderung an eine andere Organisation gesendet",
+        "Share with another organisation revoked": "Freigabe für eine andere Organisation widerrufen",
+        "Share with another organisation paused": "Freigabe für eine andere Organisation pausiert",
+        "Another organisation did not get a change": "Eine andere Organisation hat eine Änderung nicht erhalten",
+        "Secret received from another organisation": "Geheimnis von einer anderen Organisation erhalten",
+        "Secret from another organisation accepted": "Geheimnis von einer anderen Organisation angenommen",
+        "Secret from another organisation declined": "Geheimnis von einer anderen Organisation abgelehnt",
+        "Copy from another organisation updated": "Kopie von einer anderen Organisation aktualisiert",
+        "Copy from another organisation removed": "Kopie von einer anderen Organisation entfernt"
     },
     "nplurals=2; plural=(n != 1);"
 )

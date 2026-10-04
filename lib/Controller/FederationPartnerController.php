@@ -27,6 +27,7 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\FederatedShareService;
 use OCA\Keepiq\Service\FederationPartnerService;
 use OCA\Keepiq\Service\FederationRootService;
 use OCA\Keepiq\Settings\AdminSettings;
@@ -52,6 +53,7 @@ class FederationPartnerController extends Controller {
 	 * @param FederationPartnerService $partners The partner allowlist
 	 * @param FederationRootService $root The local root and version gate
 	 * @param IUserSession $userSession The user session
+	 * @param FederatedShareService $federatedShares Suspends shares to a removed partner
 	 *
 	 * @return void
 	 *
@@ -62,6 +64,7 @@ class FederationPartnerController extends Controller {
 		private FederationPartnerService $partners,
 		private FederationRootService $root,
 		private IUserSession $userSession,
+		private FederatedShareService $federatedShares,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -194,6 +197,10 @@ class FederationPartnerController extends Controller {
 		} catch (DoesNotExistException) {
 			return new JSONResponse(data: ['message' => 'Not found'], statusCode: Http::STATUS_NOT_FOUND);
 		}
+
+		// Shares to that organisation stop being served, and their owners
+		// see them suspended (sharing-federated-recipients task 4.2).
+		$this->federatedShares->suspendForPartner(partnerId: $id);
 
 		return new JSONResponse(data: ['removed' => $id]);
 	}//end destroy()

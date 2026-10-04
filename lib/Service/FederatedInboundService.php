@@ -27,6 +27,7 @@ namespace OCA\Keepiq\Service;
 use DateTime;
 use OCA\Keepiq\Db\FederatedInbound;
 use OCA\Keepiq\Db\FederatedInboundMapper;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\NotFoundException;
 use OCP\AppFramework\Db\DoesNotExistException;
 
@@ -41,6 +42,7 @@ class FederatedInboundService {
 	 *
 	 * @param FederatedInboundMapper $inboundMapper Inbound share rows
 	 * @param FederatedCopyService $copies Pulls and stores the read-only copy
+	 * @param FederatedShareAuditTrail $audit Identifier-only audit
 	 *
 	 * @return void
 	 *
@@ -49,6 +51,7 @@ class FederatedInboundService {
 	public function __construct(
 		private FederatedInboundMapper $inboundMapper,
 		private FederatedCopyService $copies,
+		private FederatedShareAuditTrail $audit,
 	) {
 	}//end __construct()
 
@@ -85,8 +88,10 @@ class FederatedInboundService {
 		$row->setSecretId($copy->getId());
 		$row->setStatus(FederatedInbound::STATUS_ACCEPTED);
 		$row->setUpdatedAt(new DateTime());
+		$row = $this->inboundMapper->update(entity: $row);
+		$this->audit->recordInbound(eventType: AuditEventTypes::FEDERATED_SHARE_ACCEPTED, row: $row, actorId: $userId);
 
-		return $this->inboundMapper->update(entity: $row);
+		return $row;
 	}//end accept()
 
 	/**
@@ -105,8 +110,10 @@ class FederatedInboundService {
 		$row = $this->pendingOf(id: $id, userId: $userId);
 		$row->setStatus(FederatedInbound::STATUS_DECLINED);
 		$row->setUpdatedAt(new DateTime());
+		$row = $this->inboundMapper->update(entity: $row);
+		$this->audit->recordInbound(eventType: AuditEventTypes::FEDERATED_SHARE_DECLINED, row: $row, actorId: $userId);
 
-		return $this->inboundMapper->update(entity: $row);
+		return $row;
 	}//end decline()
 
 	/**

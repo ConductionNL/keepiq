@@ -1646,7 +1646,21 @@ OC.L10N.register(
         "This secret is already shared with that account.": "Доступ да гэтага сакрэту ўжо дадзены гэтаму ўліковаму запісу.",
         "Other organisations": "Іншыя арганізацыі",
         "Receive secrets from other organisations": "Атрымліваць сакрэты з іншых арганізацый",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Тады людзі з партнёрскіх арганізацый змогуць знайсці ваш уліковы запіс і даваць вам доступ да сакрэтаў. Кожны з іх вы прымаеце самі."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Тады людзі з партнёрскіх арганізацый змогуць знайсці ваш уліковы запіс і даваць вам доступ да сакрэтаў. Кожны з іх вы прымаеце самі.",
+        "Shared": "Доступ дадзены",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Прыпынена: змяніўся іх сертыфікат або партнёрства. Доступ можна адклікаць або даць зноў.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Іх арганізацыя не атрымала апошнюю змену. Доступ можна адклікаць або даць зноў.",
+        "Being withdrawn": "Адклікаецца",
+        "Shared with another organisation": "Супольны доступ дадзены іншай арганізацыі",
+        "Change sent to another organisation": "Змена адпраўлена іншай арганізацыі",
+        "Share with another organisation revoked": "Супольны доступ для іншай арганізацыі адкліканы",
+        "Share with another organisation paused": "Супольны доступ для іншай арганізацыі прыпынены",
+        "Another organisation did not get a change": "Іншая арганізацыя не атрымала змену",
+        "Secret received from another organisation": "Сакрэт атрыманы з іншай арганізацыі",
+        "Secret from another organisation accepted": "Сакрэт з іншай арганізацыі прыняты",
+        "Secret from another organisation declined": "Сакрэт з іншай арганізацыі адхілены",
+        "Copy from another organisation updated": "Копія з іншай арганізацыі абноўлена",
+        "Copy from another organisation removed": "Копія з іншай арганізацыі выдалена"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

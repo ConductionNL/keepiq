@@ -1646,7 +1646,21 @@ OC.L10N.register(
         "This secret is already shared with that account.": "Ši paslaptis jau bendrinama su šia paskyra.",
         "Other organisations": "Kitos organizacijos",
         "Receive secrets from other organisations": "Gauti paslaptis iš kitų organizacijų",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Tada partnerių organizacijų žmonės galės rasti jūsų paskyrą ir bendrinti su jumis paslaptis. Kiekvieną jų priimate patys."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Tada partnerių organizacijų žmonės galės rasti jūsų paskyrą ir bendrinti su jumis paslaptis. Kiekvieną jų priimate patys.",
+        "Shared": "Bendrinama",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Pristabdyta: pasikeitė jų sertifikatas arba partnerystė. Galite atšaukti bendrinimą arba bendrinti iš naujo.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Jų organizacija negavo paskutinio pakeitimo. Galite atšaukti bendrinimą arba bendrinti iš naujo.",
+        "Being withdrawn": "Atšaukiama",
+        "Shared with another organisation": "Bendrinta su kita organizacija",
+        "Change sent to another organisation": "Pakeitimas išsiųstas kitai organizacijai",
+        "Share with another organisation revoked": "Bendrinimas su kita organizacija atšauktas",
+        "Share with another organisation paused": "Bendrinimas su kita organizacija pristabdytas",
+        "Another organisation did not get a change": "Kita organizacija negavo pakeitimo",
+        "Secret received from another organisation": "Gauta paslaptis iš kitos organizacijos",
+        "Secret from another organisation accepted": "Paslaptis iš kitos organizacijos priimta",
+        "Secret from another organisation declined": "Paslaptis iš kitos organizacijos atmesta",
+        "Copy from another organisation updated": "Kopija iš kitos organizacijos atnaujinta",
+        "Copy from another organisation removed": "Kopija iš kitos organizacijos pašalinta"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

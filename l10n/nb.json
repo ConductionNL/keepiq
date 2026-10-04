@@ -1717,7 +1717,21 @@
         "This secret is already shared with that account.": "Denne hemmeligheten er allerede delt med den kontoen.",
         "Other organisations": "Andre organisasjoner",
         "Receive secrets from other organisations": "Motta hemmeligheter fra andre organisasjoner",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personer i partnerorganisasjoner kan da finne kontoen din og dele hemmeligheter med deg. Du godtar hver enkelt selv."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Personer i partnerorganisasjoner kan da finne kontoen din og dele hemmeligheter med deg. Du godtar hver enkelt selv.",
+        "Shared": "Delt",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Satt på pause: mottakerens sertifikat eller partnerskapet er endret. Tilbakekall den, eller del på nytt.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Mottakerens organisasjon fikk ikke den siste endringen. Tilbakekall den, eller del på nytt.",
+        "Being withdrawn": "Trekkes tilbake",
+        "Shared with another organisation": "Delt med en annen organisasjon",
+        "Change sent to another organisation": "Endring sendt til en annen organisasjon",
+        "Share with another organisation revoked": "Deling med en annen organisasjon tilbakekalt",
+        "Share with another organisation paused": "Deling med en annen organisasjon satt på pause",
+        "Another organisation did not get a change": "En annen organisasjon fikk ikke en endring",
+        "Secret received from another organisation": "Hemmelighet mottatt fra en annen organisasjon",
+        "Secret from another organisation accepted": "Hemmelighet fra en annen organisasjon godtatt",
+        "Secret from another organisation declined": "Hemmelighet fra en annen organisasjon avslått",
+        "Copy from another organisation updated": "Kopi fra en annen organisasjon oppdatert",
+        "Copy from another organisation removed": "Kopi fra en annen organisasjon fjernet"
     },
     "plurals": null
 }

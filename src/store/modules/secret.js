@@ -747,6 +747,18 @@ export const useSecretStore = defineStore('secret', {
 					// The session encryption flow itself is unaffected.
 				}
 
+				// Recipients at partner organisations
+				// (sharing-federated-recipients 4.1): the whole value is
+				// encrypted again for a freshly verified certificate. Like
+				// the local sync, a failure never rolls the update back.
+				try {
+					const { useFederatedShareStore } =
+						await import('./federatedShare.js')
+					await useFederatedShareStore().syncUpdate(id)
+				} catch {
+					// The share row shows its state to the owner.
+				}
+
 				// Write-grade team member path (folder-permission-grades
 				// §4.2): when the edited row is a recipient COPY and the
 				// user holds a write grade on an ancestor team folder,

@@ -1717,7 +1717,21 @@
         "This secret is already shared with that account.": "Tämä salaisuus on jo jaettu kyseiselle tilille.",
         "Other organisations": "Muut organisaatiot",
         "Receive secrets from other organisations": "Vastaanota salaisuuksia muista organisaatioista",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Kumppaniorganisaatioiden henkilöt voivat silloin löytää tilisi ja jakaa salaisuuksia kanssasi. Hyväksyt jokaisen itse."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Kumppaniorganisaatioiden henkilöt voivat silloin löytää tilisi ja jakaa salaisuuksia kanssasi. Hyväksyt jokaisen itse.",
+        "Shared": "Jaettu",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Keskeytetty: heidän varmenteensa tai kumppanuus muuttui. Peruuta jako tai jaa uudelleen.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Heidän organisaationsa ei saanut viimeisintä muutosta. Peruuta jako tai jaa uudelleen.",
+        "Being withdrawn": "Peruutetaan",
+        "Shared with another organisation": "Jaettu toiselle organisaatiolle",
+        "Change sent to another organisation": "Muutos lähetetty toiselle organisaatiolle",
+        "Share with another organisation revoked": "Jako toiselle organisaatiolle peruutettu",
+        "Share with another organisation paused": "Jako toiselle organisaatiolle keskeytetty",
+        "Another organisation did not get a change": "Toinen organisaatio ei saanut muutosta",
+        "Secret received from another organisation": "Salaisuus vastaanotettu toisesta organisaatiosta",
+        "Secret from another organisation accepted": "Salaisuus toisesta organisaatiosta hyväksytty",
+        "Secret from another organisation declined": "Salaisuus toisesta organisaatiosta hylätty",
+        "Copy from another organisation updated": "Kopio toisesta organisaatiosta päivitetty",
+        "Copy from another organisation removed": "Kopio toisesta organisaatiosta poistettu"
     },
     "plurals": null
 }

@@ -1646,7 +1646,21 @@ OC.L10N.register(
         "This secret is already shared with that account.": "Ta skrivnost je s tem računom že deljena.",
         "Other organisations": "Druge organizacije",
         "Receive secrets from other organisations": "Prejemanje skrivnosti iz drugih organizacij",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Osebe v partnerskih organizacijah lahko nato najdejo vaš račun in z vami delijo skrivnosti. Vsako sprejmete sami."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Osebe v partnerskih organizacijah lahko nato najdejo vaš račun in z vami delijo skrivnosti. Vsako sprejmete sami.",
+        "Shared": "Deljeno",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Začasno ustavljeno: spremenilo se je njihovo potrdilo ali partnerstvo. Razveljavite ali delite znova.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Njihova organizacija ni prejela zadnje spremembe. Razveljavite ali delite znova.",
+        "Being withdrawn": "Umika se",
+        "Shared with another organisation": "Deljeno z drugo organizacijo",
+        "Change sent to another organisation": "Sprememba poslana drugi organizaciji",
+        "Share with another organisation revoked": "Souporaba z drugo organizacijo preklicana",
+        "Share with another organisation paused": "Souporaba z drugo organizacijo začasno ustavljena",
+        "Another organisation did not get a change": "Druga organizacija ni prejela spremembe",
+        "Secret received from another organisation": "Skrivnost prejeta iz druge organizacije",
+        "Secret from another organisation accepted": "Skrivnost iz druge organizacije sprejeta",
+        "Secret from another organisation declined": "Skrivnost iz druge organizacije zavrnjena",
+        "Copy from another organisation updated": "Kopija iz druge organizacije posodobljena",
+        "Copy from another organisation removed": "Kopija iz druge organizacije odstranjena"
     },
     "nplurals=4; plural=(n%100==1 ? 0 : n%100==2 ? 1 : n%100==3 || n%100==4 ? 2 : 3);"
 )

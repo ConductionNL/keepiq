@@ -1717,7 +1717,21 @@
         "This secret is already shared with that account.": "See saladus on selle kontoga juba jagatud.",
         "Other organisations": "Teised organisatsioonid",
         "Receive secrets from other organisations": "Võta vastu saladusi teistest organisatsioonidest",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Partnerorganisatsioonide inimesed saavad siis teie konto leida ja teiega saladusi jagada. Iga saladuse võtate vastu ise."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Partnerorganisatsioonide inimesed saavad siis teie konto leida ja teiega saladusi jagada. Iga saladuse võtate vastu ise.",
+        "Shared": "Jagatud",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Peatatud: nende sertifikaat või partnerlus muutus. Tühistage jagamine või jagage uuesti.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Nende organisatsioon ei saanud viimast muudatust. Tühistage jagamine või jagage uuesti.",
+        "Being withdrawn": "Tühistatakse",
+        "Shared with another organisation": "Jagatud teise organisatsiooniga",
+        "Change sent to another organisation": "Muudatus saadetud teisele organisatsioonile",
+        "Share with another organisation revoked": "Jagamine teise organisatsiooniga tühistatud",
+        "Share with another organisation paused": "Jagamine teise organisatsiooniga peatatud",
+        "Another organisation did not get a change": "Teine organisatsioon ei saanud muudatust",
+        "Secret received from another organisation": "Saladus saadud teisest organisatsioonist",
+        "Secret from another organisation accepted": "Saladus teisest organisatsioonist vastu võetud",
+        "Secret from another organisation declined": "Saladus teisest organisatsioonist tagasi lükatud",
+        "Copy from another organisation updated": "Koopia teisest organisatsioonist uuendatud",
+        "Copy from another organisation removed": "Koopia teisest organisatsioonist eemaldatud"
     },
     "plurals": null
 }

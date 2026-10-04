@@ -259,7 +259,7 @@ class FederationPartnerTest extends TestCase {
 		$partners->method('all')->willReturn([]);
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn($this->createMock(IUser::class));
-		$controller = new FederationPartnerController($this->createMock(IRequest::class), $partners, $root, $session);
+		$controller = new FederationPartnerController($this->createMock(IRequest::class), $partners, $root, $session, $this->createMock(\OCA\Keepiq\Service\FederatedShareService::class));
 
 		$this->assertSame(Http::STATUS_CONFLICT, $controller->create('https://cloud.partner.example', str_repeat('cd', 32), true, true)->getStatus());
 		$this->assertSame(Http::STATUS_CONFLICT, $controller->preview('https://cloud.partner.example')->getStatus());

@@ -91,6 +91,14 @@ class FederatedShare extends Entity implements JsonSerializable {
 	public const STATUS_FAILED = 'failed';
 
 	/**
+	 * The owner revoked it; the SHARE_UNSHARED notification is still on its
+	 * way. Nothing is served; the row goes once the notification arrives.
+	 *
+	 * @var string
+	 */
+	public const STATUS_REVOKED = 'revoked';
+
+	/**
 	 * The owner's secret this share copies.
 	 *
 	 * @var string

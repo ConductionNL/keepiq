@@ -1646,7 +1646,21 @@ OC.L10N.register(
         "This secret is already shared with that account.": "Этот секрет уже передан этой учётной записи.",
         "Other organisations": "Другие организации",
         "Receive secrets from other organisations": "Получать секреты из других организаций",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Тогда сотрудники партнёрских организаций смогут найти вашу учётную запись и делиться с вами секретами. Каждый из них вы принимаете сами."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "Тогда сотрудники партнёрских организаций смогут найти вашу учётную запись и делиться с вами секретами. Каждый из них вы принимаете сами.",
+        "Shared": "Доступ предоставлен",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Приостановлено: изменился их сертификат или партнёрство. Доступ можно отозвать или предоставить заново.",
+        "Their organisation did not get the last change. Revoke it or share again.": "Их организация не получила последнее изменение. Доступ можно отозвать или предоставить заново.",
+        "Being withdrawn": "Отзывается",
+        "Shared with another organisation": "Общий доступ предоставлен другой организации",
+        "Change sent to another organisation": "Изменение отправлено другой организации",
+        "Share with another organisation revoked": "Общий доступ для другой организации отозван",
+        "Share with another organisation paused": "Общий доступ для другой организации приостановлен",
+        "Another organisation did not get a change": "Другая организация не получила изменение",
+        "Secret received from another organisation": "Получен секрет из другой организации",
+        "Secret from another organisation accepted": "Секрет из другой организации принят",
+        "Secret from another organisation declined": "Секрет из другой организации отклонён",
+        "Copy from another organisation updated": "Копия из другой организации обновлена",
+        "Copy from another organisation removed": "Копия из другой организации удалена"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

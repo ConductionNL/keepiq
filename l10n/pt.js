@@ -1646,7 +1646,21 @@ OC.L10N.register(
         "This secret is already shared with that account.": "Este segredo já está partilhado com essa conta.",
         "Other organisations": "Outras organizações",
         "Receive secrets from other organisations": "Receber segredos de outras organizações",
-        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "As pessoas de organizações parceiras podem então encontrar a sua conta e partilhar segredos consigo. Aceita cada um pessoalmente."
+        "People in partner organisations can then find your account and share secrets with you. You accept each one yourself.": "As pessoas de organizações parceiras podem então encontrar a sua conta e partilhar segredos consigo. Aceita cada um pessoalmente.",
+        "Shared": "Partilhado",
+        "Paused: their certificate or the partnership changed. Revoke it or share again.": "Em pausa: o certificado do destinatário ou a parceria mudou. Revogue a partilha ou partilhe novamente.",
+        "Their organisation did not get the last change. Revoke it or share again.": "A organização do destinatário não recebeu a última alteração. Revogue a partilha ou partilhe novamente.",
+        "Being withdrawn": "A ser retirado",
+        "Shared with another organisation": "Partilhado com outra organização",
+        "Change sent to another organisation": "Alteração enviada para outra organização",
+        "Share with another organisation revoked": "Partilha com outra organização revogada",
+        "Share with another organisation paused": "Partilha com outra organização em pausa",
+        "Another organisation did not get a change": "Outra organização não recebeu uma alteração",
+        "Secret received from another organisation": "Segredo recebido de outra organização",
+        "Secret from another organisation accepted": "Segredo de outra organização aceite",
+        "Secret from another organisation declined": "Segredo de outra organização recusado",
+        "Copy from another organisation updated": "Cópia de outra organização atualizada",
+        "Copy from another organisation removed": "Cópia de outra organização eliminada"
     },
     "nplurals=2; plural=(n != 1);"
 )
