@@ -22,7 +22,9 @@ import FederatedShareForm from '../../src/components/share/FederatedShareForm.vu
 import SecretShareDialog from '../../src/dialogs/SecretShareDialog.vue'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 
-const F = JSON.parse(readFileSync(resolve(__dirname, '../fixtures/federation-chain.json'), 'utf8'))
+const F = JSON.parse(
+	readFileSync(resolve(__dirname, '../fixtures/federation-chain.json'), 'utf8'),
+)
 const BOB = 'bob@cloud.partner.example'
 const PASSWORD = 'correct horse battery staple'
 
@@ -32,12 +34,14 @@ const stubs = {
 	NcButton: {
 		props: ['disabled'],
 		emits: ['click'],
-		template: '<button v-bind="$attrs" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
+		template:
+			'<button v-bind="$attrs" :disabled="disabled" @click="$emit(\'click\')"><slot /></button>',
 	},
 	NcTextField: {
 		props: ['modelValue', 'label'],
 		emits: ['update:modelValue'],
-		template: '<input v-bind="$attrs" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
+		template:
+			'<input v-bind="$attrs" :value="modelValue" @input="$emit(\'update:modelValue\', $event.target.value)" />',
 	},
 	NcNoteCard: { template: '<div v-bind="$attrs"><slot /></div>' },
 }
@@ -56,7 +60,13 @@ async function mountWith(answer) {
 			}
 			return { data: answer }
 		}
-		return { data: { id: 'fs-1', recipientCloudId: body.recipientCloudId, status: 'active' } }
+		return {
+			data: {
+				id: 'fs-1',
+				recipientCloudId: body.recipientCloudId,
+				status: 'active',
+			},
+		}
 	})
 	const fetchSecret = vi.spyOn(useSecretStore(), 'fetchSecret').mockResolvedValue({
 		name: 'Supplier portal',
@@ -64,7 +74,10 @@ async function mountWith(answer) {
 		login: 'alice',
 		additionalFields: { pin: '1234' },
 	})
-	const wrapper = mount(FederatedShareForm, { props: { secretId: 'src' }, global: { stubs } })
+	const wrapper = mount(FederatedShareForm, {
+		props: { secretId: 'src' },
+		global: { stubs },
+	})
 	await wrapper.find('[data-testid="federated-share-cloud-id"]').setValue(BOB)
 	await wrapper.find('[data-testid="federated-share-check"]').trigger('click')
 	await flush()
@@ -95,8 +108,13 @@ describe('FederatedShareForm', () => {
 			partnerRootFingerprint: F.rootAFingerprint,
 		})
 
-		expect(post).toHaveBeenCalledWith(expect.stringContaining('/federation/recipient-certificate'), { cloudId: BOB })
-		const fingerprint = wrapper.find('[data-testid="federated-share-fingerprint"]').text()
+		expect(post).toHaveBeenCalledWith(
+			expect.stringContaining('/federation/recipient-certificate'),
+			{ cloudId: BOB },
+		)
+		const fingerprint = wrapper
+			.find('[data-testid="federated-share-fingerprint"]')
+			.text()
 		expect(fingerprint).toMatch(/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/)
 
 		await wrapper.find('[data-testid="federated-share-submit"]').trigger('click')
@@ -107,14 +125,18 @@ describe('FederatedShareForm', () => {
 		const [url, body] = calls[0]
 		expect(url).toContain('/api/v1/secrets/src/federated-shares')
 		expect(body.recipientCloudId).toBe(BOB)
-		expect(body.certFingerprint).toBe(fingerprint.replaceAll(':', '').toLowerCase())
+		expect(body.certFingerprint).toBe(
+			fingerprint.replaceAll(':', '').toLowerCase(),
+		)
 		// RSA-OAEP ciphertext for Bob, never the plaintext.
 		expect(body.key).toBeTruthy()
 		const wire = JSON.stringify(body)
 		for (const plain of [PASSWORD, 'alice', '1234']) {
 			expect(wire).not.toContain(plain)
 		}
-		expect(wrapper.find('[data-testid="federated-share-done"]').exists()).toBe(true)
+		expect(wrapper.find('[data-testid="federated-share-done"]').exists()).toBe(
+			true,
+		)
 	})
 
 	it('refuses a chain that ends at another root and encrypts nothing', async () => {
@@ -125,8 +147,12 @@ describe('FederatedShareForm', () => {
 			partnerRootFingerprint: F.rootAFingerprint,
 		})
 
-		expect(wrapper.find('[data-testid="federated-share-error"]').text()).toContain('could not be verified')
-		expect(wrapper.find('[data-testid="federated-share-submit"]').exists()).toBe(false)
+		expect(
+			wrapper.find('[data-testid="federated-share-error"]').text(),
+		).toContain('could not be verified')
+		expect(wrapper.find('[data-testid="federated-share-submit"]').exists()).toBe(
+			false,
+		)
 		expect(fetchSecret).not.toHaveBeenCalled()
 		expect(shareCalls(post)).toHaveLength(0)
 	})
@@ -139,15 +165,21 @@ describe('FederatedShareForm', () => {
 			partnerRootFingerprint: F.rootAFingerprint,
 		})
 
-		expect(wrapper.find('[data-testid="federated-share-error"]').text()).toContain('could not be verified')
+		expect(
+			wrapper.find('[data-testid="federated-share-error"]').text(),
+		).toContain('could not be verified')
 		expect(fetchSecret).not.toHaveBeenCalled()
 		expect(shareCalls(post)).toHaveLength(0)
 	})
 
 	it('says when the organisation is not a partner', async () => {
-		const { wrapper } = await mountWith({ reject: { response: { data: { message: 'not_a_partner' } } } })
+		const { wrapper } = await mountWith({
+			reject: { response: { data: { message: 'not_a_partner' } } },
+		})
 
-		expect(wrapper.find('[data-testid="federated-share-error"]').text()).toContain('not one of your partners')
+		expect(
+			wrapper.find('[data-testid="federated-share-error"]').text(),
+		).toContain('not one of your partners')
 	})
 })
 
@@ -172,10 +204,14 @@ describe('SecretShareDialog and another organisation', () => {
 			global: {
 				stubs: {
 					...stubs,
-					NcDialog: { template: '<div><slot /><slot name="actions" /></div>' },
+					NcDialog: {
+						template: '<div><slot /><slot name="actions" /></div>',
+					},
 					NcSelect: { template: '<div />' },
 					NcLoadingIcon: { template: '<span />' },
-					FederatedShareForm: { template: '<div data-testid="federated-share-form" />' },
+					FederatedShareForm: {
+						template: '<div data-testid="federated-share-form" />',
+					},
 				},
 			},
 		})
@@ -184,10 +220,18 @@ describe('SecretShareDialog and another organisation', () => {
 	}
 
 	it('offers no federated recipient without an outbound partner', async () => {
-		expect((await dialog(false)).find('[data-testid="federated-share-form"]').exists()).toBe(false)
+		expect(
+			(await dialog(false))
+				.find('[data-testid="federated-share-form"]')
+				.exists(),
+		).toBe(false)
 	})
 
 	it('offers it once an outbound partner exists', async () => {
-		expect((await dialog(true)).find('[data-testid="federated-share-form"]').exists()).toBe(true)
+		expect(
+			(await dialog(true))
+				.find('[data-testid="federated-share-form"]')
+				.exists(),
+		).toBe(true)
 	})
 })

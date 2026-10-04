@@ -22,7 +22,9 @@ describe('FederationReceiveSection', () => {
 	})
 
 	it('is off by default and stores the opt-in', async () => {
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: { federation_receive: '0' } })
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { federation_receive: '0' },
+		})
 		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: {} })
 		const wrapper = mount(FederationReceiveSection)
 		await flush()
@@ -33,11 +35,16 @@ describe('FederationReceiveSection', () => {
 		await toggle.setValue(true)
 		await flush()
 
-		expect(put).toHaveBeenCalledWith(expect.stringContaining('/apps/keepiq/api/settings/user'), { federation_receive: '1' })
+		expect(put).toHaveBeenCalledWith(
+			expect.stringContaining('/apps/keepiq/api/settings/user'),
+			{ federation_receive: '1' },
+		)
 	})
 
 	it('shows a stored opt-in, and turning it off stores that', async () => {
-		vi.spyOn(axios, 'get').mockResolvedValue({ data: { federation_receive: '1' } })
+		vi.spyOn(axios, 'get').mockResolvedValue({
+			data: { federation_receive: '1' },
+		})
 		const put = vi.spyOn(axios, 'put').mockResolvedValue({ data: {} })
 		const wrapper = mount(FederationReceiveSection)
 		await flush()
@@ -47,6 +54,9 @@ describe('FederationReceiveSection', () => {
 		await toggle.setValue(false)
 		await flush()
 
-		expect(put).toHaveBeenCalledWith(expect.stringContaining('/api/settings/user'), { federation_receive: '0' })
+		expect(put).toHaveBeenCalledWith(
+			expect.stringContaining('/api/settings/user'),
+			{ federation_receive: '0' },
+		)
 	})
 })

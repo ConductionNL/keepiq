@@ -38,11 +38,29 @@
 			{{ error }}
 		</NcNoteCard>
 
-		<div v-if="recipient" class="federated-share__verified" data-testid="federated-share-verified">
-			<p>{{ t('keepiq', 'Certificate fingerprint of {account}', { account: recipient.cloudId }) }}</p>
-			<code class="federated-share__fingerprint" data-testid="federated-share-fingerprint">{{ recipient.fingerprint }}</code>
+		<div
+			v-if="recipient"
+			class="federated-share__verified"
+			data-testid="federated-share-verified">
+			<p>
+				{{
+					t('keepiq', 'Certificate fingerprint of {account}', {
+						account: recipient.cloudId,
+					})
+				}}
+			</p>
+			<code
+				class="federated-share__fingerprint"
+				data-testid="federated-share-fingerprint"
+				>{{ recipient.fingerprint }}</code
+			>
 			<p class="federated-share__hint">
-				{{ t('keepiq', 'Compare it with them by phone if you want to be sure.') }}
+				{{
+					t(
+						'keepiq',
+						'Compare it with them by phone if you want to be sure.',
+					)
+				}}
 			</p>
 			<NcButton
 				variant="primary"
@@ -53,8 +71,15 @@
 			</NcButton>
 		</div>
 
-		<NcNoteCard v-if="sharedWith" type="success" data-testid="federated-share-done">
-			{{ t('keepiq', 'Shared. {account} can accept it in their own vault.', { account: sharedWith }) }}
+		<NcNoteCard
+			v-if="sharedWith"
+			type="success"
+			data-testid="federated-share-done">
+			{{
+				t('keepiq', 'Shared. {account} can accept it in their own vault.', {
+					account: sharedWith,
+				})
+			}}
 		</NcNoteCard>
 
 		<ul v-if="shares.length > 0" class="federated-share__list" data-testid="federated-share-list">
@@ -169,7 +194,11 @@ export default {
 			this.error = ''
 			try {
 				const secret = await useSecretStore().fetchSecret(this.secretId)
-				const row = await useFederatedShareStore().share(this.secretId, secret, this.recipient)
+				const row = await useFederatedShareStore().share(
+					this.secretId,
+					secret,
+					this.recipient,
+				)
 				this.sharedWith = this.recipient.cloudId
 				this.recipient = null
 				this.cloudId = ''
@@ -227,16 +256,37 @@ export default {
 		 */
 		explain(e) {
 			if (e instanceof FederatedCertificateError) {
-				return t('keepiq', 'The certificate could not be verified. Nothing was shared.')
+				return t(
+					'keepiq',
+					'The certificate could not be verified. Nothing was shared.',
+				)
 			}
 			const texts = {
-				not_a_partner: t('keepiq', 'That organisation is not one of your partners.'),
-				unknown_recipient: t('keepiq', 'No one with that account can receive secrets from you.'),
-				partner_unreachable: t('keepiq', 'The other organisation did not answer. Try again later.'),
-				delivery_failed: t('keepiq', 'The other organisation did not answer. Try again later.'),
-				already_shared: t('keepiq', 'This secret is already shared with that account.'),
+				not_a_partner: t(
+					'keepiq',
+					'That organisation is not one of your partners.',
+				),
+				unknown_recipient: t(
+					'keepiq',
+					'No one with that account can receive secrets from you.',
+				),
+				partner_unreachable: t(
+					'keepiq',
+					'The other organisation did not answer. Try again later.',
+				),
+				delivery_failed: t(
+					'keepiq',
+					'The other organisation did not answer. Try again later.',
+				),
+				already_shared: t(
+					'keepiq',
+					'This secret is already shared with that account.',
+				),
 			}
-			return texts[e?.response?.data?.message] ?? t('keepiq', 'Something went wrong. Try again.')
+			return (
+				texts[e?.response?.data?.message]
+				?? t('keepiq', 'Something went wrong. Try again.')
+			)
 		},
 	},
 }

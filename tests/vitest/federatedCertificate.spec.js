@@ -102,10 +102,18 @@ describe('verifyFederatedCertificate', () => {
 	it('matches the common name without the scheme an http instance writes', async () => {
 		// Nextcloud names a user of an http instance bob@http://host; the owner
 		// types bob@host. Same user, same instance.
-		await expect(verify({ cloudId: 'bob@http://cloud.partner.example' })).resolves.toHaveProperty('fingerprint')
-		await expect(verify({ cloudId: 'BOB@cloud.partner.example' }).catch((e) => e.reason)).resolves.toBe('name_mismatch')
-		expect(await reasonOf(verify({ cloudId: 'bob@cloud.partner.example.evil' }))).toBe('name_mismatch')
-		expect(await reasonOf(verify({ cloudId: 'bob@http://cloud.other.example' }))).toBe('name_mismatch')
+		await expect(
+			verify({ cloudId: 'bob@http://cloud.partner.example' }),
+		).resolves.toHaveProperty('fingerprint')
+		await expect(
+			verify({ cloudId: 'BOB@cloud.partner.example' }).catch((e) => e.reason),
+		).resolves.toBe('name_mismatch')
+		expect(
+			await reasonOf(verify({ cloudId: 'bob@cloud.partner.example.evil' })),
+		).toBe('name_mismatch')
+		expect(
+			await reasonOf(verify({ cloudId: 'bob@http://cloud.other.example' })),
+		).toBe('name_mismatch')
 	})
 
 	it('refuses a certificate outside its validity', async () => {

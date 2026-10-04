@@ -73,7 +73,11 @@
 			     native X hidden, the "…" menu is the pointer path to Close. -->
 			<div v-if="secret && !error" class="secret-detail__actions">
 				<NcButton
-					v-if="(!offlineReadOnly || offlineEditable) && !useOnly && !federatedReadOnly"
+					v-if="
+						(!offlineReadOnly || offlineEditable)
+						&& !useOnly
+						&& !federatedReadOnly
+					"
 					variant="primary"
 					data-testid="secret-detail-edit"
 					@click="openEdit">
@@ -124,7 +128,11 @@
 					:ariaLabel="t('keepiq', 'Secret actions')"
 					:forceMenu="true"
 					data-testid="secret-detail-more">
-					<template v-if="(!offlineReadOnly || offlineEditable) && !federatedReadOnly">
+					<template
+						v-if="
+							(!offlineReadOnly || offlineEditable)
+							&& !federatedReadOnly
+						">
 						<NcActionButton
 							:closeAfterClick="true"
 							data-testid="secret-detail-move"
@@ -1528,7 +1536,10 @@ export default {
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		canSeeSharing() {
-			return (this.isOwner === true || this.isRecipient === true) && this.federatedReadOnly === false
+			return (
+				(this.isOwner === true || this.isRecipient === true)
+				&& this.federatedReadOnly === false
+			)
 		},
 
 		/**

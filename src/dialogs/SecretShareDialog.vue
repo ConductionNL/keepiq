@@ -270,9 +270,11 @@ export default {
 	async mounted() {
 		await Promise.all([
 			this.loadShares(),
-			useFederatedShareStore().checkAvailable().then((available) => {
-				this.federationAvailable = available
-			}),
+			useFederatedShareStore()
+				.checkAvailable()
+				.then((available) => {
+					this.federationAvailable = available
+				}),
 		])
 	},
 
