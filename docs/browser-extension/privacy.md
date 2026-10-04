@@ -24,9 +24,9 @@ In the browser's extension storage, per connected account: the server address, y
 
 Also per account, a copy of your vault as the server stores it, so the extension works while the server cannot be reached: encrypted secrets, and the unencrypted names, web addresses and folders. It is replaced at every sync and removed when you disconnect the account, or when its app password is revoked.
 
-Once for the browser: how long a copied value stays on the clipboard.
+Once for the browser: how long a copied value stays on the clipboard, whether to offer to save and update logins and to suggest passwords, the type of a new item, the colour theme, and the sites you said never to save logins on.
 
-In the browser's session storage, for at most five minutes after a login fill: the tab, the site and which one-time code secret to use on the next step. It holds no code and no secret. Also, per open tab, which frames are on which site, so a fill reaches only the site you picked. The browser keeps session storage in memory only.
+In the browser's session storage, for at most five minutes after a login fill: the tab, the site and which one-time code secret to use on the next step. It holds no code and no secret. Also, per open tab, which frames are on which site, so a fill reaches only the site you picked. And, when you set a PIN, your vault key encrypted with a key made from that PIN. It is gone when you close the browser, log out, disconnect, or enter a wrong PIN five times. The browser keeps session storage in memory only.
 
 A login you submit on a site waits in memory for at most five minutes, for you to save it. It is gone when you save or dismiss it, when its tab closes, or when the vault locks.
 

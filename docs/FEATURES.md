@@ -271,7 +271,7 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | Nextcloud notifications (shares, requests, CA) | **MVP** | Platform integration |
 | REST API for all operations | **V1** | Programmatic access |
 | OpenConnector secret store integration | **V1** | Sister app integration |
-| Browser extension (Bitwarden-compatible API subset) | **Enterprise** | Auto-fill in browser |
+| Browser extension (own end-to-end client: autofill, passkeys, vault, generator, Send, offline) | **Enterprise** | Auto-fill in browser |
 | CLI tool for secret management | **Enterprise** | DevOps workflow |
 | Nextcloud Flows automation triggers | **Enterprise** | Low-code integration |
 
@@ -469,7 +469,7 @@ Large organizations, multi-instance deployments, and compliance-driven environme
 78. Breach detection for secret URLs (HaveIBeenPwned)
 79. Password age indicator
 80. Export to PDF (single secret)
-81. Browser extension (Bitwarden-compatible API subset)
+81. Browser extension (own end-to-end client)
 82. CLI tool for secret management
 83. Multiple encryption suites per user (key rotation)
 84. Custom CA chain upload
