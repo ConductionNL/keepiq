@@ -153,7 +153,9 @@ class FederatedShareReceiver {
 	 */
 	private function senderPartner(string $owner): ?FederationPartner {
 		try {
-			$signed = $this->ocmDiscovery->getIncomingSignedRequest();
+			// The owner's address names whose signature this is; Nextcloud 35
+			// cannot verify an RFC 9421 signature without it.
+			$signed = $this->ocmDiscovery->getIncomingSignedRequest($owner);
 			$ownerId = $this->cloudIdManager->resolveCloudId($owner);
 		} catch (Throwable) {
 			return null;

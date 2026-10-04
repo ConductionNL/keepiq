@@ -57,6 +57,9 @@ class FederatedShareReceiveTest extends TestCase {
 
 	private NotificationService&MockObject $notifications;
 
+	/** @var array<int,string|null> The OCM addresses the signature check was asked with */
+	private array $askedWith = [];
+
 	/**
 	 * The provider over the given partners, with the request signed by $signer
 	 * (null: unsigned; 'bad': a signature that does not verify).
@@ -93,7 +96,12 @@ class FederatedShareReceiveTest extends TestCase {
 		} else {
 			$signed = $this->createMock(IIncomingSignedRequest::class);
 			$signed->method('getOrigin')->willReturn($signer);
-			$ocm->method('getIncomingSignedRequest')->willReturn($signed);
+			$ocm->method('getIncomingSignedRequest')->willReturnCallback(
+				function (?string $address = null) use ($signed): IIncomingSignedRequest {
+					$this->askedWith[] = $address;
+					return $signed;
+				}
+			);
 		}
 
 		$config = $this->createMock(IConfig::class);
@@ -150,6 +158,10 @@ class FederatedShareReceiveTest extends TestCase {
 		);
 
 		$id = $provider->shareReceived($this->share());
+
+		// Nextcloud 35 can verify an RFC 9421 signature only when told whose
+		// it is: the owner's OCM address.
+		$this->assertSame(['alice@cloud.city.example'], $this->askedWith);
 
 		$row = $this->rows[$id];
 		$this->assertSame(FederatedInbound::STATUS_PENDING, $row->getStatus());
