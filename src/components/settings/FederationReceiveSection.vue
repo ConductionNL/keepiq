@@ -51,7 +51,9 @@ export default {
 	 */
 	async created() {
 		try {
-			const response = await axios.get(generateUrl('/apps/keepiq/api/settings/user'))
+			const response = await axios.get(
+				generateUrl('/apps/keepiq/api/settings/user'),
+			)
 			const value = response.data?.federation_receive
 			this.receive = value === '1' || value === true
 		} catch {

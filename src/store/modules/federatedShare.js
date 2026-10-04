@@ -5,7 +5,10 @@ import axios from '@nextcloud/axios'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
-import { FederatedCertificateError, verifyFederatedCertificate } from '../../crypto/federatedCertificate.js'
+import {
+	FederatedCertificateError,
+	verifyFederatedCertificate,
+} from '../../crypto/federatedCertificate.js'
 import { PROOF_PURPOSE, sessionKeyProofHeaders } from '../../crypto/keyProof.js'
 import { useShareStore } from './share.js'
 
@@ -42,7 +45,8 @@ function snapshotOf(secret) {
 	for (const field of ENCRYPTED_FIELDS) {
 		const value = secret[field]
 		if (value !== null && value !== undefined && value !== '') {
-			snapshot[field] = typeof value === 'string' ? value : JSON.stringify(value)
+			snapshot[field] =
+				typeof value === 'string' ? value : JSON.stringify(value)
 		}
 	}
 	return snapshot
@@ -72,7 +76,9 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 */
 		async checkAvailable() {
 			try {
-				const response = await axios.get(generateUrl('/apps/keepiq/api/v1/federation/status'))
+				const response = await axios.get(
+					generateUrl('/apps/keepiq/api/v1/federation/status'),
+				)
 				this.available = response.data?.outbound === true
 			} catch {
 				this.available = false
@@ -101,7 +107,11 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 				partnerRootFingerprint: answer.partnerRootFingerprint,
 				cloudId: answer.cloudId,
 			})
-			return { cloudId: answer.cloudId, certificate: answer.certificate, fingerprint }
+			return {
+				cloudId: answer.cloudId,
+				certificate: answer.certificate,
+				fingerprint,
+			}
 		},
 
 		/**
@@ -112,7 +122,11 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 		 */
 		async listFor(secretId) {
-			const response = await axios.get(generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/federated-shares`))
+			const response = await axios.get(
+				generateUrl(
+					`/apps/keepiq/api/v1/secrets/${secretId}/federated-shares`,
+				),
+			)
 			this.shares = Array.isArray(response.data) ? response.data : []
 			return this.shares
 		},
@@ -125,7 +139,9 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
 		 */
 		async revoke(id) {
-			await axios.delete(generateUrl(`/apps/keepiq/api/v1/federated-shares/${id}`))
+			await axios.delete(
+				generateUrl(`/apps/keepiq/api/v1/federated-shares/${id}`),
+			)
 			this.shares = this.shares.filter((share) => share.id !== id)
 		},
 
@@ -140,7 +156,9 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
 		 */
 		async syncUpdate(secretId) {
-			const live = (await this.listFor(secretId)).filter((share) => share.status === 'active')
+			const live = (await this.listFor(secretId)).filter(
+				(share) => share.status === 'active',
+			)
 			const result = { updated: 0, suspended: 0 }
 			if (live.length === 0) {
 				return result
@@ -152,20 +170,38 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 				try {
 					recipient = await this.lookup(share.recipientCloudId)
 				} catch (e) {
-					const reason = e instanceof FederatedCertificateError ? e.reason : e?.response?.data?.message
-					if (e instanceof FederatedCertificateError || reason === 'unknown_recipient' || reason === 'not_a_partner') {
-						await axios.post(generateUrl(`/apps/keepiq/api/v1/federated-shares/${share.id}/suspend`), { reason })
+					const reason =
+						e instanceof FederatedCertificateError
+							? e.reason
+							: e?.response?.data?.message
+					if (
+						e instanceof FederatedCertificateError
+						|| reason === 'unknown_recipient'
+						|| reason === 'not_a_partner'
+					) {
+						await axios.post(
+							generateUrl(
+								`/apps/keepiq/api/v1/federated-shares/${share.id}/suspend`,
+							),
+							{ reason },
+						)
 						result.suspended++
 					}
 					continue
 				}
-				const encrypted = await useShareStore().encryptForRecipient(snapshotOf(secret), recipient.certificate)
-				await axios.put(generateUrl(`/apps/keepiq/api/v1/federated-shares/${share.id}`), {
-					certFingerprint: fingerprintHex(recipient.fingerprint),
-					key: encrypted.key ?? '',
-					login: encrypted.login ?? null,
-					additionalFields: encrypted.additionalFields ?? null,
-				})
+				const encrypted = await useShareStore().encryptForRecipient(
+					snapshotOf(secret),
+					recipient.certificate,
+				)
+				await axios.put(
+					generateUrl(`/apps/keepiq/api/v1/federated-shares/${share.id}`),
+					{
+						certFingerprint: fingerprintHex(recipient.fingerprint),
+						key: encrypted.key ?? '',
+						login: encrypted.login ?? null,
+						additionalFields: encrypted.additionalFields ?? null,
+					},
+				)
 				result.updated++
 			}
 			return result
@@ -181,8 +217,13 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 		 */
 		async share(secretId, secret, recipient) {
-			const encrypted = await useShareStore().encryptForRecipient(snapshotOf(secret), recipient.certificate)
-			const url = generateUrl(`/apps/keepiq/api/v1/secrets/${secretId}/federated-shares`)
+			const encrypted = await useShareStore().encryptForRecipient(
+				snapshotOf(secret),
+				recipient.certificate,
+			)
+			const url = generateUrl(
+				`/apps/keepiq/api/v1/secrets/${secretId}/federated-shares`,
+			)
 			const body = {
 				recipientCloudId: recipient.cloudId,
 				certFingerprint: fingerprintHex(recipient.fingerprint),
@@ -200,7 +241,10 @@ export const useFederatedShareStore = defineStore('federatedShare', {
 				}
 				const { headers } = await sessionKeyProofHeaders({
 					purpose: PROOF_PURPOSE.SHARE_NEW_RECIPIENT,
-					reason: t('keepiq', 'You are sharing with someone new. Enter your master password to confirm.'),
+					reason: t(
+						'keepiq',
+						'You are sharing with someone new. Enter your master password to confirm.',
+					),
 					boundValues: [secretId, recipient.cloudId],
 				})
 				return (await axios.post(url, body, { headers })).data

@@ -28,7 +28,9 @@
 			{{ errorText }}
 		</NcNoteCard>
 
-		<NcLoadingIcon v-if="store.loading && store.shares.length === 0" :size="24" />
+		<NcLoadingIcon
+			v-if="store.loading && store.shares.length === 0"
+			:size="24" />
 
 		<NcEmptyContent
 			v-else-if="store.shares.length === 0"
@@ -50,13 +52,21 @@
 				<div class="incoming-shares__what">
 					<span class="incoming-shares__name">{{ share.name }}</span>
 					<span class="incoming-shares__from">
-						{{ t('keepiq', 'From {sender}', { sender: share.senderCloudId }) }}
+						{{
+							t('keepiq', 'From {sender}', {
+								sender: share.senderCloudId,
+							})
+						}}
 					</span>
-					<span class="incoming-shares__status" data-testid="incoming-share-status">
+					<span
+						class="incoming-shares__status"
+						data-testid="incoming-share-status">
 						{{ statusText(share.status) }}
 					</span>
 				</div>
-				<div v-if="share.status === 'pending'" class="incoming-shares__actions">
+				<div
+					v-if="share.status === 'pending'"
+					class="incoming-shares__actions">
 					<NcButton
 						variant="primary"
 						:disabled="store.busyId !== null"
@@ -108,10 +118,16 @@ export default {
 		 */
 		errorText() {
 			if (this.store.error === 'pull_failed') {
-				return t('keepiq', 'The other organisation did not hand over the secret. Try again later.')
+				return t(
+					'keepiq',
+					'The other organisation did not hand over the secret. Try again later.',
+				)
 			}
 			if (this.store.error === 'no_suite') {
-				return t('keepiq', 'Set up your vault before you accept a shared secret.')
+				return t(
+					'keepiq',
+					'Set up your vault before you accept a shared secret.',
+				)
 			}
 			return t('keepiq', 'Something went wrong. Try again.')
 		},

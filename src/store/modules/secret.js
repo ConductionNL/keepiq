@@ -752,7 +752,8 @@ export const useSecretStore = defineStore('secret', {
 				// encrypted again for a freshly verified certificate. Like
 				// the local sync, a failure never rolls the update back.
 				try {
-					const { useFederatedShareStore } = await import('./federatedShare.js')
+					const { useFederatedShareStore } =
+						await import('./federatedShare.js')
 					await useFederatedShareStore().syncUpdate(id)
 				} catch {
 					// The share row shows its state to the owner.

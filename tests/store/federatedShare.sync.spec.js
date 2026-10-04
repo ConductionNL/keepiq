@@ -20,12 +20,23 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { useFederatedShareStore } from '../../src/store/modules/federatedShare.js'
 import { useSecretStore } from '../../src/store/modules/secret.js'
 
-const F = JSON.parse(readFileSync(resolve(__dirname, '../fixtures/federation-chain.json'), 'utf8'))
+const F = JSON.parse(
+	readFileSync(resolve(__dirname, '../fixtures/federation-chain.json'), 'utf8'),
+)
 const BOB = 'bob@cloud.partner.example'
 const NEW_PASSWORD = 'a brand new password'
 
-const VALID = { cloudId: BOB, certificate: F.bob, chain: [F.intermediateA, F.rootA], partnerRootFingerprint: F.rootAFingerprint }
-const OTHER_ROOT = { ...VALID, certificate: F.bobOtherRoot, chain: [F.intermediateB, F.rootB] }
+const VALID = {
+	cloudId: BOB,
+	certificate: F.bob,
+	chain: [F.intermediateA, F.rootA],
+	partnerRootFingerprint: F.rootAFingerprint,
+}
+const OTHER_ROOT = {
+	...VALID,
+	certificate: F.bobOtherRoot,
+	chain: [F.intermediateB, F.rootB],
+}
 
 /**
  * Wire the owner's server: the share list, the lookup answer, and recorders
@@ -71,7 +82,11 @@ describe('federated sync on update', () => {
 		const { puts, suspends } = server(
 			[
 				{ id: 'fs-1', recipientCloudId: BOB, status: 'active' },
-				{ id: 'fs-2', recipientCloudId: 'carol@cloud.partner.example', status: 'suspended' },
+				{
+					id: 'fs-2',
+					recipientCloudId: 'carol@cloud.partner.example',
+					status: 'suspended',
+				},
 			],
 			VALID,
 		)
@@ -79,7 +94,9 @@ describe('federated sync on update', () => {
 		const result = await useFederatedShareStore().syncUpdate('src')
 
 		expect(result).toEqual({ updated: 1, suspended: 0 })
-		expect(axios.get).toHaveBeenCalledWith(expect.stringContaining('/api/v1/secrets/src/federated-shares'))
+		expect(axios.get).toHaveBeenCalledWith(
+			expect.stringContaining('/api/v1/secrets/src/federated-shares'),
+		)
 		expect(puts).toHaveLength(1)
 		const [url, body] = puts[0]
 		expect(url).toContain('/api/v1/federated-shares/fs-1')
@@ -91,7 +108,10 @@ describe('federated sync on update', () => {
 	})
 
 	it('suspends a share whose certificate no longer chains to the pinned root', async () => {
-		const { puts, suspends } = server([{ id: 'fs-1', recipientCloudId: BOB, status: 'active' }], OTHER_ROOT)
+		const { puts, suspends } = server(
+			[{ id: 'fs-1', recipientCloudId: BOB, status: 'active' }],
+			OTHER_ROOT,
+		)
 
 		const result = await useFederatedShareStore().syncUpdate('src')
 
@@ -126,9 +146,15 @@ describe('federated sync on update', () => {
 	})
 
 	it('reads nothing when no federated share is live', async () => {
-		const { fetchSecret } = server([{ id: 'fs-1', recipientCloudId: BOB, status: 'failed' }], VALID)
+		const { fetchSecret } = server(
+			[{ id: 'fs-1', recipientCloudId: BOB, status: 'failed' }],
+			VALID,
+		)
 
-		expect(await useFederatedShareStore().syncUpdate('src')).toEqual({ updated: 0, suspended: 0 })
+		expect(await useFederatedShareStore().syncUpdate('src')).toEqual({
+			updated: 0,
+			suspended: 0,
+		})
 		expect(fetchSecret).not.toHaveBeenCalled()
 	})
 })
