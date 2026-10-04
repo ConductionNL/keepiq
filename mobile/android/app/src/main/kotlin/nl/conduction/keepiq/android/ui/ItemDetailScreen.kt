@@ -152,7 +152,7 @@ fun ItemDetailScreen(
 private enum class DetailAction { Move, Trash }
 
 @Composable
-private fun ItemDetail(
+internal fun ItemDetail(
     item: DecryptedItem,
     folderPath: String,
     offline: Boolean,

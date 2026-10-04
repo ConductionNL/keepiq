@@ -56,8 +56,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Shared core tests (jvm and Android unit tests)
         run: ./gradlew --no-daemon :shared:allTests
-      - name: The placeholder app links the shared core
+      - name: The app builds and links the shared core
         run: ./gradlew --no-daemon :android:app:assembleDebug
+      - name: App screen tests on the JVM (Robolectric)
+        run: ./gradlew --no-daemon :android:app:testDebugUnitTest
       - name: No Google Play Services or Firebase in the dependency tree
         run: |
           ./gradlew --no-daemon -q :shared:dependencies :android:app:dependencies > deps.txt
