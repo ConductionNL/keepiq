@@ -175,6 +175,9 @@ export async function updateAccount(id, patch) {
 		account.appPassword = String(patch.appPassword)
 	}
 	if (patch.loggedOut !== undefined) account.loggedOut = patch.loggedOut === true
+	if (patch.loggedOutReason !== undefined) {
+		account.loggedOutReason = String(patch.loggedOutReason)
+	}
 	await saveAccounts(accounts)
 	return account
 }
