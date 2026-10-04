@@ -23,7 +23,12 @@
  */
 import type { BrowserContext, Page, Worker } from '@playwright/test'
 
-import { chromium, expect, request as playwrightRequest, test } from '@playwright/test'
+import {
+	chromium,
+	expect,
+	request as playwrightRequest,
+	test,
+} from '@playwright/test'
 import { execFileSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
@@ -64,12 +69,28 @@ const STEP_TWO = `<!doctype html><html><head><title>Code</title></head><body>
  * @param profile The profile directory (holds DevToolsActivePort).
  * @return The popup page and the CDP browser to close afterwards.
  */
-async function openPopup(context: BrowserContext, worker: Worker, profile: string): Promise<{ popup: Page, close: () => Promise<void> }> {
-	await worker.evaluate(() => (globalThis as unknown as { chrome: { action: { openPopup: () => Promise<void> } } }).chrome.action.openPopup())
-	const port = readFileSync(path.join(profile, 'DevToolsActivePort'), 'utf8').split('\n')[0]
+async function openPopup(
+	context: BrowserContext,
+	worker: Worker,
+	profile: string,
+): Promise<{ popup: Page; close: () => Promise<void> }> {
+	await worker.evaluate(() =>
+		(
+			globalThis as unknown as {
+				chrome: { action: { openPopup: () => Promise<void> } }
+			}
+		).chrome.action.openPopup(),
+	)
+	const port = readFileSync(
+		path.join(profile, 'DevToolsActivePort'),
+		'utf8',
+	).split('\n')[0]
 	for (let i = 0; i < 40; i++) {
 		const cdp = await chromium.connectOverCDP(`http://127.0.0.1:${port}`)
-		const popup = cdp.contexts().flatMap((c) => c.pages()).find((p) => p.url().endsWith('/popup.html'))
+		const popup = cdp
+			.contexts()
+			.flatMap((c) => c.pages())
+			.find((p) => p.url().endsWith('/popup.html'))
 		if (popup) {
 			return { popup, close: () => cdp.close() }
 		}
@@ -88,11 +109,17 @@ async function openPopup(context: BrowserContext, worker: Worker, profile: strin
 async function expectedCodes(): Promise<string[]> {
 	const params = parseOtpauth(SEED)
 	const now = Date.now()
-	return [await generateTotp(params, now), await generateTotp(params, now - 30_000)]
+	return [
+		await generateTotp(params, now),
+		await generateTotp(params, now - 30_000),
+	]
 }
 
 test.describe('extension: one-time code on the next step', () => {
-	test('the code field on step two is filled after a login fill', async ({ browser, baseURL }) => {
+	test('the code field on step two is filled after a login fill', async ({
+		browser,
+		baseURL,
+	}) => {
 		test.setTimeout(300_000)
 		const admin = await adminApi(baseURL)
 		const user = newVaultUser('erin')
@@ -106,14 +133,33 @@ test.describe('extension: one-time code on the next step', () => {
 			const web = await signedInContext(browser, user)
 			await setUpVault(web.page, user)
 			await gotoVaultRoute(web.page, 'secrets')
-			await expect(web.page.locator('.secret-list-view')).toBeVisible({ timeout: 30_000 })
-			const types = (await api(web.page, 'GET', '/secret-types')).body as Array<{ id: string, name: string }>
+			await expect(web.page.locator('.secret-list-view')).toBeVisible({
+				timeout: 30_000,
+			})
+			const types = (await api(web.page, 'GET', '/secret-types'))
+				.body as Array<{ id: string; name: string }>
 			const typeId = (name: string) => types.find((t) => t.name === name)?.id
 			for (const secret of [
-				{ name: 'Two-step portal', url: SITE, login: 'erin', key: 'Two-step-password-1', typeId: typeId('login') },
-				{ name: 'Two-step portal code', url: SITE, key: SEED, typeId: typeId('totp') },
+				{
+					name: 'Two-step portal',
+					url: SITE,
+					login: 'erin',
+					key: 'Two-step-password-1',
+					typeId: typeId('login'),
+				},
+				{
+					name: 'Two-step portal code',
+					url: SITE,
+					key: SEED,
+					typeId: typeId('totp'),
+				},
 			]) {
-				await withStore(web.page, 'secret', 'async (store, data) => (await store.createSecret(data)).id', secret)
+				await withStore(
+					web.page,
+					'secret',
+					'async (store, data) => (await store.createSecret(data)).id',
+					secret,
+				)
 			}
 			await web.context.close()
 
@@ -121,27 +167,55 @@ test.describe('extension: one-time code on the next step', () => {
 			const userApi = await playwrightRequest.newContext({
 				baseURL,
 				storageState: { cookies: [], origins: [] },
-				httpCredentials: { username: user.uid, password: user.password, send: 'always' },
+				httpCredentials: {
+					username: user.uid,
+					password: user.password,
+					send: 'always',
+				},
 				extraHTTPHeaders: { 'OCS-APIRequest': 'true' },
 			})
-			const appPassword = await userApi.get('/ocs/v2.php/core/getapppassword?format=json')
+			const appPassword = await userApi.get(
+				'/ocs/v2.php/core/getapppassword?format=json',
+			)
 			expect(appPassword.status()).toBe(200)
-			const pairingSecret = (await appPassword.json()).ocs.data.apppassword as string
+			const pairingSecret = (await appPassword.json()).ocs.data
+				.apppassword as string
 			await userApi.dispose()
 
 			// The unpacked Chromium build, loaded into its own profile.
-			execFileSync(process.execPath, [path.join(APP_ROOT, 'browser-extension', 'build.mjs'), '--target', 'chrome', '--outdir', outdir], { cwd: APP_ROOT })
+			execFileSync(
+				process.execPath,
+				[
+					path.join(APP_ROOT, 'browser-extension', 'build.mjs'),
+					'--target',
+					'chrome',
+					'--outdir',
+					outdir,
+				],
+				{ cwd: APP_ROOT },
+			)
 			const unpacked = path.join(outdir, 'chromium')
 			extension = await chromium.launchPersistentContext(profile, {
 				channel: 'chromium',
 				headless: true,
-				args: [`--disable-extensions-except=${unpacked}`, `--load-extension=${unpacked}`, '--remote-debugging-port=0'],
+				args: [
+					`--disable-extensions-except=${unpacked}`,
+					`--load-extension=${unpacked}`,
+					'--remote-debugging-port=0',
+				],
 			})
 			await extension.route(`${SITE}/**`, async (route) => {
 				const url = new URL(route.request().url())
-				await route.fulfill({ contentType: 'text/html', body: url.pathname.startsWith('/code') ? STEP_TWO : STEP_ONE })
+				await route.fulfill({
+					contentType: 'text/html',
+					body: url.pathname.startsWith('/code') ? STEP_TWO : STEP_ONE,
+				})
 			})
-			const worker = extension.serviceWorkers()[0] ?? (await extension.waitForEvent('serviceworker', { timeout: 15_000 }))
+			const worker =
+				extension.serviceWorkers()[0]
+				?? (await extension.waitForEvent('serviceworker', {
+					timeout: 15_000,
+				}))
 
 			const page = extension.pages()[0] ?? (await extension.newPage())
 			await page.goto(`${SITE}/`)
@@ -153,42 +227,99 @@ test.describe('extension: one-time code on the next step', () => {
 			await popup.fill('#pair-user', user.uid)
 			await popup.fill('#pair-app-password', pairingSecret)
 			await popup.click('#pair-submit')
-			await expect(popup.locator('#view-locked, #pair-error:not([hidden])').first()).toBeVisible({ timeout: 30_000 })
-			expect(await popup.locator('#pair-error').isVisible() ? await popup.locator('#pair-error').textContent() : '', 'pairing error').toBe('')
+			await expect(
+				popup.locator('#view-locked, #pair-error:not([hidden])').first(),
+			).toBeVisible({ timeout: 30_000 })
+			expect(
+				(await popup.locator('#pair-error').isVisible())
+					? await popup.locator('#pair-error').textContent()
+					: '',
+				'pairing error',
+			).toBe('')
 			await expect(popup.locator('#view-locked')).toBeVisible()
 			await popup.fill('#unlock-master', user.masterPassword)
 			await popup.click('#unlock-submit')
-			await expect(popup.locator('#view-unlocked')).toBeVisible({ timeout: 60_000 })
+			await expect(popup.locator('#view-unlocked')).toBeVisible({
+				timeout: 60_000,
+			})
 
 			// Fill the login. Step one has no code field, so the extension
 			// remembers, for this tab and site, that a code comes next.
-			const fill = popup.locator('.candidate-fill', { hasText: 'Two-step portal — ' }).filter({ hasNotText: 'code' })
+			const fill = popup
+				.locator('.candidate-fill', { hasText: 'Two-step portal — ' })
+				.filter({ hasNotText: 'code' })
 			await expect(fill.first()).toBeVisible({ timeout: 30_000 })
 			await fill.first().click()
 			await close()
-			await expect(page.locator('#username')).toHaveValue('erin', { timeout: 15_000 })
-			await expect(page.locator('#password')).toHaveValue('Two-step-password-1')
+			await expect(page.locator('#username')).toHaveValue('erin', {
+				timeout: 15_000,
+			})
+			await expect(page.locator('#password')).toHaveValue(
+				'Two-step-password-1',
+			)
 
 			// Wait for the worker to finish the fill and store the intent for
 			// step two. Without this wait the worker's own "fill the code on this
 			// page" message can land on step two after the click, which would
 			// fill the field without the next-step path ever running.
 			const intentsKey = 'keepiq.otpIntents'
-			await expect.poll(
-				async () => worker.evaluate(async (key) => {
-					const session = (globalThis as unknown as { chrome: { storage: { session: { get: (k: string) => Promise<Record<string, unknown>> } } } }).chrome.storage.session
-					return Object.values(((await session.get(key))[key] ?? {}) as Record<string, Record<string, unknown>>)
-				}, intentsKey),
-				{ timeout: 30_000 },
-			).toHaveLength(1)
+			await expect
+				.poll(
+					async () =>
+						worker.evaluate(async (key) => {
+							const session = (
+								globalThis as unknown as {
+									chrome: {
+										storage: {
+											session: {
+												get: (
+													k: string,
+												) => Promise<Record<string, unknown>>
+											}
+										}
+									}
+								}
+							).chrome.storage.session
+							return Object.values(
+								((await session.get(key))[key] ?? {}) as Record<
+									string,
+									Record<string, unknown>
+								>,
+							)
+						}, intentsKey),
+					{ timeout: 30_000 },
+				)
+				.toHaveLength(1)
 			const [intent] = await worker.evaluate(async (key) => {
-				const session = (globalThis as unknown as { chrome: { storage: { session: { get: (k: string) => Promise<Record<string, unknown>> } } } }).chrome.storage.session
-				return Object.values(((await session.get(key))[key] ?? {}) as Record<string, Record<string, unknown>>)
+				const session = (
+					globalThis as unknown as {
+						chrome: {
+							storage: {
+								session: {
+									get: (
+										k: string,
+									) => Promise<Record<string, unknown>>
+								}
+							}
+						}
+					}
+				).chrome.storage.session
+				return Object.values(
+					((await session.get(key))[key] ?? {}) as Record<
+						string,
+						Record<string, unknown>
+					>,
+				)
 			}, intentsKey)
 			// The intent names the site and the secret, never a seed or a code.
 			expect(intent.site).toBe('twostep.test')
 			expect(JSON.stringify(intent)).not.toContain('JBSWY3DPEHPK3PXP')
-			expect(Object.keys(intent).sort()).toEqual(['expiresAt', 'site', 'tabId', 'totpSecretId'])
+			expect(Object.keys(intent).sort()).toEqual([
+				'expiresAt',
+				'site',
+				'tabId',
+				'totpSecretId',
+			])
 
 			// Step two: only the code field. The extension fills it.
 			await page.click('#next')
