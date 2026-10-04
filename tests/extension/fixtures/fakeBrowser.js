@@ -113,6 +113,13 @@ export function installChrome({ tabUrl = 'https://example.com/login' } = {}) {
 				if (!found) throw new Error('No tab with id: ' + id)
 				return found
 			}),
+			// A test closes a tab by calling these listeners.
+			onRemoved: {
+				listeners: [],
+				addListener(fn) {
+					this.listeners.push(fn)
+				},
+			},
 			sendMessage: vi.fn(async (tabId, msg, options) => {
 				filled.push(options ? { ...msg, tabId, options } : msg)
 				if (msg.type === 'fill-otp') return { filled: fake.otpFieldOnPage }
