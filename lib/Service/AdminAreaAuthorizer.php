@@ -107,7 +107,7 @@ class AdminAreaAuthorizer {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.3
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.3
 	 */
 	public function holds(string $userId, string $areaClass): bool {
 		if ($userId === '' || in_array($areaClass, self::AREAS, true) === false) {
@@ -134,7 +134,7 @@ class AdminAreaAuthorizer {
 	 *
 	 * @return string[]
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#1.3
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.3
 	 */
 	public function areasOf(string $userId): array {
 		$held = [];

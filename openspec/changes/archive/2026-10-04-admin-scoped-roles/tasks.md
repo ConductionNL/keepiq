@@ -21,7 +21,7 @@
 
 ## 4. Alias removal
 
-- [ ] 4.1 One minor release after 1.2, remove the `vault_admin` alias and its notice. Verify with a PHPUnit test that a `vault_admin` member without a delegation is refused.
+- [x] 4.1 One minor release after 1.2, remove the `vault_admin` alias and its notice. Verify with a PHPUnit test that a `vault_admin` member without a delegation is refused. Moved to keepiq#1043 on 4 Oct 2026: it waits for the next minor release after #962 (decision 4 Oct: outside steps go to follow-up issues).
 
 ## Acceptance criteria
 

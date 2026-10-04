@@ -8,7 +8,7 @@
 
   @spec openspec/specs/secret-version-history/spec.md#requirement-admin-configurable-retention-and-pruning
   @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
-  @spec openspec/changes/admin-scoped-roles/tasks.md#3.1
+  @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.1
 -->
 <template>
 	<CnSettingsSection

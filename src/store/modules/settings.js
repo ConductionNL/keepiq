@@ -19,7 +19,7 @@ export const useSettingsStore = defineStore('settings', {
 		 *
 		 * @param {object} state The store state
 		 * @return {function(string): boolean} Area key to held
-		 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.5
+		 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.5
 		 */
 		holdsArea: (state) => (area) => state.adminAreas.includes(area),
 	},
