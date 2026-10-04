@@ -30,7 +30,7 @@ use RuntimeException;
  * actor `mcp`, the principal, the tool name and the result count. Never an
  * entry name, subject or value.
  *
- * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-invocations-are-audited-as-agent-reads
+ * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-invocations-are-audited-as-agent-reads
  */
 class McpToolContext {
 
@@ -57,7 +57,7 @@ class McpToolContext {
 	 *
 	 * @throws RuntimeException Without a session user
 	 *
-	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-metadata-only-entry-listing-tool
+	 * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-metadata-only-entry-listing-tool
 	 */
 	public function userId(): string {
 		$user = $this->userSession->getUser();
@@ -77,7 +77,7 @@ class McpToolContext {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-invocations-are-audited-as-agent-reads
+	 * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-invocations-are-audited-as-agent-reads
 	 */
 	public function audit(string $userId, string $tool, int $resultCount): void {
 		$this->dispatcher->dispatchTyped(
