@@ -9,7 +9,7 @@
   switched on, the section says how many users in scope have no second
   factor yet, because they lose vault access at once.
 
-  @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+  @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 -->
 <template>
 	<CnSettingsSection
@@ -126,7 +126,7 @@ export default {
 		 * The three policies with their labels.
 		 *
 		 * @return {Array<{key: string, label: string, hint: string}>}
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 		 */
 		policies() {
 			return [
@@ -165,7 +165,7 @@ export default {
 		 * Group ids for the scope pickers.
 		 *
 		 * @return {Array<string>}
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 		 */
 		groupOptions() {
 			return useGroupStore().groups.map((group) =>
@@ -177,7 +177,7 @@ export default {
 		 * Secret type names for the ownership picker.
 		 *
 		 * @return {Array<string>}
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 		 */
 		typeOptions() {
 			return useSecretTypeStore().types.map((type) => type.name)
@@ -188,7 +188,7 @@ export default {
 	 * Load the policies, the groups, the types and the two-factor gap count.
 	 *
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 	 */
 	async created() {
 		useGroupStore()
@@ -218,7 +218,7 @@ export default {
 		 * Count the users in the two-factor scope without a second factor.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 		 */
 		async loadGaps() {
 			try {
@@ -241,7 +241,7 @@ export default {
 		 *
 		 * @param {string} key The policy key.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 		 */
 		onToggle(key) {
 			return this.save(key)
@@ -252,7 +252,7 @@ export default {
 		 *
 		 * @param {string} key The policy key.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 		 */
 		async onGroupsChange(key) {
 			await this.save(key)
@@ -265,7 +265,7 @@ export default {
 		 * Persist the vault policy keys; the server validates and audits.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 		 */
 		async save() {
 			this.error = null

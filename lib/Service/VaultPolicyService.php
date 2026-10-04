@@ -108,7 +108,7 @@ class VaultPolicyService {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 	 */
 	public function read(): array {
 		$settings = [];
@@ -135,7 +135,7 @@ class VaultPolicyService {
 	 *
 	 * @throws InvalidArgumentException On an unknown group or a malformed list
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 	 */
 	public function update(array $data): void {
 		$keys = array_keys($this->read());
@@ -184,7 +184,7 @@ class VaultPolicyService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 	 */
 	public function appliesTo(string $policy, string $userId): bool {
 		if (in_array($policy, self::POLICIES, true) === false
@@ -215,7 +215,7 @@ class VaultPolicyService {
 	 *
 	 * @return array<string,mixed>
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 	 */
 	public function effectiveFor(string $userId): array {
 		$effective = [];
@@ -233,7 +233,7 @@ class VaultPolicyService {
 	 *
 	 * @return string[]
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-work-logins-are-kept-in-team-folders
 	 */
 	public function ownershipTypes(): array {
 		return $this->readList(key: self::ORG_OWNERSHIP_TYPES, default: self::DEFAULT_ORG_OWNERSHIP_TYPES);

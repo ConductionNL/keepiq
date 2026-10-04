@@ -18,7 +18,14 @@ import {
 	partsFromDraft,
 	validateDraft,
 } from '../lib/item-form.js'
-import { filterIndex, folderChoices, presentTypes } from '../lib/vault-index.js'
+import {
+	filterIndex,
+	folderChoices,
+	listState,
+	NO_FOLDER,
+	presentTypes,
+} from '../lib/vault-index.js'
+import { copyText } from './clipboard.js'
 import { relativeTime } from '../lib/generator-state.js'
 import { initFolders } from './folder-view.js'
 import { clearDetail, renderDetail } from './item-detail.js'
@@ -65,6 +72,10 @@ export function initVault({
 	doc = document,
 }) {
 	let index = []
+	// Whether the first list has arrived.
+	let loaded = false
+	// The type of a new item (Settings).
+	let preferredType = 'login'
 	let folders = []
 	let types = []
 	let webAppUrl = ''
@@ -128,8 +139,10 @@ export function initVault({
 	}
 
 	/** @return {Array<{value: string, label: string}>} Folder choices. */
-	const folderOptions = () =>
-		folderChoices(folders).map((f) => ({ value: f.id, label: f.label }))
+	const folderOptions = () => [
+		{ value: NO_FOLDER, label: 'No folder' },
+		...folderChoices(folders).map((f) => ({ value: f.id, label: f.label })),
+	]
 
 	/** Render the filtered list. */
 	function renderList() {
@@ -140,18 +153,74 @@ export function initVault({
 		})
 		const list = $('vault-list')
 		list.replaceChildren()
-		$('vault-status').textContent =
-			entries.length === 0 ? 'Nothing matches.' : `${entries.length} items`
-		for (const entry of entries) {
-			const li = doc.createElement('li')
-			li.className = 'candidate'
-			const button = doc.createElement('button')
-			button.className = 'candidate-fill'
-			button.textContent = entry.name + (entry.url ? ` (${entry.url})` : '')
-			button.addEventListener('click', () => openItem(entry.id))
-			li.appendChild(button)
-			list.appendChild(li)
+		const state = listState(loaded ? index : null, entries)
+		$('vault-status').textContent = {
+			loading: 'Loading your vault…',
+			empty: 'Your vault is empty. Add an item with New.',
+			'no-match': 'Nothing matches.',
+			'all-blocked':
+				'Every item is blocked here: its key cannot be used in this browser.',
+			items: `${entries.length} items`,
+		}[state]
+		$('vault-clear').hidden = state !== 'no-match'
+		for (const entry of entries) list.appendChild(card(entry))
+	}
+
+	/**
+	 * One item in the list: its name, type and site, Copy and Open.
+	 *
+	 * @param {object} entry The index entry.
+	 * @return {HTMLLIElement}
+	 * @spec openspec/changes/clients-extension-gaps/specs/extension-list-and-settings/spec.md#requirement-a-list-that-says-what-it-shows
+	 */
+	function card(entry) {
+		const li = doc.createElement('li')
+		li.className = 'candidate row vault-card'
+		const button = doc.createElement('button')
+		button.className = 'candidate-fill'
+		const name = doc.createElement('span')
+		name.className = 'vault-card-name'
+		name.textContent = entry.name
+		const meta = doc.createElement('span')
+		meta.className = 'vault-card-meta'
+		let host = ''
+		try {
+			host = entry.url ? new URL(entry.url).host : ''
+		} catch {
+			host = entry.url
 		}
+		meta.textContent = [entry.typeName, host, entry.blocked ? 'blocked' : '']
+			.filter(Boolean)
+			.join(' · ')
+		button.append(name, meta)
+		button.addEventListener('click', () => openItem(entry.id))
+		li.appendChild(button)
+		const kind = formKind(entry.typeName)
+		if (!entry.blocked && (kind === 'login' || kind === 'generic')) {
+			const copy = doc.createElement('button')
+			copy.type = 'button'
+			copy.className = 'link'
+			copy.textContent = 'Copy'
+			copy.setAttribute('aria-label', `Copy the password of ${entry.name}`)
+			copy.addEventListener('click', async () => {
+				const item = await send('vault-item', { id: entry.id })
+				if (item.error) return showError('vault-status', item.error)
+				if (item.secret) await copyText(item.secret)
+			})
+			li.appendChild(copy)
+		}
+		if (host && /^https?:\/\//i.test(entry.url)) {
+			const open = doc.createElement('button')
+			open.type = 'button'
+			open.className = 'link'
+			open.textContent = 'Open'
+			open.setAttribute('aria-label', `Open ${host}`)
+			open.addEventListener('click', () =>
+				chrome.tabs.create({ url: entry.url }),
+			)
+			li.appendChild(open)
+		}
+		return li
 	}
 
 	/**
@@ -301,8 +370,10 @@ export function initVault({
 	function openEdit(item, { clone = false } = {}) {
 		showError('edit-error', '')
 		const creating = !item || clone
+		// A new item starts with the type picked in Settings.
 		const typeId =
 			item?.typeId
+			|| types.find((t) => t.name === preferredType)?.id
 			|| types.find((t) => t.name === 'login')?.id
 			|| types[0]?.id
 			|| ''
@@ -375,13 +446,15 @@ export function initVault({
 
 	/** Load the index, folders and types from the worker. */
 	async function load() {
-		$('vault-status').textContent = 'Loading…'
+		$('vault-status').textContent = 'Loading your vault…'
 		const result = await send('vault-list')
 		if (result.error) {
 			$('vault-status').textContent = result.error
 			return
 		}
 		index = result.items || []
+		loaded = true
+		preferredType = (await send('extension-settings')).defaultType || 'login'
 		folders = result.folders || []
 		types = result.types || []
 		webAppUrl = result.webAppUrl || ''
@@ -398,6 +471,12 @@ export function initVault({
 	for (const id of ['vault-search', 'vault-folder', 'vault-type']) {
 		$(id).addEventListener('input', renderList)
 	}
+	$('vault-clear').addEventListener('click', () => {
+		$('vault-search').value = ''
+		$('vault-folder').value = ''
+		$('vault-type').value = ''
+		renderList()
+	})
 	const folderView = initFolders({
 		$,
 		send,
@@ -554,5 +633,25 @@ export function initVault({
 			await load()
 		},
 		canLeave,
+
+		/**
+		 * Drop everything this view holds of the vault: the open item, the
+		 * form, the list. Called when the worker locks.
+		 *
+		 * @spec openspec/changes/clients-extension-gaps/specs/extension-lock/spec.md#requirement-the-popup-forgets-the-vault-when-it-locks
+		 */
+		forget() {
+			current = null
+			form = null
+			index = []
+			loaded = false
+			clearDetail({ $ })
+			for (const el of $('vault-edit').querySelectorAll('input, textarea')) {
+				if (el.type !== 'checkbox' && el.type !== 'radio') el.value = ''
+			}
+			$('edit-fields').replaceChildren()
+			$('vault-list').replaceChildren()
+			showView('vault-browse')
+		},
 	}
 }

@@ -277,7 +277,7 @@ class ComplianceReportControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.3
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.3
 	 */
 	public function testMetricsServeAnAuditAreaHolder(): void {
 		$this->delegatedAreas = [AuditAdminSettings::class];
@@ -293,7 +293,7 @@ class ComplianceReportControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.3
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.3
 	 */
 	public function testMetricsRefuseAnApplicationsAreaHolder(): void {
 		$this->delegatedAreas = [ApplicationAdminSettings::class];

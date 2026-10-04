@@ -73,7 +73,7 @@ export const ADMIN_AREAS = [
  * @param {string} key The area key
  * @return {string[]} The section names
  *
- * @spec openspec/changes/admin-scoped-roles/tasks.md#3.1
+ * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.1
  */
 export function sectionsOf(key) {
 	return ADMIN_AREAS.find((area) => area.key === key)?.sections ?? []
@@ -87,7 +87,7 @@ export function sectionsOf(key) {
  * @param {function(string, string): void} deps.mount Mounts one area at a selector
  * @return {string[]} The area keys that were mounted
  *
- * @spec openspec/changes/admin-scoped-roles/tasks.md#3.1
+ * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.1
  */
 export function mountAdminAreas({ loadState, mount }) {
 	const mounted = []
@@ -107,7 +107,7 @@ export function mountAdminAreas({ loadState, mount }) {
  * @param {'general'|'policies'|'applications'|'audit'} key The area key
  * @return {string} The path below /apps/keepiq
  *
- * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+ * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
  */
 export function areaSettingsPath(key) {
 	return '/apps/keepiq/api/settings/admin/' + key

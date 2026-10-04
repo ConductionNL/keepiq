@@ -424,7 +424,7 @@ class Secret extends Entity implements JsonSerializable {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-an-expiring-copy-cannot-be-shared-onward
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-an-expiring-copy-cannot-be-shared-onward
 	 */
 	public function isRestrictedCopy(): bool {
 		return $this->useOnly === true || $this->accessExpiresAt !== null || $this->readOnly === true;
@@ -455,7 +455,7 @@ class Secret extends Entity implements JsonSerializable {
 	 * @throws InvalidArgumentException When it is a restricted copy
 	 * @throws ForbiddenException When it is a read-only copy from another organisation
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function assertOnwardShareable(): void {
 		$this->assertNotReadOnly();
@@ -472,7 +472,7 @@ class Secret extends Entity implements JsonSerializable {
 	 *
 	 * @throws ForbiddenException When it is a use-only copy
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function assertEditableByHolder(): self {
 		$this->assertNotReadOnly();

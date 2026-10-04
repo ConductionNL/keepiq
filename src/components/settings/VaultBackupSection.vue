@@ -7,7 +7,7 @@
   archive list and "Back up now". It offers no download: archives are read
   and restored from the command line only (design D6).
 
-  @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
+  @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 -->
 <template>
 	<CnSettingsSection
@@ -160,7 +160,7 @@ export default {
 		 * The last run, in words.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
+		 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 		 */
 		lastResultText() {
 			const when = this.formatTime(this.status.lastRunAt)
@@ -177,7 +177,7 @@ export default {
 	 * Load the settings, the last result and the archive list.
 	 *
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	async created() {
 		try {
@@ -202,7 +202,7 @@ export default {
 		 * Save the schedule, retention and key; the server validates.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
+		 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 		 */
 		async save() {
 			this.error = null
@@ -224,7 +224,7 @@ export default {
 		 * Ask the next cron run to back up.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
+		 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 		 */
 		async runNow() {
 			this.error = null
@@ -243,7 +243,7 @@ export default {
 		 *
 		 * @param {number} bytes The size.
 		 * @return {string}
-		 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
+		 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 		 */
 		formatSize(bytes) {
 			if (bytes >= 1048576) {
@@ -257,7 +257,7 @@ export default {
 		 *
 		 * @param {number} seconds The unix time.
 		 * @return {string}
-		 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
+		 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 		 */
 		formatTime(seconds) {
 			return new Date(seconds * 1000).toLocaleString()

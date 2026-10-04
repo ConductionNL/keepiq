@@ -69,7 +69,7 @@ class AdminAreaSettingsController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	public function getGeneralSettings(): JSONResponse {
@@ -87,8 +87,8 @@ class AdminAreaSettingsController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
-	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
 	 */
 	#[AuthorizedAdminSetting(AdminSettings::class)]
 	#[UserRateLimit(limit: 60, period: 60)]
@@ -111,7 +111,7 @@ class AdminAreaSettingsController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	#[AuthorizedAdminSetting(PolicyAdminSettings::class)]
 	public function getPolicySettings(): JSONResponse {
@@ -125,7 +125,7 @@ class AdminAreaSettingsController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	#[AuthorizedAdminSetting(PolicyAdminSettings::class)]
 	#[UserRateLimit(limit: 60, period: 60)]
@@ -140,7 +140,7 @@ class AdminAreaSettingsController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	#[AuthorizedAdminSetting(ApplicationAdminSettings::class)]
 	public function getApplicationSettings(): JSONResponse {
@@ -154,7 +154,7 @@ class AdminAreaSettingsController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	#[AuthorizedAdminSetting(ApplicationAdminSettings::class)]
 	#[UserRateLimit(limit: 60, period: 60)]
@@ -169,7 +169,7 @@ class AdminAreaSettingsController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	#[AuthorizedAdminSetting(AuditAdminSettings::class)]
 	public function getAuditSettings(): JSONResponse {
@@ -183,7 +183,7 @@ class AdminAreaSettingsController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	#[AuthorizedAdminSetting(AuditAdminSettings::class)]
 	#[UserRateLimit(limit: 60, period: 60)]

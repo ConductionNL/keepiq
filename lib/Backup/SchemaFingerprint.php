@@ -52,7 +52,7 @@ class SchemaFingerprint {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#1.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-hold-ciphertext-and-metadata-only
 	 */
 	public function current(): string {
 		$qb = $this->db->getQueryBuilder();

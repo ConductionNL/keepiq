@@ -77,7 +77,7 @@ export const useSessionStore = defineStore('session', {
 		 *
 		 * @param {string} masterPassword
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#3.3
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
 		 */
 		async unlock(masterPassword) {
 			// Fetch the user's encryption suite from the API.
@@ -196,7 +196,7 @@ export const useSessionStore = defineStore('session', {
 		 * awaited, so it never delays or breaks an unlock.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.2
+		 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
 		 */
 		afterUnlock() {
 			try {
@@ -215,7 +215,7 @@ export const useSessionStore = defineStore('session', {
 		 *
 		 * @param {string} privateKeyPem The recovered private key.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
 		 */
 		async unlockWithPrivateKeyPem(privateKeyPem) {
 			const response = await axios.get(

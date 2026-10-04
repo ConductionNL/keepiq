@@ -202,7 +202,7 @@ class EmergencyContactMapper extends QBMapper {
 	 *
 	 * @return string[] The grantor user IDs that have a contact in force
 	 *
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.1
+	 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 	 */
 	public function grantorsWithContact(array $userIds): array {
 		if ($userIds === []) {

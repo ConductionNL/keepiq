@@ -15,7 +15,7 @@ use ReflectionMethod;
  * The account recovery settings are admin only, and every change needs a
  * fresh password confirmation (crypto-organisation-account-recovery 1.2).
  *
- * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
  */
 class RecoveryAdminAttributesTest extends TestCase {
 
