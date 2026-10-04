@@ -7574,11 +7574,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "decided-no",
-        "evidence": "openspec/specs/mobile-pwa/spec.md:11 and :49 ('no native app and no app-store presence'); no iOS/Android project in the repo (ls: src, browser-extension, cli only); the PWA cannot register as a system autofill provider",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/clients-mobile-apps on 2026-10-04. Before: no iOS or Android project in the repo (src, browser-extension, cli only), and openspec/specs/mobile-pwa/spec.md ruled out a native app; the PWA cannot register as a system autofill provider",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "none",
-        "note": "Keepiq chose an installable PWA instead of native apps on record, so there is no system autofill on iOS or Android."
+        "note": "Decision reversed by the product owner on 2026-10-04: native iOS (17+) and Android (9+) apps on a shared Kotlin Multiplatform core, with system autofill, passkeys (iOS 17, Android 14), the vault, Send and the generator, published on the App Store, Google Play and F-Droid. Was decided-no on the mobile-pwa record of 2026-09-27.",
+        "change": "openspec/changes/clients-mobile-apps"
       },
       "rowSource": "competitor",
       "provider": "keepiq",

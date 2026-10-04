@@ -264,10 +264,18 @@
   "decidedOn": "2026-09-27"
  },
  {
+  "row": "clients-10",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: reversed by the product owner on 2026-10-04, who asked for iOS and Android apps so people can use their stored passwords on the phone, with the Android app on F-Droid as well as Google Play. 4 competitors rate yes (Bitwarden, 1Password, Passbolt, Keeper). Before this the row was decided no on the mobile-pwa record, which chose an installable web app instead.",
+  "change": "clients-mobile-apps",
+  "decidedOn": "2026-10-04"
+ },
+ {
   "row": "clients-11",
   "matrix": "keepiq",
   "decision": "decided-no",
-  "reason": "Decided no: Recorded non-goal: openspec/specs/mobile-pwa/spec.md:11 and :49 choose an installable web app instead of native apps ('no native app and no app-store presence', 'MUST NOT introduce ... a native app'), the same record clients-10 is decided no on. The installed web app opens in its own desktop window.",
+  "reason": "Decided no: no native desktop app is planned. The installed web app opens in its own desktop window. The native apps specified in clients-mobile-apps (2026-10-04) are for phones only, so they do not change this row.",
   "change": null,
   "decidedOn": "2026-09-27"
  },
@@ -299,7 +307,7 @@
   "row": "clients-20",
   "matrix": "keepiq",
   "decision": "decided-no",
-  "reason": "Decided no: Recorded non-goal: typing into desktop applications needs a native desktop client, and openspec/specs/mobile-pwa/spec.md:11 and :49 record no native app (the record clients-10 and clients-11 are decided no on).",
+  "reason": "Decided no: typing into desktop applications needs a native desktop client, and none is planned (see clients-11). The native apps specified in clients-mobile-apps (2026-10-04) are for phones only.",
   "change": null,
   "decidedOn": "2026-09-27"
  },
