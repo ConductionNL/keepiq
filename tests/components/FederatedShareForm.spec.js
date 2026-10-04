@@ -30,6 +30,28 @@ const PASSWORD = 'correct horse battery staple'
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 20))
 
+/**
+ * Wait until one of the given elements is rendered. The verifier and the
+ * RSA encryption are real WebCrypto work, which takes longer than any fixed
+ * pause on a busy machine.
+ *
+ * @param {object} wrapper The mounted form.
+ * @param {string[]} testIds The data-testids that end the wait.
+ * @return {Promise<void>}
+ */
+function settled(wrapper, testIds) {
+	return vi.waitFor(
+		() => {
+			if (
+				!testIds.some((id) => wrapper.find(`[data-testid="${id}"]`).exists())
+			) {
+				throw new Error(`none of ${testIds.join(', ')} yet`)
+			}
+		},
+		{ timeout: 15_000, interval: 20 },
+	)
+}
+
 const stubs = {
 	NcButton: {
 		props: ['disabled'],
@@ -80,7 +102,7 @@ async function mountWith(answer) {
 	})
 	await wrapper.find('[data-testid="federated-share-cloud-id"]').setValue(BOB)
 	await wrapper.find('[data-testid="federated-share-check"]').trigger('click')
-	await flush()
+	await settled(wrapper, ['federated-share-fingerprint', 'federated-share-error'])
 	return { wrapper, post, fetchSecret }
 }
 
@@ -118,7 +140,7 @@ describe('FederatedShareForm', () => {
 		expect(fingerprint).toMatch(/^([0-9A-F]{2}:){31}[0-9A-F]{2}$/)
 
 		await wrapper.find('[data-testid="federated-share-submit"]').trigger('click')
-		await flush()
+		await settled(wrapper, ['federated-share-done', 'federated-share-error'])
 
 		const calls = shareCalls(post)
 		expect(calls).toHaveLength(1)
