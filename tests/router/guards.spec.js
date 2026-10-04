@@ -87,6 +87,9 @@ const PROTECTED_ROUTES = [
 	// secrets, so they sit behind the lock like the list itself.
 	'SecretArchive',
 	'SecretTrash',
+	// Incoming from other organisations (sharing-federated-recipients 3.2)
+	// lists what partners shared with this user and accepts it into the vault.
+	'IncomingShares',
 	'ApplicationRegister',
 	'ApplicationDetail',
 	// Flows are PROTECTED, not public. A flow in this app can read and write

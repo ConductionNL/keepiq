@@ -109,6 +109,14 @@ class ShareController extends OCSController {
 		);
 	}//end index()
 
+	// The attributes sit above the docblock: the spec-coverage gate reads the
+	// docblock directly above a declaration, and stops at a multi-line attribute.
+	#[NoAdminRequired]
+	#[VaultKeyProofRequired(
+		binds: ['secretId', 'targetUserId'],
+		purpose: VaultKeyProofService::PURPOSE_SHARE_NEW_RECIPIENT,
+		exemption: KnownShareRecipientExemption::class
+	)]
 	/**
 	 * Create a share target.
 	 *
@@ -134,8 +142,6 @@ class ShareController extends OCSController {
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
 	 *   field the server stores, not a mode switch.
 	 */
-	#[NoAdminRequired]
-	#[VaultKeyProofRequired(binds: ['secretId', 'targetUserId'], purpose: VaultKeyProofService::PURPOSE_SHARE_NEW_RECIPIENT, exemption: KnownShareRecipientExemption::class)]
 	public function create(
 		string $secretId,
 		string $targetUserId,
