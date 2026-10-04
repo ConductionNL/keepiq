@@ -1603,7 +1603,19 @@ OC.L10N.register(
         "Approve {member}": "Approve {member}",
         "Recipient": "Recipient",
         "No vault yet": "No vault yet",
-        "No matching users": "No matching users"
+        "No matching users": "No matching users",
+        "Partner organisations": "Partner organisations",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.",
+        "Federation needs Nextcloud 33 or later.": "Federation needs Nextcloud 33 or later.",
+        "Your root fingerprint": "Your root fingerprint",
+        "No partners yet.": "No partners yet.",
+        "Users here may share to this partner": "Users here may share to this partner",
+        "This partner may share to users here": "This partner may share to users here",
+        "Partner address": "Partner address",
+        "Check partner": "Check partner",
+        "Partner root fingerprint": "Partner root fingerprint",
+        "I compared this fingerprint with the partner's administrator": "I compared this fingerprint with the partner's administrator",
+        "Add partner": "Add partner"
     },
     "nplurals=2; plural=(n != 1);"
 )

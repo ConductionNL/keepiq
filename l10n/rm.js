@@ -1579,7 +1579,19 @@ OC.L10N.register(
         "Approve {member}": "Approvar {member}",
         "Recipient": "Destinatari",
         "No vault yet": "Anc nagina cassaforta",
-        "No matching users": "Nagins utilisaders correspundents"
+        "No matching users": "Nagins utilisaders correspundents",
+        "Partner organisations": "Organisaziuns partenarias",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Barattai secrets cun in auter Keepiq. Omadus administraturs s’agiuntan vicendaivlamain e cumparan las improntas da ragisch per telefon u persunalmain avant che memorisar.",
+        "Federation needs Nextcloud 33 or later.": "La federaziun dovra Nextcloud 33 u pli nov.",
+        "Your root fingerprint": "Vossa impronta da ragisch",
+        "No partners yet.": "Anc nagins partenaris.",
+        "Users here may share to this partner": "Utilisaders qua dastgan parter cun quest partenari",
+        "This partner may share to users here": "Quest partenari dastga parter cun utilisaders qua",
+        "Partner address": "Adressa dal partenari",
+        "Check partner": "Verifitgar il partenari",
+        "Partner root fingerprint": "Impronta da ragisch dal partenari",
+        "I compared this fingerprint with the partner's administrator": "Jau hai cumparà questa impronta cun l’administratur dal partenari",
+        "Add partner": "Agiuntar il partenari"
     },
     "nplurals=1; plural=0;"
 )

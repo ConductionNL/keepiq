@@ -31,9 +31,9 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
 /**
  * Plugs Keepiq into Nextcloud's own extension points.
  *
- * These three registrations are not Keepiq domain wiring — they are the
- * places where the PLATFORM calls into this app: the unified-search bar, the
- * notification renderer, and the request pipeline. They are grouped because
+ * These registrations are not Keepiq domain wiring — they are the places
+ * where the PLATFORM calls into this app: the unified-search bar, the
+ * notification renderer, the request pipeline and Open Cloud Mesh. They are grouped because
  * they share that direction of control and because each one is a single
  * class handed to a core registry, with no ordering relationship to the
  * domain listeners or the AppHost plumbing.
@@ -68,6 +68,11 @@ final class PlatformIntegrationRegistrar {
 		// only on methods carrying #[VaultKeyProofRequired]; every other method
 		// passes through untouched.
 		$context->registerMiddleware(VaultKeyProofMiddleware::class);
+
+		// Open Cloud Mesh: Nextcloud's OCM discovery and endpoint-request
+		// events, through which partner instances reach the federation
+		// endpoints (sharing-federated-recipients).
+		(new FederationEventRegistrar())->register(context: $context);
 
 	}//end register()
 }//end class
