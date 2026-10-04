@@ -115,6 +115,27 @@ class KeepiqClient(
         }
     }
 
+    /**
+     * One last poll, when the user closed the browser: pairs when access was
+     * granted just before, and answers null when it was not, so the app can
+     * show the address form again with nothing stored.
+     */
+    @Throws(Exception::class)
+    suspend fun finishLoginNow(start: LoginFlowStart): Account? {
+        val credentials = try {
+            loginFlow.poll(start)
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        } ?: return null
+        try {
+            return pairWith(credentials.server, credentials.loginName, credentials.appPassword)
+        } catch (e: Exception) {
+            runCatching { api(Account("", credentials.server, credentials.loginName, credentials.appPassword)).revokeAppPassword() }
+            throw e
+        }
+    }
+
     /** Stops [finishLogin] at its next poll. */
     fun cancelLogin() {
         loginCancelled = true

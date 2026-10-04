@@ -6,3 +6,5 @@ local.properties
 .idea/
 ios/**/xcuserdata/
 ios/**/DerivedData/
+# The e2e workflow writes the test server certificate here.
+android/app/src/e2e/res/raw/
