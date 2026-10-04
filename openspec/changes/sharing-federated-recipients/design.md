@@ -22,7 +22,7 @@ Code at development `4c214a9d`:
 **Non-Goals:**
 
 - Sharing with someone who has no Keepiq at all. The public link and secret send stay the tools for that.
-- Remote recipients editing the shared secret. Remote copies are read-only in this change.
+- Remote recipients editing the shared secret. Remote copies are read-only in this change: the value and the sharing, not the folder the recipient files them in.
 - Federated groups, federated team folders and federated link shares.
 - Trusting a partner automatically on first contact.
 
@@ -61,6 +61,14 @@ Alternative considered: putting the ciphertext in the OCM share body. Rejected: 
 ### D5: Updates, revocation and expiry
 
 When the owner updates the secret, the browser's sync step also encrypts for each federated recipient, using the certificate fetched again through D3, and posts it to the outbound row; the server sends an OCM notification `SHARE_UPDATED`, and the receiving server pulls again (`notificationReceived()`). Revoking sends `SHARE_UNSHARED` and the receiving server deletes the copy. If the partner is removed or the recipient's certificate no longer verifies, the owner is told and the share is suspended until they revoke or re-share. A failed notification is retried by a background job with backoff and shown to the owner after the last attempt. Nextcloud refuses an OCM notification without a `sharedSecret`, and the sending side keeps only the secret's SHA-256, so every notification carries that hash and the receiving server compares it with the hash of the secret it holds; the receiving server also requires the signer to be the share's partner. The pull still needs the secret itself.
+
+### D7: What the recipient still controls (decision of 4 Oct 2026, keepiq#789)
+
+Read-only means the value and the sharing. Three follow-ups make that precise:
+
+- **Filing.** Bob may move his copy to one of his folders: `PUT /api/v1/secrets/{id}` with only `folderId` (and the offline `baseUpdatedAt`) passes `Secret::assertEditableByHolder()`; any other field is refused with the same read-only answer. The sidebar offers Move and Delete for a copy; edit, archive and share stay hidden. A later pull replaces the value, name and URL but never the folder.
+- **Deleting declines.** When Bob moves an accepted copy to the trash (`SecretTrashService::trash()`), or purges a copy whose share is still accepted, `FederatedCopyDeclineService` marks the inbound row declined, detaches the copy, and sends OCM `SHARE_DECLINED` to the owner's instance. That notification carries the shared secret itself: the owner's side keeps only its SHA-256, compares the two, and names the recipient as the signer for Nextcloud's signature check (`getFederationIdFromSharedSecret()`). `FederatedDeclineReceiver` then marks the owner's share `declined`, drops any pending retry, and records `federated_share.recipient_declined`. A declined share is not served, is skipped by the browser's sync, and the owner may share again. The decline is sent once; if it is lost, the owner's next `SHARE_UPDATED` reaches a declined row and Bob's server sends the decline again instead of pulling. Restoring the copy from the trash does not resume the share.
+- **Name and URL.** The pull reads the plain name and URL from the source, so a change of only those needs no new ciphertext. `SecretService::update()` calls `FederatedShareService::detailsChanged()` when the name or URL changed and no value field was sent, which sends `SHARE_UPDATED` through the retrying delivery once per live federated recipient. A value change keeps going through the browser's sync (D5), which sends its own notification.
 
 ### D6: Policy on both sides
 
