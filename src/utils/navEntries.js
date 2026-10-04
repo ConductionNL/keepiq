@@ -24,7 +24,7 @@
  *
  * Pure: the admin flag and the enabled apps are passed in.
  *
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
  */
 
 /**
@@ -32,7 +32,7 @@
  *
  * @param {object} item The menu entry.
  * @return {object|null} A vue-router location, or null for a non-route entry.
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
  */
 export function menuEntryTo(item) {
 	if (!item?.route || item.action) {
@@ -53,7 +53,7 @@ export function menuEntryTo(item) {
  * @param {object} item The menu entry.
  * @param {{isAdmin: boolean, appsWebRoots: object|null|undefined}} context The instance admin flag, and `OC.appswebroots`: one key per app enabled for this user.
  * @return {boolean} False when the entry is admin only and the user is not an admin, or names an app that is not enabled.
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
  */
 export function isMenuEntryVisible(item, { isAdmin, appsWebRoots }) {
 	if (item?.permission === 'admin' && isAdmin !== true) {
@@ -82,7 +82,7 @@ export function isMenuEntryVisible(item, { isAdmin, appsWebRoots }) {
  *
  * @param {boolean} isAdmin The instance admin flag.
  * @return {Array<string>} The permissions the user holds.
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
  */
 export function shellPermissions(isAdmin) {
 	return isAdmin === true ? ['user', 'admin'] : ['user']
