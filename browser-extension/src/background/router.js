@@ -32,6 +32,12 @@ import {
 } from '../lib/useOnly.js'
 import { isServerSupported } from '../lib/version.js'
 import { isSecureServerUrl, normalizeServerUrl } from '../lib/server-url.js'
+import { buildPinUnlock } from '../lib/pin-unlock.js'
+import {
+	decodeEnvelope,
+	decryptPrivateKeyWithRawKey,
+	deriveUnlockKeyRaw,
+} from '../crypto/index.js'
 import { buildVaultHandlers } from './vault-handlers.js'
 import { areaOrMemory, buildGeneratorHandlers } from './generator-handlers.js'
 import { buildVaultSync, isOffline, SYNC_INTERVAL_MINUTES } from './vault-sync.js'
@@ -415,6 +421,107 @@ function lockAccount(accountId) {
 	}
 }
 
+// PIN unlock (clients-extension-gaps), on session storage, built on first use.
+let pinState = null
+
+/**
+ * The PIN store.
+ *
+ * @return {object}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
+ */
+function pinModule() {
+	if (!pinState) pinState = buildPinUnlock(areaOrMemory(sessionStore()))
+	return pinState
+}
+
+/**
+ * The account's active suite: from the server, or from the vault snapshot
+ * when the server cannot be reached.
+ *
+ * @param {object} account The account.
+ * @return {Promise<object>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
+ */
+async function suiteFor(account) {
+	try {
+		return await api.fetchActiveSuite(account)
+	} catch (e) {
+		const suite = isOffline(e)
+			? (await syncModule().snapshotOf(account.id))?.suite
+			: null
+		if (!suite) throw e
+		return suite
+	}
+}
+
+/**
+ * Set a PIN for the unlocked account on screen. The master password proves
+ * it is the user and yields the unlock key the PIN then wraps.
+ *
+ * @param {{masterPassword: string, pin: string}} payload The master password and the new PIN.
+ * @return {Promise<{ok: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
+ */
+async function doPinSet(payload) {
+	const account = await activeAccount()
+	if (!vault.isUnlocked(account.id)) throw new Error('vault is locked')
+	const suite = await suiteFor(account)
+	const { salt } = decodeEnvelope(suite.privateKey)
+	const rawKey = await deriveUnlockKeyRaw(
+		String(payload.masterPassword ?? ''),
+		salt,
+	)
+	try {
+		await decryptPrivateKeyWithRawKey(suite.privateKey, rawKey)
+	} catch {
+		rawKey.fill(0)
+		throw new Error('Invalid master password')
+	}
+	try {
+		await pinModule().set(account.id, rawKey, payload.pin)
+	} finally {
+		rawKey.fill(0)
+	}
+	return { ok: true }
+}
+
+/**
+ * Unlock the account on screen with its PIN.
+ *
+ * @param {{pin: string}} payload The PIN.
+ * @return {Promise<{ok: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
+ */
+async function doPinUnlock(payload) {
+	const account = await activeAccount()
+	if (account.loggedOut) {
+		throw new Error(
+			'This account is signed out. Sign in again with a new app password.',
+		)
+	}
+	const rawKey = await pinModule().open(account.id, payload.pin)
+	try {
+		const suite = await suiteFor(account)
+		await vault.unlockWithRawKey(account.id, account, rawKey, { suite })
+	} catch (e) {
+		if (e?.name === 'OperationError') {
+			// The master password changed: the wrapped key opens nothing now.
+			await pinModule().remove(account.id)
+			throw new Error(
+				'Your master password changed. Unlock with it, then set the PIN again.',
+			)
+		}
+		throw e
+	} finally {
+		rawKey.fill(0)
+	}
+	await refreshPolicy(account)
+	await touchActivity(account.id)
+	startSync(account)
+	return { ok: true }
+}
+
 // Accounts being signed out right now, so parallel 401s do it once.
 const signingOut = new Set()
 
@@ -428,6 +535,7 @@ const signingOut = new Set()
  * @param {string} [reason] revoked (the server refused it) or logout (the user's choice).
  * @return {Promise<void>}
  * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
  */
 export async function signOutAccount(accountId, reason = 'revoked') {
 	if (!accountId || signingOut.has(accountId)) return
@@ -446,6 +554,9 @@ export async function signOutAccount(accountId, reason = 'revoked') {
 			.catch(() => {})
 		await generatorModule()
 			.forget(accountId)
+			.catch(() => {})
+		await pinModule()
+			.remove(accountId)
 			.catch(() => {})
 	} finally {
 		signingOut.delete(accountId)
@@ -503,6 +614,7 @@ async function refreshServerVersion(account) {
  * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
  * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
  * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-lock-and-log-out-per-account-or-all
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
  */
 async function getState() {
 	const accounts = await api.loadAccounts()
@@ -529,6 +641,7 @@ async function getState() {
 		})),
 		loggedOut,
 		loggedOutReason: loggedOut ? active.loggedOutReason || 'revoked' : null,
+		pinSet: active ? await pinModule().has(active.id) : false,
 		insecure,
 		unlocked: active ? vault.isUnlocked(active.id) : false,
 		user: active ? active.user : null,
@@ -579,6 +692,7 @@ async function doPair(payload) {
  * @param {{accountId?: string}} payload The account, or the active one.
  * @return {Promise<{ok: boolean, revoked: boolean}>}
  * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
  */
 async function doUnpair(payload) {
 	const id = payload.accountId || (await api.activeAccountId())
@@ -606,6 +720,9 @@ async function doUnpair(payload) {
 		.catch(() => {})
 	await syncModule()
 		.forget(id)
+		.catch(() => {})
+	await pinModule()
+		.remove(id)
 		.catch(() => {})
 	await api.removeAccount(id)
 	return { ok: true, revoked }
@@ -1323,6 +1440,12 @@ const handlers = {
 	pair: doPair,
 	relogin: doRelogin,
 	logout: doLogout,
+	'pin-set': doPinSet,
+	'pin-unlock': doPinUnlock,
+	'pin-remove': async () => {
+		await pinModule().remove((await activeAccount()).id)
+		return { ok: true }
+	},
 	unpair: doUnpair,
 	'switch-account': doSwitchAccount,
 	'set-idle': doSetIdle,

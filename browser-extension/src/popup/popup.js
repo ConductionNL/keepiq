@@ -330,6 +330,8 @@ async function renderSettings() {
 		if (res.error) showError('settings-error', res.error)
 	})
 	$('biometric-enrol').hidden = !(await platformAuthenticatorAvailable(window))
+	$('pin-set-form').hidden = !!state.pinSet
+	$('pin-remove').hidden = !state.pinSet
 	await renderClipboardSetting()
 }
 
@@ -386,7 +388,8 @@ async function refresh() {
 		renderSignedOut()
 	} else if (!state.unlocked) {
 		show('view-locked')
-		$('unlock-master').focus()
+		$('pin-block').hidden = !state.pinSet
+		;(state.pinSet ? $('unlock-pin') : $('unlock-master')).focus()
 		if (!(await renderDeviceApprovalOption())) await renderBiometricUnlock()
 	} else {
 		show('view-unlocked')
@@ -681,6 +684,36 @@ function wire() {
 			return
 		await send('logout', { all: true })
 		await refresh()
+	})
+	$('unlock-pin-submit').addEventListener('click', async () => {
+		showError('unlock-error', '')
+		const res = await send('pin-unlock', { pin: $('unlock-pin').value })
+		$('unlock-pin').value = ''
+		if (res.error) showError('unlock-error', res.error)
+		await refresh()
+	})
+	$('unlock-pin').addEventListener('keydown', (event) => {
+		if (event.key === 'Enter') $('unlock-pin-submit').click()
+	})
+	$('pin-set').addEventListener('click', async () => {
+		showError('settings-error', '')
+		const res = await send('pin-set', {
+			masterPassword: $('pin-master').value,
+			pin: $('pin-new').value,
+		})
+		$('pin-master').value = ''
+		$('pin-new').value = ''
+		if (res.error) {
+			showError('settings-error', res.error)
+			return
+		}
+		state = await send('get-state')
+		await renderSettings()
+	})
+	$('pin-remove').addEventListener('click', async () => {
+		await send('pin-remove')
+		state = await send('get-state')
+		await renderSettings()
 	})
 	$('settings-lock-all').addEventListener('click', async () => {
 		await send('lock', {})

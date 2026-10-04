@@ -121,9 +121,12 @@ export async function unlock(accountId, config, masterPassword, options = {}) {
  * @param {object} config The account's API config
  * @param {Uint8Array} rawKey The raw 32-byte unlock key
  * @return {Promise<void>}
+ * @param {{suite?: object}} [options] A suite to use instead of fetching one.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pin-unlock/spec.md#requirement-unlock-with-a-pin-until-the-browser-closes
  */
-export async function unlockWithRawKey(accountId, config, rawKey) {
-	const suite = await fetchActiveSuite(config)
+export async function unlockWithRawKey(accountId, config, rawKey, options = {}) {
+	// A suite from the vault snapshot unlocks while the server is away.
+	const suite = options.suite || (await fetchActiveSuite(config))
 	const pem = await decryptPrivateKeyWithRawKey(suite.privateKey, rawKey)
 	await hold(accountId, suite, pem)
 }
