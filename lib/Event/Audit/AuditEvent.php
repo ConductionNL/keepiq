@@ -168,7 +168,7 @@ class AuditEvent extends Event {
 	 *
 	 * @return self
 	 *
-	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-invocations-are-audited-as-agent-reads
+	 * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-invocations-are-audited-as-agent-reads
 	 */
 	public static function forMcp(
 		string $actorId,
