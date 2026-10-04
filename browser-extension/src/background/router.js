@@ -31,6 +31,7 @@ import {
 	isUseOnly,
 } from '../lib/useOnly.js'
 import { isServerSupported } from '../lib/version.js'
+import { isSecureServerUrl, normalizeServerUrl } from '../lib/server-url.js'
 import { buildVaultHandlers } from './vault-handlers.js'
 import { areaOrMemory, buildGeneratorHandlers } from './generator-handlers.js'
 import { buildVaultSync, isOffline, SYNC_INTERVAL_MINUTES } from './vault-sync.js'
@@ -281,6 +282,42 @@ function lockAccount(accountId) {
 	}
 }
 
+// Accounts being signed out right now, so parallel 401s do it once.
+const signingOut = new Set()
+
+/**
+ * Sign an account out after the server refused its app password (401): the
+ * password was revoked or changed in Nextcloud. Lock it, forget the password,
+ * the vault snapshot and the generator state, and keep the account so the
+ * user can sign in again with a new app password.
+ *
+ * @param {string} accountId The account.
+ * @return {Promise<void>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ */
+export async function signOutAccount(accountId) {
+	if (!accountId || signingOut.has(accountId)) return
+	signingOut.add(accountId)
+	try {
+		lockAccount(accountId)
+		await api
+			.updateAccount(accountId, { appPassword: '', loggedOut: true })
+			.catch(() => {})
+		await syncModule()
+			.forget(accountId)
+			.catch(() => {})
+		await generatorModule()
+			.forget(accountId)
+			.catch(() => {})
+	} finally {
+		signingOut.delete(accountId)
+	}
+}
+
+api.onUnauthorized((config) => {
+	signOutAccount(config.id)
+})
+
 /** Lock every account and drop every cache (OS lock, Lock button). */
 export function lockEverything() {
 	vault.lockAll()
@@ -321,13 +358,21 @@ async function refreshServerVersion(account) {
 	return account.serverVersion ?? null
 }
 
-/** Current state for the popup to render the right view. */
+/**
+ * Current state for the popup to render the right view.
+ *
+ * @return {Promise<object>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
+ */
 async function getState() {
 	const accounts = await api.loadAccounts()
 	const activeId = await api.activeAccountId()
 	const active = accounts.find((a) => a.id === activeId) || null
+	const loggedOut = active?.loggedOut === true
+	const insecure = active ? !isSecureServerUrl(active.url) : false
 	// An account paired before the handshake has no version yet: ask once.
-	if (active && active.serverVersion === undefined) {
+	if (active && active.serverVersion === undefined && !loggedOut && !insecure) {
 		await refreshServerVersion(active)
 	}
 	return {
@@ -341,7 +386,10 @@ async function getState() {
 			label: a.label || '',
 			unlocked: vault.isUnlocked(a.id),
 			idleMinutes: a.idleMinutes,
+			loggedOut: a.loggedOut === true,
 		})),
+		loggedOut,
+		insecure,
 		unlocked: active ? vault.isUnlocked(active.id) : false,
 		user: active ? active.user : null,
 		url: active ? active.url : null,
@@ -353,6 +401,13 @@ async function getState() {
 	}
 }
 
+/**
+ * Pair an account: clean the address, verify the app password, store it.
+ *
+ * @param {{url: string, user: string, appPassword: string}} payload The pairing form.
+ * @return {Promise<{ok: boolean, accountId: string}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-server-address-is-https-and-stored-clean
+ */
 async function doPair(payload) {
 	if ((await api.loadAccounts()).length >= api.MAX_ACCOUNTS) {
 		throw new Error(
@@ -362,7 +417,7 @@ async function doPair(payload) {
 		)
 	}
 	const config = {
-		url: payload.url,
+		url: normalizeServerUrl(payload.url),
 		user: payload.user,
 		appPassword: payload.appPassword,
 	}
@@ -375,6 +430,13 @@ async function doPair(payload) {
 	return { ok: true, accountId: account.id }
 }
 
+/**
+ * Disconnect an account and delete its app password in Nextcloud.
+ *
+ * @param {{accountId?: string}} payload The account, or the active one.
+ * @return {Promise<{ok: boolean, revoked: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ */
 async function doUnpair(payload) {
 	const id = payload.accountId || (await api.activeAccountId())
 	const account = id ? await api.loadAccount(id) : null
@@ -387,8 +449,9 @@ async function doUnpair(payload) {
 	let revoked = false
 	try {
 		// Delete the app password itself, so Disconnect really ends the
-		// pairing (#748). The local state is cleared either way.
-		revoked = await api.revokeAppPassword(account)
+		// pairing (#748). The local state is cleared either way. A signed-out
+		// account has no password left to delete.
+		revoked = account.loggedOut ? false : await api.revokeAppPassword(account)
 	} catch {
 		revoked = false
 	}
@@ -403,6 +466,29 @@ async function doUnpair(payload) {
 		.catch(() => {})
 	await api.removeAccount(id)
 	return { ok: true, revoked }
+}
+
+/**
+ * Sign a signed-out account in again with a new app password. The address
+ * and user stay; the password is verified before it is stored.
+ *
+ * @param {{accountId: string, appPassword: string}} payload The account and its new app password.
+ * @return {Promise<{ok: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ */
+async function doRelogin(payload) {
+	const account = await api.loadAccount(payload.accountId)
+	if (!account) throw new Error('This account is no longer connected')
+	const appPassword = String(payload.appPassword ?? '').trim()
+	if (appPassword === '') throw new Error('Enter a new app password')
+	const config = { url: account.url, user: account.user, appPassword }
+	const res = await api.pair(config)
+	await api.updateAccount(account.id, {
+		appPassword,
+		loggedOut: false,
+		serverVersion: res?.serverVersion ?? account.serverVersion ?? null,
+	})
+	return { ok: true }
 }
 
 async function doSwitchAccount(payload) {
@@ -438,8 +524,21 @@ async function refreshPolicy(account) {
 	maxIdleByAccount.set(account.id, max)
 }
 
+/**
+ * Unlock the active account with its master password. A signed-out account
+ * cannot unlock.
+ *
+ * @param {{masterPassword: string}} payload The master password.
+ * @return {Promise<{ok: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ */
 async function doUnlock(payload) {
 	const account = await activeAccount()
+	if (account.loggedOut) {
+		throw new Error(
+			'This account is signed out. Sign in again with a new app password.',
+		)
+	}
 	await refreshServerVersion(account)
 	await vault.unlock(account.id, account, payload.masterPassword)
 	await refreshPolicy(account)
@@ -454,10 +553,16 @@ async function doUnlock(payload) {
  *
  * @param {{accountId: string, rawKey: number[]}} payload The account and key bytes.
  * @return {Promise<{ok: boolean}>}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
  */
 async function doUnlockRaw(payload) {
 	const account = await api.loadAccount(payload.accountId)
 	if (!account) throw new Error('unknown account')
+	if (account.loggedOut) {
+		throw new Error(
+			'This account is signed out. Sign in again with a new app password.',
+		)
+	}
 	const bytes = Array.isArray(payload.rawKey) ? payload.rawKey : []
 	if (bytes.length !== 32) throw new Error('invalid unlock key')
 	const rawKey = Uint8Array.from(bytes)
@@ -943,6 +1048,7 @@ async function doBiometricUsed(payload) {
 const handlers = {
 	'get-state': getState,
 	pair: doPair,
+	relogin: doRelogin,
 	unpair: doUnpair,
 	'switch-account': doSwitchAccount,
 	'set-idle': doSetIdle,

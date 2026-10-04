@@ -40,6 +40,7 @@ vi.mock('../../browser-extension/src/lib/api.js', () => ({
 	loadAccount: vi.fn(async () => ACCOUNT),
 	activeAccountId: vi.fn(async () => ACCOUNT.id),
 	migrateLegacyConfig: vi.fn(async () => {}),
+	onUnauthorized: vi.fn(),
 	IDLE_CHOICES: [1, 5, 15, 30, 60, 240],
 	DEFAULT_IDLE_MINUTES: 15,
 	MAX_ACCOUNTS: 5,
