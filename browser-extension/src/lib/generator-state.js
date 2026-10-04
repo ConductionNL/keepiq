@@ -115,6 +115,11 @@ export function sanitizeOptions(raw, rawPolicy = null) {
 		password.includeLowercase ||= policy.requireLower
 		password.includeDigits ||= policy.requireDigit
 		password.includeSpecialCharacters ||= policy.requireSymbol
+		// A required class needs at least one character of it.
+		if (policy.requireDigit) password.minDigits = Math.max(password.minDigits, 1)
+		if (policy.requireSymbol) {
+			password.minSpecial = Math.max(password.minSpecial, 1)
+		}
 	}
 	if (
 		!password.includeUppercase
