@@ -1603,7 +1603,19 @@ OC.L10N.register(
         "Approve {member}": "Одобри {member}",
         "Recipient": "Прималац",
         "No vault yet": "Још нема трезор",
-        "No matching users": "Нема одговарајућих корисника"
+        "No matching users": "Нема одговарајућих корисника",
+        "Partner organisations": "Партнерске организације",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Размењујте тајне са другим Keepiq-ом. Оба администратора додају један другог и пре чувања упореде коренске отиске телефоном или лично.",
+        "Federation needs Nextcloud 33 or later.": "Федерација захтева Nextcloud 33 или новији.",
+        "Your root fingerprint": "Ваш коренски отисак",
+        "No partners yet.": "Још нема партнера.",
+        "Users here may share to this partner": "Корисници овде смеју да деле са овим партнером",
+        "This partner may share to users here": "Овај партнер сме да дели са корисницима овде",
+        "Partner address": "Адреса партнера",
+        "Check partner": "Провери партнера",
+        "Partner root fingerprint": "Коренски отисак партнера",
+        "I compared this fingerprint with the partner's administrator": "Упоредио сам овај отисак са администратором партнера",
+        "Add partner": "Додај партнера"
     },
     "nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);"
 )

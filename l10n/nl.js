@@ -1608,7 +1608,19 @@ OC.L10N.register(
         "Approve {member}": "{member} goedkeuren",
         "Recipient": "Ontvanger",
         "No vault yet": "Nog geen kluis",
-        "No matching users": "Geen gebruikers gevonden"
+        "No matching users": "Geen gebruikers gevonden",
+        "Partner organisations": "Partnerorganisaties",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Wissel geheimen uit met een andere Keepiq. Beide beheerders voegen elkaar toe en vergelijken de rootvingerafdrukken telefonisch of persoonlijk voordat ze opslaan.",
+        "Federation needs Nextcloud 33 or later.": "Federatie vraagt Nextcloud 33 of nieuwer.",
+        "Your root fingerprint": "Jouw rootvingerafdruk",
+        "No partners yet.": "Nog geen partners.",
+        "Users here may share to this partner": "Gebruikers hier mogen delen met deze partner",
+        "This partner may share to users here": "Deze partner mag delen met gebruikers hier",
+        "Partner address": "Adres van de partner",
+        "Check partner": "Partner controleren",
+        "Partner root fingerprint": "Rootvingerafdruk van de partner",
+        "I compared this fingerprint with the partner's administrator": "Ik heb deze vingerafdruk vergeleken met de beheerder van de partner",
+        "Add partner": "Partner toevoegen"
     },
     "nplurals=2; plural=(n != 1);"
 )

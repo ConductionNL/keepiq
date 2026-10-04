@@ -1603,7 +1603,19 @@ OC.L10N.register(
         "Approve {member}": "{member} guttheeschen",
         "Recipient": "Empfänger",
         "No vault yet": "Nach keen Tresor",
-        "No matching users": "Keng passend Benotzer"
+        "No matching users": "Keng passend Benotzer",
+        "Partner organisations": "Partnerorganisatiounen",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Tauscht Geheimnisser mat engem anere Keepiq aus. Béid Administrateure fügen sech géigesäiteg derbäi a vergläichen d’Root-Fangerofdréck um Telefon oder perséinlech, ier se späicheren.",
+        "Federation needs Nextcloud 33 or later.": "Föderatioun brauch Nextcloud 33 oder méi nei.",
+        "Your root fingerprint": "Ären Root-Fangerofdrock",
+        "No partners yet.": "Nach keng Partner.",
+        "Users here may share to this partner": "Benotzer hei däerfe mat dësem Partner deelen",
+        "This partner may share to users here": "Dëse Partner däerf mat Benotzer hei deelen",
+        "Partner address": "Adress vum Partner",
+        "Check partner": "Partner iwwerpréiwen",
+        "Partner root fingerprint": "Root-Fangerofdrock vum Partner",
+        "I compared this fingerprint with the partner's administrator": "Ech hunn dëse Fangerofdrock mam Administrateur vum Partner verglach",
+        "Add partner": "Partner derbäisetzen"
     },
     "nplurals=2; plural=(n != 1);"
 )
