@@ -65,7 +65,7 @@ class ShareExpiryService {
 	 *
 	 * @return int The number of warnings sent
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-people-are-told-before-and-when-access-ends
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-people-are-told-before-and-when-access-ends
 	 */
 	public function warnEnding(DateTime $from, DateTime $to): int {
 		$sent = 0;
@@ -94,7 +94,7 @@ class ShareExpiryService {
 	 *
 	 * @return int The number of copies whose access ended in this run
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
 	 */
 	public function expire(DateTime $now): int {
 		// Remember who held what before the removals delete the copies.
@@ -172,7 +172,7 @@ class ShareExpiryService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-people-are-told-before-and-when-access-ends
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-people-are-told-before-and-when-access-ends
 	 */
 	private function notifyEnded(Secret $copy, ?ShareTarget $target): void {
 		$this->notifications->notify(

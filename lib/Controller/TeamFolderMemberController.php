@@ -120,7 +120,7 @@ class TeamFolderMemberController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#4.1
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
 	 *   field the server stores, not a mode switch.
@@ -254,7 +254,7 @@ class TeamFolderMemberController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 */
 	#[NoAdminRequired]
 	public function setMemberGrade(

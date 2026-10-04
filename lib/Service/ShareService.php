@@ -150,7 +150,7 @@ class ShareService {
 	 * @throws InvalidArgumentException When validation fails
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#3.2
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
 	 */
 	public function createShare(
 		string $sourceSecretId,
@@ -306,7 +306,7 @@ class ShareService {
 	 *
 	 * @throws InvalidArgumentException When not found, not authorized or not a direct share
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
 	 */
 	public function updateRestriction(string $shareId, ShareRestriction $restriction, string $userId): ShareTarget {
 		try {

@@ -710,7 +710,7 @@ export default {
 		 * fan-out for the new member.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
 		async onAddMember() {
@@ -740,7 +740,7 @@ export default {
 		 *
 		 * @param {string} iso The end date (ISO 8601).
 		 * @return {string}
-		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.3
 		 */
 		formatEndDate(iso) {
 			const date = new Date(iso)

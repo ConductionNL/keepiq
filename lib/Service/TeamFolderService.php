@@ -229,7 +229,7 @@ class TeamFolderService {
 	 * @throws InvalidArgumentException On invalid input / not authorized
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 */
 	public function addMember(
 		string $teamFolderId,
@@ -616,7 +616,7 @@ class TeamFolderService {
 	 *
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
 	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-grade-changes-and-non-owner-writes-are-audited
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 */
 	public function setMemberGrade(
 		string $teamFolderId,
@@ -756,7 +756,7 @@ class TeamFolderService {
 	 *
 	 * @throws InvalidArgumentException When use-only is asked for a write grade
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 */
 	private function applyRestriction(TeamFolderMember $membership, ShareRestriction $restriction): TeamFolderMember {
 		$this->assertRestrictionFitsGrade(grade: $membership->effectiveGrade(), restriction: $restriction);
@@ -779,7 +779,7 @@ class TeamFolderService {
 	 *
 	 * @throws InvalidArgumentException When use-only is asked for a write grade
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-owners-can-share-a-secret-as-use-only
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-owners-can-share-a-secret-as-use-only
 	 */
 	private function assertRestrictionFitsGrade(string $grade, ShareRestriction $restriction): void {
 		if ($restriction->useOnly === true && $grade !== 'read') {
@@ -794,7 +794,7 @@ class TeamFolderService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-1.2
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.2
 	 */
 	private function resolveCopiesOf(TeamFolderMember $membership): void {
 		if ($this->restrictions === null || $this->shareTargets === null) {

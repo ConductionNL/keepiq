@@ -897,7 +897,7 @@ class SecretService {
 	 *   independent partial-update guards, not nested logic.
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) One partial-update guard per
 	 *   field, in the order the fields are applied; the vault policy check is one
 	 *   line. Splitting the field guards apart would scatter one update over
