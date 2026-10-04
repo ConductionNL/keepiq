@@ -63,7 +63,7 @@ class BackupRestore extends Command {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	protected function configure(): void {
 		$this->setName(name: 'keepiq:backup:restore')
@@ -82,9 +82,9 @@ class BackupRestore extends Command {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.4
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-a-restore-returns-ciphertext-that-still-needs-each-users-key
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$file = (string)$input->getArgument('file');

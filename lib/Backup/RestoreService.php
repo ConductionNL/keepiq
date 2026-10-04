@@ -95,7 +95,7 @@ class RestoreService {
 	 *
 	 * @throws InvalidArgumentException When it is encrypted without a key, the key is wrong, or a check fails
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function open(string $localPath, ?string $keyFile): array {
 		$zip = $localPath;
@@ -124,8 +124,7 @@ class RestoreService {
 	 *
 	 * @return string[]
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function refusals(array $manifest, bool $force, bool $dryRun=false): array {
 		$refusals = [];
@@ -152,7 +151,7 @@ class RestoreService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function isOlderThanNewestAuditEntry(array $manifest): bool {
 		$newest = $this->tables->newestAuditEntry();
@@ -171,7 +170,7 @@ class RestoreService {
 	 *
 	 * @return array<string,array{current:int,archive:int}>
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function compare(array $manifest): array {
 		$counts = [];
@@ -193,7 +192,7 @@ class RestoreService {
 	 *
 	 * @return string[]
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.4
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-a-restore-returns-ciphertext-that-still-needs-each-users-key
 	 */
 	public function warnings(string $zip, array $manifest): array {
 		$warnings = [
@@ -230,8 +229,7 @@ class RestoreService {
 	 *
 	 * @throws InvalidArgumentException When maintenance mode is already on
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.3
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function restore(string $zip, array $manifest, string $archiveName): array {
 		if ($this->maintenanceIsOn() === true) {
