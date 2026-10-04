@@ -371,7 +371,7 @@ struct ItemEditView: View {
                             generating = true
                         }
                     } else {
-                        LabeledInput(label: label, text: binding, problem: error("typed-\(field.key)"), keyboard: field.kind == "url" ? .URL : field.kind == "email" ? .emailAddress : .default)
+                        LabeledInput(label: label, text: binding, problem: error("typed-\(field.key)"), keyboard: keyboardFor(field))
                     }
                 }
                 VStack(alignment: .leading) {
@@ -405,6 +405,14 @@ struct ItemEditView: View {
                     .disabled(busy || model.repository.state.offline)
                 if model.repository.state.offline { Text(L("write_offline")).font(.footnote) }
             }
+        }
+    }
+
+    private func keyboardFor(_ field: TypeField) -> UIKeyboardType {
+        switch field.kind {
+        case "url": return .URL
+        case "email": return .emailAddress
+        default: return .default
         }
     }
 

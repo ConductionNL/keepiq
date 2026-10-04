@@ -226,21 +226,29 @@ private struct SendRow: View {
         }
         let nowMillis = Int64(Date().timeIntervalSince1970 * 1000)
         let minutes = SendForm.shared.minutesLeft(expiresAtMillis: IsoTime.shared.parseMillis(text: send.expiresAt), nowMillis: nowMillis)?.int64Value
-        let expiry: String? = minutes.map { m in
-            if m <= 0 { return L("send_expired") }
-            if m < 60 { return L("send_expires_minutes", Int(m)) }
-            if m < 48 * 60 { return L("send_expires_hours", Int((m + 30) / 60)) }
-            return L("send_expires_days", Int((m + 720) / 1440))
-        }
+        let expiry: String? = minutes.map(expiryText)
         VStack(alignment: .leading, spacing: 2) {
             Text(created.map { L("send_row", kind, $0) } ?? kind)
-            Text([expiry, L("send_views", Int(send.viewCount), Int(send.maxViews)), send.hasPassword ? L("send_password_badge") : nil]
-                .compactMap { $0 }
-                .joined(separator: " · "))
+            Text(detailText(expiry: expiry))
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
         .frame(minHeight: 44)
+    }
+
+    private func expiryText(_ m: Int64) -> String {
+        if m <= 0 { return L("send_expired") }
+        if m < 60 { return L("send_expires_minutes", Int(m)) }
+        if m < 48 * 60 { return L("send_expires_hours", Int((m + 30) / 60)) }
+        return L("send_expires_days", Int((m + 720) / 1440))
+    }
+
+    private func detailText(expiry: String?) -> String {
+        var parts: [String] = []
+        if let expiry { parts.append(expiry) }
+        parts.append(L("send_views", Int(send.viewCount), Int(send.maxViews)))
+        if send.hasPassword { parts.append(L("send_password_badge")) }
+        return parts.joined(separator: " · ")
     }
 }
 

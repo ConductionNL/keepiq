@@ -166,19 +166,24 @@ private struct EntryRow: View {
                 .replacingOccurrences(of: "https://", with: "")
                 .replacingOccurrences(of: "http://", with: "")
                 .split(separator: "/").first.map(String.init) ?? ""
-            let badges = [
-                entry.useOnly ? L("badge_use_only") : nil,
-                entry.readOnly && !entry.useOnly ? L("badge_read_only") : nil,
-                entry.blocked ? L("badge_blocked") : nil,
-            ].compactMap { $0 }
-            let details = [host.isEmpty ? nil : host, showFolder && !entry.folderName.isEmpty ? entry.folderName : nil, badges.isEmpty ? nil : badges.joined(separator: ", ")]
-                .compactMap { $0 }
-                .joined(separator: " · ")
+            let details = detailText(host: host)
             if !details.isEmpty {
                 Text(details).font(.footnote).foregroundStyle(.secondary)
             }
         }
         .frame(minHeight: 44)
+    }
+
+    private func detailText(host: String) -> String {
+        var badges: [String] = []
+        if entry.useOnly { badges.append(L("badge_use_only")) }
+        if entry.readOnly && !entry.useOnly { badges.append(L("badge_read_only")) }
+        if entry.blocked { badges.append(L("badge_blocked")) }
+        var parts: [String] = []
+        if !host.isEmpty { parts.append(host) }
+        if showFolder && !entry.folderName.isEmpty { parts.append(entry.folderName) }
+        if !badges.isEmpty { parts.append(badges.joined(separator: ", ")) }
+        return parts.joined(separator: " · ")
     }
 }
 
