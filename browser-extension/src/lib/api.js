@@ -372,7 +372,7 @@ export async function revokeAppPassword(config) {
 /**
  * Fetch the caller's active EncryptionSuite (private-key envelope + certificate).
  * @param config
- * @spec openspec/changes/admin-vault-policies/tasks.md#3.4
+ * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
  */
 export async function fetchActiveSuite(config) {
 	const suites = await request(config, 'GET', '/api/v1/suites')

@@ -516,7 +516,7 @@ export default {
 		 * suite came without its wrapped key, or a setup was refused.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#3.3
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
 		 */
 		twoFactorRequired() {
 			return (
@@ -530,7 +530,7 @@ export default {
 		 * Nextcloud's own security settings, where a user enables a provider.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#3.3
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
 		 */
 		securitySettingsUrl() {
 			return generateUrl('/settings/user/security')

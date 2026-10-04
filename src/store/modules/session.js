@@ -77,7 +77,7 @@ export const useSessionStore = defineStore('session', {
 		 *
 		 * @param {string} masterPassword
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#3.3
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
 		 */
 		async unlock(masterPassword) {
 			// Fetch the user's encryption suite from the API.

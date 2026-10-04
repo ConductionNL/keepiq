@@ -81,7 +81,7 @@ class TeamFolderContributionController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
 	 */
 	#[NoAdminRequired]
 	public function contributable(): JSONResponse {
@@ -103,7 +103,7 @@ class TeamFolderContributionController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.4
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-users-see-personal-items-that-break-the-ownership-policy
 	 */
 	#[NoAdminRequired]
 	public function ownershipFindings(): JSONResponse {
@@ -125,7 +125,7 @@ class TeamFolderContributionController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
 	 */
 	#[NoAdminRequired]
 	public function contributionContext(string $id): JSONResponse {
@@ -156,7 +156,7 @@ class TeamFolderContributionController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#4.2
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
 	 */
 	#[NoAdminRequired]
 	public function contribute(string $id): JSONResponse {

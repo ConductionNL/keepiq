@@ -6,7 +6,7 @@
  * folder owner and for every member, and only ciphertext is posted
  * (admin-vault-policies §4.3).
  *
- * @spec openspec/changes/admin-vault-policies/tasks.md#4.3
+ * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
  */
 
 import axios from '@nextcloud/axios'
