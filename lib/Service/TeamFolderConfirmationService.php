@@ -61,6 +61,7 @@ class TeamFolderConfirmationService {
 	 * @param ConfirmerCopyResolver $copies The confirmer's own current write copy
 	 * @param NotificationService $notificationService The owner notice
 	 * @param TeamFolderAuditor $audit The confirmation audit event
+	 * @param TeamFolderQueryService $queries Reads the caller's grade on the folder
 	 *
 	 * @return void
 	 *
@@ -75,6 +76,7 @@ class TeamFolderConfirmationService {
 		private ConfirmerCopyResolver $copies,
 		private NotificationService $notificationService,
 		private TeamFolderAuditor $audit,
+		private TeamFolderQueryService $queries,
 	) {
 	}//end __construct()
 
@@ -83,7 +85,7 @@ class TeamFolderConfirmationService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.1
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-pending-confirmations-are-served-to-authorised-confirmers-only
 	 */
 	public function isEnabled(): bool {
 		return $this->appConfig->getValueBool(Application::APP_ID, self::SWITCH_KEY, false);
@@ -101,7 +103,7 @@ class TeamFolderConfirmationService {
 	 *
 	 * @return array<int,array{teamFolderId:string,role:string,missing:array<int,array<string,string>>,recipients:array<int,array{userId:string,certificate:string}>}>
 	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.1
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-pending-confirmations-are-served-to-authorised-confirmers-only
 	 */
 	public function pendingConfirmations(string $userId): array {
 		if ($this->isEnabled() === false) {
@@ -120,11 +122,13 @@ class TeamFolderConfirmationService {
 	}//end pendingConfirmations()
 
 	/**
-	 * Register fan-out rows from the owner or from a `write`-grade confirmer.
+	 * Register fan-out rows from the owner, a manager or a `write`-grade confirmer.
 	 *
-	 * The owner keeps the existing path unchanged. A non-owner needs the
-	 * switch on, and every row is checked before anything is stored; rows
-	 * that fail a check are skipped, so the pair stays pending.
+	 * The owner and a manager (effective grade `manage`) take the plain
+	 * fan-out, which checks the manage grade and the subtree itself
+	 * (sharing-team-folder-manager-role D2). Anyone else needs the switch on,
+	 * and every row is checked before anything is stored; rows that fail a
+	 * check are skipped, so the pair stays pending.
 	 *
 	 * @param string $teamFolderId The team folder
 	 * @param array<int,array<string,mixed>> $rows The browser-encrypted rows
@@ -134,11 +138,14 @@ class TeamFolderConfirmationService {
 	 *
 	 * @throws InvalidArgumentException When the folder is missing or the caller may not confirm
 	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.2
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
 	 */
 	public function registerShares(string $teamFolderId, array $rows, string $userId): array {
 		$teamFolder = $this->loadTeamFolder(teamFolderId: $teamFolderId);
-		if ($teamFolder->getOwnerId() === $userId) {
+		if ($teamFolder->getOwnerId() === $userId
+			|| $this->queries->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId) === 'manage'
+		) {
 			return $this->teamFolders->registerFanOutShares(teamFolderId: $teamFolderId, shares: $rows, userId: $userId);
 		}
 
@@ -181,7 +188,7 @@ class TeamFolderConfirmationService {
 	 *
 	 * @return array<string,TeamFolder> Keyed by team folder id
 	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.1
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-pending-confirmations-are-served-to-authorised-confirmers-only
 	 */
 	private function candidateFolders(string $userId): array {
 		$folders = [];
@@ -213,7 +220,7 @@ class TeamFolderConfirmationService {
 	 *
 	 * @return array{teamFolderId:string,role:string,missing:array<int,array<string,string>>,recipients:array<int,array{userId:string,certificate:string}>}|null
 	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.1
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-pending-confirmations-are-served-to-authorised-confirmers-only
 	 */
 	private function pendingForFolder(TeamFolder $teamFolder, string $userId): ?array {
 		$isOwner = $teamFolder->getOwnerId() === $userId;
@@ -275,7 +282,7 @@ class TeamFolderConfirmationService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.2
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
 	 */
 	private function rowIsSafe(array $row, array $subtreeIds, array $eligible, string $confirmerId): bool {
 		$sourceId = (string)($row['sourceSecretId'] ?? '');
@@ -297,7 +304,7 @@ class TeamFolderConfirmationService {
 	 *
 	 * @return array<string,bool> Keyed by user id
 	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.2
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
 	 */
 	private function eligibleTargets(TeamFolder $teamFolder, string $confirmerId): array {
 		$targets = [];
@@ -321,7 +328,7 @@ class TeamFolderConfirmationService {
 	 *
 	 * @return array<string,bool>
 	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.2
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
 	 */
 	private function subtreeIds(TeamFolder $teamFolder): array {
 		$ids = [];
@@ -341,7 +348,7 @@ class TeamFolderConfirmationService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.3
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
 	 */
 	private function announce(TeamFolder $teamFolder, string $confirmerId, array $rows): void {
 		$memberIds = array_values(array_unique(array_column($rows, 'targetUserId')));
@@ -375,7 +382,7 @@ class TeamFolderConfirmationService {
 	 *
 	 * @throws InvalidArgumentException When it does not exist
 	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.2
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
 	 */
 	private function loadTeamFolder(string $teamFolderId): TeamFolder {
 		try {

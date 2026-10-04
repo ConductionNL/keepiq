@@ -17,11 +17,10 @@ import {
 
 const ROOT = resolve(__dirname, '../..')
 const out = mkdtempSync(join(tmpdir(), 'keepiq-release-'))
-execFileSync(
-	process.execPath,
-	['browser-extension/build.mjs', '--outdir', out],
-	{ cwd: ROOT, stdio: 'pipe' },
-)
+execFileSync(process.execPath, ['browser-extension/build.mjs', '--outdir', out], {
+	cwd: ROOT,
+	stdio: 'pipe',
+})
 afterAll(() => rmSync(out, { recursive: true, force: true }))
 
 const base = JSON.parse(

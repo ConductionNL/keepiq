@@ -10,7 +10,7 @@
  * user for "Team offboarding" and the suite id for "Encryption suites". The
  * sections watch these values, so an administrator never types an id.
  *
- * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.2
+ * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-acts-on-a-member-row
  */
 
 import axios from '@nextcloud/axios'
@@ -45,7 +45,7 @@ export const useMemberOverviewStore = defineStore('memberOverview', {
 		 * @param {string} [query.search] Search on user id or display name.
 		 * @param {number} [query.offset] Rows to skip.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.1
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 		 */
 		async fetchMembers({ status = '', search = '', offset = 0 } = {}) {
 			this.loading = true
@@ -71,7 +71,7 @@ export const useMemberOverviewStore = defineStore('memberOverview', {
 		 *
 		 * @param {string} search Search on user id or display name.
 		 * @return {Promise<Array<{userId: string, displayName: string}>>}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.3
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-acts-on-a-member-row
 		 */
 		async searchUsers(search) {
 			const response = await axios.get(
@@ -89,7 +89,7 @@ export const useMemberOverviewStore = defineStore('memberOverview', {
 		 *
 		 * @param {string} userId The leaving user.
 		 * @return {void}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.2
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-acts-on-a-member-row
 		 */
 		prefillOffboarding(userId) {
 			this.offboardUserId = userId
@@ -100,7 +100,7 @@ export const useMemberOverviewStore = defineStore('memberOverview', {
 		 *
 		 * @param {string} suiteId The suite to revoke.
 		 * @return {void}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.2
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-acts-on-a-member-row
 		 */
 		prefillSuiteRevocation(suiteId) {
 			this.revokeSuiteId = suiteId

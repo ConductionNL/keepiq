@@ -78,7 +78,7 @@ class ExpireSharesJob extends TimedJob {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Mandated by TimedJob::run().
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
 	 */
 	protected function run($argument): void {
 		$now = new DateTime();
@@ -105,7 +105,7 @@ class ExpireSharesJob extends TimedJob {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-people-are-told-before-and-when-access-ends
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-people-are-told-before-and-when-access-ends
 	 */
 	private function warn(DateTime $now): void {
 		$until = (clone $now)->add(new DateInterval('P1D'));

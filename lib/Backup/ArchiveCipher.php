@@ -61,7 +61,7 @@ class ArchiveCipher {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#1.3
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-can-be-encrypted-to-an-administrator-held-key
 	 */
 	public function isEncrypted(string $path): bool {
 		$handle = fopen($path, 'rb');
@@ -82,7 +82,7 @@ class ArchiveCipher {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.1
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function isValidPublicKey(string $pem): bool {
 		try {
@@ -105,7 +105,7 @@ class ArchiveCipher {
 	 * @throws InvalidArgumentException When the key is unusable
 	 * @throws RuntimeException When a file cannot be read or written
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#1.3
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-can-be-encrypted-to-an-administrator-held-key
 	 */
 	public function encryptFile(string $plainPath, string $outPath, string $publicPem): void {
 		$contentKey = random_bytes(32);
@@ -164,7 +164,7 @@ class ArchiveCipher {
 	 *
 	 * @throws InvalidArgumentException When the key is wrong or the archive was changed
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#1.3
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-can-be-encrypted-to-an-administrator-held-key
 	 */
 	public function decryptFile(string $encPath, string $outPath, string $privatePem): void {
 		$source = $this->open(path: $encPath, mode: 'rb');

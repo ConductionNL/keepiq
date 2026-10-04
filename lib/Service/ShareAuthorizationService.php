@@ -145,7 +145,7 @@ class ShareAuthorizationService {
 	 * @throws InvalidArgumentException When the copy is use-only or expiring
 	 *
 	 * @spec openspec/specs/link-sharing/spec.md#requirement-who-may-create-a-link-share
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function assertMayReshare(string $secretId, string $userId): void {
 		if ($this->shareTargetMapper === null) {
@@ -202,7 +202,7 @@ class ShareAuthorizationService {
 	 *
 	 * @return string|null The grade ('read' | 'write' | …), or null.
 	 *
-	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-or-write-grade
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
 	 */
 	public function resolveGrade(Secret $secret, string $userId): ?string {
 		return $this->teamFolderService?->resolveGrade(secret: $secret, userId: $userId);

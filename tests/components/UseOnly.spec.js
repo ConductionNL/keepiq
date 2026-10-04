@@ -5,7 +5,7 @@
  * Keepiq's web app never reveals, copies, exports or edits a use-only copy
  * (sharing-use-only-and-expiring-shares tasks 4.1 and 5.4).
  *
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+ * @spec openspec/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
  */
 
 import axios from '@nextcloud/axios'

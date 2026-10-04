@@ -110,7 +110,7 @@ export default {
 		 * Toggle the visibility, decrypting on the first reveal.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+		 * @spec openspec/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
 		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		async toggle() {
@@ -127,7 +127,7 @@ export default {
 		 * Resolve the plaintext for the copy button, decrypting if needed.
 		 *
 		 * @return {Promise<string>}
-		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+		 * @spec openspec/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
 		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		async resolvePlain() {

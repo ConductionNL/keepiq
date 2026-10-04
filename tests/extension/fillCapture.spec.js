@@ -31,8 +31,9 @@ let state
  * @param {object} [sender] The sender.
  * @return {Promise<object>}
  */
-const send = (type, payload = {}, sender = POPUP) =>
-	router.handleMessage({ type, payload }, sender)
+function send(type, payload = {}, sender = POPUP) {
+	return router.handleMessage({ type, payload }, sender)
+}
 
 /**
  * A content script in a frame of tab 1.
@@ -41,11 +42,13 @@ const send = (type, payload = {}, sender = POPUP) =>
  * @param {number} frameId The frame.
  * @return {object}
  */
-const frame = (url, frameId) => ({
-	...pageSender(url),
-	tab: { id: 1, url: 'https://example.com/login' },
-	frameId,
-})
+function frame(url, frameId) {
+	return {
+		...pageSender(url),
+		tab: { id: 1, url: 'https://example.com/login' },
+		frameId,
+	}
+}
 
 beforeEach(async () => {
 	vi.resetModules()
@@ -86,6 +89,23 @@ describe('fill', () => {
 			.map((m) => m.options.frameId)
 			.sort()
 		expect(frames).toEqual([0, 6])
+	})
+
+	it('keeps a frame that reported before the top frame, and forgets them all when the tab loads a new page', async () => {
+		await send('frame-ready', {}, frame('https://example.com/sso', 4))
+		await send('frame-ready', {}, frame('https://example.com/login', 0))
+		let [offered] = await send('match', { host: 'example.com' })
+		await send('fill', { id: offered.id, accountId: offered.accountId })
+		expect(browser.filled.map((m) => m.options.frameId).sort()).toEqual([0, 4])
+
+		for (const listener of browser.tabs.onUpdated.listeners) {
+			listener(1, { status: 'loading' })
+		}
+		await new Promise((r) => setTimeout(r, 20))
+		browser.filled.length = 0
+		;[offered] = await send('match', { host: 'example.com' })
+		await send('fill', { id: offered.id, accountId: offered.accountId })
+		expect(browser.filled.map((m) => m.options.frameId)).toEqual([0])
 	})
 
 	it('falls back to the top frame alone when no frame was recorded', async () => {
