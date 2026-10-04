@@ -1,0 +1,185 @@
+name: Mobile e2e
+
+# End-to-end tests of the native apps (clients-mobile-apps), with
+# screenshots and video of the flows as artifacts.
+#
+# Android: the Nextcloud with Keepiq and OpenRegister of
+# browser-extension/capture (the same setup docs-media.yml uses), behind the
+# https front of mobile/e2e/server.mjs, and an emulator that reaches it at
+# https://10.0.2.2:8443. The e2e build type trusts that run's certificate;
+# debug and release builds never do.
+#
+# iOS: the macOS runners have no Docker, so the simulator talks to
+# mobile/e2e/server.mjs replay, which answers from mobile/e2e/fixtures,
+# recorded from the same test server (`server.mjs record`).
+
+on:
+  pull_request:
+    branches: [main, development, beta]
+    paths:
+      - "mobile/**"
+      - "browser-extension/capture/compose.yaml"
+      - "browser-extension/capture/setup.sh"
+      - ".github/workflows/mobile-e2e.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    name: android (API ${{ matrix.api }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # 34 so later passkey work (Android 14+) fits; 28 is the minimum.
+          - api: 34
+            artifact: mobile-media-android
+          - api: 28
+            artifact: mobile-media-android-api28
+    env:
+      PROJECT: kq-e2e
+      OUT: ${{ github.workspace }}/media
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: keepiq
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: ConductionNL/openregister
+          ref: development
+          path: openregister
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: composer:v2
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      # The API is all the apps use, so neither front end is built.
+      - name: PHP dependencies of Keepiq and OpenRegister
+        run: |
+          composer install --no-dev --prefer-dist --no-interaction --working-dir=keepiq
+          composer install --no-dev --prefer-dist --no-interaction --working-dir=openregister
+      - name: Start the test server
+        run: docker compose -p "$PROJECT" -f keepiq/browser-extension/capture/compose.yaml up -d
+      - name: Provision it
+        run: bash keepiq/browser-extension/capture/setup.sh "$PROJECT" keepiq openregister
+      - name: The https front the emulator reaches at 10.0.2.2
+        run: |
+          occ() { docker exec -u www-data "$PROJECT-nc-1" php occ "$@"; }
+          occ config:system:set overwriteprotocol --value=https
+          occ config:system:set trusted_domains 6 --value=10.0.2.2:8443
+          occ config:system:set trusted_domains 7 --value=localhost:8443
+          mkdir -p "$RUNNER_TEMP/e2e"
+          openssl req -x509 -newkey rsa:2048 -nodes -days 2 -subj "/CN=Keepiq e2e" \
+            -addext "subjectAltName=IP:10.0.2.2,IP:127.0.0.1,DNS:localhost" \
+            -addext "basicConstraints=critical,CA:TRUE" \
+            -keyout "$RUNNER_TEMP/e2e/key.pem" -out "$RUNNER_TEMP/e2e/cert.pem"
+          mkdir -p keepiq/mobile/android/app/src/e2e/res/raw
+          cp "$RUNNER_TEMP/e2e/cert.pem" keepiq/mobile/android/app/src/e2e/res/raw/keepiq_e2e_ca.pem
+          nohup node keepiq/mobile/e2e/server.mjs proxy --port 8443 \
+            --cert "$RUNNER_TEMP/e2e/cert.pem" --key "$RUNNER_TEMP/e2e/key.pem" \
+            --upstream http://localhost:8188 --container "$PROJECT-nc-1" > "$RUNNER_TEMP/e2e/proxy.log" 2>&1 &
+          for _ in $(seq 1 20); do curl -skf -o /dev/null https://localhost:8443/status.php && break; sleep 1; done
+          curl -skf https://localhost:8443/status.php
+      - name: The shared core against the test server
+        working-directory: keepiq/mobile
+        run: |
+          keytool -importcert -noprompt -alias e2e -file "$RUNNER_TEMP/e2e/cert.pem" \
+            -keystore "$RUNNER_TEMP/e2e/trust.p12" -storetype PKCS12 -storepass changeit
+          ./gradlew --no-daemon :shared:jvmTest --tests '*LiveServerTest*' \
+            -Pkeepiq.liveServer=https://localhost:8443 -Pkeepiq.liveMasterPassword=Oj \
+            -Pjavax.net.ssl.trustStore="$RUNNER_TEMP/e2e/trust.p12" -Pjavax.net.ssl.trustStorePassword=changeit
+          # A skipped test reads like a passed one; this one must have run.
+          report=shared/build/test-results/jvmTest/TEST-nl.conduction.keepiq.shared.LiveServerTest.xml
+          grep -q 'tests="1" skipped="0" failures="0" errors="0"' "$report"
+      - name: Build the e2e app and its tests
+        working-directory: keepiq/mobile
+        run: ./gradlew --no-daemon :android:app:assembleE2e :android:app:assembleE2eAndroidTest
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Emulator tests, screenshots and video
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: default
+          arch: x86_64
+          profile: pixel_6
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: bash keepiq/mobile/e2e/android-run.sh "$OUT" "$PROJECT" keepiq/browser-extension/capture/out/app-password
+      - name: Server logs
+        if: failure()
+        run: |
+          cat "$RUNNER_TEMP/e2e/proxy.log" || true
+          docker exec "$PROJECT-nc-1" tail -n 100 /var/www/html/data/nextcloud.log || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ${{ matrix.artifact }}
+          path: media/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Stop the test server
+        if: always()
+        run: docker compose -p "$PROJECT" -f keepiq/browser-extension/capture/compose.yaml down -v
+
+  ios:
+    runs-on: macos-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Shared framework for the simulator
+        run: ./gradlew --no-daemon :shared:assembleKeepiqSharedDebugXCFramework
+      - name: Xcode project
+        working-directory: mobile/ios
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: UI tests, screenshots and video
+        run: bash e2e/ios-run.sh "$GITHUB_WORKSPACE/media"
+      - name: Replay log
+        if: failure()
+        run: cat "$GITHUB_WORKSPACE/media/replay.log" || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mobile-media-ios
+          path: |
+            media/shots/
+            media/*.mp4
+            media/KeepiqUITests.xcresult/
+          if-no-files-found: warn
+          retention-days: 14

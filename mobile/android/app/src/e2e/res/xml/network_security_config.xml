@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<!--
+    The e2e build talks to the test server on the host, which the emulator
+    reaches at 10.0.2.2, over https with a certificate made per CI run
+    (.github/workflows/mobile-e2e.yml writes it to res/raw). Only that
+    address trusts it, and plain http stays refused everywhere. The debug
+    and release builds have no such file.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="false">10.0.2.2</domain>
+        <trust-anchors>
+            <certificates src="@raw/keepiq_e2e_ca" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

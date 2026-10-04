@@ -97,20 +97,3 @@ internal actual object Primitives {
         throw KeepiqCryptoException(e.message ?: "crypto failure", e)
     }
 }
-
-/**
- * Argon2id is not available on iOS yet: neither the Security framework nor
- * CryptoKit has it, and the reference C code through cinterop is open as
- * task 1.3.1 in openspec/changes/clients-mobile-apps/tasks.md. Until then a
- * password Send cannot be created or opened on iOS; everything else works.
- */
-internal actual fun argon2id(
-    password: ByteArray,
-    salt: ByteArray,
-    memoryKiB: Int,
-    iterations: Int,
-    parallelism: Int,
-    lengthBytes: Int,
-): ByteArray = throw UnsupportedOperationException("Argon2id is not available on this target (iOS, task 1.3.1)")
-
-internal actual val argon2idAvailable: Boolean = false

@@ -137,6 +137,40 @@ class KeepiqApi(private val client: HttpClient, private val account: Account) {
     suspend fun updateSecret(id: String, body: JsonObject): JsonObject? =
         request(HttpMethod.Put, "/api/v1/secrets/" + encodePath(id), body) as? JsonObject
 
+    /**
+     * POST /api/v1/extension/pair: proves the app password works and reports
+     * the server's `apiVersion` (lib/Controller/ExtensionController::pair).
+     */
+    suspend fun pair(): PairResponse = PairResponse.from(request(HttpMethod.Post, "/api/v1/extension/pair") as? JsonObject ?: JsonObject(emptyMap()))
+
+    /** POST /api/v1/extension/unpair: the acknowledgement before the revoke. */
+    suspend fun unpair() {
+        request(HttpMethod.Post, "/api/v1/extension/unpair")
+    }
+
+    /** GET /api/v1/extension/policy: the organisation's `maxIdleMinutes`, or null when it has none. */
+    suspend fun maxIdleMinutes(): Int? =
+        ((request(HttpMethod.Get, "/api/v1/extension/policy") as? JsonObject)?.get("maxIdleMinutes") as? JsonPrimitive)?.intOrNull
+
+    /**
+     * DELETE /ocs/v2.php/core/apppassword: Nextcloud deletes the app password
+     * this request signs in with (browser-extension/src/lib/api.js
+     * revokeAppPassword). True when Nextcloud deleted it.
+     */
+    suspend fun revokeAppPassword(): Boolean {
+        val response = client.request("$base/ocs/v2.php/core/apppassword") {
+            method = HttpMethod.Delete
+            header(HttpHeaders.Authorization, basicAuth())
+            header("OCS-APIRequest", "true")
+            header(HttpHeaders.Accept, "application/json")
+        }
+        response.bodyAsText()
+        return response.status.value in 200..299
+    }
+
+    private fun basicAuth(): String =
+        "Basic " + Encoding.toBase64(Encoding.utf8("${account.loginName}:${account.appPassword}"))
+
     /** GET /api/v1/secrets/{id}: one secret with its ciphertext, fetched fresh. */
     suspend fun getSecret(id: String): JsonObject? =
         request(HttpMethod.Get, "/api/v1/secrets/" + encodePath(id)) as? JsonObject
@@ -222,6 +256,18 @@ class KeepiqApi(private val client: HttpClient, private val account: Account) {
         }
 
         private fun encodePath(segment: String): String = nl.conduction.keepiq.shared.crypto.SendCrypto.encodeUriComponent(segment)
+    }
+}
+
+/** The answer of POST /api/v1/extension/pair. */
+data class PairResponse(val ok: Boolean, val user: String?, val apiVersion: Int?, val serverVersion: String?) {
+    companion object {
+        fun from(obj: JsonObject): PairResponse = PairResponse(
+            ok = (obj["ok"] as? JsonPrimitive)?.contentOrNull == "true",
+            user = obj.string("user"),
+            apiVersion = (obj["apiVersion"] as? JsonPrimitive)?.intOrNull,
+            serverVersion = obj.string("serverVersion"),
+        )
     }
 }
 
