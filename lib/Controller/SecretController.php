@@ -30,21 +30,21 @@ use OCA\Keepiq\Exception\NotFoundException;
 use OCA\Keepiq\Exception\SuiteBlockedException;
 use OCA\Keepiq\Exception\WriteLockedException;
 use OCA\Keepiq\Service\SecretService;
-use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\OCSController;
 use OCP\IRequest;
 use OCP\IUserSession;
 
 /**
  * Authenticated API controller for Secret CRUD.
  *
- * A plain Controller, not an OCSController: Nextcloud's OCSMiddleware turns a
- * 403 JSONResponse of an OCSController into an OCS v1 envelope with HTTP 200
- * and drops its `code`, so a policy refusal would read as a saved secret.
+ * Its 403 refusals leave as 428 with the policy code as `error`: Nextcloud's
+ * OCSMiddleware would turn a 403 of an OCSController into an HTTP 200 OCS
+ * envelope, so OcsRefusalMiddleware re-statuses it first.
  */
-class SecretController extends Controller {
+class SecretController extends OCSController {
 	/**
 	 * HTTP 423 Locked status code.
 	 *

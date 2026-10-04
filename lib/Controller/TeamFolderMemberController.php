@@ -37,6 +37,7 @@ use DateTime;
 use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Exception\OwnerOnlyException;
 use OCA\Keepiq\Service\ShareRestriction;
 use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCA\Keepiq\Service\TeamFolderService;
@@ -194,10 +195,7 @@ class TeamFolderMemberController extends OCSController {
 				userId: $userId
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return $this->refusal(exception: $exception);
 		}
 
 		return new JSONResponse(data: ['revoked' => $revoked]);
@@ -287,12 +285,35 @@ class TeamFolderMemberController extends OCSController {
 				restriction: $restriction,
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return $this->refusal(exception: $exception);
 		}
 
 		return new JSONResponse(data: $member->jsonSerialize());
 	}//end setMemberGrade()
+
+	/**
+	 * The response for a refused membership change: a change only the owner
+	 * may make is forbidden (`owner_only`), anything else is a bad request.
+	 * The 403 leaves as 428 through OcsRefusalMiddleware, so the browser sees
+	 * the refusal and its code.
+	 *
+	 * @param InvalidArgumentException $exception The refusal
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 */
+	private function refusal(InvalidArgumentException $exception): JSONResponse {
+		if ($exception instanceof OwnerOnlyException) {
+			return new JSONResponse(
+				data: ['message' => $exception->getMessage(), 'error' => OwnerOnlyException::CODE],
+				statusCode: Http::STATUS_FORBIDDEN
+			);
+		}
+
+		return new JSONResponse(
+			data: ['message' => $exception->getMessage()],
+			statusCode: Http::STATUS_BAD_REQUEST
+		);
+	}//end refusal()
 }//end class

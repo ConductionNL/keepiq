@@ -94,13 +94,14 @@ A member with an effective `manage` grade MUST be able to add users and groups a
 
 ### Requirement: Only the owner governs managers and the folder itself
 
-The system MUST refuse, for a member who is not the owner, setting or clearing the `manage` grade, removing or changing a member whose grade is `manage`, changing or removing the owner, stopping sharing of the folder, and deleting the team folder. A manager MUST be able to remove their own membership.
+The system MUST refuse, for a member who is not the owner, setting or clearing the `manage` grade, removing or changing a member whose grade is `manage`, changing or removing the owner, stopping sharing of the folder, and deleting the team folder. A manager MUST be able to remove their own membership. A manager's request to set the `manage` grade, or to change or remove a manager, MUST be refused as forbidden with `error: owner_only` and the reason. Its HTTP status MUST be 428, because Nextcloud's OCS layer turns a 403 of an OCS controller into an HTTP 200 envelope that the browser would read as a success.
 
 #### Scenario: A manager cannot create another manager
 
 - **GIVEN** Olga with grade `manage` and Bob with grade `read`
 - **WHEN** Olga tries to set Bob's grade to `manage`
-- **THEN** the system MUST reject the request with a forbidden response and Bob's grade MUST stay `read`
+- **THEN** the system MUST reject the request with a forbidden refusal (HTTP 428, `error: owner_only`) and Bob's grade MUST stay `read`
+- **AND** Olga's browser MUST show the refusal
 
 #### Scenario: A manager cannot unshare the folder
 

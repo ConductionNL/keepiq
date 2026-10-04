@@ -194,13 +194,11 @@ test.describe('team-folder manager role', () => {
 				`/team-folders/${teamFolder.id}/members/${bobMember?.id}`,
 				{ grade: 'manage' },
 			)
-			// The route answers 400 with the reason. The spec asks for a
-			// forbidden response, but a 403 on this OCSController would reach a
-			// browser as an HTTP 200 OCS envelope (POLICY.md, #673 live checks),
-			// so the status is left as is and the server state is the proof.
-			expect([400, 403], JSON.stringify(refused.body)).toContain(
-				refused.status,
-			)
+			// Refused as forbidden. Keepiq answers 428 with error owner_only:
+			// a 403 on this OCSController would reach the browser as an HTTP 200
+			// OCS envelope.
+			expect(refused.status, JSON.stringify(refused.body)).toBe(428)
+			expect(refused.body?.error).toBe('owner_only')
 			expect(refused.body?.message).toBe(
 				'Only the owner can make a member a manager',
 			)

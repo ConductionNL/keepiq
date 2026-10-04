@@ -2,7 +2,7 @@
  * Offline edits through the REAL secret and offline stores (keepiq#785): an
  * offline edit lands in the sealed queue and shows at once; the replay goes
  * through the online paths, encrypts for the recipients returned AT REPLAY,
- * and handles 409, 403, 423 and a failed recipient sync as the design says.
+ * and handles 409, 428 (a refusal), 423 and a failed recipient sync as the design says.
  * IndexedDB is replaced by a map that records exactly what would be stored.
  *
  * @spec openspec/specs/offline-edit-queue/spec.md
@@ -220,12 +220,12 @@ describe('replay', () => {
 		expect(stored.size).toBe(0)
 	})
 
-	it('a 403 moves the entry to the failed list; a 423 keeps the rest queued', async () => {
+	it('a 428 refusal moves the entry to the failed list; a 423 keeps the rest queued', async () => {
 		await goOffline()
 		await secrets.updateSecret('s1', { name: 'A' })
 		await secrets.createSecret({ name: 'B', key: 'v' })
 		goOnline()
-		vi.spyOn(axios, 'put').mockRejectedValueOnce({ response: { status: 403 } })
+		vi.spyOn(axios, 'put').mockRejectedValueOnce({ response: { status: 428 } })
 		const post = vi
 			.spyOn(axios, 'post')
 			.mockRejectedValueOnce({ response: { status: 423 } })

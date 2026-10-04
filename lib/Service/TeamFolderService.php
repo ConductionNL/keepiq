@@ -46,6 +46,7 @@ use OCA\Keepiq\Db\TeamFolder;
 use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
+use OCA\Keepiq\Exception\OwnerOnlyException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use Ramsey\Uuid\Uuid;
@@ -643,7 +644,7 @@ class TeamFolderService {
 
 		$this->assertManagerMayTouch(teamFolder: $teamFolder, membership: $member, userId: $ownerId, leaving: false);
 		if ($grade === 'manage' && $teamFolder->getOwnerId() !== $ownerId) {
-			throw new InvalidArgumentException(message: 'Only the owner can make a member a manager');
+			throw new OwnerOnlyException(message: 'Only the owner can make a member a manager');
 		}
 
 		$member->setGrade($grade);
@@ -741,7 +742,7 @@ class TeamFolderService {
 		}
 
 		if ($membership->effectiveGrade() === 'manage') {
-			throw new InvalidArgumentException(message: 'Only the owner can change or remove a manager');
+			throw new OwnerOnlyException(message: 'Only the owner can change or remove a manager');
 		}
 	}//end assertManagerMayTouch()
 

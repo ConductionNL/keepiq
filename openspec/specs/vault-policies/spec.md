@@ -36,7 +36,7 @@ When the export ban applies to a user, `POST /api/v1/export/events` MUST refuse 
 
 ### Requirement: Vault unlock requires Nextcloud two-factor login
 
-When the two-factor policy applies to a user and Nextcloud reports no enabled two-factor provider for them other than backup codes, the system MUST omit `privateKey` from `GET /api/v1/suites` and `GET /api/v1/suites/{id}` and MUST add `unlockBlocked` with value `two_factor_required`. It MUST leave the suite out of `GET /api/v1/offline/manifest` and MUST refuse `POST /api/v1/suites` with 403 and code `two_factor_required`. The lock screen MUST explain the reason and link to the Nextcloud security settings. Enforcing two-factor login itself MUST stay with Nextcloud.
+When the two-factor policy applies to a user and Nextcloud reports no enabled two-factor provider for them other than backup codes, the system MUST omit `privateKey` from `GET /api/v1/suites` and `GET /api/v1/suites/{id}` and MUST add `unlockBlocked` with value `two_factor_required`. It MUST leave the suite out of `GET /api/v1/offline/manifest` and MUST refuse `POST /api/v1/suites` with 428 and `error` and `code` `two_factor_required` (428 rather than 403 because Nextcloud's OCS layer turns a 403 of an OCS controller into an HTTP 200 envelope). The lock screen MUST explain the reason and link to the Nextcloud security settings. Enforcing two-factor login itself MUST stay with Nextcloud.
 
 #### Scenario: User without two-factor login cannot unlock
 
@@ -60,13 +60,13 @@ When the two-factor policy applies to a user and Nextcloud reports no enabled tw
 
 ### Requirement: Work logins are kept in team folders
 
-When the ownership policy applies to a user, the system MUST refuse to create, import or move a secret of an in-scope type (default `login`, `api_key` and `database`) into a folder that has no team folder owned by that user among its ancestors. The refusal MUST be 403 with code `org_ownership_required`. Secrets of other types MUST stay unaffected.
+When the ownership policy applies to a user, the system MUST refuse to create, import or move a secret of an in-scope type (default `login`, `api_key` and `database`) into a folder that has no team folder owned by that user among its ancestors. The refusal MUST carry the code `org_ownership_required` as `error` and as `code`. On the secrets API (`POST /api/v1/secrets`, `PUT /api/v1/secrets/{id}`), which runs on OCS controllers, its status MUST be 428: Nextcloud's OCS layer turns a 403 there into an HTTP 200 envelope, so the browser would take the refusal for a saved secret. Secrets of other types MUST stay unaffected.
 
 #### Scenario: Personal login refused
 
 - **GIVEN** the ownership policy applies to vault owner `gina`
 - **WHEN** `gina` calls `POST /api/v1/secrets` for a `login` secret in her personal folder `Private`
-- **THEN** the response MUST be 403 with code `org_ownership_required`
+- **THEN** the response MUST be 428 with `error` and `code` `org_ownership_required`, and the browser MUST show the refusal
 - **AND** no secret MUST be stored
 
 #### Scenario: Exempt type stays personal

@@ -98,7 +98,7 @@ describe('useShareStore', () => {
 			const post = vi
 				.spyOn(axios, 'post')
 				.mockRejectedValueOnce({
-					response: { status: 403, data: { error: 'key_proof_required' } },
+					response: { status: 428, data: { error: 'key_proof_required' } },
 				})
 				.mockResolvedValueOnce({ data: { id: 's-new' } })
 			const store = useShareStore()

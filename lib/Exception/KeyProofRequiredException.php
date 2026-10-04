@@ -7,7 +7,7 @@
  * a missing, malformed, expired, mis-purposed, mis-bound, or unverifiable
  * signature over the server-issued challenge. Every failure path throws this
  * one type with no detail leaked about which check failed, and the middleware
- * maps it to an HTTP 403 carrying the machine-readable code `key_proof_required`
+ * maps it to an HTTP 428 carrying the machine-readable code `key_proof_required`
  * so the client knows to obtain a challenge and retry rather than giving up.
  *
  * @category Exception
