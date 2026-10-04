@@ -280,7 +280,7 @@ class KeepiqNotifier implements INotifier {
 	 *
 	 * @return bool True when this renderer recognised the subject.
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-people-are-told-before-and-when-access-ends
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-people-are-told-before-and-when-access-ends
 	 */
 	private function renderAccessEndSubject(INotification $notification, string $subject, array $params, IL10N $l): bool {
 		$secretName = (string)($params['secret_name'] ?? $l->t('a secret'));

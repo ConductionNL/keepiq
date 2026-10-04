@@ -377,7 +377,7 @@ class TeamFolderQueryService {
 	 *
 	 * @return array<int,TeamFolderMember>
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-owners-can-share-a-secret-as-use-only
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-owners-can-share-a-secret-as-use-only
 	 */
 	public function coveringMemberships(Secret $secret, string $userId): array {
 		$folderId = $secret->getFolderId();

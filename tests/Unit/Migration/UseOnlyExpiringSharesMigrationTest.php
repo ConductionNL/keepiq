@@ -13,7 +13,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Tests for the use-only and expiring-share columns (task 1.1).
  *
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.1
  */
 class UseOnlyExpiringSharesMigrationTest extends TestCase {
 
