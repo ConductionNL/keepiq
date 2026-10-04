@@ -126,3 +126,43 @@ export function showSavePrompt(
 		;(primary === null ? later : main).focus?.()
 	})
 }
+
+/** How long the result of a save stays on screen. */
+export const RESULT_TTL_MS = 4000
+
+/**
+ * Say how a save from the bar went, for a few seconds.
+ *
+ * @param {{ok?: boolean, saved?: string, error?: string}} result The worker's answer.
+ * @param {Document} doc The document to show it in.
+ * @param {object} [options] Test seams; production uses the defaults.
+ * @param {string} [options.mode] The shadow root mode, closed by default.
+ * @return {string} The text shown.
+ * @spec openspec/changes/clients-extension-finish/specs/extension-save-prompt-details/spec.md#requirement-a-save-that-confirms
+ */
+export function showSaveResult(result, doc = document, { mode = 'closed' } = {}) {
+	doc.getElementById(HOST_ID)?.remove()
+	const text = result?.error
+		? `Keepiq could not save this login: ${result.error}`
+		: result?.saved === 'updated'
+			? 'Password updated in Keepiq.'
+			: 'Login saved to Keepiq.'
+	const holder = doc.createElement('div')
+	holder.id = HOST_ID
+	const root = holder.attachShadow({ mode })
+	const style = doc.createElement('style')
+	style.textContent = `
+		.bar { position: fixed; top: 12px; right: 12px; z-index: 2147483647;
+			max-width: 360px; padding: 12px 16px; border-radius: 8px;
+			background: #fff; color: #222; box-shadow: 0 2px 12px rgba(0,0,0,.25);
+			font: 14px/1.4 system-ui, sans-serif; }
+		@media (prefers-color-scheme: dark) { .bar { background: #1e1e1e; color: #eee; } }`
+	const bar = doc.createElement('p')
+	bar.className = 'bar'
+	bar.setAttribute('role', 'status')
+	bar.textContent = text
+	root.append(style, bar)
+	;(doc.body || doc.documentElement).appendChild(holder)
+	setTimeout(() => holder.remove(), RESULT_TTL_MS)
+	return text
+}

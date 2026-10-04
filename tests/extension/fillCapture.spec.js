@@ -245,7 +245,7 @@ describe('the save prompt', () => {
 			pageSender('https://new.example/login'),
 		)
 		const res = await send('save-capture', { secret: 'smuggled' })
-		expect(res).toEqual({ ok: true })
+		expect(res).toEqual({ ok: true, saved: 'saved' })
 		const post = server.calls.find(
 			(c) => c.method === 'POST' && c.url.endsWith('/api/v1/secrets'),
 		)

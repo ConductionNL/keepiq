@@ -58,6 +58,8 @@ export const PAGE_MESSAGES = Object.freeze(
 		'capture-decision',
 		// A frame says it loaded; the worker records its host from the sender.
 		'frame-ready',
+		// A new page asks whether a save offer is still waiting for its tab.
+		'capture-offer',
 		'webauthn-create',
 		'webauthn-get',
 		'otp-field-detected',
@@ -1319,8 +1321,10 @@ async function policyRefusalFor(config, value) {
  * @param {object} capture The held capture.
  * @param {number} tabId The tab it was held for.
  * @param {string|null} [folderId] The folder a new login goes into.
- * @return {Promise<{ok: boolean}>}
+ * @return {Promise<{ok: boolean, saved: string}>}
  * @spec openspec/changes/clients-extension-gaps/specs/extension-autofill-extras/spec.md#requirement-save-a-new-login-into-a-folder
+ * @spec openspec/changes/clients-extension-finish/specs/extension-save-prompt-details/spec.md#requirement-update-the-one-login-that-is-meant
+ * @spec openspec/changes/clients-extension-finish/specs/extension-save-prompt-details/spec.md#requirement-a-save-that-confirms
  */
 async function saveHeldCapture(capture, tabId, folderId = null) {
 	const accountId = capture.accountId
@@ -1334,27 +1338,45 @@ async function saveHeldCapture(capture, tabId, folderId = null) {
 	}
 	const encryptedKey = await vault.encryptField(accountId, capture.secret)
 	const encryptedLogin = await vault.encryptField(accountId, capture.login || '')
-	const body = {
-		name: capture.name || capture.host,
-		url: capture.url || capture.host,
-		key: encryptedKey,
-		login: encryptedLogin,
-		encryptionSuiteId: vault.activeSuiteId(accountId),
-		...(folderId ? { folderId } : {}),
+	const encryptionSuiteId = vault.activeSuiteId(accountId)
+	// An update re-reads the login first: it may be gone since the offer.
+	let update = !!capture.id
+	if (update) {
+		try {
+			await api.getSecret(config, capture.id)
+		} catch (e) {
+			if (e?.status !== 404) throw e
+			update = false
+		}
 	}
-	if (capture.id) {
-		// An update changes the credential only; the saved name and address stay.
+	if (update) {
+		// The password only: name, address and username stay as they are.
 		await api.updateSecret(config, capture.id, {
 			key: encryptedKey,
-			login: encryptedLogin,
-			encryptionSuiteId: body.encryptionSuiteId,
+			encryptionSuiteId,
 		})
 	} else {
-		await api.createSecret(config, body)
+		const typeId = await api.typeIdByName(config, 'login').catch(() => null)
+		await api.createSecret(config, {
+			name: capture.name || capture.host,
+			url: capture.url || capture.host,
+			key: encryptedKey,
+			login: encryptedLogin,
+			encryptionSuiteId,
+			...(typeId ? { typeId } : {}),
+			...(folderId ? { folderId } : {}),
+		})
 	}
 	captures.delete(tabId)
 	await touchActivity(accountId)
-	return { ok: true }
+	// The vault list and the snapshot show the change at once; a failed
+	// sync never fails the save.
+	try {
+		await syncModule().sync(config, { force: true })
+	} catch {
+		// The next sync catches up.
+	}
+	return { ok: true, saved: update ? 'updated' : 'saved' }
 }
 
 /**
@@ -1482,7 +1504,31 @@ export async function doCapture(capture, sender) {
 		return { action: 'refused', reason: refusal }
 	}
 	captures.get(tabId).id = offer.id
+	// Kept, so the next page on the site can show the offer again.
+	captures.get(tabId).offer = { action: offer.action, name: offer.name }
 	return { action: offer.action, name: offer.name }
+}
+
+/**
+ * The offer for a page that just loaded in a tab with a held capture: the
+ * login form often redirects, so the bar comes back on the next page of the
+ * same site. A page on another site drops the capture.
+ *
+ * @param {object} payload Unused.
+ * @param {object} sender The runtime.MessageSender of the content script.
+ * @return {Promise<{action: string, name?: string}>}
+ * @spec openspec/changes/clients-extension-finish/specs/extension-save-prompt-details/spec.md#requirement-the-offer-follows-the-site-not-the-page
+ */
+async function doCaptureOffer(payload, sender) {
+	const tabId = sender?.tab?.id
+	const capture = captureOf(tabId)
+	if (!capture?.offer || sender?.frameId) return { action: 'none' }
+	const host = hostOf(sender?.url || '')
+	if (registrableDomain(host) !== registrableDomain(capture.host)) {
+		captures.delete(tabId)
+		return { action: 'none' }
+	}
+	return capture.offer
 }
 
 /**
@@ -1621,6 +1667,7 @@ const handlers = {
 			.suggestPasswords,
 	}),
 	'capture-never': doCaptureNever,
+	'capture-offer': doCaptureOffer,
 	'never-sites': async () => ({ sites: await neverSites() }),
 	'never-remove': async (payload) => ({
 		sites: await setNever(String(payload.host || ''), false),
