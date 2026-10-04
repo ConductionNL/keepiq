@@ -62,6 +62,7 @@ class VaultRepositoryTest {
     private val bodies = mutableListOf<JsonObject>()
     private var offline = false
     private var refuseWrites = false
+    private var cachingOff = false
 
     private val loginRow = """{"id":"s1","name":"Huisbank","url":"https://mijn.huisbank.example","typeId":"1","folderId":"f2",
         "key":"${enc("geheim-1")}","login":"${enc("alice")}","additionalFields":"${enc("""{"notes":"pin bij balie","Klantnummer":"123","extra":42}""")}",
@@ -81,6 +82,12 @@ class VaultRepositoryTest {
         val write = request.method != HttpMethod.Get
         val body = when {
             write && refuseWrites -> """{"ocs":{"meta":{"status":"failure","statuscode":403,"message":""},"data":{"error":"read_only","message":"You can only read this item."}}}"""
+            path == "/api/v1/offline/manifest" && cachingOff ->
+                return@MockEngine respond("""{"message":"Offline caching is off"}""", HttpStatusCode(428, "Precondition Required"))
+            path == "/api/v1/suites" -> """[{"id":"suite-9","status":"active","unlockKeyEpoch":2}]"""
+            path == "/api/v1/secrets" && request.method == HttpMethod.Get -> """{"items":[$loginRow],"total":1}"""
+            path == "/api/v1/folders" && request.method == HttpMethod.Get -> folders
+            path == "/api/v1/secret-types" -> types
             path == "/api/v1/offline/manifest" -> """{"suite":{"id":"suite-9","status":"active","unlockKeyEpoch":2},"secrets":[$loginRow,$useOnlyRow,$blockedRow],"folders":$folders,"types":$types,"unlockBlocked":null}"""
             path == "/api/v1/secrets/s1" && request.method == HttpMethod.Get -> loginRow
             path == "/api/v1/secrets/s2" && request.method == HttpMethod.Get -> useOnlyRow
@@ -277,6 +284,20 @@ class VaultRepositoryTest {
         assertEquals(3, noStore.refresh(SyncTrigger.START).index.size)
         offline = true
         val state = noStore.refresh(SyncTrigger.FOREGROUND)
+        assertTrue(state.needsConnection)
+        assertTrue(state.index.isEmpty())
+    }
+
+    @Test
+    fun withCachingOffTheStoreStaysEmptyAndOfflineTheVaultNeedsAConnection() = runTest {
+        repo.refresh(SyncTrigger.START)
+        cachingOff = true
+        val online = repo.refresh(SyncTrigger.MANUAL)
+        assertTrue(online.onlineOnly)
+        assertEquals(listOf("Huisbank"), online.index.map { it.name })
+        assertTrue(store.secrets().isEmpty(), "nothing is kept on the device")
+        offline = true
+        val state = repo.refresh(SyncTrigger.FOREGROUND)
         assertTrue(state.needsConnection)
         assertTrue(state.index.isEmpty())
     }
