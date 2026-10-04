@@ -8,7 +8,7 @@
  * never offer to save or update it; report each fill. The popup never shows
  * or copies a value, use-only or not.
  *
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+ * @spec openspec/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
  */
 
 import { hostOf, registrableDomain } from './match.js'

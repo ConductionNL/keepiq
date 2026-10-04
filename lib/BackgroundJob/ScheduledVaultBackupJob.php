@@ -63,7 +63,7 @@ class ScheduledVaultBackupJob extends TimedJob {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $argument is mandated by TimedJob::run().
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	protected function run($argument): void {
 		if ($this->backups->isDue() === false) {

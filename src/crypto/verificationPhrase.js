@@ -279,7 +279,7 @@ export const PHRASE_LENGTH = 5
  *
  * @param {Uint8Array|ArrayBuffer} publicKeyRaw The raw public key bytes.
  * @return {Promise<string>} Five words separated by spaces.
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-both-devices-show-the-same-verification-phrase
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-both-devices-show-the-same-verification-phrase
  */
 export async function verificationPhrase(publicKeyRaw) {
 	const bytes =
@@ -298,7 +298,7 @@ export async function verificationPhrase(publicKeyRaw) {
  *
  * @param {string} publicKeyBase64 The raw public key, base64.
  * @return {Promise<string>}
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-both-devices-show-the-same-verification-phrase
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-both-devices-show-the-same-verification-phrase
  */
 export async function verificationPhraseFromBase64(publicKeyBase64) {
 	const binary = atob(publicKeyBase64)

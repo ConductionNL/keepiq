@@ -56,7 +56,7 @@ class BackupVerify extends Command {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	protected function configure(): void {
 		$this->setName(name: 'keepiq:backup:verify')
@@ -73,7 +73,7 @@ class BackupVerify extends Command {
 	 *
 	 * @return int
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		try {

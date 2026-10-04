@@ -1,10 +1,10 @@
 ## ADDED Requirements
 
 ### Requirement: A fill reaches only frames on the matched site
-Each content script MUST tell the worker when its frame loads. The worker MUST record the frame's host from the browser's sender record, never from the page's message, and a new top-level page MUST replace the frames recorded for the tab before. A fill and a one-time code MUST be sent only to the frames of the tab whose recorded host is the matched host. Without a record (the worker restarted), only the top frame receives it, after the worker has checked that the tab is on the matched site. Each frame still checks its own host before it fills.
+Each content script MUST tell the worker when its frame loads. The worker MUST record the frame's host from the browser's sender record, never from the page's message, whatever order the frames report in, and MUST forget a tab's frames when the tab starts loading a new page. A fill and a one-time code MUST be sent only to the frames of the tab whose recorded host is the matched host. Without a record (the worker restarted), only the top frame receives it, after the worker has checked that the tab is on the matched site. Each frame still checks its own host before it fills.
 
 #### Scenario: A page with frames of several sites
-@e2e exclude Browser-extension worker frame routing. Covered by tests/extension/fillCapture.spec.js ("reaches only the frames the browser places on the matched site") and ("falls back to the top frame alone when no frame was recorded").
+@e2e exclude Browser-extension worker frame routing. Covered by tests/extension/fillCapture.spec.js ("reaches only the frames the browser places on the matched site"), ("keeps a frame that reported before the top frame, and forgets them all when the tab loads a new page") and ("falls back to the top frame alone when no frame was recorded").
 - **GIVEN** a tab on example.com with an advert frame, a frame of another site that claims example.com, and a second example.com frame
 - **WHEN** the user fills a login for example.com
 - **THEN** only the top frame and the second example.com frame receive it

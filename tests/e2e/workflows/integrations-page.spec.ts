@@ -32,9 +32,9 @@
  * It needs an instance with both apps (tasks.md 5.1). First run in CI on
  * 2026-09-15 (keepiq run 34955589876), where the row lookup below was fixed.
  *
- * @e2e openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#the-page-lists-only-the-rows-of-keepiq
- * @e2e openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#add-integration-goes-to-integriq
- * @e2e openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#a-switched-off-breach-check-reads-switched-off
+ * @e2e openspec/specs/admin-integrations/spec.md#the-page-lists-only-the-rows-of-keepiq
+ * @e2e openspec/specs/admin-integrations/spec.md#add-integration-goes-to-integriq
+ * @e2e openspec/specs/admin-integrations/spec.md#a-switched-off-breach-check-reads-switched-off
  */
 import type { APIRequestContext, Page } from '@playwright/test'
 
