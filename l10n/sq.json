@@ -1674,7 +1674,19 @@
         "Approve {member}": "Mirato {member}",
         "Recipient": "Marrësi",
         "No vault yet": "Ende pa kasafortë",
-        "No matching users": "Asnjë përdorues që përputhet"
+        "No matching users": "Asnjë përdorues që përputhet",
+        "Partner organisations": "Organizata partnere",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Shkëmbeni sekrete me një Keepiq tjetër. Të dy administratorët shtojnë njëri-tjetrin dhe krahasojnë gjurmët rrënjë në telefon ose personalisht para ruajtjes.",
+        "Federation needs Nextcloud 33 or later.": "Federimi kërkon Nextcloud 33 ose më të ri.",
+        "Your root fingerprint": "Gjurma juaj rrënjë",
+        "No partners yet.": "Ende pa partnerë.",
+        "Users here may share to this partner": "Përdoruesit këtu mund të ndajnë me këtë partner",
+        "This partner may share to users here": "Ky partner mund të ndajë me përdoruesit këtu",
+        "Partner address": "Adresa e partnerit",
+        "Check partner": "Kontrollo partnerin",
+        "Partner root fingerprint": "Gjurma rrënjë e partnerit",
+        "I compared this fingerprint with the partner's administrator": "E krahasova këtë gjurmë me administratorin e partnerit",
+        "Add partner": "Shto partnerin"
     },
     "plurals": null
 }
