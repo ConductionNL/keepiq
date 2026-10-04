@@ -1674,7 +1674,19 @@
         "Approve {member}": "Approuver {member}",
         "Recipient": "Destinataire",
         "No vault yet": "Pas encore de coffre",
-        "No matching users": "Aucun utilisateur correspondant"
+        "No matching users": "Aucun utilisateur correspondant",
+        "Partner organisations": "Organisations partenaires",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Échangez des secrets avec un autre Keepiq. Les deux administrateurs s’ajoutent mutuellement et comparent les empreintes racines par téléphone ou en personne avant d’enregistrer.",
+        "Federation needs Nextcloud 33 or later.": "La fédération nécessite Nextcloud 33 ou plus récent.",
+        "Your root fingerprint": "Votre empreinte racine",
+        "No partners yet.": "Aucun partenaire pour le moment.",
+        "Users here may share to this partner": "Les utilisateurs d’ici peuvent partager avec ce partenaire",
+        "This partner may share to users here": "Ce partenaire peut partager avec les utilisateurs d’ici",
+        "Partner address": "Adresse du partenaire",
+        "Check partner": "Vérifier le partenaire",
+        "Partner root fingerprint": "Empreinte racine du partenaire",
+        "I compared this fingerprint with the partner's administrator": "J’ai comparé cette empreinte avec l’administrateur du partenaire",
+        "Add partner": "Ajouter le partenaire"
     },
     "plurals": null
 }

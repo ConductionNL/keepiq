@@ -387,6 +387,15 @@ $extra = [
     // Canonical discovery path. The pre-rename path below is still served
     // and is retired before the first stable release — see legacyDocument().
     ['name' => 'discovery#document', 'url' => '/api/v1/app/.well-known/keepiq', 'verb' => 'GET'],
+    // Federated recipients (sharing-federated-recipients). The partner-facing
+    // endpoints are not routes: they live under /ocm/keepiq/... and are
+    // answered by FederationOcmRequestListener.
+    ['name' => 'federationPartner#index',   'url' => '/api/v1/federation/partners',         'verb' => 'GET'],
+    ['name' => 'federationPartner#preview', 'url' => '/api/v1/federation/partners/preview', 'verb' => 'POST'],
+    ['name' => 'federationPartner#create',  'url' => '/api/v1/federation/partners',         'verb' => 'POST'],
+    ['name' => 'federationPartner#update',  'url' => '/api/v1/federation/partners/{id}',    'verb' => 'PUT'],
+    ['name' => 'federationPartner#destroy', 'url' => '/api/v1/federation/partners/{id}',    'verb' => 'DELETE'],
+    ['name' => 'federation#recipientCertificate', 'url' => '/api/v1/federation/recipient-certificate', 'verb' => 'POST'],
     ['name' => 'discovery#legacyDocument', 'url' => '/api/v1/app/.well-known/doriath', 'verb' => 'GET'],
 
     // JWT-Bearer token exchange (public; signature-verified).
