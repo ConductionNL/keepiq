@@ -9,7 +9,7 @@
   section, through the member overview store. Metadata only: no certificate,
   key or ciphertext ever reaches this component.
 
-  @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.1
+  @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 -->
 <template>
 	<CnSettingsSection
@@ -135,7 +135,7 @@ export default {
 		 * The member overview store.
 		 *
 		 * @return {object}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.1
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 		 */
 		store() {
 			return useMemberOverviewStore()
@@ -145,7 +145,7 @@ export default {
 		 * Status filter choices; the first means every status.
 		 *
 		 * @return {Array<{id: string, label: string}>}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.1
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 		 */
 		statusOptions() {
 			return [
@@ -161,7 +161,7 @@ export default {
 		 * Table columns.
 		 *
 		 * @return {Array<{key: string, label: string}>}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.1
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 		 */
 		columns() {
 			return [
@@ -182,7 +182,7 @@ export default {
 	},
 
 	/**
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.1
+	 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 	 */
 	created() {
 		this.statusOption = this.statusOptions[0]
@@ -195,7 +195,7 @@ export default {
 		 *
 		 * @param {string} status One of none, active, revoked, compromised.
 		 * @return {string}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.1
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 		 */
 		statusLabel(status) {
 			return (
@@ -212,7 +212,7 @@ export default {
 		 * Load the first page again after the filter or search changed.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.1
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 		 */
 		reload() {
 			this.offset = 0
@@ -224,7 +224,7 @@ export default {
 		 *
 		 * @param {number} direction 1 for next, -1 for previous.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.1
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 		 */
 		page(direction) {
 			this.offset = Math.max(0, this.offset + direction * MEMBER_PAGE_SIZE)
@@ -235,7 +235,7 @@ export default {
 		 * Fetch the current page with the current filter.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.1
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 		 */
 		load() {
 			return this.store.fetchMembers({

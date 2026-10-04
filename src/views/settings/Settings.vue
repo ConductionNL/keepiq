@@ -10,8 +10,8 @@
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.4
   @spec openspec/changes/implement-dashboard-settings/tasks.md#4.5
   @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
+  @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-administrator-switches-automatic-member-confirmation-on
   @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
-  @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.2
   @spec openspec/changes/admin-scoped-roles/tasks.md#3.1
 -->
 <template>

@@ -102,7 +102,7 @@ class MemberOverviewService {
 	 *
 	 * @throws InvalidArgumentException On an unknown status or an out-of-range page
 	 *
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.1
+	 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 	 */
 	public function list(string $status, string $search, int $limit, int $offset): array {
 		if ($status !== '' && in_array($status, self::STATUSES, true) === false) {
@@ -139,7 +139,7 @@ class MemberOverviewService {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.1
+	 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 	 */
 	private function pageRows(string $status, string $search, int $limit, int $offset): array {
 		if ($status === '') {
@@ -159,7 +159,7 @@ class MemberOverviewService {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.1
+	 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 	 */
 	private function scanForStatus(string $status, string $search, int $wanted): array {
 		$matched = [];
@@ -187,7 +187,7 @@ class MemberOverviewService {
 	 *
 	 * @return array<int,array<string,mixed>>
 	 *
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.1
+	 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 	 */
 	private function resolve(array $users): array {
 		$userIds = [];
@@ -236,7 +236,7 @@ class MemberOverviewService {
 	 *
 	 * @return string One of STATUSES
 	 *
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.1
+	 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 	 */
 	private function vaultStatus(bool $hasActive, ?string $inactiveStatus): string {
 		if ($hasActive === true) {

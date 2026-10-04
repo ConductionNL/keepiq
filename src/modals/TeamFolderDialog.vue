@@ -401,7 +401,7 @@ export default {
 		 * Members confirmed by a colleague, for the dialog list.
 		 *
 		 * @return {Array<{memberId: string, confirmerId: string}>}
-		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.3
+		 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
 		 */
 		confirmations() {
 			return Object.entries(this.confirmedBy ?? {}).map(
@@ -616,7 +616,7 @@ export default {
 		 * confirmed whom and whether automatic confirmation is on.
 		 *
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
-		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.3
+		 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
 		 */
 		async refresh() {
 			// Best-effort and deliberately not awaited into the error path: who

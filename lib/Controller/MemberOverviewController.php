@@ -67,7 +67,7 @@ class MemberOverviewController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.2
+	 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 	 */
 	#[AuthorizedAdminSetting(PeopleAdminSettings::class)]
 	public function index(
