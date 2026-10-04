@@ -4,6 +4,7 @@
 package nl.conduction.keepiq.shared.vault
 
 import nl.conduction.keepiq.shared.api.Account
+import nl.conduction.keepiq.shared.api.InsecureServerException
 import nl.conduction.keepiq.shared.api.KeepiqApi
 import nl.conduction.keepiq.shared.api.platformHttpEngine
 import nl.conduction.keepiq.shared.send.SendService
@@ -30,7 +31,12 @@ class MobileSession(
     val label: String get() = labelOf(account)
 
     companion object {
-        /** Without an offline store (iOS until task 1.6.1): the vault is read from the server. */
+        /**
+         * Without an offline store (iOS until task 1.6.1): the vault is read
+         * from the server. Throws for a server address that is not https, so
+         * Swift sees a throwing call rather than a crash.
+         */
+        @Throws(InsecureServerException::class)
         fun online(account: Account, keys: VaultKeys): MobileSession =
             MobileSession(account, KeepiqApi(KeepiqApi.httpClient(platformHttpEngine()), account), keys, null, null)
 
