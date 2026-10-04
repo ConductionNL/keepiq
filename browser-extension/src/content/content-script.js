@@ -19,20 +19,8 @@ import { watchForOtpField } from './otp-watch.js'
 import { attachPasswordSuggestions } from './password-suggest.js'
 import { showSavePrompt } from './save-prompt.js'
 import { useOnlyPasswordTarget } from '../lib/useOnly.js'
+import { findLoginFields, firstUsable } from '../lib/field-detect.js'
 
-const USERNAME_SELECTORS = [
-	'input[autocomplete="username"]',
-	'input[autocomplete="email"]',
-	'input[type="email"]',
-	'input[name*="user" i]',
-	'input[name*="email" i]',
-	'input[id*="user" i]',
-	'input[id*="email" i]',
-]
-const PASSWORD_SELECTORS = [
-	'input[type="password"]',
-	'input[autocomplete="current-password"]',
-]
 const OTP_SELECTORS = [
 	'input[autocomplete="one-time-code"]',
 	'input[name*="otp" i]',
@@ -41,43 +29,13 @@ const OTP_SELECTORS = [
 	'input[inputmode="numeric"][maxlength="6"]',
 ]
 
-function visible(el) {
-	if (!el || el.disabled || el.readOnly) return false
-	const rect = el.getBoundingClientRect()
-	if (rect.width === 0 && rect.height === 0) return false
-	const style = getComputedStyle(el)
-	return style.visibility !== 'hidden' && style.display !== 'none'
-}
-
 function firstVisible(selectors) {
-	for (const sel of selectors) {
-		for (const el of document.querySelectorAll(sel)) {
-			if (visible(el)) return el
-		}
-	}
-	return null
+	return firstUsable(document, selectors)
 }
 
 /** Detect the login field pair in this frame. */
 function detectLoginFields() {
-	const password = firstVisible(PASSWORD_SELECTORS)
-	let username = firstVisible(USERNAME_SELECTORS)
-	// If no explicit username field, take a preceding visible text input.
-	if (!username && password) {
-		const inputs = Array.from(document.querySelectorAll('input'))
-		const pwIndex = inputs.indexOf(password)
-		for (let i = pwIndex - 1; i >= 0; i--) {
-			const t = (inputs[i].type || 'text').toLowerCase()
-			if (
-				(t === 'text' || t === 'email' || t === 'tel')
-				&& visible(inputs[i])
-			) {
-				username = inputs[i]
-				break
-			}
-		}
-	}
-	return { username, password }
+	return findLoginFields(document)
 }
 
 /**
