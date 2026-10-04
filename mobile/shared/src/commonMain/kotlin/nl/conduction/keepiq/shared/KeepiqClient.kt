@@ -336,3 +336,12 @@ class KeepiqClient(
         }
     }
 }
+
+/**
+ * For Swift, which sees no default arguments: a client with the platform
+ * HTTP engine and the system clock.
+ */
+fun newKeepiqClient(storage: SecureStorage, clientName: String): KeepiqClient = KeepiqClient(storage, clientName)
+
+/** The account id under a name Objective-C does not reserve, for Swift. */
+val Account.accountId: String get() = id

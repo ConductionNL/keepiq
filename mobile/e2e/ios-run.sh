@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+#
+# SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+# SPDX-License-Identifier: EUPL-1.2
+#
+# Runs the iOS UI tests on a simulator against mobile/e2e/server.mjs replay,
+# which answers as the recorded test server (there is no Docker on the macOS
+# runners). Called by .github/workflows/mobile-e2e.yml after the shared
+# framework is built and `xcodegen generate` ran in mobile/ios.
+#
+#   bash mobile/e2e/ios-run.sh <out dir>
+#
+# Writes screenshots, a video under 3 minutes and the xcresult bundle.
+set -euo pipefail
+
+OUT="$(mkdir -p "${1:?out dir}" && cd "$1" && pwd)"
+HERE="$(cd "$(dirname "$0")" && pwd)"
+IOS="$HERE/../ios"
+CERTS="$(mktemp -d)"
+mkdir -p "$OUT/shots"
+
+# A certificate for localhost, trusted by this simulator only.
+openssl req -x509 -newkey rsa:2048 -nodes -days 2 -subj "/CN=Keepiq e2e" \
+	-addext "subjectAltName=DNS:localhost,IP:127.0.0.1" \
+	-addext "basicConstraints=critical,CA:TRUE" \
+	-addext "extendedKeyUsage=serverAuth" \
+	-keyout "$CERTS/key.pem" -out "$CERTS/cert.pem" 2>/dev/null
+
+UDID="$(xcrun simctl list devices available -j | python3 -c '
+import json, sys
+devices = json.load(sys.stdin)["devices"]
+best = None
+for runtime, items in devices.items():
+    if "iOS" not in runtime:
+        continue
+    version = tuple(int(p) for p in runtime.rsplit("iOS-", 1)[-1].split("-") if p.isdigit())
+    for d in items:
+        if d["name"].startswith("iPhone") and (best is None or version > best[0]):
+            best = (version, d["udid"], d["name"])
+print(best[1])
+')"
+echo "simulator $UDID"
+xcrun simctl boot "$UDID" || true
+xcrun simctl bootstatus "$UDID" -b
+xcrun simctl keychain "$UDID" add-root-cert "$CERTS/cert.pem"
+
+node "$HERE/server.mjs" replay --port 8443 --cert "$CERTS/cert.pem" --key "$CERTS/key.pem" > "$OUT/replay.log" 2>&1 &
+REPLAY=$!
+trap 'kill "$REPLAY" 2>/dev/null || true' EXIT
+
+xcodebuild build-for-testing -project "$IOS/Keepiq.xcodeproj" -scheme Keepiq \
+	-destination "id=$UDID" -derivedDataPath "$OUT/DerivedData" -quiet
+
+xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$OUT/keepiq-ios.mp4" &
+VIDEO=$!
+status=0
+TEST_RUNNER_KEEPIQ_SERVER=https://localhost:8443 TEST_RUNNER_KEEPIQ_SHOTS_DIR="$OUT/shots" \
+	xcodebuild test-without-building -project "$IOS/Keepiq.xcodeproj" -scheme Keepiq \
+	-destination "id=$UDID" -derivedDataPath "$OUT/DerivedData" \
+	-resultBundlePath "$OUT/KeepiqUITests.xcresult" || status=$?
+kill -INT "$VIDEO" 2>/dev/null || true
+wait "$VIDEO" 2>/dev/null || true
+rm -rf "$OUT/DerivedData"
+ls -la "$OUT" "$OUT/shots"
+exit "$status"
