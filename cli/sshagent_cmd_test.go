@@ -136,3 +136,31 @@ func TestVaultUnlockerReadsOnlyCiphertext(t *testing.T) {
 		t.Fatalf("requests: %+v", requests)
 	}
 }
+
+// A service manager such as systemd gives the agent a stdout that is not a
+// terminal. Without --foreground the agent would detach, the unit's main
+// process would exit, and systemd would stop the unit and kill the agent.
+func TestTheAgentDetachesOnlyForEvalNotUnderAServiceManager(t *testing.T) {
+	cases := []struct {
+		name       string
+		flags      agentFlags
+		isDetached bool
+		terminal   bool
+		want       bool
+	}{
+		{"eval pipe, plain", agentFlags{}, false, false, true},
+		{"terminal", agentFlags{}, false, true, false},
+		{"already the background copy", agentFlags{}, true, false, false},
+		{"systemd: journal stdout with --foreground", agentFlags{Foreground: true}, false, false, false},
+		{"systemd: --locked --foreground", agentFlags{Locked: true, Foreground: true}, false, false, false},
+	}
+	for _, c := range cases {
+		if got := shouldDetach(c.flags, c.isDetached, c.terminal); got != c.want {
+			t.Errorf("%s: shouldDetach = %v, want %v", c.name, got, c.want)
+		}
+	}
+	f, err := parseAgentFlags([]string{"--locked", "--foreground"})
+	if err != nil || !f.Foreground || !f.Locked {
+		t.Fatalf("parseAgentFlags(--locked --foreground) = %+v, %v", f, err)
+	}
+}
