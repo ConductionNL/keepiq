@@ -687,7 +687,7 @@
       "id": "vault-09",
       "area": "vault",
       "name": "Mark items as favourites and filter on them.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -695,11 +695,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-favourites-tags-and-last-used on 2026-09-27. Before: grep -rniF favourite|favorite lib src: no hits anywhere in the codebase",
+        "state": "built",
+        "evidence": "lib/Controller/SecretOrganisationController.php favourite() serves PUT /api/v1/secrets/{id}/favourite on the caller's own row (oc_keepiq_secrets.is_favourite, migration Version001003Date20261002000000); GET /api/v1/secrets?favourite=true through SecretMapper::findByOwner; src/components/SecretListItem.vue star toggle and the Favourites item in the SecretList filter menu.",
         "owner": "ConductionNL/keepiq",
-        "note": "No favourites concept exists on the secret entity, store, or UI.",
-        "change": "openspec/changes/vault-favourites-tags-and-last-used"
+        "note": "Built 2026-10-02/03; live flow passed on the dev instance 2026-10-04 (tasks 5.1 to 5.5 in the archived tasks.md).",
+        "change": "openspec/changes/archive/2026-10-04-vault-favourites-tags-and-last-used",
+        "reachedOn": "SecretList page (/secrets): the star on a row, Filter menu > Favourites"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -717,7 +718,7 @@
       "id": "vault-10",
       "area": "vault",
       "name": "Label items with tags and filter by tag.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "no",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -725,11 +726,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-favourites-tags-and-last-used on 2026-09-27. Before: grep -rniF '\"tags\"' lib src: no hits; Secret entity (lib/Db) has no tags column and no additionalFields convention is treated as tags",
+        "state": "built",
+        "evidence": "lib/Controller/SecretOrganisationController.php tags() serves PUT /api/v1/secrets/{id}/tags and tagIndex() GET /api/v1/tags (lib/Db/SecretTagMapper.php, oc_keepiq_secret_tags, normalised by lib/Service/SecretTagNormaliser.php); src/components/SecretTagsField.vue in the create and edit dialogs, chips on src/components/SecretListItem.vue, bulk add and remove in src/dialogs/BulkTagDialog.vue, tag filter in the SecretList filter menu.",
         "owner": "ConductionNL/keepiq",
-        "note": "No tagging system. A user could ad-hoc name an additional field 'tag' but there is no dedicated tag storage, chip UI, or filter-by-tag.",
-        "change": "openspec/changes/vault-favourites-tags-and-last-used"
+        "note": "Built 2026-10-02/03; live flow passed on the dev instance 2026-10-04 (tasks 5.1 to 5.5 in the archived tasks.md).",
+        "change": "openspec/changes/archive/2026-10-04-vault-favourites-tags-and-last-used",
+        "reachedOn": "SecretList page (/secrets): Tags field in the create and edit dialogs, Filter menu > tag, selection strip > Tags"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1172,7 +1174,7 @@
       "id": "vault-24",
       "area": "vault",
       "name": "Sort items by date added, date changed or date last used.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "partial",
       "onepassword": "partial",
       "passbolt": "partial",
@@ -1180,12 +1182,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-favourites-tags-and-last-used on 2026-09-27 for the missing half: sorting by date last used; name, date added and date changed are built. Before: src/views/SecretList.vue:787-792 sortOptions name, created_at, updated_at -> src/store/modules/secret.js:140 sort param -> lib/Db/SecretMapper.php:48 SORTABLE_COLUMNS",
+        "state": "built",
+        "evidence": "Name, date added and date changed were built before; sorting by date last used added: oc_keepiq_secrets.last_used_at is set when the holder opens the value (lib/Service/SecretService.php) or the extension fills it (POST /api/v1/extension/used/{id}, SecretOrganisationController::used, 404 for a row the caller does not hold); SecretList filter menu > Sort by Last used.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets), Filter and sort menu",
-        "note": "Sort by name, date created and date updated works from the list's filter menu. There is no last-used timestamp on a secret, so sorting by last use is missing.",
-        "change": "openspec/changes/vault-favourites-tags-and-last-used"
+        "note": "Built 2026-10-02/03; live flow passed on the dev instance 2026-10-04 (tasks 5.1 to 5.5 in the archived tasks.md).",
+        "change": "openspec/changes/archive/2026-10-04-vault-favourites-tags-and-last-used"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
