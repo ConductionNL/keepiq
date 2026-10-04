@@ -1649,7 +1649,6 @@
         "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Não tem uma cópia destes segredos, por isso os novos membros ainda não os receberam. O proprietário pode partilhá-los: {names}",
         "Admin areas": "Áreas de administração",
         "Give a group only the parts of Keepiq administration it needs.": "Dê a um grupo apenas as partes da administração do Keepiq de que precisa.",
-        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "O antigo grupo vault_admin tem {count} membros. Ainda conta como a área Pessoas e saídas, até que uma versão posterior o remova. Delegue essa área a um grupo em vez disso.",
         "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegue uma ou mais áreas a um grupo na página de privilégios de administração. Os administradores da instância têm todas as áreas.",
         "Open administration privileges": "Abrir privilégios de administração",
         "Policies": "Políticas",

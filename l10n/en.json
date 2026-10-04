@@ -1649,7 +1649,6 @@
         "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}",
         "Admin areas": "Admin areas",
         "Give a group only the parts of Keepiq administration it needs.": "Give a group only the parts of Keepiq administration it needs.",
-        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.",
         "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.",
         "Open administration privileges": "Open administration privileges",
         "Policies": "Policies",

@@ -1578,7 +1578,6 @@ OC.L10N.register(
         "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "No tienes ninguna copia de estos secretos, así que los nuevos miembros aún no los han recibido. El propietario puede compartirlos: {names}",
         "Admin areas": "Áreas de administración",
         "Give a group only the parts of Keepiq administration it needs.": "Dé a un grupo solo las partes de la administración de Keepiq que necesita.",
-        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "El antiguo grupo vault_admin tiene {count} miembros. Todavía cuenta como el área Personas y bajas, hasta que una versión posterior lo elimine. Delegue esa área a un grupo en su lugar.",
         "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegue una o más áreas a un grupo en la página de privilegios de administración. Los administradores de la instancia tienen todas las áreas.",
         "Open administration privileges": "Abrir privilegios de administración",
         "Policies": "Políticas",

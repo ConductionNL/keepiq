@@ -4,8 +4,7 @@
  * Builds a real AdminAreaAuthorizer for controller and service tests.
  *
  * The authorizer is real, so a test exercises the same rule the app runs:
- * instance admin first, then the vault_admin alias for People, then the
- * delegated area classes. Only its collaborators are doubles. Delegated
+ * instance admin first, then the delegated area classes. Only its collaborators are doubles. Delegated
  * areas are real area instances, because Nextcloud matches a delegation on
  * `get_class()` and a mock's class name would never match.
  *
@@ -44,7 +43,7 @@ trait AdminAreaFixture {
 	 * An authorizer over $groupManager in which every user is delegated
 	 * exactly the area classes in $delegated.
 	 *
-	 * @param IGroupManager|null $groupManager The group manager (isAdmin, isInGroup); a stub answering false when null
+	 * @param IGroupManager|null $groupManager The group manager (isAdmin); a stub answering false when null
 	 * @param string[]|null $delegated Area classes delegated to the user's groups; $delegatedAreas when null
 	 *
 	 * @return AdminAreaAuthorizer
@@ -86,7 +85,6 @@ trait AdminAreaFixture {
 				initialState: $state,
 				appManager: $this->createStub(IAppManager::class),
 				appConfig: $this->createStub(IAppConfig::class),
-				groupManager: $this->createStub(IGroupManager::class),
 			);
 		}
 

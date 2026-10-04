@@ -1578,7 +1578,6 @@ OC.L10N.register(
         "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Sinulla ei ole kopiota näistä salaisuuksista, joten uudet jäsenet eivät ole vielä saaneet niitä. Omistaja voi jakaa ne: {names}",
         "Admin areas": "Hallinta-alueet",
         "Give a group only the parts of Keepiq administration it needs.": "Anna ryhmälle vain ne Keepiqin hallinnan osat, joita se tarvitsee.",
-        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Vanhassa vault_admin-ryhmässä on {count} jäsentä. Se lasketaan yhä alueeksi Henkilöt ja lähtijät, kunnes myöhempi versio poistaa sen. Delegoi alue mieluummin ryhmälle.",
         "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegoi yksi tai useampi alue ryhmälle hallintaoikeuksien sivulla. Instanssin ylläpitäjillä on kaikki alueet.",
         "Open administration privileges": "Avaa hallintaoikeudet",
         "Policies": "Käytännöt",

@@ -1649,7 +1649,6 @@
         "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Du har ingen kopi af disse hemmeligheder, så de nye medlemmer har ikke fået dem endnu. Ejeren kan dele dem: {names}",
         "Admin areas": "Administrationsområder",
         "Give a group only the parts of Keepiq administration it needs.": "Giv en gruppe kun de dele af Keepiq-administrationen, den har brug for.",
-        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Den gamle gruppe vault_admin har {count} medlemmer. Den tæller stadig som området Personer og fratrædelse, indtil en senere version fjerner den. Uddeleger hellere det område til en gruppe.",
         "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Uddeleger et eller flere områder til en gruppe på siden med administrationsrettigheder. Instansadministratorer har alle områder.",
         "Open administration privileges": "Åbn administrationsrettigheder",
         "Policies": "Politikker",

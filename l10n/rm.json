@@ -1553,7 +1553,6 @@
         "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Vus n'avais nagina copia da quests secrets, perquai n'han ils novs commembers anc betg survegnì els. Il proprietari als po parter: {names}",
         "Admin areas": "Secturs d'administraziun",
         "Give a group only the parts of Keepiq administration it needs.": "Dai ad ina gruppa mo las parts da l'administraziun da Keepiq ch'ella dovra.",
-        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "La veglia gruppa vault_admin ha {count} commembers. Ella vala anc sco il sectur Persunas e partenzas, fin ch'ina versiun posteriura l'allontanescha. Delegai empè quel sectur ad ina gruppa.",
         "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Delegai in u plirs secturs ad ina gruppa sin la pagina dals privilegis d'administraziun. Ils administraturs da l'instanza han mintga sectur.",
         "Open administration privileges": "Avrir ils privilegis d'administraziun",
         "Policies": "Directivas",

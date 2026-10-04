@@ -46,7 +46,7 @@ Every Keepiq endpoint that requires administration MUST be guarded by `#[Authori
 
 ### Requirement: In-app admin actions follow the People and offboarding area
 
-The admin handover panel in the secret sidebar and the team offboarding action MUST be available exactly to instance administrators and holders of the "People and offboarding" area. `GET /api/v1/delegations/capabilities` MUST report `canHandover` from the same check the handover endpoint enforces. Membership of the `vault_admin` group MUST count as holding that area only until the alias is removed, and the admin settings MUST warn while that group has members.
+The admin handover panel in the secret sidebar and the team offboarding action MUST be available exactly to instance administrators and holders of the "People and offboarding" area. `GET /api/v1/delegations/capabilities` MUST report `canHandover` from the same check the handover endpoint enforces. Membership of the `vault_admin` group MUST NOT count as holding that area or any other area: the alias was removed in #1043, and the admin settings show no notice about that group.
 
 #### Scenario: Helpdesk member sees the handover panel
 
@@ -54,8 +54,8 @@ The admin handover panel in the secret sidebar and the team offboarding action M
 - **WHEN** they open that secret's sidebar at `/secrets/{id}`
 - **THEN** the admin handover panel MUST be shown
 
-#### Scenario: Legacy vault_admin member is warned about
+#### Scenario: A vault_admin member without a delegation is refused
 
-- **GIVEN** the `vault_admin` group has one member and no area is delegated to it
-- **WHEN** an instance administrator opens the Keepiq admin settings
-- **THEN** the General area MUST show a notice asking to delegate the "People and offboarding" area instead
+- **GIVEN** a member of the `vault_admin` group who is not an instance administrator, and no area is delegated to any of their groups
+- **WHEN** they ask for the admin handover of a secret they hold a share of, or offboard a team member
+- **THEN** both requests MUST be refused, and `GET /api/v1/delegations/capabilities` MUST report `canHandover` as false

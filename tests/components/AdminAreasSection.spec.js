@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: EUPL-1.2
  *
  * The "Admin areas" note lists the five areas, links to Nextcloud's
- * administration privileges page and warns while vault_admin has members
- * (admin-scoped-roles §3.3).
+ * administration privileges page. The vault_admin notice is gone with its
+ * alias (#1043).
  *
  * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.3
  */
@@ -54,20 +54,13 @@ describe('AdminAreasSection', () => {
 		).toBe('/settings/admin/admindelegation')
 	})
 
-	it('shows no warning while vault_admin is empty', () => {
+	it('no longer warns about vault_admin, even when the group has members', () => {
+		state['vault-admin-members'] = 3
 		const wrapper = mount(AdminAreasSection, { global: { stubs } })
 
 		expect(
 			wrapper.find('[data-testid="admin-areas-legacy-warning"]').exists(),
 		).toBe(false)
-	})
-
-	it('warns while vault_admin has members', () => {
-		state['vault-admin-members'] = 3
-		const wrapper = mount(AdminAreasSection, { global: { stubs } })
-
-		const warning = wrapper.find('[data-testid="admin-areas-legacy-warning"]')
-		expect(warning.exists()).toBe(true)
-		expect(warning.text()).toContain('vault_admin')
+		expect(wrapper.text()).not.toContain('vault_admin')
 	})
 })

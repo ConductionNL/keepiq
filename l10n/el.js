@@ -1578,7 +1578,6 @@ OC.L10N.register(
         "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Δεν έχετε αντίγραφο αυτών των μυστικών, οπότε τα νέα μέλη δεν τα έχουν λάβει ακόμα. Ο κάτοχος μπορεί να τα κοινοποιήσει: {names}",
         "Admin areas": "Περιοχές διαχείρισης",
         "Give a group only the parts of Keepiq administration it needs.": "Δώστε σε μια ομάδα μόνο τα μέρη της διαχείρισης του Keepiq που χρειάζεται.",
-        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Η παλιά ομάδα vault_admin έχει {count} μέλη. Μετράει ακόμη ως η περιοχή Άτομα και αποχωρήσεις, μέχρι να την αφαιρέσει μια μεταγενέστερη έκδοση. Αναθέστε αντί γι' αυτό την περιοχή σε μια ομάδα.",
         "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Αναθέστε μία ή περισσότερες περιοχές σε μια ομάδα στη σελίδα δικαιωμάτων διαχείρισης. Οι διαχειριστές της εγκατάστασης έχουν κάθε περιοχή.",
         "Open administration privileges": "Άνοιγμα δικαιωμάτων διαχείρισης",
         "Policies": "Πολιτικές",

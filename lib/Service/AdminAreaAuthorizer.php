@@ -67,17 +67,9 @@ class AdminAreaAuthorizer {
 	];
 
 	/**
-	 * The legacy group that counts as holding the People area until the
-	 * alias is removed (admin-scoped-roles D4).
-	 *
-	 * @var string
-	 */
-	public const LEGACY_PEOPLE_GROUP = 'vault_admin';
-
-	/**
 	 * Constructor.
 	 *
-	 * @param IGroupManager $groupManager Instance admin and legacy group checks
+	 * @param IGroupManager $groupManager The instance admin check
 	 * @param IUserManager $userManager Resolves the user for the settings manager
 	 * @param IManager $settingsManager The settings a user may see, delegations included
 	 * @param LoggerInterface $logger Records a failed delegation lookup
@@ -96,8 +88,9 @@ class AdminAreaAuthorizer {
 
 	/**
 	 * Whether $userId holds the area of $areaClass: an instance admin holds
-	 * every area, a delegated user the areas delegated to one of their
-	 * groups, and a member of `vault_admin` the People area.
+	 * every area, and a delegated user the areas delegated to one of their
+	 * groups. No group name grants an area by itself (#1043 removed the
+	 * `vault_admin` alias for People).
 	 *
 	 * Fails closed: an unknown area, an unknown user or a failing delegation
 	 * lookup answers false.
@@ -115,12 +108,6 @@ class AdminAreaAuthorizer {
 		}
 
 		if ($this->groupManager->isAdmin($userId) === true) {
-			return true;
-		}
-
-		if ($areaClass === PeopleAdminSettings::class
-			&& $this->groupManager->isInGroup($userId, self::LEGACY_PEOPLE_GROUP) === true
-		) {
 			return true;
 		}
 

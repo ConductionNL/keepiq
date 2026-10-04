@@ -1625,7 +1625,6 @@
         "You hold no copy of these secrets, so the new members did not get them yet. The owner can share them: {names}": "Bu gizli bilgilerin bir kopyası sizde yok, bu yüzden yeni üyeler henüz bunları almadı. Sahibi bunları paylaşabilir: {names}",
         "Admin areas": "Yönetim alanları",
         "Give a group only the parts of Keepiq administration it needs.": "Bir gruba Keepiq yönetiminin yalnızca ihtiyaç duyduğu bölümlerini verin.",
-        "The legacy vault_admin group has {count} members. It still counts as the People and offboarding area, until a later release removes it. Delegate that area to a group instead.": "Eski vault_admin grubunun {count} üyesi var. Daha sonraki bir sürüm kaldırana kadar hâlâ Kişiler ve ayrılanlar alanı sayılıyor. Bunun yerine o alanı bir gruba devredin.",
         "Delegate one or more areas to a group on the administration privileges page. Instance administrators hold every area.": "Yönetim yetkileri sayfasında bir gruba bir veya daha fazla alan devredin. Örnek yöneticileri her alana sahiptir.",
         "Open administration privileges": "Yönetim yetkilerini aç",
         "Policies": "İlkeler",
