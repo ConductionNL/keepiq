@@ -172,7 +172,11 @@ export function initGenerator({ $, send, showError, doc = document }) {
 		$('gen-length-range').min = floor
 	}
 
-	/** Put the options into the form, and show the right fields. */
+	/**
+	 * Put the options into the form, and show the right fields.
+	 *
+	 * @spec openspec/specs/extension-generator/spec.md#requirement-password-options
+	 */
 	function writeForm() {
 		const p = options.password
 		$('gen-length').value = p.length
@@ -184,6 +188,10 @@ export function initGenerator({ $, send, showError, doc = document }) {
 		$('gen-symbols').checked = p.includeSpecialCharacters
 		$('gen-min-digits').value = p.minDigits
 		$('gen-min-special').value = p.minSpecial
+		// A minimum counts only while its kind is on; the generator ignores
+		// it otherwise, so the form does not show it either.
+		$('gen-min-digits').closest('label').hidden = !p.includeDigits
+		$('gen-min-special').closest('label').hidden = !p.includeSpecialCharacters
 		$('gen-ambiguous').checked = p.avoidAmbiguous
 		lockToPolicy()
 		const w = options.passphrase
