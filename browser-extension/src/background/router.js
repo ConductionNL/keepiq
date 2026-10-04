@@ -808,7 +808,8 @@ async function doOtpFieldDetected(payload, sender) {
 	const intents = await readIntents()
 	const intent = intents[tabId]
 	if (!intent) return { filled: false }
-	const site = registrableDomain(hostOf(senderOrigin(sender)))
+	const host = hostOf(senderOrigin(sender))
+	const site = registrableDomain(host)
 	if (site === '' || site !== intent.site) return { filled: false }
 	delete intents[tabId]
 	await writeIntents(intents)
@@ -822,7 +823,9 @@ async function doOtpFieldDetected(payload, sender) {
 	const res = await chrome.tabs
 		.sendMessage(
 			tabId,
-			{ type: 'fill-otp', payload: { code: result.code } },
+			// The frame fills only for its own host (fillScope, #740), so
+			// the message names the host the field was reported from.
+			{ type: 'fill-otp', payload: { code: result.code, host } },
 			{ frameId: sender.frameId ?? 0 },
 		)
 		.catch(() => ({ filled: false }))
