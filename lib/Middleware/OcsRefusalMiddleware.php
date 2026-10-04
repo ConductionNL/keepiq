@@ -3,12 +3,12 @@
 /**
  * Keepiq OCS refusal middleware
  *
- * Keeps a refusal a Keepiq OCSController returns visible to the client.
+ * Keeps a refusal on a Keepiq OCSController route visible to the client.
  * Nextcloud's OCSMiddleware rewrites every 401 and 403 response of an
  * OCSController into an OCS v1 envelope, which on an /index.php/apps route is
  * HTTP 200 without the body's machine-readable code. Measured live on
- * Nextcloud 35 (4 Oct 2026): 400, 409, 422 and 428 pass untouched. So a 403 a
- * Keepiq OCSController returns itself leaves here as 428 Precondition Required,
+ * Nextcloud 35 (4 Oct 2026): 400, 409, 422 and 428 pass untouched. So a 403 on
+ * a Keepiq OCSController route leaves here as 428 Precondition Required,
  * with its body kept and an `error` code added: the policy `code` when it has
  * one, otherwise `forbidden`.
  *
@@ -33,15 +33,18 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\AppFramework\Middleware;
 use OCP\AppFramework\OCSController;
-use Throwable;
 
 /**
- * Turns a Keepiq OCSController's own 403 into a 428 the OCS layer leaves alone.
+ * Turns every 403 of a Keepiq OCSController into a 428 the OCS layer leaves alone.
  *
  * Nextcloud runs every app middleware's afterController before OCSMiddleware's,
- * so the status is changed before the rewrite looks at it. A refusal Nextcloud
- * raises itself (not an admin, password confirmation required, and so on)
- * arrives here as an exception first; that request is left to Nextcloud.
+ * so the status is changed before the rewrite looks at it. That holds for a
+ * refusal a Keepiq controller returns and for one a middleware returns,
+ * Nextcloud's own included (not an admin, password confirmation required):
+ * Nextcloud only asks the middlewares that already ran beforeController to
+ * handle an exception, but it runs afterController on all of them. So every
+ * refusal on a Keepiq OCS route reaches the client as 428 with an `error`;
+ * before, Nextcloud's own ones arrived as an HTTP 200 envelope too.
  *
  * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
  */
@@ -52,36 +55,7 @@ class OcsRefusalMiddleware extends Middleware {
 	public const REFUSAL_STATUS = Http::STATUS_PRECONDITION_REQUIRED;
 
 	/**
-	 * Whether an exception passed through this request: the response then came
-	 * from a middleware, not from a Keepiq controller.
-	 *
-	 * @var boolean
-	 */
-	private bool $exceptionSeen = false;
-
-	/**
-	 * Remember that the response will come from exception handling, and pass it on.
-	 *
-	 * @param mixed     $controller The controller
-	 * @param string    $methodName The method
-	 * @param Throwable $exception  The raised exception
-	 *
-	 * @return Response Never; the exception is always re-thrown
-	 *
-	 * @throws Throwable Always, the same exception
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $controller and $methodName
-	 *   are mandated by OCP\AppFramework\Middleware::afterException().
-	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/tasks.md#task-6.5
-	 */
-	public function afterException($controller, $methodName, Throwable $exception): Response {
-		$this->exceptionSeen = true;
-		throw $exception;
-	}//end afterException()
-
-	/**
-	 * Re-status a Keepiq OCSController's own 403 as 428 with an `error` code.
+	 * Re-status a 403 on a Keepiq OCSController as 428 with an `error` code.
 	 *
 	 * @param mixed    $controller The controller
 	 * @param string   $methodName The method
@@ -97,7 +71,6 @@ class OcsRefusalMiddleware extends Middleware {
 	 */
 	public function afterController($controller, $methodName, Response $response): Response {
 		if (($controller instanceof OCSController) === false
-			|| $this->exceptionSeen === true
 			|| ($response instanceof JSONResponse) === false
 			|| $response->getStatus() !== Http::STATUS_FORBIDDEN
 		) {

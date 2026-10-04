@@ -12,7 +12,8 @@
  * write read as a success in the browser.
  *
  * The private OC classes are not on this test's autoload path, so the
- * dispatcher's order (afterException then afterController, both from the last
+ * dispatcher's order (afterException only for the middlewares whose
+ * beforeController ran, then afterController for all, both from the last
  * registered middleware to the first; app middlewares after the framework's)
  * and OCSMiddleware's rewrite rule are reproduced here, and the keepiq
  * middlewares themselves are the real classes. The live run that measured the
@@ -78,10 +79,18 @@ class PlainRefusalFixtureController extends Controller {
 }//end class
 
 /**
- * Stands in for a framework middleware (SecurityMiddleware and friends) that
- * turns its own exception into a 403 before any app code runs.
+ * Stands in for a framework middleware (SecurityMiddleware and friends): it
+ * refuses in beforeController and turns its own exception into a 403, before
+ * any app middleware has run.
  */
 class FrameworkRefusalFixtureMiddleware extends Middleware {
+	public function __construct(private Throwable $refusal) {
+	}
+
+	public function beforeController($controller, $methodName): void {
+		throw $this->refusal;
+	}
+
 	public function afterException($controller, $methodName, Throwable $exception): Response {
 		return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 	}
@@ -131,22 +140,23 @@ class OcsRefusalPipelineTest extends TestCase {
 	): Response {
 		$chain = $middlewares;
 		if ($frameworkException !== null) {
-			array_unshift($chain, new FrameworkRefusalFixtureMiddleware());
+			array_unshift($chain, new FrameworkRefusalFixtureMiddleware($frameworkException));
 		}
 
+		// MiddlewareDispatcher: beforeController counts every middleware it
+		// reaches; on an exception only those are asked to handle it (last
+		// first), but afterController then runs on all of them (last first).
+		$ran = 0;
 		try {
-			if ($frameworkException !== null) {
-				throw $frameworkException;
-			}
-
 			foreach ($chain as $middleware) {
+				$ran++;
 				$middleware->beforeController($controller, $method);
 			}
 
 			$response = $controllerResponse ?? $controller->$method();
 		} catch (Throwable $exception) {
 			$response = null;
-			for ($i = count($chain) - 1; $i >= 0; $i--) {
+			for ($i = $ran - 1; $i >= 0; $i--) {
 				try {
 					$response = $chain[$i]->afterException($controller, $method, $exception);
 					break;
@@ -270,25 +280,27 @@ class OcsRefusalPipelineTest extends TestCase {
 	}//end testAPlainControllerRefusalReachesTheBrowserAs428()
 
 	/**
-	 * A refusal Nextcloud itself raises (not an admin, password confirmation)
-	 * is Nextcloud's contract and is left alone.
+	 * A refusal Nextcloud itself raises on a Keepiq OCS route (not an admin,
+	 * password confirmation) reaches the browser as a refusal too, where it
+	 * used to arrive as an HTTP 200 envelope. Measured live on kq-l2 (4 Oct
+	 * 2026): GET /api/v1/ca/status as a non-admin answers 428.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/harden-vault-key-material-guards/tasks.md#task-6.5
 	 */
-	public function testAFrameworkRefusalIsLeftToNextcloud(): void {
-		$middlewares = $this->keepiqMiddlewares();
+	public function testAFrameworkRefusalReachesTheBrowserToo(): void {
 		$response = $this->dispatch(
 			controller: new OcsRefusalFixtureController('keepiq', $this->request),
 			method: 'plain',
-			middlewares: $middlewares,
+			middlewares: $this->keepiqMiddlewares(),
 			frameworkException: new RuntimeException('Logged in account must be an admin'),
 		);
 
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertArrayHasKey('ocs', $response->getData());
-	}//end testAFrameworkRefusalIsLeftToNextcloud()
+		$this->assertSame(428, $response->getStatus());
+		$this->assertSame('forbidden', $response->getData()['error']);
+		$this->assertSame('Logged in account must be an admin', $response->getData()['message']);
+	}//end testAFrameworkRefusalReachesTheBrowserToo()
 
 	/**
 	 * A plain Controller already delivers its 403; it is not touched.
