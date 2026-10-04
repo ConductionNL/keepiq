@@ -27,7 +27,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 /**
  * keepiq.listEntries: the caller's entries as metadata only.
  *
- * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-metadata-only-entry-listing-tool
+ * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-metadata-only-entry-listing-tool
  */
 class EntryMetadataTools {
 
@@ -78,7 +78,7 @@ class EntryMetadataTools {
 	 *
 	 * @return array{entries: list<array<string,scalar|null>>, total: int}
 	 *
-	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-metadata-only-entry-listing-tool
+	 * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-metadata-only-entry-listing-tool
 	 */
 	public function listEntries(?string $folderId = null, ?string $typeId = null, ?string $query = null): array {
 		$userId = $this->context->userId();

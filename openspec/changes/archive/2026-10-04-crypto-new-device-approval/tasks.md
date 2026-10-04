@@ -25,7 +25,7 @@
 
 ## 5. End to end
 
-- [ ] 5.1 Add a Playwright flow with two browser contexts for one user: the second context requests approval, the first approves after the phrases match, and the second context unlocks and lists the vault. Verify: the Playwright spec passes in the E2E job. **Live check owed**: the Playwright flow needs the E2E job; not written in this change.
+- [x] 5.1 Add a Playwright flow with two browser contexts for one user: the second context requests approval, the first approves after the phrases match, and the second context unlocks and lists the vault. Verify: the Playwright spec passes in the E2E job. Done 4 Oct: `tests/e2e/workflows/device-approval.spec.ts` (throwaway user from `_vault-users.ts`, vault set up in the browser). Red before, green after: on development it failed because the lock screen never showed "Approve from another device" (the waiting block's `v-else` paired with the organisation `v-if` from #920 and read `request.status` on null, so the whole block threw); fixed in `DeviceApprovalRequest.vue` with `tests/components/DeviceApprovalRequest.spec.js` (red on the old template). Green on Nextcloud 35 in 53 s.
 
 ## Acceptance criteria
 

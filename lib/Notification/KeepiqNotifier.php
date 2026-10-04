@@ -242,7 +242,7 @@ class KeepiqNotifier implements INotifier {
 	 *
 	 * @return bool True when this renderer recognised the subject.
 	 *
-	 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+	 * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
 	 */
 	private function renderDeviceApprovalSubject(INotification $notification, string $subject, array $params, IL10N $l): bool {
 		if ($subject !== 'device_approval_requested') {

@@ -15,7 +15,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * A new device's request is announced (crypto-new-device-approval task 1.2).
  *
- * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+ * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
  */
 class DeviceApprovalNotifierTest extends TestCase {
 

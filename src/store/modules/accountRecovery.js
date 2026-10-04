@@ -384,7 +384,7 @@ export const useAccountRecoveryStore = defineStore('accountRecovery', {
 		 * without a new master password (crypto-new-device-approval D6).
 		 *
 		 * @return {Promise<string>} The officer who handled it.
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
 		 */
 		async unlockDevice() {
 			const request = this.myRequest
