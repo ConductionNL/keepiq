@@ -5,7 +5,7 @@
  * The admin switch for automatic member confirmation loads the stored value
  * and saves only its own key (admin-auto-confirm-members §1.2).
  *
- * @spec openspec/changes/admin-auto-confirm-members/tasks.md#1.2
+ * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-administrator-switches-automatic-member-confirmation-on
  */
 
 import axios from '@nextcloud/axios'

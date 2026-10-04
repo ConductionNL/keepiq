@@ -196,7 +196,7 @@ export const useSessionStore = defineStore('session', {
 		 * awaited, so it never delays or breaks an unlock.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.2
+		 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
 		 */
 		afterUnlock() {
 			try {

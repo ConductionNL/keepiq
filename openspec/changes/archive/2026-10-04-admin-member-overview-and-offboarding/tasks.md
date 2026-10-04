@@ -17,7 +17,7 @@
 - [x] 3.1 Add `MemberOverviewSection.vue` (`CnSettingsSection`, `CnDataTable`, `NcSelect` status filter with `inputLabel`, search) and mount it in `src/views/settings/Settings.vue`. Verify with a vitest in `tests/components/` for filter and paging.
 - [x] 3.2 Add the row actions "Offboard" and "Revoke suite" that prefill `OffboardingSection.vue` and `AdminSuiteSection.vue` through a shared store. Verify with a vitest that the prefilled values reach both sections.
 - [x] 3.3 Replace the two free-text user id fields in `OffboardingSection.vue` with user pickers fed by the member endpoint. Verify with a vitest and the nc-input-labels hydra gate.
-- [ ] 3.4 Cover the flow end to end. Verify with a Playwright test in `tests/e2e/workflows/` where an administrator filters on `none`, then offboards a user from the list and sees the removed membership count. Live check owed: needs a running instance with Playwright.
+- [x] 3.4 Cover the flow end to end. Verify with a Playwright test in `tests/e2e/workflows/` where an administrator filters on `none`, then offboards a user from the list and sees the removed membership count. `tests/e2e/workflows/member-overview-offboarding.spec.ts`: filter "Not set up", every row reads Not set up, "Offboard" on the leaver's row fills Team offboarding, successor picked, confirmed, response `membershipsRemoved` 1, summary "Removed the user from 1 team folders.", no user row left. Red-before/green-after: red (0 instead of 1) with the membership removal switched off, green on development.
 
 ## Acceptance criteria
 

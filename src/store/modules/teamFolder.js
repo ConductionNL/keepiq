@@ -486,7 +486,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * logged and retried on the next run; it never blocks the vault.
 		 *
 		 * @return {Promise<{enabled: boolean, created: number, members: number}>}
-		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.1
+		 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
 		 */
 		async autoConfirm() {
 			const secretStore = useSecretStore()
@@ -574,7 +574,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * Never throws; a failed run is logged and the next one retries.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.2
+		 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
 		 */
 		async startAutoConfirm() {
 			this.stopAutoConfirm()
@@ -621,7 +621,7 @@ export const useTeamFolderStore = defineStore('teamFolder', {
 		 * Stop the repeating confirmation (on lock).
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.2
+		 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
 		 */
 		stopAutoConfirm() {
 			if (autoConfirmTimer !== null) {

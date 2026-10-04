@@ -78,7 +78,7 @@ class TeamFolderOffboardingService {
 	 * @throws InvalidArgumentException On invalid input / not authorized
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.5
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.1
+	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-offboarding-removes-the-leavers-direct-team-folder-memberships
 	 */
 	public function offboard(string $leavingUserId, string $successorUserId, string $adminId): array {
 		$this->assertOffboardingAdmin(userId: $adminId);
@@ -152,7 +152,7 @@ class TeamFolderOffboardingService {
 	 *
 	 * @return array<int,array{teamFolderId:string,groupId:string}>
 	 *
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.2
+	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-offboarding-removes-the-leavers-direct-team-folder-memberships
 	 */
 	private function coveringGroups(string $userId): array {
 		$covering = [];
@@ -177,7 +177,7 @@ class TeamFolderOffboardingService {
 	 *
 	 * @return int The number of member rows removed
 	 *
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.1
+	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-offboarding-removes-the-leavers-direct-team-folder-memberships
 	 */
 	private function removeDirectMemberships(string $userId): int {
 		$removed = 0;

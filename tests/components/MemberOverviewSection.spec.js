@@ -7,7 +7,7 @@
  * administrator never types a user or suite id
  * (admin-member-overview-and-offboarding §1.5, §3.1, §3.2, §3.3).
  *
- * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.1
+ * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
  */
 
 import axios from '@nextcloud/axios'
