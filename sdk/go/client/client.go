@@ -108,15 +108,29 @@ func (c *Client) ActiveSuite() (*Suite, error) {
 	return nil, fmt.Errorf("no active encryption suite")
 }
 
-// ListSecrets fetches the caller's secret list (metadata + ciphertext).
+// listPageSize is the server's largest page (SecretService::MAX_LIMIT).
+// Nextcloud 35 refuses any `limit` above 500 with a 400, so the list is read
+// page by page instead of in one oversized request (keepiq#786).
+const listPageSize = 100
+
+// ListSecrets fetches the caller's whole secret list (metadata + ciphertext),
+// following the pages until the server's total is reached.
 func (c *Client) ListSecrets() ([]Secret, error) {
-	var page struct {
-		Items []Secret `json:"items"`
+	var all []Secret
+	for page := 1; ; page++ {
+		var resp struct {
+			Items []Secret `json:"items"`
+			Total int      `json:"total"`
+		}
+		path := fmt.Sprintf("/apps/keepiq/api/v1/secrets?limit=%d&page=%d", listPageSize, page)
+		if err := c.getJSON(path, &resp); err != nil {
+			return nil, err
+		}
+		all = append(all, resp.Items...)
+		if len(resp.Items) == 0 || len(all) >= resp.Total {
+			return all, nil
+		}
 	}
-	if err := c.getJSON("/apps/keepiq/api/v1/secrets?limit=100000", &page); err != nil {
-		return nil, err
-	}
-	return page.Items, nil
 }
 
 // GetSecret fetches one secret by id (human mode).
