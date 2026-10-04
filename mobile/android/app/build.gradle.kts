@@ -1,8 +1,9 @@
 // SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 // SPDX-License-Identifier: EUPL-1.2
 
-// The Android app: pairing and unlock (clients-mobile-apps group 2). The
-// vault screens, autofill and passkey providers come in later groups.
+// The app: pairing and unlock (group 2) and the vault, Send and
+// generator screens (group 3) over :shared. Autofill and the passkey
+// providers come in later groups of clients-mobile-apps.
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -37,6 +38,11 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures { compose = true }
+    // Compose screen tests on the JVM with Robolectric (free software); the
+    // emulator tests come with the e2e harness of task group 2.
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
     // F-Droid: no Google dependency metadata blob in the APK.
     dependenciesInfo {
         includeInApk = false
@@ -79,4 +85,11 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.espresso.intents)
     androidTestImplementation(libs.junit)
+    testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.serialization.json)
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    debugImplementation(platform(libs.compose.bom))
+    debugImplementation(libs.compose.ui.test.manifest)
 }

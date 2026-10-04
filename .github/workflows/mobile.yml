@@ -17,6 +17,8 @@ on:
       - "src/send/**"
       - "src/totp/**"
       - "src/passkey/**"
+      - "src/generator/**"
+      - "tests/vitest/generator-vectors.spec.js"
       - ".github/workflows/mobile.yml"
   pull_request:
     branches: [main, development, beta]
@@ -28,6 +30,8 @@ on:
       - "src/send/**"
       - "src/totp/**"
       - "src/passkey/**"
+      - "src/generator/**"
+      - "tests/vitest/generator-vectors.spec.js"
       - ".github/workflows/mobile.yml"
   workflow_dispatch:
 
@@ -52,8 +56,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Shared core tests (jvm and Android unit tests)
         run: ./gradlew --no-daemon :shared:allTests
-      - name: The placeholder app links the shared core
+      - name: The app builds and links the shared core
         run: ./gradlew --no-daemon :android:app:assembleDebug
+      - name: App screen tests on the JVM (Robolectric)
+        run: ./gradlew --no-daemon :android:app:testDebugUnitTest
       - name: No Google Play Services or Firebase in the dependency tree
         run: |
           ./gradlew --no-daemon -q :shared:dependencies :android:app:dependencies > deps.txt
@@ -71,7 +77,8 @@ jobs:
         run: |
           npm ci --ignore-scripts
           KEEPIQ_KOTLIN_VECTORS=mobile/shared/build/vectors/kotlin-output.json \
-            npx vitest run tests/vitest/crypto-vectors.spec.js tests/vitest/crypto-vectors-kotlin.spec.js
+            npx vitest run tests/vitest/crypto-vectors.spec.js tests/vitest/crypto-vectors-kotlin.spec.js \
+              tests/vitest/generator-vectors.spec.js
 
   ios:
     runs-on: macos-latest

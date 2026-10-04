@@ -166,6 +166,63 @@ kotlin.sourceSets.commonTest {
     kotlin.srcDir(generateCryptoVectors)
 }
 
+// The passphrase word list is the web generator's own (src/generator/
+// eff-large-wordlist.js), compiled into commonMain, so the two generators
+// can never draw from different lists.
+val wordlistSource = layout.projectDirectory.file("../../src/generator/eff-large-wordlist.js")
+val generatedWordlist = layout.buildDirectory.dir("generated/wordlist/kotlin")
+val generateWordlist by tasks.registering {
+    inputs.file(wordlistSource).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(generatedWordlist)
+    val sourceFile = wordlistSource.asFile
+    val outDir = generatedWordlist.get().asFile
+    doLast {
+        val js = sourceFile.readText()
+        val list = js.substringAfter("Object.freeze(").substringBefore(".split(' ')")
+        val words = Regex("'([^']*)'").findAll(list).joinToString("") { it.groupValues[1] }.split(' ')
+        check(words.size == 7776 && words.toSet().size == 7776) { "The EFF word list has ${words.size} words, expected 7776" }
+        val parts = words.joinToString(" ").chunked(8_000).joinToString(",\n        ") { "\"$it\"" }
+        val body = StringBuilder()
+        body.append("// Generated from src/generator/eff-large-wordlist.js by :shared:generateWordlist. Do not edit.\n")
+        body.append("// The EFF large word list, by the Electronic Frontier Foundation, CC BY 3.0 US.\n")
+        body.append("package nl.conduction.keepiq.shared.generator\n\n")
+        body.append("internal object EffWordlist {\n")
+        body.append("    val words: List<String> by lazy {\n        listOf(\n        $parts,\n        ).joinToString(\"\").split(' ')\n    }\n")
+        body.append("}\n")
+        val target = File(outDir, "nl/conduction/keepiq/shared/generator/EffWordlist.kt")
+        target.parentFile.mkdirs()
+        target.writeText(body.toString())
+    }
+}
+kotlin.sourceSets.commonMain {
+    kotlin.srcDir(generateWordlist)
+}
+
+// The generator cases in tests/vectors/generator/ are compiled into
+// commonTest the same way as the crypto vectors.
+val generatorVectorsFile = layout.projectDirectory.file("../../tests/vectors/generator/cases.json")
+val generatedGeneratorVectors = layout.buildDirectory.dir("generated/generator-vectors/kotlin")
+val generateGeneratorVectors by tasks.registering {
+    inputs.file(generatorVectorsFile).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(generatedGeneratorVectors)
+    val sourceFile = generatorVectorsFile.asFile
+    val outDir = generatedGeneratorVectors.get().asFile
+    doLast {
+        val encoded = Base64.getEncoder().encodeToString(sourceFile.readBytes())
+        val parts = encoded.chunked(16_000).joinToString(",\n        ") { "\"$it\"" }
+        val target = File(outDir, "nl/conduction/keepiq/shared/vectors/GeneratedGeneratorVectors.kt")
+        target.parentFile.mkdirs()
+        target.writeText(
+            "// Generated from tests/vectors/generator by :shared:generateGeneratorVectors. Do not edit.\n" +
+                "package nl.conduction.keepiq.shared.vectors\n\n" +
+                "internal object GeneratedGeneratorVectors {\n    val cases: List<String> = listOf(\n        $parts,\n    )\n}\n",
+        )
+    }
+}
+kotlin.sourceSets.commonTest {
+    kotlin.srcDir(generateGeneratorVectors)
+}
+
 // The jvm tests write ciphertext produced by this core for the vector inputs.
 // tests/vitest/crypto-vectors-kotlin.spec.js opens it with the web modules.
 // -Pkeepiq.writeKotlinVectors=true writes the committed copy instead.

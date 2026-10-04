@@ -1,0 +1,1845 @@
+{
+	"about": "Web generator outputs for seeded random sources; see generate-generator-vectors.mjs",
+	"cases": [
+		{
+			"name": "default 16 characters",
+			"kind": "password",
+			"options": {},
+			"policy": null,
+			"seed": 1,
+			"expected": "[d[fl?6Rew6CvJ&H"
+		},
+		{
+			"name": "default 16 characters",
+			"kind": "password",
+			"options": {},
+			"policy": null,
+			"seed": 42,
+			"expected": "L0!HWIuo%U/hLYRr"
+		},
+		{
+			"name": "default 16 characters",
+			"kind": "password",
+			"options": {},
+			"policy": null,
+			"seed": 2026,
+			"expected": "-a@bOvNPdA0g8(/("
+		},
+		{
+			"name": "default 16 characters",
+			"kind": "password",
+			"options": {},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "0)ClxK,m2b[Ha^jd"
+		},
+		{
+			"name": "the extension defaults",
+			"kind": "password",
+			"options": {
+				"length": 14,
+				"includeUppercase": true,
+				"includeLowercase": true,
+				"includeDigits": true,
+				"includeSpecialCharacters": false,
+				"minDigits": 1,
+				"minSpecial": 1,
+				"avoidAmbiguous": true
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "UeK3QeVwmYXMLm"
+		},
+		{
+			"name": "the extension defaults",
+			"kind": "password",
+			"options": {
+				"length": 14,
+				"includeUppercase": true,
+				"includeLowercase": true,
+				"includeDigits": true,
+				"includeSpecialCharacters": false,
+				"minDigits": 1,
+				"minSpecial": 1,
+				"avoidAmbiguous": true
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "G2KTwUD5upkShc"
+		},
+		{
+			"name": "the extension defaults",
+			"kind": "password",
+			"options": {
+				"length": 14,
+				"includeUppercase": true,
+				"includeLowercase": true,
+				"includeDigits": true,
+				"includeSpecialCharacters": false,
+				"minDigits": 1,
+				"minSpecial": 1,
+				"avoidAmbiguous": true
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "MXxMPTB6NKWUYY"
+		},
+		{
+			"name": "the extension defaults",
+			"kind": "password",
+			"options": {
+				"length": 14,
+				"includeUppercase": true,
+				"includeLowercase": true,
+				"includeDigits": true,
+				"includeSpecialCharacters": false,
+				"minDigits": 1,
+				"minSpecial": 1,
+				"avoidAmbiguous": true
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "yD6oxDhEKH9XfB"
+		},
+		{
+			"name": "64 characters",
+			"kind": "password",
+			"options": {
+				"length": 64
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "[d[fl?6Rew6CvJ&Hm^kcX[?)ewsGO$@)Pe-irc2RPw-Y^^]y?5c)Zb4({aQ]8/FH"
+		},
+		{
+			"name": "64 characters",
+			"kind": "password",
+			"options": {
+				"length": 64
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "L!!HWIuo%U/hLYRr$ci!,&Bl]AC-C)>2s7fy>>B1WSfnW4Gom=mxnXP4u<,@rl4N"
+		},
+		{
+			"name": "64 characters",
+			"kind": "password",
+			"options": {
+				"length": 64
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "-a@bOvNPdA0g8(/(ET0]8LF;-xC:wC>5z+uG,)o^qUUF!PC=2[KXL)lzDW#o>e=g"
+		},
+		{
+			"name": "64 characters",
+			"kind": "password",
+			"options": {
+				"length": 64
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "0)ClxK,m2b[Ha^jdksi^;vZvsJ)Nf7$=f}=0hIs<K,3[Fc!AdA;%pfm}UWLv*1q{"
+		},
+		{
+			"name": "the minimum of 8",
+			"kind": "password",
+			"options": {
+				"length": 8
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "[d[fl?6R"
+		},
+		{
+			"name": "the minimum of 8",
+			"kind": "password",
+			"options": {
+				"length": 8
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "L!9HWIuo"
+		},
+		{
+			"name": "the minimum of 8",
+			"kind": "password",
+			"options": {
+				"length": 8
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "-a@bO2NP"
+		},
+		{
+			"name": "the minimum of 8",
+			"kind": "password",
+			"options": {
+				"length": 8
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "0)ClxK,m"
+		},
+		{
+			"name": "128 characters",
+			"kind": "password",
+			"options": {
+				"length": 128
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "[d[fl?6Rew6CvJ&Hm^kcX[?)ewsGO$@)Pe-irc2RPw-Y^^]y?5c)Zb4({aQ]8/FHQ(T$|y9K/u&.n2reMz_qiQnXVpTP,m=fRsAVsMQUpP$nr$h|;pVF*c#^-s]NG=?="
+		},
+		{
+			"name": "128 characters",
+			"kind": "password",
+			"options": {
+				"length": 128
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "L!!HWIuo%U/hLYRr$ci!,&Bl]AC-C)>2s7fy>>B1WSfnW4Gom=mxnXP4u<,@rl4N&dK4./w1}OOgHnPV%o_DTN]S4dCW}i=v^bjtftUHw{t]lOgC$u2MC9->*Sx/MLdL"
+		},
+		{
+			"name": "128 characters",
+			"kind": "password",
+			"options": {
+				"length": 128
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "-a@bOvNPdA0g8(/(ET0]8LF;-xC:wC>5z+uG,)o^qUUF!PC=2[KXL)lzDW#o>e=g[pbd]?pntk=ofq/(B:aEOV73rAQAj=#7;pf;X=oB>^b}ok.v]{;x7moHd-AW/fqO"
+		},
+		{
+			"name": "128 characters",
+			"kind": "password",
+			"options": {
+				"length": 128
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "0)ClxK,m2b[Ha^jdksi^;vZvsJ)Nf7$=f}=0hIs<K,3[Fc!AdA;%pfm}UWLv*1q{SXsnS6;8k;>:BuDvEjU0VA?c@)I?/*_Vbf^V*NAaXhBG_pAMlB;t=O7f*]xNY8^N"
+		},
+		{
+			"name": "no symbols",
+			"kind": "password",
+			"options": {
+				"length": 32,
+				"includeSpecialCharacters": false
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "xF7ZBCS8PuZPSKjRmG53h7DbKDZ8ZgXO"
+		},
+		{
+			"name": "no symbols",
+			"kind": "password",
+			"options": {
+				"length": 32,
+				"includeSpecialCharacters": false
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "IaL2EKc4TLqJ2SfLo01sjZk8svWJdfsO"
+		},
+		{
+			"name": "no symbols",
+			"kind": "password",
+			"options": {
+				"length": 32,
+				"includeSpecialCharacters": false
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "a7uFjkZYLo1oHEFIHeG5lvEL4JEYtezv"
+		},
+		{
+			"name": "no symbols",
+			"kind": "password",
+			"options": {
+				"length": 32,
+				"includeSpecialCharacters": false
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "tQGFjp0xVSumbQSH4uRHx8yIObEGR6au"
+		},
+		{
+			"name": "excluded characters",
+			"kind": "password",
+			"options": {
+				"length": 40,
+				"excludedCharacters": "0Ol1I{}[]"
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "22XRj*t3=5#Zt?=j;a2!Vbd/UbFnM^Z5jrAW,kQZ"
+		},
+		{
+			"name": "excluded characters",
+			"kind": "password",
+			"options": {
+				"length": 40,
+				"excludedCharacters": "0Ol1I{}[]"
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": ";eVSn7rQVqt-_issAW-C:-_c;/_&>>C,rQ29X@ba"
+		},
+		{
+			"name": "excluded characters",
+			"kind": "password",
+			"options": {
+				"length": 40,
+				"excludedCharacters": "0Ol1I{}[]"
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "5R3Vw+u925h<DYbeRi@b2>rsNKJnsAy/($n&g|Jn"
+		},
+		{
+			"name": "excluded characters",
+			"kind": "password",
+			"options": {
+				"length": 40,
+				"excludedCharacters": "0Ol1I{}[]"
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": ":^,Xh|ihbJQnDv;ycx>yhQ9)<:@g25G@.(Zt^Q^y"
+		},
+		{
+			"name": "avoid ambiguous",
+			"kind": "password",
+			"options": {
+				"length": 30,
+				"avoidAmbiguous": true
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "!{=MTr+,TrR/kQf!EAK2/6-/GobE-,"
+		},
+		{
+			"name": "avoid ambiguous",
+			"kind": "password",
+			"options": {
+				"length": 30,
+				"avoidAmbiguous": true
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "$SdWA)z+VMk8E9{wAa8t=di}*#z&Bw"
+		},
+		{
+			"name": "avoid ambiguous",
+			"kind": "password",
+			"options": {
+				"length": 30,
+				"avoidAmbiguous": true
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "9&L[PQ.<!n[$HxFN.9GPFons]jnAf;"
+		},
+		{
+			"name": "avoid ambiguous",
+			"kind": "password",
+			"options": {
+				"length": 30,
+				"avoidAmbiguous": true
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "6Up{uqShwS3ny5WhcUF|[^ip9sc}2N"
+		},
+		{
+			"name": "digits only",
+			"kind": "password",
+			"options": {
+				"length": 12,
+				"includeUppercase": false,
+				"includeLowercase": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "991534209293"
+		},
+		{
+			"name": "digits only",
+			"kind": "password",
+			"options": {
+				"length": 12,
+				"includeUppercase": false,
+				"includeLowercase": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "289664049927"
+		},
+		{
+			"name": "digits only",
+			"kind": "password",
+			"options": {
+				"length": 12,
+				"includeUppercase": false,
+				"includeLowercase": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "250950369216"
+		},
+		{
+			"name": "digits only",
+			"kind": "password",
+			"options": {
+				"length": 12,
+				"includeUppercase": false,
+				"includeLowercase": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "324111215846"
+		},
+		{
+			"name": "minimum digits and symbols",
+			"kind": "password",
+			"options": {
+				"length": 10,
+				"minDigits": 4,
+				"minSpecial": 3
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "[d3!l?6R83"
+		},
+		{
+			"name": "minimum digits and symbols",
+			"kind": "password",
+			"options": {
+				"length": 10,
+				"minDigits": 4,
+				"minSpecial": 3
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "L017W]u2%$"
+		},
+		{
+			"name": "minimum digits and symbols",
+			"kind": "password",
+			"options": {
+				"length": 10,
+				"minDigits": 4,
+				"minSpecial": 3
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "2a2_Ov@%86"
+		},
+		{
+			"name": "minimum digits and symbols",
+			"kind": "password",
+			"options": {
+				"length": 10,
+				"minDigits": 4,
+				"minSpecial": 3
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "0)Cl-6,42b"
+		},
+		{
+			"name": "minimums longer than the length",
+			"kind": "password",
+			"options": {
+				"length": 8,
+				"minDigits": 6,
+				"minSpecial": 6
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "[d38#?6R:467"
+		},
+		{
+			"name": "minimums longer than the length",
+			"kind": "password",
+			"options": {
+				"length": 8,
+				"minDigits": 6,
+				"minSpecial": 6
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "L0!>(1u76)22"
+		},
+		{
+			"name": "minimums longer than the length",
+			"kind": "password",
+			"options": {
+				"length": 8,
+				"minDigits": 6,
+				"minSpecial": 6
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "5a8_O22!!@07"
+		},
+		{
+			"name": "minimums longer than the length",
+			"kind": "password",
+			"options": {
+				"length": 8,
+				"minDigits": 6,
+				"minSpecial": 6
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "0)Cl}6472[[7"
+		},
+		{
+			"name": "a set of exactly two",
+			"kind": "password",
+			"options": {
+				"includeSpecialCharacters": false,
+				"excludedCharacters": "CDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "BBBBBAAABABBAABB"
+		},
+		{
+			"name": "a set of exactly two",
+			"kind": "password",
+			"options": {
+				"includeSpecialCharacters": false,
+				"excludedCharacters": "CDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "AABAAAAABBABAABB"
+		},
+		{
+			"name": "a set of exactly two",
+			"kind": "password",
+			"options": {
+				"includeSpecialCharacters": false,
+				"excludedCharacters": "CDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "ABABBABABABABABA"
+		},
+		{
+			"name": "a set of exactly two",
+			"kind": "password",
+			"options": {
+				"includeSpecialCharacters": false,
+				"excludedCharacters": "CDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "BAABBBABBAAABAAB"
+		},
+		{
+			"name": "policy 20 with a digit",
+			"kind": "password",
+			"options": {
+				"length": 8,
+				"includeDigits": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 1,
+			"expected": "xF7ZBCS8PuZPSKjRmG53"
+		},
+		{
+			"name": "policy 20 with a digit",
+			"kind": "password",
+			"options": {
+				"length": 8,
+				"includeDigits": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 42,
+			"expected": "IaL2EKc4TLqJ2SfLo01s"
+		},
+		{
+			"name": "policy 20 with a digit",
+			"kind": "password",
+			"options": {
+				"length": 8,
+				"includeDigits": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 2026,
+			"expected": "a7uFjkZYLo1oHEFIHeG5"
+		},
+		{
+			"name": "policy 20 with a digit",
+			"kind": "password",
+			"options": {
+				"length": 8,
+				"includeDigits": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 2654435769,
+			"expected": "tQGFjp0xVSumbQSH4uRH"
+		},
+		{
+			"name": "policy with every class",
+			"kind": "password",
+			"options": {
+				"length": 10,
+				"includeUppercase": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": "24",
+				"generator_require_upper": true,
+				"generator_require_lower": true,
+				"generator_require_digit": true,
+				"generator_require_symbol": true
+			},
+			"seed": 1,
+			"expected": "[d[fl?6Rew6CvJ&Hm^kcX[?)"
+		},
+		{
+			"name": "policy with every class",
+			"kind": "password",
+			"options": {
+				"length": 10,
+				"includeUppercase": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": "24",
+				"generator_require_upper": true,
+				"generator_require_lower": true,
+				"generator_require_digit": true,
+				"generator_require_symbol": true
+			},
+			"seed": 42,
+			"expected": "L!!HWIuo%U9hLYRr$ci!,&Bl"
+		},
+		{
+			"name": "policy with every class",
+			"kind": "password",
+			"options": {
+				"length": 10,
+				"includeUppercase": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": "24",
+				"generator_require_upper": true,
+				"generator_require_lower": true,
+				"generator_require_digit": true,
+				"generator_require_symbol": true
+			},
+			"seed": 2026,
+			"expected": "-a@bOvNPdA0g8(/(ET0]8LF;"
+		},
+		{
+			"name": "policy with every class",
+			"kind": "password",
+			"options": {
+				"length": 10,
+				"includeUppercase": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": "24",
+				"generator_require_upper": true,
+				"generator_require_lower": true,
+				"generator_require_digit": true,
+				"generator_require_symbol": true
+			},
+			"seed": 2654435769,
+			"expected": "0)ClxK,m2b[Ha^jdksi^;vZv"
+		},
+		{
+			"name": "policy restores excluded digits",
+			"kind": "password",
+			"options": {
+				"length": 12,
+				"excludedCharacters": "0123456789"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 1,
+			"expected": ">d>fl8&Rew&CvJ{Hm]kc"
+		},
+		{
+			"name": "policy restores excluded digits",
+			"kind": "password",
+			"options": {
+				"length": 12,
+				"excludedCharacters": "0123456789"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 42,
+			"expected": "L--HWIuo[U9hLYRr+ci-"
+		},
+		{
+			"name": "policy restores excluded digits",
+			"kind": "password",
+			"options": {
+				"length": 12,
+				"excludedCharacters": "0123456789"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 2026,
+			"expected": ":a_bOvNPdA!g(|9|ET!?"
+		},
+		{
+			"name": "policy restores excluded digits",
+			"kind": "password",
+			"options": {
+				"length": 12,
+				"excludedCharacters": "0123456789"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 2654435769,
+			"expected": "!;ClxK4m#b>Ha]jdksi]"
+		},
+		{
+			"name": "policy off changes nothing",
+			"kind": "password",
+			"options": {
+				"length": 8
+			},
+			"policy": {
+				"policy_enabled": false,
+				"generator_min_length": 64
+			},
+			"seed": 1,
+			"expected": "[d[fl?6R"
+		},
+		{
+			"name": "policy off changes nothing",
+			"kind": "password",
+			"options": {
+				"length": 8
+			},
+			"policy": {
+				"policy_enabled": false,
+				"generator_min_length": 64
+			},
+			"seed": 42,
+			"expected": "L!9HWIuo"
+		},
+		{
+			"name": "policy off changes nothing",
+			"kind": "password",
+			"options": {
+				"length": 8
+			},
+			"policy": {
+				"policy_enabled": false,
+				"generator_min_length": 64
+			},
+			"seed": 2026,
+			"expected": "-a@bO2NP"
+		},
+		{
+			"name": "policy off changes nothing",
+			"kind": "password",
+			"options": {
+				"length": 8
+			},
+			"policy": {
+				"policy_enabled": false,
+				"generator_min_length": 64
+			},
+			"seed": 2654435769,
+			"expected": "0)ClxK,m"
+		},
+		{
+			"name": "regex exact length",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-zA-Z0-9]{16}$"
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "f7zbcs8pUzpskJrM"
+		},
+		{
+			"name": "regex exact length",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-zA-Z0-9]{16}$"
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "Al2ekC4tlQj2sFlO"
+		},
+		{
+			"name": "regex exact length",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-zA-Z0-9]{16}$"
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "7UfJKzylO1Ohefih"
+		},
+		{
+			"name": "regex exact length",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-zA-Z0-9]{16}$"
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "qgfJP0XvsUMBqsh4"
+		},
+		{
+			"name": "regex range",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-z0-9]{8,16}$"
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "n79rqkgf"
+		},
+		{
+			"name": "regex range",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-z0-9]{8,16}$"
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "qduygy85lwt2un"
+		},
+		{
+			"name": "regex range",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-z0-9]{8,16}$"
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "d89z05ivmx"
+		},
+		{
+			"name": "regex range",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-z0-9]{8,16}$"
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "4oztpqhjec"
+		},
+		{
+			"name": "regex negated class",
+			"kind": "password",
+			"options": {
+				"regex": "^[^\\s<>]{16}$"
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "`Hz&!eU|S$F#+\\L["
+		},
+		{
+			"name": "regex negated class",
+			"kind": "password",
+			"options": {
+				"regex": "^[^\\s<>]{16}$"
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "G$)Om!az4Aj[CpDo"
+		},
+		{
+			"name": "regex negated class",
+			"kind": "password",
+			"options": {
+				"regex": "^[^\\s<>]{16}$"
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": ",Ab2}B1.[0kvEP%Z"
+		},
+		{
+			"name": "regex negated class",
+			"kind": "password",
+			"options": {
+				"regex": "^[^\\s<>]{16}$"
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "y7&FJ?nd-;[~OS~}"
+		},
+		{
+			"name": "regex PHP delimiters",
+			"kind": "password",
+			"options": {
+				"regex": "/^[a-z]{12}$/"
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "fvnfaqgfgrby"
+		},
+		{
+			"name": "regex PHP delimiters",
+			"kind": "password",
+			"options": {
+				"regex": "/^[a-z]{12}$/"
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "ureegscjjyzc"
+		},
+		{
+			"name": "regex PHP delimiters",
+			"kind": "password",
+			"options": {
+				"regex": "/^[a-z]{12}$/"
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "jaflwtonuvmz"
+		},
+		{
+			"name": "regex PHP delimiters",
+			"kind": "password",
+			"options": {
+				"regex": "/^[a-z]{12}$/"
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "gihrfqbhewyd"
+		},
+		{
+			"name": "regex meets the policy floor",
+			"kind": "password",
+			"options": {
+				"regex": "[a-z0-9]{8,32}"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 1,
+			"expected": "n79rqkgfep98of7eavbl3hlsnbqh"
+		},
+		{
+			"name": "regex meets the policy floor",
+			"kind": "password",
+			"options": {
+				"regex": "[a-z0-9]{8,32}"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 42,
+			"expected": "qduygy85lwt2unjyyhg7d6oe9apnjg"
+		},
+		{
+			"name": "regex meets the policy floor",
+			"kind": "password",
+			"options": {
+				"regex": "[a-z0-9]{8,32}"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 2026,
+			"expected": "d89z05ivmxm5wrytusbrnm3mjya32p9"
+		},
+		{
+			"name": "regex meets the policy floor",
+			"kind": "password",
+			"options": {
+				"regex": "[a-z0-9]{8,32}"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 2654435769,
+			"expected": "4oztpqhjecal2utcgrdxoi0u3"
+		},
+		{
+			"name": "too short",
+			"kind": "password",
+			"options": {
+				"length": 6
+			},
+			"policy": null,
+			"seed": 1,
+			"error": "Length must be at least 8 characters"
+		},
+		{
+			"name": "too short",
+			"kind": "password",
+			"options": {
+				"length": 6
+			},
+			"policy": null,
+			"seed": 42,
+			"error": "Length must be at least 8 characters"
+		},
+		{
+			"name": "too short",
+			"kind": "password",
+			"options": {
+				"length": 6
+			},
+			"policy": null,
+			"seed": 2026,
+			"error": "Length must be at least 8 characters"
+		},
+		{
+			"name": "too short",
+			"kind": "password",
+			"options": {
+				"length": 6
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"error": "Length must be at least 8 characters"
+		},
+		{
+			"name": "too long",
+			"kind": "password",
+			"options": {
+				"length": 129
+			},
+			"policy": null,
+			"seed": 1,
+			"error": "Length must not exceed 128 characters"
+		},
+		{
+			"name": "too long",
+			"kind": "password",
+			"options": {
+				"length": 129
+			},
+			"policy": null,
+			"seed": 42,
+			"error": "Length must not exceed 128 characters"
+		},
+		{
+			"name": "too long",
+			"kind": "password",
+			"options": {
+				"length": 129
+			},
+			"policy": null,
+			"seed": 2026,
+			"error": "Length must not exceed 128 characters"
+		},
+		{
+			"name": "too long",
+			"kind": "password",
+			"options": {
+				"length": 129
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"error": "Length must not exceed 128 characters"
+		},
+		{
+			"name": "no kind chosen",
+			"kind": "password",
+			"options": {
+				"includeUppercase": false,
+				"includeLowercase": false,
+				"includeDigits": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": null,
+			"seed": 1,
+			"error": "Choose at least one kind of character"
+		},
+		{
+			"name": "no kind chosen",
+			"kind": "password",
+			"options": {
+				"includeUppercase": false,
+				"includeLowercase": false,
+				"includeDigits": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": null,
+			"seed": 42,
+			"error": "Choose at least one kind of character"
+		},
+		{
+			"name": "no kind chosen",
+			"kind": "password",
+			"options": {
+				"includeUppercase": false,
+				"includeLowercase": false,
+				"includeDigits": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": null,
+			"seed": 2026,
+			"error": "Choose at least one kind of character"
+		},
+		{
+			"name": "no kind chosen",
+			"kind": "password",
+			"options": {
+				"includeUppercase": false,
+				"includeLowercase": false,
+				"includeDigits": false,
+				"includeSpecialCharacters": false
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"error": "Choose at least one kind of character"
+		},
+		{
+			"name": "set of one",
+			"kind": "password",
+			"options": {
+				"includeSpecialCharacters": false,
+				"excludedCharacters": "BCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+			},
+			"policy": null,
+			"seed": 1,
+			"error": "The character set must contain at least 2 distinct characters"
+		},
+		{
+			"name": "set of one",
+			"kind": "password",
+			"options": {
+				"includeSpecialCharacters": false,
+				"excludedCharacters": "BCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+			},
+			"policy": null,
+			"seed": 42,
+			"error": "The character set must contain at least 2 distinct characters"
+		},
+		{
+			"name": "set of one",
+			"kind": "password",
+			"options": {
+				"includeSpecialCharacters": false,
+				"excludedCharacters": "BCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+			},
+			"policy": null,
+			"seed": 2026,
+			"error": "The character set must contain at least 2 distinct characters"
+		},
+		{
+			"name": "set of one",
+			"kind": "password",
+			"options": {
+				"includeSpecialCharacters": false,
+				"excludedCharacters": "BCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"error": "The character set must contain at least 2 distinct characters"
+		},
+		{
+			"name": "empty set",
+			"kind": "password",
+			"options": {
+				"includeSpecialCharacters": false,
+				"excludedCharacters": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+			},
+			"policy": null,
+			"seed": 1,
+			"error": "The character set is empty after exclusions"
+		},
+		{
+			"name": "empty set",
+			"kind": "password",
+			"options": {
+				"includeSpecialCharacters": false,
+				"excludedCharacters": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+			},
+			"policy": null,
+			"seed": 42,
+			"error": "The character set is empty after exclusions"
+		},
+		{
+			"name": "empty set",
+			"kind": "password",
+			"options": {
+				"includeSpecialCharacters": false,
+				"excludedCharacters": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+			},
+			"policy": null,
+			"seed": 2026,
+			"error": "The character set is empty after exclusions"
+		},
+		{
+			"name": "empty set",
+			"kind": "password",
+			"options": {
+				"includeSpecialCharacters": false,
+				"excludedCharacters": "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"error": "The character set is empty after exclusions"
+		},
+		{
+			"name": "regex without a quantifier",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-zA-Z0-9]$"
+			},
+			"policy": null,
+			"seed": 1,
+			"error": "The regex must contain a length quantifier (e.g. {16} or {8,16})"
+		},
+		{
+			"name": "regex without a quantifier",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-zA-Z0-9]$"
+			},
+			"policy": null,
+			"seed": 42,
+			"error": "The regex must contain a length quantifier (e.g. {16} or {8,16})"
+		},
+		{
+			"name": "regex without a quantifier",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-zA-Z0-9]$"
+			},
+			"policy": null,
+			"seed": 2026,
+			"error": "The regex must contain a length quantifier (e.g. {16} or {8,16})"
+		},
+		{
+			"name": "regex without a quantifier",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-zA-Z0-9]$"
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"error": "The regex must contain a length quantifier (e.g. {16} or {8,16})"
+		},
+		{
+			"name": "regex too short",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-zA-Z]{5}$"
+			},
+			"policy": null,
+			"seed": 1,
+			"error": "The regex length must be at least 8 characters"
+		},
+		{
+			"name": "regex too short",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-zA-Z]{5}$"
+			},
+			"policy": null,
+			"seed": 42,
+			"error": "The regex length must be at least 8 characters"
+		},
+		{
+			"name": "regex too short",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-zA-Z]{5}$"
+			},
+			"policy": null,
+			"seed": 2026,
+			"error": "The regex length must be at least 8 characters"
+		},
+		{
+			"name": "regex too short",
+			"kind": "password",
+			"options": {
+				"regex": "^[a-zA-Z]{5}$"
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"error": "The regex length must be at least 8 characters"
+		},
+		{
+			"name": "regex below the policy",
+			"kind": "password",
+			"options": {
+				"regex": "[a-z]{8,10}"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 1,
+			"error": "The regex cannot reach the org policy minimum length of 20 characters"
+		},
+		{
+			"name": "regex below the policy",
+			"kind": "password",
+			"options": {
+				"regex": "[a-z]{8,10}"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 42,
+			"error": "The regex cannot reach the org policy minimum length of 20 characters"
+		},
+		{
+			"name": "regex below the policy",
+			"kind": "password",
+			"options": {
+				"regex": "[a-z]{8,10}"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 2026,
+			"error": "The regex cannot reach the org policy minimum length of 20 characters"
+		},
+		{
+			"name": "regex below the policy",
+			"kind": "password",
+			"options": {
+				"regex": "[a-z]{8,10}"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 2654435769,
+			"error": "The regex cannot reach the org policy minimum length of 20 characters"
+		},
+		{
+			"name": "regex without the required digit",
+			"kind": "password",
+			"options": {
+				"regex": "[a-z]{20,32}"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 1,
+			"error": "The regex excludes the digit characters the org policy requires"
+		},
+		{
+			"name": "regex without the required digit",
+			"kind": "password",
+			"options": {
+				"regex": "[a-z]{20,32}"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 42,
+			"error": "The regex excludes the digit characters the org policy requires"
+		},
+		{
+			"name": "regex without the required digit",
+			"kind": "password",
+			"options": {
+				"regex": "[a-z]{20,32}"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 2026,
+			"error": "The regex excludes the digit characters the org policy requires"
+		},
+		{
+			"name": "regex without the required digit",
+			"kind": "password",
+			"options": {
+				"regex": "[a-z]{20,32}"
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 20,
+				"generator_require_digit": true
+			},
+			"seed": 2654435769,
+			"error": "The regex excludes the digit characters the org policy requires"
+		},
+		{
+			"name": "passphrase default",
+			"kind": "passphrase",
+			"options": {},
+			"policy": null,
+			"seed": 1,
+			"expected": "skilled-trailside-gotten-pantry-hatchet"
+		},
+		{
+			"name": "passphrase default",
+			"kind": "passphrase",
+			"options": {},
+			"policy": null,
+			"seed": 42,
+			"expected": "facelift-entire-proofread-sandblast-whinny"
+		},
+		{
+			"name": "passphrase default",
+			"kind": "passphrase",
+			"options": {},
+			"policy": null,
+			"seed": 2026,
+			"expected": "stillness-salsa-commode-setup-playpen"
+		},
+		{
+			"name": "passphrase default",
+			"kind": "passphrase",
+			"options": {},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "caretaker-smith-disk-crop-brownnose"
+		},
+		{
+			"name": "passphrase six words with spaces",
+			"kind": "passphrase",
+			"options": {
+				"words": 6,
+				"separator": " "
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "skilled trailside gotten pantry hatchet flashback"
+		},
+		{
+			"name": "passphrase six words with spaces",
+			"kind": "passphrase",
+			"options": {
+				"words": 6,
+				"separator": " "
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "facelift entire proofread sandblast whinny childless"
+		},
+		{
+			"name": "passphrase six words with spaces",
+			"kind": "passphrase",
+			"options": {
+				"words": 6,
+				"separator": " "
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "stillness salsa commode setup playpen styling"
+		},
+		{
+			"name": "passphrase six words with spaces",
+			"kind": "passphrase",
+			"options": {
+				"words": 6,
+				"separator": " "
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "caretaker smith disk crop brownnose unsigned"
+		},
+		{
+			"name": "passphrase capitalised with a number",
+			"kind": "passphrase",
+			"options": {
+				"words": 4,
+				"separator": " ",
+				"capitalise": true,
+				"includeNumber": true
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "Skilled Trailside4 Gotten Pantry"
+		},
+		{
+			"name": "passphrase capitalised with a number",
+			"kind": "passphrase",
+			"options": {
+				"words": 4,
+				"separator": " ",
+				"capitalise": true,
+				"includeNumber": true
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "Facelift4 Entire Proofread Sandblast"
+		},
+		{
+			"name": "passphrase capitalised with a number",
+			"kind": "passphrase",
+			"options": {
+				"words": 4,
+				"separator": " ",
+				"capitalise": true,
+				"includeNumber": true
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "Stillness Salsa0 Commode Setup"
+		},
+		{
+			"name": "passphrase capitalised with a number",
+			"kind": "passphrase",
+			"options": {
+				"words": 4,
+				"separator": " ",
+				"capitalise": true,
+				"includeNumber": true
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "Caretaker Smith Disk Crop1"
+		},
+		{
+			"name": "passphrase twelve words, empty separator",
+			"kind": "passphrase",
+			"options": {
+				"words": 12,
+				"separator": ""
+			},
+			"policy": null,
+			"seed": 1,
+			"expected": "skilledtrailsidegottenpantryhatchetflashbacksatiableponchopesosarcasticdrinkingclarinet"
+		},
+		{
+			"name": "passphrase twelve words, empty separator",
+			"kind": "passphrase",
+			"options": {
+				"words": 12,
+				"separator": ""
+			},
+			"policy": null,
+			"seed": 42,
+			"expected": "faceliftentireproofreadsandblastwhinnychildlesstweakladieslegumemargaritacaucusregain"
+		},
+		{
+			"name": "passphrase twelve words, empty separator",
+			"kind": "passphrase",
+			"options": {
+				"words": 12,
+				"separator": ""
+			},
+			"policy": null,
+			"seed": 2026,
+			"expected": "stillnesssalsacommodesetupplaypenstylingzoningwikipediatroutdozeunsolvedspokesman"
+		},
+		{
+			"name": "passphrase twelve words, empty separator",
+			"kind": "passphrase",
+			"options": {
+				"words": 12,
+				"separator": ""
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"expected": "caretakersmithdiskcropbrownnoseunsignedbobblefelt-tiptightwadfalconkineticdeed"
+		},
+		{
+			"name": "passphrase policy 30 with a digit",
+			"kind": "passphrase",
+			"options": {
+				"words": 4
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 30,
+				"generator_require_digit": true
+			},
+			"seed": 1,
+			"expected": "skilled-trailside4-gotten-pantry"
+		},
+		{
+			"name": "passphrase policy 30 with a digit",
+			"kind": "passphrase",
+			"options": {
+				"words": 4
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 30,
+				"generator_require_digit": true
+			},
+			"seed": 42,
+			"expected": "facelift4-entire-proofread-sandblast"
+		},
+		{
+			"name": "passphrase policy 30 with a digit",
+			"kind": "passphrase",
+			"options": {
+				"words": 4
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 30,
+				"generator_require_digit": true
+			},
+			"seed": 2026,
+			"expected": "stillness-salsa0-commode-setup"
+		},
+		{
+			"name": "passphrase policy 30 with a digit",
+			"kind": "passphrase",
+			"options": {
+				"words": 4
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 30,
+				"generator_require_digit": true
+			},
+			"seed": 2654435769,
+			"expected": "caretaker-smith-disk-crop1-bobble"
+		},
+		{
+			"name": "passphrase upper and symbol",
+			"kind": "passphrase",
+			"options": {
+				"words": 4,
+				"separator": " "
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 8,
+				"generator_require_upper": true,
+				"generator_require_symbol": true
+			},
+			"seed": 1,
+			"expected": "Trailside|Gotten|Pantry|Hatchet"
+		},
+		{
+			"name": "passphrase upper and symbol",
+			"kind": "passphrase",
+			"options": {
+				"words": 4,
+				"separator": " "
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 8,
+				"generator_require_upper": true,
+				"generator_require_symbol": true
+			},
+			"seed": 42,
+			"expected": "Entire]Proofread]Sandblast]Whinny"
+		},
+		{
+			"name": "passphrase upper and symbol",
+			"kind": "passphrase",
+			"options": {
+				"words": 4,
+				"separator": " "
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 8,
+				"generator_require_upper": true,
+				"generator_require_symbol": true
+			},
+			"seed": 2026,
+			"expected": "Salsa_Commode_Setup_Playpen"
+		},
+		{
+			"name": "passphrase upper and symbol",
+			"kind": "passphrase",
+			"options": {
+				"words": 4,
+				"separator": " "
+			},
+			"policy": {
+				"policy_enabled": true,
+				"generator_min_length": 8,
+				"generator_require_upper": true,
+				"generator_require_symbol": true
+			},
+			"seed": 2654435769,
+			"expected": "Smith:Disk:Crop:Brownnose"
+		},
+		{
+			"name": "passphrase three words",
+			"kind": "passphrase",
+			"options": {
+				"words": 3
+			},
+			"policy": null,
+			"seed": 1,
+			"error": "A passphrase must have 4 to 12 words"
+		},
+		{
+			"name": "passphrase three words",
+			"kind": "passphrase",
+			"options": {
+				"words": 3
+			},
+			"policy": null,
+			"seed": 42,
+			"error": "A passphrase must have 4 to 12 words"
+		},
+		{
+			"name": "passphrase three words",
+			"kind": "passphrase",
+			"options": {
+				"words": 3
+			},
+			"policy": null,
+			"seed": 2026,
+			"error": "A passphrase must have 4 to 12 words"
+		},
+		{
+			"name": "passphrase three words",
+			"kind": "passphrase",
+			"options": {
+				"words": 3
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"error": "A passphrase must have 4 to 12 words"
+		},
+		{
+			"name": "passphrase thirteen words",
+			"kind": "passphrase",
+			"options": {
+				"words": 13
+			},
+			"policy": null,
+			"seed": 1,
+			"error": "A passphrase must have 4 to 12 words"
+		},
+		{
+			"name": "passphrase thirteen words",
+			"kind": "passphrase",
+			"options": {
+				"words": 13
+			},
+			"policy": null,
+			"seed": 42,
+			"error": "A passphrase must have 4 to 12 words"
+		},
+		{
+			"name": "passphrase thirteen words",
+			"kind": "passphrase",
+			"options": {
+				"words": 13
+			},
+			"policy": null,
+			"seed": 2026,
+			"error": "A passphrase must have 4 to 12 words"
+		},
+		{
+			"name": "passphrase thirteen words",
+			"kind": "passphrase",
+			"options": {
+				"words": 13
+			},
+			"policy": null,
+			"seed": 2654435769,
+			"error": "A passphrase must have 4 to 12 words"
+		},
+		{
+			"name": "passphrase switched off",
+			"kind": "passphrase",
+			"options": {},
+			"policy": {
+				"policy_enabled": true,
+				"generator_allow_passphrase": false
+			},
+			"seed": 1,
+			"error": "Your organisation has switched passphrases off"
+		},
+		{
+			"name": "passphrase switched off",
+			"kind": "passphrase",
+			"options": {},
+			"policy": {
+				"policy_enabled": true,
+				"generator_allow_passphrase": false
+			},
+			"seed": 42,
+			"error": "Your organisation has switched passphrases off"
+		},
+		{
+			"name": "passphrase switched off",
+			"kind": "passphrase",
+			"options": {},
+			"policy": {
+				"policy_enabled": true,
+				"generator_allow_passphrase": false
+			},
+			"seed": 2026,
+			"error": "Your organisation has switched passphrases off"
+		},
+		{
+			"name": "passphrase switched off",
+			"kind": "passphrase",
+			"options": {},
+			"policy": {
+				"policy_enabled": true,
+				"generator_allow_passphrase": false
+			},
+			"seed": 2654435769,
+			"error": "Your organisation has switched passphrases off"
+		}
+	]
+}

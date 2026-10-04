@@ -17,7 +17,13 @@ CREATE TABLE secret (
     additional_fields_ciphertext TEXT,
     encryption_suite_id TEXT,
     updated_at TEXT,
-    position INTEGER NOT NULL
+    position INTEGER NOT NULL,
+    -- What the client may do with the item (Secret::jsonSerialize). Not
+    -- secret: they decide which actions the screens offer.
+    use_only INTEGER NOT NULL DEFAULT 0,
+    read_only INTEGER NOT NULL DEFAULT 0,
+    blocked INTEGER NOT NULL DEFAULT 0,
+    blocked_reason TEXT
 );
 
 CREATE TABLE folder (
