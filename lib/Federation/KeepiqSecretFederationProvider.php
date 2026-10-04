@@ -89,7 +89,7 @@ class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 	 * @param string $providerId The share id on the sender
 	 * @param array<array-key,mixed> $notification The payload
 	 *
-	 * @return array<string,mixed>
+	 * @return array<array-key,string> Nothing is sent back: always an empty array.
 	 *
 	 * @throws \OCP\Share\Exceptions\ShareNotFound For every refusal
 	 *
