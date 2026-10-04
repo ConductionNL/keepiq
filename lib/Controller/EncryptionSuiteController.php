@@ -398,7 +398,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
-	 * @spec openspec/changes/harden-vault-key-material-guards/specs/encryption-suites/spec.md#requirement-master-password-change-routine
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-master-password-change-routine
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-master-password-change-routine
 	 */
 	public function updatePrivateKey(string $id, string $encryptedPrivateKey): JSONResponse {
@@ -483,7 +483,7 @@ class EncryptionSuiteController extends OCSController {
 	 *   would split the route and change the HTTP contract.
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-2
-	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+	 * @spec openspec/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 	 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 	 */
 	#[NoAdminRequired]
@@ -968,7 +968,7 @@ class EncryptionSuiteController extends OCSController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
+	 * @spec openspec/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
 	 */
 	#[NoAdminRequired]
 	public function proofChallenge(string $id, ?string $purpose = null): JSONResponse {

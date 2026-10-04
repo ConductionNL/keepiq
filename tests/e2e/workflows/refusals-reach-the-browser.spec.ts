@@ -14,7 +14,7 @@
  * that the refusal arrives as 428, that the app asks for the master password,
  * and that the share is made once it is given.
  *
- * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#scenario-the-refusal-reaches-the-browser-on-an-ocs-route
+ * @spec openspec/specs/vault-key-proof/spec.md#scenario-the-refusal-reaches-the-browser-on-an-ocs-route
  * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
  */
 import type { Page } from '@playwright/test'

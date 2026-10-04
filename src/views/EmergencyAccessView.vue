@@ -376,7 +376,7 @@ export default {
 		 *
 		 * @param {string} id The relationship ID.
 		 * @return {void}
-		 * @spec openspec/changes/harden-vault-key-material-guards/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
+		 * @spec openspec/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
 		 */
 		promptRevoke(id) {
 			this.revokeTarget = id
@@ -388,7 +388,7 @@ export default {
 		 * Dismiss the revoke confirmation without acting.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/harden-vault-key-material-guards/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
+		 * @spec openspec/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
 		 */
 		cancelRevoke() {
 			this.revokeTarget = null
@@ -400,7 +400,7 @@ export default {
 		 * Revoke the pending contact, proving the master password.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/harden-vault-key-material-guards/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
+		 * @spec openspec/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
 		 */
 		async confirmRevoke() {
 			this.revoking = true

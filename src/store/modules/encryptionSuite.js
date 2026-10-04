@@ -1373,7 +1373,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * @param {string} masterPassword The master password, to sign the vault-key proof
 		 * @param {boolean} acceptEmergencyLoss Proceed even though emergency access will be deleted
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
-		 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+		 * @spec openspec/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
 		async revokeSuite(reason, masterPassword, acceptEmergencyLoss = false) {
@@ -1583,7 +1583,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *
 		 * @param {string} masterPassword The current (new) master password.
 		 * @return {Promise<object>} The server's terminal result.
-		 * @spec openspec/changes/harden-vault-key-material-guards/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
 		 */
 		async abortMigration(masterPassword) {
 			await this.fetchMigrationStatus()

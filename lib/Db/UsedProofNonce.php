@@ -53,7 +53,7 @@ class UsedProofNonce extends Entity {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
+	 * @spec openspec/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
 	 */
 	public function __construct() {
 		$this->addType(fieldName: 'nonceHash', type: 'string');

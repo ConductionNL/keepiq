@@ -284,7 +284,7 @@ export const useExportStore = defineStore('export', {
 		 * @param {string} confirmation The typed confirmation phrase.
 		 * @param {string} masterPassword The master password, for the proof.
 		 * @return {Promise<object>} The deletion report.
-		 * @spec openspec/changes/harden-vault-key-material-guards/specs/gdpr-compliance/spec.md#requirement-account-data-deletion
+		 * @spec openspec/specs/gdpr-compliance/spec.md#requirement-account-data-deletion
 		 */
 		async deleteAccountData(confirmation, masterPassword) {
 			this.loading = true

@@ -225,7 +225,7 @@ class VaultKeyProofMiddlewareTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/tasks.md#task-6.5
+	 * @spec openspec/changes/archive/2026-10-04-harden-vault-key-material-guards/tasks.md#task-6.5
 	 */
 	public function testAfterExceptionMapsTheGuardExceptionTo428(): void {
 		$response = $this->middleware->afterException(

@@ -59,7 +59,7 @@ class UsedProofNonceMapper extends QBMapper {
 	 *
 	 * @throws DbException On any database failure other than the duplicate
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
+	 * @spec openspec/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
 	 */
 	public function claim(string $nonceHash, int $expiresAt): bool {
 		$qb = $this->db->getQueryBuilder();
@@ -96,7 +96,7 @@ class UsedProofNonceMapper extends QBMapper {
 	 *
 	 * @return int How many rows were deleted
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
+	 * @spec openspec/specs/vault-key-proof/spec.md#requirement-challenges-are-stateless-and-expiring
 	 */
 	public function deleteExpired(int $now): int {
 		$qb = $this->db->getQueryBuilder();

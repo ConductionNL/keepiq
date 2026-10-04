@@ -211,7 +211,7 @@ class OcsRefusalPipelineTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/tasks.md#task-6.5
+	 * @spec openspec/changes/archive/2026-10-04-harden-vault-key-material-guards/tasks.md#task-6.5
 	 */
 	public function testAMissingProofReachesTheBrowserAs428(): void {
 		$this->suiteService->method('getActiveSuite')->willThrowException(new RuntimeException('no suite'));
@@ -287,7 +287,7 @@ class OcsRefusalPipelineTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/tasks.md#task-6.5
+	 * @spec openspec/changes/archive/2026-10-04-harden-vault-key-material-guards/tasks.md#task-6.5
 	 */
 	public function testAFrameworkRefusalReachesTheBrowserToo(): void {
 		$response = $this->dispatch(
@@ -307,7 +307,7 @@ class OcsRefusalPipelineTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/tasks.md#task-6.5
+	 * @spec openspec/changes/archive/2026-10-04-harden-vault-key-material-guards/tasks.md#task-6.5
 	 */
 	public function testAPlainControllerKeepsItsOwn403(): void {
 		$response = $this->dispatch(
@@ -326,7 +326,7 @@ class OcsRefusalPipelineTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/tasks.md#task-6.5
+	 * @spec openspec/changes/archive/2026-10-04-harden-vault-key-material-guards/tasks.md#task-6.5
 	 */
 	public function testOtherStatusesAreUnchanged(): void {
 		foreach ([Http::STATUS_OK, Http::STATUS_BAD_REQUEST, Http::STATUS_NOT_FOUND, Http::STATUS_CONFLICT] as $status) {
