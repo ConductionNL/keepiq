@@ -103,7 +103,7 @@ class AdminIndexController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.1
+	 * @spec openspec/specs/admin-api/spec.md#requirement-versioned-admin-api-index
 	 */
 	#[NoAdminRequired]
 	public function index(): JSONResponse {

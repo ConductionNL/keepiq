@@ -66,7 +66,7 @@ class AdminIndexControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.1
+	 * @spec openspec/specs/admin-api/spec.md#requirement-versioned-admin-api-index
 	 */
 	public function testAnAdminGetsTheIndex(): void {
 		$data = $this->controller(uid: 'root', isAdmin: true)->index()->getData();
@@ -82,7 +82,7 @@ class AdminIndexControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.1
+	 * @spec openspec/specs/admin-api/spec.md#requirement-versioned-admin-api-index
 	 */
 	public function testAnAuditHolderGetsTheIndex(): void {
 		$this->delegatedAreas = [AuditAdminSettings::class];
@@ -97,7 +97,7 @@ class AdminIndexControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.1
+	 * @spec openspec/specs/admin-api/spec.md#requirement-versioned-admin-api-index
 	 */
 	public function testNoAreaIsRefused(): void {
 		$this->assertSame(403, $this->controller(uid: 'bob')->index()->getStatus());
@@ -109,7 +109,7 @@ class AdminIndexControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.6
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-returns-metadata-only
 	 */
 	public function testNoPathRevokesOrReinstatesASuite(): void {
 		foreach (AdminIndexController::PATHS as $path) {
