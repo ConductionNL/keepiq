@@ -42,7 +42,6 @@ use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\VaultKeyProofExemption;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Controller;
-use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Middleware;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -150,7 +149,11 @@ class VaultKeyProofMiddleware extends Middleware {
 	}//end beforeController()
 
 	/**
-	 * Translate a failed guard into a 403 the client can act on.
+	 * Translate a failed guard into a 428 the client can act on.
+	 *
+	 * 428 Precondition Required, not 403: Nextcloud's OCSMiddleware rewrites a
+	 * 403 of an OCSController into an HTTP 200 OCS envelope without the
+	 * `error`, and most guarded routes are on one (measured live, 4 Oct 2026).
 	 *
 	 * @param Controller $controller The controller
 	 * @param string $methodName The method
@@ -163,6 +166,9 @@ class VaultKeyProofMiddleware extends Middleware {
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) $controller and $methodName
 	 *   are mandated by OCP\AppFramework\Middleware::afterException(), which this
 	 *   overrides; only the exception is acted on.
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
+	 * @spec openspec/changes/harden-vault-key-material-guards/tasks.md#task-6.5
 	 */
 	public function afterException($controller, $methodName, Throwable $exception): JSONResponse {
 		if (($exception instanceof KeyProofRequiredException) === false) {
@@ -170,7 +176,7 @@ class VaultKeyProofMiddleware extends Middleware {
 		}
 
 		// A refusal is exactly what a session-only attacker produces, so it must
-		// leave a record rather than only a 403 (#804 review): in nextcloud.log,
+		// leave a record rather than only a refusal (#804 review): in nextcloud.log,
 		// and in the audit trail the SIEM export reads (keepiq#870).
 		$userId = $this->userSession->getUser()?->getUID();
 		$route = $controller::class . '::' . $methodName;
@@ -192,7 +198,7 @@ class VaultKeyProofMiddleware extends Middleware {
 				'error' => 'key_proof_required',
 				'message' => $exception->getMessage(),
 			],
-			statusCode: Http::STATUS_FORBIDDEN
+			statusCode: OcsRefusalMiddleware::REFUSAL_STATUS
 		);
 	}//end afterException()
 

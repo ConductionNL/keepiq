@@ -5,7 +5,7 @@
  *
  * Covers attribute dispatch (absent -> pass-through, present -> verify),
  * subject resolution (active vs routeParam, foreign suite refused), and the
- * afterException mapping (guard exception -> 403 key_proof_required; foreign
+ * afterException mapping (guard exception -> 428 key_proof_required; foreign
  * exception re-thrown). The signature crypto itself lives in
  * VaultKeyProofServiceTest; here the service is mocked.
  *
@@ -218,16 +218,26 @@ class VaultKeyProofMiddlewareTest extends TestCase {
 		$this->middleware->beforeController($this->controller, 'guardedActive');
 	}//end testAFailedProofPropagatesAsTheGuardException()
 
-	public function testAfterExceptionMapsTheGuardExceptionTo403(): void {
+	/**
+	 * The refusal is 428, not 403: Nextcloud's OCSMiddleware rewrites a 403 of
+	 * an OCSController into an HTTP 200 OCS envelope without the `error`
+	 * (measured live, 4 Oct 2026), and most guarded routes are on one.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/harden-vault-key-material-guards/tasks.md#task-6.5
+	 */
+	public function testAfterExceptionMapsTheGuardExceptionTo428(): void {
 		$response = $this->middleware->afterException(
 			$this->controller,
 			'guardedActive',
 			new KeyProofRequiredException('need a proof')
 		);
 
-		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame(Http::STATUS_PRECONDITION_REQUIRED, $response->getStatus());
+		$this->assertSame(428, $response->getStatus());
 		$this->assertSame('key_proof_required', $response->getData()['error']);
-	}//end testAfterExceptionMapsTheGuardExceptionTo403()
+	}//end testAfterExceptionMapsTheGuardExceptionTo428()
 
 	/**
 	 * A refused proof leaves a log line (#804 review): the session-only attacker
