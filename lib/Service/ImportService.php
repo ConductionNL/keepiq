@@ -185,13 +185,13 @@ class ImportService {
 	 * look like an envelope, never plaintext. A missing/oversized name, an
 	 * oversized url, or an oversized blob is rejected.
 	 *
-	 * @spec openspec/changes/clients-extension-gaps/specs/item-name-limit/spec.md#requirement-a-name-has-at-most-255-characters
-	 *
 	 * @param array<string,mixed> $item The encrypted item
 	 *
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException When the item is invalid
+	 *
+	 * @spec openspec/changes/clients-extension-gaps/specs/item-name-limit/spec.md#requirement-a-name-has-at-most-255-characters
 	 */
 	private function validateItem(array $item): void {
 		$name = trim((string)($item['name'] ?? ''));
