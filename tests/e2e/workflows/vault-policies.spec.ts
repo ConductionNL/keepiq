@@ -367,6 +367,8 @@ test.describe.serial('Workflow: vault policies for one group', () => {
 		expect(refused.status).toBe(428)
 		expect(refused.data?.error).toBe('org_ownership_required')
 		expect(refused.data?.code).toBe('org_ownership_required')
+		// The reason the create dialog shows (it reads response.data.message).
+		expect(refused.data?.message, 'the refusal carries its reason').toBeTruthy()
 
 		const ops = await call(gina, 'POST', '/folders', { name: `Ops ${RUN}` })
 		const team = await call(gina, 'POST', '/team-folders', {
