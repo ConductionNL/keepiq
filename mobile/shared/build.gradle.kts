@@ -43,7 +43,36 @@ kotlin {
     }
     // mobile/ios links this as KeepiqShared.xcframework.
     val xcframework = XCFramework("KeepiqShared")
-    listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
+    // Argon2id on iOS: the reference C code, compiled per target into a
+    // static library that cinterop bundles into the klib (task 1.3.1).
+    val argon2Dir = layout.projectDirectory.dir("src/nativeInterop/argon2")
+    val argon2Sources = listOf("argon2.c", "core.c", "encoding.c", "ref.c", "thread.c", "blake2/blake2b.c")
+    val iosTargets = mapOf(
+        iosX64() to ("iphonesimulator" to "x86_64-apple-ios17.0-simulator"),
+        iosArm64() to ("iphoneos" to "arm64-apple-ios17.0"),
+        iosSimulatorArm64() to ("iphonesimulator" to "arm64-apple-ios17.0-simulator"),
+    )
+    iosTargets.forEach { (target, toolchain) ->
+        val (sdk, triple) = toolchain
+        val libDir = layout.buildDirectory.dir("argon2/${target.name}").get().asFile
+        val buildArgon2 = tasks.register<Exec>("buildArgon2${target.name.replaceFirstChar { it.uppercase() }}") {
+            inputs.dir(argon2Dir)
+            outputs.dir(libDir)
+            val src = argon2Dir.dir("src").asFile
+            val include = argon2Dir.dir("include").asFile
+            val compile = argon2Sources.joinToString("; ") { source ->
+                "xcrun --sdk $sdk clang -target $triple -O2 -DARGON2_NO_THREADS -I'$include' -I'$src' " +
+                    "-c '$src/$source' -o '${source.substringAfterLast('/').removeSuffix(".c")}.o'"
+            }
+            commandLine("bash", "-c", "set -e; rm -rf '$libDir'; mkdir -p '$libDir'; cd '$libDir'; $compile; xcrun --sdk $sdk ar rcs libargon2.a *.o")
+        }
+        target.compilations.getByName("main").cinterops.create("argon2") {
+            definitionFile.set(project.file("src/nativeInterop/cinterop/argon2.def"))
+            includeDirs(argon2Dir.dir("include"))
+            extraOpts("-libraryPath", libDir.absolutePath)
+        }
+        tasks.matching { it.name == "cinteropArgon2${target.name.replaceFirstChar { c -> c.uppercase() }}" }
+            .configureEach { dependsOn(buildArgon2) }
         target.binaries.framework {
             baseName = "KeepiqShared"
             isStatic = true

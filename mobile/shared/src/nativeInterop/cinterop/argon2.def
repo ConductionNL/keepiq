@@ -1,0 +1,11 @@
+# SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+# SPDX-License-Identifier: EUPL-1.2
+#
+# The reference Argon2 C code in ../argon2 (CC0 or Apache 2.0), for the iOS
+# targets (clients-mobile-apps design D1, task 1.3.1). shared/build.gradle.kts
+# compiles it per target into libargon2.a and passes its folder with
+# -libraryPath; the static library is bundled into the klib.
+package = nl.conduction.keepiq.shared.argon2
+headers = argon2.h
+headerFilter = argon2.h
+staticLibraries = libargon2.a
