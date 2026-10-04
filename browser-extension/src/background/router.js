@@ -116,6 +116,7 @@ function syncModule() {
 			api,
 			local: chrome.storage.local,
 			activeSuiteId: (id) => vault.activeSuiteId(id),
+			activeSuiteEpoch: (id) => vault.activeSuiteEpoch(id),
 			lock: (id) => lockAccount(id),
 		})
 	}
@@ -160,6 +161,14 @@ export async function onAlarm(alarm) {
 // tab is forgotten too, so a locked popup reopens on its first tab.
 vault.onLock((accountId) => {
 	chrome.alarms?.clear(SYNC_ALARM(accountId))
+	// Tell an open popup, so it drops what it shows of the vault at once.
+	try {
+		chrome.runtime
+			.sendMessage({ type: 'keepiq-locked', accountId })
+			?.catch?.(() => {})
+	} catch {
+		// No page is listening.
+	}
 	sessionStore()
 		?.remove('popup:lastTab')
 		.catch(() => {})
