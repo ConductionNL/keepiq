@@ -1,0 +1,88 @@
+{
+	"recordedAt": "2026-10-04",
+	"origin": "{origin}",
+	"loginInit": {
+		"poll": {
+			"token": "recorded-poll-token",
+			"endpoint": "{origin}/login/v2/poll"
+		},
+		"login": "{origin}/login/v2/flow/recorded-login-token"
+	},
+	"poll": {
+		"server": "{origin}",
+		"loginName": "admin",
+		"appPassword": "stub-app-password"
+	},
+	"pair": {
+		"ok": true,
+		"user": "admin",
+		"apiVersion": 1,
+		"serverVersion": "0.3.4-unstable.20261004130000",
+		"capabilities": [
+			"match",
+			"autofill",
+			"passkey-provider",
+			"totp"
+		]
+	},
+	"suites": [
+		{
+			"id": "d0e887b5-8991-4a59-9b01-7ca3b90e6e5e",
+			"ownerType": "user",
+			"ownerId": "admin",
+			"certificate": "-----BEGIN CERTIFICATE-----\n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\n-----END CERTIFICATE-----\n",
+			"privateKey": "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",
+			"status": "active",
+			"revokedAt": null,
+			"revokedReason": null,
+			"revokedBy": null,
+			"reinstatedAt": null,
+			"reinstatedBy": null,
+			"createdAt": "2026-10-04T20:07:00+00:00",
+			"unlockKeyEpoch": 1
+		}
+	],
+	"suitesTwoFactorRequired": [
+		{
+			"id": "d0e887b5-8991-4a59-9b01-7ca3b90e6e5e",
+			"ownerType": "user",
+			"ownerId": "admin",
+			"certificate": "-----BEGIN CERTIFICATE-----\nMIIFxTCCA62gAwIBAgIIVqH+PN2i5wMwDQYJKoZIhvcNAQELBQAwgYAxCzAJBgNV\nBAYTAk5MMRYwFAYDVQQIDA1Ob29yZC1Ib2xsYW5kMRIwEAYDVQQHDAlBbXN0ZXJk\nYW0xEzARBgNVBAoMCkNvbmR1Y3Rpb24xDzANBgNVBAsMBktlZXBpcTEfMB0GA1UE\nAwwWS2VlcGlxIEludGVybWVkaWF0ZSBDQTAeFw0yNjEwMDQyMDA3MDBaFw0yNzEw\nMDQyMDA3MDBaMG8xCzAJBgNVBAYTAk5MMRYwFAYDVQQIDA1Ob29yZC1Ib2xsYW5k\nMRIwEAYDVQQHDAlBbXN0ZXJkYW0xEzARBgNVBAoMCkNvbmR1Y3Rpb24xDzANBgNV\nBAsMBktlZXBpcTEOMAwGA1UEAwwFYWRtaW4wggIiMA0GCSqGSIb3DQEBAQUAA4IC\nDwAwggIKAoICAQCu1RR7aT2cOduxmjU7eQYmB+sWSolTOG/oZ+Hh7j2WvAmnfSoR\n0iGGiw/UpVdcehO0OSeXfWNICy9dzopLjtFzJTjOEnFSNG4hQSs+XBGKsJ2zwqFQ\nkEarNoy+4/KZiI67IAYL6iygc2d9ZycikdgUyfTnJEsogSo/EKAPvbUtk9yrBpw9\nG+UScF2F7UEjYBRMytTVmQZBz2i9bIhKAxDAk/Lzp0KRr1LQ7A1feXSJs1BIT4YD\nmVj4/lBRPk7tldgMyBOsVWaRSYNWxj31g1O/GcnUYu0QCfgSHiMXVcdsX7QrGpzW\nVj5RqTR6ue4bwGxXNW7EUMlBUB9UDJoM4aT3zEoXZUukTFzevRfexHk14e2Z+Fy8\nJO0onxJUYCdwPU30Q5XqMVRfKgLfYNciHoZEIJ+AqJ3mjh2qbQYz6lRx7F7cm6BB\nUEmzouw0qaisYT+rZSG+5JGTKQBKMNY+d/3Z9vU0vXWfQtrebR76tMZBZNWsbi5x\nb2xzeI6Mu+k7D7TjNzBMzpveMdtfEmIOqI6SqehjZ1P6DiIBE7hNhv9h4P4d+9Am\niAZMFrwk43eUfjHI+W2o6M+adA9pFuBDoQGP3OQ7QC03YayBVZHPA133UgxMqA7L\n22mX5KgdsDnVDL1l/j97be1qZMToMdE+417b5m0YFC7b9eJpFPAks+M5cwIDAQAB\no1MwUTAdBgNVHQ4EFgQUYIT20crAFwO58bhZsvI5JfbP0+owHwYDVR0jBBgwFoAU\nixW4bYH8+bKtBvYekikzRe2cNj8wDwYDVR0TAQH/BAUwAwEB/zANBgkqhkiG9w0B\nAQsFAAOCAgEAhiZZ3PCSK0FLp0A4QG/HY+GSiAra7m4270yEwStvjtmTsWy4vbVn\nWdiO8km6pP85pOVCcKaJRlayEaJpD0O0fUAgYEnJT/OGiSpPln2O7LStNl6SerfV\nJk/ZpUGaQO5O7u1WeR9+W3N8l2d7BRgaZHx51s4MtuH+AjphQr3/PFvJ9eoTxD9U\niq0DBg3Qkj4EUNMwJy9XgpnEkDKjveXT9hG60z4qA2czGc3wZ+FR1aJHGSmws/Bo\nEHyVcy39wv1WIfSJjszeRrGjmaq+ozsg3wK3clMOa1Ol7OJ56ojUReoph/ju29Vg\njBIbQIWnrFN0FMTnK1ziUGNv1067JkoKMQN3nYCDnWNdDxwb8LVdzfrrklcuwCfN\nkk0N+F7XqAelZTGzXM2npgtIrIGGkU00qwE3wIf+4NUyk2uJ8qMuWpvBY8XAfUzl\ncSu744fwlitQ38RdTyRY56yoOyu5EMBF7vUcXkkNSPZO1bHL6buORbgjxtqSPCQy\najAFDrI/HCwYjQBFY2TSn7lfPPhL22qxWBLqy2eyUKrtGX6/jKtgvPupQEo4UNYK\n8mR2Io/P7JIxj91v17wKp9W9CEqwZk+M79PEeKUWuP4PM8EQoQkFivdSVvMp7Uf+\nrYvUwqSUO+fcmuKgqRJ8q8ACm07AVfdckz5DWF/RXHMp8uIupmVnl5s=\n-----END CERTIFICATE-----\n",
+			"status": "active",
+			"revokedAt": null,
+			"revokedReason": null,
+			"revokedBy": null,
+			"reinstatedAt": null,
+			"reinstatedBy": null,
+			"createdAt": "2026-10-04T20:07:00+00:00",
+			"unlockKeyEpoch": 1,
+			"unlockBlocked": "two_factor_required"
+		}
+	],
+	"policy": {
+		"maxIdleMinutes": 240
+	},
+	"unpair": {
+		"ok": true,
+		"note": "Revoke the app-password in Nextcloud security settings to fully unpair."
+	},
+	"revoke": {
+		"status": 200,
+		"body": {
+			"ocs": {
+				"meta": {
+					"status": "ok",
+					"statuscode": 200,
+					"message": "OK"
+				},
+				"data": []
+			}
+		}
+	},
+	"afterRevoke": {
+		"status": 401,
+		"body": {
+			"message": ""
+		}
+	}
+}

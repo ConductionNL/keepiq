@@ -147,5 +147,10 @@ val kotlinVectorsOut = if (providers.gradleProperty("keepiq.writeKotlinVectors")
 }
 tasks.named<Test>("jvmTest") {
     systemProperty("keepiq.kotlinVectorsOut", kotlinVectorsOut.absolutePath)
+    // LiveServerTest: the mobile e2e workflow points it at the test server
+    // and its self-signed certificate. Without these it is skipped.
+    for (name in listOf("keepiq.liveServer", "keepiq.liveMasterPassword", "javax.net.ssl.trustStore", "javax.net.ssl.trustStorePassword")) {
+        providers.gradleProperty(name).orNull?.let { systemProperty(name, it) }
+    }
     outputs.upToDateWhen { false }
 }
