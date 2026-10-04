@@ -2,7 +2,7 @@
  * Local stand-ins for the websites the capture visits, so no third-party
  * site is ever opened.
  *
- * One https server answers every *.example.com name by its Host header:
+ * One https server answers every demo name by its Host header:
  * demo login pages, a WebAuthn demo page, and cloud.example.com, which
  * forwards to the capture Nextcloud so the extension pairs with an https
  * address as a real user would. The certificate is self-signed and made per
@@ -17,14 +17,21 @@ import { connect } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-/** The demo sites, by host. */
+/**
+ * The demo sites, by host. They sit on different registrable domains
+ * (example.com, example.net, example.org and the .example name), because
+ * Keepiq offers every login of the same site under This site.
+ */
 export const SITES = {
 	'webmail.example.com': { title: 'Webmail (demo)', field: 'Email address' },
-	'bank.example.com': { title: 'Bank (demo)', field: 'Customer number' },
-	'forum.example.com': { title: 'Community forum (demo)', field: 'Username' },
+	'bank.example.net': { title: 'Bank (demo)', field: 'Customer number' },
+	'forum.example': { title: 'Community forum (demo)', field: 'Username' },
 }
 
 export const PASSKEY_HOST = 'passkeys.example.com'
+
+/** The names the demo hosts live under, all reserved for examples (RFC 2606). */
+export const DEMO_DOMAINS = ['example.com', 'example.net', 'example.org', 'example']
 export const CLOUD_HOST = 'cloud.example.com'
 
 const STYLE = `
@@ -105,7 +112,7 @@ document.getElementById('signin').addEventListener('click', async () => {
 )
 
 /**
- * Make a self-signed certificate for *.example.com.
+ * Make a self-signed certificate for the demo names.
  *
  * @param {string} dir Where to write it.
  * @return {{key: Buffer, cert: Buffer}}
@@ -115,8 +122,8 @@ function makeCertificate(dir) {
 	const cert = join(dir, 'cert.pem')
 	execFileSync('openssl', [
 		'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '2',
-		'-subj', '/CN=*.example.com',
-		'-addext', 'subjectAltName=DNS:*.example.com,DNS:example.com',
+		'-subj', '/CN=Keepiq capture demo',
+		'-addext', `subjectAltName=${DEMO_DOMAINS.map((d) => `DNS:*.${d}`).join(',')}`,
 		'-keyout', key, '-out', cert,
 	], { stdio: 'ignore' })
 	return { key: readFileSync(key), cert: readFileSync(cert) }
@@ -182,7 +189,7 @@ export async function startFixtures({ httpsPort, proxyPort, nextcloud }) {
 	})
 	await new Promise((resolve) => server.listen(httpsPort, '127.0.0.1', resolve))
 
-	// Firefox has no host resolver rules: it sends example.com through this
+	// Firefox has no host resolver rules: it sends the demo names through this
 	// proxy, which tunnels every CONNECT to the https server above.
 	const proxy = createHttpServer((req, res) => {
 		res.writeHead(405)

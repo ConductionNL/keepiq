@@ -22,7 +22,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { CLOUD_HOST, PASSKEY_HOST, startFixtures } from './fixtures.mjs'
+import { CLOUD_HOST, DEMO_DOMAINS, PASSKEY_HOST, startFixtures } from './fixtures.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const pkg = resolve(process.argv[2] || join(here, '..', 'dist', 'chromium'))
@@ -38,10 +38,10 @@ const SITE = { width: 1024, height: 640 }
 /** The demo items, created through the extension after the first unlock. */
 const DEMO_ITEMS = [
 	{ name: 'Webmail (demo)', url: 'https://webmail.example.com', login: 'anna.demo@example.com', folder: 'Personal' },
-	{ name: 'Bank (demo)', url: 'https://bank.example.com', login: '40817265', folder: 'Personal' },
-	{ name: 'Intranet (demo)', url: 'https://intranet.example.com', login: 'anna.demo', folder: 'Work' },
-	{ name: 'Project board (demo)', url: 'https://board.example.com', login: 'anna.demo@example.com', folder: 'Work' },
-	{ name: 'Router admin (demo)', url: 'https://router.example.com', login: 'admin', folder: null },
+	{ name: 'Bank (demo)', url: 'https://bank.example.net', login: '40817265', folder: 'Personal' },
+	{ name: 'Intranet (demo)', url: 'https://intranet.example.org', login: 'anna.demo', folder: 'Work' },
+	{ name: 'Project board (demo)', url: 'https://board.example.org', login: 'anna.demo@example.com', folder: 'Work' },
+	{ name: 'Router admin (demo)', url: 'https://router.example', login: 'admin', folder: null },
 ]
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
@@ -71,7 +71,7 @@ async function launch(size) {
 		args: [
 			`--disable-extensions-except=${pkg}`,
 			`--load-extension=${pkg}`,
-			`--host-resolver-rules=MAP *.example.com 127.0.0.1:${HTTPS_PORT}`,
+			`--host-resolver-rules=${DEMO_DOMAINS.map((d) => `MAP *.${d} 127.0.0.1:${HTTPS_PORT}`).join(',')}`,
 			'--ignore-certificate-errors',
 		],
 	})
@@ -175,6 +175,11 @@ try {
 		const trashed = await ask(popup, 'vault-trash', { id: item.id })
 		if (!trashed?.ok) throw new Error('trashing ' + item.id + ': ' + JSON.stringify(trashed))
 	}
+	const sends = await ask(popup, 'send-list')
+	for (const send of sends?.sends || []) {
+		const ended = await ask(popup, 'send-revoke', { id: send.id })
+		if (!ended?.ok) throw new Error('ending send ' + send.id + ': ' + JSON.stringify(ended))
+	}
 	const loginType = index.types.find((t) => t.name === 'login')
 	if (!loginType) throw new Error('the server has no login type')
 	for (const item of DEMO_ITEMS) {
@@ -253,6 +258,7 @@ try {
 	await shot(popup, 'send-form.png')
 	await popup.click('#send-create')
 	await popup.waitForSelector('#send-result:not([hidden])', { timeout: 30000 })
+	await popup.$eval('#send-result', (el) => el.scrollIntoView({ block: 'start' }))
 	await sleep(1500)
 	await shot(popup, 'send-link.png')
 	await closePage(popup, 'send.webm')
@@ -286,7 +292,7 @@ try {
 
 	// Sign in with a login Keepiq does not know: the save bar.
 	const forum = await session.context.newPage()
-	await forum.goto('https://forum.example.com/')
+	await forum.goto('https://forum.example/')
 	await sleep(1000)
 	await forum.click('#user')
 	await forum.keyboard.type('anna_demo', { delay: 90 })
@@ -303,12 +309,12 @@ try {
 	await sleep(2500)
 	await shot(forum, 'save-done.png')
 	await sleep(1000)
-	popup = await openPopup(session, await tabIdOf(session.worker, 'https://forum.example.com/'))
+	popup = await openPopup(session, await tabIdOf(session.worker, 'https://forum.example/'))
 	await popup.waitForSelector('#view-unlocked:not([hidden])', { timeout: 30000 })
 	const saved = await ask(popup, 'vault-list')
 	await closePage(popup)
 	await closePage(forum, 'save-prompt.webm')
-	if (!saved.items?.some((i) => (i.url || '').includes('forum.example.com'))) {
+	if (!saved.items?.some((i) => (i.url || '').includes('forum.example'))) {
 		throw new Error('the save bar did not save the forum login')
 	}
 
