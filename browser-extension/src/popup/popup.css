@@ -39,6 +39,12 @@ label {
 	margin-bottom: 10px;
 }
 
+/* The hidden attribute wins over any display rule above, so a view's
+   `el.hidden = true` really hides it (a label is display: block). */
+[hidden] {
+	display: none !important;
+}
+
 input {
 	display: block;
 	width: 100%;
@@ -68,6 +74,24 @@ button.link {
 	cursor: pointer;
 	font-size: 13px;
 	padding: 6px 0;
+}
+
+button.link:focus-visible {
+	outline: 2px solid var(--cobalt);
+	outline-offset: 2px;
+	border-radius: 4px;
+}
+
+/* Copy and Open next to a vault item (and Copy in the generator history):
+   each its own target, apart from the item and from each other. */
+.candidate.row {
+	gap: 4px;
+}
+
+.candidate.row > button.link {
+	flex: none;
+	min-height: 32px;
+	padding: 6px 8px;
 }
 
 .hint {
