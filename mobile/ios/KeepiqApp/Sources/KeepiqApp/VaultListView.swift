@@ -10,6 +10,12 @@ import SwiftUI
 struct VaultListView: View {
     @ObservedObject var model: VaultModel
     let folderId: String?
+
+    init(model: VaultModel, folderId: String?) {
+        self.model = model
+        self.folderId = folderId
+    }
+
     @State private var state: VaultState?
     @State private var query = ""
     @State private var folderSheet: FolderSheet?
@@ -223,6 +229,13 @@ struct FolderSheetView: View {
     @ObservedObject var model: VaultModel
     let sheet: FolderSheet
     let onDone: (_ changed: Bool, _ gone: Bool) -> Void
+
+    init(model: VaultModel, sheet: FolderSheet, onDone: @escaping (_ changed: Bool, _ gone: Bool) -> Void) {
+        self.model = model
+        self.sheet = sheet
+        self.onDone = onDone
+    }
+
     @State private var name = ""
     @State private var problem: WriteProblem?
     @State private var busy = false

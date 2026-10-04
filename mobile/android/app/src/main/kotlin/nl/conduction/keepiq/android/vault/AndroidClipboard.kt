@@ -11,10 +11,10 @@ import android.os.Build
 import android.os.Handler
 import android.os.Looper
 import android.os.PersistableBundle
-import nl.conduction.keepiq.shared.vault.Cancellable
+import nl.conduction.keepiq.shared.vault.PendingClear
 import nl.conduction.keepiq.shared.vault.ClipboardPort
 import nl.conduction.keepiq.shared.vault.ScheduledAction
-import nl.conduction.keepiq.shared.vault.Scheduler
+import nl.conduction.keepiq.shared.vault.ClearScheduler
 import nl.conduction.keepiq.shared.vault.SensitiveClipboard
 
 /**
@@ -62,13 +62,13 @@ class AndroidClipboard(context: Context) : ClipboardPort {
 }
 
 /** Main-thread timers for [SensitiveClipboard]. */
-class HandlerScheduler : Scheduler {
+class HandlerScheduler : ClearScheduler {
     private val handler = Handler(Looper.getMainLooper())
 
-    override fun schedule(delayMillis: Long, action: ScheduledAction): Cancellable {
+    override fun schedule(delayMillis: Long, action: ScheduledAction): PendingClear {
         val runnable = Runnable { action.run() }
         handler.postDelayed(runnable, delayMillis)
-        return Cancellable { handler.removeCallbacks(runnable) }
+        return PendingClear { handler.removeCallbacks(runnable) }
     }
 }
 

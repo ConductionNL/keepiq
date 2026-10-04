@@ -39,15 +39,15 @@ final class IOSClipboard: NSObject, ClipboardPort {
 }
 
 /// Main-queue timers for the shared SensitiveClipboard.
-final class MainQueueScheduler: NSObject, KeepiqShared.Scheduler {
-    func schedule(delayMillis: Int64, action: ScheduledAction) -> KeepiqShared.Cancellable {
+final class MainQueueScheduler: NSObject, ClearScheduler {
+    func schedule(delayMillis: Int64, action: ScheduledAction) -> PendingClear {
         let work = DispatchWorkItem { action.run() }
         DispatchQueue.main.asyncAfter(deadline: .now() + .milliseconds(Int(delayMillis)), execute: work)
         return WorkCancellable(work: work)
     }
 }
 
-private final class WorkCancellable: NSObject, KeepiqShared.Cancellable {
+private final class WorkCancellable: NSObject, PendingClear {
     private let work: DispatchWorkItem
 
     init(work: DispatchWorkItem) {
@@ -165,6 +165,15 @@ struct FieldRow: View {
     var masked = false
     var copy = true
     let onCopy: (String) -> Void
+
+    init(label: String, value: String, masked: Bool = false, copy: Bool = true, onCopy: @escaping (String) -> Void) {
+        self.label = label
+        self.value = value
+        self.masked = masked
+        self.copy = copy
+        self.onCopy = onCopy
+    }
+
     @State private var shown = false
 
     var body: some View {

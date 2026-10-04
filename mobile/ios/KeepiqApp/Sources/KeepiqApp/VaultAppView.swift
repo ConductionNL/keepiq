@@ -100,6 +100,14 @@ struct AccountsView: View {
     let accounts: [Account]
     let onSwitch: (Account) -> Void
     let onAdd: (() -> Void)?
+
+    init(current: Account, accounts: [Account], onSwitch: @escaping (Account) -> Void, onAdd: (() -> Void)?) {
+        self.current = current
+        self.accounts = accounts
+        self.onSwitch = onSwitch
+        self.onAdd = onAdd
+    }
+
     @State private var clearSeconds = VaultSettings.clipboardClearSeconds
     @Environment(\.dismiss) private var dismiss
 

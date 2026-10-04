@@ -10,6 +10,12 @@ import SwiftUI
 struct ItemDetailView: View {
     @ObservedObject var model: VaultModel
     let itemId: String
+
+    init(model: VaultModel, itemId: String) {
+        self.model = model
+        self.itemId = itemId
+    }
+
     @State private var result: OpenResult?
     @State private var problem: WriteProblem?
     @State private var confirmTrash = false
@@ -210,6 +216,13 @@ struct ItemEditView: View {
     let itemId: String?
     let folderId: String?
     let onSaved: (String?) -> Void
+
+    init(model: VaultModel, itemId: String?, folderId: String?, onSaved: @escaping (String?) -> Void) {
+        self.model = model
+        self.itemId = itemId
+        self.folderId = folderId
+        self.onSaved = onSaved
+    }
 
     @State private var item: DecryptedItem?
     @State private var type: SecretType?
@@ -440,6 +453,14 @@ struct SecretInput: View {
     @Binding var text: String
     let problem: String?
     let onGenerate: (() -> Void)?
+
+    init(label: String, text: Binding<String>, problem: String?, onGenerate: (() -> Void)?) {
+        self.label = label
+        _text = text
+        self.problem = problem
+        self.onGenerate = onGenerate
+    }
+
     @State private var shown = false
 
     var body: some View {

@@ -24,11 +24,11 @@ class SensitiveClipboardTest {
                 cleared += token
             }
         },
-        scheduler = object : Scheduler {
-            override fun schedule(delayMillis: Long, action: ScheduledAction): Cancellable {
+        scheduler = object : ClearScheduler {
+            override fun schedule(delayMillis: Long, action: ScheduledAction): PendingClear {
                 val cancelled = booleanArrayOf(false)
                 timers += Triple(delayMillis, { action.run() }, cancelled)
-                return Cancellable { cancelled[0] = true }
+                return PendingClear { cancelled[0] = true }
             }
         },
         clearSeconds = ClearDelay { setting },

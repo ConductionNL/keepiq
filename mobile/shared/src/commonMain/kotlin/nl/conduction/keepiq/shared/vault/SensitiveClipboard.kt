@@ -22,15 +22,15 @@ interface ClipboardPort {
  * timer. Interfaces rather than function types, so Swift implements them
  * without Kotlin's boxed function signatures.
  */
-interface Scheduler {
-    fun schedule(delayMillis: Long, action: ScheduledAction): Cancellable
+interface ClearScheduler {
+    fun schedule(delayMillis: Long, action: ScheduledAction): PendingClear
 }
 
 fun interface ScheduledAction {
     fun run()
 }
 
-fun interface Cancellable {
+fun interface PendingClear {
     fun cancel()
 }
 
@@ -49,10 +49,10 @@ fun interface ClearDelay {
  */
 class SensitiveClipboard(
     private val port: ClipboardPort,
-    private val scheduler: Scheduler,
+    private val scheduler: ClearScheduler,
     private val clearSeconds: ClearDelay,
 ) {
-    private var pending: Cancellable? = null
+    private var pending: PendingClear? = null
 
     /**
      * Copies [text] and returns the seconds until it is cleared (0: not

@@ -11,6 +11,11 @@ struct GeneratorView: View {
     @ObservedObject var model: VaultModel
     let onUse: ((String) -> Void)?
 
+    init(model: VaultModel, onUse: ((String) -> Void)?) {
+        self.model = model
+        self.onUse = onUse
+    }
+
     @State private var passphrase = false
     @State private var length = 14.0
     @State private var upper = true
@@ -142,6 +147,11 @@ private struct PolicyToggle: View {
 /// and a field to open a Send link.
 struct SendListView: View {
     @ObservedObject var model: VaultModel
+
+    init(model: VaultModel) {
+        self.model = model
+    }
+
     @State private var sends: [SendSummary]?
     @State private var problem: WriteProblem?
     @State private var deleting: SendSummary?
@@ -239,6 +249,12 @@ private struct SendRow: View {
 struct NewSendView: View {
     @ObservedObject var model: VaultModel
     let onDone: () -> Void
+
+    init(model: VaultModel, onDone: @escaping () -> Void) {
+        self.model = model
+        self.onDone = onDone
+    }
+
     @State private var credential = false
     @State private var text = ""
     @State private var username = ""
