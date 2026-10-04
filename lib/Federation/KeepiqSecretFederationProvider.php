@@ -94,11 +94,17 @@ class KeepiqSecretFederationProvider implements ISignedCloudFederationProvider {
 	 * @throws \OCP\Share\Exceptions\ShareNotFound For every refusal
 	 *
 	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-restores-his-copy
 	 */
 	public function notificationReceived(string $notificationType, string $providerId, array $notification) {
 		// The recipient removed their copy: the owner's side (task 4.4).
 		if ($notificationType === FederatedCopyDeclineService::SHARE_DECLINED && $this->declines !== null) {
 			return $this->declines->handle(providerId: $providerId, notification: $notification);
+		}
+
+		// The recipient restored a declined copy and takes the share back.
+		if ($notificationType === FederatedCopyDeclineService::SHARE_ACCEPTED && $this->declines !== null) {
+			return $this->declines->resume(providerId: $providerId, notification: $notification);
 		}
 
 		return $this->remoteChanges->handle(type: $notificationType, providerId: $providerId, notification: $notification);

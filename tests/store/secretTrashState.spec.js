@@ -81,4 +81,15 @@ describe('secret store: trash and archive', () => {
 		await store.changeSecretState('a', 'archive')
 		expect(post.mock.calls[0][0]).toContain('/api/v1/secrets/a/archive')
 	})
+
+	it('hands back what the server said, so a restore can report a federated share', async () => {
+		vi.spyOn(axios, 'post').mockResolvedValue({
+			data: { id: 'a', federatedShare: 'ended' },
+		})
+		store.secrets = [{ id: 'a' }]
+
+		const answer = await store.changeSecretState('a', 'restore')
+
+		expect(answer.federatedShare).toBe('ended')
+	})
 })

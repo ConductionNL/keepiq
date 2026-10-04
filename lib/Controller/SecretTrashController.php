@@ -84,17 +84,30 @@ class SecretTrashController extends Controller {
 	}//end trash()
 
 	/**
-	 * Take a secret out of the trash.
+	 * Take a secret out of the trash. The body is the secret; a restored
+	 * read-only copy from another organisation adds `federatedShare`
+	 * (`resumed`, `ended` or `unreachable`).
 	 *
 	 * @param string $id The secret ID
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-owner-revoked-the-share-meanwhile
 	 */
 	#[NoAdminRequired]
 	public function restore(string $id): JSONResponse {
-		return $this->run(action: fn (string $userId) => $this->trashService->restore($id, $userId));
+		return $this->run(
+			action: function (string $userId) use ($id): array {
+				$restored = $this->trashService->restore($id, $userId);
+				$body = $restored['secret']->jsonSerialize();
+				if ($restored['federatedShare'] !== null) {
+					$body['federatedShare'] = $restored['federatedShare'];
+				}
+
+				return $body;
+			}
+		);
 	}//end restore()
 
 	/**

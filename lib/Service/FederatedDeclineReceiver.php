@@ -11,6 +11,12 @@
  * more is served or sent for it, and a change still waiting for its retry is
  * dropped. Every refusal is the same "share not found".
  *
+ * It also takes the recipient's `SHARE_ACCEPTED` for a declined share: the
+ * recipient restored the copy from their trash (decision of 4 Oct 2026).
+ * Under the same checks the share is live again and gets the owner's changes;
+ * a share that was revoked, suspended or failed meanwhile, or that the owner
+ * already sent again, stays as it is and the answer is "share not found".
+ *
  * @category Service
  * @package  OCA\Keepiq\Service
  *
@@ -93,6 +99,64 @@ class FederatedDeclineReceiver {
 
 		return [];
 	}//end handle()
+
+	/**
+	 * Apply a `SHARE_ACCEPTED` from the recipient's instance: a declined
+	 * share whose copy the recipient restored becomes live again. One that
+	 * is already live stays so.
+	 *
+	 * @param string $providerId The share id here
+	 * @param array<array-key,mixed> $notification The payload, `{sharedSecret}` (the secret itself)
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws ShareNotFound For every refusal, and for a share that ended
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-restores-his-copy
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-owner-revoked-the-share-meanwhile
+	 */
+	public function resume(string $providerId, array $notification): array {
+		$row = $this->verifiedRow(providerId: $providerId, presented: $notification['sharedSecret'] ?? null);
+
+		if ($row->getStatus() === FederatedShare::STATUS_ACTIVE) {
+			return [];
+		}
+
+		if ($row->getStatus() !== FederatedShare::STATUS_DECLINED || $this->sentAgain(row: $row) === true) {
+			throw new ShareNotFound();
+		}
+
+		$row->setStatus(FederatedShare::STATUS_ACTIVE);
+		$row->setPendingNotification(null);
+		$row->setNotifyAttempts(0);
+		$row->setNextNotifyAt(null);
+		$row->setUpdatedAt(new DateTime());
+		$this->shareMapper->update(entity: $row);
+		$this->audit->recordOutbound(eventType: AuditEventTypes::FEDERATED_SHARE_RECIPIENT_RESUMED, row: $row, actorId: null);
+
+		return [];
+	}//end resume()
+
+	/**
+	 * Whether the owner shared the same secret with the same recipient again
+	 * after the decline: then that share is the live one, not this.
+	 *
+	 * @param FederatedShare $row The declined share
+	 *
+	 * @return bool
+	 */
+	private function sentAgain(FederatedShare $row): bool {
+		foreach ($this->shareMapper->findBySourceSecret(sourceSecretId: $row->getSourceSecretId()) as $other) {
+			if ($other->getId() !== $row->getId()
+				&& $other->getRecipientCloudId() === $row->getRecipientCloudId()
+				&& $other->getStatus() === FederatedShare::STATUS_ACTIVE
+			) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end sentAgain()
 
 	/**
 	 * The recipient of the share a presented shared secret belongs to, or ''

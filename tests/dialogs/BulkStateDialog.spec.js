@@ -59,6 +59,46 @@ describe('BulkStateDialog', () => {
 		await vi.waitFor(() => expect(wrapper.emitted('done')).toBeTruthy())
 	})
 
+	it('says when a restored copy came from a share that has ended', async () => {
+		vi.spyOn(useSecretStore(), 'changeSecretState')
+			.mockResolvedValueOnce({ id: 'a', federatedShare: 'ended' })
+			.mockResolvedValueOnce({ id: 'b' })
+		const wrapper = mountFor('restore')
+
+		await wrapper.find('[data-testid="bulk-state-run"]').trigger('click')
+		await vi.waitFor(() => expect(wrapper.emitted('done')).toBeTruthy())
+
+		const note = wrapper.find('[data-testid="bulk-state-federated-ended"]')
+		expect(note.exists()).toBe(true)
+		expect(note.text()).toContain(
+			'A restored copy came from a share that has ended. It stays read-only.',
+		)
+		expect(
+			wrapper
+				.find('[data-testid="bulk-state-federated-unreachable"]')
+				.exists(),
+		).toBe(false)
+	})
+
+	it('says when the organisation that shared a restored copy could not be reached', async () => {
+		vi.spyOn(useSecretStore(), 'changeSecretState')
+			.mockResolvedValueOnce({ id: 'a', federatedShare: 'unreachable' })
+			.mockResolvedValueOnce({ id: 'b', federatedShare: 'resumed' })
+		const wrapper = mountFor('restore')
+
+		await wrapper.find('[data-testid="bulk-state-run"]').trigger('click')
+		await vi.waitFor(() => expect(wrapper.emitted('done')).toBeTruthy())
+
+		expect(
+			wrapper.find('[data-testid="bulk-state-federated-unreachable"]').text(),
+		).toContain(
+			'The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.',
+		)
+		expect(
+			wrapper.find('[data-testid="bulk-state-federated-ended"]').exists(),
+		).toBe(false)
+	})
+
 	it('warns only before deleting for good', () => {
 		expect(mountFor('purge').find('.note').attributes('data-type')).toBe(
 			'warning',

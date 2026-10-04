@@ -42,6 +42,7 @@ use OCA\Keepiq\Service\AuditService;
 use OCA\Keepiq\Service\FederatedCopyDeclineService;
 use OCA\Keepiq\Service\FederatedCopyService;
 use OCA\Keepiq\Service\FederatedDeclineReceiver;
+use OCA\Keepiq\Service\FederatedInboundService;
 use OCA\Keepiq\Service\FederatedRemoteChangeService;
 use OCA\Keepiq\Service\FederatedShareAuditTrail;
 use OCA\Keepiq\Service\FederatedSharePuller;
@@ -169,9 +170,25 @@ class FederatedCopyDeclineTest extends TestCase {
 		$mapper->method('findByRemoteShareId')->willReturnCallback(
 			fn (string $remoteId): array => ($remoteId === self::SHARE_ID) ? [$this->inbound] : []
 		);
+		$mapper->method('findById')->willReturnCallback(
+			fn (string $id): FederatedInbound => ($id === $this->inbound->getId()) ? $this->inbound : throw new DoesNotExistException('none')
+		);
 		$mapper->method('update')->willReturnArgument(0);
 
 		return $mapper;
+	}
+
+	/**
+	 * Bob's answers under "Incoming from other organisations", with the real
+	 * decline service behind them.
+	 */
+	private function bobsIncoming(): FederatedInboundService {
+		return new FederatedInboundService(
+			inboundMapper: $this->inboundMapper(),
+			copies: $this->createMock(FederatedCopyService::class),
+			audit: $this->auditTrail(),
+			declines: $this->declines(),
+		);
 	}
 
 	private function declines(): FederatedCopyDeclineService {
@@ -327,11 +344,70 @@ class FederatedCopyDeclineTest extends TestCase {
 		$this->bobsTrash($this->copy)->trash('copy-1', 'bob');
 
 		$this->assertSame(FederatedInbound::STATUS_DECLINED, $this->inbound->getStatus());
-		$this->assertNull($this->inbound->getSecretId());
+		// The link stays while the copy is in the trash, for a restore.
+		$this->assertSame('copy-1', $this->inbound->getSecretId());
 		$this->assertOneDeclineSent();
 		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_DECLINED, $this->audit[0]->getEventType());
 		$this->assertSame('bob', $this->audit[0]->getActorId());
 		$this->assertIdentifiersOnly();
+	}
+
+	/**
+	 * Bob declines a share he never accepted: Alice's instance is told at
+	 * once, the same way as when he deletes an accepted copy.
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-declines-a-pending-share
+	 */
+	public function testDecliningAPendingShareTellsTheOwner(): void {
+		$this->inbound->setStatus(FederatedInbound::STATUS_PENDING);
+		$this->inbound->setSecretId(null);
+
+		$row = $this->bobsIncoming()->decline('in-1', 'bob');
+
+		$this->assertSame(FederatedInbound::STATUS_DECLINED, $row->getStatus());
+		$this->assertOneDeclineSent();
+		$this->assertSame(AuditEventTypes::FEDERATED_SHARE_DECLINED, $this->audit[0]->getEventType());
+		$this->assertIdentifiersOnly();
+	}
+
+	/**
+	 * The decline of a pending share reaches Alice's provider and her share
+	 * shows declined, with its retries dropped.
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-declines-a-pending-share
+	 */
+	public function testThePendingDeclineEndsTheOwnersShare(): void {
+		$this->inbound->setStatus(FederatedInbound::STATUS_PENDING);
+		$this->inbound->setSecretId(null);
+		$this->outbound->setPendingNotification('SHARE_UPDATED');
+		$this->outbound->setNotifyAttempts(1);
+		$this->signer = 'cloud.partner.example';
+
+		$this->bobsIncoming()->decline('in-1', 'bob');
+		$message = $this->sent[0]->getMessage();
+		$this->audit = [];
+		$this->alicesProvider()->notificationReceived($message['notificationType'], $message['providerId'], $message['notification']);
+
+		$this->assertSame(FederatedShare::STATUS_DECLINED, $this->outbound->getStatus());
+		$this->assertNull($this->outbound->getPendingNotification());
+		$this->assertSame(0, $this->outbound->getNotifyAttempts());
+	}
+
+	/**
+	 * Only Bob's own pending share can be declined, and a refusal sends nothing.
+	 */
+	public function testDecliningSomeoneElsesShareSendsNothing(): void {
+		$this->inbound->setStatus(FederatedInbound::STATUS_PENDING);
+		$this->inbound->setRecipientUid('carol');
+
+		try {
+			$this->bobsIncoming()->decline('in-1', 'bob');
+			$this->fail('declined another user\'s share');
+		} catch (\OCA\Keepiq\Exception\NotFoundException) {
+			// Not Bob's.
+		}
+
+		$this->assertSame([], $this->sent);
 	}
 
 	public function testPurgingACopyThatIsStillAcceptedTellsTheOwner(): void {
@@ -341,6 +417,7 @@ class FederatedCopyDeclineTest extends TestCase {
 		$this->bobsTrash($this->copy)->purge('copy-1', 'bob');
 
 		$this->assertSame(FederatedInbound::STATUS_DECLINED, $this->inbound->getStatus());
+		$this->assertNull($this->inbound->getSecretId());
 		$this->assertOneDeclineSent();
 	}
 

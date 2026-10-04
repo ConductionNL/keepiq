@@ -1757,7 +1757,17 @@
         "Copy from another organisation updated": "Kópia z inej organizácie aktualizovaná",
         "Copy from another organisation removed": "Kópia z inej organizácie odstránená",
         "Declined: they removed their copy. Share again if they need it.": "Odmietnuté: príjemca odstránil svoju kópiu. Ak ju potrebuje, zdieľajte znova.",
-        "Recipient at another organisation removed their copy": "Príjemca z inej organizácie odstránil svoju kópiu"
+        "Recipient at another organisation removed their copy": "Príjemca z inej organizácie odstránil svoju kópiu",
+        "Removed the user from %n team folder.": "Používateľ bol odstránený z %n tímového priečinka.",
+        "Removed the user from %n team folders.": "Používateľ bol odstránený z %n tímových priečinkov.",
+        "_Removed the user from %n team folder._::_Removed the user from %n team folders._": [
+            "Používateľ bol odstránený z %n tímového priečinka.",
+            "Používateľ bol odstránený z %n tímových priečinkov.",
+            "Používateľ bol odstránený z %n tímových priečinkov."
+        ],
+        "A restored copy came from a share that has ended. It stays read-only.": "Obnovená kópia pochádza zo zdieľania, ktoré skončilo. Zostáva iba na čítanie.",
+        "The organisation that shared a restored copy could not be reached. The copy stays read-only and does not follow their changes.": "Organizáciu, ktorá zdieľala obnovenú kópiu, sa nepodarilo zastihnúť. Kópia zostáva iba na čítanie a nesleduje ich zmeny.",
+        "Recipient at another organisation restored their copy": "Príjemca z inej organizácie obnovil svoju kópiu"
     },
     "plurals": null
 }

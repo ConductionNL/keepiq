@@ -72,6 +72,32 @@ class SecretTrashControllerTest extends TestCase {
 	}//end testDeleteTrashes()
 
 	/**
+	 * A restore answers the secret; a restored copy from another
+	 * organisation adds what became of its share, so the browser can say
+	 * that it ended.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-owner-revoked-the-share-meanwhile
+	 */
+	public function testRestoreSaysWhatBecameOfAFederatedShare(): void {
+		$secret = new Secret();
+		$secret->setId('s-1');
+		$this->trash->method('restore')->willReturnOnConsecutiveCalls(
+			['secret' => $secret, 'federatedShare' => 'ended'],
+			['secret' => $secret, 'federatedShare' => null],
+		);
+
+		$copy = $this->controller->restore('s-1')->getData();
+		$this->assertSame('ended', $copy['federatedShare']);
+		$this->assertSame('s-1', $copy['id']);
+
+		$own = $this->controller->restore('s-1')->getData();
+		$this->assertArrayNotHasKey('federatedShare', $own);
+		$this->assertSame($secret->jsonSerialize(), $own);
+	}//end testRestoreSaysWhatBecameOfAFederatedShare()
+
+	/**
 	 * Another user's secret answers 403.
 	 *
 	 * @return void

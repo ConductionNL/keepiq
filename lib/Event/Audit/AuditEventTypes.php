@@ -234,6 +234,8 @@ final class AuditEventTypes {
 	public const FEDERATED_COPY_REMOVED = 'federated_share.copy_removed';
 	// The owner's side of a recipient deleting their copy (task 4.4).
 	public const FEDERATED_SHARE_RECIPIENT_DECLINED = 'federated_share.recipient_declined';
+	// The owner's side of a recipient restoring a declined copy from the trash.
+	public const FEDERATED_SHARE_RECIPIENT_RESUMED = 'federated_share.recipient_resumed';
 
 	/**
 	 * Metadata keys that MUST NEVER appear in any audit entry, in any position.
@@ -401,10 +403,11 @@ final class AuditEventTypes {
 		self::FEDERATED_SHARE_FAILED => ['federatedShareId', 'recipientCloudId', 'partnerId', 'notification'],
 		self::FEDERATED_SHARE_RECEIVED => ['inboundShareId', 'senderCloudId', 'partnerId'],
 		self::FEDERATED_SHARE_ACCEPTED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
-		self::FEDERATED_SHARE_DECLINED => ['inboundShareId', 'senderCloudId', 'partnerId'],
+		self::FEDERATED_SHARE_DECLINED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
 		self::FEDERATED_COPY_UPDATED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
 		self::FEDERATED_COPY_REMOVED => ['inboundShareId', 'senderCloudId', 'partnerId', 'copyId'],
 		self::FEDERATED_SHARE_RECIPIENT_DECLINED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
+		self::FEDERATED_SHARE_RECIPIENT_RESUMED => ['federatedShareId', 'recipientCloudId', 'partnerId'],
 	];
 
 	/**
