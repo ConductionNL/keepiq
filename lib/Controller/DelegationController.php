@@ -28,6 +28,7 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\DelegationService;
 use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Http;
@@ -120,6 +121,9 @@ class DelegationController extends OCSController {
 				delegatedTo: $delegatedTo,
 				initiatedBy: $user->getUID()
 			);
+		} catch (ForbiddenException $exception) {
+			// A copy from another organisation (sharing-federated-recipients task 3.4).
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(
 				data: ['message' => $exception->getMessage()],
