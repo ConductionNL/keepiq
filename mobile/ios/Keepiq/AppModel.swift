@@ -44,7 +44,7 @@ final class AppModel: ObservableObject {
         #else
         noBrowser = false
         #endif
-        client = KeepiqClientKt.newKeepiqClient(storage: KeychainStorage(), clientName: "Keepiq for iOS (\(UIDevice.current.model))")
+        client = KeepiqClientKt.doNewKeepiqClient(storage: KeychainStorage(), clientName: "Keepiq for iOS (\(UIDevice.current.model))")
         let biometric = self.biometric
         client.onWipe = { accountId in biometric.delete(accountId) }
         if let active = client.accounts.activeId() { screen = .unlock(active) }
