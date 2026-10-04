@@ -75,7 +75,7 @@ class AdminPeopleControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.2
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	public function testSuitesCarryNoKeyMaterial(): void {
 		$suite = new EncryptionSuite();
@@ -103,7 +103,7 @@ class AdminPeopleControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.2
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	public function testOffboardingRunsTheScreensService(): void {
 		$summary = ['revoked' => 2, 'removedMemberships' => 1, 'transferred' => 3, 'skipped' => []];
@@ -120,7 +120,7 @@ class AdminPeopleControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.2
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	public function testARefusedOffboardingAnswers400(): void {
 		$this->teamFolders->method('offboard')->willThrowException(new InvalidArgumentException('Successor must differ from the leaving user'));

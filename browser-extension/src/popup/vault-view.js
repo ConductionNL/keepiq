@@ -554,5 +554,24 @@ export function initVault({
 			await load()
 		},
 		canLeave,
+
+		/**
+		 * Drop everything this view holds of the vault: the open item, the
+		 * form, the list. Called when the worker locks.
+		 *
+		 * @spec openspec/changes/clients-extension-gaps/specs/extension-lock/spec.md#requirement-the-popup-forgets-the-vault-when-it-locks
+		 */
+		forget() {
+			current = null
+			form = null
+			index = []
+			clearDetail({ $ })
+			for (const el of $('vault-edit').querySelectorAll('input, textarea')) {
+				if (el.type !== 'checkbox' && el.type !== 'radio') el.value = ''
+			}
+			$('edit-fields').replaceChildren()
+			$('vault-list').replaceChildren()
+			showView('vault-browse')
+		},
 	}
 }
