@@ -274,7 +274,7 @@ export default {
 		 * The member overview store, which carries the prefill from a row.
 		 *
 		 * @return {object}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.2
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-acts-on-a-member-row
 		 */
 		memberStore() {
 			return useMemberOverviewStore()
@@ -287,7 +287,7 @@ export default {
 		 * suite id field, so the administrator never types it.
 		 *
 		 * @param {string} suiteId The suite handed over by the list.
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.2
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-acts-on-a-member-row
 		 */
 		'memberStore.revokeSuiteId': function (suiteId) {
 			if (suiteId) {
@@ -301,7 +301,7 @@ export default {
 		 * (crypto-organisation-account-recovery D8).
 		 *
 		 * @param {string} id The suite id typed so far.
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-force-revocation-warns-about-enrolled-users
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-force-revocation-warns-about-enrolled-users
 		 */
 		async suiteId(id) {
 			this.enrolledInRecovery = false

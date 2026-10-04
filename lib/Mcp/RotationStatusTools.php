@@ -30,7 +30,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
  * changes no flag: rotating stays a client-side re-encryption plus a human
  * "mark rotated" in the app.
  *
- * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-rotation-status-tool
+ * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-rotation-status-tool
  */
 class RotationStatusTools {
 
@@ -68,7 +68,7 @@ class RotationStatusTools {
 	 *
 	 * @return array{flags: list<array<string,scalar|null>>, counts: array{open: int, overdue: int, compromised: int}}
 	 *
-	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-rotation-status-tool
+	 * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-rotation-status-tool
 	 */
 	public function rotationStatus(): array {
 		$userId = $this->context->userId();

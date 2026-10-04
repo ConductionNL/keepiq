@@ -163,7 +163,7 @@ class TeamFolderMemberMapper extends QBMapper {
 	 *
 	 * @return array<string,int> Membership count keyed by user ID
 	 *
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.1
+	 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 	 */
 	public function countUserMemberships(array $userIds): array {
 		if ($userIds === []) {

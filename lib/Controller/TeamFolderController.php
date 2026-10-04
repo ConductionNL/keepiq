@@ -163,7 +163,7 @@ class TeamFolderController extends OCSController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.1
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-pending-confirmations-are-served-to-authorised-confirmers-only
 	 */
 	#[NoAdminRequired]
 	public function pendingConfirmations(): JSONResponse {
@@ -224,7 +224,7 @@ class TeamFolderController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.4
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.2
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
 	 */
 	#[NoAdminRequired]
 	public function registerShares(string $id, array $shares): JSONResponse {

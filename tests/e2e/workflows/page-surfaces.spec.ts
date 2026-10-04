@@ -155,6 +155,31 @@ async function expectComponentMounted(page: Page, testId: string): Promise<void>
 }
 
 test.describe('Routed page surfaces — authenticated', () => {
+	test('IncomingSharesView renders the shares from partner organisations at #/incoming', async ({
+		page,
+	}) => {
+		await unlockVault(page)
+		await gotoVaultRoute(page, 'incoming')
+		await expectComponentMounted(page, 'incoming-shares-view')
+		// Component-specific, not chrome: this heading exists on no other route.
+		await expect(
+			page
+				.locator('[data-testid="incoming-shares-view"]')
+				.getByText('Incoming from other organisations', { exact: true }),
+		).toBeVisible()
+		// The list resolves to rows, its empty state or its error state. None
+		// of the three means the component mounted its shell and never loaded.
+		const outcome = page.locator(
+			'[data-testid^="incoming-share-"], [data-testid="incoming-shares-empty"], [data-testid="incoming-shares-error"]',
+		)
+		await expect
+			.poll(async () => await outcome.count(), {
+				message:
+					'neither incoming rows, the empty state nor the error state rendered',
+			})
+			.toBeGreaterThan(0)
+	})
+
 	test('PersonalActivityView renders the personal audit trail at #/my-activity', async ({
 		page,
 	}) => {

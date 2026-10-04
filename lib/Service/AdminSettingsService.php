@@ -329,7 +329,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On out-of-bounds values.
 	 *
 	 * @spec openspec/changes/implement-dashboard-settings/tasks.md#task-1.4
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 	 */
 	public function updateAdminSettings(array $data): array {
 		// Each group validates and persists one family of keys. Every guard
@@ -352,7 +352,7 @@ class AdminSettingsService {
 	 *
 	 * @throws InvalidArgumentException On an unknown area.
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	public function getAreaSettings(string $area): array {
 		$keys = $this->areaKeys(area: $area);
@@ -378,7 +378,7 @@ class AdminSettingsService {
 	 * @throws InvalidArgumentException On an unknown area, a key of another
 	 *                                  area, or an out-of-bounds value.
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.1
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
 	 */
 	public function updateAreaSettings(string $area, array $data): array {
 		$own = $this->areaKeys(area: $area);
@@ -468,7 +468,7 @@ class AdminSettingsService {
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.2
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 	 */
 	public function getPolicy(?string $userId = null): array {
 		return $this->policyService->getPolicy(userId: $userId);

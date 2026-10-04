@@ -7,7 +7,7 @@
  * recipient, post only ciphertext, run on unlock and every 15 minutes,
  * stop on lock.
  *
- * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.1
+ * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
  */
 
 import axios from '@nextcloud/axios'

@@ -235,7 +235,7 @@ class SiemSinkControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.3
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.3
 	 */
 	public function testAnAuditAreaHolderMayTestASink(): void {
 		$this->delegatedAreas = [AuditAdminSettings::class];
@@ -251,7 +251,7 @@ class SiemSinkControllerTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scoped-roles/tasks.md#2.3
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.3
 	 */
 	public function testAPoliciesAreaHolderIsRefused(): void {
 		$this->delegatedAreas = [PolicyAdminSettings::class];

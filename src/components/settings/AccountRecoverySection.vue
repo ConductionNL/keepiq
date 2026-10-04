@@ -7,7 +7,7 @@
   the active key's fingerprint to publish internally. Saving asks for the
   administrator's password again.
 
-  @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
+  @spec openspec/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 -->
 <template>
 	<CnSettingsSection
@@ -133,7 +133,7 @@ export default {
 
 	computed: {
 		/**
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 		 */
 		officerList() {
 			return this.officersText
@@ -147,7 +147,7 @@ export default {
 	 * Load the current settings.
 	 *
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 	 */
 	async created() {
 		try {
@@ -162,7 +162,7 @@ export default {
 		/**
 		 * @param {object} data The settings from the server.
 		 * @return {void}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 		 */
 		apply(data) {
 			this.policy = data?.policy ?? 'off'
@@ -177,7 +177,7 @@ export default {
 		 * Save after a password confirmation.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-administrators-name-recovery-officers-a-threshold-and-a-policy
 		 */
 		async save() {
 			this.busy = true
@@ -204,7 +204,7 @@ export default {
 		 * Retire the active key after a password confirmation.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-enrolments-and-officer-copies-follow-the-suite
 		 */
 		async retire() {
 			this.busy = true

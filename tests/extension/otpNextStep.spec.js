@@ -1,5 +1,5 @@
 /**
- * @spec openspec/changes/clients-extension-store-release/specs/extension-totp-autofill/spec.md#requirement-one-time-code-fill-on-the-step-after-the-login
+ * @spec openspec/specs/extension-totp-autofill/spec.md#requirement-one-time-code-fill-on-the-step-after-the-login
  *
  * The one-time code fills on the step after the login (keepiq#783): a login
  * fill leaves a one-shot intent in session storage, holding no seed and no
@@ -13,6 +13,7 @@ import {
 	importPublicKey,
 	rsaEncrypt,
 } from '../../browser-extension/src/crypto/index.js'
+import { frameMayFill } from '../../browser-extension/src/lib/fillScope.js'
 import { RSA4096_PUBLIC_KEY_SPKI_PEM } from '../vitest/fixtures/rsa-fixtures.js'
 import {
 	installChrome,
@@ -75,6 +76,18 @@ async function fillLogin() {
 }
 
 describe('after a login fill without a code field on the page', () => {
+	it('names the host the content script checks before it fills', async () => {
+		// Found by the extension Playwright flow (keepiq#783 task 5.4): since
+		// #934 a frame fills only when the message names its own host
+		// (frameMayFill), and the next-step message named none, so the real
+		// content script refused every next-step fill.
+		await fillLogin()
+		await detect('https://login.example.com/2fa', 1, 3)
+		const nextStep = otpFills()[1]
+		expect(nextStep.payload.host).toBe('login.example.com')
+		expect(frameMayFill('login.example.com', nextStep.payload.host)).toBe(true)
+	})
+
 	it('keeps an intent with no seed and no code, in session storage only', async () => {
 		const res = await fillLogin()
 		const intents = browser.session.get('keepiq.otpIntents')

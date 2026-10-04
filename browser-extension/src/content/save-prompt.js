@@ -90,8 +90,14 @@ export function showSavePrompt(
 	main.type = 'button'
 	main.className = 'primary'
 	main.textContent = primary
+	// Only a new login can be declined for the site for good.
+	const never = doc.createElement('button')
+	never.type = 'button'
+	never.textContent = 'Never for this site'
 	if (primary === null) {
 		actions.append(later)
+	} else if (offer.action === 'save') {
+		actions.append(never, later, main)
 	} else {
 		actions.append(later, main)
 	}
@@ -116,6 +122,7 @@ export function showSavePrompt(
 		}
 		main.addEventListener('click', onClick(offer.action))
 		later.addEventListener('click', onClick('dismiss'))
+		never.addEventListener('click', onClick('never'))
 		;(primary === null ? later : main).focus?.()
 	})
 }

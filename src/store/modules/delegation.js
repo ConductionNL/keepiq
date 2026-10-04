@@ -149,7 +149,7 @@ export const useDelegationStore = defineStore('delegation', {
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
-		 * @spec openspec/changes/admin-scoped-roles/tasks.md#3.2
+		 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.2
 		 */
 		async fetchCapabilities() {
 			try {

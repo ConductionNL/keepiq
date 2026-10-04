@@ -211,7 +211,7 @@ class KeepiqNotifier implements INotifier {
 	 *
 	 * @return bool True when this renderer recognised the subject.
 	 *
-	 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+	 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
 	 */
 	private function renderRecoverySubject(INotification $notification, string $subject, array $params, IL10N $l): bool {
 		$texts = [
@@ -251,7 +251,7 @@ class KeepiqNotifier implements INotifier {
 	 *
 	 * @return bool True when this renderer recognised the subject.
 	 *
-	 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
+	 * @spec openspec/specs/new-device-approval/spec.md#requirement-a-new-device-requests-approval-with-a-one-time-key
 	 */
 	private function renderDeviceApprovalSubject(INotification $notification, string $subject, array $params, IL10N $l): bool {
 		if ($subject !== 'device_approval_requested') {
@@ -289,7 +289,7 @@ class KeepiqNotifier implements INotifier {
 	 *
 	 * @return bool True when this renderer recognised the subject.
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-people-are-told-before-and-when-access-ends
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-people-are-told-before-and-when-access-ends
 	 */
 	private function renderAccessEndSubject(INotification $notification, string $subject, array $params, IL10N $l): bool {
 		$secretName = (string)($params['secret_name'] ?? $l->t('a secret'));

@@ -231,4 +231,22 @@ class SecretControllerTest extends TestCase {
 			$this->assertSame('org_ownership_required', $response->getData()['code']);
 		}
 	}//end testPolicyRefusalCarriesTheCode()
+
+	/**
+	 * The 403 above must reach the browser as a 403. Nextcloud's OCSMiddleware
+	 * rewrites every 403 JSONResponse of an OCSController into an OCS v1
+	 * envelope, which on an /index.php/apps route is HTTP 200 without the
+	 * `code`. Found live (4 Oct 2026): a refused personal login read as a
+	 * saved secret in the browser. So this controller is a plain Controller.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-work-logins-are-kept-in-team-folders
+	 */
+	public function testPolicyRefusalIsNotRewrittenByTheOcsMiddleware(): void {
+		$this->assertFalse(
+			is_subclass_of(SecretController::class, \OCP\AppFramework\OCSController::class),
+			'an OCSController loses the 403 status and the policy code'
+		);
+	}//end testPolicyRefusalIsNotRewrittenByTheOcsMiddleware()
 }//end class

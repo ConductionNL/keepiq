@@ -22,7 +22,7 @@ use PHPUnit\Framework\TestCase;
  * A manager can run a value update fan-out like an editor; a viewer cannot
  * (sharing-team-folder-manager-role task 1.2).
  *
- * @spec openspec/changes/sharing-team-folder-manager-role/tasks.md#task-1.2
+ * @spec openspec/changes/archive/2026-10-04-sharing-team-folder-manager-role/tasks.md#task-1.2
  */
 class ManagerWritesLikeAnEditorTest extends TestCase {
 

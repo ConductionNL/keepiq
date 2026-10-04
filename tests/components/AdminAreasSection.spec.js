@@ -6,7 +6,7 @@
  * administration privileges page and warns while vault_admin has members
  * (admin-scoped-roles §3.3).
  *
- * @spec openspec/changes/admin-scoped-roles/tasks.md#3.3
+ * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.3
  */
 
 import { mount } from '@vue/test-utils'

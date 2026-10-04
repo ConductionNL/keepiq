@@ -34,7 +34,7 @@ use OCP\Migration\SimpleMigrationStep;
  *
  * @psalm-suppress UnusedClass Loaded by the Nextcloud migration framework.
  *
- * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.1
  */
 class Version001008Date20261002181000 extends SimpleMigrationStep {
 
@@ -67,7 +67,7 @@ class Version001008Date20261002181000 extends SimpleMigrationStep {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Signature fixed by SimpleMigrationStep.
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.1
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		$schema  = $schemaClosure();
@@ -105,7 +105,7 @@ class Version001008Date20261002181000 extends SimpleMigrationStep {
 	 *
 	 * @return bool Whether anything was added
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-1.1
 	 */
 	private function addFlags(ISchemaWrapper $schema, string $tableName, string $expiryColumn): bool {
 		$table   = $schema->getTable($tableName);

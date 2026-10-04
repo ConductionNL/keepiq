@@ -26,7 +26,7 @@ use OCA\OpenRegister\Mcp\IMcpScannableServices;
  * #[McpTool] methods: exactly the three metadata read facades. Registered
  * under the IMcpScannableServices::keepiq alias in Application::register().
  *
- * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-surface-is-exposed-only-through-the-scannable-services-opt-in
+ * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-surface-is-exposed-only-through-the-scannable-services-opt-in
  */
 class KeepiqScannableServices implements IMcpScannableServices {
 
@@ -46,7 +46,7 @@ class KeepiqScannableServices implements IMcpScannableServices {
 	 *
 	 * @return list<class-string>
 	 *
-	 * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md#requirement-surface-is-exposed-only-through-the-scannable-services-opt-in
+	 * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-surface-is-exposed-only-through-the-scannable-services-opt-in
 	 */
 	public function getScannableServiceClasses(): array {
 		return self::CLASSES;

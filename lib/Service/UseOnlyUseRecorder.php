@@ -70,7 +70,7 @@ class UseOnlyUseRecorder {
 	 *
 	 * @throws NotFoundException When the caller holds no such use-only copy
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-each-use-is-recorded
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-each-use-is-recorded
 	 */
 	public function recordUse(string $copyId, string $userId): void {
 		try {

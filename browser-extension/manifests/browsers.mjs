@@ -14,6 +14,16 @@
 /** The add-on id Firefox signs and updates under. */
 export const GECKO_ID = 'keepiq@conduction.nl'
 
+/**
+ * Firefox's data collection categories for this extension.
+ *
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-release/spec.md#requirement-firefox-is-told-what-leaves-the-browser
+ */
+export const DATA_COLLECTION = Object.freeze([
+	'authenticationInfo',
+	'browsingActivity',
+])
+
 /** The oldest Firefox with the MV3 features the extension uses. */
 export const GECKO_MIN_VERSION = '115.0'
 
@@ -37,11 +47,22 @@ export function manifestFor(base, browser) {
 		// The worker bundle is built as a classic script for Firefox.
 		manifest.background = { scripts: ['service-worker.js'] }
 		manifest.browser_specific_settings = {
-			gecko: { id: GECKO_ID, strict_min_version: GECKO_MIN_VERSION },
+			gecko: {
+				id: GECKO_ID,
+				strict_min_version: GECKO_MIN_VERSION,
+				// What leaves the browser, for Firefox's consent screen (required
+				// for new add-ons since 3 November 2025, read from Firefox 140):
+				// the app password and encrypted logins, and the site the user is
+				// on to find its logins. Both go only to the user's own server.
+				data_collection_permissions: {
+					required: [...DATA_COLLECTION],
+				},
+			},
 		}
-		// Firefox has no `windows` permission (the API needs none) and warns on it.
+		// Firefox has no `windows` permission (the API needs none) and warns on
+		// it, and no offscreen documents (its background page has a document).
 		manifest.permissions = (manifest.permissions || []).filter(
-			(p) => p !== 'windows',
+			(p) => p !== 'windows' && p !== 'offscreen',
 		)
 		return manifest
 	}

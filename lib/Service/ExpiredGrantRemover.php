@@ -85,7 +85,7 @@ class ExpiredGrantRemover {
 	 *
 	 * @return int The number of grants removed
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
 	 */
 	public function removeExpired(DateTime $now): int {
 		$removed = 0;
@@ -130,7 +130,7 @@ class ExpiredGrantRemover {
 	 *
 	 * @return bool Whether it was revoked
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
 	 */
 	public function revokeTarget(ShareTarget $target): bool {
 		return $this->asSourceOwner(

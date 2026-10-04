@@ -401,7 +401,7 @@ export default {
 		 * Members confirmed by a colleague, for the dialog list.
 		 *
 		 * @return {Array<{memberId: string, confirmerId: string}>}
-		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.3
+		 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
 		 */
 		confirmations() {
 			return Object.entries(this.confirmedBy ?? {}).map(
@@ -420,7 +420,7 @@ export default {
 		 * Whether the current user owns this team folder.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 		 */
 		isOwner() {
 			const uid = getCurrentUser()?.uid ?? null
@@ -616,7 +616,7 @@ export default {
 		 * confirmed whom and whether automatic confirmation is on.
 		 *
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-share-a-folder-as-a-team-folder
-		 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.3
+		 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
 		 */
 		async refresh() {
 			// Best-effort and deliberately not awaited into the error path: who
@@ -710,7 +710,7 @@ export default {
 		 * fan-out for the new member.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+		 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-inherited-access-on-add-revoked-on-removal
 		 */
 		async onAddMember() {
@@ -740,7 +740,7 @@ export default {
 		 *
 		 * @param {string} iso The end date (ISO 8601).
 		 * @return {string}
-		 * @spec openspec/changes/sharing-use-only-and-expiring-shares/tasks.md#task-2.3
+		 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.3
 		 */
 		formatEndDate(iso) {
 			const date = new Date(iso)
@@ -753,7 +753,7 @@ export default {
 		 *
 		 * @param {object} member The membership row.
 		 * @return {boolean}
-		 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 		 */
 		canChangeMember(member) {
 			return this.isOwner || member.grade !== 'manage'
@@ -765,7 +765,7 @@ export default {
 		 *
 		 * @param {object} member The membership row.
 		 * @return {boolean}
-		 * @spec openspec/changes/sharing-team-folder-manager-role/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 		 */
 		canRemoveMember(member) {
 			if (this.canChangeMember(member)) {
@@ -803,7 +803,7 @@ export default {
 		 * @param {string} grade The new grade ('read'|'write').
 		 * @return {Promise<void>}
 		 *
-		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-or-write-grade
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
 		 */
 		async onGradeChange(member, grade) {
 			this.busy = true
