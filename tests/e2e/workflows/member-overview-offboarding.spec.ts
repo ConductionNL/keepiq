@@ -102,7 +102,9 @@ async function pick(
 
 test.describe('Workflow: offboard a leaver from the member overview', () => {
 	test.afterAll(async ({ playwright }) => {
-		const request = await playwright.request.newContext()
+		const request = await playwright.request.newContext({
+			storageState: { cookies: [], origins: [] },
+		})
 		await request.delete(
 			`${BASE_URL}/ocs/v2.php/cloud/users/${LEAVER}?format=json`,
 			{
@@ -114,11 +116,18 @@ test.describe('Workflow: offboard a leaver from the member overview', () => {
 
 	test('filter on "Not set up", offboard from the row, read the removed memberships', async ({
 		page,
-		request,
+		playwright,
 	}) => {
 		test.setTimeout(180_000)
 
 		// --- Fixture: a leaver without a vault, a direct member of a team folder ---
+		// A cookie-less context. Inside a test, a new context inherits the
+		// config's admin storageState, and with that session cookie attached
+		// Nextcloud asks for a fresh password confirmation once the session is
+		// older than 30 minutes, so the provisioning call answers 403.
+		const request = await playwright.request.newContext({
+			storageState: { cookies: [], origins: [] },
+		})
 		const created = await request.post(
 			`${BASE_URL}/ocs/v2.php/cloud/users?format=json`,
 			{
@@ -130,7 +139,10 @@ test.describe('Workflow: offboard a leaver from the member overview', () => {
 				},
 			},
 		)
-		expect(created.status(), 'create the leaver').toBe(200)
+		expect(created.status(), `create the leaver: ${await created.text()}`).toBe(
+			200,
+		)
+		await request.dispose()
 
 		await page.goto('/index.php/settings/admin/keepiq', {
 			waitUntil: 'domcontentloaded',
