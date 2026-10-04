@@ -42,6 +42,7 @@ pull_shots() {
 run_class() {
 	local class="$1"; shift
 	local log="$OUT/$class.txt"
+	adb logcat -c || true
 	adb shell am instrument -w \
 		-e class "$PKG.android.$class" \
 		-e keepiqServer "$SERVER" \
@@ -50,6 +51,7 @@ run_class() {
 		"$@" \
 		"$PKG.test/androidx.test.runner.AndroidJUnitRunner" | tee "$log"
 	pull_shots
+	adb logcat -d > "$OUT/logcat-$class.txt" || true
 	grep -q '^OK (1 test)' "$log"
 }
 

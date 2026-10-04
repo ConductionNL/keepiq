@@ -7,6 +7,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.browser.customtabs.CustomTabsIntent
@@ -24,6 +25,10 @@ import nl.conduction.keepiq.android.ui.KeepiqRoot
 class MainActivity : FragmentActivity() {
     private val state: AppState get() = (application as KeepiqApp).state
     private var browserOpen = false
+
+    // True once the browser covered the app (onStop). Only a return from
+    // there means the user left the sign-in page.
+    private var browserCovered = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,10 +48,17 @@ class MainActivity : FragmentActivity() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        if (browserOpen) browserCovered = true
+    }
+
     override fun onResume() {
         super.onResume()
-        if (browserOpen) {
+        if (browserOpen && browserCovered) {
+            Log.i(TAG, "back from the browser before the sign-in finished")
             browserOpen = false
+            browserCovered = false
             state.browserClosed()
         }
     }
@@ -58,11 +70,18 @@ class MainActivity : FragmentActivity() {
 
     private fun openBrowser(url: String) {
         try {
-            CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(this, Uri.parse(url))
             browserOpen = true
+            browserCovered = false
+            CustomTabsIntent.Builder().setShowTitle(true).build().launchUrl(this, Uri.parse(url))
+            Log.i(TAG, "opened the sign-in page")
         } catch (e: ActivityNotFoundException) {
+            browserOpen = false
             state.cancelLogin()
             state.reportProblem("No browser is installed. Use an app password instead.")
         }
+    }
+
+    private companion object {
+        const val TAG = "Keepiq"
     }
 }

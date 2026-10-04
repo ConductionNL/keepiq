@@ -99,6 +99,7 @@ class AppState(val client: KeepiqClient, val biometric: BiometricUnlock, private
     /** Starts Login Flow v2 and hands the login page to [openBrowser]. */
     fun startLogin(server: String, openBrowser: (String) -> Unit) = action {
         val start = client.startLogin(server)
+        android.util.Log.i("Keepiq", "login flow started at ${start.server}")
         _login.value = LoginState.Waiting(start)
         openBrowser(start.loginUrl)
         loginJob = scope.launch {
@@ -125,6 +126,7 @@ class AppState(val client: KeepiqClient, val biometric: BiometricUnlock, private
      */
     fun browserClosed() {
         val waiting = _login.value as? LoginState.Waiting ?: return
+        android.util.Log.i("Keepiq", "browser closed while waiting: one last poll")
         loginJob?.cancel()
         client.cancelLogin()
         action {
@@ -320,6 +322,7 @@ class AppState(val client: KeepiqClient, val biometric: BiometricUnlock, private
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
+                android.util.Log.w("Keepiq", "action failed", e)
                 _message.value = e.message ?: e.toString()
             } finally {
                 _busy.value = false
