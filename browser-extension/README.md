@@ -59,6 +59,7 @@ browser-extension/
     passkey/                 the WebAuthn create and get ceremony, signed in the extension
     unlock/                  the unlock window for fingerprint or face unlock
   load-check/                headless smoke test of each package
+  capture/                   screenshots and videos for docs/browser-extension/using.md
 tests/extension/             vitest unit and integration tests (the real router and popup)
 ```
 
@@ -137,3 +138,8 @@ release workflow does from the tag.
 `node browser-extension/load-check/chromium.mjs` and `firefox.mjs` start each
 package headless and check its background answers the popup; the
 `Browser extension` workflow runs both.
+
+`browser-extension/capture/` records the screenshots and videos in
+`docs/browser-extension/using.md`, against a local Nextcloud and local demo
+sites. The `Docs media` workflow runs it and uploads the media; see the
+header of `capture/chromium.mjs` to run it yourself.
