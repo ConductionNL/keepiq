@@ -233,20 +233,41 @@ class SecretControllerTest extends TestCase {
 	}//end testPolicyRefusalCarriesTheCode()
 
 	/**
-	 * The 403 above must reach the browser as a 403. Nextcloud's OCSMiddleware
-	 * rewrites every 403 JSONResponse of an OCSController into an OCS v1
-	 * envelope, which on an /index.php/apps route is HTTP 200 without the
-	 * `code`. Found live (4 Oct 2026): a refused personal login read as a
-	 * saved secret in the browser. So this controller is a plain Controller.
+	 * The 403 above must reach the browser as a refusal with its code.
+	 * Nextcloud's OCSMiddleware rewrites a 403 JSONResponse of an
+	 * OCSController into an HTTP 200 OCS v1 envelope without the `code`
+	 * (found live, 4 Oct 2026: a refused personal login read as a saved
+	 * secret). The controller stays an OCSController, so the CSRF model is
+	 * the same as every other Keepiq API controller, and Keepiq's
+	 * OcsRefusalMiddleware hands the refusal on as 428 with the policy code
+	 * as `error`, which the OCS layer leaves alone.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/specs/vault-policies/spec.md#requirement-work-logins-are-kept-in-team-folders
 	 */
-	public function testPolicyRefusalIsNotRewrittenByTheOcsMiddleware(): void {
-		$this->assertFalse(
+	public function testPolicyRefusalLeavesAs428WithItsCode(): void {
+		$this->assertTrue(
 			is_subclass_of(SecretController::class, \OCP\AppFramework\OCSController::class),
-			'an OCSController loses the 403 status and the policy code'
+			'SecretController keeps the CSRF model of the other API controllers'
 		);
-	}//end testPolicyRefusalIsNotRewrittenByTheOcsMiddleware()
+
+		$this->secretService->method('create')->willThrowException(
+			new \OCA\Keepiq\Exception\PolicyViolationException(
+				policyCode: 'org_ownership_required',
+				message: 'kept in a team folder'
+			)
+		);
+		$this->request->method('getParam')->willReturnArgument(0);
+
+		$response = (new \OCA\Keepiq\Middleware\OcsRefusalMiddleware())->afterController(
+			$this->controller,
+			'create',
+			$this->controller->create(name: 'Bank', key: 'CIPHERTEXT-BLOB-0001', folderId: 'private')
+		);
+
+		$this->assertSame(428, $response->getStatus());
+		$this->assertSame('org_ownership_required', $response->getData()['error']);
+		$this->assertSame('org_ownership_required', $response->getData()['code']);
+	}//end testPolicyRefusalLeavesAs428WithItsCode()
 }//end class

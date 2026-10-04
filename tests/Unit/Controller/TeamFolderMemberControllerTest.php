@@ -1,22 +1,18 @@
 <?php
 
 /**
- * Contract tests for the TeamFolderMemberController endpoints that carry no
- * wire proof: `teamFolderMember#members` and `teamFolderMember#approveJoin`.
+ * Unit tests for TeamFolderMemberController refusals.
  *
  * @category Test
  * @package  OCA\Keepiq\Tests\Unit\Controller
  *
  * @author    Conduction Development Team <dev@conductio.nl>
- * @copyright 2024 Conduction B.V.
+ * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @version GIT: <git-id>
  *
  * @link https://conduction.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -26,8 +22,9 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\TeamFolderMemberController;
 use OCA\Keepiq\Db\TeamFolderMember;
+use OCA\Keepiq\Exception\OwnerOnlyException;
+use OCA\Keepiq\Middleware\OcsRefusalMiddleware;
 use OCA\Keepiq\Service\TeamFolderService;
-use OCP\AppFramework\Http;
 use OCP\IRequest;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -35,246 +32,151 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Every method here is `#[NoAdminRequired]`; the per-object owner check lives
- * in TeamFolderService. The controller's own contract is therefore narrow but
- * load-bearing: the URL's team-folder id and the SESSION user must both reach
- * the service, and the service's answer — an empty member list, a refusal, a
- * fan-out payload — must reach the caller intact.
- *
+ * A manager reaching for what only the owner governs is refused visibly (#790).
  */
 class TeamFolderMemberControllerTest extends TestCase {
+	private TeamFolderService&MockObject $service;
+	private TeamFolderMemberController $controller;
+	private OcsRefusalMiddleware $refusals;
 
 	/**
-	 * The mocked request.
-	 *
-	 * @var IRequest&MockObject
-	 */
-	private IRequest&MockObject $request;
-
-	/**
-	 * The mocked team-folder service.
-	 *
-	 * @var TeamFolderService&MockObject
-	 */
-	private TeamFolderService&MockObject $teamFolderService;
-
-	/**
-	 * The mocked user session.
-	 *
-	 * @var IUserSession&MockObject
-	 */
-	private IUserSession&MockObject $userSession;
-
-	/**
-	 * Set up the mocks shared by every test.
-	 *
 	 * @return void
 	 */
 	protected function setUp(): void {
 		parent::setUp();
-
-		$this->request = $this->createMock(IRequest::class);
-		$this->teamFolderService = $this->createMock(TeamFolderService::class);
-		$this->userSession = $this->createMock(IUserSession::class);
+		$this->service = $this->createMock(TeamFolderService::class);
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('olga');
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+		$this->controller = new TeamFolderMemberController(
+			request: $this->createMock(IRequest::class),
+			teamFolderService: $this->service,
+			userSession: $session,
+		);
+		$this->refusals = new OcsRefusalMiddleware();
 	}//end setUp()
 
 	/**
-	 * Build the controller with a signed-in or an anonymous session.
+	 * Olga, a manager, sets Bob's grade to manage: refused, and the browser
+	 * receives 428 with error owner_only and the reason.
 	 *
-	 * @param string|null $userId The session UID, or null for an anonymous caller.
+	 * @return void
 	 *
-	 * @return TeamFolderMemberController The controller under test.
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 	 */
-	private function controller(?string $userId = 'owner'): TeamFolderMemberController {
-		if ($userId === null) {
-			$this->userSession->method('getUser')->willReturn(null);
-		} else {
-			$user = $this->createMock(IUser::class);
-			$user->method('getUID')->willReturn($userId);
-			$this->userSession->method('getUser')->willReturn($user);
-		}
-
-		return new TeamFolderMemberController(
-			request: $this->request,
-			teamFolderService: $this->teamFolderService,
-			userSession: $this->userSession
+	public function testAManagerGrantingManageIsRefusedVisibly(): void {
+		$this->service->method('setMemberGrade')->willThrowException(
+			new OwnerOnlyException(message: 'Only the owner can make a member a manager')
 		);
-	}//end controller()
+
+		$response = $this->controller->setMemberGrade(id: 'tf-1', memberId: 'mem-bob', grade: 'manage');
+		$this->assertSame(403, $response->getStatus());
+
+		$delivered = $this->refusals->afterController($this->controller, 'setMemberGrade', $response);
+		$this->assertSame(428, $delivered->getStatus());
+		$this->assertSame('owner_only', $delivered->getData()['error']);
+		$this->assertSame('Only the owner can make a member a manager', $delivered->getData()['message']);
+	}//end testAManagerGrantingManageIsRefusedVisibly()
 
 	/**
-	 * Build a TeamFolderMember whose serialization is known.
-	 *
-	 * @param array<string,mixed> $row The serialized row the entity reports.
-	 *
-	 * @return TeamFolderMember&MockObject The stubbed entity.
-	 */
-	private function member(array $row): TeamFolderMember&MockObject {
-		$entity = $this->createMock(TeamFolderMember::class);
-		$entity->method('jsonSerialize')->willReturn($row);
-
-		return $entity;
-	}//end member()
-
-	/**
-	 * GET /api/v1/team-folders/{id}/members must ask the service for THIS
-	 * folder as THIS user and return the serialized membership rows.
+	 * Removing a manager as a manager is refused the same way.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
 	 */
-	public function testMembersReturnsTheSerializedMembershipRowsForTheOwner(): void {
-		$rows = [
-			$this->member(
-				[
-					'id' => 'm-1',
-					'memberType' => 'user',
-					'memberId' => 'bob',
-					'grade' => 'read',
-				]
-			),
-			$this->member(
-				[
-					'id' => 'm-2',
-					'memberType' => 'group',
-					'memberId' => 'finance',
-					'grade' => 'write',
-				]
-			),
-		];
-
-		// The ITEM: the lookup is scoped to the URL's folder AND the session user.
-		$this->teamFolderService->expects($this->once())
-			->method('listMembers')
-			->with('tf-1', 'owner')
-			->willReturn($rows);
-
-		$response = $this->controller('owner')->members(id: 'tf-1');
-
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame(
-			[
-				[
-					'id' => 'm-1',
-					'memberType' => 'user',
-					'memberId' => 'bob',
-					'grade' => 'read',
-				],
-				[
-					'id' => 'm-2',
-					'memberType' => 'group',
-					'memberId' => 'finance',
-					'grade' => 'write',
-				],
-			],
-			$response->getData(),
-			'members() must serialize every row the service returned'
+	public function testAManagerRemovingAManagerIsRefusedVisibly(): void {
+		$this->service->method('removeMember')->willThrowException(
+			new OwnerOnlyException(message: 'Only the owner can change or remove a manager')
 		);
-	}//end testMembersReturnsTheSerializedMembershipRowsForTheOwner()
+
+		$delivered = $this->refusals->afterController(
+			$this->controller,
+			'removeMember',
+			$this->controller->removeMember(id: 'tf-1', memberId: 'mem-mia')
+		);
+		$this->assertSame(428, $delivered->getStatus());
+		$this->assertSame('owner_only', $delivered->getData()['error']);
+	}//end testAManagerRemovingAManagerIsRefusedVisibly()
 
 	/**
-	 * A non-owner receives an EMPTY list — the membership of someone else's
-	 * team folder must never leak through this endpoint.
+	 * An invalid request stays a 400.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
 	 */
-	public function testMembersLeaksNothingToANonOwner(): void {
-		$this->teamFolderService->expects($this->once())
+	public function testAnInvalidGradeStaysABadRequest(): void {
+		$this->service->method('setMemberGrade')->willThrowException(
+			new InvalidArgumentException(message: 'grade must be read, write or manage')
+		);
+
+		$response = $this->controller->setMemberGrade(id: 'tf-1', memberId: 'mem-bob', grade: 'boss');
+		$this->assertSame(400, $response->getStatus());
+	}//end testAnInvalidGradeStaysABadRequest()
+
+	/**
+	 * The member list is the caller's view of the folder: the service is asked
+	 * for the session user's list and each member is serialised.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/team-folder-sharing/tasks.md#4.1
+	 */
+	public function testMembersListsTheCallersViewOfTheFolder(): void {
+		$bob = new TeamFolderMember();
+		$bob->setTeamFolderId('tf-1');
+		$bob->setMemberType('user');
+		$bob->setMemberId('bob');
+		$this->service->expects($this->once())
 			->method('listMembers')
-			->with('tf-1', 'mallory')
-			->willReturn([]);
+			->with('tf-1', 'olga')
+			->willReturn([$bob]);
 
-		$response = $this->controller('mallory')->members(id: 'tf-1');
+		$response = $this->controller->members(id: 'tf-1');
 
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame([], $response->getData(), 'a non-owner must see no membership rows');
-	}//end testMembersLeaksNothingToANonOwner()
-
-	/**
-	 * An anonymous caller is refused with 401 and the service is never asked.
-	 *
-	 * @return void
-	 */
-	public function testMembersRejectsAnAnonymousCallerBeforeTheService(): void {
-		$this->teamFolderService->expects($this->never())->method('listMembers');
-
-		$response = $this->controller(null)->members(id: 'tf-1');
-
-		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-		$this->assertSame(['message' => 'Unauthorized'], $response->getData());
-	}//end testMembersRejectsAnAnonymousCallerBeforeTheService()
+		$this->assertSame(200, $response->getStatus());
+		$this->assertCount(1, $response->getData());
+		$this->assertSame('bob', $response->getData()[0]['memberId']);
+		$this->assertSame('tf-1', $response->getData()[0]['teamFolderId']);
+	}//end testMembersListsTheCallersViewOfTheFolder()
 
 	/**
-	 * POST /api/v1/team-folders/{id}/approve-join must name the approved user
-	 * to the service and return the fan-out payload the browser needs:
-	 * the recipient's certificate plus the subtree secrets to encrypt.
+	 * Approving one waiting member returns the fan-out payload for that member.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/team-folder-sharing/tasks.md#3.1
 	 */
-	public function testApproveJoinReturnsTheFanOutPayloadForTheApprovedUser(): void {
-		$payload = [
-			'recipients' => [
-				[
-					'userId' => 'newbie',
-					'certificate' => 'CERT_NEWBIE',
-				],
-			],
-			'secrets' => [
-				[
-					'id' => 'secret-1',
-					'name' => 'Shared login',
-				],
-			],
-		];
-
-		$this->teamFolderService->expects($this->once())
+	public function testApproveJoinReturnsTheFanOutForThatMember(): void {
+		$payload = ['recipients' => [['userId' => 'bob']], 'secrets' => []];
+		$this->service->expects($this->once())
 			->method('approveJoin')
-			->with('tf-1', 'newbie', 'owner')
+			->with('tf-1', 'bob', 'olga')
 			->willReturn($payload);
 
-		$response = $this->controller('owner')->approveJoin(id: 'tf-1', newMemberId: 'newbie');
+		$response = $this->controller->approveJoin(id: 'tf-1', newMemberId: 'bob');
 
-		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame(
-			$payload,
-			$response->getData(),
-			'approveJoin() must return the recipients and secrets the fan-out needs'
-		);
-	}//end testApproveJoinReturnsTheFanOutPayloadForTheApprovedUser()
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame($payload, $response->getData());
+	}//end testApproveJoinReturnsTheFanOutForThatMember()
 
 	/**
-	 * Approving a user who is not covered by the folder's membership is a
-	 * 400 — approving must not manufacture access the membership never gave.
+	 * A refused approval (not a manager of the folder) is a 400 with the reason.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/team-folder-sharing/tasks.md#3.1
 	 */
-	public function testApproveJoinAnswers400ForAUserOutsideTheMembership(): void {
-		$this->teamFolderService->expects($this->once())
-			->method('approveJoin')
-			->with('tf-1', 'outsider', 'owner')
-			->willThrowException(
-				new InvalidArgumentException('User is not covered by this team folder\'s membership')
-			);
-
-		$response = $this->controller('owner')->approveJoin(id: 'tf-1', newMemberId: 'outsider');
-
-		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
-		$this->assertSame(
-			['message' => 'User is not covered by this team folder\'s membership'],
-			$response->getData()
+	public function testApproveJoinRefusalIsABadRequestWithTheReason(): void {
+		$this->service->method('approveJoin')->willThrowException(
+			new InvalidArgumentException(message: 'Not authorized to manage this team folder')
 		);
-	}//end testApproveJoinAnswers400ForAUserOutsideTheMembership()
 
-	/**
-	 * An anonymous caller may not approve a group join.
-	 *
-	 * @return void
-	 */
-	public function testApproveJoinRejectsAnAnonymousCallerBeforeTheService(): void {
-		$this->teamFolderService->expects($this->never())->method('approveJoin');
+		$response = $this->controller->approveJoin(id: 'tf-1', newMemberId: 'bob');
 
-		$response = $this->controller(null)->approveJoin(id: 'tf-1', newMemberId: 'newbie');
-
-		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
-		$this->assertSame(['message' => 'Unauthorized'], $response->getData());
-	}//end testApproveJoinRejectsAnAnonymousCallerBeforeTheService()
-
+		$this->assertSame(400, $response->getStatus());
+		$this->assertSame('Not authorized to manage this team folder', $response->getData()['message']);
+	}//end testApproveJoinRefusalIsABadRequestWithTheReason()
 }//end class

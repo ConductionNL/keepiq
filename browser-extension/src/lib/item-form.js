@@ -252,6 +252,21 @@ export function folderPath(folders, folderId) {
 }
 
 /**
+ * A response body as an object, or an empty one when it is not JSON.
+ *
+ * @param {string|undefined} text The body.
+ * @return {object}
+ */
+function parseBody(text) {
+	try {
+		const body = JSON.parse(text || '{}')
+		return body && typeof body === 'object' ? body : {}
+	} catch {
+		return {}
+	}
+}
+
+/**
  * A server write failure in words the user can act on.
  *
  * @param {{status?: number, body?: string, message?: string}} error The failure.
@@ -260,15 +275,21 @@ export function folderPath(folders, folderId) {
 export function writeErrorMessage(error) {
 	if (error?.status === 423)
 		return 'Vault is temporarily locked for a key migration, try again later'
-	if (error?.status === 403)
-		return 'Your encryption suite is blocked, open Keepiq to resolve it'
-	if (error?.status === 400 || error?.status === 409) {
-		try {
-			const message = JSON.parse(error.body || '{}').message
-			if (message) return String(message)
-		} catch {
-			// Fall through to the generic text.
+	// Keepiq's OCS routes refuse with 428 and an error code (keepiq#673); a
+	// plain controller still says 403. A policy refusal carries its own
+	// reason; a plain one, as before, means the suite is blocked.
+	if (error?.status === 403 || error?.status === 428) {
+		const body = parseBody(error.body)
+		if (body.code || (body.error && body.error !== 'forbidden')) {
+			return body.message
+				? String(body.message)
+				: 'The server refused this change'
 		}
+		return 'Your encryption suite is blocked, open Keepiq to resolve it'
+	}
+	if (error?.status === 400 || error?.status === 409) {
+		const message = parseBody(error.body).message
+		if (message) return String(message)
 		return 'The server refused this change'
 	}
 	if (!error?.status) return 'Could not reach the server'

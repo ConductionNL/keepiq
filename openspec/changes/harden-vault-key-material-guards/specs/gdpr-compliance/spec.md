@@ -20,7 +20,7 @@ The cascade MUST remove: the user's secrets and folders, their EncryptionSuites 
 @e2e exclude Middleware enforcement on a session-authenticated route; not DOM-observable. Covered by PHPUnit on the middleware and the attribute-coverage test.
 - **GIVEN** an authenticated session for a user with an active EncryptionSuite
 - **WHEN** in-app deletion is requested with the correct confirmation phrase but without a verified key proof
-- **THEN** the system MUST refuse with `403` and `error: key_proof_required`
+- **THEN** the system MUST refuse with `428` and `error: key_proof_required`
 - **AND** nothing MUST be deleted
 
 #### Scenario: Nextcloud account deletion cascades

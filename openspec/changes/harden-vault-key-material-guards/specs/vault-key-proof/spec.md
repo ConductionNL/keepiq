@@ -8,7 +8,7 @@ The server MUST verify the signature against the public key it already stores fo
 
 The guard MUST be declared on the controller method via a `#[VaultKeyProofRequired]` attribute and enforced by middleware, so that the requirement is legible at the route and cannot be satisfied by controller code that forgets to call it.
 
-A request missing or failing the proof MUST be refused with `403` and a machine-readable `error` of `key_proof_required`, so a client can distinguish "obtain a challenge and retry" from a terminal failure.
+A request missing or failing the proof MUST be refused with `428 Precondition Required` and a machine-readable `error` of `key_proof_required`, so a client can distinguish "obtain a challenge and retry" from a terminal failure. The status MUST be the same on every guarded route, whether its controller is an OCS controller or a plain one. It is not `403` because Nextcloud's OCS layer rewrites a `403` of an OCS controller into an HTTP `200` envelope without the `error` (measured on Nextcloud 35), so a refusal would reach the browser as a success.
 
 The guard MUST NOT consult the authentication backend, and MUST NOT be waived for SSO sessions, app passwords, or any token scope. Its authority derives from key material, not from how the session was established.
 
@@ -17,8 +17,16 @@ The guard MUST NOT consult the authentication backend, and MUST NOT be waived fo
 @e2e exclude Middleware dispatch and signature verification are server-side; a DOM flow cannot present a request with the proof header withheld. Covered by PHPUnit on the middleware and service.
 - **GIVEN** an authenticated session for a user who owns an active EncryptionSuite
 - **WHEN** a guarded operation is requested without a key proof
-- **THEN** the system MUST refuse with `403` and `error: key_proof_required`
+- **THEN** the system MUST refuse with `428` and `error: key_proof_required`
 - **AND** MUST NOT perform any part of the operation
+
+#### Scenario: The refusal reaches the browser on an OCS route
+
+@e2e exclude Needs a stolen-session request with the proof header withheld; checked live on Nextcloud 35 (task 6.5) and covered by PHPUnit OcsRefusalPipelineTest, which runs the real middlewares in the dispatcher's order followed by the OCS layer's rewrite.
+- **GIVEN** a guarded route whose controller is an OCS controller
+- **WHEN** a browser session requests it without a key proof, with or without the `OCS-APIRequest` header
+- **THEN** the HTTP status MUST be `428` and the body MUST carry `error: key_proof_required`
+- **AND** the response MUST NOT be an HTTP `200` OCS envelope
 
 #### Scenario: A valid proof admits the operation
 
@@ -99,7 +107,7 @@ Every refused proof MUST leave a log entry naming the user, the route, the purpo
 @e2e exclude Server-side nonce consumption; covered by PHPUnit on VaultKeyProofService.
 - **GIVEN** a proof that verified and authorised an operation
 - **WHEN** the same nonce and signature are presented again within the challenge's lifetime
-- **THEN** the system MUST refuse with `403` and `error: key_proof_required`
+- **THEN** the system MUST refuse with `428` and `error: key_proof_required`
 - **AND** MUST NOT perform the operation again
 - **AND** this MUST hold on an install without a memcache, and on a cluster where the second request reaches another node
 
@@ -125,7 +133,7 @@ Adding a route that can render vault contents or key material permanently unread
 
 #### Scenario: A guarded route that loses its attribute fails the build
 
-@e2e exclude Attribute reflection over controller methods; the middleware itself needs a running instance to produce a 403, which is out of scope for an isolated PHPUnit run — the same rationale documented for `RateLimitAttributesTest`.
+@e2e exclude Attribute reflection over controller methods; the middleware itself needs a running instance to produce the refusal, which is out of scope for an isolated PHPUnit run — the same rationale documented for `RateLimitAttributesTest`.
 - **GIVEN** the enumeration of operations required to carry a key proof
 - **WHEN** any enumerated method does not carry `#[VaultKeyProofRequired]`, or carries it with an unexpected binding or subject
 - **THEN** the test suite MUST fail
