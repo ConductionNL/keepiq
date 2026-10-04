@@ -98,7 +98,7 @@ class AdminApiContractTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#2.2
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-is-documented-and-contract-tested
 	 */
 	public function testTheDocumentMatchesTheRoutes(): void {
 		$routes = array_keys($this->routes());
@@ -114,7 +114,7 @@ class AdminApiContractTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.1
+	 * @spec openspec/specs/admin-api/spec.md#requirement-versioned-admin-api-index
 	 */
 	public function testTheIndexListsEveryRoute(): void {
 		$listed = array_map(static fn (array $path): string => $path['method'] . ' ' . $path['path'], AdminIndexController::PATHS);
@@ -130,7 +130,7 @@ class AdminApiContractTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.6
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-returns-metadata-only
 	 */
 	public function testEveryRouteIsGuardedByTheAreaTheIndexNames(): void {
 		$areaOf = [];
@@ -168,7 +168,7 @@ class AdminApiContractTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.2
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	public function testAnAuditOnlyAccountReachesOnlyTheAuditRoutes(): void {
 		$reached = [];
@@ -194,7 +194,7 @@ class AdminApiContractTest extends TestCase {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-public-api/tasks.md#1.2
+	 * @spec openspec/specs/admin-api/spec.md#requirement-admin-api-covers-the-administration-jobs
 	 */
 	public function testTheMembersOperation(): void {
 		$key = 'GET ' . self::PREFIX . '/members';
