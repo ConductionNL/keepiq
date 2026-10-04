@@ -31,7 +31,8 @@ export const useFederatedInboundStore = defineStore('federatedInbound', {
 		 * @return {Array<object>}
 		 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 		 */
-		pending: (state) => state.shares.filter((share) => share.status === 'pending'),
+		pending: (state) =>
+			state.shares.filter((share) => share.status === 'pending'),
 	},
 
 	actions: {
@@ -50,7 +51,8 @@ export const useFederatedInboundStore = defineStore('federatedInbound', {
 				)
 				this.shares = Array.isArray(response.data) ? response.data : []
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'load_failed'
+				this.error =
+					e?.response?.data?.message || e?.message || 'load_failed'
 			} finally {
 				this.loading = false
 			}
@@ -69,12 +71,17 @@ export const useFederatedInboundStore = defineStore('federatedInbound', {
 			this.error = null
 			try {
 				const response = await axios.post(
-					generateUrl(`/apps/keepiq/api/v1/federation/incoming/${id}/${action}`),
+					generateUrl(
+						`/apps/keepiq/api/v1/federation/incoming/${id}/${action}`,
+					),
 				)
-				this.shares = this.shares.map((share) => (share.id === id ? response.data : share))
+				this.shares = this.shares.map((share) =>
+					share.id === id ? response.data : share,
+				)
 				return response.data
 			} catch (e) {
-				this.error = e?.response?.data?.message || e?.message || 'answer_failed'
+				this.error =
+					e?.response?.data?.message || e?.message || 'answer_failed'
 				throw e
 			} finally {
 				this.busyId = null
