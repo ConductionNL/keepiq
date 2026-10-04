@@ -74,7 +74,7 @@ class FederatedDeclineReceiver {
 	 * @param string $providerId The share id here
 	 * @param array<array-key,mixed> $notification The payload, `{sharedSecret}` (the secret itself)
 	 *
-	 * @return array<string,mixed>
+	 * @return array<array-key,string>
 	 *
 	 * @throws ShareNotFound For every refusal
 	 *
@@ -108,7 +108,7 @@ class FederatedDeclineReceiver {
 	 * @param string $providerId The share id here
 	 * @param array<array-key,mixed> $notification The payload, `{sharedSecret}` (the secret itself)
 	 *
-	 * @return array<string,mixed>
+	 * @return array<array-key,string>
 	 *
 	 * @throws ShareNotFound For every refusal, and for a share that ended
 	 *
