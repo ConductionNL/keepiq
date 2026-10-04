@@ -82,14 +82,23 @@
 			}}
 		</NcNoteCard>
 
-		<ul v-if="shares.length > 0" class="federated-share__list" data-testid="federated-share-list">
+		<ul
+			v-if="shares.length > 0"
+			class="federated-share__list"
+			data-testid="federated-share-list">
 			<li
 				v-for="row in shares"
 				:key="row.id"
 				class="federated-share__row"
 				:data-testid="`federated-share-row-${row.id}`">
-				<span class="federated-share__account">{{ row.recipientCloudId }}</span>
-				<span class="federated-share__state" data-testid="federated-share-state">{{ stateText(row.status) }}</span>
+				<span class="federated-share__account">{{
+					row.recipientCloudId
+				}}</span>
+				<span
+					class="federated-share__state"
+					data-testid="federated-share-state"
+					>{{ stateText(row.status) }}</span
+				>
 				<NcButton
 					v-if="row.status !== 'revoked'"
 					variant="tertiary"
@@ -240,8 +249,16 @@ export default {
 		stateText(status) {
 			const texts = {
 				active: t('keepiq', 'Shared'),
-				suspended: t('keepiq', 'Paused: their certificate or the partnership changed. Revoke it or share again.'),
-				failed: t('keepiq', 'Their organisation did not get the last change. Revoke it or share again.'),
+				suspended: t(
+					'keepiq',
+					'Paused: their certificate or the partnership changed. Revoke it or share again.',
+				),
+
+				failed: t(
+					'keepiq',
+					'Their organisation did not get the last change. Revoke it or share again.',
+				),
+
 				revoked: t('keepiq', 'Being withdrawn'),
 			}
 			return texts[status] ?? status
@@ -266,18 +283,22 @@ export default {
 					'keepiq',
 					'That organisation is not one of your partners.',
 				),
+
 				unknown_recipient: t(
 					'keepiq',
 					'No one with that account can receive secrets from you.',
 				),
+
 				partner_unreachable: t(
 					'keepiq',
 					'The other organisation did not answer. Try again later.',
 				),
+
 				delivery_failed: t(
 					'keepiq',
 					'The other organisation did not answer. Try again later.',
 				),
+
 				already_shared: t(
 					'keepiq',
 					'This secret is already shared with that account.',

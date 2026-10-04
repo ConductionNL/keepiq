@@ -31,15 +31,42 @@ export function auditEventLabel(eventType) {
 		'link_share.revoked': t('keepiq', 'Link share revoked'),
 		'link_share.auto_deleted': t('keepiq', 'Link share auto-deleted'),
 		'federated_share.sent': t('keepiq', 'Shared with another organisation'),
-		'federated_share.updated': t('keepiq', 'Change sent to another organisation'),
-		'federated_share.revoked': t('keepiq', 'Share with another organisation revoked'),
-		'federated_share.suspended': t('keepiq', 'Share with another organisation paused'),
-		'federated_share.failed': t('keepiq', 'Another organisation did not get a change'),
-		'federated_share.received': t('keepiq', 'Secret received from another organisation'),
-		'federated_share.accepted': t('keepiq', 'Secret from another organisation accepted'),
-		'federated_share.declined': t('keepiq', 'Secret from another organisation declined'),
-		'federated_share.copy_updated': t('keepiq', 'Copy from another organisation updated'),
-		'federated_share.copy_removed': t('keepiq', 'Copy from another organisation removed'),
+		'federated_share.updated': t(
+			'keepiq',
+			'Change sent to another organisation',
+		),
+		'federated_share.revoked': t(
+			'keepiq',
+			'Share with another organisation revoked',
+		),
+		'federated_share.suspended': t(
+			'keepiq',
+			'Share with another organisation paused',
+		),
+		'federated_share.failed': t(
+			'keepiq',
+			'Another organisation did not get a change',
+		),
+		'federated_share.received': t(
+			'keepiq',
+			'Secret received from another organisation',
+		),
+		'federated_share.accepted': t(
+			'keepiq',
+			'Secret from another organisation accepted',
+		),
+		'federated_share.declined': t(
+			'keepiq',
+			'Secret from another organisation declined',
+		),
+		'federated_share.copy_updated': t(
+			'keepiq',
+			'Copy from another organisation updated',
+		),
+		'federated_share.copy_removed': t(
+			'keepiq',
+			'Copy from another organisation removed',
+		),
 		'request.created': t('keepiq', 'Secret request created'),
 		'request.fulfilled': t('keepiq', 'Secret request fulfilled'),
 		'request.re_requested': t('keepiq', 'Secret request re-requested'),
