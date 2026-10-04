@@ -973,6 +973,7 @@ import { useFolderStore } from '../store/modules/folder.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { isRefusal } from '../utils/refusal.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { isUseOnly } from '../utils/shareRestriction.js'
 import { rootVaultOf } from '../utils/vaultList.js'
@@ -1585,7 +1586,7 @@ export default {
 					this.teamWritable = false
 				}
 			} catch (e) {
-				if (e?.response?.status === 403) {
+				if (isRefusal(e)) {
 					this.error = t(
 						'keepiq',
 						'This secret is locked because its encryption suite was revoked.',

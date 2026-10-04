@@ -335,7 +335,7 @@ describe('useEncryptionSuiteStore — re-enrolment after a revocation', () => {
 			.spyOn(axios, 'post')
 			.mockRejectedValueOnce({
 				response: {
-					status: 403,
+					status: 428,
 					data: { error: 'reauthentication_required' },
 				},
 			})
@@ -362,7 +362,7 @@ describe('useEncryptionSuiteStore — re-enrolment after a revocation', () => {
 	it('does not re-enrol when the password prompt is cancelled', async () => {
 		confirmPassword.mockRejectedValueOnce(new Error('Dialog closed'))
 		const post = vi.spyOn(axios, 'post').mockRejectedValueOnce({
-			response: { status: 403, data: { error: 'reauthentication_required' } },
+			response: { status: 428, data: { error: 'reauthentication_required' } },
 		})
 		const store = useEncryptionSuiteStore()
 
