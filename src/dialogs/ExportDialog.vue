@@ -223,7 +223,7 @@ import {
 } from '@nextcloud/vue'
 import zxcvbn from 'zxcvbn'
 import { verifyMasterPassword } from '../crypto/reauth.js'
-import { fetchPolicy } from '../policy/policy.js'
+import { fetchPolicy, resetPolicyCache } from '../policy/policy.js'
 import { useExportStore } from '../store/modules/export.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
@@ -390,6 +390,24 @@ export default {
 			// A mode switch invalidates the CXF pre-download report.
 			this.cxfReport = null
 		},
+
+		/**
+		 * Read the export ban again each time the dialog opens. The dialog is
+		 * mounted with the vault page, and the page's cached policy can predate
+		 * a ban an administrator switched on during this session.
+		 *
+		 * @param {boolean} open Whether the dialog is open now.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-personal-vault-export-can-be-blocked
+		 */
+		async open(open) {
+			if (open !== true) {
+				return
+			}
+			resetPolicyCache()
+			this.exportBlocked =
+				(await fetchPolicy())?.vault_export_disabled === true
+		},
 	},
 
 	/**
@@ -397,7 +415,7 @@ export default {
 	 * before anything is decrypted.
 	 *
 	 * @return {Promise<void>}
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#2.2
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-personal-vault-export-can-be-blocked
 	 */
 	async created() {
 		this.exportBlocked = (await fetchPolicy())?.vault_export_disabled === true

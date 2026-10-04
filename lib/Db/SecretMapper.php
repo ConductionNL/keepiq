@@ -144,7 +144,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-the-server-stops-serving-an-expired-copy-at-its-end-date
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-the-server-stops-serving-an-expired-copy-at-its-end-date
 	 */
 	private function excludeAccessExpired(IQueryBuilder $qb): void {
 		$qb->andWhere(
@@ -168,7 +168,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return Secret[]
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
 	 */
 	public function findAccessEndingBetween(?DateTime $from, DateTime $to): array {
 		$qb = $this->db->getQueryBuilder();
@@ -938,7 +938,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return array<string,int> Row count keyed by user ID
 	 *
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#2.1
+	 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
 	 */
 	public function countByUserOwners(array $ownerIds): array {
 		if ($ownerIds === []) {

@@ -13,7 +13,7 @@
   the leaving user (admin-member-overview-and-offboarding §1.5, §3.2, §3.3).
 
   @spec openspec/changes/team-folder-sharing/tasks.md#5.3
-  @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.3
+  @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-acts-on-a-member-row
 -->
 <template>
 	<CnSettingsSection
@@ -125,7 +125,7 @@ export default {
 		 * The member overview store, which carries the prefill from a row.
 		 *
 		 * @return {object}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.2
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-acts-on-a-member-row
 		 */
 		memberStore() {
 			return useMemberOverviewStore()
@@ -135,7 +135,7 @@ export default {
 		 * The leaving user's id, '' until one is picked.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.3
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-acts-on-a-member-row
 		 */
 		leavingUserId() {
 			return this.leavingUser?.userId ?? ''
@@ -145,7 +145,7 @@ export default {
 		 * The successor's id, '' until one is picked.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.3
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-acts-on-a-member-row
 		 */
 		successorUserId() {
 			return this.successorUser?.userId ?? ''
@@ -155,7 +155,7 @@ export default {
 		 * Group memberships that still cover the leaver after the run.
 		 *
 		 * @return {Array<{teamFolderId: string, groupId: string}>}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.5
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-offboarding-removes-the-leavers-direct-team-folder-memberships
 		 */
 		coveringGroups() {
 			return this.summary?.stillCoveredByGroups ?? []
@@ -166,7 +166,7 @@ export default {
 		 * team folder access through the group until removed from it.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.5
+		 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-offboarding-removes-the-leavers-direct-team-folder-memberships
 		 */
 		coveringGroupsText() {
 			const groups = [
@@ -230,7 +230,7 @@ export default {
 		 * A Members row chose "Offboard": put that user in the leaving field.
 		 *
 		 * @param {string} userId The user handed over by the list.
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.2
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-acts-on-a-member-row
 		 */
 		'memberStore.offboardUserId': function (userId) {
 			if (!userId) {
@@ -249,7 +249,7 @@ export default {
 		 *
 		 * @param {string} query The typed search.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#3.3
+		 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-acts-on-a-member-row
 		 */
 		async onSearch(query) {
 			this.searching = true

@@ -88,7 +88,7 @@ class SecretVersionAccessGuard {
 	 * @throws InvalidArgumentException On not found / not owned / suite blocked
 	 *
 	 * @spec openspec/changes/secret-version-history/specs/secret-version-history/spec.md
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function requireReadableVersion(string $versionId, string $userId): SecretVersion {
 		$version = $this->loadOwnedVersion(versionId: $versionId, userId: $userId);

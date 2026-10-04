@@ -240,7 +240,7 @@ class TeamFolderAuditor {
 	 * @return void
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.5
-	 * @spec openspec/changes/admin-member-overview-and-offboarding/tasks.md#1.3
+	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-offboarding-removes-the-leavers-direct-team-folder-memberships
 	 */
 	public function offboarded(
 		string $adminId,
@@ -280,7 +280,7 @@ class TeamFolderAuditor {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#2.3
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
 	 */
 	public function membersConfirmed(string $actorId, string $teamFolderId, int $confirmedCount, int $memberCount): void {
 		$this->dispatch(

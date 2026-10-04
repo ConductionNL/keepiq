@@ -41,7 +41,7 @@ trait ExpiringGrantQueries {
 	 *
 	 * @return array<int,mixed> The grant entities
 	 *
-	 * @spec openspec/changes/sharing-use-only-and-expiring-shares/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
 	 */
 	public function findEndingBetween(?DateTime $from, DateTime $to): array {
 		$qb = $this->db->getQueryBuilder();

@@ -40,7 +40,7 @@ function privateKeyPem(pkcs8) {
  *
  * @param {Record<string,string>} officerCertificates Officer uid to certificate PEM.
  * @return {Promise<{publicKey: string, copies: Record<string,string>}>}
- * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovery-private-key-is-generated-and-held-by-officers-only
  */
 export async function createRecoveryKey(officerCertificates) {
 	const pair = await generateKeyPair()
@@ -60,7 +60,7 @@ export async function createRecoveryKey(officerCertificates) {
  * @param {string} userPrivateKeyPem The user's private key, decrypted just now.
  * @param {string} recoveryCertificatePem The active recovery certificate.
  * @return {Promise<string>} The enrolment envelope.
- * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
  */
 export function buildEnrolmentEnvelope(userPrivateKeyPem, recoveryCertificatePem) {
 	return buildRecoveryEnvelope(userPrivateKeyPem, recoveryCertificatePem)
@@ -78,7 +78,7 @@ export function buildEnrolmentEnvelope(userPrivateKeyPem, recoveryCertificatePem
  * @param {CryptoKey} officerSessionKey The officer's in-session private key.
  * @param {string} requestId The request id (the AAD).
  * @return {Promise<string>} The sealed result.
- * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
  */
 export async function sealHandoff(material, officerSessionKey, requestId) {
 	const recoveryPem = await openRecoveryEnvelope(
@@ -106,7 +106,7 @@ export async function sealHandoff(material, officerSessionKey, requestId) {
  * @param {Uint8Array} requestPublicKeyRaw The request's raw public key.
  * @param {string} requestId The request id (the AAD).
  * @return {Promise<string>} The user's private key PEM.
- * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-recovered-key-reaches-only-the-requesting-browser
  */
 export async function openHandoff(
 	sealed,
@@ -131,7 +131,7 @@ export async function openHandoff(
  * can be kept in IndexedDB bound to the request (D3).
  *
  * @return {Promise<{privateKey: CryptoKey, publicKeyRaw: Uint8Array}>}
- * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
+ * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-a-recovery-request-carries-a-one-time-key-and-a-verification-phrase
  */
 export async function generateRequestKeyPair() {
 	const pair = await crypto.subtle.generateKey({ name: 'X25519' }, false, [

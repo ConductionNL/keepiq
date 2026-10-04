@@ -74,7 +74,7 @@ class TwoFactorGate {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#3.1
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
 	 */
 	public function blocks(string $userId): bool {
 		if ($this->policies->appliesTo(policy: VaultPolicyService::REQUIRE_TWO_FACTOR, userId: $userId) === false) {
@@ -98,7 +98,7 @@ class TwoFactorGate {
 	 *
 	 * @return array{inScope:int,withoutTwoFactor:int}
 	 *
-	 * @spec openspec/changes/admin-vault-policies/tasks.md#1.3
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 	 */
 	public function gapReport(array $groupIds): array {
 		$users = $this->usersInScope(groupIds: $groupIds);

@@ -189,7 +189,7 @@ class TeamFolderShareService {
 	 *
 	 * @return array<string,string> Confirmer user id keyed by member user id
 	 *
-	 * @spec openspec/changes/admin-auto-confirm-members/tasks.md#3.3
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
 	 */
 	public function confirmers(TeamFolder $teamFolder): array {
 		$confirmers = [];

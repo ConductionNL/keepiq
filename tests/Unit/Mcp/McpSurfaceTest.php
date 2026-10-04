@@ -56,7 +56,7 @@ use ReflectionClass;
 /**
  * The MCP metadata surface.
  *
- * @spec openspec/changes/hermiq-ai-tooling/specs/mcp-metadata-surface/spec.md
+ * @spec openspec/specs/mcp-metadata-surface/spec.md
  */
 class McpSurfaceTest extends TestCase {
 

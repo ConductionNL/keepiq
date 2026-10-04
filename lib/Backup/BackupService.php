@@ -88,7 +88,7 @@ class BackupService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function isDue(): bool {
 		$settings = $this->settings->read();
@@ -110,7 +110,7 @@ class BackupService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function requestRun(): void {
 		$this->appConfig->setValueBool(Application::APP_ID, self::RUN_REQUESTED, true);
@@ -123,7 +123,7 @@ class BackupService {
 	 *
 	 * @throws Throwable When the backup failed (recorded and audited first)
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function createBackup(): array {
 		$this->appConfig->setValueBool(Application::APP_ID, self::RUN_REQUESTED, false);
@@ -156,7 +156,7 @@ class BackupService {
 	 *
 	 * @return array<int,array{name:string,size:int,createdAt:int,encrypted:bool,path:string}>
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.1
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function listArchives(): array {
 		$archives = [];
@@ -180,7 +180,7 @@ class BackupService {
 	 *
 	 * @return array{lastRunAt:int,lastStatus:string,lastError:string,runRequested:bool}
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#4.1
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function status(): array {
 		$appId = Application::APP_ID;
@@ -202,7 +202,7 @@ class BackupService {
 	 *
 	 * @throws \InvalidArgumentException When no such archive exists
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#3.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-are-verified-and-restored-from-the-command-line
 	 */
 	public function localCopy(string $nameOrPath): string {
 		return $this->store->localCopy(nameOrPath: $nameOrPath);
@@ -215,7 +215,7 @@ class BackupService {
 	 *
 	 * @return int How many were removed
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#2.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-administrator-schedules-vault-backups
 	 */
 	public function prune(int $keep): int {
 		$files = $this->store->archives()->getDirectoryListing();

@@ -84,7 +84,7 @@ class ArchiveWriter {
 	 *
 	 * @throws RuntimeException When the zip cannot be written
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#1.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-hold-ciphertext-and-metadata-only
 	 */
 	public function write(string $zipPath, string $workDir): array {
 		$zip = new ZipArchive();
@@ -130,7 +130,7 @@ class ArchiveWriter {
 	 *
 	 * @return int The row count
 	 *
-	 * @spec openspec/changes/admin-scheduled-vault-backups/tasks.md#1.2
+	 * @spec openspec/specs/vault-backups/spec.md#requirement-archives-hold-ciphertext-and-metadata-only
 	 */
 	private function dumpTable(string $table, string $localPath): int {
 		$handle = fopen($localPath, 'wb');

@@ -216,8 +216,11 @@ describe('matching and filling use the active account only', () => {
 		await send('match', { host: 'example.com' })
 		const res = await send('fill', { id: 'home-s1', accountId: home.id })
 		expect(res.filled).toBe(true)
+		// Sent to the top frame only: no frame record, and the page is the match.
 		expect(browser.filled[0]).toEqual({
 			type: 'fill-credential',
+			tabId: 1,
+			options: { frameId: 0 },
 			payload: {
 				login: 'home-user',
 				secret: 'home-password',
@@ -268,17 +271,21 @@ describe('matching and filling use the active account only', () => {
 	})
 
 	it('saves a captured login to the account that was active at submit', async () => {
-		const { home } = await bothUnlocked()
-		const offer = await router.doCapture({
-			host: 'new.example',
-			url: 'https://new.example',
-			login: 'alice',
-			secret: 'correct horse battery staple violin 7%Q',
-		})
+		await bothUnlocked()
+		// The login is submitted in tab 9, which the popup then opens over.
+		browser.setTab('https://new.example/', 9)
+		const offer = await router.doCapture(
+			{
+				login: 'alice',
+				secret: 'correct horse battery staple violin 7%Q',
+			},
+			pageSender('https://new.example/'),
+		)
 		expect(offer.action).toBe('save')
 		const pending = await send('pending-capture')
 		expect(pending.capture.account).toBe('alice@cloud.home.example')
-		expect(pending.capture.accountId).toBe(home.id)
+		expect(pending.capture.host).toBe('new.example')
+		expect(JSON.stringify(pending)).not.toContain('correct horse')
 
 		await send(
 			'capture-decision',

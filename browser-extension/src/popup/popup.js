@@ -9,6 +9,7 @@ import { platformAuthenticatorAvailable } from '../unlock/ceremony.js'
 import { initGenerator } from './generator-view.js'
 import { initSend } from './send-view.js'
 import { initVault } from './vault-view.js'
+import { copyText } from './clipboard.js'
 import {
 	canAddAccount,
 	DEVICE_STATUS_TEXT,
@@ -27,7 +28,12 @@ const POPPED_OUT = params.get('popout') === '1'
 const PINNED_TAB = Number.parseInt(params.get('tabId') || '', 10)
 const PINNED = Number.isInteger(PINNED_TAB) ? PINNED_TAB : undefined
 // The messages that act on the page tab carry the pinned tab.
-const TAB_MESSAGES = new Set(['fill', 'generator-context'])
+const TAB_MESSAGES = new Set([
+	'fill',
+	'generator-context',
+	'pending-capture',
+	'save-capture',
+])
 
 function send(type, payload) {
 	const body =
@@ -52,6 +58,7 @@ function show(view) {
 		'view-unlocked',
 		'view-settings',
 		'view-update',
+		'view-signed-out',
 		'view-device-approval',
 		'view-locked-generator',
 	]) {
@@ -126,7 +133,19 @@ async function renderUnlocked() {
 			btn.className = 'candidate-fill'
 			btn.textContent = c.name + (c.url ? ' — ' + c.url : '')
 			btn.addEventListener('click', async () => {
-				const res = await send('fill', { id: c.id, accountId: c.accountId })
+				let res = await send('fill', { id: c.id, accountId: c.accountId })
+				if (res.confirm === 'http-page') {
+					// The login was saved for https; this page is plain http.
+					const yes = window.confirm(
+						`${c.name} was saved for a secure (https) site, but this page is not secure. Anyone on the network could read what is filled in. Fill it anyway?`,
+					)
+					if (!yes) return
+					res = await send('fill', {
+						id: c.id,
+						accountId: c.accountId,
+						allowHttp: true,
+					})
+				}
 				if (res.error) {
 					showError('unlock-error', res.error)
 					return
@@ -134,7 +153,7 @@ async function renderUnlocked() {
 				// Auto-copy a matched TOTP code so it is one paste away, then
 				// clear it after a short delay (extension-totp-autofill §3).
 				if (res.totpCode) {
-					await copyWithAutoClear(res.totpCode)
+					await copyText(res.totpCode)
 				}
 				window.close()
 			})
@@ -153,7 +172,8 @@ async function renderUnlocked() {
 			? `Save login for ${capture.host} to ${capture.account}?`
 			: `Save login for ${capture.host}?`
 		$('save-yes').onclick = async () => {
-			const res = await send('save-capture', capture)
+			// The worker saves what it holds for this tab; nothing is sent back.
+			const res = await send('save-capture', {})
 			if (res.error) showError('unlock-error', res.error)
 			$('save-prompt').hidden = true
 		}
@@ -163,8 +183,6 @@ async function renderUnlocked() {
 	}
 }
 
-// Clipboard TTL for a copied TOTP code (ms).
-const TOTP_CLIPBOARD_TTL = 30000
 let totpTimer = null
 
 /**
@@ -207,24 +225,6 @@ async function renderTotp(host) {
 		}
 		$('totp-count').textContent = Math.max(remaining, 0) + 's'
 	}, 1000)
-}
-
-/**
- * Copy a code to the clipboard and clear it after the TTL (no later than the
- * code window would expire).
- *
- * @param {string} code
- * @return {Promise<void>}
- */
-async function copyWithAutoClear(code) {
-	try {
-		await navigator.clipboard.writeText(code)
-		setTimeout(() => {
-			navigator.clipboard.writeText('').catch(() => {})
-		}, TOTP_CLIPBOARD_TTL)
-	} catch {
-		// Clipboard may be unavailable (no focus); the code is still shown.
-	}
 }
 
 /**
@@ -330,6 +330,41 @@ async function renderSettings() {
 		if (res.error) showError('settings-error', res.error)
 	})
 	$('biometric-enrol').hidden = !(await platformAuthenticatorAvailable(window))
+	$('pin-set-form').hidden = !!state.pinSet
+	$('pin-remove').hidden = !state.pinSet
+	await renderClipboardSetting()
+}
+
+/**
+ * The clipboard delay picker: how long a copy stays on the clipboard. It
+ * applies to every account in this browser.
+ *
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-clipboard/spec.md#requirement-every-copy-is-cleared-after-a-delay-the-user-sets
+ */
+async function renderClipboardSetting() {
+	const { seconds, choices = [] } = await send('clipboard-settings')
+	const select = $('clipboard-clear')
+	select.replaceChildren()
+	for (const value of choices) {
+		const option = document.createElement('option')
+		option.value = String(value)
+		option.textContent =
+			value === 0
+				? 'Never'
+				: value < 60
+					? `${value} seconds`
+					: value === 60
+						? '1 minute'
+						: `${value / 60} minutes`
+		option.selected = value === seconds
+		select.appendChild(option)
+	}
+	select.onchange = async () => {
+		const res = await send('set-clipboard-clear', {
+			seconds: Number(select.value),
+		})
+		if (res.error) showError('settings-error', res.error)
+	}
 }
 
 async function refresh() {
@@ -338,6 +373,9 @@ async function refresh() {
 	$('account-bar').hidden = !paired || adding
 	if (paired) {
 		renderAccountSwitcher($('account-select'), state)
+		$('account-initials').textContent = initialsOf(
+			(state.accounts || []).find((a) => a.id === state.activeAccountId),
+		)
 		$('account-add').hidden = !canAddAccount(state)
 	}
 	$('pair-cancel').hidden = !paired
@@ -346,13 +384,49 @@ async function refresh() {
 	} else if (state.serverOutdated) {
 		// Nothing else works against an older server: say so, ask nothing.
 		show('view-update')
+	} else if (state.loggedOut || state.insecure) {
+		renderSignedOut()
 	} else if (!state.unlocked) {
 		show('view-locked')
+		$('pin-block').hidden = !state.pinSet
+		;(state.pinSet ? $('unlock-pin') : $('unlock-master')).focus()
 		if (!(await renderDeviceApprovalOption())) await renderBiometricUnlock()
 	} else {
 		show('view-unlocked')
 		await selectTab(await lastTab())
 	}
+}
+
+/**
+ * Up to two initials for an account, from its label or user name.
+ *
+ * @param {object|undefined} account The account.
+ * @return {string}
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-unlock-and-accounts/spec.md#requirement-lock-and-log-out-per-account-or-all
+ */
+export function initialsOf(account) {
+	const name = String(account?.label || account?.user || '').trim()
+	const parts = name.split(/[\s._@-]+/).filter(Boolean)
+	const letters = parts.length > 1 ? parts[0][0] + parts[1][0] : name.slice(0, 2)
+	return letters.toUpperCase()
+}
+
+/**
+ * The signed-out view: the server refused the account's app password, or the
+ * account was paired over http and cannot be used.
+ *
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-pairing/spec.md#requirement-a-revoked-app-password-signs-the-account-out
+ */
+function renderSignedOut() {
+	show('view-signed-out')
+	showError('relogin-error', '')
+	$('relogin-app-password').value = ''
+	$('relogin-form').hidden = !state.loggedOut || state.insecure
+	$('signed-out-text').textContent = state.insecure
+		? 'This account was connected over http. Keepiq now needs https, so your app password is never sent in clear. Disconnect it and connect again over https.'
+		: state.loggedOutReason === 'logout'
+			? 'You logged out of this account. Create a new app password in Nextcloud and enter it here to sign in again.'
+			: 'Keepiq refused the app password of this account. It was revoked or changed in Nextcloud. Create a new app password in Nextcloud and enter it here.'
 }
 
 // --- tabs: This site, Vault, Generator, Send ---
@@ -519,7 +593,28 @@ function wire() {
 		window.close()
 	})
 	$('settings-back').addEventListener('click', () => refresh())
+	$('relogin-form').addEventListener('submit', async (event) => {
+		event.preventDefault()
+		showError('relogin-error', '')
+		const res = await send('relogin', {
+			accountId: state.activeAccountId,
+			appPassword: $('relogin-app-password').value,
+		})
+		$('relogin-app-password').value = ''
+		if (res.error) {
+			showError('relogin-error', res.error)
+			return
+		}
+		await refresh()
+	})
+	$('signed-out-disconnect').addEventListener('click', async () => {
+		if (!confirmDisconnect()) return
+		await send('unpair', { accountId: state.activeAccountId })
+		await refresh()
+	})
+
 	$('settings-unpair').addEventListener('click', async () => {
+		if (!confirmDisconnect()) return
 		await send('unpair', { accountId: state.activeAccountId })
 		await refresh()
 	})
@@ -529,6 +624,9 @@ function wire() {
 		const res = await send('unlock', {
 			masterPassword: $('unlock-master').value,
 		})
+		$('unlock-master').type = 'password'
+		$('unlock-show').textContent = 'Show'
+		$('unlock-show').setAttribute('aria-pressed', 'false')
 		$('unlock-master').value = ''
 		if (res.error) showError('unlock-error', res.error)
 		else await refresh()
@@ -551,15 +649,122 @@ function wire() {
 	})
 
 	$('unlock-unpair').addEventListener('click', async () => {
+		if (!confirmDisconnect()) return
 		await send('unpair', { accountId: state.activeAccountId })
 		await refresh()
 	})
 
+	// Show or hide the master password while typing it.
+	$('unlock-show').addEventListener('click', () => {
+		const shown = $('unlock-master').type === 'text'
+		$('unlock-master').type = shown ? 'password' : 'text'
+		$('unlock-show').textContent = shown ? 'Show' : 'Hide'
+		$('unlock-show').setAttribute('aria-pressed', shown ? 'false' : 'true')
+		$('unlock-master').focus()
+	})
+	$('unlock-master').addEventListener('keydown', (event) => {
+		if (event.key === 'Enter') $('unlock-submit').click()
+	})
+	$('settings-logout').addEventListener('click', async () => {
+		if (
+			!window.confirm(
+				'Log out of this account? Its app password is deleted in Nextcloud, and you need a new one to sign in again.',
+			)
+		)
+			return
+		await send('logout', { accountId: state.activeAccountId })
+		await refresh()
+	})
+	$('settings-logout-all').addEventListener('click', async () => {
+		if (
+			!window.confirm(
+				'Log out of all accounts? Their app passwords are deleted in Nextcloud, and you need new ones to sign in again.',
+			)
+		)
+			return
+		await send('logout', { all: true })
+		await refresh()
+	})
+	$('unlock-pin-submit').addEventListener('click', async () => {
+		showError('unlock-error', '')
+		const res = await send('pin-unlock', { pin: $('unlock-pin').value })
+		$('unlock-pin').value = ''
+		if (res.error) showError('unlock-error', res.error)
+		await refresh()
+	})
+	$('unlock-pin').addEventListener('keydown', (event) => {
+		if (event.key === 'Enter') $('unlock-pin-submit').click()
+	})
+	$('pin-set').addEventListener('click', async () => {
+		showError('settings-error', '')
+		const res = await send('pin-set', {
+			masterPassword: $('pin-master').value,
+			pin: $('pin-new').value,
+		})
+		$('pin-master').value = ''
+		$('pin-new').value = ''
+		if (res.error) {
+			showError('settings-error', res.error)
+			return
+		}
+		state = await send('get-state')
+		await renderSettings()
+	})
+	$('pin-remove').addEventListener('click', async () => {
+		await send('pin-remove')
+		state = await send('get-state')
+		await renderSettings()
+	})
+	$('settings-lock-all').addEventListener('click', async () => {
+		await send('lock', {})
+		await refresh()
+	})
+
 	$('lock-btn').addEventListener('click', async () => {
-		await send('lock')
+		// The account on screen; the others stay as they are.
+		await send('lock', { accountId: state.activeAccountId })
 		await refresh()
 	})
 }
 
+/**
+ * The worker locked an account. When it is the one on screen, drop what the
+ * popup shows of the vault at once and show the lock screen.
+ *
+ * @param {object} msg The worker's message.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-lock/spec.md#requirement-the-popup-forgets-the-vault-when-it-locks
+ */
+function onWorkerMessage(msg) {
+	if (msg?.type !== 'keepiq-locked') return
+	if (msg.accountId && msg.accountId !== state.activeAccountId) return
+	vaultView?.forget()
+	$('candidates').replaceChildren()
+	$('totp-code').textContent = ''
+	$('totp-block').hidden = true
+	$('gen-output').textContent = ''
+	$('view-unlocked').hidden = true
+	refresh()
+}
+
+/**
+ * Ask before disconnecting: it deletes the account's app password in
+ * Nextcloud and its data in this browser.
+ *
+ * @return {boolean} Whether the user confirmed.
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-lock/spec.md#requirement-lock-locks-the-account-on-screen-and-disconnect-asks-first
+ */
+function confirmDisconnect() {
+	const account = (state.accounts || []).find(
+		(a) => a.id === state.activeAccountId,
+	)
+	const name = account
+		? account.label || account.user + '@' + account.host
+		: 'this account'
+	return window.confirm(
+		`Disconnect ${name}? Its app password is deleted in Nextcloud and its data is removed from this browser.`,
+	)
+}
+
+chrome.runtime.onMessage?.addListener(onWorkerMessage)
 wire()
 refresh()

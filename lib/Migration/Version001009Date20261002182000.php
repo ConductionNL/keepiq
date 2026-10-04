@@ -31,7 +31,7 @@ use OCP\Migration\SimpleMigrationStep;
  *
  * @psalm-suppress UnusedClass Loaded by the Nextcloud migration framework.
  *
- * @spec openspec/changes/crypto-new-device-approval/tasks.md#task-1.1
+ * @spec openspec/changes/archive/2026-10-04-crypto-new-device-approval/tasks.md#task-1.1
  */
 class Version001009Date20261002182000 extends SimpleMigrationStep {
 
@@ -46,7 +46,7 @@ class Version001009Date20261002182000 extends SimpleMigrationStep {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Signature fixed by SimpleMigrationStep.
 	 *
-	 * @spec openspec/changes/crypto-new-device-approval/tasks.md#task-1.1
+	 * @spec openspec/changes/archive/2026-10-04-crypto-new-device-approval/tasks.md#task-1.1
 	 */
 	public function changeSchema(IOutput $output, Closure $schemaClosure, array $options): ?ISchemaWrapper {
 		$schema = $schemaClosure();

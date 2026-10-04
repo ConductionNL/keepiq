@@ -516,7 +516,7 @@ export default {
 		 * suite came without its wrapped key, or a setup was refused.
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#3.3
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
 		 */
 		twoFactorRequired() {
 			return (
@@ -530,7 +530,7 @@ export default {
 		 * Nextcloud's own security settings, where a user enables a provider.
 		 *
 		 * @return {string}
-		 * @spec openspec/changes/admin-vault-policies/tasks.md#3.3
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
 		 */
 		securitySettingsUrl() {
 			return generateUrl('/settings/user/security')
@@ -730,7 +730,7 @@ export default {
 		 * (crypto-new-device-approval D4): continue as after any unlock.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
 		 */
 		/**
 		 * Enrol in account recovery while the master password is in hand,
@@ -739,7 +739,7 @@ export default {
 		 *
 		 * @param {string} masterPassword The password just used to unlock.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-users-enrol-by-wrapping-their-own-key-to-the-recovery-certificate
 		 */
 		async enrolForRecovery(masterPassword) {
 			const store = useAccountRecoveryStore()
@@ -764,7 +764,7 @@ export default {
 		 *
 		 * @param {string} handledBy The officer who handed the key over.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/crypto-organisation-account-recovery/specs/organisation-account-recovery/spec.md#requirement-the-user-is-told-what-happened-and-offered-a-rotation
+		 * @spec openspec/specs/organisation-account-recovery/spec.md#requirement-the-user-is-told-what-happened-and-offered-a-rotation
 		 */
 		async onRecovered(handledBy) {
 			// Tell the user who handled it and offer a key rotation (D4).
@@ -781,7 +781,7 @@ export default {
 		},
 
 		/**
-		 * @spec openspec/changes/crypto-new-device-approval/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-pickup-is-one-time-and-unlocks-one-session
 		 */
 		async onApprovedUnlock() {
 			const returnUrl = this.$route.query.returnUrl || '/'
