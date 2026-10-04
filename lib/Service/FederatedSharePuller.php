@@ -36,7 +36,7 @@ use Throwable;
 /**
  * Pulls ciphertext from the sending partner.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 class FederatedSharePuller {
 	/**
@@ -68,7 +68,7 @@ class FederatedSharePuller {
 	 *
 	 * @throws RuntimeException `pull_failed` for every failure
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function pull(FederatedInbound $row): array {
 		$recipient = $this->cloudIdManager->getCloudId($row->getRecipientUid(), null)->getId();

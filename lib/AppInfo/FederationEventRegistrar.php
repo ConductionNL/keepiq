@@ -36,7 +36,7 @@ use OCP\OCM\Events\OCMEndpointRequestEvent;
 /**
  * Wires the federation OCM listeners.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
  */
 final class FederationEventRegistrar {
 	/**
@@ -46,7 +46,7 @@ final class FederationEventRegistrar {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public function register(IRegistrationContext $context): void {
 		$context->registerEventListener(
@@ -68,7 +68,7 @@ final class FederationEventRegistrar {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function boot(IBootContext $context): void {
 		if (class_exists(OCMEndpointRequestEvent::class) === false) {

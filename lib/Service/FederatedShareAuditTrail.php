@@ -33,7 +33,7 @@ use OCP\EventDispatcher\IEventDispatcher;
 /**
  * Identifier-only audit of federated shares.
  *
- * @spec openspec/changes/sharing-federated-recipients/tasks.md#task-4.3
+ * @spec openspec/changes/archive/2026-10-04-sharing-federated-recipients/tasks.md#task-4.3
  */
 class FederatedShareAuditTrail {
 	/**
@@ -62,7 +62,7 @@ class FederatedShareAuditTrail {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/tasks.md#task-4.3
+	 * @spec openspec/changes/archive/2026-10-04-sharing-federated-recipients/tasks.md#task-4.3
 	 */
 	public function recordOutbound(string $eventType, FederatedShare $row, ?string $actorId, array $extra = []): void {
 		$metadata = array_merge(
@@ -92,7 +92,7 @@ class FederatedShareAuditTrail {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/tasks.md#task-4.3
+	 * @spec openspec/changes/archive/2026-10-04-sharing-federated-recipients/tasks.md#task-4.3
 	 */
 	public function recordInbound(string $eventType, FederatedInbound $row, ?string $actorId): void {
 		$metadata = [

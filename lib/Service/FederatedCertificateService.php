@@ -44,7 +44,7 @@ use Throwable;
 /**
  * Federated certificate lookup, answering and asking.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
  */
 class FederatedCertificateService {
 	/**
@@ -95,7 +95,7 @@ class FederatedCertificateService {
 	 *
 	 * @return array{cloudId:string,certificate:string,chain:array<int,string>}|null
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public function answer(?string $signer, array $payload): ?array {
 		if ($this->partners->inboundPartnerForSigner(signer: $signer) === null) {
@@ -132,7 +132,7 @@ class FederatedCertificateService {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-no-partner-no-federation
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-no-partner-no-federation
 	 */
 	public function outboundAvailable(): bool {
 		if ($this->root->isSupported() === false) {
@@ -159,7 +159,7 @@ class FederatedCertificateService {
 	 * @throws InvalidArgumentException `not_a_partner` or `unknown_recipient`
 	 * @throws RuntimeException `federation_unavailable` or `partner_unreachable`
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
 	 */
 	public function lookup(string $cloudId, string $userId): array {
 		// The OCM call requestRemoteOcmEndpoint() arrived in Nextcloud 33 with the

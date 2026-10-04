@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-new-name-reaches-bob
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-a-new-name-reaches-bob
  */
 
 declare(strict_types=1);

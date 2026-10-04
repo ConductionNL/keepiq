@@ -447,7 +447,7 @@ class Secret extends Entity implements JsonSerializable {
 	 *
 	 * @throws ForbiddenException When it is a read-only federated copy
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-remote-copies-are-read-only
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-remote-copies-are-read-only
 	 */
 	public function assertNotReadOnly(): void {
 		if ($this->readOnly === true) {
@@ -486,7 +486,7 @@ class Secret extends Entity implements JsonSerializable {
 	 * @throws ForbiddenException When it is a use-only copy, or a read-only copy and more than its folder changes
 	 *
 	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-files-his-copy-in-a-folder
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-files-his-copy-in-a-folder
 	 */
 	public function assertEditableByHolder(?array $fields = null): self {
 		$filingOnly = $fields !== null

@@ -40,7 +40,7 @@ use Throwable;
 /**
  * OCM messages of the sending side.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 class FederatedShareMessenger {
 	/**
@@ -73,7 +73,7 @@ class FederatedShareMessenger {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function announce(FederatedShare $row, string $name, string $sharedSecret): bool {
 		$owner = $this->cloudIdManager->getCloudId($row->getOwnerId(), null)->getId();
@@ -113,7 +113,7 @@ class FederatedShareMessenger {
 	 *
 	 * @return bool
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function notify(FederatedShare $row, string $type): bool {
 		$notification = $this->factory->getCloudFederationNotification();

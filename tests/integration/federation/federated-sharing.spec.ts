@@ -21,12 +21,12 @@
  * 4.5): B files the copy in a folder, a new name from A reaches it while the
  * folder stays, and B deleting the copy shows the share as declined on A.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-files-his-copy-in-a-folder
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-new-name-reaches-bob
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-files-his-copy-in-a-folder
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-a-new-name-reaches-bob
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
  */
 
 import type { Browser, Page } from '@playwright/test'

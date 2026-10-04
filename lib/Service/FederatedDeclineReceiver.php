@@ -39,7 +39,7 @@ use Throwable;
 /**
  * Marks an outbound share declined when its recipient removed their copy.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
  */
 class FederatedDeclineReceiver {
 	/**
@@ -72,7 +72,7 @@ class FederatedDeclineReceiver {
 	 *
 	 * @throws ShareNotFound For every refusal
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
 	 */
 	public function handle(string $providerId, array $notification): array {
 		$row = $this->verifiedRow(providerId: $providerId, presented: $notification['sharedSecret'] ?? null);
@@ -103,7 +103,7 @@ class FederatedDeclineReceiver {
 	 *
 	 * @return string
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-deletes-his-copy
 	 */
 	public function recipientOf(string $presented, array $notification): string {
 		$row = $this->rowFor(providerId: (string)($notification['providerId'] ?? ''), presented: $presented);

@@ -9,7 +9,7 @@
  * else, is refused, nothing is decrypted or encrypted, and nothing is sent.
  * A verified certificate shows its fingerprint and only ciphertext leaves.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-certificate-from-another-root-is-refused
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-a-certificate-from-another-root-is-refused
  */
 
 import axios from '@nextcloud/axios'

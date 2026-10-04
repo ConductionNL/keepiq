@@ -33,7 +33,7 @@ use OCP\IDBConnection;
  *
  * @template-extends QBMapper<FederatedShare>
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
  */
 class FederatedShareMapper extends QBMapper {
 	/**
@@ -56,7 +56,7 @@ class FederatedShareMapper extends QBMapper {
 	 *
 	 * @throws DoesNotExistException When no row matches
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
 	 */
 	public function findById(string $id): FederatedShare {
 		$qb = $this->db->getQueryBuilder();
@@ -74,7 +74,7 @@ class FederatedShareMapper extends QBMapper {
 	 *
 	 * @return FederatedShare[]
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function findBySourceSecret(string $sourceSecretId): array {
 		$qb = $this->db->getQueryBuilder();
@@ -93,7 +93,7 @@ class FederatedShareMapper extends QBMapper {
 	 *
 	 * @return FederatedShare[]
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function findByPartner(string $partnerId): array {
 		$qb = $this->db->getQueryBuilder();
@@ -112,7 +112,7 @@ class FederatedShareMapper extends QBMapper {
 	 *
 	 * @return FederatedShare[]
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-owner-updates-reach-the-remote-copy-and-revocation-removes-it
 	 */
 	public function findDueNotifications(DateTime $now, int $limit): array {
 		$qb = $this->db->getQueryBuilder();

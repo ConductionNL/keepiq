@@ -9,7 +9,7 @@
  * names, as every Keepiq instance names its CA alike, so only the pinned
  * fingerprint and the signatures tell them apart.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
+ * @spec openspec/specs/federated-sharing/spec.md#requirement-certificate-lookup-is-signed-allowlisted-and-verified-in-the-browser
  */
 
 import { readFileSync } from 'node:fs'

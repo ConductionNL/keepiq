@@ -6,7 +6,7 @@
  * task 3.2): the list shows what partners shared, and Accept and Decline
  * call the server for exactly that share.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
  */
 
 import axios from '@nextcloud/axios'

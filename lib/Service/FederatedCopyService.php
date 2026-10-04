@@ -38,7 +38,7 @@ use RuntimeException;
 /**
  * The recipient's read-only copy of a federated share.
  *
- * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+ * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
  */
 class FederatedCopyService {
 	/**
@@ -70,7 +70,7 @@ class FederatedCopyService {
 	 *
 	 * @throws RuntimeException `pull_failed` or `no_suite`
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-bob-accepts-a-shared-login
 	 */
 	public function pullNew(FederatedInbound $row): Secret {
 		$answer = $this->puller->pull(row: $row);
@@ -109,7 +109,7 @@ class FederatedCopyService {
 	 *
 	 * @throws RuntimeException `pull_failed`, or `copy_missing` when the copy is gone
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-a-password-change-reaches-bob
 	 */
 	public function refresh(FederatedInbound $row): Secret {
 		$copy = $this->copyOf(row: $row);
@@ -127,7 +127,7 @@ class FederatedCopyService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/sharing-federated-recipients/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
+	 * @spec openspec/specs/federated-sharing/spec.md#scenario-revocation-removes-bobs-copy
 	 */
 	public function remove(FederatedInbound $row): void {
 		try {
