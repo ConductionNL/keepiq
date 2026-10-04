@@ -9,6 +9,7 @@ import { platformAuthenticatorAvailable } from '../unlock/ceremony.js'
 import { initGenerator } from './generator-view.js'
 import { initSend } from './send-view.js'
 import { initVault } from './vault-view.js'
+import { copyText } from './clipboard.js'
 import {
 	canAddAccount,
 	DEVICE_STATUS_TEXT,
@@ -152,7 +153,7 @@ async function renderUnlocked() {
 				// Auto-copy a matched TOTP code so it is one paste away, then
 				// clear it after a short delay (extension-totp-autofill §3).
 				if (res.totpCode) {
-					await copyWithAutoClear(res.totpCode)
+					await copyText(res.totpCode)
 				}
 				window.close()
 			})
@@ -182,8 +183,6 @@ async function renderUnlocked() {
 	}
 }
 
-// Clipboard TTL for a copied TOTP code (ms).
-const TOTP_CLIPBOARD_TTL = 30000
 let totpTimer = null
 
 /**
@@ -226,24 +225,6 @@ async function renderTotp(host) {
 		}
 		$('totp-count').textContent = Math.max(remaining, 0) + 's'
 	}, 1000)
-}
-
-/**
- * Copy a code to the clipboard and clear it after the TTL (no later than the
- * code window would expire).
- *
- * @param {string} code
- * @return {Promise<void>}
- */
-async function copyWithAutoClear(code) {
-	try {
-		await navigator.clipboard.writeText(code)
-		setTimeout(() => {
-			navigator.clipboard.writeText('').catch(() => {})
-		}, TOTP_CLIPBOARD_TTL)
-	} catch {
-		// Clipboard may be unavailable (no focus); the code is still shown.
-	}
 }
 
 /**
@@ -349,6 +330,39 @@ async function renderSettings() {
 		if (res.error) showError('settings-error', res.error)
 	})
 	$('biometric-enrol').hidden = !(await platformAuthenticatorAvailable(window))
+	await renderClipboardSetting()
+}
+
+/**
+ * The clipboard delay picker: how long a copy stays on the clipboard. It
+ * applies to every account in this browser.
+ *
+ * @spec openspec/changes/clients-extension-gaps/specs/extension-clipboard/spec.md#requirement-every-copy-is-cleared-after-a-delay-the-user-sets
+ */
+async function renderClipboardSetting() {
+	const { seconds, choices = [] } = await send('clipboard-settings')
+	const select = $('clipboard-clear')
+	select.replaceChildren()
+	for (const value of choices) {
+		const option = document.createElement('option')
+		option.value = String(value)
+		option.textContent =
+			value === 0
+				? 'Never'
+				: value < 60
+					? `${value} seconds`
+					: value === 60
+						? '1 minute'
+						: `${value / 60} minutes`
+		option.selected = value === seconds
+		select.appendChild(option)
+	}
+	select.onchange = async () => {
+		const res = await send('set-clipboard-clear', {
+			seconds: Number(select.value),
+		})
+		if (res.error) showError('settings-error', res.error)
+	}
 }
 
 async function refresh() {

@@ -39,9 +39,10 @@ export function manifestFor(base, browser) {
 		manifest.browser_specific_settings = {
 			gecko: { id: GECKO_ID, strict_min_version: GECKO_MIN_VERSION },
 		}
-		// Firefox has no `windows` permission (the API needs none) and warns on it.
+		// Firefox has no `windows` permission (the API needs none) and warns on
+		// it, and no offscreen documents (its background page has a document).
 		manifest.permissions = (manifest.permissions || []).filter(
-			(p) => p !== 'windows',
+			(p) => p !== 'windows' && p !== 'offscreen',
 		)
 		return manifest
 	}
