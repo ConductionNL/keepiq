@@ -25,11 +25,11 @@ struct ItemDetailView: View {
 
     var body: some View {
         Group {
-            if let opened = result as? OpenResultOpened {
+            if let opened = result as? OpenResult.Opened {
                 detail(opened.item)
-            } else if result is OpenResultMissing {
+            } else if result is OpenResult.Missing {
                 Text(L("detail_missing"))
-            } else if let failed = result as? OpenResultFailed {
+            } else if let failed = result as? OpenResult.Failed {
                 Text(writeProblemText(failed.problem))
             } else {
                 ProgressView(L("vault_loading"))
@@ -145,9 +145,9 @@ struct ItemDetailView: View {
     private func write(_ block: @escaping () async throws -> WriteResult, after: @escaping () -> Void) {
         Task { @MainActor in
             let outcome = try? await block()
-            if outcome is WriteResultSaved {
+            if outcome is WriteResult.Saved {
                 after()
-            } else if let refused = outcome as? WriteResultRefused {
+            } else if let refused = outcome as? WriteResult.Refused {
                 problem = refused.problem
             }
         }
@@ -272,11 +272,11 @@ struct ItemEditView: View {
         guard base == nil else { return }
         if let itemId {
             let opened = try? await model.repository.open(id: itemId)
-            if let opened = opened as? OpenResultOpened {
+            if let opened = opened as? OpenResult.Opened {
                 item = opened.item
                 type = opened.item.type
                 apply(ItemCodec.shared.draft(item: opened.item, type: opened.item.type))
-            } else if let failed = opened as? OpenResultFailed {
+            } else if let failed = opened as? OpenResult.Failed {
                 problem = failed.problem
             }
         } else {
@@ -429,9 +429,9 @@ struct ItemEditView: View {
                 outcome = try? await model.repository.create(draft: draft, type: type)
             }
             busy = false
-            if let saved = outcome as? WriteResultSaved {
+            if let saved = outcome as? WriteResult.Saved {
                 onSaved(saved.id)
-            } else if let refused = outcome as? WriteResultRefused {
+            } else if let refused = outcome as? WriteResult.Refused {
                 problem = refused.problem
             } else {
                 problem = WriteProblem(kind: .failed, serverMessage: nil, status: 0)

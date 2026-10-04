@@ -327,9 +327,9 @@ struct FolderSheetView: View {
         Task { @MainActor in
             let result = try? await block()
             busy = false
-            if result is WriteResultSaved {
+            if result is WriteResult.Saved {
                 onDone(true, gone)
-            } else if let refused = result as? WriteResultRefused {
+            } else if let refused = result as? WriteResult.Refused {
                 problem = refused.problem
             }
         }

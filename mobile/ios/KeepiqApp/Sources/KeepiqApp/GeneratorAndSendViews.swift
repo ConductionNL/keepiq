@@ -385,28 +385,28 @@ public struct OpenSendView: View {
 
     public var body: some View {
         let parsed = SendLink.companion.parse(link: link)
-        let needsPassword = state is OpenSendResultNeedsPassword || ((state as? OpenSendResultWrongPassword)?.burned == false)
+        let needsPassword = state is OpenSendResult.NeedsPassword || ((state as? OpenSendResult.WrongPassword)?.burned == false)
         Form {
-            if !(state is OpenSendResultOpened) {
+            if !(state is OpenSendResult.Opened) {
                 TextField(L("open_send_link"), text: $link)
                     .keyboardType(.URL)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                 if !link.isEmpty && parsed == nil { Text(L("open_send_invalid")).foregroundStyle(.red) }
             }
-            if state is OpenSendResultReady {
+            if state is OpenSendResult.Ready {
                 Text(L("open_send_ready"))
-            } else if state is OpenSendResultNeedsPassword {
+            } else if state is OpenSendResult.NeedsPassword {
                 Text(L("open_send_password"))
-            } else if let wrong = state as? OpenSendResultWrongPassword {
+            } else if let wrong = state as? OpenSendResult.WrongPassword {
                 Text(wrong.burned ? L("open_send_burned") : L("open_send_wrong", Int(wrong.attemptsLeft))).foregroundStyle(.red)
-            } else if state is OpenSendResultGone {
+            } else if state is OpenSendResult.Gone {
                 Text(L("open_send_gone"))
-            } else if state is OpenSendResultNoKey {
+            } else if state is OpenSendResult.NoKey {
                 Text(L("open_send_no_key"))
-            } else if state is OpenSendResultFailed {
+            } else if state is OpenSendResult.Failed {
                 Text(L("open_send_failed")).foregroundStyle(.red)
-            } else if let opened = state as? OpenSendResultOpened {
+            } else if let opened = state as? OpenSendResult.Opened {
                 Text(opened.payload).textSelection(.enabled)
                 if opened.burned { Text(L("open_send_last_view")).font(.footnote) }
                 if let onCopy { Button(L("action_copy")) { onCopy(opened.payload) } }
@@ -414,7 +414,7 @@ public struct OpenSendView: View {
             if needsPassword {
                 SecureField(L("detail_password"), text: $password)
             }
-            if let parsed, state is OpenSendResultReady || needsPassword {
+            if let parsed, state is OpenSendResult.Ready || needsPassword {
                 Button(L("action_open")) {
                     busy = true
                     Task { @MainActor in
