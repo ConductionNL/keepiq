@@ -109,7 +109,9 @@ describe('the popup details', () => {
 	it('shows Hours only for a custom expiry', async () => {
 		await openPopup()
 		$('tab-send').click()
-		await vi.waitFor(() => expect($('send-expiry').options.length).toBeGreaterThan(0))
+		await vi.waitFor(() =>
+			expect($('send-expiry').options.length).toBeGreaterThan(0),
+		)
 		const select = $('send-expiry')
 		select.value = '1h'
 		select.dispatchEvent(new Event('change'))
@@ -122,7 +124,9 @@ describe('the popup details', () => {
 	it('shows a minimum only while its kind of character is on', async () => {
 		await openPopup()
 		$('tab-generator').click()
-		await vi.waitFor(() => expect($('gen-output').textContent.length).toBeGreaterThan(0))
+		await vi.waitFor(() =>
+			expect($('gen-output').textContent.length).toBeGreaterThan(0),
+		)
 		const special = $('gen-min-special').closest('label')
 		// Special characters are off by default.
 		expect($('gen-symbols').checked).toBe(false)
@@ -141,6 +145,8 @@ describe('the popup details', () => {
 		await vi.waitFor(() =>
 			expect(shown($('gen-min-digits').closest('label'))).toBe(false),
 		)
-		await vi.waitFor(() => expect($('gen-output').dataset.value).not.toMatch(/\d/))
+		await vi.waitFor(() =>
+			expect($('gen-output').dataset.value).not.toMatch(/\d/),
+		)
 	})
 })
