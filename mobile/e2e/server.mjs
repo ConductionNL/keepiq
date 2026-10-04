@@ -274,22 +274,24 @@ function replay(o) {
 	const fill = (value, origin) => JSON.parse(JSON.stringify(value).split('{origin}').join(origin))
 	const server = createHttpsServer({ cert: readFileSync(o.cert), key: readFileSync(o.key) }, async (req, res) => {
 		const origin = `https://${req.headers.host}`
-		const path = req.url.split('?')[0]
+		// Nextcloud links its Login Flow routes with and without /index.php
+		// (the recording has /login/v2/poll), so the replay accepts both.
+		const path = req.url.split('?')[0].replace(/^\/index\.php(?=\/login\/)/, '')
 		const body = await new Promise((resolve) => {
 			const chunks = []
 			req.on('data', (c) => chunks.push(c))
 			req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
 		})
 		console.log(`[replay] ${req.method} ${path}`)
-		if (req.method === 'POST' && path === '/index.php/login/v2') return send(res, 200, fill(f.loginInit, origin))
-		if (req.method === 'POST' && path === '/index.php/login/v2/poll') {
+		if (req.method === 'POST' && path === '/login/v2') return send(res, 200, fill(f.loginInit, origin))
+		if (req.method === 'POST' && path === '/login/v2/poll') {
 			// Pending twice, as while the user signs in, then granted.
 			const token = new URLSearchParams(body).get('token') || ''
 			const n = (polls.get(token) || 0) + 1
 			polls.set(token, n)
 			return n < 3 ? send(res, 404, '[]') : send(res, 200, fill(f.poll, origin))
 		}
-		if (path.startsWith('/index.php/login/v2/flow')) {
+		if (path.startsWith('/login/v2/flow')) {
 			return send(res, 200, '<!doctype html><title>Nextcloud</title><h1>Log in to Nextcloud (test stub)</h1>', 'text/html')
 		}
 		const auth = Buffer.from((req.headers.authorization || '').replace(/^Basic /, ''), 'base64').toString('utf8')
