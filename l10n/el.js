@@ -1603,7 +1603,19 @@ OC.L10N.register(
         "Approve {member}": "Έγκριση {member}",
         "Recipient": "Παραλήπτης",
         "No vault yet": "Δεν έχει ακόμη θησαυροφυλάκιο",
-        "No matching users": "Δεν βρέθηκαν χρήστες"
+        "No matching users": "Δεν βρέθηκαν χρήστες",
+        "Partner organisations": "Συνεργαζόμενοι οργανισμοί",
+        "Exchange secrets with another Keepiq. Both administrators add each other and compare the root fingerprints by phone or in person before saving.": "Ανταλλάξτε μυστικά με άλλο Keepiq. Και οι δύο διαχειριστές προσθέτουν ο ένας τον άλλον και συγκρίνουν τα ριζικά αποτυπώματα τηλεφωνικά ή αυτοπροσώπως πριν την αποθήκευση.",
+        "Federation needs Nextcloud 33 or later.": "Η ομοσπονδία απαιτεί Nextcloud 33 ή νεότερο.",
+        "Your root fingerprint": "Το ριζικό σας αποτύπωμα",
+        "No partners yet.": "Δεν υπάρχουν ακόμη συνεργάτες.",
+        "Users here may share to this partner": "Οι χρήστες εδώ μπορούν να μοιράζονται με αυτόν τον συνεργάτη",
+        "This partner may share to users here": "Αυτός ο συνεργάτης μπορεί να μοιράζεται με τους χρήστες εδώ",
+        "Partner address": "Διεύθυνση συνεργάτη",
+        "Check partner": "Έλεγχος συνεργάτη",
+        "Partner root fingerprint": "Ριζικό αποτύπωμα συνεργάτη",
+        "I compared this fingerprint with the partner's administrator": "Σύγκρινα αυτό το αποτύπωμα με τον διαχειριστή του συνεργάτη",
+        "Add partner": "Προσθήκη συνεργάτη"
     },
     "nplurals=2; plural=(n != 1);"
 )
