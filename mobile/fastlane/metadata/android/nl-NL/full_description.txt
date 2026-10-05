@@ -1,0 +1,33 @@
+Keepiq zet je wachtwoorden op je telefoon. Ze komen uit je eigen Nextcloud, niet uit de cloud van een ander.
+
+Je organisatie draait Keepiq op haar Nextcloud. Koppel je telefoon één keer en je kluis staat erop. Elke login, eenmalige code en passkey die je op het web bewaarde, heb je dan ook op je telefoon.
+
+Je opent je kluis met je hoofdwachtwoord. Keepiq ontsleutelt hem op de telefoon, dus je Nextcloud bewaart hem alleen versleuteld. Met een pincode of je vingerafdruk gaat hij sneller open.
+
+Wat je ermee doet
+
+- Zoek een login op naam of webadres en kopieer het wachtwoord. Keepiq wist het klembord na een minuut.
+- Zie de actuele eenmalige code van een login met tweestapsverificatie.
+- Vul logins in andere apps en in je browser in, zonder iets te kopiëren.
+- Bewaar en gebruik passkeys vanaf Android 14.
+- Maak een sterk wachtwoord of een wachtzin die past bij de regels van je organisatie.
+- Deel een geheim met een Send-link die verloopt na een vaste tijd of een aantal keer openen.
+- Open, zoek en kopieer ook zonder verbinding.
+
+Keepiq geeft een login alleen aan de app waar hij bij hoort. Een kopie van die app van een andere uitgever krijgt niets.
+
+Je gegevens
+
+- Keepiq praat met je eigen Nextcloud. Naar ons stuurt de app niets.
+- Er zijn geen analytics, geen crashrapporten en geen advertenties.
+- Open je een Send-link, dan haalt Keepiq die op bij de server in die link.
+- Vraagt een andere app om een login, dan controleert Keepiq of de website van die app de app noemt.
+
+Lees het volledige privacybeleid (in het Engels) op https://keepiq.conduction.nl/docs/mobile/privacy
+
+Wat je nodig hebt
+
+- Een Nextcloud met de app Keepiq.
+- Android 9 of nieuwer.
+
+Keepiq is vrije software onder de EUPL. De broncode staat op GitHub.
