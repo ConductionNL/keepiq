@@ -52,6 +52,58 @@ kotlin {
         iosArm64() to ("iphoneos" to "arm64-apple-ios17.0"),
         iosSimulatorArm64() to ("iphonesimulator" to "arm64-apple-ios17.0-simulator"),
     )
+    // SQLCipher Community Edition (BSD-style licence, Zetetic) for the iOS
+    // offline store (task 1.6.1): the pinned release source, checked against
+    // its SHA-256, turned into the amalgamation once on the build host, then
+    // compiled per target with CommonCrypto, like Argon2 above. SQLDelight's
+    // native driver links it instead of the system SQLite (linkSqlite below).
+    val sqlcipherVersion = "4.19.0"
+    val sqlcipherSha256 = "7075f96cbabe45b4ecfc2e6b1745a625f856f695b0827a5506ce9ed85b906aa0"
+    val sqlcipherRoot = layout.buildDirectory.dir("sqlcipher").get().asFile
+    val sqlcipherSource = File(sqlcipherRoot, "amalgamation")
+    val sqlcipherAmalgamation = tasks.register<Exec>("sqlcipherAmalgamation") {
+        onlyIf { System.getProperty("os.name").startsWith("Mac") }
+        inputs.property("version", sqlcipherVersion)
+        inputs.property("sha256", sqlcipherSha256)
+        outputs.dir(sqlcipherSource)
+        val work = File(sqlcipherRoot, "work")
+        commandLine(
+            "bash", "-c",
+            "set -euo pipefail; rm -rf '$work' '$sqlcipherSource'; mkdir -p '$work' '$sqlcipherSource'; cd '$work'; " +
+                "curl -fsSL -o src.tar.gz https://github.com/sqlcipher/sqlcipher/archive/refs/tags/v$sqlcipherVersion.tar.gz; " +
+                "echo '$sqlcipherSha256  src.tar.gz' | shasum -a 256 -c -; " +
+                "tar xzf src.tar.gz; cd sqlcipher-$sqlcipherVersion; " +
+                "./configure --disable-tcl --with-tempstore=yes > configure.log; make sqlite3.c > make.log; " +
+                "cp sqlite3.c sqlite3.h '$sqlcipherSource/'",
+        )
+    }
+    val sqlcipherFlags = listOf(
+        "-DSQLITE_HAS_CODEC", "-DSQLCIPHER_CRYPTO_CC", "-DSQLITE_TEMP_STORE=2", "-DSQLITE_THREADSAFE=1",
+        "-DSQLITE_EXTRA_INIT=sqlcipher_extra_init", "-DSQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown",
+        "-DHAVE_USLEEP=1", "-DNDEBUG",
+    ).joinToString(" ")
+    iosTargets.forEach { (target, toolchain) ->
+        val (sdk, triple) = toolchain
+        val cipherLibDir = layout.buildDirectory.dir("sqlcipher/${target.name}").get().asFile
+        val buildSqlcipher = tasks.register<Exec>("buildSqlcipher${target.name.replaceFirstChar { it.uppercase() }}") {
+            onlyIf { System.getProperty("os.name").startsWith("Mac") }
+            inputs.files(sqlcipherAmalgamation)
+            outputs.dir(cipherLibDir)
+            commandLine(
+                "bash", "-c",
+                "set -e; rm -rf '$cipherLibDir'; mkdir -p '$cipherLibDir'; cd '$cipherLibDir'; " +
+                    "xcrun --sdk $sdk clang -target $triple -O2 -w $sqlcipherFlags -c '$sqlcipherSource/sqlite3.c' -o sqlite3.o; " +
+                    "xcrun --sdk $sdk ar rcs libsqlcipher.a sqlite3.o",
+            )
+        }
+        target.compilations.getByName("main").cinterops.create("sqlcipher") {
+            definitionFile.set(project.file("src/nativeInterop/cinterop/sqlcipher.def"))
+            includeDirs(layout.projectDirectory.dir("src/nativeInterop/sqlcipher"))
+            extraOpts("-libraryPath", cipherLibDir.absolutePath)
+        }
+        tasks.matching { it.name == "cinteropSqlcipher${target.name.replaceFirstChar { c -> c.uppercase() }}" }
+            .configureEach { dependsOn(buildSqlcipher) }
+    }
     iosTargets.forEach { (target, toolchain) ->
         val (sdk, triple) = toolchain
         val libDir = layout.buildDirectory.dir("argon2/${target.name}").get().asFile
@@ -118,6 +170,7 @@ kotlin {
             }
         }
         iosMain.dependencies {
+            implementation(libs.sqldelight.native.driver)
             implementation(libs.ktor.client.darwin)
             implementation(libs.cryptography.core)
             implementation(libs.cryptography.provider.apple)
@@ -126,8 +179,12 @@ kotlin {
     }
 }
 
-// The offline store (design D5). SQLCipher on Android; see openEncryptedDriver.
+// The offline store (design D5). SQLCipher on Android (openEncryptedDriver)
+// and on iOS (IosEncryptedStore). linkSqlite off: the iOS binaries link the
+// SQLCipher built above, never the system SQLite, which would ignore the key
+// and write a plaintext file.
 sqldelight {
+    linkSqlite.set(false)
     databases {
         create("KeepiqDatabase") {
             packageName.set("nl.conduction.keepiq.shared.store.db")
