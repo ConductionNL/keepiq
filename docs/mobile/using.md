@@ -43,7 +43,9 @@ Keepiq for iOS is not available yet. It comes later, first through TestFlight an
 2. Choose **Sign in with your browser**. Your phone's browser opens your Nextcloud login page.
 3. Sign in and grant access. Keepiq picks up the connection by itself.
 
-![Connect to your Nextcloud, with the server address and the browser sign-in button](/media/mobile/android-01-connect.png)
+<div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+  <img src="/media/mobile/android-01-connect.png" width="240" alt="Connect to your Nextcloud, with the server address and the browser sign-in button" />
+</div>
 
 Can't use the browser sign-in? Choose **Use an app password instead**. Create an app password in Nextcloud under **Settings**, then **Security**. Then enter your user name and that app password in Keepiq.
 
