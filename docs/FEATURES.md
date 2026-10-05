@@ -272,6 +272,7 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | REST API for all operations | **V1** | Programmatic access |
 | OpenConnector secret store integration | **V1** | Sister app integration |
 | Browser extension (own end-to-end client: autofill, passkeys, vault, generator, Send, offline) | **Enterprise** | Auto-fill in browser |
+| Mobile apps for Android and iOS (own end-to-end client: vault, generator, Send, offline; autofill and passkeys next). Android is a preview APK, iOS comes through TestFlight (see `docs/mobile/using.md`) | **Enterprise** | Passwords on the phone |
 | CLI tool for secret management | **Enterprise** | DevOps workflow |
 | Nextcloud Flows automation triggers | **Enterprise** | Low-code integration |
 
@@ -357,7 +358,7 @@ Three pillars:
 |------|----------|------------|
 | Feature gap vs. Bitwarden (browser extension, mobile, FIDO2) | High | Focus on what Bitwarden can't do: Nextcloud integration, write-without-read, application secrets. Browser extension is Enterprise tier. |
 | Passwords app incumbency on Nextcloud | High | Differentiate on encryption architecture (PKI vs. SSE), application secrets, and enterprise features. Consider migration tooling. |
-| No mobile app | Medium | Nextcloud's mobile apps provide the session; Keepiq is web-first. Mobile vault is a future consideration. |
+| Mobile apps not in the stores yet | Medium | Native Android and iOS apps are being built (`clients-mobile-apps`). Android ships as a signed preview APK on GitHub until Google Play and F-Droid; iOS follows through TestFlight. |
 | Complexity of PKI for end users | Medium | Zero-friction onboarding: EncryptionSuite auto-created on first login. Users only interact with master password, never with certificates. |
 | Master password lost = data lost | High | This is by design (zero-knowledge). Document clearly. Consider emergency access (V1) or admin recovery mechanisms (Enterprise). |
 | Small team | High | Own-DB architecture means more backend code than thin-client apps. Prioritize MVP ruthlessly. |
