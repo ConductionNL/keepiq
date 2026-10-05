@@ -46,7 +46,7 @@
 
 ## 6. Verification
 
-- [ ] 6.1 Run `composer check:strict`, `npm run lint`, `npm run test`, and `vendor/bin/hydra-gates` (gates 5, 14, 16, 19, 25, 30, 59, 64 called out in the PR). Record the results in the PR body.
+- [x] 6.1 Run `composer check:strict`, `npm run lint`, `npm run test`, and `vendor/bin/hydra-gates` (gates 5, 14, 16, 19, 25, 30, 59, 64 called out in the PR). Record the results in the PR body.
 - [ ] 6.2 Live check on the dev instance with OpenRegister **disabled** (`occ app:disable openregister`):
   - `GET /login` = 200, Keepiq loads and unlocks, and a secret round-trips.
   - The Flows entry is hidden, and `/apps/keepiq/flows/1` shows the missing-dependency screen.
