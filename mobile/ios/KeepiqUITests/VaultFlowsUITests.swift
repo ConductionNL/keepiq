@@ -37,6 +37,10 @@ final class VaultFlowsUITests: XCTestCase {
 
     private func type(_ text: String, into element: XCUIElement) {
         XCTAssertTrue(element.waitForExistence(timeout: 20), "\(element) is missing")
+        // A system prompt on its way out still covers the field for a moment.
+        let deadline = Date().addingTimeInterval(5)
+        while !reachable(element) && Date() < deadline { usleep(250_000) }
+        if !reachable(element) { makeHittable(element) }
         element.tap()
         element.typeText(text)
         dismissKeyboardTip()
