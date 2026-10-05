@@ -6,18 +6,54 @@ import KeepiqShared
 import LocalAuthentication
 import Security
 
+/// The app group the app and its AutoFill extension share (design D4: one
+/// unlock for both). Its id is also their shared Keychain access group.
+enum SharedGroup {
+    static let id = "group.nl.conduction.keepiq"
+
+    /// The shared Keychain access group, or nil in a build without the
+    /// entitlement (the unsigned compile check in CI): items then stay in
+    /// the app's own group and the extension cannot read them.
+    static let keychainGroup: String? = {
+        let base: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: "nl.conduction.keepiq.probe",
+            kSecAttrAccount as String: "probe",
+            kSecAttrAccessGroup as String: id,
+        ]
+        SecItemDelete(base as CFDictionary)
+        var add = base
+        add[kSecValueData as String] = Data([1])
+        add[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        let status = SecItemAdd(add as CFDictionary, nil)
+        SecItemDelete(base as CFDictionary)
+        return status == errSecSuccess ? id : nil
+    }()
+
+    /// Adds the shared access group to a Keychain query when there is one.
+    static func scoped(_ query: [String: Any]) -> [String: Any] {
+        guard let group = keychainGroup else { return query }
+        var q = query
+        q[kSecAttrAccessGroup as String] = group
+        return q
+    }
+
+    /// The shared container, or nil without the app group entitlement.
+    static var container: URL? { FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: id) }
+}
+
 /// The shared core's `SecureStorage` on iOS (design D4): one Keychain item
 /// per key, readable after the first unlock of the phone and never restored
-/// onto another device.
+/// onto another device. App and AutoFill extension share the items.
 final class KeychainStorage: NSObject, SecureStorage {
     static let service = "nl.conduction.keepiq.storage"
 
     private func query(_ key: String) -> [String: Any] {
-        [
+        SharedGroup.scoped([
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: Self.service,
             kSecAttrAccount as String: key,
-        ]
+        ])
     }
 
     func read(key: String) -> String? {
@@ -47,7 +83,7 @@ final class KeychainStorage: NSObject, SecureStorage {
     /// Deletes every item of the app, for a clean start in the UI tests.
     static func deleteAll() {
         for service in [service, BiometricKeychain.service] {
-            SecItemDelete([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service] as CFDictionary)
+            SecItemDelete(SharedGroup.scoped([kSecClass as String: kSecClassGenericPassword, kSecAttrService as String: service]) as CFDictionary)
         }
     }
 }
@@ -79,11 +115,11 @@ struct BiometricKeychain {
     }
 
     private func base(_ accountId: String) -> [String: Any] {
-        [
+        SharedGroup.scoped([
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: Self.service,
             kSecAttrAccount as String: accountId,
-        ]
+        ])
     }
 
     /// Whether a wrap exists, without showing a prompt.

@@ -32,8 +32,51 @@ struct RootView: View {
             case .settings(let vault): SettingsView(vault: vault)
             }
         }
+        #if DEBUG
+        .overlay(alignment: .bottom) { AutofillPreviewButton() }
+        #endif
     }
 }
+
+#if DEBUG
+/// UI tests only (-keepiq-autofill-preview): the AutoFill extension's screens
+/// inside the app, since a simulator test cannot pick Keepiq as the
+/// provider in Settings. The model, files and Keychain are the extension's.
+struct AutofillPreviewButton: View {
+    @EnvironmentObject private var model: AppModel
+    @ObservedObject private var index = IOSAutofillIndex.shared
+    @State private var preview: AutofillModel?
+    @State private var filled: String?
+
+    var body: some View {
+        if ProcessInfo.processInfo.arguments.contains("-keepiq-autofill-preview"), case .unlocked(let vault) = model.screen {
+            VStack {
+                if let filled { Text(filled).accessibilityIdentifier("autofillFilled") }
+                Text("sites \(index.lastSiteCount), identities \(index.lastIdentityCount)")
+                    .accessibilityIdentifier("autofillIndex")
+                Button("AutoFill preview") {
+                    let site = ProcessInfo.processInfo.environment["KEEPIQ_AUTOFILL_SITE"] ?? "example.com"
+                    preview = AutofillModel(serviceIdentifiers: [site]) { login in
+                        filled = "filled: \(login.user) / \(login.password.count)"
+                        preview = nil
+                        self.model.refreshAutofill(vault)
+                    }
+                }
+                .accessibilityIdentifier("autofillPreview")
+            }
+            .padding()
+            .sheet(item: Binding(get: { preview.map(PreviewBox.init) }, set: { if $0 == nil { preview = nil } })) { box in
+                AutofillRootView(model: box.model, onCancel: { preview = nil })
+            }
+        }
+    }
+
+    private struct PreviewBox: Identifiable {
+        let model: AutofillModel
+        var id: ObjectIdentifier { ObjectIdentifier(model) }
+    }
+}
+#endif
 
 /// The last problem, read out by VoiceOver when it appears.
 struct ProblemText: View {

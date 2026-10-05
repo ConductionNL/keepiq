@@ -304,6 +304,36 @@ async function record(o) {
  * the user "blocked" gets the suite with the two-factor block. A revoked
  * password answers 401 afterwards, as the real server does.
  */
+// A vault in memory for the iOS AutoFill test: the replay has no recorded
+// items, so what the app saves (encrypted to the recorded suite's key) is
+// kept here and listed back, also in the offline manifest.
+const replaySecrets = []
+const replayTypes = [{ id: 't-login', name: 'login', fields: [] }, { id: 't-totp', name: 'totp', fields: [] }]
+function replayVault(method, path, body, f) {
+	const keepiq = '/index.php/apps/keepiq/api/v1'
+	if (method === 'GET' && path === `${keepiq}/offline/manifest`) {
+		const suite = (Array.isArray(f.suites) ? f.suites : []).find((s) => s.status === 'active') || null
+		return [200, { suite, secrets: replaySecrets, folders: [], types: replayTypes }]
+	}
+	if (method === 'GET' && path === `${keepiq}/folders`) return [200, []]
+	if (method === 'GET' && path === `${keepiq}/secret-types`) return [200, replayTypes]
+	if (method === 'GET' && path === `${keepiq}/secrets`) return [200, { items: replaySecrets, total: replaySecrets.length }]
+	if (method === 'POST' && path === `${keepiq}/secrets`) {
+		let item
+		try {
+			item = JSON.parse(body || '{}')
+		} catch {
+			return [400, { error: 'not json' }]
+		}
+		const saved = { ...item, id: `replay-${replaySecrets.length + 1}`, updatedAt: new Date().toISOString(), useOnly: false, readOnly: false, blocked: false }
+		replaySecrets.push(saved)
+		return [200, saved]
+	}
+	const one = path.startsWith(`${keepiq}/secrets/`) ? replaySecrets.find((s) => path === `${keepiq}/secrets/${s.id}`) : null
+	if (method === 'GET' && one) return [200, one]
+	return null
+}
+
 function replay(o) {
 	const f = JSON.parse(readFileSync(FIXTURES, 'utf8'))
 	const valid = new Set(['admin:stub-app-password', 'admin:manual-app-password', 'blocked:manual-app-password'])
@@ -343,6 +373,8 @@ function replay(o) {
 		if (req.method === 'POST' && path === `${keepiq}/extension/unpair`) return send(res, 200, f.unpair)
 		if (req.method === 'GET' && path === `${keepiq}/extension/policy`) return send(res, 200, f.policy)
 		if (req.method === 'GET' && path === `${keepiq}/suites`) return send(res, 200, user === 'blocked' ? f.suitesTwoFactorRequired : f.suites)
+		const vaultAnswer = replayVault(req.method, path, body, f)
+		if (vaultAnswer) return send(res, vaultAnswer[0], vaultAnswer[1])
 		return send(res, 404, { error: 'not recorded' })
 	})
 	server.listen(Number(o.port || 8443), '0.0.0.0', () => console.log(`[replay] on https://0.0.0.0:${o.port || 8443}`))
