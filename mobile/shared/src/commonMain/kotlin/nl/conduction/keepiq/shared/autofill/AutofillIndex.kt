@@ -24,7 +24,7 @@ data class AutofillEntry(
     override val id: String,
     override val name: String,
     override val url: String?,
-    /** "login" or "totp". */
+    /** "login", "totp" or "passkey". */
     val typeName: String,
     val login: String?,
     val key: String?,
@@ -34,11 +34,15 @@ data class AutofillEntry(
     val isLogin: Boolean get() = typeName == LOGIN
     val isTotp: Boolean get() = typeName == TOTP
 
+    /** A passkey: [url] is its rpId and [key] the encrypted passkey item JSON. Never offered as a password. */
+    val isPasskey: Boolean get() = typeName == PASSKEY
+
     override fun toString(): String = "AutofillEntry(id=$id, type=$typeName)"
 
     companion object {
         const val LOGIN = "login"
         const val TOTP = "totp"
+        const val PASSKEY = "passkey"
     }
 }
 
@@ -138,16 +142,17 @@ class AutofillIndex(val entries: List<AutofillEntry>) {
         val EMPTY = AutofillIndex(emptyList())
 
         /**
-         * The index of a vault: logins and authenticator items that are not
-         * trashed and not blocked. Blocked items are never offered, as in the
-         * extension (extension-fill-and-capture).
+         * The index of a vault: logins, authenticator items and passkeys
+         * that are not trashed and not blocked. Blocked items are never
+         * offered, as in the extension (extension-fill-and-capture). The
+         * passkey provider (task group 5) reads the passkeys from here.
          */
         fun of(state: VaultState): AutofillIndex {
             val typeNames = state.types.associate { it.id to it.name }
             return AutofillIndex(
                 state.rows.filter { !it.trashed && !it.blocked }.mapNotNull { row ->
                     val typeName = row.typeId?.let { typeNames[it] } ?: AutofillEntry.LOGIN
-                    if (typeName != AutofillEntry.LOGIN && typeName != AutofillEntry.TOTP) return@mapNotNull null
+                    if (typeName != AutofillEntry.LOGIN && typeName != AutofillEntry.TOTP && typeName != AutofillEntry.PASSKEY) return@mapNotNull null
                     AutofillEntry(row.id, row.name, row.url, typeName, row.login, row.key, row.useOnly)
                 },
             )

@@ -19,6 +19,9 @@ androidx-activity = "1.10.1"
 compose-bom = "2025.06.01"
 androidx-biometric = "1.1.0"
 androidx-autofill = "1.1.0"
+# The Credential Manager provider API (passkeys, task 5.1). Never with
+# credentials-play-services-auth: a provider does not need it, and it is not free software.
+androidx-credentials = "1.3.0"
 androidx-uiautomator = "2.3.0"
 androidx-browser = "1.8.0"
 androidx-fragment = "1.8.9"
@@ -45,6 +48,7 @@ compose-bom = { module = "androidx.compose:compose-bom", version.ref = "compose-
 compose-material3 = { module = "androidx.compose.material3:material3" }
 androidx-biometric = { module = "androidx.biometric:biometric", version.ref = "androidx-biometric" }
 androidx-autofill = { module = "androidx.autofill:autofill", version.ref = "androidx-autofill" }
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "androidx-credentials" }
 androidx-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "androidx-uiautomator" }
 androidx-browser = { module = "androidx.browser:browser", version.ref = "androidx-browser" }
 androidx-fragment = { module = "androidx.fragment:fragment-ktx", version.ref = "androidx-fragment" }

@@ -411,12 +411,43 @@ for (const counter of [41, 0]) {
 		rawId: b64(Uint8Array.from(assertion.rawId)),
 	})
 }
+// A passkey the extension creates (createCredential), as the vault saves it:
+// the phone must sign with its key and rebuild its attestation (task 5.3).
+const created = await webauthn.createCredential(
+	{
+		rp: { id: 'login.example.nl', name: 'Example Login' },
+		user: {
+			id: webauthn._internals.b64urlEncode(userHandle),
+			name: 'alice@example.nl',
+			displayName: 'Alice de Vries',
+		},
+		challenge: webauthn._internals.b64urlEncode(challenge),
+		pubKeyCredParams: [
+			{ type: 'public-key', alg: -7 },
+			{ type: 'public-key', alg: -257 },
+		],
+	},
+	origin,
+)
 write('passkey.json', {
 	description:
-		'Passkey item JSON (src/passkey/passkey.js serializePasskey) and ES256 assertions from browser-extension/src/passkey/webauthn.js getAssertion. Signatures are DER and verify with publicKeySpki.',
+		'Passkey item JSON (src/passkey/passkey.js serializePasskey) and ES256 assertions from browser-extension/src/passkey/webauthn.js getAssertion. Signatures are DER and verify with publicKeySpki. registration is a passkey webauthn.js createCredential made, with its item JSON, clientDataJSON and attestationObject.',
 	itemJson: passkey.serializePasskey(record),
 	publicKeySpki: b64(await crypto.subtle.exportKey('spki', ecPair.publicKey)),
 	challengeBase64Url: webauthn._internals.b64urlEncode(challenge),
 	origin,
 	assertions: passkeyCases,
+	registration: {
+		origin,
+		itemJson: passkey.serializePasskey({
+			...created.record,
+			createdAt: '2026-10-05T10:00:00.000Z',
+		}),
+		clientDataJSON: b64(
+			Uint8Array.from(created.credential.response.clientDataJSON),
+		),
+		attestationObject: b64(
+			Uint8Array.from(created.credential.response.attestationObject),
+		),
+	},
 })

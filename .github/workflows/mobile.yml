@@ -87,6 +87,15 @@ jobs:
           KEEPIQ_KOTLIN_VECTORS=mobile/shared/build/vectors/kotlin-output.json \
             npx vitest run tests/vitest/crypto-vectors.spec.js tests/vitest/crypto-vectors-kotlin.spec.js \
               tests/vitest/generator-vectors.spec.js tests/vitest/autofill-vectors.spec.js
+      # What the core wrote in this run. When its format changes on purpose,
+      # this file replaces tests/vectors/crypto/kotlin-output.json.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kotlin-vectors
+          path: mobile/shared/build/vectors/kotlin-output.json
+          if-no-files-found: ignore
+          retention-days: 14
 
   ios:
     runs-on: macos-latest
