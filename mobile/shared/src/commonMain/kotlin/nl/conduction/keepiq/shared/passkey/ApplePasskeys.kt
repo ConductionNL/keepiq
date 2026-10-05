@@ -66,7 +66,7 @@ object ApplePasskeys {
     fun siteKey(rpId: String): String = AutofillSites.siteKey(rpId)
 
     @Throws(Exception::class)
-    suspend fun assert(api: KeepiqApi, keys: VaultKeys, choice: PasskeyChoice, clientDataHash: String, rpId: String): AppleAssertion {
+    suspend fun signIn(api: KeepiqApi, keys: VaultKeys, choice: PasskeyChoice, clientDataHash: String, rpId: String): AppleAssertion {
         val a = Passkeys.sign(api, keys, choice, ClientData.hashed(Encoding.fromBase64(clientDataHash)), rpId)
         return AppleAssertion(
             userHandle = a.userHandle?.let { base64(it) } ?: "",

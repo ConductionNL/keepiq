@@ -90,6 +90,8 @@ targets:
           NSExtensionAttributes:
             ASCredentialProviderExtensionCapabilities:
               ProvidesPasswords: true
+              # Passkey assertion and registration (task 5.2, iOS 17).
+              ProvidesPasskeys: true
               ShowsConfigurationUI: true
     settings:
       base:

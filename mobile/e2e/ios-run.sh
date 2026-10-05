@@ -81,6 +81,10 @@ fit_video() {
 }
 run_class PairUnlockUITests keepiq-ios-pairing
 run_class VaultFlowsUITests keepiq-ios-vault
+# The AutoFill extension's screens inside the app (task group 4), then its
+# passkey screens and calls (task 5.2), both against the replay.
+run_class AutofillUITests keepiq-ios-autofill
+run_class PasskeyUITests keepiq-ios-passkeys
 rm -rf "$OUT/DerivedData"
 ls -la "$OUT" "$OUT/shots"
 exit "$status"
