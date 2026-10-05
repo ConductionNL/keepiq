@@ -19,6 +19,10 @@ on:
       - "src/passkey/**"
       - "src/generator/**"
       - "tests/vitest/generator-vectors.spec.js"
+      - "tests/vitest/autofill-vectors.spec.js"
+      - "browser-extension/src/lib/match.js"
+      - "browser-extension/src/lib/useOnly.js"
+      - "browser-extension/src/lib/capture.js"
       - ".github/workflows/mobile.yml"
   pull_request:
     branches: [main, development, beta]
@@ -32,6 +36,10 @@ on:
       - "src/passkey/**"
       - "src/generator/**"
       - "tests/vitest/generator-vectors.spec.js"
+      - "tests/vitest/autofill-vectors.spec.js"
+      - "browser-extension/src/lib/match.js"
+      - "browser-extension/src/lib/useOnly.js"
+      - "browser-extension/src/lib/capture.js"
       - ".github/workflows/mobile.yml"
   workflow_dispatch:
 
@@ -78,7 +86,7 @@ jobs:
           npm ci --ignore-scripts
           KEEPIQ_KOTLIN_VECTORS=mobile/shared/build/vectors/kotlin-output.json \
             npx vitest run tests/vitest/crypto-vectors.spec.js tests/vitest/crypto-vectors-kotlin.spec.js \
-              tests/vitest/generator-vectors.spec.js
+              tests/vitest/generator-vectors.spec.js tests/vitest/autofill-vectors.spec.js
 
   ios:
     runs-on: macos-latest

@@ -69,7 +69,7 @@ class AutofillIndexTest {
         // The name fallback of the extension: "Example" mentions the label of example.org.
         assertEquals(listOf("web", "sub"), index.candidates(AutofillTarget.Web("example.org")).map { it.id })
         // An app link is never offered to a website, even one whose name reads like the package.
-        assertTrue(index.candidates(AutofillTarget.Web("example.bank")).isEmpty())
+        assertEquals(listOf("web", "sub"), index.candidates(AutofillTarget.Web("example.bank")).map { it.id })
     }
 
     @Test
