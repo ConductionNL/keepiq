@@ -20,6 +20,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
+import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.runBlocking
@@ -120,12 +121,14 @@ class VaultFlowsTest {
         compose.onNode(field("Name")).performTextInput("Shop (demo)")
         compose.onNode(field("Website address")).performTextInput("https://shop.example.com")
         compose.onNode(field("User name")).performScrollTo().performTextInput("anna.demo@example.com")
+        hideKeyboard()
         compose.onNodeWithText("Generate").performScrollTo().performClick()
         compose.waitForTag("generated")
         E2e.shot("35-generate-in-form")
         compose.onNodeWithText("Use this").performClick()
         val generated = compose.onNode(field("Password")).fetchSemanticsNode().config[SemanticsProperties.EditableText].text
         assertTrue("a generated password was filled in", generated.length >= 12)
+        hideKeyboard()
         compose.onNodeWithText("Save").performScrollTo().performClick()
         compose.waitForText("Shop (demo)", 60_000)
         compose.waitForText("anna.demo@example.com")
@@ -145,6 +148,7 @@ class VaultFlowsTest {
         compose.waitUntil(30_000) { compose.nodes(field("Name")).isNotEmpty() }
         compose.onNode(field("Name")).performTextClearance()
         compose.onNode(field("Name")).performTextInput("Shop account (demo)")
+        hideKeyboard()
         compose.onNodeWithText("Save").performScrollTo().performClick()
         compose.waitForText("Shop account (demo)", 60_000)
         E2e.shot("37-edited")
@@ -171,6 +175,7 @@ class VaultFlowsTest {
         compose.onNodeWithContentDescription("New Send").performClick()
         compose.waitUntil(30_000) { compose.nodes(field("Text to send")).isNotEmpty() }
         compose.onNode(field("Text to send")).performTextInput("The demo door code is 2468.")
+        hideKeyboard()
         compose.onNodeWithText("Create link").performScrollTo().performClick()
         compose.waitForText("Your link is ready", 60_000)
         val link = compose.nodes(hasText("/public/", substring = true)).single().config[SemanticsProperties.Text].joinToString("")
@@ -185,6 +190,7 @@ class VaultFlowsTest {
         compose.waitUntil(30_000) { compose.nodes(field("Send link")).isNotEmpty() }
         compose.onNode(field("Send link")).performTextInput(link)
         compose.waitForText("Opening shows the text", 60_000)
+        hideKeyboard()
         compose.onNodeWithText("Open").performClick()
         compose.waitForText("The demo door code is 2468.", 60_000)
         E2e.shot("42-send-opened")
@@ -214,6 +220,12 @@ class VaultFlowsTest {
     /** A six-digit code shown as two groups of three. */
     private val totpCode = SemanticsMatcher("a TOTP code") { node ->
         node.config.getOrElse(SemanticsProperties.Text) { emptyList() }.any { Regex("^\\d{3} \\d{3}$").matches(it.text) }
+    }
+
+    /** The keyboard covers the lower half; a touch there would land in the keyboard's window. */
+    private fun hideKeyboard() {
+        Espresso.closeSoftKeyboard()
+        compose.waitForIdle()
     }
 
     /** An input labelled [label]. */
