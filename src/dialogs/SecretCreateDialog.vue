@@ -32,6 +32,8 @@
 				:reduce="(opt) => opt.value"
 				:clearable="false" />
 
+			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
+
 			<!-- Card / identity composite payloads (card-identity-items §3.1):
 			     per-type field sets serialized to the encrypted key on save. -->
 			<template v-if="isCard">
@@ -116,8 +118,6 @@
 				@generated="onGenerated" />
 
 			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
-
-			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
 
 			<TypedFieldsForm
 				v-if="typedFields.length > 0"
