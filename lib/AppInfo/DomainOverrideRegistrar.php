@@ -61,7 +61,6 @@ final class DomainOverrideRegistrar {
 			static fn ($c) => new SettingsService(
 				appConfig: $c->get(\OCP\IAppConfig::class),
 				config: $c->get(\OCP\IConfig::class),
-				appManager: $c->get(\OCP\App\IAppManager::class),
 				container: $c,
 				groupManager: $c->get(\OCP\IGroupManager::class),
 				userSession: $c->get(\OCP\IUserSession::class),

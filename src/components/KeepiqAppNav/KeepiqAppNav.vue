@@ -251,7 +251,11 @@ import NavFolderTree, { NAV_TREE_MAX_DEPTH } from './NavFolderTree.vue'
 import { useFolderStore } from '../../store/modules/folder.js'
 import { useSessionStore } from '../../store/modules/session.js'
 import { useTeamFolderStore } from '../../store/modules/teamFolder.js'
-import { isMenuEntryVisible, menuEntryTo } from '../../utils/navEntries.js'
+import {
+	currentAppsWebRoots,
+	isMenuEntryVisible,
+	menuEntryTo,
+} from '../../utils/navEntries.js'
 
 /**
  * Keepiq's manifest-driven left rail with the recursive vault/folder tree.
@@ -393,9 +397,7 @@ export default {
 		sortedMenu() {
 			const context = {
 				isAdmin: this.isAdmin,
-				appsWebRoots:
-					(typeof window !== 'undefined' && window.OC?.appswebroots)
-					|| null,
+				appsWebRoots: currentAppsWebRoots(),
 			}
 			return (this.manifest?.menu || [])
 				.filter((item) => isMenuEntryVisible(item, context))

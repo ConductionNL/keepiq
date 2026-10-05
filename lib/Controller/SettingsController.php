@@ -94,8 +94,8 @@ class SettingsController extends Controller {
 	 *
 	 * The write itself delegates to {@see SettingsService::updateSettings()},
 	 * which persists the app-scoped `CONFIG_KEYS` via `IAppConfig` and returns
-	 * the refreshed settings map (stored keys plus the `openregisters` and
-	 * `isAdmin` metadata flags read by the settings UI).
+	 * the refreshed settings map (stored keys plus the `isAdmin` metadata flag
+	 * read by the settings UI).
 	 *
 	 * It writes the master password floor, so it is guarded by the Policies
 	 * area (admin-scoped-roles D2).

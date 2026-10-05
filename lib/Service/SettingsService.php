@@ -28,7 +28,6 @@ namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
-use OCP\App\IAppManager;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IConfig;
@@ -160,7 +159,6 @@ class SettingsService {
 	 *
 	 * @param IAppConfig $appConfig The app config interface
 	 * @param IConfig $config The per-user config interface
-	 * @param IAppManager $appManager The app manager
 	 * @param ContainerInterface $container The container
 	 * @param IGroupManager $groupManager The group manager
 	 * @param IUserSession $userSession The user session
@@ -173,7 +171,6 @@ class SettingsService {
 	public function __construct(
 		private IAppConfig $appConfig,
 		private IConfig $config,
-		private IAppManager $appManager,
 		ContainerInterface $container,
 		private IGroupManager $groupManager,
 		private IUserSession $userSession,
@@ -335,19 +332,10 @@ class SettingsService {
 	}//end updateUserPreferences()
 
 	/**
-	 * Check whether OpenRegister is installed and available.
-	 *
-	 * @return bool
-	 */
-	public function isOpenRegisterAvailable(): bool {
-		return $this->appManager->isInstalled('openregister');
-	}//end isOpenRegisterAvailable()
-
-	/**
 	 * Retrieve all current settings.
 	 *
-	 * Returns a flat array containing all app config values plus metadata
-	 * fields (openregisters, isAdmin) consumed by the frontend.
+	 * Returns a flat array containing all app config values plus the isAdmin
+	 * metadata field consumed by the frontend.
 	 *
 	 * @return array<string,mixed>
 	 *
@@ -365,7 +353,6 @@ class SettingsService {
 		return array_merge(
 			$settings,
 			[
-				'openregisters' => $this->isOpenRegisterAvailable(),
 				'isAdmin' => $isAdmin,
 			]
 		);

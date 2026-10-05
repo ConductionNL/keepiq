@@ -148,7 +148,10 @@ A Keepiq repair step (`OCA\Keepiq\Repair\RemoveLegacyRegisterRows`, replacing `M
 
 - every `openregister_schemas` row whose `application` is `keepiq` or `doriath`;
 - for each such schema, OpenRegister's per-schema data table `openregister_table_<registerId>_<schemaId>`, dropped only when it holds zero rows;
-- every `openregister_registers` row whose `slug` is `keepiq` or `doriath`, once its `schemas` list no longer names a schema outside that set.
+- every `openregister_registers` row whose `slug` is `keepiq` or `doriath`, once its `schemas` list no longer names a schema outside that set and no object in `openregister_objects` is stored under it;
+- every `openregister_configurations` row whose `app` is `keepiq` or `doriath`, once every register and schema it lists has been removed.
+
+Another app's register that lists a removed schema SHALL lose only that entry; every other entry SHALL stay exactly as stored. Rows SHALL be deleted before any data table is dropped, so that a failure partway leaves at worst an empty orphan table, never a schema or register pointing at a dropped table.
 
 A schema SHALL count as empty only when it has zero rows in `openregister_objects` AND zero rows in its per-schema data table (or that table does not exist). The step SHALL select rows by `application` and register slug, never by schema slug alone, because schema slugs such as `example` are shared between apps. It SHALL reach OpenRegister's tables through `IDBConnection` only, after checking that they exist, and SHALL reference no OpenRegister class. It SHALL be idempotent, and SHALL NOT fail the install or upgrade: any error is logged and the step ends.
 
@@ -156,7 +159,7 @@ A schema SHALL count as empty only when it has zero rows in `openregister_object
 
 - **GIVEN** an instance with a `doriath` register listing schema `example` (`application = keepiq`), that schema's empty data table, and an empty `keepiq` register
 - **WHEN** `occ upgrade` runs Keepiq's repair steps
-- **THEN** both registers, the schema row and the empty data table MUST be gone, and every other OpenRegister register, schema and table MUST be untouched, including another app's schema with the slug `example`
+- **THEN** both registers, both Keepiq configuration entries, the schema row and the empty data table MUST be gone, and every other OpenRegister register, schema, configuration and table MUST be untouched, including another app's schema with the slug `example`
 - @e2e exclude repair step with no UI surface — covered by RemoveLegacyRegisterRowsTest (unit, in-memory OpenRegister tables)
 
 #### Scenario: Rows that still hold objects are kept

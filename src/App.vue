@@ -469,7 +469,11 @@ import { useOfflineStore } from './store/modules/offline.js'
 import { useSessionStore } from './store/modules/session.js'
 import { initializeStores } from './store/store.js'
 import { activeDetailSecretId, closeDetailLocation } from './utils/detailRoute.js'
-import { shellPermissions } from './utils/navEntries.js'
+import {
+	currentAppsWebRoots,
+	isAppEnabled,
+	shellPermissions,
+} from './utils/navEntries.js'
 
 /** The document events that count as activity for the inactivity lock (crypto-06). */
 const ACTIVITY_EVENTS = Object.freeze([
@@ -691,13 +695,11 @@ export default {
 		 * user. Without it the companion is not mounted at all, so the shell
 		 * sends no health probe to `/apps/hermiq/` (ADR-006).
 		 *
-		 * @return {boolean} True when `OC.appswebroots` lists hermiq.
+		 * @return {boolean} True when Hermiq is enabled (`OC.appswebroots`).
 		 * @spec openspec/specs/app-shell/spec.md#requirement-optional-integrations-appear-only-when-their-app-is-present
 		 */
 		hermiqEnabled() {
-			return Boolean(
-				typeof window !== 'undefined' && window.OC?.appswebroots?.hermiq,
-			)
+			return isAppEnabled('hermiq', currentAppsWebRoots())
 		},
 
 		/**

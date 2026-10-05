@@ -38,6 +38,8 @@ use OCP\DB\QueryBuilder\IQueryBuilder;
 use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\IRequest;
+use Psr\Log\LoggerInterface;
+use Throwable;
 
 /**
  * Serves GET /api/metrics.
@@ -58,7 +60,8 @@ class MetricsController extends Controller {
 	 * @param IRequest      $request    The HTTP request
 	 * @param IDBConnection $db         The database connection
 	 * @param IAppManager   $appManager The app manager (installed version)
-	 * @param IConfig       $config     The system config (Nextcloud version)
+	 * @param IConfig         $config     The system config (Nextcloud version)
+	 * @param LoggerInterface $logger     The logger
 	 *
 	 * @return void
 	 */
@@ -67,6 +70,7 @@ class MetricsController extends Controller {
 		private readonly IDBConnection $db,
 		private readonly IAppManager $appManager,
 		private readonly IConfig $config,
+		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -78,6 +82,10 @@ class MetricsController extends Controller {
 	 * General admin area, and is the explicit posture hydra gate-30 accepts
 	 * for an admin-only scrape endpoint. `#[NoCSRFRequired]` because a
 	 * scraper authenticates with an app password and sends no CSRF token.
+	 *
+	 * A failing count leaves only `keepiq_suites_total` out, as the AppHost
+	 * engine did: `keepiq_info` and `keepiq_up` are still served, so a
+	 * database hiccup reads as a missing series, not as a target that is down.
 	 *
 	 * @return TextPlainResponse The Prometheus exposition
 	 *
@@ -98,11 +106,20 @@ class MetricsController extends Controller {
 			'# TYPE keepiq_up gauge',
 			'keepiq_up 1',
 			'',
-			'# HELP keepiq_suites_total Total number of active encryption suites',
-			'# TYPE keepiq_suites_total gauge',
-			'keepiq_suites_total ' . $this->countActiveSuites(),
-			'',
 		];
+
+		try {
+			$suites = $this->countActiveSuites();
+			array_push(
+				$lines,
+				'# HELP keepiq_suites_total Total number of active encryption suites',
+				'# TYPE keepiq_suites_total gauge',
+				'keepiq_suites_total ' . $suites,
+				''
+			);
+		} catch (Throwable $e) {
+			$this->logger->warning('[MetricsController] Counting active suites failed; series left out', ['exception' => $e]);
+		}
 
 		$response = new TextPlainResponse(implode("\n", $lines) . "\n");
 		$response->addHeader('Content-Type', self::CONTENT_TYPE);

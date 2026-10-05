@@ -2,10 +2,12 @@
 #
 # Brings up PostgreSQL + Nextcloud 32 on http://localhost:8080 (admin/admin),
 # with this repo bind-mounted as the `keepiq` custom app. Keepiq needs no other
-# app (ADR-006). A sibling `../openregister` checkout, when present, is mounted
-# alongside it and enabled too, for the Flows pages and the MCP tools. The
-# before-starting hook (docker/nextcloud/enable-apps.sh) enables the apps on
-# every start:
+# app (ADR-006). `../openregister` is always mounted alongside it; the
+# before-starting hook (docker/nextcloud/enable-apps.sh) enables OpenRegister
+# only when that directory holds a real checkout, for the Flows pages and the
+# MCP tools. Without a checkout Docker creates `../openregister` as an empty
+# (root-owned) directory, which the hook skips; remove it with sudo before
+# cloning OpenRegister there later. The hook enables the apps on every start:
 #
 #   docker compose up -d
 #

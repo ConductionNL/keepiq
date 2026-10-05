@@ -93,7 +93,6 @@ class SettingsControllerWriteTest extends TestCase {
 		$submitted = ['register' => 'b7d1c0f6-0000-4000-8000-000000000001'];
 		$stored = [
 			'register' => 'b7d1c0f6-0000-4000-8000-000000000001',
-			'openregisters' => true,
 			'isAdmin' => true,
 		];
 
@@ -133,7 +132,6 @@ class SettingsControllerWriteTest extends TestCase {
 		];
 		$stored = [
 			'register' => '',
-			'openregisters' => true,
 			'isAdmin' => true,
 		];
 

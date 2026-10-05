@@ -135,6 +135,7 @@ class HealthController extends Controller {
 	 * @spec openspec/specs/app-shell/spec.md#requirement-public-health-endpoint
 	 */
 	private function checkFilesystem(): string {
+		$path = '';
 		try {
 			$dir = $this->tempManager->getTempBaseDir();
 			if (is_dir($dir) === false || is_writable($dir) === false) {
@@ -145,13 +146,20 @@ class HealthController extends Controller {
 			if (file_put_contents($path, 'health') === false) {
 				return 'failed: TempDirectoryNotWritable';
 			}
-
-			unlink($path);
-			return 'ok';
 		} catch (Throwable $e) {
 			$this->logger->warning('[HealthController] Filesystem check failed', ['exception' => $e]);
 			return 'failed: ' . $this->shortClass(throwable: $e);
 		}
+
+		// The write succeeded, so the check passed. Removing the probe file is
+		// housekeeping: a failure there is logged, never reported as unhealthy.
+		try {
+			unlink($path);
+		} catch (Throwable $e) {
+			$this->logger->warning('[HealthController] Could not remove the health probe file', ['exception' => $e]);
+		}
+
+		return 'ok';
 	}//end checkFilesystem()
 
 	/**

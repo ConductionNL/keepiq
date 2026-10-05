@@ -94,7 +94,6 @@ class SettingsControllerTest extends TestCase {
 	public function testIndexReturnsJsonResponseWithSettings(): void {
 		$settings = [
 			'register' => 'some-uuid',
-			'openregisters' => true,
 			'isAdmin' => false,
 		];
 
@@ -117,7 +116,7 @@ class SettingsControllerTest extends TestCase {
 	 */
 	public function testCreateCallsUpdateSettingsAndReturnsSuccess(): void {
 		$params = ['register' => 'new-uuid'];
-		$updated = ['register' => 'new-uuid', 'openregisters' => true, 'isAdmin' => false];
+		$updated = ['register' => 'new-uuid', 'isAdmin' => false];
 
 		$this->request->expects($this->once())
 			->method('getParams')

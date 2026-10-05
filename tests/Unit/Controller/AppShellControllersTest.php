@@ -175,7 +175,8 @@ final class AppShellControllersTest extends TestCase {
 			$this->createMock(IRequest::class),
 			$this->db(count: '4', params: $params),
 			$this->appManager(),
-			$config
+			$config,
+			$this->createMock(LoggerInterface::class)
 		);
 
 		$response = $controller->index();
@@ -189,6 +190,31 @@ final class AppShellControllersTest extends TestCase {
 		self::assertStringContainsString("# HELP keepiq_suites_total Total number of active encryption suites\n# TYPE keepiq_suites_total gauge\nkeepiq_suites_total 4\n", $body);
 		self::assertSame(['active'], $params, 'the count filters on status = active');
 	}//end testMetricsReportTheActiveSuiteCount()
+
+	/**
+	 * A failing count leaves only that series out; the scrape still succeeds.
+	 *
+	 * @return void
+	 */
+	public function testMetricsSurviveAFailingCount(): void {
+		$config = $this->createMock(IConfig::class);
+		$config->method('getSystemValueString')->willReturn('35.0.0.1');
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects(self::once())->method('warning');
+		$controller = new MetricsController(
+			$this->createMock(IRequest::class),
+			$this->db(failure: new \RuntimeException('database gone')),
+			$this->appManager(),
+			$config,
+			$logger
+		);
+
+		$body = $controller->index()->render();
+
+		self::assertStringContainsString("keepiq_up 1\n", $body);
+		self::assertStringContainsString('keepiq_info{', $body);
+		self::assertStringNotContainsString('keepiq_suites_total', $body);
+	}//end testMetricsSurviveAFailingCount()
 
 	/**
 	 * A preferences controller over an in-memory user-value store.
