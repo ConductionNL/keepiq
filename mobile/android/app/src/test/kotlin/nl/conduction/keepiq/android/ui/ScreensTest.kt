@@ -3,7 +3,11 @@
 
 package nl.conduction.keepiq.android.ui
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -112,5 +116,25 @@ class ScreensTest {
         compose.waitForIdle()
         assertEquals(20, value.length)
         assert(value.any { it.isDigit() }) { value }
+    }
+
+    @Test
+    fun theSettingsAutofillEntryOffersTheChoiceOnlyWhenKeepiqIsNotTheService() {
+        var enabled by mutableStateOf(false)
+        val calls = mutableListOf<String>()
+        compose.setContent {
+            MaterialTheme {
+                Column { AutofillEntry(enabled = enabled, onChoose = { calls += "choose" }, onNeverList = { calls += "never" }) }
+            }
+        }
+        compose.onNodeWithText("Keepiq does not fill in logins yet. Choose Keepiq as your autofill service.").assertExists()
+        compose.onNodeWithText("Choose Keepiq for autofill").performClick()
+        compose.onNodeWithText("Show where Keepiq never saves").performClick()
+        assertEquals(listOf("choose", "never"), calls)
+
+        enabled = true
+        compose.onNodeWithText("Keepiq fills in your logins in apps and browsers.").assertExists()
+        compose.onNodeWithText("Choose Keepiq for autofill").assertDoesNotExist()
+        compose.onNodeWithText("Show where Keepiq never saves").assertExists()
     }
 }
