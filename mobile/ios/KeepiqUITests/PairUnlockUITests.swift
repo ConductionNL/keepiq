@@ -31,12 +31,13 @@ final class PairUnlockUITests: XCTestCase {
         }
     }
 
-    /// iOS may still show its own "Save Password?" prompt over the app; it is
-    /// not Keepiq's, so the test answers it and carries on.
-    private func dismissSystemSavePrompt() {
-        for target in [app!, XCUIApplication(bundleIdentifier: "com.apple.springboard")] {
-            let notNow = target.buttons["Not Now"]
-            if notNow.exists && notNow.isHittable { notNow.tap() }
+    /// iOS may still show its own "Save Password?" prompt over the app. It runs
+    /// in a system process the test cannot query, so when an element exists but
+    /// cannot be tapped, the test taps the prompt's "Not Now" (left button, just
+    /// below the middle of the screen) and tries again.
+    private func dismissSystemSavePrompt(blocking element: XCUIElement? = nil) {
+        if let element, element.exists, !element.isHittable {
+            app.coordinate(withNormalizedOffset: CGVector(dx: 0.31, dy: 0.63)).tap()
         }
     }
 
@@ -45,21 +46,21 @@ final class PairUnlockUITests: XCTestCase {
     private func appears(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
         let end = Date().addingTimeInterval(timeout)
         while Date() < end {
-            dismissSystemSavePrompt()
-            if element.waitForExistence(timeout: 1) { return true }
+            if element.waitForExistence(timeout: 1) {
+                if element.isHittable { return true }
+                dismissSystemSavePrompt(blocking: element)
+            }
         }
-        return element.exists
+        return element.exists && element.isHittable
     }
 
     private func type(_ text: String, into element: XCUIElement) {
-        dismissSystemSavePrompt()
         XCTAssertTrue(appears(element, timeout: 20), "\(element) is missing")
         element.tap()
         element.typeText(text)
     }
 
     private func tap(_ element: XCUIElement, timeout: TimeInterval = 20) {
-        dismissSystemSavePrompt()
         XCTAssertTrue(appears(element, timeout: timeout), "\(element) is missing")
         element.tap()
     }
