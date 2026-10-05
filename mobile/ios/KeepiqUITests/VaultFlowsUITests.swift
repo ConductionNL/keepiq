@@ -42,6 +42,32 @@ final class VaultFlowsUITests: XCTestCase {
         dismissKeyboardTip()
     }
 
+    /// On screen and not covered. Asking an off-screen element whether it is
+    /// hittable fails the test ("activation point invalid"), so the frame comes first.
+    private func reachable(_ element: XCUIElement) -> Bool {
+        guard element.exists else { return false }
+        let frame = element.frame
+        let screen = app.windows.firstMatch.frame
+        guard !frame.isEmpty, screen.contains(CGPoint(x: frame.midX, y: frame.midY)) else { return false }
+        return element.isHittable
+    }
+
+    /// Brings a button into reach: answer a save-password prompt, lower the
+    /// keyboard with its Return key, then scroll until it can be tapped.
+    private func makeHittable(_ element: XCUIElement) {
+        dismissSavePasswordNow()
+        if reachable(element) { return }
+        if app.keyboards.count > 0 {
+            for key in ["Return", "return", "Done", "done"] where app.keyboards.buttons[key].exists {
+                app.keyboards.buttons[key].tap()
+                break
+            }
+        }
+        for _ in 0..<4 where !reachable(element) {
+            app.swipeUp()
+        }
+    }
+
     /// The first keyboard use shows a slide-to-type tip that covers the lower half.
     private func dismissKeyboardTip() {
         let tip = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Speed up your typing")).firstMatch
@@ -53,8 +79,9 @@ final class VaultFlowsUITests: XCTestCase {
         dismissKeyboardTip()
         dismissSavePasswordNow()
         // A screen still sliding in, or a keyboard on its way out, covers it for a moment.
-        let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: element)
-        if XCTWaiter.wait(for: [hittable], timeout: 5) != .completed { app.swipeUp() }
+        let deadline = Date().addingTimeInterval(5)
+        while !reachable(element) && Date() < deadline { usleep(250_000) }
+        if !reachable(element) { makeHittable(element) }
         element.tap()
     }
 
@@ -209,7 +236,7 @@ final class VaultFlowsUITests: XCTestCase {
         let trashButtons = app.buttons.matching(identifier: "Move to trash")
         expectation(for: NSPredicate(format: "count >= 2"), evaluatedWith: trashButtons)
         waitForExpectations(timeout: 10)
-        let confirmTrash = trashButtons.allElementsBoundByIndex.first { $0.isHittable }
+        let confirmTrash = trashButtons.allElementsBoundByIndex.first { reachable($0) }
         XCTAssertNotNil(confirmTrash, "no confirmation to tap")
         confirmTrash?.tap()
         XCTAssertTrue(text("Webmail (demo)").waitForExistence(timeout: 60))
