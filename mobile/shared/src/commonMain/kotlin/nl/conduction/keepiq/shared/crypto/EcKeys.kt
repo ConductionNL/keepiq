@@ -100,14 +100,14 @@ internal object EcKeys {
             return tag to value
         }
 
-        private fun expect(tag: Int): ByteArray = any().let { (t, v) ->
+        private fun readTag(tag: Int): ByteArray = any().let { (t, v) ->
             require(t == tag) { "der: tag $t, expected $tag" }
             v
         }
 
-        fun sequence(): Der = Der(expect(0x30))
-        fun integer(): ByteArray = expect(0x02)
-        fun octets(): ByteArray = expect(0x04)
-        fun bitString(): ByteArray = expect(0x03).let { it.copyOfRange(1, it.size) }
+        fun sequence(): Der = Der(readTag(0x30))
+        fun integer(): ByteArray = readTag(0x02)
+        fun octets(): ByteArray = readTag(0x04)
+        fun bitString(): ByteArray = readTag(0x03).let { it.copyOfRange(1, it.size) }
     }
 }

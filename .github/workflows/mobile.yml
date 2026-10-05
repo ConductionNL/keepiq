@@ -71,11 +71,13 @@ jobs:
       - name: No Google Play Services or Firebase in the dependency tree
         run: |
           ./gradlew --no-daemon -q :shared:dependencies :android:app:dependencies > deps.txt
-          if grep -E "com\.google\.android\.gms|com\.google\.firebase" deps.txt; then
+          if grep -E "com\.google\.android\.gms|com\.google\.firebase|credentials-play-services-auth" deps.txt; then
             echo "A proprietary Google artifact is in the dependency tree." >&2
             exit 1
           fi
           grep -q "kotlinx-serialization-json" deps.txt
+          # The passkey provider (task 5.1) is androidx.credentials alone.
+          grep -q "androidx.credentials:credentials:1" deps.txt
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
