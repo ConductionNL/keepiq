@@ -67,9 +67,20 @@ occ config:app:delete keepiq vault_require_two_factor
 
 adb emu screenrecord stop || true
 sleep 3
-if [ -f "$OUT/keepiq-android.webm" ] && command -v ffmpeg >/dev/null; then
-	ffmpeg -loglevel error -y -i "$OUT/keepiq-android.webm" -c:v libx264 -pix_fmt yuv420p -movflags +faststart "$OUT/keepiq-android.mp4" \
-		&& rm "$OUT/keepiq-android.webm"
-fi
+
+# System autofill (task group 4): the test APK's forms and a WebView page
+# on the test server, with a recording of its own.
+adb shell pm clear "$PKG" >/dev/null
+adb emu screenrecord start --time-limit 175 "$OUT/keepiq-android-autofill.webm" || echo "::warning::the emulator did not start a recording"
+run_class SystemAutofillTest -e keepiqAppPassword "$APP_PASSWORD" || status=1
+adb emu screenrecord stop || true
+sleep 3
+
+for video in keepiq-android keepiq-android-autofill; do
+	if [ -f "$OUT/$video.webm" ] && command -v ffmpeg >/dev/null; then
+		ffmpeg -loglevel error -y -i "$OUT/$video.webm" -c:v libx264 -pix_fmt yuv420p -movflags +faststart "$OUT/$video.mp4" \
+			&& rm "$OUT/$video.webm"
+	fi
+done
 ls -la "$OUT" "$OUT/e2e-shots" 2>/dev/null || true
 exit "$status"

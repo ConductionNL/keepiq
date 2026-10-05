@@ -86,6 +86,7 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.espresso.intents)
     androidTestImplementation(libs.androidx.uiautomator)
+    androidTestImplementation(libs.kotlinx.serialization.json)
     androidTestImplementation(libs.junit)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.serialization.json)

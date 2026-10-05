@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<resources>
+    <item name="username" type="id" />
+    <item name="password" type="id" />
+    <item name="otp" type="id" />
+    <item name="submit" type="id" />
+    <item name="status" type="id" />
+    <item name="web" type="id" />
+    <!-- Digital Asset Links: this app belongs to the test server, which lists it back (mobile/e2e/server.mjs). -->
+    <string name="asset_statements" translatable="false">[{\"include\": \"https://10.0.2.2:8443/.well-known/assetlinks.json\"}]</string>
+</resources>

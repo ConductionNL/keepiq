@@ -14,7 +14,12 @@
  *                  Flow v2 page and grants access, as the user would in the
  *                  browser;
  *             GET  /__e2e/tokens  the user's app password names (the
- *                  Nextcloud device list), through occ.
+ *                  Nextcloud device list), through occ;
+ *             POST /__e2e/assetlinks  the statements this front then serves
+ *                  at /.well-known/assetlinks.json (Digital Asset Links for
+ *                  the autofill test app, whose signing key is made per run);
+ *             GET  /__e2e/login.html  a login form, for the autofill test's
+ *                  WebView (the web-domain path).
  *   record  Talks to the test Nextcloud and writes the answers the iOS
  *           tests replay to mobile/e2e/fixtures/server.json.
  *   replay  An https stub that answers from those recordings, for the iOS
@@ -169,6 +174,28 @@ function send(res, status, body, type = 'application/json') {
 	res.end(typeof body === 'string' ? body : JSON.stringify(body))
 }
 
+// What /.well-known/assetlinks.json answers; the autofill test posts it.
+let assetLinks = '[]'
+
+// The WebView page of the autofill test: a login form that shows what was
+// filled in, so the test can read it.
+const LOGIN_PAGE = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>Sign in</title>
+<style>body{font:20px sans-serif;margin:16px}input{display:block;width:100%;font-size:24px;padding:12px;margin:8px 0}</style></head>
+<body><form id="login" onsubmit="return false">
+<label for="username">User name</label>
+<input id="username" name="username" type="text" autocomplete="username" autofocus>
+<label for="password">Password</label>
+<input id="password" name="password" type="password" autocomplete="current-password">
+<button type="submit">Sign in</button></form>
+<p id="result">empty</p>
+<script>
+const show = () => { document.getElementById('result').textContent = 'filled: ' + document.getElementById('username').value + ' / ' + document.getElementById('password').value.length }
+for (const id of ['username', 'password']) document.getElementById(id).addEventListener('input', show)
+setInterval(show, 500)
+</script></body></html>`
+
 function proxy(o) {
 	const upstream = o.upstream
 	const server = createHttpsServer({ cert: readFileSync(o.cert), key: readFileSync(o.key) }, async (req, res) => {
@@ -181,6 +208,16 @@ function proxy(o) {
 			}
 			if (req.url === '/__e2e/tokens') {
 				return send(res, 200, { names: tokenNames(o.container, o.user || 'admin') })
+			}
+			if (req.url === '/__e2e/assetlinks' && req.method === 'POST') {
+				assetLinks = JSON.stringify(await readJson(req))
+				return send(res, 200, { ok: true })
+			}
+			if (req.url === '/.well-known/assetlinks.json') {
+				return send(res, 200, assetLinks)
+			}
+			if (req.url.startsWith('/__e2e/login.html')) {
+				return send(res, 200, LOGIN_PAGE, 'text/html; charset=utf-8')
 			}
 		} catch (e) {
 			console.error('[e2e]', e.message)
