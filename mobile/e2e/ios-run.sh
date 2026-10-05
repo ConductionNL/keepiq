@@ -65,6 +65,19 @@ run_class() {
 		-resultBundlePath "$OUT/$class.xcresult" || status=1
 	kill -INT "$recorder" 2>/dev/null || true
 	wait "$recorder" 2>/dev/null || true
+	fit_video "$OUT/$video.mp4"
+}
+
+# A video longer than 3 minutes is played faster until it fits, so the whole
+# run stays visible. The simulator itself has no time limit to record with.
+fit_video() {
+	local file="$1" seconds
+	[ -f "$file" ] || return 0
+	command -v ffmpeg >/dev/null || brew install --quiet ffmpeg >/dev/null 2>&1 || return 0
+	seconds="$(ffprobe -v error -show_entries format=duration -of csv=p=0 "$file" | cut -d. -f1)"
+	[ "${seconds:-0}" -gt 175 ] || return 0
+	ffmpeg -loglevel error -y -i "$file" -an -vf "setpts=PTS*170/${seconds}" -c:v libx264 -pix_fmt yuv420p \
+		-movflags +faststart "${file%.mp4}-fit.mp4" && mv "${file%.mp4}-fit.mp4" "$file"
 }
 run_class PairUnlockUITests keepiq-ios-pairing
 run_class VaultFlowsUITests keepiq-ios-vault
