@@ -34,6 +34,8 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import nl.conduction.keepiq.android.KeepiqApp
 import nl.conduction.keepiq.android.R
+import nl.conduction.keepiq.android.passkey.PasskeyProvider
+import nl.conduction.keepiq.android.passkey.PasskeySettings
 import nl.conduction.keepiq.android.ui.ScreenColumn
 
 /**
@@ -46,6 +48,7 @@ class AutofillSettingsActivity : ComponentActivity() {
     private val core: AutofillCore get() = (application as KeepiqApp).autofill
     private var enabled by mutableStateOf(false)
     private var never by mutableStateOf(emptyList<String>())
+    private var passkeys by mutableStateOf(false)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,6 +63,7 @@ class AutofillSettingsActivity : ComponentActivity() {
                         } else {
                             Button(onClick = ::chooseService, modifier = Modifier.fillMaxWidth().testTag("autofillChoose")) { Text(stringResource(R.string.autofill_choose_service)) }
                         }
+                        PasskeySettings(enabled = passkeys)
                         Text(stringResource(R.string.autofill_never_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
                         if (never.isEmpty()) Text(stringResource(R.string.autofill_never_empty))
                         for (site in never) {
@@ -82,6 +86,7 @@ class AutofillSettingsActivity : ComponentActivity() {
         super.onResume()
         enabled = core.index.isAutofillService()
         never = core.neverSave.sites()
+        passkeys = PasskeyProvider.isEnabled(this)
         core.index.clearFilesIfNotTheService()
     }
 

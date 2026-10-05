@@ -7,9 +7,13 @@ import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
 import java.security.GeneralSecurityException
 import java.security.KeyFactory
+import java.security.KeyPairGenerator
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.security.Signature
+import java.security.interfaces.ECPrivateKey
+import java.security.interfaces.ECPublicKey
+import java.security.spec.ECGenParameterSpec
 import java.security.spec.MGF1ParameterSpec
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
@@ -112,6 +116,27 @@ internal actual object Primitives {
         }
     } catch (e: GeneralSecurityException) {
         false
+    }
+
+    actual fun ecdsaP256Generate(): RawEcKeyPair = wrap {
+        val generator = KeyPairGenerator.getInstance("EC")
+        generator.initialize(ECGenParameterSpec("secp256r1"), random)
+        val pair = generator.generateKeyPair()
+        val point = (pair.public as ECPublicKey).w
+        RawEcKeyPair(
+            d = fixed32((pair.private as ECPrivateKey).s),
+            point = byteArrayOf(0x04) + fixed32(point.affineX) + fixed32(point.affineY),
+        )
+    }
+
+    /** A non-negative integer as exactly 32 big-endian bytes (BigInteger adds a sign byte or drops leading zeros). */
+    private fun fixed32(value: java.math.BigInteger): ByteArray {
+        val bytes = value.toByteArray()
+        return when {
+            bytes.size == 32 -> bytes
+            bytes.size > 32 -> bytes.copyOfRange(bytes.size - 32, bytes.size)
+            else -> ByteArray(32 - bytes.size) + bytes
+        }
     }
 
     private inline fun <T> wrap(block: () -> T): T = try {

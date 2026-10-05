@@ -179,7 +179,7 @@ class CryptoVectorsTest {
             assertContentEquals(Encoding.fromBase64(a.str("userHandle")), mine.userHandle)
             assertContentEquals(Encoding.fromBase64(a.str("rawId")), mine.rawId)
             assertEquals(a.num("nextCounter"), mine.counter)
-            assertTrue(WebAuthn.verify(spki, mine.authenticatorData, mine.clientDataJSON, mine.signature))
+            assertTrue(WebAuthn.verify(spki, mine.authenticatorData, mine.clientDataJSON!!, mine.signature))
             // DER: SEQUENCE of two INTEGERs.
             assertEquals(0x30, mine.signature[0].toInt() and 0xFF)
         }

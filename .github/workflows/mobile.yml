@@ -71,11 +71,13 @@ jobs:
       - name: No Google Play Services or Firebase in the dependency tree
         run: |
           ./gradlew --no-daemon -q :shared:dependencies :android:app:dependencies > deps.txt
-          if grep -E "com\.google\.android\.gms|com\.google\.firebase" deps.txt; then
+          if grep -E "com\.google\.android\.gms|com\.google\.firebase|credentials-play-services-auth" deps.txt; then
             echo "A proprietary Google artifact is in the dependency tree." >&2
             exit 1
           fi
           grep -q "kotlinx-serialization-json" deps.txt
+          # The passkey provider (task 5.1) is androidx.credentials alone.
+          grep -q "androidx.credentials:credentials:1" deps.txt
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -87,6 +89,15 @@ jobs:
           KEEPIQ_KOTLIN_VECTORS=mobile/shared/build/vectors/kotlin-output.json \
             npx vitest run tests/vitest/crypto-vectors.spec.js tests/vitest/crypto-vectors-kotlin.spec.js \
               tests/vitest/generator-vectors.spec.js tests/vitest/autofill-vectors.spec.js
+      # What the core wrote in this run. When its format changes on purpose,
+      # this file replaces tests/vectors/crypto/kotlin-output.json.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kotlin-vectors
+          path: mobile/shared/build/vectors/kotlin-output.json
+          if-no-files-found: ignore
+          retention-days: 14
 
   ios:
     runs-on: macos-latest

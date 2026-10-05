@@ -54,9 +54,37 @@ struct FilledLogin {
     let password: String
 }
 
+/// A passkey request the extension answers (task 5.2). iOS hands over the
+/// rpId it verified and the hash of the clientDataJSON it built.
+enum PasskeyRequest {
+    case assertion(rpId: String, clientDataHash: Data, credentialId: Data?, allowed: [Data])
+    case registration(rpId: String, userName: String, userHandle: Data, clientDataHash: Data, algorithms: [Int])
+
+    var rpId: String {
+        switch self {
+        case .assertion(let rpId, _, _, _), .registration(let rpId, _, _, _, _): return rpId
+        }
+    }
+}
+
+/// What the extension hands back to iOS for a passkey request.
+enum PasskeyResult {
+    case assertion(AppleAssertion, rpId: String, clientDataHash: Data)
+    case registration(AppleRegistration, rpId: String, clientDataHash: Data, userHandle: Data)
+}
+
+/// One passkey the sheet lists: its item name and user name, never a key.
+struct PasskeyRow: Identifiable, Hashable {
+    let id: String
+    let name: String
+    let user: String
+}
+
 /// The AutoFill extension's state (task 4.4): the unlock, the logins for the
 /// asked sites, search over the other sites one file at a time, "Add login",
-/// and the fill with the one-time code on the clipboard (task 4.5).
+/// and the fill with the one-time code on the clipboard (task 4.5). For a
+/// passkey request (task 5.2) the same unlock, then the passkey signs or is
+/// created with the shared core's ES256.
 @MainActor
 final class AutofillModel: ObservableObject {
     enum Phase: Equatable { case noAccount, locked, list, configuration, working }
@@ -66,6 +94,7 @@ final class AutofillModel: ObservableObject {
     @Published var query = ""
     @Published var message: String?
     @Published private(set) var busy = false
+    @Published private(set) var passkeyRows: [PasskeyRow] = []
 
     let client: KeepiqClient
     let biometric = BiometricKeychain()
@@ -73,15 +102,27 @@ final class AutofillModel: ObservableObject {
     let serviceIdentifiers: [String]
     private let record: String?
     private let onFill: (FilledLogin) -> Void
+    let passkey: PasskeyRequest?
+    private let onPasskey: (PasskeyResult) -> Void
+    private var passkeyChoices: [PasskeyChoice] = []
     private var keys: VaultKeys?
     private var gate: UnlockGate?
 
-    init(serviceIdentifiers: [String], record: String? = nil, configuration: Bool = false, onFill: @escaping (FilledLogin) -> Void) {
+    init(
+        serviceIdentifiers: [String],
+        record: String? = nil,
+        configuration: Bool = false,
+        passkey: PasskeyRequest? = nil,
+        onPasskey: @escaping (PasskeyResult) -> Void = { _ in },
+        onFill: @escaping (FilledLogin) -> Void
+    ) {
         client = KeepiqClientKt.doNewKeepiqClient(storage: KeychainStorage(), clientName: "Keepiq AutoFill for iOS")
         accountId = client.accounts.activeId()
         self.serviceIdentifiers = serviceIdentifiers
         self.record = record
         self.onFill = onFill
+        self.passkey = passkey
+        self.onPasskey = onPasskey
         if accountId == nil {
             phase = .noAccount
         } else if configuration {
@@ -147,6 +188,10 @@ final class AutofillModel: ObservableObject {
     }
 
     private func afterUnlock() {
+        if passkey != nil {
+            answerPasskey()
+            return
+        }
         if let record, let filled = fill(record: record) {
             finish(filled)
             return
@@ -231,6 +276,76 @@ final class AutofillModel: ObservableObject {
     private func finish(_ filled: FilledLogin) {
         phase = .working
         onFill(filled)
+    }
+
+    // MARK: Passkeys (task 5.2)
+
+    /// After the unlock: sign at once when one passkey fits, else list them; or create one.
+    private func answerPasskey() {
+        guard let accountId, let keys, let passkey else { return }
+        switch passkey {
+        case .assertion(let rpId, _, let credentialId, let allowed):
+            let json = AutofillFiles.shared.read(accountId: accountId, site: ApplePasskeys.shared.siteKey(rpId: rpId)) ?? "[]"
+            let allow = credentialId.map { [$0.base64EncodedString()] } ?? allowed.map { $0.base64EncodedString() }
+            passkeyChoices = ApplePasskeys.shared.choices(siteJson: json, rpId: rpId, keys: keys, allowed: allow)
+            passkeyRows = passkeyChoices.map { PasskeyRow(id: $0.itemId, name: $0.name, user: $0.label) }
+            if passkeyChoices.count == 1 { sign(passkeyChoices[0]) }
+        case .registration(let rpId, let userName, let userHandle, let hash, let algorithms):
+            register(accountId: accountId, keys: keys, rpId: rpId, userName: userName, userHandle: userHandle, hash: hash, algorithms: algorithms)
+        }
+    }
+
+    func choosePasskey(_ row: PasskeyRow) {
+        guard let choice = passkeyChoices.first(where: { $0.itemId == row.id }) else { return }
+        sign(choice)
+    }
+
+    private func sign(_ choice: PasskeyChoice) {
+        guard let accountId, let keys, let account = client.accounts.account(id: accountId),
+              case .assertion(let rpId, let hash, _, _) = passkey else { return }
+        busy = true
+        message = nil
+        phase = .working
+        Task {
+            defer { self.busy = false }
+            do {
+                let api = try self.client.api(account: account)
+                let signed = try await ApplePasskeys.shared.signIn(api: api, keys: keys, choice: choice, clientDataHash: hash.base64EncodedString(), rpId: rpId)
+                self.onPasskey(.assertion(signed, rpId: rpId, clientDataHash: hash))
+            } catch {
+                self.message = AL("passkey.failed") + " " + Self.text(error)
+                self.phase = .list
+            }
+        }
+    }
+
+    private func register(accountId: String, keys: VaultKeys, rpId: String, userName: String, userHandle: Data, hash: Data, algorithms: [Int]) {
+        guard let account = client.accounts.account(id: accountId) else { return }
+        busy = true
+        message = nil
+        phase = .working
+        Task {
+            defer { self.busy = false }
+            do {
+                let api = try self.client.api(account: account)
+                let json = AutofillFiles.shared.read(accountId: accountId, site: ApplePasskeys.shared.siteKey(rpId: rpId)) ?? "[]"
+                let made = try await ApplePasskeys.shared.register(
+                    api: api,
+                    keys: keys,
+                    siteJson: json,
+                    rpId: rpId,
+                    userName: userName,
+                    userHandle: userHandle.base64EncodedString(),
+                    clientDataHash: hash.base64EncodedString(),
+                    algorithms: algorithms.map { KotlinLong(value: Int64($0)) },
+                    nowMillis: Int64(Date().timeIntervalSince1970 * 1000)
+                )
+                self.onPasskey(.registration(made, rpId: rpId, clientDataHash: hash, userHandle: userHandle))
+            } catch {
+                self.message = AL("passkey.saveFailed") + " " + Self.text(error)
+                self.phase = .list
+            }
+        }
     }
 
     // MARK: Add login (iOS has no save hook for a third-party provider)

@@ -120,6 +120,17 @@ video_stop keepiq-android-autofill
 adb shell pm clear "$PKG" >/dev/null
 run_class PackageVisibilityTest -e keepiqAppPassword "$APP_PASSWORD" || status=1
 
+# Passkeys in Credential Manager (task group 5): Android 14 and later only.
+# The test app asks for the rpId 10.0.2.2, whose assetlinks.json the https
+# front serves on port 443 (mobile-e2e.yml redirects it to 8443).
+if [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -ge 34 ]; then
+	adb shell pm clear "$PKG" >/dev/null
+	video_start keepiq-android-passkeys
+	run_class PasskeyProviderTest -e keepiqAppPassword "$APP_PASSWORD" || status=1
+	video_stop keepiq-android-passkeys
+	adb shell dumpsys credential > "$OUT/dumpsys-credential.txt" 2>&1 || true
+fi
+
 # The R8 release build (API 34 job only): it starts, shows its first screen
 # and stays up while another app asks it for autofill. R8 removes code that only
 # reflection or JNI reaches; the e2e build above is not shrunk, so this is

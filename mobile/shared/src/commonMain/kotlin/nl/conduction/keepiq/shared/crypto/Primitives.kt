@@ -41,7 +41,13 @@ internal expect object Primitives {
 
     /** Verifies a DER ECDSA P-256 / SHA-256 signature. [spki] is DER SubjectPublicKeyInfo. */
     fun ecdsaP256Verify(spki: ByteArray, data: ByteArray, signatureDer: ByteArray): Boolean
+
+    /** A new random ECDSA P-256 key pair, as raw bytes; [EcKeys] turns it into the formats the extension writes. */
+    fun ecdsaP256Generate(): RawEcKeyPair
 }
+
+/** A P-256 key pair as raw bytes: the 32-byte scalar [d] and the 65-byte uncompressed [point] (0x04 ‖ x ‖ y). */
+internal class RawEcKeyPair(val d: ByteArray, val point: ByteArray)
 
 /** HMAC hash functions TOTP accepts (src/totp/totp.js HASH_BY_ALGORITHM). */
 internal enum class HmacAlgorithm { SHA1, SHA256, SHA512 }

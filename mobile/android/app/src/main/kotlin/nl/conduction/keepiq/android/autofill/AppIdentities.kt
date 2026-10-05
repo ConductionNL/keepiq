@@ -89,7 +89,12 @@ class AppIdentities(private val context: Context, private val storage: SecureSto
         emptyList()
     }
 
-    private fun siteAllows(site: String, app: AppIdentity): Boolean {
+    /**
+     * Whether [site] lists [app] in its assetlinks.json with the login
+     * relation, cached for a day. The passkey provider asks this for the
+     * rpId an app names (task 5.1).
+     */
+    fun siteAllows(site: String, app: AppIdentity): Boolean {
         val cacheKey = site + "|" + app.packageName + "|" + app.certFingerprints.sorted().joinToString(",")
         val cached = prefs.getString(cacheKey, null)
         val now = System.currentTimeMillis()

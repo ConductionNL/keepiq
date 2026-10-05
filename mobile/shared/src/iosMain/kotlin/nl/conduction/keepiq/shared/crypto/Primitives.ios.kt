@@ -86,6 +86,14 @@ internal actual object Primitives {
         false
     }
 
+    actual fun ecdsaP256Generate(): RawEcKeyPair = wrap {
+        val pair = algorithm(ECDSA).keyPairGenerator(EC.Curve.P256).generateKeyBlocking()
+        RawEcKeyPair(
+            d = pair.privateKey.encodeToByteArrayBlocking(EC.PrivateKey.Format.RAW),
+            point = pair.publicKey.encodeToByteArrayBlocking(EC.PublicKey.Format.RAW),
+        )
+    }
+
     private fun aesKey(key: ByteArray) =
         algorithm(AES.GCM).keyDecoder().decodeFromByteArrayBlocking(AES.Key.Format.RAW, key)
 

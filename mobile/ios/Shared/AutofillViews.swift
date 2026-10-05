@@ -16,7 +16,8 @@ struct AutofillRootView: View {
                 case .noAccount: Text(AL("noAccount")).padding().accessibilityIdentifier("autofillNoAccount")
                 case .configuration: Text(AL("configured")).padding().accessibilityIdentifier("autofillConfigured")
                 case .locked: AutofillUnlockView(model: model)
-                case .list: AutofillListView(model: model)
+                case .list:
+                    if model.passkey != nil { PasskeyListView(model: model) } else { AutofillListView(model: model) }
                 case .working: ProgressView().accessibilityIdentifier("autofillBusy")
                 }
             }
@@ -41,7 +42,7 @@ struct AutofillUnlockView: View {
         Form {
             Section {
                 Text(AL("unlock.title")).font(.headline).accessibilityAddTraits(.isHeader)
-                if !model.site.isEmpty { Text(AL("unlock.site", model.site)) }
+                if !model.site.isEmpty { Text(AL(model.passkey == nil ? "unlock.site" : "unlock.passkey", model.site)) }
             }
             if model.hasBiometric {
                 Button(AL("unlock.biometric")) { model.unlockWithBiometric() }.accessibilityIdentifier("autofillBiometric")
@@ -123,6 +124,34 @@ struct AutofillListView: View {
                         .accessibilityIdentifier("autofillAddSave")
                 } else {
                     Button(AL("add.title", model.site)) { adding = true }.accessibilityIdentifier("autofillAdd")
+                }
+            }
+            if let message = model.message {
+                Text(message).foregroundStyle(.red).accessibilityIdentifier("autofillMessage")
+            }
+        }
+    }
+}
+
+/// The passkeys for the site (task 5.2), when more than one fits or none
+/// does. One that fits signs at once, without this list.
+struct PasskeyListView: View {
+    @ObservedObject var model: AutofillModel
+
+    var body: some View {
+        List {
+            Section(AL("passkey.list", model.site)) {
+                if model.passkeyRows.isEmpty {
+                    Text(AL("passkey.none", model.site)).accessibilityIdentifier("passkeyEmpty")
+                }
+                ForEach(model.passkeyRows) { row in
+                    Button { model.choosePasskey(row) } label: {
+                        VStack(alignment: .leading) {
+                            Text(row.user)
+                            Text(row.name).font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    .accessibilityIdentifier("passkeyRow")
                 }
             }
             if let message = model.message {

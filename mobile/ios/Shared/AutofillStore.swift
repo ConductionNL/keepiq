@@ -114,7 +114,8 @@ final class AutofillFiles {
 
 /// The autofill index on iOS (tasks 4.4 and 4.6): the per-site files for
 /// the extension, and ASCredentialIdentityStore with the site and user name
-/// of each login, never a password. Rebuilt after every sync, cleared on
+/// of each login, never a password, and each passkey's rpId, user name,
+/// credential id and user handle (task 5.2), never its key. Rebuilt after every sync, cleared on
 /// unpair, on a suite change and when Keepiq is not the provider. With
 /// offline caching off nothing is written: the extension cannot see the
 /// app's memory, so it offers nothing then.
@@ -124,11 +125,13 @@ final class IOSAutofillIndex: NSObject, AutofillIndexSink, ObservableObject {
     /// What the last rebuild wrote, for the app's own check in UI tests.
     @Published private(set) var lastIdentityCount = 0
     @Published private(set) var lastSiteCount = 0
+    @Published private(set) var lastPasskeyCount = 0
 
-    private func publish(sites: Int, identities: Int) {
+    private func publish(sites: Int, identities: Int, passkeys: Int = 0) {
         DispatchQueue.main.async {
             self.lastSiteCount = sites
             self.lastIdentityCount = identities
+            self.lastPasskeyCount = passkeys
         }
     }
 
@@ -136,13 +139,25 @@ final class IOSAutofillIndex: NSObject, AutofillIndexSink, ObservableObject {
         guard persist else { clear(accountId: accountId); return }
         let files = AutofillSites.shared.split(index: index)
         let identities = AutofillSites.shared.identities(accountId: accountId, index: index, keys: keys)
+        // Passkeys (task 5.2): rpId, user name, credential id and user handle, never the key.
+        let passkeys = ApplePasskeys.shared.identities(accountId: accountId, index: index, keys: keys)
         AutofillFiles.shared.write(accountId: accountId, files: files)
-        publish(sites: files.count, identities: identities.count)
-        let store = identities.map {
+        publish(sites: files.count, identities: identities.count, passkeys: passkeys.count)
+        var store: [ASCredentialIdentity] = identities.map {
             ASPasswordCredentialIdentity(
                 serviceIdentifier: ASCredentialServiceIdentifier(identifier: $0.host, type: .domain),
                 user: $0.user,
                 recordIdentifier: $0.recordIdentifier
+            )
+        }
+        store += passkeys.compactMap { p -> ASCredentialIdentity? in
+            guard let credentialId = Data(base64Encoded: p.credentialId) else { return nil }
+            return ASPasskeyCredentialIdentity(
+                relyingPartyIdentifier: p.rpId,
+                userName: p.userName,
+                credentialID: credentialId,
+                userHandle: Data(base64Encoded: p.userHandle) ?? Data(),
+                recordIdentifier: p.recordIdentifier
             )
         }
         Task {
@@ -150,7 +165,7 @@ final class IOSAutofillIndex: NSObject, AutofillIndexSink, ObservableObject {
                 AutofillFiles.shared.clear(accountId: accountId)
                 return
             }
-            ASCredentialIdentityStore.shared.replaceCredentialIdentities(with: store) { _, _ in }
+            ASCredentialIdentityStore.shared.replaceCredentialIdentities(store) { _, _ in }
         }
     }
 

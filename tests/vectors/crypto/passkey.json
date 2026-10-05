@@ -1,7 +1,7 @@
 {
-	"description": "Passkey item JSON (src/passkey/passkey.js serializePasskey) and ES256 assertions from browser-extension/src/passkey/webauthn.js getAssertion. Signatures are DER and verify with publicKeySpki.",
-	"itemJson": "{\"credentialId\":\"oKGio6SlpqeoqaqrrK2urw\",\"rpId\":\"login.example.nl\",\"rpName\":\"Example Login\",\"userName\":\"alice@example.nl\",\"userDisplayName\":\"Alice de Vries\",\"userHandle\":\"dXNlci03ZjNh\",\"privateKey\":\"-----BEGIN PRIVATE KEY-----\\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgS1G9PAQRD2eNbVUz\\nznwRfD3qbAceoJTTTk/L9ujyWeOhRANCAAQ7y4FiBsJF/PMr1zZerKoErh1b92vf\\n2J/IevXr7BR84PqqW8O4dvp3Lf9WyfJR/jdaRxNKj+L5bzA3o6qPBpaB\\n-----END PRIVATE KEY-----\\n\",\"algorithm\":-7,\"counter\":41,\"transports\":[\"internal\",\"hybrid\"],\"createdAt\":\"2026-10-04T12:00:00.000Z\"}",
-	"publicKeySpki": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEO8uBYgbCRfzzK9c2XqyqBK4dW/dr39ifyHr16+wUfOD6qlvDuHb6dy3/VsnyUf43WkcTSo/i+W8wN6OqjwaWgQ==",
+	"description": "Passkey item JSON (src/passkey/passkey.js serializePasskey) and ES256 assertions from browser-extension/src/passkey/webauthn.js getAssertion. Signatures are DER and verify with publicKeySpki. registration is a passkey webauthn.js createCredential made, with its item JSON, clientDataJSON and attestationObject.",
+	"itemJson": "{\"credentialId\":\"oKGio6SlpqeoqaqrrK2urw\",\"rpId\":\"login.example.nl\",\"rpName\":\"Example Login\",\"userName\":\"alice@example.nl\",\"userDisplayName\":\"Alice de Vries\",\"userHandle\":\"dXNlci03ZjNh\",\"privateKey\":\"-----BEGIN PRIVATE KEY-----\\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgZ9UjEsDRCsCfFS64\\ndlD54XO2t7hfU5R5MUq4KfXhQiuhRANCAASpKoZIasgg5M77nq3Bb9qxn4bDt8pn\\nEe9mduJ6fLTOSaulYcpKQMvZNfDFGNCxWCNaXHTMW0lk0fWI9JTVCT+d\\n-----END PRIVATE KEY-----\\n\",\"algorithm\":-7,\"counter\":41,\"transports\":[\"internal\",\"hybrid\"],\"createdAt\":\"2026-10-04T12:00:00.000Z\"}",
+	"publicKeySpki": "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEqSqGSGrIIOTO+56twW/asZ+Gw7fKZxHvZnbieny0zkmrpWHKSkDL2TXwxRjQsVgjWlx0zFtJZNH1iPSU1Qk/nQ==",
 	"challengeBase64Url": "AAcOFRwjKjE4P0ZNVFtiaXB3foWMk5qhqK-2vcTL0tk",
 	"origin": "https://login.example.nl",
 	"assertions": [
@@ -10,7 +10,7 @@
 			"nextCounter": 42,
 			"clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiQUFjT0ZSd2pLakU0UDBaTlZGdGlhWEIzZm9XTWs1cWhxSy0ydmNUTDB0ayIsIm9yaWdpbiI6Imh0dHBzOi8vbG9naW4uZXhhbXBsZS5ubCIsImNyb3NzT3JpZ2luIjpmYWxzZX0=",
 			"authenticatorData": "UKjPjQCN8O7FARouxfFSW75BH5VKkSOzlxcwrAvq/UAFAAAAKg==",
-			"signatureDer": "MEUCIQDydZijiz505qjQgR1Pz8PGEvxbU5blgE4UMXSgiYEejgIgbGM67MhQWNkiVvOyTBon6DuUcRfX6G7AEVhwQGiKmCE=",
+			"signatureDer": "MEUCIQCd6+ApMLk1ovKU9eWU1jxamhVVkBM0BkAsE9VZFY1PmwIgKV6AWNo20IZkkFnP1G7alVKDuxx7lA8dB6mrcZhs5Ak=",
 			"userHandle": "dXNlci03ZjNh",
 			"rawId": "oKGio6SlpqeoqaqrrK2urw=="
 		},
@@ -19,9 +19,15 @@
 			"nextCounter": 0,
 			"clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uZ2V0IiwiY2hhbGxlbmdlIjoiQUFjT0ZSd2pLakU0UDBaTlZGdGlhWEIzZm9XTWs1cWhxSy0ydmNUTDB0ayIsIm9yaWdpbiI6Imh0dHBzOi8vbG9naW4uZXhhbXBsZS5ubCIsImNyb3NzT3JpZ2luIjpmYWxzZX0=",
 			"authenticatorData": "UKjPjQCN8O7FARouxfFSW75BH5VKkSOzlxcwrAvq/UAFAAAAAA==",
-			"signatureDer": "MEQCIH9kLtupZZahNiFWniifZx+BKQL/74ii+bsXRaC5iS2TAiAQ7HE+TLPLKHazAaMRamc6lmOqgv67pR2mERHRkzotSw==",
+			"signatureDer": "MEUCIQDJIRc4nG47375cai+A3NL0NjbhEfD6CtSfgh/5gqT9xwIgCIopTlUejPrGDLvNq3wWs6by6cp8cvarqIxws+x6pHg=",
 			"userHandle": "dXNlci03ZjNh",
 			"rawId": "oKGio6SlpqeoqaqrrK2urw=="
 		}
-	]
+	],
+	"registration": {
+		"origin": "https://login.example.nl",
+		"itemJson": "{\"credentialId\":\"JbQV6ayS3300fbZ6enhxrg\",\"rpId\":\"login.example.nl\",\"rpName\":\"Example Login\",\"userName\":\"alice@example.nl\",\"userDisplayName\":\"Alice de Vries\",\"userHandle\":\"dXNlci03ZjNh\",\"privateKey\":\"-----BEGIN PRIVATE KEY-----\\nMIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQg/hAmOBNiRxyzPz1U\\ngwCdF3a96cx2BRoZUHgkIU39x0KhRANCAATKDcXyudGQx3wSsrbaCQh6OSME8gFj\\nD1G3CRYYmFaZbTyQ76izu4hyddm6wAuGUvX0yMIjK5PwdgRuIioT3lLu\\n-----END PRIVATE KEY-----\\n\",\"algorithm\":-7,\"counter\":0,\"transports\":[],\"createdAt\":\"2026-10-05T10:00:00.000Z\"}",
+		"clientDataJSON": "eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiQUFjT0ZSd2pLakU0UDBaTlZGdGlhWEIzZm9XTWs1cWhxSy0ydmNUTDB0ayIsIm9yaWdpbiI6Imh0dHBzOi8vbG9naW4uZXhhbXBsZS5ubCIsImNyb3NzT3JpZ2luIjpmYWxzZX0=",
+		"attestationObject": "o2NmbXRkbm9uZWdhdHRTdG10oGhhdXRoRGF0YViUUKjPjQCN8O7FARouxfFSW75BH5VKkSOzlxcwrAvq/UBFAAAAAAAAAAAAAAAAAAAAAAAAAAAAECW0Femskt99NH22enp4ca6lAQIDJiABIVggyg3F8rnRkMd8ErK22gkIejkjBPIBYw9RtwkWGJhWmW0iWCA8kO+os7uIcnXZusALhlL19MjCIyuT8HYEbiIqE95S7g=="
+	}
 }

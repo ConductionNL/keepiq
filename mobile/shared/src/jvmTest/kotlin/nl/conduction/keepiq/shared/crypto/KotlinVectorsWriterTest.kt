@@ -9,6 +9,7 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import nl.conduction.keepiq.shared.vectors.Vectors
 import nl.conduction.keepiq.shared.vectors.arr
+import nl.conduction.keepiq.shared.vectors.obj
 import nl.conduction.keepiq.shared.vectors.objects
 import nl.conduction.keepiq.shared.vectors.str
 import java.io.File
@@ -103,10 +104,43 @@ class KotlinVectorsWriterTest {
                 "passkeyAssertion",
                 buildJsonObject {
                     put("publicKeySpki", pk.str("publicKeySpki"))
-                    put("clientDataJSON", Encoding.toBase64(assertion.clientDataJSON))
+                    put("clientDataJSON", Encoding.toBase64(assertion.clientDataJSON!!))
                     put("authenticatorData", Encoding.toBase64(assertion.authenticatorData))
                     put("signatureDer", Encoding.toBase64(assertion.signature))
                     put("counter", assertion.counter)
+                },
+            )
+            // Task 5.3: a passkey the core creates, for the extension to sign with,
+            // and an assertion with the passkey the extension created.
+            val challenge = Encoding.fromBase64Url(pk.str("challengeBase64Url"))
+            val created = WebAuthn.createCredential(
+                rpId = "login.example.nl",
+                rpName = "Example Login",
+                userName = "bob@example.nl",
+                userDisplayName = "Bob Jansen",
+                userHandle = Encoding.utf8("user-kotlin"),
+                algorithms = listOf(-7L, -257L),
+                clientData = ClientData.build(ClientData.CREATE, challenge, pk.str("origin")),
+                createdAt = "2026-10-05T10:00:00.000Z",
+            )
+            put(
+                "passkeyRegistration",
+                buildJsonObject {
+                    put("origin", pk.str("origin"))
+                    put("challengeBase64Url", pk.str("challengeBase64Url"))
+                    put("itemJson", created.record.toJson())
+                    put("clientDataJSON", Encoding.toBase64(created.clientDataJSON!!))
+                    put("attestationObject", Encoding.toBase64(created.attestationObject))
+                },
+            )
+            val fromExtension = PasskeyCredential.parse(pk.obj("registration").str("itemJson")) { "unused" }!!
+            val signed = WebAuthn.getAssertion(challenge, fromExtension.rpId, pk.str("origin"), fromExtension)
+            put(
+                "passkeyFromExtension",
+                buildJsonObject {
+                    put("clientDataJSON", Encoding.toBase64(signed.clientDataJSON!!))
+                    put("authenticatorData", Encoding.toBase64(signed.authenticatorData))
+                    put("signatureDer", Encoding.toBase64(signed.signature))
                 },
             )
         }

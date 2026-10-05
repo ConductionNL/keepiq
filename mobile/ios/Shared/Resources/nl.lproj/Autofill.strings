@@ -21,3 +21,9 @@
 "add.password" = "Wachtwoord";
 "add.save" = "Opslaan en invullen";
 "add.refused" = "Keepiq slaat geen logins op voor deze site.";
+/* Passkeys (clients-mobile-apps taak 5.2). */
+"unlock.passkey" = "Om je passkey voor %@ te gebruiken.";
+"passkey.list" = "Passkeys voor %@";
+"passkey.none" = "Geen passkey opgeslagen voor %@.";
+"passkey.failed" = "Keepiq kon niet aanmelden met deze passkey.";
+"passkey.saveFailed" = "Keepiq kon deze passkey niet opslaan.";

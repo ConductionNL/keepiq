@@ -7,6 +7,7 @@ import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.view.autofill.AutofillManager
+import nl.conduction.keepiq.android.passkey.PasskeyProvider
 import nl.conduction.keepiq.shared.autofill.AutofillIndex
 import nl.conduction.keepiq.shared.autofill.AutofillIndexSink
 import nl.conduction.keepiq.shared.vault.VaultKeys
@@ -26,7 +27,8 @@ import javax.crypto.spec.GCMParameterSpec
  * plaintext secret.
  *
  * Kept in memory only when the organisation keeps no offline copy, and when
- * Keepiq is not the autofill service: then nothing is written to disk.
+ * Keepiq is neither the autofill service nor the passkey provider: then
+ * nothing is written to disk.
  */
 class AndroidAutofillIndex(private val context: Context) : AutofillIndexSink {
     private val memory = HashMap<String, AutofillIndex>()
@@ -34,7 +36,7 @@ class AndroidAutofillIndex(private val context: Context) : AutofillIndexSink {
     @Synchronized
     override fun replace(accountId: String, index: AutofillIndex, persist: Boolean, keys: VaultKeys) {
         memory[accountId] = index
-        if (persist && isAutofillService()) {
+        if (persist && keepsFiles()) {
             write(accountId, index)
         } else {
             fileOf(accountId).delete()
@@ -67,7 +69,7 @@ class AndroidAutofillIndex(private val context: Context) : AutofillIndexSink {
     /** The user turned autofill off, or chose another service: no index on disk (mobile-system-autofill). */
     @Synchronized
     fun clearFilesIfNotTheService() {
-        if (isAutofillService()) return
+        if (keepsFiles()) return
         dir().listFiles()?.forEach { it.delete() }
     }
 
@@ -76,6 +78,13 @@ class AndroidAutofillIndex(private val context: Context) : AutofillIndexSink {
         memory.clear()
         dir().listFiles()?.forEach { it.delete() }
     }
+
+    /**
+     * The index is on disk while Keepiq fills: as the autofill service, or
+     * as the passkey and password provider on Android 14 and later (task
+     * 5.1), which reads it while the vault is locked.
+     */
+    private fun keepsFiles(): Boolean = isAutofillService() || PasskeyProvider.isEnabled(context)
 
     fun isAutofillService(): Boolean = runCatching {
         context.getSystemService(AutofillManager::class.java)?.hasEnabledAutofillServices() == true

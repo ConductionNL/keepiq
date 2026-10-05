@@ -102,6 +102,13 @@ jobs:
             --upstream http://localhost:8188 --container "$PROJECT-nc-1" > "$RUNNER_TEMP/e2e/proxy.log" 2>&1 &
           for _ in $(seq 1 20); do curl -skf -o /dev/null https://localhost:8443/status.php && break; sleep 1; done
           curl -skf https://localhost:8443/status.php
+      # A passkey's rpId is checked with Digital Asset Links at
+      # https://<rpId>/.well-known/assetlinks.json, port 443. The emulator
+      # reaches this host's port 443 at 10.0.2.2: send it to the https front.
+      - name: Port 443 to the https front
+        run: |
+          sudo iptables -t nat -A OUTPUT -o lo -p tcp --dport 443 -j REDIRECT --to-ports 8443
+          curl -skf https://127.0.0.1/status.php
       - name: The shared core against the test server
         working-directory: keepiq/mobile
         run: |

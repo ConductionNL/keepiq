@@ -21,3 +21,9 @@
 "add.password" = "Password";
 "add.save" = "Save and fill in";
 "add.refused" = "Keepiq does not save logins for this site.";
+/* Passkeys (clients-mobile-apps task 5.2). */
+"unlock.passkey" = "To use your passkey for %@.";
+"passkey.list" = "Passkeys for %@";
+"passkey.none" = "No passkey saved for %@.";
+"passkey.failed" = "Keepiq could not sign in with this passkey.";
+"passkey.saveFailed" = "Keepiq could not save this passkey.";

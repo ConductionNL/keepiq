@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<!-- Passkeys in Credential Manager (clients-mobile-apps group 5). -->
+<resources>
+    <string name="passkey_working">Getting your sign-in ready</string>
+    <string name="passkey_create_description">Saved encrypted in your Keepiq vault.</string>
+    <string name="passkeys_title">Passkeys</string>
+    <string name="passkeys_status_on">Keepiq saves your passkeys and signs you in with them in apps and browsers.</string>
+    <string name="passkeys_status_off">Choose Keepiq under passwords and passkeys to save and use passkeys.</string>
+    <string name="passkeys_choose">Choose Keepiq for passkeys</string>
+    <string name="passkeys_needs_android_14">Passkeys need Android 14. Keepiq still fills in your passwords and codes.</string>
+</resources>
