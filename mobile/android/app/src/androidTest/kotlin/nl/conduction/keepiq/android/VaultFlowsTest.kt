@@ -97,7 +97,7 @@ class VaultFlowsTest {
         // The authenticator code and its seconds left.
         compose.waitForText("Authenticator (demo)")
         compose.onNodeWithText("Authenticator (demo)").performClick()
-        compose.waitUntil(60_000) { compose.nodes(hasText(Regex("^\\d{3} \\d{3}$"))).isNotEmpty() }
+        compose.waitUntil(60_000) { compose.nodes(totpCode).isNotEmpty() }
         compose.waitUntil(10_000) { compose.nodes(hasContentDescription("seconds left", substring = true)).isNotEmpty() }
         E2e.shot("34-totp")
         compose.onNodeWithText("Back").performClick()
@@ -180,6 +180,11 @@ class VaultFlowsTest {
         } catch (e: VaultLockedException) {
             // The key is gone.
         }
+    }
+
+    /** A six-digit code shown as two groups of three. */
+    private val totpCode = SemanticsMatcher("a TOTP code") { node ->
+        node.config.getOrElse(SemanticsProperties.Text) { emptyList() }.any { Regex("^\\d{3} \\d{3}$").matches(it.text) }
     }
 
     /** An input labelled [label]. */
