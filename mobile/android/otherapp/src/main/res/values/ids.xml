@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<resources>
+    <item name="username" type="id" />
+    <item name="password" type="id" />
+    <item name="status" type="id" />
+</resources>

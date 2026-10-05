@@ -148,30 +148,47 @@ jobs:
             echo "KEEPIQ_SIGNING_KEY_PASSWORD=$KEY_PASSWORD"
           } >> "$GITHUB_ENV"
 
-      - name: Build the signed release APK
-        run: ./gradlew --no-daemon :android:app:assembleRelease
+      # R8-shrunk (build.gradle.kts), and split per processor type next to
+      # the universal APK. Nothing in the build writes a timestamp, so the
+      # same commit gives the same APKs before signing.
+      - name: Build the signed release APKs
+        run: ./gradlew --no-daemon -Pkeepiq.abiSplits=true :android:app:assembleRelease
 
       - name: Remove the keystore from the runner
         if: always()
         run: rm -f "$RUNNER_TEMP/signing.p12"
 
-      - name: Verify the signature with apksigner
+      # The universal APK keeps the name it always had; the others carry
+      # their processor type: keepiq-android-<version>-arm64-v8a.apk.
+      - name: Verify the signatures with apksigner
         env:
           MODE: ${{ steps.mode.outputs.mode }}
           APK: ${{ steps.mode.outputs.apk }}
         run: |
           build_tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          out=android/app/build/outputs/apk/release
           mkdir -p dist
-          cp android/app/build/outputs/apk/release/app-release.apk "dist/$APK"
-          "$build_tools/apksigner" verify --verbose --print-certs "dist/$APK" | tee dist/apksigner.txt
-          grep -q "Verified using v2 scheme (APK Signature Scheme v2): true" dist/apksigner.txt
-          if [ "$MODE" = "preview" ]; then
-            if ! grep -qi "certificate SHA-256 digest: $PREVIEW_CERT_SHA256" dist/apksigner.txt; then
-              echo "The APK is not signed with the published preview key." >&2
-              exit 1
+          cp "$out/app-universal-release.apk" "dist/$APK"
+          for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+            cp "$out/app-$abi-release.apk" "dist/${APK%.apk}-$abi.apk"
+          done
+          {
+            echo "| APK | Size |"
+            echo "| --- | ---: |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for file in dist/*.apk; do
+            name=$(basename "$file")
+            "$build_tools/apksigner" verify --verbose --print-certs "$file" | tee "dist/$name.apksigner.txt"
+            grep -q "Verified using v2 scheme (APK Signature Scheme v2): true" "dist/$name.apksigner.txt"
+            if [ "$MODE" = "preview" ]; then
+              if ! grep -qi "certificate SHA-256 digest: $PREVIEW_CERT_SHA256" "dist/$name.apksigner.txt"; then
+                echo "$name is not signed with the published preview key." >&2
+                exit 1
+              fi
             fi
-          fi
-          (cd dist && sha256sum "$APK" > "$APK.sha256" && cat "$APK.sha256")
+            (cd dist && sha256sum "$name" > "$name.sha256" && cat "$name.sha256")
+            echo "| $name | $(stat -c %s "$file") bytes |" >> "$GITHUB_STEP_SUMMARY"
+          done
 
       - uses: actions/upload-artifact@v4
         with:
@@ -190,7 +207,7 @@ jobs:
           APK: ${{ steps.mode.outputs.apk }}
         run: |
           fingerprint=$(printf '%s' "$PREVIEW_CERT_SHA256" | tr 'a-f' 'A-F' | sed 's/../&:/g; s/:$//')
-          sha=$(cut -d' ' -f1 "dist/$APK.sha256")
+          sums=$(cd dist && for f in *.apk; do printf -- '- SHA-256 of `%s`: `%s`\n' "$f" "$(cut -d' ' -f1 "$f.sha256")"; done)
           cat > dist/notes.md <<EOF
           This is a preview of Keepiq for Android. It is not a store release.
 
@@ -199,9 +216,11 @@ jobs:
           - Your vault stays on your Nextcloud, so you only connect the phone again.
           - Keepiq for iOS comes later through TestFlight and the App Store.
 
+          \`$APK\` runs on every phone. The smaller APKs hold the code for one processor type only: most phones take \`arm64-v8a\`.
+
           Check the download before you install it:
 
-          - SHA-256 of \`$APK\`: \`$sha\`
+          $sums
           - SHA-256 of the signing certificate: \`$fingerprint\`
 
           The user guide explains how to install and check it: https://keepiq.conduction.nl/docs/mobile/using
@@ -210,7 +229,7 @@ jobs:
           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             target=(--target "$GITHUB_SHA")
           fi
-          gh release create "$TAG" "dist/$APK" "dist/$APK.sha256" \
+          gh release create "$TAG" dist/*.apk dist/*.apk.sha256 \
             --repo "$GITHUB_REPOSITORY" \
             --prerelease \
             --title "Keepiq for Android $VERSION (preview)" \

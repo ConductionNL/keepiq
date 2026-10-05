@@ -11,7 +11,7 @@ Keepiq for Android is available as a preview. Keepiq for iOS is not available ye
 Keepiq for Android needs Android 9 or later.
 
 1. Open the [Keepiq mobile releases on GitHub](https://github.com/ConductionNL/keepiq/releases?q=mobile-v&expanded=true) on your phone.
-2. Download the `keepiq-android-<version>.apk` file from the newest release.
+2. Download the `keepiq-android-<version>.apk` file from the newest release. It runs on every phone. The smaller `keepiq-android-<version>-arm64-v8a.apk` holds only what most current phones need; take it if you know your phone has that processor type.
 3. Open the file. Android asks whether your browser may install apps. Allow it for this install.
 4. Choose **Install**.
 
@@ -19,7 +19,7 @@ Each `mobile-v<version>-preview.<n>` release is a preview. It is signed with a p
 
 #### Checking the download
 
-Each release lists the SHA-256 of the APK, and carries it as a `.sha256` file. On a computer, compare it with:
+Each release lists the SHA-256 of every APK, and carries it as a `.sha256` file next to it. On a computer, compare it with:
 
 ```
 sha256sum keepiq-android-<version>.apk
@@ -160,14 +160,16 @@ On iOS you cannot make a Send with a password yet. A Send link there opens in th
 
 Keepiq for Android can fill in your logins in other apps and in your browser.
 
-1. Open your phone's **Settings** and search for **Autofill service**. Where it sits differs per phone.
-2. Choose **Keepiq** as the service.
+1. In Keepiq, open **Unlock and account** from the settings button. The **Autofill** part says whether Keepiq fills in your logins.
+2. Tap **Choose Keepiq for autofill**. Android asks whether you trust Keepiq. Confirm.
+
+You can also do it from Android: open your phone's **Settings**, search for **Autofill service** and choose **Keepiq**. Where it sits differs per phone.
 
 Tap a login field in an app or on a website. Keepiq offers the matching logins. When the vault is locked, you see **Unlock Keepiq** first, without any account names. After you unlock, Keepiq fills in the login you choose.
 
 Keepiq only offers an app's login to the app it belongs to. A copy of that app from another publisher gets nothing.
 
-When you sign up or change a password, Keepiq offers to save it. Choose **Never** to stop the offer for that site or app. Android 9 and 10 only show **Not now**. To see or undo your **Never** choices, tap the gear next to Keepiq in the same Android screen.
+When you sign up or change a password, Keepiq offers to save it. Choose **Never** to stop the offer for that site or app. Android 9 and 10 only show **Not now**. To see or undo your **Never** choices, tap **Show where Keepiq never saves** under **Autofill** in Keepiq's settings, or the gear next to Keepiq in Android's autofill screen.
 
 A one-time code field gets the current code of the matching login.
 

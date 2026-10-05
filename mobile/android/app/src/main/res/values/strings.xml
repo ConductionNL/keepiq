@@ -227,4 +227,5 @@
     <string name="autofill_never_title">Never save on</string>
     <string name="autofill_never_empty">Keepiq offers to save your logins on every site and in every app.</string>
     <string name="autofill_never_remove">Save on %1$s again</string>
+    <string name="autofill_open_never_list">Show where Keepiq never saves</string>
 </resources>

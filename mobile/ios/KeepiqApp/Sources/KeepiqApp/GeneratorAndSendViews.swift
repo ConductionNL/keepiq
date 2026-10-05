@@ -309,7 +309,9 @@ struct NewSendView: View {
                             TextField(L("detail_username"), text: $username).textInputAutocapitalization(.never)
                         }
                         LabeledField(L("detail_password")) {
-                            SecureField(L("detail_password"), text: $password)
+                            // Keepiq's own secrets are typed as one-time codes, not passwords, so iOS
+                            // never offers to save them in another password manager.
+                            SecureField(L("detail_password"), text: $password).textContentType(.oneTimeCode)
                         }
                     } else {
                         LabeledField(L("send_text_label")) {
@@ -330,7 +332,7 @@ struct NewSendView: View {
                         }
                     }
                     LabeledField(L("send_password_label")) {
-                        SecureField(L("send_password_label"), text: $sendPassword).disabled(!passwordAvailable)
+                        SecureField(L("send_password_label"), text: $sendPassword).textContentType(.oneTimeCode).disabled(!passwordAvailable)
                     }
                     if !passwordAvailable { Text(L("send_password_unavailable")).font(.footnote) }
                 }
@@ -430,7 +432,7 @@ public struct OpenSendView: View {
             }
             if needsPassword {
                 LabeledField(L("detail_password")) {
-                    SecureField(L("detail_password"), text: $password)
+                    SecureField(L("detail_password"), text: $password).textContentType(.oneTimeCode)
                 }
             }
             if let parsed, state is OpenSendResult.Ready || needsPassword {

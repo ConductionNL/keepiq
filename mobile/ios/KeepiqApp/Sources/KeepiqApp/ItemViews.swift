@@ -489,11 +489,14 @@ struct SecretInput: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(label).font(.footnote).accessibilityHidden(true)
             HStack {
+                // Keepiq's own secrets are typed as one-time codes, not passwords, so iOS
+                // never offers to save them in another password manager (or in Keepiq).
                 if shown {
                     TextField(label, text: $text).textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .textContentType(.oneTimeCode)
                         .accessibilityLabel(label)
                 } else {
-                    SecureField(label, text: $text).accessibilityLabel(label)
+                    SecureField(label, text: $text).textContentType(.oneTimeCode).accessibilityLabel(label)
                 }
                 Button(shown ? L("action_hide") : L("action_show")) { shown.toggle() }
                     .frame(minWidth: 44, minHeight: 44)
