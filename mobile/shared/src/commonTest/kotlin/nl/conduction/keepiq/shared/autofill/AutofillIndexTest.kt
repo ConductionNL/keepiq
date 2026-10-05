@@ -175,6 +175,18 @@ class AutofillIndexTest {
         assertEquals("androidapp://com.example.bank", AutofillTarget.App(bank).saveKey)
     }
 
+    @Test
+    fun iosSiteFilesHoldOneSiteEachAndNoAppLinks() {
+        val files = AutofillSites.split(AutofillIndex.of(vault))
+        assertEquals(setOf("example.com"), files.keys)
+        assertEquals(listOf("sub", "web"), AutofillSites.matches(files.getValue("example.com"), "https://login.example.com/x").map { it.id })
+        assertEquals(listOf("code"), AutofillSites.codeItems(files.getValue("example.com"), "example.com").map { it.id })
+        assertEquals(listOf("sub"), AutofillSites.search(files.getValue("example.com"), "LOGIN").map { it.id })
+        assertEquals("example.com", AutofillSites.siteKey("https://www.example.com/sign-in"))
+        assertEquals("sub", AutofillSites.itemId(AutofillSites.recordIdentifier("acc", "sub"), "acc"))
+        assertNull(AutofillSites.itemId("other|sub", "acc"))
+    }
+
     private class RecordingSink : AutofillIndexSink {
         val indexes = HashMap<String, AutofillIndex>()
         val persisted = HashMap<String, Boolean>()
