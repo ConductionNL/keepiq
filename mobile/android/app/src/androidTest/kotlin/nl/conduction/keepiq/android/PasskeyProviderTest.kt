@@ -198,10 +198,15 @@ class PasskeyProviderTest {
 
     private fun challenge(seed: Int) = ByteArray(32) { (it * 7 + seed).toByte() }
 
+    /** The id of the current client call: its answer starts with it, so an earlier answer is never read. */
+    private var run = 0
+
     private fun client(mode: String, json: String) {
+        run += 1
         val intent = Intent().setClassName(testPackage, "nl.conduction.keepiq.android.autofilltest.PasskeyClientActivity")
             .putExtra("mode", mode)
             .putExtra("request", json)
+            .putExtra("run", run.toString())
             .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
         instrumentation.targetContext.startActivity(intent)
     }
@@ -219,7 +224,7 @@ class PasskeyProviderTest {
         var shots = 0
         var keepiqSeen = false
         while (System.currentTimeMillis() < end) {
-            val text = status()
+            val text = status()?.takeIf { it.startsWith("$run|") }?.substringAfter('|')
             if (text != null && (text.startsWith("created:") || text.startsWith("got:") || text.startsWith("error:"))) {
                 E2e.shot("$name-answer")
                 return text

@@ -25,8 +25,9 @@ import org.json.JSONObject;
  * The "other app" of PasskeyProviderTest: an app that asks Android's
  * Credential Manager to create a passkey or to sign in with one, as any app
  * with a WebAuthn login does. The status line shows the answer, so the test
- * reads it: "created:" or "got:" with the response JSON, or "error:" with
- * the exception type.
+ * reads it: the run id the test passed, then "created:" or "got:" with the
+ * response JSON, or "error:" with the exception type. The run id keeps the
+ * test from reading the previous call's answer while this one starts.
  *
  * Java and the framework API (android.credentials, Android 14), not the
  * androidx library: this runs in the test APK's own process, which carries
@@ -49,6 +50,7 @@ public class PasskeyClientActivity extends Activity {
     private static final String AUTHENTICATION_JSON = "androidx.credentials.BUNDLE_KEY_AUTHENTICATION_RESPONSE_JSON";
 
     private TextView status;
+    private String run = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,11 +64,12 @@ public class PasskeyClientActivity extends Activity {
         status = new TextView(this);
         status.setId(R.id.status);
         status.setTextSize(12f);
-        status.setText("waiting");
         root.addView(title);
         root.addView(status);
         setContentView(root);
 
+        run = String.valueOf(getIntent().getStringExtra("run"));
+        status.setText(run + "|waiting");
         String mode = getIntent().getStringExtra("mode");
         String json = getIntent().getStringExtra("request");
         try {
@@ -76,7 +79,7 @@ public class PasskeyClientActivity extends Activity {
                 get(json);
             }
         } catch (Exception e) {
-            status.setText("error:" + e.getClass().getSimpleName() + ":" + e.getMessage());
+            status.setText(run + "|error:" + e.getClass().getSimpleName() + ":" + e.getMessage());
         }
     }
 
@@ -107,12 +110,12 @@ public class PasskeyClientActivity extends Activity {
                 new OutcomeReceiver<CreateCredentialResponse, CreateCredentialException>() {
                     @Override
                     public void onResult(CreateCredentialResponse response) {
-                        status.setText("created:" + response.getData().getString(REGISTRATION_JSON));
+                        status.setText(run + "|created:" + response.getData().getString(REGISTRATION_JSON));
                     }
 
                     @Override
                     public void onError(CreateCredentialException e) {
-                        status.setText("error:" + e.getType() + ":" + e.getMessage());
+                        status.setText(run + "|error:" + e.getType() + ":" + e.getMessage());
                     }
                 });
     }
@@ -129,12 +132,12 @@ public class PasskeyClientActivity extends Activity {
                 new OutcomeReceiver<GetCredentialResponse, GetCredentialException>() {
                     @Override
                     public void onResult(GetCredentialResponse response) {
-                        status.setText("got:" + response.getCredential().getData().getString(AUTHENTICATION_JSON));
+                        status.setText(run + "|got:" + response.getCredential().getData().getString(AUTHENTICATION_JSON));
                     }
 
                     @Override
                     public void onError(GetCredentialException e) {
-                        status.setText("error:" + e.getType() + ":" + e.getMessage());
+                        status.setText(run + "|error:" + e.getType() + ":" + e.getMessage());
                     }
                 });
     }
