@@ -156,6 +156,23 @@ Open a Send link on an Android phone and Keepiq shows its content. Opening it us
 
 On iOS you cannot make a Send with a password yet. A Send link there opens in the browser.
 
+## Fill in logins in other apps
+
+Keepiq for Android can fill in your logins in other apps and in your browser.
+
+1. Open your phone's **Settings** and search for **Autofill service**. Where it sits differs per phone.
+2. Choose **Keepiq** as the service.
+
+Tap a login field in an app or on a website. Keepiq offers the matching logins. When the vault is locked, you see **Unlock Keepiq** first, without any account names. After you unlock, Keepiq fills in the login you choose.
+
+Keepiq only offers an app's login to the app it belongs to. A copy of that app from another publisher gets nothing.
+
+When you sign up or change a password, Keepiq offers to save it. Choose **Never** to stop the offer for that site or app. Android 9 and 10 only show **Not now**. To see or undo your **Never** choices, tap the gear next to Keepiq in the same Android screen.
+
+A one-time code field gets the current code of the matching login.
+
+On iOS this comes later. It needs a signed build from the App Store or TestFlight.
+
 ## Offline
 
 Keepiq for Android keeps an encrypted copy of your vault on the phone. Without a connection you can still open, search and copy. The vault shows when it last synced. Adding, editing and deleting need a connection, and Keepiq tells you so.
@@ -164,7 +181,7 @@ Keepiq for iOS does not keep an offline copy yet. It needs a connection.
 
 ## Coming next
 
-- **System autofill.** Fill logins and one-time codes in other apps and in your browser.
+- **Autofill on iOS.** Fill in logins in other apps and in Safari.
 - **Passkeys.** Sign in with the passkeys in your vault. This needs Android 14 or iOS 17.
 - **Google Play and F-Droid.** Install and update Keepiq for Android from a store.
 - **The App Store.** Keepiq for iOS, first through TestFlight.
