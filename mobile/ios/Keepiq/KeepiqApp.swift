@@ -52,7 +52,7 @@ struct AutofillPreviewButton: View {
         if ProcessInfo.processInfo.arguments.contains("-keepiq-autofill-preview"), case .unlocked(let vault) = model.screen {
             VStack {
                 if let filled { Text(filled).accessibilityIdentifier("autofillFilled") }
-                Text("sites \(index.lastSiteCount), identities \(index.lastIdentityCount)")
+                Text("sites \(index.lastSiteCount), identities \(index.lastIdentityCount), files \(AutofillFiles.shared.sites(accountId: vault.accountId).count) \(AutofillFiles.shared.isShared ? "shared" : "app only")")
                     .accessibilityIdentifier("autofillIndex")
                 Button("AutoFill preview") {
                     let site = ProcessInfo.processInfo.environment["KEEPIQ_AUTOFILL_SITE"] ?? "example.com"

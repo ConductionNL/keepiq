@@ -141,16 +141,24 @@ final class AutofillUITests: XCTestCase {
         tap(app.buttons["autofillAddSave"])
         waitForLabel(app.staticTexts["autofillFilled"], containing: "filled: alice / 15")
 
-        // The refresh after the save rebuilt the index.
-        waitForLabel(app.staticTexts["autofillIndex"], containing: "sites 1, identities 1")
+        // The refresh after the save rebuilt the index, and the site file is on disk.
+        waitForLabel(app.staticTexts["autofillIndex"], containing: "sites 1, identities 1, files 1")
         shot("autofill-ios-04-index-rebuilt")
 
         // Again: no unlock within the idle time, the login from the site file.
-        tap(app.buttons["autofillPreview"])
+        // The first sheet may still be closing: wait until the button is back.
+        let preview = app.buttons["autofillPreview"]
+        XCTAssertTrue(preview.waitForExistence(timeout: 20))
+        tap(preview)
         let row = app.buttons["autofillRow"]
-        XCTAssertTrue(row.waitForExistence(timeout: 30))
+        let shown = [row, app.secureTextFields["autofillMasterPassword"], app.staticTexts["autofillEmpty"]]
+        let deadline = Date().addingTimeInterval(30)
+        while Date() < deadline, !shown.contains(where: { $0.exists }) {
+            _ = row.waitForExistence(timeout: 1)
+        }
+        shot("autofill-ios-05-second-sheet")
+        XCTAssertTrue(row.exists, "second sheet: unlock form \(shown[1].exists), empty list \(shown[2].exists)")
         XCTAssertFalse(app.secureTextFields["autofillMasterPassword"].exists)
-        shot("autofill-ios-05-list")
         row.tap()
         waitForLabel(app.staticTexts["autofillFilled"], containing: "filled: alice / 15")
     }

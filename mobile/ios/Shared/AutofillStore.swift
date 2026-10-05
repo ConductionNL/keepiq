@@ -31,8 +31,16 @@ final class AutofillFiles {
     private let storage = KeychainStorage()
     private let keyName = "autofill:files-key"
 
+    /// True when the files are in the shared container, so the extension
+    /// reads them. A build without the app group entitlement (an unsigned
+    /// simulator build) keeps them in the app's own Application Support:
+    /// the app's in-app preview still works, the extension sees nothing.
+    var isShared: Bool { SharedGroup.container != nil }
+
     private var dir: URL? {
-        guard let base = SharedGroup.container else { return nil }
+        let base = SharedGroup.container
+            ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
+        guard let base else { return nil }
         let url = base.appendingPathComponent("autofill", isDirectory: true)
         try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
         return url
