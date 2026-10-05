@@ -68,6 +68,12 @@ final class VaultFlowsUITests: XCTestCase {
         }
     }
 
+    /// The first element of [query] that is on screen, or its first match.
+    private func onScreen(_ query: XCUIElementQuery) -> XCUIElement {
+        _ = query.firstMatch.waitForExistence(timeout: 20)
+        return query.allElementsBoundByIndex.first { reachable($0) } ?? query.firstMatch
+    }
+
     /// A Form builds its rows lazily: a button below the fold is not in the
     /// tree until the form scrolls to it.
     private func scrolledTo(_ element: XCUIElement) -> XCUIElement {
@@ -238,7 +244,7 @@ final class VaultFlowsUITests: XCTestCase {
         shot("37-edited")
 
         // Trash it: gone from the list.
-        tap(app.buttons["Move to trash"])
+        tap(scrolledTo(app.buttons["Move to trash"]))
         // The confirmation is an action sheet up to iOS 18 and a popover from
         // iOS 26 on; either way it is the "Move to trash" button the
         // dialog does not cover.
@@ -279,15 +285,16 @@ final class VaultFlowsUITests: XCTestCase {
         tap(app.buttons["Close"])
         shot("41-send-list")
 
-        // The settings route from inside the vault, and back.
-        tap(app.buttons["accounts"])
+        // The settings route from inside the vault, and back. Every tab has
+        // the account and lock buttons; the one on screen is the one to tap.
+        tap(onScreen(app.buttons.matching(identifier: "accounts")))
         tap(app.buttons["settings"])
         XCTAssertTrue(app.secureTextFields["newPin"].waitForExistence(timeout: 20))
         shot("42-settings")
         tap(app.buttons["back"])
 
         // Lock: the unlock screen again.
-        tap(app.buttons["lock"], timeout: 30)
+        tap(onScreen(app.buttons.matching(identifier: "lock")), timeout: 30)
         XCTAssertTrue(app.secureTextFields["masterPassword"].waitForExistence(timeout: 30))
         XCTAssertFalse(app.buttons["lock"].exists)
         shot("43-locked")
