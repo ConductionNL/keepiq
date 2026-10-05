@@ -112,7 +112,9 @@ class VaultFlowsTest {
         E2e.shot("34-totp")
         compose.onNodeWithText("Back").performClick()
 
-        // A new login with a generated password.
+        // A new login with a generated password. The copy's snackbar covers
+        // the add button while it shows.
+        compose.waitUntilGone("Copied.", 30_000)
         compose.onNodeWithContentDescription("Add an item").performClick()
         compose.waitUntil(30_000) { compose.nodes(field("Name")).isNotEmpty() }
         compose.onNode(field("Name")).performTextInput("Shop (demo)")
