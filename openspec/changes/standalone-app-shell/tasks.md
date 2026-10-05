@@ -25,15 +25,15 @@
 
 ## 4. Tests
 
-- [ ] 4.1 Unit tests for the three controllers and the section.
+- [x] 4.1 Unit tests for the three controllers and the section.
   - Health: ok, degraded, error (503), and a key-set assertion with no secret material.
   - Metrics: N active of N+M suites, the content type, and the series names.
   - Preferences: the round-trip, `walkthrough_completed_version` → `pref_walkthroughcompletedversion`, per-user isolation, 400 on an empty key, empty PUT deletes.
   - `SettingsSection`: id, name and icon.
-- [ ] 4.2 Contract tests for the new public or routed endpoints (`health#index`, `metrics#index`, `preferences#*`) to satisfy gate-25. Move the health/metrics Newman scenarios from the "OR AppHost" collection into `tests/integration/keepiq.postman_collection.json`, plus a 404 assertion for `POST /api/settings/load`.
-- [ ] 4.3 Replace `RoutesWithoutOpenRegisterTest` and `CanonicalRouteMethodContractTest` with a static-table test: every route resolves to a public method on an `OCA\Keepiq\Controller` class, no duplicate names, catch-all last, and an identical table with and without a stub `AppHost\Routes`. Delete `OpenRegisterAutoloaderTest`, `ManifestObservabilityTest` and the `openregister-apphost*` stubs. Keep `openregister-mcp.stub.php` only where `McpSurfaceTest` needs it.
-- [ ] 4.4 Bootstrap test: run `Application::register()` against a recording `IRegistrationContext` with a recording autoloader on an autoload path without OpenRegister and integriq. Assert that no `OCA\OpenRegister\` or `OCA\Integriq\` name is requested, that every registrar ran, and that the MCP alias is registered.
-- [ ] 4.5 Playwright e2e for the `app-shell` UI scenarios, each carrying its `@e2e` reference (gate-19).
+- [x] 4.2 Contract tests for the new public or routed endpoints (`health#index`, `metrics#index`, `preferences#*`) to satisfy gate-25. Move the health/metrics Newman scenarios from the "OR AppHost" collection into `tests/integration/keepiq.postman_collection.json`, plus a 404 assertion for `POST /api/settings/load`.
+- [x] 4.3 Replace `RoutesWithoutOpenRegisterTest` and `CanonicalRouteMethodContractTest` with a static-table test: every route resolves to a public method on an `OCA\Keepiq\Controller` class, no duplicate names, catch-all last, and an identical table with and without a stub `AppHost\Routes`. Delete `OpenRegisterAutoloaderTest`, `ManifestObservabilityTest` and the `openregister-apphost*` stubs. Keep `openregister-mcp.stub.php` only where `McpSurfaceTest` needs it.
+- [x] 4.4 Bootstrap test: run `Application::register()` against a recording `IRegistrationContext` with a recording autoloader on an autoload path without OpenRegister and integriq. Assert that no `OCA\OpenRegister\` or `OCA\Integriq\` name is requested, that every registrar ran, and that the MCP alias is registered.
+- [x] 4.5 Playwright e2e for the `app-shell` UI scenarios, each carrying its `@e2e` reference (gate-19).
   - On a no-OpenRegister instance: the shell renders the lock screen and vault, there is no Flows entry, a `/apps/keepiq/flows` deep link shows the missing-dependency screen, the admin section and version card are up to date with no re-import button, there is no Integrations entry, no AI companion and no `/apps/hermiq/` request, and the WASM CSP is still sent.
   - With OpenRegister: Flows renders.
   - Add `@spec` tags to every changed or added public/protected method (gate-16).

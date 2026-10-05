@@ -109,9 +109,7 @@ class SettingsController extends Controller {
 	 *
 	 * @return JSONResponse The refreshed settings, wrapped as `{success, config}`.
 	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md — Requirement: Boilerplate Plumbing
-	 *   Served by AppHost Generics (Scenario: Admin settings page still renders
-	 *   through the generic section)
+	 * @spec openspec/specs/app-shell/spec.md#requirement-keepiq-owns-its-route-table
 	 */
 	#[AuthorizedAdminSetting(PolicyAdminSettings::class)]
 	public function update(): JSONResponse {
@@ -137,8 +135,8 @@ class SettingsController extends Controller {
 	/**
 	 * Legacy POST alias for {@see update()} (admin only).
 	 *
-	 * The canonical AppHost route table still ships `settings#create`
-	 * (POST /api/settings) for the pre-ADR-066 `index/create/load` dialect, and
+	 * Keepiq's route table still ships `settings#create` (POST /api/settings)
+	 * for the pre-ADR-066 `index/create` dialect, and
 	 * two Keepiq callers still use it — `src/components/settings/
 	 * PasswordPolicySection.vue::save()` and `src/store/modules/
 	 * settings.js::saveSettings()` — so it stays reachable and keeps writing
@@ -153,9 +151,7 @@ class SettingsController extends Controller {
 	 *
 	 * @return JSONResponse The refreshed settings, wrapped as `{success, config}`.
 	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md — Requirement: Boilerplate Plumbing
-	 *   Served by AppHost Generics (Scenario: Admin settings page still renders
-	 *   through the generic section)
+	 * @spec openspec/specs/app-shell/spec.md#requirement-keepiq-owns-its-route-table
 	 */
 	#[AuthorizedAdminSetting(PolicyAdminSettings::class)]
 	public function create(): JSONResponse {

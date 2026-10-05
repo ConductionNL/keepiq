@@ -157,24 +157,28 @@ A schema SHALL count as empty only when it has zero rows in `openregister_object
 - **GIVEN** an instance with a `doriath` register listing schema `example` (`application = keepiq`), that schema's empty data table, and an empty `keepiq` register
 - **WHEN** `occ upgrade` runs Keepiq's repair steps
 - **THEN** both registers, the schema row and the empty data table MUST be gone, and every other OpenRegister register, schema and table MUST be untouched, including another app's schema with the slug `example`
+- @e2e exclude repair step with no UI surface — covered by RemoveLegacyRegisterRowsTest (unit, in-memory OpenRegister tables)
 
 #### Scenario: Rows that still hold objects are kept
 
 - **GIVEN** a Keepiq-keyed schema with at least one row in `openregister_objects` or in its per-schema data table
 - **WHEN** the repair step runs
 - **THEN** that schema, its data table and its register MUST be kept, and a warning naming the schema slug and row count MUST be logged
+- @e2e exclude repair step with no UI surface — covered by RemoveLegacyRegisterRowsTest (unit, in-memory OpenRegister tables)
 
 #### Scenario: Nothing happens without OpenRegister's tables
 
 - **GIVEN** an instance where OpenRegister was never installed
 - **WHEN** the repair step runs
 - **THEN** it MUST end without error and without issuing any query against an `openregister_*` table
+- @e2e exclude repair step with no UI surface — covered by RemoveLegacyRegisterRowsTest (unit, in-memory OpenRegister tables)
 
 #### Scenario: A second run is a no-op
 
 - **GIVEN** an instance where the repair step already removed the leftovers
 - **WHEN** the repair step runs again
 - **THEN** it MUST end without error, delete nothing and drop nothing
+- @e2e exclude repair step with no UI surface — covered by RemoveLegacyRegisterRowsTest (unit, in-memory OpenRegister tables)
 
 ### Requirement: Optional Integrations Appear Only When Their App Is Present
 

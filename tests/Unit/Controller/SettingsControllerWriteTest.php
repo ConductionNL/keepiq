@@ -33,10 +33,8 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
 /**
- * The canonical AppHost route table routes BOTH `PUT /api/settings`
- * (`settings#update`) and `POST /api/settings` (`settings#create`) into this
- * controller, and because Keepiq ships the class itself no generic is aliased
- * in to cover either.
+ * Keepiq's route table routes BOTH `PUT /api/settings` (`settings#update`)
+ * and `POST /api/settings` (`settings#create`) into this controller.
  *
  * These tests assert the ITEM — that the write actually reaches
  * `SettingsService::updateSettings()` with the request's own parameters, and
