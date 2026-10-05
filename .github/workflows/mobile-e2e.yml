@@ -187,6 +187,6 @@ jobs:
           path: |
             media/shots/
             media/*.mp4
-            media/KeepiqUITests.xcresult/
+            media/*.xcresult/
           if-no-files-found: warn
           retention-days: 14

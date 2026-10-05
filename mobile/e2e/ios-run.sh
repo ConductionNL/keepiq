@@ -10,7 +10,8 @@
 #
 #   bash mobile/e2e/ios-run.sh <out dir>
 #
-# Writes screenshots, a video under 3 minutes and the xcresult bundle.
+# Writes screenshots, a video per test class (each under 3 minutes) and an
+# xcresult bundle per class.
 set -euo pipefail
 
 OUT="$(mkdir -p "${1:?out dir}" && cd "$1" && pwd)"
@@ -51,15 +52,22 @@ trap 'kill "$REPLAY" 2>/dev/null || true' EXIT
 xcodebuild build-for-testing -project "$IOS/Keepiq.xcodeproj" -scheme Keepiq \
 	-destination "id=$UDID" -derivedDataPath "$OUT/DerivedData" -quiet
 
-xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$OUT/keepiq-ios.mp4" &
-VIDEO=$!
+# One test class at a time, each with its own video under 3 minutes.
 status=0
-TEST_RUNNER_KEEPIQ_SERVER=https://localhost:8443 TEST_RUNNER_KEEPIQ_SHOTS_DIR="$OUT/shots" \
-	xcodebuild test-without-building -project "$IOS/Keepiq.xcodeproj" -scheme Keepiq \
-	-destination "id=$UDID" -derivedDataPath "$OUT/DerivedData" \
-	-resultBundlePath "$OUT/KeepiqUITests.xcresult" || status=$?
-kill -INT "$VIDEO" 2>/dev/null || true
-wait "$VIDEO" 2>/dev/null || true
+run_class() {
+	local class="$1" video="$2"
+	xcrun simctl io "$UDID" recordVideo --codec=h264 --force "$OUT/$video.mp4" &
+	local recorder=$!
+	TEST_RUNNER_KEEPIQ_SERVER=https://localhost:8443 TEST_RUNNER_KEEPIQ_SHOTS_DIR="$OUT/shots" \
+		xcodebuild test-without-building -project "$IOS/Keepiq.xcodeproj" -scheme Keepiq \
+		-destination "id=$UDID" -derivedDataPath "$OUT/DerivedData" \
+		-only-testing:"KeepiqUITests/$class" \
+		-resultBundlePath "$OUT/$class.xcresult" || status=1
+	kill -INT "$recorder" 2>/dev/null || true
+	wait "$recorder" 2>/dev/null || true
+}
+run_class PairUnlockUITests keepiq-ios-pairing
+run_class VaultFlowsUITests keepiq-ios-vault
 rm -rf "$OUT/DerivedData"
 ls -la "$OUT" "$OUT/shots"
 exit "$status"
