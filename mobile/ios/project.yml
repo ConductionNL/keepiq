@@ -26,7 +26,12 @@ targets:
   Keepiq:
     type: application
     platform: iOS
-    sources: [Keepiq]
+    sources:
+      - Keepiq
+      # The vault, Send and generator screens: the KeepiqApp package's
+      # sources and strings, built into the app. Keepiq/BundleModule.swift
+      # points their Bundle.module at the main bundle.
+      - KeepiqApp/Sources/KeepiqApp
     dependencies:
       - framework: ../shared/build/XCFrameworks/debug/KeepiqShared.xcframework
         embed: false

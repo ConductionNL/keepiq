@@ -26,6 +26,16 @@ class RsaPublicKey private constructor(internal val spki: ByteArray) {
 
 /** An RSA private key from a PKCS#8 PEM (src/crypto/rsa.js importPrivateKey). */
 class RsaPrivateKey private constructor(internal val pkcs8: ByteArray) {
+    /** True once [forget] ran: the key bytes are zeros and the key opens nothing. */
+    var forgotten: Boolean = false
+        private set
+
+    /** Overwrites the key bytes, on lock (design D4). */
+    fun forget() {
+        pkcs8.fill(0)
+        forgotten = true
+    }
+
     companion object {
         fun fromPem(pem: String): RsaPrivateKey {
             val body = pem

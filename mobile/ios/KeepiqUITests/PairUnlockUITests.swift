@@ -49,6 +49,12 @@ final class PairUnlockUITests: XCTestCase {
         waitForExpectations(timeout: timeout)
     }
 
+    /// The unlock and account settings, from the account sheet inside the vault.
+    private func openSettings() {
+        tap(app.buttons["accounts"])
+        tap(app.buttons["settings"])
+    }
+
     func testBrowserPairingUnlockPinAndUnpair() {
         // 2.1: the browser sign-in.
         type(server, into: app.textFields["server"])
@@ -66,11 +72,11 @@ final class PairUnlockUITests: XCTestCase {
 
         type("Oj", into: app.secureTextFields["masterPassword"])
         tap(app.buttons["unlock"])
-        XCTAssertTrue(app.staticTexts["unlocked"].waitForExistence(timeout: 60))
+        XCTAssertTrue(app.buttons["lock"].waitForExistence(timeout: 60), "the vault opens after unlock")
         shot("05-unlocked")
 
         // 2.3: a PIN (Argon2id through the reference C code).
-        tap(app.buttons["settings"])
+        openSettings()
         type("246810", into: app.secureTextFields["newPin"])
         tap(app.buttons["setPin"])
         XCTAssertTrue(app.buttons["removePin"].waitForExistence(timeout: 60))
@@ -85,10 +91,10 @@ final class PairUnlockUITests: XCTestCase {
         shot("08-wrong-pin")
         type("246810", into: app.secureTextFields["pin"])
         tap(app.buttons["unlockPin"])
-        XCTAssertTrue(app.staticTexts["unlocked"].waitForExistence(timeout: 60))
+        XCTAssertTrue(app.buttons["lock"].waitForExistence(timeout: 60), "the vault opens after unlock")
 
         // 2.6: unpair.
-        tap(app.buttons["settings"])
+        openSettings()
         let unpair = app.buttons["unpair"]
         XCTAssertTrue(unpair.waitForExistence(timeout: 20))
         if !unpair.isHittable { app.swipeUp() }

@@ -87,6 +87,7 @@ dependencies {
     androidTestImplementation(libs.junit)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.serialization.json)
+    androidTestImplementation(libs.kotlinx.serialization.json)
     testImplementation(libs.robolectric)
     testImplementation(platform(libs.compose.bom))
     testImplementation(libs.compose.ui.test.junit4)

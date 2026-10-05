@@ -208,4 +208,6 @@
     <string name="composite_phone">Phone</string>
     <string name="composite_email">Email</string>
     <string name="composite_bsn">BSN</string>
+    <string name="cd_lock">Lock the vault</string>
+    <string name="cd_settings">Unlock and account settings</string>
 </resources>

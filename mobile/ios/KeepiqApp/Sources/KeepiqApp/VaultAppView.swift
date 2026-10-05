@@ -6,12 +6,16 @@ import SwiftUI
 
 /// The vault, Send and generator screens of one unlocked account (task
 /// group 3). The unlock flow hands in the session; `accounts` and the
-/// callbacks drive the account switcher.
+/// callbacks drive the account switcher. `onLock` is the lock button,
+/// `onSettings` opens the unlock and account settings, and `onLocked` is
+/// called with the reason when a sync found the keys changed elsewhere.
 public struct VaultAppView: View {
     @StateObject private var model: VaultModel
     private let accounts: [Account]
     private let onSwitchAccount: (Account) -> Void
     private let onAddAccount: (() -> Void)?
+    private let onLock: (() -> Void)?
+    private let onSettings: (() -> Void)?
     @State private var showAccounts = false
     @State private var openLink: String?
 
@@ -19,12 +23,19 @@ public struct VaultAppView: View {
         session: MobileSession,
         accounts: [Account],
         onSwitchAccount: @escaping (Account) -> Void,
-        onAddAccount: (() -> Void)?
+        onAddAccount: (() -> Void)?,
+        onLock: (() -> Void)? = nil,
+        onSettings: (() -> Void)? = nil,
+        onLocked: ((String) -> Void)? = nil
     ) {
-        _model = StateObject(wrappedValue: VaultModel(session: session))
+        let model = VaultModel(session: session)
+        model.onLocked = onLocked
+        _model = StateObject(wrappedValue: model)
         self.accounts = accounts
         self.onSwitchAccount = onSwitchAccount
         self.onAddAccount = onAddAccount
+        self.onLock = onLock
+        self.onSettings = onSettings
     }
 
     public var body: some View {
@@ -81,31 +92,40 @@ public struct VaultAppView: View {
                     showAccounts = false
                     onSwitchAccount(account)
                 },
-                onAdd: onAddAccount.map { add in { showAccounts = false; add() } }
+                onAdd: onAddAccount.map { add in { showAccounts = false; add() } },
+                onSettings: onSettings.map { open in { showAccounts = false; open() } }
             )
         }
     }
 
     private var accountButton: some ToolbarContent {
-        ToolbarItem(placement: .topBarTrailing) {
+        ToolbarItemGroup(placement: .topBarTrailing) {
             Button { showAccounts = true } label: { Image(systemName: "person.crop.circle") }
                 .accessibilityLabel(L("cd_switch_account", model.session.label))
+                .accessibilityIdentifier("accounts")
+            if let onLock {
+                Button(action: onLock) { Image(systemName: "lock") }
+                    .accessibilityLabel(L("cd_lock"))
+                    .accessibilityIdentifier("lock")
+            }
         }
     }
 }
 
-/// The account switcher and the clipboard delay.
+/// The account switcher, the unlock and account settings, and the clipboard delay.
 struct AccountsView: View {
     let current: Account
     let accounts: [Account]
     let onSwitch: (Account) -> Void
     let onAdd: (() -> Void)?
+    let onSettings: (() -> Void)?
 
-    init(current: Account, accounts: [Account], onSwitch: @escaping (Account) -> Void, onAdd: (() -> Void)?) {
+    init(current: Account, accounts: [Account], onSwitch: @escaping (Account) -> Void, onAdd: (() -> Void)?, onSettings: (() -> Void)? = nil) {
         self.current = current
         self.accounts = accounts
         self.onSwitch = onSwitch
         self.onAdd = onAdd
+        self.onSettings = onSettings
     }
 
     @State private var clearSeconds = VaultSettings.clipboardClearSeconds
@@ -133,6 +153,11 @@ struct AccountsView: View {
                         } else {
                             Text(L("accounts_limit")).font(.footnote)
                         }
+                    }
+                }
+                if let onSettings {
+                    Section {
+                        Button(L("cd_settings"), action: onSettings).accessibilityIdentifier("settings")
                     }
                 }
                 Section(L("settings_clipboard")) {

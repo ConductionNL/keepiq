@@ -15,12 +15,20 @@
  *                  browser;
  *             GET  /__e2e/tokens  the user's app password names (the
  *                  Nextcloud device list), through occ.
- *   record  Talks to the test Nextcloud and writes the answers the iOS
- *           tests replay to mobile/e2e/fixtures/server.json.
+ *   seed    Fills admin's vault with the demo items the vault tests use:
+ *           logins on example.com, example.net, example.org and .example
+ *           names, an authenticator (TOTP) item and a note, all clearly
+ *           fake. Every value is encrypted to admin's suite as the apps do
+ *           it. Run it again and it adds only what is missing.
+ *   record  Talks to the seeded test Nextcloud and writes the answers the
+ *           iOS tests replay to mobile/e2e/fixtures/server.json.
  *   replay  An https stub that answers from those recordings, for the iOS
- *           simulator job, where no Docker runs.
+ *           simulator job, where no Docker runs. It keeps the vault and the
+ *           Sends in memory, so an item the test creates, edits or trashes
+ *           behaves as on the real server.
  *
  *   node mobile/e2e/server.mjs proxy  --port 8443 --cert c.pem --key k.pem --upstream http://localhost:8188 --container kq-e2e-nc-1
+ *   node mobile/e2e/server.mjs seed   --upstream http://localhost:8188
  *   node mobile/e2e/server.mjs record --upstream http://localhost:8188 --container kq-e2e-nc-1
  *   node mobile/e2e/server.mjs replay --port 8443 --cert c.pem --key k.pem
  *
@@ -28,6 +36,7 @@
  * Oj, the development vault of browser-extension/capture/setup.sh.
  */
 import { execFileSync } from 'node:child_process'
+import { constants as cryptoConstants, publicEncrypt, randomUUID } from 'node:crypto'
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { request as httpRequest } from 'node:http'
 import { createServer as createHttpsServer } from 'node:https'
@@ -201,6 +210,93 @@ function proxy(o) {
 	server.listen(Number(o.port || 8443), '0.0.0.0', () => console.log(`[e2e] proxy on https://0.0.0.0:${o.port || 8443} -> ${upstream}`))
 }
 
+/** The demo vault (seed). Names say "(demo)"; every address is a reserved example name (RFC 2606). */
+export const DEMO_FOLDERS = ['Personal', 'Work']
+export const DEMO_ITEMS = [
+	{ name: 'Webmail (demo)', type: 'login', url: 'https://webmail.example.com', login: 'anna.demo@example.com', key: 'Lantern-Orbit-42!', folder: null },
+	{ name: 'Router admin (demo)', type: 'login', url: 'https://router.example', login: 'admin', key: 'Quiet-Meadow-19$', folder: null },
+	{
+		name: 'Authenticator (demo)',
+		type: 'totp',
+		url: 'https://webmail.example.com',
+		login: '',
+		key: 'otpauth://totp/Webmail%20demo:anna.demo%40example.com?secret=JBSWY3DPEHPK3PXP&issuer=Webmail%20demo',
+		folder: null,
+	},
+	{ name: 'Wi-Fi at home (demo)', type: 'note', url: '', login: '', key: 'Network: demo-home\nThis is not a real network.', folder: null },
+	{ name: 'Bank (demo)', type: 'login', url: 'https://bank.example.net', login: '40817265', key: 'Copper-Harbor-7#', folder: 'Personal' },
+	{ name: 'Intranet (demo)', type: 'login', url: 'https://intranet.example.org', login: 'anna.demo', key: 'Silver-Comet-58%', folder: 'Work' },
+	{ name: 'Project board (demo)', type: 'login', url: 'https://board.example.org', login: 'anna.demo@example.com', key: 'Amber-Valley-23&', folder: 'Work' },
+]
+
+/**
+ * A field as the apps encrypt it (src/crypto/rsa.js rsaEncrypt, the shared
+ * core's RsaFields): a 4-byte big-endian chunk count, then one 512-byte
+ * RSA-OAEP-SHA256 block per 446 bytes of UTF-8, base64.
+ */
+export function encryptField(text, certificatePem) {
+	const data = Buffer.from(text, 'utf8')
+	const chunks = []
+	for (let i = 0; i < Math.max(data.length, 1); i += 446) chunks.push(data.subarray(i, i + 446))
+	const head = Buffer.alloc(4)
+	head.writeUInt32BE(chunks.length)
+	const blocks = chunks.map((c) => publicEncrypt({ key: certificatePem, padding: cryptoConstants.RSA_PKCS1_OAEP_PADDING, oaepHash: 'sha256' }, c))
+	return Buffer.concat([head, ...blocks]).toString('base64')
+}
+
+/** Keepiq's API as admin, for seed and record. */
+function keepiqApi(upstream, password) {
+	const headers = {
+		authorization: 'Basic ' + Buffer.from(`admin:${password}`).toString('base64'),
+		'ocs-apirequest': 'true',
+		accept: 'application/json',
+	}
+	return async (method, path, body) => {
+		const opts = { headers: { ...headers } }
+		if (body !== undefined) {
+			opts.headers['content-type'] = 'application/json'
+			opts.body = JSON.stringify(body)
+		}
+		const r = await nc(upstream, method, '/index.php/apps/keepiq' + path, opts)
+		if (r.status < 200 || r.status > 299) throw new Error(`${method} ${path} answered ${r.status}: ${r.text.slice(0, 200)}`)
+		return r.text ? JSON.parse(r.text) : null
+	}
+}
+
+const listOf = (data) => (Array.isArray(data) ? data : data?.items || [])
+
+async function seed(o) {
+	const call = keepiqApi(o.upstream, o.password || 'admin')
+	const suite = listOf(await call('GET', '/api/v1/suites')).find((s) => s.status === 'active')
+	if (!suite?.certificate) throw new Error('admin has no active suite with a certificate')
+	const types = listOf(await call('GET', '/api/v1/secret-types'))
+	const folders = listOf(await call('GET', '/api/v1/folders'))
+	const folderId = {}
+	for (const name of DEMO_FOLDERS) {
+		const found = folders.find((f) => f.name === name && !f.parentId)
+		folderId[name] = found ? found.id : (await call('POST', '/api/v1/folders', { name, parentId: null })).id
+	}
+	const manifest = await call('GET', '/api/v1/offline/manifest')
+	const have = new Set((manifest.secrets || []).map((s) => s.name))
+	let added = 0
+	for (const item of DEMO_ITEMS) {
+		if (have.has(item.name)) continue
+		const type = types.find((t) => t.name === item.type)
+		if (!type) throw new Error(`no secret type ${item.type}`)
+		const body = {
+			name: item.name,
+			url: item.url || null,
+			typeId: type.id,
+			folderId: item.folder ? folderId[item.folder] : null,
+			key: encryptField(item.key, suite.certificate),
+		}
+		if (item.login) body.login = encryptField(item.login, suite.certificate)
+		await call('POST', '/api/v1/secrets', body)
+		added++
+	}
+	console.log(`[e2e] seeded ${added} demo items (${DEMO_ITEMS.length - added} were there)`)
+}
+
 /**
  * Records what the iOS replay needs. App passwords are replaced by fixed
  * fake ones, and the recorded host by a placeholder the replay fills in.
@@ -228,15 +324,48 @@ async function record(o) {
 		if (r.status !== 200) throw new Error(`${method} ${path} answered ${r.status}: ${r.text.slice(0, 200)}`)
 		return json(r)
 	}
+	const callJson = async (method, path, body) => {
+		const r = await nc(upstream, method, keepiq + path, {
+			headers: { ...basic(appPassword), 'content-type': 'application/json' },
+			body: JSON.stringify(body),
+		})
+		if (r.status < 200 || r.status > 299) throw new Error(`${method} ${path} answered ${r.status}: ${r.text.slice(0, 200)}`)
+		return json(r)
+	}
 	const pair = await call('POST', '/api/v1/extension/pair')
 	const suites = await call('GET', '/api/v1/suites')
 	const policy = await call('GET', '/api/v1/extension/policy')
+
+	// The vault (seed first): the manifest, each item as GET answers it, the
+	// generator policy, and one Send made and ended again for its shapes.
+	const manifest = await call('GET', '/api/v1/offline/manifest')
+	if (!(manifest.secrets || []).some((s) => s.name === DEMO_ITEMS[0].name)) throw new Error('the vault is not seeded: run `server.mjs seed` first')
+	const detail = await call('GET', `/api/v1/secrets/${encodeURIComponent(manifest.secrets[0].id)}`)
+	const generatorPolicy = await call('GET', '/api/settings/policy')
+	const send = await callJson('POST', '/api/v1/sends', {
+		encryptedPayload: 'recorded-payload-not-a-secret',
+		payloadType: 'text',
+		maxViews: 1,
+		ttlSeconds: 3600,
+		hasPassword: false,
+	})
+	const sends = await call('GET', '/api/v1/sends')
+	await call('DELETE', `/api/v1/sends/${encodeURIComponent(send.id)}`)
 	occ(o.container, 'config:app:set', 'keepiq', 'vault_require_two_factor', '--value=true', '--type=boolean')
+	// The web server may read the setting from its cache for a moment.
 	let blocked
 	try {
-		blocked = await call('GET', '/api/v1/suites')
+		for (let i = 0; i < 30; i++) {
+			blocked = await call('GET', '/api/v1/suites')
+			if (listOf(blocked).some((s) => s.unlockBlocked)) break
+			await new Promise((r) => setTimeout(r, 2000))
+		}
+		if (!listOf(blocked).some((s) => s.unlockBlocked)) throw new Error('the two-factor block never showed in /suites')
 	} finally {
 		occ(o.container, 'config:app:delete', 'keepiq', 'vault_require_two_factor')
+	}
+	for (let i = 0; i < 30 && listOf(await call('GET', '/api/v1/suites')).some((s) => s.unlockBlocked); i++) {
+		await new Promise((r) => setTimeout(r, 2000))
 	}
 	const unpair = await call('POST', '/api/v1/extension/unpair')
 	const revoke = await nc(upstream, 'DELETE', '/ocs/v2.php/core/apppassword', { headers: basic(appPassword) })
@@ -251,6 +380,12 @@ async function record(o) {
 	out.suites = suites
 	out.suitesTwoFactorRequired = blocked
 	out.policy = policy
+	out.manifest = manifest
+	// GET of one item answers the manifest row plus its tags.
+	out.secretTags = detail.tags ?? []
+	out.generatorPolicy = generatorPolicy
+	out.sendCreated = send
+	out.sendListed = listOf(sends).find((s) => s.id === send.id) || listOf(sends)[0] || null
 	out.unpair = unpair
 	out.revoke = { status: revoke.status, body: JSON.parse(revoke.text) }
 	out.afterRevoke = { status: after.status, body: JSON.parse(after.text || '{}') }
@@ -272,6 +407,8 @@ function replay(o) {
 	const valid = new Set(['admin:stub-app-password', 'admin:manual-app-password', 'blocked:manual-app-password'])
 	const polls = new Map()
 	const fill = (value, origin) => JSON.parse(JSON.stringify(value).split('{origin}').join(origin))
+	const vault = new Map((f.manifest?.secrets || []).map((row) => [row.id, { ...row }]))
+	const sends = new Map()
 	const server = createHttpsServer({ cert: readFileSync(o.cert), key: readFileSync(o.key) }, async (req, res) => {
 		const origin = `https://${req.headers.host}`
 		// Nextcloud links its Login Flow routes with and without /index.php
@@ -306,16 +443,111 @@ function replay(o) {
 		if (req.method === 'POST' && path === `${keepiq}/extension/unpair`) return send(res, 200, f.unpair)
 		if (req.method === 'GET' && path === `${keepiq}/extension/policy`) return send(res, 200, f.policy)
 		if (req.method === 'GET' && path === `${keepiq}/suites`) return send(res, 200, user === 'blocked' ? f.suitesTwoFactorRequired : f.suites)
+		const answer = user === 'admin' ? vaultAnswer(f, vault, sends, req.method, path, req.url, body) : null
+		if (answer) return send(res, answer[0], answer[1])
 		return send(res, 404, { error: 'not recorded' })
 	})
 	server.listen(Number(o.port || 8443), '0.0.0.0', () => console.log(`[replay] on https://0.0.0.0:${o.port || 8443}`))
 }
 
+const now = () => new Date().toISOString().replace(/\.\d{3}Z$/, '+00:00')
+
+/**
+ * The vault and Send endpoints of the replay: the recorded manifest, kept in
+ * memory and changed by the writes the tests make. Field values arrive
+ * encrypted by the app and are kept as they are; the replay never sees a
+ * plaintext. Answers [status, body], or null for a path it does not know.
+ */
+function vaultAnswer(f, vault, sends, method, path, url, body) {
+	const api = '/index.php/apps/keepiq/api/v1'
+	const json = () => {
+		try {
+			return JSON.parse(body || '{}')
+		} catch {
+			return {}
+		}
+	}
+	const rows = () => [...vault.values()].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+	if (method === 'GET' && path === '/index.php/apps/keepiq/api/settings/policy') return [200, f.generatorPolicy]
+	if (method === 'GET' && path === `${api}/offline/manifest`) return [200, { ...f.manifest, secrets: rows(), syncedAt: now() }]
+	if (method === 'GET' && path === `${api}/folders`) return [200, f.manifest.folders]
+	if (method === 'GET' && path === `${api}/secret-types`) return [200, f.manifest.types]
+	if (method === 'GET' && path === `${api}/secrets`) {
+		const limit = Number(new URL(url, 'https://replay').searchParams.get('limit') || 100)
+		return [200, { items: rows().slice(0, limit), total: vault.size }]
+	}
+	if (method === 'POST' && path === `${api}/secrets`) {
+		const b = json()
+		const template = f.manifest.secrets[0]
+		const at = now()
+		const row = {
+			...template,
+			id: randomUUID(),
+			name: b.name,
+			url: b.url ?? null,
+			typeId: b.typeId ?? null,
+			folderId: b.folderId ?? null,
+			key: b.key,
+			login: b.login ?? null,
+			additionalFields: b.additionalFields ?? null,
+			createdAt: at,
+			updatedAt: at,
+			keyUpdatedAt: at,
+		}
+		vault.set(row.id, row)
+		return [201, row]
+	}
+	const secret = path.match(new RegExp(`^${api}/secrets/([^/]+)$`))
+	if (secret) {
+		const id = decodeURIComponent(secret[1])
+		const row = vault.get(id)
+		if (!row) return [404, { error: 'not found' }]
+		if (method === 'GET') return [200, { ...row, tags: f.secretTags || [] }]
+		if (method === 'PUT') {
+			const b = json()
+			for (const field of ['name', 'url', 'folderId', 'key', 'login', 'additionalFields']) if (field in b) row[field] = b[field]
+			row.updatedAt = now()
+			if ('key' in b) row.keyUpdatedAt = row.updatedAt
+			return [200, row]
+		}
+		if (method === 'DELETE') {
+			vault.delete(id)
+			return [200, { ...row, trashedAt: now() }]
+		}
+	}
+	if (method === 'GET' && path === `${api}/sends`) return [200, [...sends.values()]]
+	if (method === 'POST' && path === `${api}/sends`) {
+		const b = json()
+		const id = randomUUID()
+		const at = new Date()
+		const { token: _recordedToken, ...shape } = f.sendListed || {}
+		const listed = {
+			...shape,
+			id,
+			payloadType: b.payloadType || 'text',
+			maxViews: b.maxViews ?? 1,
+			viewCount: 0,
+			hasPassword: b.hasPassword === true,
+			createdAt: now(),
+			expiresAt: new Date(at.getTime() + (b.ttlSeconds || 86400) * 1000).toISOString().replace(/\.\d{3}Z$/, '+00:00'),
+		}
+		sends.set(id, listed)
+		return [201, { ...f.sendCreated, ...listed, token: randomUUID().replace(/-/g, '') }]
+	}
+	const oneSend = path.match(new RegExp(`^${api}/sends/([^/]+)$`))
+	if (oneSend && method === 'DELETE') {
+		sends.delete(decodeURIComponent(oneSend[1]))
+		return [200, { success: true }]
+	}
+	return null
+}
+
 const o = options(process.argv.slice(2))
 if (o._ === 'proxy') proxy(o)
+else if (o._ === 'seed') await seed(o)
 else if (o._ === 'record') await record(o)
 else if (o._ === 'replay') replay(o)
 else {
-	console.error('usage: server.mjs proxy|record|replay [--options]')
+	console.error('usage: server.mjs proxy|seed|record|replay [--options]')
 	process.exit(2)
 }
