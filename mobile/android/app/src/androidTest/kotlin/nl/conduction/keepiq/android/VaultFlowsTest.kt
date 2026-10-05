@@ -24,6 +24,7 @@ import androidx.test.espresso.Espresso
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.runBlocking
+import kotlin.concurrent.thread
 import kotlinx.serialization.json.jsonPrimitive
 import nl.conduction.keepiq.shared.vault.VaultLockedException
 import org.junit.Assert.assertEquals
@@ -140,7 +141,7 @@ class VaultFlowsTest {
         compose.waitForText(generated)
         E2e.shot("36-created")
         // On the server: the login as the web app's API lists it, its password encrypted to the suite.
-        val stored = runBlocking { unlocked.session.api.listSecrets() }
+        val stored = onOwnThread { unlocked.session.api.listSecrets() }
             .single { it["name"]?.jsonPrimitive?.content == "Shop (demo)" }
         assertEquals("https://shop.example.com", stored["url"]?.jsonPrimitive?.content)
         val storedKey = stored["key"]!!.jsonPrimitive.content
@@ -231,6 +232,17 @@ class VaultFlowsTest {
     private fun hideKeyboard() {
         Espresso.closeSoftKeyboard()
         compose.waitForIdle()
+    }
+
+    /**
+     * Runs a suspend call to completion on a thread of its own. A
+     * runBlocking on the test thread lets a Compose frame run inside its
+     * event loop, off the main thread.
+     */
+    private fun <T> onOwnThread(block: suspend () -> T): T {
+        var result: Result<T>? = null
+        thread { result = runCatching { runBlocking { block() } } }.join()
+        return result!!.getOrThrow()
     }
 
     /** An input labelled [label]. */
