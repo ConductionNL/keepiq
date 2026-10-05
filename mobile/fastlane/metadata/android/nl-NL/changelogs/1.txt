@@ -1,0 +1,1 @@
+De eerste versie van Keepiq voor Android. Open je kluis, vul logins en passkeys in, maak wachtwoorden en deel geheimen met een Send-link.
