@@ -7576,12 +7576,42 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/clients-mobile-apps on 2026-10-04. Before: no iOS or Android project in the repo (src, browser-extension, cli only), and openspec/specs/mobile-pwa/spec.md ruled out a native app; the PWA cannot register as a system autofill provider",
+        "state": "building",
+        "evidence": "mobile/shared (Kotlin Multiplatform core: crypto, API client, SQLCipher store, sync), mobile/android/app (Compose app, android/autofill/KeepiqAutofillService.kt, android/passkey/KeepiqCredentialProviderService.kt) and mobile/ios (SwiftUI app, KeepiqAutofill/CredentialProviderViewController.swift); merged in #1154, #1155, #1159, #1160, #1164, #1170 and #1179; emulator and simulator tests in .github/workflows/mobile-e2e.yml (mobile/e2e/android-run.sh, ios-run.sh); Android preview APK published as GitHub pre-release mobile-v0.1.0-preview.2 (2026-10-05)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "none",
-        "note": "Decision reversed by the product owner on 2026-10-04: native iOS (17+) and Android (9+) apps on a shared Kotlin Multiplatform core, with system autofill, passkeys (iOS 17, Android 14), the vault, Send and the generator, published on the App Store, Google Play and F-Droid. Was decided-no on the mobile-pwa record of 2026-09-27.",
-        "change": "openspec/changes/clients-mobile-apps"
+        "reachedOn": "Android: install the preview APK from the mobile-v0.1.0-preview.2 release, connect to the Nextcloud server, unlock -> vault list; Settings -> Autofill service -> Keepiq",
+        "note": "Decision reversed by the product owner on 2026-10-04 (was decided-no on the mobile-pwa record of 2026-09-27). Built and tested in CI: the shared core, the Android app with system autofill and passkeys (Android 14), the iOS app and its AutoFill extension against a replay, offline reading and automatic accessibility audits. Open: the App Store, Google Play and F-Droid listings (6.5, 6.6), a signed iOS build and TestFlight (no Apple account yet), the iOS offline store (1.6.1), and the manual checks: biometrics, clipboard preview and device lock on real phones, browser passkey ceremonies, the extension-to-phone passkey run, and TalkBack and VoiceOver.",
+        "change": "openspec/changes/clients-mobile-apps",
+        "prs": [
+          {
+            "repo": "ConductionNL/keepiq",
+            "number": 1154
+          },
+          {
+            "repo": "ConductionNL/keepiq",
+            "number": 1155
+          },
+          {
+            "repo": "ConductionNL/keepiq",
+            "number": 1159
+          },
+          {
+            "repo": "ConductionNL/keepiq",
+            "number": 1160
+          },
+          {
+            "repo": "ConductionNL/keepiq",
+            "number": 1164
+          },
+          {
+            "repo": "ConductionNL/keepiq",
+            "number": 1170
+          },
+          {
+            "repo": "ConductionNL/keepiq",
+            "number": 1179
+          }
+        ]
       },
       "rowSource": "competitor",
       "provider": "keepiq",
