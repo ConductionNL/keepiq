@@ -17,7 +17,6 @@ import nl.conduction.keepiq.shared.autofill.NeverSaveList
 import nl.conduction.keepiq.shared.crypto.RsaFields
 import nl.conduction.keepiq.shared.crypto.RsaPrivateKey
 import nl.conduction.keepiq.shared.unlock.UnlockedVault
-import nl.conduction.keepiq.shared.vault.RsaVaultKeys
 import nl.conduction.keepiq.shared.vault.VaultKeys
 import java.security.SecureRandom
 import java.util.concurrent.ConcurrentHashMap
@@ -63,8 +62,12 @@ class AutofillCore(context: Context, storage: SecureStorage, private val state: 
     fun keys(accountId: String): VaultKeys? {
         val vault = state().openVault()?.takeIf { it.accountId == accountId } ?: return null
         keysFor?.let { (v, k) -> if (v === vault) return k }
-        val keys = vault.certificate?.let { RsaVaultKeys.fromPem(vault.privateKeyPem, it, vault.suiteId, vault.unlockKeyEpoch) }
-            ?: DecryptOnlyKeys(RsaPrivateKey.fromPem(vault.privateKeyPem), vault.suiteId, vault.unlockKeyEpoch)
+        // The vault's own keys, forgotten when it locks; without a certificate, read only.
+        val keys = try {
+            if (vault.certificate != null) vault.keys() else DecryptOnlyKeys(RsaPrivateKey.fromPem(vault.privateKeyPem), vault.suiteId, vault.unlockKeyEpoch)
+        } catch (e: Exception) {
+            return null
+        }
         keysFor = vault to keys
         return keys
     }
