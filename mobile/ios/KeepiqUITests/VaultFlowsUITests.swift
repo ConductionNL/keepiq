@@ -39,10 +39,18 @@ final class VaultFlowsUITests: XCTestCase {
         XCTAssertTrue(element.waitForExistence(timeout: 20), "\(element) is missing")
         element.tap()
         element.typeText(text)
+        dismissKeyboardTip()
+    }
+
+    /// The first keyboard use shows a slide-to-type tip that covers the lower half.
+    private func dismissKeyboardTip() {
+        let tip = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Speed up your typing")).firstMatch
+        if tip.exists, app.buttons["Continue"].exists { app.buttons["Continue"].tap() }
     }
 
     private func tap(_ element: XCUIElement, timeout: TimeInterval = 20) {
         XCTAssertTrue(element.waitForExistence(timeout: timeout), "\(element) is missing")
+        dismissKeyboardTip()
         // A screen still sliding in, or a keyboard on its way out, covers it for a moment.
         let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: element)
         if XCTWaiter.wait(for: [hittable], timeout: 5) != .completed { app.swipeUp() }
