@@ -110,12 +110,13 @@ struct AutofillListView: View {
             }
             Section {
                 if adding {
+                    // No .username or .newPassword: those make iOS offer its own strong
+                    // password and save prompt over the sheet. Keepiq keeps the login itself.
                     TextField(AL("add.user"), text: $user)
-                        .textContentType(.username)
                         .textInputAutocapitalization(.never)
                         .accessibilityIdentifier("autofillAddUser")
                     SecureField(AL("add.password"), text: $password)
-                        .textContentType(.newPassword)
+                        .textContentType(.oneTimeCode)
                         .accessibilityIdentifier("autofillAddPassword")
                     Button(AL("add.save")) { model.addLogin(user: user, password: password) }
                         .disabled(password.isEmpty || model.busy)
