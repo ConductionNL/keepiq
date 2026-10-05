@@ -286,6 +286,13 @@ class AppState(val client: KeepiqClient, val biometric: BiometricUnlock, private
         refreshGate(vault.accountId)
     }
 
+    /** The open vault, or null while locked; the autofill service fills from it (task 4.1). */
+    fun openVault(): UnlockedVault? = when (val s = _screen.value) {
+        is Screen.Unlocked -> s.vault
+        is Screen.Settings -> s.vault
+        else -> null
+    }
+
     fun openSettings(vault: UnlockedVault) {
         _screen.value = Screen.Settings(vault)
     }

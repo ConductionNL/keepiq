@@ -208,4 +208,21 @@
     <string name="composite_phone">Phone</string>
     <string name="composite_email">Email</string>
     <string name="composite_bsn">BSN</string>
+    <!-- System autofill (clients-mobile-apps group 4). -->
+    <string name="autofill_unlock">Unlock Keepiq</string>
+    <string name="autofill_unlock_hint">Unlock to fill in your login</string>
+    <string name="autofill_code_from">Code from %1$s</string>
+    <string name="autofill_choose">Choose a login</string>
+    <string name="autofill_nothing">Keepiq has no login for this app or site.</string>
+    <string name="autofill_saved">Login saved in Keepiq.</string>
+    <string name="autofill_updated">Password updated in Keepiq.</string>
+    <string name="autofill_save_failed">Keepiq could not save this login. Add it in the app.</string>
+    <string name="autofill_settings_title">Autofill</string>
+    <string name="autofill_status_on">Keepiq fills in your logins in apps and browsers.</string>
+    <string name="autofill_status_off">Keepiq does not fill in logins yet. Choose Keepiq as your autofill service.</string>
+    <string name="autofill_choose_service">Choose Keepiq for autofill</string>
+    <string name="autofill_turn_off">Turn off autofill</string>
+    <string name="autofill_never_title">Never save on</string>
+    <string name="autofill_never_empty">Keepiq offers to save your logins on every site and in every app.</string>
+    <string name="autofill_never_remove">Save on %1$s again</string>
 </resources>

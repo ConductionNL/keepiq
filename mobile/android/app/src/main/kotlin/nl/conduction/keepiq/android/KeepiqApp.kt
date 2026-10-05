@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
+import nl.conduction.keepiq.android.autofill.AutofillCore
 import nl.conduction.keepiq.android.security.BiometricUnlock
 import nl.conduction.keepiq.android.security.KeystoreStorage
 import nl.conduction.keepiq.shared.KeepiqClient
@@ -28,11 +29,22 @@ class KeepiqApp : Application() {
     lateinit var state: AppState
         private set
 
+    /** System autofill (task group 4): the index, app identities and the never-save list. */
+    lateinit var autofill: AutofillCore
+        private set
+
     override fun onCreate() {
         super.onCreate()
         val storage = KeystoreStorage(this)
         val client = KeepiqClient(storage, clientName())
         state = AppState(client, BiometricUnlock(this, storage))
+        autofill = AutofillCore(this, storage) { state }
+        // Unpair wipes the account's autofill index too (task 4.6).
+        val wipe = client.onWipe
+        client.onWipe = { accountId ->
+            wipe(accountId)
+            autofill.forget(accountId)
+        }
 
         val screenOff = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
@@ -43,7 +55,11 @@ class KeepiqApp : Application() {
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             object : DefaultLifecycleObserver {
-                override fun onStart(owner: LifecycleOwner) = state.onForeground()
+                override fun onStart(owner: LifecycleOwner) {
+                    state.onForeground()
+                    // Autofill turned off in the system settings: no index on disk.
+                    autofill.index.clearFilesIfNotTheService()
+                }
 
                 override fun onStop(owner: LifecycleOwner) = state.onBackground()
             },
