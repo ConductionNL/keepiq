@@ -19,8 +19,8 @@
 
 ## 3. Frontend shell and gating
 
-- [ ] 3.1 Mount `CnAppRoot` with `:requiresApps="[]"` in `src/App.vue`, pass `:showReimport="false"` in `src/views/settings/AdminRoot.vue`, and remove the OpenRegister `objectStore.configure(...)` and the unused `useObjectStore` export from `src/store/store.js`, and bind `:aiCompanion` to Hermiq's presence (design D6).
-- [ ] 3.2 In `src/manifest.json`: add `visibleIf.appInstalled: "openregister"` to `FlowsMenu`, add `requiresApp: {"id": "openregister", "name": "OpenRegister"}` to the `Flows` and `FlowDetail` pages, and remove the `observability` block. `npm run check:manifest` stays green (design D6, Mixed-spec rationale).
+- [x] 3.1 Mount `CnAppRoot` with `:requiresApps="[]"` in `src/App.vue`, pass `:showReimport="false"` in `src/views/settings/AdminRoot.vue`, and remove the OpenRegister `objectStore.configure(...)` and the unused `useObjectStore` export from `src/store/store.js`, and bind `:aiCompanion` to Hermiq's presence (design D6).
+- [x] 3.2 In `src/manifest.json`: add `visibleIf.appInstalled: "openregister"` to `FlowsMenu`, add `requiresApp: {"id": "openregister", "name": "OpenRegister"}` to the `Flows` and `FlowDetail` pages, and remove the `observability` block. `npm run check:manifest` stays green (design D6, Mixed-spec rationale).
   - `manifest.dependencies` stays `[]`.
 
 ## 4. Tests

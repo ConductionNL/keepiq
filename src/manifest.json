@@ -209,7 +209,8 @@
 			"icon": "Sitemap",
 			"route": "Flows",
 			"section": "settings",
-			"order": 96
+			"order": 96,
+			"visibleIf": { "appInstalled": "openregister" }
 		}
 	],
 	"pages": [
@@ -658,6 +659,7 @@
 			"route": "/flows",
 			"type": "index",
 			"title": "Flows",
+			"requiresApp": { "id": "openregister", "name": "OpenRegister" },
 			"config": { "entitySource": "flows", "app": "keepiq" },
 			"_note": "ADR-110 Decision 4: a flow is app-specific, so the authoring surface lives here rather than behind a deep link to another app's list. An ordinary index over the named `flows` source (config.entitySource) rather than the deprecated `flows` page type, reading OpenRegister's one native flow store (ADR-065), scoped to this app by config.app."
 		},
@@ -666,32 +668,11 @@
 			"route": "/flows/:id",
 			"type": "flow",
 			"title": "Flow",
+			"requiresApp": { "id": "openregister", "name": "OpenRegister" },
 			"config": { "app": "keepiq" },
 			"sidebarComponent": "FlowDetailSidebar",
 			"_note": "The shared CnFlowDetail canvas over the same single engine. Controls render in the NC app sidebar (sidebarComponent) so the canvas keeps full width; canvas and sidebar share useFlowStore. The _note claimed this before the field existed, so #/flows/new -- and every #/flows/:id -- rendered a bare canvas with no way to name, describe, trigger or step-edit the flow. Mirrors pipelinq#1490."
 		}
 	],
-	"observability": {
-		"_note": "Declarative observability via the OpenRegister AppHost engine (ADR-040 / ADR-006). These descriptors reproduce the output of the deleted hand-written HealthController + MetricsController. /api/health and /api/metrics are aliased to AppHost\\Controller\\GenericHealthController / GenericMetricsController by Bootstrap::register, so the engine reads this block at request time. Auth-posture deltas (intentional, ADR-006): health is now PUBLIC (was authenticated) and metrics are now ADMIN-ONLY (was any authenticated user). No secret material is exposed — health carries only status/app/version/checks; metrics carry only the aggregate active-suite COUNT, never any suite identifier, key material, or owner. The suites_total source is now a SQL COUNT(*) over an allowlisted table (was a PHP count() over a fetch-all). Implicit keepiq_info and keepiq_up metrics are added by the engine.",
-		"health": {
-			"statusCodePolicy": "adr006",
-			"checks": [
-				{ "id": "database", "type": "database", "severity": "critical" },
-				{ "id": "filesystem", "type": "filesystem", "severity": "degraded" }
-			]
-		},
-		"metrics": [
-			{
-				"name": "suites_total",
-				"type": "gauge",
-				"help": "Total number of active encryption suites",
-				"source": {
-					"kind": "tableCount",
-					"table": "keepiq_enc_suites",
-					"filter": { "status": { "eq": "active" } }
-				}
-			}
-		]
-	},
 	"deepLinks": []
 }

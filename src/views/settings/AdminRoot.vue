@@ -1,11 +1,12 @@
 <template>
-	<!-- The version card and re-import action belong to the General area
-	     only (admin-scoped-roles D3); every other area renders its sections. -->
+	<!-- The version card belongs to the General area only (admin-scoped-roles
+	     D3); every other area renders its sections. There is no re-import:
+	     Keepiq imports no configuration from another app (ADR-006). -->
 	<CnAdminSettingsShell
 		v-if="area === 'general'"
 		appId="keepiq"
 		appName="Keepiq"
-		@reimported="onReimported">
+		:showReimport="false">
 		<Settings v-if="storesReady" :area="area" />
 	</CnAdminSettingsShell>
 	<Settings v-else-if="storesReady" :area="area" />
@@ -49,18 +50,6 @@ export default {
 	async created() {
 		await initializeStores()
 		this.storesReady = true
-	},
-
-	methods: {
-		/**
-		 * Re-initialise the stores after the shell's Re-import action
-		 * reloads the app configuration.
-		 *
-		 * @spec exclude Event handler: re-runs store initialisation after the shell re-imports configuration.
-		 */
-		onReimported() {
-			initializeStores()
-		},
 	},
 }
 </script>

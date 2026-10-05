@@ -108,7 +108,8 @@
 		<KeyProofPromptDialog />
 
 		<CnAppRoot
-			:aiCompanion="true"
+			:aiCompanion="hermiqEnabled"
+			:requiresApps="[]"
 			:supportDialog="showSupportDialog"
 			:manifest="manifest"
 			:customComponents="shellCustomComponents"
@@ -683,6 +684,18 @@ export default {
 		 */
 		permissions() {
 			return shellPermissions(getCurrentUser()?.isAdmin === true)
+		},
+
+		/**
+		 * Whether Hermiq, the AI companion's chat backend, is enabled for this
+		 * user. Without it the companion is not mounted at all, so the shell
+		 * sends no health probe to `/apps/hermiq/` (ADR-006).
+		 *
+		 * @return {boolean} True when `OC.appswebroots` lists hermiq.
+		 * @spec openspec/specs/app-shell/spec.md#requirement-optional-integrations-appear-only-when-their-app-is-present
+		 */
+		hermiqEnabled() {
+			return Boolean(typeof window !== 'undefined' && window.OC?.appswebroots?.hermiq)
 		},
 
 		/**
