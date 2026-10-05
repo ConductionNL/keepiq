@@ -125,9 +125,11 @@ class VaultFlowsTest {
         compose.onNodeWithText("Generate").performScrollTo().performClick()
         compose.waitForTag("generated")
         E2e.shot("35-generate-in-form")
+        // The value as the generator shows it: the password field's semantics
+        // carry only the masked text.
+        val generated = generatedValue()
+        assertTrue("a generated password: $generated", generated.length >= 12)
         compose.onNodeWithText("Use this").performClick()
-        val generated = compose.onNode(field("Password")).fetchSemanticsNode().config[SemanticsProperties.EditableText].text
-        assertTrue("a generated password was filled in", generated.length >= 12)
         hideKeyboard()
         compose.onNodeWithText("Save").performScrollTo().performClick()
         // Saved: the form gives way to the new item.
