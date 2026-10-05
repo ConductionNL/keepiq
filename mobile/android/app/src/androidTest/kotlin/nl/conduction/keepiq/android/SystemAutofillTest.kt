@@ -206,7 +206,13 @@ class SystemAutofillTest {
 
     private fun unlock(accountId: String) {
         main { E2e.app.state.unlockWithMasterPassword(accountId, E2e.masterPassword) }
-        waitUntil(60_000) { E2e.app.state.openVault() != null }
+        // The unlock opens the encrypted store and syncs before the vault
+        // counts as open; on the API 28 emulator that is slow.
+        try {
+            waitUntil(180_000) { E2e.app.state.openVault() != null }
+        } catch (e: IllegalStateException) {
+            error("the vault did not open: screen ${E2e.app.state.screen.value::class.simpleName}, message ${E2e.app.state.message.value}")
+        }
     }
 
     private fun create(api: KeepiqApi, keys: RsaVaultKeys, type: String, name: String, url: String, login: String, secret: String): String = runBlocking {
