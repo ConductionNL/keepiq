@@ -417,6 +417,7 @@ struct ItemEditView: View {
     }
 
     private func save(_ draft: ItemDraft, valid: Bool) {
+        dismissKeyboard()
         showErrors = true
         guard valid else { return }
         busy = true

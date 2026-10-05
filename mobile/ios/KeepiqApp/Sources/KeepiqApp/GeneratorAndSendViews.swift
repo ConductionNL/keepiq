@@ -344,6 +344,7 @@ struct NewSendView: View {
     }
 
     private func create() {
+        dismissKeyboard()
         busy = true
         problem = nil
         let plaintext = credential ? SendForm.shared.credentialPayload(username: username, password: password) : text

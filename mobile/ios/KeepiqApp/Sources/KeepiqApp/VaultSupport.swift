@@ -159,6 +159,11 @@ func compositeLabel(_ field: String) -> String {
     }
 }
 
+/// Closes the keyboard, so it does not cover the screen a save or a new Send opens.
+func dismissKeyboard() {
+    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+}
+
 /// An input with its name shown above it. A placeholder disappears as soon
 /// as the user types, and a secure field then shows nothing at all, so the
 /// name stays visible and is the field's VoiceOver label too.
