@@ -54,6 +54,9 @@ androidx-browser = { module = "androidx.browser:browser", version.ref = "android
 androidx-fragment = { module = "androidx.fragment:fragment-ktx", version.ref = "androidx-fragment" }
 androidx-lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "androidx-lifecycle" }
 compose-ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4" }
+# Compose's accessibility checks in the emulator tests (task 3.1), over the
+# Accessibility Test Framework for Android (Apache 2.0). Tests only.
+compose-ui-test-junit4-accessibility = { module = "androidx.compose.ui:ui-test-junit4-accessibility" }
 androidx-test-runner = { module = "androidx.test:runner", version.ref = "androidx-test-runner" }
 androidx-test-rules = { module = "androidx.test:rules", version.ref = "androidx-test-rules" }
 androidx-test-junit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-junit" }

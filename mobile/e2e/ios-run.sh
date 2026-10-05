@@ -85,6 +85,8 @@ run_class VaultFlowsUITests keepiq-ios-vault
 # passkey screens and calls (task 5.2), both against the replay.
 run_class AutofillUITests keepiq-ios-autofill
 run_class PasskeyUITests keepiq-ios-passkeys
+# The accessibility audit of the main screens (task 3.1), against the replay.
+run_class AccessibilityAuditUITests keepiq-ios-a11y
 rm -rf "$OUT/DerivedData"
 ls -la "$OUT" "$OUT/shots"
 exit "$status"
