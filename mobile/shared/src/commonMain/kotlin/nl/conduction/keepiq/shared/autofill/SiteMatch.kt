@@ -130,13 +130,17 @@ object Capture {
      */
     fun <T : Matchable> classify(host: String, login: String, secret: String, items: List<T>, decrypt: (T) -> PlainLogin?): SaveOffer {
         val target = SiteMatch.hostOf(host)
-        val candidates = SiteMatch.matchSecrets(items, target).filter { it.score >= 80 }
+        return classifyCandidates(SiteMatch.matchSecrets(items, target).filter { it.score >= 80 }.map { it.item }, login, secret, decrypt)
+    }
+
+    /** The decision of [classify] over candidates already narrowed to the site or app. */
+    fun <T : Matchable> classifyCandidates(candidates: List<T>, login: String, secret: String, decrypt: (T) -> PlainLogin?): SaveOffer {
         val sameLogin = ArrayList<T>()
-        for (row in candidates) {
-            val plain = runCatching { decrypt(row.item) }.getOrNull() ?: continue
+        for (item in candidates) {
+            val plain = runCatching { decrypt(item) }.getOrNull() ?: continue
             if (plain.login != login) continue
             if (plain.secret == secret) return SaveOffer.None
-            sameLogin.add(row.item)
+            sameLogin.add(item)
         }
         return when {
             sameLogin.size == 1 -> SaveOffer.Update(sameLogin[0].id, sameLogin[0].name)

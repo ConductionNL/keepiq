@@ -93,6 +93,24 @@ class AutofillIndex(val entries: List<AutofillEntry>) {
         return scored.map { it.item }
     }
 
+    /**
+     * The stored logins a submitted one may belong to (classifyCapture
+     * counts the same site only, score 80 or more): for a website its
+     * same-site logins, for an app the logins linked to it and the
+     * same-site logins of its verified websites.
+     */
+    fun saveCandidates(target: AutofillTarget): List<AutofillEntry> {
+        val logins = entries.filter { it.isLogin }
+        val sites = logins.filter { AppLink.parse(it.url) == null }
+        return when (target) {
+            is AutofillTarget.Web -> SiteMatch.matchSecrets(sites, target.host).filter { it.score >= 80 }.map { it.item }
+            is AutofillTarget.App -> (
+                logins.filter { AppLink.parse(it.url)?.matches(target.identity) == true } +
+                    target.verifiedHosts.flatMap { h -> SiteMatch.matchSecrets(sites, h).filter { it.score >= 80 }.map { it.item } }
+                ).distinctBy { it.id }
+        }
+    }
+
     /** Whether a save offer is withheld: a use-only item belongs to this site (useOnly.js blocksSavePrompt). */
     fun blocksSave(target: AutofillTarget): Boolean = when (target) {
         is AutofillTarget.Web -> SiteMatch.blocksSavePrompt(entries.filter { it.isLogin }, target.host)
