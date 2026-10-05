@@ -179,7 +179,12 @@ final class VaultFlowsUITests: XCTestCase {
 
         // Trash it: gone from the list.
         tap(app.buttons["Move to trash"])
-        tap(app.sheets.buttons["Move to trash"])
+        // The confirmation is an action sheet up to iOS 18 and a popover from
+        // iOS 26 on; either way it is the second "Move to trash" button.
+        let trashButtons = app.buttons.matching(identifier: "Move to trash")
+        expectation(for: NSPredicate(format: "count >= 2"), evaluatedWith: trashButtons)
+        waitForExpectations(timeout: 10)
+        trashButtons.element(boundBy: trashButtons.count - 1).tap()
         XCTAssertTrue(text("Webmail (demo)").waitForExistence(timeout: 60))
         waitGone(text("Shop account (demo)"), timeout: 60)
         shot("38-trashed")
