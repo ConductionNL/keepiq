@@ -87,5 +87,28 @@
         <receiver
             android:name=".autofill.NeverSaveReceiver"
             android:exported="false" />
+        <!-- Passkeys and passwords in Credential Manager (clients-mobile-apps
+             group 5). Android binds a credential provider on 14 and later
+             only; on 9 to 13 this entry is never used. -->
+        <service
+            android:name=".passkey.KeepiqCredentialProviderService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_CREDENTIAL_PROVIDER_SERVICE"
+            tools:targetApi="34">
+            <intent-filter>
+                <action android:name="android.service.credentials.CredentialProviderService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.credentials.provider"
+                android:resource="@xml/credential_provider" />
+        </service>
+        <activity
+            android:name=".passkey.CredentialProviderActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Keepiq.AutofillUnlock"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:windowSoftInputMode="adjustResize" />
     </application>
 </manifest>

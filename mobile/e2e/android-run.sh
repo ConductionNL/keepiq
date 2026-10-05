@@ -114,5 +114,16 @@ video_start keepiq-android-autofill
 run_class SystemAutofillTest -e keepiqAppPassword "$APP_PASSWORD" || status=1
 video_stop keepiq-android-autofill
 
+# Passkeys in Credential Manager (task group 5): Android 14 and later only.
+# The test app asks for the rpId 10.0.2.2, whose assetlinks.json the https
+# front serves on port 443 (mobile-e2e.yml redirects it to 8443).
+if [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -ge 34 ]; then
+	adb shell pm clear "$PKG" >/dev/null
+	video_start keepiq-android-passkeys
+	run_class PasskeyProviderTest -e keepiqAppPassword "$APP_PASSWORD" || status=1
+	video_stop keepiq-android-passkeys
+	adb shell dumpsys credential > "$OUT/dumpsys-credential.txt" 2>&1 || true
+fi
+
 ls -la "$OUT" "$OUT/e2e-shots" 2>/dev/null || true
 exit "$status"
