@@ -85,6 +85,13 @@ final class VaultFlowsUITests: XCTestCase {
         if app.buttons["Cancel"].exists { app.buttons["Cancel"].tap() }
         XCTAssertTrue(text("Webmail (demo)").waitForExistence(timeout: 10))
 
+        // A folder holds its own items.
+        tap(app.buttons["Open folder Personal"])
+        XCTAssertTrue(text("Bank (demo)").waitForExistence(timeout: 20))
+        shot("31-folder")
+        back()
+        XCTAssertTrue(text("Webmail (demo)").waitForExistence(timeout: 10))
+
         // An item: the password hidden until shown, then copied.
         tap(text("Webmail (demo)"))
         XCTAssertTrue(text("anna.demo@example.com").waitForExistence(timeout: 60))

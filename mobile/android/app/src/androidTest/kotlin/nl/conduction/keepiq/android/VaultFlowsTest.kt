@@ -82,6 +82,13 @@ class VaultFlowsTest {
         compose.onNodeWithTag("search").performTextClearance()
         compose.waitForText("Webmail (demo)")
 
+        // A folder holds its own items.
+        compose.onNodeWithContentDescription("Open folder Personal").performClick()
+        compose.waitForText("Bank (demo)")
+        E2e.shot("31-folder")
+        compose.onNodeWithText("Back").performClick()
+        compose.waitForText("Webmail (demo)")
+
         // An item: the password hidden until shown, then copied as sensitive.
         compose.onNodeWithText("Webmail (demo)").performClick()
         compose.waitForText("anna.demo@example.com", 60_000)
