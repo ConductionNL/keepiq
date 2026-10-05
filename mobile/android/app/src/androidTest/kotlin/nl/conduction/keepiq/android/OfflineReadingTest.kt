@@ -3,6 +3,9 @@
 
 package nl.conduction.keepiq.android
 
+import android.database.DatabaseErrorHandler
+import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteException
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
@@ -17,12 +20,15 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.runBlocking
+import java.io.File
 import kotlinx.serialization.json.jsonPrimitive
 import nl.conduction.keepiq.shared.vault.WriteProblemKind
 import nl.conduction.keepiq.shared.vault.WriteResult
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -40,7 +46,8 @@ import kotlin.concurrent.thread
  * with the note that names the last sync, open an item from the store and
  * reveal its password, and find every edit refused: the buttons are off, and
  * a trash call on the repository comes back refused as offline without
- * reaching the server. Then the network comes back, a manual sync says
+ * reaching the server. On the way it reads the store file without its key
+ * and finds no plaintext (task 1.6). Then the network comes back, a manual sync says
  * "Last synced" again, and the item is still on the server.
  */
 @RunWith(AndroidJUnit4::class)
@@ -115,6 +122,10 @@ class OfflineReadingTest {
         compose.waitForText("Lantern-Orbit-42!")
         E2e.shot("53-offline-item")
 
+        // Task 1.6 on the device: the store file is SQLCipher, so without its key
+        // it holds no plaintext and plain SQLite cannot read it.
+        assertStoreUnreadableWithoutKey()
+
         // Every edit is refused: the buttons are off, with the reason under them.
         compose.onNode(hasText("Edit") and hasClickAction()).performScrollTo().assertIsNotEnabled()
         compose.onNode(hasText("Move") and hasClickAction()).assertIsNotEnabled()
@@ -138,6 +149,36 @@ class OfflineReadingTest {
         val onServer = onOwnThread { offline.session.api.listSecrets() }
             .map { it["name"]?.jsonPrimitive?.content }
         assertTrue("the refused trash changed nothing on the server: $onServer", "Webmail (demo)" in onServer)
+    }
+
+    /**
+     * Reads the account's database files as bytes: no SQLite header, none of
+     * the demo vault's names, logins or addresses, and plain SQLite refuses
+     * the file. The journal files are read too, where they exist.
+     */
+    private fun assertStoreUnreadableWithoutKey() {
+        val dir = E2e.app.getDatabasePath("x").parentFile!!
+        val stores = dir.listFiles { f -> f.name.startsWith("keepiq-vault-") && f.name.endsWith(".db") }.orEmpty()
+        assertEquals("one offline store: ${dir.list()?.toList()}", 1, stores.size)
+        val store = stores.single()
+        assertTrue("the store holds the synced vault", store.length() > 4096)
+        val files = listOf(store, File(store.path + "-wal"), File(store.path + "-journal")).filter { it.isFile }
+        for (file in files) {
+            val text = String(file.readBytes(), Charsets.ISO_8859_1)
+            assertFalse("${file.name} starts with the plain SQLite header", text.startsWith("SQLite format 3"))
+            for (plain in listOf("Webmail (demo)", "anna.demo@example.com", "example.com", "Personal", "Lantern-Orbit-42!")) {
+                assertFalse("${file.name} holds \"$plain\" in plaintext", text.contains(plain))
+            }
+        }
+        try {
+            // A no-op error handler: the default one deletes a file it calls corrupt.
+            SQLiteDatabase.openDatabase(store.path, null, SQLiteDatabase.OPEN_READONLY, DatabaseErrorHandler { }).use { db ->
+                db.rawQuery("SELECT count(*) FROM sqlite_master", null).use { it.moveToFirst() }
+            }
+            fail("plain SQLite read the offline store without its key")
+        } catch (e: SQLiteException) {
+            // "file is not a database": the key is needed.
+        }
     }
 
     /** Runs a suspend call on a thread of its own (see VaultFlowsTest). */
