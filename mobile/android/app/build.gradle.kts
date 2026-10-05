@@ -132,6 +132,9 @@ tasks.matching { it.name.startsWith("pre") && it.name.endsWith("E2eBuild") }.con
 
 dependencies {
     implementation(project(":shared"))
+    // CONTROL, reverted in the next commit: a non-free artifact in the fdroid
+    // flavour must fail mobile-fdroid.yml's free-software job (task 6.1).
+    "fdroidImplementation"("com.google.android.gms:play-services-base:18.5.0")
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.fragment)
     implementation(libs.androidx.biometric)
