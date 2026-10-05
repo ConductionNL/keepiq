@@ -120,5 +120,35 @@ video_stop keepiq-android-autofill
 adb shell pm clear "$PKG" >/dev/null
 run_class PackageVisibilityTest -e keepiqAppPassword "$APP_PASSWORD" || status=1
 
+# The R8 release build (API 34 job only): it starts, shows its first screen
+# and stays up while another app asks it for autofill. R8 removes code that only
+# reflection or JNI reaches; the e2e build above is not shrunk, so this is
+# the one run of shrunk code.
+RELEASE_APK="$APK_DIR/release/app-release.apk"
+if [ -f "$RELEASE_APK" ]; then
+	adb uninstall "$PKG" >/dev/null || true
+	adb install -r "$RELEASE_APK"
+	adb logcat -c || true
+	adb shell am start -W -n "$PKG/$PKG.android.MainActivity"
+	sleep 8
+	adb shell settings put secure autofill_service "$PKG/$PKG.android.autofill.KeepiqAutofillService"
+	adb shell am start -W -n nl.conduction.keepiq.e2e.otherapp/nl.conduction.keepiq.otherapp.LoginActivity
+	sleep 5
+	adb shell am start -W -n "$PKG/$PKG.android.MainActivity"
+	sleep 3
+	adb exec-out screencap -p > "$OUT/release-smoke.png" || true
+	adb logcat -d > "$OUT/logcat-release-smoke.txt" || true
+	adb shell settings delete secure autofill_service || true
+	if grep -A20 "FATAL EXCEPTION" "$OUT/logcat-release-smoke.txt" | grep -q "$PKG"; then
+		echo "::error::the R8 release build crashed; see logcat-release-smoke.txt"
+		status=1
+	elif ! adb shell pidof "$PKG" >/dev/null; then
+		echo "::error::the R8 release build is not running after the smoke check"
+		status=1
+	else
+		echo "The R8 release build started and stayed up through an autofill request."
+	fi
+fi
+
 ls -la "$OUT" "$OUT/e2e-shots" 2>/dev/null || true
 exit "$status"

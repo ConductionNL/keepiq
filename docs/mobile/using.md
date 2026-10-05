@@ -11,7 +11,7 @@ Keepiq for Android is available as a preview. Keepiq for iOS is not available ye
 Keepiq for Android needs Android 9 or later.
 
 1. Open the [Keepiq mobile releases on GitHub](https://github.com/ConductionNL/keepiq/releases?q=mobile-v&expanded=true) on your phone.
-2. Download the `keepiq-android-<version>.apk` file from the newest release.
+2. Download the `keepiq-android-<version>.apk` file from the newest release. It runs on every phone. The smaller `keepiq-android-<version>-arm64-v8a.apk` holds only what most current phones need; take it if you know your phone has that processor type.
 3. Open the file. Android asks whether your browser may install apps. Allow it for this install.
 4. Choose **Install**.
 
@@ -19,7 +19,7 @@ Each `mobile-v<version>-preview.<n>` release is a preview. It is signed with a p
 
 #### Checking the download
 
-Each release lists the SHA-256 of the APK, and carries it as a `.sha256` file. On a computer, compare it with:
+Each release lists the SHA-256 of every APK, and carries it as a `.sha256` file next to it. On a computer, compare it with:
 
 ```
 sha256sum keepiq-android-<version>.apk
