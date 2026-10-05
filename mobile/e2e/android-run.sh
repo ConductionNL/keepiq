@@ -48,6 +48,8 @@ wait_until_unblocked() {
 adb wait-for-device
 adb install -r -t "$APK_DIR/e2e/app-e2e.apk"
 adb install -r -t "$APK_DIR/androidTest/e2e/app-e2e-androidTest.apk"
+# An ordinary app that does not instrument Keepiq (PackageVisibilityTest).
+adb install -r -t "$HERE/../android/otherapp/build/outputs/apk/debug/otherapp-debug.apk"
 adb shell input keyevent KEYCODE_WAKEUP
 adb shell wm dismiss-keyguard || true
 adb shell settings put system screen_off_timeout 1800000 || true
@@ -113,6 +115,10 @@ adb shell pm clear "$PKG" >/dev/null
 video_start keepiq-android-autofill
 run_class SystemAutofillTest -e keepiqAppPassword "$APP_PASSWORD" || status=1
 video_stop keepiq-android-autofill
+
+# Package visibility: Keepiq fills an app that the test APK does not stand in for.
+adb shell pm clear "$PKG" >/dev/null
+run_class PackageVisibilityTest -e keepiqAppPassword "$APP_PASSWORD" || status=1
 
 ls -la "$OUT" "$OUT/e2e-shots" 2>/dev/null || true
 exit "$status"

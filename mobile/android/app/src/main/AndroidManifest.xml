@@ -5,12 +5,6 @@
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
-    <!-- System autofill reads the package name and signing certificate of
-         the app that asks (task 4.1). Android 11+ hides other packages
-         without this; password managers are an allowed use. -->
-    <uses-permission
-        android:name="android.permission.QUERY_ALL_PACKAGES"
-        tools:ignore="QueryAllPackagesPermission" />
 
     <!-- Custom Tabs: find the browsers that can show the login page (Android 11+ package visibility). -->
     <queries>

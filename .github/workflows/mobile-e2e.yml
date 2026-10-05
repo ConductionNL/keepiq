@@ -115,7 +115,7 @@ jobs:
           grep -q 'tests="1" skipped="0" failures="0" errors="0"' "$report"
       - name: Build the e2e app and its tests
         working-directory: keepiq/mobile
-        run: ./gradlew --no-daemon :android:app:assembleE2e :android:app:assembleE2eAndroidTest
+        run: ./gradlew --no-daemon :android:app:assembleE2e :android:app:assembleE2eAndroidTest :android:otherapp:assembleDebug
       # The emulator records webm; the docs and the artifact take mp4.
       - name: ffmpeg for the videos
         run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends ffmpeg
