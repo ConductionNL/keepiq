@@ -4,6 +4,7 @@
 package nl.conduction.keepiq.android.vault
 
 import nl.conduction.keepiq.shared.api.Account
+import nl.conduction.keepiq.shared.autofill.AutofillIndexHub
 import nl.conduction.keepiq.shared.api.KeepiqApi
 import nl.conduction.keepiq.shared.send.SendService
 import nl.conduction.keepiq.shared.store.VaultStore
@@ -24,7 +25,11 @@ class VaultSession(
     store: VaultStore?,
     sync: VaultSync?,
 ) {
-    val repository = VaultRepository(api, keys, store, sync, clock = { System.currentTimeMillis() })
+    val repository = VaultRepository(
+        api, keys, store, sync,
+        clock = { System.currentTimeMillis() },
+        onRefreshed = { AutofillIndexHub.refreshed(account.id, it, keys) },
+    )
     val sends = SendService(api)
 
     /** "alice on cloud.example.nl", for the account switcher. */
