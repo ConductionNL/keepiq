@@ -60,10 +60,15 @@ final class OfflineUITests: XCTestCase {
 
     private func type(_ text: String, into element: XCUIElement) {
         XCTAssertTrue(element.waitForExistence(timeout: 20), "\(element) is missing")
-        dismissSavePassword()
-        element.tap()
-        // A prompt sliding away can take the focus back for a moment.
-        if !element.hasKeyboardFocusNow { usleep(500_000); dismissSavePassword(); element.tap() }
+        // A prompt sliding in or away can take the focus back: tap until the field has it.
+        for _ in 0..<5 where !element.hasKeyboardFocusNow {
+            dismissSavePassword()
+            let deadline = Date().addingTimeInterval(3)
+            while !element.isHittable && Date() < deadline { usleep(250_000) }
+            element.tap()
+            if !element.hasKeyboardFocusNow { usleep(500_000) }
+        }
+        XCTAssertTrue(element.hasKeyboardFocusNow, "\(element) does not take the keyboard focus")
         element.typeText(text)
         let tip = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Speed up your typing")).firstMatch
         if tip.exists, app.buttons["Continue"].exists { app.buttons["Continue"].tap() }
