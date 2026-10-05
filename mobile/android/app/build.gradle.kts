@@ -21,7 +21,25 @@ android {
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+    // Release signing comes from the environment only, so no key or
+    // password lives in the repository. mobile-preview.yml sets these four
+    // variables from GitHub secrets (or from a throwaway key in its pull
+    // request dry run). Without them the release build stays unsigned.
+    val releaseStoreFile = providers.environmentVariable("KEEPIQ_SIGNING_STORE_FILE").orNull
+    signingConfigs {
+        if (releaseStoreFile != null) {
+            create("release") {
+                storeFile = file(releaseStoreFile)
+                storePassword = providers.environmentVariable("KEEPIQ_SIGNING_STORE_PASSWORD").get()
+                keyAlias = providers.environmentVariable("KEEPIQ_SIGNING_KEY_ALIAS").get()
+                keyPassword = providers.environmentVariable("KEEPIQ_SIGNING_KEY_PASSWORD").get()
+            }
+        }
+    }
     buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.findByName("release")
+        }
         // The end-to-end build (.github/workflows/mobile-e2e.yml). It is the
         // debug build plus one thing: it trusts the self-signed certificate
         // of the test server, which the workflow writes to
@@ -42,6 +60,12 @@ android {
     // emulator tests come with the e2e harness of task group 2.
     testOptions {
         unitTests.isIncludeAndroidResources = true
+    }
+    // Lint on release builds resolves lint artifacts that are not in
+    // gradle/verification-metadata.xml, so the release build would fail
+    // dependency verification. The release workflow builds without it.
+    lint {
+        checkReleaseBuilds = false
     }
     // F-Droid: no Google dependency metadata blob in the APK.
     dependenciesInfo {
