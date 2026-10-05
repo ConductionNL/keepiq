@@ -169,9 +169,18 @@ private struct TotpRow: View {
                     Text(L("detail_code")).font(.caption).foregroundStyle(.secondary)
                     HStack {
                         Text(code).font(.title.monospaced()).accessibilityIdentifier("totpCode")
-                        ProgressView(value: Double(left), total: Double(params.period))
-                            .progressViewStyle(.circular)
-                            .accessibilityLabel(L("detail_code_seconds", Int(left)))
+                        // A circular ProgressView spins on iOS whatever its value, so
+                        // the seconds left are a gauge with the number in it.
+                        Gauge(value: Double(left), in: 0...Double(params.period)) {
+                            EmptyView()
+                        } currentValueLabel: {
+                            Text("\(Int(left))")
+                        }
+                        .gaugeStyle(.accessoryCircularCapacity)
+                        .scaleEffect(0.7)
+                        .frame(width: 44, height: 44)
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel(L("detail_code_seconds", Int(left)))
                         Spacer()
                         Button(L("action_copy")) { onCopy(code) }
                             .frame(minWidth: 44, minHeight: 44)
