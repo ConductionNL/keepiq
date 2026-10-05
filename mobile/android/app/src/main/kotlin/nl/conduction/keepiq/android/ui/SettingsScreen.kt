@@ -89,7 +89,7 @@ fun AutofillEntry(enabled: Boolean, onChoose: () -> Unit, onNeverList: () -> Uni
     }
 }
 
-/** Unlock options (2.3), auto-lock (2.5), autofill (4.4) and disconnect (2.6) for the open vault. */
+/** Unlock options (2.3), auto-lock (2.5), autofill (group 4) and disconnect (2.6) for the open vault. */
 @Composable
 fun SettingsScreen(state: AppState, activity: FragmentActivity, vault: UnlockedVault) {
     val busy by state.busy.collectAsState()
