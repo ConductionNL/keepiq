@@ -59,6 +59,8 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: nl.conduction.keepiq
+        # Keepiq/Assets.xcassets: one 1024 px icon, Xcode derives the rest.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         GENERATE_INFOPLIST_FILE: NO
         # The Kotlin runtime in the static KeepiqShared framework is C++.
         OTHER_LDFLAGS: ["$(inherited)", "-lc++"]
