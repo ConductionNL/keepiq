@@ -695,7 +695,9 @@ export default {
 		 * @spec openspec/specs/app-shell/spec.md#requirement-optional-integrations-appear-only-when-their-app-is-present
 		 */
 		hermiqEnabled() {
-			return Boolean(typeof window !== 'undefined' && window.OC?.appswebroots?.hermiq)
+			return Boolean(
+				typeof window !== 'undefined' && window.OC?.appswebroots?.hermiq,
+			)
 		},
 
 		/**

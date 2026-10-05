@@ -34,7 +34,12 @@
 import type { Page } from '@playwright/test'
 
 import { expect, test } from '@playwright/test'
-import { APP_BASE, gotoVaultRoute, openVault, unlockVault } from './_workflow-helpers.ts'
+import {
+	APP_BASE,
+	gotoVaultRoute,
+	openVault,
+	unlockVault,
+} from './_workflow-helpers.ts'
 
 /**
  * The apps enabled for the logged-in user.
@@ -44,7 +49,9 @@ import { APP_BASE, gotoVaultRoute, openVault, unlockVault } from './_workflow-he
  */
 async function enabledApps(page: Page): Promise<string[]> {
 	return page.evaluate(() => {
-		const w = window as unknown as { OC?: { appswebroots?: Record<string, string> } }
+		const w = window as unknown as {
+			OC?: { appswebroots?: Record<string, string> }
+		}
 		return Object.keys(w.OC?.appswebroots ?? {})
 	})
 }
@@ -81,7 +88,9 @@ test.describe('Keepiq without OpenRegister', () => {
 		)
 	})
 
-	test('the shell renders and the vault works, with no foreign request', async ({ page }) => {
+	test('the shell renders and the vault works, with no foreign request', async ({
+		page,
+	}) => {
 		const foreign = watchForeignRequests(page, ['openregister'])
 
 		await unlockVault(page)
@@ -91,21 +100,29 @@ test.describe('Keepiq without OpenRegister', () => {
 		expect(foreign, 'requests to OpenRegister').toEqual([])
 	})
 
-	test('Flows is hidden, and a deep link explains the missing app', async ({ page }) => {
+	test('Flows is hidden, and a deep link explains the missing app', async ({
+		page,
+	}) => {
 		await unlockVault(page)
 
 		await expect(flowsEntry(page)).toHaveCount(0)
 
 		await gotoVaultRoute(page, 'flows')
-		await expect(page.getByText(/OpenRegister/).first()).toBeVisible({ timeout: 20_000 })
+		await expect(page.getByText(/OpenRegister/).first()).toBeVisible({
+			timeout: 20_000,
+		})
 		// The rest of the shell stays usable.
 		await openVault(page)
 	})
 
-	test('the admin section and its up-to-date version card render', async ({ page }) => {
+	test('the admin section and its up-to-date version card render', async ({
+		page,
+	}) => {
 		await page.goto('/index.php/settings/admin/keepiq')
 
-		await expect(page.locator('#keepiq-admin-settings, .cn-admin-settings-shell').first()).toBeVisible({ timeout: 20_000 })
+		await expect(
+			page.locator('#keepiq-admin-settings, .cn-admin-settings-shell').first(),
+		).toBeVisible({ timeout: 20_000 })
 		await expect(page.getByRole('button', { name: /Re-import/i })).toHaveCount(0)
 		await expect(page.getByText(/up to date/i).first()).toBeVisible()
 	})
@@ -125,15 +142,22 @@ test.describe('Keepiq with OpenRegister', () => {
 
 		await expect(flowsEntry(page)).toHaveCount(1)
 		await gotoVaultRoute(page, 'flows')
-		await expect(page.getByText(/OpenRegister is not installed|missing/i)).toHaveCount(0)
+		await expect(
+			page.getByText(/OpenRegister is not installed|missing/i),
+		).toHaveCount(0)
 	})
 })
 
 test.describe('Keepiq without Hermiq or integriq', () => {
-	test('no AI companion and no Hermiq request without Hermiq', async ({ page }) => {
+	test('no AI companion and no Hermiq request without Hermiq', async ({
+		page,
+	}) => {
 		const hermiq = watchForeignRequests(page, ['hermiq'])
 		await page.goto(`${APP_BASE}/`)
-		test.skip((await enabledApps(page)).includes('hermiq'), 'Hermiq is enabled on this instance')
+		test.skip(
+			(await enabledApps(page)).includes('hermiq'),
+			'Hermiq is enabled on this instance',
+		)
 
 		await unlockVault(page)
 
@@ -143,16 +167,25 @@ test.describe('Keepiq without Hermiq or integriq', () => {
 
 	test('no Integrations entry without integriq', async ({ page }) => {
 		await page.goto(`${APP_BASE}/`)
-		test.skip((await enabledApps(page)).includes('integriq'), 'integriq is enabled on this instance')
+		test.skip(
+			(await enabledApps(page)).includes('integriq'),
+			'integriq is enabled on this instance',
+		)
 
 		await unlockVault(page)
 
-		await expect(page.locator('.app-navigation').getByText('Integrations', { exact: true })).toHaveCount(0)
+		await expect(
+			page
+				.locator('.app-navigation')
+				.getByText('Integrations', { exact: true }),
+		).toHaveCount(0)
 	})
 })
 
 test('the app page still sends the WASM CSP opt-in', async ({ page }) => {
 	const response = await page.goto(`${APP_BASE}/`)
 
-	expect(response?.headers()['content-security-policy'] ?? '').toContain('wasm-unsafe-eval')
+	expect(response?.headers()['content-security-policy'] ?? '').toContain(
+		'wasm-unsafe-eval',
+	)
 })

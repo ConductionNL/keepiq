@@ -6,8 +6,7 @@
  * Nextcloud's router requires every enabled app's routes.php on a route-cache
  * miss, and a throw there answers HTTP 500 on every page of the instance
  * (#857, #867). Keepiq's table is therefore one static array with no branch on
- * another app. The unit suite runs with no OpenRegister on the autoload path,
- * which is the standalone production state.
+ * another app, so these tests hold whether or not OpenRegister is installed.
  *
  * @category Test
  * @package  OCA\Keepiq\Tests\Unit\AppInfo
@@ -41,15 +40,6 @@ class StaticRouteTableTest extends TestCase {
 	private function loadRoutes(): array {
 		return require __DIR__ . '/../../../appinfo/routes.php';
 	}//end loadRoutes()
-
-	/**
-	 * Precondition: this process really has no OpenRegister to load.
-	 *
-	 * @return void
-	 */
-	public function testOpenRegisterIsAbsentInThisSuite(): void {
-		$this->assertFalse(class_exists('OCA\OpenRegister\AppHost\Routes'));
-	}//end testOpenRegisterIsAbsentInThisSuite()
 
 	/**
 	 * The table carries the shell routes and none of the removed ones.
@@ -109,8 +99,9 @@ class StaticRouteTableTest extends TestCase {
 	/**
 	 * The table does not change when an OpenRegister AppHost class exists.
 	 *
-	 * Runs in its own process, because it defines a stand-in for the AppHost
-	 * class that must not leak into the tests above.
+	 * Holds on either instance shape: CI installs OpenRegister, the host suite
+	 * does not. A stand-in is defined only when the real class is absent, in
+	 * its own process so it cannot leak into the tests above.
 	 *
 	 * @runInSeparateProcess
 	 * @preserveGlobalState  disabled
@@ -118,13 +109,19 @@ class StaticRouteTableTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheTableIsTheSameWithOpenRegisterPresent(): void {
-		$without = $this->loadRoutes();
+		$before = $this->loadRoutes();
+		if (class_exists('OCA\\OpenRegister\\AppHost\\Routes') === true) {
+			// OpenRegister is installed here: the table must not have used it.
+			$this->assertArrayNotHasKey('delegated', $before);
+			return;
+		}
+
 		eval(
 			'namespace OCA\OpenRegister\AppHost; class Routes { '
 			. 'public static function standard(array $extra = []): array { '
 			. "return ['routes' => \$extra, 'delegated' => true]; } }"
 		);
 
-		$this->assertSame($without, $this->loadRoutes());
+		$this->assertSame($before, $this->loadRoutes());
 	}//end testTheTableIsTheSameWithOpenRegisterPresent()
 }//end class
