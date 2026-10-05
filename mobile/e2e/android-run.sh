@@ -27,6 +27,24 @@ SERVER=https://10.0.2.2:8443
 
 occ() { docker exec -u www-data "${PROJECT}-nc-1" php occ "$@"; }
 
+# The web server can keep an app setting cached for a while after occ changes
+# it. Wait until the suites answer no longer reports the two-factor block, so
+# the next test class does not start against a vault that is still withheld.
+wait_until_unblocked() {
+	local answer
+	for _ in $(seq 1 60); do
+		answer="$(curl -sk -u "admin:$APP_PASSWORD" -H 'OCS-APIRequest: true' \
+			https://localhost:8443/index.php/apps/keepiq/api/v1/suites || true)"
+		case "$answer" in
+			*unlockBlocked*) sleep 2 ;;
+			'') sleep 2 ;;
+			*) return 0 ;;
+		esac
+	done
+	echo "::error::the two-factor block was still reported 120 s after the setting was removed"
+	return 1
+}
+
 adb wait-for-device
 adb install -r -t "$APK_DIR/e2e/app-e2e.apk"
 adb install -r -t "$APK_DIR/androidTest/e2e/app-e2e-androidTest.apk"
@@ -87,6 +105,7 @@ adb shell pm clear "$PKG" >/dev/null
 occ config:app:set keepiq vault_require_two_factor --value=true --type=boolean
 run_class ManualPairingAndBlockTest -e keepiqAppPassword "$APP_PASSWORD" || status=1
 occ config:app:delete keepiq vault_require_two_factor
+wait_until_unblocked
 
 # System autofill (task group 4): the test APK's forms and a WebView page
 # on the test server.
