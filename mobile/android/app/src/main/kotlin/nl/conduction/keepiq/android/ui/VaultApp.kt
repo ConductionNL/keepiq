@@ -180,7 +180,9 @@ fun VaultApp(
                 )
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        // Above the list's add button, which lives in the content and not in
+        // the Scaffold's button slot, so the snackbar never covers it.
+        snackbarHost = { SnackbarHost(snackbar, modifier = Modifier.padding(bottom = 72.dp)) },
     ) { padding ->
         val modifier = Modifier.padding(padding)
         when (val route = stack.last()) {
