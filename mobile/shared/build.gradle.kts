@@ -322,3 +322,11 @@ tasks.named<Test>("jvmTest") {
     }
     outputs.upToDateWhen { false }
 }
+
+// The iOS simulator tests name every test in the CI log, so a store test
+// that did not run cannot pass for one that did (task 1.6.1).
+tasks.withType<org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest>().configureEach {
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
