@@ -9,6 +9,7 @@ import kotlinx.serialization.json.jsonObject
 import nl.conduction.keepiq.shared.crypto.KeepiqCryptoException
 import nl.conduction.keepiq.shared.crypto.Primitives
 import nl.conduction.keepiq.shared.store.db.KeepiqDatabase
+import nl.conduction.keepiq.shared.vault.VaultLockedException
 import java.io.File
 import java.util.Properties
 import kotlin.test.AfterTest
@@ -94,6 +95,16 @@ class VaultStoreTest {
         assertTrue(store.folders().isEmpty())
         assertNull(store.state())
         assertFalse(contains(file.readBytes(), "UlNBLWNodW5r".encodeToByteArray()), "secure_delete left the ciphertext behind")
+    }
+
+    @Test
+    fun aClosedStoreReadsAsLocked() {
+        val store = open()
+        store.replaceAll(snapshot, 1_000L)
+        store.close()
+        assertFailsWith<VaultLockedException> { store.secrets() }
+        assertFailsWith<VaultLockedException> { store.state() }
+        assertFailsWith<VaultLockedException> { store.replaceAll(snapshot, 2_000L) }
     }
 
     @Test

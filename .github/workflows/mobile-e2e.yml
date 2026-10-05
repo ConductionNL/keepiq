@@ -116,6 +116,9 @@ jobs:
       - name: Build the e2e app and its tests
         working-directory: keepiq/mobile
         run: ./gradlew --no-daemon :android:app:assembleE2e :android:app:assembleE2eAndroidTest
+      # The emulator records webm; the docs and the artifact take mp4.
+      - name: ffmpeg for the videos
+        run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends ffmpeg
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules

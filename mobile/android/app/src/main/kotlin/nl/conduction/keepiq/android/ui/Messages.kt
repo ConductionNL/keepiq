@@ -6,6 +6,7 @@ package nl.conduction.keepiq.android.ui
 import android.text.format.DateUtils
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import nl.conduction.keepiq.android.R
@@ -13,11 +14,21 @@ import nl.conduction.keepiq.shared.generator.GeneratorErrorCode
 import nl.conduction.keepiq.shared.generator.GeneratorException
 import nl.conduction.keepiq.shared.send.SendFormProblem
 import nl.conduction.keepiq.shared.vault.DraftProblem
+import nl.conduction.keepiq.shared.vault.VaultLockedException
 import nl.conduction.keepiq.shared.vault.WriteProblem
 import nl.conduction.keepiq.shared.vault.WriteProblemKind
 
-/** Runs shared work (network, store, RSA, Argon2id) off the main thread. */
-suspend fun <T> io(block: suspend () -> T): T = withContext(Dispatchers.IO) { block() }
+/**
+ * Runs shared work (network, store, RSA, Argon2id) off the main thread. Work
+ * the lock overtook ends as a cancellation: the screen that asked is gone.
+ */
+suspend fun <T> io(block: suspend () -> T): T = withContext(Dispatchers.IO) {
+    try {
+        block()
+    } catch (e: VaultLockedException) {
+        throw CancellationException("The vault was locked", e)
+    }
+}
 
 @Composable
 fun writeProblemText(problem: WriteProblem): String = when (problem.kind) {
