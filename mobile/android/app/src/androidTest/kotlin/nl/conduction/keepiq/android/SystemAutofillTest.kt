@@ -4,6 +4,7 @@
 package nl.conduction.keepiq.android
 
 import android.content.Intent
+import android.os.Build
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
@@ -163,13 +164,18 @@ class SystemAutofillTest {
         val saved = waitForServer(api, keys) { it == "newuser@example.test" }
         assertTrue("the saved login belongs to the test app", saved.startsWith("androidapp://$testPackage#sha256_cert_fingerprints="))
 
-        // "Never": the app goes on the never-save list, and is not asked again.
-        form(login = false)
-        type("username", "other@example.test")
-        type("password", "Other-pass-2")
-        device.findObject(By.res(testPackage, "submit")).click()
-        waitFor(By.res("android", "autofill_save_no")).click()
-        waitUntil { core.neverSave.contains("androidapp://$testPackage") }
+        // "Never" (Android 11+): the app goes on the never-save list, and is not asked again.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            form(login = false)
+            type("username", "other@example.test")
+            type("password", "Other-pass-2")
+            device.findObject(By.res(testPackage, "submit")).click()
+            waitFor(By.res("android", "autofill_save_no")).click()
+            waitUntil { core.neverSave.contains("androidapp://$testPackage") }
+        } else {
+            // Android 9 and 10 have no "Never" button; the list is honoured all the same.
+            core.neverSave.set("androidapp://$testPackage", true)
+        }
         form(login = false)
         type("username", "third@example.test")
         type("password", "Third-pass-3")

@@ -35,6 +35,7 @@ struct AutofillUnlockView: View {
     @ObservedObject var model: AutofillModel
     @State private var masterPassword = ""
     @State private var pin = ""
+    @FocusState private var masterFocused: Bool
 
     var body: some View {
         Form {
@@ -58,6 +59,7 @@ struct AutofillUnlockView: View {
             Section {
                 SecureField(AL("unlock.master"), text: $masterPassword)
                     .textContentType(.password)
+                    .focused($masterFocused)
                     .accessibilityIdentifier("autofillMasterPassword")
                 Button(AL("unlock.button")) { model.unlock(masterPassword: masterPassword) }
                     .disabled(masterPassword.isEmpty || model.busy)
@@ -68,6 +70,8 @@ struct AutofillUnlockView: View {
                 Text(message).foregroundStyle(.red).accessibilityIdentifier("autofillMessage")
             }
         }
+        // Without biometrics or a PIN, the master password is the way in: start there.
+        .onAppear { if !model.hasBiometric && !model.hasPin { masterFocused = true } }
     }
 }
 

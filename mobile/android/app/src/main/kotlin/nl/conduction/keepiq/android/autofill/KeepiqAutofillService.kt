@@ -111,16 +111,21 @@ class KeepiqAutofillService : AutofillService() {
         if (passwords.isEmpty() || core.neverSave.contains(target.saveKey)) return null
         if (core.indexOf(accountId).blocksSave(target)) return null
         val type = SaveInfo.SAVE_DATA_TYPE_PASSWORD or (if (form.username != null) SaveInfo.SAVE_DATA_TYPE_USERNAME else 0)
-        val never = PendingIntent.getBroadcast(
-            this, target.saveKey.hashCode(),
-            Intent(this, NeverSaveReceiver::class.java).putExtra(NeverSaveReceiver.EXTRA_SITE, target.saveKey),
-            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
-        )
-        return SaveInfo.Builder(type, passwords.toTypedArray())
+        val builder = SaveInfo.Builder(type, passwords.toTypedArray())
             .apply { form.username?.let { setOptionalIds(arrayOf(it.id)) } }
             .setFlags(SaveInfo.FLAG_SAVE_ON_ALL_VIEWS_INVISIBLE)
-            .setNegativeAction(SaveInfo.NEGATIVE_BUTTON_STYLE_NEVER, never.intentSender)
-            .build()
+        // The "Never" button exists from Android 11. Before that the offer
+        // has the system's own "Not now", and the list is kept in Keepiq's
+        // autofill settings only.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            val never = PendingIntent.getBroadcast(
+                this, target.saveKey.hashCode(),
+                Intent(this, NeverSaveReceiver::class.java).putExtra(NeverSaveReceiver.EXTRA_SITE, target.saveKey),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+            )
+            builder.setNegativeAction(SaveInfo.NEGATIVE_BUTTON_STYLE_NEVER, never.intentSender)
+        }
+        return builder.build()
     }
 
     override fun onSaveRequest(request: SaveRequest, callback: SaveCallback) {

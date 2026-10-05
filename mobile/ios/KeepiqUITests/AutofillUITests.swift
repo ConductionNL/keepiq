@@ -43,9 +43,16 @@ final class AutofillUITests: XCTestCase {
         }
     }
 
+    /// Taps until the field has keyboard focus: a field in a sheet that is
+    /// still sliding in takes the tap without taking the focus.
     private func type(_ text: String, into element: XCUIElement) {
         XCTAssertTrue(element.waitForExistence(timeout: 20), "\(element) is missing")
-        element.tap()
+        let focused = NSPredicate(format: "hasKeyboardFocus == true")
+        for _ in 0..<5 {
+            if element.isHittable { element.tap() }
+            let wait = XCTNSPredicateExpectation(predicate: focused, object: element)
+            if XCTWaiter().wait(for: [wait], timeout: 3) == .completed { break }
+        }
         element.typeText(text)
     }
 
