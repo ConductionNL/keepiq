@@ -142,7 +142,7 @@ struct AutofillPreviewButton: View {
     private func describe(_ result: PasskeyResult) -> String {
         switch result {
         case .registration(let made, let rp, _, _):
-            guard let att = Data(base64Encoded: made.attestationObject), att.count > 30 + 55 + 16 + 77 else { return "registration unreadable" }
+            guard let att = Data(base64Encoded: made.attestationObject), att.count >= 30 + 55 + 16 + 77 else { return "registration unreadable" }
             let auth = [UInt8](att.dropFirst(30))
             let rpHash = [UInt8](SHA256.hash(data: Data(rp.utf8)))
             let idLength = Int(auth[53]) << 8 | Int(auth[54])
