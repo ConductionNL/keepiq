@@ -12,6 +12,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -21,6 +22,8 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.jsonPrimitive
 import nl.conduction.keepiq.shared.vault.VaultLockedException
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -120,6 +123,13 @@ class VaultFlowsTest {
         compose.onNodeWithContentDescription("Show Password").performClick()
         compose.waitForText(generated)
         E2e.shot("36-created")
+        // On the server: the login as the web app's API lists it, its password encrypted to the suite.
+        val stored = runBlocking { unlocked.session.api.listSecrets() }
+            .single { it["name"]?.jsonPrimitive?.content == "Shop (demo)" }
+        assertEquals("https://shop.example.com", stored["url"]?.jsonPrimitive?.content)
+        val storedKey = stored["key"]!!.jsonPrimitive.content
+        assertFalse("the server holds no plaintext", storedKey.contains(generated))
+        assertEquals(generated, unlocked.session.keys.decryptField(storedKey))
 
         // Edit it.
         compose.onNodeWithText("Edit").performScrollTo().performClick()
@@ -161,17 +171,27 @@ class VaultFlowsTest {
         compose.waitForText("Text", 30_000)
         E2e.shot("41-send-list")
 
+        // Open the link in the app, as its recipient would: the text, and its one view used.
+        compose.onNodeWithText("Open a Send link").performClick()
+        compose.waitUntil(30_000) { compose.nodes(field("Send link")).isNotEmpty() }
+        compose.onNode(field("Send link")).performTextInput(link)
+        compose.waitForText("Opening shows the text", 60_000)
+        compose.onNodeWithText("Open").performClick()
+        compose.waitForText("The demo door code is 2468.", 60_000)
+        E2e.shot("42-send-opened")
+        compose.onAllNodesWithText("Close").onLast().performClick()
+
         // The settings route from inside the vault, and back.
         compose.onNodeWithTag("settings").performClick()
         compose.waitForTag("newPin")
-        E2e.shot("42-settings")
+        E2e.shot("43-settings")
         compose.onNodeWithTag("back").performScrollTo().performClick()
         compose.waitForTag("unlocked")
 
         // Lock: the unlock screen, and the session's key no longer decrypts.
         compose.onNodeWithTag("lock").performClick()
         compose.waitForTag("masterPassword", 30_000)
-        E2e.shot("43-locked")
+        E2e.shot("44-locked")
         assertTrue(unlocked.vault.isLocked)
         assertFalse(E2e.app.state.screen.value is Screen.Unlocked)
         try {
