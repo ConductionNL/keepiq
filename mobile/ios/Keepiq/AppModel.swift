@@ -10,7 +10,8 @@ import UIKit
 enum AppScreen {
     case pair
     case unlock(String)
-    case unlocked(UnlockedVault)
+    /// The vault is open; the vault screens read and write through the session.
+    case unlocked(UnlockedVault, MobileSession)
     case settings(UnlockedVault)
 }
 
@@ -34,6 +35,8 @@ final class AppModel: ObservableObject {
     private var loginTask: Task<Void, Never>?
     private var idleTask: Task<Void, Never>?
     private var lastActivity = Date()
+    /// The open vault's session, closed on lock.
+    private var session: MobileSession?
     /// UI tests replace the browser: the replayed server grants on its own.
     private let noBrowser: Bool
 
@@ -116,6 +119,7 @@ final class AppModel: ObservableObject {
     }
 
     func addAccount() {
+        lock()
         message = nil
         screen = .pair
     }
@@ -178,8 +182,17 @@ final class AppModel: ObservableObject {
             }
             guard let ready = current as? UnlockGate.Ready else { return }
             let vault = try await open(ready.suite)
+            let session: MobileSession
+            do {
+                guard let account = self.account(accountId) else { throw AppError.accountGone }
+                session = try MobileSession.companion.forVault(account: account, vault: vault)
+            } catch {
+                vault.lock()
+                throw error
+            }
+            self.session = session
             self.message = nil
-            self.screen = .unlocked(vault)
+            self.screen = .unlocked(vault, session)
             if let max = try? await self.client.maxIdleMinutes(accountId: accountId) {
                 self.maxIdle = max.intValue
             } else {
@@ -249,7 +262,7 @@ final class AppModel: ObservableObject {
 
     private var unlockedAccountId: String? {
         switch screen {
-        case .unlocked(let vault), .settings(let vault): return vault.accountId
+        case .unlocked(let vault, _), .settings(let vault): return vault.accountId
         default: return nil
         }
     }
@@ -268,25 +281,40 @@ final class AppModel: ObservableObject {
         }
     }
 
-    func lock() {
+    /// Locks now: the session forgets the private key, the unlock key is
+    /// overwritten, and the unlock screen shows. `reason` is shown there, for
+    /// a lock the user did not ask for.
+    func lock(reason: String? = nil) {
         let vault: UnlockedVault
         switch screen {
-        case .unlocked(let v), .settings(let v): vault = v
+        case .unlocked(let v, _), .settings(let v): vault = v
         default: return
         }
         idleTask?.cancel()
+        closeSession()
         vault.lock()
         showUnlock(vault.accountId)
+        if let reason { message = reason }
+    }
+
+    private func closeSession() {
+        session?.close()
+        session = nil
     }
 
     func openSettings(_ vault: UnlockedVault) { touch(); screen = .settings(vault) }
 
-    func closeSettings(_ vault: UnlockedVault) { touch(); screen = .unlocked(vault) }
+    func closeSettings(_ vault: UnlockedVault) {
+        touch()
+        guard let session else { return lock() }
+        screen = .unlocked(vault, session)
+    }
 
     // MARK: Unpair (2.6)
 
     func unpair(_ accountId: String) {
-        if case .unlocked(let v) = screen { v.lock() }
+        closeSession()
+        if case .unlocked(let v, _) = screen { v.lock() }
         if case .settings(let v) = screen { v.lock() }
         idleTask?.cancel()
         perform {
@@ -332,6 +360,12 @@ final class AppModel: ObservableObject {
         if let stopped = (error as NSError).userInfo["KotlinException"] as? LoginFlowStoppedException { return !stopped.timedOut }
         return false
     }
+}
+
+enum AppError: LocalizedError {
+    case accountGone
+
+    var errorDescription: String? { "This account is gone from this phone." }
 }
 
 /// The login page in the system browser sheet (design D3). Nextcloud's

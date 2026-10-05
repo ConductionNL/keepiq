@@ -448,10 +448,12 @@ struct LabeledInput: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            TextField(label, text: $text)
-                .keyboardType(keyboard)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
+            LabeledField(label) {
+                TextField(label, text: $text)
+                    .keyboardType(keyboard)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+            }
             if let problem { Text(problem).font(.footnote).foregroundStyle(.red) }
         }
     }
@@ -475,11 +477,13 @@ struct SecretInput: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
+            Text(label).font(.footnote).accessibilityHidden(true)
             HStack {
                 if shown {
                     TextField(label, text: $text).textInputAutocapitalization(.never).autocorrectionDisabled()
+                        .accessibilityLabel(label)
                 } else {
-                    SecureField(label, text: $text)
+                    SecureField(label, text: $text).accessibilityLabel(label)
                 }
                 Button(shown ? L("action_hide") : L("action_show")) { shown.toggle() }
                     .frame(minWidth: 44, minHeight: 44)

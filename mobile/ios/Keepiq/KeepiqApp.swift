@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 // SPDX-License-Identifier: EUPL-1.2
 
+import KeepiqShared
 import SwiftUI
 
 @main
@@ -24,12 +25,27 @@ struct RootView: View {
     @EnvironmentObject private var model: AppModel
 
     var body: some View {
-        NavigationStack {
-            switch model.screen {
-            case .pair: PairView()
-            case .unlock(let accountId): UnlockView(accountId: accountId)
-            case .unlocked(let vault): UnlockedView(vault: vault)
-            case .settings(let vault): SettingsView(vault: vault)
+        switch model.screen {
+        case .unlocked(let vault, let session):
+            // The vault brings its own tabs and navigation stacks.
+            VaultAppView(
+                session: session,
+                accounts: model.accounts,
+                onSwitchAccount: { model.switchAccount($0.accountId) },
+                onAddAccount: { model.addAccount() },
+                onLock: { model.lock() },
+                onSettings: { model.openSettings(vault) },
+                onLocked: { model.lock(reason: $0) }
+            )
+            .id(ObjectIdentifier(session))
+        default:
+            NavigationStack {
+                switch model.screen {
+                case .pair: PairView()
+                case .unlock(let accountId): UnlockView(accountId: accountId)
+                case .settings(let vault): SettingsView(vault: vault)
+                case .unlocked: EmptyView()
+                }
             }
         }
     }

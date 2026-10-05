@@ -32,6 +32,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -111,7 +112,7 @@ fun ItemDetailScreen(
             onDismissRequest = { action = null },
             text = { Text(stringResource(R.string.detail_trash_confirm, item.row.name)) },
             confirmButton = {
-                TextButton(onClick = { write({ session.repository.trash(item.row.id) }, onGone) }) {
+                TextButton(onClick = { write({ session.repository.trash(item.row.id) }, onGone) }, modifier = Modifier.testTag("confirmTrash")) {
                     Text(stringResource(R.string.action_trash))
                 }
             },

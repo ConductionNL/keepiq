@@ -23,12 +23,14 @@ struct PairView: View {
                 }
             } else {
                 Section {
-                    TextField("Server address", text: $server, prompt: Text("cloud.example.com"))
-                        .textContentType(.URL)
-                        .keyboardType(.URL)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .accessibilityIdentifier("server")
+                    LabeledField("Server address") {
+                        TextField("Server address", text: $server, prompt: Text("cloud.example.com"))
+                            .textContentType(.URL)
+                            .keyboardType(.URL)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .accessibilityIdentifier("server")
+                    }
                 }
                 if !manual {
                     Section {
@@ -40,12 +42,16 @@ struct PairView: View {
                     }
                 } else {
                     Section(footer: Text("Create an app password in Nextcloud under Personal settings, Security.")) {
-                        TextField("User name", text: $loginName)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled()
-                            .accessibilityIdentifier("loginName")
-                        SecureField("App password", text: $appPassword)
-                            .accessibilityIdentifier("appPassword")
+                        LabeledField("User name") {
+                            TextField("User name", text: $loginName, prompt: Text("Your Nextcloud user name"))
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .accessibilityIdentifier("loginName")
+                        }
+                        LabeledField("App password") {
+                            SecureField("App password", text: $appPassword, prompt: Text("Paste the app password"))
+                                .accessibilityIdentifier("appPassword")
+                        }
                         Button("Connect") { model.pairManually(server: server, loginName: loginName, appPassword: appPassword) }
                             .disabled(model.busy || server.isEmpty || loginName.isEmpty || appPassword.isEmpty)
                             .accessibilityIdentifier("connect")
@@ -95,9 +101,11 @@ struct UnlockView: View {
                 }
                 if pinSet && !usePassword {
                     Section {
-                        SecureField("PIN", text: $pin)
-                            .keyboardType(.numberPad)
-                            .accessibilityIdentifier("pin")
+                        LabeledField("PIN") {
+                            SecureField("PIN", text: $pin, prompt: Text("Your PIN"))
+                                .keyboardType(.numberPad)
+                                .accessibilityIdentifier("pin")
+                        }
                         Button("Unlock with PIN") { model.unlock(accountId, pin: pin); pin = "" }
                             .disabled(model.busy || pin.isEmpty)
                             .accessibilityIdentifier("unlockPin")
@@ -105,9 +113,12 @@ struct UnlockView: View {
                     }
                 } else {
                     Section {
-                        SecureField("Master password", text: $password)
-                            .accessibilityIdentifier("masterPassword")
-                            .onSubmit { model.unlock(accountId, masterPassword: password); password = "" }
+                        LabeledField("Master password") {
+                            SecureField("Master password", text: $password, prompt: Text("Your master password"))
+                                .textContentType(.password)
+                                .accessibilityIdentifier("masterPassword")
+                                .onSubmit { model.unlock(accountId, masterPassword: password); password = "" }
+                        }
                         Button("Unlock") { model.unlock(accountId, masterPassword: password); password = "" }
                             .disabled(model.busy || password.isEmpty)
                             .accessibilityIdentifier("unlock")
@@ -131,25 +142,6 @@ struct UnlockView: View {
         .task(id: accountId) {
             if model.gate == nil { model.refreshGate(accountId) }
         }
-    }
-}
-
-/// An open vault, until the vault screens of task group 3 replace the middle.
-struct UnlockedView: View {
-    @EnvironmentObject private var model: AppModel
-    let vault: UnlockedVault
-
-    var body: some View {
-        Form {
-            Text("Your vault is open").font(.title2).accessibilityIdentifier("unlocked")
-            if let account = model.account(vault.accountId) {
-                Text("\(account.loginName) on \(account.server.withoutScheme)")
-            }
-            Text("Keepiq locks after \(model.effectiveIdle(vault.accountId)) minutes without use, and when the phone locks.")
-            Button("Lock now") { model.lock() }.accessibilityIdentifier("lock")
-            Button("Unlock and account settings") { model.openSettings(vault) }.accessibilityIdentifier("settings")
-        }
-        .navigationTitle("Keepiq")
     }
 }
 
@@ -178,9 +170,11 @@ struct SettingsView: View {
                     Text("A PIN is set. Five wrong PINs delete it.")
                     Button("Remove the PIN") { model.removePin(vault) }.accessibilityIdentifier("removePin")
                 } else {
-                    SecureField("New PIN, 6 to 64 characters", text: $newPin)
-                        .keyboardType(.numberPad)
-                        .accessibilityIdentifier("newPin")
+                    LabeledField("New PIN") {
+                        SecureField("New PIN", text: $newPin, prompt: Text("6 to 64 characters"))
+                            .keyboardType(.numberPad)
+                            .accessibilityIdentifier("newPin")
+                    }
                     Button("Set PIN") { model.setPin(vault, pin: newPin); newPin = "" }
                         .disabled(model.busy || newPin.count < 6 || newPin.count > 64)
                         .accessibilityIdentifier("setPin")

@@ -15,7 +15,9 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import nl.conduction.keepiq.android.security.BiometricUnlock
 import nl.conduction.keepiq.android.security.KeystoreStorage
+import nl.conduction.keepiq.android.vault.VaultSession
 import nl.conduction.keepiq.shared.KeepiqClient
+import nl.conduction.keepiq.shared.store.deleteEncryptedStore
 
 /**
  * Holds the one [AppState] of the process. The vault is unlocked in memory
@@ -32,7 +34,13 @@ class KeepiqApp : Application() {
         super.onCreate()
         val storage = KeystoreStorage(this)
         val client = KeepiqClient(storage, clientName())
-        state = AppState(client, BiometricUnlock(this, storage))
+        state = AppState(
+            client,
+            BiometricUnlock(this, storage),
+            openSession = { account, vault, listener -> VaultSession.open(this, client.api(account), account, vault, listener) },
+            // Unpair removes everything stored for the account, the offline copy too.
+            onAccountWiped = { accountId -> deleteEncryptedStore(this, accountId) },
+        )
 
         val screenOff = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {

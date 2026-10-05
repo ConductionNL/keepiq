@@ -206,3 +206,5 @@
 "composite_phone" = "Telefoon";
 "composite_email" = "E-mail";
 "composite_bsn" = "BSN";
+"cd_lock" = "Kluis vergrendelen";
+"cd_settings" = "Ontgrendelen en accountinstellingen";

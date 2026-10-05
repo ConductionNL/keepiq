@@ -86,6 +86,8 @@ final class VaultModel: ObservableObject {
     let clipboard: SensitiveClipboard
     @Published var policy: GeneratorPolicy?
     @Published var toast: String?
+    /// Called with the reason when a sync locks the vault (the keys changed elsewhere).
+    var onLocked: ((String) -> Void)?
 
     init(session: MobileSession) {
         self.session = session
@@ -154,6 +156,26 @@ func compositeLabel(_ field: String) -> String {
     case "phone": return L("composite_phone")
     case "email": return L("composite_email")
     default: return L("composite_bsn")
+    }
+}
+
+/// An input with its name shown above it. A placeholder disappears as soon
+/// as the user types, and a secure field then shows nothing at all, so the
+/// name stays visible and is the field's VoiceOver label too.
+struct LabeledField<Field: View>: View {
+    let title: String
+    let field: Field
+
+    init(_ title: String, @ViewBuilder field: () -> Field) {
+        self.title = title
+        self.field = field()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.footnote).accessibilityHidden(true)
+            field.accessibilityLabel(title)
+        }
     }
 }
 

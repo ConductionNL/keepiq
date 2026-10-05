@@ -104,8 +104,10 @@ struct GeneratorView: View {
                     Text(L("gen_words", Int(words)))
                     Slider(value: $words, in: Double(Generator.shared.MIN_WORDS)...Double(Generator.shared.MAX_WORDS), step: 1)
                         .accessibilityLabel(L("gen_words", Int(words)))
-                    TextField(L("gen_separator"), text: $separator)
-                        .onChange(of: separator) { _, value in if value.count > 3 { separator = String(value.prefix(3)) } }
+                    LabeledField(L("gen_separator")) {
+                        TextField(L("gen_separator"), text: $separator)
+                            .onChange(of: separator) { _, value in if value.count > 3 { separator = String(value.prefix(3)) } }
+                    }
                     PolicyToggle(label: L("gen_capitalise"), isOn: $capitalise, locked: policy?.requireUpper == true)
                     PolicyToggle(label: L("gen_number"), isOn: $number, locked: policy?.requireDigit == true)
                 }
@@ -303,21 +305,33 @@ struct NewSendView: View {
                     }
                     .pickerStyle(.segmented)
                     if credential {
-                        TextField(L("detail_username"), text: $username).textInputAutocapitalization(.never)
-                        SecureField(L("detail_password"), text: $password)
+                        LabeledField(L("detail_username")) {
+                            TextField(L("detail_username"), text: $username).textInputAutocapitalization(.never)
+                        }
+                        LabeledField(L("detail_password")) {
+                            SecureField(L("detail_password"), text: $password)
+                        }
                     } else {
-                        TextField(L("send_text_label"), text: $text, axis: .vertical).lineLimit(3...8)
+                        LabeledField(L("send_text_label")) {
+                            TextField(L("send_text_label"), text: $text, axis: .vertical).lineLimit(3...8)
+                        }
                     }
                 }
                 Section {
-                    TextField(L("send_views_label"), text: $views).keyboardType(.numberPad)
+                    LabeledField(L("send_views_label")) {
+                        TextField(L("send_views_label"), text: $views).keyboardType(.numberPad)
+                    }
                     Picker(L("send_expiry_label"), selection: $expiry) {
                         ForEach(expiries.indices, id: \.self) { i in Text(L(expiries[i].1)).tag(i) }
                     }
                     if expiries[expiry].0 == .custom {
-                        TextField(L("send_hours_label"), text: $hours).keyboardType(.numberPad)
+                        LabeledField(L("send_hours_label")) {
+                            TextField(L("send_hours_label"), text: $hours).keyboardType(.numberPad)
+                        }
                     }
-                    SecureField(L("send_password_label"), text: $sendPassword).disabled(!passwordAvailable)
+                    LabeledField(L("send_password_label")) {
+                        SecureField(L("send_password_label"), text: $sendPassword).disabled(!passwordAvailable)
+                    }
                     if !passwordAvailable { Text(L("send_password_unavailable")).font(.footnote) }
                 }
                 Section {
@@ -388,10 +402,12 @@ public struct OpenSendView: View {
         let needsPassword = state is OpenSendResult.NeedsPassword || ((state as? OpenSendResult.WrongPassword)?.burned == false)
         Form {
             if !(state is OpenSendResult.Opened) {
-                TextField(L("open_send_link"), text: $link)
-                    .keyboardType(.URL)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
+                LabeledField(L("open_send_link")) {
+                    TextField(L("open_send_link"), text: $link)
+                        .keyboardType(.URL)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                }
                 if !link.isEmpty && parsed == nil { Text(L("open_send_invalid")).foregroundStyle(.red) }
             }
             if state is OpenSendResult.Ready {
@@ -412,7 +428,9 @@ public struct OpenSendView: View {
                 if let onCopy { Button(L("action_copy")) { onCopy(opened.payload) } }
             }
             if needsPassword {
-                SecureField(L("detail_password"), text: $password)
+                LabeledField(L("detail_password")) {
+                    SecureField(L("detail_password"), text: $password)
+                }
             }
             if let parsed, state is OpenSendResult.Ready || needsPassword {
                 Button(L("action_open")) {

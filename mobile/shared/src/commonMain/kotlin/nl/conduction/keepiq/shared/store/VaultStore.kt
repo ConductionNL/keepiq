@@ -21,6 +21,9 @@ import nl.conduction.keepiq.shared.store.db.KeepiqDatabase
 interface MetadataSealer {
     fun seal(plaintext: String): String
     fun open(sealed: String): String
+
+    /** Drops the key from memory, on lock. */
+    fun forget() {}
 }
 
 /**
@@ -39,6 +42,8 @@ class UnlockKeySealer(unlockKey: ByteArray) : MetadataSealer {
     override fun seal(plaintext: String): String = SendCrypto.aesEncrypt(key, Encoding.utf8(plaintext))
 
     override fun open(sealed: String): String = Encoding.fromUtf8(SendCrypto.aesDecrypt(key, sealed))
+
+    override fun forget() = key.fill(0)
 }
 
 /** One item as the store gives it back: ciphertext untouched, names opened. */
@@ -97,6 +102,12 @@ data class VaultSnapshot(
  */
 class VaultStore(private val driver: SqlDriver, private val sealer: MetadataSealer) {
     private val db = KeepiqDatabase(driver)
+
+    /** On lock: forgets the sealing key and closes the database. The store is reopened at the next unlock. */
+    fun close() {
+        sealer.forget()
+        driver.close()
+    }
 
     fun replaceAll(snapshot: VaultSnapshot, nowMillis: Long) {
         db.transaction {
