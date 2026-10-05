@@ -47,9 +47,9 @@
 ## 6. Verification
 
 - [x] 6.1 Run `composer check:strict`, `npm run lint`, `npm run test`, and `vendor/bin/hydra-gates` (gates 5, 14, 16, 19, 25, 30, 59, 64 called out in the PR). Record the results in the PR body.
-- [ ] 6.2 Live check on the dev instance with OpenRegister **disabled** (`occ app:disable openregister`):
+- [x] 6.2 Live check on the dev instance with OpenRegister **disabled** (`occ app:disable openregister`):
   - `GET /login` = 200, Keepiq loads and unlocks, and a secret round-trips.
   - The Flows entry is hidden, and `/apps/keepiq/flows/1` shows the missing-dependency screen.
   - Health and metrics answer per spec.
   - The network tab shows no `/apps/openregister/` or `/apps/hermiq/` request.
-- [ ] 6.3 Live check with OpenRegister **enabled**: Flows lists and opens a flow, and Hermiq lists exactly `keepiq.listEntries`, `keepiq.expiryReport` and `keepiq.rotationStatus` through OpenRegister's MCP endpoint. Re-enable OpenRegister afterwards and confirm `occ status` shows maintenance off.
+- [x] 6.3 Live check with OpenRegister **enabled**: Flows lists and opens a flow, and Hermiq lists exactly `keepiq.listEntries`, `keepiq.expiryReport` and `keepiq.rotationStatus` through OpenRegister's MCP endpoint. Re-enable OpenRegister afterwards and confirm `occ status` shows maintenance off.
