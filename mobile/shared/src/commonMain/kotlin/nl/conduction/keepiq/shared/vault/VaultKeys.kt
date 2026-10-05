@@ -30,7 +30,13 @@ interface VaultKeys {
 
     /** Encrypts one field to the suite's public key (src/crypto/rsa.js rsaEncrypt). */
     fun encryptField(plaintext: String): String
+
+    /** Drops the private key from memory, on lock. Every later call throws [VaultLockedException]. */
+    fun forget() {}
 }
+
+/** The vault was locked: its key is gone from memory. */
+class VaultLockedException : IllegalStateException("The vault is locked.")
 
 /** [VaultKeys] over the decrypted private key and the suite's certificate, held in memory only. */
 class RsaVaultKeys(
@@ -39,10 +45,17 @@ class RsaVaultKeys(
     override val suiteId: String,
     override val unlockKeyEpoch: Long?,
 ) : VaultKeys {
-    override fun decryptField(ciphertext: String?): String =
-        if (ciphertext.isNullOrEmpty()) "" else RsaFields.decrypt(ciphertext, privateKey)
+    override fun decryptField(ciphertext: String?): String {
+        if (privateKey.forgotten) throw VaultLockedException()
+        return if (ciphertext.isNullOrEmpty()) "" else RsaFields.decrypt(ciphertext, privateKey)
+    }
 
-    override fun encryptField(plaintext: String): String = RsaFields.encrypt(plaintext, publicKey)
+    override fun encryptField(plaintext: String): String {
+        if (privateKey.forgotten) throw VaultLockedException()
+        return RsaFields.encrypt(plaintext, publicKey)
+    }
+
+    override fun forget() = privateKey.forget()
 
     companion object {
         /**

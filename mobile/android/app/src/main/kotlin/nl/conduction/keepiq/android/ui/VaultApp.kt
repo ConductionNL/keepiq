@@ -17,7 +17,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -42,6 +44,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -74,7 +77,9 @@ enum class Tab { VAULT, GENERATOR, SEND }
 /**
  * The vault, Send and generator screens of one unlocked account (task
  * group 3). The unlock flow hands in the [session]; [accounts] and the
- * switch and add callbacks drive the account switcher.
+ * switch and add callbacks drive the account switcher. [onLock] and
+ * [onSettings] are the top bar's lock and settings; [onLocked] is called
+ * with the reason when a sync found the keys changed elsewhere.
  */
 @Composable
 fun VaultApp(
@@ -82,6 +87,9 @@ fun VaultApp(
     accounts: List<Account>,
     onSwitchAccount: (Account) -> Unit,
     onAddAccount: (() -> Unit)?,
+    onLock: () -> Unit = {},
+    onSettings: () -> Unit = {},
+    onLocked: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
     val prefs = remember { VaultPreferences(context) }
@@ -128,6 +136,7 @@ fun VaultApp(
     }
 
     Scaffold(
+        modifier = Modifier.testTag("unlocked"),
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(titleOf(tab))) },
@@ -139,6 +148,12 @@ fun VaultApp(
                 actions = {
                     IconButton(onClick = { showAccounts = true }) {
                         Icon(Icons.Filled.AccountCircle, contentDescription = stringResource(R.string.cd_switch_account, session.label))
+                    }
+                    IconButton(onClick = onSettings, modifier = Modifier.testTag("settings")) {
+                        Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.cd_settings))
+                    }
+                    IconButton(onClick = onLock, modifier = Modifier.testTag("lock")) {
+                        Icon(Icons.Filled.Lock, contentDescription = stringResource(R.string.cd_lock))
                     }
                 },
             )
@@ -165,7 +180,9 @@ fun VaultApp(
                 )
             }
         },
-        snackbarHost = { SnackbarHost(snackbar) },
+        // Above the list's add button, which lives in the content and not in
+        // the Scaffold's button slot, so the snackbar never covers it.
+        snackbarHost = { SnackbarHost(snackbar, modifier = Modifier.padding(bottom = 72.dp)) },
     ) { padding ->
         val modifier = Modifier.padding(padding)
         when (val route = stack.last()) {
@@ -177,6 +194,7 @@ fun VaultApp(
                 onOpenItem = { push(Route.Detail(it)) },
                 onAddItem = { push(Route.Edit(null)) },
                 onFolderGone = { pop() },
+                onLocked = onLocked,
             )
             is Route.Detail -> ItemDetailScreen(
                 session = session,

@@ -4,6 +4,7 @@
 package nl.conduction.keepiq.shared.store
 
 import app.cash.sqldelight.db.SqlDriver
+import kotlin.concurrent.Volatile
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
@@ -11,6 +12,7 @@ import nl.conduction.keepiq.shared.crypto.Encoding
 import nl.conduction.keepiq.shared.crypto.KeepiqCryptoException
 import nl.conduction.keepiq.shared.crypto.SendCrypto
 import nl.conduction.keepiq.shared.store.db.KeepiqDatabase
+import nl.conduction.keepiq.shared.vault.VaultLockedException
 
 /**
  * Seals the plaintext metadata the server sends (names, URLs, folder names)
@@ -21,6 +23,9 @@ import nl.conduction.keepiq.shared.store.db.KeepiqDatabase
 interface MetadataSealer {
     fun seal(plaintext: String): String
     fun open(sealed: String): String
+
+    /** Drops the key from memory, on lock. */
+    fun forget() {}
 }
 
 /**
@@ -39,6 +44,8 @@ class UnlockKeySealer(unlockKey: ByteArray) : MetadataSealer {
     override fun seal(plaintext: String): String = SendCrypto.aesEncrypt(key, Encoding.utf8(plaintext))
 
     override fun open(sealed: String): String = Encoding.fromUtf8(SendCrypto.aesDecrypt(key, sealed))
+
+    override fun forget() = key.fill(0)
 }
 
 /** One item as the store gives it back: ciphertext untouched, names opened. */
@@ -98,7 +105,36 @@ data class VaultSnapshot(
 class VaultStore(private val driver: SqlDriver, private val sealer: MetadataSealer) {
     private val db = KeepiqDatabase(driver)
 
-    fun replaceAll(snapshot: VaultSnapshot, nowMillis: Long) {
+    @Volatile
+    private var closed = false
+
+    /**
+     * On lock: forgets the sealing key and closes the database. The store is
+     * reopened at the next unlock. A read or write still under way, or one
+     * started later, throws [VaultLockedException].
+     */
+    fun close() {
+        closed = true
+        sealer.forget()
+        driver.close()
+    }
+
+    /** Runs [block] on an open store; a store closed under it reads as locked. */
+    private inline fun <T> open(block: () -> T): T {
+        if (closed) throw VaultLockedException()
+        return try {
+            block()
+        } catch (e: IllegalStateException) {
+            if (closed) throw VaultLockedException()
+            println("Keepiq store failed: $e")
+            throw e
+        } catch (e: Exception) {
+            println("Keepiq store failed: $e")
+            throw e
+        }
+    }
+
+    fun replaceAll(snapshot: VaultSnapshot, nowMillis: Long) = open {
         db.transaction {
             clearRows()
             snapshot.secrets.forEachIndexed { index, s ->
@@ -147,30 +183,34 @@ class VaultStore(private val driver: SqlDriver, private val sealer: MetadataSeal
     }
 
     /** Records a cheap check that found nothing new. */
-    fun touch(nowMillis: Long) = db.vaultQueries.touchState(nowMillis)
+    fun touch(nowMillis: Long) = open { db.vaultQueries.touchState(nowMillis) }
 
-    fun state(): SyncState? = db.vaultQueries.state().executeAsOneOrNull()?.let {
-        SyncState(it.suite_id, it.unlock_key_epoch, it.synced_at_millis, it.check_top, it.check_total)
+    fun state(): SyncState? = open {
+        db.vaultQueries.state().executeAsOneOrNull()?.let {
+            SyncState(it.suite_id, it.unlock_key_epoch, it.synced_at_millis, it.check_top, it.check_total)
+        }
     }
 
-    fun secrets(): List<StoredSecret> = db.vaultQueries.secrets().executeAsList().map { it.open() }
+    fun secrets(): List<StoredSecret> = open { db.vaultQueries.secrets().executeAsList().map { it.open() } }
 
-    fun secret(id: String): StoredSecret? = db.vaultQueries.secretById(id).executeAsOneOrNull()?.open()
+    fun secret(id: String): StoredSecret? = open { db.vaultQueries.secretById(id).executeAsOneOrNull()?.open() }
 
-    fun folders(): List<StoredFolder> = db.vaultQueries.folders().executeAsList().map {
-        StoredFolder(it.id, sealer.open(it.name_sealed), it.parent_id)
+    fun folders(): List<StoredFolder> = open {
+        db.vaultQueries.folders().executeAsList().map { StoredFolder(it.id, sealer.open(it.name_sealed), it.parent_id) }
     }
 
-    fun types(): List<String> = db.vaultQueries.types().executeAsList().map { it.json }
+    fun types(): List<String> = open { db.vaultQueries.types().executeAsList().map { it.json } }
 
     /** Empties the store: unpair, suite change, master-password change, offline caching off. */
-    fun clear() = db.transaction { clearRows() }
+    fun clear() = open { db.transaction { clearRows() } }
 
     private fun clearRows() {
         // Deleted rows are overwritten with zeros, not left in free pages. Set
         // inside the transaction: a driver may hand out a fresh connection
-        // per call outside one, and the pragma is per connection.
-        driver.execute(null, "PRAGMA secure_delete = ON", 0)
+        // per call outside one, and the pragma is per connection. A query,
+        // not an execute: the pragma answers with a row, and Android's
+        // SQLite refuses a statement that returns rows from execute.
+        driver.executeQuery(null, "PRAGMA secure_delete = ON", { cursor -> cursor.next() }, 0)
         db.vaultQueries.deleteSecrets()
         db.vaultQueries.deleteFolders()
         db.vaultQueries.deleteTypes()

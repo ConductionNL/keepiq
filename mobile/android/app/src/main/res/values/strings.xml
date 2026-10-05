@@ -208,6 +208,8 @@
     <string name="composite_phone">Phone</string>
     <string name="composite_email">Email</string>
     <string name="composite_bsn">BSN</string>
+    <string name="cd_lock">Lock the vault</string>
+    <string name="cd_settings">Unlock and account settings</string>
     <!-- System autofill (clients-mobile-apps group 4). -->
     <string name="autofill_unlock">Unlock Keepiq</string>
     <string name="autofill_unlock_hint">Unlock to fill in your login</string>

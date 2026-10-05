@@ -81,3 +81,11 @@ fun ComposeTestRule.waitForText(text: String, timeoutMillis: Long = 30_000) {
             .fetchSemanticsNodes().isNotEmpty()
     }
 }
+
+/** Waits until no node shows [text] any more. */
+fun ComposeTestRule.waitUntilGone(text: String, timeoutMillis: Long = 30_000) {
+    waitUntil(timeoutMillis) {
+        (this as SemanticsNodeInteractionsProvider).onAllNodesWithText(text, substring = true, useUnmergedTree = true)
+            .fetchSemanticsNodes().isEmpty()
+    }
+}

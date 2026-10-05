@@ -7,6 +7,9 @@ import nl.conduction.keepiq.shared.api.Suite
 import nl.conduction.keepiq.shared.crypto.Encoding
 import nl.conduction.keepiq.shared.crypto.KeepiqCryptoException
 import nl.conduction.keepiq.shared.crypto.PrivateKeyEnvelope
+import nl.conduction.keepiq.shared.vault.RsaVaultKeys
+import nl.conduction.keepiq.shared.vault.VaultKeys
+import nl.conduction.keepiq.shared.vault.VaultLockedException
 
 /** The server withholds the private key (`unlockBlocked`). [code] is the server's reason, such as `two_factor_required`. */
 class UnlockBlockedException(val code: String) : Exception(blockedMessage(code))
@@ -25,25 +28,60 @@ class NoVaultException : Exception("This account has no vault yet. Open Keepiq i
 
 /**
  * An unlocked vault. The private key and the unlock key live in memory only
- * (design D4); [lock] overwrites the unlock key.
+ * (design D4). [lock] overwrites the unlock key and the private key bytes of
+ * the [keys] handed out, and drops the PEM text, so nothing decrypts after
+ * it. The PEM is an immutable string: lock drops the last reference to it,
+ * which is as far as the JVM and Kotlin/Native let a string be erased.
  */
 class UnlockedVault(
     val accountId: String,
     val suiteId: String,
     val unlockKeyEpoch: Long?,
     val certificate: String?,
-    val privateKeyPem: String,
+    privateKeyPem: String,
     unlockKey: ByteArray,
 ) {
     private val key = unlockKey.copyOf()
+    private var pem: String? = privateKeyPem
+    private var vaultKeys: RsaVaultKeys? = null
+
+    /** True once [lock] ran. */
+    var isLocked: Boolean = false
+        private set
+
+    /** The opened private key (PKCS#8 PEM). Throws once locked. */
+    val privateKeyPem: String get() = pem ?: throw VaultLockedException()
 
     /** A copy of the 32-byte unlock key, to wrap it for biometric or PIN unlock. */
-    fun unlockKey(): ByteArray = key.copyOf()
+    @Throws(VaultLockedException::class)
+    fun unlockKey(): ByteArray {
+        if (isLocked) throw VaultLockedException()
+        return key.copyOf()
+    }
 
     /** The unlock key in base64, for the Swift side, which keeps it in the Keychain. */
-    fun unlockKeyBase64(): String = Encoding.toBase64(key)
+    @Throws(VaultLockedException::class)
+    fun unlockKeyBase64(): String = Encoding.toBase64(unlockKey())
 
-    fun lock() = key.fill(0)
+    /**
+     * The keys the vault, Send and generator screens encrypt and decrypt
+     * with, built once from the opened key and the suite's certificate.
+     */
+    @Throws(VaultLockedException::class, NoVaultException::class)
+    fun keys(): VaultKeys {
+        if (isLocked) throw VaultLockedException()
+        vaultKeys?.let { return it }
+        val cert = certificate ?: throw NoVaultException()
+        return RsaVaultKeys.fromPem(privateKeyPem, cert, suiteId, unlockKeyEpoch).also { vaultKeys = it }
+    }
+
+    fun lock() {
+        key.fill(0)
+        vaultKeys?.forget()
+        vaultKeys = null
+        pem = null
+        isLocked = true
+    }
 
     override fun toString(): String = "UnlockedVault(accountId=$accountId, suiteId=$suiteId)"
 }

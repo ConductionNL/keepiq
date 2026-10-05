@@ -86,6 +86,7 @@ struct VaultListView: View {
 
     private func sync(_ trigger: SyncTrigger) async {
         state = try? await model.repository.refresh(trigger: trigger)
+        if let locked = state?.locked { model.onLocked?(lockText(locked)) }
     }
 
     @ViewBuilder
@@ -252,7 +253,9 @@ struct FolderSheetView: View {
             Form {
                 switch sheet {
                 case .create, .rename:
-                    TextField(L("folder_name"), text: $name)
+                    LabeledField(L("folder_name")) {
+                        TextField(L("folder_name"), text: $name)
+                    }
                     if let nameProblem, !name.isEmpty { Text(nameProblem).foregroundStyle(.red) }
                 case .delete(let id, let folderName):
                     if !loaded {

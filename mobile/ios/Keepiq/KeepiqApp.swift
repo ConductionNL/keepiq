@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 // SPDX-License-Identifier: EUPL-1.2
 
+import KeepiqShared
 import SwiftUI
 
 @main
@@ -24,17 +25,36 @@ struct RootView: View {
     @EnvironmentObject private var model: AppModel
 
     var body: some View {
-        NavigationStack {
-            switch model.screen {
-            case .pair: PairView()
-            case .unlock(let accountId): UnlockView(accountId: accountId)
-            case .unlocked(let vault): UnlockedView(vault: vault)
-            case .settings(let vault): SettingsView(vault: vault)
-            }
-        }
+        screens
         #if DEBUG
         .overlay(alignment: .bottom) { AutofillPreviewButton() }
         #endif
+    }
+
+    @ViewBuilder private var screens: some View {
+        switch model.screen {
+        case .unlocked(let vault, let session):
+            // The vault brings its own tabs and navigation stacks.
+            VaultAppView(
+                session: session,
+                accounts: model.accounts,
+                onSwitchAccount: { model.switchAccount($0.accountId) },
+                onAddAccount: { model.addAccount() },
+                onLock: { model.lock() },
+                onSettings: { model.openSettings(vault) },
+                onLocked: { model.lock(reason: $0) }
+            )
+            .id(ObjectIdentifier(session))
+        default:
+            NavigationStack {
+                switch model.screen {
+                case .pair: PairView()
+                case .unlock(let accountId): UnlockView(accountId: accountId)
+                case .settings(let vault): SettingsView(vault: vault)
+                case .unlocked: EmptyView()
+                }
+            }
+        }
     }
 }
 
@@ -49,13 +69,12 @@ struct AutofillPreviewButton: View {
     @State private var filled: String?
 
     var body: some View {
-        if ProcessInfo.processInfo.arguments.contains("-keepiq-autofill-preview"), case .unlocked(let vault) = model.screen {
+        if ProcessInfo.processInfo.arguments.contains("-keepiq-autofill-preview"), case .unlocked(let vault, _) = model.screen {
             VStack {
                 if let filled { Text(filled).accessibilityIdentifier("autofillFilled") }
-                Text("sites \(index.lastSiteCount), identities \(index.lastIdentityCount), files \(AutofillFiles.shared.sites(accountId: vault.accountId).count) \(AutofillFiles.shared.isShared ? "shared" : "app only")")
+                Text(indexLine(vault.accountId))
                     .accessibilityIdentifier("autofillIndex")
                 Button("AutoFill preview") {
-                    let site = ProcessInfo.processInfo.environment["KEEPIQ_AUTOFILL_SITE"] ?? "example.com"
                     preview = AutofillModel(serviceIdentifiers: [site]) { login in
                         filled = "filled: \(login.user) / \(login.password.count)"
                         preview = nil
@@ -69,6 +88,17 @@ struct AutofillPreviewButton: View {
                 AutofillRootView(model: box.model, onCancel: { preview = nil })
             }
         }
+    }
+
+    private var site: String { ProcessInfo.processInfo.environment["KEEPIQ_AUTOFILL_SITE"] ?? "example.com" }
+
+    /// What is on disk for the asked site, read back from its file, not counted on the way in.
+    private func indexLine(_ accountId: String) -> String {
+        let key = AutofillSites.shared.siteKey(serviceIdentifier: site)
+        let logins = AutofillFiles.shared.read(accountId: accountId, site: key)
+            .map { AutofillIndex.companion.fromJson(text: $0).entries.count } ?? 0
+        let where_ = AutofillFiles.shared.isShared ? "shared" : "app only"
+        return "\(key): \(logins) logins on disk (\(where_)), sites \(index.lastSiteCount), identities \(index.lastIdentityCount)"
     }
 
     private struct PreviewBox: Identifiable {

@@ -9,7 +9,7 @@ import XCTest
 /// files and Keychain) under -keepiq-autofill-preview, against the replay:
 ///
 /// - the unlock inside the AutoFill sheet, with the master password;
-/// - "Add login" for example.com, saved encrypted to the suite key and
+/// - "Add login" for keepiq-autofill.test, saved encrypted to the suite key and
 ///   filled in at once;
 /// - the index rebuilt after the vault refresh: one site file and one
 ///   identity for ASCredentialIdentityStore;
@@ -28,7 +28,8 @@ final class AutofillUITests: XCTestCase {
         app = XCUIApplication()
         app.launchArguments = ["-keepiq-reset", "-keepiq-autofill-preview"]
         app.launchEnvironment["KEEPIQ_UITEST_NO_BROWSER"] = "1"
-        app.launchEnvironment["KEEPIQ_AUTOFILL_SITE"] = "example.com"
+        // A site the seeded replay vault has no login for.
+        app.launchEnvironment["KEEPIQ_AUTOFILL_SITE"] = "keepiq-autofill.test"
         app.launch()
     }
 
@@ -123,7 +124,7 @@ final class AutofillUITests: XCTestCase {
         answerSavePromptAfterConnect()
         type("Oj", into: app.secureTextFields["masterPassword"])
         tap(app.buttons["unlock"])
-        XCTAssertTrue(app.staticTexts["unlocked"].waitForExistence(timeout: 60))
+        XCTAssertTrue(app.buttons["lock"].waitForExistence(timeout: 60), "the vault opens after unlock")
 
         // The sheet starts locked: the extension has its own unlock.
         tap(app.buttons["autofillPreview"])
@@ -142,7 +143,7 @@ final class AutofillUITests: XCTestCase {
         waitForLabel(app.staticTexts["autofillFilled"], containing: "filled: alice / 15")
 
         // The refresh after the save rebuilt the index, and the site file is on disk.
-        waitForLabel(app.staticTexts["autofillIndex"], containing: "sites 1, identities 1, files 1")
+        waitForLabel(app.staticTexts["autofillIndex"], containing: "keepiq-autofill.test: 1 logins on disk")
         shot("autofill-ios-04-index-rebuilt")
 
         // Again: no unlock within the idle time, the login from the site file.

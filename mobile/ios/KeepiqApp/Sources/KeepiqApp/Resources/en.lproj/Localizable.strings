@@ -206,3 +206,5 @@
 "composite_phone" = "Phone";
 "composite_email" = "Email";
 "composite_bsn" = "BSN";
+"cd_lock" = "Lock the vault";
+"cd_settings" = "Unlock and account settings";

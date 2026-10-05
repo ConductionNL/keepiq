@@ -43,6 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -75,6 +76,7 @@ fun VaultListScreen(
     onOpenItem: (String) -> Unit,
     onAddItem: () -> Unit,
     onFolderGone: () -> Unit,
+    onLocked: (String) -> Unit = {},
 ) {
     val repository = session.repository
     var state by remember(session) { mutableStateOf<VaultState?>(repository.state.takeIf { it != VaultState.EMPTY }) }
@@ -108,6 +110,8 @@ fun VaultListScreen(
     }
 
     val current = state
+    val lockedText = current?.locked?.let { stringResource(lockText(it)) }
+    LaunchedEffect(lockedText) { if (lockedText != null) onLocked(lockedText) }
     Box(modifier.fillMaxSize()) {
         Column(Modifier.fillMaxSize()) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 16.dp)) {
@@ -117,7 +121,7 @@ fun VaultListScreen(
                     label = { Text(stringResource(R.string.search_label)) },
                     placeholder = { Text(stringResource(R.string.search_hint)) },
                     singleLine = true,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).testTag("search"),
                 )
                 IconButton(onClick = { sync(SyncTrigger.MANUAL) }) {
                     Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.action_refresh))

@@ -41,7 +41,15 @@ fun KeepiqRoot(state: AppState, activity: FragmentActivity, openBrowser: (String
             when (val s = screen) {
                 Screen.Pair -> PairScreen(state, openBrowser)
                 is Screen.Unlock -> UnlockScreen(state, activity, s.accountId)
-                is Screen.Unlocked -> UnlockedHome(state, s.vault)
+                is Screen.Unlocked -> VaultApp(
+                    session = s.session,
+                    accounts = state.client.accounts.accounts(),
+                    onSwitchAccount = { state.switchAccount(it.id) },
+                    onAddAccount = { state.addAccount() },
+                    onLock = { state.lock() },
+                    onSettings = { state.openSettings(s.vault) },
+                    onLocked = { reason -> state.lock(reason) },
+                )
                 is Screen.Settings -> SettingsScreen(state, activity, s.vault)
             }
         }

@@ -206,6 +206,8 @@
     <string name="composite_phone">Telefoon</string>
     <string name="composite_email">E-mail</string>
     <string name="composite_bsn">BSN</string>
+    <string name="cd_lock">Kluis vergrendelen</string>
+    <string name="cd_settings">Ontgrendelen en accountinstellingen</string>
     <!-- System autofill (clients-mobile-apps group 4). -->
     <string name="autofill_unlock">Keepiq ontgrendelen</string>
     <string name="autofill_unlock_hint">Ontgrendel om je login in te vullen</string>

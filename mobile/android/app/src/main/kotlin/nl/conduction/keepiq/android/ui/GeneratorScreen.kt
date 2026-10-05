@@ -36,6 +36,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -95,7 +96,7 @@ fun GeneratorScreen(
                     value ?: error?.let { generatorProblemText(it) } ?: "",
                     fontFamily = if (value != null) FontFamily.Monospace else null,
                     color = if (value == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.weight(1f).semantics { liveRegion = LiveRegionMode.Polite },
+                    modifier = Modifier.weight(1f).testTag("generated").semantics { liveRegion = LiveRegionMode.Polite },
                 )
                 IconButton(onClick = { round++ }) {
                     Icon(Icons.Filled.Refresh, contentDescription = stringResource(R.string.cd_regenerate))

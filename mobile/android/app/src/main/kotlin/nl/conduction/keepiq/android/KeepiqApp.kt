@@ -16,7 +16,9 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import nl.conduction.keepiq.android.autofill.AutofillCore
 import nl.conduction.keepiq.android.security.BiometricUnlock
 import nl.conduction.keepiq.android.security.KeystoreStorage
+import nl.conduction.keepiq.android.vault.VaultSession
 import nl.conduction.keepiq.shared.KeepiqClient
+import nl.conduction.keepiq.shared.store.deleteEncryptedStore
 
 /**
  * Holds the one [AppState] of the process. The vault is unlocked in memory
@@ -37,14 +39,19 @@ class KeepiqApp : Application() {
         super.onCreate()
         val storage = KeystoreStorage(this)
         val client = KeepiqClient(storage, clientName())
-        state = AppState(client, BiometricUnlock(this, storage))
+        // System autofill first: unpair wipes its index (task 4.6). It reads
+        // the state lazily, so it may exist before the state.
         autofill = AutofillCore(this, storage) { state }
-        // Unpair wipes the account's autofill index too (task 4.6).
-        val wipe = client.onWipe
-        client.onWipe = { accountId ->
-            wipe(accountId)
-            autofill.forget(accountId)
-        }
+        state = AppState(
+            client,
+            BiometricUnlock(this, storage),
+            openSession = { account, vault, listener -> VaultSession.open(this, client.api(account), account, vault, listener) },
+            // Unpair removes everything stored for the account: the offline copy and the autofill index.
+            onAccountWiped = { accountId ->
+                deleteEncryptedStore(this, accountId)
+                autofill.forget(accountId)
+            },
+        )
 
         val screenOff = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {

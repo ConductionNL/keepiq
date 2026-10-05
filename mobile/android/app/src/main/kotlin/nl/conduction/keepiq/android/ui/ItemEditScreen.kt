@@ -38,6 +38,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -89,6 +90,8 @@ fun ItemEditScreen(
     var busy by remember { mutableStateOf(false) }
     var generateFor by remember { mutableStateOf<((String) -> Unit)?>(null) }
     val scope = rememberCoroutineScope()
+    // The keyboard closes on save, so it does not cover the item that opens next.
+    val focus = LocalFocusManager.current
 
     LaunchedEffect(id) {
         if (id != null) {
@@ -184,6 +187,7 @@ fun ItemEditScreen(
             Button(
                 enabled = !busy && !repository.state.offline,
                 onClick = {
+                    focus.clearFocus()
                     showErrors = true
                     if (errors.isNotEmpty()) return@Button
                     busy = true

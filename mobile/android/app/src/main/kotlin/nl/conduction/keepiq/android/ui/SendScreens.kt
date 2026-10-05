@@ -45,6 +45,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -184,6 +185,7 @@ fun NewSendScreen(
     var problem by remember { mutableStateOf<SendResult.Problem?>(null) }
     var created by remember { mutableStateOf<CreatedSend?>(null) }
     val scope = rememberCoroutineScope()
+    val focus = LocalFocusManager.current
 
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.send_new_title), style = MaterialTheme.typography.headlineSmall)
@@ -245,6 +247,7 @@ fun NewSendScreen(
         problem?.form?.let { Text(sendProblemText(it), color = MaterialTheme.colorScheme.error) }
         problem?.write?.let { Text(writeProblemText(it), color = MaterialTheme.colorScheme.error) }
         Button(enabled = !busy, onClick = {
+            focus.clearFocus()
             busy = true
             problem = null
             scope.launch {

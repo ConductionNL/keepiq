@@ -14,13 +14,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import nl.conduction.keepiq.android.security.BiometricCancelledException
 import nl.conduction.keepiq.android.security.BiometricUnlock
+import nl.conduction.keepiq.android.vault.VaultSession
 import nl.conduction.keepiq.shared.KeepiqClient
 import nl.conduction.keepiq.shared.UnlockGate
 import nl.conduction.keepiq.shared.account.AccountSettings
 import nl.conduction.keepiq.shared.account.IdlePolicy
 import nl.conduction.keepiq.shared.account.IdleTimer
+import nl.conduction.keepiq.shared.api.Account
 import nl.conduction.keepiq.shared.pairing.LoginFlowStart
 import nl.conduction.keepiq.shared.pairing.LoginFlowStoppedException
+import nl.conduction.keepiq.shared.sync.LockReason
+import nl.conduction.keepiq.shared.sync.SyncListener
 import nl.conduction.keepiq.shared.unlock.StaleUnlockKeyException
 import nl.conduction.keepiq.shared.unlock.UnlockedVault
 
@@ -32,8 +36,8 @@ sealed interface Screen {
     /** A paired account, locked. */
     data class Unlock(val accountId: String) : Screen
 
-    /** The vault is open. */
-    data class Unlocked(val vault: UnlockedVault) : Screen
+    /** The vault is open; the vault screens read and write through [session]. */
+    data class Unlocked(val vault: UnlockedVault, val session: VaultSession) : Screen
 
     /** Unlock options, auto-lock and unpair for the open vault. */
     data class Settings(val vault: UnlockedVault) : Screen
@@ -51,7 +55,13 @@ sealed interface LoginState {
  * The app's state and the actions the screens call (tasks 2.1 to 2.6). One
  * instance per process, in [KeepiqApp].
  */
-class AppState(val client: KeepiqClient, val biometric: BiometricUnlock, private val clock: () -> Long = System::currentTimeMillis) {
+class AppState(
+    val client: KeepiqClient,
+    val biometric: BiometricUnlock,
+    private val openSession: (Account, UnlockedVault, SyncListener) -> VaultSession,
+    private val onAccountWiped: (String) -> Unit = {},
+    private val clock: () -> Long = System::currentTimeMillis,
+) {
     private val scope = MainScope()
     private var loginJob: Job? = null
     private var idleJob: Job? = null
@@ -80,8 +90,14 @@ class AppState(val client: KeepiqClient, val biometric: BiometricUnlock, private
 
     private val idle = IdleTimer(clock, IdlePolicy.DEFAULT_MINUTES)
 
+    /** The open vault's session, closed on lock. */
+    private var session: VaultSession? = null
+
     init {
-        client.onWipe = { accountId -> biometric.disable(accountId) }
+        client.onWipe = { accountId ->
+            biometric.disable(accountId)
+            onAccountWiped(accountId)
+        }
     }
 
     private fun initialScreen(): Screen = client.accounts.activeId()?.let { Screen.Unlock(it) } ?: Screen.Pair
@@ -148,6 +164,7 @@ class AppState(val client: KeepiqClient, val biometric: BiometricUnlock, private
     }
 
     fun addAccount() {
+        lock()
         _message.value = null
         _screen.value = Screen.Pair
     }
@@ -168,7 +185,7 @@ class AppState(val client: KeepiqClient, val biometric: BiometricUnlock, private
     }
 
     /** Reads what the unlock screen may offer: the master password, or the reason it is blocked. */
-    fun refreshGate(accountId: String) = action {
+    fun refreshGate(accountId: String, keepMessage: Boolean = false) = action(clearMessage = !keepMessage) {
         _gate.value = client.unlockGate(accountId)
     }
 
@@ -201,7 +218,15 @@ class AppState(val client: KeepiqClient, val biometric: BiometricUnlock, private
 
     private suspend fun opened(vault: UnlockedVault) {
         _message.value = null
-        _screen.value = Screen.Unlocked(vault)
+        val opened = try {
+            val account = client.accounts.account(vault.accountId) ?: throw IllegalStateException("This account is gone.")
+            openSession(account, vault, syncListener(vault.accountId))
+        } catch (e: Exception) {
+            vault.lock()
+            throw e
+        }
+        session = opened
+        _screen.value = Screen.Unlocked(vault, opened)
         _maxIdle.value = client.maxIdleMinutes(vault.accountId)
         applyIdle(vault.accountId)
         idle.touch()
@@ -272,18 +297,46 @@ class AppState(val client: KeepiqClient, val biometric: BiometricUnlock, private
         }
     }
 
-    /** Locks now: forgets the vault and shows the unlock screen. */
-    fun lock() {
+    /**
+     * Locks now: closes the session, so the private key and the store's
+     * sealing key leave memory, overwrites the unlock key, and shows the
+     * unlock screen. [reason] is shown there, for a lock the user did not ask for.
+     */
+    fun lock(reason: String? = null) {
         val vault = when (val s = _screen.value) {
             is Screen.Unlocked -> s.vault
             is Screen.Settings -> s.vault
             else -> return
         }
         idleJob?.cancel()
+        closeSession()
         vault.lock()
         _gate.value = null
         _screen.value = Screen.Unlock(vault.accountId)
-        refreshGate(vault.accountId)
+        refreshGate(vault.accountId, keepMessage = reason != null)
+        if (reason != null) _message.value = reason
+    }
+
+    private fun closeSession() {
+        session?.close()
+        session = null
+    }
+
+    /**
+     * What a sync does when it finds the keys changed elsewhere: the screens
+     * lock (VaultApp's onLocked); a changed master password or suite also
+     * makes the biometric and PIN wraps useless, so they go (design D4).
+     */
+    private fun syncListener(accountId: String) = object : SyncListener {
+        override fun lock(reason: LockReason) = Unit
+
+        override fun deleteUnlockWraps() {
+            scope.launch {
+                biometric.disable(accountId)
+                client.pins.remove(accountId)
+                client.accounts.updateSettings(accountId, client.accounts.settings(accountId).copy(biometric = false))
+            }
+        }
     }
 
     /** The open vault, or null while locked; the autofill service fills from it (task 4.1). */
@@ -298,7 +351,8 @@ class AppState(val client: KeepiqClient, val biometric: BiometricUnlock, private
     }
 
     fun closeSettings(vault: UnlockedVault) {
-        _screen.value = Screen.Unlocked(vault)
+        val open = session ?: return lock()
+        _screen.value = Screen.Unlocked(vault, open)
     }
 
     fun settings(accountId: String): AccountSettings = client.accounts.settings(accountId)
@@ -306,6 +360,7 @@ class AppState(val client: KeepiqClient, val biometric: BiometricUnlock, private
     // Unpair (task 2.6)
 
     fun unpair(accountId: String) = action {
+        closeSession()
         (_screen.value as? Screen.Unlocked)?.vault?.lock()
         (_screen.value as? Screen.Settings)?.vault?.lock()
         idleJob?.cancel()
@@ -320,10 +375,10 @@ class AppState(val client: KeepiqClient, val biometric: BiometricUnlock, private
     }
 
     /** Runs [block] with the busy flag set, and turns a failure into the message the screen shows. */
-    private fun action(block: suspend () -> Unit) {
+    private fun action(clearMessage: Boolean = true, block: suspend () -> Unit) {
         scope.launch {
             _busy.value = true
-            _message.value = null
+            if (clearMessage) _message.value = null
             try {
                 block()
             } catch (e: CancellationException) {

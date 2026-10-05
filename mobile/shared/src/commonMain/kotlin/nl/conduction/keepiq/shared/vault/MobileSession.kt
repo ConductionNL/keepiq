@@ -11,6 +11,7 @@ import nl.conduction.keepiq.shared.api.platformHttpEngine
 import nl.conduction.keepiq.shared.send.SendService
 import nl.conduction.keepiq.shared.store.VaultStore
 import nl.conduction.keepiq.shared.sync.VaultSync
+import nl.conduction.keepiq.shared.unlock.UnlockedVault
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
@@ -35,6 +36,9 @@ class MobileSession(
     /** "alice · cloud.example.nl", for the account switcher. */
     val label: String get() = labelOf(account)
 
+    /** On lock: the private key leaves memory, and nothing decrypts with this session again. */
+    fun close() = keys.forget()
+
     companion object {
         /**
          * Without an offline store (iOS until task 1.6.1): the vault is read
@@ -44,6 +48,13 @@ class MobileSession(
         @Throws(InsecureServerException::class)
         fun online(account: Account, keys: VaultKeys): MobileSession =
             MobileSession(account, KeepiqApi(KeepiqApi.httpClient(platformHttpEngine()), account), keys, null, null)
+
+        /**
+         * The session of a vault the unlock flow just opened: [online] with
+         * the keys of [vault], which [UnlockedVault.lock] forgets again.
+         */
+        @Throws(Exception::class)
+        fun forVault(account: Account, vault: UnlockedVault): MobileSession = online(account, vault.keys())
 
         fun labelOf(account: Account): String =
             "${account.loginName} · ${account.server.removePrefix("https://").trimEnd('/')}"
