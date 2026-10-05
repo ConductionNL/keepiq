@@ -46,8 +46,8 @@ wait_until_unblocked() {
 }
 
 adb wait-for-device
-adb install -r -t "$APK_DIR/e2e/app-e2e.apk"
-adb install -r -t "$APK_DIR/androidTest/e2e/app-e2e-androidTest.apk"
+adb install -r -t "$APK_DIR/fdroid/e2e/app-fdroid-e2e.apk"
+adb install -r -t "$APK_DIR/androidTest/fdroid/e2e/app-fdroid-e2e-androidTest.apk"
 # An ordinary app that does not instrument Keepiq (PackageVisibilityTest).
 adb install -r -t "$HERE/../android/otherapp/build/outputs/apk/debug/otherapp-debug.apk"
 adb shell input keyevent KEYCODE_WAKEUP
@@ -135,7 +135,7 @@ fi
 # and stays up while another app asks it for autofill. R8 removes code that only
 # reflection or JNI reaches; the e2e build above is not shrunk, so this is
 # the one run of shrunk code.
-RELEASE_APK="$APK_DIR/release/app-release.apk"
+RELEASE_APK="$APK_DIR/fdroid/release/app-fdroid-release.apk"
 if [ -f "$RELEASE_APK" ]; then
 	adb uninstall "$PKG" >/dev/null || true
 	adb install -r "$RELEASE_APK"
