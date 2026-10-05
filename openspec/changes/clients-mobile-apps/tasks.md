@@ -34,12 +34,12 @@ Each task names its check. iOS tasks need a macOS runner and an Apple developer 
 
 ## 4. System autofill
 
-- [ ] 4.1 Android `AutofillService`: field detection, package and certificate matching, web domains, inline suggestions, the locked entry. Verify: instrumented tests with a test app and a WebView page; manual check in Chrome and Firefox.
-- [ ] 4.2 Android save requests with the never-save list. Verify: instrumented test of a sign-up form.
-- [ ] 4.3 One-time codes on Android. Verify: instrumented test with a two-step form.
-- [ ] 4.4 iOS AutoFill credential provider extension: credential list, fill without interaction when unlocked, unlock screen, identity store upkeep. Verify: UI test on the simulator with a test app and an associated domain.
-- [ ] 4.5 One-time codes on iOS: the clipboard path on iOS 17, and the iOS 18 code credential if adopted. Verify: simulator test.
-- [ ] 4.6 Rebuild and clear the autofill index on sync, unpair and suite change. Verify: unit tests, plus an emulator test that a deleted item stops being offered.
+- [ ] 4.1 Android `AutofillService`: field detection, package and certificate matching, web domains, inline suggestions, the locked entry. Verify: instrumented tests with a test app and a WebView page; manual check in Chrome and Firefox. Partly done: `SystemAutofillTest` (`mobile-e2e.yml`, API 34 and 28) covers the locked entry without names, the unlock and pick, Digital Asset Links, a look-alike certificate never offered, the unlocked dropdown and a WebView's web domain; the matcher runs the extension's own cases (`tests/vectors/autofill`, Kotlin and vitest). Open: the manual check in Chrome and Firefox, and inline suggestions, which the emulator keyboard does not show (manual with Gboard or another inline keyboard).
+- [x] 4.2 Android save requests with the never-save list. Verify: instrumented test of a sign-up form. Done: `SystemAutofillTest` saves a sign-up and reads it back from the server, then "Never" puts the app on the list and no offer follows; `AutofillSaverTest` (6) covers save, update and the use-only refusal.
+- [x] 4.3 One-time codes on Android. Verify: instrumented test with a two-step form. Done: `SystemAutofillTest` fills the code field on the step after the login with the item's current TOTP.
+- [ ] 4.4 iOS AutoFill credential provider extension: credential list, fill without interaction when unlocked, unlock screen, identity store upkeep. Verify: UI test on the simulator with a test app and an associated domain. Partly done: the `KeepiqAutofill` extension is built; `AutofillUITests` runs its screens inside the app against the replay (unlock in the sheet, "Add login", the per-site files and identities rebuilt, a second fill without unlock). Open: enabling the provider in Settings cannot be automated, so the QuickType bar in Safari and an app with an associated domain stay a manual check, and so does Face ID in the sheet.
+- [ ] 4.5 One-time codes on iOS: the clipboard path on iOS 17, and the iOS 18 code credential if adopted. Verify: simulator test. Partly done: after a password fill the site's current code goes on the clipboard, local only, for 60 seconds. The iOS 18 `ASOneTimeCodeCredential` is not adopted in v1. Open: a simulator test with an authenticator item.
+- [x] 4.6 Rebuild and clear the autofill index on sync, unpair and suite change. Verify: unit tests, plus an emulator test that a deleted item stops being offered. Done: `AutofillIndexTest` covers rebuild on every refresh, memory only without offline caching, and clearing on each locking sync; `SystemAutofillTest` trashes a login on the server, syncs, finds it no longer offered, and clears the index on unpair.
 
 ## 5. Passkeys
 

@@ -13,6 +13,7 @@
 
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
+import { classifyCapture } from '../../browser-extension/src/lib/capture.js'
 import {
 	hostOf,
 	isPublicSuffix,
@@ -20,19 +21,24 @@ import {
 	matchSecrets,
 	registrableDomain,
 } from '../../browser-extension/src/lib/match.js'
-import { blocksSavePrompt, filterForHost } from '../../browser-extension/src/lib/useOnly.js'
-import { classifyCapture } from '../../browser-extension/src/lib/capture.js'
+import {
+	blocksSavePrompt,
+	filterForHost,
+} from '../../browser-extension/src/lib/useOnly.js'
 
 const cases = JSON.parse(
 	readFileSync(new URL('../vectors/autofill/cases.json', import.meta.url), 'utf8'),
 )
 
 describe('shared autofill cases', () => {
-	it.each(cases.hosts.map((h) => [JSON.stringify(h.input), h]))('host %s', (_, h) => {
-		expect(hostOf(h.input)).toBe(h.host)
-		expect(registrableDomain(h.input)).toBe(h.registrable)
-		expect(isPublicSuffix(h.input)).toBe(h.publicSuffix)
-	})
+	it.each(cases.hosts.map((h) => [JSON.stringify(h.input), h]))(
+		'host %s',
+		(_, h) => {
+			expect(hostOf(h.input)).toBe(h.host)
+			expect(registrableDomain(h.input)).toBe(h.registrable)
+			expect(isPublicSuffix(h.input)).toBe(h.publicSuffix)
+		},
+	)
 
 	it('scores', () => {
 		for (const s of cases.scores) {
@@ -44,7 +50,9 @@ describe('shared autofill cases', () => {
 		for (const m of cases.matches) {
 			const ranked = matchSecrets(cases.items, m.target)
 			expect(ranked.map((r) => r.id)).toEqual(m.ids)
-			expect(filterForHost(ranked, m.target).map((r) => r.id)).toEqual(m.filtered)
+			expect(filterForHost(ranked, m.target).map((r) => r.id)).toEqual(
+				m.filtered,
+			)
 			expect(blocksSavePrompt(cases.items, m.target)).toBe(m.blocksSave)
 		}
 	})

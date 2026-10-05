@@ -20,6 +20,7 @@
 import { writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { classifyCapture } from '../../browser-extension/src/lib/capture.js'
 import {
 	hostOf,
 	isPublicSuffix,
@@ -27,8 +28,10 @@ import {
 	matchSecrets,
 	registrableDomain,
 } from '../../browser-extension/src/lib/match.js'
-import { blocksSavePrompt, filterForHost } from '../../browser-extension/src/lib/useOnly.js'
-import { classifyCapture } from '../../browser-extension/src/lib/capture.js'
+import {
+	blocksSavePrompt,
+	filterForHost,
+} from '../../browser-extension/src/lib/useOnly.js'
 
 const HERE = dirname(fileURLToPath(import.meta.url))
 
@@ -73,8 +76,18 @@ const HOSTS = [
 
 const ITEMS = [
 	{ id: 'a', name: 'Example', url: 'https://example.com' },
-	{ id: 'b', name: 'Example login', url: 'https://login.example.com', lastUsedAt: '2026-10-01T10:00:00Z' },
-	{ id: 'c', name: 'Mail', url: 'https://mail.example.com', lastUsedAt: '2026-10-03T10:00:00Z' },
+	{
+		id: 'b',
+		name: 'Example login',
+		url: 'https://login.example.com',
+		lastUsedAt: '2026-10-01T10:00:00Z',
+	},
+	{
+		id: 'c',
+		name: 'Mail',
+		url: 'https://mail.example.com',
+		lastUsedAt: '2026-10-03T10:00:00Z',
+	},
 	{ id: 'd', name: 'example.com backup', url: '' },
 	{ id: 'e', name: 'My examples', url: null },
 	{ id: 'f', name: 'Bank', url: 'https://www.bank.co.uk' },
@@ -108,7 +121,12 @@ const hosts = HOSTS.map((input) => ({
 const scores = []
 for (const item of ITEMS) {
 	for (const target of TARGETS) {
-		scores.push({ name: item.name, url: item.url, target, score: matchScore(item, target) })
+		scores.push({
+			name: item.name,
+			url: item.url,
+			target,
+			score: matchScore(item, target),
+		})
 	}
 }
 
@@ -124,13 +142,43 @@ const matches = TARGETS.map((target) => {
 
 // Stored logins with their decrypted values, and submitted logins.
 const STORED = [
-	{ id: 's1', name: 'Example', url: 'https://example.com', plain: { login: 'alice', secret: 'one' } },
-	{ id: 's2', name: 'Example two', url: 'https://www.example.com', plain: { login: 'bob', secret: 'two' } },
-	{ id: 's3', name: 'example.com by name', url: '', plain: { login: 'carol', secret: 'three' } },
+	{
+		id: 's1',
+		name: 'Example',
+		url: 'https://example.com',
+		plain: { login: 'alice', secret: 'one' },
+	},
+	{
+		id: 's2',
+		name: 'Example two',
+		url: 'https://www.example.com',
+		plain: { login: 'bob', secret: 'two' },
+	},
+	{
+		id: 's3',
+		name: 'example.com by name',
+		url: '',
+		plain: { login: 'carol', secret: 'three' },
+	},
 	{ id: 's4', name: 'Broken', url: 'https://example.com', plain: null },
-	{ id: 's5', name: 'Dup one', url: 'https://dup.example.org', plain: { login: 'dave', secret: 'x' } },
-	{ id: 's6', name: 'Dup two', url: 'https://dup.example.org', plain: { login: 'dave', secret: 'y' } },
-	{ id: 's7', name: 'Empty login', url: 'https://empty.example.net', plain: { secret: 'z' } },
+	{
+		id: 's5',
+		name: 'Dup one',
+		url: 'https://dup.example.org',
+		plain: { login: 'dave', secret: 'x' },
+	},
+	{
+		id: 's6',
+		name: 'Dup two',
+		url: 'https://dup.example.org',
+		plain: { login: 'dave', secret: 'y' },
+	},
+	{
+		id: 's7',
+		name: 'Empty login',
+		url: 'https://empty.example.net',
+		plain: { secret: 'z' },
+	},
 ]
 const SUBMITS = [
 	{ host: 'example.com', login: 'alice', secret: 'one' },
@@ -143,7 +191,7 @@ const SUBMITS = [
 	{ host: 'empty.example.net', login: '', secret: 'other' },
 	{ host: 'unknown.test', login: 'alice', secret: 'one' },
 ]
-const decrypt = async (row) => {
+async function decrypt(row) {
 	const found = STORED.find((s) => s.id === row.id)
 	if (!found.plain) throw new Error('cannot open')
 	return found.plain
@@ -151,11 +199,16 @@ const decrypt = async (row) => {
 const classify = []
 for (const submit of SUBMITS) {
 	const offer = await classifyCapture(submit, STORED, decrypt)
-	classify.push({ ...submit, action: offer.action, id: offer.action === 'update' ? offer.id : null })
+	classify.push({
+		...submit,
+		action: offer.action,
+		id: offer.action === 'update' ? offer.id : null,
+	})
 }
 
 const out = {
-	comment: 'Written by tests/vectors/generate-autofill-vectors.mjs from the browser extension. Do not edit.',
+	comment:
+		'Written by tests/vectors/generate-autofill-vectors.mjs from the browser extension. Do not edit.',
 	hosts,
 	items: ITEMS,
 	scores,
@@ -163,5 +216,10 @@ const out = {
 	stored: STORED,
 	classify,
 }
-writeFileSync(join(HERE, 'autofill', 'cases.json'), JSON.stringify(out, null, '\t') + '\n')
-console.log(`autofill cases: ${hosts.length} hosts, ${scores.length} scores, ${matches.length} matches, ${classify.length} saves`)
+writeFileSync(
+	join(HERE, 'autofill', 'cases.json'),
+	JSON.stringify(out, null, '\t') + '\n',
+)
+console.log(
+	`autofill cases: ${hosts.length} hosts, ${scores.length} scores, ${matches.length} matches, ${classify.length} saves`,
+)
