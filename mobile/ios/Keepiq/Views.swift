@@ -50,6 +50,7 @@ struct PairView: View {
                         }
                         LabeledField("App password") {
                             SecureField("App password", text: $appPassword, prompt: Text("Paste the app password"))
+                                .textContentType(.oneTimeCode)
                                 .accessibilityIdentifier("appPassword")
                         }
                         Button("Connect") { model.pairManually(server: server, loginName: loginName, appPassword: appPassword) }
@@ -103,6 +104,7 @@ struct UnlockView: View {
                     Section {
                         LabeledField("PIN") {
                             SecureField("PIN", text: $pin, prompt: Text("Your PIN"))
+                                .textContentType(.oneTimeCode)
                                 .keyboardType(.numberPad)
                                 .accessibilityIdentifier("pin")
                         }
@@ -113,8 +115,11 @@ struct UnlockView: View {
                     }
                 } else {
                     Section {
+                        // Keepiq's own secrets are typed as one-time codes, not passwords, so iOS
+                        // never offers to save them in another password manager.
                         LabeledField("Master password") {
                             SecureField("Master password", text: $password, prompt: Text("Your master password"))
+                                .textContentType(.oneTimeCode)
                                 .accessibilityIdentifier("masterPassword")
                                 .onSubmit { model.unlock(accountId, masterPassword: password); password = "" }
                         }
@@ -171,6 +176,7 @@ struct SettingsView: View {
                 } else {
                     LabeledField("New PIN") {
                         SecureField("New PIN", text: $newPin, prompt: Text("6 to 64 characters"))
+                            .textContentType(.oneTimeCode)
                             .keyboardType(.numberPad)
                             .accessibilityIdentifier("newPin")
                     }

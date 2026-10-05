@@ -4,6 +4,7 @@
 package nl.conduction.keepiq.shared.vault
 
 import nl.conduction.keepiq.shared.api.Account
+import nl.conduction.keepiq.shared.autofill.AutofillIndexHub
 import nl.conduction.keepiq.shared.api.InsecureServerException
 import nl.conduction.keepiq.shared.api.KeepiqApi
 import nl.conduction.keepiq.shared.api.platformHttpEngine
@@ -25,7 +26,11 @@ class MobileSession(
     store: VaultStore?,
     sync: VaultSync?,
 ) {
-    val repository = VaultRepository(api, keys, store, sync, clock = ::nowMillis)
+    val repository = VaultRepository(
+        api, keys, store, sync,
+        clock = ::nowMillis,
+        onRefreshed = { AutofillIndexHub.refreshed(account.id, it, keys) },
+    )
     val sends = SendService(api)
 
     /** "alice · cloud.example.nl", for the account switcher. */

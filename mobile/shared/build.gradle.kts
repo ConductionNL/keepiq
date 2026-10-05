@@ -223,6 +223,31 @@ kotlin.sourceSets.commonTest {
     kotlin.srcDir(generateGeneratorVectors)
 }
 
+// The autofill cases in tests/vectors/autofill/ (the browser extension's
+// site matching and save rules) are compiled into commonTest the same way.
+val autofillVectorsFile = layout.projectDirectory.file("../../tests/vectors/autofill/cases.json")
+val generatedAutofillVectors = layout.buildDirectory.dir("generated/autofill-vectors/kotlin")
+val generateAutofillVectors by tasks.registering {
+    inputs.file(autofillVectorsFile).withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.dir(generatedAutofillVectors)
+    val sourceFile = autofillVectorsFile.asFile
+    val outDir = generatedAutofillVectors.get().asFile
+    doLast {
+        val encoded = Base64.getEncoder().encodeToString(sourceFile.readBytes())
+        val parts = encoded.chunked(16_000).joinToString(",\n        ") { "\"$it\"" }
+        val target = File(outDir, "nl/conduction/keepiq/shared/vectors/GeneratedAutofillVectors.kt")
+        target.parentFile.mkdirs()
+        target.writeText(
+            "// Generated from tests/vectors/autofill by :shared:generateAutofillVectors. Do not edit.\n" +
+                "package nl.conduction.keepiq.shared.vectors\n\n" +
+                "internal object GeneratedAutofillVectors {\n    val cases: List<String> = listOf(\n        $parts,\n    )\n}\n",
+        )
+    }
+}
+kotlin.sourceSets.commonTest {
+    kotlin.srcDir(generateAutofillVectors)
+}
+
 // The jvm tests write ciphertext produced by this core for the vector inputs.
 // tests/vitest/crypto-vectors-kotlin.spec.js opens it with the web modules.
 // -Pkeepiq.writeKotlinVectors=true writes the committed copy instead.

@@ -49,7 +49,13 @@ final class AppModel: ObservableObject {
         #endif
         client = KeepiqClientKt.doNewKeepiqClient(storage: KeychainStorage(), clientName: "Keepiq for iOS (\(UIDevice.current.model))")
         let biometric = self.biometric
-        client.onWipe = { accountId in biometric.delete(accountId) }
+        // Unpair wipes the account's autofill index too (task 4.6); every
+        // vault refresh rebuilds it through the hub.
+        AutofillIndexHub.shared.sink = IOSAutofillIndex.shared
+        client.onWipe = { accountId in
+            biometric.delete(accountId)
+            AutofillIndexHub.shared.clear(accountId: accountId)
+        }
         if let active = client.accounts.activeId() { screen = .unlock(active) }
         NotificationCenter.default.addObserver(
             forName: UIApplication.protectedDataWillBecomeUnavailableNotification, object: nil, queue: .main
@@ -193,6 +199,7 @@ final class AppModel: ObservableObject {
             self.session = session
             self.message = nil
             self.screen = .unlocked(vault, session)
+            self.refreshAutofill(vault)
             if let max = try? await self.client.maxIdleMinutes(accountId: accountId) {
                 self.maxIdle = max.intValue
             } else {
@@ -200,6 +207,26 @@ final class AppModel: ObservableObject {
             }
             self.touch()
             self.startIdleWatch()
+        }
+    }
+
+    /// Reads the vault once after an unlock, which rebuilds the AutoFill
+    /// index (task 4.6), while Keepiq is the AutoFill provider. Without it,
+    /// the index files are deleted.
+    func refreshAutofill(_ vault: UnlockedVault) {
+        guard let account = account(vault.accountId) else { return }
+        Task {
+            guard await AutofillState.isEnabled() else {
+                AutofillFiles.shared.clearAll()
+                return
+            }
+            do {
+                let keys = try AutofillSites.shared.keysOf(vault: vault)
+                let session = try MobileSession.companion.online(account: account, keys: keys)
+                _ = try await session.repository.refresh(trigger: SyncTrigger.manual)
+            } catch {
+                // The next unlock tries again.
+            }
         }
     }
 
