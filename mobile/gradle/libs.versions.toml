@@ -35,6 +35,9 @@ junit = "4.13.2"
 android-compileSdk = "36"
 android-minSdk = "28"
 android-targetSdk = "36"
+# The Android build tools (aapt2 aside, which AGP pins above), pinned so a
+# rebuild gives the same APK (task 6.2).
+android-buildTools = "35.0.0"
 
 [libraries]
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }

@@ -21,6 +21,21 @@ android {
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+    // The build tools are pinned so a rebuild from the same commit gives the
+    // same APK (task 6.2); the JDK and Gradle are pinned in the workflows and
+    // the wrapper.
+    buildToolsVersion = libs.versions.android.buildTools.get()
+    // Two distributions (task 6.1, design D8). They differ only in the update
+    // check, and today neither has one: Google Play and the F-Droid client
+    // each update the app themselves. An in-app update prompt for Play would
+    // need Play Core, which is not free software, so it is left out of both
+    // flavours; mobile-fdroid.yml fails the build on any such artifact.
+    // F-Droid builds `fdroid`, the Play bundle is built from `play`.
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("fdroid") { dimension = "distribution" }
+        create("play") { dimension = "distribution" }
+    }
     // Release signing comes from the environment only, so no key or
     // password lives in the repository. mobile-preview.yml sets these four
     // variables from GitHub secrets (or from a throwaway key in its pull
@@ -45,6 +60,9 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // No git commit id in the APK (META-INF/version-control-info):
+            // F-Droid rebuilds from a source tarball as well as from git.
+            vcsInfo.include = false
         }
         // The end-to-end build (.github/workflows/mobile-e2e.yml). It is the
         // debug build plus one thing: it trusts the self-signed certificate
@@ -109,7 +127,8 @@ val checkE2eCa by tasks.registering {
         }
     }
 }
-tasks.matching { it.name == "preE2eBuild" }.configureEach { dependsOn(checkE2eCa) }
+// One pre-build task per flavour: preFdroidE2eBuild, prePlayE2eBuild.
+tasks.matching { it.name.startsWith("pre") && it.name.endsWith("E2eBuild") }.configureEach { dependsOn(checkE2eCa) }
 
 dependencies {
     implementation(project(":shared"))
