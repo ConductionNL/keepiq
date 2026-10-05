@@ -173,6 +173,21 @@ A one-time code field gets the current code of the matching login.
 
 On iOS this comes later. It needs a signed build from the App Store or TestFlight.
 
+## Passkeys
+
+Keepiq for Android saves your passkeys and signs you in with them. This needs Android 14 or later. On older versions Keepiq still fills in your passwords and codes.
+
+1. Open your phone's **Settings** and go to **Passwords, passkeys and accounts**. The name differs a little per phone.
+2. Turn on **Keepiq**. You can also tap **Choose Keepiq for passkeys** in Keepiq's autofill settings.
+
+When an app or a website asks to create a passkey, choose Keepiq. The passkey goes into your vault, encrypted, next to your logins. The web app and the browser extension use the same passkey.
+
+When an app or a website asks you to sign in with a passkey, Keepiq shows the passkeys you saved for it. When the vault is locked, you see **Unlock Keepiq** first, without any account names.
+
+Keepiq only signs in to the site the passkey belongs to. An app gets a site's passkey only when that site names the app in its Digital Asset Links file. Keepiq only makes ES256 passkeys. When a site asks for another kind, your phone offers its other password managers.
+
+On iOS this comes with the signed build from the App Store or TestFlight. It needs iOS 17 or later.
+
 ## Offline
 
 Keepiq for Android keeps an encrypted copy of your vault on the phone. Without a connection you can still open, search and copy. The vault shows when it last synced. Adding, editing and deleting need a connection, and Keepiq tells you so.
@@ -182,6 +197,6 @@ Keepiq for iOS does not keep an offline copy yet. It needs a connection.
 ## Coming next
 
 - **Autofill on iOS.** Fill in logins in other apps and in Safari.
-- **Passkeys.** Sign in with the passkeys in your vault. This needs Android 14 or iOS 17.
+- **Passkeys on iOS.** Save and use passkeys in Safari and in apps, with iOS 17 or later.
 - **Google Play and F-Droid.** Install and update Keepiq for Android from a store.
 - **The App Store.** Keepiq for iOS, first through TestFlight.
