@@ -62,6 +62,8 @@ final class OfflineUITests: XCTestCase {
         XCTAssertTrue(element.waitForExistence(timeout: 20), "\(element) is missing")
         dismissSavePassword()
         element.tap()
+        // A prompt sliding away can take the focus back for a moment.
+        if !element.hasKeyboardFocusNow { usleep(500_000); dismissSavePassword(); element.tap() }
         element.typeText(text)
         let tip = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Speed up your typing")).firstMatch
         if tip.exists, app.buttons["Continue"].exists { app.buttons["Continue"].tap() }
@@ -84,6 +86,17 @@ final class OfflineUITests: XCTestCase {
         }
     }
 
+    /// Connecting with an app password makes iOS offer to save it a moment
+    /// later, in the app or in SpringBoard. Answer it before typing: keys
+    /// typed while it slides in are lost.
+    private func answerSavePromptAfterConnect() {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        for owner in [app!, springboard] where owner.buttons["Not Now"].waitForExistence(timeout: 4) {
+            owner.buttons["Not Now"].tap()
+            return
+        }
+    }
+
     private func text(_ label: String) -> XCUIElement {
         app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
     }
@@ -95,7 +108,7 @@ final class OfflineUITests: XCTestCase {
     private func unlock() {
         let master = app.secureTextFields["masterPassword"]
         XCTAssertTrue(master.waitForExistence(timeout: 60))
-        _ = app.buttons["Not Now"].waitForExistence(timeout: 3)
+        answerSavePromptAfterConnect()
         type("Oj", into: master)
         tap(app.buttons["unlock"])
         XCTAssertTrue(app.buttons["lock"].waitForExistence(timeout: 60), "the vault opens after unlock")
@@ -143,4 +156,9 @@ final class OfflineUITests: XCTestCase {
         XCTAssertTrue(text("Edits need a connection. Nothing was changed.").exists)
         shot("52-offline-item")
     }
+}
+
+private extension XCUIElement {
+    /// Whether this field has the keyboard focus right now.
+    var hasKeyboardFocusNow: Bool { (value(forKey: "hasKeyboardFocus") as? Bool) ?? false }
 }
