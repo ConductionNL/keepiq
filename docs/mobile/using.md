@@ -196,6 +196,10 @@ Keepiq for Android keeps an encrypted copy of your vault on the phone. Without a
 
 Keepiq for iOS does not keep an offline copy yet. It needs a connection.
 
+## Privacy
+
+Keepiq talks to your own Nextcloud and sends nothing to Conduction. It has no analytics and no crash reports. The [mobile app privacy policy](privacy.md) lists what the app sends where and what it keeps on your phone.
+
 ## Coming next
 
 - **Autofill on iOS.** Fill in logins in other apps and in Safari.

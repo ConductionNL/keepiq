@@ -1,0 +1,1 @@
+The first release of Keepiq for Android. Open your vault, fill in logins and passkeys, make passwords and share secrets with a Send link.

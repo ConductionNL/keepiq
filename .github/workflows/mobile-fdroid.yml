@@ -1,0 +1,168 @@
+name: Mobile F-Droid
+
+# The fdroid flavour of the Android app (clients-mobile-apps, tasks 6.1 and
+# 6.2, design D8).
+#
+# free-software: the runtime classpath of the fdroid release build may hold
+# no Google Play Services, Firebase, Play Core or other non-free artifact.
+# The play flavour is held to the same rule, because D8 allows no
+# proprietary SDK in any flavour. A hit prints the artifact and fails.
+#
+# reproducible: two jobs build the unsigned fdroid release APK, each from its
+# own clean checkout at a different path, and a third compares them byte for
+# byte. On a mismatch it uploads the diffoscope report and fails. F-Droid
+# publishes a build signed with the developer's key only when its own rebuild
+# matches, so this is the property its build server relies on.
+
+on:
+  push:
+    branches: [main, development]
+    paths:
+      - "mobile/**"
+      - ".github/workflows/mobile-fdroid.yml"
+  pull_request:
+    branches: [main, development, beta]
+    paths:
+      - "mobile/**"
+      - ".github/workflows/mobile-fdroid.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # The JDK is pinned to the patch release, the Gradle wrapper pins Gradle
+  # with a checksum, and gradle/libs.versions.toml pins AGP, aapt2 and the
+  # build tools.
+  JAVA_VERSION: "21.0.8"
+
+jobs:
+  free-software:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      - uses: gradle/actions/setup-gradle@v4
+      # Lenient dependency verification for this report only, so an artifact
+      # that is not in gradle/verification-metadata.xml still shows up here by
+      # name instead of as a checksum error. The builds below verify strictly.
+      - name: No non-free artifact in the runtime classpath
+        run: |
+          for flavour in fdroid play; do
+            ./gradlew --no-daemon -q --dependency-verification lenient \
+              :android:app:dependencies --configuration "${flavour}ReleaseRuntimeClasspath" > "deps-$flavour.txt"
+            # The report must list the app's own dependencies; an empty or
+            # failed report would otherwise pass.
+            grep -q "androidx.credentials:credentials" "deps-$flavour.txt"
+          done
+          pattern='com\.google\.android\.gms|com\.google\.firebase|com\.google\.android\.play|com\.google\.mlkit|com\.google\.android\.datatransport|com\.google\.android\.ads|com\.android\.billingclient|com\.crashlytics|io\.fabric|com\.huawei\.hms|com\.amazon\.device|credentials-play-services-auth'
+          found=0
+          for flavour in fdroid play; do
+            if hits=$(grep -E "$pattern" "deps-$flavour.txt"); then
+              echo "::error::Non-free artifact in the $flavour release runtime classpath:"
+              printf '%s\n' "$hits" | sed 's/^[-+|\\ ]*//' | sort -u | while read -r line; do
+                echo "::error::  $line"
+              done
+              found=1
+            fi
+          done
+          if [ "$found" -ne 0 ]; then
+            echo "F-Droid builds only free software (design D8). Remove the artifact above." >&2
+            exit 1
+          fi
+          echo "No non-free artifact in the fdroid or play release runtime classpath."
+
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        # Two clean checkouts at different paths: a build path that leaks into
+        # the APK shows up as a difference.
+        copy: [first, second]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ${{ matrix.copy == 'first' && 'keepiq' || 'elsewhere/keepiq-rebuild' }}
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+      # No build cache: each build starts from nothing.
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-disabled: true
+      - name: Build the unsigned fdroid release APK
+        env:
+          DIR: ${{ matrix.copy == 'first' && 'keepiq' || 'elsewhere/keepiq-rebuild' }}
+        run: |
+          cd "$DIR/mobile"
+          java -version 2>&1 | head -1
+          # Unsigned: the KEEPIQ_SIGNING_* variables are not set here.
+          ./gradlew --no-daemon :android:app:assembleFdroidRelease
+          apk=android/app/build/outputs/apk/fdroid/release/app-fdroid-release-unsigned.apk
+          test -f "$apk"
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          cp "$apk" "$GITHUB_WORKSPACE/out/keepiq-fdroid-${{ matrix.copy }}.apk"
+          sha256sum "$GITHUB_WORKSPACE/out/keepiq-fdroid-${{ matrix.copy }}.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fdroid-apk-${{ matrix.copy }}
+          path: out/*.apk
+          if-no-files-found: error
+          retention-days: 14
+
+  reproducible:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: fdroid-apk-*
+          merge-multiple: true
+          path: apks
+      - name: Compare the two builds byte for byte
+        id: compare
+        run: |
+          sha256sum apks/*.apk | tee -a "$GITHUB_STEP_SUMMARY"
+          if cmp apks/keepiq-fdroid-first.apk apks/keepiq-fdroid-second.apk; then
+            echo "The two unsigned fdroid release APKs are identical." | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "match=false" >> "$GITHUB_OUTPUT"
+            echo "::error::The two builds differ; see the diffoscope artifact."
+          fi
+      - name: diffoscope report
+        if: steps.compare.outputs.match == 'false'
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends diffoscope-minimal unzip || \
+            sudo apt-get install -y -q diffoscope
+          mkdir -p report
+          diffoscope --text report/diffoscope.txt --html report/diffoscope.html \
+            apks/keepiq-fdroid-first.apk apks/keepiq-fdroid-second.apk || true
+          head -c 60000 report/diffoscope.txt
+      - uses: actions/upload-artifact@v4
+        if: steps.compare.outputs.match == 'false'
+        with:
+          name: diffoscope
+          path: report/
+          retention-days: 14
+      - name: Fail on a mismatch
+        if: steps.compare.outputs.match == 'false'
+        run: exit 1

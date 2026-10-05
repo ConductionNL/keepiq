@@ -16,8 +16,9 @@ name: Mobile preview
 # build, signed with a throwaway key made in the job, checked with apksigner,
 # and no release.
 #
-# There are no play/fdroid flavours yet (task 6.1), so this builds the plain
-# release variant.
+# It builds the fdroid flavour (task 6.1): a preview is installed by hand,
+# outside Google Play, and the fdroid flavour is the one without any store
+# code. The asset names stay as they were.
 
 on:
   push:
@@ -152,7 +153,7 @@ jobs:
       # the universal APK. Nothing in the build writes a timestamp, so the
       # same commit gives the same APKs before signing.
       - name: Build the signed release APKs
-        run: ./gradlew --no-daemon -Pkeepiq.abiSplits=true :android:app:assembleRelease
+        run: ./gradlew --no-daemon -Pkeepiq.abiSplits=true :android:app:assembleFdroidRelease
 
       - name: Remove the keystore from the runner
         if: always()
@@ -166,11 +167,11 @@ jobs:
           APK: ${{ steps.mode.outputs.apk }}
         run: |
           build_tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
-          out=android/app/build/outputs/apk/release
+          out=android/app/build/outputs/apk/fdroid/release
           mkdir -p dist
-          cp "$out/app-universal-release.apk" "dist/$APK"
+          cp "$out/app-fdroid-universal-release.apk" "dist/$APK"
           for abi in arm64-v8a armeabi-v7a x86 x86_64; do
-            cp "$out/app-$abi-release.apk" "dist/${APK%.apk}-$abi.apk"
+            cp "$out/app-fdroid-$abi-release.apk" "dist/${APK%.apk}-$abi.apk"
           done
           {
             echo "| APK | Size |"
