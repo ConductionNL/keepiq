@@ -6,12 +6,10 @@
 # Provision the two-instance federation pair (sharing-federated-recipients
 # task 5.1) brought up by compose.yaml in this directory:
 #
-#   bash tests/integration/federation/setup.sh <compose project> <app dir> <openregister dir>
+#   bash tests/integration/federation/setup.sh <compose project> <app dir> [<openregister dir>]
 #
-# Keepiq's app shell requires OpenRegister, so a built OpenRegister checkout
-# (with vendor/ and js/) is copied in too, and Keepiq's register
-# configuration imported, as tests/e2e/ci-seed.sh does for the single
-# instance suite.
+# Keepiq needs no other app (ADR-006). A built OpenRegister checkout (with
+# vendor/ and js/) is copied in and enabled only when its directory is given.
 #
 # For each instance: wait for the install, allow the http pair to talk
 # (allow_local_remote_servers), keep the app store away from the copied app,
@@ -25,7 +23,10 @@ set -euo pipefail
 
 PROJECT="${1:?compose project}"
 APP_DIR="$(cd "${2:?app dir}" && pwd)"
-OR_DIR="$(cd "${3:?openregister dir}" && pwd)"
+OR_DIR=""
+if [ -n "${3:-}" ]; then
+	OR_DIR="$(cd "$3" && pwd)"
+fi
 declare -A PORT=([a]=8101 [b]=8102)
 
 occ() {
@@ -57,13 +58,15 @@ for side in a b; do
 	# The welcome wizard would cover the app on the first browser visit.
 	occ "$side" app:disable firstrunwizard >/dev/null 2>&1 || true
 
-	echo "[fed-setup] copying OpenRegister into ${side}"
-	docker exec "${PROJECT}-nc-${side}-1" mkdir -p /var/www/html/custom_apps/openregister
-	tar -C "$OR_DIR" --exclude=./node_modules --exclude=./.git --exclude=./tests --exclude=./coverage \
-		--exclude=./docs --exclude=./custom_apps --exclude=./openspec --exclude=./website -cf - . \
-		| docker exec -i "${PROJECT}-nc-${side}-1" tar -xf - -C /var/www/html/custom_apps/openregister
-	docker exec "${PROJECT}-nc-${side}-1" chown -R www-data:www-data /var/www/html/custom_apps/openregister
-	occ "$side" app:enable openregister
+	if [ -n "$OR_DIR" ]; then
+		echo "[fed-setup] copying OpenRegister into ${side}"
+		docker exec "${PROJECT}-nc-${side}-1" mkdir -p /var/www/html/custom_apps/openregister
+		tar -C "$OR_DIR" --exclude=./node_modules --exclude=./.git --exclude=./tests --exclude=./coverage \
+			--exclude=./docs --exclude=./custom_apps --exclude=./openspec --exclude=./website -cf - . \
+			| docker exec -i "${PROJECT}-nc-${side}-1" tar -xf - -C /var/www/html/custom_apps/openregister
+		docker exec "${PROJECT}-nc-${side}-1" chown -R www-data:www-data /var/www/html/custom_apps/openregister
+		occ "$side" app:enable openregister
+	fi
 
 	echo "[fed-setup] copying Keepiq into ${side}"
 	docker exec "${PROJECT}-nc-${side}-1" mkdir -p /var/www/html/custom_apps/keepiq
@@ -73,13 +76,6 @@ for side in a b; do
 	occ "$side" app:enable keepiq
 	occ "$side" app:list | sed -n '/Enabled:/,/Disabled:/p' | grep -q ' keepiq:' \
 		|| { echo "::error::keepiq is not enabled on ${side}"; exit 1; }
-	for conf in "$APP_DIR"/lib/Settings/keepiq_register.json "$APP_DIR"/lib/Settings/register.d/*.json; do
-		[ -f "$conf" ] || continue
-		code="$(curl -sS -o /dev/null -w '%{http_code}' -u admin:admin -H 'OCS-APIRequest: true' \
-			-F "file=@${conf}" -F force=true -F appId=keepiq \
-			"http://localhost:${PORT[$side]}/index.php/apps/openregister/api/configurations/import")"
-		[ "$code" = "200" ] || { echo "::error::importing ${conf} on ${side} answered ${code}"; exit 1; }
-	done
 
 	# The development vault of admin, which the specs unlock with "Oj".
 	suites="$(api "$side" GET /api/v1/suites)"

@@ -41,8 +41,8 @@
 
 ## 5. CI and documentation
 
-- [ ] 5.1 Add a CI leg in `.github/workflows/code-quality.yml` (or a new workflow) that installs Keepiq with no OpenRegister and no integriq in `apps-extra`, then runs the unit suite, `occ app:enable keepiq`, `GET /login` = 200, `GET /apps/keepiq/api/health` = 200, and the no-OpenRegister e2e subset. Update the comments in `code-quality.yml` that state OpenRegister must be present. Leave `docs-media.yml`, `mobile-e2e.yml` and `federation.yml` installing OpenRegister where their captures need Flows or MCP, otherwise drop it.
-- [ ] 5.2 Update `README.md` (requirements table: OpenRegister optional, with what it enables; remove "Keepiq itself is not usable"; dev setup no longer needs a sibling `../openregister`; note that the upgrade removes the empty legacy `keepiq`/`doriath` registers, schema and data table), `openspec/config.yaml` (context: no AppHost), and the `info.xml` comments that call openregister or integriq dependencies.
+- [x] 5.1 Add a CI leg in `.github/workflows/code-quality.yml` (or a new workflow) that installs Keepiq with no OpenRegister and no integriq in `apps-extra`, then runs the unit suite, `occ app:enable keepiq`, `GET /login` = 200, `GET /apps/keepiq/api/health` = 200, and the no-OpenRegister e2e subset. Update the comments in `code-quality.yml` that state OpenRegister must be present. Leave `docs-media.yml`, `mobile-e2e.yml` and `federation.yml` installing OpenRegister where their captures need Flows or MCP, otherwise drop it.
+- [x] 5.2 Update `README.md` (requirements table: OpenRegister optional, with what it enables; remove "Keepiq itself is not usable"; dev setup no longer needs a sibling `../openregister`; note that the upgrade removes the empty legacy `keepiq`/`doriath` registers, schema and data table), `openspec/config.yaml` (context: no AppHost), and the `info.xml` comments that call openregister or integriq dependencies.
 
 ## 6. Verification
 
