@@ -130,6 +130,8 @@ class VaultFlowsTest {
         assertTrue("a generated password was filled in", generated.length >= 12)
         hideKeyboard()
         compose.onNodeWithText("Save").performScrollTo().performClick()
+        // Saved: the form gives way to the new item.
+        compose.waitUntilGone("New item", 60_000)
         compose.waitForText("Shop (demo)", 60_000)
         compose.waitForText("anna.demo@example.com")
         compose.onNodeWithContentDescription("Show Password").performClick()
@@ -150,6 +152,7 @@ class VaultFlowsTest {
         compose.onNode(field("Name")).performTextInput("Shop account (demo)")
         hideKeyboard()
         compose.onNodeWithText("Save").performScrollTo().performClick()
+        compose.waitUntilGone("Edit item", 60_000)
         compose.waitForText("Shop account (demo)", 60_000)
         E2e.shot("37-edited")
 
