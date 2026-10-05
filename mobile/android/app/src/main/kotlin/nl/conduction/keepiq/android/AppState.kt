@@ -18,9 +18,9 @@ import nl.conduction.keepiq.android.vault.VaultSession
 import nl.conduction.keepiq.shared.KeepiqClient
 import nl.conduction.keepiq.shared.UnlockGate
 import nl.conduction.keepiq.shared.account.AccountSettings
-import nl.conduction.keepiq.shared.api.Account
 import nl.conduction.keepiq.shared.account.IdlePolicy
 import nl.conduction.keepiq.shared.account.IdleTimer
+import nl.conduction.keepiq.shared.api.Account
 import nl.conduction.keepiq.shared.pairing.LoginFlowStart
 import nl.conduction.keepiq.shared.pairing.LoginFlowStoppedException
 import nl.conduction.keepiq.shared.sync.LockReason
