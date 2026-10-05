@@ -57,6 +57,18 @@ final class VaultFlowsUITests: XCTestCase {
         waitForExpectations(timeout: timeout)
     }
 
+    /// iOS offers to save the app password the user just typed; the test declines.
+    private func declineSavePassword() {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        for owner in [app!, springboard] {
+            let notNow = owner.buttons["Not Now"]
+            if notNow.waitForExistence(timeout: 3) {
+                notNow.tap()
+                return
+            }
+        }
+    }
+
     private func back() {
         app.navigationBars.buttons.element(boundBy: 0).tap()
     }
@@ -68,6 +80,8 @@ final class VaultFlowsUITests: XCTestCase {
         type("admin", into: app.textFields["loginName"])
         type("manual-app-password", into: app.secureTextFields["appPassword"])
         tap(app.buttons["connect"])
+        XCTAssertTrue(app.secureTextFields["masterPassword"].waitForExistence(timeout: 60))
+        declineSavePassword()
         type("Oj", into: app.secureTextFields["masterPassword"])
         tap(app.buttons["unlock"])
         XCTAssertTrue(app.buttons["lock"].waitForExistence(timeout: 60), "the vault opens after unlock")

@@ -115,7 +115,6 @@ struct UnlockView: View {
                     Section {
                         LabeledField("Master password") {
                             SecureField("Master password", text: $password, prompt: Text("Your master password"))
-                                .textContentType(.password)
                                 .accessibilityIdentifier("masterPassword")
                                 .onSubmit { model.unlock(accountId, masterPassword: password); password = "" }
                         }
