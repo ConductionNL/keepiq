@@ -53,6 +53,16 @@ final class AutofillUITests: XCTestCase {
         }
     }
 
+    /// Connecting with an app password makes iOS offer to save it a moment
+    /// later. Answer that first: keys typed while the prompt slides in are lost.
+    private func answerSavePromptAfterConnect() {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        for owner in [app!, springboard] where owner.buttons["Not Now"].waitForExistence(timeout: 4) {
+            owner.buttons["Not Now"].tap()
+            return
+        }
+    }
+
     /// Makes an element tappable: answers the prompt, hides the keyboard that
     /// covers the lower half of a form, or scrolls the element into view.
     private func makeHittable(_ element: XCUIElement) {
@@ -110,6 +120,7 @@ final class AutofillUITests: XCTestCase {
         type("admin", into: app.textFields["loginName"])
         type("manual-app-password", into: app.secureTextFields["appPassword"])
         tap(app.buttons["connect"])
+        answerSavePromptAfterConnect()
         type("Oj", into: app.secureTextFields["masterPassword"])
         tap(app.buttons["unlock"])
         XCTAssertTrue(app.staticTexts["unlocked"].waitForExistence(timeout: 60))
