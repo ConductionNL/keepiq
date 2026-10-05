@@ -296,6 +296,11 @@ final class AppShellControllersTest extends TestCase {
 		self::assertSame(Http::STATUS_BAD_REQUEST, $refused->getStatus());
 		self::assertSame(Http::STATUS_BAD_REQUEST, $alice->setPreference(key: '___', value: 'x')->getStatus());
 		self::assertSame(['alice' => []], $store, 'an invalid key writes nothing');
+
+		$tooLarge = $alice->setPreference(key: 'tour', value: str_repeat('x', 4097));
+		self::assertSame(Http::STATUS_BAD_REQUEST, $tooLarge->getStatus());
+		self::assertSame(['alice' => []], $store, 'an oversized value writes nothing');
+		self::assertSame(['value' => str_repeat('x', 4096)], $alice->setPreference(key: 'tour', value: str_repeat('x', 4096))->getData());
 	}//end testEmptyPutDeletesAndAnInvalidKeyIsRefused()
 
 	/**

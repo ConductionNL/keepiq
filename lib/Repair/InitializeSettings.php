@@ -67,6 +67,8 @@ class InitializeSettings implements IRepairStep {
 	 * Get the name of this repair step.
 	 *
 	 * @return string
+	 *
+	 * @spec openspec/specs/app-shell/spec.md#requirement-native-admin-section-and-version-card
 	 */
 	public function getName(): string {
 		return 'Initialize Keepiq default configuration';

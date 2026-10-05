@@ -158,9 +158,9 @@ Keepiq serves these itself, with or without OpenRegister. URLs are relative to `
 | `GET /api/health` | Anyone (rate limited) | `{status, app, version, checks}`. `status` is `ok`, `degraded` (temp directory not writable, HTTP 200) or `error` (database unreachable, HTTP **503**). A failed check names only the error class, never its message. |
 | `GET /api/metrics` | Admins, and users delegated Keepiq's General admin area | Prometheus text 0.0.4: `keepiq_info{version,php_version,nextcloud_version}`, `keepiq_up`, `keepiq_suites_total` (active encryption suites). Aggregate counts only. |
 | `GET /api/preferences/{key}` | Logged-in user, own values only | `{"value": string\|null}`. UI state such as the walkthrough's completed version; never secret material. |
-| `PUT /api/preferences/{key}` with `{"value": "..."}` | Logged-in user, own values only | `{"value": ...}`; an empty value deletes the preference and answers `{"value": null}`. A key with no `[a-z0-9-]` character answers 400. |
+| `PUT /api/preferences/{key}` with `{"value": "..."}` | Logged-in user, own values only | `{"value": ...}`; an empty value deletes the preference and answers `{"value": null}`. A key with no `[a-z0-9-]` character, or a value over 4 KB, answers 400. |
 
-A Prometheus scrape authenticates with an app password; the endpoint needs no CSRF token.
+A Prometheus scrape authenticates with an app password; the endpoint needs no CSRF token. Scrape with a **dedicated, non-admin account** that is delegated only Keepiq's General admin area (Administration settings → Administration privileges), not with a personal admin account: an app password outlives password changes and carries its account's full scope. Delegated General admins also see the PHP and Nextcloud versions in `keepiq_info`.
 
 ## Development
 

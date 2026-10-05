@@ -128,38 +128,27 @@ class HealthController extends Controller {
 	}//end checkDatabase()
 
 	/**
-	 * Write and remove a file in the temp directory.
+	 * Check that the temp directory exists and is writable.
+	 *
+	 * A capability check, not a write: this endpoint is anonymous, so it must
+	 * not create files on every request.
 	 *
 	 * @return string `ok`, or `failed: <reason>`
 	 *
 	 * @spec openspec/specs/app-shell/spec.md#requirement-public-health-endpoint
 	 */
 	private function checkFilesystem(): string {
-		$path = '';
 		try {
 			$dir = $this->tempManager->getTempBaseDir();
 			if (is_dir($dir) === false || is_writable($dir) === false) {
 				return 'failed: TempDirectoryNotWritable';
 			}
 
-			$path = $dir . '/keepiq_health_' . bin2hex(random_bytes(8));
-			if (file_put_contents($path, 'health') === false) {
-				return 'failed: TempDirectoryNotWritable';
-			}
+			return 'ok';
 		} catch (Throwable $e) {
 			$this->logger->warning('[HealthController] Filesystem check failed', ['exception' => $e]);
 			return 'failed: ' . $this->shortClass(throwable: $e);
 		}
-
-		// The write succeeded, so the check passed. Removing the probe file is
-		// housekeeping: a failure there is logged, never reported as unhealthy.
-		try {
-			unlink($path);
-		} catch (Throwable $e) {
-			$this->logger->warning('[HealthController] Could not remove the health probe file', ['exception' => $e]);
-		}
-
-		return 'ok';
 	}//end checkFilesystem()
 
 	/**

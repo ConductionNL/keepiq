@@ -8,16 +8,30 @@
  * `doriath` before the rename), an `example` schema keyed to the app, and
  * OpenRegister's per-schema data table for it. Keepiq imports nothing into
  * OpenRegister any more (ADR-006), so nothing reads those rows. This step
- * removes them, but only when they hold no object.
+ * removes them, but only when nothing is stored in them.
  *
  * It reaches OpenRegister's tables through IDBConnection only and references
  * no OpenRegister class, so it runs, and does nothing, on an instance where
  * OpenRegister was never installed.
  *
- * Order matters for a step that cannot run in one transaction (a DROP TABLE
- * commits implicitly on MySQL): rows are deleted first and empty data tables
- * dropped last, so a failure partway leaves at worst an empty orphan table,
- * never a schema or register that points at nothing.
+ * Safety rules, each measured against OpenRegister's own storage (applied by
+ * {@see LegacyRegisterPlanner}):
+ *
+ * - Rows are selected by `application`, never by slug alone: OpenRegister's
+ *   uniqueness key is (organisation, application, slug), so another app or
+ *   tenant may own a `keepiq` slug. A register without an application is
+ *   never deleted.
+ * - Data tables are found by their physical name
+ *   (`openregister_table_<register>_<schema>`), as OpenRegister's own schema
+ *   deletion does, not from a register's `schemas` list, which can lose
+ *   entries. A schema or register counts as empty only when every one of its
+ *   data tables, and the legacy `openregister_objects` table if it still
+ *   exists, holds no row for it.
+ * - When the data tables cannot be listed, nothing is removed.
+ * - All row changes run in one transaction; the empty data tables are dropped
+ *   after the commit (a DROP TABLE commits implicitly on MySQL), each after a
+ *   last row count, so a failure never leaves a schema pointing at nothing.
+ * - Every removal is logged with what it removed and why.
  *
  * @category Repair
  * @package  OCA\Keepiq\Repair
@@ -36,6 +50,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Repair;
 
 use OCP\DB\QueryBuilder\IQueryBuilder;
+use OCP\IConfig;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -50,38 +65,27 @@ use Throwable;
  */
 class RemoveLegacyRegisterRows implements IRepairStep {
 	/**
-	 * The application ids Keepiq's schemas and configurations were written under.
+	 * The read-only planner.
 	 *
-	 * @var string[]
+	 * @var LegacyRegisterPlanner
 	 */
-	public const APP_IDS = ['keepiq', 'doriath'];
-
-	/**
-	 * The slugs of the registers Keepiq created.
-	 *
-	 * @var string[]
-	 */
-	public const REGISTER_SLUGS = ['keepiq', 'doriath'];
-
-	/**
-	 * OpenRegister's per-schema data table prefix, `<prefix><register>_<schema>`.
-	 *
-	 * @var string
-	 */
-	public const DATA_TABLE_PREFIX = 'openregister_table_';
+	private LegacyRegisterPlanner $planner;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param IDBConnection   $db     Database connection
+	 * @param IConfig         $config System config (table prefix)
 	 * @param LoggerInterface $logger Logger
 	 *
 	 * @return void
 	 */
 	public function __construct(
 		private readonly IDBConnection $db,
+		IConfig $config,
 		private readonly LoggerInterface $logger,
 	) {
+		$this->planner = new LegacyRegisterPlanner(db: $db, config: $config, logger: $logger);
 	}//end __construct()
 
 	/**
@@ -113,33 +117,20 @@ class RemoveLegacyRegisterRows implements IRepairStep {
 				return;
 			}
 
-			$registers = $this->registers();
-			$removedSchemas = [];
-			$emptyTables = [];
-			foreach ($this->legacySchemas() as $schema) {
-				$tables = $this->removeSchemaWhenEmpty(schema: $schema, registers: $registers);
-				if ($tables !== null) {
-					$removedSchemas[] = (int)$schema['id'];
-					$emptyTables = array_merge($emptyTables, $tables);
-				}
-			}
+			$plan = $this->planner->plan(dataTables: $this->planner->dataTables());
+			$this->apply(plan: $plan);
 
-			$removedRegisters = $this->tidyRegisters(registers: $registers, removedSchemas: $removedSchemas);
-			$configsRemoved = $this->removeConfigurations(
-				existingRegisters: array_diff(array_keys($registers), $removedRegisters)
-			);
-
-			// Last: a failure from here on leaves only an empty orphan table.
-			foreach (array_unique($emptyTables) as $table) {
-				$this->db->dropTable($table);
+			// After the commit: a failure from here on leaves only an empty orphan table.
+			foreach ($plan['dropTables'] as $table) {
+				$this->dropIfEmpty(table: $table);
 			}
 
 			$output->info(
 				sprintf(
 					'RemoveLegacyRegisterRows: %d schema(s), %d register(s) and %d configuration(s) removed.',
-					count($removedSchemas),
-					count($removedRegisters),
-					$configsRemoved
+					count($plan['schemas']),
+					count($plan['registers']),
+					count($plan['configurations'])
 				)
 			);
 		} catch (Throwable $e) {
@@ -149,289 +140,129 @@ class RemoveLegacyRegisterRows implements IRepairStep {
 	}//end run()
 
 	/**
-	 * Every register, as id => {slug, schemas as stored, numeric schema ids}.
+	 * Apply the row changes of a plan in one transaction.
 	 *
-	 * The stored list is kept as decoded so a register that is rewritten keeps
-	 * every entry this step does not remove exactly as it was.
+	 * @param array<string,array> $plan The plan from LegacyRegisterPlanner::plan()
 	 *
-	 * @return array<int,array{slug:string,schemas:array<int,mixed>,ids:int[]}>
+	 * @return void
+	 *
+	 * @throws Throwable When a change fails; the transaction is rolled back first
 	 */
-	private function registers(): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'slug', 'schemas')->from('openregister_registers');
-		$result = $qb->executeQuery();
-		$registers = [];
-		while (($row = $result->fetch()) !== false) {
-			$registers[(int)$row['id']] = $this->listEntry(slug: (string)$row['slug'], stored: $row['schemas'] ?? null);
+	private function apply(array $plan): void {
+		if ($plan['schemas'] === [] && $plan['registers'] === [] && $plan['rewrites'] === [] && $plan['configurations'] === []) {
+			return;
 		}
 
-		$result->closeCursor();
-		return $registers;
-	}//end registers()
+		$this->db->beginTransaction();
+		try {
+			$this->removeSchemas(schemas: $plan['schemas']);
+			$this->removeRegisters(registers: $plan['registers']);
+			$this->rewriteRegisterLists(rewrites: $plan['rewrites']);
+			$this->removeConfigurations(configurations: $plan['configurations']);
+			$this->db->commit();
+		} catch (Throwable $e) {
+			$this->db->rollBack();
+			throw $e;
+		}
+	}//end apply()
 
 	/**
-	 * Decode a stored id list, and the numeric ids in it.
+	 * Delete schema rows, logging each first.
 	 *
-	 * @param string $slug   The row's slug
-	 * @param mixed  $stored The stored JSON list, or null
+	 * @param array<int,array<string,mixed>> $schemas Schema rows by id, with their `tables`
 	 *
-	 * @return array{slug:string,schemas:array<int,mixed>,ids:int[]}
+	 * @return void
 	 */
-	private function listEntry(string $slug, mixed $stored): array {
-		$list = json_decode((string)($stored ?? '[]'), true);
-		if (is_array($list) === false) {
-			$list = [];
-		}
-
-		$list = array_values($list);
-		$ids = [];
-		foreach ($list as $entry) {
-			if (is_int($entry) === true || (is_string($entry) === true && ctype_digit($entry) === true)) {
-				$ids[] = (int)$entry;
+	private function removeSchemas(array $schemas): void {
+		foreach ($schemas as $schemaId => $schema) {
+			$tables = 'no data table';
+			if ($schema['tables'] !== []) {
+				$tables = implode(', ', $schema['tables']);
 			}
-		}
 
-		return ['slug' => $slug, 'schemas' => $list, 'ids' => $ids];
-	}//end listEntry()
-
-	/**
-	 * The schema rows keyed to a Keepiq application id.
-	 *
-	 * Selected by application, never by slug: slugs such as `example` are
-	 * shared between apps on one OpenRegister.
-	 *
-	 * @return array<int,array{id:int|string,slug:string}>
-	 */
-	private function legacySchemas(): array {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'slug')
-			->from('openregister_schemas')
-			->where($qb->expr()->in('application', $qb->createNamedParameter(self::APP_IDS, IQueryBuilder::PARAM_STR_ARRAY)));
-		$result = $qb->executeQuery();
-		$rows = $result->fetchAll();
-		$result->closeCursor();
-		return $rows;
-	}//end legacySchemas()
-
-	/**
-	 * Delete one schema row when no object is stored for it.
-	 *
-	 * @param array{id:int|string,slug:string}                                  $schema    The schema row
-	 * @param array<int,array{slug:string,schemas:array<int,mixed>,ids:int[]}> $registers Every register
-	 *
-	 * @return string[]|null The schema's now-empty data tables, to drop last; null when the schema was kept
-	 */
-	private function removeSchemaWhenEmpty(array $schema, array $registers): ?array {
-		$schemaId = (int)$schema['id'];
-		$tables = $this->dataTables(schemaId: $schemaId, registers: $registers);
-
-		$objects = $this->countObjects(column: 'schema', id: $schemaId);
-		foreach ($tables as $table) {
-			$objects += $this->countRows(table: $table);
-		}
-
-		if ($objects > 0) {
-			$this->logger->warning(
-				'RemoveLegacyRegisterRows: schema "{slug}" still holds {count} object(s); kept.',
-				['slug' => (string)$schema['slug'], 'count' => $objects]
+			$this->logger->info(
+				'RemoveLegacyRegisterRows: removing schema "{slug}" ({id}, application {application}); 0 rows in {tables}.',
+				['slug' => (string)$schema['slug'], 'id' => $schemaId, 'application' => (string)$schema['application'], 'tables' => $tables]
 			);
-			return null;
+			$this->deleteById(table: 'openregister_schemas', id: $schemaId);
 		}
-
-		$this->deleteById(table: 'openregister_schemas', id: $schemaId);
-		return $tables;
-	}//end removeSchemaWhenEmpty()
+	}//end removeSchemas()
 
 	/**
-	 * The existing per-schema data tables of a schema, one per register that
-	 * lists it.
+	 * Delete register rows, logging each first.
 	 *
-	 * @param int                                                              $schemaId  The schema id
-	 * @param array<int,array{slug:string,schemas:array<int,mixed>,ids:int[]}> $registers Every register
+	 * @param array<int,array<string,mixed>> $registers Register rows by id
 	 *
-	 * @return string[] Unprefixed table names
+	 * @return void
 	 */
-	private function dataTables(int $schemaId, array $registers): array {
-		$tables = [];
+	private function removeRegisters(array $registers): void {
 		foreach ($registers as $registerId => $register) {
-			$table = self::DATA_TABLE_PREFIX . $registerId . '_' . $schemaId;
-			if (in_array($schemaId, $register['ids'], true) === true && $this->db->tableExists($table) === true) {
-				$tables[] = $table;
-			}
+			$this->logger->info(
+				'RemoveLegacyRegisterRows: removing register "{slug}" ({id}, application {application}); it lists no schema and holds no row.',
+				['slug' => $register['slug'], 'id' => $registerId, 'application' => (string)$register['application']]
+			);
+			$this->deleteById(table: 'openregister_registers', id: $registerId);
 		}
-
-		return $tables;
-	}//end dataTables()
+	}//end removeRegisters()
 
 	/**
-	 * Objects stored in OpenRegister's shared object table for one register
-	 * or schema.
+	 * Store the shortened schema lists of registers that listed removed schemas.
 	 *
-	 * @param string $column `schema` or `register`
-	 * @param int    $id     The register or schema id
+	 * @param array<int,array<int,mixed>> $rewrites Register id => remaining list
 	 *
-	 * @return int The number of objects
+	 * @return void
 	 */
-	private function countObjects(string $column, int $id): int {
-		if ($this->db->tableExists('openregister_objects') === false) {
-			return 0;
+	private function rewriteRegisterLists(array $rewrites): void {
+		foreach ($rewrites as $registerId => $remaining) {
+			$this->logger->info(
+				'RemoveLegacyRegisterRows: removing deleted Keepiq schemas from the list of register {id}.',
+				['id' => $registerId]
+			);
+			$qb = $this->db->getQueryBuilder();
+			$qb->update('openregister_registers')
+				->set('schemas', $qb->createNamedParameter(json_encode($remaining)))
+				->where($qb->expr()->eq('id', $qb->createNamedParameter($registerId, IQueryBuilder::PARAM_INT)));
+			$qb->executeStatement();
 		}
-
-		$qb = $this->db->getQueryBuilder();
-		$qb->select($qb->func()->count('*', 'total'))
-			->from('openregister_objects')
-			->where($qb->expr()->eq($column, $qb->createNamedParameter((string)$id)));
-		$result = $qb->executeQuery();
-		$count = (int)$result->fetchOne();
-		$result->closeCursor();
-		return $count;
-	}//end countObjects()
+	}//end rewriteRegisterLists()
 
 	/**
-	 * Rows in one table.
+	 * Delete configuration rows, logging each first.
 	 *
-	 * @param string $table Unprefixed table name
+	 * @param array<int,array<string,mixed>> $configurations Configuration rows by id
 	 *
-	 * @return int The number of rows
+	 * @return void
 	 */
-	private function countRows(string $table): int {
-		$qb = $this->db->getQueryBuilder();
-		$qb->select($qb->func()->count('*', 'total'))->from($table);
-		$result = $qb->executeQuery();
-		$count = (int)$result->fetchOne();
-		$result->closeCursor();
-		return $count;
-	}//end countRows()
-
-	/**
-	 * Drop removed schemas from the registers that list them, and delete the
-	 * Keepiq registers that are left empty.
-	 *
-	 * Only registers that list a removed schema are rewritten, and only those
-	 * entries leave the list: every other entry stays exactly as stored. A
-	 * Keepiq register is kept while it still lists another schema or while
-	 * objects are stored under it.
-	 *
-	 * @param array<int,array{slug:string,schemas:array<int,mixed>,ids:int[]}> $registers      Every register
-	 * @param int[]                                                            $removedSchemas Removed schema ids
-	 *
-	 * @return int[] The ids of the registers deleted
-	 */
-	private function tidyRegisters(array $registers, array $removedSchemas): array {
-		$deleted = [];
-		foreach ($registers as $registerId => $register) {
-			$remaining = $this->withoutIds(list: $register['schemas'], ids: $removedSchemas);
-			$isKeepiq = in_array($register['slug'], self::REGISTER_SLUGS, true);
-
-			if ($isKeepiq === true && $remaining === []) {
-				$objects = $this->countObjects(column: 'register', id: $registerId);
-				if ($objects === 0) {
-					$this->deleteById(table: 'openregister_registers', id: $registerId);
-					$deleted[] = $registerId;
-					continue;
-				}
-
-				$this->logger->warning(
-					'RemoveLegacyRegisterRows: register "{slug}" still holds {count} object(s); kept.',
-					['slug' => $register['slug'], 'count' => $objects]
-				);
-			}
-
-			if (count($remaining) !== count($register['schemas'])) {
-				$qb = $this->db->getQueryBuilder();
-				$qb->update('openregister_registers')
-					->set('schemas', $qb->createNamedParameter(json_encode($remaining)))
-					->where($qb->expr()->eq('id', $qb->createNamedParameter($registerId, IQueryBuilder::PARAM_INT)));
-				$qb->executeStatement();
-			}
-		}//end foreach
-
-		return $deleted;
-	}//end tidyRegisters()
-
-	/**
-	 * Delete the Keepiq configuration entries that point at nothing any more.
-	 *
-	 * An entry qualifies when none of the registers and schemas it lists still
-	 * exists, whether this run removed them or an earlier one did, so an
-	 * instance that was partly cleaned up before still loses its stale entries.
-	 *
-	 * @param int[] $existingRegisters The ids of the registers that still exist
-	 *
-	 * @return int The number of configurations deleted
-	 */
-	private function removeConfigurations(array $existingRegisters): int {
-		if ($this->db->tableExists('openregister_configurations') === false) {
-			return 0;
+	private function removeConfigurations(array $configurations): void {
+		foreach ($configurations as $configurationId => $configuration) {
+			$this->logger->info(
+				'RemoveLegacyRegisterRows: removing configuration {id} (app {app}); nothing it lists exists any more.',
+				['id' => $configurationId, 'app' => (string)$configuration['app']]
+			);
+			$this->deleteById(table: 'openregister_configurations', id: $configurationId);
 		}
-
-		$qb = $this->db->getQueryBuilder();
-		$qb->select('id', 'app', 'registers', 'schemas')
-			->from('openregister_configurations')
-			->where($qb->expr()->in('app', $qb->createNamedParameter(self::APP_IDS, IQueryBuilder::PARAM_STR_ARRAY)));
-		$result = $qb->executeQuery();
-		$rows = $result->fetchAll();
-		$result->closeCursor();
-
-		$deleted = 0;
-		foreach ($rows as $row) {
-			$registers = $this->listEntry(slug: (string)$row['app'], stored: $row['registers'] ?? null);
-			$schemas = $this->listEntry(slug: (string)$row['app'], stored: $row['schemas'] ?? null);
-			// A non-numeric entry cannot be resolved here, so it counts as existing.
-			if (count($registers['ids']) !== count($registers['schemas'])
-				|| count($schemas['ids']) !== count($schemas['schemas'])
-				|| array_intersect($registers['ids'], $existingRegisters) !== []
-				|| $this->anySchemaExists(ids: $schemas['ids']) === true
-			) {
-				continue;
-			}
-
-			$this->deleteById(table: 'openregister_configurations', id: (int)$row['id']);
-			$deleted++;
-		}
-
-		return $deleted;
 	}//end removeConfigurations()
 
 	/**
-	 * Whether any of the given schema ids still has a row.
+	 * Drop a data table after a last check that it is still empty.
 	 *
-	 * @param int[] $ids Schema ids
+	 * @param string $table Unprefixed table name
 	 *
-	 * @return bool True when at least one exists
+	 * @return void
 	 */
-	private function anySchemaExists(array $ids): bool {
-		if ($ids === []) {
-			return false;
+	private function dropIfEmpty(string $table): void {
+		$rows = $this->planner->countRows(table: $table);
+		if ($rows > 0) {
+			$this->logger->warning(
+				'RemoveLegacyRegisterRows: table {table} received {count} row(s) meanwhile; kept.',
+				['table' => $table, 'count' => $rows]
+			);
+			return;
 		}
 
-		$qb = $this->db->getQueryBuilder();
-		$qb->select($qb->func()->count('*', 'total'))
-			->from('openregister_schemas')
-			->where($qb->expr()->in('id', $qb->createNamedParameter($ids, IQueryBuilder::PARAM_INT_ARRAY)));
-		$result = $qb->executeQuery();
-		$count = (int)$result->fetchOne();
-		$result->closeCursor();
-		return $count > 0;
-	}//end anySchemaExists()
-
-	/**
-	 * A stored id list without the given numeric ids; other entries untouched.
-	 *
-	 * @param array<int,mixed> $list The stored list
-	 * @param int[]            $ids  The ids to remove
-	 *
-	 * @return array<int,mixed> The remaining entries, re-indexed
-	 */
-	private function withoutIds(array $list, array $ids): array {
-		return array_values(
-			array_filter(
-				$list,
-				static fn (mixed $entry): bool => (is_int($entry) === true || (is_string($entry) === true && ctype_digit($entry) === true)) === false
-					|| in_array((int)$entry, $ids, true) === false
-			)
-		);
-	}//end withoutIds()
+		$this->logger->info('RemoveLegacyRegisterRows: dropping empty table {table}.', ['table' => $table]);
+		$this->db->dropTable($table);
+	}//end dropIfEmpty()
 
 	/**
 	 * Delete one row by id.

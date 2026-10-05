@@ -53,7 +53,7 @@ Keepiq SHALL be installable, enableable, upgradable and fully usable on a Nextcl
 
 ### Requirement: Public Health Endpoint
 
-Keepiq SHALL serve `GET /apps/keepiq/api/health` from its own `HealthController`, publicly accessible (`#[PublicPage]`, `#[NoCSRFRequired]`) per hydra ADR-006. The controller SHALL run two checks, `database` (critical: a trivial query against a Keepiq table) and `filesystem` (degraded: the temp directory is writable). The response SHALL contain ONLY the keys `status`, `app`, `version` and `checks`. `status` SHALL be `ok` when all checks pass, `degraded` when only a degraded check fails, and `error` with HTTP 503 when a critical check fails. Each `checks` value SHALL be `"ok"` or `"failed: <infrastructure error class>"`, and no value SHALL carry secret material.
+Keepiq SHALL serve `GET /apps/keepiq/api/health` from its own `HealthController`, publicly accessible (`#[PublicPage]`, `#[NoCSRFRequired]`) per hydra ADR-006. The controller SHALL run two checks, `database` (critical: a trivial query against a Keepiq table) and `filesystem` (degraded: the temp directory exists and is writable, checked without writing a file). The response SHALL contain ONLY the keys `status`, `app`, `version` and `checks`. `status` SHALL be `ok` when all checks pass, `degraded` when only a degraded check fails, and `error` with HTTP 503 when a critical check fails. Each `checks` value SHALL be `"ok"` or `"failed: <infrastructure error class>"`, and no value SHALL carry secret material.
 
 #### Scenario: Anonymous health check succeeds
 
@@ -103,7 +103,7 @@ Keepiq SHALL serve `GET /apps/keepiq/api/metrics` from its own `MetricsControlle
 
 ### Requirement: Per-User Preferences Endpoint
 
-Keepiq SHALL serve `GET /apps/keepiq/api/preferences/{key}` and `PUT /apps/keepiq/api/preferences/{key}` from its own `PreferencesController`, for any logged-in user (`#[NoAdminRequired]`). The key SHALL be normalised by lower-casing and stripping every character outside `[a-z0-9-]`, then cut to 64 characters. A key that is empty after this SHALL be refused with HTTP 400. The value SHALL be stored through `OCP\IConfig` user values under app `keepiq` and key `pref_<normalised key>`, which is the same storage key the AppHost controller used, so existing values survive. `GET` SHALL answer `{"value": <string|null>}`. `PUT` SHALL answer `{"value": <stored value>}`, and with an empty value SHALL delete the preference and answer `{"value": null}`. A user SHALL only ever read or write their own preferences. Values are UI state (for example the walkthrough's completed version), are stored in plain text, and SHALL NOT be used for secret material.
+Keepiq SHALL serve `GET /apps/keepiq/api/preferences/{key}` and `PUT /apps/keepiq/api/preferences/{key}` from its own `PreferencesController`, for any logged-in user (`#[NoAdminRequired]`). The key SHALL be normalised by lower-casing and stripping every character outside `[a-z0-9-]`, then cut to 64 characters. A key that is empty after this SHALL be refused with HTTP 400. The value SHALL be stored through `OCP\IConfig` user values under app `keepiq` and key `pref_<normalised key>`, which is the same storage key the AppHost controller used, so existing values survive. `GET` SHALL answer `{"value": <string|null>}`. `PUT` SHALL answer `{"value": <stored value>}`, and with an empty value SHALL delete the preference and answer `{"value": null}`. A value longer than 4096 bytes SHALL be refused with HTTP 400 and nothing stored. A user SHALL only ever read or write their own preferences. Values are UI state (for example the walkthrough's completed version), are stored in plain text, and SHALL NOT be used for secret material.
 
 #### Scenario: The walkthrough preference round-trips
 
@@ -144,16 +144,15 @@ Keepiq's admin section (`OCA\Keepiq\Sections\SettingsSection`) SHALL implement `
 
 ### Requirement: Legacy OpenRegister Rows Are Removed When Empty
 
-A Keepiq repair step (`OCA\Keepiq\Repair\RemoveLegacyRegisterRows`, replacing `MigrateSchemaApplicationId`) SHALL remove what earlier Keepiq versions created in OpenRegister:
+A Keepiq repair step (`OCA\Keepiq\Repair\RemoveLegacyRegisterRows`, replacing `MigrateSchemaApplicationId`) SHALL remove what earlier Keepiq versions created in OpenRegister, and nothing else:
 
-- every `openregister_schemas` row whose `application` is `keepiq` or `doriath`;
-- for each such schema, OpenRegister's per-schema data table `openregister_table_<registerId>_<schemaId>`, dropped only when it holds zero rows;
-- every `openregister_registers` row whose `slug` is `keepiq` or `doriath`, once its `schemas` list no longer names a schema outside that set and no object in `openregister_objects` is stored under it;
-- every `openregister_configurations` row whose `app` is `keepiq` or `doriath`, once every register and schema it lists has been removed.
+- every `openregister_schemas` row whose `application` is `keepiq` or `doriath`, with its per-schema data tables;
+- every `openregister_registers` row whose `application` is `keepiq` or `doriath` and whose `schemas` list no longer names a schema that still exists;
+- every `openregister_configurations` row whose `app` is `keepiq` or `doriath` once none of the registers and schemas it lists still exists.
 
-Another app's register that lists a removed schema SHALL lose only that entry; every other entry SHALL stay exactly as stored. Rows SHALL be deleted before any data table is dropped, so that a failure partway leaves at worst an empty orphan table, never a schema or register pointing at a dropped table.
+Rows SHALL be selected by `application` (or `app`), never by slug alone, because OpenRegister's uniqueness key is (organisation, application, slug); a register without an application SHALL never be deleted. A schema or register SHALL count as empty only when every per-schema data table belonging to it holds zero rows, and so does the legacy `openregister_objects` table when it still exists. Data tables SHALL be found by their physical name (`openregister_table_<register>_<schema>`) in the database catalogue, not from a register's `schemas` list; when the catalogue cannot be read, nothing SHALL be removed.
 
-A schema SHALL count as empty only when it has zero rows in `openregister_objects` AND zero rows in its per-schema data table (or that table does not exist). The step SHALL select rows by `application` and register slug, never by schema slug alone, because schema slugs such as `example` are shared between apps. It SHALL reach OpenRegister's tables through `IDBConnection` only, after checking that they exist, and SHALL reference no OpenRegister class. It SHALL be idempotent, and SHALL NOT fail the install or upgrade: any error is logged and the step ends.
+Another app's register that lists a removed schema SHALL lose only that entry; every other entry SHALL stay exactly as stored. All row changes SHALL run in one transaction that is rolled back on failure. Empty data tables SHALL be dropped after the commit, each only after a final row count of zero. Every removal SHALL be logged before it happens, naming the table, id, slug, application and the row counts that justified it. The step SHALL reach OpenRegister's tables through `IDBConnection` only, reference no OpenRegister class, be idempotent, and never fail the install or upgrade: an error is logged and the step ends.
 
 #### Scenario: Empty leftovers are removed when OpenRegister is installed
 
@@ -167,6 +166,27 @@ A schema SHALL count as empty only when it has zero rows in `openregister_object
 - **GIVEN** a Keepiq-keyed schema with at least one row in `openregister_objects` or in its per-schema data table
 - **WHEN** the repair step runs
 - **THEN** that schema, its data table and its register MUST be kept, and a warning naming the schema slug and row count MUST be logged
+
+#### Scenario: Tables are found by name, not from the register's list
+
+- **GIVEN** a Keepiq-keyed schema whose register no longer lists it, while `openregister_table_<register>_<schema>` still holds rows
+- **WHEN** the repair step runs
+- **THEN** that schema and its data table MUST be kept
+- @e2e exclude repair step with no UI surface — covered by RemoveLegacyRegisterRowsTest (unit, in-memory OpenRegister tables)
+
+#### Scenario: Another application's register with a Keepiq slug is left alone
+
+- **GIVEN** an empty register with slug `keepiq` whose `application` is another app, or empty
+- **WHEN** the repair step runs
+- **THEN** that register MUST be kept
+- @e2e exclude repair step with no UI surface — covered by RemoveLegacyRegisterRowsTest (unit, in-memory OpenRegister tables)
+
+#### Scenario: A failure rolls back and the next run converges
+
+- **GIVEN** a run that fails after its first row change
+- **WHEN** the run ends and the step runs again later
+- **THEN** the first run MUST have changed nothing, and the second MUST remove the leftovers
+- @e2e exclude repair step with no UI surface — covered by RemoveLegacyRegisterRowsTest (unit, in-memory OpenRegister tables)
 - @e2e exclude repair step with no UI surface — covered by RemoveLegacyRegisterRowsTest (unit, in-memory OpenRegister tables)
 
 #### Scenario: Nothing happens without OpenRegister's tables

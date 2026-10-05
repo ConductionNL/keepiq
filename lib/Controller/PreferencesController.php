@@ -51,6 +51,13 @@ class PreferencesController extends Controller {
 	private const KEY_PREFIX = 'pref_';
 
 	/**
+	 * Maximum length of a stored value, in bytes. Preferences are UI state.
+	 *
+	 * @var int
+	 */
+	public const MAX_VALUE_BYTES = 4096;
+
+	/**
 	 * Maximum length of a normalised key.
 	 *
 	 * @var int
@@ -109,7 +116,7 @@ class PreferencesController extends Controller {
 	 * @param string $key   The preference key, normalised before use
 	 * @param string $value The value; empty deletes the preference
 	 *
-	 * @return JSONResponse `{value: string|null}`, 400 on an invalid key
+	 * @return JSONResponse `{value: string|null}`, 400 on an invalid key or a value over 4 KB
 	 *
 	 * @spec openspec/specs/app-shell/spec.md#requirement-per-user-preferences-endpoint
 	 */
@@ -123,6 +130,10 @@ class PreferencesController extends Controller {
 		$safeKey = $this->normaliseKey(key: $key);
 		if ($safeKey === '') {
 			return new JSONResponse(data: ['message' => 'Invalid key'], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		if (strlen($value) > self::MAX_VALUE_BYTES) {
+			return new JSONResponse(data: ['message' => 'Value too large'], statusCode: Http::STATUS_BAD_REQUEST);
 		}
 
 		if ($value === '') {
