@@ -265,3 +265,11 @@ tasks.named<Test>("jvmTest") {
     }
     outputs.upToDateWhen { false }
 }
+
+// Each test by name in the CI log (jvm, Android and the iOS simulator), so
+// a task's evidence is the test that ran, not only the task that passed.
+tasks.withType<org.gradle.api.tasks.testing.AbstractTestTask>().configureEach {
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
