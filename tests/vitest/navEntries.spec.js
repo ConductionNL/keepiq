@@ -106,13 +106,23 @@ describe('isMenuEntryVisible', () => {
 		).toBe(false)
 	})
 
-	it('leaves every existing entry visible for every user', () => {
-		for (const item of base.menu) {
+	it('leaves every ungated entry visible for every user', () => {
+		for (const item of base.menu.filter((entry) => entry.visibleIf === undefined)) {
 			expect(
 				isMenuEntryVisible(item, { isAdmin: false, appsWebRoots: null }),
 				item.id,
 			).toBe(true)
 		}
+	})
+
+	it('shows Flows only when OpenRegister is enabled (standalone-app-shell)', () => {
+		const flows = base.menu.find((entry) => entry.id === 'FlowsMenu')
+		expect(flows.visibleIf).toEqual({ appInstalled: 'openregister' })
+		expect(isMenuEntryVisible(flows, { isAdmin: false, appsWebRoots: null })).toBe(false)
+		expect(isMenuEntryVisible(flows, { isAdmin: false, appsWebRoots: { keepiq: '/apps/keepiq' } })).toBe(false)
+		expect(
+			isMenuEntryVisible(flows, { isAdmin: false, appsWebRoots: { keepiq: '/apps/keepiq', openregister: '/apps/openregister' } }),
+		).toBe(true)
 	})
 
 	it('is what KeepiqAppNav filters and routes with', () => {

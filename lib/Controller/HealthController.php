@@ -136,12 +136,17 @@ class HealthController extends Controller {
 	 */
 	private function checkFilesystem(): string {
 		try {
-			$path = $this->tempManager->getTempBaseDir() . '/keepiq_health_' . bin2hex(random_bytes(8));
-			if (@file_put_contents($path, 'health') === false) {
+			$dir = $this->tempManager->getTempBaseDir();
+			if (is_dir($dir) === false || is_writable($dir) === false) {
 				return 'failed: TempDirectoryNotWritable';
 			}
 
-			@unlink($path);
+			$path = $dir . '/keepiq_health_' . bin2hex(random_bytes(8));
+			if (file_put_contents($path, 'health') === false) {
+				return 'failed: TempDirectoryNotWritable';
+			}
+
+			unlink($path);
 			return 'ok';
 		} catch (Throwable $e) {
 			$this->logger->warning('[HealthController] Filesystem check failed', ['exception' => $e]);
