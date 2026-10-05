@@ -45,6 +45,7 @@ struct PairView: View {
                             .autocorrectionDisabled()
                             .accessibilityIdentifier("loginName")
                         SecureField("App password", text: $appPassword)
+                            .textContentType(.oneTimeCode)
                             .accessibilityIdentifier("appPassword")
                         Button("Connect") { model.pairManually(server: server, loginName: loginName, appPassword: appPassword) }
                             .disabled(model.busy || server.isEmpty || loginName.isEmpty || appPassword.isEmpty)
@@ -96,6 +97,7 @@ struct UnlockView: View {
                 if pinSet && !usePassword {
                     Section {
                         SecureField("PIN", text: $pin)
+                            .textContentType(.oneTimeCode)
                             .keyboardType(.numberPad)
                             .accessibilityIdentifier("pin")
                         Button("Unlock with PIN") { model.unlock(accountId, pin: pin); pin = "" }
@@ -105,7 +107,10 @@ struct UnlockView: View {
                     }
                 } else {
                     Section {
+                        // Keepiq's own secrets are typed as one-time codes, not passwords, so iOS
+                        // never offers to save them in another password manager.
                         SecureField("Master password", text: $password)
+                            .textContentType(.oneTimeCode)
                             .accessibilityIdentifier("masterPassword")
                             .onSubmit { model.unlock(accountId, masterPassword: password); password = "" }
                         Button("Unlock") { model.unlock(accountId, masterPassword: password); password = "" }
@@ -179,6 +184,7 @@ struct SettingsView: View {
                     Button("Remove the PIN") { model.removePin(vault) }.accessibilityIdentifier("removePin")
                 } else {
                     SecureField("New PIN, 6 to 64 characters", text: $newPin)
+                        .textContentType(.oneTimeCode)
                         .keyboardType(.numberPad)
                         .accessibilityIdentifier("newPin")
                     Button("Set PIN") { model.setPin(vault, pin: newPin); newPin = "" }

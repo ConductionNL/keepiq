@@ -49,6 +49,7 @@ struct AutofillUnlockView: View {
             if model.hasPin {
                 Section {
                     SecureField(AL("unlock.pin"), text: $pin)
+                        .textContentType(.oneTimeCode)
                         .keyboardType(.numberPad)
                         .accessibilityIdentifier("autofillPin")
                     Button(AL("unlock.button")) { model.unlock(pin: pin) }
@@ -57,8 +58,10 @@ struct AutofillUnlockView: View {
                 }
             }
             Section {
+                // Keepiq's own secrets are typed as one-time codes, not passwords, so iOS
+                // never offers to save them in another password manager.
                 SecureField(AL("unlock.master"), text: $masterPassword)
-                    .textContentType(.password)
+                    .textContentType(.oneTimeCode)
                     .focused($masterFocused)
                     .accessibilityIdentifier("autofillMasterPassword")
                 Button(AL("unlock.button")) { model.unlock(masterPassword: masterPassword) }

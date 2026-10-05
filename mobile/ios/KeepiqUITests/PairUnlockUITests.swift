@@ -31,14 +31,36 @@ final class PairUnlockUITests: XCTestCase {
         }
     }
 
+    /// iOS may still show its own "Save Password?" prompt over the app; it is
+    /// not Keepiq's, so the test answers it and carries on.
+    private func dismissSystemSavePrompt() {
+        for target in [app!, XCUIApplication(bundleIdentifier: "com.apple.springboard")] {
+            let notNow = target.buttons["Not Now"]
+            if notNow.exists && notNow.isHittable { notNow.tap() }
+        }
+    }
+
+    /// Waits for an element while answering the system prompt, which can
+    /// appear a moment after the tap that caused it.
+    private func appears(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
+        let end = Date().addingTimeInterval(timeout)
+        while Date() < end {
+            dismissSystemSavePrompt()
+            if element.waitForExistence(timeout: 1) { return true }
+        }
+        return element.exists
+    }
+
     private func type(_ text: String, into element: XCUIElement) {
-        XCTAssertTrue(element.waitForExistence(timeout: 20), "\(element) is missing")
+        dismissSystemSavePrompt()
+        XCTAssertTrue(appears(element, timeout: 20), "\(element) is missing")
         element.tap()
         element.typeText(text)
     }
 
     private func tap(_ element: XCUIElement, timeout: TimeInterval = 20) {
-        XCTAssertTrue(element.waitForExistence(timeout: timeout), "\(element) is missing")
+        dismissSystemSavePrompt()
+        XCTAssertTrue(appears(element, timeout: timeout), "\(element) is missing")
         element.tap()
     }
 
