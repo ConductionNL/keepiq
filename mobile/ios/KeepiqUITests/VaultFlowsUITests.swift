@@ -68,6 +68,15 @@ final class VaultFlowsUITests: XCTestCase {
         }
     }
 
+    /// A Form builds its rows lazily: a button below the fold is not in the
+    /// tree until the form scrolls to it.
+    private func scrolledTo(_ element: XCUIElement) -> XCUIElement {
+        for _ in 0..<6 where !element.waitForExistence(timeout: 2) {
+            app.swipeUp()
+        }
+        return element
+    }
+
     /// The first keyboard use shows a slide-to-type tip that covers the lower half.
     private func dismissKeyboardTip() {
         let tip = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "Speed up your typing")).firstMatch
@@ -199,13 +208,13 @@ final class VaultFlowsUITests: XCTestCase {
         type("Shop (demo)", into: app.textFields["Name"])
         type("https://shop.example.com", into: app.textFields["Website address"])
         type("anna.demo@example.com", into: app.textFields["User name"])
-        tap(app.buttons["Generate"])
+        tap(scrolledTo(app.buttons["Generate"]))
         XCTAssertTrue(app.staticTexts["generated"].waitForExistence(timeout: 20))
         let generated = app.staticTexts["generated"].label
         XCTAssertGreaterThanOrEqual(generated.count, 12)
         shot("35-generate-in-form")
         tap(app.buttons["Use this"])
-        tap(app.buttons["Save"])
+        tap(scrolledTo(app.buttons["Save"]))
         // Saving a login with a password makes iOS offer to keep it.
         declineSavePassword()
         XCTAssertTrue(text("Shop (demo)").waitForExistence(timeout: 60))
@@ -222,7 +231,7 @@ final class VaultFlowsUITests: XCTestCase {
         name.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
         name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 20))
         name.typeText("Shop account (demo)")
-        tap(app.buttons["Save"])
+        tap(scrolledTo(app.buttons["Save"]))
         // Saving a login with a password makes iOS offer to keep it.
         declineSavePassword()
         XCTAssertTrue(text("Shop account (demo)").waitForExistence(timeout: 60))
@@ -262,7 +271,7 @@ final class VaultFlowsUITests: XCTestCase {
                         XCUIElement.ElementType.textField.rawValue, XCUIElement.ElementType.textView.rawValue, "Text to send")
         ).firstMatch
         type("The demo door code is 2468.", into: sendText)
-        tap(app.buttons["Create link"])
+        tap(scrolledTo(app.buttons["Create link"]))
         let link = app.staticTexts["sendLink"]
         XCTAssertTrue(link.waitForExistence(timeout: 60))
         XCTAssertTrue(link.label.hasPrefix(server) && link.label.contains("#"), "link: \(link.label)")
