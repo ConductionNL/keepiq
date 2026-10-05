@@ -23,7 +23,7 @@ class MobileSession(
     val account: Account,
     val api: KeepiqApi,
     val keys: VaultKeys,
-    store: VaultStore?,
+    private val store: VaultStore?,
     sync: VaultSync?,
 ) {
     val repository = VaultRepository(
