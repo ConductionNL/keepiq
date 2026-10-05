@@ -137,6 +137,13 @@ The index is rebuilt after each sync, and cleared on unpair and on a suite chang
 
 - It reads the `AssistStructure`, finds user name, password and one-time-code fields by autofill hints, HTML attributes and view ids, and matches by app package or web domain.
 - An app is matched by its package name and signing certificate, through Digital Asset Links when the app declares a website. A package with a different signing certificate never gets a website's login.
+- Package visibility: the app keeps `QUERY_ALL_PACKAGES`. Measured on 2026-10-05 in CI (`PackageVisibilityTest`, mobile-e2e run 37290748291):
+  - Keepiq reads the asking app's package and signing certificate with `PackageManager.getPackageInfo(..., GET_SIGNING_CERTIFICATES)` (`AppIdentities`), and its Digital Asset Links statement with `getApplicationInfo`.
+  - From Android 11 the package manager hides other apps. The automatic-visibility list (developer.android.com/training/package-visibility/automatic) has no autofill case. The system, not the asking app, binds the autofill service. The AOSP autofill service (Android 14) calls no `grantImplicitAccess`.
+  - Without the permission, on API 34, the other app was hidden before the fill (the control), the lookup during the fill was `BLOCKED` in the `AppsFilter` log, and Keepiq offered nothing. On API 28 there is no filtering, and the fill worked.
+  - `SystemAutofillTest` could not show this. Its forms live in the test APK, and Android makes an instrumentation APK and its target visible to each other. `PackageVisibilityTest` fills a separate APK (`:android:otherapp`) instead.
+  - Google Play restricts the permission: the Play listing needs a permission declaration that explains autofill. F-Droid accepts it.
+  - The passkey provider (D7) should not need it: Credential Manager hands the provider the caller's package and signing info (`CallingAppInfo`), so it reads no other package. Its own e2e test confirms this once it lands.
 - Inline suggestions in the keyboard on Android 11+; the dropdown otherwise.
 - Locked: one "Unlock Keepiq" entry that opens the authentication activity, then returns the dataset.
 - Saving: `onSaveRequest` offers to save a new or changed login, with the same never-save list as the extension.

@@ -32,4 +32,6 @@ gradle.extensions.extraProperties["keepiq.android"] = withAndroid
 include(":shared")
 if (withAndroid) {
     include(":android:app")
+    // The "other app" of the autofill package-visibility e2e test; never released.
+    include(":android:otherapp")
 }

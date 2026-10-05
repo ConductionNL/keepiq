@@ -3,6 +3,8 @@
 
 package nl.conduction.keepiq.android.autofill
 
+import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -83,13 +85,31 @@ class AutofillSettingsActivity : ComponentActivity() {
         core.index.clearFilesIfNotTheService()
     }
 
-    private fun chooseService() {
-        startActivity(Intent(Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE).setData(Uri.parse("package:$packageName")))
-    }
+    private fun chooseService() = chooseKeepiq(this)
 
     private fun turnOff() {
         getSystemService(AutofillManager::class.java)?.disableAutofillServices()
         core.index.clearAll()
         enabled = core.index.isAutofillService()
+    }
+
+    companion object {
+        /** Whether Keepiq is the autofill service now. */
+        fun isKeepiq(context: Context): Boolean = runCatching {
+            context.getSystemService(AutofillManager::class.java)?.hasEnabledAutofillServices() == true
+        }.getOrDefault(false)
+
+        /**
+         * Android's own "use Keepiq for autofill?" question. A phone without
+         * it (autofill turned off by the maker) gets its settings instead.
+         */
+        fun chooseKeepiq(context: Context) {
+            val ask = Intent(Settings.ACTION_REQUEST_SET_AUTOFILL_SERVICE).setData(Uri.parse("package:${context.packageName}"))
+            try {
+                context.startActivity(ask)
+            } catch (e: ActivityNotFoundException) {
+                context.startActivity(Intent(Settings.ACTION_SETTINGS))
+            }
+        }
     }
 }

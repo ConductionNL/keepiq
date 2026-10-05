@@ -115,7 +115,24 @@ jobs:
           grep -q 'tests="1" skipped="0" failures="0" errors="0"' "$report"
       - name: Build the e2e app and its tests
         working-directory: keepiq/mobile
-        run: ./gradlew --no-daemon :android:app:assembleE2e :android:app:assembleE2eAndroidTest
+        run: ./gradlew --no-daemon :android:app:assembleE2e :android:app:assembleE2eAndroidTest :android:otherapp:assembleDebug
+      # The release build is shrunk by R8, which the e2e build is not. On one
+      # API level, android-run.sh installs it after the tests and checks that
+      # it starts and stays up through an autofill request. Signed
+      # with a throwaway key made here.
+      - name: Build the R8 release app for the smoke check
+        if: matrix.api == 34
+        working-directory: keepiq/mobile
+        run: |
+          pw=$(openssl rand -hex 24)
+          echo "::add-mask::$pw"
+          keytool -genkeypair -keystore "$RUNNER_TEMP/smoke.p12" -storetype PKCS12 \
+            -storepass "$pw" -keypass "$pw" -alias smoke -keyalg RSA -keysize 2048 \
+            -validity 1 -dname "CN=Keepiq smoke" >/dev/null
+          KEEPIQ_SIGNING_STORE_FILE="$RUNNER_TEMP/smoke.p12" KEEPIQ_SIGNING_STORE_PASSWORD="$pw" \
+            KEEPIQ_SIGNING_KEY_ALIAS=smoke KEEPIQ_SIGNING_KEY_PASSWORD="$pw" \
+            ./gradlew --no-daemon :android:app:assembleRelease
+          rm -f "$RUNNER_TEMP/smoke.p12"
       # The emulator records webm; the docs and the artifact take mp4.
       - name: ffmpeg for the videos
         run: sudo apt-get update -q && sudo apt-get install -y -q --no-install-recommends ffmpeg

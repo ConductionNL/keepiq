@@ -39,6 +39,12 @@ android {
     buildTypes {
         getByName("release") {
             signingConfig = signingConfigs.findByName("release")
+            // R8: drop unused code and resources (keep rules in
+            // proguard-rules.pro). Only the release build; debug and e2e stay
+            // as they are, so the emulator tests run unshrunk code.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         // The end-to-end build (.github/workflows/mobile-e2e.yml). It is the
         // debug build plus one thing: it trusts the self-signed certificate
@@ -66,6 +72,20 @@ android {
     // dependency verification. The release workflow builds without it.
     lint {
         checkReleaseBuilds = false
+    }
+    // One APK per processor type next to the universal one, when asked for
+    // (-Pkeepiq.abiSplits=true, mobile-preview.yml): the SQLCipher native
+    // library is most of the APK, and a phone needs only its own. Off by
+    // default, so debug and e2e builds keep their single APK.
+    if (providers.gradleProperty("keepiq.abiSplits").orNull?.toBoolean() == true) {
+        splits {
+            abi {
+                isEnable = true
+                reset()
+                include("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+                isUniversalApk = true
+            }
+        }
     }
     // F-Droid: no Google dependency metadata blob in the APK.
     dependenciesInfo {

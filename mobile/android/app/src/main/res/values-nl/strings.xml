@@ -225,4 +225,5 @@
     <string name="autofill_never_title">Nooit opslaan op</string>
     <string name="autofill_never_empty">Keepiq biedt op elke site en in elke app aan je login op te slaan.</string>
     <string name="autofill_never_remove">Weer opslaan op %1$s</string>
+    <string name="autofill_open_never_list">Toon waar Keepiq nooit opslaat</string>
 </resources>
