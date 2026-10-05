@@ -69,8 +69,23 @@ final class VaultFlowsUITests: XCTestCase {
         }
     }
 
+    /// Leaves the search: "Cancel" up to iOS 18, a close button from iOS 26 on.
+    private func endSearch(_ search: XCUIElement) {
+        for label in ["Cancel", "Close"] where app.buttons[label].exists {
+            app.buttons[label].firstMatch.tap()
+            return
+        }
+        let clear = search.buttons["Clear text"]
+        if clear.exists { clear.tap() }
+    }
+
     private func back() {
-        app.navigationBars.buttons.element(boundBy: 0).tap()
+        let bar = app.navigationBars.firstMatch
+        for candidate in [bar.buttons["BackButton"], bar.buttons["Back"], bar.buttons["Vault"]] where candidate.exists {
+            candidate.tap()
+            return
+        }
+        bar.buttons.element(boundBy: 0).tap()
     }
 
     func testVaultSearchRevealCopyTotpCreateEditTrashGeneratorSendAndLock() {
@@ -96,7 +111,7 @@ final class VaultFlowsUITests: XCTestCase {
         XCTAssertTrue(text("Bank (demo)").waitForExistence(timeout: 10))
         waitGone(text("Webmail (demo)"))
         shot("31-search")
-        if app.buttons["Cancel"].exists { app.buttons["Cancel"].tap() }
+        endSearch(search)
         XCTAssertTrue(text("Webmail (demo)").waitForExistence(timeout: 10))
 
         // A folder holds its own items.
