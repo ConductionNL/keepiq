@@ -5,6 +5,7 @@ package nl.conduction.keepiq.shared.store
 
 import kotlinx.cinterop.ByteVar
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.UnsafeNumber
 import kotlinx.cinterop.readBytes
 import kotlinx.cinterop.reinterpret
 import kotlinx.serialization.json.Json
@@ -28,6 +29,7 @@ import kotlin.test.assertTrue
  * is encrypted with the device key, the key lives in [SecureStorage], and
  * unpair deletes both. VaultStoreTest covers the store logic on the jvm.
  */
+@OptIn(ExperimentalForeignApi::class, UnsafeNumber::class)
 class IosEncryptedStoreTest {
     private val directory = NSTemporaryDirectory() + "keepiq-store-test-" + NSUUID().UUIDString
     private val storage = InMemorySecureStorage()
@@ -135,7 +137,6 @@ class IosEncryptedStoreTest {
 
     private fun obj(json: String) = Json.parseToJsonElement(json).jsonObject
 
-    @OptIn(ExperimentalForeignApi::class)
     private fun fileBytes(): ByteArray {
         val path = IosEncryptedStore.path(accountId, directory)
         return listOf(path, "$path-wal").fold(ByteArray(0)) { all, file ->
