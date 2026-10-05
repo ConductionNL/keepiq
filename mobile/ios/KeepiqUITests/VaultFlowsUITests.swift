@@ -51,6 +51,7 @@ final class VaultFlowsUITests: XCTestCase {
     private func tap(_ element: XCUIElement, timeout: TimeInterval = 20) {
         XCTAssertTrue(element.waitForExistence(timeout: timeout), "\(element) is missing")
         dismissKeyboardTip()
+        dismissSavePasswordNow()
         // A screen still sliding in, or a keyboard on its way out, covers it for a moment.
         let hittable = XCTNSPredicateExpectation(predicate: NSPredicate(format: "hittable == true"), object: element)
         if XCTWaiter.wait(for: [hittable], timeout: 5) != .completed { app.swipeUp() }
@@ -76,6 +77,15 @@ final class VaultFlowsUITests: XCTestCase {
                 notNow.tap()
                 return
             }
+        }
+    }
+
+    /// The save-password prompt, if it is up right now, without waiting for it.
+    private func dismissSavePasswordNow() {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        for owner in [app!, springboard] where owner.buttons["Not Now"].exists {
+            owner.buttons["Not Now"].tap()
+            return
         }
     }
 
@@ -169,6 +179,8 @@ final class VaultFlowsUITests: XCTestCase {
         shot("35-generate-in-form")
         tap(app.buttons["Use this"])
         tap(app.buttons["Save"])
+        // Saving a login with a password makes iOS offer to keep it.
+        declineSavePassword()
         XCTAssertTrue(text("Shop (demo)").waitForExistence(timeout: 60))
         tap(text("Shop (demo)"))
         tap(app.buttons["Show Password"], timeout: 60)
@@ -184,6 +196,8 @@ final class VaultFlowsUITests: XCTestCase {
         name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 20))
         name.typeText("Shop account (demo)")
         tap(app.buttons["Save"])
+        // Saving a login with a password makes iOS offer to keep it.
+        declineSavePassword()
         XCTAssertTrue(text("Shop account (demo)").waitForExistence(timeout: 60))
         shot("37-edited")
 
