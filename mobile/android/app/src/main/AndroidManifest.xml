@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
 <!-- SPDX-License-Identifier: EUPL-1.2 -->
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- System autofill reads the package name and signing certificate of
+         the app that asks (task 4.1). Android 11+ hides other packages
+         without this; password managers are an allowed use. -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
 
     <!-- Custom Tabs: find the browsers that can show the login page (Android 11+ package visibility). -->
     <queries>
@@ -53,5 +60,32 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
+        <!-- System autofill (clients-mobile-apps group 4). -->
+        <service
+            android:name=".autofill.KeepiqAutofillService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_AUTOFILL_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.autofill.AutofillService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.autofill"
+                android:resource="@xml/autofill_service" />
+        </service>
+        <activity
+            android:name=".autofill.AutofillUnlockActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Keepiq.AutofillUnlock"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".autofill.AutofillSettingsActivity"
+            android:exported="true"
+            android:label="@string/autofill_settings_title" />
+        <receiver
+            android:name=".autofill.NeverSaveReceiver"
+            android:exported="false" />
     </application>
 </manifest>

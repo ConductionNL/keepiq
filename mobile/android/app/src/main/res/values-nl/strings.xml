@@ -208,4 +208,21 @@
     <string name="composite_bsn">BSN</string>
     <string name="cd_lock">Kluis vergrendelen</string>
     <string name="cd_settings">Ontgrendelen en accountinstellingen</string>
+    <!-- System autofill (clients-mobile-apps group 4). -->
+    <string name="autofill_unlock">Keepiq ontgrendelen</string>
+    <string name="autofill_unlock_hint">Ontgrendel om je login in te vullen</string>
+    <string name="autofill_code_from">Code van %1$s</string>
+    <string name="autofill_choose">Kies een login</string>
+    <string name="autofill_nothing">Keepiq heeft geen login voor deze app of site.</string>
+    <string name="autofill_saved">Login opgeslagen in Keepiq.</string>
+    <string name="autofill_updated">Wachtwoord bijgewerkt in Keepiq.</string>
+    <string name="autofill_save_failed">Keepiq kon deze login niet opslaan. Voeg hem toe in de app.</string>
+    <string name="autofill_settings_title">Automatisch invullen</string>
+    <string name="autofill_status_on">Keepiq vult je logins in, in apps en browsers.</string>
+    <string name="autofill_status_off">Keepiq vult nog geen logins in. Kies Keepiq als dienst voor automatisch invullen.</string>
+    <string name="autofill_choose_service">Kies Keepiq voor automatisch invullen</string>
+    <string name="autofill_turn_off">Automatisch invullen uitzetten</string>
+    <string name="autofill_never_title">Nooit opslaan op</string>
+    <string name="autofill_never_empty">Keepiq biedt op elke site en in elke app aan je login op te slaan.</string>
+    <string name="autofill_never_remove">Weer opslaan op %1$s</string>
 </resources>

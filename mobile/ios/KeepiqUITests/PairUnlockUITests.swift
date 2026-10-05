@@ -31,14 +31,62 @@ final class PairUnlockUITests: XCTestCase {
         }
     }
 
+    /// iOS may show its own "Save Password?" prompt after a sign-in or a save.
+    /// It is not Keepiq's, so the test answers "Not Now" when it is up.
+    private func dismissSystemSavePrompt() {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        for owner in [app!, springboard] where owner.buttons["Not Now"].exists {
+            owner.buttons["Not Now"].tap()
+            return
+        }
+    }
+
+    /// Connecting with an app password makes iOS offer to save it a moment
+    /// later. Answer that first: keys typed while the prompt slides in are lost.
+    private func answerSavePromptAfterConnect() {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        for owner in [app!, springboard] where owner.buttons["Not Now"].waitForExistence(timeout: 4) {
+            owner.buttons["Not Now"].tap()
+            return
+        }
+    }
+
+    /// Makes an element tappable: answers the prompt, hides the keyboard that
+    /// covers the lower half of a form, or scrolls the element into view.
+    private func makeHittable(_ element: XCUIElement) {
+        dismissSystemSavePrompt()
+        if element.isHittable { return }
+        if app.keyboards.count > 0 {
+            // Return ends editing in a SwiftUI field and lowers the keyboard.
+            let keys = app.keyboards.buttons.matching(
+                NSPredicate(format: "label IN %@", ["Return", "return", "Done", "done"]))
+            if keys.firstMatch.exists { keys.firstMatch.tap() } else { app.swipeDown(velocity: .slow) }
+        } else {
+            app.swipeUp(velocity: .slow)
+        }
+    }
+
+    /// Waits for an element while answering the system prompt, which can
+    /// appear a moment after the tap that caused it.
+    private func appears(_ element: XCUIElement, timeout: TimeInterval) -> Bool {
+        let end = Date().addingTimeInterval(timeout)
+        while Date() < end {
+            if element.waitForExistence(timeout: 1) {
+                if element.isHittable { return true }
+                makeHittable(element)
+            }
+        }
+        return element.exists && element.isHittable
+    }
+
     private func type(_ text: String, into element: XCUIElement) {
-        XCTAssertTrue(element.waitForExistence(timeout: 20), "\(element) is missing")
+        XCTAssertTrue(appears(element, timeout: 20), "\(element) is missing")
         element.tap()
         element.typeText(text)
     }
 
     private func tap(_ element: XCUIElement, timeout: TimeInterval = 20) {
-        XCTAssertTrue(element.waitForExistence(timeout: timeout), "\(element) is missing")
+        XCTAssertTrue(appears(element, timeout: timeout), "\(element) is missing")
         element.tap()
     }
 
@@ -115,6 +163,7 @@ final class PairUnlockUITests: XCTestCase {
         type("manual-app-password", into: app.secureTextFields["appPassword"])
         shot("20-app-password")
         tap(app.buttons["connect"])
+        answerSavePromptAfterConnect()
 
         let blocked = app.staticTexts["blocked"]
         XCTAssertTrue(blocked.waitForExistence(timeout: 60))

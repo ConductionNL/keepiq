@@ -1,0 +1,1204 @@
+{
+	"comment": "Written by tests/vectors/generate-autofill-vectors.mjs from the browser extension. Do not edit.",
+	"hosts": [
+		{
+			"input": "",
+			"host": "",
+			"registrable": "",
+			"publicSuffix": false
+		},
+		{
+			"input": "example.com",
+			"host": "example.com",
+			"registrable": "example.com",
+			"publicSuffix": false
+		},
+		{
+			"input": "EXAMPLE.com",
+			"host": "example.com",
+			"registrable": "example.com",
+			"publicSuffix": false
+		},
+		{
+			"input": "  example.com  ",
+			"host": "example.com",
+			"registrable": "example.com",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://example.com",
+			"host": "example.com",
+			"registrable": "example.com",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://Login.Example.com:8443/path?q=1#top",
+			"host": "login.example.com",
+			"registrable": "example.com",
+			"publicSuffix": false
+		},
+		{
+			"input": "http://user:pass@example.com/",
+			"host": "example.com",
+			"registrable": "example.com",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://example.com.",
+			"host": "example.com.",
+			"registrable": "com.",
+			"publicSuffix": false
+		},
+		{
+			"input": "www.bank.co.uk",
+			"host": "www.bank.co.uk",
+			"registrable": "bank.co.uk",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://a.b.gov.nl/x",
+			"host": "a.b.gov.nl",
+			"registrable": "b.gov.nl",
+			"publicSuffix": false
+		},
+		{
+			"input": "gov.nl",
+			"host": "gov.nl",
+			"registrable": "gov.nl",
+			"publicSuffix": true
+		},
+		{
+			"input": "co.uk",
+			"host": "co.uk",
+			"registrable": "co.uk",
+			"publicSuffix": true
+		},
+		{
+			"input": "localhost",
+			"host": "localhost",
+			"registrable": "localhost",
+			"publicSuffix": true
+		},
+		{
+			"input": "https://10.0.2.2:8443",
+			"host": "10.0.2.2",
+			"registrable": "2.2",
+			"publicSuffix": false
+		},
+		{
+			"input": "10.0.2.2",
+			"host": "10.0.2.2",
+			"registrable": "2.2",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://127.1",
+			"host": "127.0.0.1",
+			"registrable": "0.1",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://0x7f.0.0.1/",
+			"host": "127.0.0.1",
+			"registrable": "0.1",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://example.123",
+			"host": "",
+			"registrable": "",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://[::1]:8080/",
+			"host": "[::1]",
+			"registrable": "[::1]",
+			"publicSuffix": true
+		},
+		{
+			"input": "https://bücher.de/",
+			"host": "xn--bcher-kva.de",
+			"registrable": "xn--bcher-kva.de",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://ÉCOLE.fr",
+			"host": "xn--cole-9oa.fr",
+			"registrable": "xn--cole-9oa.fr",
+			"publicSuffix": false
+		},
+		{
+			"input": "androidapp://com.example.bank",
+			"host": "com.example.bank",
+			"registrable": "example.bank",
+			"publicSuffix": false
+		},
+		{
+			"input": "androidapp://com.example.bank#sha256_cert_fingerprints=AA:BB",
+			"host": "com.example.bank",
+			"registrable": "example.bank",
+			"publicSuffix": false
+		},
+		{
+			"input": "android-app://com.example.bank",
+			"host": "android-app",
+			"registrable": "android-app",
+			"publicSuffix": true
+		},
+		{
+			"input": "ftp://files.example.org",
+			"host": "files.example.org",
+			"registrable": "example.org",
+			"publicSuffix": false
+		},
+		{
+			"input": "mailto:alice@example.com",
+			"host": "example.com",
+			"registrable": "example.com",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://exa mple.com",
+			"host": "",
+			"registrable": "",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://example.com:99999",
+			"host": "",
+			"registrable": "",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://example.com:80a",
+			"host": "",
+			"registrable": "",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://%65xample.com",
+			"host": "example.com",
+			"registrable": "example.com",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://",
+			"host": "",
+			"registrable": "",
+			"publicSuffix": false
+		},
+		{
+			"input": "not a url at all",
+			"host": "",
+			"registrable": "",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://example.com\\path",
+			"host": "example.com",
+			"registrable": "example.com",
+			"publicSuffix": false
+		},
+		{
+			"input": "HTTPS://EXAMPLE.COM",
+			"host": "example.com",
+			"registrable": "example.com",
+			"publicSuffix": false
+		},
+		{
+			"input": "sub.domain.example.co.nz",
+			"host": "sub.domain.example.co.nz",
+			"registrable": "example.co.nz",
+			"publicSuffix": false
+		},
+		{
+			"input": "https://xn--bcher-kva.de",
+			"host": "xn--bcher-kva.de",
+			"registrable": "xn--bcher-kva.de",
+			"publicSuffix": false
+		}
+	],
+	"items": [
+		{
+			"id": "a",
+			"name": "Example",
+			"url": "https://example.com"
+		},
+		{
+			"id": "b",
+			"name": "Example login",
+			"url": "https://login.example.com",
+			"lastUsedAt": "2026-10-01T10:00:00Z"
+		},
+		{
+			"id": "c",
+			"name": "Mail",
+			"url": "https://mail.example.com",
+			"lastUsedAt": "2026-10-03T10:00:00Z"
+		},
+		{
+			"id": "d",
+			"name": "example.com backup",
+			"url": ""
+		},
+		{
+			"id": "e",
+			"name": "My examples",
+			"url": null
+		},
+		{
+			"id": "f",
+			"name": "Bank",
+			"url": "https://www.bank.co.uk"
+		},
+		{
+			"id": "g",
+			"name": "Other",
+			"url": "https://other.org"
+		},
+		{
+			"id": "h",
+			"name": "Shared",
+			"url": "https://example.com",
+			"useOnly": true
+		},
+		{
+			"id": "i",
+			"name": "Shared elsewhere",
+			"url": "https://other.org",
+			"useOnly": true
+		},
+		{
+			"id": "j",
+			"name": "App",
+			"url": "androidapp://com.example.bank"
+		},
+		{
+			"id": "k",
+			"name": "Test server",
+			"url": "https://10.0.2.2:8443"
+		}
+	],
+	"scores": [
+		{
+			"name": "Example",
+			"url": "https://example.com",
+			"target": "example.com",
+			"score": 100
+		},
+		{
+			"name": "Example",
+			"url": "https://example.com",
+			"target": "login.example.com",
+			"score": 80
+		},
+		{
+			"name": "Example",
+			"url": "https://example.com",
+			"target": "https://www.example.com/sign-in",
+			"score": 80
+		},
+		{
+			"name": "Example",
+			"url": "https://example.com",
+			"target": "bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "Example",
+			"url": "https://example.com",
+			"target": "online.bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "Example",
+			"url": "https://example.com",
+			"target": "other.org",
+			"score": 0
+		},
+		{
+			"name": "Example",
+			"url": "https://example.com",
+			"target": "10.0.2.2",
+			"score": 0
+		},
+		{
+			"name": "Example",
+			"url": "https://example.com",
+			"target": "ex.com",
+			"score": 0
+		},
+		{
+			"name": "Example",
+			"url": "https://example.com",
+			"target": "",
+			"score": 0
+		},
+		{
+			"name": "Example",
+			"url": "https://example.com",
+			"target": "com.example.bank",
+			"score": 20
+		},
+		{
+			"name": "Example login",
+			"url": "https://login.example.com",
+			"target": "example.com",
+			"score": 80
+		},
+		{
+			"name": "Example login",
+			"url": "https://login.example.com",
+			"target": "login.example.com",
+			"score": 100
+		},
+		{
+			"name": "Example login",
+			"url": "https://login.example.com",
+			"target": "https://www.example.com/sign-in",
+			"score": 80
+		},
+		{
+			"name": "Example login",
+			"url": "https://login.example.com",
+			"target": "bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "Example login",
+			"url": "https://login.example.com",
+			"target": "online.bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "Example login",
+			"url": "https://login.example.com",
+			"target": "other.org",
+			"score": 0
+		},
+		{
+			"name": "Example login",
+			"url": "https://login.example.com",
+			"target": "10.0.2.2",
+			"score": 0
+		},
+		{
+			"name": "Example login",
+			"url": "https://login.example.com",
+			"target": "ex.com",
+			"score": 0
+		},
+		{
+			"name": "Example login",
+			"url": "https://login.example.com",
+			"target": "",
+			"score": 0
+		},
+		{
+			"name": "Example login",
+			"url": "https://login.example.com",
+			"target": "com.example.bank",
+			"score": 20
+		},
+		{
+			"name": "Mail",
+			"url": "https://mail.example.com",
+			"target": "example.com",
+			"score": 80
+		},
+		{
+			"name": "Mail",
+			"url": "https://mail.example.com",
+			"target": "login.example.com",
+			"score": 80
+		},
+		{
+			"name": "Mail",
+			"url": "https://mail.example.com",
+			"target": "https://www.example.com/sign-in",
+			"score": 80
+		},
+		{
+			"name": "Mail",
+			"url": "https://mail.example.com",
+			"target": "bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "Mail",
+			"url": "https://mail.example.com",
+			"target": "online.bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "Mail",
+			"url": "https://mail.example.com",
+			"target": "other.org",
+			"score": 0
+		},
+		{
+			"name": "Mail",
+			"url": "https://mail.example.com",
+			"target": "10.0.2.2",
+			"score": 0
+		},
+		{
+			"name": "Mail",
+			"url": "https://mail.example.com",
+			"target": "ex.com",
+			"score": 0
+		},
+		{
+			"name": "Mail",
+			"url": "https://mail.example.com",
+			"target": "",
+			"score": 0
+		},
+		{
+			"name": "Mail",
+			"url": "https://mail.example.com",
+			"target": "com.example.bank",
+			"score": 0
+		},
+		{
+			"name": "example.com backup",
+			"url": "",
+			"target": "example.com",
+			"score": 40
+		},
+		{
+			"name": "example.com backup",
+			"url": "",
+			"target": "login.example.com",
+			"score": 40
+		},
+		{
+			"name": "example.com backup",
+			"url": "",
+			"target": "https://www.example.com/sign-in",
+			"score": 40
+		},
+		{
+			"name": "example.com backup",
+			"url": "",
+			"target": "bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "example.com backup",
+			"url": "",
+			"target": "online.bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "example.com backup",
+			"url": "",
+			"target": "other.org",
+			"score": 0
+		},
+		{
+			"name": "example.com backup",
+			"url": "",
+			"target": "10.0.2.2",
+			"score": 0
+		},
+		{
+			"name": "example.com backup",
+			"url": "",
+			"target": "ex.com",
+			"score": 0
+		},
+		{
+			"name": "example.com backup",
+			"url": "",
+			"target": "",
+			"score": 0
+		},
+		{
+			"name": "example.com backup",
+			"url": "",
+			"target": "com.example.bank",
+			"score": 20
+		},
+		{
+			"name": "My examples",
+			"url": null,
+			"target": "example.com",
+			"score": 20
+		},
+		{
+			"name": "My examples",
+			"url": null,
+			"target": "login.example.com",
+			"score": 20
+		},
+		{
+			"name": "My examples",
+			"url": null,
+			"target": "https://www.example.com/sign-in",
+			"score": 20
+		},
+		{
+			"name": "My examples",
+			"url": null,
+			"target": "bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "My examples",
+			"url": null,
+			"target": "online.bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "My examples",
+			"url": null,
+			"target": "other.org",
+			"score": 0
+		},
+		{
+			"name": "My examples",
+			"url": null,
+			"target": "10.0.2.2",
+			"score": 0
+		},
+		{
+			"name": "My examples",
+			"url": null,
+			"target": "ex.com",
+			"score": 0
+		},
+		{
+			"name": "My examples",
+			"url": null,
+			"target": "",
+			"score": 0
+		},
+		{
+			"name": "My examples",
+			"url": null,
+			"target": "com.example.bank",
+			"score": 20
+		},
+		{
+			"name": "Bank",
+			"url": "https://www.bank.co.uk",
+			"target": "example.com",
+			"score": 0
+		},
+		{
+			"name": "Bank",
+			"url": "https://www.bank.co.uk",
+			"target": "login.example.com",
+			"score": 0
+		},
+		{
+			"name": "Bank",
+			"url": "https://www.bank.co.uk",
+			"target": "https://www.example.com/sign-in",
+			"score": 0
+		},
+		{
+			"name": "Bank",
+			"url": "https://www.bank.co.uk",
+			"target": "bank.co.uk",
+			"score": 80
+		},
+		{
+			"name": "Bank",
+			"url": "https://www.bank.co.uk",
+			"target": "online.bank.co.uk",
+			"score": 80
+		},
+		{
+			"name": "Bank",
+			"url": "https://www.bank.co.uk",
+			"target": "other.org",
+			"score": 0
+		},
+		{
+			"name": "Bank",
+			"url": "https://www.bank.co.uk",
+			"target": "10.0.2.2",
+			"score": 0
+		},
+		{
+			"name": "Bank",
+			"url": "https://www.bank.co.uk",
+			"target": "ex.com",
+			"score": 0
+		},
+		{
+			"name": "Bank",
+			"url": "https://www.bank.co.uk",
+			"target": "",
+			"score": 0
+		},
+		{
+			"name": "Bank",
+			"url": "https://www.bank.co.uk",
+			"target": "com.example.bank",
+			"score": 0
+		},
+		{
+			"name": "Other",
+			"url": "https://other.org",
+			"target": "example.com",
+			"score": 0
+		},
+		{
+			"name": "Other",
+			"url": "https://other.org",
+			"target": "login.example.com",
+			"score": 0
+		},
+		{
+			"name": "Other",
+			"url": "https://other.org",
+			"target": "https://www.example.com/sign-in",
+			"score": 0
+		},
+		{
+			"name": "Other",
+			"url": "https://other.org",
+			"target": "bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "Other",
+			"url": "https://other.org",
+			"target": "online.bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "Other",
+			"url": "https://other.org",
+			"target": "other.org",
+			"score": 100
+		},
+		{
+			"name": "Other",
+			"url": "https://other.org",
+			"target": "10.0.2.2",
+			"score": 0
+		},
+		{
+			"name": "Other",
+			"url": "https://other.org",
+			"target": "ex.com",
+			"score": 0
+		},
+		{
+			"name": "Other",
+			"url": "https://other.org",
+			"target": "",
+			"score": 0
+		},
+		{
+			"name": "Other",
+			"url": "https://other.org",
+			"target": "com.example.bank",
+			"score": 0
+		},
+		{
+			"name": "Shared",
+			"url": "https://example.com",
+			"target": "example.com",
+			"score": 100
+		},
+		{
+			"name": "Shared",
+			"url": "https://example.com",
+			"target": "login.example.com",
+			"score": 80
+		},
+		{
+			"name": "Shared",
+			"url": "https://example.com",
+			"target": "https://www.example.com/sign-in",
+			"score": 80
+		},
+		{
+			"name": "Shared",
+			"url": "https://example.com",
+			"target": "bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "Shared",
+			"url": "https://example.com",
+			"target": "online.bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "Shared",
+			"url": "https://example.com",
+			"target": "other.org",
+			"score": 0
+		},
+		{
+			"name": "Shared",
+			"url": "https://example.com",
+			"target": "10.0.2.2",
+			"score": 0
+		},
+		{
+			"name": "Shared",
+			"url": "https://example.com",
+			"target": "ex.com",
+			"score": 0
+		},
+		{
+			"name": "Shared",
+			"url": "https://example.com",
+			"target": "",
+			"score": 0
+		},
+		{
+			"name": "Shared",
+			"url": "https://example.com",
+			"target": "com.example.bank",
+			"score": 0
+		},
+		{
+			"name": "Shared elsewhere",
+			"url": "https://other.org",
+			"target": "example.com",
+			"score": 0
+		},
+		{
+			"name": "Shared elsewhere",
+			"url": "https://other.org",
+			"target": "login.example.com",
+			"score": 0
+		},
+		{
+			"name": "Shared elsewhere",
+			"url": "https://other.org",
+			"target": "https://www.example.com/sign-in",
+			"score": 0
+		},
+		{
+			"name": "Shared elsewhere",
+			"url": "https://other.org",
+			"target": "bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "Shared elsewhere",
+			"url": "https://other.org",
+			"target": "online.bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "Shared elsewhere",
+			"url": "https://other.org",
+			"target": "other.org",
+			"score": 100
+		},
+		{
+			"name": "Shared elsewhere",
+			"url": "https://other.org",
+			"target": "10.0.2.2",
+			"score": 0
+		},
+		{
+			"name": "Shared elsewhere",
+			"url": "https://other.org",
+			"target": "ex.com",
+			"score": 0
+		},
+		{
+			"name": "Shared elsewhere",
+			"url": "https://other.org",
+			"target": "",
+			"score": 0
+		},
+		{
+			"name": "Shared elsewhere",
+			"url": "https://other.org",
+			"target": "com.example.bank",
+			"score": 0
+		},
+		{
+			"name": "App",
+			"url": "androidapp://com.example.bank",
+			"target": "example.com",
+			"score": 0
+		},
+		{
+			"name": "App",
+			"url": "androidapp://com.example.bank",
+			"target": "login.example.com",
+			"score": 0
+		},
+		{
+			"name": "App",
+			"url": "androidapp://com.example.bank",
+			"target": "https://www.example.com/sign-in",
+			"score": 0
+		},
+		{
+			"name": "App",
+			"url": "androidapp://com.example.bank",
+			"target": "bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "App",
+			"url": "androidapp://com.example.bank",
+			"target": "online.bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "App",
+			"url": "androidapp://com.example.bank",
+			"target": "other.org",
+			"score": 0
+		},
+		{
+			"name": "App",
+			"url": "androidapp://com.example.bank",
+			"target": "10.0.2.2",
+			"score": 0
+		},
+		{
+			"name": "App",
+			"url": "androidapp://com.example.bank",
+			"target": "ex.com",
+			"score": 0
+		},
+		{
+			"name": "App",
+			"url": "androidapp://com.example.bank",
+			"target": "",
+			"score": 0
+		},
+		{
+			"name": "App",
+			"url": "androidapp://com.example.bank",
+			"target": "com.example.bank",
+			"score": 100
+		},
+		{
+			"name": "Test server",
+			"url": "https://10.0.2.2:8443",
+			"target": "example.com",
+			"score": 0
+		},
+		{
+			"name": "Test server",
+			"url": "https://10.0.2.2:8443",
+			"target": "login.example.com",
+			"score": 0
+		},
+		{
+			"name": "Test server",
+			"url": "https://10.0.2.2:8443",
+			"target": "https://www.example.com/sign-in",
+			"score": 0
+		},
+		{
+			"name": "Test server",
+			"url": "https://10.0.2.2:8443",
+			"target": "bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "Test server",
+			"url": "https://10.0.2.2:8443",
+			"target": "online.bank.co.uk",
+			"score": 0
+		},
+		{
+			"name": "Test server",
+			"url": "https://10.0.2.2:8443",
+			"target": "other.org",
+			"score": 0
+		},
+		{
+			"name": "Test server",
+			"url": "https://10.0.2.2:8443",
+			"target": "10.0.2.2",
+			"score": 100
+		},
+		{
+			"name": "Test server",
+			"url": "https://10.0.2.2:8443",
+			"target": "ex.com",
+			"score": 0
+		},
+		{
+			"name": "Test server",
+			"url": "https://10.0.2.2:8443",
+			"target": "",
+			"score": 0
+		},
+		{
+			"name": "Test server",
+			"url": "https://10.0.2.2:8443",
+			"target": "com.example.bank",
+			"score": 0
+		}
+	],
+	"matches": [
+		{
+			"target": "example.com",
+			"ids": [
+				"a",
+				"h",
+				"c",
+				"b",
+				"d",
+				"e"
+			],
+			"filtered": [
+				"a",
+				"h",
+				"c",
+				"b",
+				"d",
+				"e"
+			],
+			"blocksSave": true
+		},
+		{
+			"target": "login.example.com",
+			"ids": [
+				"b",
+				"c",
+				"a",
+				"h",
+				"d",
+				"e"
+			],
+			"filtered": [
+				"b",
+				"c",
+				"a",
+				"h",
+				"d",
+				"e"
+			],
+			"blocksSave": true
+		},
+		{
+			"target": "https://www.example.com/sign-in",
+			"ids": [
+				"c",
+				"b",
+				"a",
+				"h",
+				"d",
+				"e"
+			],
+			"filtered": [
+				"c",
+				"b",
+				"a",
+				"h",
+				"d",
+				"e"
+			],
+			"blocksSave": true
+		},
+		{
+			"target": "bank.co.uk",
+			"ids": [
+				"f"
+			],
+			"filtered": [
+				"f"
+			],
+			"blocksSave": false
+		},
+		{
+			"target": "online.bank.co.uk",
+			"ids": [
+				"f"
+			],
+			"filtered": [
+				"f"
+			],
+			"blocksSave": false
+		},
+		{
+			"target": "other.org",
+			"ids": [
+				"g",
+				"i"
+			],
+			"filtered": [
+				"g",
+				"i"
+			],
+			"blocksSave": true
+		},
+		{
+			"target": "10.0.2.2",
+			"ids": [
+				"k"
+			],
+			"filtered": [
+				"k"
+			],
+			"blocksSave": false
+		},
+		{
+			"target": "ex.com",
+			"ids": [],
+			"filtered": [],
+			"blocksSave": false
+		},
+		{
+			"target": "",
+			"ids": [],
+			"filtered": [],
+			"blocksSave": false
+		},
+		{
+			"target": "com.example.bank",
+			"ids": [
+				"j",
+				"b",
+				"a",
+				"d",
+				"e"
+			],
+			"filtered": [
+				"j",
+				"b",
+				"a",
+				"d",
+				"e"
+			],
+			"blocksSave": false
+		}
+	],
+	"stored": [
+		{
+			"id": "s1",
+			"name": "Example",
+			"url": "https://example.com",
+			"plain": {
+				"login": "alice",
+				"secret": "one"
+			}
+		},
+		{
+			"id": "s2",
+			"name": "Example two",
+			"url": "https://www.example.com",
+			"plain": {
+				"login": "bob",
+				"secret": "two"
+			}
+		},
+		{
+			"id": "s3",
+			"name": "example.com by name",
+			"url": "",
+			"plain": {
+				"login": "carol",
+				"secret": "three"
+			}
+		},
+		{
+			"id": "s4",
+			"name": "Broken",
+			"url": "https://example.com",
+			"plain": null
+		},
+		{
+			"id": "s5",
+			"name": "Dup one",
+			"url": "https://dup.example.org",
+			"plain": {
+				"login": "dave",
+				"secret": "x"
+			}
+		},
+		{
+			"id": "s6",
+			"name": "Dup two",
+			"url": "https://dup.example.org",
+			"plain": {
+				"login": "dave",
+				"secret": "y"
+			}
+		},
+		{
+			"id": "s7",
+			"name": "Empty login",
+			"url": "https://empty.example.net",
+			"plain": {
+				"secret": "z"
+			}
+		}
+	],
+	"classify": [
+		{
+			"host": "example.com",
+			"login": "alice",
+			"secret": "one",
+			"action": "none",
+			"id": null
+		},
+		{
+			"host": "example.com",
+			"login": "alice",
+			"secret": "changed",
+			"action": "update",
+			"id": "s1"
+		},
+		{
+			"host": "login.example.com",
+			"login": "bob",
+			"secret": "new",
+			"action": "update",
+			"id": "s2"
+		},
+		{
+			"host": "example.com",
+			"login": "carol",
+			"secret": "three",
+			"action": "save",
+			"id": null
+		},
+		{
+			"host": "example.com",
+			"login": "erin",
+			"secret": "e",
+			"action": "save",
+			"id": null
+		},
+		{
+			"host": "dup.example.org",
+			"login": "dave",
+			"secret": "new",
+			"action": "none",
+			"id": null
+		},
+		{
+			"host": "dup.example.org",
+			"login": "dave",
+			"secret": "x",
+			"action": "none",
+			"id": null
+		},
+		{
+			"host": "empty.example.net",
+			"login": "",
+			"secret": "other",
+			"action": "update",
+			"id": "s7"
+		},
+		{
+			"host": "unknown.test",
+			"login": "alice",
+			"secret": "one",
+			"action": "save",
+			"id": null
+		}
+	]
+}

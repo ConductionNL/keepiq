@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<resources>
+    <!-- The "Unlock Keepiq" screen of system autofill. Translucent, so the
+         form under it stays visible: an app whose fields all turn invisible
+         ends its autofill session, and the login would arrive too late. -->
+    <style name="Theme.Keepiq.AutofillUnlock" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+</resources>

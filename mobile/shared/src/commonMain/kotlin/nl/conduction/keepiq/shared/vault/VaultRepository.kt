@@ -74,6 +74,12 @@ class VaultRepository(
     private val store: VaultStore?,
     private val sync: VaultSync?,
     private val clock: () -> Long,
+    /**
+     * Sees every state [refresh] returns. The sessions pass
+     * [nl.conduction.keepiq.shared.autofill.AutofillIndexHub.refreshed], so
+     * the autofill index follows each sync (task 4.6).
+     */
+    private val onRefreshed: (VaultState) -> Unit = {},
 ) {
     /** The last state [refresh] produced. */
     var state: VaultState = VaultState.EMPTY
@@ -89,6 +95,13 @@ class VaultRepository(
             if (e.status == 0) offlineState() else fromStore(offline = false).copy(problem = WriteProblem.from(e))
         } catch (e: Exception) {
             offlineState()
+        }
+        try {
+            onRefreshed(state)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // The index is rebuilt at the next sync; the list still shows the vault.
         }
         return state
     }

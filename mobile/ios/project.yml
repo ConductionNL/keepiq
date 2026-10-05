@@ -28,11 +28,18 @@ targets:
     platform: iOS
     sources:
       - Keepiq
+      # Shared: the Keychain, the autofill index files and the AutoFill
+      # screens, compiled into the app and its extension.
+      - Shared
       # The vault, Send and generator screens: the KeepiqApp package's
       # sources and strings, built into the app. Keepiq/BundleModule.swift
       # points their Bundle.module at the main bundle.
       - KeepiqApp/Sources/KeepiqApp
+    entitlements:
+      path: Keepiq/Keepiq.entitlements
     dependencies:
+      - target: KeepiqAutofill
+        embed: true
       - framework: ../shared/build/XCFrameworks/debug/KeepiqShared.xcframework
         embed: false
       - sdk: CryptoKit.framework
@@ -55,6 +62,41 @@ targets:
         GENERATE_INFOPLIST_FILE: NO
         # The Kotlin runtime in the static KeepiqShared framework is C++.
         OTHER_LDFLAGS: ["$(inherited)", "-lc++"]
+  # The AutoFill credential provider extension (clients-mobile-apps task 4.4).
+  KeepiqAutofill:
+    type: app-extension
+    platform: iOS
+    sources: [KeepiqAutofill, Shared]
+    entitlements:
+      path: KeepiqAutofill/KeepiqAutofill.entitlements
+    dependencies:
+      - framework: ../shared/build/XCFrameworks/debug/KeepiqShared.xcframework
+        embed: false
+      - sdk: CryptoKit.framework
+      - sdk: Security.framework
+      - sdk: LocalAuthentication.framework
+      - sdk: AuthenticationServices.framework
+      - sdk: libsqlite3.tbd
+    info:
+      path: KeepiqAutofill/Info.plist
+      properties:
+        CFBundleDisplayName: Keepiq
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSFaceIDUsageDescription: Keepiq uses Face ID to unlock your vault.
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.authentication-services-credential-provider-ui
+          NSExtensionPrincipalClass: $(PRODUCT_MODULE_NAME).CredentialProviderViewController
+          NSExtensionAttributes:
+            ASCredentialProviderExtensionCapabilities:
+              ProvidesPasswords: true
+              ShowsConfigurationUI: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: nl.conduction.keepiq.autofill
+        GENERATE_INFOPLIST_FILE: NO
+        OTHER_LDFLAGS: ["$(inherited)", "-lc++"]
+        APPLICATION_EXTENSION_API_ONLY: YES
   KeepiqUITests:
     type: bundle.ui-testing
     platform: iOS

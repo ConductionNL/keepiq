@@ -13,6 +13,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
+import nl.conduction.keepiq.android.autofill.AutofillCore
 import nl.conduction.keepiq.android.security.BiometricUnlock
 import nl.conduction.keepiq.android.security.KeystoreStorage
 import nl.conduction.keepiq.android.vault.VaultSession
@@ -30,16 +31,26 @@ class KeepiqApp : Application() {
     lateinit var state: AppState
         private set
 
+    /** System autofill (task group 4): the index, app identities and the never-save list. */
+    lateinit var autofill: AutofillCore
+        private set
+
     override fun onCreate() {
         super.onCreate()
         val storage = KeystoreStorage(this)
         val client = KeepiqClient(storage, clientName())
+        // System autofill first: unpair wipes its index (task 4.6). It reads
+        // the state lazily, so it may exist before the state.
+        autofill = AutofillCore(this, storage) { state }
         state = AppState(
             client,
             BiometricUnlock(this, storage),
             openSession = { account, vault, listener -> VaultSession.open(this, client.api(account), account, vault, listener) },
-            // Unpair removes everything stored for the account, the offline copy too.
-            onAccountWiped = { accountId -> deleteEncryptedStore(this, accountId) },
+            // Unpair removes everything stored for the account: the offline copy and the autofill index.
+            onAccountWiped = { accountId ->
+                deleteEncryptedStore(this, accountId)
+                autofill.forget(accountId)
+            },
         )
 
         val screenOff = object : BroadcastReceiver() {
@@ -51,7 +62,11 @@ class KeepiqApp : Application() {
 
         ProcessLifecycleOwner.get().lifecycle.addObserver(
             object : DefaultLifecycleObserver {
-                override fun onStart(owner: LifecycleOwner) = state.onForeground()
+                override fun onStart(owner: LifecycleOwner) {
+                    state.onForeground()
+                    // Autofill turned off in the system settings: no index on disk.
+                    autofill.index.clearFilesIfNotTheService()
+                }
 
                 override fun onStop(owner: LifecycleOwner) = state.onBackground()
             },
