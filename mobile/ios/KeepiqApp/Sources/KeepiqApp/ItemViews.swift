@@ -251,6 +251,8 @@ struct ItemEditView: View {
     @State private var busy = false
     @State private var generating = false
     @State private var generateTarget: String?
+    /// Saved: the secret fields show empty while the form leaves (task 3.2.1).
+    @State private var leaving = false
 
     private var types: [SecretType] { model.repository.state.types.filter { $0.name != "passkey" } }
 
@@ -415,6 +417,7 @@ struct ItemEditView: View {
                 if model.repository.state.offline { Text(L("write_offline")).font(.footnote) }
             }
         }
+        .secretFieldsCleared(leaving)
     }
 
     private func keyboardFor(_ field: TypeField) -> UIKeyboardType {
@@ -440,6 +443,8 @@ struct ItemEditView: View {
             }
             busy = false
             if let saved = outcome as? WriteResult.Saved {
+                leaving = true
+                await leaveWithEmptySecrets()
                 onSaved(saved.id)
             } else if let refused = outcome as? WriteResult.Refused {
                 problem = refused.problem
@@ -447,6 +452,38 @@ struct ItemEditView: View {
                 problem = WriteProblem(kind: .failed, serverMessage: nil, status: 0)
             }
         }
+    }
+}
+
+extension View {
+    /// Empties the secret fields before a saved form leaves the screen, so
+    /// iOS does not offer to save Keepiq's own secrets as a password (task
+    /// 3.2.1). iOS reads the user name and password fields when they leave
+    /// the view hierarchy ("Make sure to only clear the username and password
+    /// fields after they've been removed from the view hierarchy. This way,
+    /// we can read out the data and save it into credential.", WWDC 2018
+    /// session 204); fields that are empty by then hold nothing to save. The
+    /// values were sent already, and the fields stay secure fields, so
+    /// VoiceOver still announces them as such.
+    func secretFieldsCleared(_ cleared: Bool) -> some View {
+        environment(\.secretFieldsCleared, cleared)
+    }
+}
+
+/// Lets SwiftUI push the empty values into the text fields before the form goes.
+@MainActor
+func leaveWithEmptySecrets() async {
+    try? await Task.sleep(nanoseconds: 200_000_000)
+}
+
+private struct SecretFieldsClearedKey: EnvironmentKey {
+    static let defaultValue = false
+}
+
+extension EnvironmentValues {
+    var secretFieldsCleared: Bool {
+        get { self[SecretFieldsClearedKey.self] }
+        set { self[SecretFieldsClearedKey.self] = newValue }
     }
 }
 
@@ -484,6 +521,10 @@ struct SecretInput: View {
     }
 
     @State private var shown = false
+    @Environment(\.secretFieldsCleared) private var cleared
+
+    /// The value, or nothing once the saved form is leaving.
+    private var value: Binding<String> { cleared ? .constant("") : $text }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -492,11 +533,11 @@ struct SecretInput: View {
                 // Keepiq's own secrets are typed as one-time codes, not passwords, so iOS
                 // never offers to save them in another password manager (or in Keepiq).
                 if shown {
-                    TextField(label, text: $text).textInputAutocapitalization(.never).autocorrectionDisabled()
+                    TextField(label, text: value).textInputAutocapitalization(.never).autocorrectionDisabled()
                         .textContentType(.oneTimeCode)
                         .accessibilityLabel(label)
                 } else {
-                    SecureField(label, text: $text).textContentType(.oneTimeCode).accessibilityLabel(label)
+                    SecureField(label, text: value).textContentType(.oneTimeCode).accessibilityLabel(label)
                 }
                 Button(shown ? L("action_hide") : L("action_show")) { shown.toggle() }
                     .frame(minWidth: 44, minHeight: 44)

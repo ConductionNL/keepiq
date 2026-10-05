@@ -126,17 +126,15 @@ final class VaultFlowsUITests: XCTestCase {
         }
     }
 
-    /// iOS still offers "Save Password?" after Keepiq's item form, even with
-    /// the fields typed as one-time codes (open in tasks.md, 3.2). The test
-    /// answers it and records that it came, so the run continues.
-    private func expectNoSavePasswordPrompt() {
+    /// iOS must not offer "Save Password?" after Keepiq's item form (task
+    /// 3.2.1): the form empties its secret fields before it leaves, so iOS
+    /// finds nothing to save. A prompt is a regression and fails the test.
+    private func expectNoSavePasswordPrompt(_ step: String) {
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-        for owner in [app!, springboard] where owner.buttons["Not Now"].waitForExistence(timeout: 3) {
+        for owner in [app!, springboard] where owner.buttons["Not Now"].waitForExistence(timeout: 4) {
+            shot("save-password-prompt-\(step)")
+            XCTFail("iOS offered to save a password after Keepiq's item form (\(step))")
             owner.buttons["Not Now"].tap()
-            let note = XCTAttachment(string: "iOS offered to save a password from Keepiq's item form")
-            note.name = "save-password-prompt-seen"
-            note.lifetime = .keepAlways
-            add(note)
             return
         }
     }
@@ -240,8 +238,8 @@ final class VaultFlowsUITests: XCTestCase {
         shot("35-generate-in-form")
         tap(app.buttons["Use this"])
         tap(scrolledTo(app.buttons["Save"]))
-        // The item form types its secrets as one-time codes, so iOS does not offer to keep them.
-        expectNoSavePasswordPrompt()
+        // The form empties its secret fields before it leaves: iOS has nothing to offer to keep.
+        expectNoSavePasswordPrompt("create")
         XCTAssertTrue(text("Shop (demo)").waitForExistence(timeout: 60))
         tap(text("Shop (demo)"))
         tap(app.buttons["Show Password"], timeout: 60)
@@ -257,8 +255,7 @@ final class VaultFlowsUITests: XCTestCase {
         name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 20))
         name.typeText("Shop account (demo)")
         tap(scrolledTo(app.buttons["Save"]))
-        // The item form types its secrets as one-time codes, so iOS does not offer to keep them.
-        expectNoSavePasswordPrompt()
+        expectNoSavePasswordPrompt("edit")
         XCTAssertTrue(text("Shop account (demo)").waitForExistence(timeout: 60))
         shot("37-edited")
 
