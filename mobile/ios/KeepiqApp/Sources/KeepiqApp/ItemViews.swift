@@ -168,7 +168,7 @@ private struct TotpRow: View {
                 VStack(alignment: .leading) {
                     Text(L("detail_code")).font(.caption).foregroundStyle(.secondary)
                     HStack {
-                        Text(code).font(.title.monospaced())
+                        Text(code).font(.title.monospaced()).accessibilityIdentifier("totpCode")
                         ProgressView(value: Double(left), total: Double(params.period))
                             .progressViewStyle(.circular)
                             .accessibilityLabel(L("detail_code_seconds", Int(left)))

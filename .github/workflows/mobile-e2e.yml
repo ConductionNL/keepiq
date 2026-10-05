@@ -11,7 +11,8 @@ name: Mobile e2e
 #
 # iOS: the macOS runners have no Docker, so the simulator talks to
 # mobile/e2e/server.mjs replay, which answers from mobile/e2e/fixtures,
-# recorded from the same test server (`server.mjs record`).
+# recorded from the same seeded test server (`server.mjs seed`, then
+# `server.mjs record`).
 
 on:
   pull_request:
@@ -80,6 +81,9 @@ jobs:
         run: docker compose -p "$PROJECT" -f keepiq/browser-extension/capture/compose.yaml up -d
       - name: Provision it
         run: bash keepiq/browser-extension/capture/setup.sh "$PROJECT" keepiq openregister
+      # The demo vault the vault tests read: example.com names, all fake.
+      - name: Seed the demo vault
+        run: node keepiq/mobile/e2e/server.mjs seed --upstream http://localhost:8188
       - name: The https front the emulator reaches at 10.0.2.2
         run: |
           occ() { docker exec -u www-data "$PROJECT-nc-1" php occ "$@"; }

@@ -66,7 +66,7 @@ struct GeneratorView: View {
                 if policy?.allowPassphrase == false { Text(L("gen_passphrase_off")).font(.footnote) }
                 HStack {
                     if let value = outcome.value {
-                        Text(value).font(.body.monospaced()).textSelection(.disabled)
+                        Text(value).font(.body.monospaced()).textSelection(.disabled).accessibilityIdentifier("generated")
                     } else {
                         Text(generatorProblem(outcome.error)).foregroundStyle(.red)
                     }
@@ -290,7 +290,7 @@ struct NewSendView: View {
             if let created {
                 Section {
                     Text(created.hasPassword ? L("send_created_password") : L("send_created"))
-                    Text(created.link).font(.footnote).textSelection(.enabled)
+                    Text(created.link).font(.footnote).textSelection(.enabled).accessibilityIdentifier("sendLink")
                     if let url = URL(string: created.link) {
                         ShareLink(item: url) { Label(L("action_share"), systemImage: "square.and.arrow.up") }
                     }

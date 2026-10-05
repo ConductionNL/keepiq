@@ -520,8 +520,9 @@ function vaultAnswer(f, vault, sends, method, path, url, body) {
 		const b = json()
 		const id = randomUUID()
 		const at = new Date()
+		const { token: _recordedToken, ...shape } = f.sendListed || {}
 		const listed = {
-			...(f.sendListed || {}),
+			...shape,
 			id,
 			payloadType: b.payloadType || 'text',
 			maxViews: b.maxViews ?? 1,
