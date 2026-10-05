@@ -19,15 +19,20 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\AppInfo;
 
-use Closure;
 use OCA\Keepiq\Mcp\KeepiqScannableServices;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
  * Registers Keepiq's MCP opt-in: the IMcpScannableServices::keepiq alias that
- * tells OpenRegister's scanner which classes carry #[McpTool]. Only when
- * OpenRegister is present and enabled; otherwise nothing is registered and
- * Keepiq has no MCP surface at all.
+ * tells OpenRegister's scanner which classes carry #[McpTool].
+ *
+ * The alias is registered on every instance and is inert without
+ * OpenRegister. Both arguments are strings, so registering it autoloads
+ * nothing: `KeepiqScannableServices` (which implements an OpenRegister
+ * interface) and the tool classes load only when OpenRegister's scanner
+ * resolves the alias, which can only happen while OpenRegister runs and its
+ * own autoload prefix is registered. Without OpenRegister nobody asks, and
+ * Keepiq has no MCP surface (ADR-006).
  *
  * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-surface-is-exposed-only-through-the-scannable-services-opt-in
  */
@@ -41,34 +46,15 @@ class McpRegistrar {
 	public const ALIAS = 'OCA\\OpenRegister\\Mcp\\IMcpScannableServices::keepiq';
 
 	/**
-	 * Constructor.
-	 *
-	 * @param Closure|null $openRegisterPresent Answers whether OpenRegister is
-	 *                                          enabled; OpenRegisterAutoloader::register() when null.
-	 *
-	 * @return void
-	 */
-	public function __construct(private ?Closure $openRegisterPresent = null) {
-	}//end __construct()
-
-	/**
-	 * Register the alias when OpenRegister is there.
+	 * Register the inert scannable-services alias.
 	 *
 	 * @param IRegistrationContext $context The registration context
 	 *
-	 * @return bool Whether the alias was registered
-	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) The prelude is static by design (see OpenRegisterAutoloader).
+	 * @return void
 	 *
 	 * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-surface-is-exposed-only-through-the-scannable-services-opt-in
 	 */
-	public function register(IRegistrationContext $context): bool {
-		$present = $this->openRegisterPresent ?? static fn (): bool => OpenRegisterAutoloader::register();
-		if ($present() !== true) {
-			return false;
-		}
-
+	public function register(IRegistrationContext $context): void {
 		$context->registerServiceAlias(self::ALIAS, KeepiqScannableServices::class);
-		return true;
 	}//end register()
 }//end class

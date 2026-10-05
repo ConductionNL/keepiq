@@ -41,7 +41,6 @@ class OfflineEditsSettingTest extends TestCase {
 	private function service(IAppConfig $appConfig): AdminSettingsService {
 		return new AdminSettingsService(
 			appConfig: $appConfig,
-			appManager: $this->createMock(IAppManager::class),
 			container: $this->createMock(ContainerInterface::class),
 			userSession: $this->createMock(IUserSession::class),
 			logger: $this->createMock(LoggerInterface::class),

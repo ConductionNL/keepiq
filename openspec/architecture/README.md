@@ -8,6 +8,17 @@ ADRs document significant design decisions, their context, the reasoning behind 
 
 ADRs are created and refined during `/opsx:app-explore` sessions.
 
+## Index
+
+| ADR | Title | Status |
+|-----|-------|--------|
+| [ADR-001](adr-001-own-database-tables.md) | Own database tables | accepted |
+| [ADR-002](adr-002-polymorphic-encryption-suite-ownership.md) | Polymorphic encryption-suite ownership | accepted |
+| [ADR-003](adr-003-rsa-aes-encryption-architecture.md) | RSA/AES encryption architecture | accepted |
+| [ADR-004](adr-004-secrets-in-app-local-encrypted-tables.md) | Secrets in app-local encrypted tables, not OpenRegister | accepted |
+| [ADR-005](adr-005-admin-suite-force-revocation-and-compromise-signalling.md) | Administrator suite force-revocation and compromise signalling | accepted |
+| [ADR-006](adr-006-keepiq-is-independently-usable.md) | Keepiq is independently usable and runs its own app shell | accepted |
+
 ## Naming Convention
 
 Files are named `adr-{NNN}-{slug}.md` with sequential numbering:

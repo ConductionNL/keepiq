@@ -3,7 +3,8 @@
 /**
  * Keepiq Initialize Settings Repair Step
  *
- * Repair step that initializes Keepiq register and schemas on install/upgrade.
+ * Repair step that seeds Keepiq's default app config on install/upgrade and
+ * records the configured version the admin version card compares against.
  *
  * @category Repair
  * @package  OCA\Keepiq\Repair
@@ -22,15 +23,15 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Repair;
 
 use OCA\Keepiq\AppInfo\Application;
-use OCA\Keepiq\Service\SettingsService;
+use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
-use Psr\Log\LoggerInterface;
-use Throwable;
 
 /**
- * Repair step that initializes Keepiq configuration via SettingsService.
+ * Repair step that seeds Keepiq's default configuration.
+ *
+ * @spec openspec/specs/app-shell/spec.md#requirement-native-admin-section-and-version-card
  */
 class InitializeSettings implements IRepairStep {
 	private const DEFAULT_CONFIG = [
@@ -51,16 +52,14 @@ class InitializeSettings implements IRepairStep {
 	/**
 	 * Constructor for InitializeSettings.
 	 *
-	 * @param SettingsService $settingsService The settings service
-	 * @param IAppConfig $appConfig The app config interface
-	 * @param LoggerInterface $logger The logger interface
+	 * @param IAppConfig  $appConfig  The app config interface
+	 * @param IAppManager $appManager The app manager (installed version)
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private SettingsService $settingsService,
 		private IAppConfig $appConfig,
-		private LoggerInterface $logger,
+		private IAppManager $appManager,
 	) {
 	}//end __construct()
 
@@ -70,7 +69,7 @@ class InitializeSettings implements IRepairStep {
 	 * @return string
 	 */
 	public function getName(): string {
-		return 'Initialize Keepiq register and schemas via ConfigurationService';
+		return 'Initialize Keepiq default configuration';
 	}//end getName()
 
 	/**
@@ -80,7 +79,7 @@ class InitializeSettings implements IRepairStep {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-6
+	 * @spec openspec/specs/app-shell/spec.md#requirement-native-admin-section-and-version-card
 	 */
 	public function run(IOutput $output): void {
 		$output->info('Initializing Keepiq configuration...');
@@ -94,44 +93,12 @@ class InitializeSettings implements IRepairStep {
 			}
 		}
 
-		if ($this->settingsService->isOpenRegisterAvailable() === false) {
-			$output->warning(
-				'OpenRegister is not installed or enabled. Skipping auto-configuration.'
-			);
-			$this->logger->warning(
-				'Keepiq: OpenRegister not available, skipping register initialization'
-			);
-			return;
-		}
-
-		try {
-			// NOT forced. `force: true` bypasses OpenRegister's app-level import fast-skip
-			// (gated on `$force === false`), so this step re-parsed the register descriptor +
-			// register.d fragments and walked every register/schema on EVERY upgrade, even when
-			// nothing changed. Forcing was never needed: the version passed to OR is
-			// content-addressed (`+frag.<md5 of the fragments>`), so a content change already
-			// bumps the version and re-imports; OpenRegister#426 additionally makes the gate
-			// content-aware. A genuinely unchanged config now fast-skips in milliseconds.
-			$result = $this->settingsService->loadConfiguration();
-
-			if ($result['success'] === true) {
-				$version = ($result['version'] ?? 'unknown');
-				$output->info(
-					'Keepiq configuration imported successfully (version: ' . $version . ')'
-				);
-				return;
-			}
-
-			$message = ($result['message'] ?? 'unknown error');
-			$output->warning(
-				'Keepiq configuration import issue: ' . $message
-			);
-		} catch (Throwable $e) {
-			$output->warning('Could not auto-configure Keepiq: ' . $e->getMessage());
-			$this->logger->error(
-				'Keepiq initialization failed',
-				['exception' => $e->getMessage()]
-			);
-		}//end try
+		// The version the admin version card compares the installed version
+		// with. Keepiq imports no configuration from another app (ADR-006), so
+		// seeding the defaults above IS the configuration step: once it has
+		// run, the configuration is current for this version.
+		$version = $this->appManager->getAppVersion(Application::APP_ID);
+		$this->appConfig->setValueString(Application::APP_ID, 'config_version', $version);
+		$output->info('Keepiq configuration is current (version: ' . $version . ')');
 	}//end run()
 }//end class

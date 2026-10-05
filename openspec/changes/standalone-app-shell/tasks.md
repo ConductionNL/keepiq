@@ -1,20 +1,20 @@
 ## 1. Decision record
 
-- [ ] 1.1 Write `openspec/architecture/adr-006-keepiq-is-independently-usable.md` (design D7): status accepted 2026-10-05, the exception to hydra ADR-040 and ADR-022, ADR-110's flow engine kept OpenRegister-only behind a presence gate, and the gate consequences (gate-64 n/a, gate-59 closed, gate-30 via `#[AuthorizedAdminSetting]`, gates 5/14 on real controllers). Add it to `openspec/architecture/README.md`.
+- [x] 1.1 Write `openspec/architecture/adr-006-keepiq-is-independently-usable.md` (design D7): status accepted 2026-10-05, the exception to hydra ADR-040 and ADR-022, ADR-110's flow engine kept OpenRegister-only behind a presence gate, and the gate consequences (gate-64 n/a, gate-59 closed, gate-30 via `#[AuthorizedAdminSetting]`, gates 5/14 on real controllers). Add it to `openspec/architecture/README.md`.
   - The ADR names Ruben's in-person agreement and the product-owner decision.
   - ADR-004's sentence "the only OR touchpoint is `InitializeSettings`" is updated to point at ADR-006.
 
 ## 2. Backend shell
 
-- [ ] 2.1 Remove the AppHost wiring from `lib/AppInfo/Application.php` (the `Bootstrap` import, the `bootstrapAppHost()` call, the boot-time `reportFailure()`), delete `lib/AppInfo/OpenRegisterAutoloader.php`, and drop the AppHost "override" framing in `DomainOverrideRegistrar` and `AdminAreaRegistrar` while keeping their bindings (design D1).
+- [x] 2.1 Remove the AppHost wiring from `lib/AppInfo/Application.php` (the `Bootstrap` import, the `bootstrapAppHost()` call, the boot-time `reportFailure()`), delete `lib/AppInfo/OpenRegisterAutoloader.php`, and drop the AppHost "override" framing in `DomainOverrideRegistrar` and `AdminAreaRegistrar` while keeping their bindings (design D1).
   - `grep -rn 'OpenRegister\\\\AppHost' lib appinfo` returns nothing.
-- [ ] 2.2 Make `McpRegistrar` register the scannable-services alias unconditionally as a string alias, and remove the `$openRegisterPresent` seam (design D5).
+- [x] 2.2 Make `McpRegistrar` register the scannable-services alias unconditionally as a string alias, and remove the `$openRegisterPresent` seam (design D5).
   - Registering loads no `OCA\OpenRegister\` name and no `OCA\Keepiq\Mcp\` class.
-- [ ] 2.3 Rewrite `appinfo/routes.php` as one static table: the #892 fallback plus `health#index`, `metrics#index`, `preferences#getPreference`, `preferences#setPreference`. No `class_exists`, no `settings#load`, no `store#…`, catch-all last (design D2).
-- [ ] 2.4 Add `lib/Controller/HealthController.php` (public; `database` and `filesystem` checks; `ok`/`degraded`/`error` with 503; only short exception class names in `failed:`) and `lib/Controller/MetricsController.php` (`#[AuthorizedAdminSetting(settings: AdminSettings::class)]`, Prometheus 0.0.4, `keepiq_info`, `keepiq_up`, `keepiq_suites_total` as one filtered COUNT) (design D3).
-- [ ] 2.5 Add `lib/Controller/PreferencesController.php` as a port of the AppHost preferences contract: `[^a-z0-9-]` stripped, lower-cased, 64-character cap, `pref_<key>` user value of app `keepiq`, empty PUT deletes (design D3).
-- [ ] 2.6 Change `lib/Sections/SettingsSection.php` to implement `OCP\Settings\IIconSection` with id `keepiq` and its current name, priority and icon (design D4).
-- [ ] 2.7 Delete `lib/Service/RegisterConfigurationLoader.php`, `lib/Settings/keepiq_register.json`, `lib/Repair/MigrateSchemaApplicationId.php`, replacing it in the same `info.xml` `<step>` slot with a new `RemoveLegacyRegisterRows` repair step (spec: Legacy OpenRegister Rows Are Removed When Empty; unit tests for all three scenarios), `SettingsService`/`AdminSettingsService::loadConfiguration()` and `SettingsController::load()`. Remove `isOpenRegisterAvailable()` and its skip branch from `InitializeSettings`, which now writes `config_version` = installed version after seeding. Delete the gate-59 exclude comment in `AdminSettings::provideAreaState()` (design D4).
+- [x] 2.3 Rewrite `appinfo/routes.php` as one static table: the #892 fallback plus `health#index`, `metrics#index`, `preferences#getPreference`, `preferences#setPreference`. No `class_exists`, no `settings#load`, no `store#…`, catch-all last (design D2).
+- [x] 2.4 Add `lib/Controller/HealthController.php` (public; `database` and `filesystem` checks; `ok`/`degraded`/`error` with 503; only short exception class names in `failed:`) and `lib/Controller/MetricsController.php` (`#[AuthorizedAdminSetting(settings: AdminSettings::class)]`, Prometheus 0.0.4, `keepiq_info`, `keepiq_up`, `keepiq_suites_total` as one filtered COUNT) (design D3).
+- [x] 2.5 Add `lib/Controller/PreferencesController.php` as a port of the AppHost preferences contract: `[^a-z0-9-]` stripped, lower-cased, 64-character cap, `pref_<key>` user value of app `keepiq`, empty PUT deletes (design D3).
+- [x] 2.6 Change `lib/Sections/SettingsSection.php` to implement `OCP\Settings\IIconSection` with id `keepiq` and its current name, priority and icon (design D4).
+- [x] 2.7 Delete `lib/Service/RegisterConfigurationLoader.php`, `lib/Settings/keepiq_register.json`, `lib/Repair/MigrateSchemaApplicationId.php`, replacing it in the same `info.xml` `<step>` slot with a new `RemoveLegacyRegisterRows` repair step (spec: Legacy OpenRegister Rows Are Removed When Empty; unit tests for all three scenarios), `SettingsService`/`AdminSettingsService::loadConfiguration()` and `SettingsController::load()`. Remove `isOpenRegisterAvailable()` and its skip branch from `InitializeSettings`, which now writes `config_version` = installed version after seeding. Delete the gate-59 exclude comment in `AdminSettings::provideAreaState()` (design D4).
   - The `register.d/` README is removed, or rewritten if anything else still references it.
 
 ## 3. Frontend shell and gating

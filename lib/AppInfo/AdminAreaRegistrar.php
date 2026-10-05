@@ -30,21 +30,22 @@ use OCA\Keepiq\Settings\PolicyAdminSettings;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
- * Binds every admin area id to an instance of exactly that class. MUST run
- * after the AppHost engine, like DomainOverrideRegistrar.
+ * Binds every admin area id to an instance of exactly that class.
+ *
+ * @spec openspec/specs/app-shell/spec.md#requirement-native-admin-section-and-version-card
  */
 final class AdminAreaRegistrar {
 	/**
 	 * Register the five admin area classes as themselves
 	 * (admin-scoped-roles D1).
 	 *
-	 * The AppHost engine binds `AdminSettings` to an instance of its generic
-	 * class, so `get_class()` on the delegation page and in
-	 * `IManager::getAllowedAdminSettings()` named the generic, never Keepiq's
-	 * class, and a delegation could never satisfy
-	 * `#[AuthorizedAdminSetting(AdminSettings::class)]`. Registering the
-	 * concrete classes here, after the engine, makes the registered instance
-	 * the class a guard names.
+	 * `get_class()` on the delegation page and in
+	 * `IManager::getAllowedAdminSettings()` must name Keepiq's own class, or a
+	 * delegation can never satisfy
+	 * `#[AuthorizedAdminSetting(AdminSettings::class)]`. Registering each
+	 * concrete class as itself makes the registered instance the class a
+	 * guard names. (Under the former AppHost engine, `AdminSettings` was
+	 * bound to a generic class, which is why this registrar exists.)
 	 *
 	 * @param IRegistrationContext $context The registration context
 	 *

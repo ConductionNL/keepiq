@@ -5,27 +5,15 @@ declare(strict_types=1);
 /*
  * Keepiq route table.
  *
- * The canonical AppHost plumbing routes (dashboard page + SPA catch-all,
- * settings index/create/load, per-user preferences, and the observability
- * endpoints health#index / metrics#index) are provided by
- * \OCA\OpenRegister\AppHost\Routes::standard(). The /api/health and
- * /api/metrics URLs are unchanged; their controllers are aliased to the
- * AppHost generic controllers by Bootstrap::register() in Application.php.
- *
- * Every Keepiq domain route is appended via $extra below. It is inserted
- * before the SPA catch-all so it keeps priority over the /{path} fallback.
- *
- * The AppHost builder is called behind a class_exists() guard. Nextcloud's
+ * One static table, the same on every instance: Keepiq runs its own app
+ * shell and references no class from another app (ADR-006). Nextcloud's
  * router requires this file for every enabled app on every route-cache miss,
- * so an unguarded call to a class from another app throws when OpenRegister
- * is not installed, or installed but disabled (the autoloader prelude skips a
- * disabled OpenRegister since #712). That throw is not confined to Keepiq: it
- * answers HTTP 500 on every page of the instance, the login page and the apps
- * page included (#857, #867). Without OpenRegister the fallback below routes
- * the dashboard and settings controllers Keepiq ships itself, the domain
- * routes and the SPA catch-all. The AppHost-only routes (preferences, health,
- * metrics) are left out, because their controllers only exist as aliases to
- * OpenRegister classes: a 404 there is honest, a 500 is not.
+ * so it must never depend on another app being installed or enabled; a throw
+ * here answers HTTP 500 on every page of the instance (#857, #867).
+ *
+ * Layout: the shell routes (dashboard page, settings, per-user preferences,
+ * health, metrics), then every Keepiq domain route in $extra, then the SPA
+ * catch-all, which must stay last so it never shadows an earlier route.
  */
 
 $extra = [
@@ -238,7 +226,7 @@ $extra = [
     // with base /apps/keepiq/public, so recipient links are PATHS
     // (/public/share/link/{token}, /public/send/{token},
     // /public/share/request/{token}) and a load or refresh of any of them
-    // must serve the shell. Mirrors the AppHost dashboard#page +
+    // must serve the shell. Mirrors the dashboard#page +
     // dashboard#catchAll split: a distinct name, because Symfony silently
     // replaces same-named routes. Sits in $extra, so it precedes the
     // authenticated /{path} fallback.
@@ -545,16 +533,6 @@ $extra = [
     ['name' => 'secretOrganisation#used', 'url' => '/api/v1/extension/used/{id}', 'verb' => 'POST'],
 ];
 
-// Preferred path: OpenRegister's AppHost owns the canonical route table.
-// class_exists() autoloads, and answers false rather than throwing when the
-// class cannot be loaded.
-if (class_exists('OCA\OpenRegister\AppHost\Routes') === true) {
-    return \OCA\OpenRegister\AppHost\Routes::standard($extra);
-}
-
-// Fallback: OpenRegister is missing or disabled. Keep the routes whose
-// controllers Keepiq ships itself, so the instance stays up and Keepiq
-// degrades per endpoint instead of taking every app down with it.
 return [
     'routes' => array_merge(
         [
@@ -562,7 +540,12 @@ return [
             ['name' => 'settings#index', 'url' => '/api/settings', 'verb' => 'GET'],
             ['name' => 'settings#create', 'url' => '/api/settings', 'verb' => 'POST'],
             ['name' => 'settings#update', 'url' => '/api/settings', 'verb' => 'PUT'],
-            ['name' => 'settings#load', 'url' => '/api/settings/load', 'verb' => 'POST'],
+            // Per-user UI preferences, such as the walkthrough's completed version.
+            ['name' => 'preferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
+            ['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
+            // Observability (hydra ADR-006): health is public, metrics admin-only.
+            ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
+            ['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
         ],
         $extra,
         [

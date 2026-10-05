@@ -25,7 +25,6 @@ use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\SettingsService;
-use OCA\Keepiq\Settings\AdminSettings;
 use OCA\Keepiq\Settings\PolicyAdminSettings;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -90,17 +89,8 @@ class SettingsController extends Controller {
 	/**
 	 * Update settings with provided data (admin only).
 	 *
-	 * This is the canonical AppHost write, matching
-	 * {@see \OCA\OpenRegister\AppHost\Controller\GenericSettingsControllerBase::update()}.
-	 * `\OCA\OpenRegister\AppHost\Routes::standard()` — which `appinfo/routes.php`
-	 * returns wholesale — ships `['name' => 'settings#update', 'url' =>
-	 * '/api/settings', 'verb' => 'PUT']`, and because Keepiq ships its own
-	 * `SettingsController` class the AppHost generic is never aliased in
-	 * (`AppHost\Bootstrap::aliasControllerUnlessLeafDefinesIt()` only binds the
-	 * alias when the leaf does NOT define the class). So this method has to
-	 * exist here: without it the router matches the URL, the dispatcher
-	 * reflects the method, and the request dies with a 500 ReflectionException
-	 * rather than a 404.
+	 * Routed as `settings#update` (`PUT /api/settings`) in Keepiq's own route
+	 * table.
 	 *
 	 * The write itself delegates to {@see SettingsService::updateSettings()},
 	 * which persists the app-scoped `CONFIG_KEYS` via `IAppConfig` and returns
@@ -171,25 +161,6 @@ class SettingsController extends Controller {
 	public function create(): JSONResponse {
 		return $this->update();
 	}//end create()
-
-	/**
-	 * Re-import the configuration from keepiq_register.json (admin only).
-	 *
-	 * Forces a fresh import regardless of version, auto-configuring
-	 * all schema and register IDs from the import result.
-	 *
-	 * @AuthorizedAdminSetting(AdminSettings::class)
-	 *
-	 * @return JSONResponse
-	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-5
-	 */
-	#[AuthorizedAdminSetting(AdminSettings::class)]
-	public function load(): JSONResponse {
-		$result = $this->settingsService->loadConfiguration(force: true);
-
-		return new JSONResponse(data: $result);
-	}//end load()
 
 	/**
 	 * How many users a two-factor vault policy for these groups covers, and

@@ -183,7 +183,6 @@ class SettingsService {
 	) {
 		$this->adminSettings = ($adminSettings ?? new AdminSettingsService(
 			appConfig: $appConfig,
-			appManager: $appManager,
 			container: $container,
 			userSession: $userSession,
 			logger: $logger,
@@ -261,23 +260,6 @@ class SettingsService {
 	public function getPolicy(): array {
 		return $this->adminSettings->getPolicy(userId: $this->userSession->getUser()?->getUID());
 	}//end getPolicy()
-
-	/**
-	 * Load configuration from keepiq_register.json via OpenRegister.
-	 *
-	 * @param bool $force Force re-import even if already configured.
-	 *
-	 * @return array<string,mixed> Result with success flag, message, and version.
-	 *
-	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $force is passed straight through to
-	 *   OpenRegister's ADR-022 importFromApp(appId, data, version, force) signature; it is
-	 *   never a branch here. See RegisterConfigurationLoader::loadConfiguration().
-	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-6
-	 */
-	public function loadConfiguration(bool $force = false): array {
-		return $this->adminSettings->loadConfiguration(force: $force);
-	}//end loadConfiguration()
 
 	/**
 	 * Get the per-user preferences (implement-dashboard-settings §1.5).

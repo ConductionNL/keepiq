@@ -137,30 +137,6 @@ class SettingsControllerTest extends TestCase {
 	}//end testCreateCallsUpdateSettingsAndReturnsSuccess()
 
 	/**
-	 * Test that load() returns the result of loadConfiguration.
-	 *
-	 * @return void
-	 */
-	public function testLoadReturnsConfigurationResult(): void {
-		$loadResult = [
-			'success' => true,
-			'message' => 'Configuration imported successfully.',
-			'version' => '0.1.0',
-		];
-
-		$this->settingsService->expects($this->once())
-			->method('loadConfiguration')
-			->with(force: true)
-			->willReturn($loadResult);
-
-		$result = $this->controller->load();
-
-		self::assertInstanceOf(JSONResponse::class, $result);
-		self::assertTrue($result->getData()['success']);
-
-	}//end testLoadReturnsConfigurationResult()
-
-	/**
 	 * Test that getGeneralSettings() returns the General area settings from the service.
 	 *
 	 * @return void

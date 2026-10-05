@@ -64,7 +64,6 @@ class ExtensionControllerTest extends TestCase {
 		);
 		$settings = new AdminSettingsService(
 			appConfig: $appConfig,
-			appManager: $this->createMock(IAppManager::class),
 			container: $this->createMock(ContainerInterface::class),
 			userSession: $session,
 			logger: $this->createMock(LoggerInterface::class),
@@ -230,7 +229,6 @@ class ExtensionControllerTest extends TestCase {
 		$appConfig->expects($this->once())->method('setValueInt')->with('keepiq', 'extension_max_idle_minutes', 30);
 		$settings = new AdminSettingsService(
 			appConfig: $appConfig,
-			appManager: $this->createMock(IAppManager::class),
 			container: $this->createMock(ContainerInterface::class),
 			userSession: $this->createMock(IUserSession::class),
 			logger: $this->createMock(LoggerInterface::class),
