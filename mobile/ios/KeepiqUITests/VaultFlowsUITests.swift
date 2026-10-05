@@ -126,6 +126,17 @@ final class VaultFlowsUITests: XCTestCase {
         }
     }
 
+    /// Keepiq's own forms never make iOS offer "Save Password?". Should it
+    /// come anyway, the test answers it, so the rest still runs, and fails.
+    private func expectNoSavePasswordPrompt() {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        for owner in [app!, springboard] where owner.buttons["Not Now"].waitForExistence(timeout: 3) {
+            owner.buttons["Not Now"].tap()
+            XCTFail("iOS offered to save a password from Keepiq's item form")
+            return
+        }
+    }
+
     /// The save-password prompt, if it is up right now, without waiting for it.
     private func dismissSavePasswordNow() {
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
@@ -225,8 +236,8 @@ final class VaultFlowsUITests: XCTestCase {
         shot("35-generate-in-form")
         tap(app.buttons["Use this"])
         tap(scrolledTo(app.buttons["Save"]))
-        // Saving a login with a password makes iOS offer to keep it.
-        declineSavePassword()
+        // The item form types its secrets as one-time codes, so iOS does not offer to keep them.
+        expectNoSavePasswordPrompt()
         XCTAssertTrue(text("Shop (demo)").waitForExistence(timeout: 60))
         tap(text("Shop (demo)"))
         tap(app.buttons["Show Password"], timeout: 60)
@@ -242,8 +253,8 @@ final class VaultFlowsUITests: XCTestCase {
         name.typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: 20))
         name.typeText("Shop account (demo)")
         tap(scrolledTo(app.buttons["Save"]))
-        // Saving a login with a password makes iOS offer to keep it.
-        declineSavePassword()
+        // The item form types its secrets as one-time codes, so iOS does not offer to keep them.
+        expectNoSavePasswordPrompt()
         XCTAssertTrue(text("Shop account (demo)").waitForExistence(timeout: 60))
         shot("37-edited")
 
