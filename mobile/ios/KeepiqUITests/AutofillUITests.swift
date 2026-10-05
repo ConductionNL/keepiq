@@ -43,13 +43,28 @@ final class AutofillUITests: XCTestCase {
         }
     }
 
-    /// iOS may still show its own "Save Password?" prompt over the app. It runs
-    /// in a system process the test cannot query, so when an element exists but
-    /// cannot be tapped, the test taps the prompt's "Not Now" (left button, just
-    /// below the middle of the screen) and tries again.
-    private func dismissSystemSavePrompt(blocking element: XCUIElement? = nil) {
-        if let element, element.exists, !element.isHittable {
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.31, dy: 0.63)).tap()
+    /// iOS may show its own "Save Password?" prompt after a sign-in or a save.
+    /// It is not Keepiq's, so the test answers "Not Now" when it is up.
+    private func dismissSystemSavePrompt() {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        for owner in [app!, springboard] where owner.buttons["Not Now"].exists {
+            owner.buttons["Not Now"].tap()
+            return
+        }
+    }
+
+    /// Makes an element tappable: answers the prompt, hides the keyboard that
+    /// covers the lower half of a form, or scrolls the element into view.
+    private func makeHittable(_ element: XCUIElement) {
+        dismissSystemSavePrompt()
+        if element.isHittable { return }
+        if app.keyboards.count > 0 {
+            // Return ends editing in a SwiftUI field and lowers the keyboard.
+            let keys = app.keyboards.buttons.matching(
+                NSPredicate(format: "label IN %@", ["Return", "return", "Done", "done"]))
+            if keys.firstMatch.exists { keys.firstMatch.tap() } else { app.swipeDown(velocity: .slow) }
+        } else {
+            app.swipeUp(velocity: .slow)
         }
     }
 
@@ -62,7 +77,7 @@ final class AutofillUITests: XCTestCase {
         while Date() < end {
             if element.waitForExistence(timeout: 1) {
                 if element.isHittable { return true }
-                dismissSystemSavePrompt(blocking: element)
+                makeHittable(element)
             }
         }
         return element.exists && element.isHittable
