@@ -187,20 +187,17 @@ class McpSurfaceTest extends TestCase {
 	}//end testScannableSurfaceIsExactlyThreeReadTools()
 
 	/**
-	 * 1.5: the alias is registered with OpenRegister present, and not without.
+	 * The alias is registered unconditionally, as two strings, and is inert
+	 * without OpenRegister (standalone-app-shell D5).
 	 *
 	 * @return void
 	 */
-	public function testAliasOnlyWithOpenRegister(): void {
+	public function testAliasIsRegisteredInertly(): void {
 		$context = $this->createMock(IRegistrationContext::class);
 		$context->expects($this->once())->method('registerServiceAlias')
 			->with('OCA\\OpenRegister\\Mcp\\IMcpScannableServices::keepiq', KeepiqScannableServices::class);
-		$this->assertTrue((new McpRegistrar(openRegisterPresent: static fn (): bool => true))->register($context));
-
-		$absent = $this->createMock(IRegistrationContext::class);
-		$absent->expects($this->never())->method('registerServiceAlias');
-		$this->assertFalse((new McpRegistrar(openRegisterPresent: static fn (): bool => false))->register($absent));
-	}//end testAliasOnlyWithOpenRegister()
+		(new McpRegistrar())->register($context);
+	}//end testAliasIsRegisteredInertly()
 
 	/**
 	 * Entry tool over a SecretService that answers per user.

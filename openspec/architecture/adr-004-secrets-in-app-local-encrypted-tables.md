@@ -30,10 +30,10 @@ server. This falls under ADR-070's first recognised exception class.
 At HEAD, `lib/Db/` holds ~32 Entity+QBMapper pairs (64 files) over 30 schema
 migrations, with zero `ObjectService` data-path references. Ciphertext lives
 in typed columns (`Secret`, `SecretVersion`, encrypted `Attachment` blobs
-with AES-GCM-encrypted metadata); the only OR touchpoint is
-`lib/Repair/InitializeSettings.php`, which imports a register *scaffold* when
-OR happens to be installed and skips cleanly when it is not — no secret
-material ever flows through OR.
+with AES-GCM-encrypted metadata); no secret material ever flows through OR.
+(This ADR originally named `lib/Repair/InitializeSettings.php`'s register
+*scaffold* import as the only OR touchpoint. That import is gone: Keepiq is
+independently usable and runs its own app shell, see ADR-006.)
 
 ## Decision
 

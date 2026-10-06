@@ -35,6 +35,7 @@ use OCA\Keepiq\Controller\AuditController;
 use OCA\Keepiq\Controller\CACertificateController;
 use OCA\Keepiq\Controller\EncryptionSuiteController;
 use OCA\Keepiq\Controller\MemberOverviewController;
+use OCA\Keepiq\Controller\MetricsController;
 use OCA\Keepiq\Controller\RecoveryAdminController;
 use OCA\Keepiq\Controller\SettingsController;
 use OCA\Keepiq\Service\AdminAreaAuthorizer;
@@ -113,7 +114,8 @@ class AdminAreaGuardTest extends TestCase {
 			'auditor cannot manage account recovery' => [$audit, RecoveryAdminController::class, 'update', false],
 			// General holder (also the old whole-section delegation).
 			'general renews the CA' => [$general, CACertificateController::class, 'renewRoot', true],
-			'general re-imports' => [$general, SettingsController::class, 'load', true],
+			'general scrapes metrics' => [$general, MetricsController::class, 'index', true],
+			'auditor cannot scrape metrics' => [$audit, MetricsController::class, 'index', false],
 			'general cannot force-revoke' => [$general, EncryptionSuiteController::class, 'forceRevoke', false],
 			'general cannot PUT policies' => [$general, AdminAreaSettingsController::class, 'updatePolicySettings', false],
 			'general cannot lower the master password floor' => [$general, SettingsController::class, 'update', false],

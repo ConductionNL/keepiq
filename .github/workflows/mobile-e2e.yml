@@ -3,7 +3,7 @@ name: Mobile e2e
 # End-to-end tests of the native apps (clients-mobile-apps), with
 # screenshots and video of the flows as artifacts.
 #
-# Android: the Nextcloud with Keepiq and OpenRegister of
+# Android: the Nextcloud with Keepiq (alone, ADR-006) of
 # browser-extension/capture (the same setup docs-media.yml uses), behind the
 # https front of mobile/e2e/server.mjs, and an emulator that reaches it at
 # https://10.0.2.2:8443. The e2e build type trusts that run's certificate;
@@ -53,12 +53,6 @@ jobs:
         with:
           path: keepiq
           persist-credentials: false
-      - uses: actions/checkout@v4
-        with:
-          repository: ConductionNL/openregister
-          ref: development
-          path: openregister
-          persist-credentials: false
       - uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
@@ -73,14 +67,13 @@ jobs:
           node-version: "24"
 
       # The API is all the apps use, so neither front end is built.
-      - name: PHP dependencies of Keepiq and OpenRegister
+      - name: PHP dependencies of Keepiq
         run: |
           composer install --no-dev --prefer-dist --no-interaction --working-dir=keepiq
-          composer install --no-dev --prefer-dist --no-interaction --working-dir=openregister
       - name: Start the test server
         run: docker compose -p "$PROJECT" -f keepiq/browser-extension/capture/compose.yaml up -d
       - name: Provision it
-        run: bash keepiq/browser-extension/capture/setup.sh "$PROJECT" keepiq openregister
+        run: bash keepiq/browser-extension/capture/setup.sh "$PROJECT" keepiq
       # The demo vault the vault tests read: example.com names, all fake.
       - name: Seed the demo vault
         run: node keepiq/mobile/e2e/server.mjs seed --upstream http://localhost:8188

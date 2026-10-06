@@ -1,8 +1,8 @@
 name: Federation (two instances)
 
 # The two-instance test of federated sharing (sharing-federated-recipients
-# task 5.1): two Nextcloud 35 containers on one network, each with Keepiq and
-# OpenRegister, partners pinned on both sides, then a browser shares a secret
+# task 5.1): two Nextcloud 35 containers on one network, each with Keepiq
+# alone (it needs no other app, ADR-006), partners pinned on both sides, then a browser shares a secret
 # from A to a user of B, B accepts and reads it, A updates it and revokes it.
 # See tests/integration/federation/.
 
@@ -37,20 +37,14 @@ jobs:
         with:
           path: keepiq
           persist-credentials: false
-      - uses: actions/checkout@v4
-        with:
-          repository: ConductionNL/openregister
-          ref: development
-          path: openregister
-          persist-credentials: false
       - uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
           tools: composer:v2
       - uses: actions/setup-node@v4
         with:
-          # npm 11, which both lockfiles need (engines: npm ^11); Node 22
-          # ships npm 10, whose `npm ci` misreads them.
+          # npm 11, which the lockfile needs (engines: npm ^11); Node 22
+          # ships npm 10, whose `npm ci` misreads it.
           node-version: "24"
 
       - name: Build Keepiq
@@ -59,17 +53,11 @@ jobs:
           composer install --no-dev --prefer-dist --no-interaction
           npm ci
           npm run build
-      - name: Build OpenRegister
-        working-directory: openregister
-        run: |
-          composer install --no-dev --prefer-dist --no-interaction
-          npm ci
-          npm run build
 
       - name: Start the two instances
         run: docker compose -p kq-fed -f keepiq/tests/integration/federation/compose.yaml up -d
       - name: Provision both instances and pin the partners
-        run: bash keepiq/tests/integration/federation/setup.sh kq-fed keepiq openregister
+        run: bash keepiq/tests/integration/federation/setup.sh kq-fed keepiq
 
       - name: Install the browser
         working-directory: keepiq

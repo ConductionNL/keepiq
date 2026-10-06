@@ -47,7 +47,6 @@ class TrashRetentionSettingTest extends TestCase {
 		$this->appConfig = $this->createMock(IAppConfig::class);
 		$this->service = new AdminSettingsService(
 			appConfig: $this->appConfig,
-			appManager: $this->createMock(IAppManager::class),
 			container: $this->createMock(ContainerInterface::class),
 			userSession: $this->createMock(IUserSession::class),
 			logger: $this->createMock(LoggerInterface::class),

@@ -183,12 +183,10 @@ jobs:
       enable-eslint: true
       enable-phpunit: true
       enable-newman: true
-      # Keepiq adopts OpenRegister's AppHost engine in lib/AppInfo/Application.php
-      # (ADR-040 / ADR-022) and ships lib/Settings/keepiq_register.json, so
-      # OpenRegister must be present in the test instance — otherwise
-      # SettingsService::isOpenRegisterAvailable() is false, InitializeSettings
-      # skips the register import with a warning, and the app boots without the
-      # host engine it delegates to.
+      # Keepiq needs no other app (ADR-006); standalone.yml proves that on an
+      # instance with Keepiq alone. OpenRegister is installed HERE so this
+      # suite covers the integrations that need it: the Flows pages and the
+      # MCP tools, which appear only when OpenRegister is enabled.
       #
       # NOTE the org is ConductionNL, not Conduction. `Conduction` does not
       # exist, and the shared workflow clones additional-apps UNAUTHENTICATED —

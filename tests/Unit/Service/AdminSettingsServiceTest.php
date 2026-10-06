@@ -80,7 +80,6 @@ class AdminSettingsServiceTest extends TestCase {
 
 		$this->service = new AdminSettingsService(
 			appConfig: $this->appConfig,
-			appManager: $this->createMock(IAppManager::class),
 			container: $this->createMock(ContainerInterface::class),
 			userSession: $session,
 			logger: $this->createMock(LoggerInterface::class),

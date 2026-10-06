@@ -24,7 +24,6 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 
 use InvalidArgumentException;
 use OCA\Keepiq\Service\SettingsService;
-use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IConfig;
 use OCP\IGroupManager;
@@ -67,7 +66,6 @@ class SettingsServiceHealthTest extends TestCase {
 		$this->service = new SettingsService(
 			$this->appConfig,
 			$this->config,
-			$this->createMock(IAppManager::class),
 			$this->createMock(ContainerInterface::class),
 			$this->createMock(IGroupManager::class),
 			$this->createMock(IUserSession::class),
