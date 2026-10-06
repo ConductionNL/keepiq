@@ -81,6 +81,8 @@ trait MarksCompromisedSecrets {
 	 * back to $secret quietly. Any other lookup failure falls back too, but is
 	 * logged and sets $failed: it means the source owner is not warned, which a
 	 * caller counting the containment's failures has to count (keepiq#1189).
+	 * CompromiseContainmentService counts it; SuiteCompromiseListener keeps no
+	 * tally, so there it is only logged.
 	 *
 	 * @param Secret    $secret The Secret sealed under the affected suite
 	 * @param bool|null $failed Set to true when the lookup failed

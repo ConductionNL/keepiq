@@ -28,8 +28,7 @@ use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\ReinstateRefusedException;
 use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
 use OCA\Keepiq\Attribute\VaultKeyProofRequired;
-use OCA\Keepiq\Db\SuiteMigration;
-use OCA\Keepiq\Service\CompromiseContainmentService;
+use OCA\Keepiq\Service\AdminSuiteRevocationService;
 use OCA\Keepiq\Service\EmergencyEnvelopeInvalidationService;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\MigrationService;
@@ -79,7 +78,7 @@ class EncryptionSuiteController extends OCSController {
 	 * @param VaultKeyProofService $proofService The vault-key-proof service (issues challenges)
 	 * @param EmergencyEnvelopeInvalidationService $emergencyService The emergency-envelope service (revoke safeguard)
 	 * @param \OCA\Keepiq\Service\TwoFactorGate $twoFactor The two-factor vault policy (admin-vault-policies D3)
-	 * @param CompromiseContainmentService $containment The compromise containment (force-revoke cascade)
+	 * @param AdminSuiteRevocationService $adminRevocation The administrator force-revoke, plain and compromise
 	 * @param \OCA\Keepiq\Service\PasskeyService|null $passkeyService The passkey service (passkey vault login; null when unwired)
 	 *
 	 * @return void
@@ -92,7 +91,7 @@ class EncryptionSuiteController extends OCSController {
 		private VaultKeyProofService $proofService,
 		private EmergencyEnvelopeInvalidationService $emergencyService,
 		private \OCA\Keepiq\Service\TwoFactorGate $twoFactor,
-		private CompromiseContainmentService $containment,
+		private AdminSuiteRevocationService $adminRevocation,
 		private ?\OCA\Keepiq\Service\PasskeyService $passkeyService = null,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
@@ -672,37 +671,13 @@ class EncryptionSuiteController extends OCSController {
 		}
 
 		try {
-			if ($markCompromised === true) {
-				return new JSONResponse(
-					data: $this->forceRevokeAsCompromise(suiteId: $id, reason: $reason, adminUid: $adminUid)
-				);
+			if ($markCompromised === false) {
+				return new JSONResponse(data: $this->adminRevocation->revoke(suiteId: $id, reason: $reason, adminUid: $adminUid));
 			}
 
-			// Not while the suite is part of an in-progress migration: revoking
-			// either end strands it (keepiq#803). Checked before anything else.
-			// A COMPROMISE force-revoke is the exception (above): there the
-			// migration is ended instead, or whoever is being contained could
-			// block the containment for good by leaving a migration open.
-			$this->migrationService->assertNoMigrationInProgress(suiteId: $id);
-
-			// Read BEFORE revokeSuite(): the EncryptionSuiteRevokedEvent cascade
-			// clears the grantor's emergency envelopes, so the usable count is
-			// non-zero here only while the contacts still exist.
-			$emergencyCount = $this->emergencyService->countUsableForGrantorSuite($id);
-
-			$suite = $this->suiteService->revokeSuite(
-				id: $id,
-				reason: $reason,
-				revokedBy: $adminUid,
-				markCompromised: false,
-				emergencyContactsDestroyed: $emergencyCount,
+			return $this->compromiseResponse(
+				data: $this->adminRevocation->revokeAsCompromise(suiteId: $id, reason: $reason, adminUid: $adminUid)
 			);
-			$this->containment->notifyEmergencyAccessCleared(suite: $suite, count: $emergencyCount);
-
-			$data = $suite->jsonSerialize();
-			$data['emergencyContactsDestroyed'] = $emergencyCount;
-			$data['warning'] = 'The revoked user may still know these secrets; consider rotating them.';
-			return new JSONResponse(data: $data);
 		} catch (SuiteMigrationInProgressException $e) {
 			$this->suiteService->recordRevokeRefused(suiteId: $id, actorId: $adminUid, reasonCode: 'migration_in_progress', markCompromised: $markCompromised);
 			return new JSONResponse(
@@ -725,122 +700,22 @@ class EncryptionSuiteController extends OCSController {
 	}//end forceRevoke()
 
 	/**
-	 * Force-revoke a suite as compromised, and contain what its key reached.
+	 * The response to a compromise force-revoke.
 	 *
-	 * The blast radius is collected from BOTH ends of an open migration before
-	 * either is revoked, because each revoke's cascade deletes the ShareTargets
-	 * the lookup reads (keepiq#864). Containment then stamps and warns, revokes
-	 * the user's link shares and passkeys (LinkShareService::deleteByUserId via
-	 * MigrationService, keepiq#858) and ends their sessions (keepiq#860). Its
-	 * failures are counted and returned as `cascadeIncomplete`, so the
-	 * administrator is not told containment ran when part of it did not
-	 * (keepiq#863), and audited as `suite.compromise_contained` (keepiq#1189).
-	 * Containment runs even when ending the migration throws; the error is
-	 * still returned.
+	 * A failed migration end is a 500, not a refusal: the named suite is
+	 * revoked and contained, only ending its migration failed (keepiq#1189).
 	 *
-	 * @param string $suiteId  The suite to revoke
-	 * @param string $reason   The administrator's reason
-	 * @param string $adminUid The acting administrator
+	 * @param array<string,mixed> $data The body from AdminSuiteRevocationService::revokeAsCompromise()
 	 *
-	 * @return array<string,mixed> The response body
-	 *
-	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 * @return JSONResponse
 	 */
-	private function forceRevokeAsCompromise(string $suiteId, string $reason, string $adminUid): array {
-		$migration = $this->migrationService->findInProgressForSuite(suiteId: $suiteId);
-		$otherId = null;
-		if ($migration !== null) {
-			$otherId = $migration->getOldSuiteId();
-			if ($otherId === $suiteId) {
-				$otherId = $migration->getNewSuiteId();
-			}
+	private function compromiseResponse(array $data): JSONResponse {
+		if (($data['error'] ?? null) === AdminSuiteRevocationService::MIGRATION_END_FAILED) {
+			return new JSONResponse(data: $data, statusCode: Http::STATUS_INTERNAL_SERVER_ERROR);
 		}
 
-		$radius = $this->containment->collect(suiteIds: array_values(array_filter([$suiteId, $otherId])));
-
-		// Read BEFORE revokeSuite(): the revoke cascade clears the envelopes.
-		$emergencyCount = $this->emergencyService->countUsableForGrantorSuite($suiteId);
-		$suite = $this->suiteService->revokeSuite(
-			id: $suiteId,
-			reason: $reason,
-			revokedBy: $adminUid,
-			markCompromised: true,
-			emergencyContactsDestroyed: $emergencyCount,
-		);
-
-		$data = $suite->jsonSerialize();
-		$data['emergencyContactsDestroyed'] = $emergencyCount;
-
-		// The named suite is revoked from here on, so its containment runs
-		// even when ending the migration throws. A retry collects after the
-		// revoke and would no longer find what this radius holds (keepiq#864).
-		$cleared = $emergencyCount;
-		try {
-			if ($migration !== null && $otherId !== null) {
-				$ended = $this->endMigrationForCompromise(
-					migration: $migration,
-					otherId: $otherId,
-					reason: $reason,
-					adminUid: $adminUid
-				);
-				$cleared += $ended['alsoRevokedEmergencyContactsDestroyed'];
-				$data += $ended;
-			}
-		} finally {
-			$this->containment->notifyEmergencyAccessCleared(suite: $suite, count: $cleared);
-
-			$tally = $this->containment->contain(radius: $radius, suite: $suite, revokedBy: $adminUid);
-			$this->suiteService->recordContainment(suiteId: $suiteId, actorId: $adminUid, tally: $tally);
-		}
-
-		$data['cascade'] = $tally;
-		$data['cascadeIncomplete'] = $tally['failed'] > 0;
-
-		return $data;
-	}//end forceRevokeAsCompromise()
-
-	/**
-	 * Revoke the other end of the suite's in-progress migration, then end it.
-	 *
-	 * Part of a compromise force-revoke. The other end is revoked as
-	 * compromised too: during a compromise either end may be the one the
-	 * attacker controls (keepiq#809 review). The migration is terminated LAST,
-	 * so if revoking the other end fails, a retry of the force-revoke still
-	 * finds the open migration and finishes the job.
-	 *
-	 * @param SuiteMigration $migration The in-progress migration
-	 * @param string         $otherId   Its end the administrator did not name
-	 * @param string         $reason    The admin's reason, reused for the other end
-	 * @param string         $adminUid  The acting administrator
-	 *
-	 * @return array{terminatedMigration: string, alsoRevokedSuite: string, alsoRevokedEmergencyContactsDestroyed: int}
-	 *
-	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-suite-in-an-in-progress-migration-cannot-be-revoked
-	 */
-	private function endMigrationForCompromise(
-		SuiteMigration $migration,
-		string $otherId,
-		string $reason,
-		string $adminUid,
-	): array {
-		$otherCount = $this->emergencyService->countUsableForGrantorSuite($otherId);
-		$this->suiteService->revokeSuite(
-			id: $otherId,
-			reason: $reason,
-			revokedBy: $adminUid,
-			markCompromised: true,
-			emergencyContactsDestroyed: $otherCount,
-		);
-
-		$this->migrationService->terminateForCompromise(migration: $migration, actorId: $adminUid);
-
-		return [
-			'terminatedMigration' => (string)$migration->getId(),
-			'alsoRevokedSuite' => $otherId,
-			'alsoRevokedEmergencyContactsDestroyed' => $otherCount,
-		];
-
-	}//end endMigrationForCompromise()
+		return new JSONResponse(data: $data);
+	}//end compromiseResponse()
 
 	#[NoAdminRequired]
 	#[VaultKeyProofRequired(

@@ -706,7 +706,7 @@ After the revoke the system MUST:
 
 Each step MUST contain its own failure: a failure on one secret, one notification or one cleanup step MUST NOT stop the others. The number of failed steps MUST be returned in the response as `cascade.failed`, with `cascadeIncomplete: true` when it is above zero, so the administrator is not told containment ran when part of it did not (keepiq#863). A lookup failure that leaves an owner unwarned, such as a failed lookup of a shared copy's source, MUST count as a failed step. The tally MUST also be audited as `suite.compromise_contained`, with `incomplete: true` when a step failed (keepiq#1189).
 
-Once the named suite is revoked, its containment MUST run even when revoking the other end or ending the migration fails, on the blast radius collected before any revoke; the failure MUST still be returned. A retry collects after the revoke and can no longer find the source owners (keepiq#864, keepiq#1189).
+Once the named suite is revoked, its containment MUST run even when revoking the other end or ending the migration fails, on the blast radius collected before any revoke, because a retry collects after the revoke and can no longer find the source owners (keepiq#864, keepiq#1189). That failure MUST count as a failed step, MUST be audited as `migrationEndFailed: true`, and MUST be answered with HTTP 500 and `error: migration_end_failed` carrying the containment tally; it MUST NOT be recorded as a refused revoke. The migration MUST stay open. A retry on a suite that is already revoked while its migration is still open MUST only revoke the other end and end the migration, without running the containment again, so nobody is warned twice.
 
 Every force-revoke, compromise or not, that deletes usable emergency contacts MUST notify the suite's owner with the number deleted (both ends of a terminated migration counted together), because revocation leaves the owner nothing to look at afterwards (keepiq#876). The response MUST report the other end's count as `alsoRevokedEmergencyContactsDestroyed` (keepiq#877).
 
@@ -729,15 +729,23 @@ Every force-revoke, compromise or not, that deletes usable emergency contacts MU
 - **GIVEN** A's suite is in an in-progress migration and revoking the other end fails
 - **WHEN** an administrator force-revokes A's suite with `markCompromised: true`
 - **THEN** the containment MUST run on the blast radius collected before either revoke
-- **AND** it MUST be audited as `suite.compromise_contained`
-- **AND** the response MUST report the failure and the migration MUST stay open
+- **AND** it MUST be audited as `suite.compromise_contained` with `incomplete: true` and `migrationEndFailed: true`
+- **AND** the response MUST be HTTP 500 with `error: migration_end_failed` and the containment tally
+- **AND** no `suite.revoke_refused` MUST be recorded, and the migration MUST stay open
+
+#### Scenario: A retry after a failed migration end does not contain twice
+@e2e exclude Failure injection; covered by PHPUnit on EncryptionSuiteController.
+- **GIVEN** a compromise force-revoke of A's suite revoked and contained it, but ending its migration failed
+- **WHEN** the administrator force-revokes A's suite again with `markCompromised: true`
+- **THEN** the other end MUST be revoked and the migration ended
+- **AND** the containment MUST NOT run again
 
 #### Scenario: A failed source lookup is counted
 @e2e exclude Failure injection; covered by PHPUnit on CompromiseContainmentService.
 - **GIVEN** looking up the source of a shared copy in the blast radius fails
 - **WHEN** the compromise cascade runs
 - **THEN** the copy MUST still be stamped
-- **AND** the step MUST count as failed, so the cascade is reported and audited as incomplete
+- **AND** the lookup MUST count as one failed step, so the cascade is reported and audited as incomplete
 
 #### Scenario: An owner with several affected secrets is told how many
 @e2e exclude Notification content; covered by PHPUnit on CompromiseContainmentService and KeepiqNotifier.

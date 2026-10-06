@@ -263,7 +263,9 @@ class CompromiseContainmentServiceTest extends TestCase {
 
 	/**
 	 * A share-target lookup that throws leaves the source owner unwarned, so
-	 * it is a counted failure; the copy is still stamped (keepiq#1189).
+	 * it is a counted failure; the copy is still stamped (keepiq#1189). The
+	 * outbound lookup would fail on the same cause, so it is not attempted:
+	 * one failure, counted once.
 	 *
 	 * @return void
 	 */
@@ -271,7 +273,7 @@ class CompromiseContainmentServiceTest extends TestCase {
 		$copy = $this->secret('copy-1', 'alice', 'suite-a');
 		$this->secretMapper->method('findByEncryptionSuiteId')->willReturn([$copy]);
 		$this->shareTargetMapper->method('findByRecipientSecret')->willThrowException(new RuntimeException('db gone'));
-		$this->shareTargetMapper->method('findBySourceSecret')->willReturn([]);
+		$this->shareTargetMapper->method('findBySourceSecret')->willThrowException(new RuntimeException('db gone'));
 
 		$tally = $this->service->contain($this->service->collect(['suite-a']), $this->suite(), 'admin');
 

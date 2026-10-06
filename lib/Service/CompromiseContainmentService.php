@@ -205,7 +205,9 @@ class CompromiseContainmentService {
 			}
 
 			$radius->addSealed(secret: $secret, target: $target);
-			if ($target === $secret) {
+			// After a failed lookup $secret may be a copy, and its outbound
+			// lookup would fail on the same cause: one failure, counted once.
+			if ($target === $secret && $failed === false) {
 				$this->collectOutbound(radius: $radius, secret: $secret);
 			}
 		}

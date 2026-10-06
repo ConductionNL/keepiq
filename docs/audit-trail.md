@@ -107,8 +107,11 @@ the trail and the SIEM export and not only in `nextcloud.log`:
   a fixed reason code and whether a compromise revoke was asked for.
 - `suite.compromise_contained`: the containment of a compromise force-revoke
   ran. Metadata: how many secrets were stamped, how many warnings were sent,
-  how many steps failed, and whether containment was therefore incomplete.
-  Recorded also when ending the suite's migration failed.
+  how many steps failed, whether containment was therefore incomplete, and
+  `migrationEndFailed`: revoking the other end of the suite's key migration, or
+  ending the migration, failed, so the other end is still live. That failure
+  also counts as a failed step. A retry of the force-revoke then only finishes
+  the migration and records no second containment.
 - `suite.recovery_aborted`: the owner called off a compromise recovery before
   any secret moved. `suite.migration_terminated`: a compromise force-revoke
   ended a recovery that was still running.

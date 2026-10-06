@@ -26,6 +26,7 @@ use OCA\Keepiq\Db\SuiteMigration;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
 use OCA\Keepiq\Service\CompromiseBlastRadius;
+use OCA\Keepiq\Service\AdminSuiteRevocationService;
 use OCA\Keepiq\Service\CompromiseContainmentService;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\MigrationService;
@@ -38,6 +39,7 @@ use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
@@ -122,7 +124,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 			proofService: $this->proofService,
 			emergencyService: $this->emergencyService,
 			twoFactor: $this->twoFactorGate(),
-			containment: $this->containment,
+			adminRevocation: $this->adminRevocation(containment: $this->containment),
 		);
 	}//end setUp()
 
@@ -1212,13 +1214,26 @@ class EncryptionSuiteControllerTest extends TestCase {
 	/**
 	 * Record revokeSuite() and terminateForCompromise() calls in order.
 	 *
-	 * @param array<int,string> $log  Receives "revoke:<id>" and "terminate:<id>"
-	 * @param string|null       $fail A suite id whose revoke throws, once
+	 * getSuite() answers `revoked` for a suite revoked so far, `active` otherwise.
+	 *
+	 * @param array<int,string> $log    Receives "revoke:<id>" and "terminate:<id>"
+	 * @param string|null       $fail   A suite id whose revoke throws, once
+	 * @param array<string,int> $counts Usable emergency contacts per suite id (default 0)
 	 *
 	 * @return void
 	 */
-	private function recordCompromiseCalls(array &$log, ?string $fail = null): void {
-		$this->emergencyService->method('countUsableForGrantorSuite')->willReturn(0);
+	private function recordCompromiseCalls(array &$log, ?string $fail = null, array $counts = []): void {
+		$this->emergencyService->method('countUsableForGrantorSuite')->willReturnCallback(
+			static fn (string $id): int => $counts[$id] ?? 0
+		);
+		$this->suiteService->method('getSuite')->willReturnCallback(
+			static function (string $id) use (&$log): EncryptionSuite {
+				$suite = new EncryptionSuite();
+				$suite->setId($id);
+				$suite->setStatus(in_array('revoke:' . $id, $log, true) ? 'revoked' : 'active');
+				return $suite;
+			}
+		);
 		$this->suiteService->method('revokeSuite')->willReturnCallback(
 			static function (string $id) use (&$log, &$fail): EncryptionSuite {
 				if ($id === $fail) {
@@ -1288,17 +1303,54 @@ class EncryptionSuiteControllerTest extends TestCase {
 	public function testAFailedOtherEndRevokeCanBeRetried(): void {
 		$this->migrationService->method('findInProgressForSuite')->willReturn($this->openMigration());
 		$log = [];
-		$this->recordCompromiseCalls($log, 'suite-2');
+		$this->recordCompromiseCalls($log, 'suite-2', ['suite-2' => 1]);
+		$containment = $this->createMock(CompromiseContainmentService::class);
+		$containment->method('collect')->willReturn(new CompromiseBlastRadius());
+		// Contained on the first attempt; the retry must not warn everyone again (keepiq#1189).
+		$containment->expects($this->once())->method('contain')->willReturn(['stamped' => 0, 'notified' => 0, 'failed' => 0]);
+		$notified = [];
+		$containment->method('notifyEmergencyAccessCleared')->willReturnCallback(
+			static function (EncryptionSuite $suite, int $count) use (&$notified): bool {
+				$notified[] = $count;
+				return true;
+			}
+		);
+		$controller = $this->controllerWith(containment: $containment);
 
-		$first = $this->controller->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
-		$this->assertNotSame(Http::STATUS_OK, $first->getStatus());
+		$first = $controller->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $first->getStatus());
 		$this->assertNotContains('terminate:migration-1', $log, 'nothing may be terminated while the other end is live');
 
-		$retry = $this->controller->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
+		$retry = $controller->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
 		$this->assertSame(Http::STATUS_OK, $retry->getStatus());
-		$this->assertContains('revoke:suite-2', $log);
-		$this->assertSame('terminate:migration-1', end($log));
+		$this->assertSame(['revoke:suite-1', 'revoke:suite-2', 'terminate:migration-1'], $log, 'the retry must not revoke the named suite again');
+		$this->assertTrue($retry->getData()['containmentAlreadyRan']);
+		$this->assertSame('suite-2', $retry->getData()['alsoRevokedSuite']);
+		$this->assertSame([0, 1], $notified, 'the retry tells the owner about the other end\'s contacts');
 	}//end testAFailedOtherEndRevokeCanBeRetried()
+
+	/**
+	 * A retry whose migration end fails again still answers with the
+	 * migration failure and still does not contain twice (keepiq#1189).
+	 *
+	 * @return void
+	 */
+	public function testARetryThatFailsAgainDoesNotContainTwice(): void {
+		$this->migrationService->method('findInProgressForSuite')->willReturn($this->openMigration());
+		$log = [];
+		$this->recordCompromiseCalls($log);
+		$this->migrationService->method('terminateForCompromise')->willThrowException(new RuntimeException('database went away'));
+		$containment = $this->createMock(CompromiseContainmentService::class);
+		$containment->method('collect')->willReturn(new CompromiseBlastRadius());
+		$containment->expects($this->once())->method('contain')->willReturn(['stamped' => 0, 'notified' => 0, 'failed' => 0]);
+		$controller = $this->controllerWith(containment: $containment);
+
+		$controller->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
+		$retry = $controller->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
+
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $retry->getStatus());
+		$this->assertSame('migration_end_failed', $retry->getData()['error']);
+	}//end testARetryThatFailsAgainDoesNotContainTwice()
 
 	/**
 	 * A compromise force-revoke with no migration revokes just the one suite.
@@ -1464,25 +1516,59 @@ class EncryptionSuiteControllerTest extends TestCase {
 	public function testAFailedOtherEndRevokeStillContains(): void {
 		$this->migrationService->method('findInProgressForSuite')->willReturn($this->openMigration());
 		$log = [];
-		$this->recordCompromiseCalls($log, 'suite-2');
+		$this->recordCompromiseCalls($log, 'suite-2', ['suite-1' => 2, 'suite-2' => 1]);
 		$radius = new CompromiseBlastRadius();
-		$tally = ['stamped' => 3, 'notified' => 2, 'failed' => 0];
 		$containment = $this->createMock(CompromiseContainmentService::class);
 		$containment->method('collect')->willReturn($radius);
 		$containment->expects($this->once())
 			->method('contain')
 			->with($radius, $this->callback(static fn (EncryptionSuite $suite): bool => $suite->getId() === 'suite-1'), 'testuser')
-			->willReturn($tally);
-		$containment->expects($this->once())->method('notifyEmergencyAccessCleared');
+			->willReturn(['stamped' => 3, 'notified' => 2, 'failed' => 0]);
+		$containment->expects($this->once())
+			->method('notifyEmergencyAccessCleared')
+			->with($this->callback(static fn (EncryptionSuite $suite): bool => $suite->getId() === 'suite-1'), 2);
 		$this->suiteService->expects($this->once())
 			->method('recordContainment')
-			->with('suite-1', 'testuser', $tally);
+			->with('suite-1', 'testuser', ['stamped' => 3, 'notified' => 2, 'failed' => 1], true);
+		$this->suiteService->expects($this->never())->method('recordRevokeRefused');
 
 		$response = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
 
-		$this->assertNotSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		$data = $response->getData();
+		$this->assertSame('migration_end_failed', $data['error']);
+		$this->assertSame('suite-1', $data['id']);
+		$this->assertSame(['stamped' => 3, 'notified' => 2, 'failed' => 1], $data['cascade']);
+		$this->assertTrue($data['cascadeIncomplete']);
+		$this->assertSame(2, $data['emergencyContactsDestroyed']);
+		$this->assertArrayNotHasKey('terminatedMigration', $data);
 		$this->assertNotContains('terminate:migration-1', $log, 'nothing may be terminated while the other end is live');
 	}//end testAFailedOtherEndRevokeStillContains()
+
+	/**
+	 * When the named suite's own revoke throws, nothing was revoked: no
+	 * containment runs, and the refusal is recorded as before.
+	 *
+	 * @return void
+	 */
+	public function testAFailedNamedRevokeRunsNoContainment(): void {
+		$this->migrationService->method('findInProgressForSuite')->willReturn($this->openMigration());
+		$log = [];
+		$this->recordCompromiseCalls($log, 'suite-1');
+		$containment = $this->createMock(CompromiseContainmentService::class);
+		$containment->method('collect')->willReturn(new CompromiseBlastRadius());
+		$containment->expects($this->never())->method('contain');
+		$containment->expects($this->never())->method('notifyEmergencyAccessCleared');
+		$this->suiteService->expects($this->never())->method('recordContainment');
+		$this->suiteService->expects($this->once())
+			->method('recordRevokeRefused')
+			->with('suite-1', 'testuser', 'forbidden', true);
+
+		$response = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame([], $log);
+	}//end testAFailedNamedRevokeRunsNoContainment()
 
 	/**
 	 * The containment tally reaches the audit trail, not only the response
@@ -1499,7 +1585,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$containment->method('contain')->willReturn(['stamped' => 4, 'notified' => 1, 'failed' => 2]);
 		$this->suiteService->expects($this->once())
 			->method('recordContainment')
-			->with('suite-1', 'testuser', ['stamped' => 4, 'notified' => 1, 'failed' => 2]);
+			->with('suite-1', 'testuser', ['stamped' => 4, 'notified' => 1, 'failed' => 2], false);
 
 		$response = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
 
@@ -1594,9 +1680,27 @@ class EncryptionSuiteControllerTest extends TestCase {
 			proofService: $this->proofService,
 			emergencyService: $this->emergencyService,
 			twoFactor: $this->twoFactorGate(),
-			containment: $containment,
+			adminRevocation: $this->adminRevocation(containment: $containment),
 		);
 	}//end controllerWith()
+
+	/**
+	 * The real force-revoke service over this test's mocks, so the controller
+	 * tests keep covering the revoke flow end to end.
+	 *
+	 * @param CompromiseContainmentService $containment The containment double
+	 *
+	 * @return AdminSuiteRevocationService
+	 */
+	private function adminRevocation(CompromiseContainmentService $containment): AdminSuiteRevocationService {
+		return new AdminSuiteRevocationService(
+			suiteService: $this->suiteService,
+			migrationService: $this->migrationService,
+			emergencyService: $this->emergencyService,
+			containment: $containment,
+			logger: $this->createMock(originalClassName: LoggerInterface::class),
+		);
+	}//end adminRevocation()
 
 	/**
 	 * A user whose suite was revoked and who has no active suite cannot enrol a

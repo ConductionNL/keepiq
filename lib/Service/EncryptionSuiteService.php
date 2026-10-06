@@ -284,15 +284,28 @@ class EncryptionSuiteService {
 	 * (owners or recipients not warned, the account not contained) left no
 	 * trace for the SIEM (keepiq#1189). Only the counts are recorded.
 	 *
-	 * @param string             $suiteId The suite revoked as compromised
-	 * @param string             $actorId The acting administrator
-	 * @param array<string, int> $tally   The containment tally: stamped, notified, failed
+	 * `migrationEndFailed` says the response is unfinished: the other end of
+	 * the suite's migration is still live and the migration still open. That
+	 * failure is also counted in `failed`.
+	 *
+	 * @param string             $suiteId            The suite revoked as compromised
+	 * @param string             $actorId            The acting administrator
+	 * @param array<string, int> $tally              The containment tally: stamped, notified, failed
+	 * @param bool               $migrationEndFailed Whether ending the suite's migration failed
 	 *
 	 * @return void
 	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $migrationEndFailed is
+	 *   recorded data about the containment, not a mode switch for this method.
+	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
 	 */
-	public function recordContainment(string $suiteId, string $actorId, array $tally): void {
+	public function recordContainment(
+		string $suiteId,
+		string $actorId,
+		array $tally,
+		bool $migrationEndFailed = false,
+	): void {
 		$this->eventDispatcher?->dispatchTyped(
 			$this->auditEvents->forUser(
 				actorId: $actorId,
@@ -304,6 +317,7 @@ class EncryptionSuiteService {
 					'notified' => $tally['notified'],
 					'failed' => $tally['failed'],
 					'incomplete' => $tally['failed'] > 0,
+					'migrationEndFailed' => $migrationEndFailed,
 				],
 			)
 		);

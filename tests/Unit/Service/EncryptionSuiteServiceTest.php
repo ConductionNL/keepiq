@@ -794,9 +794,12 @@ class EncryptionSuiteServiceTest extends TestCase {
 		$this->assertSame('admin', $event->getActorId());
 		$this->assertSame('suite', $event->getObjectType());
 		$this->assertSame('suite-1', $event->getObjectId());
-		$this->assertSame(['stamped' => 4, 'notified' => 1, 'failed' => 2, 'incomplete' => true], $event->getMetadata());
 		$this->assertSame(
-			['stamped', 'notified', 'failed', 'incomplete'],
+			['stamped' => 4, 'notified' => 1, 'failed' => 2, 'incomplete' => true, 'migrationEndFailed' => false],
+			$event->getMetadata()
+		);
+		$this->assertSame(
+			['stamped', 'notified', 'failed', 'incomplete', 'migrationEndFailed'],
 			AuditEventTypes::WHITELIST[AuditEventTypes::SUITE_COMPROMISE_CONTAINED]
 		);
 	}//end testRecordContainmentDispatchesAnAuditEvent()
@@ -816,4 +819,22 @@ class EncryptionSuiteServiceTest extends TestCase {
 
 		$this->assertFalse($dispatched[0]->getMetadata()['incomplete']);
 	}//end testACompleteContainmentIsNotFlaggedIncomplete()
+
+	/**
+	 * A failed migration end is recorded, so the trail shows the compromise
+	 * response is unfinished (keepiq#1189).
+	 *
+	 * @return void
+	 */
+	public function testAFailedMigrationEndIsRecorded(): void {
+		$dispatched = [];
+		$this->serviceCollecting($dispatched)->recordContainment(
+			suiteId: 'suite-1',
+			actorId: 'admin',
+			tally: ['stamped' => 1, 'notified' => 1, 'failed' => 1],
+			migrationEndFailed: true,
+		);
+
+		$this->assertTrue($dispatched[0]->getMetadata()['migrationEndFailed']);
+	}//end testAFailedMigrationEndIsRecorded()
 }//end class

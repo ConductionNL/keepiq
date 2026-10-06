@@ -305,7 +305,7 @@ final class AuditEventTypes {
 		self::SUITE_RECOVERY_ABORTED => ['migrationId', 'newSuiteId'],
 		self::SUITE_MIGRATION_TERMINATED => ['migrationId', 'oldSuiteId', 'newSuiteId'],
 		self::SUITE_REVOKE_REFUSED => ['reasonCode', 'markCompromised'],
-		self::SUITE_COMPROMISE_CONTAINED => ['stamped', 'notified', 'failed', 'incomplete'],
+		self::SUITE_COMPROMISE_CONTAINED => ['stamped', 'notified', 'failed', 'incomplete', 'migrationEndFailed'],
 		// The guarded route, its purpose and why the proof was refused; never
 		// the proof, the nonce or the signature.
 		self::KEY_PROOF_REFUSED => ['route', 'purpose', 'reason'],
