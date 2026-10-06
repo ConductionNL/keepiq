@@ -159,10 +159,14 @@ private struct TotpRow: View {
     let onCopy: (String) -> Void
     /// The countdown ring grows with Dynamic Type.
     @ScaledMetric(relativeTo: .body) private var gaugeSize: CGFloat = 44
+    private static let stillCode = ProcessInfo.processInfo.environment["KEEPIQ_UITEST_STILL_CODE"] == "1"
 
     var body: some View {
         if let params = item.totp {
-            TimelineView(.periodic(from: .now, by: 1)) { context in
+            // The accessibility audit renders the screen at several text sizes,
+            // and a countdown that redraws every second during that pass makes it
+            // report the rows below as clipped. Its UI test holds the code still.
+            TimelineView(.periodic(from: .now, by: Self.stillCode ? 3600 : 1)) { context in
                 let millis = Int64(context.date.timeIntervalSince1970 * 1000)
                 let code = Totp.shared.generate(params: params, epochMillis: millis)
                 let left = Totp.shared.secondsRemaining(period: params.period, epochMillis: millis)

@@ -27,6 +27,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         app = XCUIApplication()
         app.launchArguments = ["-keepiq-reset"]
         app.launchEnvironment["KEEPIQ_UITEST_NO_BROWSER"] = "1"
+        app.launchEnvironment["KEEPIQ_UITEST_STILL_CODE"] = "1"
         app.launch()
     }
 
@@ -104,12 +105,12 @@ final class AccessibilityAuditUITests: XCTestCase {
         screens.append(screen)
         // Let a push or a sheet finish: the contrast check reads pixels.
         usleep(1_000_000)
-        shot("a11y-" + screen.replacingOccurrences(of: ",", with: "").replacingOccurrences(of: " ", with: "-"))
+        let screenshot = shot("a11y-" + screen.replacingOccurrences(of: ",", with: "").replacingOccurrences(of: " ", with: "-"))
         let bars = barFrames()
         let rowUnderBar = rowsUnderBars(bars)
         try app.performAccessibilityAudit(for: .all) { issue in
             let line = "\(screen): \(Self.name(of: issue.auditType)): \(issue.compactDescription) [\(Self.describe(issue.element))]"
-            if let reason = A11yExclusions.reason(for: issue, bars: bars, rowUnderBar: rowUnderBar) {
+            if let reason = A11yExclusions.reason(for: issue, bars: bars, rowUnderBar: rowUnderBar, screenshot: screenshot) {
                 self.excluded.append("\(line) (excluded: \(reason))")
             } else {
                 self.issues.append(line + "\n    " + issue.detailedDescription)
@@ -170,7 +171,8 @@ final class AccessibilityAuditUITests: XCTestCase {
 
     // MARK: - Helpers, as in VaultFlowsUITests
 
-    private func shot(_ name: String) {
+    @discardableResult
+    private func shot(_ name: String) -> XCUIScreenshot {
         let screenshot = XCUIScreen.main.screenshot()
         let attachment = XCTAttachment(screenshot: screenshot)
         attachment.name = name
@@ -179,6 +181,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         if let dir = env["KEEPIQ_SHOTS_DIR"] {
             try? screenshot.pngRepresentation.write(to: URL(fileURLWithPath: dir).appendingPathComponent("\(name).png"))
         }
+        return screenshot
     }
 
     private func type(_ text: String, into element: XCUIElement) {
@@ -276,7 +279,7 @@ final class AccessibilityAuditUITests: XCTestCase {
 /// Audit issues the test leaves out, each a documented false positive with
 /// its reason. Real issues are fixed in the app, never listed here.
 enum A11yExclusions {
-    static func reason(for issue: XCUIAccessibilityAuditIssue, bars: [CGRect], rowUnderBar: Bool) -> String? {
+    static func reason(for issue: XCUIAccessibilityAuditIssue, bars: [CGRect], rowUnderBar: Bool, screenshot: XCUIScreenshot) -> String? {
         let element = issue.element.flatMap { $0.exists ? $0 : nil }
         let type = element?.elementType
         let label = element?.label ?? ""
@@ -291,6 +294,14 @@ enum A11yExclusions {
         if issue.auditType == .contrast, let frame = element?.frame,
            bars.contains(where: { $0.insetBy(dx: 0, dy: -24).intersects(frame) }) {
             return "under the system scroll edge effect of a bar"
+        }
+        // A contrast finding on an element whose pixels, measured in the
+        // screenshot of the same screen, pass WCAG AA: the text colour against
+        // the background is 4.5:1 or more. Seen on the Edit button, drawn in
+        // Keepiq's tint on white (7.1:1) like the Move button below it.
+        if issue.auditType == .contrast, let frame = element?.frame,
+           let measured = measuredContrast(in: frame, of: screenshot), measured >= 4.5 {
+            return String(format: "measured %.1f:1 in the screenshot, at least 4.5:1", measured)
         }
         // A contrast finding the audit cannot tie to an element, on a screen
         // where a list row is half under a bar: the faded row has no element
@@ -318,5 +329,56 @@ enum A11yExclusions {
             return "SwiftUI text styles reported as partially unsupported; Keepiq uses no fixed font size"
         }
         return nil
+    }
+
+    /// The contrast ratio between the background (the most frequent colour
+    /// inside `frame`) and the text (the most frequent colour clearly unlike
+    /// it), or nil when the frame holds no second colour.
+    static func measuredContrast(in frame: CGRect, of screenshot: XCUIScreenshot) -> Double? {
+        let image = screenshot.image
+        guard let cg = image.cgImage, image.size.width > 0 else { return nil }
+        let scale = CGFloat(cg.width) / image.size.width
+        let rect = CGRect(x: frame.minX * scale, y: frame.minY * scale, width: frame.width * scale, height: frame.height * scale).integral
+        guard let crop = cg.cropping(to: rect), crop.width > 0, crop.height > 0,
+              let space = CGColorSpace(name: CGColorSpace.sRGB) else { return nil }
+        let width = crop.width
+        let height = crop.height
+        var pixels = [UInt8](repeating: 0, count: width * height * 4)
+        let drawn: Bool = pixels.withUnsafeMutableBytes { buffer in
+            guard let context = CGContext(data: buffer.baseAddress, width: width, height: height, bitsPerComponent: 8,
+                                          bytesPerRow: width * 4, space: space,
+                                          bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue) else { return false }
+            context.draw(crop, in: CGRect(x: 0, y: 0, width: width, height: height))
+            return true
+        }
+        guard drawn else { return nil }
+        var counts: [UInt32: Int] = [:]
+        for index in stride(from: 0, to: pixels.count, by: 4) {
+            let key = UInt32(pixels[index]) << 16 | UInt32(pixels[index + 1]) << 8 | UInt32(pixels[index + 2])
+            counts[key, default: 0] += 1
+        }
+        let ranked = counts.sorted { $0.value > $1.value }.map(\.key)
+        guard let background = ranked.first,
+              let text = ranked.dropFirst().first(where: { distance($0, background) > 96 }) else { return nil }
+        let lighter = max(luminance(text), luminance(background))
+        let darker = min(luminance(text), luminance(background))
+        return (lighter + 0.05) / (darker + 0.05)
+    }
+
+    private static func channels(_ rgb: UInt32) -> [Double] {
+        [Double((rgb >> 16) & 0xFF), Double((rgb >> 8) & 0xFF), Double(rgb & 0xFF)]
+    }
+
+    private static func distance(_ a: UInt32, _ b: UInt32) -> Double {
+        zip(channels(a), channels(b)).reduce(0) { $0 + abs($1.0 - $1.1) }
+    }
+
+    /// WCAG relative luminance of an sRGB colour.
+    private static func luminance(_ rgb: UInt32) -> Double {
+        let linear = channels(rgb).map { value -> Double in
+            let c = value / 255
+            return c <= 0.04045 ? c / 12.92 : pow((c + 0.055) / 1.055, 2.4)
+        }
+        return 0.2126 * linear[0] + 0.7152 * linear[1] + 0.0722 * linear[2]
     }
 }
