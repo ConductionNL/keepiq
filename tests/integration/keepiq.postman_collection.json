@@ -79,8 +79,8 @@
 	},
 	"item": [
 		{
-			"name": "0. AppHost observability (declarative health + metrics)",
-			"description": "Locks the ADR-006 / ADR-040 observability contract that src/manifest.json declares and OpenRegister's AppHost GenericHealthController / GenericMetricsController serve. These scenarios live in openspec/specs/apphost-adoption/spec.md and were previously waived with '@e2e exclude API-only endpoint — covered by the OR AppHost Newman contract collection'. That collection is in the OPENREGISTER repo and keepiq's CI never runs it, so the contract was asserted NOWHERE for keepiq. These requests assert it here, in keepiq's own always-run collection.\n\nHealth is PUBLIC (auth-posture delta, ADR-006) so it is fetched from {{noAuthBase}} with no auth block — the host-scoped NC session cookie established on {{baseUrl}} is never sent there, keeping 'anonymous' honest.",
+			"name": "0. App shell (health, metrics, preferences)",
+			"description": "Locks the contract of Keepiq's own shell endpoints (ADR-006, openspec/specs/app-shell/spec.md): public health, admin-only metrics, per-user preferences, and the removed settings/load import route. Health and metrics were served by OpenRegister's AppHost engine until ADR-006; their contract is unchanged, so these requests also guard that the move kept it.\n\nHealth is PUBLIC (hydra ADR-006) so it is fetched from {{noAuthBase}} with no auth block \u2014 the host-scoped NC session cookie established on {{baseUrl}} is never sent there, keeping 'anonymous' honest.",
 			"item": [
 				{
 					"name": "Health: anonymous check succeeds (200, database+filesystem ok)",
@@ -90,8 +90,8 @@
 							"script": {
 								"type": "text/javascript",
 								"exec": [
-									"// openspec/specs/apphost-adoption/spec.md",
-									"//   Requirement: Public Declarative Health Endpoint",
+									"// openspec/specs/app-shell/spec.md",
+									"//   Requirement: Public Health Endpoint",
 									"//   Scenario: Anonymous health check succeeds",
 									"pm.test('health is publicly reachable (200, no auth)', () => pm.response.to.have.status(200));",
 									"const b = pm.response.json();",
@@ -133,8 +133,8 @@
 							"script": {
 								"type": "text/javascript",
 								"exec": [
-									"// openspec/specs/apphost-adoption/spec.md",
-									"//   Requirement: Public Declarative Health Endpoint",
+									"// openspec/specs/app-shell/spec.md",
+									"//   Requirement: Public Health Endpoint",
 									"//   Scenario: Health response carries no secret material",
 									"pm.test('health is publicly reachable (200, no auth)', () => pm.response.to.have.status(200));",
 									"const b = pm.response.json();",
@@ -258,9 +258,9 @@
 							"script": {
 								"type": "text/javascript",
 								"exec": [
-									"// openspec/specs/apphost-adoption/spec.md",
-									"//   Requirement: Admin-Only Declarative Metrics Endpoint",
-									"//   Scenario: Metrics parity after adoption",
+									"// openspec/specs/app-shell/spec.md",
+									"//   Requirement: Admin-Only Metrics Endpoint",
+									"//   Scenario: Metrics report the active suite count",
 									"pm.test('admin can scrape metrics (200)', () => pm.response.to.have.status(200));",
 									"pm.test('Prometheus text exposition format 0.0.4', () => {",
 									"    pm.expect(pm.response.headers.get('Content-Type') || '').to.include('text/plain');",
@@ -353,7 +353,268 @@
 							]
 						}
 					}
+				},
+			{
+				"name": "Preferences: PUT stores the walkthrough version",
+				"event": [
+					{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"// openspec/specs/app-shell/spec.md",
+								"//   Requirement: Per-User Preferences Endpoint",
+								"//   Scenario: The walkthrough preference round-trips",
+								"pm.test('200', () => pm.response.to.have.status(200));",
+								"pm.test('echoes the stored value', () => pm.expect(pm.response.json()).to.eql({ value: '0.3.7' }));"
+							]
+						}
+					}
+				],
+				"request": {
+					"auth": {
+						"type": "basic",
+						"basic": [
+							{
+								"key": "username",
+								"value": "{{adminUser}}",
+								"type": "string"
+							},
+							{
+								"key": "password",
+								"value": "{{adminPass}}",
+								"type": "string"
+							}
+						]
+					},
+					"method": "PUT",
+					"header": [
+						{
+							"key": "OCS-APIRequest",
+							"value": "true"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Accept",
+							"value": "application/json"
+						}
+					],
+					"url": {
+						"raw": "{{baseUrl}}/index.php/apps/keepiq/api/preferences/walkthrough_completed_version",
+						"host": [
+							"{{baseUrl}}"
+						],
+						"path": [
+							"index.php",
+							"apps",
+							"keepiq",
+							"api",
+							"preferences",
+							"walkthrough_completed_version"
+						]
+					},
+					"body": {
+						"mode": "raw",
+						"raw": "{\"value\": \"0.3.7\"}"
+					}
 				}
+			},
+			{
+				"name": "Preferences: GET reads it back",
+				"event": [
+					{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"// openspec/specs/app-shell/spec.md",
+								"//   Requirement: Per-User Preferences Endpoint",
+								"pm.test('200', () => pm.response.to.have.status(200));",
+								"pm.test('reads the stored value', () => pm.expect(pm.response.json()).to.eql({ value: '0.3.7' }));"
+							]
+						}
+					}
+				],
+				"request": {
+					"auth": {
+						"type": "basic",
+						"basic": [
+							{
+								"key": "username",
+								"value": "{{adminUser}}",
+								"type": "string"
+							},
+							{
+								"key": "password",
+								"value": "{{adminPass}}",
+								"type": "string"
+							}
+						]
+					},
+					"method": "GET",
+					"header": [
+						{
+							"key": "OCS-APIRequest",
+							"value": "true"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Accept",
+							"value": "application/json"
+						}
+					],
+					"url": {
+						"raw": "{{baseUrl}}/index.php/apps/keepiq/api/preferences/walkthrough_completed_version",
+						"host": [
+							"{{baseUrl}}"
+						],
+						"path": [
+							"index.php",
+							"apps",
+							"keepiq",
+							"api",
+							"preferences",
+							"walkthrough_completed_version"
+						]
+					}
+				}
+			},
+			{
+				"name": "Preferences: empty PUT deletes (teardown)",
+				"event": [
+					{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"// openspec/specs/app-shell/spec.md",
+								"//   Requirement: Per-User Preferences Endpoint",
+								"pm.test('200', () => pm.response.to.have.status(200));",
+								"pm.test('answers null after delete', () => pm.expect(pm.response.json()).to.eql({ value: null }));"
+							]
+						}
+					}
+				],
+				"request": {
+					"auth": {
+						"type": "basic",
+						"basic": [
+							{
+								"key": "username",
+								"value": "{{adminUser}}",
+								"type": "string"
+							},
+							{
+								"key": "password",
+								"value": "{{adminPass}}",
+								"type": "string"
+							}
+						]
+					},
+					"method": "PUT",
+					"header": [
+						{
+							"key": "OCS-APIRequest",
+							"value": "true"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Accept",
+							"value": "application/json"
+						}
+					],
+					"url": {
+						"raw": "{{baseUrl}}/index.php/apps/keepiq/api/preferences/walkthrough_completed_version",
+						"host": [
+							"{{baseUrl}}"
+						],
+						"path": [
+							"index.php",
+							"apps",
+							"keepiq",
+							"api",
+							"preferences",
+							"walkthrough_completed_version"
+						]
+					},
+					"body": {
+						"mode": "raw",
+						"raw": "{\"value\": \"\"}"
+					}
+				}
+			},
+			{
+				"name": "Removed: POST settings/load answers 404",
+				"event": [
+					{
+						"listen": "test",
+						"script": {
+							"type": "text/javascript",
+							"exec": [
+								"// openspec/specs/app-shell/spec.md",
+								"//   Requirement: Keepiq Owns Its Route Table",
+								"//   Scenario: Removed OpenRegister-only routes answer 404",
+								"pm.test('404, the import route is gone', () => pm.response.to.have.status(404));"
+							]
+						}
+					}
+				],
+				"request": {
+					"auth": {
+						"type": "basic",
+						"basic": [
+							{
+								"key": "username",
+								"value": "{{adminUser}}",
+								"type": "string"
+							},
+							{
+								"key": "password",
+								"value": "{{adminPass}}",
+								"type": "string"
+							}
+						]
+					},
+					"method": "POST",
+					"header": [
+						{
+							"key": "OCS-APIRequest",
+							"value": "true"
+						},
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						},
+						{
+							"key": "Accept",
+							"value": "application/json"
+						}
+					],
+					"url": {
+						"raw": "{{baseUrl}}/index.php/apps/keepiq/api/settings/load",
+						"host": [
+							"{{baseUrl}}"
+						],
+						"path": [
+							"index.php",
+							"apps",
+							"keepiq",
+							"api",
+							"settings",
+							"load"
+						]
+					}
+				}
+			}
 			]
 		},
 		{
@@ -3478,7 +3739,7 @@
 		},
 		{
 			"name": "10. Metrics admin-only posture (non-admin -> 403)",
-			"description": "openspec/specs/apphost-adoption/spec.md — Requirement: Admin-Only Declarative Metrics Endpoint, Scenario: Non-admin user cannot scrape metrics. ADR-006 tightens the pre-adoption any-authenticated-user posture to admin-only.\n\nWHY THIS FOLDER RUNS LAST, AND WHY IT MEASURES THE CALLER.\n\nNewman keeps ONE cookie jar per HOST. Nextcloud resolves a request's session BEFORE it looks at an Authorization: Basic header, so a request that carries non-admin Basic credentials to a host where an ADMIN session cookie already exists executes AS THE ADMIN. An assertion of 'non-admin gets 403' written that way reads 200 and is then mis-filed either as a missing guard or, after someone 'fixes' it, as a passing test that never involved a non-admin at all.\n\nTwo defences, both required:\n  1. The non-admin requests go to {{noAuthBase}} (127.0.0.1), where the admin session established on {{baseUrl}} (localhost) is not sent. This folder is placed LAST so the non-admin session it establishes on 127.0.0.1 cannot in turn pollute the anonymous no-auth assertions in folders 4 and 7, which run earlier against the same host.\n  2. A CONTROL request immediately before the assertion calls /ocs/v2.php/cloud/user on the SAME host in the SAME chain and asserts the resolved identity is the non-admin user. If the control reports 'admin', the 403 assertion below is meaningless and the control fails first, naming the reason.",
+			"description": "openspec/specs/app-shell/spec.md — Requirement: Admin-Only Metrics Endpoint, Scenario: Non-admin user cannot scrape metrics. ADR-006 tightens the pre-adoption any-authenticated-user posture to admin-only.\n\nWHY THIS FOLDER RUNS LAST, AND WHY IT MEASURES THE CALLER.\n\nNewman keeps ONE cookie jar per HOST. Nextcloud resolves a request's session BEFORE it looks at an Authorization: Basic header, so a request that carries non-admin Basic credentials to a host where an ADMIN session cookie already exists executes AS THE ADMIN. An assertion of 'non-admin gets 403' written that way reads 200 and is then mis-filed either as a missing guard or, after someone 'fixes' it, as a passing test that never involved a non-admin at all.\n\nTwo defences, both required:\n  1. The non-admin requests go to {{noAuthBase}} (127.0.0.1), where the admin session established on {{baseUrl}} (localhost) is not sent. This folder is placed LAST so the non-admin session it establishes on 127.0.0.1 cannot in turn pollute the anonymous no-auth assertions in folders 4 and 7, which run earlier against the same host.\n  2. A CONTROL request immediately before the assertion calls /ocs/v2.php/cloud/user on the SAME host in the SAME chain and asserts the resolved identity is the non-admin user. If the control reports 'admin', the 403 assertion below is meaningless and the control fails first, naming the reason.",
 			"item": [
 				{
 					"name": "SETUP: provision a non-admin user (idempotent)",
@@ -3644,8 +3905,8 @@
 									"    pm.expect(pm.collectionVariables.get('nonAdminControlPassed')).to.eql('true');",
 									"});",
 									"",
-									"// openspec/specs/apphost-adoption/spec.md",
-									"//   Requirement: Admin-Only Declarative Metrics Endpoint",
+									"// openspec/specs/app-shell/spec.md",
+									"//   Requirement: Admin-Only Metrics Endpoint",
 									"//   Scenario: Non-admin user cannot scrape metrics",
 									"pm.test('non-admin metrics scrape is rejected (403)', () => pm.response.to.have.status(403));",
 									"",

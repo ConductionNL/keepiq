@@ -6,8 +6,7 @@
  * The instance-wide (admin-scoped) configuration surface: the whole
  * `getAdminSettings()` payload, the validated writes behind
  * `updateAdminSettings()`, and the two admin-only reads that hang off it —
- * the org password policy (PasswordPolicyService) and the OpenRegister
- * register import (RegisterConfigurationLoader).
+ * the org password policy (PasswordPolicyService).
  *
  * Extracted from SettingsService, which keeps the per-user preferences and
  * the small CONFIG_KEYS surface every authenticated user may read.
@@ -34,7 +33,6 @@ namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
-use OCP\App\IAppManager;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IUserSession;
@@ -161,23 +159,14 @@ class AdminSettingsService {
 	private PasswordPolicyService $policyService;
 
 	/**
-	 * The OpenRegister register-configuration loader.
-	 *
-	 * @var RegisterConfigurationLoader
-	 */
-	private RegisterConfigurationLoader $registerLoader;
-
-	/**
 	 * Constructor for the AdminSettingsService.
 	 *
 	 * @param IAppConfig $appConfig The app config interface
-	 * @param IAppManager $appManager The app manager
 	 * @param ContainerInterface $container The container
 	 * @param IUserSession $userSession The user session (audit actor)
 	 * @param LoggerInterface $logger The logger
 	 * @param IEventDispatcher|null $eventDispatcher The audit dispatcher (policy changes)
 	 * @param PasswordPolicyService|null $policyService The org password policy
-	 * @param RegisterConfigurationLoader|null $registerLoader The register-configuration loader
 	 *
 	 * @return void
 	 *
@@ -185,24 +174,16 @@ class AdminSettingsService {
 	 */
 	public function __construct(
 		private IAppConfig $appConfig,
-		IAppManager $appManager,
 		private ContainerInterface $container,
 		IUserSession $userSession,
 		private LoggerInterface $logger,
 		?IEventDispatcher $eventDispatcher = null,
 		?PasswordPolicyService $policyService = null,
-		?RegisterConfigurationLoader $registerLoader = null,
 	) {
 		$this->policyService = ($policyService ?? new PasswordPolicyService(
 			appConfig: $appConfig,
 			userSession: $userSession,
 			eventDispatcher: $eventDispatcher,
-		));
-
-		$this->registerLoader = ($registerLoader ?? new RegisterConfigurationLoader(
-			appManager: $appManager,
-			container: $container,
-			logger: $logger,
 		));
 	}//end __construct()
 
@@ -474,22 +455,6 @@ class AdminSettingsService {
 		return $this->policyService->getPolicy(userId: $userId);
 	}//end getPolicy()
 
-	/**
-	 * Load configuration from keepiq_register.json via OpenRegister.
-	 *
-	 * @param bool $force Force re-import even if already configured.
-	 *
-	 * @return array<string,mixed> Result with success flag, message, and version.
-	 *
-	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $force is passed straight through to
-	 *   OpenRegister's ADR-022 importFromApp(appId, data, version, force) signature; it is
-	 *   never a branch here. See RegisterConfigurationLoader::loadConfiguration().
-	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-6
-	 */
-	public function loadConfiguration(bool $force = false): array {
-		return $this->registerLoader->loadConfiguration(force: $force);
-	}//end loadConfiguration()
 
 	/**
 	 * Password-strength and session keys (implement-dashboard-settings §1.4).

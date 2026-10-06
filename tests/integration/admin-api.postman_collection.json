@@ -9,6 +9,22 @@
  },
  "variable": [
   {
+   "key": "baseUrl",
+   "value": "http://localhost:8080"
+  },
+  {
+   "key": "noAuthBase",
+   "value": "http://127.0.0.1:8080"
+  },
+  {
+   "key": "adminUser",
+   "value": "admin"
+  },
+  {
+   "key": "adminPass",
+   "value": "admin"
+  },
+  {
    "key": "auditorUser",
    "value": "keepiq-newman-auditor"
   },

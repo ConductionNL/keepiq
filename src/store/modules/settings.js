@@ -5,7 +5,6 @@ export const useSettingsStore = defineStore('settings', {
 	state: () => ({
 		settings: {},
 		loading: false,
-		hasOpenRegisters: false,
 		isAdmin: false,
 		/** @type {string[]} The admin areas the user holds (admin-scoped-roles). */
 		adminAreas: [],
@@ -43,7 +42,6 @@ export const useSettingsStore = defineStore('settings', {
 				if (response.ok) {
 					const data = await response.json()
 					this.settings = data
-					this.hasOpenRegisters = !!data?.openregisters
 					this.isAdmin = !!data?.isAdmin
 					this.adminAreas = Array.isArray(data?.adminAreas)
 						? data.adminAreas

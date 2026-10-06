@@ -20,7 +20,6 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Tests\Unit\Service;
 
 use OCA\Keepiq\Service\SettingsService;
-use OCP\App\IAppManager;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IConfig;
@@ -78,7 +77,6 @@ class SettingsServiceSessionTimeoutTest extends TestCase {
 		return new SettingsService(
 			appConfig: $appConfig,
 			config: $config,
-			appManager: $this->createMock(originalClassName: IAppManager::class),
 			container: $this->createMock(originalClassName: ContainerInterface::class),
 			groupManager: $this->createMock(originalClassName: IGroupManager::class),
 			userSession: $this->createMock(originalClassName: IUserSession::class),

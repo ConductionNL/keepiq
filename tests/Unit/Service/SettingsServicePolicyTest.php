@@ -23,7 +23,6 @@ use InvalidArgumentException;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Service\SettingsService;
-use OCP\App\IAppManager;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IConfig;
@@ -93,7 +92,6 @@ class SettingsServicePolicyTest extends TestCase {
 		$this->service = new SettingsService(
 			appConfig: $this->appConfig,
 			config: $this->createMock(originalClassName: IConfig::class),
-			appManager: $this->createMock(originalClassName: IAppManager::class),
 			container: $this->createMock(originalClassName: ContainerInterface::class),
 			groupManager: $this->createMock(originalClassName: IGroupManager::class),
 			userSession: $this->createMock(originalClassName: IUserSession::class),

@@ -38,7 +38,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  * notification renderer, the request pipeline and Open Cloud Mesh. They are grouped because
  * they share that direction of control and because each one is a single
  * class handed to a core registry, with no ordering relationship to the
- * domain listeners or the AppHost plumbing.
+ * domain listeners.
  */
 final class PlatformIntegrationRegistrar {
 	/**

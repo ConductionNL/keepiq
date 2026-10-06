@@ -362,6 +362,11 @@ struct NewSendView: View {
             )
             busy = false
             if let done = result?.valueOrNull as? CreatedSend {
+                // Empty before the form leaves, so iOS has no password to
+                // offer to save (task 3.2.1, see secretFieldsCleared).
+                password = ""
+                sendPassword = ""
+                await leaveWithEmptySecrets()
                 created = done
             } else if let failed = result?.problemOrNull {
                 if let form = failed.form {

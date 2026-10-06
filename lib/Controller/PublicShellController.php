@@ -8,8 +8,8 @@
  * routes stay guarded client-side: only PUBLIC_ROUTE_NAMES render
  * without a vault session, and every data call from those pages hits
  * #[PublicPage] API endpoints. A dedicated controller (not a method on
- * DashboardController) because Bootstrap aliases the dashboard name to
- * the AppHost generic controller, which must not grow public methods.
+ * DashboardController) so the anonymous surface stays in one small class
+ * that declares nothing but #[PublicPage] methods.
  *
  * @category Controller
  * @package  OCA\Keepiq\Controller
@@ -106,7 +106,7 @@ class PublicShellController extends Controller {
 	 * refreshing any of them must serve the shell — the vue-router resolves
 	 * the rest client-side. A separate method rather than a second route on
 	 * page() because Symfony silently replaces same-named routes (see the
-	 * AppHost dashboard#page / dashboard#catchAll split this mirrors).
+	 * dashboard#page / dashboard#catchAll split this mirrors).
 	 *
 	 * @param string $path The SPA subpath (resolved client-side, unused here)
 	 *

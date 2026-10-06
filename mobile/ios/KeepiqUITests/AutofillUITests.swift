@@ -54,6 +54,19 @@ final class AutofillUITests: XCTestCase {
         }
     }
 
+    /// Whether iOS offered to save a password after the add-login form (task
+    /// 3.2.1): recorded as an attachment and in the log, then answered.
+    private func recordSavePrompt(_ step: String) {
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        for owner in [app!, springboard] where owner.buttons["Not Now"].waitForExistence(timeout: 4) {
+            shot("save-password-prompt-\(step)")
+            print("KEEPIQ save-password prompt after \(step)")
+            owner.buttons["Not Now"].tap()
+            return
+        }
+        print("KEEPIQ no save-password prompt after \(step)")
+    }
+
     /// Connecting with an app password makes iOS offer to save it a moment
     /// later. Answer that first: keys typed while the prompt slides in are lost.
     private func answerSavePromptAfterConnect() {
@@ -140,6 +153,7 @@ final class AutofillUITests: XCTestCase {
         type("Correct-horse-1", into: app.secureTextFields["autofillAddPassword"])
         shot("autofill-ios-03-add-login")
         tap(app.buttons["autofillAddSave"])
+        recordSavePrompt("autofill-add")
         waitForLabel(app.staticTexts["autofillFilled"], containing: "filled: alice / 15")
 
         // The refresh after the save rebuilt the index, and the site file is on disk.

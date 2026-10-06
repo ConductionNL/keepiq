@@ -96,7 +96,6 @@ class VaultPolicyServiceTest extends TestCase {
 		);
 		$this->admin = new AdminSettingsService(
 			appConfig: $appConfig,
-			appManager: $this->createMock(IAppManager::class),
 			container: $this->createMock(ContainerInterface::class),
 			userSession: $session,
 			logger: $this->createMock(LoggerInterface::class),

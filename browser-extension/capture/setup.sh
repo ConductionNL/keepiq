@@ -5,12 +5,12 @@
 #
 # Provision the capture instance brought up by compose.yaml in this directory:
 #
-#   bash browser-extension/capture/setup.sh <compose project> <app dir> <openregister dir>
+#   bash browser-extension/capture/setup.sh <compose project> <app dir> [<openregister dir>]
 #
 # The same steps as tests/integration/federation/setup.sh, for one instance:
-# copy a built OpenRegister and Keepiq in, enable them with debug on so admin
-# gets the development vault (master password "Oj"), import Keepiq's register
-# configuration and VERIFY the vault exists. Then the development secrets,
+# copy Keepiq in (and a built OpenRegister, only when its directory is given:
+# Keepiq needs no other app, ADR-006), enable it with debug on so admin gets
+# the development vault (master password "Oj"), and VERIFY the vault exists. Then the development secrets,
 # which carry real company names, are purged: the capture script fills the
 # vault with demo items through the extension itself. Last, an app password
 # for the extension is written to browser-extension/capture/out/app-password.
@@ -18,7 +18,10 @@ set -euo pipefail
 
 PROJECT="${1:?compose project}"
 APP_DIR="$(cd "${2:?app dir}" && pwd)"
-OR_DIR="$(cd "${3:?openregister dir}" && pwd)"
+OR_DIR=""
+if [ -n "${3:-}" ]; then
+	OR_DIR="$(cd "$3" && pwd)"
+fi
 PORT="${KQ_MEDIA_PORT:-8188}"
 BASE="http://localhost:${PORT}"
 CONTAINER="${PROJECT}-nc-1"
@@ -54,13 +57,15 @@ occ config:system:set trusted_domains 5 --value=cloud.example.com
 # The welcome wizard would cover the app on the first browser visit.
 occ app:disable firstrunwizard >/dev/null 2>&1 || true
 
-echo "[capture-setup] copying OpenRegister in"
-docker exec "$CONTAINER" mkdir -p /var/www/html/custom_apps/openregister
-tar -C "$OR_DIR" --exclude=./node_modules --exclude=./.git --exclude=./tests --exclude=./coverage \
-	--exclude=./docs --exclude=./custom_apps --exclude=./openspec --exclude=./website -cf - . \
-	| docker exec -i "$CONTAINER" tar -xf - -C /var/www/html/custom_apps/openregister
-docker exec "$CONTAINER" chown -R www-data:www-data /var/www/html/custom_apps/openregister
-occ app:enable openregister
+if [ -n "$OR_DIR" ]; then
+	echo "[capture-setup] copying OpenRegister in"
+	docker exec "$CONTAINER" mkdir -p /var/www/html/custom_apps/openregister
+	tar -C "$OR_DIR" --exclude=./node_modules --exclude=./.git --exclude=./tests --exclude=./coverage \
+		--exclude=./docs --exclude=./custom_apps --exclude=./openspec --exclude=./website -cf - . \
+		| docker exec -i "$CONTAINER" tar -xf - -C /var/www/html/custom_apps/openregister
+	docker exec "$CONTAINER" chown -R www-data:www-data /var/www/html/custom_apps/openregister
+	occ app:enable openregister
+fi
 
 echo "[capture-setup] copying Keepiq in"
 docker exec "$CONTAINER" mkdir -p /var/www/html/custom_apps/keepiq
@@ -71,14 +76,6 @@ docker exec "$CONTAINER" chown -R www-data:www-data /var/www/html/custom_apps/ke
 occ app:enable keepiq
 occ app:list | sed -n '/Enabled:/,/Disabled:/p' | grep -q ' keepiq:' \
 	|| { echo "::error::keepiq is not enabled"; exit 1; }
-for conf in "$APP_DIR"/lib/Settings/keepiq_register.json "$APP_DIR"/lib/Settings/register.d/*.json; do
-	[ -f "$conf" ] || continue
-	code="$(curl -sS -o /dev/null -w '%{http_code}' -u admin:admin -H 'OCS-APIRequest: true' \
-		-F "file=@${conf}" -F force=true -F appId=keepiq \
-		"${BASE}/index.php/apps/openregister/api/configurations/import")"
-	[ "$code" = "200" ] || { echo "::error::importing ${conf} answered ${code}"; exit 1; }
-done
-
 # The development vault of admin, which the extension unlocks with "Oj".
 suites="$(api GET /api/v1/suites)"
 echo "$suites" | grep -q '"status":"active"' \

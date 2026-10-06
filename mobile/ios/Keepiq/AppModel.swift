@@ -31,6 +31,8 @@ final class AppModel: ObservableObject {
 
     let client: KeepiqClient
     let biometric = BiometricKeychain()
+    /// The Keychain items of the core, also where each account's store key lives.
+    private let storage = KeychainStorage()
     private let browser = BrowserLogin()
     private var loginTask: Task<Void, Never>?
     private var idleTask: Task<Void, Never>?
@@ -47,13 +49,16 @@ final class AppModel: ObservableObject {
         #else
         noBrowser = false
         #endif
-        client = KeepiqClientKt.doNewKeepiqClient(storage: KeychainStorage(), clientName: "Keepiq for iOS (\(UIDevice.current.model))")
+        client = KeepiqClientKt.doNewKeepiqClient(storage: storage, clientName: "Keepiq for iOS (\(UIDevice.current.model))")
         let biometric = self.biometric
+        let storage = self.storage
         // Unpair wipes the account's autofill index too (task 4.6); every
         // vault refresh rebuilds it through the hub.
         AutofillIndexHub.shared.sink = IOSAutofillIndex.shared
         client.onWipe = { accountId in
             biometric.delete(accountId)
+            // The offline copy and its key (task 1.6.1).
+            IosVaultSession.shared.deleteStore(accountId: accountId, storage: storage)
             AutofillIndexHub.shared.clear(accountId: accountId)
         }
         if let active = client.accounts.activeId() { screen = .unlock(active) }
@@ -191,7 +196,10 @@ final class AppModel: ObservableObject {
             let session: MobileSession
             do {
                 guard let account = self.account(accountId) else { throw AppError.accountGone }
-                session = try MobileSession.companion.forVault(account: account, vault: vault)
+                // The account's encrypted offline store and its sync (task 1.6.1).
+                session = try IosVaultSession.shared.open(
+                    account: account, vault: vault, storage: self.storage, listener: SyncLock(model: self, accountId: accountId)
+                )
             } catch {
                 vault.lock()
                 throw error
@@ -228,6 +236,14 @@ final class AppModel: ObservableObject {
                 // The next unlock tries again.
             }
         }
+    }
+
+    /// A sync found a new suite or master password: the biometric and PIN
+    /// wraps hold a key that no longer opens the vault (design D4).
+    func deleteUnlockWraps(_ accountId: String) {
+        biometric.delete(accountId)
+        client.pins.remove(accountId: accountId)
+        revision += 1
     }
 
     // MARK: Unlock options (2.3)
@@ -386,6 +402,40 @@ final class AppModel: ObservableObject {
         if case BiometricError.cancelled = error { return true }
         if let stopped = (error as NSError).userInfo["KotlinException"] as? LoginFlowStoppedException { return !stopped.timedOut }
         return false
+    }
+}
+
+/// What a sync does when it finds the keys changed elsewhere (design D5):
+/// the unlock wraps go, and the vault locks. A sync may call it off the main
+/// thread, so it hops there first.
+final class SyncLock: NSObject, SyncListener {
+    private weak var model: AppModel?
+    private let accountId: String
+
+    init(model: AppModel, accountId: String) {
+        self.model = model
+        self.accountId = accountId
+    }
+
+    func lock(reason: LockReason) {
+        DispatchQueue.main.async { [weak model] in
+            MainActor.assumeIsolated { model?.lock(reason: SyncLock.text(reason)) }
+        }
+    }
+
+    func deleteUnlockWraps() {
+        DispatchQueue.main.async { [weak model, accountId] in
+            MainActor.assumeIsolated { model?.deleteUnlockWraps(accountId) }
+        }
+    }
+
+    static func text(_ reason: LockReason) -> String {
+        switch reason {
+        // The vault list's own texts for the same locks.
+        case .suiteChanged: return L("vault_locked_suite")
+        case .masterPasswordChanged: return L("vault_locked_password")
+        default: return L("vault_locked_two_factor")
+        }
     }
 }
 

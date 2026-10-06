@@ -48,6 +48,30 @@ export function menuEntryTo(item) {
 }
 
 /**
+ * `OC.appswebroots`: one key per app enabled for the logged-in user, or null
+ * outside a Nextcloud page.
+ *
+ * @return {object|null} The map, or null.
+ * @spec openspec/specs/app-shell/spec.md#requirement-optional-integrations-appear-only-when-their-app-is-present
+ */
+export function currentAppsWebRoots() {
+	return (typeof window !== 'undefined' && window.OC?.appswebroots) || null
+}
+
+/**
+ * Whether an app is enabled for the logged-in user. The one place Keepiq
+ * decides app presence, for the menu gates and the AI companion alike.
+ *
+ * @param {string} appId The app id, e.g. `openregister`.
+ * @param {object|null|undefined} appsWebRoots `OC.appswebroots`.
+ * @return {boolean} False on uncertainty: a missing map is not an enabled app.
+ * @spec openspec/specs/app-shell/spec.md#requirement-optional-integrations-appear-only-when-their-app-is-present
+ */
+export function isAppEnabled(appId, appsWebRoots) {
+	return Boolean(appsWebRoots) && Object.hasOwn(appsWebRoots, appId)
+}
+
+/**
  * Whether a menu entry may render for this user on this instance.
  *
  * @param {object} item The menu entry.
@@ -63,7 +87,7 @@ export function isMenuEntryVisible(item, { isAdmin, appsWebRoots }) {
 	const required = item?.visibleIf?.appInstalled
 	if (typeof required === 'string' && required.length > 0) {
 		// Hide on uncertainty, like CnAppNav: a missing map is not an installed app.
-		return Boolean(appsWebRoots) && Object.hasOwn(appsWebRoots, required)
+		return isAppEnabled(required, appsWebRoots)
 	}
 
 	return true

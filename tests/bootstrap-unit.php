@@ -192,6 +192,12 @@ foreach (['ConnectionStatusReportedEvent', 'ConnectionRefreshRequestedEvent'] as
 	}
 }
 
+// Doctrine's expression-builder constants, which OCP's IExpressionBuilder
+// reads and nextcloud/ocp does not ship. Loads only when Doctrine is absent.
+if (class_exists('\\Doctrine\\DBAL\\Query\\Expression\\ExpressionBuilder') === false) {
+	require_once __DIR__ . '/stubs/doctrine-expression-builder.stub.php';
+}
+
 // OpenRegister's MCP contract (hermiq-ai-tooling): KeepiqScannableServices
 // implements IMcpScannableServices and the read facades carry #[McpTool].
 // The stub loads only when OpenRegister's own classes do not resolve.
