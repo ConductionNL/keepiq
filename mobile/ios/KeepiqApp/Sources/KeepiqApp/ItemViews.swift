@@ -158,6 +158,8 @@ struct ItemDetailView: View {
 private struct TotpRow: View {
     let item: DecryptedItem
     let onCopy: (String) -> Void
+    /// The countdown ring grows with Dynamic Type.
+    @ScaledMetric(relativeTo: .body) private var gaugeSize: CGFloat = 44
 
     var body: some View {
         if let params = item.totp {
@@ -166,7 +168,7 @@ private struct TotpRow: View {
                 let code = Totp.shared.generate(params: params, epochMillis: millis)
                 let left = Totp.shared.secondsRemaining(period: params.period, epochMillis: millis)
                 VStack(alignment: .leading) {
-                    Text(L("detail_code")).font(.caption).foregroundStyle(.secondary)
+                    Text(L("detail_code")).font(.caption).foregroundStyle(KeepiqPalette.secondaryText)
                     HStack {
                         Text(code).font(.title.monospaced()).accessibilityIdentifier("totpCode")
                         // A circular ProgressView spins on iOS whatever its value, so
@@ -174,11 +176,11 @@ private struct TotpRow: View {
                         Gauge(value: Double(left), in: 0...Double(params.period)) {
                             EmptyView()
                         } currentValueLabel: {
-                            Text("\(Int(left))")
+                            Text("\(Int(left))").font(.caption)
                         }
                         .gaugeStyle(.accessoryCircularCapacity)
                         .scaleEffect(0.7)
-                        .frame(width: 44, height: 44)
+                        .frame(width: gaugeSize, height: gaugeSize)
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(L("detail_code_seconds", Int(left)))
                         Spacer()
@@ -391,7 +393,7 @@ struct ItemEditView: View {
                 }
             }
             if kind != .passkey {
-                Section(L("detail_extra_fields")) {
+                Section(titled: L("detail_extra_fields")) {
                     ForEach(fieldNames.indices, id: \.self) { i in
                         VStack {
                             LabeledInput(label: L("edit_field_name"), text: $fieldNames[i], problem: error("field-\(i)"))

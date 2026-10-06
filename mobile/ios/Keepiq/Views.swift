@@ -41,7 +41,7 @@ struct PairView: View {
                             .accessibilityIdentifier("useAppPassword")
                     }
                 } else {
-                    Section(footer: Text("Create an app password in Nextcloud under Personal settings, Security.")) {
+                    Section(footer: Text("Create an app password in Nextcloud under Personal settings, Security.").foregroundStyle(KeepiqPalette.secondaryText)) {
                         LabeledField("User name") {
                             TextField("User name", text: $loginName, prompt: Text("Your Nextcloud user name"))
                                 .textInputAutocapitalization(.never)
@@ -161,7 +161,7 @@ struct SettingsView: View {
         let biometricOn = model.biometric.isEnabled(vault.accountId)
         let pinSet = model.client.pins.has(accountId: vault.accountId)
         Form {
-            Section("Unlock") {
+            Section(titled: "Unlock") {
                 Toggle("Face ID or Touch ID", isOn: Binding(
                     get: { biometricOn },
                     set: { on in on ? model.enableBiometric(vault) : model.disableBiometric(vault) }
@@ -185,14 +185,14 @@ struct SettingsView: View {
                         .accessibilityIdentifier("setPin")
                 }
             }
-            Section("Account") {
+            Section(titled: "Account") {
                 if let account = model.account(vault.accountId) {
                     Text("\(account.loginName) on \(account.server.withoutScheme)")
                 }
                 Button("Disconnect this account", role: .destructive) { confirmUnpair = true }
                     .accessibilityIdentifier("unpair")
             }
-            Section("Lock after") {
+            Section(titled: "Lock after") {
                 if let max = model.maxIdle {
                     Text("Your organisation allows at most \(max) minutes.").font(.footnote)
                 }

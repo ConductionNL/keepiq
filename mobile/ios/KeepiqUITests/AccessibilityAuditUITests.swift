@@ -102,6 +102,8 @@ final class AccessibilityAuditUITests: XCTestCase {
     /// Audits the screen on display, and collects what it finds.
     private func audit(_ screen: String) throws {
         screens.append(screen)
+        // Let a push or a sheet finish: the contrast check reads pixels.
+        usleep(1_000_000)
         shot("a11y-" + screen.replacingOccurrences(of: ",", with: "").replacingOccurrences(of: " ", with: "-"))
         try app.performAccessibilityAudit(for: .all) { issue in
             let line = "\(screen): \(Self.name(of: issue.auditType)): \(issue.compactDescription) [\(Self.describe(issue.element))]"
@@ -256,6 +258,27 @@ final class AccessibilityAuditUITests: XCTestCase {
 /// its reason. Real issues are fixed in the app, never listed here.
 enum A11yExclusions {
     static func reason(for issue: XCUIAccessibilityAuditIssue) -> String? {
-        nil
+        let element = issue.element.flatMap { $0.exists ? $0 : nil }
+        let type = element?.elementType
+        let label = element?.label ?? ""
+        // A single-line text field scrolls its text sideways, so it never
+        // hides what was typed. The audit flags every single-line field at
+        // the largest sizes; the field itself grows with Dynamic Type.
+        if issue.auditType == .textClipped, let type, [.textField, .secureTextField, .searchField].contains(type) {
+            return "a single-line text field scrolls its text, it does not clip it"
+        }
+        // The item's own login or address, shown as the user saved it.
+        // VoiceOver reads it as it is; a different label would hide the value.
+        if issue.auditType == .sufficientElementDescription, label.contains("@") || label.contains("://") {
+            return "the label is the item's own login or address"
+        }
+        // Every Text in Keepiq uses a text style (no fixed point sizes), and
+        // the text grows with the setting. The audit reports SwiftUI text in
+        // lists and buttons as "partially unsupported" all the same. The full
+        // "unsupported" finding is not excluded.
+        if issue.auditType == .dynamicType, issue.compactDescription.contains("partially") {
+            return "SwiftUI text styles reported as partially unsupported; Keepiq uses no fixed font size"
+        }
+        return nil
     }
 }

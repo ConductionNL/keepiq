@@ -205,7 +205,7 @@ struct FieldRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(label).font(.caption).foregroundStyle(.secondary)
+            Text(label).font(.caption).foregroundStyle(KeepiqPalette.secondaryText)
             HStack {
                 if masked && !shown {
                     Text("••••••••").accessibilityLabel(label)
@@ -213,6 +213,8 @@ struct FieldRow: View {
                     Text(value.isEmpty ? "-" : value)
                         .font(masked ? .body.monospaced() : .body)
                         .textSelection(.disabled)
+                        // Wraps instead of clipping at large Dynamic Type sizes (a long address has no spaces).
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer()
                 if masked {

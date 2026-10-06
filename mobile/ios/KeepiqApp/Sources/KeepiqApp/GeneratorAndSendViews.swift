@@ -71,8 +71,12 @@ struct GeneratorView: View {
                         Text(generatorProblem(outcome.error)).foregroundStyle(.red)
                     }
                     Spacer()
-                    Button { round += 1 } label: { Image(systemName: "arrow.clockwise") }
-                        .frame(minWidth: 44, minHeight: 44)
+                    // The frame inside the label: a borderless button only takes taps on its label.
+                    Button { round += 1 } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
                         .accessibilityLabel(L("cd_regenerate"))
                     if let value = outcome.value {
                         if let onUse {
@@ -233,9 +237,11 @@ private struct SendRow: View {
             Text(created.map { L("send_row", kind, $0) } ?? kind)
             Text(detailText(expiry: expiry))
                 .font(.footnote)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(KeepiqPalette.secondaryText)
         }
         .frame(minHeight: 44)
+        // One element for the row, so its 44 pt is the hit area and not each line's.
+        .accessibilityElement(children: .combine)
     }
 
     private func expiryText(_ m: Int64) -> String {
