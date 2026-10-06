@@ -674,5 +674,69 @@
 			"_note": "The shared CnFlowDetail canvas over the same single engine. Controls render in the NC app sidebar (sidebarComponent) so the canvas keeps full width; canvas and sidebar share useFlowStore. The _note claimed this before the field existed, so #/flows/new -- and every #/flows/:id -- rendered a bare canvas with no way to name, describe, trigger or step-edit the flow. Mirrors pipelinq#1490."
 		}
 	],
-	"deepLinks": []
+	"deepLinks": [],
+	"discovery": {
+		"public": true,
+		"standards": [
+			{
+				"id": "webauthn",
+				"name": "WebAuthn passkeys (vault login)",
+				"role": "provides",
+				"access": "authenticated",
+				"specUrl": "https://www.w3.org/TR/webauthn-3/"
+			},
+			{
+				"id": "fido-cxf",
+				"name": "FIDO Credential Exchange Format (import and export)",
+				"version": "1.0",
+				"role": "provides",
+				"access": "authenticated",
+				"specUrl": "https://fidoalliance.org/specifications-credential-exchange-specifications/"
+			},
+			{
+				"id": "fido-cxp",
+				"name": "FIDO Credential Exchange Protocol (relayed transfer)",
+				"role": "provides",
+				"access": "authenticated",
+				"specUrl": "https://fidoalliance.org/specifications-credential-exchange-specifications/"
+			},
+			{
+				"id": "oauth-jwt-bearer",
+				"name": "OAuth 2.0 JWT bearer grant for application tokens (RFC 7523)",
+				"role": "provides",
+				"access": "token",
+				"endpoint": "/apps/keepiq/api/v1/token",
+				"specUrl": "https://www.rfc-editor.org/rfc/rfc7523"
+			},
+			{
+				"id": "x509",
+				"name": "X.509 certificates from the built-in CA (recipient encryption)",
+				"role": "provides",
+				"access": "authenticated",
+				"specUrl": "https://www.rfc-editor.org/rfc/rfc5280"
+			},
+			{
+				"id": "ocm",
+				"name": "Open Cloud Mesh federated secret shares with partner organisations",
+				"role": "provides",
+				"access": "token",
+				"endpoint": "/ocm/keepiq",
+				"specUrl": "https://github.com/cs3org/OCM-API"
+			}
+		],
+		"links": {
+			"discovery": "/apps/keepiq/api/v1/app/.well-known/keepiq"
+		},
+		"ocmResourceTypes": [
+			{
+				"name": "keepiq-secret",
+				"shareTypes": [
+					"user"
+				],
+				"protocols": {
+					"keepiq": "/ocm/keepiq"
+				}
+			}
+		]
+	}
 }

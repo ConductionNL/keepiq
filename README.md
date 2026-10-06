@@ -290,6 +290,21 @@ docker exec nextcloud php occ app:enable openregister
 | [`openspec/architecture/`](openspec/architecture/) | App-specific Architectural Decision Records (3 ADRs) |
 | [`openspec/ROADMAP.md`](openspec/ROADMAP.md) | Product roadmap |
 
+<!-- discovery:start -->
+## Standards & federation
+
+| Standard | Role | Access |
+|---|---|---|
+| [WebAuthn passkeys (vault login)](https://www.w3.org/TR/webauthn-3/) | Provides | Nextcloud login |
+| [FIDO Credential Exchange Format (import and export)](https://fidoalliance.org/specifications-credential-exchange-specifications/) 1.0 | Provides | Nextcloud login |
+| [FIDO Credential Exchange Protocol (relayed transfer)](https://fidoalliance.org/specifications-credential-exchange-specifications/) | Provides | Nextcloud login |
+| [OAuth 2.0 JWT bearer grant for application tokens (RFC 7523)](https://www.rfc-editor.org/rfc/rfc7523) | Provides | Token, no login |
+| [X.509 certificates from the built-in CA (recipient encryption)](https://www.rfc-editor.org/rfc/rfc5280) | Provides | Nextcloud login |
+| [Open Cloud Mesh federated secret shares with partner organisations](https://github.com/cs3org/OCM-API) | Provides | Token, no login |
+
+Other servers can read this list without logging in, from the Nextcloud capabilities endpoint (published by OpenRegister). Details, federation and admin switches: [docs/standards-and-federation.md](docs/standards-and-federation.md).
+<!-- discovery:end -->
+
 ## Standards & Compliance
 
 - **Encryption:** RSA-4096 + AES-256, X.509 PKI, NIST SP 800-57

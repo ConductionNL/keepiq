@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "license": "EUPL-1.2",
   "scripts": {
+    "docs:standards": "node scripts/generate-standards-docs.cjs",
+    "check:standards-docs": "node scripts/generate-standards-docs.cjs --check",
     "build": "NODE_ENV=production webpack --config webpack.config.js --progress",
     "build:extension": "node browser-extension/build.mjs",
     "check:l10n-js": "node scripts/build-l10n-js.js --check",
