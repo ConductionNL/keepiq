@@ -13,6 +13,9 @@ on:
     paths: ["browser-extension/**", "src/crypto/**", "src/totp/**", ".github/workflows/browser-extension.yml"]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-and-load:
     runs-on: ubuntu-latest

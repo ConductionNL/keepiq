@@ -97,7 +97,7 @@ export class Client {
 	constructor(url: string, private readonly applicationId: string, private readonly privateKeyPem: string, private readonly options: ClientOptions = {}) {
 		const parsed = new URL(url)
 		if (!applicationId) throw new Error('application id is required')
-		this.base = url.replace(/\/+$/, '')
+		this.base = stripTrailingSlashes(url)
 		this.origin = parsed.origin
 		this.fetchFn = options.fetch ?? globalThis.fetch.bind(globalThis)
 		this.now = options.now ?? Date.now
@@ -312,4 +312,18 @@ export class Client {
 			return res
 		}
 	}
+}
+
+/**
+ * The address without its trailing slashes.
+ *
+ * A loop rather than `/\/+$/`: that pattern backtracks quadratically on a long
+ * run of slashes that is not at the end, and the address is caller input.
+ *
+ * @param url The address
+ */
+function stripTrailingSlashes(url: string): string {
+	let end = url.length
+	while (end > 0 && url[end - 1] === '/') end--
+	return url.slice(0, end)
 }

@@ -13,6 +13,10 @@ on:
 jobs:
   triage:
     uses: ConductionNL/.github/.github/workflows/issue-triage.yml@main
+    # What the shared workflow's jobs declare: they label and assign issues.
+    permissions:
+      contents: read
+      issues: write
     with:
       app-name: keepiq
       backlog-existing: ${{ github.event_name == 'workflow_dispatch' && inputs.backlog-existing || false }}

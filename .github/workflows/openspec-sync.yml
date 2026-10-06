@@ -9,6 +9,10 @@ on:
 jobs:
   sync:
     uses: ConductionNL/.github/.github/workflows/openspec-sync.yml@main
+    # What the shared workflow's jobs declare: they label and assign issues.
+    permissions:
+      contents: read
+      issues: write
     with:
       app-name: keepiq
     secrets:

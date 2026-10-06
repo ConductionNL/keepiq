@@ -37,6 +37,11 @@ describe('Client', () => {
 		expect(stub.exchanges).toBe(1)
 	})
 
+	it('ignores trailing slashes on the address', async () => {
+		const s = await new Client(url + '///', 'billing', FIXTURE.privateKeyPem).getByName('ci-fixture-db-password')
+		expect(s.key).toBe(FIXTURE.plaintext.key)
+	})
+
 	it('reports not modified on an unchanged second read', async () => {
 		const c = client()
 		expect((await c.getById('sec-cli-fixture')).etag).toBeTruthy()

@@ -160,7 +160,7 @@ describe('log out and lock', () => {
 				c.method === 'DELETE'
 				&& c.url.endsWith('/ocs/v2.php/core/apppassword'),
 		)
-		expect(revokes.map((c) => c.url.startsWith(TWO))).toEqual([true])
+		expect(revokes.map((c) => new URL(c.url).origin)).toEqual([TWO])
 	})
 
 	it('logs out of all accounts', async () => {
