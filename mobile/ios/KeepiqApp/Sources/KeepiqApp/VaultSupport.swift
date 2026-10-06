@@ -202,6 +202,19 @@ struct FieldRow: View {
     }
 
     @State private var shown = false
+
+    /// A long address or login has no spaces, so the text could only be cut
+    /// off. A zero-width space after each slash, dot and @ lets it wrap there;
+    /// VoiceOver and Copy keep the value as it is.
+    static func breakable(_ value: String) -> String {
+        guard !value.contains(" ") else { return value }
+        var out = ""
+        for character in value {
+            out.append(character)
+            if character == "/" || character == "." || character == "@" { out.append("\u{200B}") }
+        }
+        return out
+    }
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
@@ -214,12 +227,13 @@ struct FieldRow: View {
                 if masked && !shown {
                     Text("••••••••").accessibilityLabel(label)
                 } else {
-                    Text(value.isEmpty ? "-" : value)
+                    Text(value.isEmpty ? "-" : masked ? value : Self.breakable(value))
                         .font(masked ? .body.monospaced() : .body)
                         .textSelection(.disabled)
                         .lineLimit(nil)
-                        // Wraps instead of clipping at large Dynamic Type sizes (a long address has no spaces).
+                        // Wraps instead of clipping at large Dynamic Type sizes.
                         .fixedSize(horizontal: false, vertical: true)
+                        .accessibilityLabel(value.isEmpty ? "-" : value)
                 }
                 if !typeSize.isAccessibilitySize { Spacer() }
                 if masked {

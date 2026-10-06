@@ -27,7 +27,6 @@ final class AccessibilityAuditUITests: XCTestCase {
         app = XCUIApplication()
         app.launchArguments = ["-keepiq-reset"]
         app.launchEnvironment["KEEPIQ_UITEST_NO_BROWSER"] = "1"
-        app.launchEnvironment["KEEPIQ_UITEST_STILL_CODE"] = "1"
         app.launch()
     }
 
