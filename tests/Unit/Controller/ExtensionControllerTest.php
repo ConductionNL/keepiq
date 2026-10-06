@@ -33,6 +33,8 @@ use Psr\Log\LoggerInterface;
 
 /**
  * @covers \OCA\Keepiq\Controller\ExtensionController
+ * @uses   \OCA\Keepiq\Service\AdminSettingsService
+ * @uses   \OCA\Keepiq\Service\PasswordPolicyService
  */
 class ExtensionControllerTest extends TestCase {
 	/**
