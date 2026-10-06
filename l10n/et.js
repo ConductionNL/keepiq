@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Kompromiteerimisjärgne taastamine katkestatud",
         "Key rotation ended by a compromise revoke": "Võtmevahetus lõpetati kompromiteerimise tõttu tehtud tühistamisega",
         "Encryption suite revoke refused": "Krüpteerimiskomplekti tühistamine keelatud",
+        "Compromise containment recorded": "Kompromiteerimise ohjeldamine registreeritud",
         "Master password proof refused": "Põhiparooli tõend keelatud",
         "Your current master password": "Sinu praegune põhiparool",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n hädaabikontaktil oli ootel juurdepääsutaotlus, kui võtmevahetus ta eemaldas. Kontrolli, kes küsis, enne kui kedagi uuesti lisad.",

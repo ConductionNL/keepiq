@@ -1327,6 +1327,7 @@
         "Compromise recovery aborted": "Vaarantumisen jälkeinen palautus keskeytetty",
         "Key rotation ended by a compromise revoke": "Avainkierto päättyi vaarantumisen vuoksi tehtyyn peruutukseen",
         "Encryption suite revoke refused": "Salauspaketin peruutus hylätty",
+        "Compromise containment recorded": "Vaarantumisen rajaaminen kirjattu",
         "Master password proof refused": "Pääsalasanan todiste hylätty",
         "Your current master password": "Nykyinen pääsalasanasi",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n hätäyhteyshenkilöllä oli avoin käyttöoikeuspyyntö, kun avainkierto poisti hänet. Tarkista, kuka pyysi, ennen kuin lisäät ketään uudelleen.",

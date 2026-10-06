@@ -734,7 +734,9 @@ class EncryptionSuiteController extends OCSController {
 	 * MigrationService, keepiq#858) and ends their sessions (keepiq#860). Its
 	 * failures are counted and returned as `cascadeIncomplete`, so the
 	 * administrator is not told containment ran when part of it did not
-	 * (keepiq#863).
+	 * (keepiq#863), and audited as `suite.compromise_contained` (keepiq#1189).
+	 * Containment runs even when ending the migration throws; the error is
+	 * still returned.
 	 *
 	 * @param string $suiteId  The suite to revoke
 	 * @param string $reason   The administrator's reason
@@ -769,21 +771,28 @@ class EncryptionSuiteController extends OCSController {
 		$data = $suite->jsonSerialize();
 		$data['emergencyContactsDestroyed'] = $emergencyCount;
 
+		// The named suite is revoked from here on, so its containment runs
+		// even when ending the migration throws. A retry collects after the
+		// revoke and would no longer find what this radius holds (keepiq#864).
 		$cleared = $emergencyCount;
-		if ($migration !== null && $otherId !== null) {
-			$ended = $this->endMigrationForCompromise(
-				migration: $migration,
-				otherId: $otherId,
-				reason: $reason,
-				adminUid: $adminUid
-			);
-			$cleared += $ended['alsoRevokedEmergencyContactsDestroyed'];
-			$data += $ended;
+		try {
+			if ($migration !== null && $otherId !== null) {
+				$ended = $this->endMigrationForCompromise(
+					migration: $migration,
+					otherId: $otherId,
+					reason: $reason,
+					adminUid: $adminUid
+				);
+				$cleared += $ended['alsoRevokedEmergencyContactsDestroyed'];
+				$data += $ended;
+			}
+		} finally {
+			$this->containment->notifyEmergencyAccessCleared(suite: $suite, count: $cleared);
+
+			$tally = $this->containment->contain(radius: $radius, suite: $suite, revokedBy: $adminUid);
+			$this->suiteService->recordContainment(suiteId: $suiteId, actorId: $adminUid, tally: $tally);
 		}
 
-		$this->containment->notifyEmergencyAccessCleared(suite: $suite, count: $cleared);
-
-		$tally = $this->containment->contain(radius: $radius, suite: $suite, revokedBy: $adminUid);
 		$data['cascade'] = $tally;
 		$data['cascadeIncomplete'] = $tally['failed'] > 0;
 

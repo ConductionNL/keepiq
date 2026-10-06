@@ -262,6 +262,40 @@ class CompromiseContainmentServiceTest extends TestCase {
 	}//end testAFailedLookupIsCounted()
 
 	/**
+	 * A share-target lookup that throws leaves the source owner unwarned, so
+	 * it is a counted failure; the copy is still stamped (keepiq#1189).
+	 *
+	 * @return void
+	 */
+	public function testAFailedSourceLookupIsCounted(): void {
+		$copy = $this->secret('copy-1', 'alice', 'suite-a');
+		$this->secretMapper->method('findByEncryptionSuiteId')->willReturn([$copy]);
+		$this->shareTargetMapper->method('findByRecipientSecret')->willThrowException(new RuntimeException('db gone'));
+		$this->shareTargetMapper->method('findBySourceSecret')->willReturn([]);
+
+		$tally = $this->service->contain($this->service->collect(['suite-a']), $this->suite(), 'admin');
+
+		$this->assertSame(1, $tally['failed']);
+		$this->assertNotNull($copy->getPossiblyCompromisedAt());
+	}//end testAFailedSourceLookupIsCounted()
+
+	/**
+	 * A secret that is not a shared copy is no failure.
+	 *
+	 * @return void
+	 */
+	public function testAnOwnSecretIsNoFailure(): void {
+		$own = $this->secret('own-1', 'alice', 'suite-a');
+		$this->secretMapper->method('findByEncryptionSuiteId')->willReturn([$own]);
+		$this->shareTargetMapper->method('findByRecipientSecret')->willThrowException(new DoesNotExistException('not a copy'));
+		$this->shareTargetMapper->method('findBySourceSecret')->willReturn([]);
+
+		$tally = $this->service->contain($this->service->collect(['suite-a']), $this->suite(), 'admin');
+
+		$this->assertSame(0, $tally['failed']);
+	}//end testAnOwnSecretIsNoFailure()
+
+	/**
 	 * Integration-style, with the REAL revoke listener and a share-target store
 	 * that honours deletes: a compromise force-revoke during a migration A to B
 	 * where alice holds a copy of carol's secret on B. Collected before the two

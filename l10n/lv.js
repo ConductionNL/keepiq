@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Atkopšana pēc kompromitēšanas pārtraukta",
         "Key rotation ended by a compromise revoke": "Atslēgas maiņu pārtrauca atsaukšana kompromitēšanas dēļ",
         "Encryption suite revoke refused": "Šifrēšanas komplekta atsaukšana noraidīta",
+        "Compromise containment recorded": "Kompromitācijas ierobežošana reģistrēta",
         "Master password proof refused": "Galvenās paroles pierādījums noraidīts",
         "Your current master password": "Jūsu pašreizējā galvenā parole",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n ārkārtas kontaktpersonai bija neizskatīts piekļuves pieprasījums, kad atslēgas maiņa to noņēma. Pārbaudiet, kas to pieprasīja, pirms kādu pievienojat atkārtoti.",

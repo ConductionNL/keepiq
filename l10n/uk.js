@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Відновлення після компрометації перервано",
         "Key rotation ended by a compromise revoke": "Зміну ключа завершено відкликанням через компрометацію",
         "Encryption suite revoke refused": "Відкликання набору шифрування відхилено",
+        "Compromise containment recorded": "Стримування компрометації зареєстровано",
         "Master password proof refused": "Підтвердження головного пароля відхилено",
         "Your current master password": "Ваш поточний головний пароль",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n екстрений контакт мав запит на доступ в очікуванні, коли зміна ключа його видалила. Перевірте, хто запитував, перш ніж знову когось додавати.",

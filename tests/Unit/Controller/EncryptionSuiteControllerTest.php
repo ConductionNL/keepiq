@@ -1453,6 +1453,60 @@ class EncryptionSuiteControllerTest extends TestCase {
 	}//end testAnIncompleteCascadeReachesTheResponse()
 
 	/**
+	 * When revoking the other end throws, the named suite is already revoked:
+	 * its containment still runs on the radius collected before any revoke,
+	 * and is audited, while the error still reaches the administrator. A
+	 * retry would collect after the revoke and miss the source owners
+	 * (keepiq#864, keepiq#1189).
+	 *
+	 * @return void
+	 */
+	public function testAFailedOtherEndRevokeStillContains(): void {
+		$this->migrationService->method('findInProgressForSuite')->willReturn($this->openMigration());
+		$log = [];
+		$this->recordCompromiseCalls($log, 'suite-2');
+		$radius = new CompromiseBlastRadius();
+		$tally = ['stamped' => 3, 'notified' => 2, 'failed' => 0];
+		$containment = $this->createMock(CompromiseContainmentService::class);
+		$containment->method('collect')->willReturn($radius);
+		$containment->expects($this->once())
+			->method('contain')
+			->with($radius, $this->callback(static fn (EncryptionSuite $suite): bool => $suite->getId() === 'suite-1'), 'testuser')
+			->willReturn($tally);
+		$containment->expects($this->once())->method('notifyEmergencyAccessCleared');
+		$this->suiteService->expects($this->once())
+			->method('recordContainment')
+			->with('suite-1', 'testuser', $tally);
+
+		$response = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
+
+		$this->assertNotSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertNotContains('terminate:migration-1', $log, 'nothing may be terminated while the other end is live');
+	}//end testAFailedOtherEndRevokeStillContains()
+
+	/**
+	 * The containment tally reaches the audit trail, not only the response
+	 * (keepiq#1189).
+	 *
+	 * @return void
+	 */
+	public function testTheContainmentIsAudited(): void {
+		$this->migrationService->method('findInProgressForSuite')->willReturn(null);
+		$log = [];
+		$this->recordCompromiseCalls($log);
+		$containment = $this->createMock(CompromiseContainmentService::class);
+		$containment->method('collect')->willReturn(new CompromiseBlastRadius());
+		$containment->method('contain')->willReturn(['stamped' => 4, 'notified' => 1, 'failed' => 2]);
+		$this->suiteService->expects($this->once())
+			->method('recordContainment')
+			->with('suite-1', 'testuser', ['stamped' => 4, 'notified' => 1, 'failed' => 2]);
+
+		$response = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+	}//end testTheContainmentIsAudited()
+
+	/**
 	 * A complete cascade says so.
 	 *
 	 * @return void

@@ -1327,6 +1327,7 @@
         "Compromise recovery aborted": "Ele geçirilme sonrası kurtarma iptal edildi",
         "Key rotation ended by a compromise revoke": "Anahtar değişimi, ele geçirilme nedeniyle yapılan bir iptalle sonlandırıldı",
         "Encryption suite revoke refused": "Şifreleme paketi iptali reddedildi",
+        "Compromise containment recorded": "Güvenlik ihlalinin sınırlandırılması kaydedildi",
         "Master password proof refused": "Ana parola kanıtı reddedildi",
         "Your current master password": "Geçerli ana parolanız",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n acil durum kişisinin, anahtar değişimi onu kaldırdığında bekleyen bir erişim isteği vardı. Birini yeniden eklemeden önce kimin istediğini kontrol edin.",

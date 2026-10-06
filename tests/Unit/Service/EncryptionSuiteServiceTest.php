@@ -772,4 +772,48 @@ class EncryptionSuiteServiceTest extends TestCase {
 			AuditEventTypes::WHITELIST[AuditEventTypes::SUITE_REVOKE_REFUSED]
 		);
 	}//end testRecordRevokeRefusedDispatchesAnAuditEvent()
+
+	/**
+	 * The containment tally reaches the audit trail as counts, flagged
+	 * incomplete when a step failed (keepiq#1189).
+	 *
+	 * @return void
+	 */
+	public function testRecordContainmentDispatchesAnAuditEvent(): void {
+		$dispatched = [];
+		$this->serviceCollecting($dispatched)->recordContainment(
+			suiteId: 'suite-1',
+			actorId: 'admin',
+			tally: ['stamped' => 4, 'notified' => 1, 'failed' => 2],
+		);
+
+		$this->assertCount(1, $dispatched);
+		$event = $dispatched[0];
+		$this->assertInstanceOf(AuditEvent::class, $event);
+		$this->assertSame(AuditEventTypes::SUITE_COMPROMISE_CONTAINED, $event->getEventType());
+		$this->assertSame('admin', $event->getActorId());
+		$this->assertSame('suite', $event->getObjectType());
+		$this->assertSame('suite-1', $event->getObjectId());
+		$this->assertSame(['stamped' => 4, 'notified' => 1, 'failed' => 2, 'incomplete' => true], $event->getMetadata());
+		$this->assertSame(
+			['stamped', 'notified', 'failed', 'incomplete'],
+			AuditEventTypes::WHITELIST[AuditEventTypes::SUITE_COMPROMISE_CONTAINED]
+		);
+	}//end testRecordContainmentDispatchesAnAuditEvent()
+
+	/**
+	 * A containment without failures is not flagged incomplete.
+	 *
+	 * @return void
+	 */
+	public function testACompleteContainmentIsNotFlaggedIncomplete(): void {
+		$dispatched = [];
+		$this->serviceCollecting($dispatched)->recordContainment(
+			suiteId: 'suite-1',
+			actorId: 'admin',
+			tally: ['stamped' => 1, 'notified' => 1, 'failed' => 0],
+		);
+
+		$this->assertFalse($dispatched[0]->getMetadata()['incomplete']);
+	}//end testACompleteContainmentIsNotFlaggedIncomplete()
 }//end class

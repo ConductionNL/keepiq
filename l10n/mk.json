@@ -1327,6 +1327,7 @@
         "Compromise recovery aborted": "Обновувањето по компромитирање е прекинато",
         "Key rotation ended by a compromise revoke": "Ротацијата на клучот е завршена со отповикување поради компромитирање",
         "Encryption suite revoke refused": "Отповикувањето на пакетот за шифрирање е одбиено",
+        "Compromise containment recorded": "Ограничувањето на компромитирањето е евидентирано",
         "Master password proof refused": "Доказот за главната лозинка е одбиен",
         "Your current master password": "Вашата тековна главна лозинка",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n контакт за итни случаи имаше барање за пристап на чекање кога ротацијата на клучот го отстрани. Проверете кој побарал пред повторно да додадете некого.",

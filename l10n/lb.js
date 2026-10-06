@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Erhuelung no Kompromittéierung ofgebrach",
         "Key rotation ended by a compromise revoke": "Schlësselrotatioun duerch e Kompromittéierungs-Widderruff ofgeschloss",
         "Encryption suite revoke refused": "Widderruff vun der Verschlësselungssuite refuséiert",
+        "Compromise containment recorded": "Androung vun der Kompromittéierung protokolléiert",
         "Master password proof refused": "Beweis vum Masterpasswuert refuséiert",
         "Your current master password": "Äert aktuellt Masterpasswuert",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n Noutkontakt hat eng oppen Zougrëffsufro, wéi Är Schlësselrotatioun en ewechgeholl huet. Kuckt, wien gefrot huet, ier Dir iergendeen nees derbäisetzt.",

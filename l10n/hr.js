@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Oporavak nakon kompromitacije prekinut",
         "Key rotation ended by a compromise revoke": "Rotacija ključa završena opozivom zbog kompromitacije",
         "Encryption suite revoke refused": "Opoziv paketa šifriranja odbijen",
+        "Compromise containment recorded": "Zabilježeno obuzdavanje kompromitacije",
         "Master password proof refused": "Dokaz glavne lozinke odbijen",
         "Your current master password": "Vaša trenutna glavna lozinka",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n kontakt za hitne slučajeve imao je zahtjev za pristup na čekanju kada ga je rotacija ključa uklonila. Provjerite tko je tražio prije nego što ikoga ponovno dodate.",

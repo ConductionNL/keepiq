@@ -1327,6 +1327,7 @@
         "Compromise recovery aborted": "Recuperació després de compromís cancel·lada",
         "Key rotation ended by a compromise revoke": "Rotació de clau finalitzada per una revocació per compromís",
         "Encryption suite revoke refused": "Revocació del conjunt de xifratge rebutjada",
+        "Compromise containment recorded": "S'ha registrat la contenció del compromís",
         "Master password proof refused": "Prova de la contrasenya mestra rebutjada",
         "Your current master password": "La teva contrasenya mestra actual",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n contacte d'emergència tenia una sol·licitud d'accés pendent quan la rotació de clau el va eliminar. Comprova qui la va demanar abans de tornar a afegir ningú.",

@@ -278,6 +278,38 @@ class EncryptionSuiteService {
 	}//end recordRevokeRefused()
 
 	/**
+	 * Audit the containment of a compromise force-revoke.
+	 *
+	 * The tally reached only the HTTP response, so an incomplete containment
+	 * (owners or recipients not warned, the account not contained) left no
+	 * trace for the SIEM (keepiq#1189). Only the counts are recorded.
+	 *
+	 * @param string             $suiteId The suite revoked as compromised
+	 * @param string             $actorId The acting administrator
+	 * @param array<string, int> $tally   The containment tally: stamped, notified, failed
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 */
+	public function recordContainment(string $suiteId, string $actorId, array $tally): void {
+		$this->eventDispatcher?->dispatchTyped(
+			$this->auditEvents->forUser(
+				actorId: $actorId,
+				eventType: AuditEventTypes::SUITE_COMPROMISE_CONTAINED,
+				objectType: 'suite',
+				objectId: $suiteId,
+				metadata: [
+					'stamped' => $tally['stamped'],
+					'notified' => $tally['notified'],
+					'failed' => $tally['failed'],
+					'incomplete' => $tally['failed'] > 0,
+				],
+			)
+		);
+	}//end recordContainment()
+
+	/**
 	 * Reinstate a revoked EncryptionSuite. Re-signs the public key with the active intermediate.
 	 *
 	 * Refused for a suite revoked as compromised: reinstating it re-opens every

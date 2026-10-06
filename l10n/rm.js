@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Recuperaziun suenter cumpromissiun interrutta",
         "Key rotation ended by a compromise revoke": "Rotaziun da la clav terminada tras ina revocaziun pervia da cumpromissiun",
         "Encryption suite revoke refused": "Revocaziun da la suita da criptografia refusada",
+        "Compromise containment recorded": "Limitaziun da la cumpromissiun registrada",
         "Master password proof refused": "Cumprova dal pled-clav principal refusada",
         "Your current master password": "Tes pled-clav principal actual",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n contact d'urgenza aveva ina dumonda d'access pendenta cura che la rotaziun da la clav l'ha allontanà. Controllescha tgi che ha dumandà avant che agiuntar puspè insatgi.",

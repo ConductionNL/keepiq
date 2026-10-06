@@ -1333,6 +1333,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Herstel na compromittering afgebroken",
         "Key rotation ended by a compromise revoke": "Sleutelrotatie beëindigd door een intrekking wegens compromittering",
         "Encryption suite revoke refused": "Intrekken van versleutelingssuite geweigerd",
+        "Compromise containment recorded": "Inperking van compromittering vastgelegd",
         "Master password proof refused": "Bewijs van hoofdwachtwoord geweigerd",
         "Your current master password": "Je huidige hoofdwachtwoord",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n noodcontact had een openstaand toegangsverzoek toen je sleutelrotatie het verwijderde. Controleer wie het vroeg voordat je iemand opnieuw toevoegt.",

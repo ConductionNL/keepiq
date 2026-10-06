@@ -198,7 +198,12 @@ class CompromiseContainmentService {
 		}
 
 		foreach ($secrets as $secret) {
-			$target = $this->resolveTarget(secret: $secret);
+			$failed = false;
+			$target = $this->resolveTarget(secret: $secret, failed: $failed);
+			if ($failed === true) {
+				$radius->addFailure();
+			}
+
 			$radius->addSealed(secret: $secret, target: $target);
 			if ($target === $secret) {
 				$this->collectOutbound(radius: $radius, secret: $secret);

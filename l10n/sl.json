@@ -1327,6 +1327,7 @@
         "Compromise recovery aborted": "Obnovitev po ogrožanju prekinjena",
         "Key rotation ended by a compromise revoke": "Menjavo ključa je končal preklic zaradi ogrožanja",
         "Encryption suite revoke refused": "Preklic šifrirnega kompleta zavrnjen",
+        "Compromise containment recorded": "Zajezitev ogroženosti zabeležena",
         "Master password proof refused": "Dokaz glavnega gesla zavrnjen",
         "Your current master password": "Vaše trenutno glavno geslo",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n stik za nujne primere je imel čakajočo zahtevo za dostop, ko ga je menjava ključa odstranila. Preverite, kdo je zahteval, preden koga znova dodate.",

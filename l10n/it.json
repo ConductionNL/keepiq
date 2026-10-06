@@ -1327,6 +1327,7 @@
         "Compromise recovery aborted": "Ripristino dopo compromissione annullato",
         "Key rotation ended by a compromise revoke": "Rotazione della chiave terminata da una revoca per compromissione",
         "Encryption suite revoke refused": "Revoca della suite di crittografia rifiutata",
+        "Compromise containment recorded": "Contenimento della compromissione registrato",
         "Master password proof refused": "Prova della password principale rifiutata",
         "Your current master password": "La tua password principale attuale",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n contatto di emergenza aveva una richiesta di accesso in sospeso quando la rotazione della chiave lo ha rimosso. Controlla chi l'ha chiesta prima di aggiungere di nuovo qualcuno.",

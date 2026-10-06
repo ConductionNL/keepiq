@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Възстановяването след компрометиране е прекратено",
         "Key rotation ended by a compromise revoke": "Смяната на ключа е прекратена от отмяна поради компрометиране",
         "Encryption suite revoke refused": "Отмяната на комплекта за шифроване е отказана",
+        "Compromise containment recorded": "Ограничаването на компрометирането е записано",
         "Master password proof refused": "Доказът за главната парола е отказан",
         "Your current master password": "Текущата ви главна парола",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n контакт за спешни случаи имаше чакаща заявка за достъп, когато смяната на ключа го премахна. Проверете кой е поискал, преди да добавите някого отново.",

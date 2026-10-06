@@ -1327,6 +1327,7 @@
         "Compromise recovery aborted": "Compromise recovery aborted",
         "Key rotation ended by a compromise revoke": "Key rotation ended by a compromise revoke",
         "Encryption suite revoke refused": "Encryption suite revoke refused",
+        "Compromise containment recorded": "Compromise containment recorded",
         "Master password proof refused": "Master password proof refused",
         "Your current master password": "Your current master password",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.",
