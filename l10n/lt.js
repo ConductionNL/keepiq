@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Atkūrimas po kompromitavimo nutrauktas",
         "Key rotation ended by a compromise revoke": "Rakto keitimą užbaigė atšaukimas dėl kompromitavimo",
         "Encryption suite revoke refused": "Šifravimo rinkinio atšaukimas atmestas",
+        "Compromise containment recorded": "Kompromitavimo suvaldymas užregistruotas",
         "Master password proof refused": "Pagrindinio slaptažodžio įrodymas atmestas",
         "Your current master password": "Jūsų dabartinis pagrindinis slaptažodis",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n skubios pagalbos kontaktas turėjo laukiančią prieigos užklausą, kai rakto keitimas jį pašalino. Patikrinkite, kas prašė, prieš vėl ką nors pridėdami.",

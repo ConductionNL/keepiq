@@ -87,6 +87,10 @@ final class AuditEventTypes {
 	// containment path shows up as refusals, not as successes.
 	public const SUITE_REVOKE_REFUSED = 'suite.revoke_refused';
 
+	// The containment of a compromise force-revoke ran (keepiq#1189). An
+	// incomplete one otherwise only reached the HTTP response.
+	public const SUITE_COMPROMISE_CONTAINED = 'suite.compromise_contained';
+
 	// Vault-key proof (keepiq#870). A refused proof is exactly what a
 	// session-only attacker probing a guarded route produces. The proof,
 	// the nonce and the signature are never recorded.
@@ -301,6 +305,7 @@ final class AuditEventTypes {
 		self::SUITE_RECOVERY_ABORTED => ['migrationId', 'newSuiteId'],
 		self::SUITE_MIGRATION_TERMINATED => ['migrationId', 'oldSuiteId', 'newSuiteId'],
 		self::SUITE_REVOKE_REFUSED => ['reasonCode', 'markCompromised'],
+		self::SUITE_COMPROMISE_CONTAINED => ['stamped', 'notified', 'failed', 'incomplete', 'migrationEndFailed'],
 		// The guarded route, its purpose and why the proof was refused; never
 		// the proof, the nonce or the signature.
 		self::KEY_PROOF_REFUSED => ['route', 'purpose', 'reason'],

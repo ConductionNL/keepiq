@@ -79,15 +79,19 @@ trait MarksCompromisedSecrets {
 	 *
 	 * Not being a shared copy, or a source that is gone, is expected and falls
 	 * back to $secret quietly. Any other lookup failure falls back too, but is
-	 * logged: it means the source owner is not warned.
+	 * logged and sets $failed: it means the source owner is not warned, which a
+	 * caller counting the containment's failures has to count (keepiq#1189).
+	 * CompromiseContainmentService counts it; SuiteCompromiseListener keeps no
+	 * tally, so there it is only logged.
 	 *
-	 * @param Secret $secret The Secret sealed under the affected suite
+	 * @param Secret    $secret The Secret sealed under the affected suite
+	 * @param bool|null $failed Set to true when the lookup failed
 	 *
 	 * @return Secret
 	 *
 	 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 	 */
-	private function resolveTarget(Secret $secret): Secret {
+	private function resolveTarget(Secret $secret, ?bool &$failed = null): Secret {
 		try {
 			$row = $this->shareTargetMapper->findByRecipientSecret(
 				recipientSecretId: $secret->getId()
@@ -100,6 +104,7 @@ trait MarksCompromisedSecrets {
 				'Keepiq: could not resolve the source of secret ' . $secret->getId() . ': ' . $exception->getMessage(),
 				['app' => 'keepiq']
 			);
+			$failed = true;
 			return $secret;
 		}
 	}//end resolveTarget()

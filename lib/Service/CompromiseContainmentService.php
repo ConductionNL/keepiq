@@ -198,9 +198,16 @@ class CompromiseContainmentService {
 		}
 
 		foreach ($secrets as $secret) {
-			$target = $this->resolveTarget(secret: $secret);
+			$failed = false;
+			$target = $this->resolveTarget(secret: $secret, failed: $failed);
+			if ($failed === true) {
+				$radius->addFailure();
+			}
+
 			$radius->addSealed(secret: $secret, target: $target);
-			if ($target === $secret) {
+			// After a failed lookup $secret may be a copy, and its outbound
+			// lookup would fail on the same cause: one failure, counted once.
+			if ($target === $secret && $failed === false) {
 				$this->collectOutbound(radius: $radius, secret: $secret);
 			}
 		}

@@ -1327,6 +1327,7 @@
         "Compromise recovery aborted": "A kompromittálás utáni helyreállítás megszakítva",
         "Key rotation ended by a compromise revoke": "A kulcscserét egy kompromittálás miatti visszavonás fejezte be",
         "Encryption suite revoke refused": "A titkosítási csomag visszavonása elutasítva",
+        "Compromise containment recorded": "A kompromittálódás megfékezése rögzítve",
         "Master password proof refused": "A mesterjelszó igazolása elutasítva",
         "Your current master password": "A jelenlegi mesterjelszava",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n vészhelyzeti kapcsolattartónak függő hozzáférési kérelme volt, amikor a kulcscsere eltávolította. Ellenőrizze, ki kérte, mielőtt bárkit újra hozzáad.",

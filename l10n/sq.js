@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Rikuperimi pas komprometimit u ndërpre",
         "Key rotation ended by a compromise revoke": "Rrotullimi i çelësit përfundoi nga një revokim për shkak të komprometimit",
         "Encryption suite revoke refused": "Revokimi i paketës së enkriptimit u refuzua",
+        "Compromise containment recorded": "Kufizimi i komprometimit u regjistrua",
         "Master password proof refused": "Prova e fjalëkalimit kryesor u refuzua",
         "Your current master password": "Fjalëkalimi yt kryesor aktual",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n kontakt urgjence kishte një kërkesë aksesi në pritje kur rrotullimi i çelësit e hoqi. Kontrollo kush e kërkoi para se të shtosh dikë përsëri.",

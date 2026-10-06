@@ -242,7 +242,7 @@ class EncryptionSuiteService {
 	 * response, so an attack on the containment path was invisible to the
 	 * SIEM. The reason code is a fixed machine token chosen by the caller
 	 * (`migration_in_progress`, `invalid_argument`, `forbidden`,
-	 * `empty_reason`), never an exception message, so nothing a request
+	 * `empty_reason`, `migration_end_failed`), never an exception message, so nothing a request
 	 * supplied ends up in the trail.
 	 *
 	 * @param string $suiteId         The suite the revoke targeted
@@ -276,6 +276,52 @@ class EncryptionSuiteService {
 			)
 		);
 	}//end recordRevokeRefused()
+
+	/**
+	 * Audit the containment of a compromise force-revoke.
+	 *
+	 * The tally reached only the HTTP response, so an incomplete containment
+	 * (owners or recipients not warned, the account not contained) left no
+	 * trace for the SIEM (keepiq#1189). Only the counts are recorded.
+	 *
+	 * `migrationEndFailed` says the response is unfinished: the other end of
+	 * the suite's migration is still live and the migration still open. That
+	 * failure is also counted in `failed`.
+	 *
+	 * @param string             $suiteId            The suite revoked as compromised
+	 * @param string             $actorId            The acting administrator
+	 * @param array<string, int> $tally              The containment tally: stamped, notified, failed
+	 * @param bool               $migrationEndFailed Whether ending the suite's migration failed
+	 *
+	 * @return void
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $migrationEndFailed is
+	 *   recorded data about the containment, not a mode switch for this method.
+	 *
+	 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-compromise-force-revoke-contains-the-account
+	 */
+	public function recordContainment(
+		string $suiteId,
+		string $actorId,
+		array $tally,
+		bool $migrationEndFailed = false,
+	): void {
+		$this->eventDispatcher?->dispatchTyped(
+			$this->auditEvents->forUser(
+				actorId: $actorId,
+				eventType: AuditEventTypes::SUITE_COMPROMISE_CONTAINED,
+				objectType: 'suite',
+				objectId: $suiteId,
+				metadata: [
+					'stamped' => $tally['stamped'],
+					'notified' => $tally['notified'],
+					'failed' => $tally['failed'],
+					'incomplete' => $tally['failed'] > 0,
+					'migrationEndFailed' => $migrationEndFailed,
+				],
+			)
+		);
+	}//end recordContainment()
 
 	/**
 	 * Reinstate a revoked EncryptionSuite. Re-signs the public key with the active intermediate.

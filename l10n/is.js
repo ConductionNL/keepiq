@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Endurheimt eftir innbrot hætt",
         "Key rotation ended by a compromise revoke": "Lyklaskiptum lokið með afturköllun vegna innbrots",
         "Encryption suite revoke refused": "Afturköllun dulkóðunarsvítu hafnað",
+        "Compromise containment recorded": "Hindrun á öryggisbresti skráð",
         "Master password proof refused": "Sönnun aðallykilorðs hafnað",
         "Your current master password": "Núverandi aðallykilorð þitt",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n neyðartengiliður var með opna aðgangsbeiðni þegar lyklaskiptin fjarlægðu hann. Athugaðu hver bað um aðgang áður en þú bætir einhverjum við aftur.",

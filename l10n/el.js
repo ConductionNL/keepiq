@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Η ανάκτηση μετά από παραβίαση ακυρώθηκε",
         "Key rotation ended by a compromise revoke": "Η εναλλαγή κλειδιού τερματίστηκε από ανάκληση λόγω παραβίασης",
         "Encryption suite revoke refused": "Η ανάκληση της σουίτας κρυπτογράφησης απορρίφθηκε",
+        "Compromise containment recorded": "Καταγράφηκε ο περιορισμός της παραβίασης",
         "Master password proof refused": "Η απόδειξη του κύριου κωδικού απορρίφθηκε",
         "Your current master password": "Ο τρέχων κύριος κωδικός σας",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n επαφή έκτακτης ανάγκης είχε εκκρεμές αίτημα πρόσβασης όταν η εναλλαγή κλειδιού την αφαίρεσε. Ελέγξτε ποιος το ζήτησε πριν προσθέσετε ξανά κάποιον.",

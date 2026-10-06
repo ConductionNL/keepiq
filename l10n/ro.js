@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Recuperarea după compromitere a fost anulată",
         "Key rotation ended by a compromise revoke": "Rotația cheii a fost încheiată de o revocare pentru compromitere",
         "Encryption suite revoke refused": "Revocarea suitei de criptare a fost refuzată",
+        "Compromise containment recorded": "Limitarea compromiterii a fost înregistrată",
         "Master password proof refused": "Dovada parolei principale a fost refuzată",
         "Your current master password": "Parola principală actuală",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n contact de urgență avea o cerere de acces în așteptare când rotația cheii l-a eliminat. Verificați cine a cerut înainte să adăugați pe cineva din nou.",

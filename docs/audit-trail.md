@@ -90,7 +90,8 @@ operators and works councils know it is the default.
 `request.created`, `request.fulfilled`, `request.re_requested`,
 `request.revoked`, `suite.revoked`, `suite.reinstated`,
 `suite.recovery_started`, `suite.recovery_completed`, `suite.recovery_aborted`,
-`suite.migration_terminated`, `suite.revoke_refused`, `key_proof.refused`,
+`suite.migration_terminated`, `suite.revoke_refused`,
+`suite.compromise_contained`, `key_proof.refused`,
 `application.registered`,
 `application.approved`, `application.rejected`, `application.deleted`,
 `application.token_issued`, `application.secret_retrieved`, `vault.exported`,
@@ -104,6 +105,17 @@ the trail and the SIEM export and not only in `nextcloud.log`:
   itself is never recorded.
 - `suite.revoke_refused`: an administrator force-revoke was refused. Metadata:
   a fixed reason code and whether a compromise revoke was asked for.
+- `suite.compromise_contained`: the containment of a compromise force-revoke
+  ran. Metadata: how many secrets were stamped, how many warnings were sent,
+  how many steps failed, whether containment was therefore incomplete, and
+  `migrationEndFailed`: revoking the other end of the suite's key migration, or
+  ending the migration, failed, so the other end is still live. That failure
+  also counts as a failed step. A retry of the force-revoke only finishes the
+  migration, without a second containment, when this event shows the suite's
+  containment completed with no failed step since the migration started;
+  otherwise the retry contains again. A retry whose migration end fails again
+  is recorded as `suite.revoke_refused` with reason code
+  `migration_end_failed`.
 - `suite.recovery_aborted`: the owner called off a compromise recovery before
   any secret moved. `suite.migration_terminated`: a compromise force-revoke
   ended a recovery that was still running.

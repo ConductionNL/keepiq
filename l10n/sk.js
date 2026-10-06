@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Obnova po kompromitácii prerušená",
         "Key rotation ended by a compromise revoke": "Rotácia kľúča ukončená odvolaním pre kompromitáciu",
         "Encryption suite revoke refused": "Odvolanie šifrovacej sady zamietnuté",
+        "Compromise containment recorded": "Obmedzenie kompromitácie zaznamenané",
         "Master password proof refused": "Dôkaz hlavného hesla zamietnutý",
         "Your current master password": "Vaše súčasné hlavné heslo",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n núdzový kontakt mal nevybavenú žiadosť o prístup, keď ho rotácia kľúča odstránila. Skôr ako niekoho znova pridáte, overte, kto žiadal.",

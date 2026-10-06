@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Cealaíodh an t-aisghabháil tar éis comhréitigh",
         "Key rotation ended by a compromise revoke": "Cuireadh deireadh le malartú eochrach le cúlghairm mar gheall ar chomhréiteach",
         "Encryption suite revoke refused": "Diúltaíodh do chúlghairm na sraithe criptiúcháin",
+        "Compromise containment recorded": "Srianadh an chomhréitigh taifeadta",
         "Master password proof refused": "Diúltaíodh do chruthúnas an phríomhfhocail faire",
         "Your current master password": "Do phríomhfhocal faire reatha",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "Bhí iarratas rochtana ar feitheamh ag %n teagmhálaí éigeandála nuair a bhain do mhalartú eochrach é. Seiceáil cé a d'iarr sula gcuireann tú duine ar bith ar ais.",

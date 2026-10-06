@@ -354,6 +354,8 @@ export default {
 					outcome.alsoRevokedEmergencyContactsDestroyed ?? 0
 				this.cascadeIncomplete = outcome.cascadeIncomplete === true
 				this.cascadeFailed = outcome.cascadeFailed ?? 0
+				// Revoked, but the key migration is still open (keepiq#1189).
+				this.error = outcome.unfinished ?? null
 			} catch (e) {
 				// A cancelled sudo prompt or a server refusal must surface, never
 				// be swallowed into a silent success. Contact identities never

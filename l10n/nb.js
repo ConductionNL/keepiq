@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Gjenoppretting etter kompromittering avbrutt",
         "Key rotation ended by a compromise revoke": "Nøkkelrotasjon avsluttet av en tilbakekalling på grunn av kompromittering",
         "Encryption suite revoke refused": "Tilbakekalling av krypteringssuite avvist",
+        "Compromise containment recorded": "Inndemming av kompromittering registrert",
         "Master password proof refused": "Bevis for hovedpassord avvist",
         "Your current master password": "Ditt nåværende hovedpassord",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n nødkontakt hadde en ventende tilgangsforespørsel da nøkkelrotasjonen fjernet den. Sjekk hvem som spurte før du legger til noen igjen.",

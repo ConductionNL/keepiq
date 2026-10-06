@@ -1327,6 +1327,7 @@
         "Compromise recovery aborted": "L-irkupru wara kompromess twaqqaf",
         "Key rotation ended by a compromise revoke": "Ir-rotazzjoni taċ-ċavetta ntemmet b'revoka minħabba kompromess",
         "Encryption suite revoke refused": "Ir-revoka tas-suite tal-encryption ġiet miċħuda",
+        "Compromise containment recorded": "Il-konteniment tal-kompromess ġie rreġistrat",
         "Master password proof refused": "Il-prova tal-password ewlenija ġiet miċħuda",
         "Your current master password": "Il-password ewlenija attwali tiegħek",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n kuntatt ta' emerġenza kellu talba għal aċċess pendenti meta r-rotazzjoni taċ-ċavetta neħħietu. Iċċekkja min talab qabel ma żżid lil xi ħadd mill-ġdid.",

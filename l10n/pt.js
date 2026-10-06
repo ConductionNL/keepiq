@@ -1328,6 +1328,7 @@ OC.L10N.register(
         "Compromise recovery aborted": "Recuperação após comprometimento cancelada",
         "Key rotation ended by a compromise revoke": "Rotação de chave terminada por uma revogação por comprometimento",
         "Encryption suite revoke refused": "Revogação do conjunto de cifragem recusada",
+        "Compromise containment recorded": "Contenção do comprometimento registada",
         "Master password proof refused": "Prova da palavra-passe mestra recusada",
         "Your current master password": "A sua palavra-passe mestra atual",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n contacto de emergência tinha um pedido de acesso pendente quando a rotação de chave o removeu. Verifique quem o pediu antes de voltar a adicionar alguém.",

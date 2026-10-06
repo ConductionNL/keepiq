@@ -1327,6 +1327,7 @@
         "Compromise recovery aborted": "Gendannelse efter kompromittering afbrudt",
         "Key rotation ended by a compromise revoke": "Nøglerotation afsluttet af en tilbagekaldelse pga. kompromittering",
         "Encryption suite revoke refused": "Tilbagekaldelse af krypteringssuite afvist",
+        "Compromise containment recorded": "Inddæmning af kompromittering registreret",
         "Master password proof refused": "Bevis for hovedadgangskode afvist",
         "Your current master password": "Din nuværende hovedadgangskode",
         "%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.": "%n nødkontakt havde en ventende adgangsanmodning, da din nøglerotation fjernede den. Tjek, hvem der spurgte, før du tilføjer nogen igen.",
