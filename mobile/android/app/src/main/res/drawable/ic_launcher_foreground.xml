@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<!-- The Keepiq lock from img/pwa-icon-maskable.svg, as the adaptive icon's
+     foreground (also its monochrome layer). The 24-unit glyph is scaled by
+     2.25 and centred, as the PWA icon does at 512 px: the lock spans
+     38 to 70 dp across and 32 to 74 dp down, inside the 66 dp safe zone of
+     the 108 dp canvas, so no launcher mask clips it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group
+        android:translateX="27"
+        android:translateY="27"
+        android:scaleX="2.25"
+        android:scaleY="2.25">
+        <!-- Lock body: the SVG's rect x=5 y=11 width=14 height=10 rx=2. -->
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:pathData="M7,11H17A2,2 0,0 1,19 13V19A2,2 0,0 1,17 21H7A2,2 0,0 1,5 19V13A2,2 0,0 1,7 11Z" />
+        <!-- Lock shackle, a filled outline 1.5 units thick. -->
+        <path
+            android:fillColor="#FFFFFFFF"
+            android:fillType="evenOdd"
+            android:pathData="M12,2.25A4.75,4.75 0,0 0,7.25 7V11H8.75V7A3.25,3.25 0,0 1,15.25 7V11H16.75V7A4.75,4.75 0,0 0,12 2.25Z" />
+    </group>
+</vector>
