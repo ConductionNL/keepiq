@@ -19,12 +19,14 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\EncryptionSuiteController;
 use OCA\Keepiq\Db\AuditEntry;
 use OCA\Keepiq\Db\AuditEntryMapper;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use OCA\Keepiq\Exception\ConflictException;
 use OCA\Keepiq\Exception\SuiteMigrationInProgressException;
 use OCA\Keepiq\Service\CompromiseBlastRadius;
@@ -1217,6 +1219,7 @@ class EncryptionSuiteControllerTest extends TestCase {
 		$migration->setOldSuiteId('suite-1');
 		$migration->setNewSuiteId('suite-2');
 		$migration->setStatus('in_progress');
+		$migration->setStartedAt(new DateTime('2026-10-01 09:00:00'));
 
 		return $migration;
 	}//end openMigration()
@@ -1284,9 +1287,20 @@ class EncryptionSuiteControllerTest extends TestCase {
 			}
 		);
 		$this->auditEntries->method('findFiltered')->willReturnCallback(
-			static function (array $filters) use (&$entries): array {
-				$matching = array_filter($entries, static fn (AuditEntry $entry): bool => $entry->getObjectId() === $filters['objectId']);
-				return array_slice(array_values($matching), 0, 1);
+			function (array $filters, int $limit) use (&$entries): array {
+				// The skip is only safe on exactly this query: this event, this
+				// suite, since the migration started (keepiq#1189).
+				$this->assertEquals(
+					[
+						'eventType' => AuditEventTypes::SUITE_COMPROMISE_CONTAINED,
+						'objectType' => 'suite',
+						'objectId' => 'suite-1',
+						'from' => new DateTime('2026-10-01 09:00:00'),
+					],
+					$filters
+				);
+				$this->assertSame(1, $limit);
+				return array_slice($entries, 0, 1);
 			}
 		);
 	}//end auditContainments()
@@ -1453,6 +1467,66 @@ class EncryptionSuiteControllerTest extends TestCase {
 
 		$this->assertStringContainsString('part of its containment', $first->getData()['message']);
 	}//end testARetryAfterAnIncompleteContainmentContainsAgain()
+
+	/**
+	 * A containment record that does not show a complete containment does
+	 * not let a retry skip it: no metadata, or a failed step that was not the
+	 * migration end (keepiq#1189).
+	 *
+	 * @return array<string,array{0: string|null}>
+	 */
+	public static function incompleteRecords(): array {
+		return [
+			'no metadata' => [null],
+			'empty metadata' => [''],
+			'a failed containment step' => [(string)json_encode(['failed' => 1, 'migrationEndFailed' => false])],
+			'no failed count' => [(string)json_encode(['migrationEndFailed' => true])],
+		];
+	}//end incompleteRecords()
+
+	/**
+	 * A retry contains again when the newest record is not a complete one.
+	 *
+	 * @param string|null $metadata The stored metadata of the newest record
+	 *
+	 * @return void
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('incompleteRecords')]
+	public function testARetryContainsAgainOnAnIncompleteRecord(?string $metadata): void {
+		$this->migrationService->method('findInProgressForSuite')->willReturn($this->openMigration());
+		$log = ['revoke:suite-1'];
+		$this->recordCompromiseCalls($log);
+		$entry = new AuditEntry();
+		$entry->setMetadata($metadata);
+		$this->auditEntries->method('findFiltered')->willReturn([$entry]);
+		$containment = $this->createMock(CompromiseContainmentService::class);
+		$containment->method('collect')->willReturn(new CompromiseBlastRadius());
+		$containment->expects($this->once())->method('contain')->willReturn(['stamped' => 0, 'notified' => 0, 'failed' => 0]);
+
+		$response = $this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
+
+		$this->assertArrayNotHasKey('containmentAlreadyRan', $response->getData());
+	}//end testARetryContainsAgainOnAnIncompleteRecord()
+
+	/**
+	 * A migration without a start would make the lookup unbounded in time, so
+	 * the retry contains again without asking the audit trail.
+	 *
+	 * @return void
+	 */
+	public function testARetryContainsAgainWhenTheMigrationHasNoStart(): void {
+		$migration = $this->openMigration();
+		$migration->setStartedAt(null);
+		$this->migrationService->method('findInProgressForSuite')->willReturn($migration);
+		$log = ['revoke:suite-1'];
+		$this->recordCompromiseCalls($log);
+		$this->auditEntries->expects($this->never())->method('findFiltered');
+		$containment = $this->createMock(CompromiseContainmentService::class);
+		$containment->method('collect')->willReturn(new CompromiseBlastRadius());
+		$containment->expects($this->once())->method('contain')->willReturn(['stamped' => 0, 'notified' => 0, 'failed' => 0]);
+
+		$this->controllerWith(containment: $containment)->forceRevoke('suite-1', 'account taken over', true, confirmSuiteId: 'suite-1');
+	}//end testARetryContainsAgainWhenTheMigrationHasNoStart()
 
 	/**
 	 * When the audit trail cannot be read, the retry contains again.

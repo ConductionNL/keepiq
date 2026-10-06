@@ -1447,8 +1447,8 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *   `alsoRevokedEmergencyContactsDestroyed`, `cascadeIncomplete` and `cascadeFailed`.
 		 *   A compromise revoke whose migration end failed answers 500 with
 		 *   `migration_end_failed`; it still resolves, with the server's message
-		 *   in `unfinished`, because the suite was revoked and contained
-		 *   (keepiq#1189). Any other failure rejects.
+		 *   in `unfinished`, because the suite was revoked (its containment
+		 *   ran; see `cascade`) (keepiq#1189). Any other failure rejects.
 		 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 		 */
 		async forceRevokeSuite({
@@ -1477,7 +1477,10 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 					{ reason, markCompromised, confirmSuiteId },
 				)
 			} catch (error) {
-				if (error?.response?.data?.error !== 'migration_end_failed') {
+				if (
+					error?.response?.status !== 500
+					|| error.response.data?.error !== 'migration_end_failed'
+				) {
 					throw error
 				}
 				response = error.response

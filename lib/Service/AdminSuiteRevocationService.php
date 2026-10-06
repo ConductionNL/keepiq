@@ -227,7 +227,10 @@ class AdminSuiteRevocationService {
 	 * @return EncryptionSuite|null
 	 */
 	private function alreadyContained(string $suiteId, ?SuiteMigration $migration): ?EncryptionSuite {
-		if ($migration === null) {
+		// Without a start the lookup would match a containment from any
+		// earlier migration: the column is NOT NULL, but the skip must not
+		// rest on that.
+		if ($migration === null || $migration->getStartedAt() === null) {
 			return null;
 		}
 
@@ -258,9 +261,14 @@ class AdminSuiteRevocationService {
 			return null;
 		}
 
-		// `failed` also counts the failed migration end, which the retry redoes.
+		// A record without a failure count proves nothing. `failed` also
+		// counts the failed migration end, which the retry redoes.
 		$metadata = $entries[0]->getMetadataArray();
-		$containmentFailures = (int)($metadata['failed'] ?? 1) - (int)(($metadata['migrationEndFailed'] ?? false) === true);
+		if (is_int($metadata['failed'] ?? null) === false) {
+			return null;
+		}
+
+		$containmentFailures = $metadata['failed'] - (int)(($metadata['migrationEndFailed'] ?? false) === true);
 		if ($containmentFailures !== 0) {
 			return null;
 		}

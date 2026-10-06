@@ -414,6 +414,25 @@ describe('useEncryptionSuiteStore — re-enrolment after a revocation', () => {
 		expect(outcome.cascadeFailed).toBe(1)
 	})
 
+	it('rejects a migration_end_failed body that is not a 500', async () => {
+		const failure = {
+			response: {
+				status: 403,
+				data: { error: 'migration_end_failed', message: 'x' },
+			},
+		}
+		vi.spyOn(axios, 'post').mockRejectedValue(failure)
+
+		await expect(
+			useEncryptionSuiteStore().forceRevokeSuite({
+				id: 'suite-1',
+				reason: 'taken over',
+				markCompromised: true,
+				confirmSuiteId: 'suite-1',
+			}),
+		).rejects.toBe(failure)
+	})
+
 	it('still rejects any other server failure', async () => {
 		const failure = { response: { status: 403, data: { message: 'refused' } } }
 		vi.spyOn(axios, 'post').mockRejectedValue(failure)

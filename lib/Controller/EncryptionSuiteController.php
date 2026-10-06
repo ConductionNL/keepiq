@@ -703,7 +703,8 @@ class EncryptionSuiteController extends OCSController {
 	 * The response to a compromise force-revoke.
 	 *
 	 * A failed migration end is a 500, not a refusal: the named suite is
-	 * revoked and contained, only ending its migration failed (keepiq#1189).
+	 * revoked and its containment ran (see `cascade`), only ending its
+	 * migration failed (keepiq#1189).
 	 *
 	 * @param array<string,mixed> $data The body from AdminSuiteRevocationService::revokeAsCompromise()
 	 *
