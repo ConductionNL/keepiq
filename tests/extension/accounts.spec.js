@@ -117,7 +117,9 @@ describe('account storage', () => {
 		expect(sixth.error).toContain('up to 5 accounts')
 		expect(await api.loadAccounts()).toHaveLength(5)
 		expect(
-			server.calls.some((c) => c.url.startsWith('https://cloud6.example')),
+			server.calls.some(
+				(c) => new URL(c.url).origin === 'https://cloud6.example',
+			),
 		).toBe(false)
 	})
 
@@ -296,7 +298,7 @@ describe('matching and filling use the active account only', () => {
 			(c) => c.method === 'POST' && c.url.endsWith('/api/v1/secrets'),
 		)
 		expect(posts).toHaveLength(1)
-		expect(posts[0].url.startsWith(HOME)).toBe(true)
+		expect(new URL(posts[0].url).origin).toBe(HOME)
 		expect(posts[0].body.encryptionSuiteId).toBe('home-suite')
 	})
 })

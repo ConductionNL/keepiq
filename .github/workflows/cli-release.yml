@@ -18,6 +18,9 @@ on:
     paths: ["cli/**", "sdk/go/**", "sdk/testdata/**", ".github/workflows/cli-release.yml"]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -43,6 +46,9 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
+    # Attaches the binary to the GitHub release on a cli-v tag.
+    permissions:
+      contents: write
     # No observed runs yet; a pure-Go cross-compile is minutes at most.
     timeout-minutes: 20
     defaults:
@@ -89,6 +95,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Attaches SHA256SUMS to the GitHub release on a cli-v tag.
+    permissions:
+      contents: write
     steps:
       - uses: actions/download-artifact@v4
         with:

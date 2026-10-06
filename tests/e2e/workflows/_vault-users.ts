@@ -25,6 +25,7 @@ import type {
 } from '@playwright/test'
 
 import { expect, request as playwrightRequest } from '@playwright/test'
+import { randomInt } from 'node:crypto'
 import * as path from 'path'
 import { APP_BASE } from './_workflow-helpers.ts'
 
@@ -81,7 +82,7 @@ export interface VaultUser {
  * @return The account details (not created yet).
  */
 export function newVaultUser(prefix: string): VaultUser {
-	const tag = `${Date.now().toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`
+	const tag = `${Date.now().toString(36)}${randomInt(1296).toString(36)}`
 	const uid = `${prefix}-${tag}`
 	return {
 		uid,
