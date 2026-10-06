@@ -197,7 +197,14 @@ class AdminAreaSettingsTest extends TestCase {
 	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#1.2
 	 */
 	public function testInfoXmlRegistersEveryArea(): void {
-		$info = simplexml_load_file(__DIR__ . '/../../../appinfo/info.xml');
+		// Parse the bytes, not the path: under a Nextcloud bootstrap (CI),
+		// lib/base.php blocks libxml's external entity loader, which
+		// simplexml_load_file() also uses to open the file, so it returns false
+		// (see NextcloudFloorMatrixTest).
+		$xml = file_get_contents(__DIR__ . '/../../../appinfo/info.xml');
+		$this->assertIsString($xml, 'appinfo/info.xml must be readable');
+		$info = simplexml_load_string($xml);
+		$this->assertNotFalse($info, 'appinfo/info.xml must parse');
 		$admins = array_map('strval', iterator_to_array($info->settings->admin, false));
 
 		$this->assertSame(array_values(AdminAreaAuthorizer::AREAS), $admins);
