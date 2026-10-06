@@ -337,10 +337,14 @@ struct NewSendView: View {
                             TextField(L("send_hours_label"), text: $hours).keyboardType(.numberPad)
                         }
                     }
-                    LabeledField(L("send_password_label")) {
-                        SecureField(L("send_password_label"), text: $sendPassword).textContentType(.oneTimeCode).disabled(!passwordAvailable)
+                    // Without a password option there is no field to fill in, only the reason.
+                    if passwordAvailable {
+                        LabeledField(L("send_password_label")) {
+                            SecureField(L("send_password_label"), text: $sendPassword).textContentType(.oneTimeCode)
+                        }
+                    } else {
+                        Text(L("send_password_unavailable")).font(.footnote)
                     }
-                    if !passwordAvailable { Text(L("send_password_unavailable")).font(.footnote) }
                 }
                 Section {
                     if let problem { Text(problem).foregroundStyle(.red) }

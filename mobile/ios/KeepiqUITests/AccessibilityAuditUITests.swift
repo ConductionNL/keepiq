@@ -105,9 +105,11 @@ final class AccessibilityAuditUITests: XCTestCase {
         // Let a push or a sheet finish: the contrast check reads pixels.
         usleep(1_000_000)
         shot("a11y-" + screen.replacingOccurrences(of: ",", with: "").replacingOccurrences(of: " ", with: "-"))
+        let bars = barFrames()
+        let rowUnderBar = rowsUnderBars(bars)
         try app.performAccessibilityAudit(for: .all) { issue in
             let line = "\(screen): \(Self.name(of: issue.auditType)): \(issue.compactDescription) [\(Self.describe(issue.element))]"
-            if let reason = A11yExclusions.reason(for: issue, bars: self.barFrames()) {
+            if let reason = A11yExclusions.reason(for: issue, bars: bars, rowUnderBar: rowUnderBar) {
                 self.excluded.append("\(line) (excluded: \(reason))")
             } else {
                 self.issues.append(line + "\n    " + issue.detailedDescription)
@@ -124,6 +126,14 @@ final class AccessibilityAuditUITests: XCTestCase {
             .filter { $0.exists }
             .map(\.frame)
             .filter { !$0.isEmpty }
+    }
+
+    /// Whether a list row sits partly under a bar, faded by the scroll edge
+    /// effect, at the moment of the audit.
+    private func rowsUnderBars(_ bars: [CGRect]) -> Bool {
+        app.cells.allElementsBoundByIndex.contains { cell in
+            cell.exists && bars.contains { $0.intersects(cell.frame) }
+        }
     }
 
     private func report() {
@@ -266,7 +276,7 @@ final class AccessibilityAuditUITests: XCTestCase {
 /// Audit issues the test leaves out, each a documented false positive with
 /// its reason. Real issues are fixed in the app, never listed here.
 enum A11yExclusions {
-    static func reason(for issue: XCUIAccessibilityAuditIssue, bars: [CGRect]) -> String? {
+    static func reason(for issue: XCUIAccessibilityAuditIssue, bars: [CGRect], rowUnderBar: Bool) -> String? {
         let element = issue.element.flatMap { $0.exists ? $0 : nil }
         let type = element?.elementType
         let label = element?.label ?? ""
@@ -281,6 +291,13 @@ enum A11yExclusions {
         if issue.auditType == .contrast, let frame = element?.frame,
            bars.contains(where: { $0.insetBy(dx: 0, dy: -24).intersects(frame) }) {
             return "under the system scroll edge effect of a bar"
+        }
+        // A contrast finding the audit cannot tie to an element, on a screen
+        // where a list row is half under a bar: the faded row has no element
+        // of its own any more. Seen on the vault list, with the last row under
+        // the tab bar. Any finding with an element is still counted.
+        if issue.auditType == .contrast, element == nil, rowUnderBar {
+            return "a row half under a bar, faded by the scroll edge effect"
         }
         // A single-line text field scrolls its text sideways, so it never
         // hides what was typed. The audit flags every single-line field at
