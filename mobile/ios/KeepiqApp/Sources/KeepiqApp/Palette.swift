@@ -17,6 +17,14 @@ enum KeepiqPalette {
             : UIColor(red: 0x00 / 255, green: 0x55 / 255, blue: 0xB3 / 255, alpha: 1)
     })
 
+    /// Destructive actions in a list: 6.0:1 on white (the system red is
+    /// 3.6:1), and the system dark-mode red, 5.0:1 on the dark cells.
+    static let destructive = Color(UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 0xFF / 255, green: 0x45 / 255, blue: 0x3A / 255, alpha: 1)
+            : UIColor(red: 0xC4 / 255, green: 0x14 / 255, blue: 0x1C / 255, alpha: 1)
+    })
+
     /// Secondary text: 6.6:1 on white and 7.5:1 on the dark grouped cells.
     static let secondaryText = Color(UIColor { traits in
         traits.userInterfaceStyle == .dark

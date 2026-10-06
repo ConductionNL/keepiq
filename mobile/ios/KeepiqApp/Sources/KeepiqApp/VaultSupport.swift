@@ -202,21 +202,26 @@ struct FieldRow: View {
     }
 
     @State private var shown = false
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
+        // At the accessibility text sizes the buttons go under the value, so
+        // a long value keeps the full width instead of being clipped.
+        let layout = typeSize.isAccessibilitySize ? AnyLayout(VStackLayout(alignment: .leading)) : AnyLayout(HStackLayout())
         VStack(alignment: .leading, spacing: 4) {
             Text(label).font(.caption).foregroundStyle(KeepiqPalette.secondaryText)
-            HStack {
+            layout {
                 if masked && !shown {
                     Text("••••••••").accessibilityLabel(label)
                 } else {
                     Text(value.isEmpty ? "-" : value)
                         .font(masked ? .body.monospaced() : .body)
                         .textSelection(.disabled)
+                        .lineLimit(nil)
                         // Wraps instead of clipping at large Dynamic Type sizes (a long address has no spaces).
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer()
+                if !typeSize.isAccessibilitySize { Spacer() }
                 if masked {
                     Button(shown ? L("action_hide") : L("action_show")) { shown.toggle() }
                         .frame(minWidth: 44, minHeight: 44)

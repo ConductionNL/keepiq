@@ -66,7 +66,7 @@ struct ItemDetailView: View {
                     }
                 }
                 Section {
-                    Button(L("action_trash"), role: .destructive) { confirmTrash = true }.disabled(offline)
+                    Button(role: .destructive) { confirmTrash = true } label: { Text(L("action_trash")).foregroundStyle(KeepiqPalette.destructive) }.disabled(offline)
                     if offline { Text(L("write_offline")).font(.footnote) }
                 }
             }
@@ -176,9 +176,10 @@ private struct TotpRow: View {
                         Gauge(value: Double(left), in: 0...Double(params.period)) {
                             EmptyView()
                         } currentValueLabel: {
-                            Text("\(Int(left))").font(.caption)
+                            Text("\(Int(left))").font(.caption).foregroundStyle(.primary)
                         }
                         .gaugeStyle(.accessoryCircularCapacity)
+                        .tint(KeepiqPalette.accent)
                         .scaleEffect(0.7)
                         .frame(width: gaugeSize, height: gaugeSize)
                         .accessibilityElement(children: .ignore)

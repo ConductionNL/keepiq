@@ -189,7 +189,7 @@ struct SettingsView: View {
                 if let account = model.account(vault.accountId) {
                     Text("\(account.loginName) on \(account.server.withoutScheme)")
                 }
-                Button("Disconnect this account", role: .destructive) { confirmUnpair = true }
+                Button(role: .destructive) { confirmUnpair = true } label: { Text("Disconnect this account").foregroundStyle(KeepiqPalette.destructive) }
                     .accessibilityIdentifier("unpair")
             }
             Section(titled: "Lock after") {

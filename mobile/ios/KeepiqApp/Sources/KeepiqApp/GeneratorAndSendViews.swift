@@ -66,7 +66,7 @@ struct GeneratorView: View {
                 if policy?.allowPassphrase == false { Text(L("gen_passphrase_off")).font(.footnote) }
                 HStack {
                     if let value = outcome.value {
-                        Text(value).font(.body.monospaced()).textSelection(.disabled).accessibilityIdentifier("generated")
+                        Text(value).font(.body.monospaced()).textSelection(.disabled).lineLimit(nil).fixedSize(horizontal: false, vertical: true).accessibilityIdentifier("generated")
                     } else {
                         Text(generatorProblem(outcome.error)).foregroundStyle(.red)
                     }

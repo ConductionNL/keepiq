@@ -107,7 +107,7 @@ final class AccessibilityAuditUITests: XCTestCase {
         shot("a11y-" + screen.replacingOccurrences(of: ",", with: "").replacingOccurrences(of: " ", with: "-"))
         try app.performAccessibilityAudit(for: .all) { issue in
             let line = "\(screen): \(Self.name(of: issue.auditType)): \(issue.compactDescription) [\(Self.describe(issue.element))]"
-            if let reason = A11yExclusions.reason(for: issue) {
+            if let reason = A11yExclusions.reason(for: issue, bars: self.barFrames()) {
                 self.excluded.append("\(line) (excluded: \(reason))")
             } else {
                 self.issues.append(line + "\n    " + issue.detailedDescription)
@@ -115,6 +115,15 @@ final class AccessibilityAuditUITests: XCTestCase {
             // Collected here; the test fails once, at the end, with the whole list.
             return true
         }
+    }
+
+    /// The navigation bar and the tab bar on screen. From iOS 26 the system
+    /// fades the content scrolled under them (the scroll edge effect).
+    private func barFrames() -> [CGRect] {
+        (app.navigationBars.allElementsBoundByIndex + app.tabBars.allElementsBoundByIndex)
+            .filter { $0.exists }
+            .map(\.frame)
+            .filter { !$0.isEmpty }
     }
 
     private func report() {
@@ -257,10 +266,22 @@ final class AccessibilityAuditUITests: XCTestCase {
 /// Audit issues the test leaves out, each a documented false positive with
 /// its reason. Real issues are fixed in the app, never listed here.
 enum A11yExclusions {
-    static func reason(for issue: XCUIAccessibilityAuditIssue) -> String? {
+    static func reason(for issue: XCUIAccessibilityAuditIssue, bars: [CGRect]) -> String? {
         let element = issue.element.flatMap { $0.exists ? $0 : nil }
         let type = element?.elementType
         let label = element?.label ?? ""
+        // A button that is off until its field is filled in: WCAG 1.4.3
+        // exempts an inactive user interface component from the contrast rule.
+        if issue.auditType == .contrast, let element, !element.isEnabled {
+            return "an inactive control, exempt from WCAG 1.4.3"
+        }
+        // Text scrolled under the navigation bar or the tab bar: iOS 26 fades
+        // it on purpose (the scroll edge effect). Scrolled into view it has its
+        // full contrast. 24 pt around each bar is the width of the fade.
+        if issue.auditType == .contrast, let frame = element?.frame,
+           bars.contains(where: { $0.insetBy(dx: 0, dy: -24).intersects(frame) }) {
+            return "under the system scroll edge effect of a bar"
+        }
         // A single-line text field scrolls its text sideways, so it never
         // hides what was typed. The audit flags every single-line field at
         // the largest sizes; the field itself grows with Dynamic Type.
