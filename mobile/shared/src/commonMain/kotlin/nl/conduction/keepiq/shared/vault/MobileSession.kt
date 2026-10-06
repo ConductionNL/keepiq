@@ -23,7 +23,7 @@ class MobileSession(
     val account: Account,
     val api: KeepiqApi,
     val keys: VaultKeys,
-    store: VaultStore?,
+    private val store: VaultStore?,
     sync: VaultSync?,
 ) {
     val repository = VaultRepository(
@@ -36,13 +36,22 @@ class MobileSession(
     /** "alice · cloud.example.nl", for the account switcher. */
     val label: String get() = labelOf(account)
 
-    /** On lock: the private key leaves memory, and nothing decrypts with this session again. */
-    fun close() = keys.forget()
+    /** Whether this session keeps an offline copy on the phone. */
+    val hasStore: Boolean get() = store != null
+
+    /**
+     * On lock: the private key and the store's sealing key leave memory and
+     * the store closes. Nothing decrypts with this session again.
+     */
+    fun close() {
+        keys.forget()
+        runCatching { store?.close() }
+    }
 
     companion object {
         /**
-         * Without an offline store (iOS until task 1.6.1): the vault is read
-         * from the server. Throws for a server address that is not https, so
+         * Without an offline store (offline caching off, or the AutoFill
+         * index refresh): the vault is read from the server. Throws for a server address that is not https, so
          * Swift sees a throwing call rather than a crash.
          */
         @Throws(InsecureServerException::class)

@@ -46,7 +46,8 @@ targets:
       - sdk: Security.framework
       - sdk: LocalAuthentication.framework
       - sdk: AuthenticationServices.framework
-      - sdk: libsqlite3.tbd
+      # No libsqlite3: KeepiqShared carries SQLCipher (task 1.6.1), and the
+      # system SQLite next to it could answer the store's calls unencrypted.
     info:
       path: Keepiq/Info.plist
       properties:
@@ -78,7 +79,6 @@ targets:
       - sdk: Security.framework
       - sdk: LocalAuthentication.framework
       - sdk: AuthenticationServices.framework
-      - sdk: libsqlite3.tbd
     info:
       path: KeepiqAutofill/Info.plist
       properties:

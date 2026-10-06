@@ -63,9 +63,9 @@ enum class FolderDeleteKind { EMPTY, ITEMS, SUBFOLDERS }
  * sync (tasks 1.6 and 1.7), opening items fresh from the server, and every
  * write the vault screens make, through the same endpoints as the web app.
  *
- * [store] and [sync] are null where there is no offline store (iOS until
- * task 1.6.1): the vault is then read from the server only, and needs a
- * connection. While [VaultState.offline] is set every write is refused
+ * [store] and [sync] are null where there is no offline store (offline
+ * caching off, or a store that could not be opened): the vault is then read
+ * from the server only, and needs a connection. While [VaultState.offline] is set every write is refused
  * before it is sent, with the message that edits need a connection.
  */
 class VaultRepository(

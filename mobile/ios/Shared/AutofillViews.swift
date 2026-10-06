@@ -119,7 +119,7 @@ struct AutofillListView: View {
                     SecureField(AL("add.password"), text: $password)
                         .textContentType(.oneTimeCode)
                         .accessibilityIdentifier("autofillAddPassword")
-                    Button(AL("add.save")) { model.addLogin(user: user, password: password) }
+                    Button(AL("add.save")) { model.addLogin(user: user, password: password) { password = "" } }
                         .disabled(password.isEmpty || model.busy)
                         .accessibilityIdentifier("autofillAddSave")
                 } else {

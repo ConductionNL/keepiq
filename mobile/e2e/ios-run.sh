@@ -85,6 +85,9 @@ run_class VaultFlowsUITests keepiq-ios-vault
 # passkey screens and calls (task 5.2), both against the replay.
 run_class AutofillUITests keepiq-ios-autofill
 run_class PasskeyUITests keepiq-ios-passkeys
+# Offline reading from the encrypted store (tasks 1.6.1 and 3.4): the replay
+# drops every connection halfway through the test.
+run_class OfflineUITests keepiq-ios-offline
 rm -rf "$OUT/DerivedData"
 ls -la "$OUT" "$OUT/shots"
 exit "$status"

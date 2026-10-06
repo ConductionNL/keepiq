@@ -350,7 +350,10 @@ final class AutofillModel: ObservableObject {
 
     // MARK: Add login (iOS has no save hook for a third-party provider)
 
-    func addLogin(user: String, password: String) {
+    /// Saves a new login for the site and fills it. [clearFields] runs before
+    /// the sheet goes: the form empties its password field first, so iOS has
+    /// nothing to offer to save (task 3.2.1, as the app's item form does).
+    func addLogin(user: String, password: String, clearFields: @escaping () -> Void = {}) {
         guard let accountId, let keys, let account = client.accounts.account(id: accountId) else { return }
         let host = site
         busy = true
@@ -371,6 +374,8 @@ final class AutofillModel: ObservableObject {
                 if result == SaveResult.refused {
                     self.message = AL("add.refused")
                 } else {
+                    clearFields()
+                    try? await Task.sleep(nanoseconds: 200_000_000)
                     self.finish(FilledLogin(user: user, password: password))
                 }
             } catch {

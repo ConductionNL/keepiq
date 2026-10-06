@@ -31,6 +31,9 @@
  *           simulator job, where no Docker runs. It keeps the vault and the
  *           Sends in memory, so an item the test creates, edits or trashes
  *           behaves as on the real server.
+ *             POST /__e2e/offline  {offline: true|false}  from then on drops
+ *                  every other connection unanswered, as a phone without a
+ *                  network sees it, or answers again (the offline test).
  *
  *   node mobile/e2e/server.mjs proxy  --port 8443 --cert c.pem --key k.pem --upstream http://localhost:8188 --container kq-e2e-nc-1
  *   node mobile/e2e/server.mjs seed   --upstream http://localhost:8188
@@ -437,7 +440,8 @@ async function record(o) {
  * Answers as the recorded server. Accepted app passwords: stub-app-password
  * (from the login flow) and manual-app-password (typed by hand), for admin;
  * the user "blocked" gets the suite with the two-factor block. A revoked
- * password answers 401 afterwards, as the real server does.
+ * password answers 401 afterwards, as the real server does. While offline
+ * (POST /__e2e/offline) every other request loses its connection.
  */
 function replay(o) {
 	const f = JSON.parse(readFileSync(FIXTURES, 'utf8'))
@@ -446,6 +450,7 @@ function replay(o) {
 	const fill = (value, origin) => JSON.parse(JSON.stringify(value).split('{origin}').join(origin))
 	const vault = new Map((f.manifest?.secrets || []).map((row) => [row.id, { ...row }]))
 	const sends = new Map()
+	let offline = false
 	const server = createHttpsServer({ cert: readFileSync(o.cert), key: readFileSync(o.key) }, async (req, res) => {
 		const origin = `https://${req.headers.host}`
 		// Nextcloud links its Login Flow routes with and without /index.php
@@ -456,7 +461,17 @@ function replay(o) {
 			req.on('data', (c) => chunks.push(c))
 			req.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')))
 		})
-		console.log(`[replay] ${req.method} ${path}`)
+		if (req.method === 'POST' && path === '/__e2e/offline') {
+			try {
+				offline = JSON.parse(body || '{}').offline === true
+			} catch {
+				return send(res, 400, { error: 'expected {"offline": true|false}' })
+			}
+			console.log(`[replay] offline: ${offline}`)
+			return send(res, 200, { offline })
+		}
+		console.log(`[replay] ${req.method} ${path}${offline ? ' (offline: dropped)' : ''}`)
+		if (offline) return req.socket.destroy()
 		if (req.method === 'POST' && path === '/login/v2') return send(res, 200, fill(f.loginInit, origin))
 		if (req.method === 'POST' && path === '/login/v2/poll') {
 			// Pending twice, as while the user signs in, then granted.

@@ -1,0 +1,13 @@
+# SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+# SPDX-License-Identifier: EUPL-1.2
+#
+# SQLCipher Community Edition for the iOS offline store (task 1.6.1).
+# shared/build.gradle.kts builds it from the pinned release source into
+# libsqlcipher.a per target and passes its folder with -libraryPath; the
+# static library is bundled into the klib, so the framework and the
+# simulator tests carry it. It uses CommonCrypto from Security.framework.
+package = nl.conduction.keepiq.shared.sqlcipher
+headers = keepiq_sqlcipher.h
+headerFilter = keepiq_sqlcipher.h
+staticLibraries = libsqlcipher.a
+linkerOpts = -framework Security
