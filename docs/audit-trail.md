@@ -110,8 +110,12 @@ the trail and the SIEM export and not only in `nextcloud.log`:
   how many steps failed, whether containment was therefore incomplete, and
   `migrationEndFailed`: revoking the other end of the suite's key migration, or
   ending the migration, failed, so the other end is still live. That failure
-  also counts as a failed step. A retry of the force-revoke then only finishes
-  the migration and records no second containment.
+  also counts as a failed step. A retry of the force-revoke only finishes the
+  migration, without a second containment, when this event shows the suite's
+  containment completed with no failed step since the migration started;
+  otherwise the retry contains again. A retry whose migration end fails again
+  is recorded as `suite.revoke_refused` with reason code
+  `migration_end_failed`.
 - `suite.recovery_aborted`: the owner called off a compromise recovery before
   any secret moved. `suite.migration_terminated`: a compromise force-revoke
   ended a recovery that was still running.

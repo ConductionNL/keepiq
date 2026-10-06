@@ -706,7 +706,7 @@ After the revoke the system MUST:
 
 Each step MUST contain its own failure: a failure on one secret, one notification or one cleanup step MUST NOT stop the others. The number of failed steps MUST be returned in the response as `cascade.failed`, with `cascadeIncomplete: true` when it is above zero, so the administrator is not told containment ran when part of it did not (keepiq#863). A lookup failure that leaves an owner unwarned, such as a failed lookup of a shared copy's source, MUST count as a failed step. The tally MUST also be audited as `suite.compromise_contained`, with `incomplete: true` when a step failed (keepiq#1189).
 
-Once the named suite is revoked, its containment MUST run even when revoking the other end or ending the migration fails, on the blast radius collected before any revoke, because a retry collects after the revoke and can no longer find the source owners (keepiq#864, keepiq#1189). That failure MUST count as a failed step, MUST be audited as `migrationEndFailed: true`, and MUST be answered with HTTP 500 and `error: migration_end_failed` carrying the containment tally; it MUST NOT be recorded as a refused revoke. The migration MUST stay open. A retry on a suite that is already revoked while its migration is still open MUST only revoke the other end and end the migration, without running the containment again, so nobody is warned twice.
+Once the named suite is revoked, its containment MUST run even when revoking the other end or ending the migration fails, on the blast radius collected before any revoke, because a retry collects after the revoke and can no longer find the source owners (keepiq#864, keepiq#1189). That failure MUST count as a failed step, MUST be audited as `migrationEndFailed: true`, and MUST be answered with HTTP 500 and `error: migration_end_failed` carrying the containment tally; it MUST NOT be recorded as a refused revoke. The migration MUST stay open. A retry on a suite that is already revoked while its migration is still open MUST only revoke the other end and end the migration, without running the containment again, ONLY when the audit trail holds a `suite.compromise_contained` entry for that suite since the migration started with no failed containment step; the suite's status alone MUST NOT count as proof, because an attempt can stop between the revoke and the containment. In every other case (no entry, a failed containment step, an unreadable trail) the retry MUST revoke and contain again. A retry whose migration end fails again MUST be recorded as `suite.revoke_refused` with reason code `migration_end_failed`. When containment steps failed too, the response message MUST NOT say the suite was contained.
 
 Every force-revoke, compromise or not, that deletes usable emergency contacts MUST notify the suite's owner with the number deleted (both ends of a terminated migration counted together), because revocation leaves the owner nothing to look at afterwards (keepiq#876). The response MUST report the other end's count as `alsoRevokedEmergencyContactsDestroyed` (keepiq#877).
 
@@ -735,10 +735,16 @@ Every force-revoke, compromise or not, that deletes usable emergency contacts MU
 
 #### Scenario: A retry after a failed migration end does not contain twice
 @e2e exclude Failure injection; covered by PHPUnit on EncryptionSuiteController.
-- **GIVEN** a compromise force-revoke of A's suite revoked and contained it, but ending its migration failed
+- **GIVEN** a compromise force-revoke of A's suite revoked and contained it with no failed step, and recorded `suite.compromise_contained`, but ending its migration failed
 - **WHEN** the administrator force-revokes A's suite again with `markCompromised: true`
 - **THEN** the other end MUST be revoked and the migration ended
 - **AND** the containment MUST NOT run again
+
+#### Scenario: A retry without a complete containment record contains again
+@e2e exclude Failure injection; covered by PHPUnit on EncryptionSuiteController.
+- **GIVEN** an earlier compromise force-revoke revoked A's suite but stopped before its containment completed, or its containment had failed steps
+- **WHEN** the administrator force-revokes A's suite again with `markCompromised: true`
+- **THEN** the suite MUST be revoked and contained again
 
 #### Scenario: A failed source lookup is counted
 @e2e exclude Failure injection; covered by PHPUnit on CompromiseContainmentService.

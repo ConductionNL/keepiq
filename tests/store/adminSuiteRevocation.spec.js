@@ -383,4 +383,48 @@ describe('useEncryptionSuiteStore — re-enrolment after a revocation', () => {
 		).rejects.toMatchObject({ response: { status: 409 } })
 		expect(confirmPassword).not.toHaveBeenCalled()
 	})
+
+	it('resolves a failed migration end with the result and the unfinished message (keepiq#1189)', async () => {
+		vi.spyOn(axios, 'post').mockRejectedValue({
+			response: {
+				status: 500,
+				data: {
+					id: 'suite-1',
+					status: 'revoked',
+					emergencyContactsDestroyed: 2,
+					cascade: { stamped: 3, notified: 1, failed: 1 },
+					cascadeIncomplete: true,
+					error: 'migration_end_failed',
+					message: 'Force-revoke it again to finish.',
+				},
+			},
+		})
+
+		const outcome = await useEncryptionSuiteStore().forceRevokeSuite({
+			id: 'suite-1',
+			reason: 'taken over',
+			markCompromised: true,
+			confirmSuiteId: 'suite-1',
+		})
+
+		expect(outcome.unfinished).toBe('Force-revoke it again to finish.')
+		expect(outcome.suite.id).toBe('suite-1')
+		expect(outcome.emergencyContactsDestroyed).toBe(2)
+		expect(outcome.cascadeIncomplete).toBe(true)
+		expect(outcome.cascadeFailed).toBe(1)
+	})
+
+	it('still rejects any other server failure', async () => {
+		const failure = { response: { status: 403, data: { message: 'refused' } } }
+		vi.spyOn(axios, 'post').mockRejectedValue(failure)
+
+		await expect(
+			useEncryptionSuiteStore().forceRevokeSuite({
+				id: 'suite-1',
+				reason: 'taken over',
+				markCompromised: true,
+				confirmSuiteId: 'suite-1',
+			}),
+		).rejects.toBe(failure)
+	})
 })

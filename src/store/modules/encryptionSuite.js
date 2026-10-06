@@ -1445,6 +1445,10 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *   `warning` (only when `markCompromised` was false), and for a compromise
 		 *   revoke `alsoRevokedSuite`, `terminatedMigration`,
 		 *   `alsoRevokedEmergencyContactsDestroyed`, `cascadeIncomplete` and `cascadeFailed`.
+		 *   A compromise revoke whose migration end failed answers 500 with
+		 *   `migration_end_failed`; it still resolves, with the server's message
+		 *   in `unfinished`, because the suite was revoked and contained
+		 *   (keepiq#1189). Any other failure rejects.
 		 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 		 */
 		async forceRevokeSuite({
@@ -1466,12 +1470,26 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				await import('@nextcloud/password-confirmation')
 			await confirmPassword()
 
-			const response = await axios.post(
-				generateUrl(`/apps/keepiq/api/v1/suites/${id}/force-revoke`),
-				{ reason, markCompromised, confirmSuiteId },
-			)
+			let response
+			try {
+				response = await axios.post(
+					generateUrl(`/apps/keepiq/api/v1/suites/${id}/force-revoke`),
+					{ reason, markCompromised, confirmSuiteId },
+				)
+			} catch (error) {
+				if (error?.response?.data?.error !== 'migration_end_failed') {
+					throw error
+				}
+				response = error.response
+			}
 
 			return {
+				// Set when the suite was revoked but its key migration could
+				// not be ended; force-revoking again finishes it (keepiq#1189).
+				unfinished:
+					response.data.error === 'migration_end_failed'
+						? response.data.message
+						: null,
 				suite: response.data,
 				emergencyContactsDestroyed:
 					response.data.emergencyContactsDestroyed ?? 0,

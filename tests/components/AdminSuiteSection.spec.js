@@ -158,4 +158,22 @@ describe('AdminSuiteSection', () => {
 			wrapper.find('[data-testid="admin-suite-cascade-incomplete"]').exists(),
 		).toBe(false)
 	})
+
+	it('shows the result and the cascade, and says the migration is still open (keepiq#1189)', async () => {
+		const wrapper = await revokeWith(true, {
+			suite: revokedSuite,
+			emergencyContactsDestroyed: 0,
+			cascadeIncomplete: true,
+			cascadeFailed: 1,
+			unfinished: 'Force-revoke it again to finish.',
+		})
+
+		expect(wrapper.find('[data-testid="admin-suite-error"]').text()).toContain(
+			'Force-revoke it again to finish.',
+		)
+		expect(
+			wrapper.find('[data-testid="admin-suite-cascade-incomplete"]').exists(),
+		).toBe(true)
+		expect(wrapper.vm.result).toEqual(revokedSuite)
+	})
 })

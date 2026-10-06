@@ -242,7 +242,7 @@ class EncryptionSuiteService {
 	 * response, so an attack on the containment path was invisible to the
 	 * SIEM. The reason code is a fixed machine token chosen by the caller
 	 * (`migration_in_progress`, `invalid_argument`, `forbidden`,
-	 * `empty_reason`), never an exception message, so nothing a request
+	 * `empty_reason`, `migration_end_failed`), never an exception message, so nothing a request
 	 * supplied ends up in the trail.
 	 *
 	 * @param string $suiteId         The suite the revoke targeted

@@ -24,8 +24,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Service;
 
+use OCA\Keepiq\Db\AuditEntryMapper;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\SuiteMigration;
+use OCA\Keepiq\Event\Audit\AuditEventTypes;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -49,6 +51,7 @@ class AdminSuiteRevocationService {
 	 * @param MigrationService                     $migrationService Finds and ends the suite's migration
 	 * @param EmergencyEnvelopeInvalidationService $emergencyService Counts the emergency contacts a revoke destroys
 	 * @param CompromiseContainmentService         $containment      Collects and contains the blast radius
+	 * @param AuditEntryMapper                     $auditEntries     Tells whether a containment already completed
 	 * @param LoggerInterface                      $logger           The logger
 	 *
 	 * @return void
@@ -58,6 +61,7 @@ class AdminSuiteRevocationService {
 		private MigrationService $migrationService,
 		private EmergencyEnvelopeInvalidationService $emergencyService,
 		private CompromiseContainmentService $containment,
+		private AuditEntryMapper $auditEntries,
 		private LoggerInterface $logger,
 	) {
 	}//end __construct()
@@ -118,9 +122,9 @@ class AdminSuiteRevocationService {
 	 * Once the named suite is revoked, a failure to revoke the other end or to
 	 * end the migration does not stop its containment: it is counted as a
 	 * failed step and returned as `error: migration_end_failed`, not as a
-	 * refused revoke. The migration stays open, so a retry finds it; the retry
-	 * only finishes the migration, because the containment already ran
-	 * (keepiq#1189).
+	 * refused revoke. The migration stays open, so a retry finds it. The retry
+	 * only finishes the migration when the audit trail shows the containment
+	 * completed; otherwise it runs everything again (keepiq#1189).
 	 *
 	 * @param string $suiteId  The suite to revoke
 	 * @param string $reason   The administrator's reason
@@ -134,21 +138,22 @@ class AdminSuiteRevocationService {
 		$migration = $this->migrationService->findInProgressForSuite(suiteId: $suiteId);
 		$otherId = $this->otherEnd(migration: $migration, suiteId: $suiteId);
 
-		// Only a compromise force-revoke revokes a suite in an open migration
-		// (the plain and owner paths refuse), so a revoked suite with its
-		// migration still open is one whose migration end failed, after its
-		// containment ran. Containing again would warn everyone twice.
-		if ($migration !== null && $otherId !== null) {
-			$named = $this->suiteService->getSuite($suiteId);
-			if ($named->getStatus() === 'revoked') {
-				return $this->finishMigrationForCompromise(
-					suite: $named,
-					migration: $migration,
-					otherId: $otherId,
-					reason: $reason,
-					adminUid: $adminUid
-				);
-			}
+		// A retry after a failed migration end only finishes the migration,
+		// so nobody is warned twice, but ONLY when the audit trail shows a
+		// complete containment of this suite since the migration started. The
+		// suite's status alone proves nothing: an attempt can stop between
+		// the revoke and the containment (keepiq#1189). Without that record
+		// everything runs again, the revoke included, because a revoke can
+		// also stop between its status update and its cascade.
+		$named = $this->alreadyContained(suiteId: $suiteId, migration: $migration);
+		if ($named !== null && $migration !== null && $otherId !== null) {
+			return $this->finishMigrationForCompromise(
+				suite: $named,
+				migration: $migration,
+				otherId: $otherId,
+				reason: $reason,
+				adminUid: $adminUid
+			);
 		}
 
 		$radius = $this->containment->collect(suiteIds: array_values(array_filter([$suiteId, $otherId])));
@@ -202,11 +207,66 @@ class AdminSuiteRevocationService {
 		$data['cascade'] = $tally;
 		$data['cascadeIncomplete'] = $tally['failed'] > 0;
 		if ($migrationEndFailed === true) {
-			$data += self::migrationEndFailedBody();
+			$data += self::migrationEndFailedBody(containmentFailures: $tally['failed'] - 1);
 		}
 
 		return $data;
 	}//end revokeAsCompromise()
+
+	/**
+	 * The named suite, when it is revoked mid-migration and the audit trail
+	 * shows its containment completed since the migration started.
+	 *
+	 * Every doubt answers null, so the containment runs again: no record (the
+	 * attempt stopped before it, or the audit write failed, which is
+	 * fail-soft), a record with failed containment steps, or a lookup error.
+	 *
+	 * @param string              $suiteId   The named suite
+	 * @param SuiteMigration|null $migration Its in-progress migration
+	 *
+	 * @return EncryptionSuite|null
+	 */
+	private function alreadyContained(string $suiteId, ?SuiteMigration $migration): ?EncryptionSuite {
+		if ($migration === null) {
+			return null;
+		}
+
+		try {
+			$named = $this->suiteService->getSuite($suiteId);
+			if ($named->getStatus() !== 'revoked') {
+				return null;
+			}
+
+			$entries = $this->auditEntries->findFiltered(
+				filters: [
+					'eventType' => AuditEventTypes::SUITE_COMPROMISE_CONTAINED,
+					'objectType' => 'suite',
+					'objectId' => $suiteId,
+					'from' => $migration->getStartedAt(),
+				],
+				limit: 1
+			);
+		} catch (Throwable $exception) {
+			$this->logger->warning(
+				'Keepiq: could not tell whether suite ' . $suiteId . ' was contained; containing it again: ' . $exception->getMessage(),
+				['app' => 'keepiq']
+			);
+			return null;
+		}
+
+		if ($entries === []) {
+			return null;
+		}
+
+		// `failed` also counts the failed migration end, which the retry redoes.
+		$metadata = $entries[0]->getMetadataArray();
+		$containmentFailures = (int)($metadata['failed'] ?? 1) - (int)(($metadata['migrationEndFailed'] ?? false) === true);
+		if ($containmentFailures !== 0) {
+			return null;
+		}
+
+		return $named;
+	}//end alreadyContained()
 
 	/**
 	 * Finish the migration a compromise force-revoke left open.
@@ -242,7 +302,16 @@ class AdminSuiteRevocationService {
 			adminUid: $adminUid
 		);
 		if ($ended === null) {
-			return $data + self::migrationEndFailedBody();
+			// No containment ran, so no containment event: record the failed
+			// attempt itself, or the trail shows nothing while the other end
+			// stays live.
+			$this->suiteService->recordRevokeRefused(
+				suiteId: (string)$suite->getId(),
+				actorId: $adminUid,
+				reasonCode: self::MIGRATION_END_FAILED,
+				markCompromised: true
+			);
+			return $data + self::migrationEndFailedBody(containmentFailures: 0);
 		}
 
 		$this->containment->notifyEmergencyAccessCleared(
@@ -288,12 +357,19 @@ class AdminSuiteRevocationService {
 	/**
 	 * The response fields of a compromise force-revoke whose migration end failed.
 	 *
+	 * @param int $containmentFailures Failed containment steps, not counting the migration end
+	 *
 	 * @return array{error: string, message: string}
 	 */
-	private static function migrationEndFailedBody(): array {
+	private static function migrationEndFailedBody(int $containmentFailures): array {
+		$message = 'The suite is revoked and contained, but ending its key migration failed. Force-revoke it again to finish.';
+		if ($containmentFailures > 0) {
+			$message = 'The suite is revoked, but part of its containment and ending its key migration failed. Force-revoke it again to retry both.';
+		}
+
 		return [
 			'error' => self::MIGRATION_END_FAILED,
-			'message' => 'The suite is revoked and contained, but ending its key migration failed. Force-revoke it again to finish.',
+			'message' => $message,
 		];
 	}//end migrationEndFailedBody()
 
