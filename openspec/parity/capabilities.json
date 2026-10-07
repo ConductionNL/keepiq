@@ -8877,11 +8877,12 @@
       "nextcloud-passwords": "yes",
       "built": {
         "state": "built",
-        "evidence": "src/manifest.json:3 walkthrough (tour keepiq:getting-started, trigger first-visit, 7 steps) -> src/main.js:236 manifestForLockState (src/router/guards.js, withheld while locked) -> CnWalkthrough in @conduction/nextcloud-vue resolves nav-item refs via data-cn-route, emitted by src/components/KeepiqAppNav/KeepiqAppNav.vue:52 ; completion stored via GET/PUT /api/preferences/walkthrough_completed_version (src/router/guards.js:310, OpenRegister AppHost preferences controller)",
-        "owner": "ConductionNL/nextcloud-vue",
+        "evidence": "src/manifest.json:3 walkthrough (tour keepiq:getting-started, trigger first-visit, 6 steps) -> src/main.js:236 manifestForLockState (src/router/guards.js, withheld while locked) -> CnWalkthrough in @conduction/nextcloud-vue resolves nav-item refs via data-cn-route, emitted by src/components/KeepiqAppNav/KeepiqAppNav.vue:52 ; completion stored via GET/PUT /api/preferences/walkthrough_completed_version (appinfo/routes.php:544 preferences#getPreference, lib/Controller/PreferencesController.php:94)",
+        "owner": "ConductionNL/keepiq",
         "reachedOn": "First unlocked visit to the app -> Getting started tour",
-        "note": "A seven-step tour starts on the first unlocked visit and points at Dashboard, All secrets, Features and roadmap, Reports and Flows; it is held back while the vault is locked. Completion is stored through the OpenRegister AppHost preferences endpoint.",
-        "spec": "none"
+        "note": "A six-step tour starts on the first unlocked visit and points at Dashboard, All secrets, Features and roadmap, Reports and Flows; it is held back while the vault is locked. Completion is stored per user through Keepiq's own preferences endpoint (lib/Controller/PreferencesController.php), under the key the OpenRegister AppHost used. The tour renderer, CnWalkthrough, comes from @conduction/nextcloud-vue; the tour content, the lock gate and the preference store are Keepiq's.",
+        "spec": "openspec/specs/getting-started-walkthrough",
+        "readOn": "2026-10-07"
       },
       "rowSource": "own",
       "provider": "nextcloud-vue",
