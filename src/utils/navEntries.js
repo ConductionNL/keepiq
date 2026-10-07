@@ -24,7 +24,7 @@
  *
  * Pure: the admin flag and the enabled apps are passed in.
  *
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
  */
 
 /**
@@ -32,7 +32,7 @@
  *
  * @param {object} item The menu entry.
  * @return {object|null} A vue-router location, or null for a non-route entry.
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
  */
 export function menuEntryTo(item) {
 	if (!item?.route || item.action) {
@@ -48,12 +48,36 @@ export function menuEntryTo(item) {
 }
 
 /**
+ * `OC.appswebroots`: one key per app enabled for the logged-in user, or null
+ * outside a Nextcloud page.
+ *
+ * @return {object|null} The map, or null.
+ * @spec openspec/specs/app-shell/spec.md#requirement-optional-integrations-appear-only-when-their-app-is-present
+ */
+export function currentAppsWebRoots() {
+	return (typeof window !== 'undefined' && window.OC?.appswebroots) || null
+}
+
+/**
+ * Whether an app is enabled for the logged-in user. The one place Keepiq
+ * decides app presence, for the menu gates and the AI companion alike.
+ *
+ * @param {string} appId The app id, e.g. `openregister`.
+ * @param {object|null|undefined} appsWebRoots `OC.appswebroots`.
+ * @return {boolean} False on uncertainty: a missing map is not an enabled app.
+ * @spec openspec/specs/app-shell/spec.md#requirement-optional-integrations-appear-only-when-their-app-is-present
+ */
+export function isAppEnabled(appId, appsWebRoots) {
+	return Boolean(appsWebRoots) && Object.hasOwn(appsWebRoots, appId)
+}
+
+/**
  * Whether a menu entry may render for this user on this instance.
  *
  * @param {object} item The menu entry.
  * @param {{isAdmin: boolean, appsWebRoots: object|null|undefined}} context The instance admin flag, and `OC.appswebroots`: one key per app enabled for this user.
  * @return {boolean} False when the entry is admin only and the user is not an admin, or names an app that is not enabled.
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
  */
 export function isMenuEntryVisible(item, { isAdmin, appsWebRoots }) {
 	if (item?.permission === 'admin' && isAdmin !== true) {
@@ -63,8 +87,27 @@ export function isMenuEntryVisible(item, { isAdmin, appsWebRoots }) {
 	const required = item?.visibleIf?.appInstalled
 	if (typeof required === 'string' && required.length > 0) {
 		// Hide on uncertainty, like CnAppNav: a missing map is not an installed app.
-		return Boolean(appsWebRoots) && Object.hasOwn(appsWebRoots, required)
+		return isAppEnabled(required, appsWebRoots)
 	}
 
 	return true
+}
+
+/**
+ * The permission list the app shell hands to CnAppRoot.
+ *
+ * CnPageRenderer refuses a page whose `permission` the list does not hold,
+ * but it treats an EMPTY list as "the app did not say" and serves every
+ * page. Nextcloud provides no permission list (`OC.currentUser` is the uid
+ * string), so the shell used to pass an empty one and the admin-only
+ * Integrations page opened for anyone who typed its URL (#878). The list is
+ * never empty: every signed-in user holds `user`, and the instance admin
+ * also holds `admin`, the same flag the menu filter above uses.
+ *
+ * @param {boolean} isAdmin The instance admin flag.
+ * @return {Array<string>} The permissions the user holds.
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+ */
+export function shellPermissions(isAdmin) {
+	return isAdmin === true ? ['user', 'admin'] : ['user']
 }

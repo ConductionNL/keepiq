@@ -52,7 +52,7 @@
     "argon2-browser": "^1.18.0",
     "buffer": "^6.0.3",
     "dexie": "^4.4.6",
-    "dompurify": "^3.4.14",
+    "dompurify": "^3.4.16",
     "events": "^3.3.0",
     "gridstack": "^12.6.0",
     "marked": "^12.0.0",

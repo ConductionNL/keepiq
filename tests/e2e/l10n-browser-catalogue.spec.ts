@@ -140,9 +140,13 @@ test.describe(`l10n browser catalogue (${APP_ID})`, () => {
 			if (!bundle) return { registered: false as const, keys: 0 }
 
 			// A key whose translation differs from itself — the only kind that can
-			// tell a working lookup apart from the identity fallback.
+			// tell a working lookup apart from the identity fallback. Only a plain
+			// string entry: a plural entry (`_singular_::_plural_`) holds an array
+			// of forms, always "differs", and resolves through n(), not t().
 			const translated =
-				Object.keys(bundle).find((k) => bundle[k] !== k) || null
+				Object.keys(bundle).find(
+					(k) => typeof bundle[k] === 'string' && bundle[k] !== k,
+				) || null
 			const translate = w.OC?.L10N?.translate || w.t
 			return {
 				registered: true as const,

@@ -2,7 +2,9 @@
 
 ## Purpose
 TBD - created by archiving change secret-export-gdpr. Update Purpose after archive.
+
 ## Requirements
+
 ### Requirement: GDPR Personal Data Export
 The system MUST provide a full personal data export (GDPR Art. 15, right of access) as one machine-readable, versioned JSON package, assembled in the browser from two halves:
 
@@ -31,8 +33,10 @@ If the user cannot unlock the vault, the package MUST still be produced with the
 ### Requirement: Account Data Deletion
 The system MUST support deletion of all of a user's Keepiq data (GDPR Art. 17, right to erasure) via two triggers running the same idempotent cascade:
 
-- **In-app**: gated by master-password re-entry (client-side proof of knowledge, as in plaintext export) AND a typed confirmation phrase; deletes Keepiq data while the Nextcloud account remains
+- **In-app**: gated by a verified key proof (see the `vault-key-proof` capability) AND a typed confirmation phrase; deletes Keepiq data while the Nextcloud account remains
 - **Automatic**: a `UserDeletedEvent` listener runs the cascade when the Nextcloud account is deleted, so Keepiq data never outlives its account
+
+The in-app trigger wipes every secret, suite and migration in one request, so a Nextcloud session alone MUST NOT be sufficient for it. The master-password re-entry is therefore proven to the server as a signature made with the private key it unlocks, bound to the confirmation phrase, rather than checked only in the browser. The phrase stays as a guard against a slip. A user without an active EncryptionSuite cannot make a proof; their Keepiq data is removed through the automatic trigger when their Nextcloud account is deleted.
 
 The cascade MUST remove: the user's secrets and folders, their EncryptionSuites (including encrypted private keys) and SuiteMigration records, link shares, secret requests, share records per the shared-secret semantics requirement, and user settings. Every cascade step MUST be idempotent so an interrupted run can be safely re-executed.
 
@@ -41,6 +45,13 @@ The cascade MUST remove: the user's secrets and folders, their EncryptionSuites 
 - **WHEN** a user initiates in-app account data deletion
 - **THEN** the system MUST require master-password re-entry and the typed confirmation phrase
 - **AND** failing either gate MUST abort with nothing deleted
+
+#### Scenario: In-app deletion without a key proof is refused
+@e2e exclude Middleware enforcement on a session-authenticated route; not DOM-observable. Covered by PHPUnit on the middleware and the attribute-coverage test.
+- **GIVEN** an authenticated session for a user with an active EncryptionSuite
+- **WHEN** in-app deletion is requested with the correct confirmation phrase but without a verified key proof
+- **THEN** the system MUST refuse with `428` and `error: key_proof_required`
+- **AND** nothing MUST be deleted
 
 #### Scenario: Nextcloud account deletion cascades
 @e2e exclude Server-side lifecycle contract — the UserDeletedEvent listener runs the cascade with no UI; covered by PHPUnit (UserDeletedListenerTest triggers the cascade with the user-deleted trigger).
@@ -95,4 +106,3 @@ This requirement is scoped to event emission only: persistence, retention, and a
 @e2e exclude Server-side event-payload contract — GdprExportPerformedEvent records whether the vault was included; covered by PHPUnit (GdprControllerTest emits-event + ExportGdprEventTest payload tests).
 - **WHEN** a user produces a GDPR data export package
 - **THEN** a `GdprExportPerformedEvent` MUST be dispatched recording whether the vault half was included
-

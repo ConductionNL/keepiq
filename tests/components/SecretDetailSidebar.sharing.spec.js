@@ -37,6 +37,7 @@ const stubAll = {
 	CopyButton: { template: '<button />' },
 	PasswordField: { template: '<input />' },
 	ShareList: { template: '<div data-testid="stub-share-list" />' },
+	GroupShareList: { template: '<div data-testid="stub-group-share-list" />' },
 	DelegationManager: { template: '<div data-testid="stub-delegation-manager" />' },
 	ShareRequestForm: { template: '<div data-testid="stub-share-request-form" />' },
 	SecretRequestList: { template: '<div data-testid="stub-request-list" />' },
@@ -95,6 +96,10 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 		expect(
 			wrapper.find('[data-testid="secret-detail-share-list"]').exists(),
 		).toBe(true)
+		// sharing-02: the owner is offered Share with group.
+		expect(
+			wrapper.find('[data-testid="secret-detail-group-share-list"]').exists(),
+		).toBe(true)
 		expect(
 			wrapper
 				.find('[data-testid="secret-detail-delegation-manager"]')
@@ -116,6 +121,10 @@ describe('SecretDetailSidebar sharing tab (§12.6)', () => {
 		)
 		expect(
 			wrapper.find('[data-testid="secret-detail-share-list"]').exists(),
+		).toBe(false)
+		// sharing-02: a recipient is not offered Share with group.
+		expect(
+			wrapper.find('[data-testid="secret-detail-group-share-list"]').exists(),
 		).toBe(false)
 		expect(
 			wrapper

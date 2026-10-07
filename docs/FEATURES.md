@@ -71,13 +71,13 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | Bulk secret operations (delete, move folder) | **V1** | Efficiency for large vaults |
 | Secret import (CSV, Bitwarden JSON/CSV, KeePass 2.x XML, Nextcloud Passwords backup) | **V1** ✅ Built | Migration from other tools — client-side parse + encrypt, field-mapping preview, folder/collection mapping, duplicate detection, chunked encrypted commit, malformed-row rejection (see `docs/importing.md`) |
 | Secret export (encrypted backup, CSV) | **V1** ✅ Built | Data portability — client-side Argon2id+AES-256-GCM `.doriath-backup` + warning/re-auth-gated plaintext CSV (see `docs/gdpr.md`) |
-| Favorite/pinned secrets | **V1** | Quick access to frequently used secrets |
+| Favorite/pinned secrets | **V1** ✅ Built | Quick access to frequently used secrets: a star per holder and a Favourites filter, plus a Last used sort (`vault-favourites-tags-and-last-used`) |
 | Recently accessed secrets | **V1** | Convenience pattern from all major vaults |
 | Password health scoring per secret | **V1** ✅ | Flag weak, reused, or old passwords (Bitwarden Reports, 1Password Watchtower) — implemented in `password-health` (client-side vault health report) |
 | Secret strength indicator in list view | **V1** ✅ | Color-coded strength badge next to each secret (Passbolt, Bitwarden) — implemented in `password-health` (in-session zxcvbn badge) |
 | Vault search with keyboard shortcut (Ctrl+K) | **V1** | Power-user quick access (1Password pattern) |
 | Dark mode support | **V1** | User preference; Nextcloud supports dark mode natively |
-| Secret tags (in addition to folders) | **Enterprise** | Cross-cutting categorization |
+| Secret tags (in addition to folders) | **Enterprise** ✅ Built | Cross-cutting categorization: plain-text tags per holder, a tag filter and bulk add or remove (`vault-favourites-tags-and-last-used`) |
 | Custom fields per secret type (admin-defined) | **Enterprise** | Organization-specific field requirements |
 | Breach detection (HaveIBeenPwned) for secret values | **V1** ✅ | Opt-in k-anonymity breach check (5-char prefix proxy) — implemented in `password-health`, double-gated (admin + per-user), default off |
 | Password age indicator | **V1** ✅ | Show how old each secret is; flag stale credentials — implemented in `password-health` via server-maintained `key_updated_at` |
@@ -234,7 +234,7 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 |-------|-------------|-----------------|-----------------|------|
 | Secret shared with user | `secret_shared` | `notify_shares` | Notify recipient | **MVP** |
 | Secret request fulfilled | `request_fulfilled` | `notify_requests` | Notify requester | **MVP** |
-| Application pending approval | `app_pending` | — (always notify admins) | All vault_admins | **MVP** |
+| Application pending approval | `app_pending` | — (always notify admins) | Members of the Nextcloud `admin` group | **MVP** |
 | Group share: new member needs approval | `group_member_added` | `notify_group_shares` | Notify secret owner | **MVP** |
 | Share request from recipient | `share_request` | `notify_shares` | Notify secret owner | **MVP** |
 | Share request approved/denied | `share_request_result` | `notify_shares` | Notify requester | **MVP** |
@@ -258,6 +258,8 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | GDPR data export (all user secrets + metadata) | **V1** ✅ Built | Right of access (Art. 15) — browser-assembled package = server metadata + client-decrypted vault (see `docs/gdpr.md`) |
 | GDPR data deletion (user + all shares) | **V1** ✅ Built | Right to erasure (Art. 17) — in-app + `UserDeletedEvent` cascade with defined shared-secret semantics (see `docs/gdpr.md`) |
 | Audit trail on all secret operations | **V1** ✅ Built | Accountability |
+| No OpenRegister integration leaves (files, calendar, deck, activity) | **V1** ✅ Decided | Secret material and vault-structure metadata never leave the vault's own access control; expiry and rotation stay in Keepiq's scans, notifications and dashboard (see `openspec/specs/integration-boundary/`) |
+| AI/MCP: metadata-only read tools (`listEntries`, `expiryReport`, `rotationStatus`) | **V1** ✅ Built | An assistant can answer "what expires this month?"; secret values are never agent-reachable and no tool writes (see `openspec/specs/mcp-metadata-surface/`) |
 | Field-level encryption audit (verify encrypted fields) | **Enterprise** | Compliance verification |
 | Data retention policies | **Enterprise** | Automated cleanup |
 
@@ -269,7 +271,8 @@ There is **no production-ready Nextcloud-native encrypted vault with application
 | Nextcloud notifications (shares, requests, CA) | **MVP** | Platform integration |
 | REST API for all operations | **V1** | Programmatic access |
 | OpenConnector secret store integration | **V1** | Sister app integration |
-| Browser extension (Bitwarden-compatible API subset) | **Enterprise** | Auto-fill in browser |
+| Browser extension (own end-to-end client: autofill, passkeys, vault, generator, Send, offline) | **Enterprise** | Auto-fill in browser |
+| Mobile apps for Android and iOS (own end-to-end client). Android: vault, one-time codes, generator, Send, offline copy, autofill in apps and browsers, passkeys on Android 14 and later; a signed preview APK on GitHub, with `fdroid` and `play` builds ready for the stores. iOS: vault, generator and Send; autofill, passkeys and offline come with the signed build through TestFlight. See `docs/mobile/using.md` and `docs/mobile/privacy.md` | **Enterprise** | Passwords on the phone |
 | CLI tool for secret management | **Enterprise** | DevOps workflow |
 | Nextcloud Flows automation triggers | **Enterprise** | Low-code integration |
 
@@ -355,7 +358,7 @@ Three pillars:
 |------|----------|------------|
 | Feature gap vs. Bitwarden (browser extension, mobile, FIDO2) | High | Focus on what Bitwarden can't do: Nextcloud integration, write-without-read, application secrets. Browser extension is Enterprise tier. |
 | Passwords app incumbency on Nextcloud | High | Differentiate on encryption architecture (PKI vs. SSE), application secrets, and enterprise features. Consider migration tooling. |
-| No mobile app | Medium | Nextcloud's mobile apps provide the session; Keepiq is web-first. Mobile vault is a future consideration. |
+| Mobile apps not in the stores yet | Medium | Native Android and iOS apps are built (`clients-mobile-apps`). Android ships as a signed preview APK on GitHub. Its F-Droid build is free software only and reproducible, both checked in CI, and the store texts are drafted; the store accounts do not exist yet. iOS follows through TestFlight. |
 | Complexity of PKI for end users | Medium | Zero-friction onboarding: EncryptionSuite auto-created on first login. Users only interact with master password, never with certificates. |
 | Master password lost = data lost | High | This is by design (zero-knowledge). Document clearly. Consider emergency access (V1) or admin recovery mechanisms (Enterprise). |
 | Small team | High | Own-DB architecture means more backend code than thin-client apps. Prioritize MVP ruthlessly. |
@@ -467,7 +470,7 @@ Large organizations, multi-instance deployments, and compliance-driven environme
 78. Breach detection for secret URLs (HaveIBeenPwned)
 79. Password age indicator
 80. Export to PDF (single secret)
-81. Browser extension (Bitwarden-compatible API subset)
+81. Browser extension (own end-to-end client)
 82. CLI tool for secret management
 83. Multiple encryption suites per user (key rotation)
 84. Custom CA chain upload

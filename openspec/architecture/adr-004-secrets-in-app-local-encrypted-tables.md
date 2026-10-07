@@ -4,6 +4,9 @@
 
 **Date**: 2026-07-27
 
+- **References:** hydra ADR-022 (Apps consume OpenRegister abstractions), exception clause
+- **Gate 23 rules:** 7
+
 ## Context
 
 Org ADR-070 (`hydra/openspec/architecture/adr-070-or-backed-persistence-default.md`)
@@ -27,10 +30,10 @@ server. This falls under ADR-070's first recognised exception class.
 At HEAD, `lib/Db/` holds ~32 Entity+QBMapper pairs (64 files) over 30 schema
 migrations, with zero `ObjectService` data-path references. Ciphertext lives
 in typed columns (`Secret`, `SecretVersion`, encrypted `Attachment` blobs
-with AES-GCM-encrypted metadata); the only OR touchpoint is
-`lib/Repair/InitializeSettings.php`, which imports a register *scaffold* when
-OR happens to be installed and skips cleanly when it is not — no secret
-material ever flows through OR.
+with AES-GCM-encrypted metadata); no secret material ever flows through OR.
+(This ADR originally named `lib/Repair/InitializeSettings.php`'s register
+*scaffold* import as the only OR touchpoint. That import is gone: Keepiq is
+independently usable and runs its own app shell, see ADR-006.)
 
 ## Decision
 
@@ -55,6 +58,29 @@ clause; the paths named below are the suppression scope for
 
 `lib/Db/**`, `lib/Migration/**`, `lib/Search/SecretSearchProvider.php`, and
 `lib/Service/{AuditService,SiemService,SettingsService,JwtAuthService,AttachmentService,ShareService,GroupShareService,LinkShareService,DelegationService,TeamFolderService,GdprService,ComplianceReportService,ImportService,SecretService,SecretVersionService}.php`.
+
+### Vault audit and share checks stay app-local (gate-23 rules 2 and 6)
+
+Decided 4 October 2026 by the product owner (keepiq#673 follow-up). OpenRegister's
+audit trail and RBAC act on objects the server can read. Keepiq's audit events
+and share checks are about vault structure: who reached which secret, through
+which share, delegation or team folder. Writing them through OpenRegister would
+put that structure in OpenRegister's audit store, search index and exports, the
+same exposure the persistence exception above exists to prevent. So the audit
+trails and the share authorization stay app-local:
+
+- `lib/Service/ShareAuditTrail.php` (gate 23 rules: 2)
+- `lib/Service/LinkShareAuditTrail.php` (gate 23 rules: 2)
+- `lib/Service/EmergencyAccessAuditTrail.php` (gate 23 rules: 2)
+- `lib/Service/ApplicationAuditTrail.php` (gate 23 rules: 2)
+- `lib/Service/SiemAuditTrail.php` (gate 23 rules: 2)
+- `lib/Service/FederatedShareAuditTrail.php` (gate 23 rules: 2)
+- `lib/Listener/AuditListener.php` (gate 23 rules: 2)
+- `lib/Service/ShareAuthorizationService.php` (gate 23 rules: 6)
+
+These classes log identifiers only, never a value, login or ciphertext, and the
+share checks decide who may receive a re-wrapped key, which no row-level ACL can
+express.
 
 ### Drift boundary — what Keepiq still consumes org-wide
 

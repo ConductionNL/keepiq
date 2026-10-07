@@ -28,6 +28,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use OCA\Keepiq\Tests\Support\AdminAreaFixture;
+use OCA\Keepiq\Settings\AuditAdminSettings;
+use OCA\Keepiq\Settings\ApplicationAdminSettings;
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\ApplicationRequestAdminController;
 use OCA\Keepiq\Db\SecretRequest;
@@ -46,6 +49,8 @@ use RuntimeException;
  * Tests for the admin-scoped application-request surface.
  */
 class ApplicationRequestAdminControllerTest extends TestCase {
+	use AdminAreaFixture;
+
 	/**
 	 * The service mock.
 	 *
@@ -85,7 +90,7 @@ class ApplicationRequestAdminControllerTest extends TestCase {
 			request: $this->createMock(IRequest::class),
 			service: $this->service,
 			userSession: $session,
-			groupManager: $this->groupManager,
+			areas: $this->areaAuthorizer(groupManager: $this->groupManager),
 		);
 	}//end controllerFor()
 
@@ -330,4 +335,37 @@ class ApplicationRequestAdminControllerTest extends TestCase {
 		);
 	}//end testACodelessRevokeRefusalFallsBackToBadRequest()
 
+
+	/**
+	 * A holder of the Applications area who is no instance admin sees the
+	 * requests (admin-scoped-roles §2.2).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.2
+	 */
+	public function testAnApplicationsAreaHolderSeesTheRequests(): void {
+		$this->delegatedAreas = [ApplicationAdminSettings::class];
+		$this->service->expects($this->once())->method('listForApplication')->with('app-1', true)->willReturn([$this->row()]);
+
+		$response = $this->controllerFor('helpdesk', false)->index(id: 'app-1');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+	}//end testAnApplicationsAreaHolderSeesTheRequests()
+
+	/**
+	 * A holder of only the Audit area is refused (admin-scoped-roles §2.2).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.2
+	 */
+	public function testAnAuditAreaHolderIsRefused(): void {
+		$this->delegatedAreas = [AuditAdminSettings::class];
+		$this->service->expects($this->never())->method('listForApplication');
+
+		$response = $this->controllerFor('auditor', false)->index(id: 'app-1');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+	}//end testAnAuditAreaHolderIsRefused()
 }//end class

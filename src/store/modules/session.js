@@ -4,8 +4,26 @@ import { defineStore } from 'pinia'
 import { decryptPrivateKeyWithRawKey, deriveAesKey } from '../../crypto/aes.js'
 import { decodeEnvelope } from '../../crypto/envelope.js'
 import { decryptPrivateKey, importPrivateKey } from '../../crypto/index.js'
+import { useTeamFolderStore } from './teamFolder.js'
 
 const DEFAULT_TIMEOUT = 600000 // 10 minutes
+
+/**
+ * The saved timeout choices in milliseconds. `session` means no idle timer
+ * beyond the Nextcloud session itself, held as `null` so it can never fall
+ * back to a number by accident.
+ */
+export const TIMEOUT_CHOICES = Object.freeze({
+	session: null,
+	'10min': 600000,
+	'30min': 1800000,
+})
+
+/** The choice used when none is saved or the saved one is unknown. */
+export const DEFAULT_TIMEOUT_CHOICE = '10min'
+
+/** Activity is recorded at most once per this many milliseconds. */
+export const ACTIVITY_THROTTLE_MS = 15000
 
 /**
  * Lock-time hooks invoked when the vault locks. The password-health store
@@ -35,8 +53,10 @@ export const useSessionStore = defineStore('session', {
 		cryptoKey: null,
 		/** @type {CryptoKey|null} AES key derived from master password */
 		aesKey: null,
-		/** @type {number} Session timeout in ms */
+		/** @type {number|null} Idle timeout in ms; null = no idle timer (Nextcloud session). */
 		timeout: DEFAULT_TIMEOUT,
+		/** @type {string} The timeout choice the timeout was derived from. */
+		timeoutChoice: DEFAULT_TIMEOUT_CHOICE,
 		/** @type {number} Last activity timestamp */
 		lastActivity: Date.now(),
 		/** @type {string|null} Encrypted private key blob from server */
@@ -57,6 +77,7 @@ export const useSessionStore = defineStore('session', {
 		 *
 		 * @param {string} masterPassword
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-vault-unlock-requires-nextcloud-two-factor-login
 		 */
 		async unlock(masterPassword) {
 			// Fetch the user's encryption suite from the API.
@@ -68,6 +89,14 @@ export const useSessionStore = defineStore('session', {
 
 			if (!activeSuite) {
 				throw new Error('No active EncryptionSuite found')
+			}
+
+			// The two-factor vault policy withholds the wrapped key
+			// (admin-vault-policies D3): say so, never "wrong password".
+			if (activeSuite.unlockBlocked) {
+				throw Object.assign(new Error(activeSuite.unlockBlocked), {
+					code: activeSuite.unlockBlocked,
+				})
 			}
 
 			await this.unlockFromBlob({
@@ -119,6 +148,7 @@ export const useSessionStore = defineStore('session', {
 			this.certificate = certificate
 			this.suiteId = suiteId
 			this.lastActivity = Date.now()
+			this.afterUnlock()
 		},
 
 		/**
@@ -157,6 +187,50 @@ export const useSessionStore = defineStore('session', {
 			this.certificate = activeSuite.certificate
 			this.suiteId = activeSuite.id
 			this.lastActivity = Date.now()
+			this.afterUnlock()
+		},
+
+		/**
+		 * Work that starts once the vault is open: the background confirmation
+		 * of new team folder members (admin-auto-confirm-members D5). Not
+		 * awaited, so it never delays or breaks an unlock.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
+		 */
+		afterUnlock() {
+			try {
+				useTeamFolderStore()
+					.startAutoConfirm()
+					.catch(() => {})
+			} catch {
+				// Never let a background job break the unlock.
+			}
+		},
+
+		/**
+		 * Unlock this session from a recovered private key, for one session
+		 * only (crypto-new-device-approval D6, the officer path). There is no
+		 * raw unlock key, so the offline cache stays off for this session.
+		 *
+		 * @param {string} privateKeyPem The recovered private key.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/new-device-approval/spec.md#requirement-the-administrator-path-goes-through-organisation-account-recovery
+		 */
+		async unlockWithPrivateKeyPem(privateKeyPem) {
+			const response = await axios.get(
+				generateUrl('/apps/keepiq/api/v1/suites'),
+			)
+			const activeSuite = response.data.find((s) => s.status === 'active')
+			if (!activeSuite) {
+				throw new Error('No active EncryptionSuite found')
+			}
+			this.cryptoKey = await importPrivateKey(privateKeyPem)
+			this.aesKey = null
+			this.encryptedPrivateKey = activeSuite.privateKey
+			this.certificate = activeSuite.certificate
+			this.suiteId = activeSuite.id
+			this.lastActivity = Date.now()
 		},
 
 		/**
@@ -165,6 +239,12 @@ export const useSessionStore = defineStore('session', {
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
 		 */
 		lock() {
+			// Stop confirming members: the key it needs is about to go.
+			try {
+				useTeamFolderStore().stopAutoConfirm()
+			} catch {
+				// A failing stop must never block the lock itself.
+			}
 			this.cryptoKey = null
 			this.aesKey = null
 			this.encryptedPrivateKey = null
@@ -191,9 +271,77 @@ export const useSessionStore = defineStore('session', {
 				return
 			}
 
+			if (this.timeout === null) {
+				return
+			}
+
 			if (Date.now() - this.lastActivity > this.timeout) {
 				this.lock()
 			}
+		},
+
+		/**
+		 * Record user activity for the inactivity lock, at most once per
+		 * ACTIVITY_THROTTLE_MS so pointer moves and key presses do not cost a
+		 * store write each. Activity on a locked vault is ignored.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/vault-session-lock/spec.md#requirement-inactivity-lock
+		 */
+		noteActivity() {
+			if (this.cryptoKey === null) {
+				return
+			}
+
+			const now = Date.now()
+			if (now - this.lastActivity >= ACTIVITY_THROTTLE_MS) {
+				this.lastActivity = now
+			}
+		},
+
+		/**
+		 * Apply a timeout choice. An unknown choice falls back to ten minutes.
+		 *
+		 * @param {string} choice One of the TIMEOUT_CHOICES keys.
+		 * @return {void}
+		 * @spec openspec/specs/vault-session-lock/spec.md#requirement-saved-session-timeout
+		 */
+		applyTimeoutChoice(choice) {
+			const known = Object.hasOwn(TIMEOUT_CHOICES, choice)
+			this.timeoutChoice = known ? choice : DEFAULT_TIMEOUT_CHOICE
+			this.timeout = TIMEOUT_CHOICES[this.timeoutChoice]
+		},
+
+		/**
+		 * Load the saved timeout from the user settings. When they cannot be
+		 * read the ten-minute default stays.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/vault-session-lock/spec.md#requirement-saved-session-timeout
+		 */
+		async loadTimeoutPreference() {
+			try {
+				const response = await axios.get(
+					generateUrl('/apps/keepiq/api/settings/user'),
+				)
+				this.applyTimeoutChoice(response.data?.session_timeout)
+			} catch {
+				this.applyTimeoutChoice(DEFAULT_TIMEOUT_CHOICE)
+			}
+		},
+
+		/**
+		 * Save a timeout choice and apply it at once.
+		 *
+		 * @param {string} choice One of the TIMEOUT_CHOICES keys.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/vault-session-lock/spec.md#requirement-saved-session-timeout
+		 */
+		async saveTimeoutPreference(choice) {
+			this.applyTimeoutChoice(choice)
+			await axios.put(generateUrl('/apps/keepiq/api/settings/user'), {
+				session_timeout: this.timeoutChoice,
+			})
 		},
 
 		/**

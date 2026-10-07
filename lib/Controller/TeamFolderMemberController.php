@@ -33,8 +33,14 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
+use DateTime;
+use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Exception\ManagerOnlyException;
+use OCA\Keepiq\Exception\OwnerOnlyException;
+use OCA\Keepiq\Service\ShareRestriction;
+use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCA\Keepiq\Service\TeamFolderService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -108,15 +114,27 @@ class TeamFolderMemberController extends OCSController {
 	 * @param string $id The TeamFolder UUID
 	 * @param string $memberType The member type (`user`|`group`)
 	 * @param string $memberId The Nextcloud user or group ID
+	 * @param bool $useOnly Whether the member may only use the values (read grade only)
+	 * @param string|null $expiresAt When the membership ends (ISO 8601)
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#4.1
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
+	 *   field the server stores, not a mode switch.
 	 */
 	#[NoAdminRequired]
-	public function addMember(string $id, string $memberType, string $memberId): JSONResponse {
+	public function addMember(
+		string $id,
+		string $memberType,
+		string $memberId,
+		bool $useOnly = false,
+		?string $expiresAt = null,
+	): JSONResponse {
 		$userId = $this->sessionUserId();
 		if ($userId === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
@@ -127,7 +145,12 @@ class TeamFolderMemberController extends OCSController {
 				teamFolderId: $id,
 				memberType: $memberType,
 				memberId: $memberId,
-				userId: $userId
+				userId: $userId,
+				restriction: (new ShareRestrictionRules())->fromRequest(
+					useOnly: $useOnly,
+					expiresAt: $expiresAt,
+					now: new DateTime('now', new DateTimeZone('UTC'))
+				)
 			);
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(
@@ -173,10 +196,7 @@ class TeamFolderMemberController extends OCSController {
 				userId: $userId
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return $this->refusal(exception: $exception);
 		}
 
 		return new JSONResponse(data: ['revoked' => $revoked]);
@@ -225,34 +245,86 @@ class TeamFolderMemberController extends OCSController {
 	 * @param string $id The team folder UUID
 	 * @param string $memberId The membership row UUID
 	 * @param string $grade The grade (`read`|`write`)
+	 * @param bool|null $useOnly Whether the member may only use the values (null = leave both options)
+	 * @param string|null $expiresAt When the membership ends (ISO 8601; sent with useOnly)
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-or-write-grade
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-team-folder-membership-carries-a-read-write-or-manage-grade
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.2
 	 */
 	#[NoAdminRequired]
-	public function setMemberGrade(string $id, string $memberId, string $grade = ''): JSONResponse {
+	public function setMemberGrade(
+		string $id,
+		string $memberId,
+		string $grade = '',
+		?bool $useOnly = null,
+		?string $expiresAt = null,
+	): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
 		try {
+			$restriction = null;
+			if ($useOnly !== null) {
+				$restriction = (new ShareRestrictionRules())->fromRequest(
+					useOnly: $useOnly,
+					expiresAt: $expiresAt,
+					now: new DateTime('now', new DateTimeZone('UTC'))
+				);
+			}
+
 			$member = $this->teamFolderService->setMemberGrade(
 				teamFolderId: $id,
 				memberId: $memberId,
 				grade: $grade,
 				ownerId: $user->getUID(),
+				restriction: $restriction,
 			);
 		} catch (InvalidArgumentException $exception) {
-			return new JSONResponse(
-				data: ['message' => $exception->getMessage()],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return $this->refusal(exception: $exception);
 		}
 
 		return new JSONResponse(data: $member->jsonSerialize());
 	}//end setMemberGrade()
+
+	/**
+	 * The response for a refused membership change: a change only the owner
+	 * may make is forbidden (`owner_only`), so is one by a member who is
+	 * neither owner nor manager (`manager_only`); anything else is a bad
+	 * request.
+	 * The 403 leaves as 428 through OcsRefusalMiddleware, so the browser sees
+	 * the refusal and its code.
+	 *
+	 * @param InvalidArgumentException $exception The refusal
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-only-the-owner-governs-managers-and-the-folder-itself
+	 * @spec openspec/specs/folder-permission-grades/spec.md#scenario-non-owner-cannot-change-a-grade
+	 */
+	private function refusal(InvalidArgumentException $exception): JSONResponse {
+		if ($exception instanceof OwnerOnlyException) {
+			return new JSONResponse(
+				data: ['message' => $exception->getMessage(), 'error' => OwnerOnlyException::CODE],
+				statusCode: Http::STATUS_FORBIDDEN
+			);
+		}
+
+		if ($exception instanceof ManagerOnlyException) {
+			return new JSONResponse(
+				data: ['message' => $exception->getMessage(), 'error' => ManagerOnlyException::CODE],
+				statusCode: Http::STATUS_FORBIDDEN
+			);
+		}
+
+		return new JSONResponse(
+			data: ['message' => $exception->getMessage()],
+			statusCode: Http::STATUS_BAD_REQUEST
+		);
+	}//end refusal()
 }//end class

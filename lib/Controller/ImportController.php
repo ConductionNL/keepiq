@@ -92,7 +92,7 @@ class ImportController extends OCSController {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+	 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 	 */
 	#[NoAdminRequired]
 	public function batchCreate(?array $items = null): JSONResponse {

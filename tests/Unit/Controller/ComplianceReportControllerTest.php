@@ -24,6 +24,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use OCA\Keepiq\Tests\Support\AdminAreaFixture;
+use OCA\Keepiq\Settings\AuditAdminSettings;
+use OCA\Keepiq\Settings\ApplicationAdminSettings;
 use OCA\Keepiq\Controller\ComplianceReportController;
 use OCA\Keepiq\Service\ComplianceReportService;
 use OCP\AppFramework\Http;
@@ -48,6 +51,8 @@ use PHPUnit\Framework\TestCase;
  *
  */
 class ComplianceReportControllerTest extends TestCase {
+	use AdminAreaFixture;
+
 
 	/**
 	 * The mocked compliance report service.
@@ -106,7 +111,7 @@ class ComplianceReportControllerTest extends TestCase {
 			request: $this->createMock(IRequest::class),
 			service: $this->service,
 			userSession: $this->userSession,
-			groupManager: $this->groupManager
+			areas: $this->areaAuthorizer(groupManager: $this->groupManager)
 		);
 	}//end controller()
 
@@ -265,4 +270,37 @@ class ComplianceReportControllerTest extends TestCase {
 		$this->assertSame(['message' => 'Compliance reporting is admin-only'], $response->getData());
 	}//end testExportedForbidsALoggedInNonAdminWithoutRecordingAnything()
 
+
+	/**
+	 * A holder of the Audit area who is no instance admin gets the metrics
+	 * (admin-scoped-roles §2.3).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.3
+	 */
+	public function testMetricsServeAnAuditAreaHolder(): void {
+		$this->delegatedAreas = [AuditAdminSettings::class];
+		$this->service->expects($this->once())->method('cachedMetrics')->willReturn(['secretsTotal' => 1]);
+
+		$response = $this->controller(userId: 'auditor', isAdmin: false)->metrics();
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+	}//end testMetricsServeAnAuditAreaHolder()
+
+	/**
+	 * A holder of only the Applications area is refused (admin-scoped-roles §2.3).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.3
+	 */
+	public function testMetricsRefuseAnApplicationsAreaHolder(): void {
+		$this->delegatedAreas = [ApplicationAdminSettings::class];
+		$this->service->expects($this->never())->method('cachedMetrics');
+
+		$response = $this->controller(userId: 'appadmin', isAdmin: false)->metrics();
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+	}//end testMetricsRefuseAnApplicationsAreaHolder()
 }//end class

@@ -7,4 +7,8 @@ on:
 jobs:
   sync:
     uses: ConductionNL/.github/.github/workflows/sync-to-beta.yml@main
+    # What the shared workflow's job declares: it opens the sync pull request.
+    permissions:
+      contents: write
+      pull-requests: write
     secrets: inherit

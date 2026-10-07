@@ -96,7 +96,7 @@ class BreachProxyController extends Controller {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
+	 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
 	 */
 	public function __construct(
 		IRequest $request,
@@ -138,6 +138,11 @@ class BreachProxyController extends Controller {
 	 * gate-7 correctly stops treating that 403 as a guard once it requires a
 	 * 403 to have consulted the caller.
 	 *
+	 * The prefix arrives in the POST body, never in the request URI
+	 * (keepiq#866). Nextcloud stamps every log line, and the web server every
+	 * access-log line, with the request URI next to the user id; a prefix in
+	 * the path paired the two on any line written during this request.
+	 *
 	 * A call that reaches the upstream reports its HTTP status to integriq's
 	 * connection registry, at most once an hour while it stays the same
 	 * (adopt-connection-registry). Only the status travels: never the prefix,
@@ -149,10 +154,10 @@ class BreachProxyController extends Controller {
 	 * @return DataResponse
 	 *
 	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-opt-in-breach-checking-via-k-anonymity
-	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
+	 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
 	 */
 	#[NoAdminRequired]
-	public function range(string $prefix): DataResponse {
+	public function range(string $prefix = ''): DataResponse {
 		if ($this->userSession->getUser() === null) {
 			return new DataResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
@@ -193,8 +198,10 @@ class BreachProxyController extends Controller {
 		} catch (Throwable $e) {
 			// Soft-degrade. Never log the prefix together with a user id
 			// (privacy), and the exception is exactly that pairing: the client's
-			// message names the request URL, which ends in the prefix, and
-			// Nextcloud stamps every line with the user who typed the password.
+			// message names the upstream URL, which ends in the prefix, and
+			// Nextcloud stamps every line with the user who typed the password
+			// and with the request URI, which is why the prefix travels in the
+			// body and not in this route's path (keepiq#866).
 			// So the class and the HTTP status go in the line and the message
 			// goes nowhere, not even as an `exception` context key, which the
 			// log writer would render in full.

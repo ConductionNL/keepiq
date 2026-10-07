@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<!-- Keepiq as the autofill service (clients-mobile-apps task 4.1): inline
+     suggestions in the keyboard on Android 11+, and the settings Android
+     links to. -->
+<autofill-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:settingsActivity="nl.conduction.keepiq.android.autofill.AutofillSettingsActivity"
+    android:supportsInlineSuggestions="true" />

@@ -28,7 +28,6 @@ namespace OCA\Keepiq\Service;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
-use OCP\App\IAppManager;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use OCP\IConfig;
@@ -108,6 +107,10 @@ class SettingsService {
 		// Offline read-only cache per-device opt-out (offline-readonly-cache
 		// §1.2); default on, gated behind the admin org-wide switch.
 		'offline_cache_optin' => '1',
+		// Receive secrets from other organisations (sharing-federated-
+		// recipients D6); default off. Until it is '1' a partner's
+		// certificate lookup gets the unknown-recipient answer.
+		'federation_receive' => '0',
 	];
 
 	/**
@@ -156,7 +159,6 @@ class SettingsService {
 	 *
 	 * @param IAppConfig $appConfig The app config interface
 	 * @param IConfig $config The per-user config interface
-	 * @param IAppManager $appManager The app manager
 	 * @param ContainerInterface $container The container
 	 * @param IGroupManager $groupManager The group manager
 	 * @param IUserSession $userSession The user session
@@ -169,7 +171,6 @@ class SettingsService {
 	public function __construct(
 		private IAppConfig $appConfig,
 		private IConfig $config,
-		private IAppManager $appManager,
 		ContainerInterface $container,
 		private IGroupManager $groupManager,
 		private IUserSession $userSession,
@@ -179,7 +180,6 @@ class SettingsService {
 	) {
 		$this->adminSettings = ($adminSettings ?? new AdminSettingsService(
 			appConfig: $appConfig,
-			appManager: $appManager,
 			container: $container,
 			userSession: $userSession,
 			logger: $logger,
@@ -214,6 +214,37 @@ class SettingsService {
 	}//end updateAdminSettings()
 
 	/**
+	 * The settings of one admin area (admin-scoped-roles D2).
+	 *
+	 * @param string $area One of AdminSettingsService::SETTINGS_AREAS
+	 *
+	 * @return array<string,mixed>
+	 *
+	 * @throws InvalidArgumentException On an unknown area.
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
+	 */
+	public function getAreaSettings(string $area): array {
+		return $this->adminSettings->getAreaSettings(area: $area);
+	}//end getAreaSettings()
+
+	/**
+	 * Write one admin area's keys (admin-scoped-roles D2).
+	 *
+	 * @param string $area One of AdminSettingsService::SETTINGS_AREAS
+	 * @param array<string,mixed> $data The input data
+	 *
+	 * @return array<string,mixed> The area's settings after the write
+	 *
+	 * @throws InvalidArgumentException On a key of another area or an out-of-bounds value.
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.1
+	 */
+	public function updateAreaSettings(string $area, array $data): array {
+		return $this->adminSettings->updateAreaSettings(area: $area, data: $data);
+	}//end updateAreaSettings()
+
+	/**
 	 * The user-visible policy floor for the write dialogs — policy gate,
 	 * generator floor, score floor, HIBP block, and exempt types only
 	 * (org-password-policies §1.3).
@@ -221,27 +252,11 @@ class SettingsService {
 	 * @return array<string,mixed>
 	 *
 	 * @spec openspec/changes/org-password-policies/specs/org-password-policies/spec.md
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-administrator-configures-vault-policies-per-group
 	 */
 	public function getPolicy(): array {
-		return $this->adminSettings->getPolicy();
+		return $this->adminSettings->getPolicy(userId: $this->userSession->getUser()?->getUID());
 	}//end getPolicy()
-
-	/**
-	 * Load configuration from keepiq_register.json via OpenRegister.
-	 *
-	 * @param bool $force Force re-import even if already configured.
-	 *
-	 * @return array<string,mixed> Result with success flag, message, and version.
-	 *
-	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $force is passed straight through to
-	 *   OpenRegister's ADR-022 importFromApp(appId, data, version, force) signature; it is
-	 *   never a branch here. See RegisterConfigurationLoader::loadConfiguration().
-	 *
-	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-6
-	 */
-	public function loadConfiguration(bool $force = false): array {
-		return $this->adminSettings->loadConfiguration(force: $force);
-	}//end loadConfiguration()
 
 	/**
 	 * Get the per-user preferences (implement-dashboard-settings §1.5).
@@ -254,7 +269,11 @@ class SettingsService {
 	 */
 	public function getUserPreferences(string $userId): array {
 		$appId = Application::APP_ID;
-		$adminDefault = $this->appConfig->getValueString($appId, 'default_session_timeout', 'session');
+		$adminDefault = $this->appConfig->getValueString(
+			$appId,
+			'default_session_timeout',
+			AdminSettingsService::DEFAULT_SESSION_TIMEOUT
+		);
 
 		$prefs = [];
 		foreach (self::USER_PREF_KEYS as $key => $default) {
@@ -313,19 +332,10 @@ class SettingsService {
 	}//end updateUserPreferences()
 
 	/**
-	 * Check whether OpenRegister is installed and available.
-	 *
-	 * @return bool
-	 */
-	public function isOpenRegisterAvailable(): bool {
-		return $this->appManager->isInstalled('openregister');
-	}//end isOpenRegisterAvailable()
-
-	/**
 	 * Retrieve all current settings.
 	 *
-	 * Returns a flat array containing all app config values plus metadata
-	 * fields (openregisters, isAdmin) consumed by the frontend.
+	 * Returns a flat array containing all app config values plus the isAdmin
+	 * metadata field consumed by the frontend.
 	 *
 	 * @return array<string,mixed>
 	 *
@@ -343,7 +353,6 @@ class SettingsService {
 		return array_merge(
 			$settings,
 			[
-				'openregisters' => $this->isOpenRegisterAvailable(),
 				'isAdmin' => $isAdmin,
 			]
 		);

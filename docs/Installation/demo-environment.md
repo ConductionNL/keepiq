@@ -64,7 +64,7 @@ curl -s http://localhost:8616/status.php
 
 | App | Why |
 | --- | --- |
-| `openregister` | **Required.** Every Connext app declares its registers and schemas against OpenRegister. |
+| `openregister` | **Required by the demo suite.** The other Connext apps declare their registers and schemas against OpenRegister. Keepiq itself does not need it; with it, Keepiq adds the Flows pages and the MCP tools. |
 | `thematiq` | Optional. Government theming. Absent, the UI renders unthemed rather than wrong. |
 | `integriq` | Optional. The connector, for feeding in data from systems you do not control. |
 | `keepiq` | The app this page is about. |

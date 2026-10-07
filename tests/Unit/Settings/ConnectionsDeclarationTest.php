@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-001-keepiq-declares-its-outside-connections-in-one-static-file
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-001-keepiq-declares-its-outside-connections-in-one-static-file
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -225,7 +225,7 @@ class ConnectionsDeclarationTest extends TestCase {
 	 * The admin section id is `keepiq`: info.xml names Sections\SettingsSection,
 	 * and Keepiq's own navigation links to the same page. A link into a section
 	 * that does not exist scrolls nowhere and logs nothing. An id on a component
-	 * that Settings.vue does not render is just as missing.
+	 * that no admin area renders is just as missing.
 	 *
 	 * @return void
 	 */
@@ -239,7 +239,9 @@ class ConnectionsDeclarationTest extends TestCase {
 			haystack: $this->read(path: 'src/components/KeepiqAppNav/KeepiqAppNav.vue')
 		);
 
-		$settings = $this->read(path: 'src/views/settings/Settings.vue');
+		// Settings.vue renders the sections of one admin area, listed per area
+		// in adminAreas.js (admin-scoped-roles D3).
+		$settings = $this->read(path: 'src/views/settings/adminAreas.js');
 		$linked   = [];
 		foreach ($this->declaration()['connections'] as $connection) {
 			$url = (string) ($connection['settingsUrl'] ?? '');
@@ -258,7 +260,7 @@ class ConnectionsDeclarationTest extends TestCase {
 				string: $this->read(path: 'src/components/settings/' . $component . '.vue'),
 				message: $component . ' does not carry #' . $anchor . ' on its root section'
 			);
-			$this->assertStringContainsString(needle: '<' . $component . ' />', haystack: $settings, message: $component . ' is not rendered');
+			$this->assertStringContainsString(needle: "'" . $component . "'", haystack: $settings, message: $component . ' is not rendered in any admin area');
 
 			$linked[] = $anchor;
 		}

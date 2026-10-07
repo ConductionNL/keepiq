@@ -29,11 +29,11 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
-use InvalidArgumentException;
 use OCA\Keepiq\Db\SiemQueueItemMapper;
 use OCA\Keepiq\Db\SiemSink;
 use OCA\Keepiq\Db\SiemSinkMapper;
 use OCA\Keepiq\Service\Connection\ConnectionReporter;
+use OCA\Keepiq\Service\Siem\SinkConnectorSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Security\ICrypto;
 use Ramsey\Uuid\Uuid;
@@ -43,6 +43,7 @@ use Throwable;
  * CRUD and test-fire for SIEM sinks.
  */
 class SiemSinkService {
+
 
 	/**
 	 * The sink audit trail.
@@ -84,33 +85,24 @@ class SiemSinkService {
 	 *
 	 * @return SiemSink
 	 *
-	 * @throws InvalidArgumentException On invalid parameters
+	 * Invalid parameters raise SinkConnectorSettings's InvalidArgumentException.
 	 *
 	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 	 */
 	public function createSink(string $adminUid, array $params): SiemSink {
-		$type = (string)($params['type'] ?? '');
-		if (in_array($type, ['syslog', 'webhook'], true) === false) {
-			throw new InvalidArgumentException('type must be syslog or webhook');
-		}
-
-		$endpoint = (string)($params['endpoint'] ?? '');
-		if ($endpoint === '') {
-			throw new InvalidArgumentException('endpoint is required');
-		}
-
-		if ($type === 'webhook' && str_starts_with($endpoint, 'https://') === false) {
-			throw new InvalidArgumentException('webhook endpoints must be https://');
-		}
+		$connector = (new SinkConnectorSettings())->forCreate(params: $params);
+		$type = $connector['type'];
 
 		$sink = new SiemSink();
 		$sink->setId(Uuid::uuid4()->toString());
 		$sink->setName((string)($params['name'] ?? $type));
 		$sink->setType($type);
 		$sink->setEnabled((bool)($params['enabled'] ?? true));
-		$sink->setEndpoint($endpoint);
+		$sink->setEndpoint($connector['endpoint']);
 		$sink->setTls((bool)($params['tls'] ?? true));
 		$sink->setQueueCap(max(10, (int)($params['queueCap'] ?? 1000)));
+		$sink->setFormat($connector['format']);
+		$sink->setConnectorOptions($connector['connectorOptions']);
 		$sink->setCreatedBy($adminUid);
 		$sink->setCreatedAt(new DateTime());
 		$this->applySecretAndFilter(sink: $sink, params: $params);
@@ -132,36 +124,20 @@ class SiemSinkService {
 	 * @return SiemSink
 	 *
 	 * @throws DoesNotExistException When the sink is missing
+	 * An invalid format, endpoint or connector option raises SinkConnectorSettings's InvalidArgumentException.
 	 *
 	 * @spec openspec/specs/siem-audit-export/spec.md#requirement-admin-configured-syslog-and-webhook-sinks
 	 */
 	public function updateSink(string $adminUid, string $sinkId, array $params): SiemSink {
 		$sink = $this->sinkMapper->findById($sinkId);
-		if (isset($params['name']) === true) {
-			$sink->setName((string)$params['name']);
-		}
-
-		if (isset($params['enabled']) === true) {
-			$sink->setEnabled((bool)$params['enabled']);
-		}
-
-		if (isset($params['endpoint']) === true && (string)$params['endpoint'] !== '') {
-			$sink->setEndpoint((string)$params['endpoint']);
-		}
-
-		if (isset($params['tls']) === true) {
-			$sink->setTls((bool)$params['tls']);
-		}
-
-		if (isset($params['queueCap']) === true) {
-			$sink->setQueueCap(max(10, (int)$params['queueCap']));
-		}
+		$this->applyGeneralChanges(sink: $sink, params: $params);
+		(new SinkConnectorSettings())->applyUpdate(sink: $sink, params: $params);
 
 		$this->applySecretAndFilter(sink: $sink, params: $params);
 		$sink->setUpdatedAt(new DateTime());
 		$sink = $this->sinkMapper->update($sink);
 
-		$this->auditTrail->recordSinkUpdated(actorId: $adminUid, sinkId: $sinkId);
+		$this->auditTrail->recordSinkUpdated(actorId: $adminUid, sinkId: $sinkId, type: $sink->getType());
 		$this->reportSinksChanged();
 
 		return $sink;
@@ -221,7 +197,9 @@ class SiemSinkService {
 			$this->transport->deliver(sink: $sink, payloadJson: $payload);
 		} catch (Throwable $exception) {
 			$outcome = 'failed';
-			$error = $exception->getMessage();
+			// The admin sees class, status and host, never the message, which
+			// names the full sink URL with any token in it (keepiq#728).
+			$error = $this->transport->describeFailure(exception: $exception, sink: $sink);
 		}
 
 		$this->auditTrail->recordSinkTested(actorId: $adminUid, sinkId: $sinkId, outcome: $outcome);
@@ -258,6 +236,13 @@ class SiemSinkService {
 			$sink->setHmacSecretEnc($this->crypto->encrypt($secret));
 		}
 
+		// The connector credential follows the HMAC secret's rule: write-only,
+		// encrypted at rest, and blank keeps the stored one.
+		$credential = $params['credential'] ?? null;
+		if (is_string($credential) === true && $credential !== '') {
+			$sink->setCredentialEnc($this->crypto->encrypt($credential));
+		}
+
 		if (array_key_exists('categoryFilter', $params) === true) {
 			$filter = $params['categoryFilter'];
 			$encoded = null;
@@ -270,6 +255,33 @@ class SiemSinkService {
 	}//end applySecretAndFilter()
 
 	/**
+	 * Apply the generic fields an update supplies: name, enabled, tls and the
+	 * queue cap. Absent fields stay as they are.
+	 *
+	 * @param SiemSink $sink The sink to mutate
+	 * @param array<string,mixed> $params The request params
+	 *
+	 * @return void
+	 */
+	private function applyGeneralChanges(SiemSink $sink, array $params): void {
+		if (isset($params['name']) === true) {
+			$sink->setName((string)$params['name']);
+		}
+
+		if (isset($params['enabled']) === true) {
+			$sink->setEnabled((bool)$params['enabled']);
+		}
+
+		if (isset($params['tls']) === true) {
+			$sink->setTls((bool)$params['tls']);
+		}
+
+		if (isset($params['queueCap']) === true) {
+			$sink->setQueueCap(max(10, (int)$params['queueCap']));
+		}
+	}//end applyGeneralChanges()
+
+	/**
 	 * Ask integriq to resolve SIEM export again after a sink change.
 	 *
 	 * The reporter counts the enabled sinks only when integriq is installed,
@@ -277,7 +289,7 @@ class SiemSinkService {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
+	 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
 	 */
 	private function reportSinksChanged(): void {
 		$this->connectionReporter?->siemSinksChanged(

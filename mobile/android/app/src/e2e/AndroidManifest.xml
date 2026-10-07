@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<!-- The e2e build only: trust the test server's self-signed certificate
+     (see res/xml), and treat the autofill test app as a browser, so its
+     WebView's web domain counts (SystemAutofillTest). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application
+        android:networkSecurityConfig="@xml/network_security_config"
+        tools:ignore="UnusedAttribute">
+        <meta-data
+            android:name="nl.conduction.keepiq.e2e.BROWSERS"
+            android:value="nl.conduction.keepiq.test" />
+    </application>
+</manifest>

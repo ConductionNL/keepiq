@@ -7,10 +7,9 @@ import { importPublicKey, rsaEncrypt } from '../../crypto/index.js'
  * Pinia store for the registered-application admin queue + user
  * registration flow (implement-application-mgmt §9).
  *
- * The store wraps the `/api/v1/applications` REST surface and surfaces
- * the one-time private key returned by `register` / `approve` for the
- * PrivateKeyDownloadDialog. The private key MUST never be persisted —
- * it lives only in transient store state until the dialog is dismissed.
+ * The store wraps the `/api/v1/applications` REST surface. The server
+ * never generates or returns a private key (parity row pki-09, decided
+ * no): an application keeps its own key pair and supplies a CSR.
  *
  * @spec openspec/changes/implement-application-mgmt/tasks.md#task-9.1
  */
@@ -26,10 +25,6 @@ export const useApplicationStore = defineStore('application', {
 		totalCount: 0,
 		/** @type {boolean} Whether a request is in flight. */
 		loading: false,
-		/** @type {string|null} The one-time private-key PEM returned by register/approve. */
-		oneTimePrivateKey: null,
-		/** @type {string|null} The application ID the one-time key belongs to. */
-		oneTimePrivateKeyAppId: null,
 	}),
 
 	getters: {
@@ -107,9 +102,7 @@ export const useApplicationStore = defineStore('application', {
 
 		/**
 		 * Register a new application. Admins auto-approve; non-admin
-		 * callers create a pending row. When the server generates a
-		 * keypair (no CSR supplied) the response carries `private_key`
-		 * — the caller MUST surface it via PrivateKeyDownloadDialog.
+		 * callers create a pending row.
 		 *
 		 * @param {object} payload The registration payload.
 		 * @param {string} payload.name The application name.
@@ -133,11 +126,6 @@ export const useApplicationStore = defineStore('application', {
 			)
 			const data = response.data || {}
 
-			if (data.private_key) {
-				this.oneTimePrivateKey = data.private_key
-				this.oneTimePrivateKeyAppId = data.id ?? null
-			}
-
 			this.applications.push(data)
 			if (data.status === 'pending') {
 				this.pendingApplications.push(data)
@@ -147,10 +135,6 @@ export const useApplicationStore = defineStore('application', {
 
 		/**
 		 * Approve a pending application. Admin-only.
-		 *
-		 * Mirrors registerApplication: when the original request had no
-		 * CSR, the approval call generates the keypair server-side and
-		 * returns `private_key` — surface via PrivateKeyDownloadDialog.
 		 *
 		 * @param {string} id The application ID.
 		 * @return {Promise<object>} The approved application row.
@@ -163,11 +147,6 @@ export const useApplicationStore = defineStore('application', {
 				{},
 			)
 			const data = response.data || {}
-
-			if (data.private_key) {
-				this.oneTimePrivateKey = data.private_key
-				this.oneTimePrivateKeyAppId = id
-			}
 
 			this.pendingApplications = this.pendingApplications.filter(
 				(a) => a.id !== id,
@@ -219,18 +198,6 @@ export const useApplicationStore = defineStore('application', {
 			if (this.currentApplication?.id === id) {
 				this.currentApplication = null
 			}
-		},
-
-		/**
-		 * Clear the one-time private key from store state. The caller
-		 * MUST invoke this after the PrivateKeyDownloadDialog has been
-		 * acknowledged and dismissed.
-		 *
-		 * @return {void}
-		 */
-		clearOneTimePrivateKey() {
-			this.oneTimePrivateKey = null
-			this.oneTimePrivateKeyAppId = null
 		},
 
 		/**

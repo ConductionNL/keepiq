@@ -1,0 +1,29 @@
+/* SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> */
+/* SPDX-License-Identifier: EUPL-1.2 */
+/* De AutoFill-extensie (clients-mobile-apps taak 4.4). */
+"noAccount" = "Koppel eerst een account in de Keepiq-app.";
+"configured" = "Keepiq vult je logins in. Open de Keepiq-app om een account te koppelen of instellingen te wijzigen.";
+"cancel" = "Annuleren";
+"unlock.title" = "Keepiq ontgrendelen";
+"unlock.site" = "Om je login voor %@ in te vullen.";
+"unlock.biometric" = "Ontgrendelen met Face ID of Touch ID";
+"unlock.pin" = "Pincode";
+"unlock.master" = "Hoofdwachtwoord";
+"unlock.button" = "Ontgrendelen";
+"search" = "Zoek in je kluis";
+"list.forSite" = "Logins voor %@";
+"list.results" = "Zoekresultaten";
+"list.none" = "Geen login opgeslagen voor %@.";
+"list.noMatch" = "Geen login past bij je zoekopdracht.";
+"fill.failed" = "Keepiq kon deze login niet openen.";
+"add.title" = "Login toevoegen voor %@";
+"add.user" = "Gebruikersnaam";
+"add.password" = "Wachtwoord";
+"add.save" = "Opslaan en invullen";
+"add.refused" = "Keepiq slaat geen logins op voor deze site.";
+/* Passkeys (clients-mobile-apps taak 5.2). */
+"unlock.passkey" = "Om je passkey voor %@ te gebruiken.";
+"passkey.list" = "Passkeys voor %@";
+"passkey.none" = "Geen passkey opgeslagen voor %@.";
+"passkey.failed" = "Keepiq kon niet aanmelden met deze passkey.";
+"passkey.saveFailed" = "Keepiq kon deze passkey niet opslaan.";

@@ -7,7 +7,7 @@
  * key to and overwrites an existing contact's envelope, so a session alone must
  * not be enough.
  *
- * @spec openspec/changes/harden-vault-key-material-guards/specs/emergency-access/spec.md#requirement-designate-emergency-contact
+ * @spec openspec/specs/emergency-access/spec.md#requirement-designate-emergency-contact
  */
 
 import axios from '@nextcloud/axios'

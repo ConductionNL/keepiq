@@ -23,20 +23,22 @@ declare(strict_types=1);
 namespace OCA\Keepiq\AppInfo;
 
 use OCA\Keepiq\Middleware\JwtAuthMiddleware;
+use OCA\Keepiq\Middleware\OcsRefusalMiddleware;
 use OCA\Keepiq\Middleware\VaultKeyProofMiddleware;
 use OCA\Keepiq\Notification\KeepiqNotifier;
 use OCA\Keepiq\Search\SecretSearchProvider;
+use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
 /**
  * Plugs Keepiq into Nextcloud's own extension points.
  *
- * These three registrations are not Keepiq domain wiring — they are the
- * places where the PLATFORM calls into this app: the unified-search bar, the
- * notification renderer, and the request pipeline. They are grouped because
+ * These registrations are not Keepiq domain wiring — they are the places
+ * where the PLATFORM calls into this app: the unified-search bar, the
+ * notification renderer, the request pipeline and Open Cloud Mesh. They are grouped because
  * they share that direction of control and because each one is a single
  * class handed to a core registry, with no ordering relationship to the
- * domain listeners or the AppHost plumbing.
+ * domain listeners.
  */
 final class PlatformIntegrationRegistrar {
 	/**
@@ -69,5 +71,30 @@ final class PlatformIntegrationRegistrar {
 		// passes through untouched.
 		$context->registerMiddleware(VaultKeyProofMiddleware::class);
 
+		// Keeps a refusal of a Keepiq OCSController visible: Nextcloud's
+		// OCSMiddleware rewrites a 403 there into an HTTP 200 OCS envelope, so
+		// the controller's own 403 leaves as 428 with an `error` code.
+		$context->registerMiddleware(OcsRefusalMiddleware::class);
+
+		// Open Cloud Mesh: Nextcloud's OCM discovery and endpoint-request
+		// events, through which partner instances reach the federation
+		// endpoints (sharing-federated-recipients).
+		(new FederationEventRegistrar())->register(context: $context);
+
 	}//end register()
+
+	/**
+	 * Boot-time wiring of the platform extension points: the Open Cloud
+	 * Mesh provider for federated secrets, which Nextcloud registers through
+	 * a service rather than a registration context.
+	 *
+	 * @param IBootContext $context The boot context
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federated-sharing/spec.md#requirement-federated-shares-carry-only-browser-made-ciphertext
+	 */
+	public function boot(IBootContext $context): void {
+		(new FederationEventRegistrar())->boot(context: $context);
+	}//end boot()
 }//end class

@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretTagMapper;
 
 /**
  * Cascades attachment, grant and version-history removal for secrets.
@@ -41,6 +42,7 @@ class SecretChildDataCleaner {
 	 * @param SecretMapper $secretMapper The secret mapper
 	 * @param AttachmentService|null $attachmentService The attachment service (delete cascade)
 	 * @param SecretVersionService|null $versionService The version-history service (delete cascade)
+	 * @param SecretTagMapper|null $tagMapper The tag mapper (delete cascade)
 	 *
 	 * @return void
 	 *
@@ -50,6 +52,7 @@ class SecretChildDataCleaner {
 		private SecretMapper $secretMapper,
 		private ?AttachmentService $attachmentService = null,
 		private ?SecretVersionService $versionService = null,
+		private ?SecretTagMapper $tagMapper = null,
 	) {
 	}//end __construct()
 
@@ -62,7 +65,7 @@ class SecretChildDataCleaner {
 	 * @spec exclude Predicate over injected collaborators; no spec behaviour of its own.
 	 */
 	public function hasCascades(): bool {
-		return $this->attachmentService !== null || $this->versionService !== null;
+		return $this->attachmentService !== null || $this->versionService !== null || $this->tagMapper !== null;
 	}//end hasCascades()
 
 	/**
@@ -80,6 +83,8 @@ class SecretChildDataCleaner {
 		$this->attachmentService?->deleteGrantsForSecretCopy($secretId);
 		// Version-history cascade (secret-version-history §5.2).
 		$this->versionService?->deleteForSecret($secretId);
+		// The holder's tags (vault-favourites-tags-and-last-used).
+		$this->tagMapper?->deleteBySecret($secretId);
 	}//end purgeForSecret()
 
 	/**
@@ -114,6 +119,9 @@ class SecretChildDataCleaner {
 	 * @spec openspec/changes/encrypted-attachments/tasks.md#3.2
 	 */
 	public function purgeForOwnerUser(string $userId): void {
+		// Every tag the user set, on rows they own or hold as a copy.
+		$this->tagMapper?->deleteByOwner($userId);
+
 		if ($this->hasCascades() === false) {
 			return;
 		}

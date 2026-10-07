@@ -197,7 +197,7 @@ class AuditEntryMapper extends QBMapper {
 			$qb->andWhere(
 				$qb->expr()->gte(
 					'occurred_at',
-					$qb->createNamedParameter($this->normaliseDate(value: $filters['from']), IQueryBuilder::PARAM_DATE)
+					$qb->createNamedParameter($this->normaliseDate(value: $filters['from']), IQueryBuilder::PARAM_DATETIME_MUTABLE)
 				)
 			);
 		}
@@ -206,7 +206,7 @@ class AuditEntryMapper extends QBMapper {
 			$qb->andWhere(
 				$qb->expr()->lte(
 					'occurred_at',
-					$qb->createNamedParameter($this->normaliseDate(value: $filters['to']), IQueryBuilder::PARAM_DATE)
+					$qb->createNamedParameter($this->normaliseDate(value: $filters['to']), IQueryBuilder::PARAM_DATETIME_MUTABLE)
 				)
 			);
 		}
@@ -248,7 +248,7 @@ class AuditEntryMapper extends QBMapper {
 			->where(
 				$select->expr()->lt(
 					'occurred_at',
-					$select->createNamedParameter($cutoff, IQueryBuilder::PARAM_DATE)
+					$select->createNamedParameter($cutoff, IQueryBuilder::PARAM_DATETIME_MUTABLE)
 				)
 			)
 			->setMaxResults($batchSize);

@@ -89,7 +89,7 @@ class GdprController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	#[NoAdminRequired]
 	public function metadata(): JSONResponse {
@@ -128,7 +128,7 @@ class GdprController extends Controller {
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/harden-vault-key-material-guards/specs/gdpr-compliance/spec.md#requirement-account-data-deletion
+	 * @spec openspec/specs/gdpr-compliance/spec.md#requirement-account-data-deletion
 	 */
 	#[NoAdminRequired]
 	#[VaultKeyProofRequired(binds: ['confirmation'], subject: 'active', purpose: VaultKeyProofService::PURPOSE_DELETE_ACCOUNT_DATA)]

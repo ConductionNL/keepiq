@@ -9,7 +9,8 @@
  *  - promotes any temporary SecretDelegations the suite owner had created
  *    to permanent so the delegate-as-de-facto-owner survives the
  *    revocation (the original owner's Secret copies become inaccessible
- *    when the suite is gone).
+ *    when the suite is gone), except on a compromise force-revoke, which
+ *    revokes them instead (keepiq#817, ADR-005).
  *
  * @category Listener
  * @package  OCA\Keepiq\Listener
@@ -83,15 +84,31 @@ class EncryptionSuiteRevokedListener implements IEventListener {
 		$userId = $event->getOwnerId();
 
 		try {
-			// The ex-recipient can no longer decrypt anything; sweep
-			// every ShareTarget where they were the recipient.
-			$this->shareTargetMapper->deleteByTargetUser(targetUserId: $userId);
+			// The ex-recipient can no longer decrypt the copies sealed under
+			// the revoked suite; sweep the ShareTargets for those copies.
+			// Scoped to this suite: a compromise force-revoke during a
+			// migration revokes a second suite right after this one, and an
+			// unscoped sweep here removed the rows the cascade needs to find
+			// the owners of the copies on that second suite (keepiq#864).
+			$this->shareTargetMapper->deleteByTargetUserAndSuite(
+				targetUserId: $userId,
+				suiteId: $event->getSuiteId()
+			);
 		} catch (Throwable $exception) {
 			$this->logger->warning(
 				'Keepiq: EncryptionSuiteRevokedListener share-target sweep failed for '
 				. $userId . ': ' . $exception->getMessage(),
 				['app' => 'keepiq']
 			);
+		}
+
+		if ($event->getCompromised() === true) {
+			// A compromise force-revoke cuts the user's temporary delegations
+			// instead of promoting them: one made from a stolen session is a
+			// foothold, and promoting it would make it permanent during the
+			// incident response (keepiq#817, ADR-005). Permanent ones stay.
+			$this->revokeTemporaryDelegations(event: $event);
+			return;
 		}
 
 		try {
@@ -111,4 +128,36 @@ class EncryptionSuiteRevokedListener implements IEventListener {
 			);
 		}
 	}//end handle()
+
+	/**
+	 * Revoke the temporary delegations of a user whose suite was revoked as
+	 * compromised. Fail-soft like the other cascade steps.
+	 *
+	 * @param EncryptionSuiteRevokedEvent $event The compromise revoke event
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-permanent-transfer-on-suite-revocation
+	 */
+	private function revokeTemporaryDelegations(EncryptionSuiteRevokedEvent $event): void {
+		try {
+			$revoked = $this->delegationService->revokeTemporary(
+				originalOwnerId: $event->getOwnerId(),
+				revokedBy: $event->getRevokedBy()
+			);
+			if ($revoked > 0) {
+				$this->logger->info(
+					'Keepiq: revoked ' . $revoked . ' temporary delegations after the compromise revoke of '
+					. $event->getSuiteId() . ' (owner=' . $event->getOwnerId() . ')',
+					['app' => 'keepiq']
+				);
+			}
+		} catch (Throwable $exception) {
+			$this->logger->warning(
+				'Keepiq: EncryptionSuiteRevokedListener delegation-revoke failed for '
+				. $event->getOwnerId() . ': ' . $exception->getMessage(),
+				['app' => 'keepiq']
+			);
+		}
+	}//end revokeTemporaryDelegations()
 }//end class

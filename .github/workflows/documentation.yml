@@ -15,6 +15,11 @@ on:
 jobs:
   deploy:
     uses: ConductionNL/.github/.github/workflows/documentation.yml@main
+    # What the shared workflow's jobs declare: the deploy job writes the
+    # gh-pages branch, the image job publishes the fallback site image.
+    permissions:
+      contents: write
+      packages: write
     # A reusable workflow receives NO secrets by default. Without this block the
     # callee's publish step finds CF_API_TOKEN empty, skips itself on its own
     # `if:` guard, and the run finishes GREEN having changed nothing -- the

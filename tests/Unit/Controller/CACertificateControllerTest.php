@@ -21,10 +21,14 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use OCA\Keepiq\Controller\CACertificateController;
 use OCA\Keepiq\Service\CertificateAuthorityService;
+use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Http;
+use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
+use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use ReflectionMethod;
 use RuntimeException;
 
 /**
@@ -116,9 +120,11 @@ class CACertificateControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testRenewIntermediateReturnsCountAndStatus(): void {
-		$this->caService->method('renewIntermediate')
-			->with(true)
+		// The admin endpoint is the compromise path: it must revoke the old
+		// intermediate, never take the scheduled (non-revoking) rollover.
+		$this->caService->expects($this->once())->method('renewIntermediateRevokingOld')
 			->willReturn(5);
+		$this->caService->expects($this->never())->method('renewIntermediate');
 
 		$statusData = [
 			'status' => 'healthy',
@@ -142,7 +148,7 @@ class CACertificateControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testRenewIntermediateReturns500OnFailure(): void {
-		$this->caService->method('renewIntermediate')
+		$this->caService->method('renewIntermediateRevokingOld')
 			->willThrowException(new RuntimeException('Renew failed'));
 
 		$response = $this->controller->renewIntermediate();
@@ -186,4 +192,37 @@ class CACertificateControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
 	}//end testRenewRootReturns500OnFailure()
+
+	/**
+	 * A regular user must be refused on every CA write (keepiq#741).
+	 *
+	 * The "renew root" button in the CA health section now calls renewRoot().
+	 * Nextcloud's SecurityMiddleware refuses a non-admin before the method runs
+	 * ONLY because the dispatched method itself declares
+	 * #[AuthorizedAdminSetting(AdminSettings::class)] and does not declare
+	 * #[NoAdminRequired]. Dropping the first, or adding the second, would let
+	 * any logged-in user re-sign every suite under a new root.
+	 *
+	 * @return void
+	 */
+	public function testCaWritesRefuseARegularUser(): void {
+		$checked = 0;
+
+		foreach (['renewRoot', 'renewIntermediate', 'retryBootstrap'] as $method) {
+			$reflection = new ReflectionMethod(CACertificateController::class, $method);
+			$admin      = $reflection->getAttributes(AuthorizedAdminSetting::class);
+
+			$this->assertCount(1, $admin, sprintf('CACertificateController::%s() must declare #[AuthorizedAdminSetting]', $method));
+			$this->assertSame([AdminSettings::class], $admin[0]->getArguments());
+			$this->assertCount(
+				0,
+				$reflection->getAttributes(NoAdminRequired::class),
+				sprintf('CACertificateController::%s() must not be open to non-admins', $method)
+			);
+			$checked++;
+		}
+
+		// Positive control: the assertions above only mean something if they ran.
+		$this->assertSame(3, $checked);
+	}//end testCaWritesRefuseARegularUser()
 }//end class

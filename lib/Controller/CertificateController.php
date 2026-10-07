@@ -28,13 +28,14 @@ namespace OCA\Keepiq\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\CertificateLifecycleService;
+use OCA\Keepiq\Settings\AdminSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
-use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -48,7 +49,7 @@ class CertificateController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param CertificateLifecycleService $service The lifecycle service
 	 * @param IUserSession $userSession The user session
-	 * @param IGroupManager $groupManager The group manager (admin scope)
+	 * @param AdminAreaAuthorizer $areas Whether the caller holds the General admin area
 	 *
 	 * @return void
 	 */
@@ -56,7 +57,7 @@ class CertificateController extends OCSController {
 		IRequest $request,
 		private CertificateLifecycleService $service,
 		private IUserSession $userSession,
-		private IGroupManager $groupManager,
+		private AdminAreaAuthorizer $areas,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -78,7 +79,7 @@ class CertificateController extends OCSController {
 	 * @return bool
 	 */
 	private function isAdmin(string $uid): bool {
-		return $this->groupManager->isAdmin($uid);
+		return $this->areas->holds(userId: $uid, areaClass: AdminSettings::class);
 	}//end isAdmin()
 
 	/**
@@ -116,6 +117,8 @@ class CertificateController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/certificate-lifecycle/spec.md#scenario-client-submits-parsed-metadata-for-a-stored-certificate
 	 */
 	#[NoAdminRequired]
 	public function submitMetadata(
@@ -163,6 +166,8 @@ class CertificateController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-guided-renewal-by-certificate-origin
 	 */
 	#[NoAdminRequired]
 	public function renewalChecklist(string $secretId): JSONResponse {
@@ -189,6 +194,8 @@ class CertificateController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/certificate-lifecycle/spec.md#scenario-suite-certificate-re-issued-preserving-its-public-key
 	 */
 	#[NoAdminRequired]
 	public function reissueSuite(string $suiteId): JSONResponse {

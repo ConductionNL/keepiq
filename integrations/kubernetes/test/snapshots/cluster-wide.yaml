@@ -1,0 +1,127 @@
+---
+# Source: keepiq-operator/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: keepiq-operator
+  namespace: shop
+  labels:
+    app.kubernetes.io/name: keepiq-operator
+    app.kubernetes.io/instance: keepiq-operator
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: keepiq-operator-0.1.0
+---
+# Source: keepiq-operator/templates/rbac.yaml
+# What the operator may do: read its two resources and the Secret that holds
+# the application key, write the target Secrets it owns, patch the pod template
+# of restart targets, and record events. Namespaced unless clusterWide is set.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: keepiq-operator
+  labels:
+    app.kubernetes.io/name: keepiq-operator
+    app.kubernetes.io/instance: keepiq-operator
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: keepiq-operator-0.1.0
+rules:
+  - apiGroups: [keepiq.conduction.nl]
+    resources: [keepiqsecrets, keepiqconnections]
+    verbs: [get, list, watch]
+  - apiGroups: [keepiq.conduction.nl]
+    resources: [keepiqsecrets/status]
+    verbs: [get, update, patch]
+  - apiGroups: [""]
+    resources: [secrets]
+    verbs: [get, list, watch, create, update, patch]
+  - apiGroups: [""]
+    resources: [events]
+    verbs: [create, patch]
+  - apiGroups: [events.k8s.io]
+    resources: [events]
+    verbs: [create, patch]
+  - apiGroups: [apps]
+    resources: [deployments, statefulsets]
+    verbs: [get, patch]
+  - apiGroups: [coordination.k8s.io]
+    resources: [leases]
+    verbs: [get, list, watch, create, update, patch]
+---
+# Source: keepiq-operator/templates/rbac.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: keepiq-operator
+  labels:
+    app.kubernetes.io/name: keepiq-operator
+    app.kubernetes.io/instance: keepiq-operator
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: keepiq-operator-0.1.0
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: keepiq-operator
+subjects:
+  - kind: ServiceAccount
+    name: keepiq-operator
+    namespace: shop
+---
+# Source: keepiq-operator/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keepiq-operator
+  namespace: shop
+  labels:
+    app.kubernetes.io/name: keepiq-operator
+    app.kubernetes.io/instance: keepiq-operator
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    helm.sh/chart: keepiq-operator-0.1.0
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: keepiq-operator
+      app.kubernetes.io/instance: keepiq-operator
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: keepiq-operator
+        app.kubernetes.io/instance: keepiq-operator
+    spec:
+      serviceAccountName: keepiq-operator
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: operator
+          image: "ghcr.io/conductionnl/keepiq-operator:0.1.0"
+          imagePullPolicy: IfNotPresent
+          args:
+            - --leader-elect
+          ports:
+            - name: metrics
+              containerPort: 8080
+            - name: probes
+              containerPort: 8081
+          livenessProbe:
+            httpGet: {path: /healthz, port: probes}
+          readinessProbe:
+            httpGet: {path: /readyz, port: probes}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            readOnlyRootFilesystem: true
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              cpu: 20m
+              memory: 64Mi

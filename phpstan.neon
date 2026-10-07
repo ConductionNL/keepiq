@@ -13,12 +13,9 @@ parameters:
     # App-specific only. The base already sets level, paths, bootstrapFiles,
     # excludePaths, scanDirectories and every fleet-wide ignore.
     scanFiles:
-        # AppHost Settings engine (GenericSettingsSection + GenericAdminSettings)
-        # so Sections\SettingsSection and Settings\AdminSettings resolve the base
-        # classes they extend when the openregister sibling app is absent from the
-        # analysis path. Analysis-only — never loaded at runtime (ADR-040).
-        - tests/stubs/openregister-apphost.stub.php
-        - tests/stubs/openregister-apphost-bootstrap.stub.php
+        # OpenRegister's MCP attribute and scannable-services interface
+        # (hermiq-ai-tooling), resolved at runtime only when OR is installed.
+        - tests/stubs/openregister-mcp.stub.php
         # Integriq's connection-registry events (adopt-connection-registry), named
         # by string behind class_exists in ConnectionReporter (ADR-041).
         - tests/stubs/Integriq/Event/ConnectionStatusReportedEvent.php

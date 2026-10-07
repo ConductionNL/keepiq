@@ -225,21 +225,45 @@ class CertificateAuthorityService {
 	}//end signCsr()
 
 	/**
-	 * Renew the intermediate certificate.
+	 * Renew the intermediate certificate on schedule.
 	 *
-	 * @param bool $forced If true, immediately revoke the old intermediate.
+	 * The old intermediate is deactivated but NOT revoked: certificates it
+	 * signed stay valid until they are re-signed. Called by the daily
+	 * RenewIntermediateCertificate job.
 	 *
 	 * @return int Number of suites re-signed.
 	 *
-	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $forced does not select between two
-	 *   behaviours: the rollover (generate, deactivate, re-sign) is identical either
-	 *   way. It adds one extra fact to the old intermediate — an immediate revokedAt —
-	 *   for the compromise path. The scheduled caller (RenewIntermediateCertificate)
-	 *   relies on the false default, so the default cannot be dropped.
+	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
+	 */
+	public function renewIntermediate(): int {
+		return $this->rollIntermediate(revokeOldAt: null);
+	}//end renewIntermediate()
+
+	/**
+	 * Renew the intermediate certificate and revoke the old one immediately.
+	 *
+	 * The compromise path: the same rollover as renewIntermediate(), plus a
+	 * revokedAt on the old intermediate. Called by the admin force-renew
+	 * endpoint.
+	 *
+	 * @return int Number of suites re-signed.
 	 *
 	 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-1
 	 */
-	public function renewIntermediate(bool $forced = false): int {
+	public function renewIntermediateRevokingOld(): int {
+		return $this->rollIntermediate(revokeOldAt: new DateTime());
+	}//end renewIntermediateRevokingOld()
+
+	/**
+	 * Generate a new intermediate, deactivate the old one, and re-sign all
+	 * active suites.
+	 *
+	 * @param DateTime|null $revokeOldAt Revocation time to stamp on the old
+	 *                                   intermediate, or null to leave it unrevoked
+	 *
+	 * @return int Number of suites re-signed.
+	 */
+	private function rollIntermediate(?DateTime $revokeOldAt): int {
 		$root = $this->caCertificateMapper->findRoot();
 		$rootKey = openssl_pkey_get_private(
 			private_key: $this->crypto->decrypt($root->getPrivateKey())
@@ -255,8 +279,8 @@ class CertificateAuthorityService {
 		$oldIntermediate->setIsActive(false);
 		$oldIntermediate->setSuccessorId($newIntermediate->getId());
 
-		if ($forced === true) {
-			$oldIntermediate->setRevokedAt(new DateTime());
+		if ($revokeOldAt !== null) {
+			$oldIntermediate->setRevokedAt($revokeOldAt);
 		}
 
 		$this->caCertificateMapper->update($oldIntermediate);
@@ -267,12 +291,12 @@ class CertificateAuthorityService {
 		$this->logger->info(
 			"Keepiq: Intermediate renewed, {$resignedCount} suites re-signed",
 			[
-				'forced' => $forced,
+				'forced' => $revokeOldAt !== null,
 			]
 		);
 
 		return $resignedCount;
-	}//end renewIntermediate()
+	}//end rollIntermediate()
 
 	/**
 	 * Renew the root certificate and generate a new intermediate.

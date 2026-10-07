@@ -40,6 +40,7 @@
 const fs = require('fs')
 const path = require('path')
 const vm = require('vm')
+const { browserKnows, isPluralKey } = require('../../scripts/l10n-plural-rules.js')
 
 const ROOT = process.cwd()
 const L10N_DIR = path.join(ROOT, 'l10n')
@@ -204,7 +205,12 @@ for (const set of sets) {
 		}
 		comparedLocaleFiles++
 		comparedKeys += enKeys.length
-		const missing = enKeys.filter((k) => !Object.hasOwn(locObj, k))
+		// A plural entry is NOT required in a locale whose language
+		// @nextcloud/l10n has no plural rule for (it would index form 0 for
+		// every count); there the plain singular/plural keys are the right
+		// fallback. See scripts/l10n-plural-rules.js.
+		const missing = enKeys.filter((k) => !Object.hasOwn(locObj, k)
+			&& !(isPluralKey(k) && !browserKnows(loc)))
 		const empty = enKeys.filter((k) => Object.hasOwn(locObj, k) && isEmpty(locObj[k]))
 		if (missing.length || empty.length) {
 			failures.push({ set: set.kind, loc, kind: 'INCOMPLETE', missing, empty, total: enKeys.length })

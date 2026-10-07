@@ -23,6 +23,8 @@ use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
+use OCA\Keepiq\Db\GroupShare;
+use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegation;
 use OCA\Keepiq\Db\SecretDelegationMapper;
@@ -57,6 +59,11 @@ class ShareServiceTest extends TestCase {
 	 * @var ShareService
 	 */
 	private ShareService $service;
+
+	/**
+	 * @var GroupShareMapper&MockObject
+	 */
+	private GroupShareMapper $groupShareMapper;
 
 	/**
 	 * Mock share-target mapper.
@@ -112,6 +119,7 @@ class ShareServiceTest extends TestCase {
 		$this->delegationMapper = $this->createMock(originalClassName: SecretDelegationMapper::class);
 		$this->notificationService = $this->createMock(originalClassName: NotificationService::class);
 		$this->db = $this->createMock(originalClassName: IDBConnection::class);
+		$this->groupShareMapper = $this->createMock(originalClassName: GroupShareMapper::class);
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
 
 		$this->service = $this->wireService(logger: $logger);
@@ -156,6 +164,7 @@ class ShareServiceTest extends TestCase {
 				secretMapper: $this->secretMapper,
 				copyFactory: $copyFactory,
 				notificationService: $this->notificationService,
+				groupShareMapper: $this->groupShareMapper,
 			),
 			syncService: new ShareSyncService(
 				mapper: $this->mapper,
@@ -491,6 +500,41 @@ class ShareServiceTest extends TestCase {
 	}//end testRevokeShareDeletesWhenAuthorized()
 
 	/**
+	 * Keepiq#83: ending every share of a secret (trash or delete) removes
+	 * each recipient's copy too, not only the link rows. A copy already gone
+	 * does not stop the others.
+	 *
+	 * @return void
+	 */
+	public function testDeleteAllForSecretRemovesEveryRecipientCopy(): void {
+		$bob = new ShareTarget();
+		$bob->setSourceSecretId('src-1');
+		$bob->setSecretId('copy-bob');
+		$carol = new ShareTarget();
+		$carol->setSourceSecretId('src-1');
+		$carol->setSecretId('copy-carol');
+		$this->mapper->method('findBySourceSecret')->with('src-1')->willReturn([$bob, $carol]);
+
+		$copyBob = new Secret();
+		$copyBob->setId('copy-bob');
+		$this->secretMapper->method('findById')->willReturnCallback(
+			static function (string $id) use ($copyBob): Secret {
+				if ($id === 'copy-bob') {
+					return $copyBob;
+				}
+
+				throw new DoesNotExistException('gone');
+			}
+		);
+
+		$this->secretMapper->expects($this->once())->method('delete')->with($copyBob);
+		$this->mapper->expects($this->once())->method('deleteBySourceSecret')->with('src-1');
+		$this->db->expects($this->once())->method('commit');
+
+		$this->service->deleteAllForSecret('src-1');
+	}//end testDeleteAllForSecretRemovesEveryRecipientCopy()
+
+	/**
 	 * Test revokeShare rejects unauthorized callers.
 	 *
 	 * @return void
@@ -585,6 +629,53 @@ class ShareServiceTest extends TestCase {
 		$this->assertSame(2, $written);
 		$this->assertNull($copy1->getPossiblyCompromisedAt());
 	}//end testSyncUpdateWritesEveryCopyAndClearsCompromise()
+
+	/**
+	 * A recipient's star and last-used time survive the owner's edit: the
+	 * sync writes only the value columns of the copy
+	 * (vault-favourites-tags-and-last-used, "A recipient's star survives the owner's edit").
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+	 */
+	public function testSyncUpdateLeavesTheRecipientsStar(): void {
+		$source = $this->makeOwnerSecret('src-1', 'alice');
+		$source->setUpdatedAt(new DateTime('2026-01-01T00:00:00+00:00'));
+
+		$copy = new Secret();
+		$copy->setId('copy-1');
+		$copy->setIsFavourite(true);
+		$copy->setLastUsedAt(new DateTime('2026-09-30T08:00:00+00:00'));
+		// As loaded from the database: nothing pending.
+		$copy->resetUpdatedFields();
+
+		$this->secretMapper->method('findById')->willReturnMap([['src-1', $source], ['copy-1', $copy]]);
+		$row = new ShareTarget();
+		$row->setSourceSecretId('src-1');
+		$row->setSecretId('copy-1');
+		$this->mapper->method('findBySourceSecret')->willReturn([$row]);
+
+		$written = [];
+		$this->secretMapper->method('update')->willReturnCallback(
+			static function (Secret $secret) use (&$written): Secret {
+				$written = array_keys($secret->getUpdatedFields());
+				return $secret;
+			}
+		);
+
+		$this->service->syncUpdate(
+			secretId: 'src-1',
+			updates: [['secretId' => 'copy-1', 'key' => 'enc-new']],
+			expectedUpdatedAt: '2026-01-01T00:00:00+00:00',
+			userId: 'alice'
+		);
+
+		$this->assertContains('key', $written);
+		$this->assertNotContains('isFavourite', $written);
+		$this->assertNotContains('lastUsedAt', $written);
+		$this->assertTrue($copy->getIsFavourite());
+	}//end testSyncUpdateLeavesTheRecipientsStar()
 
 	/**
 	 * Test syncUpdate optimistic-lock failure.
@@ -702,6 +793,61 @@ class ShareServiceTest extends TestCase {
 		$this->assertSame('self', $report[3]['status']);
 		$this->assertCount(1, $inserted);
 	}//end testRegisterDirectSharesIdempotentOwnerScopedReport()
+
+	/**
+	 * sharing-02: a row carrying a groupShareId links the new ShareTarget
+	 * to that group share, so revoking the group share revokes the copy.
+	 * A group share of a DIFFERENT secret is refused as `invalid`, so a
+	 * caller cannot hang a copy on someone else's group share.
+	 *
+	 * @return void
+	 */
+	public function testRegisterDirectSharesLinksAGroupShareOfTheSameSecret(): void {
+		$mine = $this->makeOwnerSecret('sec-mine', 'alice');
+		$this->secretMapper->method('findById')->willReturn($mine);
+		$this->stubRecipientHasSuite();
+		$this->mapper->method('findBySourceSecretAndTargetUser')
+			->willThrowException(new DoesNotExistException('no row'));
+
+		$ours = new GroupShare();
+		$ours->setId('gs-1');
+		$ours->setSecretId('sec-mine');
+		$theirs = new GroupShare();
+		$theirs->setId('gs-other');
+		$theirs->setSecretId('sec-bobs');
+		$this->groupShareMapper->method('findById')->willReturnCallback(
+			static function (string $id) use ($ours, $theirs): GroupShare {
+				return match ($id) {
+					'gs-1' => $ours,
+					'gs-other' => $theirs,
+					default => throw new DoesNotExistException('missing'),
+				};
+			}
+		);
+
+		$inserted = [];
+		$this->mapper->method('insert')->willReturnCallback(
+			static function ($row) use (&$inserted) {
+				$inserted[] = $row;
+				return $row;
+			}
+		);
+
+		$report = $this->service->registerDirectShares(
+			userId: 'alice',
+			shares: [
+				['sourceSecretId' => 'sec-mine', 'targetUserId' => 'bob', 'encryptedKey' => 'BLOB', 'groupShareId' => 'gs-1'],
+				['sourceSecretId' => 'sec-mine', 'targetUserId' => 'carol', 'encryptedKey' => 'BLOB', 'groupShareId' => 'gs-other'],
+				['sourceSecretId' => 'sec-mine', 'targetUserId' => 'dave', 'encryptedKey' => 'BLOB', 'groupShareId' => 'gs-ghost'],
+			]
+		);
+
+		$this->assertSame('created', $report[0]['status']);
+		$this->assertSame('invalid', $report[1]['status']);
+		$this->assertSame('invalid', $report[2]['status']);
+		$this->assertCount(1, $inserted);
+		$this->assertSame('gs-1', $inserted[0]->getGroupShareId());
+	}//end testRegisterDirectSharesLinksAGroupShareOfTheSameSecret()
 
 	/**
 	 * bulk-actions §8.3: an already-shared pair is `exists` (idempotent

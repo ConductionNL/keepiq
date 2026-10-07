@@ -16,13 +16,8 @@
     </projectFiles>
     <stubs>
         <file name="vendor/nextcloud/ocp/OCP/Capabilities/ICapability.php" preloadClasses="true" />
-        <!-- AppHost Settings engine (GenericSettingsSection + GenericAdminSettings)
-             so Sections\SettingsSection and Settings\AdminSettings resolve the base
-             classes they extend during static analysis when the openregister
-             sibling app is absent. Analysis-only — never loaded at runtime.
-             The real classes live in openregister/lib/AppHost/Settings/. -->
-        <file name="tests/stubs/openregister-apphost.stub.php" preloadClasses="true" />
-        <file name="tests/stubs/openregister-apphost-bootstrap.stub.php" />
+        <!-- OpenRegister's MCP attribute and IMcpScannableServices (hermiq-ai-tooling). -->
+        <file name="tests/stubs/openregister-mcp.stub.php" preloadClasses="true" />
         <!-- Integriq's connection-registry events (adopt-connection-registry).
              ConnectionReporter names them by string behind class_exists
              (ADR-041). Declaration-only stubs, so psalm sees the constructor
@@ -72,10 +67,6 @@
                 <referencedClass name="OCP\Http\Client\IClientService"/>
                 <referencedClass name="OCP\Notification\IManager"/>
                 <referencedClass name="OCP\Share\IManager"/>
-                <!-- OpenRegister cross-app classes (loaded dynamically) -->
-                <referencedClass name="OCA\OpenRegister\Event\DeepLinkRegistrationEvent"/>
-                <referencedClass name="OCA\OpenRegister\Service\ObjectService"/>
-                <referencedClass name="OCA\OpenRegister\Service\ConfigurationService"/>
                 <!-- Nextcloud server internals -->
                 <referencedClass name="OC"/>
                 <!-- GuzzleHttp (loaded via composer at runtime) -->

@@ -36,6 +36,7 @@ use OCA\Keepiq\Db\GroupShareMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretDelegationMapper;
 use OCA\Keepiq\Db\SecretMapper;
+use OCA\Keepiq\Db\SecretTagMapper;
 use OCA\Keepiq\Event\Audit\AuditEvent;
 use OCA\Keepiq\Event\Audit\AuditEventFactory;
 use OCA\Keepiq\Event\Audit\AuditEventTypes;
@@ -137,6 +138,11 @@ class SecretService {
 	 * @param AuditEventFactory $auditEvents The audit-event factory
 	 * @param FolderOwnershipGuard|null $folderOwnership Checks a secret's folder belongs to its owner (keepiq#795);
 	 *                                                   without it every folder is refused
+	 * @param SecretTagMapper|null $tagMapper The holder's tags (vault-favourites-tags-and-last-used):
+	 *                                        list rows carry them, a delete removes them
+	 * @param OrgOwnershipGuard|null $orgOwnership The team folder ownership policy (admin-vault-policies)
+	 * @param OfflineEditGuard $editGuard Refuses an offline edit made on an older version
+	 * @param FederatedShareService|null $federatedShares Tells partner recipients of a new name or URL
 	 *
 	 * @return void
 	 */
@@ -158,6 +164,10 @@ class SecretService {
 		private ?RotationPolicyService $rotationService = null,
 		private AuditEventFactory $auditEvents = new AuditEventFactory(),
 		private ?FolderOwnershipGuard $folderOwnership = null,
+		private ?SecretTagMapper $tagMapper = null,
+		private ?OrgOwnershipGuard $orgOwnership = null,
+		private OfflineEditGuard $editGuard = new OfflineEditGuard(),
+		private ?FederatedShareService $federatedShares = null,
 	) {
 	}//end __construct()
 
@@ -263,6 +273,10 @@ class SecretService {
 			$userId
 		);
 
+		// Work logins live in team folders when the policy says so
+		// (admin-vault-policies D4). Import commits through here too.
+		$this->orgOwnership?->assertAllowed(userId: $userId, typeId: $typeId, folderId: $folderId);
+
 		$now = new DateTime();
 		$secret = new Secret();
 		$secret->setId(Uuid::uuid4()->toString());
@@ -331,10 +345,15 @@ class SecretService {
 			throw new InvalidArgumentException('A secret requires a name and a key');
 		}
 
-		// The writing user files the application's secret, so the folder is
-		// checked against that user.
+		// Keepiq#873: a secret may only sit in a folder its OWNER owns, because
+		// the folder owner's delete purges every secret in it. The owner here
+		// is the application, which owns no folder, so this path refuses any
+		// folder exactly like the machine paths do. Without this, the writing
+		// user could purge the application's secret by deleting their folder.
 		$folderId = $this->nullableString(value: $data['folderId'] ?? null);
-		$this->requireFolderOwnedBy(folderId: $folderId, userId: $writingUserId);
+		if ($folderId !== null) {
+			throw new InvalidArgumentException('An application cannot file a secret in a folder');
+		}
 
 		try {
 			$suite = $this->suiteMapper->findActiveByOwner('application', $applicationId);
@@ -519,9 +538,11 @@ class SecretService {
 	 * @throws InvalidArgumentException When a submitted field is invalid
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
-	 *   independent, flat partial-update branch.
+	 *   independent, flat partial-update branch; every branch is pinned by
+	 *   tests/Unit/Service/SecretServiceMachineWriteTest.php (#152).
 	 * @SuppressWarnings(PHPMD.NPathComplexity)      Same: the branches are
-	 *   independent partial-update guards, not nested logic.
+	 *   independent partial-update guards, not nested logic. Extracting them
+	 *   into helpers trips TooManyMethods on this class instead (measured).
 	 *
 	 * @spec openspec/changes/openconnector-secret-store-api/specs/secret-store-api/spec.md
 	 */
@@ -801,6 +822,7 @@ class SecretService {
 	 * @throws SuiteBlockedException When the encryption suite is revoked/compromised
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-sort-by-date-last-used
 	 */
 	public function get(string $id, string $userId): Secret {
 		$secret = $this->loadOwned(id: $id, userId: $userId);
@@ -821,6 +843,10 @@ class SecretService {
 				objectName: $secret->getName(),
 			)
 		);
+
+		// Opening the value is a use (vault-favourites-tags-and-last-used D3);
+		// the list and search never come through here.
+		$this->mapper->markUsed($secret->getId(), $userId, new DateTime());
 
 		return $secret;
 	}//end get()
@@ -865,6 +891,7 @@ class SecretService {
 	 * @throws ForbiddenException When the secret belongs to another user
 	 * @throws WriteLockedException When a compromise-recovery migration is in progress
 	 * @throws InvalidArgumentException When a provided field is invalid
+	 * @throws \OCA\Keepiq\Exception\StaleWriteException When `baseUpdatedAt` names an older version
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) Each updatable field is an
 	 *   independent, flat partial-update branch.
@@ -872,11 +899,18 @@ class SecretService {
 	 *   independent partial-update guards, not nested logic.
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength) One partial-update guard per
+	 *   field, in the order the fields are applied; the vault policy check is one
+	 *   line. Splitting the field guards apart would scatter one update over
+	 *   several methods and the class is at its method limit.
 	 */
 	public function update(string $id, array $data, string $userId): Secret {
 		$this->assertNotWriteLocked(userId: $userId);
 
-		$secret = $this->loadOwned(id: $id, userId: $userId);
+		$secret = $this->loadOwned(id: $id, userId: $userId)->assertEditableByHolder(fields: array_keys($data));
+
+		$data = $this->editGuard->checkedUpdate(secret: $secret, data: $data);
 
 		// Pre-update snapshot source (secret-version-history §2.2): captured
 		// BEFORE any mutation; persisted below only when a field actually
@@ -909,6 +943,8 @@ class SecretService {
 			$secret->setTypeId($this->typeService->resolveTypeForSecret($data['typeId'], $userId));
 		}
 
+		$this->orgOwnership?->assertKept(secret: $secret, before: $preUpdate, userId: $userId);
+
 		if (array_key_exists('key', $data) === true) {
 			$key = (string)$data['key'];
 			if ($key === '') {
@@ -923,15 +959,11 @@ class SecretService {
 				$secret->setKey($key);
 				$secret->setKeyUpdatedAt(new DateTime());
 
-				// The possibly-compromised warning says "this value was exposed,
-				// replace it at its source". Replacing the value is exactly what
-				// just happened, so the warning has been answered and is cleared.
-				// It is cleared HERE and nowhere else in this method on purpose:
-				// a rename, a folder move, a type change or a metadata edit
-				// leaves the exposed value in place and must leave the warning
-				// standing. The same-ciphertext guard above means a client that
-				// resends the unchanged key alongside a rename does not clear it
-				// either.
+				// The possibly-compromised warning says "replace this exposed value
+				// at its source"; a new value answers it, so it is cleared HERE and
+				// nowhere else: a rename, folder move, type change or metadata edit
+				// leaves the exposed value, and the warning, in place. A resent
+				// unchanged key does not clear it either (same-ciphertext guard).
 				$secret->setPossiblyCompromisedAt(null);
 			}
 		}//end if
@@ -942,6 +974,8 @@ class SecretService {
 
 		if (array_key_exists('additionalFields', $data) === true) {
 			$secret->setAdditionalFields($this->nullableString(value: $data['additionalFields']));
+			// Request-filled blobs the client merged into this one (keepiq#750).
+			$secret->dropMergedPending(count: (int)($data['mergedPending'] ?? 0));
 		}
 
 		if ($this->shouldSnapshot(before: $preUpdate, after: $secret) === true) {
@@ -950,6 +984,16 @@ class SecretService {
 
 		$secret->setUpdatedAt(new DateTime());
 		$this->mapper->update($secret);
+
+		// Recipients at partner organisations follow a new name or URL
+		// (sharing-federated-recipients 4.5). A new value reaches them through
+		// the browser's sync, which sends its own notification.
+		if ($this->federatedShares !== null
+			&& array_intersect(['key', 'login', 'additionalFields'], array_keys($data)) === []
+			&& ($preUpdate->getName() !== $secret->getName() || $preUpdate->getUrl() !== $secret->getUrl())
+		) {
+			$this->federatedShares->detailsChanged(secretId: $secret->getId(), userId: $userId);
+		}
 
 		$changedFields = array_values(
 			array_intersect(
@@ -976,6 +1020,8 @@ class SecretService {
 	 *
 	 * @param string $id The secret ID
 	 * @param string $userId The requesting Nextcloud user ID
+	 * @param string|null $purgeReason Set when this delete purges a trashed secret:
+	 *                                 'owner' or 'retention' (vault-trash-and-archive)
 	 *
 	 * @return void
 	 *
@@ -983,8 +1029,9 @@ class SecretService {
 	 * @throws ForbiddenException When the secret belongs to another user
 	 *
 	 * @spec openspec/changes/add-secret-audit-trail/tasks.md#task-3.1
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
 	 */
-	public function delete(string $id, string $userId): void {
+	public function delete(string $id, string $userId, ?string $purgeReason = null): void {
 		$secret = $this->loadOwned(id: $id, userId: $userId);
 
 		// Cascade to derived link shares + secret requests + user shares
@@ -1023,18 +1070,40 @@ class SecretService {
 		// Rotation-flag cascade (rotation-expiry-policies).
 		$this->rotationService?->deleteForSecret($id);
 
+		// The holder's tags (vault-favourites-tags-and-last-used).
+		$this->tagMapper?->deleteBySecret($id);
+
 		$this->mapper->delete($secret);
 		$this->logger->info("Keepiq: secret {$id} deleted by {$userId}");
 
-		$this->dispatchAudit(
-			event: $this->auditEvents->forUser(
+		// A purge from the trash (vault-trash-and-archive) records its own
+		// event: by the owner, or by the system when the retention ran out.
+		$event = match ($purgeReason) {
+			null => $this->auditEvents->forUser(
 				actorId: $userId,
 				eventType: AuditEventTypes::SECRET_DELETED,
 				objectType: 'secret',
 				objectId: $id,
 				objectName: $secret->getName(),
-			)
-		);
+			),
+			'retention' => $this->auditEvents->forSystem(
+				eventType: AuditEventTypes::SECRET_PURGED,
+				objectType: 'secret',
+				objectId: $id,
+				objectName: $secret->getName(),
+				metadata: ['reason' => $purgeReason],
+			),
+			default => $this->auditEvents->forUser(
+				actorId: $userId,
+				eventType: AuditEventTypes::SECRET_PURGED,
+				objectType: 'secret',
+				objectId: $id,
+				objectName: $secret->getName(),
+				metadata: ['reason' => $purgeReason],
+			),
+		};
+
+		$this->dispatchAudit(event: $event);
 	}//end delete()
 
 	/**
@@ -1050,8 +1119,14 @@ class SecretService {
 	 * @param int $page The 1-based page number
 	 * @param int $limit The page size
 	 * @param string|null $typeId The secret-type filter (null = all types)
+	 * @param string $state The trash/archive state (SecretMapper::STATE_*), live by default
+	 * @param bool|null $favourite Only the user's starred secrets when true
+	 * @param string|null $tag Only secrets the user tagged with this tag
 	 *
 	 * @return array{items: array<int,array<string,mixed>>, total: int, page: int, limit: int}
+	 *
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
 	 */
 	public function list(
 		string $userId,
@@ -1061,16 +1136,19 @@ class SecretService {
 		int $page,
 		int $limit,
 		?string $typeId = null,
+		string $state = SecretMapper::STATE_LIVE,
+		?bool $favourite = null,
+		?string $tag = null,
 	): array {
 		$limit = $this->clampLimit(limit: $limit);
 		$page = max(1, $page);
 		$offset = (($page - 1) * $limit);
 
-		$secrets = $this->mapper->findByOwner('user', $userId, $folderId, $sort, $direction, $limit, $offset, $typeId);
-		$total = $this->mapper->countByOwner('user', $userId, $folderId, $typeId);
+		$secrets = $this->mapper->findByOwner('user', $userId, $folderId, $sort, $direction, $limit, $offset, $typeId, $state, $favourite, $tag);
+		$total = $this->mapper->countByOwner('user', $userId, $folderId, $typeId, $state, $favourite, $tag);
 
 		return [
-			'items' => array_map([$this, 'serialiseWithBlocking'], $secrets),
+			'items' => $this->withTags(items: array_map([$this, 'serialiseWithBlocking'], $secrets), userId: $userId),
 			'total' => $total,
 			'page' => $page,
 			'limit' => $limit,
@@ -1086,6 +1164,8 @@ class SecretService {
 	 * @param int $limit The page size
 	 *
 	 * @return array{items: array<int,array<string,mixed>>, total: int, page: int, limit: int}
+	 *
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
 	 */
 	public function search(string $userId, string $term, int $page, int $limit): array {
 		$limit = $this->clampLimit(limit: $limit);
@@ -1105,7 +1185,7 @@ class SecretService {
 		$window = array_slice($matched, $offset, $limit);
 
 		return [
-			'items' => array_map([$this, 'serialiseWithBlocking'], $window),
+			'items' => $this->withTags(items: array_map([$this, 'serialiseWithBlocking'], $window), userId: $userId),
 			'total' => $total,
 			'page' => $page,
 			'limit' => $limit,
@@ -1128,6 +1208,8 @@ class SecretService {
 	 *                         early stop; scan to the ceiling)
 	 *
 	 * @return Secret[]
+	 *
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
 	 */
 	public function fuzzyMatch(string $userId, string $term, int $targetCount = 0): array {
 		$tolerance = 2;
@@ -1155,7 +1237,9 @@ class SecretService {
 				'name',
 				'asc',
 				self::FUZZY_SCAN_PAGE_SIZE,
-				$offset
+				$offset,
+				null,
+				SecretMapper::STATE_LIVE
 			);
 			if ($pageRows === []) {
 				break;
@@ -1255,6 +1339,30 @@ class SecretService {
 	}//end isFuzzyHit()
 
 	/**
+	 * Add the holder's tags to serialised secrets (vault-favourites-tags-and-last-used).
+	 * Every item gets a `tags` list, empty when it has none or no tag mapper is wired.
+	 *
+	 * @param array<int,array<string,mixed>> $items  Serialised secrets of the user
+	 * @param string                         $userId The holder
+	 *
+	 * @return array<int,array<string,mixed>>
+	 *
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+	 */
+	public function withTags(array $items, string $userId): array {
+		$tags = [];
+		if ($this->tagMapper !== null && $items !== []) {
+			$tags = $this->tagMapper->findTagsBySecretIds($userId, array_map(static fn (array $item): string => (string)$item['id'], $items));
+		}
+
+		foreach ($items as $index => $item) {
+			$items[$index]['tags'] = ($tags[(string)$item['id']] ?? []);
+		}
+
+		return $items;
+	}//end withTags()
+
+	/**
 	 * Serialise a secret, withholding encrypted blobs when its suite blocks.
 	 *
 	 * @param Secret $secret The secret
@@ -1328,6 +1436,13 @@ class SecretService {
 			throw new ForbiddenException(message: 'Secret belongs to another user');
 		}
 
+		// A copy whose access ended answers as an unknown secret
+		// (sharing-use-only-and-expiring-shares D5).
+		$accessEnds = $secret->getAccessExpiresAt();
+		if ($accessEnds !== null && $accessEnds <= new DateTime()) {
+			throw new NotFoundException(message: 'Secret not found');
+		}
+
 		return $secret;
 	}//end loadOwned()
 
@@ -1345,7 +1460,7 @@ class SecretService {
 	 *
 	 * @throws SuiteBlockedException When no active suite exists
 	 *
-	 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+	 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 	 */
 	public function assertActiveSuite(string $userId): void {
 		$this->getActiveSuiteOrBlock(userId: $userId);
@@ -1407,14 +1522,23 @@ class SecretService {
 	 *
 	 * @param string $id The secret UUID
 	 * @param string $userId The caller (must own the secret)
+	 * @param string|null $baseUpdatedAt The version an offline change was made from; a
+	 *                                   secret changed since is refused (offline-edit-queue)
 	 *
 	 * @return Secret
 	 *
 	 * @throws NotFoundException When the secret does not exist
 	 * @throws ForbiddenException When the secret belongs to another user
+	 * @throws \OCA\Keepiq\Exception\StaleWriteException When it changed since `baseUpdatedAt`
+	 *
+	 * @spec openspec/specs/rotation-expiry-policies/spec.md#requirement-per-secret-expiry-without-ciphertext-change
+	 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-concurrent-server-changes-are-never-overwritten-silently
 	 */
-	public function findOwned(string $id, string $userId): Secret {
-		return $this->loadOwned(id: $id, userId: $userId);
+	public function findOwned(string $id, string $userId, ?string $baseUpdatedAt=null): Secret {
+		$secret = $this->loadOwned(id: $id, userId: $userId);
+		$this->editGuard->assertUnchangedSince(secret: $secret, baseUpdatedAt: $baseUpdatedAt);
+
+		return $secret;
 	}//end findOwned()
 
 	/**

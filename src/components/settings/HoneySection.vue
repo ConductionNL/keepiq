@@ -151,6 +151,8 @@ export default {
 		 *
 		 * @param {object} alert The alert row.
 		 * @return {boolean}
+		 *
+		 * @spec openspec/specs/honey-credentials/spec.md#requirement-alert-storms-are-rate-limited-and-per-accessor-snoozable
 		 */
 		isSnoozed(alert) {
 			return (
@@ -164,6 +166,8 @@ export default {
 		 *
 		 * @param {string|null} agent The user agent.
 		 * @return {string}
+		 *
+		 * @spec exclude Presentation-only: truncates a user-agent string for the alert table.
 		 */
 		shortAgent(agent) {
 			if (!agent) {
@@ -177,6 +181,8 @@ export default {
 		 *
 		 * @param {string|null} iso The ISO timestamp.
 		 * @return {string}
+		 *
+		 * @spec exclude Presentation-only formatter: renders an ISO timestamp as a locale string.
 		 */
 		formatDate(iso) {
 			if (!iso) {

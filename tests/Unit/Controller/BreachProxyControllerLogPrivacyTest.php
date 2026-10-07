@@ -20,7 +20,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -89,6 +89,28 @@ class BreachProxyControllerLogPrivacyTest extends TestCase {
 		$this->logged        = [];
 		$this->clientService = $this->createMock(originalClassName: IClientService::class);
 	}//end setUp()
+
+	/**
+	 * Keepiq#866: the prefix travels in the POST body, never in the request
+	 * URI. Nextcloud's log envelope stamps the request URI next to the user
+	 * id on every line written during the request, so a prefix in the path
+	 * paired the two whatever the line itself said.
+	 *
+	 * @return void
+	 */
+	public function testTheRouteCarriesThePrefixInTheBodyNotTheUri(): void {
+		$source = (string)file_get_contents(filename: __DIR__.'/../../../appinfo/routes.php');
+		$found = preg_match(
+			pattern: "/\\['name'\\s*=>\\s*'breachProxy#range',\\s*'url'\\s*=>\\s*'([^']+)',\\s*'verb'\\s*=>\\s*'([A-Z]+)'\\]/",
+			subject: $source,
+			matches: $route
+		);
+
+		$this->assertSame(expected: 1, actual: $found, message: 'breachProxy#range route not found');
+		$this->assertSame(expected: '/api/v1/breach-check/range', actual: $route[1]);
+		$this->assertSame(expected: 'POST', actual: $route[2]);
+		$this->assertStringNotContainsString(needle: '{prefix}', haystack: $route[1]);
+	}//end testTheRouteCarriesThePrefixInTheBodyNotTheUri()
 
 	/**
 	 * A failed lookup logs neither the prefix nor the URL, and names the class and status.

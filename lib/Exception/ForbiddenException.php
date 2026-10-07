@@ -29,4 +29,17 @@ use RuntimeException;
  * Thrown when a requester is not authorised to perform an operation.
  */
 class ForbiddenException extends RuntimeException {
+	/**
+	 * The machine-readable policy code a refusal carries, if any. A plain
+	 * ownership refusal has none; a vault policy refusal names its policy
+	 * (admin-vault-policies), so a controller can return it without knowing
+	 * the subclass.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-work-logins-are-kept-in-team-folders
+	 */
+	public function policyCode(): ?string {
+		return null;
+	}//end policyCode()
 }//end class

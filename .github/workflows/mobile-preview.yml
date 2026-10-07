@@ -1,0 +1,238 @@
+name: Mobile preview
+
+# Preview builds of Keepiq for Android (clients-mobile-apps, task 6.4).
+#
+# A tag mobile-v<versionName>-preview.<n> builds the release APK, signs it
+# with the PREVIEW key from GitHub secrets, checks the signature with
+# apksigner, and publishes a GitHub pre-release with the APK and its SHA-256.
+# The preview key is not the store release key: a later Play or F-Droid build
+# is signed differently, so users reinstall then.
+#
+# workflow_dispatch does the same; with a tag it also publishes the
+# pre-release at that tag on the chosen ref, without one it only uploads the
+# signed APK as a workflow artifact.
+#
+# A pull request that touches the Android build runs the dry run: the same
+# build, signed with a throwaway key made in the job, checked with apksigner,
+# and no release.
+#
+# It builds the fdroid flavour (task 6.1): a preview is installed by hand,
+# outside Google Play, and the fdroid flavour is the one without any store
+# code. The asset names stay as they were.
+
+on:
+  push:
+    tags: ["mobile-v*-preview.*"]
+  pull_request:
+    branches: [main, development, beta]
+    paths:
+      - ".github/workflows/mobile-preview.yml"
+      - "mobile/android/**"
+      - "mobile/shared/**"
+      - "mobile/gradle/**"
+      - "mobile/*.gradle.kts"
+      - "mobile/gradle.properties"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to publish, for example mobile-v0.1.0-preview.1. Leave empty to build without a release."
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-preview-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # The SHA-256 of the preview signing certificate, as docs/mobile/using.md
+  # publishes it. A preview build signed with anything else fails.
+  PREVIEW_CERT_SHA256: 89313b106e7d43fa141ecb0b4d1c188d77d8b3e214dba9fb4e8dd3c2674bfc35
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    # The debug build in mobile.yml takes about ten minutes; a release build
+    # is of the same order.
+    timeout-minutes: 45
+    permissions:
+      contents: write
+    defaults:
+      run:
+        # Explicit bash runs with pipefail, so a failing apksigner is not
+        # hidden behind tee.
+        shell: bash
+        working-directory: mobile
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Mode and version
+        id: mode
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          version_name=$(sed -n 's/^ *versionName = "\(.*\)"$/\1/p' android/app/build.gradle.kts)
+          if [ -z "$version_name" ]; then
+            echo "No versionName in mobile/android/app/build.gradle.kts." >&2
+            exit 1
+          fi
+          tag=""
+          case "$EVENT" in
+            push) tag="$GITHUB_REF_NAME" ;;
+            workflow_dispatch) tag="$INPUT_TAG" ;;
+          esac
+          if [ "$EVENT" = "pull_request" ]; then
+            mode=dry-run
+            version="${version_name}-dryrun"
+          else
+            mode=preview
+            version="${version_name}-preview"
+          fi
+          if [ -n "$tag" ]; then
+            if ! printf '%s' "$tag" | grep -Eq '^mobile-v[0-9]+\.[0-9]+\.[0-9]+-preview\.[0-9]+$'; then
+              echo "Tag $tag does not match mobile-v<x.y.z>-preview.<n>." >&2
+              exit 1
+            fi
+            version="${tag#mobile-v}"
+            if [ "${version%-preview.*}" != "$version_name" ]; then
+              echo "Tag $tag does not match versionName $version_name in the app." >&2
+              exit 1
+            fi
+          fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "apk=keepiq-android-${version}.apk" >> "$GITHUB_OUTPUT"
+          echo "Mode $mode, version $version, tag ${tag:-none}"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Signing key (throwaway, dry run)
+        if: steps.mode.outputs.mode == 'dry-run'
+        run: |
+          pw=$(openssl rand -hex 24)
+          echo "::add-mask::$pw"
+          keytool -genkeypair -keystore "$RUNNER_TEMP/signing.p12" -storetype PKCS12 \
+            -storepass "$pw" -keypass "$pw" -alias dryrun -keyalg RSA -keysize 2048 \
+            -validity 1 -dname "CN=Keepiq dry run" >/dev/null
+          {
+            echo "KEEPIQ_SIGNING_STORE_FILE=$RUNNER_TEMP/signing.p12"
+            echo "KEEPIQ_SIGNING_STORE_PASSWORD=$pw"
+            echo "KEEPIQ_SIGNING_KEY_ALIAS=dryrun"
+            echo "KEEPIQ_SIGNING_KEY_PASSWORD=$pw"
+          } >> "$GITHUB_ENV"
+
+      - name: Signing key (preview, from secrets)
+        if: steps.mode.outputs.mode == 'preview'
+        env:
+          KEYSTORE_B64: ${{ secrets.KEEPIQ_PREVIEW_KEYSTORE_B64 }}
+          STORE_PASSWORD: ${{ secrets.KEEPIQ_PREVIEW_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEEPIQ_PREVIEW_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEEPIQ_PREVIEW_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ] || [ -z "$STORE_PASSWORD" ] || [ -z "$KEY_ALIAS" ] || [ -z "$KEY_PASSWORD" ]; then
+            echo "A KEEPIQ_PREVIEW_* secret is missing; the preview cannot be signed." >&2
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/signing.p12"
+          {
+            echo "KEEPIQ_SIGNING_STORE_FILE=$RUNNER_TEMP/signing.p12"
+            echo "KEEPIQ_SIGNING_STORE_PASSWORD=$STORE_PASSWORD"
+            echo "KEEPIQ_SIGNING_KEY_ALIAS=$KEY_ALIAS"
+            echo "KEEPIQ_SIGNING_KEY_PASSWORD=$KEY_PASSWORD"
+          } >> "$GITHUB_ENV"
+
+      # R8-shrunk (build.gradle.kts), and split per processor type next to
+      # the universal APK. Nothing in the build writes a timestamp, so the
+      # same commit gives the same APKs before signing.
+      - name: Build the signed release APKs
+        run: ./gradlew --no-daemon -Pkeepiq.abiSplits=true :android:app:assembleFdroidRelease
+
+      - name: Remove the keystore from the runner
+        if: always()
+        run: rm -f "$RUNNER_TEMP/signing.p12"
+
+      # The universal APK keeps the name it always had; the others carry
+      # their processor type: keepiq-android-<version>-arm64-v8a.apk.
+      - name: Verify the signatures with apksigner
+        env:
+          MODE: ${{ steps.mode.outputs.mode }}
+          APK: ${{ steps.mode.outputs.apk }}
+        run: |
+          build_tools=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          out=android/app/build/outputs/apk/fdroid/release
+          mkdir -p dist
+          cp "$out/app-fdroid-universal-release.apk" "dist/$APK"
+          for abi in arm64-v8a armeabi-v7a x86 x86_64; do
+            cp "$out/app-fdroid-$abi-release.apk" "dist/${APK%.apk}-$abi.apk"
+          done
+          {
+            echo "| APK | Size |"
+            echo "| --- | ---: |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for file in dist/*.apk; do
+            name=$(basename "$file")
+            "$build_tools/apksigner" verify --verbose --print-certs "$file" | tee "dist/$name.apksigner.txt"
+            grep -q "Verified using v2 scheme (APK Signature Scheme v2): true" "dist/$name.apksigner.txt"
+            if [ "$MODE" = "preview" ]; then
+              if ! grep -qi "certificate SHA-256 digest: $PREVIEW_CERT_SHA256" "dist/$name.apksigner.txt"; then
+                echo "$name is not signed with the published preview key." >&2
+                exit 1
+              fi
+            fi
+            (cd dist && sha256sum "$name" > "$name.sha256" && cat "$name.sha256")
+            echo "| $name | $(stat -c %s "$file") bytes |" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keepiq-android-${{ steps.mode.outputs.version }}
+          path: |
+            mobile/dist/*.apk
+            mobile/dist/*.sha256
+          retention-days: 14
+
+      - name: Publish the pre-release
+        if: steps.mode.outputs.mode == 'preview' && steps.mode.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.mode.outputs.tag }}
+          VERSION: ${{ steps.mode.outputs.version }}
+          APK: ${{ steps.mode.outputs.apk }}
+        run: |
+          fingerprint=$(printf '%s' "$PREVIEW_CERT_SHA256" | tr 'a-f' 'A-F' | sed 's/../&:/g; s/:$//')
+          sums=$(cd dist && for f in *.apk; do printf -- '- SHA-256 of `%s`: `%s`\n' "$f" "$(cut -d' ' -f1 "$f.sha256")"; done)
+          cat > dist/notes.md <<EOF
+          This is a preview of Keepiq for Android. It is not a store release.
+
+          - It is signed with a preview key, not the key of the coming store builds.
+          - The store builds will need a reinstall: uninstall this preview, then install the store app.
+          - Your vault stays on your Nextcloud, so you only connect the phone again.
+          - Keepiq for iOS comes later through TestFlight and the App Store.
+
+          \`$APK\` runs on every phone. The smaller APKs hold the code for one processor type only: most phones take \`arm64-v8a\`.
+
+          Check the download before you install it:
+
+          $sums
+          - SHA-256 of the signing certificate: \`$fingerprint\`
+
+          The user guide explains how to install and check it: https://keepiq.conduction.nl/docs/mobile/using
+          EOF
+          target=()
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            target=(--target "$GITHUB_SHA")
+          fi
+          gh release create "$TAG" dist/*.apk dist/*.apk.sha256 \
+            --repo "$GITHUB_REPOSITORY" \
+            --prerelease \
+            --title "Keepiq for Android $VERSION (preview)" \
+            --notes-file dist/notes.md \
+            "${target[@]}"

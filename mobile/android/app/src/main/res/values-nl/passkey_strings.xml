@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<!-- Passkeys in Credential Manager (clients-mobile-apps groep 5). -->
+<resources>
+    <string name="passkey_working">Je aanmelding wordt klaargezet</string>
+    <string name="passkey_create_description">Versleuteld bewaard in je Keepiq-kluis.</string>
+    <string name="passkeys_title">Passkeys</string>
+    <string name="passkeys_status_on">Keepiq bewaart je passkeys en meldt je ermee aan in apps en browsers.</string>
+    <string name="passkeys_status_off">Kies Keepiq bij wachtwoorden en passkeys om passkeys op te slaan en te gebruiken.</string>
+    <string name="passkeys_choose">Kies Keepiq voor passkeys</string>
+    <string name="passkeys_needs_android_14">Passkeys hebben Android 14 nodig. Keepiq vult je wachtwoorden en codes nog steeds in.</string>
+</resources>

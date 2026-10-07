@@ -26,6 +26,7 @@ use DateTime;
 use Exception;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Exception\ForbiddenException;
 use OCA\Keepiq\Service\EncryptionSuiteService;
 use OCA\Keepiq\Service\LinkShareService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -39,6 +40,11 @@ use OCP\IUserSession;
 
 /**
  * Authenticated API controller for link share CRUD.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) Each refusal of a link share
+ *   (not found, invalid input, a read-only copy from another organisation)
+ *   is its own exception class mapped to its own status; the thirteenth is
+ *   the read-only refusal of sharing-federated-recipients task 3.4.
  */
 class LinkShareController extends OCSController {
 	/**
@@ -159,6 +165,13 @@ class LinkShareController extends OCSController {
 				expiresAt: $expiry,
 				userId: $userId
 			);
+		} catch (DoesNotExistException) {
+			// Not the owner and not a delegate, or no such secret: the same
+			// answer either way (keepiq#214).
+			return new JSONResponse(data: ['message' => 'Secret not found'], statusCode: Http::STATUS_NOT_FOUND);
+		} catch (ForbiddenException $e) {
+			// A copy from another organisation (sharing-federated-recipients task 3.4).
+			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],

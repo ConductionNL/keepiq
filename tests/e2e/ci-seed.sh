@@ -106,60 +106,7 @@ echo "[ci-seed] re-running Keepiq repair steps so the dev seeders execute"
 php occ app:disable keepiq
 php occ app:enable keepiq
 
-# ── 2. Import the Keepiq register into OpenRegister ─────────────────────────
-# Keepiq adopts OpenRegister's AppHost engine (lib/AppInfo/Application.php,
-# ADR-040 / ADR-022) and ships lib/Settings/keepiq_register.json.
-# `InitializeSettings` imports it with `force: false`, the version-guarded path,
-# which can advance the recorded configuration version WITHOUT applying
-# anything. Keepiq has no `settings#import` route of its own (appinfo/routes.php
-# registers only getAdminSettings / updateAdminSettings / getUserSettings /
-# updateUserSettings / getPolicy), so use OpenRegister's generic importer.
-#
-# That endpoint accepts exactly three input shapes — a multipart file under the
-# literal key `file`, a `url` param, or a `json` param. The raw register JSON as
-# the request body is NOT one of them (it 400s with "Missing required keys").
-# `force` is compared `=== 'true' || === true`, so the multipart string "true"
-# is accepted here.
-#
-# lib/Settings/register.d/ is the ADR-037 fragment directory. It currently holds
-# only README.md; if fragments are ever added they must each be posted
-# separately (the importer rejects multi-file uploads with "Expected only 1
-# file"), so the loop below is written to handle that already.
-APP_DIR="apps/keepiq"
-IMPORT_URL="${BASE}/index.php/apps/openregister/api/configurations/import"
-
-import_configuration() {
-	local file="$1"
-	local body code
-	body="$(mktemp)"
-	echo "[ci-seed] POST ${IMPORT_URL} <- ${file} (force=true)"
-	code="$(
-		curl -sS -o "$body" -w '%{http_code}' \
-			-u "${USER_NAME}:${USER_PASS}" \
-			-H 'OCS-APIRequest: true' \
-			-F "file=@${file}" \
-			-F 'force=true' \
-			-F 'appId=keepiq' \
-			"$IMPORT_URL" || echo 000
-	)"
-	echo "[ci-seed] import HTTP ${code}"
-	head -c 1500 "$body"; echo
-	if [ "$code" != "200" ]; then
-		echo "::error::Keepiq configuration import failed for ${file} (HTTP ${code})."
-		return 1
-	fi
-	return 0
-}
-
-import_configuration "${APP_DIR}/lib/Settings/keepiq_register.json"
-
-# ADR-037 fragments, in stable (sorted) order. `|| true` on the glob expansion
-# keeps `set -e` from aborting when the directory holds nothing but README.md.
-for frag in $(find "${APP_DIR}/lib/Settings/register.d" -maxdepth 1 -name '*.json' | sort || true); do
-	import_configuration "$frag"
-done
-
-# ── 3. Provision the non-admin vault fixture user ────────────────────────────
+# ── 2. Provision the non-admin vault fixture user ────────────────────────────
 # tests/e2e/workflows/compromise-recovery.spec.ts cannot drive ADMIN's vault:
 # SeedDevelopmentData writes admin's AES-GCM private-key envelope with the PHP
 # EncryptService and the browser's decryptPrivateKey() rejects it (that spec's
@@ -202,7 +149,7 @@ echo "[ci-seed] vault fixture user ready: ${VAULT_FIXTURE_USER}"
 # Whether it still owns no suite is checked by the spec itself, which skips
 # rather than asserting against the wrong surface if setup mode is absent.
 
-# ── 4. Verify — every claim below is checked, none is assumed ────────────────
+# ── 3. Verify — every claim below is checked, none is assumed ────────────────
 # A 200 from an importer is not the same as a register existing, and a repair
 # step that exits 0 is not evidence that it seeded anything. Query the real
 # endpoints and fail loudly on anything missing.
@@ -301,26 +248,6 @@ elif kind == 'secrets':
         sys.exit(1)
     print('[ci-seed] secrets OK.')
 
-elif kind == 'registers':
-    # REPORTED, NOT ASSERTED — deliberately. OpenRegister's ImportHandler
-    # creates registers only from `components.registers`, and
-    # lib/Settings/keepiq_register.json declares none: it is still the
-    # scaffold descriptor, carrying a single `example` schema and the comment
-    # "replace with your app's actual schemas". Asserting a `keepiq` register
-    # here would assert something the shipped config does not describe.
-    slugs = {field(i, 'slug') for i in items}
-    print(f'[ci-seed] openregister registers present: {sorted(s for s in slugs if s)}')
-
-elif kind == 'schemas':
-    # REPORTED, NOT ASSERTED — for the same reason as `registers` above.
-    # lib/Settings/keepiq_register.json now declares no schemas at all.
-    # It used to carry the scaffold's `example` placeholder, which was
-    # asserted here as an import canary; that slug collided with shillinq's
-    # copy of the same placeholder on a shared OpenRegister, and Keepiq
-    # keeps its secrets in its own lib/Db tables rather than as OpenRegister
-    # objects, so there was never a real schema to put in its place.
-    slugs = {field(i, 'slug') for i in items}
-    print(f'[ci-seed] openregister schemas present: {sorted(s for s in slugs if s)}')
 PY
 }
 
@@ -337,14 +264,6 @@ SECRETS_BODY="$(mktemp)"
 api_get '/index.php/apps/keepiq/api/v1/secrets?limit=100' "$SECRETS_BODY"
 verify "$SECRETS_BODY" secrets
 
-REG_BODY="$(mktemp)"
-api_get '/index.php/apps/openregister/api/registers?_limit=300' "$REG_BODY"
-verify "$REG_BODY" registers
-
-SCH_BODY="$(mktemp)"
-api_get '/index.php/apps/openregister/api/schemas?_limit=1000' "$SCH_BODY"
-verify "$SCH_BODY" schemas
-
 # The CA underwrites every suite certificate. Report its health — the
 # admin-settings spec asserts the "Healthy" label only when this agrees.
 CA_BODY="$(mktemp)"
@@ -353,7 +272,7 @@ echo "[ci-seed] CA status: $(head -c 400 "$CA_BODY")"
 
 echo "[ci-seed] Keepiq dev vault provisioned."
 
-# ── 5. Warm the SPA so the first spec doesn't pay the cold start ─────────────
+# ── 4. Warm the SPA so the first spec doesn't pay the cold start ─────────────
 # The shared workflow serves Nextcloud with `php -S 0.0.0.0:8080`. It now sets
 # PHP_CLI_SERVER_WORKERS=8, but that is an UNVERIFIED fix for the measured
 # cold-start effect (the first spec to run blew its test timeout waiting for the
@@ -374,7 +293,7 @@ do
 	echo "[ci-seed] warm ${path} -> ${code}"
 done
 
-# ── 6. The bundle gate ───────────────────────────────────────────────────────
+# ── 5. The bundle gate ───────────────────────────────────────────────────────
 # Do NOT hardcode the bundle URL. Nextcloud serves an app's assets from whichever
 # apps directory it was installed into — `/apps/<app>/js/…` on the CI runner,
 # `/custom_apps/<app>/js/…` in the docker dev images — and asking for the wrong

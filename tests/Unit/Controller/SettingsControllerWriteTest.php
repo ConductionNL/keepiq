@@ -24,7 +24,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use OCA\Keepiq\Controller\SettingsController;
 use OCA\Keepiq\Service\SettingsService;
-use OCA\Keepiq\Settings\AdminSettings;
+use OCA\Keepiq\Settings\PolicyAdminSettings;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\IRequest;
 use OCP\IUserSession;
@@ -33,10 +33,8 @@ use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
 /**
- * The canonical AppHost route table routes BOTH `PUT /api/settings`
- * (`settings#update`) and `POST /api/settings` (`settings#create`) into this
- * controller, and because Keepiq ships the class itself no generic is aliased
- * in to cover either.
+ * Keepiq's route table routes BOTH `PUT /api/settings` (`settings#update`)
+ * and `POST /api/settings` (`settings#create`) into this controller.
  *
  * These tests assert the ITEM — that the write actually reaches
  * `SettingsService::updateSettings()` with the request's own parameters, and
@@ -95,7 +93,6 @@ class SettingsControllerWriteTest extends TestCase {
 		$submitted = ['register' => 'b7d1c0f6-0000-4000-8000-000000000001'];
 		$stored = [
 			'register' => 'b7d1c0f6-0000-4000-8000-000000000001',
-			'openregisters' => true,
 			'isAdmin' => true,
 		];
 
@@ -135,7 +132,6 @@ class SettingsControllerWriteTest extends TestCase {
 		];
 		$stored = [
 			'register' => '',
-			'openregisters' => true,
 			'isAdmin' => true,
 		];
 
@@ -216,9 +212,9 @@ class SettingsControllerWriteTest extends TestCase {
 			);
 
 			$this->assertSame(
-				[AdminSettings::class],
+				[PolicyAdminSettings::class],
 				$attributes[0]->getArguments(),
-				sprintf('SettingsController::%s() must gate on Keepiq\'s own AdminSettings panel', $method)
+				sprintf('SettingsController::%s() writes the master password floor, so it must gate on the Policies area', $method)
 			);
 		}
 

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <!-- System autofill names the app that asks by its package and signing
+         certificate, read from the package manager (task 4.1). From Android
+         11 the package manager hides that app: the system binds the autofill
+         service, so the app that asks is not automatically visible.
+         PackageVisibilityTest showed it on API 34: without this permission
+         the lookup is BLOCKED and Keepiq cannot fill an ordinary app. Google
+         Play asks for a permission declaration; F-Droid accepts it. -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <!-- Custom Tabs: find the browsers that can show the login page (Android 11+ package visibility). -->
+    <queries>
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService" />
+        </intent>
+    </queries>
+
+    <application
+        android:name=".KeepiqApp"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <!-- Opens a Keepiq Send link in the app (clients-mobile-apps task 3.6).
+             Self-hosted servers cannot be verified as app links, so Android
+             offers Keepiq for these links when the user allows it, and
+             "Share" sends a link here. -->
+        <activity
+            android:name=".OpenSendActivity"
+            android:exported="true"
+            android:label="@string/open_send_title">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" />
+                <data android:host="*" />
+                <data android:pathPattern="/.*/apps/keepiq/public/send/.*" />
+                <data android:pathPattern="/apps/keepiq/public/send/.*" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+        <!-- System autofill (clients-mobile-apps group 4). -->
+        <service
+            android:name=".autofill.KeepiqAutofillService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_AUTOFILL_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.autofill.AutofillService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.autofill"
+                android:resource="@xml/autofill_service" />
+        </service>
+        <activity
+            android:name=".autofill.AutofillUnlockActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Keepiq.AutofillUnlock"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name=".autofill.AutofillSettingsActivity"
+            android:exported="true"
+            android:label="@string/autofill_settings_title" />
+        <receiver
+            android:name=".autofill.NeverSaveReceiver"
+            android:exported="false" />
+        <!-- Passkeys and passwords in Credential Manager (clients-mobile-apps
+             group 5). Android binds a credential provider on 14 and later
+             only; on 9 to 13 this entry is never used. -->
+        <service
+            android:name=".passkey.KeepiqCredentialProviderService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_CREDENTIAL_PROVIDER_SERVICE"
+            tools:targetApi="34">
+            <intent-filter>
+                <action android:name="android.service.credentials.CredentialProviderService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.credentials.provider"
+                android:resource="@xml/credential_provider" />
+        </service>
+        <activity
+            android:name=".passkey.CredentialProviderActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Keepiq.AutofillUnlock"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:windowSoftInputMode="adjustResize" />
+    </application>
+</manifest>

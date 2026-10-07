@@ -23,6 +23,9 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use OCA\Keepiq\Tests\Support\AdminAreaFixture;
+use OCA\Keepiq\Settings\PolicyAdminSettings;
+use OCA\Keepiq\Settings\AuditAdminSettings;
 use OCA\Keepiq\Controller\SiemSinkController;
 use OCA\Keepiq\Service\SiemService;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -43,6 +46,8 @@ use PHPUnit\Framework\TestCase;
  *
  */
 class SiemSinkControllerTest extends TestCase {
+	use AdminAreaFixture;
+
 
 	/**
 	 * The mocked request.
@@ -108,7 +113,7 @@ class SiemSinkControllerTest extends TestCase {
 			request: $this->request,
 			service: $this->service,
 			userSession: $this->userSession,
-			groupManager: $this->groupManager
+			areas: $this->areaAuthorizer(groupManager: $this->groupManager)
 		);
 	}//end controller()
 
@@ -223,4 +228,37 @@ class SiemSinkControllerTest extends TestCase {
 		$this->assertSame(['message' => 'Sink not found'], $response->getData());
 	}//end testSiemSinkTestAnswers404ForAnUnknownSink()
 
+
+	/**
+	 * A holder of the Audit area who is no instance admin may test-fire a
+	 * sink (admin-scoped-roles §2.3).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.3
+	 */
+	public function testAnAuditAreaHolderMayTestASink(): void {
+		$this->delegatedAreas = [AuditAdminSettings::class];
+		$this->service->expects($this->once())->method('testSink')->with('auditor', 'sink-1')->willReturn(['delivered' => true]);
+
+		$response = $this->controller('auditor', false)->test(id: 'sink-1');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+	}//end testAnAuditAreaHolderMayTestASink()
+
+	/**
+	 * A holder of only the Policies area is refused (admin-scoped-roles §2.3).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.3
+	 */
+	public function testAPoliciesAreaHolderIsRefused(): void {
+		$this->delegatedAreas = [PolicyAdminSettings::class];
+		$this->service->expects($this->never())->method('testSink');
+
+		$response = $this->controller('policyadmin', false)->test(id: 'sink-1');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+	}//end testAPoliciesAreaHolderIsRefused()
 }//end class

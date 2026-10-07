@@ -3,9 +3,11 @@ import { generateUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 import { importPublicKey, rsaDecrypt, rsaEncrypt } from '../../crypto/index.js'
 import { PASSKEY_TYPE_NAME, passkeyRpId } from '../../passkey/passkey.js'
+import { isAccessExpired } from '../../utils/shareRestriction.js'
 import { useOfflineStore } from './offline.js'
 import { useSecretTypeStore } from './secretType.js'
 import { useSessionStore } from './session.js'
+import { useShareStore } from './share.js'
 
 /**
  * Pinia store for secrets.
@@ -25,9 +27,58 @@ import { useSessionStore } from './session.js'
  * would quietly shrink an export to whichever folder the user happened to be
  * browsing — the mirror image of the bug that motivated storing it at all.
  *
- * @type {{folderId: null, typeId: null, search: string}}
+ * `state: 'kept'` is everything not in the trash: an export or an import
+ * reconciliation carries archived secrets too (vault-trash-and-archive).
+ *
+ * @type {{folderId: null, typeId: null, search: string, state: string}}
  */
-const WHOLE_VAULT = { folderId: null, typeId: null, search: '' }
+const WHOLE_VAULT = {
+	folderId: null,
+	typeId: null,
+	search: '',
+	state: 'kept',
+	favourite: false,
+	tag: null,
+}
+/**
+ * Merge request-filled extra-field blobs into the owner's own extra fields
+ * (keepiq#750). Each pending blob is the JSON object of the members one fill
+ * supplied; later fills win for a member they both name. A blob that cannot
+ * be decrypted is skipped and makes the merge incomplete, so it is not
+ * dropped from the server.
+ *
+ * @param {object|string|null|undefined} own The owner's decrypted extra fields.
+ * @param {Array<string>} pending The pending ciphertexts, oldest first.
+ * @param {CryptoKey} cryptoKey The session private key.
+ * @return {Promise<{fields: object|string|null, complete: boolean}>}
+ * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+ */
+async function mergePendingFields(own, pending, cryptoKey) {
+	if (
+		own !== null
+		&& own !== undefined
+		&& (typeof own !== 'object' || Array.isArray(own))
+	) {
+		// Not a member object: there is nothing to merge into safely.
+		return { fields: own, complete: false }
+	}
+	const fields = { ...(own || {}) }
+	let complete = true
+	for (const ciphertext of pending) {
+		try {
+			const members = JSON.parse(await rsaDecrypt(ciphertext, cryptoKey))
+			if (members && typeof members === 'object' && !Array.isArray(members)) {
+				Object.assign(fields, members)
+			} else {
+				complete = false
+			}
+		} catch {
+			complete = false
+		}
+	}
+	return { fields, complete }
+}
+
 export const useSecretStore = defineStore('secret', {
 	state: () => ({
 		/** @type {Array<object>} The current page of secrets (metadata + ciphertext). */
@@ -39,7 +90,16 @@ export const useSecretStore = defineStore('secret', {
 		/** @type {boolean} Whether a request is in flight. */
 		loading: false,
 		/** @type {object} Active list filters. */
-		filters: { folderId: null, search: '', typeId: null },
+		filters: {
+			folderId: null,
+			search: '',
+			typeId: null,
+			state: 'live',
+			favourite: false,
+			tag: null,
+		},
+		/** @type {Array<{tag: string, count: number}>} The holder's tags, for the filter menu. */
+		tags: [],
 		/** @type {object} Active sort. */
 		sort: { field: 'name', direction: 'asc' },
 		/** @type {number} The current 1-based page. */
@@ -76,7 +136,14 @@ export const useSecretStore = defineStore('secret', {
 			if ('folderId' in query) this.filters.folderId = query.folderId ?? null
 			if ('search' in query) this.filters.search = query.search ?? ''
 			if ('typeId' in query) this.filters.typeId = query.typeId ?? null
-			if ('sort' in query && query.sort) this.sort.field = query.sort
+			if ('sort' in query && query.sort) {
+				this.sort.field = query.sort
+				// Last used reads newest first; every other sort keeps ascending.
+				this.sort.direction = query.sort === 'last_used_at' ? 'desc' : 'asc'
+			}
+			if ('state' in query) this.filters.state = query.state || 'live'
+			if ('favourite' in query) this.filters.favourite = !!query.favourite
+			if ('tag' in query) this.filters.tag = query.tag || null
 		},
 
 		/**
@@ -97,6 +164,24 @@ export const useSecretStore = defineStore('secret', {
 				// Offline (served from cache): list from the decrypted snapshot
 				// instead of the live API (offline-readonly-cache §4.2).
 				const offline = useOfflineStore()
+				// Trash and archive state (vault-trash-and-archive): live
+				// unless the view names another. The offline snapshot holds
+				// live secrets only, so the Trash and Archive views are empty
+				// offline.
+				const state =
+					('state' in options ? options.state : this.filters.state)
+					|| 'live'
+				if (
+					offline.servedFromCache
+					&& offline.vault
+					&& state !== 'live'
+					&& state !== 'kept'
+				) {
+					this.secrets = []
+					this.totalCount = 0
+					this.page = 1
+					return
+				}
 				if (offline.servedFromCache && offline.vault) {
 					// PRESENCE, not nullishness: an explicit null means "no filter"
 					// (vault root, or a bulk fetch of the whole vault), which `??`
@@ -114,12 +199,19 @@ export const useSecretStore = defineStore('secret', {
 					// silently showed the whole vault while offline.
 					const typeId =
 						'typeId' in options ? options.typeId : this.filters.typeId
+					const { favourite, tag } = this.organisationFilter(options)
 					let items = offline.vault.secrets
 					if (folderId) {
 						items = items.filter((s) => s.folderId === folderId)
 					}
 					if (typeId) {
 						items = items.filter((s) => s.typeId === typeId)
+					}
+					if (favourite) {
+						items = items.filter((s) => s.favourite)
+					}
+					if (tag) {
+						items = items.filter((s) => (s.tags || []).includes(tag))
 					}
 					if (search) {
 						items = items.filter(
@@ -157,6 +249,17 @@ export const useSecretStore = defineStore('secret', {
 					'typeId' in options ? options.typeId : this.filters.typeId
 				if (typeId) {
 					params.typeId = typeId
+				}
+				if (state !== 'live') {
+					params.state = state
+				}
+				// Favourites and tags (vault-favourites-tags-and-last-used).
+				const { favourite, tag } = this.organisationFilter(options)
+				if (favourite) {
+					params.favourite = 1
+				}
+				if (tag) {
+					params.tag = tag
 				}
 
 				try {
@@ -237,6 +340,8 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {Error} e The caught error.
 		 * @return {boolean}
+		 *
+		 * @spec openspec/specs/offline-readonly-cache/spec.md#scenario-offline-unlock-opens-the-vault-for-reading
 		 */
 		isNetworkError(e) {
 			return (
@@ -274,6 +379,7 @@ export const useSecretStore = defineStore('secret', {
 					)
 					const secret = response.data
 					this.currentSecret = await this.decryptSecret(secret)
+					await this.persistMergedPending(id)
 					return this.currentSecret
 				} catch (e) {
 					if (this.isNetworkError(e) && offline.vault) {
@@ -296,11 +402,21 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {object} secret The secret with ciphertext blobs.
 		 * @return {Promise<object>} A copy of the secret with plaintext fields.
+		 * @spec openspec/specs/expiring-shares/spec.md#requirement-offline-copies-respect-the-end-date
+		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
 		 */
 		async decryptSecret(secret) {
 			const session = useSessionStore()
 			if (!session.cryptoKey) {
 				throw new Error('Vault is locked')
+			}
+
+			// A copy whose access ended is never opened, also not from an
+			// offline snapshot taken before the end
+			// (sharing-use-only-and-expiring-shares D5).
+			if (isAccessExpired(secret)) {
+				throw new Error(t('keepiq', 'Your access to this secret has ended'))
 			}
 
 			const decrypted = { ...secret }
@@ -321,7 +437,45 @@ export const useSecretStore = defineStore('secret', {
 					decrypted.additionalFields = json
 				}
 			}
+			const pending = Array.isArray(secret.pendingAdditionalFields)
+				? secret.pendingAdditionalFields
+				: []
+			if (pending.length > 0) {
+				const merged = await mergePendingFields(
+					decrypted.additionalFields,
+					pending,
+					session.cryptoKey,
+				)
+				decrypted.additionalFields = merged.fields
+				decrypted.mergedPending = merged.complete ? pending.length : 0
+			}
 			return decrypted
+		},
+
+		/**
+		 * Write back an extra-field blob that now holds the request-filled
+		 * pending members (keepiq#750), so the server drops them from the
+		 * pending list. Best effort: a failure leaves them pending, and the
+		 * next open merges them again.
+		 *
+		 * @param {string} id The secret ID.
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/secret-requests/spec.md#requirement-requestable-fields
+		 */
+		async persistMergedPending(id) {
+			const current = this.currentSecret
+			if (!current || current.id !== id || !(current.mergedPending > 0)) {
+				return
+			}
+			try {
+				await this.updateSecret(id, {
+					additionalFields: current.additionalFields,
+					mergedPending: current.mergedPending,
+				})
+				current.mergedPending = 0
+			} catch {
+				// Stays pending; merged again on the next open.
+			}
 		},
 
 		/**
@@ -329,6 +483,8 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {string|null} typeId The secret type id.
 		 * @return {boolean}
+		 *
+		 * @spec openspec/specs/passkey-item-type/spec.md#scenario-credential-stored-ciphertext-rp-id-in-url
 		 */
 		isPasskeyTypeId(typeId) {
 			if (!typeId) {
@@ -339,11 +495,76 @@ export const useSecretStore = defineStore('secret', {
 		},
 
 		/**
+		 * Save a new secret into a team folder the user does not own, as a
+		 * member with write access (admin-vault-policies D5). The value is
+		 * encrypted in this browser for the folder owner (the owner row) and
+		 * for every member, this user included. Only ciphertext is sent.
+		 *
+		 * @param {string} teamFolderId The team folder.
+		 * @param {object} data name, url, typeId, key, login, additionalFields (plaintext).
+		 * @return {Promise<object>} The stored owner row and the copy count.
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
+		 */
+		async contributeSecret(teamFolderId, data) {
+			const context = (
+				await axios.get(
+					generateUrl(
+						`/apps/keepiq/api/v1/team-folders/${teamFolderId}/contribution-context`,
+					),
+				)
+			).data
+			const fields = {
+				key: String(data.key ?? ''),
+				login: data.login ? String(data.login) : '',
+				additionalFields: data.additionalFields
+					? typeof data.additionalFields === 'string'
+						? data.additionalFields
+						: JSON.stringify(data.additionalFields)
+					: '',
+			}
+			const shareStore = useShareStore()
+			const owner = await shareStore.encryptForRecipient(
+				fields,
+				context.ownerCertificate,
+			)
+			const copies = []
+			for (const recipient of context.recipients ?? []) {
+				const blob = await shareStore.encryptForRecipient(
+					fields,
+					recipient.certificate,
+				)
+				copies.push({
+					targetUserId: recipient.userId,
+					encryptedKey: blob.key ?? '',
+					encryptedLogin: blob.login ?? null,
+					encryptedAdditionalFields: blob.additionalFields ?? null,
+				})
+			}
+			const response = await axios.post(
+				generateUrl(
+					`/apps/keepiq/api/v1/team-folders/${teamFolderId}/secrets`,
+				),
+				{
+					name: data.name,
+					url: data.url ?? null,
+					typeId: data.typeId ?? null,
+					folderId: data.folderId ?? null,
+					key: owner.key ?? '',
+					login: owner.login ?? null,
+					additionalFields: owner.additionalFields ?? null,
+					copies,
+				},
+			)
+			return response.data
+		},
+
+		/**
 		 * Create a secret, encrypting the sensitive fields in the browser first.
 		 *
 		 * @param {object} data Plaintext fields (name, url, key, login, additionalFields, ...).
 		 * @return {Promise<object>} The created secret (server response).
 		 * @spec openspec/specs/secrets/spec.md#requirement-create-secret
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 		 */
 		async createSecret(data) {
 			const session = useSessionStore()
@@ -382,6 +603,15 @@ export const useSecretStore = defineStore('secret', {
 				payload.additionalFields = await rsaEncrypt(json, publicKey)
 			}
 
+			// Offline: the same payload goes into the sealed queue and is
+			// replayed later (offline-edit-queue).
+			const offline = useOfflineStore()
+			if (offline.servedFromCache) {
+				const secretId = crypto.randomUUID()
+				await offline.enqueue({ op: 'create', secretId, body: payload })
+				return { id: secretId, ...payload, pendingSync: true }
+			}
+
 			const response = await axios.post(
 				generateUrl('/apps/keepiq/api/v1/secrets'),
 				payload,
@@ -396,6 +626,7 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {object} data The fields to change.
 		 * @return {Promise<object>} The updated secret (server response).
 		 * @spec openspec/specs/secrets/spec.md#requirement-update-secret
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 		 */
 		async updateSecret(id, data) {
 			const session = useSessionStore()
@@ -443,7 +674,31 @@ export const useSecretStore = defineStore('secret', {
 							? data.additionalFields
 							: JSON.stringify(data.additionalFields)
 					payload.additionalFields = await rsaEncrypt(json, publicKey)
+					// The blob now holds the request-filled pending members this
+					// client merged on open: let the server drop them (keepiq#750).
+					const merged =
+						data.mergedPending
+						?? (this.currentSecret?.id === id
+							? this.currentSecret.mergedPending
+							: 0)
+					if (merged > 0) {
+						payload.mergedPending = merged
+					}
 				}
+			}
+
+			// Offline: queue the change on the cached version; the recipient
+			// fan-out runs at replay time, never from here (offline-edit-queue).
+			const offline = useOfflineStore()
+			if (offline.servedFromCache) {
+				const cached = offline.vault?.secrets?.find((x) => x.id === id)
+				await offline.enqueue({
+					op: 'update',
+					secretId: id,
+					baseUpdatedAt: cached?.updatedAt ?? null,
+					body: payload,
+				})
+				return { ...(cached || { id }), ...payload, pendingSync: true }
 			}
 
 			const response = await axios.put(
@@ -492,6 +747,18 @@ export const useSecretStore = defineStore('secret', {
 					// The session encryption flow itself is unaffected.
 				}
 
+				// Recipients at partner organisations
+				// (sharing-federated-recipients 4.1): the whole value is
+				// encrypted again for a freshly verified certificate. Like
+				// the local sync, a failure never rolls the update back.
+				try {
+					const { useFederatedShareStore } =
+						await import('./federatedShare.js')
+					await useFederatedShareStore().syncUpdate(id)
+				} catch {
+					// The share row shows its state to the owner.
+				}
+
 				// Write-grade team member path (folder-permission-grades
 				// §4.2): when the edited row is a recipient COPY and the
 				// user holds a write grade on an ancestor team folder,
@@ -522,10 +789,164 @@ export const useSecretStore = defineStore('secret', {
 		 * @param {string} id The secret ID.
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/secrets/spec.md#requirement-delete-secret
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
 		 */
 		async deleteSecret(id) {
+			const offline = useOfflineStore()
+			if (offline.servedFromCache) {
+				const cached = offline.vault?.secrets?.find((x) => x.id === id)
+				await offline.enqueue({
+					op: 'delete',
+					secretId: id,
+					baseUpdatedAt: cached?.updatedAt ?? null,
+				})
+				this.secrets = this.secrets.filter((s) => s.id !== id)
+				return
+			}
 			await axios.delete(generateUrl(`/apps/keepiq/api/v1/secrets/${id}`))
 			this.secrets = this.secrets.filter((s) => s.id !== id)
+		},
+
+		/**
+		 * Move a secret between trash and archive states and drop it from the
+		 * list being shown: every action takes it out of the current view.
+		 *
+		 * The server's answer comes back: a restored copy from another
+		 * organisation carries `federatedShare` (resumed, ended, unreachable).
+		 *
+		 * @param {string} id The secret ID.
+		 * @param {string} action restore, purge, archive or unarchive.
+		 * @return {Promise<object>} The response body.
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+		 * @spec openspec/specs/federated-sharing/spec.md#scenario-the-owner-revoked-the-share-meanwhile
+		 */
+		async changeSecretState(id, action) {
+			const url = generateUrl(`/apps/keepiq/api/v1/secrets/${id}/${action}`)
+			const response =
+				action === 'purge' ? await axios.delete(url) : await axios.post(url)
+			this.secrets = this.secrets.filter((s) => s.id !== id)
+			this.totalCount = Math.max(0, this.totalCount - 1)
+			return response?.data ?? {}
+		},
+
+		/**
+		 * The favourite and tag filters a fetch uses: the options' own when
+		 * present, else the stored list query.
+		 *
+		 * @param {object} options The fetch options.
+		 * @return {{favourite: boolean, tag: string|null}}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+		 */
+		organisationFilter(options = {}) {
+			return {
+				favourite: !!('favourite' in options
+					? options.favourite
+					: this.filters.favourite),
+				tag: ('tag' in options ? options.tag : this.filters.tag) || null,
+			}
+		},
+
+		/**
+		 * Star or unstar one of the user's secrets and mark the row in place.
+		 * In the Favourites view an unstarred row leaves the list.
+		 *
+		 * @param {string} id The secret ID.
+		 * @param {boolean} favourite The new star.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+		 */
+		async setFavourite(id, favourite) {
+			await axios.put(
+				generateUrl(`/apps/keepiq/api/v1/secrets/${id}/favourite`),
+				{ favourite },
+			)
+			if (!favourite && this.filters.favourite) {
+				const before = this.secrets.length
+				this.secrets = this.secrets.filter((s) => s.id !== id)
+				this.totalCount = Math.max(
+					0,
+					this.totalCount - (before - this.secrets.length),
+				)
+				return
+			}
+			this.secrets = this.secrets.map((s) =>
+				s.id === id ? { ...s, favourite } : s,
+			)
+			if (this.currentSecret?.id === id) {
+				this.currentSecret = { ...this.currentSecret, favourite }
+			}
+		},
+
+		/**
+		 * Replace the tags on one of the user's secrets, keep the set the
+		 * server stored (trimmed, lowercase), and reload the tag list.
+		 *
+		 * @param {string} id The secret ID.
+		 * @param {Array<string>} tags The tags.
+		 * @return {Promise<Array<string>>} The stored tags.
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+		 */
+		async setTags(id, tags) {
+			const response = await axios.put(
+				generateUrl(`/apps/keepiq/api/v1/secrets/${id}/tags`),
+				{ tags },
+			)
+			const stored = response.data?.tags || []
+			this.secrets = this.secrets.map((s) =>
+				s.id === id ? { ...s, tags: stored } : s,
+			)
+			await this.fetchTags()
+			return stored
+		},
+
+		/**
+		 * Add one tag to, or remove it from, a selection of secrets. Rows that
+		 * already have (or lack) it are left alone.
+		 *
+		 * @param {Array<string>} ids The selected secret IDs.
+		 * @param {string} tag The tag.
+		 * @param {boolean} add True to add, false to remove.
+		 * @return {Promise<number>} How many secrets changed.
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+		 */
+		async changeTagInBulk(ids, tag, add) {
+			const wanted = (tag || '').trim().toLowerCase()
+			if (!wanted) return 0
+			let changed = 0
+			for (const id of ids) {
+				const row = this.secrets.find((s) => s.id === id)
+				// Only rows on screen: their current tags are known, so the
+				// PUT cannot wipe tags this view never loaded.
+				if (!row) continue
+				const current = row.tags || []
+				const has = current.includes(wanted)
+				if (has === add) continue
+				const next = add
+					? [...current, wanted]
+					: current.filter((t) => t !== wanted)
+				const response = await axios.put(
+					generateUrl(`/apps/keepiq/api/v1/secrets/${id}/tags`),
+					{ tags: next },
+				)
+				const stored = response.data?.tags || next
+				this.secrets = this.secrets.map((s) =>
+					s.id === id ? { ...s, tags: stored } : s,
+				)
+				changed++
+			}
+			return changed
+		},
+
+		/**
+		 * Load the user's tags with their counts, for the filter menu.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+		 */
+		async fetchTags() {
+			const response = await axios.get(generateUrl('/apps/keepiq/api/v1/tags'))
+			this.tags = response.data?.tags || []
 		},
 
 		/**
@@ -533,6 +954,8 @@ export const useSecretStore = defineStore('secret', {
 		 *
 		 * @param {string} term The search term.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-search
 		 */
 		async searchSecrets(term) {
 			this.filters.search = term

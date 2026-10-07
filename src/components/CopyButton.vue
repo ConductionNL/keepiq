@@ -1,5 +1,6 @@
 <template>
 	<NcButton
+		v-if="!useOnly"
 		:variant="buttonType"
 		:aria-label="label"
 		:title="label"
@@ -68,6 +69,15 @@ export default {
 			default: 'tertiary',
 		},
 
+		/**
+		 * A use-only value is never copied: the button is not rendered and a
+		 * programmatic copy refuses (sharing-use-only-and-expiring-shares D3).
+		 */
+		useOnly: {
+			type: Boolean,
+			default: false,
+		},
+
 		/** Seconds after which the clipboard is cleared (0 disables clearing). */
 		clearAfter: {
 			type: Number,
@@ -84,6 +94,9 @@ export default {
 		}
 	},
 
+	/**
+	 * @spec exclude Lifecycle teardown: clears the pending copied-indicator timer on unmount.
+	 */
 	beforeUnmount() {
 		if (this.timer) {
 			clearTimeout(this.timer)
@@ -101,8 +114,13 @@ export default {
 		 * decrypt). No-op when a direct `value` is supplied.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+		 * @spec openspec/specs/mobile-pwa/spec.md#scenario-copy-inside-the-tap-gesture-honest-failure-without-a-secure-context
 		 */
 		async prewarm() {
+			if (this.useOnly) {
+				return
+			}
 			if (this.resolve && this.prewarmed === null) {
 				try {
 					this.prewarmed = await this.resolve()
@@ -117,8 +135,13 @@ export default {
 		 * the clipboard auto-clear.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+		 * @spec openspec/specs/mobile-pwa/spec.md#requirement-mobile-webcrypto-and-clipboard-verification
 		 */
 		async onCopy() {
+			if (this.useOnly) {
+				return
+			}
 			let text = this.value
 			if (this.resolve) {
 				// Prefer a value already resolved by the pointerdown pre-warm so
@@ -150,6 +173,8 @@ export default {
 		 *
 		 * @param {string} text The text to write.
 		 * @return {Promise<void>}
+		 *
+		 * @spec openspec/specs/mobile-pwa/spec.md#requirement-mobile-webcrypto-and-clipboard-verification
 		 */
 		async writeClipboard(text) {
 			if (navigator.clipboard && navigator.clipboard.writeText) {

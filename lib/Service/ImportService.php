@@ -57,6 +57,13 @@ class ImportService {
 	public const MAX_FIELD_LENGTH = 4096;
 
 	/**
+	 * Maximum character length of a name: the width of the `name` column.
+	 *
+	 * @var int
+	 */
+	public const MAX_NAME_LENGTH = 255;
+
+	/**
 	 * Maximum byte length of a single ciphertext blob (RSA-expanded).
 	 *
 	 * @var int
@@ -95,7 +102,7 @@ class ImportService {
 	 * @throws SuiteBlockedException When the user has no active EncryptionSuite
 	 * @throws InvalidArgumentException When the chunk exceeds the item cap
 	 *
-	 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-chunked-batch-commit
+	 * @spec openspec/specs/secret-import/spec.md#requirement-chunked-batch-commit
 	 * @spec openspec/changes/add-totp-secrets/specs/secrets/spec.md#requirement-secret-types
 	 */
 	public function commitChunk(array $items, string $userId): array {
@@ -183,6 +190,8 @@ class ImportService {
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException When the item is invalid
+	 *
+	 * @spec openspec/changes/clients-extension-gaps/specs/item-name-limit/spec.md#requirement-a-name-has-at-most-255-characters
 	 */
 	private function validateItem(array $item): void {
 		$name = trim((string)($item['name'] ?? ''));
@@ -190,8 +199,10 @@ class ImportService {
 			throw new InvalidArgumentException('Missing name');
 		}
 
-		if (strlen($name) > self::MAX_FIELD_LENGTH) {
-			throw new InvalidArgumentException('Name exceeds the maximum length');
+		// The name column holds 255 characters; a longer name would fail at
+		// the database instead of here.
+		if (mb_strlen($name) > self::MAX_NAME_LENGTH) {
+			throw new InvalidArgumentException('Name exceeds the maximum length of 255 characters');
 		}
 
 		if (isset($item['url']) === true && strlen((string)$item['url']) > self::MAX_FIELD_LENGTH) {

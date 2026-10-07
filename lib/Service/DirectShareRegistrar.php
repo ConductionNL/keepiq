@@ -31,6 +31,10 @@ declare(strict_types=1);
 namespace OCA\Keepiq\Service;
 
 use DateTime;
+use DateTimeZone;
+use InvalidArgumentException;
+use OCA\Keepiq\Db\GroupShareMapper;
+use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
@@ -39,6 +43,10 @@ use Ramsey\Uuid\Uuid;
 
 /**
  * Registers batches of pre-encrypted direct shares.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The registrar validates each
+ *   row (owner, restriction, idempotency) and writes the copy, the share row,
+ *   the restriction and the audit entry; each collaborator is one of those.
  */
 class DirectShareRegistrar {
 
@@ -57,6 +65,8 @@ class DirectShareRegistrar {
 	 * @param RecipientSecretCopyFactory $copyFactory The recipient-copy factory
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param ShareAuditTrail|null $auditTrail The share audit trail
+	 * @param GroupShareMapper|null $groupShareMapper The group-share mapper (rows linked to a group share)
+	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
 	 *
 	 * @return void
 	 *
@@ -68,6 +78,8 @@ class DirectShareRegistrar {
 		private RecipientSecretCopyFactory $copyFactory,
 		private NotificationService $notificationService,
 		?ShareAuditTrail $auditTrail = null,
+		private ?GroupShareMapper $groupShareMapper = null,
+		private ?ShareRestrictionResolver $restrictions = null,
 	) {
 		$this->auditTrail = ($auditTrail ?? new ShareAuditTrail());
 	}//end __construct()
@@ -79,11 +91,14 @@ class DirectShareRegistrar {
 	 * team-folder fan-out registration.
 	 *
 	 * @param string $userId The sharing owner
-	 * @param array<int,array<string,mixed>> $shares Rows {sourceSecretId, targetUserId, encryptedKey, encryptedLogin?, encryptedAdditionalFields?}
+	 * @param array<int,array<string,mixed>> $shares Rows {sourceSecretId, targetUserId, encryptedKey,
+	 *   encryptedLogin?, encryptedAdditionalFields?, groupShareId?, useOnly?, expiresAt?}
 	 *
 	 * @return array<int,array{sourceSecretId:string,targetUserId:string,status:string,recipientSecretId?:string}>
 	 *
 	 * @spec openspec/specs/bulk-actions/spec.md#requirement-the-four-bulk-operations
+	 * @spec openspec/specs/sharing-group/spec.md#requirement-share-with-a-group
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
 	 */
 	public function registerDirectShares(string $userId, array $shares): array {
 		$report = [];
@@ -166,6 +181,14 @@ class DirectShareRegistrar {
 			];
 		}
 
+		if ($this->groupShareMatches(sourceSecretId: $sourceSecretId, row: $row) === false) {
+			return [
+				'sourceSecretId' => $sourceSecretId,
+				'targetUserId' => $targetUserId,
+				'status' => 'invalid',
+			];
+		}
+
 		return $this->createDirectShare(
 			userId: $userId,
 			sourceSecretId: $sourceSecretId,
@@ -194,19 +217,18 @@ class DirectShareRegistrar {
 		string $encryptedKey,
 		array $row,
 	): array {
-		// Per-item owner guard — a foreign secret is skipped, never a
-		// whole-batch failure and never an oracle.
-		try {
-			$source = $this->secretMapper->findById($sourceSecretId);
-		} catch (DoesNotExistException) {
-			$source = null;
-		}
-
-		if ($source === null || $source->getOwnerType() !== 'user' || $source->getOwnerId() !== $userId) {
+		// Per-item owner guard: a foreign secret is skipped, never a
+		// whole-batch failure and never an oracle. A use-only or expiring
+		// copy is never a share source (D4), and a malformed restriction is
+		// reported, not guessed.
+		$source = $this->loadOwnedSource(sourceSecretId: $sourceSecretId, userId: $userId);
+		$restriction = $this->parseRestriction(row: $row);
+		$refusal = $this->refusalFor(source: $source, restriction: $restriction);
+		if ($refusal !== null || $source === null || $restriction === null) {
 			return [
 				'sourceSecretId' => $sourceSecretId,
 				'targetUserId' => $targetUserId,
-				'status' => 'not_owned',
+				'status' => ($refusal ?? 'invalid'),
 			];
 		}
 
@@ -245,9 +267,17 @@ class DirectShareRegistrar {
 		$entity->setSourceSecretId($sourceSecretId);
 		$entity->setTargetUserId($targetUserId);
 		$entity->setSecretId($copy->getId());
+		$entity->setGroupShareId($this->optionalString(value: ($row['groupShareId'] ?? null)));
 		$entity->setCreatedBy($userId);
 		$entity->setCreatedAt(new DateTime());
-		$this->mapper->insert($entity);
+		if ($entity->getGroupShareId() === null) {
+			// A group-linked row takes its restriction from the group share.
+			$entity->setUseOnly($restriction->useOnly);
+			$entity->setExpiresAt($restriction->expiresAt);
+		}
+
+		$persisted = $this->mapper->insert($entity);
+		$this->restrictions?->resolveTarget(target: $persisted);
 
 		$this->auditTrail->recordBulkShareGranted(
 			userId: $userId,
@@ -263,6 +293,105 @@ class DirectShareRegistrar {
 			'recipientSecretId' => $copy->getId(),
 		];
 	}//end createDirectShare()
+
+	/**
+	 * The caller's own user-owned source secret, or null.
+	 *
+	 * @param string $sourceSecretId The source secret
+	 * @param string $userId The sharing owner
+	 *
+	 * @return Secret|null
+	 */
+	private function loadOwnedSource(string $sourceSecretId, string $userId): ?Secret {
+		try {
+			$source = $this->secretMapper->findById($sourceSecretId);
+		} catch (DoesNotExistException) {
+			return null;
+		}
+
+		if ($source->getOwnerType() !== 'user' || $source->getOwnerId() !== $userId) {
+			return null;
+		}
+
+		return $source;
+	}//end loadOwnedSource()
+
+	/**
+	 * A row's use-only flag and end date, or null when the date is refused.
+	 *
+	 * @param array<string,mixed> $row The row
+	 *
+	 * @return ShareRestriction|null
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 */
+	private function parseRestriction(array $row): ?ShareRestriction {
+		try {
+			return (new ShareRestrictionRules())->fromRequest(
+				useOnly: ($row['useOnly'] ?? false),
+				expiresAt: ($row['expiresAt'] ?? null),
+				now: new DateTime('now', new DateTimeZone('UTC'))
+			);
+		} catch (InvalidArgumentException) {
+			return null;
+		}
+	}//end parseRestriction()
+
+	/**
+	 * The status a row is refused with, or null when it may proceed.
+	 *
+	 * @param Secret|null $source The caller's own source, or null
+	 * @param ShareRestriction|null $restriction The parsed restriction, or null
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
+	 */
+	private function refusalFor(?Secret $source, ?ShareRestriction $restriction): ?string {
+		if ($source === null) {
+			return 'not_owned';
+		}
+
+		if ($source->isRestrictedCopy() === true) {
+			return 'restricted';
+		}
+
+		if ($restriction === null) {
+			return 'invalid';
+		}
+
+		return null;
+	}//end refusalFor()
+
+	/**
+	 * Whether a row's optional groupShareId names a group share of the SAME
+	 * source secret. A row without one matches; an unknown group share, one
+	 * of another secret, or no mapper to check with does not (fail closed).
+	 * The owner guard in createDirectShare() then covers the secret itself.
+	 *
+	 * @param string $sourceSecretId The row's source secret
+	 * @param array<string,mixed> $row The row
+	 *
+	 * @return bool
+	 */
+	private function groupShareMatches(string $sourceSecretId, array $row): bool {
+		$groupShareId = $this->optionalString(value: ($row['groupShareId'] ?? null));
+		if ($groupShareId === null) {
+			return true;
+		}
+
+		if ($this->groupShareMapper === null) {
+			return false;
+		}
+
+		try {
+			$groupShare = $this->groupShareMapper->findById($groupShareId);
+		} catch (DoesNotExistException) {
+			return false;
+		}
+
+		return $groupShare->getSecretId() === $sourceSecretId;
+	}//end groupShareMatches()
 
 	/**
 	 * Normalise an optional blob value to a non-empty string or null.

@@ -66,12 +66,10 @@ class PublicRouteSurfaceContractTest extends TestCase {
 	/**
 	 * Parse `appinfo/routes.php` into `name => url` pairs.
 	 *
-	 * Source text rather than `require`: the file returns
-	 * `\OCA\OpenRegister\AppHost\Routes::standard(...)` and the unit suite runs
-	 * against the `nextcloud/ocp` stubs with no OpenRegister on the autoload
-	 * path (see CanonicalRouteMethodContractTest, which reads it the same way).
-	 * The canonical routes that call adds live at `/` and `/{path}`, so nothing
-	 * it contributes falls inside the `/public` space this test guards.
+	 * Source text rather than `require`, so the scan sees every literal entry,
+	 * including the shell routes at `/` and `/{path}`, which fall outside the
+	 * `/public` space this test guards. StaticRouteTableTest covers the table
+	 * as `require` returns it.
 	 *
 	 * @return array<int, array{name: string, url: string}> Every parsed entry.
 	 */

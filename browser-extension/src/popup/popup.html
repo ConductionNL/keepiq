@@ -8,43 +8,387 @@
 </head>
 <body>
 	<main id="app" class="keepiq-popup">
+		<!-- Account switcher (extension-account-switching) -->
+		<header id="account-bar" class="row account-bar" hidden>
+			<span id="account-initials" class="account-initials" aria-hidden="true"></span>
+			<label class="account-select-label">Account
+				<select id="account-select" aria-label="Active account"></select>
+			</label>
+			<button id="account-add" class="link">Add account</button>
+		</header>
+
+		<!-- The paired server is older than this extension supports -->
+		<section id="view-update" hidden>
+			<h1>Update Keepiq on your server</h1>
+			<p class="hint">This extension version needs a newer Keepiq on your Nextcloud server. Ask your administrator to update it, then open the extension again.</p>
+		</section>
+
+		<!-- Signed out: the server refused the app password, or the account
+		     was paired over http (clients-extension-gaps) -->
+		<section id="view-signed-out" hidden>
+			<h1>Signed out</h1>
+			<p id="signed-out-text" class="hint"></p>
+			<form id="relogin-form">
+				<label>New app password<input id="relogin-app-password" type="password" autocomplete="off" required></label>
+				<p id="relogin-error" class="error" role="alert" hidden></p>
+				<button type="submit" id="relogin-submit">Sign in again</button>
+			</form>
+			<button type="button" id="signed-out-disconnect" class="link">Disconnect this account</button>
+		</section>
+
 		<!-- Pairing view -->
 		<section id="view-pair" hidden>
 			<h1>Connect to Keepiq</h1>
 			<label>Server URL<input id="pair-url" type="url" placeholder="https://cloud.example.org" autocomplete="off"></label>
 			<label>Nextcloud user<input id="pair-user" type="text" autocomplete="off"></label>
 			<label>App password<input id="pair-app-password" type="password" autocomplete="off"></label>
-			<p class="hint">Use a Nextcloud <strong>app password</strong> (Settings → Security), not your login password. Revoke it there to unpair.</p>
+			<p class="hint">Use a Nextcloud <strong>app password</strong> (Settings → Security), not your login password. Disconnect deletes it again.</p>
 			<button id="pair-submit" class="primary">Connect</button>
+			<button id="pair-cancel" class="link" hidden>Cancel</button>
 			<p id="pair-error" class="error" role="alert" hidden></p>
 		</section>
 
 		<!-- Locked view -->
 		<section id="view-locked" hidden>
 			<h1>Unlock vault</h1>
-			<label>Master password<input id="unlock-master" type="password" autocomplete="off"></label>
+			<div id="pin-block" hidden>
+				<label>PIN<input id="unlock-pin" type="password" inputmode="numeric" autocomplete="off"></label>
+				<button id="unlock-pin-submit" class="primary">Unlock with PIN</button>
+				<p class="hint">Or unlock with your master password below.</p>
+			</div>
+			<div class="row">
+				<label class="grow">Master password<input id="unlock-master" type="password" autocomplete="off"></label>
+				<button id="unlock-show" type="button" class="link" aria-pressed="false" aria-controls="unlock-master">Show</button>
+			</div>
 			<p class="hint">Your master password is used only in this extension to decrypt your vault. It never reaches the server.</p>
 			<button id="unlock-submit" class="primary">Unlock</button>
+			<button id="unlock-biometric" class="link" hidden>Unlock with fingerprint or face</button>
+			<button id="unlock-device" class="link" hidden>Approve from another device</button>
+			<button id="locked-generate" class="link">Generate a password</button>
 			<button id="unlock-unpair" class="link">Disconnect</button>
 			<p id="unlock-error" class="error" role="alert" hidden></p>
+		</section>
+
+		<!-- Waiting for approval from another device -->
+		<section id="view-device-approval" hidden>
+			<h1>Approve from another device</h1>
+			<p class="hint">Open Keepiq on a device where your vault is unlocked and approve this request there. Check that it shows these same words.</p>
+			<p id="device-phrase" class="phrase" aria-live="polite"></p>
+			<p id="device-status" class="hint" role="status">Waiting for approval…</p>
+			<button id="device-cancel" class="link">Cancel</button>
+			<p id="device-error" class="error" role="alert" hidden></p>
 		</section>
 
 		<!-- Unlocked view -->
 		<section id="view-unlocked" hidden>
 			<header class="row">
 				<span id="active-host" class="host"></span>
+				<button id="popout-btn" class="link" title="Open Keepiq in its own window">Pop out</button>
+				<button id="settings-btn" class="link" hidden>Settings</button>
 				<button id="lock-btn" class="link">Lock</button>
 			</header>
-			<ul id="candidates" class="candidates"></ul>
-			<p id="no-candidates" class="hint" hidden>No matching secrets for this site.</p>
-			<div id="totp-block" hidden>
-				<div class="totp"><span id="totp-code" class="totp-code"></span><span id="totp-count" class="totp-count"></span></div>
+
+			<div id="panel-site" role="tabpanel" aria-labelledby="tab-site">
+				<ul id="candidates" class="candidates"></ul>
+				<p id="no-candidates" class="hint" hidden>No matching secrets for this site.</p>
+				<div id="totp-block" hidden>
+					<div class="totp"><span id="totp-code" class="totp-code"></span><span id="totp-count" class="totp-count"></span></div>
+				</div>
+				<div id="save-prompt" class="save-prompt" hidden>
+					<p id="save-text"></p>
+					<label id="save-folder-label">Folder<select id="save-folder"><option value="">No folder</option></select></label>
+					<button id="save-yes" class="primary">Save</button>
+					<button id="save-no" class="link">Not now</button>
+					<button id="save-never" class="link">Never for this site</button>
+				</div>
 			</div>
-			<div id="save-prompt" class="save-prompt" hidden>
-				<p id="save-text"></p>
-				<button id="save-yes" class="primary">Save</button>
-				<button id="save-no" class="link">Not now</button>
+
+			<div id="panel-vault" role="tabpanel" aria-labelledby="tab-vault" hidden>
+				<div id="vault-browse">
+					<label>Search<input id="vault-search" type="search" autocomplete="off"></label>
+					<div class="row filters">
+						<label>Folder<select id="vault-folder"><option value="">All folders</option></select></label>
+						<label>Type<select id="vault-type"><option value="">All types</option></select></label>
+					</div>
+					<button id="vault-new" class="primary">New item</button>
+					<button id="vault-folders-open" class="link">Folders</button>
+					<div class="row">
+						<span id="vault-sync" class="hint" role="status"></span>
+						<button id="vault-sync-now" class="link">Sync now</button>
+					</div>
+					<p id="vault-offline" class="hint" hidden>You are offline. Changes need a connection to Keepiq.</p>
+					<p id="vault-status" class="hint" role="status"></p>
+					<button id="vault-clear" type="button" class="link" hidden>Clear filters</button>
+					<ul id="vault-list" class="candidates"></ul>
+				</div>
+
+				<div id="vault-folders" hidden>
+					<button id="folders-back" class="link">Back to the vault</button>
+					<h2>Folders</h2>
+					<div id="folders-notice" class="hint" hidden>
+						<p>Folder names are not encrypted. Server administrators can read them.</p>
+						<button id="folders-notice-ok" class="link">Got it</button>
+					</div>
+					<form id="folder-add" novalidate>
+						<label>New folder<input id="folder-add-name" type="text" maxlength="255" autocomplete="off"></label>
+						<label>Inside<select id="folder-add-parent"><option value="">No folder</option></select></label>
+						<button id="folder-add-save" type="submit" class="primary">Add folder</button>
+					</form>
+					<ul id="folder-tree" class="candidates"></ul>
+					<div id="folder-delete" hidden>
+						<p id="folder-delete-text"></p>
+						<label id="folder-delete-items-label" hidden>Its items<select id="folder-delete-items">
+							<option value="move">Move to the parent folder</option>
+							<option value="delete">Delete them</option>
+						</select></label>
+						<div id="folder-delete-subfolders"></div>
+						<button id="folder-delete-confirm" class="primary danger">Delete folder</button>
+						<button id="folder-delete-cancel" class="link">Cancel</button>
+					</div>
+					<p id="folders-error" class="error" role="alert" hidden></p>
+				</div>
+
+				<div id="vault-detail" hidden>
+					<button id="detail-back" class="link">Back to the vault</button>
+					<h2 id="detail-name"></h2>
+					<p id="detail-meta" class="hint"></p>
+					<div id="detail-blocked" hidden>
+						<p id="detail-blocked-reason" class="error"></p>
+						<p id="detail-migration" class="hint" hidden></p>
+						<button id="detail-open-web" class="link">Open Keepiq in Nextcloud</button>
+					</div>
+					<div id="detail-sections"></div>
+					<div class="row actions">
+						<button id="detail-edit" class="link">Edit</button>
+						<button id="detail-clone" class="link">Clone</button>
+						<button id="detail-move" class="link">Move</button>
+						<button id="detail-send" class="link">Send</button>
+						<button id="detail-delete" class="link danger">Delete</button>
+					</div>
+					<div id="detail-move-picker" hidden>
+						<label>Move to<select id="detail-move-folder"><option value="">No folder</option></select></label>
+						<button id="detail-move-save" class="primary">Move</button>
+						<button id="detail-move-cancel" class="link">Cancel</button>
+					</div>
+					<p id="detail-error" class="error" role="alert" hidden></p>
+				</div>
+
+				<form id="vault-edit" hidden novalidate>
+					<h2 id="edit-title">New item</h2>
+					<label id="edit-type-label">Type<select id="edit-type"></select></label>
+					<label>Name<input id="edit-name" type="text" maxlength="255" autocomplete="off" required></label>
+					<label>Website<input id="edit-url" type="url" maxlength="4096" autocomplete="off"></label>
+					<div id="edit-login-block">
+						<label>Username<input id="edit-login" type="text" maxlength="4096" autocomplete="off"></label>
+						<button id="edit-generate-username" type="button" class="link">Generate a username</button>
+					</div>
+					<div id="edit-secret-block">
+						<label id="edit-secret-label">Password<input id="edit-secret" type="password" autocomplete="new-password"></label>
+						<button id="edit-generate" type="button" class="link">Generate a password</button>
+					</div>
+					<div id="edit-composite"></div>
+					<label id="edit-notes-label">Notes<textarea id="edit-notes" rows="3"></textarea></label>
+					<fieldset id="edit-fields-block" class="fields">
+						<legend>Additional fields</legend>
+						<div id="edit-fields"></div>
+						<button id="edit-field-add" type="button" class="link">Add a field</button>
+					</fieldset>
+					<label>Folder<select id="edit-folder"><option value="">No folder</option></select></label>
+					<button id="edit-save" type="submit" class="primary">Save</button>
+					<button id="edit-cancel" type="button" class="link">Cancel</button>
+					<p id="edit-error" class="error" role="alert" hidden></p>
+				</form>
 			</div>
+
+			<div id="panel-generator" role="tabpanel" aria-labelledby="tab-generator" hidden>
+				<div id="gen-main">
+					<div class="subtabs" role="tablist" aria-label="Kind of value">
+						<button id="gen-tab-password" role="tab" aria-selected="true" data-kind="password">Password</button>
+						<button id="gen-tab-passphrase" role="tab" aria-selected="false" data-kind="passphrase">Passphrase</button>
+						<button id="gen-tab-username" role="tab" aria-selected="false" data-kind="username">Username</button>
+					</div>
+					<output id="gen-output" class="gen-output" aria-live="polite"></output>
+					<div class="row actions">
+						<button id="gen-regenerate" class="primary">Regenerate</button>
+						<button id="gen-copy" class="link">Copy</button>
+						<button id="gen-use" class="primary" hidden>Use this value</button>
+					</div>
+					<p id="gen-policy" class="hint" hidden></p>
+					<p id="gen-error" class="error" role="alert" hidden></p>
+
+					<div id="gen-password-options">
+						<label>Length <span id="gen-length-value"></span>
+							<input id="gen-length-range" type="range" min="8" max="128" aria-label="Length slider">
+						</label>
+						<label>Length<input id="gen-length" type="number" min="8" max="128"></label>
+						<label class="inline"><input id="gen-upper" type="checkbox"> Uppercase (A-Z)</label>
+						<label class="inline"><input id="gen-lower" type="checkbox"> Lowercase (a-z)</label>
+						<label class="inline"><input id="gen-digits" type="checkbox"> Numbers (0-9)</label>
+						<label class="inline"><input id="gen-symbols" type="checkbox"> Special characters (!@#$%…)</label>
+						<div class="row filters">
+							<label>Minimum numbers<input id="gen-min-digits" type="number" min="0" max="9"></label>
+							<label>Minimum special<input id="gen-min-special" type="number" min="0" max="9"></label>
+						</div>
+						<label class="inline"><input id="gen-ambiguous" type="checkbox"> Avoid ambiguous characters</label>
+					</div>
+					<div id="gen-passphrase-options" hidden>
+						<label>Number of words<input id="gen-words" type="number" min="4" max="12"></label>
+						<label>Word separator<input id="gen-separator" type="text" maxlength="3"></label>
+						<label class="inline"><input id="gen-capitalise" type="checkbox"> Capitalize</label>
+						<label class="inline"><input id="gen-number" type="checkbox"> Include number</label>
+					</div>
+					<div id="gen-username-options" hidden>
+						<label>Type<select id="gen-username-type">
+							<option value="word">Random word</option>
+							<option value="plus">Plus addressed email</option>
+							<option value="catchall">Catch-all email</option>
+						</select></label>
+						<div id="gen-username-word">
+							<label class="inline"><input id="gen-username-capitalize" type="checkbox"> Capitalize</label>
+							<label class="inline"><input id="gen-username-number" type="checkbox"> Include number</label>
+						</div>
+						<div id="gen-username-plus" hidden>
+							<label>Email<input id="gen-email" type="email" placeholder="you@example.com" autocomplete="off"></label>
+							<fieldset class="mode"><legend>Add</legend>
+								<label class="inline"><input type="radio" name="gen-email-mode" value="random" checked> Random</label>
+								<label class="inline"><input type="radio" name="gen-email-mode" value="website"> Website name</label>
+							</fieldset>
+						</div>
+						<div id="gen-username-catchall" hidden>
+							<label>Domain<input id="gen-domain" type="text" placeholder="example.com" autocomplete="off"></label>
+							<fieldset class="mode"><legend>Before the @</legend>
+								<label class="inline"><input type="radio" name="gen-domain-mode" value="random" checked> Random</label>
+								<label class="inline"><input type="radio" name="gen-domain-mode" value="website"> Website name</label>
+							</fieldset>
+						</div>
+						<p id="gen-website-hint" class="hint" hidden>No website detected</p>
+					</div>
+					<button id="gen-history-open" class="link">Generator history</button>
+				</div>
+
+				<div id="gen-history" hidden>
+					<button id="gen-history-back" class="link">Back to the generator</button>
+					<h2>Generator history</h2>
+					<ul id="gen-history-list" class="candidates"></ul>
+					<p id="gen-history-empty" class="hint" hidden>No generated values yet</p>
+					<button id="gen-history-clear" class="link danger">Clear history</button>
+				</div>
+			</div>
+
+			<div id="panel-send" role="tabpanel" aria-labelledby="tab-send" hidden>
+				<form id="send-form" novalidate>
+					<fieldset class="mode">
+						<legend>What to send</legend>
+						<label class="inline"><input type="radio" name="send-type" value="text" checked> Text</label>
+						<label class="inline"><input type="radio" name="send-type" value="credential"> Username and password</label>
+					</fieldset>
+					<label id="send-text-label">Text<textarea id="send-text" rows="3"></textarea></label>
+					<div id="send-credential" hidden>
+						<label>Username<input id="send-username" type="text" autocomplete="off"></label>
+						<label>Password<input id="send-password" type="password" autocomplete="off"></label>
+					</div>
+					<label>Can be opened<input id="send-views" type="number" min="1" max="100" value="1"></label>
+					<label>Expires after<select id="send-expiry"></select></label>
+					<label id="send-custom-label" hidden>Hours<input id="send-custom" type="number" min="1" max="720" value="24"></label>
+					<label>Password (optional)<input id="send-protect" type="password" autocomplete="new-password"></label>
+					<p id="send-key-hint" class="hint">Without a password the link carries the key: anyone with the link can open the send. With a password, share the password another way.</p>
+					<p id="send-offline" class="hint" hidden>You are offline. A send needs a connection to Keepiq.</p>
+					<button id="send-create" type="submit" class="primary">Create link</button>
+					<p id="send-progress" class="hint" role="status" hidden>Protecting the send with its password…</p>
+					<p id="send-error" class="error" role="alert" hidden></p>
+				</form>
+				<div id="send-result" hidden>
+					<p>Copy the link now. Keepiq does not show it again.</p>
+					<input id="send-link" type="text" readonly aria-label="Link">
+					<button id="send-copy" class="primary">Copy link</button>
+				</div>
+				<h2>My sends</h2>
+				<ul id="send-list" class="candidates"></ul>
+				<p id="send-empty" class="hint" hidden>You have no sends.</p>
+				<button id="send-retry" type="button" class="link" hidden>Try again</button>
+			</div>
+			<nav class="tabs" role="tablist" aria-label="Keepiq">
+				<button id="tab-site" role="tab" aria-controls="panel-site" aria-selected="true">This site</button>
+				<button id="tab-vault" role="tab" aria-controls="panel-vault" aria-selected="false">Vault</button>
+				<button id="tab-generator" role="tab" aria-controls="panel-generator" aria-selected="false">Generator</button>
+				<button id="tab-send" role="tab" aria-controls="panel-send" aria-selected="false">Send</button>
+				<button id="tab-settings" role="tab" aria-selected="false">Settings</button>
+			</nav>
+		</section>
+
+		<!-- The Generator while locked: the generator panel moves in here. -->
+		<section id="view-locked-generator" hidden>
+			<button id="locked-generator-back" class="link">Back to unlock</button>
+			<div id="locked-generator-slot"></div>
+		</section>
+
+		<!-- Settings view (per account) -->
+		<section id="view-settings" hidden>
+			<h1>Settings</h1>
+			<section class="settings-group" aria-labelledby="settings-account-title">
+				<h2 id="settings-account-title">This account</h2>
+				<fieldset class="idle-fieldset">
+					<legend>Lock after being idle for</legend>
+					<div id="idle-choices"></div>
+				</fieldset>
+				<p class="hint">Keepiq also locks when your computer locks.</p>
+				<button id="biometric-enrol" class="link" hidden>Set up fingerprint or face unlock</button>
+				<fieldset id="pin-settings">
+					<legend>Unlock with a PIN</legend>
+					<div id="pin-set-form">
+						<label>Master password<input id="pin-master" type="password" autocomplete="off"></label>
+						<label>New PIN<input id="pin-new" type="password" inputmode="numeric" autocomplete="off"></label>
+						<button id="pin-set" class="link">Set PIN</button>
+					</div>
+					<button id="pin-remove" class="link" hidden>Remove PIN</button>
+					<p class="hint">The PIN works until you close the browser. After five wrong PINs, Keepiq asks for your master password.</p>
+				</fieldset>
+				<button id="settings-logout" class="link">Log out of this account</button>
+				<button id="settings-lock-all" class="link">Lock all accounts</button>
+				<button id="settings-logout-all" class="link">Log out of all accounts</button>
+				<button id="settings-unpair" class="link">Disconnect this account</button>
+			</section>
+			<section class="settings-group" aria-labelledby="settings-autofill-title">
+				<h2 id="settings-autofill-title">Autofill</h2>
+				<label class="check"><input id="setting-offer-save" type="checkbox"> Offer to save new logins</label>
+				<label class="check"><input id="setting-offer-update" type="checkbox"> Offer to update a changed password</label>
+				<label class="check"><input id="setting-suggest" type="checkbox"> Suggest a strong password in sign-up fields</label>
+				<p id="shortcut-text" class="hint"></p>
+				<fieldset id="never-settings">
+					<legend>Never offer to save logins on</legend>
+					<ul id="never-list" class="candidates"></ul>
+					<p id="never-empty" class="hint">No sites yet.</p>
+				</fieldset>
+				<label>Clear the clipboard after a copy
+					<select id="clipboard-clear"></select>
+				</label>
+			</section>
+			<section class="settings-group" aria-labelledby="settings-items-title">
+				<h2 id="settings-items-title">New items</h2>
+				<label>Type of a new item<select id="setting-default-type"></select></label>
+			</section>
+			<section class="settings-group" aria-labelledby="settings-look-title">
+				<h2 id="settings-look-title">Appearance</h2>
+				<label>Theme
+					<select id="setting-theme">
+						<option value="system">Same as the system</option>
+						<option value="light">Light</option>
+						<option value="dark">Dark</option>
+					</select>
+				</label>
+			</section>
+			<section class="settings-group" aria-labelledby="settings-web-title">
+				<h2 id="settings-web-title">Keepiq on the web</h2>
+				<p class="hint">Import and export, notifications and your master password are managed in Keepiq on your Nextcloud.</p>
+				<button id="settings-open-web" class="link">Open Keepiq on the web</button>
+			</section>
+			<section class="settings-group" aria-labelledby="settings-about-title">
+				<h2 id="settings-about-title">About</h2>
+				<p id="about-text" class="hint"></p>
+				<button id="settings-notices" class="link">Third-party notices</button>
+			</section>
+			<button id="settings-back" class="primary">Done</button>
+			<p id="settings-error" class="error" role="alert" hidden></p>
 		</section>
 	</main>
 	<script type="module" src="popup.js"></script>

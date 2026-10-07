@@ -165,15 +165,25 @@ class TeamFolderMembershipResolver {
 	 * their public certificates for browser-side encryption. Users
 	 * without a suite are skipped silently (§2.2).
 	 *
+	 * A user whose Nextcloud account is disabled is skipped too. Disabling
+	 * the account is the standard offboarding step, and a leaver still in a
+	 * member group keeps an active suite, so without this the next
+	 * reconcile would hand them a fresh copy (admin-member-overview D3).
+	 *
 	 * @param string[] $userIds The candidate user IDs
 	 *
 	 * @return array<int,array{userId:string,certificate:string}>
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.2
+	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-the-fan-out-never-re-shares-to-a-disabled-account
 	 */
 	public function eligibleRecipients(array $userIds): array {
 		$recipients = [];
 		foreach ($userIds as $candidateId) {
+			if ($this->isDisabledAccount(userId: $candidateId) === true) {
+				continue;
+			}
+
 			try {
 				$suite = $this->suiteMapper->findActiveByOwner(ownerType: 'user', ownerId: $candidateId);
 			} catch (DoesNotExistException) {
@@ -188,6 +198,24 @@ class TeamFolderMembershipResolver {
 
 		return $recipients;
 	}//end eligibleRecipients()
+
+	/**
+	 * Whether a user's Nextcloud account exists and is disabled.
+	 *
+	 * An unknown user id is not "disabled": it simply has no suite and is
+	 * skipped by the suite lookup, as before.
+	 *
+	 * @param string $userId The candidate user ID
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-the-fan-out-never-re-shares-to-a-disabled-account
+	 */
+	private function isDisabledAccount(string $userId): bool {
+		$user = $this->userManager->get($userId);
+
+		return $user !== null && $user->isEnabled() === false;
+	}//end isDisabledAccount()
 
 	/**
 	 * All membership rows that cover a user: direct user rows plus group
@@ -229,6 +257,7 @@ class TeamFolderMembershipResolver {
 	 * @return array<int,array{id:string,name:string}>
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.3
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function subtreeSecretRefs(TeamFolder $teamFolder): array {
 		$refs = [];
@@ -239,6 +268,11 @@ class TeamFolderMembershipResolver {
 				ownerId: $teamFolder->getOwnerId(),
 				folderId: (string)$folderId
 			) as $secret) {
+				// A use-only or expiring copy is never fanned out (D4).
+				if ($secret->isRestrictedCopy() === true) {
+					continue;
+				}
+
 				$refs[] = [
 					'id' => $secret->getId(),
 					'name' => $secret->getName(),

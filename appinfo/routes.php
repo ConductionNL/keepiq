@@ -5,36 +5,75 @@ declare(strict_types=1);
 /*
  * Keepiq route table.
  *
- * The canonical AppHost plumbing routes (dashboard page + SPA catch-all,
- * settings index/create/load, per-user preferences, and the observability
- * endpoints health#index / metrics#index) are provided by
- * \OCA\OpenRegister\AppHost\Routes::standard(). The /api/health and
- * /api/metrics URLs are unchanged; their controllers are aliased to the
- * AppHost generic controllers by Bootstrap::register() in Application.php.
+ * One static table, the same on every instance: Keepiq runs its own app
+ * shell and references no class from another app (ADR-006). Nextcloud's
+ * router requires this file for every enabled app on every route-cache miss,
+ * so it must never depend on another app being installed or enabled; a throw
+ * here answers HTTP 500 on every page of the instance (#857, #867).
  *
- * Every Keepiq domain route is appended via $extra below — it is inserted
- * before the SPA catch-all so it keeps priority over the /{path} fallback.
- * This file references no OCA\OpenRegister symbol other than the pure array
- * builder Routes::standard(), so it is safe to require even when OpenRegister
- * is disabled.
+ * Layout: the shell routes (dashboard page, settings, per-user preferences,
+ * health, metrics), then every Keepiq domain route in $extra, then the SPA
+ * catch-all, which must stay last so it never shadows an earlier route.
  */
 
-return \OCA\OpenRegister\AppHost\Routes::standard([
+$extra = [
     // Dashboard summary (domain aggregator — DashboardController::summary()).
     ['name' => 'dashboard#summary', 'url' => '/api/dashboard/summary', 'verb' => 'GET'],
 
-    // Admin + user settings split (implement-dashboard-settings §2.4).
-    ['name' => 'settings#getAdminSettings',    'url' => '/api/settings/admin', 'verb' => 'GET'],
-    ['name' => 'settings#updateAdminSettings', 'url' => '/api/settings/admin', 'verb' => 'PUT'],
+    // Admin settings, one route pair per admin area, each guarded by its own
+    // area class (admin-scoped-roles D2). The People area owns no settings keys.
+    ['name' => 'adminAreaSettings#getGeneralSettings',        'url' => '/api/settings/admin/general',      'verb' => 'GET'],
+    ['name' => 'adminAreaSettings#updateGeneralSettings',     'url' => '/api/settings/admin/general',      'verb' => 'PUT'],
+    ['name' => 'adminAreaSettings#getPolicySettings',         'url' => '/api/settings/admin/policies',     'verb' => 'GET'],
+    ['name' => 'adminAreaSettings#updatePolicySettings',      'url' => '/api/settings/admin/policies',     'verb' => 'PUT'],
+    ['name' => 'adminAreaSettings#getApplicationSettings',    'url' => '/api/settings/admin/applications', 'verb' => 'GET'],
+    ['name' => 'adminAreaSettings#updateApplicationSettings', 'url' => '/api/settings/admin/applications', 'verb' => 'PUT'],
+    ['name' => 'adminAreaSettings#getAuditSettings',          'url' => '/api/settings/admin/audit',        'verb' => 'GET'],
+    ['name' => 'adminAreaSettings#updateAuditSettings',       'url' => '/api/settings/admin/audit',        'verb' => 'PUT'],
+    // Two-factor gap count for the vault policy section (admin-vault-policies §1.3).
+    ['name' => 'settings#twoFactorGaps',       'url' => '/api/settings/admin/two-factor-gaps', 'verb' => 'GET'],
+    // Vault backups (admin-scheduled-vault-backups §4.1): status, list and a
+    // run request. No route serves archive content (design D6).
+    ['name' => 'backupAdmin#index', 'url' => '/api/settings/admin/backups',     'verb' => 'GET'],
+    ['name' => 'backupAdmin#update', 'url' => '/api/settings/admin/backups',    'verb' => 'PUT'],
+    ['name' => 'backupAdmin#run',   'url' => '/api/settings/admin/backups/run', 'verb' => 'POST'],
     ['name' => 'settings#getUserSettings',     'url' => '/api/settings/user',  'verb' => 'GET'],
     // Read-only org password policy for write dialogs (org-password-policies §1.3).
     ['name' => 'settings#getPolicy',           'url' => '/api/settings/policy', 'verb' => 'GET'],
     ['name' => 'settings#updateUserSettings',  'url' => '/api/settings/user',  'verb' => 'PUT'],
 
+    // Admin API v1 (admin-public-api): a documented, versioned surface for
+    // scripts, each route guarded by one admin area (admin-scoped-roles).
+    // docs/api/admin-v1.openapi.json describes exactly these routes
+    // (AdminApiContractTest). The policies pair reuses the area settings
+    // methods; `postfix` keeps their route names distinct.
+    ['name' => 'adminIndex#index', 'url' => '/api/v1/admin', 'verb' => 'GET'],
+    ['name' => 'adminAreaSettings#getPolicySettings', 'url' => '/api/v1/admin/policies', 'verb' => 'GET', 'postfix' => 'AdminApi'],
+    ['name' => 'adminAreaSettings#updatePolicySettings', 'url' => '/api/v1/admin/policies', 'verb' => 'PUT', 'postfix' => 'AdminApi'],
+    ['name' => 'adminPeople#suites',    'url' => '/api/v1/admin/suites',      'verb' => 'GET'],
+    ['name' => 'adminPeople#offboard',  'url' => '/api/v1/admin/offboarding', 'verb' => 'POST'],
+    ['name' => 'adminApplication#index',          'url' => '/api/v1/admin/applications',                       'verb' => 'GET'],
+    ['name' => 'adminApplication#create',         'url' => '/api/v1/admin/applications',                       'verb' => 'POST'],
+    ['name' => 'adminApplication#approve',        'url' => '/api/v1/admin/applications/{id}/approve',          'verb' => 'POST'],
+    ['name' => 'adminApplication#reject',         'url' => '/api/v1/admin/applications/{id}/reject',           'verb' => 'POST'],
+    ['name' => 'adminApplication#getLeasePolicy', 'url' => '/api/v1/admin/applications/{id}/lease-policy',     'verb' => 'GET'],
+    ['name' => 'adminApplication#setLeasePolicy', 'url' => '/api/v1/admin/applications/{id}/lease-policy',     'verb' => 'PUT'],
+    ['name' => 'adminApplication#show',           'url' => '/api/v1/admin/applications/{id}',                  'verb' => 'GET'],
+    ['name' => 'adminApplication#destroy',        'url' => '/api/v1/admin/applications/{id}',                  'verb' => 'DELETE'],
+    ['name' => 'adminAudit#events',         'url' => '/api/v1/admin/audit',                    'verb' => 'GET'],
+    ['name' => 'adminAudit#reports',        'url' => '/api/v1/admin/compliance/reports',       'verb' => 'GET'],
+    ['name' => 'adminAudit#generateReport', 'url' => '/api/v1/admin/compliance/reports',       'verb' => 'POST'],
+    ['name' => 'adminAudit#showReport',     'url' => '/api/v1/admin/compliance/reports/{id}',  'verb' => 'GET'],
+    ['name' => 'adminAudit#sinks',          'url' => '/api/v1/admin/siem/sinks',               'verb' => 'GET'],
+    ['name' => 'adminAudit#createSink',     'url' => '/api/v1/admin/siem/sinks',               'verb' => 'POST'],
+    ['name' => 'adminAudit#updateSink',     'url' => '/api/v1/admin/siem/sinks/{id}',          'verb' => 'PUT'],
+    ['name' => 'adminAudit#destroySink',    'url' => '/api/v1/admin/siem/sinks/{id}',          'verb' => 'DELETE'],
+
     // EncryptionSuite CRUD.
     ['name' => 'encryptionSuite#index',             'url' => '/api/v1/suites',                          'verb' => 'GET'],
     ['name' => 'encryptionSuite#show',              'url' => '/api/v1/suites/{id}',                     'verb' => 'GET'],
     ['name' => 'encryptionSuite#create',            'url' => '/api/v1/suites',                          'verb' => 'POST'],
+    ['name' => 'encryptionSuite#reenrol',           'url' => '/api/v1/suites/reenrol',                  'verb' => 'POST'],
     ['name' => 'encryptionSuite#updatePrivateKey',  'url' => '/api/v1/suites/{id}/private-key',         'verb' => 'PUT'],
     ['name' => 'encryptionSuite#revoke',            'url' => '/api/v1/suites/{id}/revoke',              'verb' => 'POST'],
     ['name' => 'encryptionSuite#forceRevoke',       'url' => '/api/v1/suites/{id}/force-revoke',        'verb' => 'POST'],
@@ -85,6 +124,8 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
 
     // Secret CRUD. The nested link-shares route below is more specific and
     // is registered immediately after, so it still resolves correctly.
+    // Recently used widget (vault-recently-used); before the {id} wildcard.
+    ['name' => 'audit#recent',  'url' => '/api/v1/secrets/recent', 'verb' => 'GET'],
     ['name' => 'secret#index',   'url' => '/api/v1/secrets',      'verb' => 'GET'],
     ['name' => 'secret#create',  'url' => '/api/v1/secrets',      'verb' => 'POST'],
     // Batch import commit (secret-import D7). Accepts arrays of already
@@ -94,8 +135,19 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // catch-all wildcard.
     ['name' => 'import#batchCreate', 'url' => '/api/v1/secrets/import-batch', 'verb' => 'POST'],
     ['name' => 'secret#show',    'url' => '/api/v1/secrets/{id}', 'verb' => 'GET'],
-    ['name' => 'secret#update',  'url' => '/api/v1/secrets/{id}', 'verb' => 'PUT'],
-    ['name' => 'secret#destroy', 'url' => '/api/v1/secrets/{id}', 'verb' => 'DELETE'],
+    ['name' => 'secretUpdate#update', 'url' => '/api/v1/secrets/{id}', 'verb' => 'PUT'],
+    // Trash and archive (vault-trash-and-archive): DELETE /{id} moves a secret to the trash.
+    ['name' => 'secretTrash#trash',     'url' => '/api/v1/secrets/{id}',           'verb' => 'DELETE'],
+    ['name' => 'secretTrash#restore',   'url' => '/api/v1/secrets/{id}/restore',   'verb' => 'POST'],
+    ['name' => 'secretTrash#purge',     'url' => '/api/v1/secrets/{id}/purge',     'verb' => 'DELETE'],
+    ['name' => 'secretTrash#archive',   'url' => '/api/v1/secrets/{id}/archive',   'verb' => 'POST'],
+    ['name' => 'secretTrash#unarchive', 'url' => '/api/v1/secrets/{id}/unarchive', 'verb' => 'POST'],
+    // Favourites, tags and last used (vault-favourites-tags-and-last-used), the caller's own rows only.
+    ['name' => 'secretOrganisation#favourite', 'url' => '/api/v1/secrets/{id}/favourite', 'verb' => 'PUT'],
+    ['name' => 'secretOrganisation#tags',      'url' => '/api/v1/secrets/{id}/tags',      'verb' => 'PUT'],
+    // A fill of a use-only copy, reported by the extension (sharing-use-only-and-expiring-shares §3.3).
+    ['name' => 'useOnly#used',                 'url' => '/api/v1/secrets/{id}/used',      'verb' => 'POST'],
+    ['name' => 'secretOrganisation#tagIndex',  'url' => '/api/v1/tags',                   'verb' => 'GET'],
 
     // Link sharing — authenticated CRUD (secret owner).
     ['name' => 'linkShare#index',   'url' => '/api/v1/secrets/{secretId}/link-shares', 'verb' => 'GET'],
@@ -123,11 +175,14 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // Bulk direct-share registration + recipient-cert lookup (bulk-actions §6.1).
     ['name' => 'share#registerBatch',        'url' => '/api/v1/shares/register-batch',        'verb' => 'POST'],
     ['name' => 'share#recipientCertificate', 'url' => '/api/v1/shares/recipient-certificate', 'verb' => 'GET'],
+    ['name' => 'recipientStatus#status',     'url' => '/api/v1/shares/recipient-status',      'verb' => 'POST'],
     // POST, not GET: a candidate list does not belong in a query string,
     // and the sharee-search pages these ids come from can be long.
     ['name' => 'share#recipientCertificates', 'url' => '/api/v1/shares/recipient-certificates', 'verb' => 'POST'],
     ['name' => 'share#sync',        'url' => '/api/v1/secrets/{secretId}/sync',         'verb' => 'PUT'],
     ['name' => 'share#destroy',     'url' => '/api/v1/shares/{id}',                     'verb' => 'DELETE'],
+    // Use-only flag and end date of a direct share (sharing-use-only-and-expiring-shares §2.1).
+    ['name' => 'share#update',      'url' => '/api/v1/shares/{id}',                     'verb' => 'PATCH'],
 
     // Group sharing — implement-user-sharing §9.2.
     ['name' => 'groupShare#index',            'url' => '/api/v1/secrets/{secretId}/group-shares',           'verb' => 'GET'],
@@ -171,7 +226,7 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // with base /apps/keepiq/public, so recipient links are PATHS
     // (/public/share/link/{token}, /public/send/{token},
     // /public/share/request/{token}) and a load or refresh of any of them
-    // must serve the shell. Mirrors the AppHost dashboard#page +
+    // must serve the shell. Mirrors the dashboard#page +
     // dashboard#catchAll split: a distinct name, because Symfony silently
     // replaces same-named routes. Sits in $extra, so it precedes the
     // authenticated /{path} fallback.
@@ -227,6 +282,33 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // Offline cache (offline-readonly-cache §1.4) — owner-scoped
     // consolidated snapshot; 403 when the admin off switch is set.
     ['name' => 'offline#manifest', 'url' => '/api/v1/offline/manifest', 'verb' => 'GET'],
+    // Organisation account recovery (crypto-organisation-account-recovery).
+    ['name' => 'recoveryAdmin#show',          'url' => '/api/v1/recovery/admin',                      'verb' => 'GET'],
+    ['name' => 'recoveryAdmin#update',        'url' => '/api/v1/recovery/admin',                      'verb' => 'PUT'],
+    ['name' => 'recoveryAdmin#retireKey',     'url' => '/api/v1/recovery/admin/keys/{id}/retire',     'verb' => 'POST'],
+    ['name' => 'recoveryAdmin#enrolled',      'url' => '/api/v1/recovery/admin/enrolled',             'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#overview',    'url' => '/api/v1/recovery/officer',                    'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#createKey',   'url' => '/api/v1/recovery/officer/keys',               'verb' => 'POST'],
+    ['name' => 'recoveryOfficer#ownCopy',     'url' => '/api/v1/recovery/officer/copy',               'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#replaceOwnCopy', 'url' => '/api/v1/recovery/officer/keys/{keyId}/copy', 'verb' => 'PUT'],
+    ['name' => 'recoveryOfficer#approve',     'url' => '/api/v1/recovery/requests/{id}/approve',      'verb' => 'POST'],
+    ['name' => 'recoveryOfficer#decline',     'url' => '/api/v1/recovery/requests/{id}/decline',      'verb' => 'POST'],
+    ['name' => 'recoveryOfficer#handoff',     'url' => '/api/v1/recovery/requests/{id}/handoff',      'verb' => 'GET'],
+    ['name' => 'recoveryOfficer#postSealed',  'url' => '/api/v1/recovery/requests/{id}/sealed',       'verb' => 'POST'],
+    ['name' => 'recoveryUser#enrolment',      'url' => '/api/v1/recovery/enrolment',                  'verb' => 'GET'],
+    ['name' => 'recoveryUser#enrol',          'url' => '/api/v1/recovery/enrolment',                  'verb' => 'PUT'],
+    ['name' => 'recoveryUser#withdraw',       'url' => '/api/v1/recovery/enrolment',                  'verb' => 'DELETE'],
+    ['name' => 'recoveryUser#myRequest',      'url' => '/api/v1/recovery/requests/mine',              'verb' => 'GET'],
+    ['name' => 'recoveryUser#createRequest',  'url' => '/api/v1/recovery/requests',                   'verb' => 'POST'],
+    ['name' => 'recoveryUser#complete',       'url' => '/api/v1/recovery/requests/{id}/complete',     'verb' => 'POST'],
+    // New device approval (crypto-new-device-approval). The fixed paths come
+    // before the {id} ones.
+    ['name' => 'deviceApproval#status',  'url' => '/api/v1/device-approvals/status',       'verb' => 'GET'],
+    ['name' => 'deviceApproval#pending', 'url' => '/api/v1/device-approvals/pending',      'verb' => 'GET'],
+    ['name' => 'deviceApproval#create',  'url' => '/api/v1/device-approvals',              'verb' => 'POST'],
+    ['name' => 'deviceApproval#show',    'url' => '/api/v1/device-approvals/{id}',         'verb' => 'GET'],
+    ['name' => 'deviceApproval#approve', 'url' => '/api/v1/device-approvals/{id}/approve', 'verb' => 'POST'],
+    ['name' => 'deviceApproval#deny',    'url' => '/api/v1/device-approvals/{id}/deny',    'verb' => 'POST'],
 
     // Offline service worker (offline-readonly-cache §3) — served from the
     // app root with the correct JS MIME + app-root default scope.
@@ -293,6 +375,27 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // Canonical discovery path. The pre-rename path below is still served
     // and is retired before the first stable release — see legacyDocument().
     ['name' => 'discovery#document', 'url' => '/api/v1/app/.well-known/keepiq', 'verb' => 'GET'],
+    // Federated recipients (sharing-federated-recipients). The partner-facing
+    // endpoints are not routes: they live under /ocm/keepiq/... and are
+    // answered by FederationOcmRequestListener.
+    ['name' => 'federationPartner#index',   'url' => '/api/v1/federation/partners',         'verb' => 'GET'],
+    ['name' => 'federationPartner#preview', 'url' => '/api/v1/federation/partners/preview', 'verb' => 'POST'],
+    ['name' => 'federationPartner#create',  'url' => '/api/v1/federation/partners',         'verb' => 'POST'],
+    ['name' => 'federationPartner#update',  'url' => '/api/v1/federation/partners/{id}',    'verb' => 'PUT'],
+    ['name' => 'federationPartner#destroy', 'url' => '/api/v1/federation/partners/{id}',    'verb' => 'DELETE'],
+    ['name' => 'federation#recipientCertificate', 'url' => '/api/v1/federation/recipient-certificate', 'verb' => 'POST'],
+    ['name' => 'federation#status', 'url' => '/api/v1/federation/status', 'verb' => 'GET'],
+    // Federated shares (sharing-federated-recipients D4): the owner posts the
+    // ciphertext made for a partner's user; the recipient accepts or declines
+    // what arrived under "Incoming from other organisations".
+    ['name' => 'federatedShare#index',  'url' => '/api/v1/secrets/{secretId}/federated-shares', 'verb' => 'GET'],
+    ['name' => 'federatedShare#create', 'url' => '/api/v1/secrets/{secretId}/federated-shares', 'verb' => 'POST'],
+    ['name' => 'federatedShare#update',  'url' => '/api/v1/federated-shares/{id}',         'verb' => 'PUT'],
+    ['name' => 'federatedShare#destroy', 'url' => '/api/v1/federated-shares/{id}',         'verb' => 'DELETE'],
+    ['name' => 'federatedShare#suspend', 'url' => '/api/v1/federated-shares/{id}/suspend', 'verb' => 'POST'],
+    ['name' => 'federatedInbound#index',   'url' => '/api/v1/federation/incoming',              'verb' => 'GET'],
+    ['name' => 'federatedInbound#accept',  'url' => '/api/v1/federation/incoming/{id}/accept',  'verb' => 'POST'],
+    ['name' => 'federatedInbound#decline', 'url' => '/api/v1/federation/incoming/{id}/decline', 'verb' => 'POST'],
     ['name' => 'discovery#legacyDocument', 'url' => '/api/v1/app/.well-known/doriath', 'verb' => 'GET'],
 
     // JWT-Bearer token exchange (public; signature-verified).
@@ -301,6 +404,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     // Bearer-authenticated application secrets API (openconnector-secret-store-api).
     // JwtAuthMiddleware enforces the Authorization header before the controller runs.
     // The by-name route precedes {id} so its extra path segment resolves first.
+    // The calling application's own certificate and fingerprint
+    // (app-own-certificate), so a client can check envelopes without
+    // configuring the certificate.
+    ['name' => 'applicationCertificate#show', 'url' => '/api/v1/app/certificate', 'verb' => 'GET'],
     ['name' => 'applicationSecrets#index',  'url' => '/api/v1/app/secrets',                 'verb' => 'GET'],
     ['name' => 'applicationSecrets#create', 'url' => '/api/v1/app/secrets',                 'verb' => 'POST'],
     ['name' => 'applicationSecrets#byName', 'url' => '/api/v1/app/secrets/by-name/{name}',  'verb' => 'GET',
@@ -317,10 +424,10 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'applicationSecretRequests#create', 'url' => '/api/v1/app/secret-requests', 'verb' => 'POST'],
 
     ['name' => 'machineLease#index',  'url' => '/api/v1/app/leases',              'verb' => 'GET'],
-    ['name' => 'machineLease#renew',  'url' => '/api/v1/app/leases/{id}/renew',   'verb' => 'POST'],
     ['name' => 'machineLease#revoke', 'url' => '/api/v1/app/leases/{id}/revoke',  'verb' => 'POST'],
     // Session-authenticated admin/owner lease management.
     ['name' => 'leaseAdmin#index',     'url' => '/api/v1/applications/{id}/leases',       'verb' => 'GET'],
+    ['name' => 'leaseAdmin#getPolicy', 'url' => '/api/v1/applications/{id}/lease-policy', 'verb' => 'GET'],
     ['name' => 'leaseAdmin#setPolicy', 'url' => '/api/v1/applications/{id}/lease-policy', 'verb' => 'PUT'],
     ['name' => 'leaseAdmin#revoke',    'url' => '/api/v1/leases/{leaseId}',               'verb' => 'DELETE'],
 
@@ -361,6 +468,11 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'teamFolder#index',                'url' => '/api/v1/team-folders',                         'verb' => 'GET'],
     ['name' => 'teamFolder#create',               'url' => '/api/v1/team-folders',                         'verb' => 'POST'],
     ['name' => 'teamFolder#offboard',             'url' => '/api/v1/team-folders/offboard',                'verb' => 'POST'],
+    // Contributable team folders (admin-vault-policies §4.3): before any /{id} route.
+    ['name' => 'teamFolderContribution#contributable',        'url' => '/api/v1/team-folders/contributable',           'verb' => 'GET'],
+    ['name' => 'teamFolderContribution#ownershipFindings',    'url' => '/api/v1/team-folders/ownership-findings',      'verb' => 'GET'],
+    // admin-auto-confirm-members D4: before any /{id} route.
+    ['name' => 'teamFolder#pendingConfirmations', 'url' => '/api/v1/team-folders/pending-confirmations', 'verb' => 'GET'],
     ['name' => 'teamFolderMember#members',        'url' => '/api/v1/team-folders/{id}/members',            'verb' => 'GET'],
     ['name' => 'teamFolderMember#addMember',      'url' => '/api/v1/team-folders/{id}/members',            'verb' => 'POST'],
     ['name' => 'teamFolderMember#removeMember',   'url' => '/api/v1/team-folders/{id}/members/{memberId}', 'verb' => 'DELETE'],
@@ -369,8 +481,16 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'share#writeContext',              'url' => '/api/v1/secrets/{id}/write-context',           'verb' => 'GET'],
     ['name' => 'teamFolder#reconcile',            'url' => '/api/v1/team-folders/{id}/reconcile',          'verb' => 'GET'],
     ['name' => 'teamFolder#registerShares',       'url' => '/api/v1/team-folders/{id}/shares',             'verb' => 'POST'],
+    // Write-grade member contribution (admin-vault-policies D5).
+    ['name' => 'teamFolderContribution#contribute',           'url' => '/api/v1/team-folders/{id}/secrets',            'verb' => 'POST'],
+    ['name' => 'teamFolderContribution#contributionContext',  'url' => '/api/v1/team-folders/{id}/contribution-context', 'verb' => 'GET'],
     ['name' => 'teamFolderMember#approveJoin',    'url' => '/api/v1/team-folders/{id}/approve-join',       'verb' => 'POST'],
     ['name' => 'teamFolder#destroy',              'url' => '/api/v1/team-folders/{id}',                    'verb' => 'DELETE'],
+
+    // Admin member overview (admin-member-overview-and-offboarding D4): admin
+    // only, metadata only. Under /api/v1/admin/ so admin-public-api can
+    // document it without a rename.
+    ['name' => 'memberOverview#index', 'url' => '/api/v1/admin/members', 'verb' => 'GET'],
 
     // Audit trail (add-secret-audit-trail §4.1). Specific /secret/{id} and
     // /me routes come before the admin instance-wide /audit collection.
@@ -380,7 +500,9 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
 
     // Password-health breach-check proxy (password-health §1.5). Prefix-only
     // k-anonymity forward to HIBP; double-gated (admin setting + user opt-in).
-    ['name' => 'breachProxy#range', 'url' => '/api/v1/breach-check/range/{prefix}', 'verb' => 'GET'],
+    // POST with the prefix in the body, never in the URI: Nextcloud stamps the
+    // request URI next to the user id on every log line (keepiq#866).
+    ['name' => 'breachProxy#range', 'url' => '/api/v1/breach-check/range', 'verb' => 'POST'],
 
     // GDPR data-subject endpoints (secret-export-gdpr D3/D4). All self-scoped
     // to the session user — no user selector. Master-password re-auth on the
@@ -405,4 +527,35 @@ return \OCA\OpenRegister\AppHost\Routes::standard([
     ['name' => 'extension#pair', 'url' => '/api/v1/extension/pair', 'verb' => 'POST'],
     ['name' => 'extension#unpair', 'url' => '/api/v1/extension/unpair', 'verb' => 'POST'],
     ['name' => 'extension#match', 'url' => '/api/v1/extension/match', 'verb' => 'GET'],
-]);
+    // The idle lock maximum the extension clamps the user's choice to.
+    ['name' => 'extension#policy', 'url' => '/api/v1/extension/policy', 'verb' => 'GET'],
+    // A fill from the extension counts as a use (vault-favourites-tags-and-last-used); 404 for a row the caller does not hold.
+    ['name' => 'secretOrganisation#used', 'url' => '/api/v1/extension/used/{id}', 'verb' => 'POST'],
+];
+
+return [
+    'routes' => array_merge(
+        [
+            ['name' => 'dashboard#page', 'url' => '/', 'verb' => 'GET'],
+            ['name' => 'settings#index', 'url' => '/api/settings', 'verb' => 'GET'],
+            ['name' => 'settings#create', 'url' => '/api/settings', 'verb' => 'POST'],
+            ['name' => 'settings#update', 'url' => '/api/settings', 'verb' => 'PUT'],
+            // Per-user UI preferences, such as the walkthrough's completed version.
+            ['name' => 'preferences#getPreference', 'url' => '/api/preferences/{key}', 'verb' => 'GET'],
+            ['name' => 'preferences#setPreference', 'url' => '/api/preferences/{key}', 'verb' => 'PUT'],
+            // Observability (hydra ADR-006): health is public, metrics admin-only.
+            ['name' => 'metrics#index', 'url' => '/api/metrics', 'verb' => 'GET'],
+            ['name' => 'health#index', 'url' => '/api/health', 'verb' => 'GET'],
+        ],
+        $extra,
+        [
+            [
+                'name'         => 'dashboard#catchAll',
+                'url'          => '/{path}',
+                'verb'         => 'GET',
+                'requirements' => ['path' => '(?!api/).+'],
+                'defaults'     => ['path' => ''],
+            ],
+        ]
+    ),
+];

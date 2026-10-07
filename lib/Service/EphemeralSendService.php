@@ -224,6 +224,8 @@ class EphemeralSendService {
 	 * @param string $ownerId The owner
 	 *
 	 * @return EphemeralSend[]
+	 *
+	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-manage-and-revoke-sends
 	 */
 	public function listForOwner(string $ownerId): array {
 		return $this->mapper->findByOwner(ownerId: $ownerId);
@@ -239,6 +241,8 @@ class EphemeralSendService {
 	 * @return void
 	 *
 	 * @throws DoesNotExistException When missing or foreign
+	 *
+	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-manage-and-revoke-sends
 	 */
 	public function revoke(string $id, string $ownerId): void {
 		$send = $this->mapper->findById($id);
@@ -257,6 +261,8 @@ class EphemeralSendService {
 	 * @return array<string,mixed>
 	 *
 	 * @throws DoesNotExistException When missing, expired, or burned
+	 *
+	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-anonymous-recipient-access-with-no-account
 	 */
 	public function peek(string $token): array {
 		$send = $this->loadLive(token: $token);
@@ -303,6 +309,8 @@ class EphemeralSendService {
 	 * @return array{burned:bool, remainingViews:int}
 	 *
 	 * @throws DoesNotExistException When missing, expired, or burned
+	 *
+	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-burn-after-read-and-optional-expiry
 	 */
 	public function confirmView(string $token): array {
 		$send = $this->loadLive(token: $token);
@@ -367,6 +375,8 @@ class EphemeralSendService {
 	 * Delete TTL-elapsed and fully-burned sends (cron).
 	 *
 	 * @return int Rows purged
+	 *
+	 * @spec openspec/specs/ephemeral-send/spec.md#requirement-burn-after-read-and-optional-expiry
 	 */
 	public function purge(): int {
 		$count = 0;

@@ -5,11 +5,15 @@
 # entrypoint entirely and prevents Nextcloud from starting — hence this hook.
 #
 # app:enable is idempotent, so re-running on every start is harmless.
-# openregister must be enabled first: keepiq builds on its AppHost engine.
+# Keepiq needs no other app (ADR-006). OpenRegister is enabled only when a
+# checkout is mounted at ../openregister; it adds the Flows pages and the MCP
+# tools.
 #
 # SPDX-License-Identifier: EUPL-1.2
 # SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
 set -eu
 
-php /var/www/html/occ app:enable openregister
+if [ -f /var/www/html/custom_apps/openregister/appinfo/info.xml ]; then
+	php /var/www/html/occ app:enable openregister
+fi
 php /var/www/html/occ app:enable keepiq

@@ -50,6 +50,18 @@ export function hostOf(input) {
 }
 
 /**
+ * Whether a host is a public suffix under the same approximation: a single
+ * label (`org`, `nl`) or one of the multi-label suffixes above.
+ *
+ * @param {string} host A hostname.
+ * @return {boolean} True for a public suffix.
+ */
+export function isPublicSuffix(host) {
+	const h = hostOf(host)
+	return h !== '' && (h.indexOf('.') === -1 || MULTI_LABEL_SUFFIXES.has(h))
+}
+
+/**
  * The registrable domain (eTLD+1 approximation) of a hostname.
  * @param host
  */
@@ -100,10 +112,18 @@ export function matchScore(secret, targetHost) {
  * @param {Array<{ url?: string, name?: string }>} secrets
  * @param {string} targetHost
  * @return {Array<object>} matching secrets, best-first, each with `_score`
+ * @spec openspec/specs/extension-small-items/spec.md#requirement-suggestions-by-last-use
  */
 export function matchSecrets(secrets, targetHost) {
 	return (secrets || [])
 		.map((s) => ({ ...s, _score: matchScore(s, targetHost) }))
 		.filter((s) => s._score > 0)
-		.sort((a, b) => b._score - a._score)
+		.sort(
+			(a, b) =>
+				b._score - a._score
+				// Equally good: the one used last comes first.
+				|| String(b.lastUsedAt || '').localeCompare(
+					String(a.lastUsedAt || ''),
+				),
+		)
 }

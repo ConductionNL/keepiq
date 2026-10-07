@@ -1,8 +1,13 @@
 # secret-store-api Specification
 
+**OpenSpec changes:**
+- [apps-secret-sync-and-rotation-runner](../../changes/archive/2026-10-02-apps-secret-sync-and-rotation-runner/) _(archived 2026-10-02)_
+
 ## Purpose
-TBD - created by archiving change openconnector-secret-store-api. Update Purpose after archive.
+The machine API through which an approved application, such as an OpenConnector or integriq connector, fetches and writes back the secrets in its own vault. The server stores and serves ciphertext only; the application decrypts with its own private key.
+
 ## Requirements
+
 ### Requirement: Machine API Discovery Document
 The system MUST serve an unauthenticated, machine-readable discovery document declaring the API version, token endpoint, supported grant type (`urn:ietf:params:oauth:grant-type:jwt-bearer`), assertion requirements (algorithm, maximum lifetime, audience), the secret endpoint paths (list, by-id, by-name), and the supported envelope formats. The canonical location is `GET /api/v1/app/.well-known/keepiq`. The identical document MUST also be served at the pre-rename path `GET /api/v1/app/.well-known/doriath`, until that path is removed before the first stable release. The document MUST contain no instance-private data. Breaking changes to addressing or envelope shape MUST be published as a new API version in this document, never as an in-place mutation of an existing version.
 
@@ -75,6 +80,21 @@ The system MUST allow an authenticated application to create and update secrets 
 
 ### Requirement: Token Endpoint Hardening
 The token endpoint MUST verify the JWT assertion's signature against the application's registered certificate, reject assertions with a lifetime over 300 seconds or an expired/future validity window, and reject any reuse of a `jti` within the assertion's lifetime (replay protection). Failed exchanges MUST be subject to Nextcloud brute-force throttling. Applications that are pending, rejected, deleted, or whose EncryptionSuite is revoked or compromised MUST be refused a token. Issued bearer tokens MUST be opaque, expire within 5 minutes, and grant access to exactly one application's vault.
+
+#### Scenario: Replayed assertion rejected
+@e2e exclude Machine-to-machine API contract with no UI surface; covered by JwtAuthServiceTest (jti replay) and the Newman token negative cases.
+- **WHEN** the same signed assertion (same `jti`) is presented twice within its lifetime
+- **THEN** the second exchange MUST be rejected
+
+#### Scenario: Pending application refused
+@e2e exclude Machine-to-machine API contract with no UI surface; covered by JwtAuthServiceTest::testInactiveApplicationRejected (status guard) and the application-mgmt isActive() check.
+- **WHEN** an application with status `pending` presents a validly signed assertion
+- **THEN** the token exchange MUST be refused
+
+#### Scenario: Failed exchanges throttled
+@e2e exclude Machine-to-machine API contract with no UI surface; covered by the BruteForceProtection attribute + throttle() calls on ApplicationTokenController::exchange (verified by the route-auth/semantic-auth gates) and the Newman token-negative group.
+- **WHEN** repeated invalid assertions are presented
+- **THEN** the endpoint MUST apply brute-force throttling to subsequent attempts
 
 ### Requirement: Discovery Path
 The discovery document MUST be served at both the canonical path
@@ -286,3 +306,47 @@ Machine secret-request creation MUST enforce the same guards as token issuance: 
 @e2e exclude Machine-to-machine API contract with no UI surface; covered by ApplicationSecretRequestServiceTest::testCreationEmitsExactlyOneApplicationAuditEvent asserting the dispatched typed audit event.
 - **WHEN** an application successfully creates a request on the machine surface
 - **THEN** exactly one audit event MUST be dispatched with the application as actor
+
+### Requirement: Conditional machine write-back
+
+`PUT /api/v1/app/secrets/{id}` MUST accept an `If-Match` header. When the header is present and does not equal the secret's current strong ETag, the server MUST answer 412 Precondition Failed and MUST NOT change the secret. When the header is absent, the endpoint MUST behave as before. The discovery document MUST advertise `conditionalWrite: true`.
+
+#### Scenario: Stale write is refused
+
+- **GIVEN** an application read secret `pg-app-password` with ETag `A`, and the secret was later updated to ETag `B`
+- **WHEN** the application calls `PUT /api/v1/app/secrets/{id}` with `If-Match: A`
+- **THEN** the response MUST be 412
+- **AND** the stored ciphertext MUST still be the one behind ETag `B`
+
+#### Scenario: Matching write succeeds
+
+- **GIVEN** an application holds the current ETag of its secret
+- **WHEN** it calls `PUT /api/v1/app/secrets/{id}` with that ETag in `If-Match` and new ciphertext
+- **THEN** the ciphertext MUST be replaced and a new ETag returned
+
+### Requirement: Expiry date in the machine envelope
+
+The `secret` block of the machine envelope MUST include `expiresAt` as an ISO 8601 timestamp, or null when the secret has no expiry. Adding it MUST NOT change any other envelope field. The discovery document MUST advertise `expiresAt: true`.
+
+#### Scenario: Consumer reads the expiry date
+
+- **GIVEN** an application secret with an expiry date of 1 December 2026
+- **WHEN** the application fetches it through `GET /api/v1/app/secrets/{id}`
+- **THEN** the envelope's `secret.expiresAt` MUST be `2026-12-01T00:00:00+00:00`
+
+### Requirement: An application reads its own certificate
+
+The system MUST serve `GET /api/v1/app/certificate` to a Bearer-authenticated application. The response MUST contain the application id, the id of its active encryption suite, that suite's certificate in PEM and its `certificateFingerprint`, computed exactly as in the response envelope (`sha256:` over the certificate DER). The response MUST NOT contain private key material or another application's certificate. The discovery document MUST name the path under `certificate`.
+
+#### Scenario: A client verifies envelopes without configuring the certificate
+
+- **GIVEN** an approved application with an active encryption suite and a valid access token
+- **WHEN** it calls `GET /api/v1/app/certificate`
+- **THEN** the response MUST carry its certificate and `certificateFingerprint`
+- **AND** that fingerprint MUST equal the `certificateFingerprint` of every envelope encrypted to that suite
+
+#### Scenario: No token, no certificate
+
+- **GIVEN** a request without a Bearer token
+- **WHEN** it calls `GET /api/v1/app/certificate`
+- **THEN** the response MUST be 401

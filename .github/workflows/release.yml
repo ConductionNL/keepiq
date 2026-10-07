@@ -37,6 +37,11 @@ jobs:
   unstable:
     if: github.ref == 'refs/heads/development'
     uses: ConductionNL/.github/.github/workflows/release.yml@main
+    # What the shared release job declares: it commits the version bump,
+    # tags it and opens the bump pull request.
+    permissions:
+      contents: write
+      pull-requests: write
     with:
       release-type: unstable
       app-name: keepiq
@@ -46,6 +51,11 @@ jobs:
   beta:
     if: github.ref == 'refs/heads/beta'
     uses: ConductionNL/.github/.github/workflows/release.yml@main
+    # What the shared release job declares: it commits the version bump,
+    # tags it and opens the bump pull request.
+    permissions:
+      contents: write
+      pull-requests: write
     with:
       release-type: beta
       app-name: keepiq
@@ -55,6 +65,11 @@ jobs:
   stable:
     if: github.ref == 'refs/heads/main'
     uses: ConductionNL/.github/.github/workflows/release.yml@main
+    # What the shared release job declares: it commits the version bump,
+    # tags it and opens the bump pull request.
+    permissions:
+      contents: write
+      pull-requests: write
     with:
       release-type: stable
       app-name: keepiq

@@ -60,6 +60,35 @@
 			</li>
 		</ul>
 
+		<!-- Hand the secret to a colleague for a while (#754). The delegate
+		     must already hold a share, so the choice is limited to the
+		     secret's current recipients. -->
+		<div
+			v-if="canReclaim && candidates.length > 0"
+			class="keepiq-delegation-manager__create"
+			data-testid="delegation-manager-create">
+			<label class="keepiq-delegation-manager__label">
+				<span>{{ t('keepiq', 'Hand over to') }}</span>
+				<select
+					v-model="delegateTo"
+					data-testid="delegation-manager-delegate">
+					<option value="" disabled>
+						{{ t('keepiq', 'Choose a recipient') }}
+					</option>
+					<option v-for="uid in candidates" :key="uid" :value="uid">
+						{{ uid }}
+					</option>
+				</select>
+			</label>
+			<button
+				type="button"
+				:disabled="delegateTo === '' || store.loading"
+				data-testid="delegation-manager-delegate-submit"
+				@click="onDelegate">
+				{{ t('keepiq', 'Hand over temporarily') }}
+			</button>
+		</div>
+
 		<div v-if="canReclaim" class="keepiq-delegation-manager__actions">
 			<button
 				type="button"
@@ -81,6 +110,7 @@
 
 <script>
 import { useDelegationStore } from '../../store/modules/delegation.js'
+import { useShareStore } from '../../store/modules/share.js'
 
 export default {
 	name: 'DelegationManager',
@@ -97,15 +127,55 @@ export default {
 		},
 	},
 
-	emits: ['reclaimed'],
+	emits: ['reclaimed', 'delegated'],
 
+	/**
+	 * @spec exclude Store-ref passthrough: returns the Pinia delegation store with no domain logic.
+	 */
 	setup() {
 		const store = useDelegationStore()
-		return { store }
+		const shareStore = useShareStore()
+		return { store, shareStore }
 	},
 
+	data() {
+		return { delegateTo: '' }
+	},
+
+	computed: {
+		/**
+		 * The recipients who may become a delegate: they hold a share and
+		 * are not already one.
+		 *
+		 * @return {Array<string>} User ids.
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+		 */
+		candidates() {
+			const delegated = new Set(
+				this.store.delegations.map((row) => row.delegatedTo),
+			)
+			const ids = (this.shareStore.shares || [])
+				.map((share) => share?.targetUserId)
+				.filter(
+					(uid) =>
+						typeof uid === 'string' && uid !== '' && !delegated.has(uid),
+				)
+			return [...new Set(ids)]
+		},
+	},
+
+	/**
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+	 */
 	async mounted() {
 		await this.store.fetchDelegations(this.secretId)
+		if (this.canReclaim) {
+			try {
+				await this.shareStore.fetchShares(this.secretId)
+			} catch {
+				// No recipients to offer; the store holds the error for ShareList.
+			}
+		}
 	},
 
 	beforeUnmount() {
@@ -113,6 +183,28 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Hand the secret to the chosen recipient until the owner reclaims it.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+		 */
+		async onDelegate() {
+			try {
+				const created = await this.store.createDelegation(
+					this.secretId,
+					this.delegateTo,
+				)
+				this.delegateTo = ''
+				this.$emit('delegated', created)
+			} catch {
+				// The store already captured the error; let it render.
+			}
+		},
+
+		/**
+		 * @spec openspec/specs/user-sharing/spec.md#requirement-reclaim-delegation
+		 */
 		async onReclaim() {
 			try {
 				const removed = await this.store.reclaimDelegation(this.secretId)
@@ -181,6 +273,19 @@ export default {
 	   --color-warning-text is the paired value that stays readable on it. */
 	background: var(--color-warning);
 	color: var(--color-warning-text);
+}
+
+.keepiq-delegation-manager__create {
+	display: flex;
+	align-items: flex-end;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.keepiq-delegation-manager__label {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
 }
 
 .keepiq-delegation-manager__actions {

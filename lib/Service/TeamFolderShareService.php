@@ -41,6 +41,9 @@ use Throwable;
 
 /**
  * Registers and revokes the derived shares of a team folder.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The fan-out writes the copy, the
+ *   share row and its restriction; each collaborator is one of those.
  */
 class TeamFolderShareService {
 	/**
@@ -51,6 +54,7 @@ class TeamFolderShareService {
 	 * @param RecipientSecretCopyService $copies The recipient-copy service
 	 * @param NotificationService $notificationService The notification dispatcher
 	 * @param IDBConnection $db The database connection
+	 * @param ShareRestrictionResolver|null $restrictions Materialises use-only and end dates onto copies
 	 *
 	 * @return void
 	 *
@@ -62,6 +66,7 @@ class TeamFolderShareService {
 		private RecipientSecretCopyService $copies,
 		private NotificationService $notificationService,
 		private IDBConnection $db,
+		private ?ShareRestrictionResolver $restrictions = null,
 	) {
 	}//end __construct()
 
@@ -174,6 +179,31 @@ class TeamFolderShareService {
 
 		return $missing;
 	}//end missingPairs()
+
+	/**
+	 * Who handed each member their copies, when that was not the owner:
+	 * the automatic confirmations of admin-auto-confirm-members, for the
+	 * team folder dialog. User ids only, from the derived share rows.
+	 *
+	 * @param TeamFolder $teamFolder The team folder
+	 *
+	 * @return array<string,string> Confirmer user id keyed by member user id
+	 *
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-an-unlocked-confirmers-browser-confirms-without-a-click
+	 */
+	public function confirmers(TeamFolder $teamFolder): array {
+		$confirmers = [];
+		foreach ($this->bulkGrantMapper->findByTeamFolder(teamFolderId: $teamFolder->getId()) as $row) {
+			$createdBy = $row->getCreatedBy();
+			if ($createdBy === '' || $createdBy === $teamFolder->getOwnerId()) {
+				continue;
+			}
+
+			$confirmers[$row->getTargetUserId()] = $createdBy;
+		}
+
+		return $confirmers;
+	}//end confirmers()
 
 	/**
 	 * Revoke every derived ShareTarget of a team folder (and the
@@ -312,7 +342,8 @@ class TeamFolderShareService {
 		$entity->setTeamFolderId($teamFolder->getId());
 		$entity->setCreatedBy($userId);
 		$entity->setCreatedAt(new DateTime());
-		$this->shareTargetMapper->insert($entity);
+		$persisted = $this->shareTargetMapper->insert($entity);
+		$this->restrictions?->resolveTarget(target: $persisted);
 
 		return [
 			'sourceSecretId' => $sourceSecretId,

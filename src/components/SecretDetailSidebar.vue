@@ -46,18 +46,38 @@
 				v-if="secret && !error && offlineReadOnly"
 				class="secret-detail__offline-note"
 				data-testid="secret-detail-offline-note">
-				{{
-					t(
-						'keepiq',
-						'Read-only while offline — reconnect to edit, move, share, or delete.',
-					)
-				}}
+				<template v-if="offlineEditable">
+					{{
+						t(
+							'keepiq',
+							'Offline. Edits, moves and deletes stay on this device and sync when you are back online. Sharing and attachments need a connection.',
+						)
+					}}
+				</template>
+				<template v-else>
+					{{
+						t(
+							'keepiq',
+							'Read-only while offline — reconnect to edit, move, share, or delete.',
+						)
+					}}
+				</template>
 			</div>
+			<p
+				v-if="secret && !error && secret.pendingSync"
+				class="secret-detail__pending"
+				data-testid="secret-detail-pending">
+				{{ t('keepiq', 'Not synced yet') }}
+			</p>
 			<!-- Rendered offline too (write actions hidden then): with the
 			     native X hidden, the "…" menu is the pointer path to Close. -->
 			<div v-if="secret && !error" class="secret-detail__actions">
 				<NcButton
-					v-if="!offlineReadOnly"
+					v-if="
+						(!offlineReadOnly || offlineEditable)
+						&& !useOnly
+						&& !federatedReadOnly
+					"
 					variant="primary"
 					data-testid="secret-detail-edit"
 					@click="openEdit">
@@ -66,11 +86,38 @@
 					</template>
 					{{ t('keepiq', 'Edit') }}
 				</NcButton>
+				<!-- The holder's star (vault-favourites-tags-and-last-used). -->
 				<NcButton
-					v-if="!offlineReadOnly"
+					v-if="!offlineReadOnly && secret"
+					variant="tertiary"
+					:pressed="isFavourite"
+					:ariaLabel="
+						isFavourite
+							? t('keepiq', 'Remove from favourites')
+							: t('keepiq', 'Add to favourites')
+					"
+					:title="
+						isFavourite
+							? t('keepiq', 'Remove from favourites')
+							: t('keepiq', 'Add to favourites')
+					"
+					data-testid="secret-detail-star"
+					@click="toggleFavourite">
+					<template #icon>
+						<Star v-if="isFavourite" :size="20" />
+						<StarOutline v-else :size="20" />
+					</template>
+				</NcButton>
+				<NcButton
+					v-if="!useOnly && !federatedReadOnly"
 					variant="secondary"
+					:disabled="offlineReadOnly"
 					:ariaLabel="t('keepiq', 'Share')"
-					:title="t('keepiq', 'Share')"
+					:title="
+						offlineReadOnly
+							? t('keepiq', 'Sharing needs a connection')
+							: t('keepiq', 'Share')
+					"
 					data-testid="secret-detail-share"
 					@click="openShare">
 					<template #icon>
@@ -81,7 +128,10 @@
 					:ariaLabel="t('keepiq', 'Secret actions')"
 					:forceMenu="true"
 					data-testid="secret-detail-more">
-					<template v-if="!offlineReadOnly">
+					<!-- A read-only copy from another organisation may still be
+					     filed in a folder and deleted (sharing-federated-recipients
+					     3.5 and 4.4); deleting it declines the share. -->
+					<template v-if="!offlineReadOnly || offlineEditable">
 						<NcActionButton
 							:closeAfterClick="true"
 							data-testid="secret-detail-move"
@@ -90,6 +140,23 @@
 								<FolderMove :size="20" />
 							</template>
 							{{ t('keepiq', 'Move') }}
+						</NcActionButton>
+						<NcActionButton
+							v-if="!offlineReadOnly && !federatedReadOnly"
+							:closeAfterClick="true"
+							data-testid="secret-detail-archive"
+							@click="toggleArchive">
+							<template #icon>
+								<ArchiveArrowUpOutline
+									v-if="isArchived"
+									:size="20" />
+								<ArchiveOutline v-else :size="20" />
+							</template>
+							{{
+								isArchived
+									? t('keepiq', 'Unarchive')
+									: t('keepiq', 'Archive')
+							}}
 						</NcActionButton>
 						<NcActionButton
 							:closeAfterClick="true"
@@ -125,6 +192,42 @@
 		</NcEmptyContent>
 
 		<div v-if="!error && secret" class="secret-detail__card">
+			<!-- Use-only copy (sharing-use-only-and-expiring-shares D3): the
+			     value is never shown or copied here, only filled by the
+			     extension. -->
+			<NcNoteCard
+				v-if="useOnly"
+				type="info"
+				data-testid="secret-detail-use-only">
+				{{
+					t(
+						'keepiq',
+						'You can sign in with this login through the Keepiq browser extension. Its owner chose not to let you view or copy it.',
+					)
+				}}
+			</NcNoteCard>
+			<!-- A copy from another organisation (sharing-federated-recipients
+			     task 3.4): readable, never changed or passed on. -->
+			<NcNoteCard
+				v-if="federatedReadOnly"
+				type="info"
+				data-testid="secret-detail-federated">
+				{{
+					t(
+						'keepiq',
+						'{sender} shared this from another organisation. You can read it, but not change or share it.',
+						{ sender: secret.federatedSource || t('keepiq', 'Someone') },
+					)
+				}}
+			</NcNoteCard>
+			<p
+				v-if="accessEndsOn"
+				class="secret-detail__team-badge"
+				data-testid="secret-detail-access-ends">
+				{{
+					t('keepiq', 'Your access ends on {date}', { date: accessEndsOn })
+				}}
+			</p>
 			<!-- Write-grade badge (folder-permission-grades §4.3): the
 			     member knows an edit propagates to the whole team. -->
 			<p
@@ -205,6 +308,7 @@
 							<PasswordField
 								:key="secretLoadToken"
 								:label="keyLabel"
+								:useOnly="useOnly"
 								:resolve="resolveKey" />
 						</div>
 					</div>
@@ -229,7 +333,7 @@
 				</div>
 
 				<div
-					v-if="isPasskey"
+					v-if="isPasskey && !useOnly"
 					class="secret-detail__row secret-detail__row--block">
 					<span class="secret-detail__row-icon">
 						<Fingerprint :size="20" />
@@ -250,7 +354,7 @@
 				     Proton layout): each field its own row — icon, muted
 				     label, value; number/CVV/PIN masked with an eye toggle
 				     and copy at the row end. Absent fields render no row. -->
-				<template v-if="isCard && cardPayload">
+				<template v-if="isCard && cardPayload && !useOnly">
 					<div
 						v-if="cardPayload.cardholder"
 						class="secret-detail__row"
@@ -418,7 +522,7 @@
 			     plain headings outside the boxes, icon-less label-over-value
 			     rows, the BSN masked with a trailing eye + copy. Absent
 			     fields render no row; empty sections render no box. -->
-			<template v-if="isIdentity && identityPayload">
+			<template v-if="isIdentity && identityPayload && !useOnly">
 				<template
 					v-if="
 						identityFullName
@@ -556,7 +660,7 @@
 				</div>
 			</div>
 
-			<div v-if="hasAdditionalFields" class="secret-detail__box">
+			<div v-if="hasAdditionalFields && !useOnly" class="secret-detail__box">
 				<div class="secret-detail__row secret-detail__row--block">
 					<span class="secret-detail__row-icon">
 						<FormatListBulleted :size="20" />
@@ -597,7 +701,7 @@
 						<div class="secret-detail__row-value">
 							<AttachmentPanel
 								:secretId="secretId"
-								:canManage="isOwner" />
+								:canManage="isOwner && !offlineReadOnly" />
 						</div>
 					</div>
 				</div>
@@ -676,6 +780,11 @@
 						v-if="isOwner"
 						:secretId="secretId"
 						data-testid="secret-detail-share-list" />
+
+					<GroupShareList
+						v-if="isOwner"
+						:secretId="secretId"
+						data-testid="secret-detail-group-share-list" />
 
 					<DelegationManager
 						v-if="isOwner"
@@ -779,6 +888,7 @@
 							}}</span>
 							<div class="secret-detail__row-value">
 								<VersionHistoryPanel
+									v-if="!useOnly"
 									:secretId="secretId"
 									:canManage="isOwner"
 									@restored="load" />
@@ -834,6 +944,8 @@ import {
 	NcNoteCard,
 } from '@nextcloud/vue'
 import Account from 'vue-material-design-icons/Account.vue'
+import ArchiveArrowUpOutline from 'vue-material-design-icons/ArchiveArrowUpOutline.vue'
+import ArchiveOutline from 'vue-material-design-icons/ArchiveOutline.vue'
 import Autorenew from 'vue-material-design-icons/Autorenew.vue'
 import BeehiveOutline from 'vue-material-design-icons/BeehiveOutline.vue'
 import CalendarMonthOutline from 'vue-material-design-icons/CalendarMonthOutline.vue'
@@ -857,6 +969,8 @@ import Paperclip from 'vue-material-design-icons/Paperclip.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
 import ShareVariant from 'vue-material-design-icons/ShareVariant.vue'
 import ShieldOutline from 'vue-material-design-icons/ShieldOutline.vue'
+import Star from 'vue-material-design-icons/Star.vue'
+import StarOutline from 'vue-material-design-icons/StarOutline.vue'
 import Web from 'vue-material-design-icons/Web.vue'
 import SecretRequestCreateDialog from '../dialogs/SecretRequestCreateDialog.vue'
 import AttachmentPanel from './AttachmentPanel.vue'
@@ -869,6 +983,7 @@ import SecretActivityTab from './SecretActivityTab.vue'
 import SecretRequestList from './secretRequest/SecretRequestList.vue'
 import AdminHandoverPanel from './share/AdminHandoverPanel.vue'
 import DelegationManager from './share/DelegationManager.vue'
+import GroupShareList from './share/GroupShareList.vue'
 import ShareList from './share/ShareList.vue'
 import ShareRequestForm from './share/ShareRequestForm.vue'
 import TotpDisplay from './TotpDisplay.vue'
@@ -879,7 +994,9 @@ import { useFolderStore } from '../store/modules/folder.js'
 import { useOfflineStore } from '../store/modules/offline.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
+import { isRefusal } from '../utils/refusal.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
+import { isUseOnly } from '../utils/shareRestriction.js'
 import { rootVaultOf } from '../utils/vaultList.js'
 
 /**
@@ -901,6 +1018,8 @@ export default {
 		NcEmptyContent,
 		NcNoteCard,
 		Account,
+		ArchiveArrowUpOutline,
+		ArchiveOutline,
 		Autorenew,
 		BeehiveOutline,
 		CalendarMonthOutline,
@@ -924,6 +1043,8 @@ export default {
 		Paperclip,
 		Pencil,
 		ShareVariant,
+		Star,
+		StarOutline,
 		Web,
 		AdminHandoverPanel,
 		AttachmentPanel,
@@ -936,6 +1057,7 @@ export default {
 		SecretActivityTab,
 		SecretRequestCreateDialog,
 		SecretRequestList,
+		GroupShareList,
 		ShareList,
 		ShareRequestForm,
 		TotpDisplay,
@@ -999,6 +1121,26 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * Whether the open secret is archived (vault-trash-and-archive).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+		 */
+		isArchived() {
+			return Boolean(this.secret?.archivedAt)
+		},
+
+		/**
+		 * Whether the holder starred this secret.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+		 */
+		isFavourite() {
+			return this.secret?.favourite === true
+		},
+
 		/**
 		 * The sidebar header name: the secret's name once loaded, a generic
 		 * placeholder while loading/errored (NcAppSidebar requires a name).
@@ -1084,6 +1226,32 @@ export default {
 		},
 
 		/**
+		 * Whether this is a use-only copy: no reveal, copy, edit, share or
+		 * version reveal (sharing-use-only-and-expiring-shares D3).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/use-only-shares/spec.md#requirement-keepiqs-clients-never-reveal-a-use-only-value
+		 */
+		useOnly() {
+			return isUseOnly(this.secret)
+		},
+
+		/**
+		 * The day the holder's access to this copy ends, or '' for none.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/expiring-shares/spec.md#requirement-shares-and-memberships-can-carry-an-end-date
+		 */
+		accessEndsOn() {
+			const end = this.secret?.accessExpiresAt
+			if (!end) {
+				return ''
+			}
+			const date = new Date(end)
+			return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString()
+		},
+
+		/**
 		 * Whether this secret has at least one additional field to show.
 		 *
 		 * The count matters, not just the presence of an object. `{}` is truthy AND
@@ -1139,6 +1307,11 @@ export default {
 		 * @spec openspec/specs/card-identity-items/spec.md#requirement-type-specific-presentation-and-masked-reveal
 		 */
 		showKeyRow() {
+			// A use-only copy shows one masked row whatever its type: no
+			// structured payload rows, which would reveal the value.
+			if (this.useOnly) {
+				return !this.isTotp
+			}
 			// A composite payload that fails to parse (legacy plain string)
 			// falls back to the raw key row rather than showing nothing.
 			if (this.isCard) {
@@ -1326,10 +1499,21 @@ export default {
 		 * all write actions on the detail are hidden (offline-readonly-cache §4.2).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/specs/offline-readonly-cache/spec.md#requirement-offline-mode-is-strictly-read-only
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-sharing-and-membership-actions-stay-online-only
 		 */
 		offlineReadOnly() {
 			return useOfflineStore().readOnly
+		},
+
+		/**
+		 * Offline with offline edits allowed: edit, move and delete go into
+		 * the sync queue; sharing stays online-only.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-sharing-and-membership-actions-stay-online-only
+		 */
+		offlineEditable() {
+			return useOfflineStore().editsQueued
 		},
 
 		/**
@@ -1352,7 +1536,22 @@ export default {
 		 * @spec openspec/specs/user-sharing/spec.md#requirement-share-a-secret
 		 */
 		canSeeSharing() {
-			return this.isOwner === true || this.isRecipient === true
+			return (
+				(this.isOwner === true || this.isRecipient === true)
+				&& this.federatedReadOnly === false
+			)
+		},
+
+		/**
+		 * Whether this is a read-only copy from another organisation: no
+		 * edit, archive or share (sharing-federated-recipients task 3.4);
+		 * moving it to a folder and deleting it stay (tasks 3.5 and 4.4).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/federated-sharing/spec.md#requirement-remote-copies-are-read-only
+		 */
+		federatedReadOnly() {
+			return this.secret?.readOnly === true
 		},
 	},
 
@@ -1417,13 +1616,13 @@ export default {
 						this.secretId,
 					)
 					this.teamWritable =
-						context.effectiveGrade === 'write'
+						['write', 'manage'].includes(context.effectiveGrade)
 						&& context.sourceSecretId !== this.secretId
 				} catch {
 					this.teamWritable = false
 				}
 			} catch (e) {
-				if (e?.response?.status === 403) {
+				if (isRefusal(e)) {
 					this.error = t(
 						'keepiq',
 						'This secret is locked because its encryption suite was revoked.',
@@ -1534,6 +1733,43 @@ export default {
 			this.cnOpenModal('secret-share', {
 				secretId: this.secretId,
 			})
+		},
+
+		/**
+		 * Star or unstar the open secret.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+		 */
+		async toggleFavourite() {
+			const favourite = !this.isFavourite
+			try {
+				await useSecretStore().setFavourite(this.secretId, favourite)
+				this.secret = { ...this.secret, favourite }
+			} catch {
+				showError(t('keepiq', 'Could not change the favourite'))
+			}
+		},
+
+		/**
+		 * Archive the open secret, or bring an archived one back, then close
+		 * the sidebar: either way the secret leaves the list being shown.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+		 */
+		async toggleArchive() {
+			const action = this.isArchived ? 'unarchive' : 'archive'
+			try {
+				await useSecretStore().changeSecretState(this.secretId, action)
+				this.$emit('close')
+			} catch {
+				showError(
+					action === 'archive'
+						? t('keepiq', 'Could not archive the secret')
+						: t('keepiq', 'Could not unarchive the secret'),
+				)
+			}
 		},
 
 		/**

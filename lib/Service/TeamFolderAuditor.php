@@ -234,10 +234,13 @@ class TeamFolderAuditor {
 	 * @param string $successorUserId The successor taking ownership
 	 * @param int $revoked The number of derived shares revoked
 	 * @param int $transferred The number of secrets transferred
+	 * @param int $membershipsRemoved The number of direct team-folder memberships removed
+	 * @param string[] $coveringGroupIds The groups whose membership rows still cover the leaver
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.5
+	 * @spec openspec/specs/team-folder-sharing/spec.md#requirement-offboarding-removes-the-leavers-direct-team-folder-memberships
 	 */
 	public function offboarded(
 		string $adminId,
@@ -245,6 +248,8 @@ class TeamFolderAuditor {
 		string $successorUserId,
 		int $revoked,
 		int $transferred,
+		int $membershipsRemoved=0,
+		array $coveringGroupIds=[],
 	): void {
 		$this->dispatch(
 			event: $this->auditEvents->forUser(
@@ -258,8 +263,38 @@ class TeamFolderAuditor {
 					'successorUserId' => $successorUserId,
 					'revokedCount' => $revoked,
 					'transferredCount' => $transferred,
+					'membershipsRemovedCount' => $membershipsRemoved,
+					'coveringGroupIds' => $coveringGroupIds,
 				],
 			)
 		);
 	}//end offboarded()
+
+	/**
+	 * Record an automatic confirmation run: the confirmer is the actor.
+	 *
+	 * @param string $actorId The confirmer (owner or write-grade member)
+	 * @param string $teamFolderId The team folder
+	 * @param int $confirmedCount The number of copies created
+	 * @param int $memberCount The number of members who received copies
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/team-folder-auto-confirm/spec.md#requirement-the-server-accepts-a-confirmers-row-only-when-it-is-safe
+	 */
+	public function membersConfirmed(string $actorId, string $teamFolderId, int $confirmedCount, int $memberCount): void {
+		$this->dispatch(
+			event: $this->auditEvents->forUser(
+				actorId: $actorId,
+				eventType: AuditEventTypes::TEAM_FOLDER_MEMBERS_CONFIRMED,
+				objectType: self::OBJECT_TYPE,
+				objectId: $teamFolderId,
+				objectName: '',
+				metadata: [
+					'confirmedCount' => $confirmedCount,
+					'memberCount' => $memberCount,
+				],
+			)
+		);
+	}//end membersConfirmed()
 }//end class

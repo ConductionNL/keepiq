@@ -646,7 +646,7 @@ CnSettingsSection (name="Applications")
 └─────────────────────────────────────────────┘
 ```
 
-Must use `NcAppSettingsDialog` (NOT `NcDialog`) with `NcAppSettingsSection` for each group. See `openspec/specs/nextcloud-app/spec.md` for the full pattern.
+Must use `NcAppSettingsDialog` (NOT `NcDialog`) with `NcAppSettingsSection` for each group. See ADR-004 (frontend) and ADR-079 (settings surface placement) in hydra's `openspec/architecture/` for the full pattern.
 
 ### 3.12 Master Password Change
 

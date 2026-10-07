@@ -2,30 +2,46 @@
   "manifest_version": 3,
   "name": "Keepiq",
   "version": "0.1.0",
-  "description": "Zero-knowledge autofill for the Keepiq secrets manager. The vault is unlocked and every secret decrypted inside the extension — the server only ever ships encrypted blobs.",
+  "description": "Fill logins, one-time codes and passkeys from your Keepiq vault. It opens in the extension, so your server only sees encrypted data.",
   "permissions": [
     "storage",
     "activeTab",
     "tabs",
-    "scripting",
     "clipboardWrite",
     "idle",
-    "windows"
-  ],
-  "optional_permissions": [
-    "webAuthenticationProxy"
+    "alarms",
+    "windows",
+    "offscreen",
+    "contextMenus"
   ],
   "host_permissions": [
     "http://*/*",
     "https://*/*"
   ],
-  "background": {
-    "service_worker": "service-worker.js",
-    "type": "module"
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "commands": {
+    "fill-login": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+L",
+        "mac": "Command+Shift+L"
+      },
+      "description": "Fill the login for this site"
+    }
   },
   "action": {
     "default_popup": "popup.html",
-    "default_title": "Keepiq"
+    "default_title": "Keepiq",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
   },
   "content_scripts": [
     {
@@ -42,6 +58,6 @@
     }
   ],
   "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
+    "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
   }
 }
