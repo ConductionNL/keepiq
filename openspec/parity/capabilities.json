@@ -4321,6 +4321,29 @@
       }
     },
     {
+      "id": "apps-26",
+      "area": "apps",
+      "name": "Let an AI assistant report on expiring and unrotated secrets without ever seeing a secret.",
+      "keepiq": "yes",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "built",
+        "evidence": "lib/Mcp/EntryMetadataTools.php, ExpiryReportTools.php:81 expiryReport, RotationStatusTools.php, MetadataAllowList.php; registered through lib/AppInfo/McpRegistrar.php behind the scannable-services opt-in; invocations audited as agent reads",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "An MCP client (Hermiq) with the Keepiq tools enabled",
+        "change": "openspec/changes/archive/2026-10-04-hermiq-ai-tooling"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "read-from-code",
+      "source": "spec-round-2026-10-07"
+    },
+    {
       "id": "pki-01",
       "area": "pki",
       "name": "Run a private certificate authority with a root and an intermediate certificate.",
@@ -8205,6 +8228,98 @@
         "hashicorp-vault": "hashicorp/vault@v2.1.1 ui/package.json:121 depends on ember-intl but git ls-files holds no translations or locales files; the UI is English only. Note: rated by the lane from the source.",
         "passbolt": "passbolt/passbolt_styleguide@v5.16.0 src/locales/ holds 17 locales (cs-CZ to uk-UA); src/react-extension/components/Administration/DisplayInternationalizationAdministration sets the organisation default Note: proposed by the source reader as a capability no row covered."
       }
+    },
+    {
+      "id": "clients-24",
+      "area": "clients",
+      "name": "Generate a password or passphrase in the browser extension, and get one suggested in a sign-up field.",
+      "keepiq": "yes",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "built",
+        "evidence": "browser-extension/src/popup/generator-view.js (Generator tab, password and passphrase options, history); browser-extension/src/content/password-suggest.js suggests a strong password in sign-up and change-password fields; policy-locked options per openspec/specs/extension-generator-policy",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Extension popup -> Generator tab; a sign-up field on a website -> suggestion",
+        "spec": "openspec/specs/extension-generator"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "read-from-code",
+      "source": "spec-round-2026-10-07"
+    },
+    {
+      "id": "clients-25",
+      "area": "clients",
+      "name": "Create a one-off send from the browser extension and end the ones you made.",
+      "keepiq": "yes",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "built",
+        "evidence": "browser-extension/src/popup/send-view.js create form and My sends list with revoke (send('send-revoke')), offline refusal per openspec/specs/extension-send-details",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Extension popup -> Send tab",
+        "spec": "openspec/specs/extension-send"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "read-from-code",
+      "source": "spec-round-2026-10-07"
+    },
+    {
+      "id": "clients-26",
+      "area": "clients",
+      "name": "Browse, search, add and edit vault items and folders from the browser extension.",
+      "keepiq": "yes",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "built",
+        "evidence": "browser-extension/src/popup/vault-view.js (browse and search), item-detail.js (copy, reveal, edit), folder-view.js (manage folders)",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Extension popup -> Vault tab",
+        "spec": "openspec/specs/extension-vault"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "read-from-code",
+      "source": "spec-round-2026-10-07"
+    },
+    {
+      "id": "clients-27",
+      "area": "clients",
+      "name": "Keep using the browser extension offline from an encrypted snapshot of the vault.",
+      "keepiq": "yes",
+      "bitwarden": "unknown",
+      "onepassword": "unknown",
+      "passbolt": "unknown",
+      "keeper": "unknown",
+      "hashicorp-vault": "unknown",
+      "nextcloud-passwords": "unknown",
+      "built": {
+        "state": "built",
+        "evidence": "browser-extension/src/lib/vault.js and src/background/vault-handlers.js keep and refresh the snapshot; a changed suite discards it",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "Extension popup -> Vault tab while offline (Synced at, Sync now)",
+        "change": "openspec/changes/archive/2026-10-04-clients-extension-complete"
+      },
+      "rowSource": "own",
+      "provider": "keepiq",
+      "providerHow": "read-from-code",
+      "source": "spec-round-2026-10-07"
     }
   ],
   "pending": []
