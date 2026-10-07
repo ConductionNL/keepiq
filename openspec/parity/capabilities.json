@@ -5514,7 +5514,7 @@
         "evidence": "src/generator/generator.js generatePassphrase (EFF large word list src/generator/eff-large-wordlist.js, crypto.getRandomValues) <- src/dialogs/KeyGeneratorModal.vue Password/Passphrase switch; policy fit + generator_allow_passphrase (lib/Service/PasswordPolicyService.php). Tests: tests/vitest/generator.spec.js, tests/dialogs/KeyGeneratorModal.spec.js, tests/e2e/workflows/key-generator.spec.ts. Change: openspec/changes/client-side-key-generator (supersedes health-passphrase-generator).",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Generate a strong key -> Passphrase",
-        "change": "openspec/changes/client-side-key-generator"
+        "change": "openspec/changes/archive/2026-10-07-client-side-key-generator"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
