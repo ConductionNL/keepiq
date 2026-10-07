@@ -1778,7 +1778,7 @@
         "evidence": "Specified in openspec/changes/crypto-organisation-account-recovery on 2026-09-27. Before: src/components/settings/AdminSuiteSection.vue:21,180 admin can only force-revoke a suite so the user starts a new empty vault; grep -rni 'escrow\\|recovery key\\|account recovery' lib: only emergency-access envelopes escrowed to a contact's certificate, never to an admin",
         "owner": "ConductionNL/keepiq",
         "note": "By zero-knowledge design an administrator cannot restore access to a user's secrets. The admin can force-revoke the locked suite so the user can set up a fresh vault, but the old secrets stay unreadable unless the user has an emergency contact or a backup file.",
-        "change": "openspec/changes/crypto-organisation-account-recovery"
+        "change": "openspec/changes/archive/2026-10-04-crypto-organisation-account-recovery"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -2194,7 +2194,7 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Sign-in is Nextcloud's; a new device unlocks the vault with the user's passphrase, and there is no approve-from-another-device or admin approval flow.",
-        "change": "openspec/changes/crypto-new-device-approval"
+        "change": "openspec/changes/archive/2026-10-04-crypto-new-device-approval"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -2756,7 +2756,7 @@
         "evidence": "Specified in openspec/changes/sharing-federated-recipients on 2026-09-27. Before: grep -rn 'federat\\|remote share\\|outside.*organi[sz]ation' lib/Controller lib/Service: no sharing-related hits (the one federated-cloud-ID hit in EncryptionSuiteProvisioningService.php:331 is only used to name a certificate's common name, not to share with an external account). All sharing paths (user-to-user, team folder, link, send) target a Nextcloud user ID, group ID, or an anonymous public link on this instance.",
         "owner": "ConductionNL/keepiq",
         "note": "Sharing with an account on a different Nextcloud instance is not supported; a password-protected public link (sharing-14) is the closest substitute.",
-        "change": "openspec/changes/sharing-federated-recipients"
+        "change": "openspec/changes/archive/2026-10-04-sharing-federated-recipients"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -2785,7 +2785,7 @@
         "state": "specified",
         "evidence": "Specified in openspec/changes/sharing-team-folder-manager-role on 2026-09-27. Before: The only role-like concept in the codebase is a team folder membership grade of read or write (folder-permission-grades spec, sharing-09); there is no manager/viewer role vocabulary and no 'collection' concept beyond team folders. grep -rln 'manager\\|viewer' src/store/modules lib/Controller for role-purposed hits: none.",
         "owner": "ConductionNL/keepiq",
-        "change": "openspec/changes/sharing-team-folder-manager-role"
+        "change": "openspec/changes/archive/2026-10-04-sharing-team-folder-manager-role"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -2967,7 +2967,7 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "Every recipient who can use a secret can also reveal it.",
-        "change": "openspec/changes/sharing-use-only-and-expiring-shares"
+        "change": "openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares"
       },
       "rowSource": "competitor",
       "origin": "tender",
@@ -3000,7 +3000,7 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "A share to a colleague lasts until it is revoked by hand.",
-        "change": "openspec/changes/sharing-use-only-and-expiring-shares"
+        "change": "openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -4143,7 +4143,7 @@
         "evidence": "Specified in openspec/changes/apps-terraform-provider on 2026-09-27. Before: grep -rli 'terraform' . --include=*.md --include=*.php --include=*.go: no hits",
         "note": "No Terraform provider exists for managing keepiq secrets/applications as code.",
         "owner": "ConductionNL/keepiq",
-        "change": "openspec/changes/apps-terraform-provider"
+        "change": "openspec/changes/archive/2026-10-04-apps-terraform-provider"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5752,7 +5752,7 @@
         "reachedOn": "Nextcloud admin delegation for the Keepiq settings section; vault_admin group for offboarding and for the admin handover panel in the secret sidebar",
         "note": "There are two coarse levers: Nextcloud's delegation of the whole Keepiq admin section, and a hard-coded vault_admin group that unlocks offboarding and admin handover. The handover now has a route, a controller call and a UI panel (f13ad8e6, closing #184), so both levers work end to end. There is still no role editor and no per-permission role, so a person cannot be given only the permissions they need: partial.",
         "defects": [],
-        "change": "openspec/changes/admin-scoped-roles"
+        "change": "openspec/changes/archive/2026-10-04-admin-scoped-roles"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -6261,7 +6261,7 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "There is no scheduled server-side backup of all vaults and no restore command; an instance relies on the Nextcloud database backup.",
-        "change": "openspec/changes/admin-scheduled-vault-backups"
+        "change": "openspec/changes/archive/2026-10-04-admin-scheduled-vault-backups"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -7252,7 +7252,7 @@
             "needsLiveCheck": false
           }
         ],
-        "change": "openspec/changes/clients-extension-store-release"
+        "change": "openspec/changes/archive/2026-10-04-clients-extension-store-release"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7371,7 +7371,7 @@
             "needsLiveCheck": false
           }
         ],
-        "change": "openspec/changes/clients-extension-store-release"
+        "change": "openspec/changes/archive/2026-10-04-clients-extension-store-release"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7711,7 +7711,7 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "none",
         "note": "SSH keys can be stored as secrets, but nothing exposes them to an SSH agent.",
-        "change": "openspec/changes/clients-ssh-agent"
+        "change": "openspec/changes/archive/2026-10-04-clients-ssh-agent"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -7787,7 +7787,8 @@
         "evidence": "Flows page src/manifest.json:570 (index over OpenRegister 'flows' source) and FlowDetail with src/registry.js:63 FlowDetailSidebar (CnFlowSidebar); OpenRegister triggers are only manual, object and schedule (openregister lib/Service/Flow/Nodes/TriggerManualNode.php, TriggerObjectNode.php, TriggerScheduleNode.php); keepiq data lives in its own tables and grep -i flow lib: no trigger publisher",
         "owner": "ConductionNL/openregister",
         "reachedOn": "Flows menu item (/flows) -> OpenRegister flow list and canvas",
-        "note": "The Flows page and canvas are reachable, but they run on OpenRegister's engine whose triggers fire on OpenRegister objects, schedules or manual runs. Keepiq's vault lives in its own tables and publishes nothing to it, so no vault event can start a flow."
+        "note": "The Flows page and canvas are reachable, but they run on OpenRegister's engine whose triggers fire on OpenRegister objects, schedules or manual runs. Keepiq's vault lives in its own tables and publishes nothing to it, so no vault event can start a flow.",
+        "change": "openspec/changes/clients-vault-event-flow-triggers"
       },
       "rowSource": "own",
       "provider": "openregister",
