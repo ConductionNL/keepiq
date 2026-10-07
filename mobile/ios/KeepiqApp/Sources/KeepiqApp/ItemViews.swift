@@ -58,15 +58,16 @@ struct ItemDetailView: View {
             if row.blocked {
                 Text(row.blockedReason ?? L("detail_blocked"))
             } else {
+                if item.kind == .totp { Section { TotpRow(item: item, onCopy: model.copy) } }
                 Section { fields(item) }
                 if !row.useOnly {
                     Section {
-                        Button(L("action_edit")) { editing = true }.disabled(offline)
-                        Button(L("action_move")) { moving = true }.disabled(offline)
+                        Button { editing = true } label: { Text(L("action_edit")).foregroundStyle(KeepiqPalette.accent) }.disabled(offline)
+                        Button { moving = true } label: { Text(L("action_move")).foregroundStyle(KeepiqPalette.accent) }.disabled(offline)
                     }
                 }
                 Section {
-                    Button(L("action_trash"), role: .destructive) { confirmTrash = true }.disabled(offline)
+                    Button(role: .destructive) { confirmTrash = true } label: { Text(L("action_trash")).foregroundStyle(KeepiqPalette.destructive) }.disabled(offline)
                     if offline { Text(L("write_offline")).font(.footnote) }
                 }
             }
@@ -102,8 +103,6 @@ struct ItemDetailView: View {
             if !row.useOnly {
                 FieldRow(label: kind == .login ? L("detail_password") : L("detail_value"), value: item.secret, masked: true, onCopy: model.copy)
             }
-        } else if kind == .totp {
-            TotpRow(item: item, onCopy: model.copy)
         } else if kind == .note {
             if !row.useOnly { FieldRow(label: L("detail_notes"), value: item.secret, onCopy: model.copy) }
         } else if kind == .card || kind == .identity {
@@ -158,6 +157,8 @@ struct ItemDetailView: View {
 private struct TotpRow: View {
     let item: DecryptedItem
     let onCopy: (String) -> Void
+    /// The countdown ring grows with Dynamic Type.
+    @ScaledMetric(relativeTo: .body) private var gaugeSize: CGFloat = 44
 
     var body: some View {
         if let params = item.totp {
@@ -166,19 +167,21 @@ private struct TotpRow: View {
                 let code = Totp.shared.generate(params: params, epochMillis: millis)
                 let left = Totp.shared.secondsRemaining(period: params.period, epochMillis: millis)
                 VStack(alignment: .leading) {
-                    Text(L("detail_code")).font(.caption).foregroundStyle(.secondary)
+                    Text(L("detail_code")).font(.caption).foregroundStyle(KeepiqPalette.secondaryText)
                     HStack {
                         Text(code).font(.title.monospaced()).accessibilityIdentifier("totpCode")
                         // A circular ProgressView spins on iOS whatever its value, so
                         // the seconds left are a gauge with the number in it.
                         Gauge(value: Double(left), in: 0...Double(params.period)) {
                             EmptyView()
-                        } currentValueLabel: {
-                            Text("\(Int(left))")
                         }
                         .gaugeStyle(.accessoryCircularCapacity)
+                        .tint(KeepiqPalette.accent)
                         .scaleEffect(0.7)
-                        .frame(width: 44, height: 44)
+                        .frame(width: gaugeSize, height: gaugeSize)
+                        // The accessory style draws its value label for widgets, with
+                        // vibrancy; a plain Text keeps the full contrast of the primary colour.
+                        .overlay { Text("\(Int(left))").font(.caption2).monospacedDigit().foregroundStyle(.primary) }
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel(L("detail_code_seconds", Int(left)))
                         Spacer()
@@ -391,7 +394,7 @@ struct ItemEditView: View {
                 }
             }
             if kind != .passkey {
-                Section(L("detail_extra_fields")) {
+                Section(titled: L("detail_extra_fields")) {
                     ForEach(fieldNames.indices, id: \.self) { i in
                         VStack {
                             LabeledInput(label: L("edit_field_name"), text: $fieldNames[i], problem: error("field-\(i)"))

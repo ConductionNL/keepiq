@@ -88,6 +88,8 @@ run_class PasskeyUITests keepiq-ios-passkeys
 # Offline reading from the encrypted store (tasks 1.6.1 and 3.4): the replay
 # drops every connection halfway through the test.
 run_class OfflineUITests keepiq-ios-offline
+# The accessibility audit of the main screens (task 3.1), against the replay.
+run_class AccessibilityAuditUITests keepiq-ios-a11y
 rm -rf "$OUT/DerivedData"
 ls -la "$OUT" "$OUT/shots"
 exit "$status"
