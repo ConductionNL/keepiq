@@ -96,6 +96,7 @@ class FederatedCopyDeclineTest extends TestCase {
 	private ?string $signer = 'cloud.city.example';
 
 	protected function setUp(): void {
+		$this->skipWithoutFederation();
 		$this->inbound = new FederatedInbound();
 		$this->inbound->setId('in-1');
 		$this->inbound->setRecipientUid('bob');

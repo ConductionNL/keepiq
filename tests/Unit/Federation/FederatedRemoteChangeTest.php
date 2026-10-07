@@ -74,6 +74,7 @@ class FederatedRemoteChangeTest extends TestCase {
 	private array $askedWith = [];
 
 	protected function setUp(): void {
+		$this->skipWithoutFederation();
 		$this->row = new FederatedInbound();
 		$this->row->setId('in-1');
 		$this->row->setRecipientUid('bob');
