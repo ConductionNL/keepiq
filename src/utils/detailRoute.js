@@ -16,7 +16,9 @@
  */
 
 /** The two list routes able to host the detail sidebar. */
-const LIST_ROUTE_NAMES = ['SecretList', 'SecretListFolder']
+// SecretArchive (vault-trash-and-archive) opens the sidebar over the Archive
+// view. The Trash view opens no sidebar: a trashed secret is restored first.
+const LIST_ROUTE_NAMES = ['SecretList', 'SecretListFolder', 'SecretArchive']
 
 /**
  * The route location that opens a secret's detail sidebar while keeping
@@ -28,6 +30,9 @@ const LIST_ROUTE_NAMES = ['SecretList', 'SecretListFolder']
  * @spec openspec/specs/secrets/spec.md#requirement-read-secret
  */
 export function secretDetailLocation(route, id) {
+	if (route?.name === 'SecretArchive') {
+		return { name: 'SecretArchive', params: { id } }
+	}
 	if (route?.name === 'SecretListFolder' && route.params?.folderId) {
 		return {
 			name: 'SecretListFolder',
@@ -46,6 +51,9 @@ export function secretDetailLocation(route, id) {
  * @spec openspec/specs/secrets/spec.md#requirement-read-secret
  */
 export function closeDetailLocation(route) {
+	if (route?.name === 'SecretArchive') {
+		return { name: 'SecretArchive' }
+	}
 	if (route?.name === 'SecretListFolder' && route.params?.folderId) {
 		return {
 			name: 'SecretListFolder',

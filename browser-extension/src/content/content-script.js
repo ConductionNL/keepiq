@@ -14,19 +14,13 @@
  * No secret is ever stored here; the worker owns all key material.
  */
 
-const USERNAME_SELECTORS = [
-	'input[autocomplete="username"]',
-	'input[autocomplete="email"]',
-	'input[type="email"]',
-	'input[name*="user" i]',
-	'input[name*="email" i]',
-	'input[id*="user" i]',
-	'input[id*="email" i]',
-]
-const PASSWORD_SELECTORS = [
-	'input[type="password"]',
-	'input[autocomplete="current-password"]',
-]
+import { frameMayFill } from '../lib/fillScope.js'
+import { watchForOtpField } from './otp-watch.js'
+import { attachPasswordSuggestions } from './password-suggest.js'
+import { showSavePrompt, showSaveResult } from './save-prompt.js'
+import { useOnlyPasswordTarget } from '../lib/useOnly.js'
+import { findLoginFields, firstUsable } from '../lib/field-detect.js'
+
 const OTP_SELECTORS = [
 	'input[autocomplete="one-time-code"]',
 	'input[name*="otp" i]',
@@ -35,43 +29,13 @@ const OTP_SELECTORS = [
 	'input[inputmode="numeric"][maxlength="6"]',
 ]
 
-function visible(el) {
-	if (!el || el.disabled || el.readOnly) return false
-	const rect = el.getBoundingClientRect()
-	if (rect.width === 0 && rect.height === 0) return false
-	const style = getComputedStyle(el)
-	return style.visibility !== 'hidden' && style.display !== 'none'
-}
-
 function firstVisible(selectors) {
-	for (const sel of selectors) {
-		for (const el of document.querySelectorAll(sel)) {
-			if (visible(el)) return el
-		}
-	}
-	return null
+	return firstUsable(document, selectors)
 }
 
 /** Detect the login field pair in this frame. */
 function detectLoginFields() {
-	const password = firstVisible(PASSWORD_SELECTORS)
-	let username = firstVisible(USERNAME_SELECTORS)
-	// If no explicit username field, take a preceding visible text input.
-	if (!username && password) {
-		const inputs = Array.from(document.querySelectorAll('input'))
-		const pwIndex = inputs.indexOf(password)
-		for (let i = pwIndex - 1; i >= 0; i--) {
-			const t = (inputs[i].type || 'text').toLowerCase()
-			if (
-				(t === 'text' || t === 'email' || t === 'tel')
-				&& visible(inputs[i])
-			) {
-				username = inputs[i]
-				break
-			}
-		}
-	}
-	return { username, password }
+	return findLoginFields(document)
 }
 
 /**
@@ -92,8 +56,16 @@ function setValue(el, value) {
 	el.dispatchEvent(new Event('change', { bubbles: true }))
 }
 
-function fillCredential({ login, secret }) {
-	const { username, password } = detectLoginFields()
+function fillCredential({ login, secret, useOnly }) {
+	const detected = detectLoginFields()
+	const username = detected.username
+	// A use-only value goes only into a real password field.
+	const password = useOnly
+		? useOnlyPasswordTarget(detected.password)
+		: detected.password
+	if (useOnly && !password) {
+		return false
+	}
 	let filled = false
 	if (username && login) {
 		username.focus()
@@ -147,22 +119,81 @@ function onSubmit() {
 	captureCurrent()
 }
 
-function captureCurrent() {
+// One capture per submit: Enter and submit both fire for the same form.
+let lastCaptured = ''
+
+/**
+ * Send the submitted login to the worker and show its offer in the page at
+ * once (clients-save-prompt). The worker decides save, update or nothing; the
+ * popup keeps the same offer as a fallback.
+ *
+ * @return {Promise<void>}
+ */
+async function captureCurrent() {
 	const { username, password } = detectLoginFields()
 	if (!password || !password.value) return
+	const login = username ? username.value : ''
+	const stamp = login + '\u0000' + password.value
+	if (stamp === lastCaptured) return
+	lastCaptured = stamp
+	let offer
 	try {
-		chrome.runtime.sendMessage({
+		offer = await chrome.runtime.sendMessage({
 			type: 'capture-credential',
 			payload: {
 				host: location.hostname,
 				url: location.origin,
-				login: username ? username.value : '',
+				login,
 				secret: password.value,
 			},
 		})
 	} catch {
 		// The worker may be asleep; the capture is best-effort.
+		return
 	}
+	if (window.top !== window) return // one bar, in the top frame's view only
+	if (!offer) return
+	if (offer.action === 'refused') {
+		// Nothing to decide: the policy refused the password, so only explain.
+		await showSavePrompt(offer, location.hostname)
+		return
+	}
+	await offerInPage(offer)
+}
+
+/**
+ * Show a save or update offer in the bar, pass on the choice, and say how
+ * the save went.
+ *
+ * @param {{action: string, name?: string}} offer The worker's offer.
+ * @return {Promise<void>}
+ * @spec openspec/specs/extension-save-prompt-details/spec.md#requirement-a-save-that-confirms
+ */
+async function offerInPage(offer) {
+	if (offer?.action !== 'save' && offer?.action !== 'update') return
+	const choice = await showSavePrompt(offer, location.hostname)
+	let result
+	try {
+		result = await chrome.runtime.sendMessage({
+			type: 'capture-decision',
+			payload: { choice },
+		})
+	} catch {
+		// The popup still offers the capture.
+		return
+	}
+	if (choice === 'save' || choice === 'update') showSaveResult(result || {})
+}
+
+// After a login redirects, the next page of the same site shows the offer
+// that is still waiting for this tab.
+if (window.top === window) {
+	Promise.resolve(
+		chrome.runtime.sendMessage({ type: 'capture-offer', payload: {} }),
+	)
+		.catch(() => null)
+		.then((offer) => offerInPage(offer))
+		.catch(() => {})
 }
 
 // --- message handling from the popup / background worker ---
@@ -173,9 +204,17 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 			sendResponse(reportHasLoginForm())
 			return true
 		case 'fill-credential':
+			// A frame of another site (an embedded widget, an advert) stays
+			// silent, so the answer comes from a frame that may fill (#740).
+			if (!frameMayFill(location.hostname, msg.payload?.host)) {
+				return false
+			}
 			sendResponse({ filled: fillCredential(msg.payload) })
 			return true
 		case 'fill-otp':
+			if (!frameMayFill(location.hostname, msg.payload?.host)) {
+				return false
+			}
 			sendResponse({ filled: fillOtp(msg.payload?.code) })
 			return true
 		default:
@@ -184,6 +223,34 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 })
 
 attachSubmitCapture()
+
+// Tell the worker this frame is here; it records the frame's site from the
+// browser's sender record, so a fill reaches only frames on the matched site.
+chrome.runtime.sendMessage({ type: 'frame-ready', payload: {} })?.catch?.(() => {})
+
+// A strong password for a sign-up or change-password field, generated by the
+// worker under the org policy (clients-extension-generator-vault-send).
+// Only when the user has not switched suggestions off in Settings.
+Promise.resolve(chrome.runtime.sendMessage({ type: 'page-settings', payload: {} }))
+	.catch(() => null)
+	.then((settings) => {
+		if (settings?.suggestPasswords === false) return
+		attachPasswordSuggestions(document, () =>
+			chrome.runtime.sendMessage({ type: 'generate-for-field', payload: {} }),
+		)
+	})
+
+// A code field on the step after the login: tell the worker, which fills it
+// only when a login fill on this site in this tab asked for it.
+watchForOtpField({
+	doc: document,
+	find: () => firstVisible(OTP_SELECTORS),
+	report: () => {
+		chrome.runtime
+			.sendMessage({ type: 'otp-field-detected', payload: {} })
+			.catch(() => {})
+	},
+})
 
 // --- WebAuthn relay (extension-passkey-provider, page-context shim path) ---
 
@@ -196,7 +263,7 @@ function injectShim() {
 		s.onload = () => s.remove()
 		;(document.head || document.documentElement).appendChild(s)
 	} catch {
-		// CSP may block injection; the native proxy path covers Chrome/Edge.
+		// CSP may block injection; the page then keeps the browser's own authenticator.
 	}
 }
 
@@ -209,7 +276,9 @@ window.addEventListener('message', async (event) => {
 	try {
 		const res = await chrome.runtime.sendMessage({
 			type,
-			payload: { options: data.options, origin: data.origin },
+			// The worker takes the origin from the browser's sender record; this
+			// is only informative and never the page's own claim.
+			payload: { options: data.options, origin: location.origin },
 		})
 		window.postMessage(
 			{

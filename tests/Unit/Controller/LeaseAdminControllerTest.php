@@ -23,6 +23,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use OCA\Keepiq\Tests\Support\AdminAreaFixture;
+use OCA\Keepiq\Settings\AuditAdminSettings;
 use InvalidArgumentException;
 use OCA\Keepiq\Controller\LeaseAdminController;
 use OCA\Keepiq\Db\Application;
@@ -51,6 +53,8 @@ use PHPUnit\Framework\TestCase;
  *
  */
 class LeaseAdminControllerTest extends TestCase {
+	use AdminAreaFixture;
+
 
 	/**
 	 * The mocked lease service.
@@ -124,7 +128,7 @@ class LeaseAdminControllerTest extends TestCase {
 			leaseMapper: $this->createMock(MachineLeaseMapper::class),
 			applicationMapper: $this->applicationMapper,
 			userSession: $this->userSession,
-			groupManager: $this->groupManager
+			areas: $this->areaAuthorizer(groupManager: $this->groupManager)
 		);
 	}//end controller()
 
@@ -329,4 +333,138 @@ class LeaseAdminControllerTest extends TestCase {
 		);
 	}//end testSetPolicyWithARefusedTtlAnswers400AndReportsNoPolicy()
 
+	/**
+	 * The lease policy view the per-application form reads.
+	 *
+	 * @return array<string,array<string,int|bool|null>>
+	 */
+	private function policyView(): array {
+		return [
+			'effective' => ['defaultTtl' => 600, 'maxTtl' => 3600, 'renewable' => true, 'blockOnRevoke' => false],
+			'override' => ['defaultTtl' => 600, 'maxTtl' => null, 'renewable' => null],
+			'instance' => ['defaultTtl' => 900, 'maxTtl' => 3600, 'renewable' => true],
+		];
+	}//end policyView()
+
+	/**
+	 * A real application entity registered by the given user.
+	 *
+	 * @param string $registeredBy The registrant uid.
+	 *
+	 * @return Application
+	 */
+	private function applicationOf(string $registeredBy): Application {
+		$application = new Application();
+		$application->setRegisteredBy($registeredBy);
+		return $application;
+	}//end applicationOf()
+
+	/**
+	 * An admin reads the policy view and may edit it (keepiq#753).
+	 *
+	 * @return void
+	 */
+	public function testGetPolicyByAnAdminReturnsTheViewAndMayEdit(): void {
+		$this->signIn('root');
+		$this->groupManager->method('isAdmin')->with('root')->willReturn(true);
+		$this->applicationMapper->expects($this->once())
+			->method('findById')
+			->with('app-1')
+			->willReturn($this->applicationOf('bob'));
+		$this->leaseService->expects($this->once())
+			->method('policyView')
+			->with('app-1')
+			->willReturn($this->policyView());
+
+		$response = $this->controller()->getPolicy(id: 'app-1');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(array_merge($this->policyView(), ['canEdit' => true]), $response->getData());
+	}//end testGetPolicyByAnAdminReturnsTheViewAndMayEdit()
+
+	/**
+	 * The registrant reads the same view but may not edit: setPolicy() is
+	 * admin-only, so the form must not offer a save it would refuse.
+	 *
+	 * @return void
+	 */
+	public function testGetPolicyByTheRegistrantIsReadOnly(): void {
+		$this->signIn('bob');
+		$this->groupManager->method('isAdmin')->with('bob')->willReturn(false);
+		$this->applicationMapper->method('findById')->with('app-1')->willReturn($this->applicationOf('bob'));
+		$this->leaseService->method('policyView')->willReturn($this->policyView());
+
+		$response = $this->controller()->getPolicy(id: 'app-1');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertFalse($response->getData()['canEdit']);
+	}//end testGetPolicyByTheRegistrantIsReadOnly()
+
+	/**
+	 * Another user gets the indistinguishable 404 and learns nothing.
+	 *
+	 * @return void
+	 */
+	public function testGetPolicyByAnotherUserIs404AndRevealsNothing(): void {
+		$this->signIn('mallory');
+		$this->groupManager->method('isAdmin')->with('mallory')->willReturn(false);
+		$this->applicationMapper->method('findById')->with('app-1')->willReturn($this->applicationOf('bob'));
+		$this->leaseService->expects($this->never())->method('policyView');
+
+		$response = $this->controller()->getPolicy(id: 'app-1');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertSame(['message' => 'Not found'], $response->getData());
+	}//end testGetPolicyByAnotherUserIs404AndRevealsNothing()
+
+	/**
+	 * An anonymous caller gets 401.
+	 *
+	 * @return void
+	 */
+	public function testGetPolicyByAnAnonymousCallerIs401(): void {
+		$this->signIn(null);
+		$this->leaseService->expects($this->never())->method('policyView');
+
+		$response = $this->controller()->getPolicy(id: 'app-1');
+
+		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+	}//end testGetPolicyByAnAnonymousCallerIs401()
+
+	/**
+	 * An admin asking for an application that does not exist gets a 404.
+	 *
+	 * @return void
+	 */
+	public function testGetPolicyForAnUnknownApplicationIs404(): void {
+		$this->signIn('root');
+		$this->groupManager->method('isAdmin')->willReturn(true);
+		$this->applicationMapper->method('findById')
+			->willThrowException(new DoesNotExistException('gone'));
+		$this->leaseService->expects($this->never())->method('policyView');
+
+		$response = $this->controller()->getPolicy(id: 'app-does-not-exist');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	}//end testGetPolicyForAnUnknownApplicationIs404()
+
+
+	/**
+	 * A holder of only the Audit area is refused like any non-admin
+	 * (admin-scoped-roles §2.2).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.2
+	 */
+	public function testSetPolicyByAnAuditAreaHolderIs404AndWritesNothing(): void {
+		$this->delegatedAreas = [AuditAdminSettings::class];
+		$this->signIn('auditor');
+		$this->groupManager->method('isAdmin')->willReturn(false);
+		$this->leaseService->expects($this->never())->method('setPolicyOverride');
+
+		$response = $this->controller()->setPolicy(id: 'app-0000-4000-8000-000000000001', defaultTtl: 3600);
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+	}//end testSetPolicyByAnAuditAreaHolderIs404AndWritesNothing()
 }//end class

@@ -30,8 +30,8 @@ use OCA\Keepiq\Event\SuiteMigrationStartedEvent;
 use OCA\Keepiq\Listener\EmergencyAccessSuiteRevocationListener;
 use OCA\Keepiq\Listener\EmergencyAccessSuiteRotationListener;
 use OCA\Keepiq\Listener\EncryptionSuiteRevokedListener;
+use OCA\Keepiq\Listener\RecoverySuiteListener;
 use OCA\Keepiq\Listener\SuiteCompromiseListener;
-use OCA\Keepiq\Listener\SuiteCompromiseOnRevokeListener;
 use OCA\Keepiq\Listener\SuiteMigrationAbortedListener;
 use OCA\Keepiq\Listener\SuiteMigrationCompletedListener;
 use OCA\Keepiq\Listener\SuiteMigrationStartedListener;
@@ -43,9 +43,7 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  * The three suite events fan out to more than one listener each. Nextcloud's
  * dispatcher invokes every registered listener for an event, and a failure in
  * one is contained by that listener, not by this registration. The ORDER is
- * not significant, with one exception on the revoke event: the compromise
- * cascade reads the ShareTargets that EncryptionSuiteRevokedListener deletes,
- * so it is registered at a higher priority to run first (keepiq#802).
+ * not significant.
  *
  * Grouped as one registrar because all the listeners share a single trigger
  * family (a suite started migrating, finished migrating, or was revoked) and
@@ -54,8 +52,8 @@ use OCP\AppFramework\Bootstrap\IRegistrationContext;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects) This registrar's sole job is
  *   to name the suite-lifecycle event/listener graph, so its coupling is the
- *   size of that graph and grows by one with each listener it wires (the
- *   admin-suite-revocation compromise listener is the latest). Splitting it
+ *   size of that graph and grows by one with each listener it wires.
+ *   Splitting it
  *   would fragment one trigger family across files without reducing any real
  *   dependency.
  */
@@ -102,20 +100,10 @@ final class SuiteLifecycleEventRegistrar {
 			listener: SuiteCompromiseListener::class
 		);
 
-		// Admin force-revoke compromise cascade (admin-suite-revocation D2):
-		// on the SAME revoke event, but only when the administrator flagged the
-		// revocation as a compromise — stamp/flag/notify over the revoked
-		// suite's blast radius. A no-op on the owner path (flag stays false).
-		// Priority 10 so it runs BEFORE EncryptionSuiteRevokedListener (priority
-		// 0), which deletes the revoked user's inbound ShareTargets. The cascade
-		// resolves each shared copy's source owner through those rows; run after
-		// the sweep it always missed and warned the revoked user instead of the
-		// owners who have to rotate (keepiq#802).
-		$context->registerEventListener(
-			event: EncryptionSuiteRevokedEvent::class,
-			listener: SuiteCompromiseOnRevokeListener::class,
-			priority: 10
-		);
+		// The administrator's compromise cascade is NOT a listener here. It
+		// runs from CompromiseContainmentService, called by the force-revoke
+		// itself, so it can read the blast radius before any revoke sweeps it
+		// and report its failures to the administrator (keepiq#863, #864).
 
 		// Emergency access — invalidate/clear recovery envelopes on a grantor's
 		// suite rotation (compromise recovery) or revocation, and invalidate
@@ -127,6 +115,17 @@ final class SuiteLifecycleEventRegistrar {
 		$context->registerEventListener(
 			event: EncryptionSuiteRevokedEvent::class,
 			listener: EmergencyAccessSuiteRevocationListener::class
+		);
+
+		// Organisation account recovery: enrolments and open requests follow
+		// the suite (crypto-organisation-account-recovery D7).
+		$context->registerEventListener(
+			event: SuiteMigrationCompletedEvent::class,
+			listener: RecoverySuiteListener::class
+		);
+		$context->registerEventListener(
+			event: EncryptionSuiteRevokedEvent::class,
+			listener: RecoverySuiteListener::class
 		);
 
 	}//end register()

@@ -4,11 +4,11 @@
 
   Developer-facing "register an application" page. Shows the user's own
   application registrations (on the shared CnIndexPage list view) and lets
-  them add new ones via the ApplicationRegisterDialog. When the server returns
-  a one-time private key the PrivateKeyDownloadDialog is shown until the user
-  acknowledges.
+  them add new ones via the ApplicationRegisterDialog. The server never
+  returns a private key (parity row pki-09, decided no), so there is no key
+  download step.
 
-  Admins should use `AdminApplicationsView` for the approval queue;
+  Admins approve the queue in the admin settings (ApplicationQueueSection);
   this view is intentionally non-admin scoped.
 
   @spec openspec/changes/implement-application-mgmt/tasks.md#task-10.1
@@ -53,20 +53,12 @@
 			:open="dialogOpen"
 			@close="dialogOpen = false"
 			@registered="onRegistered" />
-
-		<PrivateKeyDownloadDialog
-			:open="
-				store.oneTimePrivateKey !== null && store.oneTimePrivateKey !== ''
-			"
-			:privateKey="store.oneTimePrivateKey || ''"
-			@close="onAcknowledgeKey" />
 	</div>
 </template>
 
 <script>
 import { CnIndexPage, CnStatusBadge } from '@conduction/nextcloud-vue'
 import ApplicationRegisterDialog from '../dialogs/ApplicationRegisterDialog.vue'
-import PrivateKeyDownloadDialog from '../dialogs/PrivateKeyDownloadDialog.vue'
 import { useApplicationStore } from '../store/modules/application.js'
 
 export default {
@@ -76,7 +68,6 @@ export default {
 		CnIndexPage,
 		CnStatusBadge,
 		ApplicationRegisterDialog,
-		PrivateKeyDownloadDialog,
 	},
 
 	data() {
@@ -88,6 +79,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Presentation filter: narrows the already-loaded list by name client-side.
+		 */
 		rows() {
 			const term = this.searchTerm.trim().toLowerCase()
 			const all = this.store.applications || []
@@ -118,6 +112,9 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec exclude Presentation config: names the title and subtitle fields for the list.
+		 */
 		listConfig() {
 			return { titleField: 'name', subtitleField: 'description' }
 		},
@@ -165,10 +162,20 @@ export default {
 	methods: {
 		t,
 
+		/**
+		 * @param {string} value The search term.
+		 *
+		 * @spec exclude Local view state: stores the search term typed in the list filter.
+		 */
 		onSearch(value) {
 			this.searchTerm = value
 		},
 
+		/**
+		 * @param {object} object The application object.
+		 *
+		 * @spec exclude Navigation plumbing: routes to the clicked application detail.
+		 */
 		openApplication(object) {
 			this.$router.push(`/applications/${object.id}`)
 		},
@@ -193,6 +200,11 @@ export default {
 			}
 		},
 
+		/**
+		 * @param {string} status The status value.
+		 *
+		 * @spec exclude Presentation-only: maps the status value to a badge colour variant.
+		 */
 		statusVariant(status) {
 			switch (status) {
 				case 'active':
@@ -206,14 +218,13 @@ export default {
 			}
 		},
 
+		/**
+		 * @spec openspec/specs/application-mgmt/spec.md#requirement-register-application
+		 */
 		onRegistered() {
 			this.dialogOpen = false
 			// Refresh the list so the new row shows up.
 			this.store.fetchApplications().catch(() => {})
-		},
-
-		onAcknowledgeKey() {
-			this.store.clearOneTimePrivateKey()
 		},
 	},
 }

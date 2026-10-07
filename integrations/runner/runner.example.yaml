@@ -1,0 +1,38 @@
+# keepiq-runner configuration. It names Keepiq secrets, never values: every
+# credential the runner needs is a secret in the same application vault.
+keepiq:
+  url: https://cloud.example.org
+  applicationId: ops-runner
+  privateKeyFile: /run/keepiq/key.pem
+  # certificateFile: /run/keepiq/cert.pem   # optional: refuse envelopes for another certificate
+
+stateDir: /var/lib/keepiq-runner   # journal (ciphertext only) and sync state (ETags only)
+
+rotations:
+  - secret: pg-app-password          # login = the role, key = its password
+    connector: postgres
+    target: {host: "db.internal:5432", database: app, sslmode: require}
+    adminSecret: pg-admin            # login = admin role, key = its password
+    schedule: "0 3 * * 0"            # Sundays 03:00
+    followExpiry: true               # also rotate when expiresAt is within the lead time
+    leadTime: 168h
+    generator: {length: 32, classes: [lower, upper, digits, symbols]}
+
+  - secret: legacy-api-password
+    connector: exec                  # JSON on stdin, exit code as the answer
+    command: [/usr/local/bin/rotate-legacy-api]
+    followExpiry: true
+
+syncs:
+  - name: aws-prod
+    secrets: [stripe-key, deploy-token]
+    destination: aws-secrets-manager
+    options: {region: eu-west-1, prefix: prod/}
+    # credentialsSecret: aws-sync    # login = access key id, key = secret key; omit for the default AWS chain
+    interval: 60s
+
+  - name: github-app
+    secrets: [deploy-token]
+    destination: github-actions
+    options: {repository: example/app}
+    credentialsSecret: github-token  # key = a token that may write Actions secrets

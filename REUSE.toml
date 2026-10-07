@@ -34,3 +34,18 @@ path = "**"
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 Conduction B.V. <info@conduction.nl>"
 SPDX-License-Identifier = "EUPL-1.2"
+
+[[annotations]]
+path = "src/generator/eff-large-wordlist.js"
+precedence = "override"
+SPDX-FileCopyrightText = "2016 Electronic Frontier Foundation"
+SPDX-License-Identifier = "CC-BY-3.0-US"
+
+# The reference Argon2 C code (P-H-C/phc-winner-argon2, tag 20190702), linked
+# into the iOS build of the mobile core through cinterop (clients-mobile-apps
+# design D1). Unchanged upstream files; the authors offer CC0 or Apache 2.0.
+[[annotations]]
+path = "mobile/shared/src/nativeInterop/argon2/**"
+precedence = "override"
+SPDX-FileCopyrightText = "2015 Daniel Dinu, Dmitry Khovratovich, Jean-Philippe Aumasson, and Samuel Neves"
+SPDX-License-Identifier = "CC0-1.0 OR Apache-2.0"

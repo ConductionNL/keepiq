@@ -57,13 +57,22 @@
 		<!-- Abort is the non-destructive escape: it discards the unused new key
 		     and returns the vault to the old key, which is still valid. The
 		     server refuses if any secret has already been re-encrypted, so this
-		     is only ever offered, never forced. -->
-		<div v-if="expanded" class="keepiq-migration-banner__abort">
+		     is only ever offered, never forced. It needs a proof over the NEW
+		     key (keepiq#859), so a session alone cannot call the rotation off:
+		     that is the current master password. -->
+		<form
+			v-if="expanded"
+			class="keepiq-migration-banner__abort"
+			@submit.prevent="onAbort">
+			<NcPasswordField
+				v-model="abortPassword"
+				:label="t('keepiq', 'Your current master password')"
+				:disabled="busy" />
 			<NcButton
+				type="submit"
 				variant="tertiary"
 				data-testid="migration-abort"
-				:disabled="busy"
-				@click="onAbort">
+				:disabled="busy || abortPassword === ''">
 				{{
 					busy
 						? t('keepiq', 'Aborting…')
@@ -78,7 +87,7 @@
 					)
 				}}
 			</span>
-		</div>
+		</form>
 
 		<p v-if="progressLabel" class="keepiq-migration-banner__hint">
 			{{ progressLabel }}
@@ -112,6 +121,7 @@ export default {
 	data() {
 		return {
 			oldPassword: '',
+			abortPassword: '',
 			busy: false,
 			error: null,
 			expanded: false,
@@ -234,18 +244,7 @@ export default {
 				// a toast that stays until dismissed. A count and where to go, no
 				// re-add action: a resumed run doesn't know what the owner ticked
 				// (#804 review).
-				const removed = outcome?.residualContacts?.length ?? 0
-				if (removed > 0) {
-					showWarning(
-						this.n(
-							'keepiq',
-							'Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.',
-							'Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.',
-							removed,
-						),
-						{ timeout: TOAST_PERMANENT_TIMEOUT },
-					)
-				}
+				this.announceRemovedContacts(outcome?.residualContacts ?? [])
 
 				// The store leaves the migration in place when the server wants a
 				// loss acknowledged, so say where that decision now lives instead
@@ -275,21 +274,65 @@ export default {
 		 * the banner stays, pointing the user at resuming instead.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/harden-vault-key-material-guards/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
 		 */
 		async onAbort() {
 			this.busy = true
 			this.error = null
 
 			try {
-				await useEncryptionSuiteStore().abortMigration()
+				await useEncryptionSuiteStore().abortMigration(this.abortPassword)
 			} catch (e) {
 				this.error =
 					e?.response?.data?.message
 					|| e?.message
 					|| this.t('keepiq', 'Could not abort the rotation.')
 			} finally {
+				// The field must not keep holding the master password afterwards.
+				this.abortPassword = ''
 				this.busy = false
+			}
+		},
+
+		/**
+		 * Announce the emergency contacts the completion sweep removed.
+		 *
+		 * Removed contacts get a count and a pointer to Emergency Access. A
+		 * contact whose break-glass was in flight gets its own warning with no
+		 * nudge to add it back, because an in-flight request is what a planted
+		 * contact looks like (keepiq#880, spec: warn, rather than prompt).
+		 *
+		 * @param {Array<{reason: string}>} residual The read-back of removed contacts.
+		 * @return {void}
+		 * @spec openspec/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
+		 */
+		announceRemovedContacts(residual) {
+			const inFlight = residual.filter(
+				(c) => c.reason === 'break_glass_in_flight',
+			).length
+			const removed = residual.length - inFlight
+			if (removed > 0) {
+				showWarning(
+					this.n(
+						'keepiq',
+						'Your key rotation removed %n emergency contact. Check Emergency Access and add it again if you still want it.',
+						'Your key rotation removed %n emergency contacts. Check Emergency Access and add them again if you still want them.',
+						removed,
+					),
+					{ timeout: TOAST_PERMANENT_TIMEOUT },
+				)
+			}
+
+			if (inFlight > 0) {
+				showWarning(
+					this.n(
+						'keepiq',
+						'%n emergency contact had an access request pending when your key rotation removed it. Check who asked before you add anyone back.',
+						'%n emergency contacts had an access request pending when your key rotation removed them. Check who asked before you add anyone back.',
+						inFlight,
+					),
+					{ timeout: TOAST_PERMANENT_TIMEOUT },
+				)
 			}
 		},
 	},
@@ -319,6 +362,13 @@ export default {
 }
 
 .keepiq-migration-banner__form {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	gap: 0.5rem;
+}
+
+.keepiq-migration-banner__abort {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: flex-end;

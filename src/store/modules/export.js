@@ -65,7 +65,7 @@ export const useExportStore = defineStore('export', {
 		 * @param {string} scope 'vault' | 'folders'
 		 * @param {number} secretCount The number of secrets exported.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 */
 		async reportExport(mode, scope, secretCount) {
 			await axios.post(generateUrl('/apps/keepiq/api/v1/export/events'), {
@@ -83,7 +83,7 @@ export const useExportStore = defineStore('export', {
 		 * @param {string} passphrase The backup passphrase.
 		 * @param {object} [scope] Scope selector ({ mode, folderIds }).
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 */
 		async exportBackup(secrets, folders, passphrase, scope = { mode: 'vault' }) {
 			this.loading = true
@@ -119,7 +119,7 @@ export const useExportStore = defineStore('export', {
 		 * @param {Array<object>} folders Folder rows.
 		 * @param {object} [scope] Scope selector.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 */
 		async exportCsv(secrets, folders, scope = { mode: 'vault' }) {
 			this.loading = true
@@ -247,7 +247,7 @@ export const useExportStore = defineStore('export', {
 		 * @param {Array<object>|null} secrets Decrypted secrets, or null when locked.
 		 * @param {Array<object>} folders Folder rows.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
 		async exportGdprPackage(secrets, folders) {
 			this.loading = true
@@ -284,7 +284,7 @@ export const useExportStore = defineStore('export', {
 		 * @param {string} confirmation The typed confirmation phrase.
 		 * @param {string} masterPassword The master password, for the proof.
 		 * @return {Promise<object>} The deletion report.
-		 * @spec openspec/changes/harden-vault-key-material-guards/specs/gdpr-compliance/spec.md#requirement-account-data-deletion
+		 * @spec openspec/specs/gdpr-compliance/spec.md#requirement-account-data-deletion
 		 */
 		async deleteAccountData(confirmation, masterPassword) {
 			this.loading = true

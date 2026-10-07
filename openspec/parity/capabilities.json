@@ -528,7 +528,7 @@
       "id": "vault-04",
       "area": "vault",
       "name": "Recover a deleted item from a trash bin before it is gone for good.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -536,10 +536,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-trash-and-archive on 2026-09-27. Before: grep -rniF trash|deletedAt lib src: no soft-delete column or restore path. SecretDeleteConfirmDialog.vue:30 and BulkDeleteDialog.vue:35 both say there is no trash and the delete cannot be undone",
+        "state": "built",
+        "evidence": "lib/Service/SecretTrashService.php trash/restore/purge (sharing revoked at trash through SecretSharingRevoker); DELETE /api/v1/secrets/{id} -> SecretTrashController::trash; POST .../restore, DELETE .../purge; lib/BackgroundJob/PurgeTrashedSecretsJob.php daily purge past trash_retention_days (AdminSettingsService, 1 to 365, default 30); src/views/SecretList.vue Trash view (route SecretTrash, /trash) with Restore and Delete for good (src/dialogs/BulkStateDialog.vue)",
         "owner": "ConductionNL/keepiq",
-        "note": "Deliberate design choice, stated in the delete-confirmation copy itself, not a gap that was missed. Decision 2026-09-27: specified as vault-trash-and-archive; the bulk-actions spec names a trash a separate change (openspec/specs/bulk-actions/spec.md:94), so it is not a recorded non-goal."
+        "reachedOn": "Keepiq navigation, Trash: select secrets, Restore or Delete for good",
+        "note": "Built 2026-09-30. Tests: PHPUnit SecretTrashServiceTest, SecretTrashControllerTest, PurgeTrashedSecretsJobTest, SecretServiceTrashStateTest, TrashRetentionSettingTest, SecretStateFilterTest; vitest secretTrashState.spec.js, BulkStateDialog.spec.js, TrashDeleteCopy.spec.js.",
+        "change": "openspec/changes/archive/2026-09-30-vault-trash-and-archive"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -685,7 +687,7 @@
       "id": "vault-09",
       "area": "vault",
       "name": "Mark items as favourites and filter on them.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -693,10 +695,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-favourites-tags-and-last-used on 2026-09-27. Before: grep -rniF favourite|favorite lib src: no hits anywhere in the codebase",
+        "state": "built",
+        "evidence": "lib/Controller/SecretOrganisationController.php favourite() serves PUT /api/v1/secrets/{id}/favourite on the caller's own row (oc_keepiq_secrets.is_favourite, migration Version001003Date20261002000000); GET /api/v1/secrets?favourite=true through SecretMapper::findByOwner; src/components/SecretListItem.vue star toggle and the Favourites item in the SecretList filter menu.",
         "owner": "ConductionNL/keepiq",
-        "note": "No favourites concept exists on the secret entity, store, or UI."
+        "note": "Built 2026-10-02/03; live flow passed on the dev instance 2026-10-04 (tasks 5.1 to 5.5 in the archived tasks.md).",
+        "change": "openspec/changes/archive/2026-10-04-vault-favourites-tags-and-last-used",
+        "reachedOn": "SecretList page (/secrets): the star on a row, Filter menu > Favourites"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -714,7 +718,7 @@
       "id": "vault-10",
       "area": "vault",
       "name": "Label items with tags and filter by tag.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "no",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -722,10 +726,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-favourites-tags-and-last-used on 2026-09-27. Before: grep -rniF '\"tags\"' lib src: no hits; Secret entity (lib/Db) has no tags column and no additionalFields convention is treated as tags",
+        "state": "built",
+        "evidence": "lib/Controller/SecretOrganisationController.php tags() serves PUT /api/v1/secrets/{id}/tags and tagIndex() GET /api/v1/tags (lib/Db/SecretTagMapper.php, oc_keepiq_secret_tags, normalised by lib/Service/SecretTagNormaliser.php); src/components/SecretTagsField.vue in the create and edit dialogs, chips on src/components/SecretListItem.vue, bulk add and remove in src/dialogs/BulkTagDialog.vue, tag filter in the SecretList filter menu.",
         "owner": "ConductionNL/keepiq",
-        "note": "No tagging system. A user could ad-hoc name an additional field 'tag' but there is no dedicated tag storage, chip UI, or filter-by-tag."
+        "note": "Built 2026-10-02/03; live flow passed on the dev instance 2026-10-04 (tasks 5.1 to 5.5 in the archived tasks.md).",
+        "change": "openspec/changes/archive/2026-10-04-vault-favourites-tags-and-last-used",
+        "reachedOn": "SecretList page (/secrets): Tags field in the create and edit dialogs, Filter menu > tag, selection strip > Tags"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -755,7 +761,8 @@
         "evidence": "src/dialogs/SecretCreateDialog.vue:122 and src/dialogs/SecretEditDialog.vue:125 AdditionalFieldsEditor -> src/store/modules/secret.js:377 encrypts additionalFields blob -> POST /api/v1/secrets (appinfo/routes.php:89); src/components/AdditionalFieldsEditor.vue:50 value is a plain NcTextField; src/components/SecretDetailSidebar.vue:570-577 renders every value as plain <dd> text",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret / Edit secret dialog -> Additional fields section",
-        "note": "Owners can add, rename and remove named custom fields on create and edit, stored encrypted. There is no hidden or concealed field kind: values are typed in plain text fields and shown unmasked on the detail sidebar."
+        "note": "Owners can add, rename and remove named custom fields on create and edit, stored encrypted. There is no hidden or concealed field kind: values are typed in plain text fields and shown unmasked on the detail sidebar.",
+        "change": "openspec/changes/vault-custom-field-kinds-and-ssh-key"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -851,7 +858,8 @@
         "evidence": "lib/Repair/SeedSecretTypes.php:64 seeds 'ssh_key' => 'SSH Key'; src/dialogs/SecretCreateDialog.vue:95-108 offers only one value field for it; src/cxf/cxf.js:205,355 maps CXF ssh-key items; grep -rni ssh src --include=*.vue: no SSH-specific form, public-key field or key-pair generator",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Type: SSH Key",
-        "note": "SSH Key exists as its own type, but it stores a single secret value like any other type: there are no separate private key, public key and fingerprint fields and no key-pair generation. A user can put the public key in an additional field by hand."
+        "note": "SSH Key exists as its own type, but it stores a single secret value like any other type: there are no separate private key, public key and fingerprint fields and no key-pair generation. A user can put the public key in an additional field by hand.",
+        "change": "openspec/changes/vault-custom-field-kinds-and-ssh-key"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -921,7 +929,8 @@
         "evidence": "Specified in openspec/changes/vault-login-totp-codes on 2026-09-27 for the missing half: a code from a seed kept on a login; the separate authenticator item is built. Before: lib/Repair/SeedSecretTypes.php:67 seeds 'totp' => 'Authenticator (TOTP)'; src/components/SecretDetailSidebar.vue:214-228 renders TotpDisplay only when the type is totp (:1243 isTotp); src/totp/totp.js:7 parses otpauth URI or base32; src/import/parsers/bitwarden.js:70-71 puts a login's seed into additionalFields.totp, which the sidebar shows as plain text, not a code",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> detail sidebar of an Authenticator (TOTP) item -> One-time code row",
-        "note": "A live one-time code works, but only on a separate Authenticator item whose value is the seed. A seed kept on a login (for example imported from Bitwarden into additionalFields.totp) is shown as raw text and never becomes a code."
+        "note": "A live one-time code works, but only on a separate Authenticator item whose value is the seed. A seed kept on a login (for example imported from Bitwarden into additionalFields.totp) is shown as raw text and never becomes a code.",
+        "change": "openspec/changes/vault-login-totp-codes"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1037,7 +1046,7 @@
       "id": "vault-20",
       "area": "vault",
       "name": "Choose a default item type and default view for new items.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "partial",
@@ -1045,18 +1054,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "building",
-        "evidence": "lib/Service/SettingsService.php:98-99 user pref keys default_secret_type and default_view; grep -rn default_secret_type src: no hits; src/views/DashboardSettingsView.vue:36 edits default_view but is in no route or registry (grep DashboardSettingsView src: only a comment)",
+        "state": "built",
+        "evidence": "src/App.vue user-settings dialog -> Defaults section src/components/settings/DefaultsSection.vue -> src/store/modules/userPreferences.js save() PUT /api/settings/user (default_secret_type, default_view); src/dialogs/SecretCreateDialog.vue mounted() resolveDefaultTypeId (saved type, else login); src/views/SecretList.vue listViewMode -> CnIndexPage viewMode; dead src/views/DashboardSettingsView.vue deleted",
         "owner": "ConductionNL/keepiq",
-        "note": "The backend stores both preferences, but no reached screen edits them: the only form is DashboardSettingsView, which no route mounts. The create dialog and list do not read them either; the create dialog preselects the first type.",
-        "defects": [
-          {
-            "at": "src/views/DashboardSettingsView.vue:36",
-            "what": "The settings view that edits default_view is not mounted by any route or registry entry, so the preference cannot be set.",
-            "issue": "#208",
-            "needsLiveCheck": false
-          }
-        ]
+        "reachedOn": "User settings dialog (app navigation, Settings) -> Defaults; then New secret, and the Secrets list",
+        "note": "Built 2026-09-30. Defect #208 (unmounted DashboardSettingsView) closed by deleting the view and mounting DefaultsSection. Tests: vitest tests/components/DefaultsSection.spec.js, tests/dialogs/SecretCreateDialog.defaultType.spec.js, tests/views/SecretList.defaultView.spec.js, tests/store/userPreferences.spec.js.",
+        "change": "openspec/changes/archive/2026-09-30-vault-defaults-and-recently-used-widget"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1076,7 +1079,7 @@
       "id": "vault-21",
       "area": "vault",
       "name": "See the secrets you used most recently on the dashboard.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "partial",
       "onepassword": "partial",
       "passbolt": "no",
@@ -1084,11 +1087,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "building",
-        "evidence": "src/manifest.json:294 recent-activity-feed widget -> GET /api/v1/audit/me (appinfo/routes.php:378) listing the user's own audit events with item names; lib/Service/AuditService.php:200 recentlyAccessed (secret.read only) has no caller (grep recentlyAccessed lib src: definition only)",
+        "state": "built",
+        "evidence": "src/manifest.json dashboard widget recently-used (object-table, endpointSource /apps/keepiq/api/v1/secrets/recent, rowRoute SecretList) -> appinfo/routes.php audit#recent -> lib/Controller/AuditController.php recent() -> lib/Service/RecentlyUsedService.php forUser() over AuditService::recentlyAccessed(), distinct, owned, not tombstoned, at most five",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Dashboard page (/) -> Recent activity widget",
-        "note": "The dashboard shows your last five audit events of any kind, which includes secret reads by name, but it is an activity log rather than a list of recently used secrets and rows do not open the secret. The dedicated recently-accessed query exists but nothing calls it."
+        "reachedOn": "Dashboard page (/) -> Recently used widget; a row opens /secrets/:id",
+        "note": "Built 2026-09-30. Tests: PHPUnit tests/Unit/Service/RecentlyUsedServiceTest.php (distinct newest first, dropped when no longer held, cap five, empty), tests/Unit/Controller/AuditControllerTest.php.",
+        "change": "openspec/changes/archive/2026-09-30-vault-defaults-and-recently-used-widget"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1119,7 +1123,8 @@
         "state": "specified",
         "evidence": "Specified in openspec/changes/vault-item-clone-preview-and-print on 2026-09-27. Before: grep -rni 'clone\\|duplicate\\|make a copy' src --include=*.vue: only import-wizard duplicate handling; no clone action in SecretDetailSidebar.vue or SecretList.vue menus",
         "owner": "ConductionNL/keepiq",
-        "note": "There is no clone or duplicate action on a secret."
+        "note": "There is no clone or duplicate action on a secret.",
+        "change": "openspec/changes/vault-item-clone-preview-and-print"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1169,7 +1174,7 @@
       "id": "vault-24",
       "area": "vault",
       "name": "Sort items by date added, date changed or date last used.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "partial",
       "onepassword": "partial",
       "passbolt": "partial",
@@ -1177,11 +1182,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-favourites-tags-and-last-used on 2026-09-27 for the missing half: sorting by date last used; name, date added and date changed are built. Before: src/views/SecretList.vue:787-792 sortOptions name, created_at, updated_at -> src/store/modules/secret.js:140 sort param -> lib/Db/SecretMapper.php:48 SORTABLE_COLUMNS",
+        "state": "built",
+        "evidence": "Name, date added and date changed were built before; sorting by date last used added: oc_keepiq_secrets.last_used_at is set when the holder opens the value (lib/Service/SecretService.php) or the extension fills it (POST /api/v1/extension/used/{id}, SecretOrganisationController::used, 404 for a row the caller does not hold); SecretList filter menu > Sort by Last used.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets), Filter and sort menu",
-        "note": "Sort by name, date created and date updated works from the list's filter menu. There is no last-used timestamp on a secret, so sorting by last use is missing."
+        "note": "Built 2026-10-02/03; live flow passed on the dev instance 2026-10-04 (tasks 5.1 to 5.5 in the archived tasks.md).",
+        "change": "openspec/changes/archive/2026-10-04-vault-favourites-tags-and-last-used"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -1213,7 +1219,8 @@
         "evidence": "Specified in openspec/changes/vault-duplicate-finder on 2026-09-27. Before: git grep -i duplicate src lib: only the import wizard dedup (src/dialogs/ImportWizardDialog.vue:7 'duplicates' step); no report or merge over the stored vault",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
-        "note": "Duplicates are caught only while importing (portability-05); nothing finds or merges duplicates already stored."
+        "note": "Duplicates are caught only while importing (portability-05); nothing finds or merges duplicates already stored.",
+        "change": "openspec/changes/vault-duplicate-finder"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -1245,7 +1252,8 @@
         "evidence": "Specified in openspec/changes/vault-item-clone-preview-and-print on 2026-09-27. Before: src/components/AttachmentPanel.vue:42-44 offers only 'Download attachment' (store.download); appinfo/routes.php:350 attachment#download returns the ciphertext blob; no preview component",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretDetailSidebar attachment panel (download only)",
-        "note": "Attachments decrypt to a download; there is no in-app preview."
+        "note": "Attachments decrypt to a download; there is no in-app preview.",
+        "change": "openspec/changes/vault-item-clone-preview-and-print"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -1265,7 +1273,7 @@
       "id": "vault-27",
       "area": "vault",
       "name": "Archive an item so it leaves search and autofill without being deleted.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -1273,11 +1281,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/vault-trash-and-archive on 2026-09-27. Before: git grep -i archiv src lib appinfo: no match",
+        "state": "built",
+        "evidence": "lib/Service/SecretTrashService.php archive/unarchive (shares kept); lib/Db/SecretStateFilter.php live excludes archived in the list, fuzzy search, dashboard count and offline cache; SecretMapper::searchByNameOrUrl (extension match) and findForUnifiedSearch always live; health report reads the live list; src/components/SecretDetailSidebar.vue Archive/Unarchive; Archive view (route SecretArchive, /archive)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing",
-        "note": "No archive state; an item is either live or deleted."
+        "reachedOn": "Secret detail panel, more actions, Archive; Keepiq navigation, Archive",
+        "note": "Built 2026-09-30. Tests: PHPUnit SecretTrashServiceTest::testArchiveAndUnarchiveKeepShares, SecretStateFilterTest; vitest secretTrashState.spec.js, detail-route.spec.js.",
+        "change": "openspec/changes/archive/2026-09-30-vault-trash-and-archive"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -1309,7 +1318,8 @@
         "evidence": "Specified in openspec/changes/vault-website-addresses on 2026-09-27. Before: lib/Db/Secret.php:252 a single 'url' string field; git grep -i 'additionalUrl|urls' src lib: no multi-URL model; browser-extension/src/lib/match.js matches on that one url",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
-        "note": "A secret carries one website address."
+        "note": "A secret carries one website address.",
+        "change": "openspec/changes/vault-website-addresses"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -1371,7 +1381,8 @@
         "evidence": "Specified in openspec/changes/vault-item-clone-preview-and-print on 2026-09-27. Before: searched 'qrcode', 'QRCode', 'print(' in src/ lib/: only src/dialogs/ComplianceSnapshotDialog.vue:201 prints the compliance report",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
-        "note": "A secret cannot be printed or shown as a QR code."
+        "note": "A secret cannot be printed or shown as a QR code.",
+        "change": "openspec/changes/vault-item-clone-preview-and-print"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -1401,7 +1412,8 @@
         "evidence": "Specified in openspec/changes/vault-website-addresses on 2026-09-27 for the missing half: a preview image of the site; site icons are built. Before: lib/Controller/DashboardController.php:101 favicon_service_url admin setting (off by default) -> src/utils/favicon.js:6 -> src/components/SecretListItem.vue:13 favicon in the list; searched 'screenshot', 'preview' for sites: none",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Secret list, favicon beside each login once an admin sets a favicon service",
-        "note": "Site icons show when an admin configures a favicon service; there is no screenshot preview."
+        "note": "Site icons show when an admin configures a favicon service; there is no screenshot preview.",
+        "change": "openspec/changes/vault-website-addresses"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -1587,7 +1599,7 @@
       "id": "crypto-06",
       "area": "crypto",
       "name": "Lock the vault by hand, and have it lock itself after a period of inactivity.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -1595,19 +1607,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "building",
-        "evidence": "src/manifest.json:170-173 'Lock vault' menu -> src/App.vue:743 sessionStore.lock(); src/App.vue:779 polls checkTimeout -> src/store/modules/session.js:194 compares against lastActivity, which is set only at unlock (:121,:159) because updateActivity (:204) has no caller (grep updateActivity src: definition only); browser-extension/src/background/service-worker.js:37-38 real idle lock",
+        "state": "built",
+        "evidence": "src/App.vue mounted() registers pointerdown/pointermove/keydown/wheel/scroll/touchstart listeners -> handleActivity -> src/store/modules/session.js noteActivity() (15 s throttle); checkTimeout() compares against lastActivity and skips a null timeout; manual lock unchanged (sessionStore.lock)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "App navigation -> Lock vault; automatic lock via the App.vue timeout poll",
-        "note": "Manual lock works and the vault locks itself on tab close and after a timeout. In the web app that timeout runs from the moment of unlock, not from the last activity, so an active user is locked out mid-work; the browser extension does have a true idle lock.",
-        "defects": [
-          {
-            "at": "src/store/modules/session.js:204",
-            "what": "updateActivity is never called, so the web app's auto-lock is an absolute timer from unlock rather than an inactivity timer.",
-            "issue": null,
-            "needsLiveCheck": true
-          }
-        ]
+        "reachedOn": "Any vault page while unlocked; the lock screen appears after the chosen idle period",
+        "note": "Built 2026-09-29. Tests: vitest tests/store/session.timeout.spec.js (active user stays unlocked over 25 min, idle user locked, throttle, locked vault ignores activity), tests/components/appSessionWiring.spec.js.",
+        "change": "openspec/changes/archive/2026-09-29-crypto-session-timeout-and-inactivity-lock"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1627,7 +1632,7 @@
       "id": "crypto-07",
       "area": "crypto",
       "name": "Choose your own session timeout.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -1635,25 +1640,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "building",
-        "evidence": "src/App.vue:137-143 Session timeout select in Personal settings -> :873-874 saveTimeout maps session:0, 10min, 30min then '|| 600000' and only sets sessionStore.timeout in memory; no request persists it and App.vue:497 always starts at 'session'; src/components/settings/SessionTimeoutSection.vue:52-66 does GET/PUT session_timeout but is mounted nowhere (grep SessionTimeoutSection src: self only); lib/Service/SettingsService.php:93 stores the key",
+        "state": "built",
+        "evidence": "src/App.vue user-settings Session select -> onTimeoutChange -> src/store/modules/session.js saveTimeoutPreference() PUT /api/settings/user; loadTimeoutPreference() on mount; 'session' held as null (no idle timer); lib/Service/AdminSettingsService.php DEFAULT_SESSION_TIMEOUT = '10min' for an unset value",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "App navigation -> Personal settings -> Session -> Session timeout",
-        "note": "A user can pick 10 or 30 minutes and it applies for the current page session only; it is not saved and resets on reload. The 'Nextcloud session' option maps to 0, which the '|| 600000' fallback turns into 10 minutes, so it silently behaves like 10 minutes.",
-        "defects": [
-          {
-            "at": "src/App.vue:874",
-            "what": "The 'Nextcloud session' choice maps to 0 and the '|| 600000' fallback turns it into a 10-minute timeout.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "src/App.vue:873",
-            "what": "The chosen timeout is never persisted to the server, and the component that does persist it (SessionTimeoutSection.vue) is not mounted, so the choice is lost on reload.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ]
+        "reachedOn": "User settings dialog (app navigation, Settings) -> Session -> Session timeout",
+        "note": "Built 2026-09-29. Tests: vitest tests/store/session.timeout.spec.js (load, save, Nextcloud session never locks), PHPUnit SettingsServiceSessionTimeoutTest.",
+        "change": "openspec/changes/archive/2026-09-29-crypto-session-timeout-and-inactivity-lock"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -1713,7 +1705,7 @@
       "id": "crypto-09",
       "area": "crypto",
       "name": "Unlock with a fingerprint or face scan on your device.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -1721,11 +1713,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/clients-extension-unlock-lock-and-accounts on 2026-09-27 for the missing half: fingerprint or face unlock in the browser extension; the web app unlock with a platform passkey is built. Before: src/components/PasskeyManager.vue:25 offers Touch ID, Windows Hello or a security key; src/store/modules/passkey.js:221 userVerification 'preferred' with the PRF extension; browser-extension/src/popup/popup.js unlocks with the master password only (grep -rni 'biometric\\|webauthn' browser-extension/src/popup: no hits)",
+        "state": "built",
+        "evidence": "browser-extension/src/unlock/ceremony.js enrolBiometric/unlockWithBiometric -> router.js biometric-enrol / biometric-options / unlock-raw -> browser-extension/src/lib/vault.js unlockWithRawKey; server lib/Service/PasskeyService.php enroll(clientKind, rpId) and loginOptions(client, rpId), migration Version001007Date20261002180000; web list src/components/PasskeyManager.vue labels extension credentials",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Lock page (/lock) -> Unlock with passkey, using a platform authenticator",
-        "note": "Fingerprint or face unlock works in the web app only by enrolling a platform passkey (Touch ID, Windows Hello) whose browser supports PRF. The browser extension and CLI have no biometric unlock."
+        "reachedOn": "Extension popup -> Settings -> Set up fingerprint or face unlock; locked popup -> Unlock with fingerprint or face",
+        "note": "PRF passkey owned by the extension (its own origin as relying party, user verification required); the server stores only the wrapped unlock key. Vitest with a fake PRF authenticator; the Playwright virtual-authenticator run and the per-browser check are owed.",
+        "change": "openspec/changes/archive/2026-10-02-clients-extension-unlock-lock-and-accounts"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1784,7 +1777,8 @@
         "state": "specified",
         "evidence": "Specified in openspec/changes/crypto-organisation-account-recovery on 2026-09-27. Before: src/components/settings/AdminSuiteSection.vue:21,180 admin can only force-revoke a suite so the user starts a new empty vault; grep -rni 'escrow\\|recovery key\\|account recovery' lib: only emergency-access envelopes escrowed to a contact's certificate, never to an admin",
         "owner": "ConductionNL/keepiq",
-        "note": "By zero-knowledge design an administrator cannot restore access to a user's secrets. The admin can force-revoke the locked suite so the user can set up a fresh vault, but the old secrets stay unreadable unless the user has an emergency contact or a backup file."
+        "note": "By zero-knowledge design an administrator cannot restore access to a user's secrets. The admin can force-revoke the locked suite so the user can set up a fresh vault, but the old secrets stay unreadable unless the user has an emergency contact or a backup file.",
+        "change": "openspec/changes/crypto-organisation-account-recovery"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -1843,7 +1837,8 @@
         "state": "specified",
         "evidence": "Specified in openspec/changes/crypto-vault-encryption-details on 2026-09-27. Before: src/crypto/rsa.js:8 RSA_KEY_BITS = 4096 and src/crypto/aes.js:15 PBKDF2 600000 are code constants only; grep -rni 'algorithm\\|key size\\|RSA-OAEP' src --include=*.vue: only template comments; src/views/CertificateInventoryView.vue:116-137 shows vault certificate owner, subject and expiry, no algorithm or key size",
         "owner": "ConductionNL/keepiq",
-        "note": "No screen tells the user which algorithms or key sizes protect the vault. The certificates page shows the vault certificate's subject and expiry, but not RSA-4096, RSA-OAEP, AES-256-GCM or the key derivation settings."
+        "note": "No screen tells the user which algorithms or key sizes protect the vault. The certificates page shows the vault certificate's subject and expiry, but not RSA-4096, RSA-OAEP, AES-256-GCM or the key derivation settings.",
+        "change": "openspec/changes/crypto-vault-encryption-details"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2071,7 +2066,8 @@
         "evidence": "Specified in openspec/changes/crypto-item-reprompt on 2026-09-27. Before: git grep -i 'reprompt|re-prompt' src browser-extension: no match; master-password re-entry exists only before a plaintext export (src/dialogs/ExportDialog.vue:130 via src/crypto/reauth.js verifyMasterPassword)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
-        "note": "Re-entry of the master password guards export only, not viewing or filling a chosen item."
+        "note": "Re-entry of the master password guards export only, not viewing or filling a chosen item.",
+        "change": "openspec/changes/crypto-item-reprompt"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -2197,7 +2193,8 @@
         "evidence": "Specified in openspec/changes/crypto-new-device-approval on 2026-09-27. Before: searched 'device approval', 'auth request', 'approveLogin', 'LoginRequest' in lib/ src/ appinfo/routes.php: no match; the vault unlocks with the user's own passphrase on each device",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
-        "note": "Sign-in is Nextcloud's; a new device unlocks the vault with the user's passphrase, and there is no approve-from-another-device or admin approval flow."
+        "note": "Sign-in is Nextcloud's; a new device unlocks the vault with the user's passphrase, and there is no approve-from-another-device or admin approval flow.",
+        "change": "openspec/changes/crypto-new-device-approval"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -2247,7 +2244,7 @@
       "id": "sharing-02",
       "area": "sharing",
       "name": "Share a secret with a Nextcloud group.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -2255,18 +2252,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "building",
-        "evidence": "lib/Controller/GroupShareController.php and lib/Service/GroupShareService.php implement group shares fully, but src/components/share/GroupShareForm.vue (registry key 'group-share-form') has no cnOpenModal caller anywhere in src/, and no store or component ever calls the /api/v1/secrets/{id}/group-shares endpoints (grep -rn 'group-shares' src/ browser-extension/ cli/: no hits). GroupShareForm.vue also calls useShareStore.encryptForRecipient with a `members` prop no caller ever supplies, not the groupShare backend at all.",
+        "state": "built",
+        "evidence": "src/components/SecretDetailSidebar.vue mounts src/components/share/GroupShareList.vue for owners -> GroupShareForm.vue -> src/store/modules/groupShare.js shareWithGroup: POST /api/v1/secrets/{id}/group-shares (appinfo/routes.php:134, lib/Service/GroupShareService.php createGroupShare honours Nextcloud share settings) then POST /api/v1/shares/register-batch with groupShareId (lib/Service/DirectShareRegistrar.php groupShareMatches); revoke via DELETE /api/v1/group-shares/{id} revokes each member copy through ShareRevocationService",
         "owner": "ConductionNL/keepiq",
-        "note": "A user cannot share a secret with a Nextcloud group today. The backend and a form component exist but nothing in the app opens the form or calls the group-share API.",
-        "defects": [
-          {
-            "at": "src/components/share/GroupShareForm.vue:1",
-            "what": "Group-share form component is registered but never opened by any page or dialog, and its own submit logic calls the wrong store (useShareStore per-user encryption) rather than the group-shares endpoint.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ]
+        "reachedOn": "Secret sidebar (/secrets, open a secret you own) -> Sharing -> Share with group",
+        "note": "Built 2026-09-29. Tests: GroupShareServiceTest (visibility, skipped count, revoke cascade), ShareServiceTest::testRegisterDirectSharesLinksAGroupShareOfTheSameSecret, GroupShareControllerTest create, vitest groupShare store and GroupShareList.",
+        "change": "openspec/changes/archive/2026-09-29-sharing-group-share-entry-point"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -2554,8 +2545,8 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "building",
-        "evidence": "src/components/share/DelegationManager.vue (mounted for owners in SecretDetailSidebar.vue:680) wires a reclaim button -> store.reclaimDelegation -> POST /api/v1/secrets/{id}/delegations/reclaim (appinfo/routes.php:155). But the creation half, useDelegationStore.createDelegation (delegation.js:105, POST .../delegations), has no caller anywhere in src/ -- DelegationManager only lists and reclaims, it never offers to create one.",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: No competitor rated yes, no demand, outside the core area. Reversible: the reclaim half is built and the creation half is a store and dialog gap. Before: src/components/share/DelegationManager.vue (mounted for owners in SecretDetailSidebar.vue:680) wires a reclaim button -> store.reclaimDelegation -> POST /api/v1/secrets/{id}/delegations/reclaim (appinfo/routes.php:155). But the creation half, useDelegationStore.createDelegation (delegation.js:105, POST .../delegations), has no caller anywhere in src/ -- DelegationManager only lists and reclaims, it never offers to create one.",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretDetailSidebar -> Delegations section (reclaim only)",
         "note": "A temporary delegation to a colleague can never be created through the UI, so the reclaim button that IS wired has nothing to act on in normal use: createDelegation (src/store/modules/delegation.js:105) still has no caller in src/. Do not confuse with AdminHandoverPanel.vue (mounted in SecretDetailSidebar.vue:700), a separate vault-admin takeover that has worked end to end since f13ad8e6 (route, controller call and panel, closing #184); it is not an owner-to-colleague temporary handover and does not close this gap.",
@@ -2627,8 +2618,8 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "No feature lets a user who lacks any access to a secret ask its owner for access. The nearest built feature, src/components/share/ShareRequestForm.vue (mounted in SecretDetailSidebar.vue:687 for isRecipient && !isOwner), requires the requester to ALREADY hold a shared copy and asks the owner to share with a DIFFERENT third party (openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated), which is a distinct capability from the one this row describes.",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: Single competitor, no demand. Before: No feature lets a user who lacks any access to a secret ask its owner for access. The nearest built feature, src/components/share/ShareRequestForm.vue (mounted in SecretDetailSidebar.vue:687 for isRecipient && !isOwner), requires the requester to ALREADY hold a shared copy and asks the owner to share with a DIFFERENT third party (openspec/specs/user-sharing/spec.md#requirement-share-request-recipient-initiated), which is a distinct capability from the one this row describes.",
         "owner": "ConductionNL/keepiq",
         "note": "Rename suggestion: the built and reachable ShareRequestForm feature is 'ask the owner to share this secret with someone else', not 'ask the owner for access to it' for yourself. There is no discovery mechanism for a secret you cannot already see, so a self-access request has nothing to attach to."
       },
@@ -2764,7 +2755,8 @@
         "state": "specified",
         "evidence": "Specified in openspec/changes/sharing-federated-recipients on 2026-09-27. Before: grep -rn 'federat\\|remote share\\|outside.*organi[sz]ation' lib/Controller lib/Service: no sharing-related hits (the one federated-cloud-ID hit in EncryptionSuiteProvisioningService.php:331 is only used to name a certificate's common name, not to share with an external account). All sharing paths (user-to-user, team folder, link, send) target a Nextcloud user ID, group ID, or an anonymous public link on this instance.",
         "owner": "ConductionNL/keepiq",
-        "note": "Sharing with an account on a different Nextcloud instance is not supported; a password-protected public link (sharing-14) is the closest substitute."
+        "note": "Sharing with an account on a different Nextcloud instance is not supported; a password-protected public link (sharing-14) is the closest substitute.",
+        "change": "openspec/changes/sharing-federated-recipients"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -2792,7 +2784,8 @@
       "built": {
         "state": "specified",
         "evidence": "Specified in openspec/changes/sharing-team-folder-manager-role on 2026-09-27. Before: The only role-like concept in the codebase is a team folder membership grade of read or write (folder-permission-grades spec, sharing-09); there is no manager/viewer role vocabulary and no 'collection' concept beyond team folders. grep -rln 'manager\\|viewer' src/store/modules lib/Controller for role-purposed hits: none.",
-        "owner": "ConductionNL/keepiq"
+        "owner": "ConductionNL/keepiq",
+        "change": "openspec/changes/sharing-team-folder-manager-role"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -2942,8 +2935,8 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "grep -rln 'Comment' lib/Controller/*.php src/store/modules/*.js: no hits. No comment/annotation feature exists anywhere in the app.",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: Single competitor, no demand. Before: grep -rln 'Comment' lib/Controller/*.php src/store/modules/*.js: no hits. No comment/annotation feature exists anywhere in the app.",
         "owner": "ConductionNL/keepiq"
       },
       "rowSource": "competitor",
@@ -2973,7 +2966,8 @@
         "evidence": "Specified in openspec/changes/sharing-use-only-and-expiring-shares on 2026-09-27. Before: git grep -i 'hidePassword|useOnly|can_view' src lib: no match; team folder roles are read-only or edit (sharing-09), both reveal the value",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
-        "note": "Every recipient who can use a secret can also reveal it."
+        "note": "Every recipient who can use a secret can also reveal it.",
+        "change": "openspec/changes/sharing-use-only-and-expiring-shares"
       },
       "rowSource": "competitor",
       "origin": "tender",
@@ -3005,7 +2999,8 @@
         "evidence": "Specified in openspec/changes/sharing-use-only-and-expiring-shares on 2026-09-27. Before: lib/Controller/ShareController.php: no expiry field on a user share (git grep -i expir lib/Controller/ShareController.php: no match); time-bound access exists only for public links (sharing-14) and ownership handover (sharing-11)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
-        "note": "A share to a colleague lasts until it is revoked by hand."
+        "note": "A share to a colleague lasts until it is revoked by hand.",
+        "change": "openspec/changes/sharing-use-only-and-expiring-shares"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -3856,8 +3851,8 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "building",
-        "evidence": "lib/Controller/ApplicationController.php:338 destroy() -> lib/Service/ApplicationService.php:201-221 delete(): removes the application row and cascades MachineLease + lease-policy rows only. The method's own docblock (line 216-218) reads: 'The full cascade (Secrets + EncryptionSuite + SecretRequests) lands with the dedicated build cycle once those services accept owner_type=application.' SecretService::deleteByApplication() exists but is only called from ApplicationSecretRequestService and SecretPlaceholderCleaner, never from ApplicationService::delete()",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: No competitor rated yes, no demand, outside the core area. Reversible: ApplicationService::delete cascades leases and lease policies but not secrets. Before: lib/Controller/ApplicationController.php:338 destroy() -> lib/Service/ApplicationService.php:201-221 delete(): removes the application row and cascades MachineLease + lease-policy rows only. The method's own docblock (line 216-218) reads: 'The full cascade (Secrets + EncryptionSuite + SecretRequests) lands with the dedicated build cycle once those services accept owner_type=application.' SecretService::deleteByApplication() exists but is only called from ApplicationSecretRequestService and SecretPlaceholderCleaner, never from ApplicationService::delete()",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Application detail page -> admin delete action -> DELETE /apps/keepiq/api/v1/applications/{id}",
         "note": "The application-mgmt spec requires that deleting an application permanently deletes the application, its EncryptionSuite, and all its attributed secrets. The shipped delete only removes the application row and its lease rows; secrets and the EncryptionSuite are left behind, contradicting the spec's own scenario.",
@@ -3983,7 +3978,7 @@
       "id": "apps-17",
       "area": "apps",
       "name": "Inject secrets into a Kubernetes cluster.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -3991,10 +3986,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/apps-kubernetes-injection on 2026-09-27. Before: grep -rli 'kubernetes|k8s|helm' lib src cli browser-extension: no hits",
-        "note": "No Kubernetes secret injection (operator, CSI driver, sidecar) exists; keepiq's machine surface is a plain HTTP+JWT API a cluster could call itself, but nothing ships to do that integration.",
-        "owner": "ConductionNL/keepiq"
+        "state": "built",
+        "evidence": "integrations/kubernetes: controller-runtime operator (KeepiqConnection, KeepiqSecret CRDs), Helm chart with namespaced RBAC, no-Secret recipe via keepiq install + keepiq ci run; envtest suite (CRD validation, sync, rotation restart, 404/409/token/fingerprint reasons, leases) green; helm lint and template snapshots green",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/apps-kubernetes-injection (stacked on #914). Owed: kind test and release workflow in CI, the first k8s-v* release, and the live sync against the dev instance.",
+        "change": "openspec/changes/archive/2026-10-02-apps-kubernetes-injection"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -4012,7 +4009,7 @@
       "id": "apps-18",
       "area": "apps",
       "name": "Use a ready-made GitHub Actions or GitLab CI integration.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "unknown",
@@ -4020,10 +4017,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/apps-client-libraries-and-ci on 2026-09-27. Before: grep -rli 'github.action|gitlab.ci|.gitlab-ci' lib src cli browser-extension: no hits (only this repo's own CI workflows use GitHub Actions, which is unrelated to a keepiq integration product)",
-        "note": "No ready-made GitHub Actions or GitLab CI step exists; a pipeline would have to install and script the keepiq CLI itself.",
-        "owner": "ConductionNL/keepiq"
+        "state": "built",
+        "evidence": "integrations/github-action/action.yml + keepiq-action.sh (run mode via keepiq ci run, export-env masks every line before GITHUB_ENV, checksum-verified install), integrations/gitlab-ci/keepiq.gitlab-ci.yml (.keepiq hidden job), cli-release.yml SHA256SUMS + ghcr.io/conductionnl/keepiq-cli; integrations/test/run.sh passes 9 checks against sdk/testdata/stub_server.py",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/apps-client-libraries-and-ci. Owed: the first cli-v* release with SHA256SUMS and the ghcr image, and the workflow dry runs in CI.",
+        "change": "openspec/changes/archive/2026-10-02-apps-client-libraries-and-ci"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -4049,8 +4048,8 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "grep -rli 'dynamic.*database|database.*credential|db.*secret.*engine' lib src: no hits; keepiq only stores and serves secrets a human or app already supplied, it does not generate short-lived database credentials itself",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: Single competitor, no demand. Before: grep -rli 'dynamic.*database|database.*credential|db.*secret.*engine' lib src: no hits; keepiq only stores and serves secrets a human or app already supplied, it does not generate short-lived database credentials itself",
         "note": "No dynamic secrets engine (database, cloud IAM, etc.) exists, unlike Vault/OpenBao.",
         "owner": "ConductionNL/keepiq"
       },
@@ -4070,7 +4069,7 @@
       "id": "apps-20",
       "area": "apps",
       "name": "Rotate a database or service password automatically.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "partial",
       "onepassword": "partial",
       "passbolt": "no",
@@ -4078,10 +4077,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/apps-secret-sync-and-rotation-runner on 2026-09-27. Before: Matrix corrected 2026-09-27 in the openspec pass: the rating is no and nothing rotates a password at the destination service; the evidence below is the reminder and manual mark-rotated flow only. Before: openspec/specs/rotation-expiry-policies/spec.md:9 describes 'expiry, an admin-default and user-override max-age policy, approaching/overdue reminders ... a proven mark-rotated flow'; this is a reminder + manual mark-rotated flow (lib/Controller/RotationController.php, src/store/modules/rotation.js), not automatic rotation of the underlying credential at the target service",
+        "state": "built",
+        "evidence": "integrations/runner: keepiq-runner rotates postgres/mysql/exec targets prove-then-record (journal encrypted to the app key, If-Match write-back, set-back on failed login or 412, crash recovery); connector tests passed against postgres:16 and mysql:8.4; server: If-Match on PUT /api/v1/app/secrets/{id}, expiresAt in the envelope",
         "owner": "ConductionNL/keepiq",
-        "note": "keepiq flags stale/expiring secrets and lets a user mark one rotated, but it never rotates a password at the destination service itself the way Vault/1Password-style rotation connectors do."
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/apps-secret-sync-and-rotation-runner (stacked on #914). Owed: end-to-end rotation on the dev instance (task 4.3) and the first runner-v* release.",
+        "change": "openspec/changes/archive/2026-10-02-apps-secret-sync-and-rotation-runner"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -4099,7 +4100,7 @@
       "id": "apps-21",
       "area": "apps",
       "name": "Use client libraries for common programming languages.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -4107,11 +4108,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/apps-client-libraries-and-ci on 2026-09-27 for the missing half: client libraries for common languages; the Go command-line client is built. Before: cli/ is a single Go CLI (stdlib only) covering human read-only + CI fetch; no client SDKs for other languages exist (no python/node/java package in the repo)",
-        "reachedOn": "keepiq CLI (Go binary, cross-compiled)",
-        "note": "There is one cross-compiled CLI binary, not per-language client libraries; a Python or Node consumer would call the documented HTTP+JWT API directly with no official SDK.",
-        "owner": "ConductionNL/keepiq"
+        "state": "built",
+        "evidence": "sdk/go (keepiq.New: GetByName, GetByID, List, Create, Update; go test green), sdk/python (keepiq-sdk, 14 tests green), sdk/js (@conduction/keepiq-sdk, 15 vitest tests green); shared vectors in sdk/testdata decrypted by every library and by DecryptService in tests/Unit/Service/SdkEncryptedVectorsTest.php",
+        "owner": "ConductionNL/keepiq",
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/apps-client-libraries-and-ci. Owed: publishing to PyPI and npm (sdk-py-v*, sdk-js-v* tags) and the first sdk/go/v* tag.",
+        "change": "openspec/changes/archive/2026-10-02-apps-client-libraries-and-ci"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -4140,7 +4142,8 @@
         "state": "specified",
         "evidence": "Specified in openspec/changes/apps-terraform-provider on 2026-09-27. Before: grep -rli 'terraform' . --include=*.md --include=*.php --include=*.go: no hits",
         "note": "No Terraform provider exists for managing keepiq secrets/applications as code.",
-        "owner": "ConductionNL/keepiq"
+        "owner": "ConductionNL/keepiq",
+        "change": "openspec/changes/apps-terraform-provider"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -4198,8 +4201,8 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "grep -n 'class.*Controller' lib/Controller | grep -i 'encrypt|transit|crypto': only EncryptionSuiteController (manages the user's own suite/keypair), no generic encrypt/decrypt-as-a-service endpoint that takes arbitrary application data",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: Single competitor, no demand. Before: grep -n 'class.*Controller' lib/Controller | grep -i 'encrypt|transit|crypto': only EncryptionSuiteController (manages the user's own suite/keypair), no generic encrypt/decrypt-as-a-service endpoint that takes arbitrary application data",
         "note": "keepiq encrypts secret VALUES it stores; it has no Vault-Transit-style API where an application sends it arbitrary data to encrypt/decrypt without storing it.",
         "owner": "ConductionNL/keepiq"
       },
@@ -4218,7 +4221,7 @@
       "id": "apps-25",
       "area": "apps",
       "name": "Push secrets out to cloud secret stores such as AWS Secrets Manager, Azure Key Vault or GitHub and keep them in sync.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "partial",
       "onepassword": "partial",
       "passbolt": "no",
@@ -4226,11 +4229,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/apps-secret-sync-and-rotation-runner on 2026-09-27. Before: git grep -i 'aws|azure|key vault' lib src: no match; no outbound secret sync",
+        "state": "built",
+        "evidence": "integrations/runner internal/syncer + internal/destinations: updated_since polling, per-entry ETag state with backoff, pushes to AWS Secrets Manager, Azure Key Vault, GitHub Actions secrets (sealed box) and exec; tested against protocol stubs",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing",
-        "note": "No push of secrets to cloud secret stores."
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/apps-secret-sync-and-rotation-runner (stacked on #914). Owed: a LocalStack run and live pushes to real cloud accounts.",
+        "change": "openspec/changes/archive/2026-10-02-apps-secret-sync-and-rotation-runner"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -4288,8 +4292,8 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "building",
-        "evidence": "Intermediate: lib/BackgroundJob/RenewIntermediateCertificate.php:68 (daily, appinfo/info.xml:111) -> CertificateAuthorityService.php:242 renewIntermediate -> resignAllActiveSuites. Root: CertificateAuthorityService.php:288 renewRoot only reachable through POST /api/v1/ca/renew-root (lib/Controller/CACertificateController.php:140), which no UI calls (routes-unmatched NO-REF); lib/BackgroundJob/CheckRootCertificateExpiry.php:68 only logs",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: No competitor rated yes, no demand, outside the core area. Reversible: the intermediate renews on a daily job and the root renews only by hand. Before: Intermediate: lib/BackgroundJob/RenewIntermediateCertificate.php:68 (daily, appinfo/info.xml:111) -> CertificateAuthorityService.php:242 renewIntermediate -> resignAllActiveSuites. Root: CertificateAuthorityService.php:288 renewRoot only reachable through POST /api/v1/ca/renew-root (lib/Controller/CACertificateController.php:140), which no UI calls (routes-unmatched NO-REF); lib/BackgroundJob/CheckRootCertificateExpiry.php:68 only logs",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "machine: daily background job (intermediate only)",
         "note": "The intermediate is renewed automatically, but because of an inverted date diff it is renewed every day rather than 30 days before expiry. The root is never renewed automatically and its expiry warning never fires.",
@@ -4473,8 +4477,8 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "building",
-        "evidence": "lib/Service/CertificateAuthorityService.php:223 signCsr and lib/Service/CertificateIssuanceService.php:211 exist but no controller calls signCsr (grep '->signCsr(' lib: only the service wrapper); the only CSR the CA signs is an application's registration CSR (lib/Service/ApplicationSuiteProvisioner.php:67), downloadable on src/views/ApplicationDetail.vue:324 -> GET /api/v1/applications/{id}/certificate",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: Single competitor, no demand. Before: lib/Service/CertificateAuthorityService.php:223 signCsr and lib/Service/CertificateIssuanceService.php:211 exist but no controller calls signCsr (grep '->signCsr(' lib: only the service wrapper); the only CSR the CA signs is an application's registration CSR (lib/Service/ApplicationSuiteProvisioner.php:67), downloadable on src/views/ApplicationDetail.vue:324 -> GET /api/v1/applications/{id}/certificate",
         "owner": "ConductionNL/keepiq",
         "note": "There is no way to issue a certificate for an arbitrary service. The CA only signs keepiq's own suite certificates and the CSR an application submits when it registers with keepiq."
       },
@@ -4533,8 +4537,8 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "building",
-        "evidence": "src/views/ApplicationRegisterView.vue:57 mounts src/dialogs/PrivateKeyDownloadDialog.vue when src/store/modules/application.js:136 finds data.private_key, but no PHP code returns a private_key (grep \"'private_key'\" lib: no hits); lib/Service/ApplicationLifecycleService.php:334 only provisions a suite from a supplied CSR",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: No competitor rated yes, no demand, outside the core area. Note: PrivateKeyDownloadDialog is mounted but no PHP code returns a private_key, so the dialog is dead UI. Before: src/views/ApplicationRegisterView.vue:57 mounts src/dialogs/PrivateKeyDownloadDialog.vue when src/store/modules/application.js:136 finds data.private_key, but no PHP code returns a private_key (grep \"'private_key'\" lib: no hits); lib/Service/ApplicationLifecycleService.php:334 only provisions a suite from a supplied CSR",
         "owner": "ConductionNL/keepiq",
         "note": "The one-time private key download is wired in the frontend but the backend never generates a key pair or returns a private key, so the dialog can never open. Applications must bring their own key via a CSR; one registered without a CSR gets no suite.",
         "defects": [
@@ -4838,7 +4842,7 @@
       "id": "health-08",
       "area": "health",
       "name": "Generate a memorable passphrase made of words.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -4846,10 +4850,10 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/health-passphrase-generator on 2026-09-27. Before: grep -rli 'passphrase|diceware|wordlist' src lib browser-extension/src cli: hits are only export-backup passphrases and import parsers; KeyGeneratorService has no word mode",
+        "state": "built",
+        "evidence": "src/generator/generator.js generatePassphrase (EFF large word list src/generator/eff-large-wordlist.js, crypto.getRandomValues) <- src/dialogs/KeyGeneratorModal.vue Password/Passphrase switch; policy fit + generator_allow_passphrase (lib/Service/PasswordPolicyService.php). Tests: tests/vitest/generator.spec.js, tests/dialogs/KeyGeneratorModal.spec.js, tests/e2e/workflows/key-generator.spec.ts. Change: openspec/changes/client-side-key-generator (supersedes health-passphrase-generator).",
         "owner": "ConductionNL/keepiq",
-        "note": "The generator only produces character strings (or regex-shaped ones); there is no word-based passphrase mode."
+        "reachedOn": "SecretList page (/secrets) -> New secret dialog -> Generate a strong key -> Passphrase"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -4875,8 +4879,8 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "grep -rni 'username generat|email alias|simplelogin|anonaddy|forwarder' src lib browser-extension/src cli: no hits",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: Single competitor, no demand. Before: grep -rni 'username generat|email alias|simplelogin|anonaddy|forwarder' src lib browser-extension/src cli: no hits",
         "owner": "ConductionNL/keepiq",
         "note": "No username or email-alias generator anywhere in the app, extension or CLI."
       },
@@ -4903,8 +4907,8 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "grep -rni 'breachedaccount|email.*breach|breach.*email' src lib: no hits; the only HIBP use is the Pwned Passwords range proxy (lib/Controller/BreachProxyController.php:57)",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: Single competitor, no demand. Before: grep -rni 'breachedaccount|email.*breach|breach.*email' src lib: no hits; the only HIBP use is the Pwned Passwords range proxy (lib/Controller/BreachProxyController.php:57)",
         "owner": "ConductionNL/keepiq",
         "note": "Breach checking covers password values only, on demand; there is no email or account breach monitoring and no alerting on new breaches."
       },
@@ -4935,7 +4939,8 @@
         "state": "specified",
         "evidence": "Specified in openspec/changes/health-site-security-checks on 2026-09-27. Before: grep -rni '2fa.directory|twofactorauth|inactive.*2fa' src lib browser-extension/src: no hits",
         "owner": "ConductionNL/keepiq",
-        "note": "No inactive two-factor report; the health engine has no such category (src/health/engine.js:114)."
+        "note": "No inactive two-factor report; the health engine has no such category (src/health/engine.js:114).",
+        "change": "openspec/changes/health-site-security-checks"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -4963,7 +4968,8 @@
         "state": "specified",
         "evidence": "Specified in openspec/changes/health-site-security-checks on 2026-09-27. Before: src/health/engine.js flags only weak, reused, stale, compromised, breached; grep for http protocol checks in src and browser-extension/src: no hits",
         "owner": "ConductionNL/keepiq",
-        "note": "No insecure-URL (http) finding in the health report or the extension."
+        "note": "No insecure-URL (http) finding in the health report or the extension.",
+        "change": "openspec/changes/health-site-security-checks"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5054,7 +5060,8 @@
         "evidence": "Specified in openspec/changes/health-site-security-checks on 2026-09-27. Before: git grep -i 'passkey' src/health src/store/modules/health.js: no passkey-availability check",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
-        "note": "Health report has no passkey-available check."
+        "note": "Health report has no passkey-available check.",
+        "change": "openspec/changes/health-site-security-checks"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -5158,8 +5165,8 @@
           },
           {
             "at": "lib/Service/AdminSettingsService.php:394",
-            "what": "expiry_policy_enforced is stored by the admin settings service but read nowhere and has no UI.",
-            "issue": null,
+            "what": "expiry_policy_enforced was stored by the admin settings service but read nowhere and had no UI. Removed: earliest expiry wins everywhere, so there is nothing to enforce (keepiq#746).",
+            "issue": "#746",
             "needsLiveCheck": false
           }
         ]
@@ -5262,7 +5269,7 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "built",
-        "evidence": "compromise: lib/Listener/SuiteCompromiseOnRevokeListener.php:102 stamps possibly_compromised_at and :108 flag(suite_compromise), registered lib/AppInfo/SuiteLifecycleEventRegistrar.php:109; breach: src/views/HealthReportView.vue:120 Flag all breached -> rotation.js:170 POST /api/v1/rotation-flags -> RotationFlagService.php:136 flagBatch",
+        "evidence": "compromise: lib/Service/CompromiseContainmentService.php stampSealed() stamps possibly_compromised_at and flags suite_compromise (via lib/Listener/MarksCompromisedSecrets.php), called by EncryptionSuiteController::forceRevokeAsCompromise(); breach: src/views/HealthReportView.vue:120 Flag all breached -> rotation.js:170 POST /api/v1/rotation-flags -> RotationFlagService.php:136 flagBatch",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Automatic on a compromise revocation; Password health page button for breached passwords",
         "note": "Compromise flagging is automatic. Breach flagging is a one-click user action because breach verdicts never leave the browser."
@@ -5332,8 +5339,8 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "building",
-        "evidence": "routes GET/POST/DELETE /api/v1/expiry-policies -> lib/Controller/RotationController.php:161,190,224 and store actions src/store/modules/rotation.js:81,108,124 exist, but grep for fetchPolicies|upsertPolicy|deletePolicy in src components: no callers",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: No competitor rated yes, no demand, outside the core area. Reversible: the expiry policy routes and store actions exist and have no page. Before: routes GET/POST/DELETE /api/v1/expiry-policies -> lib/Controller/RotationController.php:161,190,224 and store actions src/store/modules/rotation.js:81,108,124 exist, but grep for fetchPolicies|upsertPolicy|deletePolicy in src components: no callers",
         "owner": "ConductionNL/keepiq",
         "note": "Backend and store are done, but no screen calls them; the admin section says type and folder policies are managed from the vault UI, which has no such editor. Open issue #77.",
         "defects": [
@@ -5374,7 +5381,8 @@
         "evidence": "Specified in openspec/changes/vault-website-addresses on 2026-09-27. Before: searched 'change-password', 'well-known' in src/ lib/ browser-extension/src: no match",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
-        "note": "Keepiq stores the website address but never looks up or opens the site's change-password page."
+        "note": "Keepiq stores the website address but never looks up or opens the site's change-password page.",
+        "change": "openspec/changes/vault-website-addresses"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -5503,7 +5511,7 @@
       "id": "admin-04",
       "area": "admin",
       "name": "Remove a leaving user from every team folder in one step.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -5511,19 +5519,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-member-overview-and-offboarding on 2026-09-27 for the missing half: offboarding also removes the leaver's own team folder member rows; revoking derived shares and handing over owned team secrets is built. Before: src/components/settings/OffboardingSection.vue:150 (after OffboardingConfirmDialog) -> src/store/modules/teamFolder.js:220 POST /api/v1/team-folders/offboard -> lib/Controller/TeamFolderController.php:236 -> lib/Service/TeamFolderOffboardingService.php:83 offboard: revokeTeamSharesForUser (lib/Service/TeamFolderShareService.php:232) then transfer owned team secrets to a successor",
+        "state": "built",
+        "evidence": "lib/Service/TeamFolderOffboardingService.php offboard: revoke derived shares, transfer owned team secrets, then delete every direct user membership row (membershipsRemoved) and report covering group rows (stillCoveredByGroups); src/components/settings/OffboardingSection.vue summary; tests/e2e/workflows/member-overview-offboarding.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Nextcloud admin settings -> Keepiq -> Team offboarding (admin or vault_admin)",
-        "note": "One action revokes every team-folder-derived share and hands owned team secrets to a successor. It does not delete the user's team-folder member rows, so a direct user membership survives.",
-        "defects": [
-          {
-            "at": "lib/Service/TeamFolderOffboardingService.php:95",
-            "what": "Offboarding revokes derived share rows but never removes TeamFolderMember rows for the leaver; a later reconcile or share fan-out by the folder owner could re-share to them.",
-            "issue": null,
-            "needsLiveCheck": true
-          }
-        ]
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> People and offboarding: Members row \"Offboard\" or Team offboarding",
+        "note": "Built 2026-10-04 (archived). Direct memberships are removed; group rows that still cover the leaver stay and are named in the result.",
+        "change": "openspec/changes/archive/2026-10-04-admin-member-overview-and-offboarding"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -5706,7 +5707,7 @@
       "id": "admin-10",
       "area": "admin",
       "name": "Enforce rules such as two-factor login or a ban on exporting personal vaults.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "partial",
@@ -5714,10 +5715,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-vault-policies on 2026-09-27. Before: grep -rni 'export_disabled|allow_export|require_2fa|twofactor' lib/Service/AdminSettingsService.php lib/Controller/ExportController.php src/components/settings: no hits",
+        "state": "built",
+        "evidence": "lib/Service/VaultPolicyService.php (vault_export_disabled, vault_require_two_factor, per group), lib/Controller/ExportController.php events() 403 export_disabled_by_policy, lib/Service/TwoFactorGate.php withholds privateKey, src/components/settings/VaultPolicySection.vue, src/dialogs/ExportDialog.vue; tests/e2e/workflows/vault-policies.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "note": "Keepiq has no policy to require two-factor login or to block personal vault export. Nextcloud can enforce two-factor for the whole login, which also guards keepiq, but that is a server setting, not a vault rule."
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Policies -> Vault policies",
+        "note": "Built 2026-10-04 (archived). Each policy is off by default and applies to everyone or to chosen groups; the GDPR package stays available under the export ban.",
+        "change": "openspec/changes/archive/2026-10-04-admin-vault-policies"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5748,7 +5751,8 @@
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Nextcloud admin delegation for the Keepiq settings section; vault_admin group for offboarding and for the admin handover panel in the secret sidebar",
         "note": "There are two coarse levers: Nextcloud's delegation of the whole Keepiq admin section, and a hard-coded vault_admin group that unlocks offboarding and admin handover. The handover now has a route, a controller call and a UI panel (f13ad8e6, closing #184), so both levers work end to end. There is still no role editor and no per-permission role, so a person cannot be given only the permissions they need: partial.",
-        "defects": []
+        "defects": [],
+        "change": "openspec/changes/admin-scoped-roles"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5766,7 +5770,7 @@
       "id": "admin-12",
       "area": "admin",
       "name": "See which users have set up a vault.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -5774,19 +5778,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-member-overview-and-offboarding on 2026-09-27 for the missing half: a list of which users have set up a vault; the count is built. Before: src/components/settings/ComplianceSection.vue:44 shows metrics.adoption.usersWithActiveSuite <- lib/Service/ComplianceReportService.php:107 countDistinct keepiq_enc_suites; no per-user list endpoint (open #37)",
+        "state": "built",
+        "evidence": "GET /api/v1/admin/members (lib/Controller/MemberOverviewController.php, lib/Service/MemberOverviewService.php) with status and search filters; src/components/settings/MemberOverviewSection.vue with Offboard and Revoke suite row actions; tests/e2e/workflows/member-overview-offboarding.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Nextcloud admin settings -> Keepiq -> Compliance section (count only)",
-        "note": "Admins see how many users have an active vault, not which ones. The encryption-suite admin section needs a suite id typed in by hand.",
-        "defects": [
-          {
-            "at": "src/components/settings/AdminSuiteSection.vue:24",
-            "what": "Force-revoke asks for a suite id but no screen lists users or suites to find it.",
-            "issue": "#37",
-            "needsLiveCheck": false
-          }
-        ]
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> People and offboarding -> Members",
+        "note": "Built 2026-10-04 (archived). Metadata only: no certificate, key or ciphertext in a row.",
+        "change": "openspec/changes/archive/2026-10-04-admin-member-overview-and-offboarding"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5804,7 +5801,7 @@
       "id": "admin-13",
       "area": "admin",
       "name": "Manage the organisation through a public admin API.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "partial",
       "passbolt": "yes",
@@ -5812,10 +5809,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-public-api on 2026-09-27. Before: no OpenAPI or admin API docs in docs/; machine routes /api/v1/app/* (appinfo/routes.php:295-321) cover application secrets only; admin endpoints like PUT /api/settings/admin are internal session routes",
+        "state": "built",
+        "evidence": "GET /api/v1/admin (lib/Controller/AdminIndexController.php) with People, Policies, Applications and Audit endpoints under /api/v1/admin, each guarded by its admin area; docs/api/admin-v1.openapi.json; tests/Unit/Contract/AdminApiContractTest.php; tests/integration/admin-api.postman_collection.json (Audit-only service account, green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "note": "The admin screens call internal REST routes that a script could reach with a Nextcloud app password, but there is no documented, versioned admin API or scoped admin token."
+        "reachedOn": "HTTP Basic with a Nextcloud app password of a user whose group holds a Keepiq admin area, GET /index.php/apps/keepiq/api/v1/admin",
+        "note": "Built 2026-10-04 (archived). Force revocation and suite reinstatement stay out of the API because both need a fresh password confirmation.",
+        "change": "openspec/changes/archive/2026-10-04-admin-public-api"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -5935,8 +5934,8 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "building",
-        "evidence": "src/manifest.json pending-apps-queue widget (visibleWhen pending_apps_count > 0) -> GET /api/v1/applications/pending; lib/Service/DashboardSummaryService.php:155 computes ca_health for admins but no widget renders it and src/components/dashboard/CaHealthCard.vue has no importer",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: No competitor rated yes, no demand, outside the core area. Reversible: the CA health summary is computed and no widget renders it. Before: src/manifest.json pending-apps-queue widget (visibleWhen pending_apps_count > 0) -> GET /api/v1/applications/pending; lib/Service/DashboardSummaryService.php:155 computes ca_health for admins but no widget renders it and src/components/dashboard/CaHealthCard.vue has no importer",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Dashboard (/) Applications awaiting approval table, admins with pending work only",
         "note": "Admins see which applications await approval on the dashboard, but cannot approve from there, and the CA status is only in admin settings (CaHealthSection). The dashboard CA card is built but orphaned. The queue's View-all footer needs a live check: the _note at src/manifest.json:208 that ties it to the limit forwarding predates the installed @conduction/nextcloud-vue 2.55.1, which keeps limit, so it is not recorded as a defect.",
@@ -5966,7 +5965,7 @@
       "id": "admin-18",
       "area": "admin",
       "name": "An administrator defines new item types and the fields they carry.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "no",
       "onepassword": "no",
       "passbolt": "no",
@@ -5974,11 +5973,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "building",
-        "evidence": "appinfo/routes.php:75-77 secretType#create/update/destroy -> lib/Controller/SecretTypeController.php; src/store/modules/secretType.js:73 createType has no caller in src (git grep createType src)",
+        "state": "built",
+        "evidence": "Admin settings src/views/settings/Settings.vue -> src/components/settings/ItemTypesSection.vue -> src/dialogs/SecretTypeEditorDialog.vue -> store secretType.createType/updateType({fields}) -> lib/Controller/SecretTypeController.php create/update(fields) -> lib/Service/SecretTypeService.php normaliseFields (unique key and label, not key/login/url, kinds text/hidden/url/email, at most 30) -> lib/Db/SecretType.php fields (migration Version001001Date20260930000000); src/components/TypedFieldsForm.vue in SecretCreateDialog/SecretEditDialog, values into the encrypted additional fields under the label (src/utils/typedFields.js)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing, API only",
-        "note": "Custom secret types exist in the API and store, but no page lets anyone create one."
+        "reachedOn": "Administration settings -> Keepiq -> Item types; then New secret with that type",
+        "note": "Built 2026-09-30. Tests: PHPUnit SecretTypeFieldsTest, SecretTypeControllerTest; vitest SecretTypeEditorDialog, ItemTypesSection, SecretCreateDialog.typedFields, SecretEditDialog.typedFields, tests/vitest/typed-fields.spec.js.",
+        "change": "openspec/changes/archive/2026-09-30-admin-secret-type-editor"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -6094,7 +6094,7 @@
       "id": "admin-22",
       "area": "admin",
       "name": "Require that work logins are kept in the organisation's vault rather than in personal vaults.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "partial",
       "passbolt": "no",
@@ -6102,11 +6102,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-vault-policies on 2026-09-27. Before: lib/Service/AdminSettingsService.php: no ownership or personal-vault policy; git grep -i 'personal vault' lib: descriptive text only",
+        "state": "built",
+        "evidence": "lib/Service/OrgOwnershipGuard.php (403 org_ownership_required on create, move and import of in-scope types outside an own team folder), POST /api/v1/team-folders/{id}/secrets for write-grade members, src/components/OwnershipFindings.vue; tests/e2e/workflows/vault-policies.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing",
-        "note": "Every secret starts in the creator's personal vault; nothing forces work logins into a team folder."
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Policies -> Vault policies -> Keep work logins in team folders",
+        "note": "Built 2026-10-04 (archived). Default types login, api_key and database; other types stay personal.",
+        "change": "openspec/changes/archive/2026-10-04-admin-vault-policies"
       },
       "rowSource": "competitor",
       "origin": "tender",
@@ -6164,8 +6165,8 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "lib/Service/AdminSettingsService.php:55 VALID_SESSION_TIMEOUTS and :308 default_session_timeout set a DEFAULT only; git grep default_session_timeout src: no caller, so no admin page sets it; src/App.vue:137 user timeout select has no cap",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: Single competitor, changelog signal only, no demand row. Before: lib/Service/AdminSettingsService.php:55 VALID_SESSION_TIMEOUTS and :308 default_session_timeout set a DEFAULT only; git grep default_session_timeout src: no caller, so no admin page sets it; src/App.vue:137 user timeout select has no cap",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing, API only",
         "note": "An admin API stores a default session timeout, but it is not a maximum and no admin page reaches it."
@@ -6186,7 +6187,7 @@
       "id": "admin-25",
       "area": "admin",
       "name": "New members are confirmed automatically, without an administrator handing over access by hand.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "unknown",
       "passbolt": "partial",
@@ -6194,11 +6195,12 @@
       "hashicorp-vault": "yes",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/admin-auto-confirm-members on 2026-09-27. Before: lib/Service/TeamFolderService.php:496 approveJoin returns a fan-out payload the owner's browser must encrypt; src/modals/TeamFolderDialog.vue:469 shows pendingCount and src/store/modules/teamFolder.js:278 runFanOut shares keys when the owner runs it; approveJoin (teamFolder.js:202) has no caller in src",
+        "state": "built",
+        "evidence": "Policies switch team_folder_auto_confirm; GET /api/v1/team-folders/pending-confirmations and write-grade confirmers in POST /api/v1/team-folders/{id}/shares (lib/Service/TeamFolderConfirmationService.php, ConfirmerCopyResolver.php); src/store/modules/teamFolder.js autoConfirm() after unlock and every 15 minutes; tests/e2e/workflows/team-folder-auto-confirm.spec.ts (green against a fresh Nextcloud 35 on 2026-10-04)",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Team folder dialog, pending members count and fan-out run by the owner",
-        "note": "A new team folder member gets access only when the owner's browser runs the key fan-out; there is no automatic confirmation."
+        "reachedOn": "Nextcloud admin settings -> Keepiq -> Policies -> New team folder members; then any unlocked owner or write member",
+        "note": "Built 2026-10-04 (archived). The server never sees plaintext: an unlocked owner's or write member's browser encrypts for the newcomer.",
+        "change": "openspec/changes/archive/2026-10-04-admin-auto-confirm-members"
       },
       "rowSource": "competitor",
       "origin": "changelog",
@@ -6258,7 +6260,8 @@
         "evidence": "Specified in openspec/changes/admin-scheduled-vault-backups on 2026-09-27. Before: searched 'backup' in lib/Command lib/BackgroundJob: no match; the encrypted-backup export (portability-09) is per user and started by hand",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
-        "note": "There is no scheduled server-side backup of all vaults and no restore command; an instance relies on the Nextcloud database backup."
+        "note": "There is no scheduled server-side backup of all vaults and no restore command; an instance relies on the Nextcloud database backup.",
+        "change": "openspec/changes/admin-scheduled-vault-backups"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -6695,7 +6698,7 @@
       "id": "audit-14",
       "area": "audit",
       "name": "Use ready-made connectors for Splunk, Microsoft Sentinel or similar tools.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -6703,11 +6706,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/audit-siem-vendor-connectors on 2026-09-27 for the missing half: named Splunk, Microsoft Sentinel and CEF presets on the SIEM export; the generic syslog and webhook stream is built. Before: lib/Service/SiemTransport.php:100 generic RFC 5424 syslog and :152 generic HTTPS JSON webhook; grep -i 'splunk|sentinel|datadog|CEF|LEEF' lib src/components/settings/SiemSection.vue: no hits",
+        "state": "built",
+        "evidence": "SiemTransport splunk_hec and sentinel transports and CEF syslog format (lib/Service/Siem/*Formatter.php), write-only ICrypto credential, connector picker in SiemSection.vue, integrations/siem/sentinel/keepiq-dcr.json and integrations/siem/splunk/props.conf; PHPUnit SiemFormattersTest, SiemConnectorTransportTest, SiemSinkServiceConnectorTest, SentinelTemplateTest; vitest SiemSection.spec.js",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "Nextcloud admin settings > Keepiq > SIEM section",
-        "note": "No named connectors or vendor formats; Splunk, Sentinel and similar tools can ingest the generic syslog or webhook stream, but the admin has to configure the receiving side."
+        "reachedOn": "2026-10-02",
+        "note": "Built on feat/audit-siem-vendor-connectors. Owed: the Playwright flow in the E2E job, an az what-if of the template and a Splunk container test-fire.",
+        "change": "openspec/changes/archive/2026-10-02-audit-siem-vendor-connectors"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -6763,8 +6767,8 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "none",
-        "evidence": "lib/Service/ComplianceReportService.php:56-70 SECTION_ALLOWLIST holds aggregates only (adoption, secretsPerUser, shareHygiene counts); no per-member access listing in lib/ src/",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: Single competitor, changelog signal only, no demand row. Before: lib/Service/ComplianceReportService.php:56-70 SECTION_ALLOWLIST holds aggregates only (adoption, secretsPerUser, shareHygiene counts); no per-member access listing in lib/ src/",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "The compliance report counts shares but never lists which member can reach which secret or folder."
@@ -6849,7 +6853,7 @@
       "id": "portability-03",
       "area": "portability",
       "name": "Preview and adjust the field mapping before importing.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "no",
       "onepassword": "unknown",
       "passbolt": "no",
@@ -6857,25 +6861,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "building",
-        "evidence": "preview: src/dialogs/ImportWizardDialog.vue:66-117 (first 5 rows, src/dialogs/ImportWizardDialog.vue previewRows). Adjust: src/import/parsers/csv.js:120 accepts options.mapping and csv.js:142 declares adjustableMapping, but the wizard never passes a mapping (ImportWizardDialog.vue:506 parseFile(text, format, {passphrase})) and src/store/modules/import.js:57 mapping state is never written",
+        "state": "built",
+        "evidence": "src/dialogs/ImportWizardDialog.vue mapping step mounts src/components/import/ColumnMapping.vue when store.adjustableMapping -> src/store/modules/import.js applyMapping() re-parses sourceText through csvParser.parseDetailed (src/import/parsers/csv.js); canProceed requires mappingHasName; per-cell toggleReveal on login and password cells",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "SecretList page (/secrets) -> toolbar Import -> Import wizard -> mapping step",
-        "note": "The user sees a read-only preview of the first five mapped rows. There is no control to remap columns, although the CSV parser supports an explicit mapping.",
-        "defects": [
-          {
-            "at": "src/dialogs/ImportWizardDialog.vue:468",
-            "what": "Sensitive cells are masked with a per-cell reveal, but nothing ever sets revealed[key], so login and password columns can never be revealed in the preview.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "src/store/modules/import.js:57",
-            "what": "The mapping state and the parser's adjustableMapping flag are never used, so column remapping promised by the spec is not wired.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ]
+        "reachedOn": "Vault (/secrets) -> Import -> Generic CSV -> pick a file -> mapping step",
+        "note": "Built 2026-09-29. Tests: vitest tests/store/importMapping.spec.js, tests/dialogs/ImportWizardDialog.mapping.spec.js.",
+        "change": "openspec/changes/archive/2026-09-29-portability-import-field-mapping"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7063,7 +7054,8 @@
         "evidence": "src/views/SecretList.vue:163 'Encrypted transfer (CXP)' -> src/dialogs/CxpTransferDialog.vue:275 startReceive (createImportRequest src/crypto/cxp.js:110) -> POST /api/v1/cxp/relay (appinfo/routes.php:400 -> lib/Controller/CxpRelayController.php:219) -> poll GET relay/{id}/response (routes.php:401) -> cxp.js:187 openEnvelope -> import wizard; send: CxpTransferDialog.vue:360 doSend -> src/store/modules/export.js:206 exportCxpSealed (sealForRequest cxp.js:136)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> actions menu 'Encrypted transfer (CXP)' -> CXP transfer dialog",
-        "note": "The HPKE-sealed handshake works through a relay on this Nextcloud instance only, so both sides must be Keepiq sessions on the same server. There is no way to transfer to or from a different provider, and the send side always sends the whole vault."
+        "note": "The HPKE-sealed handshake works through a relay on this Nextcloud instance only, so both sides must be Keepiq sessions on the same server. There is no way to transfer to or from a different provider, and the send side always sends the whole vault.",
+        "change": "openspec/changes/portability-cxp-cross-provider-transfer"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7108,7 +7100,8 @@
             "issue": null,
             "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/portability-export-choice-and-restore-fidelity"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7172,7 +7165,8 @@
         "evidence": "Specified in openspec/changes/portability-export-choice-and-restore-fidelity on 2026-09-27 for the missing half: choosing by type, by selected items and by fields; whole vault or one folder is built. Before: src/dialogs/ExportDialog.vue:250 scopeOptions (Entire vault or one folder) -> :322 buildScope -> src/export/serializer.js:101 serializeVault collectSubtree (folder plus descendants)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "SecretList page (/secrets) -> actions menu 'Export data' -> Export dialog -> Scope select",
-        "note": "Scope is either the whole vault or one folder subtree. There is no choice by type, by selected items or of which fields to include, and CXP send is always the whole vault."
+        "note": "Scope is either the whole vault or one folder subtree. There is no choice by type, by selected items or of which fields to include, and CXP send is always the whole vault.",
+        "change": "openspec/changes/portability-export-choice-and-restore-fidelity"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7257,7 +7251,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "change": "openspec/changes/clients-extension-store-release"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7322,7 +7317,7 @@
       "id": "clients-03",
       "area": "clients",
       "name": "Be offered to save or update a login after submitting a form.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -7330,31 +7325,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "yes",
       "built": {
-        "state": "building",
-        "evidence": "browser-extension/src/content/content-script.js:134 attachSubmitCapture (submit + Enter) -> :150 captureCurrent -> service-worker.js:240 pendingCapture (memory) -> popup.js:79 'pending-capture' save prompt -> service-worker.js:186 doSaveCapture -> api.js:120 POST /api/v1/secrets",
+        "state": "built",
+        "evidence": "browser-extension/src/content/content-script.js captureCurrent -> service-worker.js doCapture -> src/lib/capture.js classifyCapture (same-site rows, decrypted login match: save / update with id / none) -> content/save-prompt.js showSavePrompt (closed shadow root, trusted clicks only) -> 'capture-decision' -> doSaveCapture (update sends key+login to the matched id, create otherwise); popup fallback unchanged",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "browser-extension popup (browser-extension/src/popup/popup.js) -> save prompt shown the next time the popup is opened",
-        "note": "A submitted login is captured, but the offer only appears when the user opens the popup, and it always creates a new secret. The update branch exists but no capture ever carries an id, so an existing login is never updated.",
-        "defects": [
-          {
-            "at": "browser-extension/build.mjs:1",
-            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "browser-extension/src/background/service-worker.js:198",
-            "what": "doSaveCapture updates only when payload.id is set, but captureCurrent (content-script.js:150) never sets an id, so 'update login' never happens and a changed password creates a duplicate secret.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "browser-extension/src/background/service-worker.js:29",
-            "what": "The pending capture lives in worker memory only, so an MV3 worker shutdown before the user opens the popup drops the offer.",
-            "issue": null,
-            "needsLiveCheck": true
-          }
-        ]
+        "reachedOn": "Any website login form: submit, and the Keepiq bar appears top right with Save or Update",
+        "note": "Built 2026-09-30. Tests: vitest tests/extension/saveCapture.spec.js (update with id, unchanged offers nothing, save, trusted click, page click ignored). Store release is still open (clients-extension-store-release), so the extension is loaded from a build.",
+        "change": "openspec/changes/archive/2026-09-30-clients-extension-save-prompt-and-passkey-origin"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7394,7 +7370,8 @@
             "issue": null,
             "needsLiveCheck": false
           }
-        ]
+        ],
+        "change": "openspec/changes/clients-extension-store-release"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7414,7 +7391,7 @@
       "id": "clients-05",
       "area": "clients",
       "name": "Use the extension as a passkey provider on websites.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -7422,31 +7399,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "no",
       "built": {
-        "state": "building",
-        "evidence": "browser-extension/src/content/content-script.js:192 injectShim -> browser-extension/src/content/inpage-shim.js overrides navigator.credentials -> content-script.js:204 relay -> service-worker.js:230 webauthn-create/get -> browser-extension/src/passkey/orchestrator.js:74 handleCreate (consent window, createSecret with passkey typeId) / handleGet (match by rpId, getAssertion browser-extension/src/passkey/webauthn.js:197, counter write-back); native path browser-extension/src/passkey/registration.js:23",
+        "state": "built",
+        "evidence": "browser-extension/src/background/service-worker.js webauthn-create/get take senderOrigin(sender) (passkey/rp.js), never the page payload; passkey/orchestrator.js handleCreate/handleGet refuse with rp-origin-mismatch unless rpIdAllowed(rpId, origin) before consent or any vault read; dead native proxy path (registration.js, optional webAuthenticationProxy) removed",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "Any website's WebAuthn call while the extension is unlocked -> Keepiq consent window",
-        "note": "Passkey create and sign run in the extension through the page shim with per-site consent. The Chrome native proxy path never activates because its optional permission is never requested, and the relay trusts an origin the page itself supplies.",
-        "defects": [
-          {
-            "at": "browser-extension/build.mjs:1",
-            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
-            "issue": null,
-            "needsLiveCheck": false
-          },
-          {
-            "at": "browser-extension/src/content/content-script.js:212",
-            "what": "The relay forwards data.origin from the page's own postMessage instead of location.origin, and no code checks the rpId against the origin, so a malicious page can ask for an assertion for another site's rpId with a forged origin in clientDataJSON; only the consent window naming that rpId stands in the way.",
-            "issue": null,
-            "needsLiveCheck": true
-          },
-          {
-            "at": "browser-extension/manifest.json:15",
-            "what": "webAuthenticationProxy is an optional permission and nothing calls chrome.permissions.request, so registration.js:26 always finds no proxy and the native Chrome/Edge provider path is dead.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ]
+        "note": "Built 2026-09-30. Tests: vitest tests/extension/passkeyOrigin.spec.js (own host, parent domain, foreign rpId, public suffix, insecure origin, sender origin, orchestrator refuses before vault read). Store release is still open (clients-extension-store-release).",
+        "change": "openspec/changes/archive/2026-09-30-clients-extension-save-prompt-and-passkey-origin"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7466,7 +7424,7 @@
       "id": "clients-06",
       "area": "clients",
       "name": "The extension locks itself automatically.",
-      "keepiq": "partial",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "yes",
@@ -7474,19 +7432,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/clients-extension-unlock-lock-and-accounts on 2026-09-27 for the missing half: a user-chosen idle period; the fixed 15 minute idle lock is built. Before: browser-extension/src/background/service-worker.js:37 touchActivity -> browser-extension/src/lib/vault.js:114 armIdleLock (default 15 minutes, service-worker.js:26) ; service-worker.js:254 chrome.idle locked -> vault.lock ; popup.js:197 manual Lock ; worker termination drops the in-memory key",
+        "state": "built",
+        "evidence": "browser-extension/src/popup/popup.js renderSettings -> set-idle -> browser-extension/src/background/router.js doSetIdle/effectiveIdleMinutes -> browser-extension/src/lib/vault.js armIdleLock (per account); router.js refreshPolicy -> GET /api/v1/extension/policy -> lib/Controller/ExtensionController.php policy() -> AdminSettingsService::extensionMaxIdleMinutes; admin field src/components/settings/ExtensionSection.vue",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "browser-extension popup (browser-extension/src/popup/popup.js) (automatic, plus the Lock button)",
-        "note": "The extension locks after 15 idle minutes, on OS or browser lock, on worker termination and on demand. The idle period cannot be changed because nothing ever writes config.idleMinutes, and the extension is not distributed.",
-        "defects": [
-          {
-            "at": "browser-extension/build.mjs:1",
-            "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
-            "issue": null,
-            "needsLiveCheck": false
-          }
-        ]
+        "reachedOn": "Extension popup -> Settings -> Lock after being idle for; Keepiq admin settings -> Browser extension",
+        "note": "User-chosen idle delay per account (1 to 240 minutes, 15 default), capped by the administrator maximum read at every unlock; OS lock, worker termination and the Lock button still lock every account. Distribution is the change clients-extension-store-release.",
+        "change": "openspec/changes/archive/2026-10-02-clients-extension-unlock-lock-and-accounts"
       },
       "rowSource": "own",
       "provider": "keepiq",
@@ -7625,11 +7576,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "partial",
       "built": {
-        "state": "decided-no",
-        "evidence": "openspec/specs/mobile-pwa/spec.md:11 and :49 ('no native app and no app-store presence'); no iOS/Android project in the repo (ls: src, browser-extension, cli only); the PWA cannot register as a system autofill provider",
+        "state": "specified",
+        "evidence": "Specified in openspec/changes/clients-mobile-apps on 2026-10-04. Before: no iOS or Android project in the repo (src, browser-extension, cli only), and openspec/specs/mobile-pwa/spec.md ruled out a native app; the PWA cannot register as a system autofill provider",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "none",
-        "note": "Keepiq chose an installable PWA instead of native apps on record, so there is no system autofill on iOS or Android."
+        "note": "Decision reversed by the product owner on 2026-10-04: native iOS (17+) and Android (9+) apps on a shared Kotlin Multiplatform core, with system autofill, passkeys (iOS 17, Android 14), the vault, Send and the generator, published on the App Store, Google Play and F-Droid. Was decided-no on the mobile-pwa record of 2026-09-27.",
+        "change": "openspec/changes/clients-mobile-apps"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -7686,24 +7638,19 @@
       "nextcloud-passwords": "partial",
       "built": {
         "state": "building",
-        "evidence": "browser-extension/manifest.json:3 manifest_version 3 with background.service_worker; browser-extension/build.mjs:24 targets chrome110 and firefox110; no Safari project",
+        "evidence": "browser-extension/build.mjs builds dist/chromium (module service worker) and dist/firefox (background scripts, gecko id) from manifest.json + manifests/browsers.mjs; .github/workflows/browser-extension.yml loads both headless (load-check/chromium.mjs, firefox.mjs); browser-extension/safari/convert.sh waits for a macOS runner",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "browser-extension (load unpacked in Chrome or Edge)",
-        "note": "One MV3 extension targets Chromium browsers and nominally Firefox. Firefox does not run an MV3 background.service_worker, so the Firefox build is unlikely to load; there is no Safari build and no store listing for any browser.",
+        "reachedOn": "npm run build:extension -> browser-extension/dist/chromium or dist/firefox, loaded in the browser",
+        "note": "Chromium and Firefox packages are built and load-checked (2026-09-30). The Safari half is open: it needs a macOS runner and an Apple developer identity (DECISIONS row 20), task 1.2 of the change.",
         "defects": [
           {
             "at": "browser-extension/build.mjs:1",
             "what": "The extension has no release or store pipeline (only cli-release.yml exists under .github/workflows), so a user can only get it by building from source and loading it unpacked.",
             "issue": null,
             "needsLiveCheck": false
-          },
-          {
-            "at": "browser-extension/manifest.json:22",
-            "what": "The manifest declares only background.service_worker; Firefox MV3 needs background.scripts, so the extension probably fails to start in Firefox despite the README and build target claiming Firefox support.",
-            "issue": null,
-            "needsLiveCheck": true
           }
-        ]
+        ],
+        "change": "openspec/changes/clients-extension-firefox-and-safari-builds"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -7733,7 +7680,8 @@
         "evidence": "Specified in openspec/changes/clients-ssh-agent on 2026-09-27. Before: grep -ril 'ssh-agent|ssh agent' lib src cli browser-extension: no hits; ssh_key exists only as a stored secret type (src/cxf/cxf.js:355)",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "none",
-        "note": "SSH keys can be stored as secrets, but nothing exposes them to an SSH agent."
+        "note": "SSH keys can be stored as secrets, but nothing exposes them to an SSH agent.",
+        "change": "openspec/changes/clients-ssh-agent"
       },
       "rowSource": "competitor",
       "provider": "keepiq",
@@ -7941,7 +7889,7 @@
       "id": "clients-19",
       "area": "clients",
       "name": "Edit items while offline and have the changes sync when you are back online.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "no",
       "onepassword": "yes",
       "passbolt": "no",
@@ -7949,11 +7897,12 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/clients-offline-edits on 2026-09-27. Before: offline cache is read-only by design (clients-09; src/App.vue:73 stale-data banner, src/offline)",
+        "state": "built",
+        "evidence": "src/store/modules/secret.js createSecret/updateSecret/deleteSecret (servedFromCache) -> src/store/modules/offline.js enqueue -> src/offline/queue.js sealEntry/coalesce -> src/offline/cache.js putQueueEntry (IndexedDB queue store); replay: offline.js replayQueue/replayOne/fanOut -> POST/PUT/DELETE /api/v1/secrets with baseUpdatedAt -> lib/Service/SecretService.php assertUnchangedSince (409) -> share.js syncUpdate/syncAsTeamWriter; UI src/components/OfflineSyncPanel.vue, src/dialogs/OfflineConflictDialog.vue; admin src/components/settings/OfflineCacheSection.vue offline_edits_enabled",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing",
-        "note": "Offline mode reads only; edits need the server."
+        "reachedOn": "Offline vault (/secrets served from cache) -> secret sidebar Edit, Move, Delete and New secret; sync panel under the offline banner",
+        "note": "Off by default (admin switch). Changes are sealed to the owner's certificate at rest and replayed with a fresh recipient fan-out; a server change since the snapshot answers 409 and the user chooses. Sharing, folders and attachments stay online-only. Playwright flows (shared edit, conflict) are owed.",
+        "change": "openspec/changes/archive/2026-10-02-clients-offline-edits"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -8005,7 +7954,7 @@
       "id": "clients-21",
       "area": "clients",
       "name": "Switch between several accounts or servers in the same app or extension.",
-      "keepiq": "no",
+      "keepiq": "yes",
       "bitwarden": "yes",
       "onepassword": "yes",
       "passbolt": "no",
@@ -8013,11 +7962,12 @@
       "hashicorp-vault": "partial",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "specified",
-        "evidence": "Specified in openspec/changes/clients-extension-unlock-lock-and-accounts on 2026-09-27. Before: browser-extension/src/lib/api.js:15-31 stores one paired config under CONFIG_KEY; no account list",
+        "state": "built",
+        "evidence": "browser-extension/src/lib/api.js addAccount/loadAccounts/setActiveAccount (keepiq.accounts, MAX_ACCOUNTS 5, migrateLegacyConfig) -> browser-extension/src/background/router.js doPair/doSwitchAccount, matchCache per account, doFill refuses another account's ids -> browser-extension/src/popup/views.js renderAccountSwitcher",
         "owner": "ConductionNL/keepiq",
-        "reachedOn": "nothing",
-        "note": "The extension pairs with one Nextcloud account at a time; switching means unpairing."
+        "reachedOn": "Extension popup header -> Account select and Add account",
+        "note": "Up to five accounts on one or more servers, each with its own key, lock state, idle timer and settings; matching, filling and saving use the active account. Tests: tests/extension/accounts.spec.js, tests/extension/popupAccounts.spec.js.",
+        "change": "openspec/changes/archive/2026-10-02-clients-extension-unlock-lock-and-accounts"
       },
       "rowSource": "competitor",
       "origin": "featureRequest",
@@ -8045,8 +7995,8 @@
       "hashicorp-vault": "no",
       "nextcloud-passwords": "unknown",
       "built": {
-        "state": "none",
-        "evidence": "searched 'phish', 'blocklist' in browser-extension/ src/ lib/: only browser-extension/src/lib/match.js:11, which matches the saved URL before any fill; no known-phishing list and no warning page",
+        "state": "decided-no",
+        "evidence": "Decided no on 2026-09-29: Single competitor, changelog signal only, no demand row. Before: searched 'phish', 'blocklist' in browser-extension/ src/ lib/: only browser-extension/src/lib/match.js:11, which matches the saved URL before any fill; no known-phishing list and no warning page",
         "owner": "ConductionNL/keepiq",
         "reachedOn": "nothing",
         "note": "The extension refuses to fill on a site whose address does not match the saved login, which blunts phishing, but it never warns about a known phishing site."

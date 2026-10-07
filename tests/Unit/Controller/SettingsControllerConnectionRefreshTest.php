@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -30,6 +30,7 @@ namespace OCA\Keepiq\Tests\Unit\Controller;
 
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\DomainOverrideRegistrar;
+use OCA\Keepiq\Controller\AdminAreaSettingsController;
 use OCA\Keepiq\Controller\SettingsController;
 use OCA\Keepiq\Service\Connection\ConnectionReporter;
 use OCA\Keepiq\Service\SettingsService;
@@ -47,6 +48,7 @@ use Psr\Container\ContainerInterface;
  * @covers \OCA\Keepiq\Controller\SettingsController
  * @covers \OCA\Keepiq\AppInfo\DomainOverrideRegistrar
  * @covers \OCA\Keepiq\AppInfo\SettingsControllerFactory
+ * @uses   \OCA\Keepiq\Controller\AdminAreaSettingsController
  */
 class SettingsControllerConnectionRefreshTest extends TestCase {
 
@@ -87,13 +89,12 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 	 *
 	 * @param ConnectionReporter|null $reporter The reporter, or null for an instance without one.
 	 *
-	 * @return SettingsController
+	 * @return AdminAreaSettingsController
 	 */
-	private function controller(?ConnectionReporter $reporter): SettingsController {
-		return new SettingsController(
+	private function controller(?ConnectionReporter $reporter): AdminAreaSettingsController {
+		return new AdminAreaSettingsController(
 			request: $this->request,
 			settingsService: $this->settingsService,
-			userSession: $this->createMock(originalClassName: IUserSession::class),
 			connectionReporter: $reporter,
 		);
 	}//end controller()
@@ -105,10 +106,10 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 	 */
 	public function testSavingTheSwitchAsksForARefresh(): void {
 		$this->request->method('getParams')->willReturn(['breach_check_enabled' => false]);
-		$this->settingsService->method('updateAdminSettings')->willReturn(['breach_check_enabled' => false]);
+		$this->settingsService->method('updateAreaSettings')->willReturn(['breach_check_enabled' => false]);
 		$this->reporter->expects($this->once())->method('breachCheckSaved')->willReturn(true);
 
-		$response = $this->controller(reporter: $this->reporter)->updateAdminSettings();
+		$response = $this->controller(reporter: $this->reporter)->updateGeneralSettings();
 
 		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
 		$this->assertSame(expected: ['breach_check_enabled' => false], actual: $response->getData());
@@ -120,11 +121,11 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 	 * @return void
 	 */
 	public function testASaveWithoutTheSwitchAsksForNothing(): void {
-		$this->request->method('getParams')->willReturn(['vault_lock_timeout' => 15]);
-		$this->settingsService->method('updateAdminSettings')->willReturn([]);
+		$this->request->method('getParams')->willReturn(['offline_cache_enabled' => true]);
+		$this->settingsService->method('updateAreaSettings')->willReturn([]);
 		$this->reporter->expects($this->never())->method('breachCheckSaved');
 
-		$this->controller(reporter: $this->reporter)->updateAdminSettings();
+		$this->controller(reporter: $this->reporter)->updateGeneralSettings();
 	}//end testASaveWithoutTheSwitchAsksForNothing()
 
 	/**
@@ -134,10 +135,10 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 	 */
 	public function testARefusedSaveAsksForNothing(): void {
 		$this->request->method('getParams')->willReturn(['breach_check_enabled' => true]);
-		$this->settingsService->method('updateAdminSettings')->willThrowException(new InvalidArgumentException('bad value'));
+		$this->settingsService->method('updateAreaSettings')->willThrowException(new InvalidArgumentException('bad value'));
 		$this->reporter->expects($this->never())->method('breachCheckSaved');
 
-		$response = $this->controller(reporter: $this->reporter)->updateAdminSettings();
+		$response = $this->controller(reporter: $this->reporter)->updateGeneralSettings();
 
 		$this->assertSame(expected: Http::STATUS_BAD_REQUEST, actual: $response->getStatus());
 	}//end testARefusedSaveAsksForNothing()
@@ -149,22 +150,24 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 	 */
 	public function testWithoutTheReporterTheSaveStillAnswers(): void {
 		$this->request->method('getParams')->willReturn(['breach_check_enabled' => true]);
-		$this->settingsService->method('updateAdminSettings')->willReturn(['breach_check_enabled' => true]);
+		$this->settingsService->method('updateAreaSettings')->willReturn(['breach_check_enabled' => true]);
 
-		$response = $this->controller(reporter: null)->updateAdminSettings();
+		$response = $this->controller(reporter: null)->updateGeneralSettings();
 
 		$this->assertSame(expected: Http::STATUS_OK, actual: $response->getStatus());
 	}//end testWithoutTheReporterTheSaveStillAnswers()
 
 	/**
-	 * The hand-built container factory passes the reporter to the controller.
-	 *
-	 * The controller's own default is null, so a factory that forgets the
-	 * argument still builds, and the refresh never goes out.
+	 * The hand-built container factory passes the admin area check to the
+	 * settings controller, so `/api/settings` reports the areas the user
+	 * holds (admin-scoped-roles §2.5). The controller's own default is null,
+	 * so a factory that forgets the argument still builds and reports none.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#2.5
 	 */
-	public function testTheContainerFactoryPassesTheReporter(): void {
+	public function testTheContainerFactoryPassesTheAreaCheck(): void {
 		$factories = [];
 		$context   = $this->createMock(originalClassName: IRegistrationContext::class);
 		$context->method('registerService')->willReturnCallback(
@@ -176,23 +179,27 @@ class SettingsControllerConnectionRefreshTest extends TestCase {
 		(new DomainOverrideRegistrar())->register(context: $context);
 		$this->assertArrayHasKey(key: SettingsController::class, array: $factories);
 
+		$user = $this->createMock(originalClassName: \OCP\IUser::class);
+		$user->method('getUID')->willReturn('helpdesk');
+		$session = $this->createMock(originalClassName: IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+		$areas = $this->createMock(originalClassName: \OCA\Keepiq\Service\AdminAreaAuthorizer::class);
+		$areas->method('areasOf')->with('helpdesk')->willReturn(['people']);
 		$services = [
 			IRequest::class           => $this->request,
 			SettingsService::class    => $this->settingsService,
-			IUserSession::class       => $this->createMock(originalClassName: IUserSession::class),
-			ConnectionReporter::class => $this->reporter,
+			IUserSession::class       => $session,
+			\OCA\Keepiq\Service\AdminAreaAuthorizer::class => $areas,
+			\OCA\Keepiq\Service\TwoFactorGate::class => $this->createMock(originalClassName: \OCA\Keepiq\Service\TwoFactorGate::class),
 		];
 		$container = $this->createMock(originalClassName: ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			static fn (string $id): object => $services[$id]
 		);
 
-		$this->request->method('getParams')->willReturn(['breach_check_enabled' => true]);
-		$this->settingsService->method('updateAdminSettings')->willReturn([]);
-		$this->reporter->expects($this->once())->method('breachCheckSaved')->willReturn(true);
+		$this->settingsService->method('getSettings')->willReturn(['isAdmin' => false]);
 
 		$controller = $factories[SettingsController::class]($container);
-		$this->assertInstanceOf(expected: SettingsController::class, actual: $controller);
-		$controller->updateAdminSettings();
-	}//end testTheContainerFactoryPassesTheReporter()
+		$this->assertSame(['isAdmin' => false, 'adminAreas' => ['people']], $controller->index()->getData());
+	}//end testTheContainerFactoryPassesTheAreaCheck()
 }//end class

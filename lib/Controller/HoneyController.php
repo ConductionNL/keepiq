@@ -29,13 +29,14 @@ namespace OCA\Keepiq\Controller;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
 use OCA\Keepiq\Db\HoneyAlert;
+use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\HoneyCredentialService;
+use OCA\Keepiq\Settings\AuditAdminSettings;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
-use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -49,7 +50,7 @@ class HoneyController extends OCSController {
 	 * @param IRequest $request The request object
 	 * @param HoneyCredentialService $service The honey service
 	 * @param IUserSession $userSession The user session
-	 * @param IGroupManager $groupManager The group manager (admin scope)
+	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Audit admin area
 	 *
 	 * @return void
 	 */
@@ -57,7 +58,7 @@ class HoneyController extends OCSController {
 		IRequest $request,
 		private HoneyCredentialService $service,
 		private IUserSession $userSession,
-		private IGroupManager $groupManager,
+		private AdminAreaAuthorizer $areas,
 	) {
 		parent::__construct(appName: Application::APP_ID, request: $request);
 	}//end __construct()
@@ -79,7 +80,7 @@ class HoneyController extends OCSController {
 	 * @return bool
 	 */
 	private function isAdmin(string $uid): bool {
-		return $this->groupManager->isAdmin($uid);
+		return $this->areas->holds(userId: $uid, areaClass: AuditAdminSettings::class);
 	}//end isAdmin()
 
 	/**
@@ -125,6 +126,8 @@ class HoneyController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 	 */
 	#[NoAdminRequired]
 	public function unflag(string $id): JSONResponse {
@@ -152,6 +155,8 @@ class HoneyController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 	 */
 	#[NoAdminRequired]
 	public function status(string $id): JSONResponse {
@@ -180,6 +185,8 @@ class HoneyController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-honey-flag-is-owner-admin-only-and-invisible-to-others
 	 */
 	#[NoAdminRequired]
 	public function alerts(): JSONResponse {
@@ -204,6 +211,8 @@ class HoneyController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-alert-storms-are-rate-limited-and-per-accessor-snoozable
 	 */
 	#[NoAdminRequired]
 	public function acknowledge(string $id): JSONResponse {
@@ -233,6 +242,8 @@ class HoneyController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/honey-credentials/spec.md#requirement-alert-storms-are-rate-limited-and-per-accessor-snoozable
 	 */
 	#[NoAdminRequired]
 	public function snooze(string $id, int $hours = 24): JSONResponse {

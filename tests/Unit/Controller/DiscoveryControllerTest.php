@@ -87,7 +87,22 @@ class DiscoveryControllerTest extends TestCase {
 		$this->assertSame(300, $data['assertion']['maxLifetime']);
 		$this->assertArrayHasKey('byName', $data['secrets']);
 		$this->assertContains('doriath-machine-secret-v1', $data['envelopeFormats']);
+		$this->assertArrayHasKey('certificate', $data);
 	}//end testDocumentShape()
+
+	/**
+	 * The document advertises conditional write-back and the expiry date in
+	 * the envelope, so a consumer can rely on both.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/secret-store-api/spec.md
+	 */
+	public function testDocumentAdvertisesConditionalWriteAndExpiresAt(): void {
+		$data = $this->controller->document()->getData();
+		$this->assertTrue($data['conditionalWrite']);
+		$this->assertTrue($data['expiresAt']);
+	}//end testDocumentAdvertisesConditionalWriteAndExpiresAt()
 
 	/**
 	 * The document contains no instance-private data (no keys, certs,
@@ -96,10 +111,18 @@ class DiscoveryControllerTest extends TestCase {
 	 * @return void
 	 */
 	public function testNoInstancePrivateData(): void {
-		$flat = json_encode($this->controller->document()->getData());
+		$data = $this->controller->document()->getData();
+		// `certificate` names the Bearer path where an application reads its
+		// OWN certificate (app-own-certificate); the document carries the path,
+		// never a certificate (no PEM, so no BEGIN).
+		$certificatePath = $data['certificate'];
+		unset($data['certificate']);
+		$flat = json_encode($data);
 		foreach (['privateKey', 'certificate', 'BEGIN', 'password', 'userId'] as $needle) {
 			$this->assertStringNotContainsString($needle, $flat);
 		}
+
+		$this->assertSame('/apps/keepiq/keepiq.applicationCertificate.show', $certificatePath);
 	}//end testNoInstancePrivateData()
 	/**
 	 * Both discovery paths return the identical document.

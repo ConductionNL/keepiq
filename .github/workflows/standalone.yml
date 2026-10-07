@@ -1,0 +1,118 @@
+name: Standalone (no other app)
+
+# Keepiq must install and work with no other Conduction app (ADR-006,
+# standalone-app-shell). This job pins that promise: one Nextcloud with Keepiq
+# ALONE (no OpenRegister, no integriq, no Hermiq), provisioned by the same
+# browser-extension/capture setup docs-media.yml uses, then
+#
+# - a smoke check: the other apps are not enabled, the login page and
+#   Keepiq's health answer 200, metrics answers an admin;
+# - the standalone half of tests/e2e/workflows/standalone-shell.spec.ts: the
+#   shell renders, Flows is hidden and its deep link explains the missing
+#   app, the admin section renders, and no request reaches another app.
+#
+# The "with OpenRegister" half of that spec skips here by design; the main
+# quality workflow installs OpenRegister and integriq and covers it.
+
+on:
+  pull_request:
+    branches: [main, development, beta]
+    paths:
+      - "lib/**"
+      - "src/**"
+      - "appinfo/**"
+      - "tests/e2e/**"
+      - "browser-extension/capture/**"
+      - ".github/workflows/standalone.yml"
+  push:
+    branches: [development]
+    paths:
+      - "lib/**"
+      - "src/**"
+      - "appinfo/**"
+      - "tests/e2e/**"
+      - "browser-extension/capture/**"
+      - ".github/workflows/standalone.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  standalone:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      PROJECT: kq-standalone
+      KQ_MEDIA_PORT: "8188"
+      BASE: http://localhost:8188
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: keepiq
+          persist-credentials: false
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          tools: composer:v2
+      - uses: actions/setup-node@v4
+        with:
+          # npm 11, which the lockfile needs; Node 22 ships npm 10.
+          node-version: "24"
+
+      - name: Build Keepiq
+        working-directory: keepiq
+        run: |
+          composer install --no-dev --prefer-dist --no-interaction
+          npm ci
+          npm run build
+
+      - name: Start the instance
+        run: docker compose -p "$PROJECT" -f keepiq/browser-extension/capture/compose.yaml up -d
+      # No OpenRegister directory: the setup copies in and enables Keepiq only.
+      - name: Provision it with Keepiq alone
+        run: bash keepiq/browser-extension/capture/setup.sh "$PROJECT" keepiq
+
+      - name: Smoke check
+        run: |
+          set -euo pipefail
+          enabled="$(docker exec -u www-data "${PROJECT}-nc-1" php occ app:list --output=json \
+            | python3 -c 'import json, sys; print(" ".join(json.load(sys.stdin)["enabled"]))')"
+          for app in openregister integriq hermiq; do
+            if [[ " $enabled " == *" $app "* ]]; then
+              echo "::error::$app is enabled; this job must run Keepiq alone"
+              exit 1
+            fi
+          done
+          [[ " $enabled " == *" keepiq "* ]] || { echo "::error::keepiq is not enabled"; exit 1; }
+
+          code="$(curl -sS -o /dev/null -w '%{http_code}' "${BASE}/index.php/login")"
+          [ "$code" = "200" ] || { echo "::error::GET /login answered ${code}"; exit 1; }
+
+          health="$(curl -sS -w '\n%{http_code}' "${BASE}/index.php/apps/keepiq/api/health")"
+          [ "$(echo "$health" | tail -n1)" = "200" ] || { echo "::error::health answered: ${health}"; exit 1; }
+          echo "$health" | head -n1 | python3 -c 'import json, sys; b = json.load(sys.stdin); assert b["status"] == "ok", b'
+
+          code="$(curl -sS -o /dev/null -w '%{http_code}' -u admin:admin "${BASE}/index.php/apps/keepiq/api/metrics")"
+          [ "$code" = "200" ] || { echo "::error::metrics answered ${code} to an admin"; exit 1; }
+
+      - name: Standalone e2e
+        working-directory: keepiq
+        env:
+          PLAYWRIGHT_BASE_URL: http://localhost:8188
+          NC_ADMIN_USER: admin
+          NC_ADMIN_PASS: admin
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright test -c tests/e2e/playwright.config.ts tests/e2e/workflows/standalone-shell.spec.ts
+
+      - name: Server log
+        if: failure()
+        run: docker exec "${PROJECT}-nc-1" tail -n 200 /var/www/html/data/nextcloud.log || true
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: standalone-playwright-report
+          path: keepiq/playwright-report/
+          if-no-files-found: ignore
+          retention-days: 14

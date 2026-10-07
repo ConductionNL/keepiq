@@ -23,9 +23,17 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Controller;
 
+use DateTime;
+use DateTimeZone;
 use InvalidArgumentException;
 use OCA\Keepiq\AppInfo\Application;
+use OCA\Keepiq\Attribute\VaultKeyProofRequired;
+use OCA\Keepiq\Exception\ForbiddenException;
+use OCA\Keepiq\Service\KnownShareRecipientExemption;
+use OCA\Keepiq\Service\ShareRestriction;
+use OCA\Keepiq\Service\ShareRestrictionRules;
 use OCA\Keepiq\Service\ShareService;
+use OCA\Keepiq\Service\VaultKeyProofService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
@@ -35,6 +43,9 @@ use OCP\IUserSession;
 
 /**
  * Authenticated API controller for ShareTarget CRUD.
+ *
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) One public method per share
+ *   operation; the use-only change added the restriction update.
  */
 class ShareController extends OCSController {
 	/**
@@ -98,6 +109,14 @@ class ShareController extends OCSController {
 		);
 	}//end index()
 
+	// The attributes sit above the docblock: the spec-coverage gate reads the
+	// docblock directly above a declaration, and stops at a multi-line attribute.
+	#[NoAdminRequired]
+	#[VaultKeyProofRequired(
+		binds: ['secretId', 'targetUserId'],
+		purpose: VaultKeyProofService::PURPOSE_SHARE_NEW_RECIPIENT,
+		exemption: KnownShareRecipientExemption::class
+	)]
 	/**
 	 * Create a share target.
 	 *
@@ -109,19 +128,27 @@ class ShareController extends OCSController {
 	 * @param string $targetUserId The recipient Nextcloud user ID
 	 * @param string $recipientSecretId The recipient's encrypted Secret copy ID
 	 * @param string|null $groupShareId Optional group-share linkage
+	 * @param bool $useOnly Whether the recipient may only use the value (direct shares)
+	 * @param string|null $expiresAt When the recipient's access ends (ISO 8601, direct shares)
 	 *
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-user-sharing/tasks.md#task-9.1
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
+	 *   field the server stores, not a mode switch.
 	 */
-	#[NoAdminRequired]
 	public function create(
 		string $secretId,
 		string $targetUserId,
 		string $recipientSecretId,
 		?string $groupShareId = null,
+		bool $useOnly = false,
+		?string $expiresAt = null,
 	): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {
@@ -134,8 +161,16 @@ class ShareController extends OCSController {
 				targetUserId: $targetUserId,
 				recipientSecretId: $recipientSecretId,
 				groupShareId: $groupShareId,
-				userId: $user->getUID()
+				userId: $user->getUID(),
+				restriction: (new ShareRestrictionRules())->fromRequest(
+					useOnly: $useOnly,
+					expiresAt: $expiresAt,
+					now: new DateTime('now', new DateTimeZone('UTC'))
+				)
 			);
+		} catch (ForbiddenException $e) {
+			// A copy from another organisation (sharing-federated-recipients task 3.4).
+			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $e) {
 			return new JSONResponse(
 				data: ['message' => $e->getMessage()],
@@ -145,6 +180,54 @@ class ShareController extends OCSController {
 
 		return new JSONResponse(data: $share->jsonSerialize(), statusCode: Http::STATUS_CREATED);
 	}//end create()
+
+	/**
+	 * Change the use-only flag and end date of a direct share. Owner or
+	 * delegate only; the recipient is refused, because the source is not
+	 * theirs.
+	 *
+	 * @param string $id The share-target row ID
+	 * @param bool $useOnly Whether the recipient may only use the value
+	 * @param string|null $expiresAt When the recipient's access ends (ISO 8601, null clears it)
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/changes/archive/2026-10-04-sharing-use-only-and-expiring-shares/tasks.md#task-2.1
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) $useOnly is a request body
+	 *   field the server stores, not a mode switch.
+	 */
+	#[NoAdminRequired]
+	public function update(string $id, bool $useOnly = false, ?string $expiresAt = null): JSONResponse {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$restriction = (new ShareRestrictionRules())->fromRequest(
+				useOnly: $useOnly,
+				expiresAt: $expiresAt,
+				now: new DateTime('now', new DateTimeZone('UTC'))
+			);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		try {
+			$share = $this->shareService->updateRestriction(
+				shareId: $id,
+				restriction: $restriction,
+				userId: $user->getUID()
+			);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+		}
+
+		return new JSONResponse(data: $share->jsonSerialize());
+	}//end update()
 
 	/**
 	 * Revoke a share target.
@@ -207,6 +290,9 @@ class ShareController extends OCSController {
 				groupShareId: $groupShareId,
 				userId: $user->getUID()
 			);
+		} catch (ForbiddenException $exception) {
+			// A copy from another organisation (sharing-federated-recipients task 3.4).
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(
 				data: ['message' => $exception->getMessage()],
@@ -251,6 +337,9 @@ class ShareController extends OCSController {
 				expectedUpdatedAt: $expectedUpdatedAt,
 				userId: $user->getUID()
 			);
+		} catch (ForbiddenException $exception) {
+			// A copy from another organisation (sharing-federated-recipients task 3.4).
+			return new JSONResponse(data: ['message' => $exception->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		} catch (InvalidArgumentException $exception) {
 			return new JSONResponse(
 				data: ['message' => $exception->getMessage()],
@@ -273,8 +362,10 @@ class ShareController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/bulk-actions/specs/bulk-actions/spec.md#requirement-bulk-share
+	 * @spec openspec/specs/user-sharing/spec.md#requirement-sharing-with-a-new-party-requires-a-verified-key-proof
 	 */
 	#[NoAdminRequired]
+	#[VaultKeyProofRequired(purpose: VaultKeyProofService::PURPOSE_SHARE_REGISTER_BATCH)]
 	public function registerBatch(array $shares = []): JSONResponse {
 		$user = $this->userSession->getUser();
 		if ($user === null) {

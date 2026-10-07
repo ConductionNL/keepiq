@@ -9,7 +9,52 @@
 				{{ error }}
 			</NcNoteCard>
 
+			<div
+				v-if="passphraseOffered"
+				class="key-generator-modal__mode"
+				role="radiogroup"
+				:aria-label="t('keepiq', 'Kind of key')">
+				<NcCheckboxRadioSwitch
+					v-model="mode"
+					type="radio"
+					value="password"
+					name="key-generator-mode"
+					data-testid="mode-password">
+					{{ t('keepiq', 'Password') }}
+				</NcCheckboxRadioSwitch>
+				<NcCheckboxRadioSwitch
+					v-model="mode"
+					type="radio"
+					value="passphrase"
+					name="key-generator-mode"
+					data-testid="mode-passphrase">
+					{{ t('keepiq', 'Passphrase') }}
+				</NcCheckboxRadioSwitch>
+			</div>
+
 			<fieldset
+				v-if="mode === 'passphrase'"
+				class="key-generator-modal__basic"
+				data-testid="passphrase-options">
+				<NcInputField
+					v-model="wordsInput"
+					type="number"
+					:label="t('keepiq', 'Number of words')"
+					:min="4"
+					:max="12" />
+				<NcInputField
+					v-model="separator"
+					:label="t('keepiq', 'Separator')" />
+				<NcCheckboxRadioSwitch v-model="capitalise" type="switch">
+					{{ t('keepiq', 'Capitalise each word') }}
+				</NcCheckboxRadioSwitch>
+				<NcCheckboxRadioSwitch v-model="includeNumber" type="switch">
+					{{ t('keepiq', 'Include a number') }}
+				</NcCheckboxRadioSwitch>
+			</fieldset>
+
+			<fieldset
+				v-if="mode === 'password'"
 				:disabled="regex.length > 0"
 				class="key-generator-modal__basic">
 				<NcInputField
@@ -48,7 +93,9 @@
 					:label="t('keepiq', 'Exclude characters')" />
 			</fieldset>
 
-			<details class="key-generator-modal__advanced">
+			<details
+				v-if="mode === 'password'"
+				class="key-generator-modal__advanced">
 				<summary>{{ t('keepiq', 'Advanced') }}</summary>
 				<NcInputField
 					v-model="regex"
@@ -96,8 +143,6 @@
 </template>
 
 <script>
-import axios from '@nextcloud/axios'
-import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -108,6 +153,11 @@ import {
 } from '@nextcloud/vue'
 import ContentCopy from 'vue-material-design-icons/ContentCopy.vue'
 import Dice5 from 'vue-material-design-icons/Dice5.vue'
+import {
+	generateKey,
+	generatePassphrase,
+	passphraseAllowed,
+} from '../generator/generator.js'
 import { fetchPolicy } from '../policy/policy.js'
 
 export default {
@@ -147,15 +197,37 @@ export default {
 			maxLength: 128,
 			policyFloorActive: false,
 			symbolLocked: false,
+			policy: null,
+			mode: 'password',
+			wordsInput: 5,
+			separator: '-',
+			capitalise: false,
+			includeNumber: false,
 		}
+	},
+
+	computed: {
+		/**
+		 * Whether to offer passphrases: on unless the organisation policy
+		 * switched them off.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/client-side-key-generator/specs/passphrase-generator/spec.md#requirement-passphrases-follow-the-organisation-password-policy
+		 */
+		passphraseOffered() {
+			return passphraseAllowed(this.policy)
+		},
 	},
 
 	/**
 	 * Clamp the controls to the org policy floor (org-password-policies
 	 * §5.2) — the server clamp stays authoritative regardless.
+	 *
+	 * @spec openspec/specs/org-password-policies/spec.md#requirement-generator-locked-to-policy
 	 */
 	async mounted() {
 		const policy = await fetchPolicy()
+		this.policy = policy ?? null
 		if (policy?.policy_enabled === true) {
 			const floor = Number.parseInt(policy.generator_min_length, 10) || 0
 			if (floor > this.minLength) {
@@ -177,6 +249,8 @@ export default {
 		 * Proxy the dialog's open state to the parent and reset on close.
 		 *
 		 * @param {boolean} value The new open state.
+		 *
+		 * @spec exclude Event re-emitter: resets transient state and emits update:open.
 		 */
 		onUpdateOpen(value) {
 			if (value === false) {
@@ -187,6 +261,8 @@ export default {
 
 		/**
 		 * Reset transient state (preview + error) when the dialog closes.
+		 *
+		 * @spec exclude Transient UI reset: clears preview, error and loading flags on close.
 		 */
 		reset() {
 			this.generatedKey = ''
@@ -195,34 +271,42 @@ export default {
 		},
 
 		/**
-		 * Call the server-side generator and display the result.
+		 * Generate the key in the browser and display it. The value never
+		 * leaves this page unencrypted: the server only sees the ciphertext
+		 * once the secret is saved.
 		 *
 		 * @spec openspec/specs/key-generator/spec.md#requirement-default-generation
 		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
+		 * @spec openspec/changes/client-side-key-generator/specs/passphrase-generator/spec.md#requirement-generate-a-passphrase
 		 */
 		async generate() {
 			this.loading = true
 			this.error = null
 
 			try {
-				const payload = this.regex
+				if (this.mode === 'passphrase' && this.passphraseOffered) {
+					this.generatedKey = generatePassphrase(
+						{
+							words: Number(this.wordsInput),
+							separator: this.separator,
+							capitalise: this.capitalise,
+							includeNumber: this.includeNumber,
+						},
+						this.policy,
+					)
+					return
+				}
+				const options = this.regex
 					? { regex: this.regex }
 					: {
 							length: Number(this.lengthInput),
 							includeSpecialCharacters: this.includeSpecialCharacters,
 							excludedCharacters: this.excludedCharacters,
 						}
-
-				const response = await axios.post(
-					generateUrl('/apps/keepiq/api/v1/generate-key'),
-					payload,
-				)
-				this.generatedKey = response.data.generatedKey
+				this.generatedKey = generateKey(options, this.policy)
 			} catch (e) {
 				this.generatedKey = ''
-				this.error =
-					e?.response?.data?.message
-					|| t('keepiq', 'Failed to generate key')
+				this.error = e?.message || t('keepiq', 'Failed to generate key')
 			} finally {
 				this.loading = false
 			}
@@ -230,6 +314,8 @@ export default {
 
 		/**
 		 * Emit the generated value to the parent and close the dialog.
+		 *
+		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
 		 */
 		use() {
 			if (!this.generatedKey) {
@@ -241,6 +327,8 @@ export default {
 
 		/**
 		 * Copy the generated key to the clipboard.
+		 *
+		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
 		 */
 		async copyToClipboard() {
 			if (!this.generatedKey || !navigator.clipboard) {
@@ -267,6 +355,11 @@ export default {
 	border: none;
 	margin: 0;
 	padding: 0;
+}
+
+.key-generator-modal__mode {
+	display: flex;
+	gap: 16px;
 }
 
 .key-generator-modal__advanced summary {

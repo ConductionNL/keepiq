@@ -127,7 +127,7 @@ class DashboardSummaryService {
 
 		$summary = [
 			'total_secrets' => $this->safeCount(
-				counter: fn () => $this->secretMapper?->countByOwner('user', $userId, null) ?? 0,
+				counter: fn () => $this->secretMapper?->countByOwner('user', $userId, null, null, SecretMapper::STATE_LIVE) ?? 0,
 				metricId: 'total_secrets',
 			),
 			'shared_with_me_count' => $this->safeCount(

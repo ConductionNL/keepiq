@@ -86,7 +86,6 @@ class SettingsServiceMasterPasswordTest extends TestCase {
 		$this->service = new SettingsService(
 			appConfig: $this->appConfig,
 			config: $this->createMock(originalClassName: IConfig::class),
-			appManager: $appManager,
 			container: $this->createMock(originalClassName: ContainerInterface::class),
 			groupManager: $this->createMock(originalClassName: IGroupManager::class),
 			userSession: $this->createMock(originalClassName: IUserSession::class),

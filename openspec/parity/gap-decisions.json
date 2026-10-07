@@ -264,10 +264,18 @@
   "decidedOn": "2026-09-27"
  },
  {
+  "row": "clients-10",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Build: reversed by the product owner on 2026-10-04, who asked for iOS and Android apps so people can use their stored passwords on the phone, with the Android app on F-Droid as well as Google Play. 4 competitors rate yes (Bitwarden, 1Password, Passbolt, Keeper). Before this the row was decided no on the mobile-pwa record, which chose an installable web app instead.",
+  "change": "clients-mobile-apps",
+  "decidedOn": "2026-10-04"
+ },
+ {
   "row": "clients-11",
   "matrix": "keepiq",
   "decision": "decided-no",
-  "reason": "Decided no: Recorded non-goal: openspec/specs/mobile-pwa/spec.md:11 and :49 choose an installable web app instead of native apps ('no native app and no app-store presence', 'MUST NOT introduce ... a native app'), the same record clients-10 is decided no on. The installed web app opens in its own desktop window.",
+  "reason": "Decided no: no native desktop app is planned. The installed web app opens in its own desktop window. The native apps specified in clients-mobile-apps (2026-10-04) are for phones only, so they do not change this row.",
   "change": null,
   "decidedOn": "2026-09-27"
  },
@@ -299,7 +307,7 @@
   "row": "clients-20",
   "matrix": "keepiq",
   "decision": "decided-no",
-  "reason": "Decided no: Recorded non-goal: typing into desktop applications needs a native desktop client, and openspec/specs/mobile-pwa/spec.md:11 and :49 record no native app (the record clients-10 and clients-11 are decided no on).",
+  "reason": "Decided no: typing into desktop applications needs a native desktop client, and none is planned (see clients-11). The native apps specified in clients-mobile-apps (2026-10-04) are for phones only.",
   "change": null,
   "decidedOn": "2026-09-27"
  },
@@ -726,5 +734,237 @@
   "reason": "Build: the core area (vault, the area of the first 30 rows) with a changelog row (https://github.com/marius-wieschollek/passwords/blob/2026.7.0/CHANGELOG.md). Specified for the missing half: a preview image of the site; site icons are built.",
   "change": "vault-website-addresses",
   "decidedOn": "2026-09-27"
+ },
+ {
+  "row": "vault-11",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Core area (vault) and six competitors rate yes; the missing half is a hidden field kind.",
+  "change": "vault-custom-field-kinds-and-ssh-key",
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "vault-14",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Core area (vault) and three competitors rate yes; the missing half is the key pair fields and generation.",
+  "change": "vault-custom-field-kinds-and-ssh-key",
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "vault-20",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Core area (vault); the backend stores both preferences and no screen edits or reads them.",
+  "change": "vault-defaults-and-recently-used-widget",
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "vault-21",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Core area (vault); the recently-accessed query is finished and has no caller.",
+  "change": "vault-defaults-and-recently-used-widget",
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "crypto-06",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Four competitors rate yes; the web auto-lock is a timer from unlock and updateActivity has no caller.",
+  "change": "crypto-session-timeout-and-inactivity-lock",
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "crypto-07",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Four competitors rate yes; the timeout choice is not saved and Nextcloud session becomes 10 minutes.",
+  "change": "crypto-session-timeout-and-inactivity-lock",
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "sharing-02",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Five competitors rate yes; backend is complete and nothing opens the form.",
+  "change": "sharing-group-share-entry-point",
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "admin-18",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Feature request row plus one competitor yes (Keeper); no page creates a type and a type has no field list.",
+  "change": "admin-secret-type-editor",
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "portability-03",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Two competitors rate yes; the parser supports a mapping the wizard never passes.",
+  "change": "portability-import-field-mapping",
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "portability-08",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Two competitors rate yes; the handshake only works between two Keepiq sessions on one server.",
+  "change": "portability-cxp-cross-provider-transfer",
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "clients-03",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Five competitors rate yes; the offer only appears in the popup and never updates an existing login.",
+  "change": "clients-extension-save-prompt-and-passkey-origin",
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "clients-05",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Three competitors rate yes; the relay trusts a page-supplied origin.",
+  "change": "clients-extension-save-prompt-and-passkey-origin",
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "clients-12",
+  "matrix": "keepiq",
+  "decision": "build",
+  "reason": "Four competitors rate yes; the Firefox build probably does not start and there is no Safari build.",
+  "change": "clients-extension-firefox-and-safari-builds",
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "sharing-11",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "No competitor rated yes, no demand, outside the core area. Reversible: the reclaim half is built and the creation half is a store and dialog gap",
+  "change": null,
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "sharing-13",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Single competitor, no demand",
+  "change": null,
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "sharing-23",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Single competitor, no demand",
+  "change": null,
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "apps-13",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "No competitor rated yes, no demand, outside the core area. Reversible: ApplicationService::delete cascades leases and lease policies but not secrets",
+  "change": null,
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "apps-19",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Single competitor, no demand",
+  "change": null,
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "apps-24",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Single competitor, no demand",
+  "change": null,
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "pki-02",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "No competitor rated yes, no demand, outside the core area. Reversible: the intermediate renews on a daily job and the root renews only by hand",
+  "change": null,
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "pki-07",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Single competitor, no demand",
+  "change": null,
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "pki-09",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "No competitor rated yes, no demand, outside the core area. Note: PrivateKeyDownloadDialog is mounted but no PHP code returns a private_key, so the dialog is dead UI",
+  "change": null,
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "health-09",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Single competitor, no demand",
+  "change": null,
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "health-10",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Single competitor, no demand",
+  "change": null,
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "rotation-07",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "No competitor rated yes, no demand, outside the core area. Reversible: the expiry policy routes and store actions exist and have no page",
+  "change": null,
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "admin-17",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "No competitor rated yes, no demand, outside the core area. Reversible: the CA health summary is computed and no widget renders it",
+  "change": null,
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "admin-24",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Single competitor, changelog signal only, no demand row",
+  "change": null,
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "audit-16",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Single competitor, changelog signal only, no demand row",
+  "change": null,
+  "decidedOn": "2026-09-29"
+ },
+ {
+  "row": "clients-22",
+  "matrix": "keepiq",
+  "decision": "decided-no",
+  "reason": "Single competitor, changelog signal only, no demand row",
+  "change": null,
+  "decidedOn": "2026-09-29"
  }
 ]

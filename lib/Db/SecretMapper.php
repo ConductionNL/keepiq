@@ -38,8 +38,45 @@ use OCP\IDBConnection;
  *   focused query the service layer composes (find/count/search/cascade);
  *   splitting the mapper would scatter the secrets table's access in one
  *   place across several classes for no benefit.
+ * @SuppressWarnings(PHPMD.TooManyMethods) Same reason: one focused query per
+ *   method; the favourite and last-used writes belong with the table.
  */
 class SecretMapper extends QBMapper {
+	/**
+	 * Neither trashed nor archived: the everyday vault.
+	 *
+	 * @var string
+	 */
+	public const STATE_LIVE = 'live';
+
+	/**
+	 * In the trash, waiting for restore or purge.
+	 *
+	 * @var string
+	 */
+	public const STATE_TRASHED = 'trashed';
+
+	/**
+	 * Archived and not trashed.
+	 *
+	 * @var string
+	 */
+	public const STATE_ARCHIVED = 'archived';
+
+	/**
+	 * Everything that is not trashed (live and archived): what an export carries.
+	 *
+	 * @var string
+	 */
+	public const STATE_KEPT = 'kept';
+
+	/**
+	 * The states a list request may name.
+	 *
+	 * @var string[]
+	 */
+	public const LIST_STATES = [self::STATE_LIVE, self::STATE_TRASHED, self::STATE_ARCHIVED, self::STATE_KEPT];
+
 	/**
 	 * The columns a list may be sorted by (allow-list to prevent injection).
 	 *
@@ -50,6 +87,7 @@ class SecretMapper extends QBMapper {
 		'url',
 		'created_at',
 		'updated_at',
+		'last_used_at',
 	];
 
 	/**
@@ -98,6 +136,64 @@ class SecretMapper extends QBMapper {
 	}//end resolveSortColumn()
 
 	/**
+	 * Leave out every recipient copy whose access has ended
+	 * (sharing-use-only-and-expiring-shares D5): the copy stops being
+	 * served at its end date, not at the next run of the expiry job.
+	 *
+	 * @param IQueryBuilder $qb The query to narrow
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-the-server-stops-serving-an-expired-copy-at-its-end-date
+	 */
+	private function excludeAccessExpired(IQueryBuilder $qb): void {
+		$qb->andWhere(
+			$qb->expr()->orX(
+				$qb->expr()->isNull('access_expires_at'),
+				$qb->expr()->gt(
+					'access_expires_at',
+					$qb->createNamedParameter(new DateTime(), IQueryBuilder::PARAM_DATETIME_MUTABLE)
+				)
+			)
+		);
+	}//end excludeAccessExpired()
+
+	/**
+	 * The recipient copies whose access ends in (from, to]. A null `from`
+	 * lists every copy whose access ended at or before `to`: the expiry
+	 * job's clean-up set. A window a day ahead gives the copies to warn.
+	 *
+	 * @param DateTime|null $from Exclusive lower bound (null = none)
+	 * @param DateTime      $to   Inclusive upper bound
+	 *
+	 * @return Secret[]
+	 *
+	 * @spec openspec/specs/expiring-shares/spec.md#requirement-a-background-job-removes-expired-access
+	 */
+	public function findAccessEndingBetween(?DateTime $from, DateTime $to): array {
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('*')
+			->from($this->getTableName())
+			->where($qb->expr()->isNotNull('access_expires_at'))
+			->andWhere(
+				$qb->expr()->lte(
+					'access_expires_at',
+					$qb->createNamedParameter($to, IQueryBuilder::PARAM_DATETIME_MUTABLE)
+				)
+			);
+		if ($from !== null) {
+			$qb->andWhere(
+				$qb->expr()->gt(
+					'access_expires_at',
+					$qb->createNamedParameter($from, IQueryBuilder::PARAM_DATETIME_MUTABLE)
+				)
+			);
+		}
+
+		return $this->findEntities(query: $qb);
+	}//end findAccessEndingBetween()
+
+	/**
 	 * Find secrets owned by an owner, with optional folder filter, sort, and
 	 * pagination.
 	 *
@@ -109,8 +205,19 @@ class SecretMapper extends QBMapper {
 	 * @param int $limit Maximum rows
 	 * @param int $offset Row offset
 	 * @param string|null $typeId Filter by secret-type ID (null = all types)
+	 * @param string|null $state  One of the STATE_* constants; null = every row,
+	 *                            trashed and archived included (GDPR, account
+	 *                            deletion and key rotation need them all)
+	 * @param bool|null $favourite Only the holder's starred rows when true
+	 * @param string|null $tag     Only rows the holder tagged with this tag
 	 *
 	 * @return Secret[]
+	 *
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-sort-by-date-last-used
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) Each argument is one optional
+	 *   filter of the paged list; a parameter object would only rename them.
 	 */
 	public function findByOwner(
 		string $ownerType,
@@ -121,6 +228,9 @@ class SecretMapper extends QBMapper {
 		int $limit = 1000,
 		int $offset = 0,
 		?string $typeId = null,
+		?string $state = null,
+		?bool $favourite = null,
+		?string $tag = null,
 	): array {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select('*')
@@ -136,13 +246,18 @@ class SecretMapper extends QBMapper {
 			$qb->andWhere($qb->expr()->eq('type_id', $qb->createNamedParameter($typeId)));
 		}
 
+		(new SecretStateFilter())->apply(qb: $qb, state: $state);
+		$this->excludeAccessExpired(qb: $qb);
+		$organisation = new SecretListOrganisation();
+		$organisation->apply(qb: $qb, ownerId: $ownerId, favourite: $favourite, tag: $tag);
+
 		$dir = 'ASC';
 		if (strtolower($direction) === 'desc') {
 			$dir = 'DESC';
 		}
 
-		$qb->orderBy($this->resolveSortColumn(sort: $sort), $dir)
-			->setMaxResults($limit)
+		$organisation->order(qb: $qb, column: $this->resolveSortColumn(sort: $sort), direction: $dir);
+		$qb->setMaxResults($limit)
 			->setFirstResult($offset);
 
 		return $this->findEntities(query: $qb);
@@ -255,14 +370,23 @@ class SecretMapper extends QBMapper {
 	 * @param string $ownerId The owner ID
 	 * @param string|null $folderId Filter by folder ID (null = no folder filter)
 	 * @param string|null $typeId Filter by secret-type ID (null = all types)
+	 * @param string|null $state  One of the STATE_* constants; null = every row
+	 * @param bool|null $favourite Only the holder's starred rows when true
+	 * @param string|null $tag     Only rows the holder tagged with this tag
 	 *
 	 * @return int
+	 *
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
 	 */
 	public function countByOwner(
 		string $ownerType,
 		string $ownerId,
 		?string $folderId = null,
 		?string $typeId = null,
+		?string $state = null,
+		?bool $favourite = null,
+		?string $tag = null,
 	): int {
 		$qb = $this->db->getQueryBuilder();
 		$qb->select($qb->func()->count('*', 'cnt'))
@@ -277,6 +401,10 @@ class SecretMapper extends QBMapper {
 		if ($typeId !== null) {
 			$qb->andWhere($qb->expr()->eq('type_id', $qb->createNamedParameter($typeId)));
 		}
+
+		(new SecretStateFilter())->apply(qb: $qb, state: $state);
+		$this->excludeAccessExpired(qb: $qb);
+		(new SecretListOrganisation())->apply(qb: $qb, ownerId: $ownerId, favourite: $favourite, tag: $tag);
 
 		$result = $qb->executeQuery();
 		$row = $result->fetch();
@@ -407,7 +535,10 @@ class SecretMapper extends QBMapper {
 					$qb->expr()->iLike('url', $qb->createNamedParameter($like))
 				)
 			)
+			->andWhere($qb->expr()->isNull('trashed_at'))
+			->andWhere($qb->expr()->isNull('archived_at'))
 			->setMaxResults(max(1, $limit));
+		$this->excludeAccessExpired(qb: $qb);
 
 		return $this->findEntities(query: $qb);
 	}//end searchByNameOrUrl()
@@ -436,8 +567,11 @@ class SecretMapper extends QBMapper {
 					$qb->expr()->iLike('url', $qb->createNamedParameter($like))
 				)
 			)
+			->andWhere($qb->expr()->isNull('trashed_at'))
+			->andWhere($qb->expr()->isNull('archived_at'))
 			->orderBy('name', 'ASC')
 			->setMaxResults($limit);
+		$this->excludeAccessExpired(qb: $qb);
 
 		return $this->findEntities(query: $qb);
 	}//end findForUnifiedSearch()
@@ -501,7 +635,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return int The number of rows deleted
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function deleteByOwnerUser(string $ownerId): int {
 		$qb = $this->db->getQueryBuilder();
@@ -511,6 +645,25 @@ class SecretMapper extends QBMapper {
 
 		return $qb->executeStatement();
 	}//end deleteByOwnerUser()
+
+	/**
+	 * Delete every secret attributed to an application
+	 * (application-mgmt "Delete Application" cascade). Idempotent.
+	 *
+	 * @param string $applicationId The application ID
+	 *
+	 * @return int The number of rows deleted
+	 *
+	 * @spec openspec/specs/application-mgmt/spec.md#requirement-delete-application
+	 */
+	public function deleteByOwnerApplication(string $applicationId): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->delete($this->getTableName())
+			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter('application')))
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($applicationId)));
+
+		return $qb->executeStatement();
+	}//end deleteByOwnerApplication()
 
 	/**
 	 * Mark a recipient copy as a tombstoned, detached share-copy.
@@ -524,7 +677,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function tombstone(string $secretId, string $reason): void {
 		$qb = $this->db->getQueryBuilder();
@@ -544,7 +697,7 @@ class SecretMapper extends QBMapper {
 	 *
 	 * @return void
 	 *
-	 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+	 * @spec openspec/specs/gdpr-compliance/spec.md
 	 */
 	public function reassignOwner(string $secretId, string $newOwnerId): void {
 		$qb = $this->db->getQueryBuilder();
@@ -728,4 +881,89 @@ class SecretMapper extends QBMapper {
 
 		return $this->findEntities(query: $qb);
 	}//end findBySuiteForOwner()
+	/**
+	 * Star or unstar one holder's row. Keyed by owner as well as id, so a
+	 * row the user does not hold is never touched.
+	 *
+	 * @param string $id        The row
+	 * @param string $ownerId   The holder (a user)
+	 * @param bool   $favourite The new star
+	 *
+	 * @return int The number of rows changed (0 or 1)
+	 *
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+	 */
+	public function setFavourite(string $id, string $ownerId, bool $favourite): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('is_favourite', $qb->createNamedParameter($favourite, IQueryBuilder::PARAM_BOOL))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
+			->andWhere($qb->expr()->eq('owner_type', $qb->createNamedParameter('user')))
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+
+		return $qb->executeStatement();
+	}//end setFavourite()
+
+	/**
+	 * Record that the holder opened or filled a row. Only `last_used_at` is
+	 * written: `updated_at` stays, so a sync lock or a "changed" sort is not
+	 * disturbed by a read.
+	 *
+	 * @param string   $id      The row
+	 * @param string   $ownerId The holder (a user)
+	 * @param DateTime $usedAt  When it was used
+	 *
+	 * @return int The number of rows changed (0 or 1)
+	 *
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-sort-by-date-last-used
+	 */
+	public function markUsed(string $id, string $ownerId, DateTime $usedAt): int {
+		$qb = $this->db->getQueryBuilder();
+		$qb->update($this->getTableName())
+			->set('last_used_at', $qb->createNamedParameter($usedAt->format('Y-m-d H:i:s'), IQueryBuilder::PARAM_STR))
+			->where($qb->expr()->eq('id', $qb->createNamedParameter($id)))
+			->andWhere($qb->expr()->eq('owner_type', $qb->createNamedParameter('user')))
+			->andWhere($qb->expr()->eq('owner_id', $qb->createNamedParameter($ownerId)));
+
+		return $qb->executeStatement();
+	}//end markUsed()
+
+	/**
+	 * Count the live secret rows each user owns, in one grouped query.
+	 *
+	 * Tombstoned rows are left out. Users without a row are absent from the
+	 * result; the caller reads them as zero.
+	 *
+	 * @param string[] $ownerIds The user IDs to count for
+	 *
+	 * @return array<string,int> Row count keyed by user ID
+	 *
+	 * @spec openspec/specs/admin-member-overview/spec.md#requirement-administrator-lists-vault-status-per-user
+	 */
+	public function countByUserOwners(array $ownerIds): array {
+		if ($ownerIds === []) {
+			return [];
+		}
+
+		$qb = $this->db->getQueryBuilder();
+		$qb->select('owner_id')
+			->selectAlias($qb->func()->count('id'), 'row_count')
+			->from($this->getTableName())
+			->where($qb->expr()->eq('owner_type', $qb->createNamedParameter('user')))
+			->andWhere(
+				$qb->expr()->in('owner_id', $qb->createNamedParameter($ownerIds, IQueryBuilder::PARAM_STR_ARRAY))
+			)
+			->andWhere($qb->expr()->isNull('tombstoned_at'))
+			->groupBy('owner_id');
+
+		$counts = [];
+		$result = $qb->executeQuery();
+		while (($row = $result->fetch()) !== false) {
+			$counts[(string)$row['owner_id']] = (int)$row['row_count'];
+		}
+
+		$result->closeCursor();
+
+		return $counts;
+	}//end countByUserOwners()
 }//end class

@@ -21,6 +21,7 @@
 			<GdprExportDialog
 				:open="gdprOpen"
 				:secrets="decryptedSecrets"
+				:skipped="skippedSecrets"
 				:folders="folders"
 				@update:open="gdprOpen = $event" />
 			<AccountDeletionDialog
@@ -58,6 +59,19 @@
 				:open="true"
 				@close="closeBulkDialog"
 				@done="onBulkDone" />
+			<!-- Trash and archive (vault-trash-and-archive). -->
+			<BulkStateDialog
+				v-if="stateActions.includes(bulkDialog)"
+				:open="true"
+				:action="bulkDialog"
+				@close="closeBulkDialog"
+				@done="onBulkDone" />
+			<!-- Tags in bulk (vault-favourites-tags-and-last-used). -->
+			<BulkTagDialog
+				v-if="bulkDialog === 'tag'"
+				:open="true"
+				@close="closeBulkDialog"
+				@done="onBulkDone" />
 			<BulkShareDialog
 				v-if="bulkDialog === 'share'"
 				:open="true"
@@ -76,7 +90,7 @@
 			     "consumer manages its own dialog" opt-out; the @add path is
 			     unaffected because this view listens to it. -->
 			<CnIndexPage
-				viewMode="list"
+				:viewMode="listViewMode"
 				:availableViewModes="['list', 'cards', 'table']"
 				listLabel="List"
 				:showFormDialog="false"
@@ -88,13 +102,17 @@
 				:loading="loading || folderSwitching"
 				:pagination="pagination"
 				:title="pageTitle"
-				:addLabel="offlineReadOnly ? '' : t('keepiq', 'New secret')"
+				:addLabel="
+					(offlineReadOnly && !offlineEditsQueued) || listState !== 'live'
+						? ''
+						: t('keepiq', 'New secret')
+				"
 				addIcon="Plus"
-				inlineSearch
+				:inlineSearch="listState === 'live'"
 				:searchValue="searchTerm"
 				:searchPlaceholder="t('keepiq', 'Search secrets')"
 				rowKey="id"
-				:emptyText="t('keepiq', 'No secrets found')"
+				:emptyText="emptyText"
 				:refreshing="loading"
 				:showMassImport="false"
 				:showMassExport="false"
@@ -220,6 +238,35 @@
 							@update:modelValue="onTypeFilter(option.value)">
 							{{ option.label }}
 						</NcActionRadio>
+						<!-- Favourites and tags (vault-favourites-tags-and-last-used). -->
+						<NcActionSeparator />
+						<NcActionCheckbox
+							:modelValue="favouriteFilter"
+							data-testid="secret-favourite-filter"
+							@update:modelValue="onFavouriteFilter">
+							{{ t('keepiq', 'Favourites') }}
+						</NcActionCheckbox>
+						<template v-if="tagFilterOptions.length > 0">
+							<NcActionCaption :name="t('keepiq', 'Filter by tag')" />
+							<NcActionRadio
+								name="secret-tag-filter"
+								value=""
+								:modelValue="tagFilter ?? ''"
+								data-testid="secret-tag-filter"
+								@update:modelValue="onTagFilter(null)">
+								{{ t('keepiq', 'All tags') }}
+							</NcActionRadio>
+							<NcActionRadio
+								v-for="option in tagFilterOptions"
+								:key="option.value"
+								name="secret-tag-filter"
+								:value="option.value"
+								:modelValue="tagFilter ?? ''"
+								data-testid="secret-tag-filter"
+								@update:modelValue="onTagFilter(option.value)">
+								{{ option.label }}
+							</NcActionRadio>
+						</template>
 						<NcActionSeparator />
 						<NcActionCaption :name="t('keepiq', 'Sort by')" />
 						<NcActionRadio
@@ -293,7 +340,41 @@
 				     navigated away" and "the prune watcher saw the new rows"
 				     the strip still shows the OLD view's selection — acting
 				     on it would move/delete secrets from the previous page. -->
-				<template #selection-actions>
+				<template v-if="listState === 'trashed'" #selection-actions>
+					<NcButton
+						variant="secondary"
+						:disabled="loading"
+						data-testid="bulk-open-restore"
+						@click="bulkDialog = 'restore'">
+						<template #icon>
+							<DeleteRestore :size="20" />
+						</template>
+						{{ t('keepiq', 'Restore') }}
+					</NcButton>
+					<NcButton
+						variant="error"
+						:disabled="loading"
+						data-testid="bulk-open-purge"
+						@click="bulkDialog = 'purge'">
+						<template #icon>
+							<TrashCanOutline :size="20" />
+						</template>
+						{{ t('keepiq', 'Delete for good') }}
+					</NcButton>
+				</template>
+				<template v-else-if="listState === 'archived'" #selection-actions>
+					<NcButton
+						variant="secondary"
+						:disabled="loading"
+						data-testid="bulk-open-unarchive"
+						@click="bulkDialog = 'unarchive'">
+						<template #icon>
+							<ArchiveArrowUpOutline :size="20" />
+						</template>
+						{{ t('keepiq', 'Unarchive') }}
+					</NcButton>
+				</template>
+				<template v-else #selection-actions>
 					<NcButton
 						variant="secondary"
 						:disabled="loading || folderSwitching"
@@ -325,6 +406,26 @@
 						{{ t('keepiq', 'Add to team folder') }}
 					</NcButton>
 					<NcButton
+						variant="secondary"
+						:disabled="loading || folderSwitching"
+						data-testid="bulk-open-tag"
+						@click="bulkDialog = 'tag'">
+						<template #icon>
+							<TagOutline :size="20" />
+						</template>
+						{{ t('keepiq', 'Tags') }}
+					</NcButton>
+					<NcButton
+						variant="secondary"
+						:disabled="loading || folderSwitching"
+						data-testid="bulk-open-archive"
+						@click="bulkDialog = 'archive'">
+						<template #icon>
+							<ArchiveOutline :size="20" />
+						</template>
+						{{ t('keepiq', 'Archive') }}
+					</NcButton>
+					<NcButton
 						variant="error"
 						:disabled="loading || folderSwitching"
 						data-testid="bulk-open-delete"
@@ -338,13 +439,8 @@
 				<!-- Rich empty state. -->
 				<template #empty>
 					<NcEmptyContent
-						:name="t('keepiq', 'No secrets found')"
-						:description="
-							t(
-								'keepiq',
-								'Add your first secret using the button above',
-							)
-						">
+						:name="emptyText"
+						:description="emptyDescription">
 						<template #icon>
 							<KeyVariant :size="64" />
 						</template>
@@ -484,6 +580,9 @@ import {
 import { markRaw } from 'vue'
 import AccountGroup from 'vue-material-design-icons/AccountGroup.vue'
 import AccountQuestion from 'vue-material-design-icons/AccountQuestion.vue'
+import ArchiveArrowUpOutline from 'vue-material-design-icons/ArchiveArrowUpOutline.vue'
+import ArchiveOutline from 'vue-material-design-icons/ArchiveOutline.vue'
+import DeleteRestore from 'vue-material-design-icons/DeleteRestore.vue'
 import FilterIcon from 'vue-material-design-icons/Filter.vue'
 import FilterOutline from 'vue-material-design-icons/FilterOutline.vue'
 import FolderMoveOutline from 'vue-material-design-icons/FolderMoveOutline.vue'
@@ -493,6 +592,7 @@ import Import from 'vue-material-design-icons/Import.vue'
 import KeyVariant from 'vue-material-design-icons/KeyVariant.vue'
 import Safe from 'vue-material-design-icons/Safe.vue'
 import ShareVariantOutline from 'vue-material-design-icons/ShareVariantOutline.vue'
+import TagOutline from 'vue-material-design-icons/TagOutline.vue'
 import TrashCanOutline from 'vue-material-design-icons/TrashCanOutline.vue'
 import SecretListItem from '../components/SecretListItem.vue'
 import SecretTypeIcon from '../components/SecretTypeIcon.vue'
@@ -502,6 +602,8 @@ import AccountDeletionDialog from '../dialogs/AccountDeletionDialog.vue'
 import BulkDeleteDialog from '../dialogs/BulkDeleteDialog.vue'
 import BulkMoveDialog from '../dialogs/BulkMoveDialog.vue'
 import BulkShareDialog from '../dialogs/BulkShareDialog.vue'
+import BulkStateDialog from '../dialogs/BulkStateDialog.vue'
+import BulkTagDialog from '../dialogs/BulkTagDialog.vue'
 import BulkTeamFolderDialog from '../dialogs/BulkTeamFolderDialog.vue'
 import CxpTransferDialog from '../dialogs/CxpTransferDialog.vue'
 import ExportDialog from '../dialogs/ExportDialog.vue'
@@ -519,6 +621,10 @@ import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretRequestStore } from '../store/modules/secretRequest.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
+import {
+	resolveDefaultView,
+	useUserPreferencesStore,
+} from '../store/modules/userPreferences.js'
 import { secretDetailLocation } from '../utils/detailRoute.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
 import { rootVaultOf, subfolderRows } from '../utils/vaultList.js'
@@ -571,6 +677,12 @@ export default {
 		FolderOutline,
 		ShareVariantOutline,
 		TrashCanOutline,
+		ArchiveArrowUpOutline,
+		ArchiveOutline,
+		DeleteRestore,
+		BulkStateDialog,
+		BulkTagDialog,
+		TagOutline,
 		KeyVariant,
 		SecretListItem,
 		SecretTypeIcon,
@@ -611,6 +723,10 @@ export default {
 			importOpen: false,
 			teamFolderOpen: false,
 			typeFilter: null,
+			/** Only the user's starred secrets (vault-favourites-tags-and-last-used). */
+			favouriteFilter: false,
+			/** Only secrets with this tag, or null for all. */
+			tagFilter: null,
 			decryptedSecrets: [],
 			/** Secrets the last decryptAllSecrets() could not decrypt (keepiq#794). */
 			skippedSecrets: 0,
@@ -642,6 +758,16 @@ export default {
 
 	computed: {
 		/**
+		 * The view the list opens in: the user's saved default view.
+		 *
+		 * @return {string} list, cards or table.
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 */
+		listViewMode() {
+			return resolveDefaultView(useUserPreferencesStore().defaultView)
+		},
+
+		/**
 		 * Secret id -> its pending request, for the row indicator.
 		 *
 		 * @return {object} Map of secretId to the pending request.
@@ -659,18 +785,30 @@ export default {
 			return map
 		},
 
+		/**
+		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
+		 */
 		secretStore() {
 			return useSecretStore()
 		},
 
+		/**
+		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
+		 */
 		folderStore() {
 			return useFolderStore()
 		},
 
+		/**
+		 * @spec exclude Store-state passthrough: returns the loaded secrets array.
+		 */
 		secrets() {
 			return this.secretStore.secrets
 		},
 
+		/**
+		 * @spec exclude Store-state passthrough: returns the loading flag for the spinner.
+		 */
 		loading() {
 			return this.secretStore.loading
 		},
@@ -681,7 +819,7 @@ export default {
 		 * export serializer.
 		 *
 		 * @return {Array<object>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 */
 		folders() {
 			return this.folderStore.folders
@@ -692,7 +830,7 @@ export default {
 		 * locked (import requires the session CryptoKey to encrypt rows).
 		 *
 		 * @return {boolean}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 */
 		vaultLocked() {
 			return useSessionStore().isLocked
@@ -704,21 +842,45 @@ export default {
 		 * are disabled while true.
 		 *
 		 * @return {boolean}
+		 *
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-sharing-and-membership-actions-stay-online-only
 		 */
 		offlineReadOnly() {
 			return useOfflineStore().readOnly
 		},
 
+		/**
+		 * Offline with offline edits allowed: New secret stays available and
+		 * goes into the sync queue; folders, import and requests stay
+		 * online-only.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-offline-changes-go-into-a-sealed-local-queue
+		 */
+		offlineEditsQueued() {
+			return useOfflineStore().editsQueued
+		},
+
+		/**
+		 * @spec exclude Trivial getter: reads the folder id from the route params.
+		 */
 		selectedFolderId() {
 			return this.$route.params.folderId || null
 		},
 
-		/** Display name of the selected folder for the team-sharing dialog. */
+		/**
+		 * Display name of the selected folder for the team-sharing dialog.
+		 *
+		 * @spec exclude Presentation getter: resolves the selected folder to its display name.
+		 */
 		selectedFolderName() {
 			const folder = this.folders.find((f) => f.id === this.selectedFolderId)
 			return folder?.name ?? ''
 		},
 
+		/**
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
+		 */
 		pagination() {
 			return {
 				page: this.secretStore.page,
@@ -794,7 +956,21 @@ export default {
 				{ value: 'url', label: t('keepiq', 'URL') },
 				{ value: 'created_at', label: t('keepiq', 'Created') },
 				{ value: 'updated_at', label: t('keepiq', 'Updated') },
+				{ value: 'last_used_at', label: t('keepiq', 'Last used') },
 			]
+		},
+
+		/**
+		 * The user's tags for the filter menu, with how many secrets carry each.
+		 *
+		 * @return {Array<{value: string, label: string}>}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+		 */
+		tagFilterOptions() {
+			return this.secretStore.tags.map((entry) => ({
+				value: entry.tag,
+				label: `${entry.tag} (${entry.count})`,
+			}))
 		},
 
 		/**
@@ -808,7 +984,12 @@ export default {
 		 * @spec exclude Presentation-only active-state derivation for the funnel button.
 		 */
 		filterMenuActive() {
-			return !!this.typeFilter || this.sortField !== 'name'
+			return (
+				!!this.typeFilter
+				|| this.favouriteFilter
+				|| !!this.tagFilter
+				|| this.sortField !== 'name'
+			)
 		},
 
 		/**
@@ -866,7 +1047,19 @@ export default {
 			if (this.folderSwitching) {
 				return []
 			}
-			return this.secrets
+			// A change made offline is marked until it syncs (offline-edit-queue).
+			return this.secrets.map((secret) =>
+				secret.pendingSync
+					? {
+							...secret,
+							name:
+								secret.name
+								+ ' ('
+								+ t('keepiq', 'Not synced yet')
+								+ ')',
+						}
+					: secret,
+			)
 		},
 
 		/**
@@ -877,7 +1070,76 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
 		 */
 		pageTitle() {
+			if (this.listState === 'trashed') {
+				return t('keepiq', 'Trash')
+			}
+			if (this.listState === 'archived') {
+				return t('keepiq', 'Archive')
+			}
 			return this.selectedFolderName || t('keepiq', 'Secrets')
+		},
+
+		/**
+		 * Which state the list shows: the Trash and Archive pages reuse this
+		 * view under their own route names (vault-trash-and-archive).
+		 *
+		 * @return {string} live, trashed or archived
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+		 */
+		listState() {
+			return (
+				{ SecretTrash: 'trashed', SecretArchive: 'archived' }[
+					this.$route?.name
+				] || 'live'
+			)
+		},
+
+		/**
+		 * The bulk actions that change a secret's trash or archive state.
+		 *
+		 * @return {Array<string>}
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+		 */
+		stateActions() {
+			return ['archive', 'unarchive', 'restore', 'purge']
+		},
+
+		/**
+		 * The empty state, per view.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+		 */
+		emptyText() {
+			if (this.listState === 'trashed') {
+				return t('keepiq', 'The trash is empty')
+			}
+			if (this.listState === 'archived') {
+				return t('keepiq', 'No archived secrets')
+			}
+			return t('keepiq', 'No secrets found')
+		},
+
+		/**
+		 * The empty state's second line, per view.
+		 *
+		 * @return {string}
+		 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-restoring-and-purging-trashed-secrets
+		 */
+		emptyDescription() {
+			if (this.listState === 'trashed') {
+				return t(
+					'keepiq',
+					'Deleted secrets wait here until the retention period ends, then they are deleted for good.',
+				)
+			}
+			if (this.listState === 'archived') {
+				return t(
+					'keepiq',
+					'Archive a secret from its detail panel to keep it out of the vault list, search and autofill.',
+				)
+			}
+			return t('keepiq', 'Add your first secret using the button above')
 		},
 
 		/**
@@ -1028,12 +1290,20 @@ export default {
 			return items
 		},
 
-		/** Bulk selection store (bulk-actions §1). */
+		/**
+		 * Bulk selection store (bulk-actions §1).
+		 *
+		 * @spec exclude Store-ref passthrough: returns a Pinia store with no domain logic.
+		 */
 		bulkStore() {
 			return useBulkStore()
 		},
 
-		/** Whether every secret in the current view is selected. */
+		/**
+		 * Whether every secret in the current view is selected.
+		 *
+		 * @spec openspec/specs/bulk-actions/spec.md#requirement-multi-select-and-bulk-action-bar
+		 */
 		allCurrentSelected() {
 			return (
 				this.secrets.length > 0
@@ -1109,10 +1379,12 @@ export default {
 
 	/**
 	 * Load types + folders + the first secrets page, then lazily run the
-	 * client-side password-health pass so strength badges appear.
+	 * client-side password-health pass so strength badges appear. Also reads
+	 * the user's saved default view.
 	 *
 	 * @return {Promise<void>}
 	 * @spec openspec/changes/password-health/specs/password-health/spec.md#requirement-strength-scoring-and-badges
+	 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
 	 */
 	async mounted() {
 		// The bulk selection is client-only and dies with the lock (§1.2).
@@ -1126,6 +1398,9 @@ export default {
 			// Drives the outstanding-request badge. allSettled, so a failure here
 			// costs the badge and never the list itself.
 			useSecretRequestStore().fetchRequests(),
+			this.loadViewPreference(),
+			// The tag list for the filter menu (vault-favourites-tags-and-last-used).
+			this.secretStore.fetchTags(),
 		])
 		try {
 			await this.reload()
@@ -1143,6 +1418,16 @@ export default {
 
 	methods: {
 		t,
+
+		/**
+		 * Read the saved default view (once per page load).
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+		 */
+		loadViewPreference() {
+			return useUserPreferencesStore().ensureLoaded()
+		},
 
 		/**
 		 * Per-row selection toggle with shift-click range support
@@ -1202,19 +1487,27 @@ export default {
 			this.bulkStore.setSelection([...ids])
 		},
 
-		/** Close whichever bulk dialog is open. */
+		/**
+		 * Close whichever bulk dialog is open.
+		 *
+		 * @spec exclude Presentation state: clears which bulk dialog is open.
+		 */
 		closeBulkDialog() {
 			this.bulkDialog = null
 		},
 
 		/**
 		 * A bulk run finished: refresh the list so moved/deleted rows
-		 * reflect reality; keep the dialog open to show the report.
+		 * reflect reality; keep the dialog open to show the report. A bulk
+		 * tag change also moves the tag counts in the filter menu.
 		 *
 		 * @return {Promise<void>}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
 		 */
 		async onBulkDone() {
 			await this.reload()
+			// A bulk tag change moves the tag counts in the filter menu.
+			await this.secretStore.fetchTags().catch(() => {})
 		},
 
 		/**
@@ -1224,7 +1517,7 @@ export default {
 		 * dialogs can say how many are missing (keepiq#794).
 		 *
 		 * @return {Promise<{secrets: Array<object>, skipped: number}>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async decryptAllSecrets() {
@@ -1235,6 +1528,14 @@ export default {
 			const secrets = []
 			let skipped = 0
 			for (const secret of store.secrets) {
+				// A row under a revoked or blocked suite is served without its
+				// ciphertext (Secret::jsonSerializeBlocked), so decryptSecret()
+				// would return it as is, with an empty value. Count it instead
+				// of exporting a blank entry (keepiq#862).
+				if (secret.blocked) {
+					skipped += 1
+					continue
+				}
 				try {
 					secrets.push(await store.decryptSecret(secret))
 				} catch {
@@ -1251,7 +1552,7 @@ export default {
 		 * Open the export dialog after decrypting the vault client-side.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/secret-export/spec.md
+		 * @spec openspec/specs/secret-export/spec.md
 		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async openExport() {
@@ -1277,14 +1578,17 @@ export default {
 		},
 
 		/**
-		 * Open the GDPR export dialog; decrypt the vault if it is unlocked.
+		 * Open the GDPR export dialog; decrypt the vault if it is unlocked, and
+		 * hand on how many secrets could not be decrypted (keepiq#874).
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/specs/gdpr-compliance/spec.md
+		 * @spec openspec/changes/portability-export-choice-and-restore-fidelity/specs/export-selection-and-restore/spec.md#requirement-nothing-is-left-out-of-an-export-in-silence
 		 */
 		async openGdpr() {
-			const { secrets } = await this.decryptAllSecrets()
+			const { secrets, skipped } = await this.decryptAllSecrets()
 			this.decryptedSecrets = secrets
+			this.skippedSecrets = skipped
 			this.gdprOpen = true
 		},
 
@@ -1295,7 +1599,7 @@ export default {
 		 * disabled while locked, and the wizard itself renders a lock guard.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
 		 */
 		/**
 		 * The outstanding-request state for a row, or null.
@@ -1393,6 +1697,9 @@ export default {
 			])
 		},
 
+		/**
+		 * @spec openspec/specs/secret-import/spec.md#requirement-client-side-parsing-and-e2e-guarantee
+		 */
 		openImport() {
 			if (this.vaultLocked) {
 				return
@@ -1405,7 +1712,7 @@ export default {
 		 * imported secrets and any created folders appear.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-import/specs/secret-import/spec.md#requirement-import-summary-report
+		 * @spec openspec/specs/secret-import/spec.md#requirement-import-summary-report
 		 */
 		async onImported() {
 			await this.folderStore.fetchFolders()
@@ -1417,7 +1724,7 @@ export default {
 		 * the export dialog.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/secret-export-gdpr/specs/gdpr-compliance/spec.md
+		 * @spec openspec/specs/gdpr-compliance/spec.md
 		 */
 		async onExportFirst() {
 			this.deletionOpen = false
@@ -1462,6 +1769,9 @@ export default {
 				search: this.searchTerm,
 				sort: this.sortField,
 				typeId: this.typeFilter,
+				state: this.listState,
+				favourite: this.favouriteFilter,
+				tag: this.tagFilter,
 			})
 			await this.secretStore.fetchSecrets({ page: 1 })
 		},
@@ -1471,9 +1781,35 @@ export default {
 		 *
 		 * @param {string|null} typeId The selected type id (null = all).
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
 		 */
 		onTypeFilter(typeId) {
 			this.typeFilter = typeId
+			this.reload()
+		},
+
+		/**
+		 * Favourites-only toggle (vault-favourites-tags-and-last-used).
+		 *
+		 * @param {boolean} value Whether to show only starred secrets.
+		 * @return {void}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+		 */
+		onFavouriteFilter(value) {
+			this.favouriteFilter = !!value
+			this.reload()
+		},
+
+		/**
+		 * Tag filter change (vault-favourites-tags-and-last-used).
+		 *
+		 * @param {string|null} tag The tag, or null for all.
+		 * @return {void}
+		 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
+		 */
+		onTagFilter(tag) {
+			this.tagFilter = tag || null
 			this.reload()
 		},
 
@@ -1482,6 +1818,8 @@ export default {
 		 *
 		 * @param {string} value The current search value.
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-search
 		 */
 		onSearch(value) {
 			this.searchTerm = value
@@ -1498,6 +1836,8 @@ export default {
 		 *
 		 * @param {string} value The chosen sort field.
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/secrets/spec.md#requirement-list-and-pagination
 		 */
 		onSort(value) {
 			this.sortField = value
@@ -1520,6 +1860,9 @@ export default {
 				search: this.searchTerm,
 				sort: this.sortField,
 				typeId: this.typeFilter,
+				state: this.listState,
+				favourite: this.favouriteFilter,
+				tag: this.tagFilter,
 			})
 			this.secretStore.fetchSecrets({ page: target })
 		},
@@ -1535,6 +1878,8 @@ export default {
 		 * @spec openspec/specs/secrets/spec.md#requirement-read-secret
 		 */
 		openSecret(id) {
+			// A trashed secret has no detail view: Restore brings it back first.
+			if (this.listState === 'trashed') return
 			this.$router.push(secretDetailLocation(this.$route, id))
 		},
 
@@ -1582,6 +1927,8 @@ export default {
 		 * future toast wiring; kept so the event has a handler.
 		 *
 		 * @return {void}
+		 *
+		 * @spec exclude No-op event sink: swallows the copied event; nothing happens.
 		 */
 		onCopied() {},
 
@@ -1629,6 +1976,8 @@ export default {
 		 *
 		 * @param {{ parentId: (string|null) }} [payload] The parent folder id.
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/secrets-write-ui/spec.md#scenario-create-a-folder
 		 */
 		openCreateFolder({ parentId } = {}) {
 			this.cnOpenModal('folder-create', {

@@ -23,7 +23,7 @@
 
 Securely store and share secrets (passwords, API keys, certificates) for Nextcloud users and applications, using end-to-end RSA/AES encryption backed by a private Certificate Authority.
 
-> **Thick backend architecture** — Keepiq owns its own encrypted database tables. No OpenRegister dependency. All secrets are encrypted at rest with RSA-4096 public keys; private keys are AES-256 wrapped with a master password derived key.
+> **Thick backend architecture** — Keepiq owns its own encrypted database tables and does not store secrets in OpenRegister. It needs no other app: OpenRegister and integriq are optional and only add integrations (see Requirements). All secrets are encrypted at rest with RSA-4096 public keys; private keys are AES-256 wrapped with a master password derived key.
 
 ## Screenshots
 
@@ -118,6 +118,18 @@ keepiq/
 | Nextcloud | 28 – 33 |
 | PHP | 8.1+ |
 | Node.js | 20+ |
+| OpenRegister | optional |
+| integriq | optional |
+
+Keepiq installs and works fully on its own (ADR-006). The optional apps only add integrations, which appear when the app is enabled:
+
+| App | Adds |
+|-----|------|
+| OpenRegister | The **Flows** pages and the **MCP tools** for AI agents (`listEntries`, `expiryReport`, `rotationStatus`) |
+| integriq | The **Integrations** page under settings |
+| Hermiq | The **AI companion** in the app shell |
+
+Upgrading from a version that used OpenRegister's app shell removes the empty `keepiq`/`doriath` register, schema and data table it left in OpenRegister, but only when they hold no object.
 
 ## Installation
 
@@ -137,21 +149,35 @@ npm install && npm run build
 php occ app:enable keepiq
 ```
 
+## Monitoring and preferences endpoints
+
+Keepiq serves these itself, with or without OpenRegister. URLs are relative to `/index.php/apps/keepiq`.
+
+| Method and path | Who | Response |
+|-----------------|-----|----------|
+| `GET /api/health` | Anyone (rate limited) | `{status, app, version, checks}`. `status` is `ok`, `degraded` (temp directory not writable, HTTP 200) or `error` (database unreachable, HTTP **503**). A failed check names only the error class, never its message. |
+| `GET /api/metrics` | Admins, and users delegated Keepiq's General admin area | Prometheus text 0.0.4: `keepiq_info{version,php_version,nextcloud_version}`, `keepiq_up`, `keepiq_suites_total` (active encryption suites). Aggregate counts only. |
+| `GET /api/preferences/{key}` | Logged-in user, own values only | `{"value": string\|null}`. UI state such as the walkthrough's completed version; never secret material. |
+| `PUT /api/preferences/{key}` with `{"value": "..."}` | Logged-in user, own values only | `{"value": ...}`; an empty value deletes the preference and answers `{"value": null}`. A key with no `[a-z0-9-]` character, or a value over 4 KB, answers 400. |
+
+A Prometheus scrape authenticates with an app password; the endpoint needs no CSRF token. Scrape with a **dedicated, non-admin account** that is delegated only Keepiq's General admin area (Administration settings → Administration privileges), not with a personal admin account: an app password outlives password changes and carries its account's full scope. Delegated General admins also see the PHP and Nextcloud versions in `keepiq_info`.
+
 ## Development
 
 ### Start the environment
 
-Requires a sibling checkout of [openregister](https://github.com/ConductionNL/openregister)
-next to this repo (`../openregister`) — Keepiq builds on OpenRegister's AppHost engine.
+Keepiq needs no other app. To work on the integrations, place a checkout of
+[openregister](https://github.com/ConductionNL/openregister) next to this repo
+(`../openregister`); it is mounted and enabled automatically when present.
 
 ```bash
 composer install && npm install && npm run build
 docker compose up -d
 ```
 
-Nextcloud is served at http://localhost:8080 (admin/admin). Both `openregister`
-and `keepiq` are enabled automatically on every container start by the
-`before-starting` hook in `docker/nextcloud/enable-apps.sh`.
+Nextcloud is served at http://localhost:8080 (admin/admin). `keepiq` (and
+`openregister`, when mounted) is enabled automatically on every container start
+by the `before-starting` hook in `docker/nextcloud/enable-apps.sh`.
 
 ### Frontend development
 
@@ -223,13 +249,14 @@ translation push would stage itself again.
 
 ### Enable locally
 
-The docker compose stack enables both apps automatically on every start. To
+The docker compose stack enables the apps automatically on every start. To
 (re-)enable them by hand — e.g. after disabling them, without restarting:
 
 ```bash
 npm install && npm run build
-docker exec nextcloud php occ app:enable openregister
 docker exec nextcloud php occ app:enable keepiq
+# Only when ../openregister is mounted:
+docker exec nextcloud php occ app:enable openregister
 ```
 
 ## Tech Stack

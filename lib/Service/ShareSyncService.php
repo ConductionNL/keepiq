@@ -35,6 +35,7 @@ use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Db\Secret;
 use OCA\Keepiq\Db\SecretMapper;
 use OCA\Keepiq\Db\ShareTargetMapper;
+use OCA\Keepiq\Db\TeamFolderMember;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IDBConnection;
 use Throwable;
@@ -98,6 +99,7 @@ class ShareSyncService {
 	 * @throws InvalidArgumentException When validation or optimistic-lock check fails
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-sync-on-update
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-the-server-refuses-what-it-can-enforce
 	 */
 	public function syncUpdate(
 		string $secretId,
@@ -106,6 +108,14 @@ class ShareSyncService {
 		string $userId,
 	): int {
 		$source = $this->auth->loadSecret(secretId: $secretId);
+		// A copy from another organisation is never written by its holder
+		// (sharing-federated-recipients task 3.4).
+		$source->assertNotReadOnly();
+		if ($source->getUseOnly() === true) {
+			// A use-only copy is never written by its holder (D4).
+			throw new InvalidArgumentException(message: 'A use-only copy cannot be changed');
+		}
+
 		$isWriter = $this->resolveSyncWriter(source: $source, userId: $userId);
 		$this->assertSyncSourceUnchanged(source: $source, expectedUpdatedAt: $expectedUpdatedAt);
 
@@ -171,7 +181,7 @@ class ShareSyncService {
 		}
 
 		$ownerCertificate = null;
-		if ($grade === 'write' || $grade === 'owner') {
+		if ($grade === 'owner' || in_array($grade, TeamFolderMember::WRITE_GRADES, true) === true) {
 			try {
 				$ownerCertificate = $this->suiteMapper
 					->findActiveByOwner(ownerType: $source->getOwnerType(), ownerId: $source->getOwnerId())
@@ -208,7 +218,7 @@ class ShareSyncService {
 		}
 
 		$grade = $this->auth->resolveGrade(secret: $source, userId: $userId);
-		if ($grade !== 'write') {
+		if (in_array($grade, TeamFolderMember::WRITE_GRADES, true) === false) {
 			$this->auth->assertOwnerOrDelegate(secret: $source, userId: $userId);
 		}
 

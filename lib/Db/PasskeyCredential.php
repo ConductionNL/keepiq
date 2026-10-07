@@ -51,6 +51,10 @@ use OCP\AppFramework\Db\Entity;
  * @method void setTransports(?string $transports)
  * @method string|null getAaguid()
  * @method void setAaguid(?string $aaguid)
+ * @method string getClientKind()
+ * @method void setClientKind(string $clientKind)
+ * @method string|null getRpId()
+ * @method void setRpId(?string $rpId)
  * @method string getStatus()
  * @method void setStatus(string $status)
  * @method DateTime|null getLastUsedAt()
@@ -124,6 +128,21 @@ class PasskeyCredential extends Entity implements JsonSerializable {
 	protected ?string $aaguid = null;
 
 	/**
+	 * Which client owns the credential: web (the web app) or extension.
+	 *
+	 * @var string
+	 */
+	protected string $clientKind = 'web';
+
+	/**
+	 * The WebAuthn relying party id the credential is bound to (the
+	 * extension id for an extension credential; null on older web rows).
+	 *
+	 * @var string|null
+	 */
+	protected ?string $rpId = null;
+
+	/**
 	 * One of: active | stale | revoked.
 	 *
 	 * @var string
@@ -187,6 +206,8 @@ class PasskeyCredential extends Entity implements JsonSerializable {
 		$this->addType(fieldName: 'label', type: 'string');
 		$this->addType(fieldName: 'transports', type: 'string');
 		$this->addType(fieldName: 'aaguid', type: 'string');
+		$this->addType(fieldName: 'clientKind', type: 'string');
+		$this->addType(fieldName: 'rpId', type: 'string');
 		$this->addType(fieldName: 'status', type: 'string');
 		$this->addType(fieldName: 'lastUsedAt', type: 'datetime');
 		$this->addType(fieldName: 'createdAt', type: 'datetime');
@@ -205,6 +226,7 @@ class PasskeyCredential extends Entity implements JsonSerializable {
 			'label' => $this->label,
 			'transports' => $this->transports,
 			'aaguid' => $this->aaguid,
+			'clientKind' => $this->clientKind,
 			'status' => $this->status,
 			'lastUsedAt' => $this->lastUsedAt?->format('c'),
 			'createdAt' => $this->createdAt?->format('c'),

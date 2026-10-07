@@ -146,6 +146,8 @@ class CertificateLifecycleService {
 	 * @param string $pem The PEM certificate
 	 *
 	 * @return array<string,mixed>|null Parsed display fields, or null
+	 *
+	 * @spec openspec/specs/certificate-lifecycle/spec.md#requirement-metadata-parsing-split-by-pem-readability
 	 */
 	public function parseCaCertificate(string $pem): ?array {
 		// The openssl_x509_parse() call warns when handed something that is not

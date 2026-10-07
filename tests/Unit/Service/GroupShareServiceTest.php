@@ -32,10 +32,12 @@ use OCA\Keepiq\Db\ShareTarget;
 use OCA\Keepiq\Db\ShareTargetMapper;
 use OCA\Keepiq\Service\GroupShareService;
 use OCA\Keepiq\Service\NotificationService;
+use OCA\Keepiq\Service\ShareRevocationService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroup;
 use OCP\IGroupManager;
 use OCP\IUser;
+use OCP\Share\IManager as IShareManager;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -93,6 +95,30 @@ class GroupShareServiceTest extends TestCase {
 	private NotificationService $notificationService;
 
 	/**
+	 * @var IShareManager&MockObject
+	 */
+	private IShareManager $shareManager;
+
+	/**
+	 * @var ShareRevocationService&MockObject
+	 */
+	private ShareRevocationService $revocationService;
+
+	/**
+	 * Whether the Nextcloud share settings allow group sharing.
+	 *
+	 * @var boolean
+	 */
+	private bool $groupSharingAllowed = true;
+
+	/**
+	 * Whether the Nextcloud share settings restrict sharing to own groups.
+	 *
+	 * @var boolean
+	 */
+	private bool $membersOnly = false;
+
+	/**
 	 * Set up fixtures.
 	 *
 	 * @return void
@@ -107,6 +133,10 @@ class GroupShareServiceTest extends TestCase {
 		$this->groupManager = $this->createMock(originalClassName: IGroupManager::class);
 		$this->notificationService = $this->createMock(originalClassName: NotificationService::class);
 		$logger = $this->createMock(originalClassName: LoggerInterface::class);
+		$this->shareManager = $this->createMock(originalClassName: IShareManager::class);
+		$this->shareManager->method('allowGroupSharing')->willReturnCallback(fn (): bool => $this->groupSharingAllowed);
+		$this->shareManager->method('shareWithGroupMembersOnly')->willReturnCallback(fn (): bool => $this->membersOnly);
+		$this->revocationService = $this->createMock(originalClassName: ShareRevocationService::class);
 
 		$this->service = new GroupShareService(
 			mapper: $this->mapper,
@@ -117,7 +147,9 @@ class GroupShareServiceTest extends TestCase {
 			delegationMapper: $this->delegationMapper,
 			groupManager: $this->groupManager,
 			notificationService: $this->notificationService,
-			logger: $logger
+			logger: $logger,
+			shareManager: $this->shareManager,
+			revocationService: $this->revocationService
 		);
 	}//end setUp()
 
@@ -201,7 +233,72 @@ class GroupShareServiceTest extends TestCase {
 		$this->assertCount(1, $result['members']);
 		$this->assertSame('bob', $result['members'][0]['userId']);
 		$this->assertSame('PEM-BOB', $result['members'][0]['certificate']);
+		// carol has no suite: counted as skipped, the owner is not.
+		$this->assertSame(1, $result['skipped']);
 	}//end testCreateGroupShareReturnsEligibleMembers()
+
+	/**
+	 * sharing-02: when Nextcloud restricts sharing to the caller's own
+	 * groups, a group the caller is not in is refused exactly like a
+	 * missing group, so the reply does not confirm the group exists.
+	 *
+	 * @return void
+	 */
+	public function testCreateGroupShareRefusesAGroupTheCallerCannotSee(): void {
+		$this->membersOnly = true;
+		$secret = $this->makeOwnerSecret('src-1', 'alice');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->groupManager->method('get')->willReturn($this->createMock(IGroup::class));
+		$this->groupManager->method('isInGroup')->with('alice', 'board')->willReturn(false);
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Group not found');
+
+		$this->service->createGroupShare(secretId: 'src-1', groupId: 'board', userId: 'alice');
+	}//end testCreateGroupShareRefusesAGroupTheCallerCannotSee()
+
+	/**
+	 * sharing-02: with the restriction on, a group the caller belongs to
+	 * is accepted.
+	 *
+	 * @return void
+	 */
+	public function testCreateGroupShareAcceptsOwnGroupWhenRestricted(): void {
+		$this->membersOnly = true;
+		$secret = $this->makeOwnerSecret('src-1', 'alice');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$group = $this->createMock(IGroup::class);
+		$group->method('getUsers')->willReturn([]);
+		$this->groupManager->method('get')->willReturn($group);
+		$this->groupManager->method('isInGroup')->with('alice', 'finance')->willReturn(true);
+		$this->mapper->method('findBySecretAndGroup')->willThrowException(new DoesNotExistException('no'));
+		$this->mapper->expects($this->once())->method('insert')->willReturnArgument(0);
+
+		$result = $this->service->createGroupShare(secretId: 'src-1', groupId: 'finance', userId: 'alice');
+
+		$this->assertSame('finance', $result['groupShare']->getGroupId());
+		$this->assertSame(0, $result['skipped']);
+	}//end testCreateGroupShareAcceptsOwnGroupWhenRestricted()
+
+	/**
+	 * sharing-02: when the administrator disabled group sharing in
+	 * Nextcloud, keepiq does not offer a way around it.
+	 *
+	 * @return void
+	 */
+	public function testCreateGroupShareRefusedWhenGroupSharingIsDisabled(): void {
+		$this->groupSharingAllowed = false;
+		$secret = $this->makeOwnerSecret('src-1', 'alice');
+		$this->secretMapper->method('findById')->willReturn($secret);
+		$this->groupManager->method('get')->willReturn($this->createMock(IGroup::class));
+		$this->mapper->expects($this->never())->method('insert');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Group sharing is disabled');
+
+		$this->service->createGroupShare(secretId: 'src-1', groupId: 'finance', userId: 'alice');
+	}//end testCreateGroupShareRefusedWhenGroupSharingIsDisabled()
 
 	/**
 	 * Test createGroupShare rejects unauthorized callers.
@@ -287,12 +384,30 @@ class GroupShareServiceTest extends TestCase {
 		$entity->setSecretId('src-1');
 		$this->mapper->method('findById')->willReturn($entity);
 
+		$first = new ShareTarget();
+		$first->setId('st-bob');
+		$second = new ShareTarget();
+		$second->setId('st-carol');
+		$this->bulkGrantMapper->method('findByGroupShare')->with('gs-1')->willReturn([$first, $second]);
+
+		// sharing-02: each member's copy is revoked through the share
+		// revocation path, which deletes the recipient's Secret copy, not
+		// only the ShareTarget row.
+		$revoked = [];
+		$this->revocationService->expects($this->exactly(2))->method('revokeShare')
+			->willReturnCallback(
+				static function (string $shareId, string $userId) use (&$revoked): void {
+					$revoked[] = $shareId . ':' . $userId;
+				}
+			);
 		$this->bulkGrantMapper->expects($this->once())
 			->method('deleteByGroupShare')
 			->with('gs-1');
 		$this->mapper->expects($this->once())->method('delete')->with($entity);
 
 		$this->service->revokeGroupShare(groupShareId: 'gs-1', userId: 'alice');
+
+		$this->assertSame(['st-bob:alice', 'st-carol:alice'], $revoked);
 	}//end testRevokeGroupShareCascades()
 
 	/**

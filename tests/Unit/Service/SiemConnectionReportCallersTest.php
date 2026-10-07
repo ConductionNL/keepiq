@@ -17,7 +17,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -56,6 +56,7 @@ use RuntimeException;
  * @uses   \OCA\Keepiq\Service\SiemAuditTrail
  * @uses   \OCA\Keepiq\Db\SiemSink
  * @uses   \OCA\Keepiq\Db\SiemQueueItem
+ * @uses   \OCA\Keepiq\Service\Siem\SinkConnectorSettings
  */
 class SiemConnectionReportCallersTest extends TestCase {
 

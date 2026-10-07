@@ -14,8 +14,9 @@
   does not, and it is the only answer when an owner is gone, unresponsive or
   hostile. Without it those secrets are destroyed on account deletion.
 
-  The panel renders nothing at all unless the signed-in user is in the
-  vault_admin group. Group membership is the only thing checked here; whether
+  The panel renders nothing at all unless the signed-in user holds the People
+  and offboarding admin area (`canHandover`). That is the only thing checked
+  here; whether
   THIS admin may take over THIS secret (they must already hold a share of it,
   and must not already be its owner) is decided server-side on the write, so a
   visible button is an offer, never a permission.
@@ -24,7 +25,7 @@
 -->
 <template>
 	<div
-		v-if="store.isVaultAdmin === true"
+		v-if="store.canHandover === true"
 		class="admin-handover"
 		data-testid="admin-handover-panel">
 		<NcButton
@@ -93,13 +94,15 @@ export default {
 	},
 
 	/**
-	 * Ask whether this user is a vault admin at all. The panel renders
-	 * nothing until the answer arrives, and nothing if it is false.
+	 * Ask whether this user may use the admin handover at all (the People
+	 * and offboarding area). The panel renders nothing until the answer
+	 * arrives, and nothing if it is false.
 	 *
 	 * @spec openspec/specs/user-sharing/spec.md#requirement-ownership-delegation
+	 * @spec openspec/changes/archive/2026-10-04-admin-scoped-roles/tasks.md#3.2
 	 */
 	created() {
-		if (this.store.isVaultAdmin === null) {
+		if (this.store.canHandover === null) {
 			this.store.fetchCapabilities()
 		}
 	},

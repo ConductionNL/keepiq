@@ -1,0 +1,89 @@
+-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+-- SPDX-License-Identifier: EUPL-1.2
+--
+-- The offline copy of one account's vault (design D5). The database file is
+-- SQLCipher-encrypted on the device. On top of that, item ciphertext stays
+-- as the server sent it (RSA chunks), and every name, URL and folder name is
+-- sealed again under the unlock key (columns ending in _sealed).
+
+CREATE TABLE secret (
+    id TEXT NOT NULL PRIMARY KEY,
+    name_sealed TEXT NOT NULL,
+    url_sealed TEXT,
+    type_id TEXT,
+    folder_id TEXT,
+    key_ciphertext TEXT,
+    login_ciphertext TEXT,
+    additional_fields_ciphertext TEXT,
+    encryption_suite_id TEXT,
+    updated_at TEXT,
+    position INTEGER NOT NULL,
+    -- What the client may do with the item (Secret::jsonSerialize). Not
+    -- secret: they decide which actions the screens offer.
+    use_only INTEGER NOT NULL DEFAULT 0,
+    read_only INTEGER NOT NULL DEFAULT 0,
+    blocked INTEGER NOT NULL DEFAULT 0,
+    blocked_reason TEXT
+);
+
+CREATE TABLE folder (
+    id TEXT NOT NULL PRIMARY KEY,
+    name_sealed TEXT NOT NULL,
+    parent_id TEXT
+);
+
+CREATE TABLE secret_type (
+    id TEXT NOT NULL PRIMARY KEY,
+    json TEXT NOT NULL
+);
+
+CREATE TABLE sync_state (
+    singleton INTEGER NOT NULL PRIMARY KEY CHECK (singleton = 1),
+    suite_id TEXT,
+    unlock_key_epoch INTEGER,
+    synced_at_millis INTEGER NOT NULL,
+    check_top TEXT,
+    check_total INTEGER NOT NULL
+);
+
+insertSecret:
+INSERT INTO secret VALUES ?;
+
+insertFolder:
+INSERT INTO folder VALUES ?;
+
+insertType:
+INSERT INTO secret_type VALUES ?;
+
+putState:
+INSERT OR REPLACE INTO sync_state VALUES (1, ?, ?, ?, ?, ?);
+
+touchState:
+UPDATE sync_state SET synced_at_millis = ? WHERE singleton = 1;
+
+state:
+SELECT * FROM sync_state WHERE singleton = 1;
+
+secrets:
+SELECT * FROM secret ORDER BY position;
+
+secretById:
+SELECT * FROM secret WHERE id = ?;
+
+folders:
+SELECT * FROM folder;
+
+types:
+SELECT * FROM secret_type;
+
+deleteSecrets:
+DELETE FROM secret;
+
+deleteFolders:
+DELETE FROM folder;
+
+deleteTypes:
+DELETE FROM secret_type;
+
+deleteState:
+DELETE FROM sync_state;

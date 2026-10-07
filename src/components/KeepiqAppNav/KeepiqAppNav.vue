@@ -96,6 +96,25 @@
 					<Plus :size="20" />
 				</template>
 			</NcAppNavigationItem>
+			<!-- Team folders the user manages without owning them
+			     (sharing-team-folder-manager-role D5): the only way in to
+			     their member list, since the folder is in the owner's tree. -->
+			<template v-if="managedTeamFolders.length > 0">
+				<NcAppNavigationCaption
+					:name="t('keepiq', 'Team folders you manage')"
+					data-testid="nav-managed-caption" />
+				<NcAppNavigationItem
+					v-for="teamFolder in managedTeamFolders"
+					:key="teamFolder.id"
+					:name="teamFolder.folderName"
+					:data-testid="`nav-managed-${teamFolder.id}`"
+					@click="
+						shareFolder = {
+							id: teamFolder.folderId,
+							name: teamFolder.folderName,
+						}
+					" />
+			</template>
 			<!-- One dialog for both: FolderCreateDialog switches between the
 			     vault and folder flow on `parentId` alone (no parent = a vault
 			     at the root, which is the only place a vault can be made), so
@@ -231,7 +250,12 @@ import TeamFolderDialog from '../../modals/TeamFolderDialog.vue'
 import NavFolderTree, { NAV_TREE_MAX_DEPTH } from './NavFolderTree.vue'
 import { useFolderStore } from '../../store/modules/folder.js'
 import { useSessionStore } from '../../store/modules/session.js'
-import { isMenuEntryVisible, menuEntryTo } from '../../utils/navEntries.js'
+import { useTeamFolderStore } from '../../store/modules/teamFolder.js'
+import {
+	currentAppsWebRoots,
+	isMenuEntryVisible,
+	menuEntryTo,
+} from '../../utils/navEntries.js'
 
 /**
  * Keepiq's manifest-driven left rail with the recursive vault/folder tree.
@@ -306,6 +330,16 @@ export default {
 
 	computed: {
 		/**
+		 * The team folders the user manages without owning them.
+		 *
+		 * @return {Array<object>}
+		 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
+		 */
+		managedTeamFolders() {
+			return useTeamFolderStore().managed
+		},
+
+		/**
 		 * The folder store backing the rail's vault/folder tree.
 		 *
 		 * @spec openspec/specs/secrets/spec.md#requirement-folder-management
@@ -358,14 +392,12 @@ export default {
 		 * admin or the app is not enabled (src/utils/navEntries.js).
 		 *
 		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
-		 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+		 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
 		 */
 		sortedMenu() {
 			const context = {
 				isAdmin: this.isAdmin,
-				appsWebRoots:
-					(typeof window !== 'undefined' && window.OC?.appswebroots)
-					|| null,
+				appsWebRoots: currentAppsWebRoots(),
 			}
 			return (this.manifest?.menu || [])
 				.filter((item) => isMenuEntryVisible(item, context))
@@ -546,7 +578,7 @@ export default {
 		 * @param {object} item The menu entry.
 		 * @return {object|null}
 		 * @spec openspec/specs/menu-architecture/spec.md#app-navigation-renders
-		 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+		 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
 		 */
 		itemTo(item) {
 			return menuEntryTo(item)
@@ -604,6 +636,9 @@ export default {
 		 */
 		fetchFoldersSafe() {
 			this.folderStore.fetchFolders().catch(() => {})
+			useTeamFolderStore()
+				.fetchTeamFolders()
+				.catch(() => {})
 		},
 
 		/**

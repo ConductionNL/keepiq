@@ -39,6 +39,10 @@ use OCP\IUserSession;
 
 /**
  * Authenticated API controller for Secret CRUD.
+ *
+ * Its 403 refusals leave as 428 with the policy code as `error`: Nextcloud's
+ * OCSMiddleware would turn a 403 of an OCSController into an HTTP 200 OCS
+ * envelope, so OcsRefusalMiddleware re-statuses it first.
  */
 class SecretController extends OCSController {
 	/**
@@ -89,6 +93,9 @@ class SecretController extends OCSController {
 	 * @param int $page Page number (1-based)
 	 * @param int $limit Items per page
 	 * @param string|null $typeId Filter by secret-type ID (omit = all types)
+	 * @param string $state live (default), trashed, archived or kept (live and archived)
+	 * @param string|null $favourite '1' or 'true' for only the user's starred secrets
+	 * @param string|null $tag Only secrets the user tagged with this tag
 	 *
 	 * @NoAdminRequired
 	 *
@@ -96,6 +103,11 @@ class SecretController extends OCSController {
 	 *
 	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
 	 * @spec openspec/changes/passkey-item-type/specs/passkey-item-type/spec.md#requirement-passkey-listing-filtering-and-site-associated-presentation
+	 * @spec openspec/specs/vault-trash-and-archive/spec.md#requirement-archiving-a-secret
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-favourite-items-per-holder
+	 *
+	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) The parameters are the
+	 *   route's query string, bound by the framework one by one.
 	 */
 	#[NoAdminRequired]
 	public function index(
@@ -106,14 +118,23 @@ class SecretController extends OCSController {
 		int $page = 1,
 		int $limit = SecretService::DEFAULT_LIMIT,
 		?string $typeId = null,
+		string $state = 'live',
+		?string $favourite = null,
+		?string $tag = null,
 	): JSONResponse {
 		$userId = $this->uid();
 		if ($userId === null) {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		$result = $this->secretService->list($userId, $folderId, $sort, $direction, $page, $limit, $typeId);
-		if ($search !== null && trim($search) !== '') {
+		try {
+			$onlyFavourites = in_array(strtolower((string)$favourite), ['1', 'true'], true);
+			$result = $this->secretService->list($userId, $folderId, $sort, $direction, $page, $limit, $typeId, $state, $onlyFavourites, $tag);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		if ($state === 'live' && $search !== null && trim($search) !== '') {
 			$result = $this->secretService->search($userId, $search, $page, $limit);
 		}
 
@@ -130,6 +151,7 @@ class SecretController extends OCSController {
 	 * @return JSONResponse
 	 *
 	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
+	 * @spec openspec/changes/vault-favourites-tags-and-last-used/specs/vault-list-organisation/spec.md#requirement-tags-per-holder
 	 */
 	#[NoAdminRequired]
 	public function show(string $id): JSONResponse {
@@ -146,7 +168,11 @@ class SecretController extends OCSController {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
 		}
 
-		return new JSONResponse(data: $secret->jsonSerialize());
+		// The holder's tags ride along for the edit dialog (vault-favourites-tags-and-last-used).
+		$data   = $secret->jsonSerialize();
+		$tagged = $this->secretService->withTags([$data], $userId);
+
+		return new JSONResponse(data: ($tagged[0] ?? $data));
 	}//end show()
 
 	/**
@@ -206,8 +232,9 @@ class SecretController extends OCSController {
 			// The folder named in the request does not exist (keepiq#795).
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (ForbiddenException|SuiteBlockedException $e) {
-			// ForbiddenException: the folder belongs to another user (keepiq#795).
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
+			// ForbiddenException: the folder belongs to another user (keepiq#795),
+			// or a vault policy refused the write (admin-vault-policies D4).
+			return $this->forbidden(exception: $e);
 		} catch (WriteLockedException $e) {
 			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: self::STATUS_LOCKED);
 		} catch (InvalidArgumentException $e) {
@@ -274,91 +301,21 @@ class SecretController extends OCSController {
 	}//end createOwnedSecret()
 
 	/**
-	 * Update a secret. Only the supplied fields are changed.
+	 * A 403 for a refused write, with the policy code when a vault policy
+	 * refused it (admin-vault-policies D4).
 	 *
-	 * @param string $id The secret ID
-	 * @param string|null $name The new name
-	 * @param string|null $url The new URL
-	 * @param string|null $typeId The new type ID
-	 * @param string|null $folderId The new folder ID
-	 * @param string|null $key The new RSA-encrypted key blob
-	 * @param string|null $login The new RSA-encrypted login blob
-	 * @param string|null $additionalFields The new RSA-encrypted additional fields blob
-	 *
-	 * @NoAdminRequired
+	 * @param ForbiddenException|SuiteBlockedException $exception The refusal
 	 *
 	 * @return JSONResponse
 	 *
-	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) Each parameter is read indirectly via the
-	 *   variable-variable ${$field} loop that forwards only fields present in the request.
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-work-logins-are-kept-in-team-folders
 	 */
-	#[NoAdminRequired]
-	public function update(
-		string $id,
-		?string $name = null,
-		?string $url = null,
-		?string $typeId = null,
-		?string $folderId = null,
-		?string $key = null,
-		?string $login = null,
-		?string $additionalFields = null,
-	): JSONResponse {
-		$userId = $this->uid();
-		if ($userId === null) {
-			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+	private function forbidden(ForbiddenException|SuiteBlockedException $exception): JSONResponse {
+		$data = ['message' => $exception->getMessage()];
+		if ($exception instanceof ForbiddenException && $exception->policyCode() !== null) {
+			$data['code'] = $exception->policyCode();
 		}
 
-		// Only forward fields that were explicitly provided in the request.
-		$data = [];
-		foreach (['name', 'url', 'typeId', 'folderId', 'key', 'login', 'additionalFields'] as $field) {
-			if ($this->request->getParam($field, '__unset__') !== '__unset__') {
-				$data[$field] = ${$field};
-			}
-		}
-
-		try {
-			$secret = $this->secretService->update($id, $data, $userId);
-		} catch (NotFoundException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
-		} catch (ForbiddenException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
-		} catch (WriteLockedException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: self::STATUS_LOCKED);
-		} catch (InvalidArgumentException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
-		}
-
-		return new JSONResponse(data: $secret->jsonSerialize());
-	}//end update()
-
-	/**
-	 * Delete a secret (cascades to its link shares).
-	 *
-	 * @param string $id The secret ID
-	 *
-	 * @NoAdminRequired
-	 *
-	 * @return JSONResponse
-	 *
-	 * @spec openspec/changes/implement-secrets/tasks.md#task-4.1
-	 */
-	#[NoAdminRequired]
-	public function destroy(string $id): JSONResponse {
-		$userId = $this->uid();
-		if ($userId === null) {
-			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
-		}
-
-		try {
-			$this->secretService->delete($id, $userId);
-		} catch (NotFoundException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_NOT_FOUND);
-		} catch (ForbiddenException $e) {
-			return new JSONResponse(data: ['message' => $e->getMessage()], statusCode: Http::STATUS_FORBIDDEN);
-		}
-
-		return new JSONResponse(data: ['status' => 'deleted']);
-	}//end destroy()
+		return new JSONResponse(data: $data, statusCode: Http::STATUS_FORBIDDEN);
+	}//end forbidden()
 }//end class

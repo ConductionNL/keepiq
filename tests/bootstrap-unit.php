@@ -116,6 +116,11 @@ if ($ncLoaded === false && $autoloader instanceof \Composer\Autoload\ClassLoader
 	$autoloader->addPsr4('NCU\\', __DIR__ . '/../vendor/nextcloud/ocp/NCU/');
 }
 
+// Keepiq's own test helpers (tests/Support), shared across test files.
+if ($autoloader instanceof \Composer\Autoload\ClassLoader) {
+	$autoloader->addPsr4('OCA\\Keepiq\\Tests\\Support\\', __DIR__ . '/Support/');
+}
+
 // Register Test\ namespace for NC test classes.
 $serverTestsLib = __DIR__ . '/../../../tests/lib/';
 if (is_dir($serverTestsLib)) {
@@ -142,6 +147,39 @@ if (class_exists('Doctrine\\DBAL\\ParameterType') === false) {
 	);
 }
 
+// IQueryBuilder's PARAM_* constants also name Doctrine\DBAL\Types\Types and
+// Doctrine\DBAL\ArrayParameterType, and PHP resolves every constant of the
+// interface the first time any one of them is read. Without these stubs a test
+// that reads IQueryBuilder::PARAM_BOOL fails with "Class not found". Values
+// match doctrine/dbal 4.
+if (class_exists('Doctrine\\DBAL\\Types\\Types') === false) {
+	eval(
+		'namespace Doctrine\\DBAL\\Types; '
+		. 'final class Types { '
+		. "public const BOOLEAN = 'boolean'; "
+		. "public const DATE_MUTABLE = 'date'; "
+		. "public const DATE_IMMUTABLE = 'date_immutable'; "
+		. "public const DATETIME_MUTABLE = 'datetime'; "
+		. "public const DATETIME_IMMUTABLE = 'datetime_immutable'; "
+		. "public const DATETIMETZ_MUTABLE = 'datetimetz'; "
+		. "public const DATETIMETZ_IMMUTABLE = 'datetimetz_immutable'; "
+		. "public const TIME_MUTABLE = 'time'; "
+		. '}'
+	);
+}
+
+if (class_exists('Doctrine\\DBAL\\ArrayParameterType') === false) {
+	eval(
+		'namespace Doctrine\\DBAL; '
+		. 'enum ArrayParameterType: int { '
+		. 'case INTEGER = 101; '
+		. 'case STRING = 102; '
+		. 'case ASCII = 117; '
+		. 'case BINARY = 16; '
+		. '}'
+	);
+}
+
 // Integriq's connection-registry events (adopt-connection-registry).
 // ConnectionReporter sends them by string class name behind class_exists
 // (ADR-041), so Keepiq stays installable without integriq. The stubs mirror
@@ -152,4 +190,17 @@ foreach (['ConnectionStatusReportedEvent', 'ConnectionRefreshRequestedEvent'] as
 	if (class_exists('\\OCA\\Integriq\\Event\\' . $integriqStubEvent) === false) {
 		require_once __DIR__ . '/stubs/Integriq/Event/' . $integriqStubEvent . '.php';
 	}
+}
+
+// Doctrine's expression-builder constants, which OCP's IExpressionBuilder
+// reads and nextcloud/ocp does not ship. Loads only when Doctrine is absent.
+if (class_exists('\\Doctrine\\DBAL\\Query\\Expression\\ExpressionBuilder') === false) {
+	require_once __DIR__ . '/stubs/doctrine-expression-builder.stub.php';
+}
+
+// OpenRegister's MCP contract (hermiq-ai-tooling): KeepiqScannableServices
+// implements IMcpScannableServices and the read facades carry #[McpTool].
+// The stub loads only when OpenRegister's own classes do not resolve.
+if (interface_exists('\\OCA\\OpenRegister\\Mcp\\IMcpScannableServices') === false) {
+	require_once __DIR__ . '/stubs/openregister-mcp.stub.php';
 }

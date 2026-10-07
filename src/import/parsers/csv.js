@@ -147,4 +147,14 @@ export const csvParser = {
 	 * @return {Promise<Array<object>>} Normalized rows.
 	 */
 	parse: async (input, options = {}) => parseCsvImport(input, options).rows,
+	/**
+	 * Parse and also return the column mapping and headers, for the wizard's
+	 * mapping step.
+	 *
+	 * @param {string} input The CSV text.
+	 * @param {object} [options] Parse options (mapping).
+	 * @return {Promise<{rows: Array<object>, mapping: Array<object>, headers: Array<string>}>}
+	 * @spec openspec/specs/portability-import-mapping/spec.md#requirement-adjustable-csv-mapping
+	 */
+	parseDetailed: async (input, options = {}) => parseCsvImport(input, options),
 }

@@ -53,7 +53,8 @@ browser from two halves:
   encryption-suite records (certificate, status, audit fields — the encrypted
   private-key blob is **excluded**, with the exclusion documented inside the
   package), shares given/received, delegations, link-share metadata (no
-  snapshots), secret requests, and user settings.
+  snapshots), secret requests, user settings, and per secret the user's
+  favourite star, tags and last-used time (`organisation`).
 - **Client vault**: the decrypted secrets + folder structure.
 
 If the vault is locked, the package is still produced with the server half only,

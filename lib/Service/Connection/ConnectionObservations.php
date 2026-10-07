@@ -18,7 +18,7 @@
  *
  * @link https://conduction.nl
  *
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
  *
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  * SPDX-License-Identifier: EUPL-1.2
@@ -38,7 +38,7 @@ use Throwable;
  * exception names the request URL, and on a range lookup that URL ends in the
  * caller's hash prefix.
  *
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
  */
 class ConnectionObservations {
 
@@ -59,7 +59,7 @@ class ConnectionObservations {
 	 *
 	 * @return array{0: string, 1: string} The status and the message.
 	 *
-	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
+	 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
 	 */
 	public function breachLookup(?int $httpStatus): array {
 		if ($httpStatus === null) {
@@ -88,7 +88,7 @@ class ConnectionObservations {
 	 *
 	 * @return array{0: string, 1: string}|null The status and the message, or null.
 	 *
-	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
+	 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
 	 */
 	public function siemSinksChanged(int $enabledSinks, int $sinks): ?array {
 		if ($enabledSinks > 0) {
@@ -111,7 +111,7 @@ class ConnectionObservations {
 	 *
 	 * @return array{0: string, 1: string}|null The status and the message, or null when the drain met nothing.
 	 *
-	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
+	 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-002-a-save-asks-integriq-to-look-again-and-a-lookup-or-a-drain-reports-what-it-met
 	 */
 	public function siemDrain(int $enabledSinks, array $delivered, int $sinks): ?array {
 		if ($enabledSinks === 0) {
@@ -162,7 +162,7 @@ class ConnectionObservations {
 	 *
 	 * @return string The host, or an empty string when there is none.
 	 *
-	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
+	 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
 	 */
 	public function siemSinkHost(string $endpoint): string {
 		$endpoint = trim($endpoint);
@@ -188,7 +188,7 @@ class ConnectionObservations {
 	 *
 	 * @return int|null The answer's HTTP status, or null.
 	 *
-	 * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
+	 * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-003-a-report-names-a-status-code-or-a-host-and-nothing-a-user-typed
 	 */
 	public function httpStatusOf(Throwable $exception): ?int {
 		if (method_exists($exception, 'getResponse') === false) {

@@ -30,13 +30,13 @@ use OCA\Keepiq\AppInfo\Application as KeepiqApp;
 use OCA\Keepiq\Db\ApplicationMapper;
 use OCA\Keepiq\Db\MachineLease;
 use OCA\Keepiq\Db\MachineLeaseMapper;
+use OCA\Keepiq\Service\AdminAreaAuthorizer;
 use OCA\Keepiq\Service\LeaseService;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\OCSController;
-use OCP\IGroupManager;
 use OCP\IRequest;
 use OCP\IUserSession;
 
@@ -52,7 +52,7 @@ class LeaseAdminController extends OCSController {
 	 * @param MachineLeaseMapper $leaseMapper The lease mapper
 	 * @param ApplicationMapper $applicationMapper The application mapper (owner guard)
 	 * @param IUserSession $userSession The user session
-	 * @param IGroupManager $groupManager The group manager (admin check)
+	 * @param AdminAreaAuthorizer $areas Whether the caller holds the Applications admin area
 	 *
 	 * @return void
 	 */
@@ -62,7 +62,7 @@ class LeaseAdminController extends OCSController {
 		private MachineLeaseMapper $leaseMapper,
 		private ApplicationMapper $applicationMapper,
 		private IUserSession $userSession,
-		private IGroupManager $groupManager,
+		private AdminAreaAuthorizer $areas,
 	) {
 		parent::__construct(appName: KeepiqApp::APP_ID, request: $request);
 	}//end __construct()
@@ -131,6 +131,49 @@ class LeaseAdminController extends OCSController {
 	}//end revoke()
 
 	/**
+	 * Read an application's lease policy (admin or registrant only).
+	 *
+	 * Answers the effective policy, the stored override and the instance
+	 * values, plus whether the caller may change it: only an admin may
+	 * (setPolicy()), the registrant sees it read-only. Everyone else gets
+	 * the same 404 as a nonexistent application.
+	 *
+	 * @param string $id The application id
+	 *
+	 * @NoAdminRequired
+	 *
+	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
+	 */
+	#[NoAdminRequired]
+	public function getPolicy(string $id): JSONResponse {
+		$userId = $this->sessionUserId();
+		if ($userId === null) {
+			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		if ($this->mayManageApplication(applicationId: $id, userId: $userId) === false) {
+			return $this->notFound();
+		}
+
+		// An admin passes the guard without a lookup, so check existence here:
+		// a policy view for an application that does not exist is a 404 too.
+		try {
+			$this->applicationMapper->findById($id);
+		} catch (DoesNotExistException) {
+			return $this->notFound();
+		}
+
+		return new JSONResponse(
+			data: array_merge(
+				$this->leaseService->policyView(applicationId: $id),
+				['canEdit' => $this->areas->holds(userId: $userId, areaClass: AdminAreaAuthorizer::APPLICATIONS)]
+			)
+		);
+	}//end getPolicy()
+
+	/**
 	 * Store a per-application lease-policy override (admin only).
 	 *
 	 * @param string $id The application id
@@ -141,6 +184,8 @@ class LeaseAdminController extends OCSController {
 	 * @NoAdminRequired
 	 *
 	 * @return JSONResponse
+	 *
+	 * @spec openspec/specs/machine-secret-leases/spec.md#requirement-admin-lease-ttl-policy
 	 */
 	#[NoAdminRequired]
 	public function setPolicy(string $id, ?int $defaultTtl = null, ?int $maxTtl = null, ?bool $renewable = null): JSONResponse {
@@ -149,7 +194,7 @@ class LeaseAdminController extends OCSController {
 			return new JSONResponse(data: ['message' => 'Unauthorized'], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		if ($this->groupManager->isAdmin($userId) === false) {
+		if ($this->areas->holds(userId: $userId, areaClass: AdminAreaAuthorizer::APPLICATIONS) === false) {
 			return $this->notFound();
 		}
 
@@ -183,7 +228,7 @@ class LeaseAdminController extends OCSController {
 	 * @return bool
 	 */
 	private function mayManageApplication(string $applicationId, string $userId): bool {
-		if ($this->groupManager->isAdmin($userId) === true) {
+		if ($this->areas->holds(userId: $userId, areaClass: AdminAreaAuthorizer::APPLICATIONS) === true) {
 			return true;
 		}
 

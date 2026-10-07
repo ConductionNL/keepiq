@@ -7,8 +7,8 @@
   action in the app was also the only one with no confirmation — and it is the
   path people use, because list-view rows carry no `…` menu of their own.
 
-  There is no trash: BulkDeleteDialog says so for a selection, this says so for
-  one secret. Owns the delete call and emits `deleted`, mirroring
+  A delete moves the secret to the trash (vault-trash-and-archive):
+  BulkDeleteDialog says so for a selection, this says so for one secret. Owns the delete call and emits `deleted`, mirroring
   FolderDeleteConfirmDialog's contract, and accepts the `onDeleted` callback
   prop the sidebar's other registry modals already use.
 -->
@@ -27,7 +27,7 @@
 				{{
 					t(
 						'keepiq',
-						'This permanently deletes this secret and revokes its shares. There is no trash — this cannot be undone.',
+						'This moves the secret to the trash and ends its shares now. You can restore it from the trash until the retention period ends, which is 30 days unless your administrator changed it.',
 					)
 				}}
 			</NcNoteCard>

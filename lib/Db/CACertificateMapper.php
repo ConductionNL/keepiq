@@ -94,7 +94,7 @@ class CACertificateMapper extends QBMapper {
 
 		$qb->select('*')
 			->from($this->getTableName())
-			->where($qb->expr()->lte('expires_at', $qb->createNamedParameter($threshold, \OCP\DB\QueryBuilder\IQueryBuilder::PARAM_DATE)))
+			->where($qb->expr()->lte('expires_at', $qb->createNamedParameter($threshold, \OCP\DB\QueryBuilder\IQueryBuilder::PARAM_DATETIME_MUTABLE)))
 			->andWhere($qb->expr()->isNull('revoked_at'));
 
 		return $this->findEntities(query: $qb);

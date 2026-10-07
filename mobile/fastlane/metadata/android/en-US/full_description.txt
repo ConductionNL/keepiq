@@ -1,0 +1,33 @@
+Keepiq puts your passwords on your phone. They come from your own Nextcloud, not from someone else's cloud.
+
+Your organisation runs Keepiq on its Nextcloud. Connect your phone once and your vault is there. Every login, one-time code and passkey you saved on the web is on your phone too.
+
+You open your vault with your master password. Keepiq decrypts it on the phone, so your Nextcloud only ever stores it encrypted. A PIN or your fingerprint opens it faster.
+
+What you can do
+
+- Find a login by name or web address and copy the password. Keepiq clears the clipboard after a minute.
+- See the current one-time code of a login with two-step verification.
+- Fill in logins in other apps and in your browser, without copying anything.
+- Save and use passkeys on Android 14 and later.
+- Make a strong password or passphrase that fits your organisation's rules.
+- Share a secret with a Send link that expires after a set time or number of views.
+- Open, search and copy without a connection.
+
+Keepiq only gives a login to the app it belongs to. A copy of that app from another publisher gets nothing.
+
+Your data
+
+- Keepiq talks to your own Nextcloud. It sends nothing to us.
+- There are no analytics, no crash reports and no ads.
+- When you open a Send link, Keepiq fetches it from the server in that link.
+- When another app asks for a login, Keepiq checks that the app's website lists the app.
+
+Read the full privacy policy at https://keepiq.conduction.nl/docs/mobile/privacy
+
+What you need
+
+- A Nextcloud with the Keepiq app.
+- Android 9 or later.
+
+Keepiq is free software under the EUPL. The source code is on GitHub.

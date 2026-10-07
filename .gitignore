@@ -128,3 +128,7 @@ screens/
 .stale/
 /.e2e-state/
 .phpunit.result.cache
+
+# The two-instance federation test (tests/integration/federation).
+/playwright-report-federation/
+/test-results-federation/

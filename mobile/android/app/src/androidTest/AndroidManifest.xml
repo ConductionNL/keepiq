@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> -->
+<!-- SPDX-License-Identifier: EUPL-1.2 -->
+<!-- The test APK doubles as the "other app" of the autofill e2e test
+     (SystemAutofillTest): a native login form, a sign-up form and a
+     WebView page. It names the test server as its website for Digital
+     Asset Links. It is also the app that asks for passkeys
+     (PasskeyProviderTest). -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <application>
+        <meta-data
+            android:name="asset_statements"
+            android:resource="@string/asset_statements" />
+        <activity
+            android:name="nl.conduction.keepiq.android.autofilltest.AutofillFormActivity"
+            android:exported="true"
+            android:label="Autofill form"
+            android:windowSoftInputMode="adjustResize" />
+        <activity
+            android:name="nl.conduction.keepiq.android.autofilltest.WebFormActivity"
+            android:exported="true"
+            android:label="Autofill web form" />
+        <!-- The app that asks Credential Manager for passkeys (PasskeyProviderTest). -->
+        <activity
+            android:name="nl.conduction.keepiq.android.autofilltest.PasskeyClientActivity"
+            android:exported="true"
+            android:label="Passkey test app" />
+    </application>
+</manifest>

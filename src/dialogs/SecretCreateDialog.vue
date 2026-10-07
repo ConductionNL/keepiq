@@ -32,6 +32,8 @@
 				:reduce="(opt) => opt.value"
 				:clearable="false" />
 
+			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
+
 			<!-- Card / identity composite payloads (card-identity-items §3.1):
 			     per-type field sets serialized to the encrypted key on save. -->
 			<template v-if="isCard">
@@ -117,20 +119,54 @@
 
 			<NcTextField v-model="url" :label="t('keepiq', 'URL (optional)')" />
 
-			<NcTextField v-model="login" :label="t('keepiq', 'Login (optional)')" />
+			<TypedFieldsForm
+				v-if="typedFields.length > 0"
+				:fields="typedFields"
+				:values="typedValues"
+				:missing="typedMissing"
+				:disabled="saving"
+				@update:values="onTypedValues" />
 
 			<AdditionalFieldsEditor
 				:members="additionalFields"
 				:disabled="saving"
 				@update:members="additionalFields = $event" />
 
+			<SecretTagsField
+				:modelValue="tags"
+				:disabled="saving"
+				@update:modelValue="tags = $event" />
+
 			<!-- The shared destination picker (no "Vault root" option, by
 			     design): a secret always lives in a vault, so creating one
 			     at the root cannot be offered. Replaces a local NcSelect
 			     that still listed the root. -->
+			<!-- The team folder ownership policy (admin-vault-policies §4.3):
+			     a covered type goes into one of the user's own team folders,
+			     or into a team folder they can write to. -->
+			<NcNoteCard
+				v-if="ownershipApplies"
+				type="info"
+				data-testid="secret-create-ownership">
+				{{
+					t(
+						'keepiq',
+						'Your organisation keeps this type of secret in a team folder. Pick one of your team folders, or one you can write to.',
+					)
+				}}
+			</NcNoteCard>
+			<NcSelect
+				v-if="ownershipApplies && contributable.length > 0"
+				v-model="contributeTo"
+				:options="contributable"
+				label="folderName"
+				:inputLabel="t('keepiq', 'Team folder you can write to')"
+				data-testid="secret-create-contribute-to" />
 			<DestinationSelect
+				v-if="!contributeTo"
 				v-model="selectedFolderId"
 				mode="folders"
+				:onlyIds="ownershipApplies ? ownTeamFolderIds : null"
 				:label="t('keepiq', 'Folder')" />
 
 			<NcNoteCard
@@ -157,6 +193,8 @@
 </template>
 
 <script>
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcDialog,
@@ -170,6 +208,8 @@ import Dice5 from 'vue-material-design-icons/Dice5.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import AdditionalFieldsEditor from '../components/AdditionalFieldsEditor.vue'
 import DestinationSelect from '../components/DestinationSelect.vue'
+import SecretTagsField from '../components/SecretTagsField.vue'
+import TypedFieldsForm from '../components/TypedFieldsForm.vue'
 import KeyGeneratorModal from './KeyGeneratorModal.vue'
 import {
 	CARD_TYPE_NAME,
@@ -183,8 +223,40 @@ import { useFolderStore } from '../store/modules/folder.js'
 import { useSecretStore } from '../store/modules/secret.js'
 import { useSecretTypeStore } from '../store/modules/secretType.js'
 import { useSessionStore } from '../store/modules/session.js'
+import { useTeamFolderStore } from '../store/modules/teamFolder.js'
+import {
+	resolveDefaultTypeId,
+	useUserPreferencesStore,
+} from '../store/modules/userPreferences.js'
 import { membersToObject } from '../utils/additionalFields.js'
 import { secretTypeLabel } from '../utils/secretTypes.js'
+import {
+	mergeTypedValues,
+	missingRequired,
+	typedFieldsOf,
+} from '../utils/typedFields.js'
+
+/**
+ * Every folder id at or below the given roots.
+ *
+ * @param {Array<{id: string, parentId: string|null}>} folders The user's folders.
+ * @param {Array<string>} roots The root folder ids.
+ * @return {Array<string>}
+ */
+function subtreeIds(folders, roots) {
+	const ids = new Set(roots)
+	let grew = true
+	while (grew) {
+		grew = false
+		for (const folder of folders) {
+			if (folder.parentId && ids.has(folder.parentId) && !ids.has(folder.id)) {
+				ids.add(folder.id)
+				grew = true
+			}
+		}
+	}
+	return [...ids]
+}
 
 /**
  * Create a secret. The value (and optional login) are RSA-encrypted by the
@@ -196,7 +268,9 @@ export default {
 
 	components: {
 		AdditionalFieldsEditor,
+		TypedFieldsForm,
 		DestinationSelect,
+		SecretTagsField,
 		Dice5,
 		KeyGeneratorModal,
 		NcButton,
@@ -232,7 +306,16 @@ export default {
 			url: '',
 			login: '',
 			additionalFields: [],
+			tags: [],
+			typedValues: {},
+			typedMissing: [],
 			selectedFolderId: this.folderId,
+			/** Team folders the user can write to but does not own (admin-vault-policies §4.3). */
+			contributable: [],
+			/** The chosen contributable team folder, or null. */
+			contributeTo: null,
+			/** Folder ids inside a team folder the user owns. */
+			ownTeamFolderIds: [],
 			saving: false,
 			error: '',
 			generatorOpen: false,
@@ -251,6 +334,9 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * @spec exclude Store-state passthrough: reads the session lock flag for display gating.
+		 */
 		locked() {
 			return useSessionStore().isLocked
 		},
@@ -283,9 +369,39 @@ export default {
 				: t('keepiq', 'Secret value')
 		},
 
-		/** The selected type's system name (card-identity-items §3.1). */
+		/**
+		 * The fields an administrator defined on the chosen type; empty for
+		 * the built-in types, which keep their own forms.
+		 *
+		 * @return {Array<object>} The fields.
+		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 */
+		typedFields() {
+			return typedFieldsOf(useSecretTypeStore().typesById[this.typeId])
+		},
+
+		/**
+		 * The selected type's system name (card-identity-items §3.1).
+		 *
+		 * @spec exclude Trivial lookup: resolves the selected type id to its name.
+		 */
 		selectedTypeName() {
 			return useSecretTypeStore().typesById[this.typeId]?.name ?? ''
+		},
+
+		/**
+		 * Whether the team folder ownership policy covers this user and type.
+		 *
+		 * @return {boolean}
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
+		 */
+		ownershipApplies() {
+			return (
+				this.policy?.vault_org_ownership === true
+				&& (this.policy?.vault_org_ownership_types ?? []).includes(
+					this.selectedTypeName,
+				)
+			)
 		},
 
 		isCard() {
@@ -296,12 +412,20 @@ export default {
 			return this.selectedTypeName === IDENTITY_TYPE_NAME
 		},
 
-		/** Best-effort Luhn hint — never blocks saving (§3.2). */
+		/**
+		 * Best-effort Luhn hint — never blocks saving (§3.2).
+		 *
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-payment-card-and-identity-system-types
+		 */
 		luhnOk() {
 			return luhnValid(this.card.number)
 		},
 
-		/** The value serialized for the encrypted key field. */
+		/**
+		 * The value serialized for the encrypted key field.
+		 *
+		 * @spec openspec/specs/card-identity-items/spec.md#requirement-composite-payload-stored-as-ciphertext-in-the-key-field
+		 */
 		effectiveValue() {
 			if (this.isCard) {
 				return serializeCard(this.card)
@@ -318,6 +442,8 @@ export default {
 		 * disabled until compliant. Never POSTs a non-compliant value.
 		 *
 		 * @return {{compliant: boolean, reason: string|null}}
+		 *
+		 * @spec openspec/specs/org-password-policies/spec.md#requirement-client-side-save-enforcement
 		 */
 		policyVerdict() {
 			if (this.isCard || this.isIdentity) {
@@ -338,7 +464,7 @@ export default {
 			if (this.saving || this.locked || this.name.trim() === '') {
 				return false
 			}
-			if (!this.selectedFolderId) {
+			if (!this.selectedFolderId && !this.contributeTo) {
 				return false
 			}
 			if (this.isCard) {
@@ -351,6 +477,13 @@ export default {
 		},
 	},
 
+	/**
+	 * Load what the screen needs, including the user's saved defaults.
+	 *
+	 * @return {Promise<void>}
+	 * @spec openspec/specs/secrets-write-ui/spec.md#requirement-create-a-secret-from-the-ui
+	 * @spec openspec/specs/vault-defaults/spec.md#requirement-default-item-type-and-view
+	 */
 	async mounted() {
 		this.policy = await fetchPolicy()
 		const typeStore = useSecretTypeStore()
@@ -358,12 +491,20 @@ export default {
 			await typeStore.fetchTypes()
 		}
 		if (this.typeId === null && typeStore.types.length > 0) {
-			const login = typeStore.types.find((type) => type.name === 'login')
-			this.typeId = login ? login.id : typeStore.types[0].id
+			// The user's saved default type; Login when it no longer exists (vault-20).
+			const prefs = useUserPreferencesStore()
+			await prefs.ensureLoaded()
+			this.typeId = resolveDefaultTypeId(
+				prefs.defaultSecretType,
+				typeStore.types,
+			)
 		}
 		const folderStore = useFolderStore()
 		if (folderStore.folders.length === 0) {
 			await folderStore.fetchFolders()
+		}
+		if (this.policy?.vault_org_ownership === true) {
+			await this.loadOwnershipTargets()
 		}
 	},
 
@@ -371,10 +512,69 @@ export default {
 		t,
 
 		/**
+		 * Where a covered type may go: folders inside the user's own team
+		 * folders, and the team folders they can write to.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/vault-policies/spec.md#requirement-write-grade-members-save-new-secrets-into-a-team-folder
+		 */
+		async loadOwnershipTargets() {
+			try {
+				const teamFolderStore = useTeamFolderStore()
+				await teamFolderStore.fetchTeamFolders()
+				const roots = teamFolderStore.owned.map(
+					(teamFolder) => teamFolder.folderId,
+				)
+				this.ownTeamFolderIds = subtreeIds(useFolderStore().folders, roots)
+				this.contributable =
+					(
+						await axios.get(
+							generateUrl(
+								'/apps/keepiq/api/v1/team-folders/contributable',
+							),
+						)
+					).data ?? []
+			} catch {
+				this.contributable = []
+			}
+		},
+
+		/**
+		 * Take the typed values and clear the marks of fields now filled.
+		 *
+		 * @param {object} values The values by field key.
+		 * @return {void}
+		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-item-type-definitions
+		 */
+		onTypedValues(values) {
+			this.typedValues = values
+			this.typedMissing = this.typedMissing.filter((key) =>
+				missingRequired(this.typedFields, values).includes(key),
+			)
+		},
+
+		/**
+		 * The additional-fields object to encrypt: the free members plus the
+		 * typed values.
+		 *
+		 * @return {object} The blob.
+		 * @spec openspec/specs/admin-secret-types/spec.md#requirement-typed-fields-storage
+		 */
+		additionalBlob() {
+			return mergeTypedValues(
+				membersToObject(this.additionalFields),
+				this.typedFields,
+				this.typedValues,
+			)
+		},
+
+		/**
 		 * Forward the open-state change; emit `close` when dismissed.
 		 *
 		 * @param {boolean} value The new open state.
 		 * @return {void}
+		 *
+		 * @spec exclude Event re-emitter: syncs the open flag and emits close to the parent.
 		 */
 		onUpdateOpen(value) {
 			this.open = value
@@ -387,6 +587,8 @@ export default {
 		 * Open the key generator dialog.
 		 *
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
 		 */
 		openGenerator() {
 			this.generatorOpen = true
@@ -397,6 +599,8 @@ export default {
 		 *
 		 * @param {string} key The generated key.
 		 * @return {void}
+		 *
+		 * @spec openspec/specs/key-generator/spec.md#requirement-frontend-integration
 		 */
 		onGenerated(key) {
 			if (typeof key === 'string' && key.length > 0) {
@@ -419,6 +623,11 @@ export default {
 			if (!this.canSubmit) {
 				return
 			}
+			// A required field of the type blocks the save and is marked (admin-18).
+			this.typedMissing = missingRequired(this.typedFields, this.typedValues)
+			if (this.typedMissing.length > 0) {
+				return
+			}
 			this.saving = true
 			this.error = ''
 			try {
@@ -436,6 +645,26 @@ export default {
 						return
 					}
 				}
+				if (this.contributeTo) {
+					// A team folder this user can write to but does not own
+					// (admin-vault-policies D5): encrypted for owner and members.
+					const result = await useSecretStore().contributeSecret(
+						this.contributeTo.teamFolderId,
+						{
+							name: this.name.trim(),
+							typeId: this.typeId,
+							url: this.url || null,
+							login: this.login || '',
+							key: this.effectiveValue,
+							...(Object.keys(this.additionalBlob()).length > 0
+								? { additionalFields: this.additionalBlob() }
+								: {}),
+						},
+					)
+					this.$emit('saved', result.secret)
+					this.onUpdateOpen(false)
+					return
+				}
 				const created = await useSecretStore().createSecret({
 					name: this.name.trim(),
 					typeId: this.typeId,
@@ -446,14 +675,16 @@ export default {
 					// Only when there ARE members: the store encrypts whatever it is
 					// handed, so passing {} unconditionally would write an empty
 					// ciphertext blob onto every secret ever created here.
-					...(this.additionalFields.length > 0
-						? {
-								additionalFields: membersToObject(
-									this.additionalFields,
-								),
-							}
+					// The typed values ride in the same blob, named by field label,
+					// so the server only ever sees their ciphertext (admin-18).
+					...(Object.keys(this.additionalBlob()).length > 0
+						? { additionalFields: this.additionalBlob() }
 						: {}),
 				})
+				// Tags are stored apart from the value (vault-favourites-tags-and-last-used).
+				if (this.tags.length > 0 && created?.id) {
+					await useSecretStore().setTags(created.id, this.tags)
+				}
 				this.$emit('saved', created)
 				if (this.onSaved) {
 					this.onSaved(created)

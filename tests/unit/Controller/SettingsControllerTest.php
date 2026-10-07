@@ -19,6 +19,7 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Controller;
 
+use OCA\Keepiq\Controller\AdminAreaSettingsController;
 use OCA\Keepiq\Controller\SettingsController;
 use OCA\Keepiq\Service\SettingsService;
 use OCP\AppFramework\Http\JSONResponse;
@@ -93,7 +94,6 @@ class SettingsControllerTest extends TestCase {
 	public function testIndexReturnsJsonResponseWithSettings(): void {
 		$settings = [
 			'register' => 'some-uuid',
-			'openregisters' => true,
 			'isAdmin' => false,
 		];
 
@@ -104,7 +104,8 @@ class SettingsControllerTest extends TestCase {
 		$result = $this->controller->index();
 
 		self::assertInstanceOf(JSONResponse::class, $result);
-		self::assertSame($settings, $result->getData());
+		// Without an area check wired the user holds no admin area.
+		self::assertSame($settings + ['adminAreas' => []], $result->getData());
 
 	}//end testIndexReturnsJsonResponseWithSettings()
 
@@ -115,7 +116,7 @@ class SettingsControllerTest extends TestCase {
 	 */
 	public function testCreateCallsUpdateSettingsAndReturnsSuccess(): void {
 		$params = ['register' => 'new-uuid'];
-		$updated = ['register' => 'new-uuid', 'openregisters' => true, 'isAdmin' => false];
+		$updated = ['register' => 'new-uuid', 'isAdmin' => false];
 
 		$this->request->expects($this->once())
 			->method('getParams')
@@ -135,35 +136,11 @@ class SettingsControllerTest extends TestCase {
 	}//end testCreateCallsUpdateSettingsAndReturnsSuccess()
 
 	/**
-	 * Test that load() returns the result of loadConfiguration.
+	 * Test that getGeneralSettings() returns the General area settings from the service.
 	 *
 	 * @return void
 	 */
-	public function testLoadReturnsConfigurationResult(): void {
-		$loadResult = [
-			'success' => true,
-			'message' => 'Configuration imported successfully.',
-			'version' => '0.1.0',
-		];
-
-		$this->settingsService->expects($this->once())
-			->method('loadConfiguration')
-			->with(force: true)
-			->willReturn($loadResult);
-
-		$result = $this->controller->load();
-
-		self::assertInstanceOf(JSONResponse::class, $result);
-		self::assertTrue($result->getData()['success']);
-
-	}//end testLoadReturnsConfigurationResult()
-
-	/**
-	 * Test that getAdminSettings() returns the admin settings from the service.
-	 *
-	 * @return void
-	 */
-	public function testGetAdminSettingsReturnsServiceResponse(): void {
+	public function testGetGeneralSettingsReturnsServiceResponse(): void {
 		$expected = [
 			'min_password_length' => 12,
 			'min_password_score' => 3,
@@ -172,36 +149,38 @@ class SettingsControllerTest extends TestCase {
 		];
 
 		$this->settingsService->expects($this->once())
-			->method('getAdminSettings')
+			->method('getAreaSettings')
+			->with('general')
 			->willReturn($expected);
 
-		$result = $this->controller->getAdminSettings();
+		$result = $this->areaController()->getGeneralSettings();
 
 		self::assertInstanceOf(JSONResponse::class, $result);
 		self::assertSame($expected, $result->getData());
 
-	}//end testGetAdminSettingsReturnsServiceResponse()
+	}//end testGetGeneralSettingsReturnsServiceResponse()
 
 	/**
-	 * Test that updateAdminSettings() returns 400 on InvalidArgumentException.
+	 * Test that updatePolicySettings() returns 400 on InvalidArgumentException.
 	 *
 	 * @return void
 	 */
-	public function testUpdateAdminSettingsReturns400OnInvalidInput(): void {
+	public function testUpdatePolicySettingsReturns400OnInvalidInput(): void {
 		$this->request->expects($this->once())
 			->method('getParams')
 			->willReturn(['min_password_length' => 5]);
 
 		$this->settingsService->expects($this->once())
-			->method('updateAdminSettings')
+			->method('updateAreaSettings')
+			->with('policies', ['min_password_length' => 5])
 			->willThrowException(new \InvalidArgumentException('min_password_length must be between 12 and 20'));
 
-		$result = $this->controller->updateAdminSettings();
+		$result = $this->areaController()->updatePolicySettings();
 
 		self::assertInstanceOf(JSONResponse::class, $result);
 		self::assertSame(400, $result->getStatus());
 
-	}//end testUpdateAdminSettingsReturns400OnInvalidInput()
+	}//end testUpdatePolicySettingsReturns400OnInvalidInput()
 
 	/**
 	 * Test that getUserSettings() returns prefs for the authenticated user.
@@ -246,4 +225,16 @@ class SettingsControllerTest extends TestCase {
 		self::assertSame($updated, $result->getData());
 
 	}//end testUpdateUserSettingsForwardsToService()
+
+	/**
+	 * The per-area admin settings controller over the same doubles.
+	 *
+	 * @return AdminAreaSettingsController
+	 */
+	private function areaController(): AdminAreaSettingsController {
+		return new AdminAreaSettingsController(
+			request: $this->request,
+			settingsService: $this->settingsService,
+		);
+	}//end areaController()
 }//end class

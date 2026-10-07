@@ -12,6 +12,7 @@ import {
 import { buildKeyProofHeaders, PROOF_PURPOSE } from '../../crypto/keyProof.js'
 import { createMigrationRunner } from '../../migration/driver.js'
 import { MIGRATION_STORES } from '../../migration/pipeline.js'
+import { usePasskeyStore } from './passkey.js'
 import { onVaultLock, useSessionStore } from './session.js'
 
 /**
@@ -128,13 +129,10 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 					masterPassword,
 				)
 
-				const response = await axios.post(
-					generateUrl('/apps/keepiq/api/v1/suites'),
-					{
-						publicKey: publicKeyPem,
-						encryptedPrivateKey: encryptedPk,
-					},
-				)
+				const response = await this.postNewSuite({
+					publicKey: publicKeyPem,
+					encryptedPrivateKey: encryptedPk,
+				})
 
 				this.currentSuite = response.data
 
@@ -194,6 +192,12 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 			)
 
 			session.encryptedPrivateKey = newEncryptedPk
+
+			// The server marks every passkey unlock envelope stale on this
+			// change (passkey-vault-login D4). Reload the list so the settings
+			// show them as stale and ask to re-enroll, instead of still
+			// reading "active" until the page is reloaded.
+			await usePasskeyStore().fetchCredentials()
 		},
 
 		/**
@@ -220,12 +224,20 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 *   The migration outcome, including the emergency contacts that were not
 		 *   re-enveloped, each with why (see migrateEmergencyContacts).
 		 * @spec openspec/changes/restore-suite-migration-loop/specs/encryption-suites/spec.md#requirement-migration-covers-every-suite-bound-store
+		 * @spec openspec/specs/offline-edit-queue/spec.md#requirement-pending-changes-block-logout-and-rotation
 		 */
 		async initiateCompromiseRecovery(
 			oldPassword,
 			newPassword,
 			carryContactIds = [],
 		) {
+			// Offline changes are sealed to the current certificate: a rotation
+			// waits until they are synced or discarded (offline-edit-queue D6).
+			const { useOfflineStore: offlineStoreOf } = await import('./offline.js')
+			const offline = offlineStoreOf()
+			await offline.loadQueue()
+			offline.assertNoPendingChanges()
+
 			const { publicKeyPem, privateKey } = await generateKeyPair()
 
 			// Export new private key as PEM.
@@ -1361,7 +1373,7 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * @param {string} masterPassword The master password, to sign the vault-key proof
 		 * @param {boolean} acceptEmergencyLoss Proceed even though emergency access will be deleted
 		 * @spec openspec/changes/retrofit-2026-05-25-doriath-coverage/tasks.md#task-7
-		 * @spec openspec/changes/harden-vault-key-material-guards/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
+		 * @spec openspec/specs/vault-key-proof/spec.md#requirement-irreversible-operations-require-a-verified-key-proof
 		 * @spec openspec/changes/migrate-emergency-access-on-rotation/specs/emergency-access/spec.md#requirement-envelope-invalidation-on-key-change
 		 */
 		async revokeSuite(reason, masterPassword, acceptEmergencyLoss = false) {
@@ -1427,12 +1439,24 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * @param {string} params.id The suite id to force-revoke.
 		 * @param {string} params.reason The required, free-form revocation reason.
 		 * @param {boolean} params.markCompromised Treat the suite's secrets as compromised (default false).
-		 * @return {Promise<{suite: object, emergencyContactsDestroyed: number, warning: string|null}>}
-		 *   The revoked suite, the count of destroyed usable emergency contacts, and
-		 *   (only when `markCompromised` was false) the rotation-may-be-warranted warning.
-		 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+		 * @param {string} params.confirmSuiteId The suite id the administrator typed to
+		 *   confirm; the server refuses the request unless it equals `id` (keepiq#871).
+		 * @return {Promise<object>} The revoked `suite`, `emergencyContactsDestroyed`,
+		 *   `warning` (only when `markCompromised` was false), and for a compromise
+		 *   revoke `alsoRevokedSuite`, `terminatedMigration`,
+		 *   `alsoRevokedEmergencyContactsDestroyed`, `cascadeIncomplete` and `cascadeFailed`.
+		 *   A compromise revoke whose migration end failed answers 500 with
+		 *   `migration_end_failed`; it still resolves, with the server's message
+		 *   in `unfinished`, because the suite was revoked (its containment
+		 *   ran; see `cascade`) (keepiq#1189). Any other failure rejects.
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 		 */
-		async forceRevokeSuite({ id, reason, markCompromised = false }) {
+		async forceRevokeSuite({
+			id,
+			reason,
+			markCompromised = false,
+			confirmSuiteId = '',
+		}) {
 			if (!id) {
 				throw new Error('No suite id to revoke')
 			}
@@ -1446,35 +1470,98 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 				await import('@nextcloud/password-confirmation')
 			await confirmPassword()
 
-			const response = await axios.post(
-				generateUrl(`/apps/keepiq/api/v1/suites/${id}/force-revoke`),
-				{ reason, markCompromised },
-			)
+			let response
+			try {
+				response = await axios.post(
+					generateUrl(`/apps/keepiq/api/v1/suites/${id}/force-revoke`),
+					{ reason, markCompromised, confirmSuiteId },
+				)
+			} catch (error) {
+				if (
+					error?.response?.status !== 500
+					|| error.response.data?.error !== 'migration_end_failed'
+				) {
+					throw error
+				}
+				response = error.response
+			}
 
 			return {
+				// Set when the suite was revoked but its key migration could
+				// not be ended; force-revoking again finishes it (keepiq#1189).
+				unfinished:
+					response.data.error === 'migration_end_failed'
+						? response.data.message
+						: null,
 				suite: response.data,
 				emergencyContactsDestroyed:
 					response.data.emergencyContactsDestroyed ?? 0,
 				warning: response.data.warning ?? null,
+				// A compromise force-revoke during a key migration also revokes
+				// the migration's other suite and ends the migration (keepiq#877).
+				alsoRevokedSuite: response.data.alsoRevokedSuite ?? null,
+				terminatedMigration: response.data.terminatedMigration ?? null,
+				alsoRevokedEmergencyContactsDestroyed:
+					response.data.alsoRevokedEmergencyContactsDestroyed ?? 0,
+				// Steps of the compromise response that failed (keepiq#863).
+				cascadeIncomplete: response.data.cascadeIncomplete === true,
+				cascadeFailed: response.data.cascade?.failed ?? 0,
 			}
+		},
+
+		/**
+		 * Register a new suite, confirming the Nextcloud password when the server asks.
+		 *
+		 * After a revocation the server refuses a plain create with
+		 * `reauthentication_required` (keepiq#860): a session alone may not
+		 * replace a revoked vault key. The user then confirms their password
+		 * and the same key material goes to the sudo-guarded re-enrol route.
+		 *
+		 * @param {object} body The publicKey and encryptedPrivateKey to register.
+		 * @return {Promise<object>} The axios response with the created suite.
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-re-enrolment-after-a-revocation-requires-a-fresh-password-confirmation
+		 */
+		async postNewSuite(body) {
+			try {
+				return await axios.post(
+					generateUrl('/apps/keepiq/api/v1/suites'),
+					body,
+				)
+			} catch (e) {
+				if (e?.response?.data?.error !== 'reauthentication_required') {
+					throw e
+				}
+			}
+
+			const { confirmPassword } =
+				await import('@nextcloud/password-confirmation')
+			await confirmPassword()
+			return axios.post(
+				generateUrl('/apps/keepiq/api/v1/suites/reenrol'),
+				body,
+			)
 		},
 
 		/**
 		 * Reinstate a revoked suite by id from the admin settings surface.
 		 *
-		 * Wired to the existing admin-only `reinstate()` endpoint, which carries no
-		 * `#[PasswordConfirmationRequired]` — the `AuthorizedAdminSetting` guard is
-		 * the authorization, so no sudo flow is needed. Frontend-only; the endpoint
-		 * and `reinstateSuite()` service are unchanged.
+		 * Wired to the admin-only `reinstate()` endpoint. Reinstating re-opens
+		 * every secret under the key, so the endpoint carries
+		 * `#[PasswordConfirmationRequired]` like force-revoke does, and the sudo
+		 * flow runs before the request (keepiq#865).
 		 *
 		 * @param {string} id The suite id to reinstate.
 		 * @return {Promise<object>} The reinstated suite JSON.
-		 * @spec openspec/changes/admin-suite-revocation/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-administrator-force-revocation
 		 */
 		async reinstateSuiteAdmin(id) {
 			if (!id) {
 				throw new Error('No suite id to reinstate')
 			}
+
+			const { confirmPassword } =
+				await import('@nextcloud/password-confirmation')
+			await confirmPassword()
 
 			const response = await axios.post(
 				generateUrl(`/apps/keepiq/api/v1/suites/${id}/reinstate`),
@@ -1510,10 +1597,16 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 		 * is the only safe route — so this surfaces that as an error for the
 		 * banner rather than pretending it succeeded.
 		 *
+		 * The server requires a vault-key proof over the NEW suite's key
+		 * (keepiq#859), so a stolen session cannot call the owner's recovery
+		 * off. That is the key the session is unlocked with, so the password
+		 * asked for is the current master password.
+		 *
+		 * @param {string} masterPassword The current (new) master password.
 		 * @return {Promise<object>} The server's terminal result.
-		 * @spec openspec/changes/harden-vault-key-material-guards/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
+		 * @spec openspec/specs/encryption-suites/spec.md#requirement-a-migration-can-be-aborted-before-any-record-moves
 		 */
-		async abortMigration() {
+		async abortMigration(masterPassword) {
 			await this.fetchMigrationStatus()
 			if (this.migrationStatus === null) {
 				throw new Error('There is no migration to abort')
@@ -1521,10 +1614,24 @@ export const useEncryptionSuiteStore = defineStore('encryptionSuite', {
 
 			const migrationId = this.migrationStatus.id
 			try {
+				const { data: newSuite } = await axios.get(
+					generateUrl(
+						`/apps/keepiq/api/v1/suites/${this.migrationStatus.newSuiteId}`,
+					),
+				)
+				const headers = await buildKeyProofHeaders({
+					suiteId: newSuite.id,
+					purpose: PROOF_PURPOSE.ABORT_MIGRATION,
+					encryptedPrivateKey: newSuite.privateKey,
+					masterPassword,
+					boundValues: [migrationId],
+				})
 				const { data } = await axios.post(
 					generateUrl(
 						`/apps/keepiq/api/v1/migrations/${migrationId}/abort`,
 					),
+					{},
+					{ headers },
 				)
 				return data
 			} finally {

@@ -9,7 +9,7 @@ import (
 
 // readPasswordNoEcho reads a line from stdin with terminal echo disabled, so the
 // master password / app-password never appears on screen. It toggles echo via
-// `stty` (present on any POSIX shell) to keep the CLI stdlib-only — no cgo, no
+// `stty` (present on any POSIX shell) with no cgo and no
 // external Go module, single static binary. Returns ok=false when stdin is not
 // an interactive TTY (piped input), so the caller falls back to a plain read.
 func readPasswordNoEcho() (string, bool) {

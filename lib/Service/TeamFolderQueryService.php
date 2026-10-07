@@ -38,11 +38,20 @@ use OCA\Keepiq\Db\TeamFolder;
 use OCA\Keepiq\Db\TeamFolderMapper;
 use OCA\Keepiq\Db\TeamFolderMember;
 use OCA\Keepiq\Db\TeamFolderMemberMapper;
+use OCA\Keepiq\Exception\ManagerOnlyException;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IGroupManager;
 
 /**
  * Read-side lookups and ancestor-chain resolution for team folders.
+ *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) The read side of team folders,
+ *   including the ancestor walks that grades and restrictions both need.
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) One public lookup per caller need.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The read side joins folders,
+ *   team folders, memberships, groups and secrets, and the manage check
+ *   refuses with its own exception so a viewer's grade change reads as
+ *   forbidden (folder-permission-grades).
  */
 class TeamFolderQueryService {
 	/**
@@ -170,8 +179,12 @@ class TeamFolderQueryService {
 			}
 
 			// Recipients see the folder identity, never the member list
-			// (share-visibility rule, user-sharing spec).
-			$memberOf[] = $this->describe(teamFolder: $teamFolder, includeMembers: false);
+			// (share-visibility rule, user-sharing spec); a manager sees the
+			// list it manages (sharing-team-folder-manager-role D5).
+			$grade = $this->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId);
+			$entry = $this->describe(teamFolder: $teamFolder, includeMembers: $grade === 'manage');
+			$entry['grade'] = $grade;
+			$memberOf[] = $entry;
 		}
 
 		return [
@@ -197,7 +210,9 @@ class TeamFolderQueryService {
 			return [];
 		}
 
-		if ($teamFolder->getOwnerId() !== $userId) {
+		if ($teamFolder->getOwnerId() !== $userId
+			&& $this->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId) !== 'manage'
+		) {
 			return [];
 		}
 
@@ -266,11 +281,11 @@ class TeamFolderQueryService {
 						continue;
 					}
 
-					if ($membership->effectiveGrade() === 'write') {
-						return 'write';
+					$best = $this->higherGrade(current: $best, candidate: $membership->effectiveGrade());
+					if ($best === 'manage') {
+						// Nothing ranks higher.
+						return $best;
 					}
-
-					$best = 'read';
 				}
 			} catch (DoesNotExistException) {
 				// Not a team folder — keep climbing.
@@ -285,6 +300,109 @@ class TeamFolderQueryService {
 
 		return $best;
 	}//end resolveGrade()
+
+	/**
+	 * The higher of two grades (`read` < `write` < `manage`).
+	 *
+	 * @param string|null $current   The best grade so far
+	 * @param string      $candidate Another grade
+	 *
+	 * @return string
+	 */
+	private function higherGrade(?string $current, string $candidate): string {
+		$ranks = array_flip(TeamFolderMember::GRADES);
+		if ($current === null || ($ranks[$candidate] ?? -1) > ($ranks[$current] ?? -1)) {
+			return $candidate;
+		}
+
+		return $current;
+	}//end higherGrade()
+
+	/**
+	 * The caller's effective grade on a team folder itself: the highest
+	 * grade any membership of it or of an ancestor team folder gives them.
+	 * Null when nothing covers them.
+	 *
+	 * @param TeamFolder $teamFolder The team folder
+	 * @param string     $userId     The caller
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-effective-grade-is-the-highest-grade-along-the-ancestor-folder-chain
+	 */
+	public function gradeOnTeamFolder(TeamFolder $teamFolder, string $userId): ?string {
+		$best = null;
+		foreach ($this->ancestorTeamFolders(folderId: $teamFolder->getFolderId()) as $ancestor) {
+			foreach ($this->memberMapper->findByTeamFolder(teamFolderId: $ancestor->getId()) as $membership) {
+				if ($this->membershipCovers(membership: $membership, userId: $userId) === true) {
+					$best = $this->higherGrade(current: $best, candidate: $membership->effectiveGrade());
+				}
+			}
+		}
+
+		return $best;
+	}//end gradeOnTeamFolder()
+
+	/**
+	 * Load a team folder the caller may manage: its owner, or a member whose
+	 * effective grade on it is `manage` (sharing-team-folder-manager-role D2).
+	 *
+	 * @param string $teamFolderId The TeamFolder UUID
+	 * @param string $userId       The caller
+	 *
+	 * @return TeamFolder
+	 *
+	 * @throws InvalidArgumentException When missing or the caller may not manage it
+	 *
+	 * @spec openspec/specs/folder-permission-grades/spec.md#requirement-managers-keep-the-membership-current
+	 */
+	public function loadManageableTeamFolder(string $teamFolderId, string $userId): TeamFolder {
+		try {
+			$teamFolder = $this->mapper->findById(id: $teamFolderId);
+		} catch (DoesNotExistException) {
+			throw new InvalidArgumentException(message: 'Team folder not found');
+		}
+
+		if ($teamFolder->getOwnerId() !== $userId
+			&& $this->gradeOnTeamFolder(teamFolder: $teamFolder, userId: $userId) !== 'manage'
+		) {
+			// A viewer or an editor: forbidden, not a bad request
+			// (folder-permission-grades, "Non-owner cannot change a grade").
+			throw new ManagerOnlyException(message: 'Not authorized to manage this team folder');
+		}
+
+		return $teamFolder;
+	}//end loadManageableTeamFolder()
+
+	/**
+	 * Every team-folder membership along a secret's folder ancestor chain
+	 * that covers a user, directly or through a group. These are the
+	 * team-folder grants ShareRestrictionResolver combines.
+	 *
+	 * @param Secret $secret The SOURCE secret
+	 * @param string $userId The candidate user
+	 *
+	 * @return array<int,TeamFolderMember>
+	 *
+	 * @spec openspec/specs/use-only-shares/spec.md#requirement-owners-can-share-a-secret-as-use-only
+	 */
+	public function coveringMemberships(Secret $secret, string $userId): array {
+		$folderId = $secret->getFolderId();
+		if ($folderId === null || $folderId === '') {
+			return [];
+		}
+
+		$covering = [];
+		foreach ($this->ancestorTeamFolders(folderId: $folderId) as $teamFolder) {
+			foreach ($this->memberMapper->findByTeamFolder(teamFolderId: $teamFolder->getId()) as $membership) {
+				if ($this->membershipCovers(membership: $membership, userId: $userId) === true) {
+					$covering[] = $membership;
+				}
+			}
+		}
+
+		return $covering;
+	}//end coveringMemberships()
 
 	/**
 	 * Describe a team folder for the API (folder name resolved; members
@@ -329,8 +447,9 @@ class TeamFolderQueryService {
 	 * @return array<int,TeamFolder>
 	 *
 	 * @spec openspec/changes/team-folder-sharing/tasks.md#2.3
+	 * @spec openspec/specs/vault-policies/spec.md#requirement-work-logins-are-kept-in-team-folders
 	 */
-	private function ancestorTeamFolders(string $folderId): array {
+	public function ancestorTeamFolders(string $folderId): array {
 		$found = [];
 		$current = $folderId;
 		$guard = 0;

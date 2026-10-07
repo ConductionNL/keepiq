@@ -1,0 +1,62 @@
+name: CLI on macOS
+
+# Checks `keepiq ssh-agent` on macOS, where nobody on the team has a Mac to
+# try it by hand (keepiq#1042). With no secrets and no Nextcloud server it:
+#
+#   - runs the CLI's Go tests, including the real-sshd integration test and
+#     the `eval` test, and fails if either of those is skipped
+#   - runs cli/scripts/ssh-agent-e2e.sh: the README's recipe in a real shell
+#     against a fake Keepiq (cli/internal/fakevault) and a throwaway sshd
+#     started as the runner user on a high port, never the system sshd
+#   - installs the README's launchd plist in the runner user's home and checks
+#     the agent launchd starts (same script, KEEPIQ_E2E_LAUNCHD=1)
+
+on:
+  pull_request:
+    branches: [main, development, beta]
+    paths: ["cli/**", "sdk/go/**", "sdk/testdata/**", ".github/workflows/cli-macos.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cli-macos-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ssh-agent:
+    runs-on: macos-latest
+    # The Go tests take a few minutes (RSA-4096 keys); the e2e script under two.
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25.x"
+          cache-dependency-path: cli/go.sum
+      - name: Versions
+        run: |
+          sw_vers
+          uname -m
+          go version
+          ssh -V
+          command -v sshd ssh-add git
+          id
+      - run: go vet ./...
+      - name: Go tests, with the ssh-agent tests required to run
+        run: |
+          set -o pipefail
+          go test -count=1 -v ./... 2>&1 | tee "$RUNNER_TEMP/go-test.log" | grep -E '^(--- |ok|FAIL|PASS)'
+          for t in TestRealSSHThroughTheAgent TestEvalReturnsAndTheAgentKeepsServing TestVaultUnlockerReadsOnlyCiphertext; do
+            grep -q -- "--- PASS: $t " "$RUNNER_TEMP/go-test.log" || { echo "::error::$t did not pass (skipped or missing)"; exit 1; }
+          done
+      - name: README recipe and launchd plist, end to end
+        # A hang in `eval "$(keepiq ssh-agent)"` (keepiq#1022) ends here, not at the job limit.
+        timeout-minutes: 10
+        env:
+          KEEPIQ_E2E_LAUNCHD: "1"
+        run: bash scripts/ssh-agent-e2e.sh

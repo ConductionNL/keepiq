@@ -1,0 +1,46 @@
+name: Browser extension
+
+# Builds the extension for Chromium and Firefox and loads each package in a
+# headless browser to check its background starts and answers the popup
+# (clients-browser-builds). Safari needs a macOS runner and stays an open task.
+
+on:
+  push:
+    branches: [main, development]
+    paths: ["browser-extension/**", "src/crypto/**", "src/totp/**", ".github/workflows/browser-extension.yml"]
+  pull_request:
+    branches: [main, development, beta]
+    paths: ["browser-extension/**", "src/crypto/**", "src/totp/**", ".github/workflows/browser-extension.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-load:
+    runs-on: ubuntu-latest
+    # A build and two browser starts; minutes at most.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run build:extension
+      - name: Chromium loads the package
+        run: |
+          npx playwright install --with-deps chromium
+          node browser-extension/load-check/chromium.mjs
+      - name: Firefox loads the package
+        run: |
+          npm install --no-save selenium-webdriver@4
+          firefox --version
+          geckodriver --version
+          node browser-extension/load-check/firefox.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: browser-extension
+          path: browser-extension/dist/
+          retention-days: 14

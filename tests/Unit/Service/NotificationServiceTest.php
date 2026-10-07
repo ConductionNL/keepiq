@@ -23,6 +23,7 @@ use OCA\Keepiq\Service\NotificationService;
 use OCP\IConfig;
 use OCP\Notification\IManager;
 use OCP\Notification\INotification;
+use OCP\Notification\InvalidValueException;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -242,10 +243,53 @@ class NotificationServiceTest extends TestCase {
 			'secret_compromised',
 			'request_fulfilled',
 			'app_pending',
+			'shared_secret_compromised',
+			'emergency_grantee_compromised',
+			'emergency_access_cleared',
 		];
 
 		foreach ($expected as $subject) {
 			$this->assertArrayHasKey(key: $subject, array: NotificationService::SUBJECT_SETTING_MAP);
 		}
 	}//end testSubjectSettingMapCoverage()
+	/**
+	 * notify() without an object id still gives Nextcloud a valid one.
+	 *
+	 * Nextcloud's `Notification::setObject()` refuses an empty id with an
+	 * InvalidValueException (an InvalidArgumentException). Found live on
+	 * Nextcloud 35 (keepiq#788): naming recovery officers saved the settings
+	 * and then answered 400, because `recovery_officer_named` is sent without
+	 * an object id. The double below applies Nextcloud's own rule.
+	 *
+	 * @return void
+	 */
+	public function testNotifyWithoutAnObjectIdSetsAValidOne(): void {
+		$this->config->method('getUserValue')->willReturn('1');
+
+		$objectIds = [];
+		$notification = $this->createMock(originalClassName: INotification::class);
+		$notification->method('setApp')->willReturnSelf();
+		$notification->method('setUser')->willReturnSelf();
+		$notification->method('setDateTime')->willReturnSelf();
+		$notification->method('setSubject')->willReturnSelf();
+		$notification->method('setObject')->willReturnCallback(
+			function (string $type, string $id) use ($notification, &$objectIds): INotification {
+				// lib/private/Notification/Notification.php, Nextcloud 35.
+				if ($type === '' || isset($type[64]) === true || $id === '' || isset($id[64]) === true) {
+					throw new InvalidValueException('objectId');
+				}
+
+				$objectIds[] = $id;
+				return $notification;
+			}
+		);
+		$this->manager->method('createNotification')->willReturn($notification);
+		$this->manager->expects($this->exactly(3))->method('notify');
+
+		foreach (['recovery_officer_named', 'recovery_declined', 'recovery_ready'] as $subject) {
+			$this->assertTrue(condition: $this->service->notify(subject: $subject, recipientId: 'olga'));
+		}
+
+		$this->assertCount(expectedCount: 3, haystack: $objectIds);
+	}//end testNotifyWithoutAnObjectIdSetsAValidOne()
 }//end class

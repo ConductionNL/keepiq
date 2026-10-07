@@ -22,6 +22,7 @@ namespace OCA\Keepiq\Tests\Unit\Service;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\CACertificate;
 use OCA\Keepiq\Db\CACertificateMapper;
+use OCA\Keepiq\Db\EncryptionSuite;
 use OCA\Keepiq\Db\EncryptionSuiteMapper;
 use OCA\Keepiq\Service\CertificateIssuanceService;
 use OCA\Keepiq\Service\X509CertificateAssembler;
@@ -381,4 +382,62 @@ class CertificateIssuanceServiceTest extends TestCase {
 		);
 
 	}//end testIssuedCertificateIsSignedByTheActiveIntermediate()
+
+	/**
+	 * A suite certificate whose subject carries no commonName must come back
+	 * from a re-issue with the suite owner as its commonName (#152).
+	 *
+	 * reissueSuiteCertificate() hands the owner id down as `fallbackCn`, and
+	 * the docblock promised "CN to use when the old cert has none". The
+	 * argument used to be accepted and ignored, so a CN-less certificate was
+	 * re-issued CN-less again. The public key must still be preserved.
+	 *
+	 * @return void
+	 */
+	public function testReissueAddsTheOwnerAsCommonNameWhenTheOldCertificateHasNone(): void {
+		[$pub] = $this->makeRsaKeypair(2048);
+		$assembler = new X509CertificateAssembler($this->logger);
+		$cnLess = $assembler->issueForPublicKey(
+			$pub,
+			['id-at-countryName' => 'NL', 'id-at-organizationName' => 'Conduction'],
+			$this->intermediateCertPem,
+			$this->intermediatePrivPem,
+		);
+		$this->assertArrayNotHasKey('CN', openssl_x509_parse($cnLess)['subject'], 'fixture must start without a CN');
+
+		$suite = new EncryptionSuite();
+		$suite->setOwnerId('owner@example.com');
+		$suite->setCertificate($cnLess);
+		$this->suiteMapper->expects($this->once())->method('update')->with($suite);
+
+		$this->assertTrue($this->service->reissueSuiteCertificate($suite));
+
+		$renewed = (string)$suite->getCertificate();
+		$this->assertSame('owner@example.com', openssl_x509_parse($renewed)['subject']['CN'] ?? null);
+		$this->assertSame(
+			$this->modulusOf($cnLess),
+			$this->modulusOf($renewed),
+			'adding the fallback CN must not change the public key'
+		);
+
+	}//end testReissueAddsTheOwnerAsCommonNameWhenTheOldCertificateHasNone()
+
+	/**
+	 * A certificate that already has a commonName keeps it: the fallback is
+	 * a fallback, not an override.
+	 *
+	 * @return void
+	 */
+	public function testReissueKeepsAnExistingCommonName(): void {
+		[$pub, $priv] = $this->makeRsaKeypair(2048);
+		$original = $this->service->signPublicKey($pub, 'kept@example.com', $priv);
+
+		$suite = new EncryptionSuite();
+		$suite->setOwnerId('owner@example.com');
+		$suite->setCertificate($original);
+
+		$this->assertTrue($this->service->reissueSuiteCertificate($suite));
+		$this->assertSame('kept@example.com', openssl_x509_parse((string)$suite->getCertificate())['subject']['CN']);
+
+	}//end testReissueKeepsAnExistingCommonName()
 }//end class

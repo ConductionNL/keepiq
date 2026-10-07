@@ -1,0 +1,29 @@
+/* SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl> */
+/* SPDX-License-Identifier: EUPL-1.2 */
+/* The AutoFill extension (clients-mobile-apps task 4.4). */
+"noAccount" = "Connect an account in the Keepiq app first.";
+"configured" = "Keepiq fills in your logins. Open the Keepiq app to connect an account or to change settings.";
+"cancel" = "Cancel";
+"unlock.title" = "Unlock Keepiq";
+"unlock.site" = "To fill in your login for %@.";
+"unlock.biometric" = "Unlock with Face ID or Touch ID";
+"unlock.pin" = "PIN";
+"unlock.master" = "Master password";
+"unlock.button" = "Unlock";
+"search" = "Search your vault";
+"list.forSite" = "Logins for %@";
+"list.results" = "Search results";
+"list.none" = "No login saved for %@.";
+"list.noMatch" = "No login matches your search.";
+"fill.failed" = "Keepiq could not open this login.";
+"add.title" = "Add a login for %@";
+"add.user" = "User name";
+"add.password" = "Password";
+"add.save" = "Save and fill in";
+"add.refused" = "Keepiq does not save logins for this site.";
+/* Passkeys (clients-mobile-apps task 5.2). */
+"unlock.passkey" = "To use your passkey for %@.";
+"passkey.list" = "Passkeys for %@";
+"passkey.none" = "No passkey saved for %@.";
+"passkey.failed" = "Keepiq could not sign in with this passkey.";
+"passkey.saveFailed" = "Keepiq could not save this passkey.";

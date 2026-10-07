@@ -8,13 +8,17 @@
  * `query`, `permission` and `visibleIf` never runs. Each of the three fails
  * silently: no preset, an admin entry for everyone, an entry to a missing app.
  *
- * @spec openspec/changes/adopt-connection-registry/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
+ * @spec openspec/specs/admin-integrations/spec.md#requirement-req-keepiq-conn-004-an-admin-reads-the-connections-on-an-integrations-page
  */
 
 import * as fs from 'fs'
 import * as path from 'path'
 import { describe, expect, it } from 'vitest'
-import { isMenuEntryVisible, menuEntryTo } from '../../src/utils/navEntries.js'
+import {
+	isAppEnabled,
+	isMenuEntryVisible,
+	menuEntryTo,
+} from '../../src/utils/navEntries.js'
 
 const ROOT = path.resolve(__dirname, '../..')
 const read = (...parts) => fs.readFileSync(path.join(ROOT, ...parts), 'utf8')
@@ -106,8 +110,10 @@ describe('isMenuEntryVisible', () => {
 		).toBe(false)
 	})
 
-	it('leaves every existing entry visible for every user', () => {
-		for (const item of base.menu) {
+	it('leaves every ungated entry visible for every user', () => {
+		for (const item of base.menu.filter(
+			(entry) => entry.visibleIf === undefined,
+		)) {
 			expect(
 				isMenuEntryVisible(item, { isAdmin: false, appsWebRoots: null }),
 				item.id,
@@ -115,12 +121,45 @@ describe('isMenuEntryVisible', () => {
 		}
 	})
 
+	it('isAppEnabled answers from OC.appswebroots and hides on uncertainty', () => {
+		expect(
+			isAppEnabled('hermiq', {
+				keepiq: '/apps/keepiq',
+				hermiq: '/apps/hermiq',
+			}),
+		).toBe(true)
+		expect(isAppEnabled('hermiq', { keepiq: '/apps/keepiq' })).toBe(false)
+		expect(isAppEnabled('hermiq', null)).toBe(false)
+		expect(isAppEnabled('hermiq', undefined)).toBe(false)
+	})
+
+	it('shows Flows only when OpenRegister is enabled (standalone-app-shell)', () => {
+		const flows = base.menu.find((entry) => entry.id === 'FlowsMenu')
+		expect(flows.visibleIf).toEqual({ appInstalled: 'openregister' })
+		expect(
+			isMenuEntryVisible(flows, { isAdmin: false, appsWebRoots: null }),
+		).toBe(false)
+		expect(
+			isMenuEntryVisible(flows, {
+				isAdmin: false,
+				appsWebRoots: { keepiq: '/apps/keepiq' },
+			}),
+		).toBe(false)
+		expect(
+			isMenuEntryVisible(flows, {
+				isAdmin: false,
+				appsWebRoots: {
+					keepiq: '/apps/keepiq',
+					openregister: '/apps/openregister',
+				},
+			}),
+		).toBe(true)
+	})
+
 	it('is what KeepiqAppNav filters and routes with', () => {
 		const nav = read('src', 'components', 'KeepiqAppNav', 'KeepiqAppNav.vue')
 		expect(nav).toContain('.filter((item) => isMenuEntryVisible(item, context))')
 		expect(nav).toMatch(/itemTo\(item\) \{\s+return menuEntryTo\(item\)\s+\}/)
-		expect(nav).toMatch(
-			/appsWebRoots:\s+\(typeof window !== 'undefined' && window\.OC\?\.appswebroots\)\s+\|\| null,/,
-		)
+		expect(nav).toMatch(/appsWebRoots:\s+currentAppsWebRoots\(\),/)
 	})
 })

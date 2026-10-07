@@ -38,6 +38,8 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\Tests\Unit\Service;
 
+use OCA\Keepiq\Settings\PeopleAdminSettings;
+use OCA\Keepiq\Tests\Support\AdminAreaFixture;
 use DateTime;
 use InvalidArgumentException;
 use OCA\Keepiq\Db\EncryptionSuite;
@@ -85,6 +87,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/implement-user-sharing/tasks.md#task-15.9
  */
 class UserSharingIntegrationTest extends TestCase {
+	use AdminAreaFixture;
+
 	/**
 	 * Build a Secret with the given owner.
 	 *
@@ -324,8 +328,8 @@ class UserSharingIntegrationTest extends TestCase {
 	}//end testDelegationLifecycleReclaimAndMakePermanent()
 
 	/**
-	 * §15.4 — admin handover requires (a) vault_admin membership and
-	 * (b) the admin already holding a share of the secret.
+	 * §15.4 — admin handover requires (a) the People and offboarding area
+	 * and (b) the admin already holding a share of the secret.
 	 *
 	 * @return void
 	 */
@@ -340,15 +344,12 @@ class UserSharingIntegrationTest extends TestCase {
 			authorizer: new DelegationAuthorizer(
 				secretMapper: $secretMapper,
 				shareTargetMapper: $shareTargetMapper,
-				groupManager: $groupManager,
+				areas: $this->areaAuthorizer(groupManager: $groupManager, delegated: [PeopleAdminSettings::class]),
 			),
 		);
 
 		$secret = $this->makeSecret('s-1', 'alice');
 		$secretMapper->method('findById')->willReturn($secret);
-		$groupManager->method('isInGroup')
-			->with('mallory', DelegationAuthorizer::VAULT_ADMIN_GROUP)
-			->willReturn(true);
 		$shareTargetMapper->method('findBySourceSecretAndTargetUser')
 			->willReturn(new ShareTarget());
 

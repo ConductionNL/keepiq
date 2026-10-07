@@ -16,7 +16,7 @@
   reused. State the guard actually needs — the target id, the busy flag, the
   refusal message — stays with the parent view; this component only presents it.
 
-  @spec openspec/changes/harden-vault-key-material-guards/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
+  @spec openspec/specs/emergency-access/spec.md#requirement-revoke-emergency-contact
 -->
 <template>
 	<NcDialog

@@ -110,9 +110,21 @@ permissions:
 
 jobs:
   quality:
-    # Skips the standing "development → beta" sync PR, which would otherwise
-    # re-run the whole pipeline on every merge into development.
-    if: (github.event_name != 'pull_request' || github.head_ref != 'development')
+    # THE PROMOTION PR RUNS (keepiq#882). A pull request whose head is
+    # `development` is skipped only when it targets something other than
+    # `beta`. The standing "development to beta" sync PR used to be skipped
+    # too, and the shared workflow keeps Playwright off ordinary `development`
+    # traffic (`e2e-promotion-only`, default true) and runs it on PRs into
+    # `beta` and `main` instead. The two rules together meant the promotion
+    # into `beta` ran nothing, so release.yml cut the beta artifact before
+    # Playwright had seen the promoted tree.
+    #
+    # The price is a full run each time a merge into `development` updates the
+    # sync PR. The concurrency group above cancels a superseded PR run, so only
+    # the newest one finishes. The fast tier on that run repeats what the push
+    # to `development` already checked; the shared workflow has no input to run
+    # only the heavy tier.
+    if: (github.event_name != 'pull_request' || github.head_ref != 'development' || github.base_ref == 'beta')
     uses: ConductionNL/.github/.github/workflows/quality.yml@main
     with:
       app-name: keepiq
@@ -171,12 +183,10 @@ jobs:
       enable-eslint: true
       enable-phpunit: true
       enable-newman: true
-      # Keepiq adopts OpenRegister's AppHost engine in lib/AppInfo/Application.php
-      # (ADR-040 / ADR-022) and ships lib/Settings/keepiq_register.json, so
-      # OpenRegister must be present in the test instance — otherwise
-      # SettingsService::isOpenRegisterAvailable() is false, InitializeSettings
-      # skips the register import with a warning, and the app boots without the
-      # host engine it delegates to.
+      # Keepiq needs no other app (ADR-006); standalone.yml proves that on an
+      # instance with Keepiq alone. OpenRegister is installed HERE so this
+      # suite covers the integrations that need it: the Flows pages and the
+      # MCP tools, which appear only when OpenRegister is enabled.
       #
       # NOTE the org is ConductionNL, not Conduction. `Conduction` does not
       # exist, and the shared workflow clones additional-apps UNAUTHENTICATED —
@@ -190,7 +200,10 @@ jobs:
       # integriq is here because the Integrations page reads integriq's
       # `app_connection` rows (adopt-connection-registry). Without it the page
       # shows the missing-dependency screen and
-      # `tests/e2e/workflows/integrations-page.spec.ts` fails on every run.
+      # `tests/e2e/workflows/integrations-page.spec.ts` fails wherever
+      # Playwright runs: the promotion PRs into `beta` and `main`, the nightly
+      # dispatch, and a manual dispatch. Ordinary `development` pushes and PRs
+      # do not run Playwright (`e2e-promotion-only`).
       # `app` is `integriq`, verified in its appinfo/info.xml on `development`
       # on 2026-09-15.
       additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"},{"repo":"ConductionNL/integriq","app":"integriq","ref":"development"}]'

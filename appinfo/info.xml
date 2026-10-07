@@ -36,7 +36,7 @@ Vrij en open source onder de EUPL-1.2-licentie.
 
 **Ondersteuning:** Voor ondersteuning, neem contact op via support@conduction.nl.
     ]]></description>
-    <version>0.3.4-unstable.20260912202807</version>
+    <version>0.3.4-unstable.20261005160000</version>
     <licence>EUPL-1.2</licence>
     <author mail="info@conduction.nl" homepage="https://www.conduction.nl/">Conduction</author>
     <namespace>Keepiq</namespace>
@@ -95,16 +95,17 @@ Vrij en open source onder de EUPL-1.2-licentie.
             Floor is 32, fleet-wide, so PHP 8.3 is guaranteed by the platform.
 
             31 was never actually deliverable: the CI matrix is derived from
-            this `<nextcloud>` range (no leg below 32), because OpenRegister —
-            which this app builds on — declares `min-version="32"` itself.
-            Advertising 31 in the App Store promised a range no test leg covered
-            and no dependency could satisfy.
+            this `<nextcloud>` range (no leg below 32), and OpenRegister, whose
+            integrations this app offers when it is present, declares
+            `min-version="32"` itself. Advertising 31 in the App Store promised
+            a range no test leg covered.
 
             max-version is 35 as of 2026-09-15: verified against Nextcloud 35
             (35.0.0 dev) on the shared dev instance — keepiq enabled, its DB
             migrations ran cleanly under `occ upgrade`, and the log showed no
-            deprecations or errors. Dependencies openregister and integriq also
-            declare 35 on development (verified 2026-09-24).
+            deprecations or errors. The optional openregister and integriq also
+            declare 35 on development (verified 2026-09-24); Keepiq does not
+            need either (ADR-006).
         -->
         <nextcloud min-version="32" max-version="35"/>
     </dependencies>
@@ -114,14 +115,20 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <job>OCA\Keepiq\BackgroundJob\CheckRootCertificateExpiry</job>
         <job>OCA\Keepiq\BackgroundJob\PurgeAuditLogJob</job>
         <job>OCA\Keepiq\BackgroundJob\ExpireSecretRequestsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ExpireSharesJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ExpireDeviceApprovalsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ExpireRecoveryRequestsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ApproveElapsedEmergencyRequests</job>
         <job>OCA\Keepiq\BackgroundJob\PruneSecretVersionsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\RetryFederatedNotificationsJob</job>
+        <job>OCA\Keepiq\BackgroundJob\PurgeTrashedSecretsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ScanExpiringSecretsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ExpireMachineLeasesJob</job>
         <job>OCA\Keepiq\BackgroundJob\EphemeralSendPurgeJob</job>
         <job>OCA\Keepiq\BackgroundJob\RefreshComplianceMetricsJob</job>
         <job>OCA\Keepiq\BackgroundJob\DeliverSiemEventsJob</job>
         <job>OCA\Keepiq\BackgroundJob\ScanCertificateExpiryJob</job>
+        <job>OCA\Keepiq\BackgroundJob\ScheduledVaultBackupJob</job>
     </background-jobs>
 
     <!--
@@ -173,29 +180,16 @@ Vrij en open source onder de EUPL-1.2-licentie.
             <step>OCA\Keepiq\Repair\MigrateAppConfigKeys</step>
             <step>OCA\Keepiq\Repair\MigrateUserPreferences</step>
             <!--
-                THE THIRD STORE KEYED BY APP ID, AND THE TWO ABOVE DO NOT COVER
-                IT. `oc_appconfig` and `oc_preferences` are Nextcloud's; this
-                one is OpenRegister's `openregister_schemas.application`.
-
-                OpenRegister resolves the two halves of a configuration by
-                DIFFERENT keys: a REGISTER by slug alone, a SCHEMA by the PAIR
-                (application, slug) via findByApplicationAndSlug(). This app now
-                passes `appId: Application::APP_ID` = `keepiq`, while every
-                schema it already owns still carries `application = doriath` —
-                so the pair matches nothing, and ImportHandler's not-found
-                branch is not an error path, it is the "create a new one" path.
-                The import then builds a SECOND, EMPTY schema set while every
-                stored secret stays bound to the old rows. Nothing errors; the
-                app renders empty collections.
-
-                MUST stay ahead of InitializeSettings, which is what triggers
-                that import via SettingsService.
-
-                Refuses rather than merges where a slug already has a twin under
-                the new application id, never deletes a schema, and never
-                throws — an escaping exception in <install> aborts the install.
+                Removes the empty register, schema and per-schema data table
+                that earlier Keepiq versions created in OpenRegister (both the
+                `keepiq` and the pre-rename `doriath` ids). Keepiq imports
+                nothing into OpenRegister any more (ADR-006), so nothing reads
+                them. Deletes only what holds zero objects, touches OpenRegister
+                tables through IDBConnection only, does nothing when they do
+                not exist, and never throws: an escaping exception in <install>
+                aborts the install.
             -->
-            <step>OCA\Keepiq\Repair\MigrateSchemaApplicationId</step>
+            <step>OCA\Keepiq\Repair\RemoveLegacyRegisterRows</step>
             <step>OCA\Keepiq\Repair\BootstrapCertificateAuthority</step>
             <step>OCA\Keepiq\Repair\InitializeSettings</step>
             <step>OCA\Keepiq\Repair\SeedSecretTypes</step>
@@ -210,11 +204,10 @@ Vrij en open source onder de EUPL-1.2-licentie.
         <install>
             <step>OCA\Keepiq\Repair\MigrateAppConfigKeys</step>
             <step>OCA\Keepiq\Repair\MigrateUserPreferences</step>
-            <!-- Same step, same reason, same position ahead of
-                 InitializeSettings; see the <post-migration> block. An app-id
-                 rename presents to Nextcloud as a FRESH INSTALL, so this block
-                 is the one that actually fires on the upgrade it exists for. -->
-            <step>OCA\Keepiq\Repair\MigrateSchemaApplicationId</step>
+            <!-- Same step as in <post-migration>. An app-id rename presents
+                 to Nextcloud as a FRESH INSTALL, so the doriath leftovers are
+                 only reached from this block on that path. -->
+            <step>OCA\Keepiq\Repair\RemoveLegacyRegisterRows</step>
             <step>OCA\Keepiq\Repair\BootstrapCertificateAuthority</step>
             <step>OCA\Keepiq\Repair\InitializeSettings</step>
             <step>OCA\Keepiq\Repair\SeedSecretTypes</step>
@@ -228,8 +221,21 @@ Vrij en open source onder de EUPL-1.2-licentie.
         </install>
     </repair-steps>
 
+    <!-- Vault backups (admin-scheduled-vault-backups D4). -->
+    <commands>
+        <command>OCA\Keepiq\Command\BackupCreate</command>
+        <command>OCA\Keepiq\Command\BackupList</command>
+        <command>OCA\Keepiq\Command\BackupVerify</command>
+        <command>OCA\Keepiq\Command\BackupRestore</command>
+    </commands>
+
     <settings>
+        <!-- Five delegable admin areas (admin-scoped-roles D1). -->
         <admin>OCA\Keepiq\Settings\AdminSettings</admin>
+        <admin>OCA\Keepiq\Settings\PolicyAdminSettings</admin>
+        <admin>OCA\Keepiq\Settings\ApplicationAdminSettings</admin>
+        <admin>OCA\Keepiq\Settings\PeopleAdminSettings</admin>
+        <admin>OCA\Keepiq\Settings\AuditAdminSettings</admin>
         <admin-section>OCA\Keepiq\Sections\SettingsSection</admin-section>
     </settings>
 

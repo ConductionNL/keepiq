@@ -21,12 +21,10 @@ declare(strict_types=1);
 
 namespace OCA\Keepiq\AppInfo;
 
-use OCA\OpenRegister\AppHost\Bootstrap;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
-use Psr\Log\LoggerInterface;
 
 /**
  * Main application class for the Keepiq Nextcloud app.
@@ -41,11 +39,12 @@ use Psr\Log\LoggerInterface;
  * resolved from the container: `register()` IS the point at which the
  * container is being populated, so there is nothing to resolve from yet.
  *
- * The AppHost adoption below deliberately stays inline. It is the one piece
- * of wiring that references a class from a SIBLING app, which psalm cannot
- * resolve; moved into a registrar of its own, its `$context`/`$appId`
- * parameters would be reachable only from that unresolvable call and psalm
- * reports both as never referenced (measured).
+ * Keepiq runs its own app shell and references no class from another app
+ * (ADR-006): it is installable and fully usable with no other Conduction app
+ * enabled. Integrations with another app register inertly and only come
+ * alive when that app runs (see McpRegistrar).
+ *
+ * @spec openspec/specs/app-shell/spec.md#requirement-keepiq-operates-without-any-other-conduction-app
  */
 class Application extends App implements IBootstrap {
 	public const APP_ID = 'keepiq';
@@ -87,83 +86,20 @@ class Application extends App implements IBootstrap {
 	 *
 	 * @return void
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) OCA\OpenRegister\AppHost\Bootstrap
-	 * is a cross-app static bootstrap entry point in a SIBLING Nextcloud app
-	 * that may be absent or unloadable at this point — the call is guarded by
-	 * class_exists() and wrapped in a catch(\Throwable) for exactly that
-	 * reason. It cannot be injected: this method IS the composition root, so
-	 * there is no container to resolve an adapter from yet, and declaring a
-	 * typed dependency on a possibly-absent foreign class would 500 every
-	 * route (a param type is a class reference the router reflects over).
-	 * OpenRegisterAutoloader::bootstrapAppHost() is static for the same reason.
+	 * @spec openspec/specs/app-shell/spec.md#requirement-keepiq-operates-without-any-other-conduction-app
 	 */
 	public function register(IRegistrationContext $context): void {
 		include_once __DIR__ . '/../../vendor/autoload.php';
 
-		// Adopt the OpenRegister AppHost engine (ADR-040 / ADR-022). One call wires
-		// the boilerplate plumbing the fleet shares: the dashboard/preferences/
-		// settings controllers, the settings + action-auth services, the install
-		// repair steps, the admin-settings panel + section, the manifest-driven
-		// deep-link listener, and the observability controllers (health + metrics).
-		//
-		// Every registration is a lazy service closure, so a disabled/absent
-		// OpenRegister never fatals Nextcloud bootstrap — an aliased route simply
-		// surfaces a 5xx and /api/health reports the degraded state.
-		//
-		// Keepiq then RE-REGISTERS its three domain-divergent plumbing classes
-		// after this call so the concrete leaf classes win over the generic
-		// aliases (see DomainOverrideRegistrar).
-		//
-		// LOAD-ORDER HAZARD (measured, not theoretical). OC_App::getEnabledApps()
-		// sort()s the app list, and Coordinator::registerApps() walks THAT sorted
-		// list registering one app's autoloader (private API: OC_App's up to
-		// NC 34, AppManager's from 35) and then calling $app->register(), one
-		// app at a time. So every app registers before the PSR-4 prefix of
-		// every alphabetically-LATER app exists: `keepiq` < `openregister`, so
-		// OCA\OpenRegister\ is not autoloadable at this point on a perfectly
-		// healthy instance.
-		//
-		// Left unguarded, the resulting \Error aborted this ENTIRE register() —
-		// every registrar below never ran, and the audit listener recorded ZERO
-		// dispatched events. Coordinator::registerApps() catches the Throwable and
-		// logs an 'emergency', then `continue`s to the next app, so Keepiq stayed
-		// enabled and kept serving requests: nothing in the UI, and nothing in the
-		// app itself, reported that half its wiring was missing.
-		//
-		// OpenRegisterAutoloader puts OpenRegister's prefix on the autoloader
-		// ourselves, which is exactly what Nextcloud will do a few iterations
-		// later, and then runs the AppHost wiring below. bootstrapAppHost() is the
-		// whole of that wiring, so every branch of it is unit-tested there rather
-		// than here, where Application cannot be constructed without a container.
-		// It never throws. An absent or disabled OpenRegister skips the AppHost
-		// plumbing quietly; anything else (no lib/, no loadable Bootstrap, a
-		// throwing or broken Bootstrap) is recorded and logged from boot(). This
-		// app's own listeners and services below MUST register either way.
-		//
-		// Gate-64 — apphost-prelude exclude This app HAS a prelude, OpenRegisterAutoloader
-		// — but gate-64 matches only `registerAutoloading(...)` naming
-		// 'openregister', which is `\OC_App::registerAutoloading()`. That is
-		// PRIVATE API and Nextcloud 35 REMOVED it, which is the defect this
-		// app just fixed (keepiq#712): the call threw, the prelude's catch-all
-		// returned false, the guard answered false, and every AppHost endpoint
-		// returned 500. NC 35 moved the method to `OC\App\AppManager`, also
-		// private and not on `OCP\App\IAppManager`, so there is no public API
-		// the gate's pattern can be satisfied with. The prelude now does what
-		// Nextcloud does — a PSR-4 prefix over the app's lib/, via
-		// spl_autoload_register and the public IAppManager::getAppPath(). The
-		// gate's intent is met; its pattern cannot be. Tracked in
-		// ConductionNL/.github#791: gate-64 should accept a prelude that
-		// registers the prefix by any means, and stop mandating a method that
-		// no longer exists.
-		OpenRegisterAutoloader::bootstrapAppHost(
-			bootstrap: static function () use ($context): void {
-				Bootstrap::register($context, self::APP_ID, ['namespace' => 'OCA\\Keepiq']);
-			}
-		);
-
-		// ORDER MATTERS here: a registerService() for an id the AppHost engine
-		// already aliased only wins when it runs after that call.
+		// Keepiq's own settings stack and the admin areas, as themselves, so a
+		// delegation of an area satisfies the guard that names it
+		// (admin-scoped-roles D1).
 		(new DomainOverrideRegistrar())->register(context: $context);
+		(new AdminAreaRegistrar())->register(context: $context);
+
+		// MCP opt-in (hermiq-ai-tooling): three metadata-only read tools for AI
+		// agents. The alias is inert unless OpenRegister runs and asks for it.
+		(new McpRegistrar())->register(context: $context);
 
 		// Domain event wiring, one registrar per trigger family. Each is
 		// independent: a listener graph can be extended without touching the
@@ -179,7 +115,7 @@ class Application extends App implements IBootstrap {
 		// Domain repair steps (BootstrapCertificateAuthority, InitializeSettings,
 		// SeedSecretTypes, the Seed* development data steps) are registered via
 		// info.xml <repair-steps>. InitializeSettings is the Keepiq concrete
-		// re-registered above (domain default-config seeding); the rest are
+		// registered above (domain default-config seeding); the rest are
 		// crypto/seed domain steps owned by the app.
 	}//end register()
 
@@ -188,21 +124,14 @@ class Application extends App implements IBootstrap {
 	 *
 	 * @param IBootContext $context The boot context
 	 *
-	 * All wiring happens in register(). The one thing done here is reporting
-	 * why the OpenRegister AppHost wiring fell through to the degraded path,
-	 * because register() runs before this app's container can inject a logger
-	 * and must never throw.
+	 * All wiring happens in register(), except the OCM provider of federated
+	 * sharing, which registers at boot.
 	 *
 	 * @return void
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) OpenRegisterAutoloader is a static
-	 *   prelude by design: it runs before this app's container exists.
-	 *
-	 * @spec openspec/specs/apphost-adoption/spec.md#requirement-apphost-prelude-registers-openregister-with-public-api-only
+	 * @spec openspec/specs/app-shell/spec.md#requirement-keepiq-operates-without-any-other-conduction-app
 	 */
 	public function boot(IBootContext $context): void {
-		OpenRegisterAutoloader::reportFailure(
-			logger: $context->getServerContainer()->get(LoggerInterface::class)
-		);
+		(new PlatformIntegrationRegistrar())->boot(context: $context);
 	}//end boot()
 }//end class

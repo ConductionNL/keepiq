@@ -40,6 +40,7 @@ class AuditEvent extends Event {
 	public const ACTOR_APPLICATION = 'application';
 	public const ACTOR_SYSTEM = 'system';
 	public const ACTOR_LINK_VISITOR = 'link_visitor';
+	public const ACTOR_MCP = 'mcp';
 
 	/**
 	 * Constructor for AuditEvent.
@@ -153,6 +154,32 @@ class AuditEvent extends Event {
 	): self {
 		return new self(self::ACTOR_LINK_VISITOR, null, $eventType, $objectType, $objectId, $objectName, $metadata);
 	}//end forLinkVisitor()
+
+	/**
+	 * Build an event actored by an AI agent through an MCP tool, for the
+	 * Nextcloud user it acts for (hermiq-ai-tooling).
+	 *
+	 * @param string $actorId The user the agent acts for
+	 * @param string $eventType The event type
+	 * @param string $objectType The object type
+	 * @param string|null $objectId The object id
+	 * @param string|null $objectName The object name
+	 * @param array<string,mixed> $metadata The metadata
+	 *
+	 * @return self
+	 *
+	 * @spec openspec/specs/mcp-metadata-surface/spec.md#requirement-invocations-are-audited-as-agent-reads
+	 */
+	public static function forMcp(
+		string $actorId,
+		string $eventType,
+		string $objectType,
+		?string $objectId = null,
+		?string $objectName = null,
+		array $metadata = [],
+	): self {
+		return new self(self::ACTOR_MCP, $actorId, $eventType, $objectType, $objectId, $objectName, $metadata);
+	}//end forMcp()
 
 	/**
 	 * Get the actor type.
