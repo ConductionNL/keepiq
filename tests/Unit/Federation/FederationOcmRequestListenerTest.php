@@ -51,6 +51,15 @@ require_once __DIR__ . '/FederationFixtures.php';
 class FederationOcmRequestListenerTest extends TestCase {
 	use FederationFixtures;
 
+	/**
+	 * Skip on a Nextcloud without the OCM APIs.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->skipWithoutFederation();
+	}//end setUp()
+
 	/** @var array<string,string> userId => receive preference */
 	private array $optIns = ['bob' => '1', 'carol' => '0', 'dave' => '1'];
 

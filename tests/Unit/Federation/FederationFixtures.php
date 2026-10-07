@@ -28,11 +28,27 @@ use OCA\Keepiq\Db\FederationPartnerMapper;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\Federation\ICloudId;
 use OCP\Federation\ICloudIdManager;
+use OCP\OCM\Events\OCMEndpointRequestEvent;
 use PHPUnit\Framework\TestCase;
 
 trait FederationFixtures {
 	/** This instance's host. */
 	private string $localHost = 'cloud.here.example';
+
+	/**
+	 * Skip on a Nextcloud that cannot federate.
+	 *
+	 * The OCM APIs these tests use arrived in Nextcloud 33; Keepiq supports 32,
+	 * where FederationRootService::isSupported() is false and federation stays
+	 * off. The same check decides both.
+	 *
+	 * @return void
+	 */
+	private function skipWithoutFederation(): void {
+		if (class_exists(OCMEndpointRequestEvent::class) === false) {
+			$this->markTestSkipped('Federation needs the OCM APIs of Nextcloud 33 or later.');
+		}
+	}//end skipWithoutFederation()
 
 	/**
 	 * A partner mapper over an in-memory list.

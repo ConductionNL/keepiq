@@ -117,7 +117,14 @@ class FederatedSharesMigrationTest extends TestCase {
 	 */
 	private function tableDouble(array &$added, bool $exists = false): object {
 		$type = (new \ReflectionMethod(ISchemaWrapper::class, 'getTable'))->getReturnType();
-		$class = ($type instanceof \ReflectionNamedType) ? $type->getName() : \stdClass::class;
+		if ($type instanceof \ReflectionNamedType === false) {
+			// Nextcloud 34 and older declare no return type, so PHPUnit enforces
+			// none: a recording object stands in, as a mock of stdClass cannot
+			// have hasColumn() configured.
+			return $this->recordingTable(added: $added, exists: $exists);
+		}
+
+		$class = $type->getName();
 		$mock = $this->getMockBuilder($class)->disableOriginalConstructor()->getMock();
 		$mock->method('hasColumn')->willReturn($exists);
 		$addReturn = (new \ReflectionMethod($class, 'addColumn'))->getReturnType();
@@ -141,4 +148,58 @@ class FederatedSharesMigrationTest extends TestCase {
 
 		return $mock;
 	}//end tableDouble()
+
+	/**
+	 * A plain table stand-in recording addColumn() calls.
+	 *
+	 * @param array<string,array<string,mixed>> $added  Receives name => options
+	 * @param bool                              $exists Whether hasColumn() answers true
+	 *
+	 * @return object
+	 */
+	private function recordingTable(array &$added, bool $exists): object {
+		return new class($added, $exists) {
+			/** @var array<string,array<string,mixed>> */
+			private array $added;
+
+			/**
+			 * @param array<string,array<string,mixed>> $added
+			 */
+			public function __construct(array &$added, private bool $exists) {
+				$this->added = &$added;
+			}
+
+			public function hasColumn(string $name): bool {
+				return $this->exists;
+			}
+
+			/**
+			 * @param array<string,mixed> $options
+			 */
+			public function addColumn(string $name, mixed $type, array $options = []): void {
+				$this->added[$name] = $options;
+			}
+
+			/**
+			 * @param array<int,string> $columns
+			 */
+			public function setPrimaryKey(array $columns): self {
+				return $this;
+			}
+
+			/**
+			 * @param array<int,string> $columns
+			 */
+			public function addIndex(array $columns, ?string $name = null): self {
+				return $this;
+			}
+
+			/**
+			 * @param array<int,string> $columns
+			 */
+			public function addUniqueIndex(array $columns, ?string $name = null): self {
+				return $this;
+			}
+		};
+	}//end recordingTable()
 }//end class

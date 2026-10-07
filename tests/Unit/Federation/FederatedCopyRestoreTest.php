@@ -104,6 +104,7 @@ class FederatedCopyRestoreTest extends TestCase {
 	private bool $aliceDown = false;
 
 	protected function setUp(): void {
+		$this->skipWithoutFederation();
 		$this->inbound = new FederatedInbound();
 		$this->inbound->setId('in-1');
 		$this->inbound->setRecipientUid('bob');

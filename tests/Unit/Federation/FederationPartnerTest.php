@@ -53,6 +53,15 @@ require_once __DIR__ . '/FederationFixtures.php';
 class FederationPartnerTest extends TestCase {
 	use FederationFixtures;
 
+	/**
+	 * Skip on a Nextcloud without the OCM APIs.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->skipWithoutFederation();
+	}//end setUp()
+
 	/** @var array<int,string> URLs the fake HTTP client was asked for */
 	private array $fetched = [];
 

@@ -76,6 +76,14 @@ for side in a b; do
 	occ "$side" app:enable keepiq
 	occ "$side" app:list | sed -n '/Enabled:/,/Disabled:/p' | grep -q ' keepiq:' \
 		|| { echo "::error::keepiq is not enabled on ${side}"; exit 1; }
+	# The web server can still answer 404 for Keepiq's routes for a moment
+	# after app:enable (it failed one of two identical runs of 4934a642); wait
+	# for the API before the first real call, which still fails loudly if it
+	# never comes.
+	for _ in $(seq 1 30); do
+		api "$side" GET /api/v1/suites >/dev/null 2>&1 && break
+		sleep 2
+	done
 
 	# The development vault of admin, which the specs unlock with "Oj".
 	suites="$(api "$side" GET /api/v1/suites)"

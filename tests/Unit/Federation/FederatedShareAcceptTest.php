@@ -79,6 +79,7 @@ class FederatedShareAcceptTest extends TestCase {
 	private IOCMDiscoveryService&MockObject $ocm;
 
 	protected function setUp(): void {
+		$this->skipWithoutFederation();
 		$this->pending = new FederatedInbound();
 		$this->pending->setId('in-1');
 		$this->pending->setRecipientUid('bob');

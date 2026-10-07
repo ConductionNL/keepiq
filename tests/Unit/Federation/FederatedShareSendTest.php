@@ -71,6 +71,7 @@ class FederatedShareSendTest extends TestCase {
 	private ICloudFederationProviderManager&MockObject $ocm;
 
 	protected function setUp(): void {
+		$this->skipWithoutFederation();
 		$this->source = new Secret();
 		$this->source->setId('src');
 		$this->source->setName('Supplier portal');

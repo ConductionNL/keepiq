@@ -49,6 +49,15 @@ require_once __DIR__ . '/OcmDoubles.php';
 class FederatedShareReceiveTest extends TestCase {
 	use FederationFixtures;
 
+	/**
+	 * Skip on a Nextcloud without the OCM APIs.
+	 *
+	 * @return void
+	 */
+	protected function setUp(): void {
+		$this->skipWithoutFederation();
+	}//end setUp()
+
 	/** @var array<string,FederatedInbound> */
 	private array $rows = [];
 

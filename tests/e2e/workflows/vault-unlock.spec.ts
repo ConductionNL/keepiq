@@ -152,6 +152,18 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 			// online, which is true in headless Chromium over the instance's
 			// HTTPS origin.
 			/\/api\/v1\/passkeys\/login-options\b/,
+			// LockScreen's checkSuite() asks, whenever online, whether to offer
+			// "Approve from another device" (#1024). The answer is `{enabled}`,
+			// an instance switch; no vault material.
+			/\/api\/v1\/device-approvals\/status\b/,
+			// When device approval is on, DeviceApprovalRequest on the lock
+			// screen reads the session user's own recovery enrolment to decide
+			// whether to offer the administrator path (new-device-approval D6):
+			// `{enrolled, policy}`, no key material. It fires only on an
+			// instance with device approval enabled, which CI's is not by
+			// default; this test timed out before its assertion from #1024 on,
+			// so neither entry was ever needed until the timeout was fixed.
+			/\/api\/v1\/recovery\/enrolment$/,
 			// CnAppRoot's setup() calls useSupportDialog(appId, { persistence:
 			// 'server' }) unconditionally — same shell layer, and for the same
 			// reason, as the /api/settings entry above: it runs before any route
@@ -205,6 +217,10 @@ test.describe('Workflow: vault unlock — encryption-suites/spec.md', () => {
 			.map((pg) => `#${pg.route.replace(/:[^/]+/g, 'some-id')}`)
 
 		expect(hashes.length).toBeGreaterThan(5)
+
+		// Every goto is a full page load: about 4.6 s a route in CI, so the 17
+		// routes outgrew the default budget at route 15. Scale it with the walk.
+		test.setTimeout(30_000 + hashes.length * 10_000)
 
 		for (const hash of hashes) {
 			// ADR-074 rule 4, and the note above: `networkidle` never settles on
